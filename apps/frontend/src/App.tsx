@@ -4,9 +4,7 @@ import { AuthProvider } from '@/providers/auth-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
-import { HomePage } from '@/features/question-bank/pages/home-page'
 import { EnglishHomePage } from '@/features/question-bank/pages/english-home-page'
-import { PracticePage } from '@/features/practice/pages/practice-page'
 import { PracticeHubPage } from '@/features/practice/pages/practice-hub-page-v2'
 import { PracticeSessionPage } from '@/features/practice/pages/practice-session-page'
 import { ScriptHubPage } from '@/features/script/pages/script-hub-page'
@@ -19,18 +17,14 @@ import { AchievementHallPage } from '@/features/achievement/pages/achievement-ha
 import { OnboardingLayout } from '@/features/onboarding/pages/onboarding-layout'
 import { GoalsSelectionPage } from '@/features/onboarding/pages/goals-selection-page'
 import { AbilitySelectionPage } from '@/features/onboarding/pages/ability-selection-page'
-import { MockPage } from '@/features/mock-exam/pages/mock-page'
-import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { AccountPage } from '@/features/account/pages/account-page'
 import { AdminUsersPage } from '@/features/admin/pages/admin-users-page'
 import { AdminMembersPage } from '@/features/admin/pages/admin-members-page'
 import { AdminBillingPage } from '@/features/admin/pages/admin-billing-page'
 import { AdminNotificationsPage } from '@/features/admin/pages/admin-notifications-page'
-import { AdminResourcesPage } from '@/features/admin/pages/admin-resources-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { NotificationDetailPage } from '@/features/notification/pages/notification-detail-page'
-import { PortalPage } from '@/features/portal/pages/portal-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { RegisterPage } from '@/features/auth/pages/register-page'
 import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
@@ -48,7 +42,6 @@ import { LeaderboardPage } from '@/features/leaderboard/pages/leaderboard-page'
 import { InvitePage } from '@/features/referral/pages/invite-page'
 import { AdminCouponsPage } from '@/features/admin/pages/admin-coupons-page'
 import { AdminFeedbacksPage } from '@/features/admin/pages/admin-feedbacks-page'
-import { AdminQuestionBankPage } from '@/features/admin/pages/admin-question-bank-page'
 import { AdminSettingsPage } from '@/features/admin/pages/admin-settings-page'
 import { AdminAnalyticsPage } from '@/features/admin/pages/admin-analytics-page'
 
@@ -65,10 +58,8 @@ export default function App() {
                 <Route path="members" element={<AdminMembersPage />} />
                 <Route path="billing" element={<AdminBillingPage />} />
                 <Route path="notifications" element={<AdminNotificationsPage />} />
-                <Route path="resources" element={<AdminResourcesPage />} />
                 <Route path="coupons" element={<AdminCouponsPage />} />
                 <Route path="feedbacks" element={<AdminFeedbacksPage />} />
-                <Route path="question-bank" element={<AdminQuestionBankPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
               </Route>
@@ -76,13 +67,11 @@ export default function App() {
               {/* 用户端 — RootLayout */}
               <Route element={<RootLayout />}>
                 <Route path="/" element={<EnglishHomePage />} />
-                <Route path="/portal" element={<PortalPage />} />
 
                 {/* 练习模式 */}
                 <Route path="/practice" element={<PracticeHubPage />} />
                 <Route path="/practice/topics" element={<PracticeHubPage />} />
                 <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
-                <Route path="/practice/:topicId" element={<PracticePage />} />
 
                 {/* 剧本模式 */}
                 <Route path="/script" element={<ScriptHubPage />} />
@@ -100,8 +89,6 @@ export default function App() {
 
                 {/* 成就殿堂 */}
                 <Route path="/achievements" element={<AchievementHallPage />} />
-                <Route path="/mock" element={<MockPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/member" element={<MemberPage />} />
                 <Route path="/notifications" element={<NotificationListPage />} />
