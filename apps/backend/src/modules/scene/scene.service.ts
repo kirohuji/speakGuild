@@ -29,7 +29,10 @@ export class SceneService {
       include: {
         category: true,
         vocabularies: { orderBy: { sortOrder: 'asc' } },
-        chunks: { orderBy: { createdAt: 'asc' } },
+        chunks: {
+          orderBy: { createdAt: 'asc' },
+          include: { examples: { orderBy: { sortOrder: 'asc' } } },
+        },
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {

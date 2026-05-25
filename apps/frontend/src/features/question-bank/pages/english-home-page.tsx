@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, Play, Map, Library, TrendingUp, Sparkles, Mic, Target } from 'lucide-react'
+import {
+  BookOpen, Play, Library, TrendingUp, Sparkles, Mic, Target,
+  ListChecks, ChevronRight, ArrowRight, GraduationCap, MessageSquareText,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import api from '@/features/practice/api/english-practice-api'
+import { learningApi, type TodayPlan } from '@/features/learning/api/learning-api'
 
 interface QuickStats {
   userLevel: number; totalXp: number; xpForNextLevel: number
@@ -19,20 +25,24 @@ interface QuickStats {
 export function EnglishHomePage() {
   const { session } = useAuth()
   const [stats, setStats] = useState<QuickStats | null>(null)
+  const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!session?.user?.id) { setLoading(false); return }
-    api.get('/level/overview')
-      .then((res: any) => {
+
+    Promise.all([
+      api.get('/level/overview').then((res: any) => {
         const data = res?.data ?? res
         if (data?.outputLevel) setStats(data)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+      }).catch(() => {}),
+      learningApi.getTodayTasks().then(setTodayPlan).catch(() => setTodayPlan(null)),
+    ]).finally(() => setLoading(false))
   }, [session])
 
-  const xpPercent = stats ? Math.min(100, Math.round((stats.totalXp % (stats.xpForNextLevel || 100)) / (stats.xpForNextLevel || 100) * 100)) : 0
+  const xpPercent = stats
+    ? Math.min(100, Math.round((stats.totalXp % (stats.xpForNextLevel || 100)) / (stats.xpForNextLevel || 100) * 100))
+    : 0
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
@@ -42,36 +52,41 @@ export function EnglishHomePage() {
           Hi, {session?.user?.name ?? '同学'}!
         </h1>
         <p className="mt-1 text-muted-foreground">
-          今日目标：完成 3 次录音练习
+          继续你的英语表达学习之旅
         </p>
       </div>
 
       {/* Level Card */}
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner /></div>
+        <div className="mb-6 space-y-3">
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       ) : stats ? (
-        <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/20">
-              <Sparkles className="size-7 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Lv.{stats.userLevel}</Badge>
-                <span className="text-sm font-medium text-foreground">
-                  {stats.outputLevelDescription}
-                </span>
+        <Link to="/growth">
+          <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10 transition-colors hover:from-primary/10 hover:to-primary/20">
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                <Sparkles className="size-7 text-primary" />
               </div>
-              <div className="mt-2 space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>XP {stats.totalXp}</span>
-                  <span>下一级 {stats.xpForNextLevel} XP</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">Lv.{stats.userLevel}</Badge>
+                  <span className="text-sm font-medium text-foreground">
+                    {stats.outputLevelDescription}
+                  </span>
                 </div>
-                <Progress value={xpPercent} className="h-1.5" />
+                <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>XP {stats.totalXp}</span>
+                    <span>下一级 {stats.xpForNextLevel} XP</span>
+                  </div>
+                  <Progress value={xpPercent} className="h-1.5" />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
       ) : (
         <Card className="mb-6">
           <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
@@ -84,13 +99,56 @@ export function EnglishHomePage() {
         </Card>
       )}
 
+      {/* Continue Learning / Today's Tasks — Primary CTA */}
+      {todayPlan && todayPlan.currentUnit && todayPlan.tasks.length > 0 && (
+        <Link to="/today">
+          <Card className="mb-6 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 transition-colors hover:from-primary/10 hover:to-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/20">
+                    <ListChecks className="size-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">继续学习</p>
+                    <p className="text-xs text-muted-foreground">
+                      {todayPlan.currentUnit.title} · 今日 {todayPlan.tasks.length} 个任务
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" className="shrink-0 gap-1">
+                  去完成
+                  <ArrowRight className="size-3" />
+                </Button>
+              </div>
+
+              {/* Mini task list */}
+              <div className="mt-3 space-y-1.5">
+                {todayPlan.tasks.slice(0, 3).map((task) => (
+                  <div key={task.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className={cn(
+                      'size-1.5 rounded-full',
+                      task.type === 'vocab' && 'bg-blue-500',
+                      task.type === 'chunk' && 'bg-purple-500',
+                      task.type === 'practice' && 'bg-orange-500',
+                      task.type === 'script' && 'bg-green-500',
+                    )} />
+                    <span>{task.title}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
+
       {/* Quick Actions */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: '练习', icon: BookOpen, path: '/practice', color: 'text-blue-500 bg-blue-500/10' },
-          { label: '剧本', icon: Play, path: '/script', color: 'text-green-500 bg-green-500/10' },
-          { label: '探索', icon: Map, path: '/explore', color: 'text-purple-500 bg-purple-500/10' },
-          { label: '表达库', icon: Library, path: '/expressions', color: 'text-amber-500 bg-amber-500/10' },
+          { label: '学习计划', icon: BookOpen, path: '/learning', color: 'text-blue-500 bg-blue-500/10' },
+          { label: '今日任务', icon: ListChecks, path: '/today', color: 'text-primary bg-primary/10' },
+          { label: '剧本挑战', icon: Play, path: '/script', color: 'text-green-500 bg-green-500/10' },
+          { label: '我的学习库', icon: Library, path: '/expressions', color: 'text-amber-500 bg-amber-500/10' },
         ].map((item) => {
           const Icon = item.icon
           return (
@@ -108,36 +166,9 @@ export function EnglishHomePage() {
         })}
       </div>
 
-      {/* Today's Recommendation */}
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Mic className="size-4 text-primary" /> 今日推荐练习
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="rounded-lg border border-border p-3">
-            <p className="font-medium text-foreground">自我介绍 — 30 秒挑战</p>
-            <p className="text-xs text-muted-foreground">场景：留学生活 · 宿舍入住</p>
-            <div className="mt-2 flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">L2</Badge>
-              <span className="text-xs text-muted-foreground">预计 5 分钟</span>
-            </div>
-          </div>
-          <div className="rounded-lg border border-border p-3">
-            <p className="font-medium text-foreground">点咖啡 — 日常对话</p>
-            <p className="text-xs text-muted-foreground">场景：日常社交 · 咖啡店</p>
-            <div className="mt-2 flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">L1</Badge>
-              <span className="text-xs text-muted-foreground">预计 3 分钟</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Chunks & Stats */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="mb-6 grid grid-cols-2 gap-3">
           <Card>
             <CardContent className="flex flex-col items-center p-4 text-center">
               <span className="text-2xl font-bold text-foreground">{stats.masteredChunks}</span>
@@ -147,16 +178,21 @@ export function EnglishHomePage() {
           <Card>
             <CardContent className="flex flex-col items-center p-4 text-center">
               <span className="text-2xl font-bold text-foreground">{stats.totalChunks}</span>
-              <span className="text-xs text-muted-foreground">学习中的 Chunk</span>
+              <span className="text-xs text-muted-foreground">总计 Chunk</span>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Growth link */}
-      <div className="mt-6">
-        <Link to="/growth">
+      {/* Bottom links */}
+      <div className="space-y-2">
+        <Link to="/learning">
           <Button variant="outline" className="w-full gap-2">
+            <BookOpen className="size-4" /> 浏览全部学习材料
+          </Button>
+        </Link>
+        <Link to="/growth">
+          <Button variant="ghost" className="w-full gap-2 text-muted-foreground">
             <TrendingUp className="size-4" /> 查看我的成长
           </Button>
         </Link>

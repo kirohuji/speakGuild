@@ -5,6 +5,9 @@ import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
 import { EnglishHomePage } from '@/features/question-bank/pages/english-home-page'
+import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
+import { TodayTaskPage } from '@/features/learning/pages/today-task-page'
+import { LearningUnitPage } from '@/features/learning/pages/learning-unit-page'
 import { PracticeHubPage } from '@/features/practice/pages/practice-hub-page-v2'
 import { PracticeSessionPage } from '@/features/practice/pages/practice-session-page'
 import { ScriptHubPage } from '@/features/script/pages/script-hub-page'
@@ -77,6 +80,13 @@ export default function App() {
               {/* 用户端 — RootLayout */}
               <Route element={<RootLayout />}>
                 <Route path="/" element={<EnglishHomePage />} />
+
+                {/* 学习计划 — 教材驱动路径 */}
+                <Route path="/learning" element={<LearningPlanPage />} />
+                <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
+
+                {/* 今日任务 */}
+                <Route path="/today" element={<TodayTaskPage />} />
 
                 {/* 练习模式 */}
                 <Route path="/practice" element={<PracticeHubPage />} />

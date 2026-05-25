@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Eye, EyeOff, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
+import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { SentencePatternPanel } from '../components/sentence-pattern-panel'
 
 type Step = 'preview' | 'chunks' | 'record' | 'feedback' | 'upgrade' | 'retell'
@@ -24,6 +25,8 @@ export function PracticeSessionPage() {
   const [step, setStep] = useState<Step>('preview')
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
+  const [insightIndex, setInsightIndex] = useState(0)
+  const [insightOpen, setInsightOpen] = useState(false)
 
   // Recording
   const [isRecording, setIsRecording] = useState(false)
@@ -61,6 +64,55 @@ export function PracticeSessionPage() {
     try { await chunkApi.activate(chunkId) } catch {}
     setActivatedChunks((prev) => new Set([...prev, chunkId]))
   }, [])
+
+  const insightItems = useMemo<LearningInsightItem[]>(() => {
+    if (!detail) return []
+    const sceneName = detail.scene.title
+    const words: LearningInsightItem[] = detail.vocabularies.map((vocabulary) => ({
+      kind: 'word',
+      id: `word:${vocabulary.id}`,
+      word: vocabulary.word,
+      meaning: vocabulary.meaning,
+      sceneName,
+    }))
+    const chunks: LearningInsightItem[] = detail.activeChunks.map((chunk) => ({
+      kind: 'chunk',
+      id: `chunk:${chunk.id}`,
+      text: chunk.text,
+      meaning: chunk.meaning,
+      description: chunk.description,
+      examples: chunk.examples,
+      sceneName,
+    }))
+    const patterns: LearningInsightItem[] = detail.topic.sentencePatterns?.length
+      ? detail.topic.sentencePatterns.map((pattern, index) => ({
+        kind: 'pattern',
+        id: `pattern:${index}`,
+        pattern: pattern.pattern,
+        meaning: pattern.meaning,
+        slots: pattern.slots,
+        example: pattern.example,
+        difficulty: pattern.difficulty,
+        sceneName,
+      }))
+      : detail.topic.sentenceSkeleton
+        ? [{
+          kind: 'pattern',
+          id: 'pattern:skeleton',
+          pattern: detail.topic.sentenceSkeleton,
+          meaning: detail.topic.promptZh,
+          sceneName,
+        }]
+        : []
+    return [...words, ...chunks, ...patterns]
+  }, [detail])
+
+  const openInsight = useCallback((id: string) => {
+    const nextIndex = insightItems.findIndex((item) => item.id === id)
+    if (nextIndex < 0) return
+    setInsightIndex(nextIndex)
+    setInsightOpen(true)
+  }, [insightItems])
 
   const startRecording = async () => {
     try {
@@ -203,7 +255,12 @@ export function PracticeSessionPage() {
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {detail.vocabularies.map((v) => (
-                    <Badge key={v.id} variant="outline" className="text-sm">
+                    <Badge
+                      key={v.id}
+                      variant="outline"
+                      className="cursor-pointer text-sm transition-colors hover:border-primary hover:text-primary"
+                      onClick={() => openInsight(`word:${v.id}`)}
+                    >
                       {v.word}
                       <span className="ml-1 text-xs text-muted-foreground">{v.meaning}</span>
                     </Badge>
@@ -228,9 +285,13 @@ export function PracticeSessionPage() {
             expandedId={expandedChunkId}
             onActivate={activateChunk}
             onExpand={setExpandedChunkId}
+            onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
             onContinue={() => setStep('record')}
           />
-          <SentencePatternPanel topic={detail.topic} />
+          <SentencePatternPanel
+            topic={detail.topic}
+            onInspect={(index) => openInsight(detail.topic.sentencePatterns?.length ? `pattern:${index}` : 'pattern:skeleton')}
+          />
         </div>
       )}
 
@@ -394,6 +455,14 @@ export function PracticeSessionPage() {
           </div>
         </div>
       )}
+
+      <LearningInsightDialog
+        items={insightItems}
+        index={Math.min(insightIndex, Math.max(insightItems.length - 1, 0))}
+        open={insightOpen}
+        onOpenChange={setInsightOpen}
+        onIndexChange={setInsightIndex}
+      />
     </div>
   )
 }

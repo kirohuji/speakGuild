@@ -15,7 +15,9 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { expressionApi } from '@/features/practice/api/english-practice-api'
+import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { cn } from '@/lib/cn'
+import { useWordsStore } from '@/stores/assets.store'
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
@@ -34,6 +36,9 @@ export function ExpressionLibraryPage() {
   const [expressions, setExpressions] = useState<Expression[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const { entries: wordEntries, removeWord } = useWordsStore()
+  const [wordInsightIndex, setWordInsightIndex] = useState(0)
+  const [wordInsightOpen, setWordInsightOpen] = useState(false)
 
   // Review state
   const [reviewItems, setReviewItems] = useState<Expression[]>([])
@@ -63,6 +68,7 @@ export function ExpressionLibraryPage() {
 
   useEffect(() => {
     if (filter === 'review') { setLoading(true); loadReview().finally(() => setLoading(false)) }
+    else if (filter === 'words') setLoading(false)
     else fetchData()
   }, [filter])
 
@@ -71,18 +77,24 @@ export function ExpressionLibraryPage() {
   }
 
   const filtered = filter === 'all' ? expressions : expressions.filter((e) => e.type === filter)
+  const wordInsightItems: LearningInsightItem[] = wordEntries.map((entry) => ({
+    kind: 'word',
+    id: `word:${entry.word}`,
+    word: entry.word,
+  }))
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">表达库</h1>
-        <p className="mt-1 text-muted-foreground">你的英语表达资产中心</p>
+        <h1 className="text-2xl font-bold text-foreground">我的学习库</h1>
+        <p className="mt-1 text-muted-foreground">自动沉淀你的单词、表达、错句和升级内容</p>
       </div>
 
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList className="mb-4 w-full flex-wrap">
           <TabsTrigger value="all" className="flex-1 min-w-[60px]">全部</TabsTrigger>
-          <TabsTrigger value="chunk" className="flex-1 min-w-[60px]">Chunk</TabsTrigger>
+          <TabsTrigger value="words" className="flex-1 min-w-[60px]">单词</TabsTrigger>
+          <TabsTrigger value="chunk" className="flex-1 min-w-[60px]">表达</TabsTrigger>
           <TabsTrigger value="error_sentence" className="flex-1 min-w-[60px]">错句</TabsTrigger>
           <TabsTrigger value="upgraded" className="flex-1 min-w-[60px]">升级</TabsTrigger>
           <TabsTrigger value="review" className="flex-1 min-w-[60px] relative">
@@ -93,7 +105,51 @@ export function ExpressionLibraryPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Review Tab */}
+        <TabsContent value="words">
+          {wordEntries.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <BookMarked className="size-12 text-muted-foreground/40" />
+              <p className="mt-4 text-muted-foreground">还没有加入单词</p>
+              <p className="text-sm text-muted-foreground">在练习页点击场景词汇，加入生词本</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {wordEntries.map((entry, index) => (
+                <Card
+                  key={entry.word}
+                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                  onClick={() => {
+                    setWordInsightIndex(index)
+                    setWordInsightOpen(true)
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold text-foreground">{entry.word}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {new Date(entry.addedAt).toLocaleDateString('zh-CN')}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          removeWord(entry.word)
+                        }}
+                      >
+                        <Trash2 className="size-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="review">
           {reviewItems.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-center">
@@ -133,49 +189,51 @@ export function ExpressionLibraryPage() {
           )}
         </TabsContent>
 
-        <TabsContent value={filter}>
-          {loading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-center">
-              <BookMarked className="size-12 text-muted-foreground/40" />
-              <p className="mt-4 text-muted-foreground">还没有保存的表达</p>
-              <p className="text-sm text-muted-foreground">完成练习后可以保存错句和升级表达</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filtered.map((expr) => {
-                const meta = TYPE_META[expr.type] ?? TYPE_META.chunk
-                const Icon = meta.icon
-                const text = expr.corrected ?? expr.chunkText ?? expr.original ?? ''
-                return (
-                  <Card key={expr.id} className={cn('border-l-4', meta.color)}>
-                    <CardContent className="flex items-start justify-between p-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <Badge variant="outline" className="gap-1 text-xs">
-                            <Icon className="size-3" />{meta.label}
-                          </Badge>
-                          {expr.sceneName && <span className="text-xs text-muted-foreground">{expr.sceneName}</span>}
+        {filter !== 'review' && filter !== 'words' && (
+          <TabsContent value={filter}>
+            {loading ? (
+              <div className="flex justify-center py-12"><Spinner /></div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center py-12 text-center">
+                <BookMarked className="size-12 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">还没有保存的内容</p>
+                <p className="text-sm text-muted-foreground">学习过程中系统会自动沉淀到这里</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filtered.map((expr) => {
+                  const meta = TYPE_META[expr.type] ?? TYPE_META.chunk
+                  const Icon = meta.icon
+                  const text = expr.corrected ?? expr.chunkText ?? expr.original ?? ''
+                  return (
+                    <Card key={expr.id} className={cn('border-l-4', meta.color)}>
+                      <CardContent className="flex items-start justify-between p-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex items-center gap-2">
+                            <Badge variant="outline" className="gap-1 text-xs">
+                              <Icon className="size-3" />{meta.label}
+                            </Badge>
+                            {expr.sceneName && <span className="text-xs text-muted-foreground">{expr.sceneName}</span>}
+                          </div>
+                          <p className="truncate text-sm text-foreground">{text}</p>
+                          {expr.original && expr.corrected && expr.original !== expr.corrected && (
+                            <p className="mt-1 truncate text-xs text-muted-foreground line-through">{expr.original}</p>
+                          )}
                         </div>
-                        <p className="truncate text-sm text-foreground">{text}</p>
-                        {expr.original && expr.corrected && expr.original !== expr.corrected && (
-                          <p className="mt-1 truncate text-xs text-muted-foreground line-through">{expr.original}</p>
-                        )}
-                      </div>
-                      <Button variant="ghost" size="icon" className="ml-2 shrink-0" onClick={() => handleDelete(expr.id)}>
-                        <Trash2 className="size-4 text-muted-foreground" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
-        </TabsContent>
+                        <Button variant="ghost" size="icon" className="ml-2 shrink-0" onClick={() => handleDelete(expr.id)}>
+                          <Trash2 className="size-4 text-muted-foreground" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
+          </TabsContent>
+        )}
       </Tabs>
 
-      {filtered.length > 0 && filter !== 'review' && (
+      {filtered.length > 0 && filter !== 'review' && filter !== 'words' && (
         <p className="mt-4 text-center text-xs text-muted-foreground">共 {filtered.length} 条表达</p>
       )}
 
@@ -190,6 +248,14 @@ export function ExpressionLibraryPage() {
         setRevealed={setRevealed}
         userAnswer={userAnswer}
         setUserAnswer={setUserAnswer}
+      />
+
+      <LearningInsightDialog
+        items={wordInsightItems}
+        index={Math.min(wordInsightIndex, Math.max(wordInsightItems.length - 1, 0))}
+        open={wordInsightOpen}
+        onOpenChange={setWordInsightOpen}
+        onIndexChange={setWordInsightIndex}
       />
     </div>
   )

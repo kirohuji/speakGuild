@@ -26,6 +26,7 @@ import { ScriptModule } from './modules/script/script.module';
 import { ExpressionModule } from './modules/expression/expression.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ExplorationModule } from './modules/exploration/exploration.module';
+import { LearningModule } from './modules/learning/learning.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ExplorationModule } from './modules/exploration/exploration.module';
     ExpressionModule,
     OnboardingModule,
     ExplorationModule,
+    LearningModule,
   ],
 })
 export class AppModule {}

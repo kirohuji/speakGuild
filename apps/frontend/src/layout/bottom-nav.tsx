@@ -1,15 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BookOpen, Home, Library, Play, User } from 'lucide-react'
+import { BookOpen, Home, Library, Play, User, ListChecks } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useAuth } from '@/providers/auth-provider'
 
 const navItems = [
   { label: '首页', path: '/', icon: Home },
-  { label: '练习', path: '/practice', icon: BookOpen },
-  { label: '剧本', path: '/script', icon: Play },
-  { label: '表达库', path: '/expressions', icon: Library },
-  { label: '我的', path: '/profile', icon: User },
+  { label: '学习计划', path: '/learning', icon: BookOpen },
+  { label: '今日任务', path: '/today', icon: ListChecks },
+  { label: '剧本挑战', path: '/script', icon: Play },
+  { label: '我的学习库', path: '/expressions', icon: Library },
 ]
 
 export function BottomNav() {

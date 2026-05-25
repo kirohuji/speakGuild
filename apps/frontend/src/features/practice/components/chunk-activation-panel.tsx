@@ -13,6 +13,7 @@ interface ChunkActivationPanelProps {
   expandedId: string | null
   onActivate: (chunkId: string) => void
   onExpand: (chunkId: string) => void
+  onInspect: (chunkId: string) => void
   onContinue: () => void
 }
 
@@ -22,6 +23,7 @@ export function ChunkActivationPanel({
   expandedId,
   onActivate,
   onExpand,
+  onInspect,
   onContinue,
 }: ChunkActivationPanelProps) {
   const hasChunks = chunks.length > 0
@@ -51,6 +53,7 @@ export function ChunkActivationPanel({
                       onExpand(chunk.id)
                       if (!activatedIds.has(chunk.id)) onActivate(chunk.id)
                     }}
+                    onInspect={() => onInspect(chunk.id)}
                   />
                 ))}
               </div>
@@ -75,20 +78,29 @@ function ChunkActivationItem({
   active,
   expanded,
   onClick,
+  onInspect,
 }: {
   chunk: ChunkItem
   active: boolean
   expanded: boolean
   onClick: () => void
+  onInspect: () => void
 }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={cn(
         'w-full rounded-lg border p-3 text-left transition-colors',
         active ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/30 hover:bg-muted/40',
       )}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -116,8 +128,20 @@ function ChunkActivationItem({
               {example.note && <p className="mt-1 text-[11px] text-muted-foreground">{example.note}</p>}
             </div>
           ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-1"
+            onClick={(event) => {
+              event.stopPropagation()
+              onInspect()
+            }}
+          >
+            查看完整讲解
+          </Button>
         </div>
       )}
-    </button>
+    </div>
   )
 }

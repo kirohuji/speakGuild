@@ -9,9 +9,10 @@ import { NotificationBell } from '@/features/notification/components/notificatio
 
 const navItems = [
   { label: '首页', path: '/' },
-  { label: '练习', path: '/practice' },
-  { label: '剧本', path: '/script' },
-  { label: '表达库', path: '/expressions' },
+  { label: '学习计划', path: '/learning' },
+  { label: '今日任务', path: '/today' },
+  { label: '剧本挑战', path: '/script' },
+  { label: '我的学习库', path: '/expressions' },
   { label: '成长', path: '/growth' },
   { label: '会员', path: '/member' },
 ]
