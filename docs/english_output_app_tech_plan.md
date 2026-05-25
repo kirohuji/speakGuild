@@ -1,0 +1,2218 @@
+# 沉浸式英语输出训练 App — 改造技术开发文档
+
+> 版本：V1.0  
+> 日期：2026-05-25  
+> 基于：GuideReady（导游说）项目改造为「沉浸式英语输出训练」App  
+> 参考 PRD：`docs/english_output_app_prd_v2.md`
+
+---
+
+## 目录
+
+1. [当前项目功能盘点](#1-当前项目功能盘点)
+2. [功能映射：旧→新](#2-功能映射旧新)
+3. [数据库改造方案](#3-数据库改造方案)
+4. [后端模块改造方案](#4-后端模块改造方案)
+5. [前端改造方案](#5-前端改造方案)
+6. [AI Prompt 改造方案](#6-ai-prompt-改造方案)
+7. [分阶段实施计划](#7-分阶段实施计划)
+8. [风险与注意事项](#8-风险与注意事项)
+
+---
+
+## 1. 当前项目功能盘点
+
+### 1.1 后端模块总览（20 个模块）
+
+| # | 模块 | 核心功能 | 改造结论 |
+|---|------|---------|---------|
+| 1 | **auth** | Better Auth 认证、邮箱/手机 OTP、微信/Apple 社交登录、密码找回、账号注销 | ✅ 保留，无需改造 |
+| 2 | **config-guide** | 省份/语言/考试类型/面试形式绑定选择 | ❌ 废弃，替换为用户目标/能力选择 |
+| 3 | **question-bank** | 题库 Dashboard、话题浏览、题目 CRUD、掌握度聚合 | 🔄 替换为 Scene + Topic + Chunk 系统 |
+| 4 | **practice** | 题目练习、进度追踪 (user+question)、每日打卡、行为记录 | 🔄 重做为英语输出练习模式 |
+| 5 | **practice-ai** | DeepSeek 流式反馈（评分/优点/改进）、词汇丰富、教学引导 | 🔄 重写 Prompt，改为英语纠错+表达升级 |
+| 6 | **tts** | MiniMax/Cartesia TTS、configHash 缓存、Whisper STT 转写 | ✅ 保留，核心基础设施 |
+| 7 | **mock-exam** | 试卷管理、模考记录、评分、薄弱点追踪 | 🔄 改为口语诊断 + 剧本挑战 |
+| 8 | **assets** | 收藏题目、生词本（含来源追踪） | 🔄 扩展为表达库（Expression Library） |
+| 9 | **profile** | 用户 Dashboard、活动热力图、练习历史 | 🔄 改为「我的成长」页面 |
+| 10 | **membership** | 三级会员（free/standard/advanced）、RevenueCat 同步 | ✅ 保留，新增剧本包购买 |
+| 11 | **file-assets** | COS STS 上传、SHA256 去重、引用计数、头像管理 | ✅ 保留 |
+| 12 | **pay** | 支付宝/微信支付、签名验证、订单管理 | ✅ 保留 |
+| 13 | **notification** | 广播/定向通知、已读状态、WebSocket (Socket.io) | ✅ 保留 |
+| 14 | **resource-library** | 层级资源树、地区筛选、多内容类型 | ❌ 废弃或改为参考素材 |
+| 15 | **coupon** | 优惠券（百分比/固定/免费试用）、校验、使用限制 | ✅ 保留 |
+| 16 | **referral** | 推荐码、奖励追踪 | ✅ 保留 |
+| 17 | **achievement** | 成就徽章（连续打卡/掌握度阈值）、自动解锁检测 | 🔄 改造为等级配套成就系统（里程碑徽章+隐藏成就） |
+| 18 | **feedback** | 反馈提交、状态追踪、管理员回复 | ✅ 保留 |
+| 19 | **admin** | 用户管理、收入统计、题库 CRUD、系统配置、数据分析 | 🔄 适配新的数据模型管理 |
+| 20 | **leaderboard** | 练习排行、模考排行、连续打卡排行 | ✅ 保留 |
+
+### 1.2 前端功能总览（18 个功能域）
+
+| # | 功能域 | 页面/组件 | 改造结论 |
+|---|--------|----------|---------|
+| 1 | **auth** | 登录、注册、忘记密码 | ✅ 保留 |
+| 2 | **question-bank** | 首页、题库绑定、搜索 | 🔄 改为英语学习首页 |
+| 3 | **practice** | 录音练习、AI 反馈、TTS 播放 | 🔄 重做为新练习模式 |
+| 4 | **mock-exam** | 模考页面、试卷列表、计时器 | 🔄 改为口语诊断/剧本 |
+| 5 | **profile** | 个人中心、活动热力图 | 🔄 改为「我的成长」 |
+| 6 | **account** | 社交账号绑定管理 | ✅ 保留 |
+| 7 | **assets** | 收藏、生词本 (Zustand stores) | 🔄 扩展为表达库页面 |
+| 8 | **achievement** | 成就徽章展示 | 🔄 改为等级配套成就展示（里程碑+稀有度+进度） |
+| 9 | **leaderboard** | 排行榜 | ✅ 保留 |
+| 10 | **membership** | 会员计划、支付 | ✅ 保留，新增剧本包 |
+| 11 | **notification** | 通知列表、详情、实时推送 | ✅ 保留 |
+| 12 | **feedback** | 反馈提交 | ✅ 保留 |
+| 13 | **referral** | 邀请好友 | ✅ 保留 |
+| 14 | **admin** | 管理后台（10 个子页面） | 🔄 适配新数据模型 |
+| 15 | **portal** | 落地页/引导页 | 🔄 改为新手引导流程 |
+| 16 | **system** | 法律条款（9 个页面） | ✅ 保留 |
+| 17 | **file-assets** | 头像上传 | ✅ 保留 |
+| 18 | **coupon** | 优惠券 | ✅ 保留 |
+
+### 1.3 现有外部集成
+
+| 服务 | 用途 | 改造结论 |
+|------|------|---------|
+| **DeepSeek API** | AI 反馈流式生成 | 🔄 重写 Prompt |
+| **MiniMax / Cartesia** | TTS 语音合成 | ✅ 保留 |
+| **Whisper API** | 语音转文字 | ✅ 保留 |
+| **腾讯云 COS** | 对象存储 | ✅ 保留 |
+| **支付宝 / 微信支付** | 支付 | ✅ 保留 |
+| **RevenueCat** | 跨端会员同步 | ✅ 保留 |
+| **Socket.io** | 实时通知 | ✅ 保留 |
+
+---
+
+## 2. 功能映射：旧→新
+
+### 2.1 核心概念映射
+
+| GuideReady 概念 | → | 英语输出训练概念 | 说明 |
+|:---|:---:|:---|:---|
+| 题库 (QuestionBank) | → | **场景分类 (SceneCategory)** | 省份→场景领域（留学生活/旅行/职场等） |
+| 话题 (QuestionTopic) | → | **场景 (Scene)** | 考试话题→生活场景（机场、宿舍、课堂等） |
+| 题目 (QuestionItem) | → | **训练话题 (TrainingTopic)** | 考试题→英语输出话题 |
+| - | → | **Chunk（新增）** | 核心表达块，全新概念 |
+| 生词 (VocabularyWord) | → | **表达库条目 (ExpressionItem)** | 扩展后的个人表达资产 |
+| 模考试卷 (MockPaper) | → | **剧本关卡 (ScriptEpisode)** | 试卷→剧情关卡 |
+| 模考记录 (MockExamRecord) | → | **剧本通关记录 (ScriptRecord)** | 考试成绩→通关评价 |
+| 成就 (Achievement) | → | **等级配套成就系统 (Achievement v2)** | 徽章→里程碑+稀有度+隐藏成就，与等级互补 |
+| 掌握度 (masteryScore) | → | **场景准备度 (SceneReadiness)** | 单题掌握→场景综合准备度 |
+| 资源配置 (ConfigBind) | → | **用户目标/能力 (UserProfile)** | 考试配置→学习目标+输出等级 |
+
+### 2.2 保留不变的功能模块
+
+以下模块与英语输出训练 App 需求**高度契合**，无需架构级改造，仅需微调：
+
+| 模块 | 保留原因 | 微调项 |
+|------|---------|--------|
+| **Auth** | 认证体系完全适用 | 无需改动 |
+| **TTS + Whisper** | 语音合成和转写是核心能力 | 无需改动 |
+| **File-Assets (COS)** | 对象存储适用 | 无需改动 |
+| **Membership + Pay** | 会员+支付体系适用 | 新增「剧本包」SKU |
+| **Notification** | 通知推送适用 | 无需改动 |
+| **Referral** | 推荐系统适用 | 无需改动 |
+| **Coupon** | 优惠券适用 | 无需改动 |
+| **Feedback** | 用户反馈适用 | 无需改动 |
+| **Leaderboard** | 排行榜适用 | 排名维度调整 |
+| **Admin** | 管理后台框架适用 | 管理对象变更 |
+
+### 2.3 需要废弃的模块
+
+| 模块 | 废弃原因 |
+|------|---------|
+| **config-guide** | 导游考试特有的省份/语言/考试类型绑定，英语 App 不需要 |
+| **resource-library** | 导游考试资料库，英语 App 可用更轻量的方式替代 |
+
+---
+
+## 3. 数据库改造方案
+
+### 3.1 数据模型变更总览
+
+```
+保留表（不改）: User, Session, Account, Verification, UserPreference, SystemConfig
+保留表（不改）: MembershipPlan, UserMembership, Order, Coupon, Payment
+保留表（不改）: Notification, NotificationTarget, NotificationRead
+保留表（不改）: FileAsset, FileReference, Achievement（部分）, ReferralCode
+保留表（不改）: Feedback, Leaderboard 相关
+
+废弃表: QuestionBank, QuestionTopic, QuestionItem, QuestionContent, QuestionAudio
+废弃表: UserBindingConfig, MockPaper, MockPaperQuestion, MockExamRecord
+废弃表: ResourceNode
+
+改造表: PracticeRecord, PracticeProgress, DailyActivity,
+        FavoriteQuestion, VocabularyWord, Achievement
+
+新增表: 见下方 3.2 节
+```
+
+### 3.2 新增数据模型
+
+#### 3.2.1 用户画像扩展
+
+```prisma
+// 扩展 User 表字段
+model User {
+  // ... 现有字段保持不变 ...
+  
+  // 新增：学习目标（多选，JSON 数组）
+  learningGoals        String[]           @default([])  // ["留学生活", "旅行英语", "职场交流"]
+  
+  // 新增：输出能力等级
+  outputLevel          String             @default("L1") // L1-L5
+  outputLevelDetail    Json?              // { answerLength, grammarAccuracy, chunkUsage, logicComplete, naturalness, fluency, retellAbility }
+  
+  // 新增：用户总等级（替代 achievement 的单一 XP 计算）
+  totalXp              Int                @default(0)
+  userLevel            Int                @default(1)
+  
+  // 关联
+  sceneProgresses      UserSceneProgress[]
+  chunkProgresses      UserChunkProgress[]
+  expressionItems      ExpressionItem[]
+  scriptRecords        ScriptRecord[]
+  scriptDialogues      ScriptDialogue[]
+  explorationRecords   ExplorationRecord[]
+  onboardingStatus     OnboardingStatus?
+}
+```
+
+#### 3.2.2 场景系统
+
+```prisma
+// 场景分类
+model SceneCategory {
+  id            String    @id @default(cuid())
+  name          String    // 留学生活 / 旅行英语 / 职场交流 / 日常社交 / 学术挑战
+  icon          String?
+  sortOrder     Int       @default(0)
+  scenes        Scene[]
+  createdAt     DateTime  @default(now())
+  
+  @@map("scene_category")
+}
+
+// 场景
+model Scene {
+  id                  String        @id @default(cuid())
+  category            SceneCategory @relation(fields: [categoryId], references: [id])
+  categoryId          String
+  title               String        // 宿舍 Check-in / 机场入境 / 咖啡店点餐
+  location            String        // 宿舍前台 / 机场入境大厅 / 咖啡店
+  description         String?
+  
+  // 难度要求
+  requiredOutputLevel String        @default("L1")  // L1-L5
+  requiredUserLevel   Int           @default(1)
+  
+  // 关联
+  prerequisiteScenes  ScenePrerequisite[]  @relation("Scene")
+  vocabularies        SceneVocabulary[]
+  chunks              Chunk[]
+  trainingTopics      TrainingTopic[]
+  scriptEpisodes      ScriptEpisode[]
+  userProgresses      UserSceneProgress[]
+  
+  createdAt           DateTime      @default(now())
+  
+  @@map("scene")
+}
+
+// 场景前置依赖（多对多）
+model ScenePrerequisite {
+  id              String  @id @default(cuid())
+  scene           Scene   @relation("Scene", fields: [sceneId], references: [id])
+  sceneId         String
+  prerequisite    Scene   @relation("Prerequisite", fields: [prerequisiteId], references: [id])
+  prerequisiteId  String
+  
+  @@unique([sceneId, prerequisiteId])
+  @@map("scene_prerequisite")
+}
+```
+
+#### 3.2.3 Chunk 系统
+
+```prisma
+// Chunk（表达块）
+model Chunk {
+  id              String    @id @default(cuid())
+  text            String    // "I'm here to check in."
+  meaning         String    // "我是来办理入住的。"
+  category        String    // 宿舍入住 / 自我介绍 / 问路
+  difficulty      String    @default("L2")  // L1-L5
+  example         String?   // 完整例句
+  
+  // 关联场景
+  scene           Scene?    @relation(fields: [sceneId], references: [id])
+  sceneId         String?
+  applicableSceneIds String[] // 可跨场景使用的场景 ID 列表
+  
+  // 关联（用户掌握进度）
+  userProgresses  UserChunkProgress[]
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([sceneId])
+  @@index([difficulty])
+  @@map("chunk")
+}
+
+// 场景词汇
+model SceneVocabulary {
+  id        String  @id @default(cuid())
+  scene     Scene   @relation(fields: [sceneId], references: [id])
+  sceneId   String
+  word      String  // "dormitory"
+  meaning   String  // "宿舍"
+  sortOrder Int     @default(0)
+  
+  @@index([sceneId])
+  @@map("scene_vocabulary")
+}
+```
+
+#### 3.2.4 用户 Chunk 掌握度
+
+```prisma
+enum ChunkMasteryStatus {
+  not_learned   // 未学习
+  activated     // 已激活（看过）
+  can_read      // 能跟读
+  can_output    // 能输出（在回答中主动使用）
+  mastered      // 已掌握（2-3 个不同场景复用）
+}
+
+model UserChunkProgress {
+  id              String             @id @default(cuid())
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  chunk           Chunk              @relation(fields: [chunkId], references: [id])
+  chunkId         String
+  status          ChunkMasteryStatus @default(not_learned)
+  seenCount       Int                @default(0)
+  spokenCount     Int                @default(0)
+  correctUseCount Int                @default(0)
+  usedSceneIds    String[]           @default([])  // 在哪些场景中使用过
+  lastPracticedAt DateTime?
+  updatedAt       DateTime           @updatedAt
+  
+  @@unique([userId, chunkId])
+  @@map("user_chunk_progress")
+}
+```
+
+#### 3.2.5 训练话题
+
+```prisma
+// 练习模式训练话题（替代原 QuestionItem）
+model TrainingTopic {
+  id                   String    @id @default(cuid())
+  scene                Scene     @relation(fields: [sceneId], references: [id])
+  sceneId              String
+  title                String    // 话题标题
+  promptEn             String    @db.Text  // 英文提示/问题
+  promptZh             String    @db.Text  // 中文提示
+  suggestedDurationSec Int       @default(60)  // 建议回答时长（秒）
+  difficulty           String    @default("L2")  // L1-L5
+  
+  // 关联 Chunk（本话题激活的表达块）
+  activeChunks         Chunk[]
+  // 句型骨架
+  sentenceSkeleton     String?   @db.Text  // "I'm from ___. It's a ___ city in ___."
+  
+  sortOrder            Int       @default(0)
+  
+  // 用户练习记录
+  practiceRecords      PracticeRecord[]
+  practiceProgresses   PracticeProgress[]
+  
+  createdAt            DateTime  @default(now())
+  
+  @@index([sceneId, difficulty])
+  @@map("training_topic")
+}
+```
+
+#### 3.2.6 剧本系统
+
+```prisma
+// 剧本关卡
+model ScriptEpisode {
+  id                  String    @id @default(cuid())
+  chapterId           String    // "chapter_1"
+  chapterTitle        String    // "初到国外"
+  episodeOrder        Int       // 章节内排序
+  title               String    // "宿舍 Check-in"
+  
+  // 关联场景
+  scene               Scene     @relation(fields: [sceneId], references: [id])
+  sceneId             String
+  
+  // 解锁要求
+  requiredOutputLevel String    @default("L2")
+  requiredUserLevel   Int       @default(1)
+  vocabRequiredCount  Int       @default(6)   // 需掌握词汇数
+  vocabTotalCount     Int       @default(10)
+  chunkRequiredCount  Int       @default(6)   // 需掌握 Chunk 数
+  chunkTotalCount     Int       @default(10)
+  prerequisiteEpisodes String[] @default([])  // 前置关卡 ID
+  
+  // 任务目标
+  objectives          String[]  // ["说明自己来办理入住", "提供姓名和学生证", ...]
+  
+  // 通关条件
+  passObjectiveCount  Int       @default(3)   // 至少完成 N 个目标
+  passChunkCount      Int       @default(3)   // 至少使用 N 个核心 Chunk
+  passRetellRequired  Boolean   @default(true) // 是否需要复述
+  passMinDialogues    Int       @default(3)   // 最少对话轮数
+  
+  // 奖励
+  rewards             Json?     // { "unlockScenes": [], "unlockNpc": "alex", "xp": 30, "sceneMasteryBonus": 15 }
+  
+  // NPC 配置
+  npcName             String    // "Alex（室友）"
+  npcRole             String    // "室友，大一新生，友好健谈"
+  npcPersonality      String?   // NPC 性格描述，用于 AI 生成对话
+  
+  // 核心内容
+  coreVocabularies    SceneVocabulary[]
+  coreChunks          Chunk[]
+  
+  // 对话记录
+  dialogues           ScriptDialogue[]
+  records             ScriptRecord[]
+  
+  isPreview           Boolean   @default(false)  // Chapter 0 体验关
+  createdAt           DateTime  @default(now())
+  
+  @@index([chapterId, episodeOrder])
+  @@map("script_episode")
+}
+
+// 剧本对话记录（每轮对话）
+model ScriptDialogue {
+  id            String    @id @default(cuid())
+  episode       ScriptEpisode @relation(fields: [episodeId], references: [id])
+  episodeId     String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  round         Int       // 第几轮对话
+  
+  npcText       String    @db.Text  // NPC 说的话
+  userAudioUrl  String?   // 用户录音 URL
+  userText      String?   @db.Text  // 用户转写文本
+  
+  // AI 判断
+  isOnTopic     Boolean?  // 是否切题
+  objectiveCompleted String[] @default([]) // 完成了哪些目标
+  chunksUsed    String[]  @default([]) // 使用了哪些 Chunk
+  grammarIssues Json?     // [{ type, original, correction }]
+  needsFollowUp Boolean   @default(false) // NPC 是否需要追问
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([episodeId, userId, round])
+  @@map("script_dialogue")
+}
+
+// 剧本通关记录
+model ScriptRecord {
+  id              String    @id @default(cuid())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  episode         ScriptEpisode @relation(fields: [episodeId], references: [id])
+  episodeId       String
+  
+  passed          Boolean   @default(false)
+  objectivesDone  Int       @default(0)   // 完成目标数
+  chunksUsed      Int       @default(0)   // 使用 Chunk 数
+  dialogueRounds  Int       @default(0)   // 对话轮数
+  retellCompleted Boolean   @default(false)
+  
+  // AI 综合评价
+  aiFeedback      Json?     // { score, strengths, improvements, upgradedExpressions }
+  
+  xpEarned        Int       @default(0)
+  completedAt     DateTime? 
+  createdAt       DateTime  @default(now())
+  
+  @@unique([userId, episodeId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("script_record")
+}
+```
+
+#### 3.2.7 探索模式 — 视觉小说架构
+
+探索模式采用 **inkjs（叙事引擎）+ PIXI.js（渲染层）** 的架构，参考 Ren'Py / PixiVN 的视觉小说风格。
+
+```prisma
+// 游戏角色（带立绘表情系统）
+model GameCharacter {
+  id            String    @id @default(cuid())
+  name          String    // "Alex"
+  displayName   String    // "室友 Alex"
+  role          String    // "室友，大一新生，友好健谈"
+  personality   String?   // AI 对话角色描述（自由对话模式使用）
+
+  // 视觉资源
+  avatarUrl     String?   // 头像（列表/地图显示用）
+  spriteBaseUrl String?   // 基础立绘 URL（PIXI.Sprite 加载）
+  expressions   Json?     // [{ key: "happy", url: "..." }, { key: "surprised", url: "..." }]
+
+  // 立绘位置（视觉小说对话场景）
+  defaultPosition String? // "left" | "center" | "right"
+
+  locationNpcs  GameLocationNpc[]
+
+  createdAt     DateTime  @default(now())
+
+  @@map("game_character")
+}
+
+// 游戏地图
+model GameMap {
+  id            String    @id @default(cuid())
+  name          String    // "大学校园" / "宿舍区"
+  displayName   String    // "校园地图"
+
+  // 视觉资源
+  backgroundUrl String?   // 地图背景图（PIXI 渲染用）
+  thumbnailUrl  String?   // 缩略图（列表展示用）
+  width         Int       @default(1920)
+  height        Int       @default(1080)
+
+  locations     GameLocation[]
+
+  // 解锁条件
+  requiredOutputLevel String @default("L1")
+  requiredChapterId    String?  // 需通关的章节
+
+  isPreview     Boolean   @default(false)
+  sortOrder     Int       @default(0)
+
+  createdAt     DateTime  @default(now())
+
+  @@map("game_map")
+}
+
+// 地图上的地点（可点击进入）
+model GameLocation {
+  id            String    @id @default(cuid())
+  map           GameMap   @relation(fields: [mapId], references: [id])
+  mapId         String
+  name          String    // "宿舍大厅"
+  displayName   String    // "🏠 宿舍大厅"
+  description   String?   // "你住的地方，室友 Alex 经常在这里。"
+
+  // 地图坐标
+  posX          Float     @default(0)
+  posY          Float     @default(0)
+  icon          String?   // 地图标记图标
+
+  // 进入后的视觉小说场景
+  backgroundUrl String?   // 地点背景图（PIXI 渲染）
+  bgmUrl        String?   // 背景音乐（可选）
+  ambientUrl    String?   // 环境音效（可选）
+
+  // 场景类型
+  locationType  String    @default("vn_scene")  // "vn_scene" | "dialogue_hub" | "transition"
+
+  // 关联的内容
+  sceneId       String?   // 关联的 Scene（英语学习场景）
+  inkScriptId   String?   // 关联的 Ink 叙事脚本（进入后自动播放）
+  npcs          GameLocationNpc[]  // 此地点的 NPC
+
+  // 可前往的相邻地点（地图移动）
+  exits         GameLocationExit[]  @relation("FromLocation")
+
+  // 解锁条件
+  requiredOutputLevel String   @default("L1")
+  requiredSceneIds     String[] @default([])
+  requiredFlags        Json?    // 需要的游戏旗标 { "met_alex": true }
+
+  isPreview     Boolean   @default(false)
+  sortOrder     Int       @default(0)
+
+  createdAt     DateTime  @default(now())
+
+  @@map("game_location")
+}
+
+// 地点出口（地图导航）
+model GameLocationExit {
+  id            String       @id @default(cuid())
+  from          GameLocation @relation("FromLocation", fields: [fromId], references: [id])
+  fromId        String
+  to            GameLocation @relation("ToLocation", fields: [toId], references: [id])
+  toId          String
+  label         String       // "去校园咖啡店 →"
+  requiredFlags Json?        // 可能需要旗标才能通行
+
+  @@unique([fromId, toId])
+  @@map("game_location_exit")
+}
+
+// 地点-NPC 关联（哪些 NPC 出现在哪些地点）
+model GameLocationNpc {
+  id            String        @id @default(cuid())
+  location      GameLocation  @relation(fields: [locationId], references: [id])
+  locationId    String
+  character     GameCharacter @relation(fields: [characterId], references: [id])
+  characterId   String
+
+  // NPC 在该地点的行为
+  schedule      Json?         // [{ "dayOfWeek": 1, "startHour": 9, "endHour": 17 }]
+  defaultGreeting String?     // "Hey! How's it going?"
+
+  // 对话内容
+  inkTalkScriptId String?     // 点击 NPC 触发的 Ink 自由对话脚本
+  // 如果为空，则走 AI 自由对话模式
+
+  sortOrder     Int           @default(0)
+
+  @@unique([locationId, characterId])
+  @@map("game_location_npc")
+}
+```
+
+#### 3.2.8 Ink 叙事脚本 & 游戏存档
+
+```prisma
+// Ink 叙事脚本（剧本模式 & 探索模式共用）
+model InkScript {
+  id            String    @id @default(cuid())
+  key           String    @unique   // "chapter_1_ep3_dorm_checkin" | "explore_cafe_alex_talk"
+  title         String
+  scriptType    String    @default("episode")  // "episode" | "side_quest" | "free_talk" | "cutscene"
+
+  // Ink 编译产物
+  inkJson       Json      // Ink Compiler 编译后的 JSON（inkjs.Story 可直接加载）
+  inkSource     String?   @db.Text  // 原始 Ink 源码（可选，调试/编辑用）
+
+  // 关联
+  episodeId     String?   // 关联的 ScriptEpisode（剧本模式主线）
+  locationId    String?   // 关联的 GameLocation（探索模式地点脚本）
+  characterId   String?   // 关联的 GameCharacter（NPC 对话脚本）
+
+  // 脚本中使用的变量声明（供后台了解有哪些游戏旗标）
+  declaredVariables Json?  // ["met_alex", "helped_librarian", "romance_points"]
+
+  // 版本管理
+  version       Int       @default(1)
+  changelog     String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([scriptType])
+  @@index([episodeId])
+  @@index([locationId])
+  @@map("ink_script")
+}
+
+// 游戏存档（Ink 状态持久化）
+model GameSave {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+
+  // Ink 引擎状态（inkjs 的 state.toJson()）
+  inkState      Json?    // 包含：当前 knot/stitch 位置、所有变量值、访问计数等
+
+  // 游戏世界状态
+  currentMapId  String?
+  currentLocationId String?
+  visitedLocationIds String[] @default([])
+  flags         Json?    // 游戏旗标快照 { "met_alex": true, "got_key": false, "day": 3 }
+
+  // 存档元数据
+  saveName      String   @default("自动存档")
+  playTimeSeconds Int    @default(0)
+  slot          Int      @default(1)  // 存档槽位 1-5
+
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, slot])
+  @@index([userId, updatedAt(sort: Desc)])
+  @@map("game_save")
+}
+
+// 探索对话记录（自由对话模式，非 Ink 驱动的场景）
+model ExplorationRecord {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  character   GameCharacter @relation(fields: [characterId], references: [id])
+  characterId String
+  location    GameLocation @relation(fields: [locationId], references: [id])
+  locationId  String
+
+  userText    String    @db.Text  // 用户转写文本
+  npcReply    String?   @db.Text  // AI 或 Ink 生成的 NPC 回复
+  feedback    Json?     // AI 纠错反馈（自由对话模式）
+
+  // 是否由 Ink 脚本驱动
+  isInkDriven Boolean   @default(false)
+  inkKnotName String?   // 所处的 Ink knot
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("exploration_record")
+}
+```
+
+#### 3.2.8 表达库 & 复习系统
+
+```prisma
+// 表达库条目（扩展自原 VocabularyWord）
+enum ExpressionType {
+  chunk          // 学过的 Chunk
+  error_sentence // 说错的句子
+  upgraded       // 升级后的表达
+  scene_phrase   // 场景短语
+  custom         // 用户自建
+}
+
+model ExpressionItem {
+  id            String         @id @default(cuid())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  type          ExpressionType @default(chunk)
+  
+  original      String?        @db.Text  // 用户原始错句（error_sentence 类型）
+  corrected     String?        @db.Text  // AI 纠正/升级后的句子
+  chunkText     String?        // 关联 Chunk 的文本（chunk 类型）
+  sceneName     String?        // 来源场景
+  
+  masteryStatus String         @default("activated")  // activated / can_read / can_output / mastered
+  reviewCount   Int            @default(0)
+  lastReviewedAt DateTime?
+  nextReviewAt  DateTime?      // 下次复习时间（间隔重复）
+  
+  createdAt     DateTime       @default(now())
+  
+  @@index([userId, type])
+  @@index([userId, nextReviewAt])
+  @@map("expression_item")
+}
+```
+
+#### 3.2.9 用户场景熟练度 & 准备度
+
+```prisma
+model UserSceneProgress {
+  id                    String   @id @default(cuid())
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String
+  scene                 Scene    @relation(fields: [sceneId], references: [id])
+  sceneId               String
+  
+  // 准备度
+  readiness             Int      @default(0)  // 0-100
+  mastery               Int      @default(0)  // 0-100 场景熟练度
+  
+  // 各维度进度
+  vocabLearned          Int      @default(0)
+  vocabTotal            Int      @default(0)
+  chunkMastered         Int      @default(0)
+  chunkTotal            Int      @default(0)
+  
+  completedPracticeCount Int     @default(0)
+  completedScriptCount   Int     @default(0)
+  prerequisiteCompleted  Boolean @default(false)
+  
+  updatedAt             DateTime @updatedAt
+  
+  @@unique([userId, sceneId])
+  @@map("user_scene_progress")
+}
+```
+
+#### 3.2.10 新手引导
+
+```prisma
+model OnboardingStatus {
+  id              String   @id @default(cuid())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String   @unique
+  
+  goalsSelected   Boolean  @default(false)  // 是否已选择学习目标
+  abilitySelected Boolean  @default(false)  // 是否已自评能力
+  diagnosticDone  Boolean  @default(false)  // 是否完成口语诊断
+  tutorialDone    Boolean  @default(false)  // 是否完成新手剧情
+  
+  diagnosticResult Json?   // 诊断报告
+  createdAt       DateTime @default(now())
+  
+  @@map("onboarding_status")
+}
+```
+
+#### 3.2.11 等级配套成就系统
+
+```prisma
+// 成就定义表（替代原 Achievement 表，更丰富的元数据）
+enum AchievementCategory {
+  milestone       // 里程碑（等级/数量达到某个值）
+  streak          // 连续打卡
+  challenge       // 挑战类（一次性特殊成就）
+  mastery         // 掌握类（Chunk/场景熟练度）
+  hidden          // 隐藏成就（触发条件不公开）
+  first_time      // 首次体验
+}
+
+enum AchievementRarity {
+  common          // 普通 — 灰色
+  rare            // 稀有 — 蓝色
+  epic            // 史诗 — 紫色
+  legendary       // 传说 — 金色
+}
+
+model AchievementDef {
+  id              String             @id @default(cuid())
+  key             String             @unique   // "first_recording", "chunk_master_50", "streak_30"
+  title           String             // "初次开口" / "表达达人" / "铁嘴铜牙"
+  description     String             // "完成第一次录音回答"
+  category        AchievementCategory @default(milestone)
+  rarity          AchievementRarity   @default(common)
+  icon            String?            // 图标标识（lucide icon name 或 emoji）
+  
+  // 解锁条件（JSON，由成就引擎解析）
+  condition       Json               // { "type": "recording_count", "threshold": 1 }
+  // 或：{ "type": "chunk_mastered", "threshold": 50 }
+  // 或：{ "type": "output_level", "threshold": "L3" }
+  // 或：{ "type": "streak_days", "threshold": 30 }
+  // 或：{ "type": "scene_mastery", "sceneId": "...", "threshold": 80 }
+  // 或：{ "type": "script_completed", "chapterId": "chapter_1" }
+  // 或：{ "type": "xp_total", "threshold": 1000 }
+  // 或：{ "type": "combo", "actions": ["recording", "retell", "chunk_output"], "withinMinutes": 30 }
+  
+  // 奖励（可选）
+  rewardXp        Int                @default(0)
+  rewardTitle     String?            // 解锁称号
+  
+  // 显示控制
+  sortOrder       Int                @default(0)
+  isHidden        Boolean            @default(false)  // 隐藏成就（条件不公开）
+  hintText        String?            // 隐藏成就的模糊提示
+  
+  createdAt       DateTime           @default(now())
+  
+  userAchievements UserAchievement[]
+  
+  @@map("achievement_def")
+}
+
+// 用户成就记录
+enum UserAchievementStatus {
+  locked          // 未解锁
+  unlocked        // 已解锁（未查看）
+  seen            // 已查看
+}
+
+model UserAchievement {
+  id              String                @id @default(cuid())
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  achievement     AchievementDef        @relation(fields: [achievementId], references: [id])
+  achievementId   String
+  
+  status          UserAchievementStatus @default(locked)
+  progress        Int                   @default(0)   // 当前进度（如 12/50 chunks）
+  progressTarget  Int                   @default(0)   // 目标值
+  
+  unlockedAt      DateTime?
+  seenAt          DateTime?
+  createdAt       DateTime              @default(now())
+  
+  @@unique([userId, achievementId])
+  @@index([userId, status])
+  @@map("user_achievement")
+}
+```
+
+**成就示例清单：**
+
+| key | 名称 | 类别 | 稀有度 | 条件 |
+|-----|------|------|--------|------|
+| `first_recording` | 初次开口 | first_time | common | 完成第 1 次录音回答 |
+| `first_script_clear` | 初出茅庐 | first_time | common | 通关第 1 个剧本关卡 |
+| `first_retell` | 过目不忘 | first_time | common | 完成第 1 次遮挡复述 |
+| `recording_10` | 开口十次 | milestone | common | 累计 10 次录音回答 |
+| `recording_50` | 话筒常客 | milestone | rare | 累计 50 次录音回答 |
+| `recording_100` | 百口莫辩 | milestone | epic | 累计 100 次录音回答 |
+| `recording_500` | 话痨之王 | milestone | legendary | 累计 500 次录音回答 |
+| `chunk_learn_20` | 表达学徒 | milestone | common | 掌握 20 个 Chunk（can_output 以上） |
+| `chunk_learn_50` | 表达达人 | milestone | rare | 掌握 50 个 Chunk |
+| `chunk_learn_100` | 表达大师 | milestone | epic | 掌握 100 个 Chunk |
+| `chunk_learn_300` | 活字典 | milestone | legendary | 掌握 300 个 Chunk |
+| `streak_7` | 七日之约 | streak | rare | 连续打卡 7 天 |
+| `streak_30` | 铁嘴铜牙 | streak | epic | 连续打卡 30 天 |
+| `streak_100` | 百日维新 | streak | legendary | 连续打卡 100 天 |
+| `level_l3` | 能说完整 | mastery | rare | 输出等级达到 L3 |
+| `level_l5` | 出口成章 | mastery | legendary | 输出等级达到 L5 |
+| `scene_dorm_80` | 宿舍万事通 | mastery | rare | 宿舍入住场景熟练度 ≥ 80% |
+| `scene_campus_all` | 校园达人 | mastery | epic | 校园生活全部场景熟练度 ≥ 70% |
+| `chapter_1_all` | 留学生存者 | challenge | epic | 通关 Chapter 1 全部关卡 |
+| `chapter_2_all` | 校园探险家 | challenge | epic | 通关 Chapter 2 全部关卡 |
+| `perfect_script` | 完美通关 | challenge | legendary | 某关卡 100% 目标完成 + 全部 Chunk 使用 |
+| `one_take` | 一遍过 | challenge | epic | 连续通关 3 个剧本关卡无失败 |
+| `retell_master` | 复述神童 | challenge | rare | 连续 10 次复述一次通过 |
+| `hidden_polite` | 彬彬有礼 | hidden | rare | 在对话中自然使用 5 种不同礼貌表达 |
+| `hidden_helpful` | 乐于助人 | hidden | rare | 在探索模式中帮助 3 个不同 NPC |
+| `hidden_night_owl` | 夜猫子 | hidden | epic | 在凌晨 0:00-5:00 完成一次练习 |
+
+### 3.3 数据库迁移策略
+
+采用**渐进式迁移**，不轻易删表：
+
+| 阶段 | 操作 |
+|------|------|
+| Phase 0 | 新增所有新表，旧表保留不动 |
+| Phase 1 | 新功能使用新表运行，旧功能仍可回退 |
+| Phase 2 | 数据迁移脚本：VocabularyWord → ExpressionItem, 旧 Achievement → AchievementDef |
+| Phase 3 | 废弃旧表（加 `_deprecated` 后缀，保留 1 个版本后再删除） |
+
+**迁移命令：**
+```bash
+cd apps/backend
+pnpm prisma:migrate --name add_english_output_schema
+pnpm prisma:generate
+```
+
+---
+
+## 4. 后端模块改造方案
+
+### 4.1 模块变更总览
+
+| 操作 | 模块 |
+|------|------|
+| **新增** | `scene` — 场景与场景分类管理 |
+| **新增** | `chunk` — Chunk 表达块管理与掌握度追踪 |
+| **新增** | `script` — 剧本关卡、对话、通关管理 |
+| **新增** | `exploration` — 探索模式：地图/地点/NPC/Ink 剧本/游戏存档管理 |
+| **新增** | `ink` — Ink 叙事脚本管理（编译产物存储、版本管理、变量声明） |
+| **新增** | `expression` — 表达库 CRUD + 间隔复习 |
+| **新增** | `level` — 用户等级、输出等级、场景熟练度计算引擎 |
+| **新增** | `onboarding` — 新手引导流程 |
+| **重写** | `practice` — 改为英语输出练习模式 |
+| **重写** | `practice-ai` — 重写 Prompt 模板 |
+| **扩展** | `assets` → 合并到 `expression` |
+| **扩展** | `achievement` → 改造为等级配套成就系统（里程碑徽章 + 隐藏成就） |
+| **废弃** | `config-guide` |
+| **废弃** | `resource-library` |
+| **废弃** | `question-bank`（数据迁移后） |
+| **不变** | `auth`, `tts`, `file-assets`, `membership`, `pay`, `notification`, `coupon`, `referral`, `feedback`, `admin`, `leaderboard` |
+
+### 4.2 核心新模块设计
+
+#### 4.2.1 Scene Module（场景模块）
+
+```
+modules/scene/
+├── scene.module.ts
+├── scene.controller.ts
+├── scene.service.ts
+└── dto/
+    ├── list-scenes.dto.ts
+    ├── scene-detail.dto.ts
+    └── scene-readiness.dto.ts
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/scenes` | 获取场景分类+场景列表 |
+| GET | `/api/v1/scenes/:id` | 场景详情（含词汇、Chunk、训练话题） |
+| GET | `/api/v1/scenes/:id/readiness` | 用户对该场景的准备度 |
+| GET | `/api/v1/scenes/categories` | 场景分类列表 |
+
+#### 4.2.2 Chunk Module（Chunk 模块）
+
+```
+modules/chunk/
+├── chunk.module.ts
+├── chunk.controller.ts
+├── chunk.service.ts
+└── dto/
+    ├── list-chunks.dto.ts
+    └── update-mastery.dto.ts
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/chunks?sceneId=` | 按场景获取 Chunk 列表 |
+| GET | `/api/v1/chunks/my` | 我的 Chunk 掌握状态 |
+| POST | `/api/v1/chunks/:id/activate` | 标记为「已激活」 |
+| POST | `/api/v1/chunks/:id/read` | 标记为「能跟读」 |
+| POST | `/api/v1/chunks/:id/output` | 标记为「能输出」（带场景 ID） |
+| POST | `/api/v1/chunks/:id/master` | 标记为「已掌握」 |
+
+#### 4.2.3 Script Module（剧本模块）
+
+```
+modules/script/
+├── script.module.ts
+├── script.controller.ts
+├── script.service.ts
+├── script-npc.service.ts        # NPC 对话生成（调用 AI）
+├── script-judge.service.ts      # 任务完成判断（调用 AI）
+└── dto/
+    ├── list-episodes.dto.ts
+    ├── start-episode.dto.ts
+    ├── submit-dialogue.dto.ts
+    └── episode-result.dto.ts
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/script/chapters` | 获取所有章节+关卡列表 |
+| GET | `/api/v1/script/episodes/:id` | 关卡详情（含解锁状态） |
+| GET | `/api/v1/script/episodes/:id/readiness` | 场景准备度 |
+| POST | `/api/v1/script/episodes/:id/start` | 开始关卡（返回开场 NPC 对话） |
+| POST | `/api/v1/script/episodes/:id/dialogue` | 提交用户语音转写，返回 NPC 回复+判断 |
+| POST | `/api/v1/script/episodes/:id/retell` | 提交复述结果 |
+| POST | `/api/v1/script/episodes/:id/complete` | 关卡复盘 + 结算 |
+| GET | `/api/v1/script/records` | 我的剧本通关记录 |
+
+**核心业务流程（Script NPC 服务）：**
+```
+用户提交语音 → Whisper 转写 → 
+  AI 任务判断 Prompt（是否切题? 是否完成目标? 使用了哪些 Chunk? 是否需要追问?） →
+  如果未完成 → AI 生成 NPC 追问（引导用户补充） →
+  如果完成 → AI 纠错 + 表达升级 → 推进剧情
+```
+
+#### 4.2.4 Expression Module（表达库模块）
+
+```
+modules/expression/
+├── expression.module.ts
+├── expression.controller.ts
+├── expression.service.ts
+└── dto/
+    ├── create-expression.dto.ts
+    ├── list-expressions.dto.ts
+    └── review-expression.dto.ts
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/expressions` | 我的表达库（支持类型/场景筛选） |
+| POST | `/api/v1/expressions` | 保存表达（来自练习/剧本） |
+| DELETE | `/api/v1/expressions/:id` | 删除表达 |
+| GET | `/api/v1/expressions/review` | 待复习表达列表 |
+| POST | `/api/v1/expressions/:id/review` | 完成一次复习 |
+
+#### 4.2.5 Level Module（等级系统模块）
+
+```
+modules/level/
+├── level.module.ts
+├── level.controller.ts
+├── level.service.ts
+├── xp-calculator.service.ts       # XP 计算
+├── output-level.service.ts         # 输出能力等级评估
+├── scene-readiness.service.ts      # 场景准备度计算
+└── dto/
+    └── level-overview.dto.ts
+```
+
+**等级计算引擎：**
+
+**用户等级 (XP-based):**
+| 行为 | XP |
+|------|----|
+| 完成一次练习 | +10 |
+| 完成一次录音回答 | +5 |
+| 成功复述一个 Chunk | +5 |
+| 通关一个剧本关卡 | +30 |
+| 连续打卡 | +20 |
+| 主动使用新 Chunk | +10 |
+
+**输出能力等级评估维度：**
+- 回答时长（20s/30s/60s 阈值）
+- 语法错误率
+- Chunk 主动使用率
+- 逻辑完整度（观点→原因→例子）
+- 自然度（中式表达率）
+- 流利度（停顿/重复率）
+- 复述能力
+
+**场景准备度计算权重：**
+| 维度 | 权重 |
+|------|------|
+| 输出等级满足 | 25% |
+| 核心 Chunk 掌握度 | 30% |
+| 场景词汇掌握度 | 20% |
+| 前置任务完成 | 15% |
+| 相关录音练习 | 10% |
+
+#### 4.2.6 Onboarding Module（新手引导模块）
+
+```
+modules/onboarding/
+├── onboarding.module.ts
+├── onboarding.controller.ts
+├── onboarding.service.ts
+└── dto/
+    ├── select-goals.dto.ts
+    ├── select-ability.dto.ts
+    └── diagnostic-result.dto.ts
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/onboarding/goals` | 选择学习目标 |
+| POST | `/api/v1/onboarding/ability` | 自评当前能力 |
+| POST | `/api/v1/onboarding/diagnostic/start` | 开始 2 分钟口语诊断 |
+| POST | `/api/v1/onboarding/diagnostic/submit` | 提交诊断回答 |
+| GET | `/api/v1/onboarding/status` | 获取引导状态 |
+
+#### 4.2.7 Achievement Module（成就模块 — 改造升级）
+
+现有 `achievement` 模块保留骨架，升级为等级配套成就系统。成就系统负责**庆祝里程碑**，等级系统负责**量化成长**，两者互补。
+
+```
+modules/achievement/
+├── achievement.module.ts
+├── achievement.controller.ts
+├── achievement.service.ts
+├── achievement-engine.service.ts   # 成就检测引擎（事件驱动）
+└── dto/
+    ├── list-achievements.dto.ts
+    ├── achievement-detail.dto.ts
+    └── unlock-notification.dto.ts
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/achievements` | 获取所有成就列表（含用户解锁状态） |
+| GET | `/api/v1/achievements/unlocked` | 我的已解锁成就 |
+| GET | `/api/v1/achievements/:id` | 成就详情（含进度） |
+| POST | `/api/v1/achievements/check` | 手动触发成就检测（通常由事件自动触发） |
+| POST | `/api/v1/achievements/:id/seen` | 标记为已查看 |
+
+**成就检测引擎设计：**
+
+采用**事件驱动**模式，在关键用户行为发生后自动检测成就：
+
+```typescript
+// achievement-engine.service.ts 核心逻辑
+@Injectable()
+export class AchievementEngineService {
+  // 事件 → 成就映射
+  private readonly eventChecks: Record<string, AchievementCheck[]> = {
+    'recording.completed': [
+      { achievementKey: 'first_recording', type: 'count', threshold: 1 },
+      { achievementKey: 'recording_10', type: 'count', threshold: 10 },
+      { achievementKey: 'recording_50', type: 'count', threshold: 50 },
+      { achievementKey: 'recording_100', type: 'count', threshold: 100 },
+      { achievementKey: 'recording_500', type: 'count', threshold: 500 },
+    ],
+    'chunk.mastered': [
+      { achievementKey: 'chunk_learn_20', type: 'count', threshold: 20 },
+      { achievementKey: 'chunk_learn_50', type: 'count', threshold: 50 },
+      { achievementKey: 'chunk_learn_100', type: 'count', threshold: 100 },
+      { achievementKey: 'chunk_learn_300', type: 'count', threshold: 300 },
+    ],
+    'script.completed': [
+      { achievementKey: 'first_script_clear', type: 'count', threshold: 1 },
+      { achievementKey: 'chapter_1_all', type: 'chapter_complete', chapterId: 'chapter_1' },
+      { achievementKey: 'chapter_2_all', type: 'chapter_complete', chapterId: 'chapter_2' },
+      { achievementKey: 'perfect_script', type: 'perfect_clear' },
+    ],
+    'streak.updated': [
+      { achievementKey: 'streak_7', type: 'threshold', threshold: 7 },
+      { achievementKey: 'streak_30', type: 'threshold', threshold: 30 },
+      { achievementKey: 'streak_100', type: 'threshold', threshold: 100 },
+    ],
+    'level.output_changed': [
+      { achievementKey: 'level_l3', type: 'threshold', threshold: 'L3' },
+      { achievementKey: 'level_l5', type: 'threshold', threshold: 'L5' },
+    ],
+    'retell.completed': [
+      { achievementKey: 'first_retell', type: 'count', threshold: 1 },
+      { achievementKey: 'retell_master', type: 'streak', threshold: 10 },
+    ],
+    'scene.mastery_updated': [
+      { achievementKey: 'scene_dorm_80', type: 'scene_threshold', sceneId: 'dorm_checkin', threshold: 80 },
+      { achievementKey: 'scene_campus_all', type: 'category_threshold', categoryId: 'campus', threshold: 70 },
+    ],
+    'daily.login': [
+      { achievementKey: 'hidden_night_owl', type: 'time_range', startHour: 0, endHour: 5 },
+    ],
+  };
+
+  async onEvent(eventType: string, userId: string, payload: any) {
+    const checks = this.eventChecks[eventType] || [];
+    for (const check of checks) {
+      await this.evaluateAndUnlock(userId, check, payload);
+    }
+  }
+}
+```
+
+**等级系统 vs 成就系统 职责划分：**
+
+| 维度 | 等级系统 (Level) | 成就系统 (Achievement) |
+|------|-----------------|----------------------|
+| **目的** | 量化成长，持续追踪 | 庆祝里程碑，制造惊喜 |
+| **展示** | 数值（Lv.5, L3, 80%） | 徽章 + 稀有度颜色 |
+| **变化** | 渐进式（每次 +XP） | 跳跃式（达标瞬间解锁） |
+| **动机** | 持续进步感 | 惊喜感 + 收集欲 |
+| **示例** | XP 进度条、输出等级 | "🎉 恭喜解锁「初次开口」！" |
+| **失败** | 不会降级（可波动） | 一旦解锁永不回收 |
+
+**配合使用示例：**
+
+```
+用户完成第 50 次录音回答：
+
+等级系统变化：
+  XP +5 → 总 XP 450/500 → 用户等级仍然是 Lv.3
+  录音维度分 +0.3 → 输出等级不变
+
+成就系统变化：
+  🎉 解锁成就：「话筒常客」（稀有·蓝）
+  "累计完成 50 次录音回答！你的勇气值得一枚徽章。"
+  XP 奖励 +50（来自成就）
+```
+
+#### 4.2.8 Exploration Module（探索模块 — 视觉小说架构）
+
+探索模式采用双层架构：**后台管理地图/角色/资产元数据**，**前端使用 inkjs + PIXI.js 渲染**。后台不直接运行 Ink 引擎，而是存储编译后的 Ink JSON、管理资源引用。
+
+```
+modules/exploration/
+├── exploration.module.ts
+├── exploration.controller.ts
+├── exploration.service.ts
+├── map/
+│   ├── map.service.ts              # 地图 CRUD + 地点拓扑
+│   └── dto/map.dto.ts
+├── character/
+│   ├── character.service.ts        # 角色 CRUD + 表情管理
+│   └── dto/character.dto.ts
+├── ink/
+│   ├── ink-script.service.ts        # Ink 剧本管理（存储+版本）
+│   └── dto/ink-script.dto.ts
+├── game-save/
+│   ├── game-save.service.ts         # 游戏存档（Ink 状态持久化）
+│   └── dto/game-save.dto.ts
+└── dialogue/
+    ├── exploration-dialogue.service.ts  # 自由对话记录
+    └── dto/dialogue.dto.ts
+```
+
+**API 端点：**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| **地图** | | |
+| GET | `/api/v1/explore/maps` | 获取所有可用地图（含解锁状态） |
+| GET | `/api/v1/explore/maps/:id` | 地图详情（含地点列表+拓扑关系） |
+| GET | `/api/v1/explore/locations/:id` | 地点详情（含 NPC 列表、出口、Ink 脚本引用） |
+| **角色** | | |
+| GET | `/api/v1/explore/characters` | 角色列表 |
+| GET | `/api/v1/explore/characters/:id` | 角色详情（含表情列表+立绘 URL） |
+| **Ink 剧本** | | |
+| GET | `/api/v1/explore/ink/:key` | 获取 Ink 编译 JSON（前端 inkjs 直接加载） |
+| GET | `/api/v1/explore/ink/:key/variables` | 获取脚本声明的变量列表 |
+| **游戏存档** | | |
+| GET | `/api/v1/explore/saves` | 我的存档列表（多槽位） |
+| GET | `/api/v1/explore/saves/:slot` | 读取指定槽位存档 |
+| POST | `/api/v1/explore/saves/:slot` | 保存游戏（Ink 状态 + 世界状态） |
+| DELETE | `/api/v1/explore/saves/:slot` | 删除存档 |
+| **自由对话** | | |
+| POST | `/api/v1/explore/dialogue` | 提交自由对话（非 Ink 驱动，走 AI 生成回复） |
+| GET | `/api/v1/explore/dialogue/history?characterId=` | 与某 NPC 的对话历史 |
+
+**核心设计决策：**
+
+```
+┌──────────────────────────────────────────────────┐
+│                    前端 (Browser)                  │
+│  ┌──────────────┐  ┌─────────────────────────┐   │
+│  │   PIXI.js    │  │        inkjs            │   │
+│  │  (渲染引擎)   │  │    (叙事引擎·状态机)     │   │
+│  │              │  │                         │   │
+│  │ · 背景图层    │  │ · 加载 Ink JSON          │   │
+│  │ · 角色立绘    │  │ · 对话流控制             │   │
+│  │ · 对话框 UI   │  │ · 分支选择               │   │
+│  │ · 地图渲染    │  │ · 变量读写               │   │
+│  │ · 转场动画    │  │ · 存档序列化             │   │
+│  └──────┬───────┘  └───────────┬─────────────┘   │
+│         │                      │                  │
+│         └──────────┬───────────┘                  │
+│                    ↓                              │
+│          GameCoordinator (游戏协调器)              │
+│          · 加载场景 → PIXI 渲染背景+立绘           │
+│          · Ink continue → 更新对话框文本            │
+│          · 用户选择 → Ink ChoosePathString         │
+│          · 自动存档 → POST /saves                  │
+└────────────────────┬─────────────────────────────┘
+                     │ HTTP
+┌────────────────────┴─────────────────────────────┐
+│                后台 (NestJS)                       │
+│  · 地图/地点/角色 元数据 CRUD                       │
+│  · Ink JSON 存储 + 版本管理                        │
+│  · 游戏存档持久化 (Ink saveState JSON)             │
+│  · 自由对话 AI NPC 回复生成                        │
+│  · 英语纠错反馈（复用 practice-ai）                 │
+└──────────────────────────────────────────────────┘
+```
+
+**关键技术点：**
+
+1. **Ink 不跑在服务端**：inkjs 是纯前端库，后台只存 JSON 和存档，不做叙事运算。这样避免了服务端状态同步的复杂性。
+
+2. **存档即 Ink State**：`inkjs.Story.state.toJson()` 导出的 JSON 直接存入 `GameSave.inkState`，加载时 `story.state.LoadJson(savedState)` 即可恢复。游戏世界状态（位置、旗标等）额外存一份快照方便后台查询。
+
+3. **自由对话作为 Ink 的 fallback**：如果某个 NPC 没有配置 Ink 脚本（`inkTalkScriptId` 为空），对话走 AI 自由对话模式。Ink 脚本由内容团队编写，AI 自由对话作为内容不足时的补充。
+
+4. **PIXI.js 资源加载**：角色立绘、背景图、地图图等静态资源通过 COS（复用 File-Assets 模块）管理，前端按需加载。
+
+---
+
+### 4.3 重写模块详情
+
+#### 4.3.1 Practice 模块（重写）
+
+原 `practice` 模块基于 `QuestionItem` 的导游考试练习。重写后：
+
+**新接口：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/practice/topics?sceneId=` | 获取场景下的训练话题列表 |
+| GET | `/api/v1/practice/topics/:id` | 话题详情（含词汇、激活 Chunk、句型骨架） |
+| POST | `/api/v1/practice/topics/:id/record` | 提交录音转写结果 |
+| POST | `/api/v1/practice/topics/:id/feedback` | 获取 AI 纠错+表达升级（SSE 流式） |
+| POST | `/api/v1/practice/topics/:id/retell` | 提交复述结果 |
+| POST | `/api/v1/practice/topics/:id/save` | 保存错句/升级表达到表达库 |
+
+#### 4.3.2 Practice-AI 模块（重写 Prompt）
+
+原 Prompt 面向导游考试中文内容。重写后面向英语输出训练。
+
+详见 [第 6 节 AI Prompt 改造方案](#6-ai-prompt-改造方案)。
+
+---
+
+## 5. 前端改造方案
+
+### 5.1 路由重设计
+
+```tsx
+// 新 App.tsx 路由结构
+
+<Routes>
+  {/* 管理员后台 — 独立布局，不变 */}
+  <Route path="/admin" element={<AdminLayout />}>
+    {/* ... 适配新的管理对象 ... */}
+  </Route>
+
+  {/* 用户端 */}
+  <Route element={<RootLayout />}>
+    {/* 首页 */}
+    <Route path="/" element={<HomePage />} />
+    
+    {/* 练习模式 */}
+    <Route path="/practice" element={<PracticeHubPage />} />
+    <Route path="/practice/:topicId" element={<PracticeSessionPage />} />
+    
+    {/* 剧本模式 */}
+    <Route path="/script" element={<ScriptHubPage />} />
+    <Route path="/script/:episodeId" element={<ScriptPlayPage />} />
+    
+    {/* 探索模式 */}
+    <Route path="/explore" element={<ExploreMapPage />} />
+    <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
+    
+    {/* 表达库 */}
+    <Route path="/expressions" element={<ExpressionLibraryPage />} />
+    
+    {/* 我的成长 */}
+    <Route path="/growth" element={<GrowthPage />} />
+    
+    {/* 成就殿堂 */}
+    <Route path="/achievements" element={<AchievementHallPage />} />
+    
+    {/* 保留 */}
+    <Route path="/profile" element={<ProfilePage />} />
+    <Route path="/member" element={<MemberPage />} />
+    <Route path="/notifications" element={<NotificationListPage />} />
+    <Route path="/leaderboard" element={<LeaderboardPage />} />
+    <Route path="/invite" element={<InvitePage />} />
+    <Route path="/feedback" element={<FeedbackPage />} />
+    
+    {/* 新手引导 */}
+    <Route path="/onboarding" element={<OnboardingLayout />}>
+      <Route path="goals" element={<GoalsSelectionPage />} />
+      <Route path="ability" element={<AbilitySelectionPage />} />
+      <Route path="diagnostic" element={<DiagnosticPage />} />
+    </Route>
+    
+    {/* 认证 & 系统页面不变 */}
+    {/* ... */}
+  </Route>
+</Routes>
+```
+
+### 5.2 新增前端页面
+
+#### 5.2.1 首页 (HomePage) — 重做
+
+原首页是题库 Dashboard。新首页：
+
+```
+┌─────────────────────────────────┐
+│  Hi, Lourd!                     │
+│  输出能力：能说完整 (L3)          │
+│                                 │
+│  📊 今日训练                     │
+│  ├─ 完成 3/5 个练习              │
+│  ├─ 掌握 2 个新 Chunk            │
+│  └─ 录音时长：45 秒              │
+│                                 │
+│  🎬 继续上次任务                 │
+│  └─ [剧本] Chapter 1-2 打车去宿舍 │
+│                                 │
+│  📝 今日推荐 Chunk               │
+│  ├─ "I'm still getting used..." │
+│  ├─ "Could you tell me where..."│
+│  └─ "I was wondering if..."     │
+│                                 │
+│  🎯 快速入口                     │
+│  [练习模式] [剧本模式] [探索模式]  │
+│  [表达库]   [我的成长]           │
+└─────────────────────────────────┘
+```
+
+#### 5.2.2 练习模式页面
+
+```
+features/practice/
+├── pages/
+│   ├── practice-hub-page.tsx       # 场景/话题选择
+│   └── practice-session-page.tsx   # 练习会话（核心页面）
+├── components/
+│   ├── topic-card.tsx              # 话题卡片
+│   ├── vocabulary-preview.tsx      # 词汇预热
+│   ├── chunk-activation.tsx        # Chunk 激活面板
+│   ├── sentence-skeleton.tsx       # 句型骨架
+│   ├── voice-recorder.tsx          # 录音按钮（已有，改造）
+│   ├── ai-feedback-panel.tsx       # AI 纠错结果
+│   ├── expression-upgrade.tsx      # 表达升级展示
+│   ├── shadowing-player.tsx        # 跟读播放器
+│   ├── retell-mask.tsx             # 遮挡复述
+│   └── save-to-library.tsx         # 保存到表达库
+└── api/
+    └── practice-api.ts
+```
+
+**练习会话流程：**
+```
+选择话题 → 
+  词汇预热（展示 5-8 个词汇） → 
+  Chunk 激活（展示 5-8 个表达块，用户逐个点击「已读」） → 
+  句型骨架（展示可填充结构） → 
+  录音回答（用户录音，Whisper 转写） → 
+  AI 纠错（SSE 流式返回语法/搭配/中式表达/自然度/逻辑问题） → 
+  表达升级（清楚版 / 自然版 / 进阶版） → 
+  跟读（TTS 播放升级表达，用户跟读） → 
+  遮挡复述（关键位置遮挡，用户填空复述） → 
+  保存到表达库
+```
+
+#### 5.2.3 剧本模式页面
+
+```
+features/script/
+├── pages/
+│   ├── script-hub-page.tsx         # 章节列表+关卡卡片
+│   └── script-play-page.tsx        # 剧本对话页面
+├── components/
+│   ├── chapter-list.tsx            # 章节列表
+│   ├── episode-card.tsx            # 关卡卡片（含准备度、要求、奖励）
+│   ├── episode-locked-card.tsx     # 未解锁关卡卡片（含缺失项+推荐练习）
+│   ├── episode-intro.tsx           # 关卡开场（剧情背景+任务目标）
+│   ├── npc-dialogue-bubble.tsx     # NPC 对话气泡
+│   ├── user-response-area.tsx      # 用户录音回答区
+│   ├── task-progress-bar.tsx       # 任务目标完成进度
+│   ├── chunk-usage-tracker.tsx     # Chunk 使用追踪
+│   ├── episode-recap.tsx           # 关卡复盘（纠错+升级+复述）
+│   └── episode-reward.tsx          # 通关奖励展示
+└── api/
+    └── script-api.ts
+```
+
+**剧本对话页面布局：**
+```
+┌─────────────────────────────┐
+│  🎬 Chapter 1-3 宿舍 Check-in│
+│  进度：目标 2/4 | Chunk 1/3  │
+├─────────────────────────────┤
+│                             │
+│  ┌─────────────────────┐    │
+│  │ 🧑‍💼 前台：Hi! Welcome  │    │
+│  │ to the dormitory.   │    │
+│  │ How can I help you? │    │
+│  └─────────────────────┘    │
+│                             │
+│  ┌─────────────────────┐    │
+│  │ 🎙️ 你的回答：        │    │
+│  │ "I'm here to check  │    │
+│  │  in. My name is..." │    │
+│  │                     │    │
+│  │ ✅ 目标完成: 说明入住  │    │
+│  │ ✅ Chunk: I'm here   │    │
+│  │    to check in.      │    │
+│  └─────────────────────┘    │
+│                             │
+│  ┌─────────────────────────┐│
+│  │ 🧑‍💼 Great! Let me look ││
+│  │ up your booking.       ││
+│  │ Could you show me your ││
+│  │ student ID?            ││
+│  └─────────────────────────┘│
+│                             │
+│        [🎙️ 按住录音]        │
+│                             │
+│  [词汇提示] [Chunk提示]      │
+└─────────────────────────────┘
+```
+
+#### 5.2.4 探索模式 — 视觉小说架构
+
+探索模式采用 **PIXI.js（渲染层）+ inkjs（叙事引擎）** 双层架构，参考 Ren'Py / PixiVN / NQTR 的视觉小说风格。
+
+**技术选型：**
+
+| 层 | 技术 | 作用 |
+|----|------|------|
+| 渲染引擎 | **PIXI.js v8** | 2D WebGL 渲染：背景图、角色立绘、对话框 UI、地图、转场动画 |
+| 叙事引擎 | **inkjs** | Ink 语言运行时：对话流控制、分支选择、变量管理、状态序列化 |
+| 语音 | **现有 TTS 模块** | NPC 对话配音（可选） |
+| 语音输入 | **现有 Whisper 集成** | 用户语音 → 文本 → Ink 变量或 AI 判断 |
+| 资源管理 | **现有 COS / File-Assets** | 立绘、背景、地图图等静态资源存储 |
+
+**前端目录结构：**
+
+```
+features/explore/
+├── pages/
+│   ├── explore-map-page.tsx        # 地图页面（PIXI 渲染可点击地图）
+│   └── explore-location-page.tsx   # 地点页面（VN 对话场景）
+│
+├── engine/                          # 🆕 游戏引擎层
+│   ├── game-coordinator.ts         # 游戏协调器（核心调度）
+│   ├── pixi/
+│   │   ├── pixi-app.ts             # PIXI.Application 初始化
+│   │   ├── scenes/
+│   │   │   ├── map-scene.ts        # 地图场景（地点标记+导航）
+│   │   │   └── vn-scene.ts         # 视觉小说场景（背景+立绘+对话框）
+│   │   ├── layers/
+│   │   │   ├── background-layer.ts # 背景图层（渐变/滑动转场）
+│   │   │   ├── character-layer.ts  # 角色立绘层（表情切换/入场出场动画）
+│   │   │   └── dialogue-layer.ts   # 对话框层（Ren'Py 风格底栏）
+│   │   └── effects/
+│   │       ├── transition.ts       # 转场效果（淡入淡出/滑动）
+│   │       └── character-anim.ts   # 角色动画（入场/抖动/高亮）
+│   ├── ink/
+│   │   ├── ink-engine.ts           # inkjs Story 封装（加载/继续/选择/存档）
+│   │   └── ink-bindings.ts         # Ink 外部函数绑定（播放音效/动画触发等）
+│   └── save/
+│       └── save-manager.ts         # 存档管理器（自动存档+多槽位）
+│
+├── components/                      # React 组件层（嵌在 PIXI Canvas 之上）
+│   ├── dialogue-box.tsx            # 对话框 React 实现（备选方案，非 PIXI 模式用）
+│   ├── choice-buttons.tsx          # 分支选择按钮
+│   ├── character-status.tsx        # 角色好感度/状态显示
+│   ├── map-hud.tsx                 # 地图 HUD（地点名称、导航提示）
+│   ├── save-load-panel.tsx         # 存档/读档面板
+│   └── free-dialogue-input.tsx     # 自由对话输入（非 Ink 驱动时使用）
+│
+├── api/
+│   ├── explore-api.ts              # 地图/地点/角色 API
+│   ├── ink-api.ts                  # Ink 剧本加载 API
+│   └── game-save-api.ts            # 存档 API
+│
+└── stores/
+    └── explore.store.ts            # 探索模式全局状态（当前位置/NPC/标志位）
+```
+
+**游戏协调器 (GameCoordinator) 核心流程：**
+
+```typescript
+// game-coordinator.ts — 伪代码
+class GameCoordinator {
+  private pixiApp: PIXI.Application;
+  private inkStory: inkjs.Story;
+  private vnScene: VNScene;
+
+  // 进入一个地点
+  async enterLocation(locationId: string) {
+    // 1. 加载地点元数据
+    const location = await exploreApi.getLocation(locationId);
+    
+    // 2. PIXI 渲染场景
+    await this.vnScene.setBackground(location.backgroundUrl);
+    await this.vnScene.setCharacters(location.npcs);  // 立绘定位
+    
+    // 3. 如果有 Ink 剧本，加载并开始播放
+    if (location.inkScriptId) {
+      const inkJson = await inkApi.loadScript(location.inkScriptId);
+      this.inkStory = new inkjs.Story(inkJson);
+      
+      // 注入外部函数（Ink 脚本中调用的 React 侧功能）
+      this.inkStory.BindExternalFunction("playBgm", (name) => { /* ... */ });
+      this.inkStory.BindExternalFunction("showExpression", (char, expr) => {
+        this.vnScene.setExpression(char, expr);  // PIXI 立绘表情切换
+      });
+      
+      // 开始叙事
+      this.continueStory();
+    }
+  }
+
+  // 推进 Ink 叙事
+  continueStory() {
+    while (this.inkStory.canContinue) {
+      const line = this.inkStory.Continue();
+      this.vnScene.showDialogue(line);  // 更新对话框文字
+    }
+    
+    // 如果有分支选择，展示选项
+    if (this.inkStory.currentChoices.length > 0) {
+      this.showChoices(this.inkStory.currentChoices);
+    }
+  }
+
+  // 用户选择了某个分支
+  chooseChoice(index: number) {
+    this.inkStory.ChooseChoiceIndex(index);
+    this.continueStory();
+  }
+
+  // 存档
+  async autoSave() {
+    const saveData = {
+      inkState: this.inkStory.state.toJson(),
+      currentLocationId: this.currentLocationId,
+      flags: this.inkStory.variablesState.GetVariables(),
+    };
+    await gameSaveApi.save(saveData);
+  }
+}
+```
+
+**视觉小说场景布局（PIXI 渲染层）：**
+
+```
+┌──────────────────────────────────────────────┐
+│                                              │
+│         🌆 背景图层 (BackgroundLayer)         │
+│         (宿舍大厅 / 咖啡店 / 校园...)          │
+│                                              │
+│   ┌────────┐              ┌────────┐         │
+│   │ 🧑‍💼     │              │  🧑     │         │
+│   │ 前台    │              │  用户   │         │
+│   │ (left) │              │ (right) │         │
+│   │ happy  │              │ neutral │         │
+│   └────────┘              └────────┘         │
+│     角色立绘层 (CharacterLayer)               │
+│                                              │
+│  ┌──────────────────────────────────────────┐│
+│  │ 🧑‍💼 前台                                  ││
+│  │ "Great! Let me look up your booking.     ││
+│  │  Could you show me your student ID?"     ││
+│  │                                          ││
+│  │                         [🎙️ 按住录音]    ││
+│  └──────────────────────────────────────────┘│
+│     对话框层 (DialogueLayer)                  │
+│     Ren'Py 风格底栏 + 角色名标签              │
+└──────────────────────────────────────────────┘
+```
+
+**与练习模式/剧本模式的关系：**
+
+```
+练习模式 ──→ 学会场景表达 ──→ 场景准备度达标
+                                    ↓
+剧本模式 ──→ 固定任务通关 ──→ 解锁探索地点
+                                    ↓
+探索模式 ──→ 自由漫步校园 ──→ Ink 支线任务 + AI 自由对话
+                                    ↓
+                              发现新弱点 ──→ 回到练习模式
+```
+
+**分阶段前端实现：**
+
+| 阶段 | PIXI 实现 | React Fallback | 说明 |
+|------|-----------|----------------|------|
+| **Phase 4 MVP** | ❌ 不用 | ✅ 纯 React + CSS | 地图用 CSS/图片 + 点击热点，对话框用 React 组件 |
+| **V1.2** | ✅ 基础 VN 场景 | React 地图 | PIXI 仅渲染对话场景（背景+立绘+对话框），地图仍用 React |
+| **V2.0** | ✅ 完整 PIXI | - | 全 PIXI 渲染（地图+场景+转场），React 仅做 HUD 覆盖层 |
+
+> **为什么 Phase 4 不用 PIXI：** MVP 阶段先验证探索模式的产品逻辑（地点导航 → NPC 对话 → 学习闭环）是否成立，PIXI.js 集成复杂度高（资源加载管线、Canvas 与 React 通信、移动端适配），更适合在 V1.2 验证通过后投入。
+
+#### 5.2.5 我的成长页面
+
+```
+features/growth/
+├── pages/
+│   └── growth-page.tsx
+├── components/
+│   ├── user-level-card.tsx        # 用户等级+XP 进度
+│   ├── output-level-card.tsx      # 输出能力等级 + 各维度雷达图
+│   ├── achievement-entry-card.tsx  # 成就殿堂入口卡片（最近解锁+总数）
+│   ├── scene-mastery-grid.tsx     # 场景熟练度矩阵（彩色卡片）
+│   ├── chunk-mastery-stats.tsx    # Chunk 掌握统计（饼图/进度条）
+│   ├── weekly-stats.tsx           # 本周练习统计
+│   ├── common-errors.tsx          # 常错表达 Top 5
+│   └── recommended-path.tsx       # 推荐提升路径
+└── api/
+    └── growth-api.ts
+```
+
+#### 5.2.6 表达库页面
+
+```
+features/expression/
+├── pages/
+│   └── expression-library-page.tsx
+├── components/
+│   ├── expression-tabs.tsx         # 全部/Chunk/错句/升级/场景分类
+│   ├── expression-card.tsx         # 表达卡片
+│   ├── review-session.tsx          # 复习会话（中文提示→输出→判断）
+│   └── expression-stats.tsx        # 表达统计
+└── api/
+    └── expression-api.ts
+```
+
+#### 5.2.7 新手引导页面
+
+```
+features/onboarding/
+├── pages/
+│   ├── goals-selection-page.tsx    # 选择学习目标（多选）
+│   ├── ability-selection-page.tsx  # 自评当前能力（A/B/C/D/E）
+│   ├── diagnostic-page.tsx         # 2 分钟口语诊断
+│   └── diagnostic-result-page.tsx  # 诊断报告
+└── api/
+    └── onboarding-api.ts
+```
+
+#### 5.2.8 成就殿堂页面
+
+```
+features/achievement/
+├── pages/
+│   └── achievement-hall-page.tsx
+├── components/
+│   ├── achievement-grid.tsx         # 成就网格（按类别分组）
+│   ├── achievement-badge.tsx        # 单个成就徽章（含稀有度颜色+解锁状态）
+│   ├── achievement-detail-drawer.tsx # 成就详情抽屉
+│   ├── achievement-category-tabs.tsx # 类别 Tab（全部/里程碑/连续打卡/挑战/隐藏）
+│   ├── achievement-progress-bar.tsx  # 未解锁成就的进度条
+│   ├── hidden-achievement-teaser.tsx # 隐藏成就（显示?+模糊提示）
+│   ├── recent-unlock-toast.tsx      # 最近解锁成就 Toast 动画
+│   └── achievement-stats.tsx        # 成就统计（总数/已解锁/稀有度分布）
+└── api/
+    └── achievement-api.ts
+```
+
+**成就殿堂页面布局：**
+
+```
+┌─────────────────────────────────┐
+│  🏆 成就殿堂                     │
+│  已解锁 12 / 35                  │
+│                                 │
+│  ┌─ 最近解锁 ──────────────────┐ │
+│  │ 🎉 话筒常客 · 5分钟前       │ │
+│  │ "累计完成50次录音回答！"    │ │
+│  └────────────────────────────┘ │
+│                                 │
+│  [全部] [里程碑] [连续打卡] [掌握] [隐藏] │
+│                                 │
+│  ┌──────┐ ┌──────┐ ┌──────┐   │
+│  │🎤初次│ │🎬初出│ │📖过目│   │
+│  │ 开口 │ │ 茅庐 │ │ 不忘 │   │
+│  │ 普通 │ │ 普通 │ │ 普通 │   │
+│  └──────┘ └──────┘ └──────┘   │
+│  ┌──────┐ ┌──────┐ ┌──────┐   │
+│  │🔷开口│ │🔷表达│ │🔷七日│   │
+│  │ 十次 │ │ 学徒 │ │ 之约 │   │
+│  │ 稀有 │ │ 稀有 │ │ 稀有 │   │
+│  └──────┘ └──────┘ └──────┘   │
+│  ┌──────┐ ┌──────┐ ┌──────┐   │
+│  │🟣话筒│ │🟣表达│ │🟣铁嘴│   │
+│  │ 常客 │ │ 达人 │ │ 铜牙 │   │
+│  │ 史诗 │ │ 史诗 │ │ 史诗 │   │
+│  └──────┘ └──────┘ └──────┘   │
+│  ┌──────┐ ┌──────┐ ┌──────┐   │
+│  │🔒 ?? │ │🔒 ?? │ │🟡话痨│   │
+│  │  ?   │ │  ?   │ │ 之王 │   │
+│  │隐藏  │ │隐藏  │ │ 传说 │   │
+│  └──────┘ └──────┘ └──────┘   │
+└─────────────────────────────────┘
+```
+
+**成就稀有度配色方案（使用 shadcn 语义化颜色）：**
+
+| 稀有度 | 边框色 | 背景色 | 图标色 | 示例 |
+|--------|--------|--------|--------|------|
+| common 普通 | `border-border` | `bg-muted` | `text-muted-foreground` | 灰色调 |
+| rare 稀有 | `border-blue-500/30` | `bg-blue-50 dark:bg-blue-950` | `text-blue-500` | 蓝色调 |
+| epic 史诗 | `border-purple-500/30` | `bg-purple-50 dark:bg-purple-950` | `text-purple-500` | 紫色调 |
+| legendary 传说 | `border-amber-400/50` | `bg-amber-50 dark:bg-amber-950` | `text-amber-400` | 金色调 |
+
+### 5.3 新增 Zustand Store
+
+| Store | 作用 | 持久化 |
+|-------|------|--------|
+| `scene.store.ts` | 当前选中场景、场景列表缓存 | Memory |
+| `chunk.store.ts` | 当前激活 Chunk 列表、用户掌握状态 | Memory |
+| `script.store.ts` | 当前剧本关卡状态、对话历史、任务进度 | Memory |
+| `expression.store.ts` | 表达库缓存 | localStorage |
+| `growth.store.ts` | 等级、XP、熟练度缓存 | Memory |
+| `onboarding.store.ts` | 新手引导进度 | localStorage |
+| `achievement.store.ts` | 成就列表、解锁状态、最近解锁 | Memory |
+
+### 5.4 底部导航栏重设计
+
+```
+原底部导航：
+[题库] [模考] [通知] [我的]
+
+新底部导航（5 项）：
+[练习] [剧本] [探索] [表达库] [成长]
+
+"成就殿堂"入口放在「成长」页面的顶部卡片中，
+以及首页"最近解锁成就"区域，避免底部导航过于拥挤。
+```
+
+---
+
+## 6. AI Prompt 改造方案
+
+### 6.1 练习模式：AI 纠错 + 表达升级 Prompt
+
+现有 `practice-ai` 模块的 DeepSeek 流式调用框架可复用，但 Prompt 模板需完全重写。
+
+**新 System Prompt 核心结构：**
+
+```markdown
+你是一个英语口语教练。用户正在练习 "[场景名称]" 场景中的 "[话题名称]"，
+他们刚刚用英语回答了以下问题：
+
+问题：{promptEn}
+用户的回答（语音转写）：{userTranscript}
+
+用户的当前输出水平是 {outputLevel}（{outputLevelDescription}）。
+
+请按以下 JSON 格式进行分析（仅返回 JSON，不要其他文字）：
+
+{
+  "errorCorrection": [
+    {
+      "type": "grammar|collocation|chinglish|unnatural|logic",
+      "original": "...",
+      "correction": "...",
+      "explanation": "用中文简要解释为什么这样改"
+    }
+  ],
+  "expressionUpgrade": {
+    "clear": "清楚版——语法正确、意思清楚的基础版本",
+    "natural": "自然版——更符合英语母语者习惯的版本",
+    "advanced": "进阶版——使用更丰富表达的高级版本（仅当用户水平 >= L3 时提供）"
+  },
+  "extractedChunks": [
+    {
+      "chunk": "可复用的表达块",
+      "meaning": "中文含义",
+      "type": "collocation|sentence_starter|transition|idiom"
+    }
+  ],
+  "score": {
+    "answerLength": "short|medium|long",
+    "grammarAccuracy": 1-10,
+    "chunkUsage": 1-10,
+    "logicCompleteness": 1-10,
+    "naturalness": 1-10,
+    "fluency": 1-10
+  },
+  "overallComment": "用中文给出 2-3 句总体评价和鼓励"
+}
+```
+
+### 6.2 剧本模式：任务判断 + NPC 对话 Prompt
+
+**任务判断 Prompt：**
+
+```markdown
+你是一个英语学习剧本中的 NPC 对话裁判。当前剧本关卡：
+
+场景：{sceneTitle}
+NPC 角色：{npcName}，{npcRole}
+NPC 性格：{npcPersonality}
+
+任务目标（需用户完成）：
+{objectives}
+
+核心 Chunk（用户应主动使用）：
+{coreChunks}
+
+上一轮 NPC 说的话：{lastNpcText}
+用户这一轮的回答（语音转写）：{userTranscript}
+
+已完成的目标：{completedObjectives}
+已使用的 Chunk：{usedChunks}
+当前对话轮数：{round}/{maxRounds}
+
+请按以下 JSON 格式分析：
+
+{
+  "isOnTopic": true/false,
+  "newlyCompletedObjectives": ["目标1", "目标2"],
+  "newlyUsedChunks": ["chunk文本"],
+  "needsFollowUp": true/false,
+  "followUpReason": "如果 needFollowUp=true，说明缺少什么关键信息",
+  "grammarIssues": [
+    { "type": "...", "original": "...", "correction": "..." }
+  ],
+  "shouldHintChunk": true/false,
+  "hintChunkSuggestion": "建议用户使用哪个 Chunk 的提示语",
+  "allObjectivesCompleted": true/false,
+  "isStuck": true/false,
+  "isComplete": true/false
+}
+```
+
+**NPC 对话生成 Prompt：**
+
+```markdown
+你正在扮演剧本中的一个 NPC 角色。当前剧本：
+
+场景：{sceneTitle}
+你的角色：{npcName}，{npcRole}
+你的性格：{npcPersonality}
+
+对话上下文：
+- 任务目标：{objectives}
+- 已完成目标：{completedObjectives}
+- 对话历史（最近 3 轮）：
+  {dialogueHistory}
+
+裁判判断结果：
+- 用户是否切题：{isOnTopic}
+- 是否需要追问：{needsFollowUp}
+- 追问原因：{followUpReason}
+- 是否需要提示 Chunk：{shouldHintChunk}
+- 提示建议：{hintChunkSuggestion}
+
+用户当前输出等级：{outputLevel}
+
+请生成你的下一句对白（英文），要求：
+1. 符合角色身份和性格
+2. 自然推动剧情发展
+3. 如果 needFollowUp=true，自然地追问缺失信息
+4. 如果 isComplete=true，自然地结束当前场景对话
+5. 语言难度适应用户等级（{outputLevel}）
+6. 长度控制在 1-3 句
+7. 如果 shouldHintChunk=true，自然地引导用户使用目标 Chunk，但不要直接说出来
+```
+
+### 6.3 口语诊断 Prompt
+
+```markdown
+你是一个英语口语诊断评估师。用户刚刚完成了 2 分钟的口语诊断，
+回答了以下问题：
+
+{diagnosticQuestionsAndAnswers}
+
+请评估用户的输出能力，按以下 JSON 格式：
+
+{
+  "outputLevel": "L1|L2|L3|L4|L5",
+  "levelDescription": "能说一句|能说清楚|能说完整|能自然交流|能深入表达",
+  "dimensions": {
+    "answerLength": { "score": 1-10, "comment": "..." },
+    "grammarAccuracy": { "score": 1-10, "comment": "..." },
+    "chunkUsage": { "score": 1-10, "comment": "..." },
+    "logicCompleteness": { "score": 1-10, "comment": "..." },
+    "naturalness": { "score": 1-10, "comment": "..." },
+    "fluency": { "score": 1-10, "comment": "..." }
+  },
+  "mainProblems": ["回答偏短", "连接词较少", "有中式表达"],
+  "recommendedPath": "先练「日常生活」和「校园基础」场景。",
+  "recommendedScenes": ["daily_routine", "self_intro", "campus_basic"]
+}
+```
+
+---
+
+## 7. 分阶段实施计划
+
+### Phase 0：基础设施准备（第 1-2 周）
+
+**目标：** 数据库改造 + 基础新模块搭建，旧功能不受影响
+
+| 任务 | 负责人 | 工时估计 |
+|------|--------|---------|
+| Prisma Schema 新增表（3.2 节全部模型） | 后端 | 3d |
+| 数据库迁移脚本编写 | 后端 | 1d |
+| Scene + Chunk 种子数据准备（Chapter 0-1 的 5 个场景、50 个 Chunk） | 内容 | 5d |
+| 后端 Scene/Chunk 模块基础 CRUD | 后端 | 3d |
+| 后端 Level 模块（XP 计算 + 输出等级评估引擎） | 后端 | 3d |
+| 前端路由重构（新路由结构，旧路由保留） | 前端 | 1d |
+| 前端底部导航重设计 | 前端 | 1d |
+
+### Phase 1：练习模式 MVP（第 3-4 周）
+
+**目标：** 完成新练习模式的完整闭环，这是后续剧本模式的基础
+
+| 任务 | 工时估计 |
+|------|---------|
+| 后端 Practice 模块重写（新训练话题接口） | 3d |
+| 后端 Practice-AI Prompt 重写 + 流式纠错接口 | 3d |
+| 后端 Expression 模块基础 CRUD | 2d |
+| 前端练习模式页面（话题选择→词汇→Chunk→录音→纠错→升级→复述→保存） | 5d |
+| 前端表达库页面 | 2d |
+| 前端首页重做 | 3d |
+| 联调测试 | 2d |
+
+### Phase 2：剧本模式 MVP（第 5-7 周）
+
+**目标：** 完成 Chapter 0（3 个体验关）+ Chapter 1 部分关卡
+
+| 任务 | 工时估计 |
+|------|---------|
+| 后端 Script 模块（关卡管理+NPC 对话+任务判断+通关结算） | 5d |
+| 后端 Script NPC 对话 Prompt 调优（成本最高的部分） | 5d |
+| 后端 Script 任务判断 Prompt 调优 | 3d |
+| 前端剧本 Hub 页面（章节列表+关卡卡片+准备度+解锁状态） | 3d |
+| 前端剧本 Play 页面（对话界面+NPC 气泡+任务进度+录音+复盘） | 5d |
+| 前端解锁引导（缺失项→推荐练习→跳转练习模式→回到剧本） | 2d |
+| Chapter 0-3 个关卡内容制作 | 3d |
+| 联调测试 | 3d |
+
+### Phase 3：新手引导 + 等级系统 + 成就系统（第 8-9 周）
+
+**目标：** 完成新用户引导流程 + 完整的等级展示 + 成就体系
+
+| 任务 | 工时估计 |
+|------|---------|
+| 后端 Onboarding 模块 | 2d |
+| 后端 Level 模块完善（场景熟练度计算+Chunk 掌握度状态机） | 2d |
+| 后端 Achievement 模块改造（成就定义+检测引擎+事件驱动解锁） | 3d |
+| 后端 Growth API（汇总用户所有等级/熟练度/成就数据） | 2d |
+| 前端新手引导页面（目标选择→能力自评→口语诊断→诊断报告） | 4d |
+| 前端我的成长页面（等级卡片+场景熟练度矩阵+Chunk 统计+成就入口+周报） | 4d |
+| 前端成就殿堂页面（徽章网格+稀有度配色+进度条+隐藏成就 tease） | 3d |
+| 前端成就解锁 Toast 动画 + 首页"最近解锁"卡片 | 1d |
+| 联调测试 | 2d |
+
+### Phase 4：探索模式 MVP + 剧本扩展（第 10-12 周）
+
+**目标：** 探索模式 React 版（纯 CSS 视觉小说风格，不用 PIXI）+ Chapter 1 完整关卡
+
+| 任务 | 工时估计 |
+|------|---------|
+| 后端 Exploration 模块（地图+地点拓扑+角色+表情+Ink 剧本存储） | 4d |
+| 后端 GameSave 模块（多槽位存档+Ink 状态持久化） | 2d |
+| 后端 Ink 剧本管理（编译 JSON 上传+版本管理+变量声明提取） | 2d |
+| 前端探索地图页面（React+CSS 可点击地图+地点标记+导航） | 3d |
+| 前端探索 VN 对话页面（React 实现 Ren'Py 风格：背景+立绘+底栏对话框+分支选择） | 5d |
+| 前端 inkjs 集成（加载 Ink JSON+继续/选择+存档序列化+外部函数绑定） | 3d |
+| 前端存档/读档面板 | 2d |
+| Chapter 1 完整 5 个关卡内容制作 | 5d |
+| 支付系统适配（剧本包 SKU） | 2d |
+| 整体打磨 + 内测 | 5d |
+
+### Phase 5：PIXI.js 渲染升级 + 内容扩展（V1.1-V1.2）
+
+| 版本 | 内容 |
+|------|------|
+| **V1.1** | PIXI.js v8 集成：VN 场景转 PIXI 渲染（背景+立绘+对话框+转场动画）；Chapter 2 校园生活 5 关 |
+| **V1.2** | PIXI 地图渲染 + 3 个探索地点开放；Chapter 3 日常生活 5 关；角色好感度系统 |
+
+### Phase 6：沉浸式完整体验（V2.0）
+
+| 版本 | 内容 |
+|------|------|
+| **V2.0** | 全 PIXI 渲染（地图+场景+转场）；自由探索；多 NPC 支线任务；学术挑战 Chapter 5；角色关系发展
+
+---
+
+## 8. 风险与注意事项
+
+### 8.1 技术风险
+
+| 风险 | 影响 | 缓解措施 |
+|------|------|---------|
+| **AI Prompt 效果不稳定** | 剧本模式任务判断不准确，NPC 对话不自然 | 1. 先做练习模式验证纠错 Prompt；2. 剧本模式加人工兜底规则；3. 收集真实对话数据持续调优 |
+| **Whisper 转写准确率** | 用户口语不标准导致转写偏差大 | 1. 保留原始录音；2. UI 展示转写结果供用户确认；3. 允许手动修正 |
+| **AI API 成本过高** | 剧本模式每轮对话都调用 AI，成本不可控 | 1. 免费用户限制每日次数；2. 缓存常见 NPC 对话模板；3. 规则引擎处理简单判断 |
+| **数据库迁移风险** | 旧数据丢失或迁移异常 | 1. Phase 0 只新增表不删旧表；2. 迁移脚本先 dry-run；3. 数据库全量备份 |
+
+### 8.2 产品风险
+
+| 风险 | 缓解措施 |
+|------|---------|
+| 内容制作（Chunk、剧本、词汇）工作量被低估 | 优先 MVP 最小内容集（5 场景、50 Chunk、5-10 关卡），验证后再扩展 |
+| 剧本模式 NPC 对话"不像真人" | 限制 NPC 性格参数，设置对话模板兜底 |
+| 探索模式过早开放导致用户挫败 | 严格按 Phase 4 预览策略，L3 以下用户仅限预览 |
+
+### 8.3 迁移期间注意事项
+
+1. **双轨运行期**：Phase 0-2 期间，旧 GuideReady 功能和新英语功能共存，通过功能开关控制
+2. **API 版本化**：新 API 使用 `/api/v2/` 前缀，旧 `/api/v1/guide-exam` 保持不变
+3. **前端渐进切换**：通过配置项控制展示旧首页还是新首页
+4. **用户数据迁移**：老用户首次进入新 App 时走完整引导流程
+5. **回退方案**：每个 Phase 都保持可回退到上一版本的能力
+
+---
+
+## 附录
+
+### A. 模块依赖关系图
+
+```mermaid
+flowchart TD
+    subgraph 基础设施
+        Auth[Auth]
+        TTS[TTS + Whisper]
+        COS[File-Assets COS]
+        Pay[Pay + Membership]
+    end
+
+    subgraph 核心新模块
+        Scene[Scene 场景]
+        Chunk[Chunk 表达块]
+        Level[Level 等级系统]
+        Expression[Expression 表达库]
+        Achievement[Achievement 成就]
+        Ink[Ink 剧本管理]
+    end
+
+    subgraph 业务新模块
+        Practice[Practice 练习模式]
+        Script[Script 剧本模式]
+        Exploration[Exploration 探索模式]
+        Onboarding[Onboarding 新手引导]
+    end
+
+    subgraph 保留模块
+        Notification[Notification]
+        Referral[Referral]
+        Coupon[Coupon]
+        Feedback[Feedback]
+        Leaderboard[Leaderboard]
+        Admin[Admin]
+    end
+
+    Auth --> Practice
+    Auth --> Script
+    Auth --> Exploration
+    Auth --> Onboarding
+
+    Scene --> Practice
+    Scene --> Script
+    Scene --> Exploration
+    Chunk --> Practice
+    Chunk --> Script
+    Level --> Script
+    Ink --> Script
+    Ink --> Exploration
+
+    Practice --> Expression
+    Script --> Expression
+    Practice --> Level
+    Script --> Level
+    Practice --> Achievement
+    Script --> Achievement
+    Level --> Achievement
+
+    TTS --> Practice
+    TTS --> Script
+    TTS --> Exploration
+    COS --> Practice
+    COS --> Exploration
+    Pay --> Script
+```
+
+### B. 关键文件变更清单
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `prisma/schema.prisma` | 🔄 扩展 | 新增 15+ 张表（Scene/Chunk/Script/Expression/Level/GameMap/GameCharacter/InkScript/GameSave 等） |
+| `src/modules/scene/` | ✅ 新增 | 场景模块 |
+| `src/modules/chunk/` | ✅ 新增 | Chunk 模块 |
+| `src/modules/script/` | ✅ 新增 | 剧本模块 |
+| `src/modules/expression/` | ✅ 新增 | 表达库模块 |
+| `src/modules/level/` | ✅ 新增 | 等级模块 |
+| `src/modules/onboarding/` | ✅ 新增 | 新手引导模块 |
+| `src/modules/exploration/` | ✅ 新增 | 探索模块（地图+角色+Ink 剧本+存档） |
+| `src/modules/achievement/` | 🔄 改造 | 成就引擎（事件驱动+里程碑+稀有度） |
+| `src/modules/practice/` | 🔄 重写 | 英语输出练习 |
+| `src/modules/practice-ai/` | 🔄 重写 | Prompt 模板 |
+| `src/modules/config-guide/` | ❌ 废弃 | |
+| `src/modules/resource-library/` | ❌ 废弃 | |
+| `src/modules/question-bank/` | ❌ 废弃 | 数据迁移后 |
+| `src/features/practice/` | 🔄 重写 | 新前端页面 |
+| `src/features/script/` | ✅ 新增 | 剧本前端 |
+| `src/features/explore/` | ✅ 新增 | 探索前端（React 地图+VN 对话+inkjs 引擎+PIXI 渲染层） |
+| `src/features/expression/` | ✅ 新增 | 表达库前端 |
+| `src/features/growth/` | ✅ 新增 | 成长前端 |
+| `src/features/achievement/` | 🔄 改造 | 成就殿堂前端 |
+| `src/features/onboarding/` | ✅ 新增 | 引导前端 |
+| `src/App.tsx` | 🔄 改造 | 路由重构 |
+| `src/stores/` | 🔄 扩展 | 新增 7 个 Store（scene/chunk/script/expression/growth/onboarding/achievement/explore） |
+| `package.json` (frontend) | ➕ 新增依赖 | `inkjs`, `pixi.js` (V1.1+) |
+
+### C. 环境变量新增
+
+```bash
+# 新增：英语输出训练配置
+ENGLISH_OUTPUT_DEFAULT_SCENE=chapter_0  # 默认新手场景
+ENGLISH_OUTPUT_FREE_AI_CORRECTIONS=10   # 免费用户每日 AI 纠错次数
+ENGLISH_OUTPUT_SCRIPT_PACK_IDS=pack_1,pack_2  # 剧本包 SKU 列表
+ENGLISH_OUTPUT_ACHIEVEMENT_WEBHOOK=     # 成就解锁通知 webhook（可选）
+ENGLISH_OUTPUT_MAX_GAME_SAVES=5         # 每用户最大存档槽位
+
+# 不变
+DATABASE_URL=
+DEEPSEEK_API_KEY=
+MINIMAX_API_KEY=
+CARTESIA_API_KEY=
+TENCENT_COS_*
+ALIPAY_*
+WECHAT_PAY_*
+```
+
+---
+
+> **总结：** 现有 GuideReady 项目约 **60% 的基础设施可直接复用**（认证、语音、存储、支付、通知等），**20% 需要改造**（练习、AI、等级、成就），**20% 需要全新构建**（场景、Chunk、剧本、探索 VN 架构、表达库、引导）。
+>
+> **核心架构决策：**
+> - **等级系统**负责量化成长（XP/输出等级/场景熟练度/Chunk 掌握度）
+> - **成就系统**负责庆祝里程碑（徽章+稀有度+隐藏成就），两者互补
+> - **探索模式**采用 inkjs + PIXI.js 视觉小说架构：Ink 做叙事引擎（分支对话/变量/状态机），PIXI.js 做渲染层（背景/立绘/对话框/转场），后台只管元数据和存档持久化，不做叙事运算
+> - MVP 阶段探索模式先用 React+CSS 实现（降低 Phase 4 风险），V1.1 再切换 PIXI.js
+>
+> 建议按 Phase 0→6 分阶段实施，优先验证练习模式闭环，再逐步扩展剧本和探索模式。
