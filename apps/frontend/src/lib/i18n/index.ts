@@ -246,7 +246,7 @@ const en = {
       profile: 'Profile',
     },
     home: {
-      title: 'GuideReady',
+      title: '英游记',
       hero: {
         mode: 'Training Mode',
         practice: 'Practice Mode',

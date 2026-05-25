@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // ══════════════════════════════════════════════════════════
 
 const defaultConfigs = [
-  { key: 'app_name',            value: 'SpeakGuild',           group: 'basic', label: '应用名称',       type: 'string',   description: 'App 显示名称' },
+  { key: 'app_name',            value: '英游记',             group: 'basic', label: '应用名称',       type: 'string',   description: 'App 显示名称' },
   { key: 'app_logo_url',        value: '',                     group: 'basic', label: 'Logo URL',        type: 'string',   description: 'App Logo 图片链接' },
   { key: 'contact_email',       value: '',                     group: 'basic', label: '联系邮箱',       type: 'string',   description: '客服/联系邮箱地址' },
   { key: 'icp_number',          value: '',                     group: 'basic', label: 'ICP 备案号',     type: 'string',   description: 'ICP 备案号' },
@@ -80,15 +80,15 @@ async function seedCoupons() {
 // ══════════════════════════════════════════════════════════
 
 async function seedUsers() {
-  await auth.api.signUpEmail({ body: { name: 'Admin', email: 'admin@speakguild.local', password: 'admin123456' } })
+  await auth.api.signUpEmail({ body: { name: 'Admin', email: 'admin@engjourney.local', password: 'admin123456' } })
   const adminUser = await prisma.user.update({
-    where: { email: 'admin@speakguild.local' },
+    where: { email: 'admin@engjourney.local' },
     data: { role: 'admin', outputLevel: 'L5', userLevel: 10, totalXp: 1200, learningGoals: ['留学生活', '职场交流'] },
   })
 
-  await auth.api.signUpEmail({ body: { name: 'Test User', email: 'user@speakguild.local', password: 'user123456' } })
+  await auth.api.signUpEmail({ body: { name: 'Test User', email: 'user@engjourney.local', password: 'user123456' } })
   const normalUser = await prisma.user.update({
-    where: { email: 'user@speakguild.local' },
+    where: { email: 'user@engjourney.local' },
     data: { outputLevel: 'L2', userLevel: 3, totalXp: 350, learningGoals: ['留学生活', '日常社交', '提升英语思维'] },
   })
 

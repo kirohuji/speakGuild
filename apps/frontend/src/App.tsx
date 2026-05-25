@@ -25,6 +25,7 @@ import { AdminBillingPage } from '@/features/admin/pages/admin-billing-page'
 import { AdminNotificationsPage } from '@/features/admin/pages/admin-notifications-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { NotificationDetailPage } from '@/features/notification/pages/notification-detail-page'
+import { PortalPage } from '@/features/portal/pages/portal-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { RegisterPage } from '@/features/auth/pages/register-page'
 import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
@@ -114,6 +115,9 @@ export default function App() {
                 <Route path="/system/icp" element={<SystemIcpPage />} />
                 <Route path="/system/contact" element={<SystemContactPage />} />
               </Route>
+
+              {/* 落地页 — 无外层布局 */}
+              <Route path="/portal" element={<PortalPage />} />
 
               {/* 认证页 — 无外层布局 */}
               <Route path="/auth/login" element={<LoginPage />} />

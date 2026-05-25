@@ -61,7 +61,7 @@ export class PayService {
       orderNo,
       amount,
       subject: `${plan.name} - ${isYearly ? '年付' : '月付'}`,
-          body: `guideready 会员 - ${plan.name}`,
+          body: `EngJourney 会员 - ${plan.name}`,
       notifyUrl,
       returnUrl,
     });
@@ -259,7 +259,7 @@ export class PayService {
       orderNo,
       amount: 100,
       subject: `[测试] ${plan.name} - 月付`,
-          body: `guideready 测试支付 - ${plan.name}`,
+          body: `EngJourney 测试支付 - ${plan.name}`,
       notifyUrl,
       returnUrl,
     });

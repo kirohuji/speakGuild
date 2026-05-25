@@ -214,10 +214,10 @@ export function OnboardingGuide({ open, onClose, onFinish }: OnboardingGuideProp
 
 /**
  * 检查是否是首次访问，返回是否需要显示引导
- * 存储 key: guideready-onboarding-seen
+ * 存储 key: engjourney-onboarding-seen
  */
 export function useOnboarding() {
-  const KEY = 'guideready-onboarding-seen'
+  const KEY = 'engjourney-onboarding-seen'
 
   const hasSeen = localStorage.getItem(KEY) === '1'
 
