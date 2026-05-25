@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { Sun, Moon, Monitor, User, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,13 +8,15 @@ import { useAuth } from '@/providers/auth-provider'
 import { NotificationBell } from '@/features/notification/components/notification-bell'
 
 const navItems = [
-  { key: 'library', path: '/' },
-  { key: 'mock', path: '/mock' },
-  { key: 'member', path: '/member' },
+  { label: '首页', path: '/' },
+  { label: '练习', path: '/practice' },
+  { label: '剧本', path: '/script' },
+  { label: '表达库', path: '/expressions' },
+  { label: '成长', path: '/growth' },
+  { label: '会员', path: '/member' },
 ]
 
 export function Header() {
-  const { t } = useTranslation()
   const location = useLocation()
   const { theme, setTheme } = useTheme()
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
@@ -32,9 +33,9 @@ export function Header() {
   }
 
   const themeOptions = [
-    { value: 'light', label: t('profile.themeLight'), icon: Sun },
-    { value: 'dark', label: t('profile.themeDark'), icon: Moon },
-    { value: 'system', label: t('profile.themeSystem'), icon: Monitor },
+    { value: 'light', label: '浅色', icon: Sun },
+    { value: 'dark', label: '深色', icon: Moon },
+    { value: 'system', label: '跟随系统', icon: Monitor },
   ]
 
   const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor
@@ -67,7 +68,7 @@ export function Header() {
         <nav className="hidden lg:flex items-center gap-1 flex-1">
           {navItems.map((item) => (
             <Link
-              key={item.key}
+              key={item.path}
               to={item.path}
               className={cn(
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
@@ -76,7 +77,7 @@ export function Header() {
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               )}
             >
-              {t(`nav.${item.key}`)}
+              {item.label}
             </Link>
           ))}
         </nav>

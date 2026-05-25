@@ -19,6 +19,7 @@ import { GoalsSelectionPage } from '@/features/onboarding/pages/goals-selection-
 import { AbilitySelectionPage } from '@/features/onboarding/pages/ability-selection-page'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { AccountPage } from '@/features/account/pages/account-page'
+import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { AdminUsersPage } from '@/features/admin/pages/admin-users-page'
 import { AdminMembersPage } from '@/features/admin/pages/admin-members-page'
 import { AdminBillingPage } from '@/features/admin/pages/admin-billing-page'
@@ -98,6 +99,7 @@ export default function App() {
 
                 {/* 成就殿堂 */}
                 <Route path="/achievements" element={<AchievementHallPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/member" element={<MemberPage />} />
                 <Route path="/notifications" element={<NotificationListPage />} />

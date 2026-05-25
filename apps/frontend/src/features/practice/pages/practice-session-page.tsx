@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Lightbulb, Eye, EyeOff, Check, Save } from 'lucide-react'
+import { ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Eye, EyeOff, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
+import { ChunkActivationPanel } from '../components/chunk-activation-panel'
+import { SentencePatternPanel } from '../components/sentence-pattern-panel'
 
 type Step = 'preview' | 'chunks' | 'record' | 'feedback' | 'upgrade' | 'retell'
 
@@ -23,6 +23,7 @@ export function PracticeSessionPage() {
   // Flow state
   const [step, setStep] = useState<Step>('preview')
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
+  const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
 
   // Recording
   const [isRecording, setIsRecording] = useState(false)
@@ -44,7 +45,14 @@ export function PracticeSessionPage() {
     setLoading(true)
     practiceApi
       .getTopicDetail(topicId)
-      .then(setDetail)
+      .then((data) => {
+        setDetail(data)
+        const learnedChunkIds = data.activeChunks
+          .filter((chunk) => chunk.masteryStatus !== 'not_learned')
+          .map((chunk) => chunk.id)
+        setActivatedChunks(new Set(learnedChunkIds))
+        setExpandedChunkId(data.activeChunks[0]?.id ?? null)
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [topicId])
@@ -214,81 +222,15 @@ export function PracticeSessionPage() {
       {/* Step: Chunks */}
       {step === 'chunks' && (
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Lightbulb className="size-4" /> 核心表达块 ({activatedChunks.size}/{detail.activeChunks.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-muted-foreground">
-                点击每个表达块查看含义，标记为「已激活」
-              </p>
-              <div className="space-y-2">
-                {detail.activeChunks.map((c) => (
-                  <div
-                    key={c.id}
-                    className={cn(
-                      'flex items-center justify-between rounded-lg border p-3 transition-colors cursor-pointer',
-                      activatedChunks.has(c.id)
-                        ? 'border-primary/50 bg-primary/5'
-                        : 'border-border hover:border-primary/30',
-                    )}
-                    onClick={() => !activatedChunks.has(c.id) && activateChunk(c.id)}
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{c.text}</p>
-                      <p className="text-xs text-muted-foreground">{c.meaning}</p>
-                      {c.description && <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>}
-                      {c.examples?.[0] && (
-                        <p className="mt-1 text-xs italic text-muted-foreground">
-                          {c.examples[0].en}
-                        </p>
-                      )}
-                    </div>
-                    {activatedChunks.has(c.id) ? (
-                      <Check className="size-5 text-primary" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">点击激活</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {(detail.topic.sentencePatterns?.length || detail.topic.sentenceSkeleton) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">句型骨架</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {detail.topic.sentencePatterns?.length ? (
-                  <div className="space-y-2">
-                    {detail.topic.sentencePatterns.map((item, index) => (
-                      <div key={index} className="rounded-lg bg-muted p-3">
-                        <p className="font-mono text-sm text-foreground">{item.pattern}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{item.meaning}</p>
-                        {item.example && <p className="mt-1 text-xs italic text-muted-foreground">{item.example}</p>}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="rounded-lg bg-muted p-3 font-mono text-sm text-foreground">
-                    {detail.topic.sentenceSkeleton}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <Button
-            className="w-full"
-            disabled={activatedChunks.size === 0}
-            onClick={() => setStep('record')}
-          >
-            下一步：开口练习
-          </Button>
+          <ChunkActivationPanel
+            chunks={detail.activeChunks}
+            activatedIds={activatedChunks}
+            expandedId={expandedChunkId}
+            onActivate={activateChunk}
+            onExpand={setExpandedChunkId}
+            onContinue={() => setStep('record')}
+          />
+          <SentencePatternPanel topic={detail.topic} />
         </div>
       )}
 

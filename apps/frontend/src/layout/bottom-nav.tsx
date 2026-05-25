@@ -1,34 +1,22 @@
-import React, { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { BookOpen, Play, Map, Library, TrendingUp } from 'lucide-react'
+import { BookOpen, Home, Library, Play, User } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
-import { useNotificationStore } from '@/features/notification/store'
 import { useAuth } from '@/providers/auth-provider'
 
 const navItems = [
+  { label: '首页', path: '/', icon: Home },
   { label: '练习', path: '/practice', icon: BookOpen },
   { label: '剧本', path: '/script', icon: Play },
-  { label: '探索', path: '/explore', icon: Map },
   { label: '表达库', path: '/expressions', icon: Library },
-  { label: '成长', path: '/growth', icon: TrendingUp },
+  { label: '我的', path: '/profile', icon: User },
 ]
 
 export function BottomNav() {
   const location = useLocation()
   const visible = useLayoutStore((s) => s.bottomNavVisible)
-  const unreadCount = useNotificationStore((s) => s.unreadCount)
-  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount)
-  const initSocket = useNotificationStore((s) => s.initSocket)
   const { session } = useAuth()
   const isLoggedIn = !!session
-
-  useEffect(() => {
-    if (session?.user?.id) {
-      initSocket(session.user.id)
-      fetchUnreadCount()
-    }
-  }, [session?.user?.id, initSocket, fetchUnreadCount])
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'
@@ -52,11 +40,6 @@ export function BottomNav() {
               )}
             >
               <Icon className={cn('h-5 w-5', active && 'stroke-[2.2]')} />
-              {path === '/notifications' && unreadCount > 0 && (
-                <span className="absolute right-[calc(50%-20px)] top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
               <span className="text-[10px] font-medium">{label}</span>
             </Link>
           )
