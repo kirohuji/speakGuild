@@ -1,11 +1,35 @@
 import { IsString, IsOptional, IsInt, IsArray } from 'class-validator';
 
+export class ChunkExampleDto {
+  @IsString()
+  en: string;
+
+  @IsString()
+  zh: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @IsOptional()
+  @IsString()
+  level?: string;
+
+  @IsOptional()
+  @IsString()
+  sceneId?: string;
+}
+
 export class CreateChunkDto {
   @IsString()
   text: string;
 
   @IsString()
   meaning: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsOptional()
   @IsString()
@@ -16,8 +40,8 @@ export class CreateChunkDto {
   difficulty?: string;
 
   @IsOptional()
-  @IsString()
-  example?: string;
+  @IsArray()
+  examples?: ChunkExampleDto[];
 
   @IsOptional()
   @IsString()
@@ -40,6 +64,10 @@ export class UpdateChunkDto {
 
   @IsOptional()
   @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
   category?: string;
 
   @IsOptional()
@@ -47,8 +75,8 @@ export class UpdateChunkDto {
   difficulty?: string;
 
   @IsOptional()
-  @IsString()
-  example?: string;
+  @IsArray()
+  examples?: ChunkExampleDto[];
 
   @IsOptional()
   @IsString()
@@ -72,6 +100,10 @@ export class CreateScriptEpisodeDto {
 
   @IsString()
   title: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsString()
   sceneId: string;
@@ -174,6 +206,10 @@ export class UpdateScriptEpisodeDto {
   @IsOptional()
   @IsString()
   title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsOptional()
   @IsString()

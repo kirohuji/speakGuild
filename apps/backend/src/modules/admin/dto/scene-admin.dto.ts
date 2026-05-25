@@ -91,6 +91,10 @@ export class CreateVocabularyDto {
   meaning: string;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsInt()
   sortOrder?: number;
 }
@@ -105,6 +109,10 @@ export class UpdateVocabularyDto {
   meaning?: string;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsInt()
   sortOrder?: number;
 }
@@ -115,6 +123,10 @@ export class CreateTrainingTopicDto {
 
   @IsString()
   title: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsString()
   promptEn: string;
@@ -133,6 +145,9 @@ export class CreateTrainingTopicDto {
   @IsOptional()
   @IsString()
   sentenceSkeleton?: string;
+
+  @IsOptional()
+  sentencePatterns?: any;
 
   @IsOptional()
   @IsArray()
@@ -155,6 +170,10 @@ export class UpdateTrainingTopicDto {
 
   @IsOptional()
   @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
   promptEn?: string;
 
   @IsOptional()
@@ -172,6 +191,9 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsString()
   sentenceSkeleton?: string;
+
+  @IsOptional()
+  sentencePatterns?: any;
 
   @IsOptional()
   @IsArray()

@@ -41,7 +41,13 @@ export class EnglishPracticeService {
           },
         },
         activeChunks: {
-          include: { chunk: true },
+          include: {
+            chunk: {
+              include: {
+                examples: { orderBy: { sortOrder: 'asc' } },
+              },
+            },
+          },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -66,6 +72,7 @@ export class EnglishPracticeService {
         suggestedDurationSec: topic.suggestedDurationSec,
         difficulty: topic.difficulty,
         sentenceSkeleton: topic.sentenceSkeleton,
+        sentencePatterns: topic.sentencePatterns,
       },
       scene: {
         id: topic.scene.id,
@@ -84,7 +91,8 @@ export class EnglishPracticeService {
           id: tc.chunk.id,
           text: tc.chunk.text,
           meaning: tc.chunk.meaning,
-          example: tc.chunk.example,
+          description: tc.chunk.description,
+          examples: tc.chunk.examples,
           masteryStatus: (progress as any)?.status ?? 'not_learned',
         };
       }),

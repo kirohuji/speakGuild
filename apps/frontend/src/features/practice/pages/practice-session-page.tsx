@@ -239,7 +239,12 @@ export function PracticeSessionPage() {
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{c.text}</p>
                       <p className="text-xs text-muted-foreground">{c.meaning}</p>
-                      {c.example && <p className="mt-1 text-xs italic text-muted-foreground">{c.example}</p>}
+                      {c.description && <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>}
+                      {c.examples?.[0] && (
+                        <p className="mt-1 text-xs italic text-muted-foreground">
+                          {c.examples[0].en}
+                        </p>
+                      )}
                     </div>
                     {activatedChunks.has(c.id) ? (
                       <Check className="size-5 text-primary" />
@@ -252,15 +257,27 @@ export function PracticeSessionPage() {
             </CardContent>
           </Card>
 
-          {detail.topic.sentenceSkeleton && (
+          {(detail.topic.sentencePatterns?.length || detail.topic.sentenceSkeleton) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">句型骨架</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="rounded-lg bg-muted p-3 font-mono text-sm text-foreground">
-                  {detail.topic.sentenceSkeleton}
-                </p>
+                {detail.topic.sentencePatterns?.length ? (
+                  <div className="space-y-2">
+                    {detail.topic.sentencePatterns.map((item, index) => (
+                      <div key={index} className="rounded-lg bg-muted p-3">
+                        <p className="font-mono text-sm text-foreground">{item.pattern}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{item.meaning}</p>
+                        {item.example && <p className="mt-1 text-xs italic text-muted-foreground">{item.example}</p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-lg bg-muted p-3 font-mono text-sm text-foreground">
+                    {detail.topic.sentenceSkeleton}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}

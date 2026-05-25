@@ -7,14 +7,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
+import { ChunkExamplesEditor } from '../components/content-authoring-fields'
 import {
   listAllChunks, createChunk, updateChunk, deleteChunk,
   listSceneCategories, listScenes,
@@ -114,8 +115,13 @@ export function AdminChunksPage() {
                             {c.category && <Badge variant="secondary" className="text-xs">{c.category}</Badge>}
                           </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">{c.meaning}</p>
-                          {c.example && (
-                            <p className="mt-1 max-w-xl truncate text-xs italic text-muted-foreground/60">{c.example}</p>
+                          {c.description && (
+                            <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground/60">{c.description}</p>
+                          )}
+                          {c.examples?.[0] && (
+                            <p className="mt-1 max-w-xl truncate text-xs italic text-muted-foreground/60">
+                              {c.examples[0].en}
+                            </p>
                           )}
                         </div>
                       </td>
@@ -169,16 +175,25 @@ function ChunkDialog({
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (edit) setForm(edit)
-    else setForm({ text: '', meaning: '', difficulty: 'L2', category: '', applicableSceneIds: [] })
+    if (edit) {
+      setForm({
+        ...edit,
+        examples: edit.examples ?? [],
+      })
+    }
+    else setForm({ text: '', meaning: '', description: '', difficulty: 'L2', category: '', applicableSceneIds: [], examples: [] })
   }, [edit, open])
 
   const handleSave = async () => {
     if (!form.text?.trim() || !form.meaning?.trim()) return
     setSaving(true)
     try {
-      if (edit) await updateChunk(edit.id, form)
-      else await createChunk(form)
+      const payload = {
+        ...form,
+        examples: (form.examples ?? []).filter((item: any) => item.en?.trim() && item.zh?.trim()),
+      }
+      if (edit) await updateChunk(edit.id, payload)
+      else await createChunk(payload)
       toast.success('Chunk 已保存')
       onSaved()
       onClose()
@@ -188,7 +203,7 @@ function ChunkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑 Chunk' : '新增 Chunk'}</DialogTitle>
         </DialogHeader>
@@ -232,10 +247,19 @@ function ChunkDialog({
               </Select>
           </div>
           <div>
-            <Label>示例句子</Label>
-            <Textarea value={form.example ?? ''} onChange={(e) => setForm({ ...form, example: e.target.value })}
-              placeholder="Hi, I'm here to check in. My booking is under the name Li." />
+            <MarkdownEditor
+              label="讲解 / 使用说明"
+              value={form.description ?? ''}
+              onChange={(value) => setForm({ ...form, description: value })}
+              height={160}
+              preview="edit"
+              placeholder="说明这个 Chunk 的使用场景、语气、常见搭配..."
+            />
           </div>
+          <ChunkExamplesEditor
+            value={form.examples ?? []}
+            onChange={(examples) => setForm({ ...form, examples })}
+          />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>取消</Button>
             <Button onClick={handleSave} disabled={saving || !form.text?.trim() || !form.meaning?.trim()}>

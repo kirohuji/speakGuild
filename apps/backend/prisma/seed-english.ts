@@ -71,9 +71,9 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   console.log(`  ✓ 80 个场景词汇`)
 
   // ═══ 3. Chunk 表达块 ═══
-  const chunkData: { text: string; meaning: string; category: string; sceneTitle: string; difficulty: string; example?: string }[] = [
+  const chunkData: { text: string; meaning: string; category: string; sceneTitle: string; difficulty: string; examples?: { en: string; zh: string; note?: string; level?: string }[] }[] = [
     // 宿舍入住
-    { text: "I'm here to check in.", meaning: '我是来办理入住的。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2', example: "Hi, I'm here to check in. My booking is under the name Li." },
+    { text: "I'm here to check in.", meaning: '我是来办理入住的。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2', examples: [{ en: "Hi, I'm here to check in. My booking is under the name Li.", zh: '你好，我是来办理入住的。我的预订姓名是李。', level: 'basic' }] },
     { text: 'My booking is under the name...', meaning: '我的预订名字是...', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
     { text: 'Here is my student ID.', meaning: '这是我的学生证。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
     { text: 'Could you tell me where my room is?', meaning: '能告诉我房间在哪吗？', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
@@ -81,24 +81,24 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
     { text: 'Where is the laundry room?', meaning: '洗衣房在哪？', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
     { text: 'Thank you for your help.', meaning: '谢谢你的帮助。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L1' },
     // 机场入境
-    { text: "I'm here to study.", meaning: '我是来读书的。', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2', example: "I'm here to study at the University of Manchester." },
+    { text: "I'm here to study.", meaning: '我是来读书的。', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2', examples: [{ en: "I'm here to study at the University of Manchester.", zh: '我是来曼彻斯特大学读书的。', level: 'basic' }] },
     { text: 'I will be staying for...', meaning: '我会待...', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2' },
     { text: 'My luggage is...', meaning: '我的行李是...', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L1' },
     { text: 'I have nothing to declare.', meaning: '我没有需要申报的。', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2' },
     // 认识室友
-    { text: "I'm from...", meaning: '我来自...', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1', example: "I'm from Shanghai. It's a big city in China." },
+    { text: "I'm from...", meaning: '我来自...', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1', examples: [{ en: "I'm from Shanghai. It's a big city in China.", zh: '我来自上海，那是中国的一座大城市。', level: 'basic' }] },
     { text: "My major is...", meaning: '我的专业是...', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1' },
     { text: "I'm still getting used to everything.", meaning: '我还在适应一切。', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L2' },
     { text: 'Would you like to grab a coffee sometime?', meaning: '改天一起喝杯咖啡？', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L2' },
     { text: "It's nice to meet you.", meaning: '很高兴认识你。', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1' },
     // 咖啡店
-    { text: "I'd like a..., please.", meaning: '我想要一杯...', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1', example: "I'd like a latte, please." },
+    { text: "I'd like a..., please.", meaning: '我想要一杯...', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1', examples: [{ en: "I'd like a latte, please.", zh: '我想要一杯拿铁，谢谢。', level: 'basic' }] },
     { text: 'For here or to go?', meaning: '堂食还是打包？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1' },
     { text: 'Can I get the bill, please?', meaning: '能给我账单吗？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1' },
     { text: 'Do you have any dairy-free options?', meaning: '有非乳制品的选项吗？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L2' },
     { text: 'How much is it?', meaning: '多少钱？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1' },
     // 超市
-    { text: 'Where can I find...?', meaning: '我在哪能找到...？', category: '超市', sceneTitle: '超市购物', difficulty: 'L1', example: 'Where can I find the milk?' },
+    { text: 'Where can I find...?', meaning: '我在哪能找到...？', category: '超市', sceneTitle: '超市购物', difficulty: 'L1', examples: [{ en: 'Where can I find the milk?', zh: '我在哪能找到牛奶？', level: 'basic' }] },
     { text: 'Do you have this in a different size?', meaning: '这个有其他尺寸吗？', category: '超市', sceneTitle: '超市购物', difficulty: 'L2' },
     { text: "I'm looking for...", meaning: '我在找...', category: '超市', sceneTitle: '超市购物', difficulty: 'L1' },
     { text: 'Is this on sale?', meaning: '这个在打折吗？', category: '超市', sceneTitle: '超市购物', difficulty: 'L1' },
@@ -118,12 +118,12 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
     // 通用日常
     { text: "I'm not sure how to say this, but...", meaning: '我不确定怎么说，但是...', category: '日常表达', sceneTitle: '认识室友', difficulty: 'L1' },
     { text: 'Could you repeat that, please?', meaning: '能重复一遍吗？', category: '日常表达', sceneTitle: '宿舍入住', difficulty: 'L1' },
-    { text: "I was wondering if...", meaning: '我在想是否...', category: '日常表达', sceneTitle: '咖啡店点餐', difficulty: 'L2', example: 'I was wondering if you could help me.' },
+    { text: "I was wondering if...", meaning: '我在想是否...', category: '日常表达', sceneTitle: '咖啡店点餐', difficulty: 'L2', examples: [{ en: 'I was wondering if you could help me.', zh: '我想问问你是否可以帮我一下。', level: 'intermediate' }] },
     { text: "I'm afraid I...", meaning: '恐怕我...', category: '日常表达', sceneTitle: '小组讨论', difficulty: 'L2' },
     { text: "It depends on...", meaning: '这取决于...', category: '日常表达', sceneTitle: '小组讨论', difficulty: 'L2' },
     { text: "To be honest...", meaning: '说实话...', category: '日常表达', sceneTitle: '认识室友', difficulty: 'L2' },
     { text: "As far as I know...", meaning: '据我所知...', category: '日常表达', sceneTitle: '小组讨论', difficulty: 'L3' },
-    { text: 'Would you mind...?', meaning: '你介意...吗？', category: '日常表达', sceneTitle: '咖啡店点餐', difficulty: 'L2', example: 'Would you mind opening the window?' },
+    { text: 'Would you mind...?', meaning: '你介意...吗？', category: '日常表达', sceneTitle: '咖啡店点餐', difficulty: 'L2', examples: [{ en: 'Would you mind opening the window?', zh: '你介意打开窗户吗？', level: 'intermediate' }] },
   ]
 
   const chunkIds: Record<string, string> = {}
@@ -132,8 +132,21 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
     const chunk = await prisma.chunk.create({
       data: {
         text: c.text, meaning: c.meaning, category: c.category,
-        difficulty: c.difficulty, example: c.example, sceneId,
+        difficulty: c.difficulty,
+        description: `${c.meaning} 常用于${c.category}场景，可替换省略号部分来表达具体信息。`,
+        sceneId,
         applicableSceneIds: [sceneId].filter(Boolean) as string[],
+        examples: c.examples?.length
+          ? {
+              create: c.examples.map((example, i) => ({
+                en: example.en,
+                zh: example.zh,
+                note: example.note ?? null,
+                level: example.level ?? 'basic',
+                sortOrder: i,
+              })),
+            }
+          : undefined,
       },
     })
     const key = c.text.slice(0, 20)

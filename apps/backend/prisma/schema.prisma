@@ -751,6 +751,7 @@ model Scene {
   chunks               Chunk[]
   trainingTopics       TrainingTopic[]
   scriptEpisodes       ScriptEpisode[]
+  chunkExamples        ChunkExample[]
   userProgresses       UserSceneProgress[]
   gameLocations        GameLocation[]
   createdAt            DateTime           @default(now())
@@ -775,9 +776,10 @@ model Chunk {
   id                  String              @id @default(cuid())
   text                String
   meaning             String
+  description         String?             @db.Text
   category            String
   difficulty          String              @default("L2")
-  example             String?
+  examples            ChunkExample[]
   scene               Scene?              @relation(fields: [sceneId], references: [id])
   sceneId             String?
   applicableSceneIds  String[]
@@ -797,11 +799,30 @@ model SceneVocabulary {
   sceneId       String
   word          String
   meaning       String
+  description   String?              @db.Text
   sortOrder     Int                  @default(0)
   episodeVocabs ScriptEpisodeVocab[]
 
   @@index([sceneId])
   @@map("scene_vocabulary")
+}
+
+model ChunkExample {
+  id        String   @id @default(cuid())
+  chunk     Chunk    @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  chunkId   String
+  en        String   @db.Text
+  zh        String   @db.Text
+  note      String?  @db.Text
+  level     String   @default("basic")
+  scene     Scene?   @relation(fields: [sceneId], references: [id])
+  sceneId   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([chunkId, sortOrder])
+  @@index([sceneId])
+  @@map("chunk_example")
 }
 
 // ──── 用户 Chunk 掌握度 ────
@@ -831,12 +852,14 @@ model TrainingTopic {
   scene                Scene             @relation(fields: [sceneId], references: [id])
   sceneId              String
   title                String
+  description          String?           @db.Text
   promptEn             String            @db.Text
   promptZh             String            @db.Text
   suggestedDurationSec Int               @default(60)
   difficulty           String            @default("L2")
   activeChunks         TrainingTopicChunk[]
   sentenceSkeleton     String?           @db.Text
+  sentencePatterns     Json?
   sortOrder            Int               @default(0)
   createdAt            DateTime          @default(now())
 
@@ -864,6 +887,7 @@ model ScriptEpisode {
   chapterTitle         String
   episodeOrder         Int
   title                String
+  description          String?                @db.Text
   scene                Scene                  @relation(fields: [sceneId], references: [id])
   sceneId              String
   requiredOutputLevel  String                 @default("L2")

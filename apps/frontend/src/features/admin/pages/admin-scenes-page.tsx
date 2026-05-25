@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
-  BookOpen, ChevronDown, ChevronRight, Save, X,
+  BookOpen, ChevronRight, X,
   Volume2, Sparkles, ExternalLink, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,19 +9,23 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { MarkdownEditor } from '@/components/common/markdown-editor'
 import {
   lookupWord, getBestPhonetic, getFirstAudio,
   type DictEntry,
 } from '@/lib/dictionary-api'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
+import {
+  ChunkMultiSelect,
+  SentencePatternEditor,
+} from '../components/content-authoring-fields'
 import {
   listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory,
   listScenes, getScene, createScene, updateScene, deleteScene,
@@ -65,7 +69,7 @@ function CategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑分类' : '新增分类'}</DialogTitle>
         </DialogHeader>
@@ -124,7 +128,7 @@ function SceneDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑场景' : '新增场景'}</DialogTitle>
         </DialogHeader>
@@ -146,8 +150,14 @@ function SceneDialog({
             <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="宿舍前台" />
           </div>
           <div>
-            <Label>描述</Label>
-            <Textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <MarkdownEditor
+              label="描述"
+              value={form.description ?? ''}
+              onChange={(value) => setForm({ ...form, description: value })}
+              height={160}
+              preview="edit"
+              placeholder="这个场景面向什么任务、用户会遇到什么情境..."
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -242,7 +252,7 @@ function VocabularyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑词汇' : '新增词汇'}</DialogTitle>
         </DialogHeader>
@@ -260,6 +270,16 @@ function VocabularyDialog({
           <div>
             <Label>中文含义</Label>
             <Input value={form.meaning ?? ''} onChange={(e) => setForm({ ...form, meaning: e.target.value })} placeholder="宿舍" />
+          </div>
+          <div>
+            <MarkdownEditor
+              label="词汇讲解"
+              value={form.description ?? ''}
+              onChange={(value) => setForm({ ...form, description: value })}
+              height={140}
+              preview="edit"
+              placeholder="用法、搭配、易错点，可选..."
+            />
           </div>
           {(lookupLoading || lookupError || dictData || enrichData) && (
             <VocabularyLookupPreview
@@ -410,15 +430,19 @@ function TrainingTopicDialog({
 
   useEffect(() => {
     if (edit) setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [] })
-    else setForm({ sceneId, title: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [] })
+    else setForm({ sceneId, title: '', description: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [] })
   }, [edit, open, sceneId])
 
   const handleSave = async () => {
     if (!form.title?.trim() || !form.promptEn?.trim()) return
     setSaving(true)
     try {
-      if (edit) await updateTrainingTopic(edit.id, form)
-      else await createTrainingTopic(form)
+      const payload = {
+        ...form,
+        sentencePatterns: (form.sentencePatterns ?? []).filter((item: any) => item.pattern?.trim()),
+      }
+      if (edit) await updateTrainingTopic(edit.id, payload)
+      else await createTrainingTopic(payload)
       toast.success('话题已保存')
       onSaved()
       onClose()
@@ -428,7 +452,7 @@ function TrainingTopicDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑话题' : '新增话题'}</DialogTitle>
         </DialogHeader>
@@ -438,12 +462,34 @@ function TrainingTopicDialog({
             <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
           </div>
           <div>
-            <Label>英文提示</Label>
-            <Textarea value={form.promptEn ?? ''} onChange={(e) => setForm({ ...form, promptEn: e.target.value })} placeholder="Tell me about yourself." />
+            <MarkdownEditor
+              label="话题说明"
+              value={form.description ?? ''}
+              onChange={(value) => setForm({ ...form, description: value })}
+              height={140}
+              preview="edit"
+              placeholder="这个话题训练什么能力、回答时要注意什么..."
+            />
           </div>
           <div>
-            <Label>中文提示</Label>
-            <Textarea value={form.promptZh ?? ''} onChange={(e) => setForm({ ...form, promptZh: e.target.value })} placeholder="请介绍一下你自己。" />
+            <MarkdownEditor
+              label="英文提示"
+              value={form.promptEn ?? ''}
+              onChange={(value) => setForm({ ...form, promptEn: value })}
+              height={160}
+              preview="edit"
+              placeholder="Tell me about yourself."
+            />
+          </div>
+          <div>
+            <MarkdownEditor
+              label="中文提示"
+              value={form.promptZh ?? ''}
+              onChange={(value) => setForm({ ...form, promptZh: value })}
+              height={160}
+              preview="edit"
+              placeholder="请介绍一下你自己。"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -461,30 +507,24 @@ function TrainingTopicDialog({
             </div>
           </div>
           <div>
-            <Label>句型骨架</Label>
-            <Textarea value={form.sentenceSkeleton ?? ''} onChange={(e) => setForm({ ...form, sentenceSkeleton: e.target.value })}
-              placeholder="I'm from ___. It's a ___ city in ___." />
+            <SentencePatternEditor
+              value={form.sentencePatterns ?? []}
+              onChange={(sentencePatterns) => setForm({
+                ...form,
+                sentencePatterns,
+                sentenceSkeleton: sentencePatterns
+                  .filter((item: any) => item.pattern?.trim())
+                  .map((item: any) => `- ${item.pattern}${item.meaning ? ` (${item.meaning})` : ''}`)
+                  .join('\n'),
+              })}
+            />
           </div>
-          <div>
-            <Label>关联 Chunk（可多选）</Label>
-            <div className="flex flex-wrap gap-1.5 border rounded-lg p-3 max-h-40 overflow-y-auto">
-              {chunks.filter((c) => !c.sceneId || c.sceneId === sceneId).map((c) => (
-                <Badge key={c.id}
-                  variant={form.chunkIds?.includes(c.id) ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => {
-                    const ids = form.chunkIds ?? []
-                    setForm({
-                      ...form,
-                      chunkIds: ids.includes(c.id) ? ids.filter((i: string) => i !== c.id) : [...ids, c.id],
-                    })
-                  }}
-                >
-                  {c.text}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <ChunkMultiSelect
+            chunks={chunks}
+            value={form.chunkIds ?? []}
+            sceneId={sceneId}
+            onChange={(chunkIds) => setForm({ ...form, chunkIds })}
+          />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>取消</Button>
             <Button onClick={handleSave} disabled={saving}>保存</Button>

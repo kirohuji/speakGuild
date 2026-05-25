@@ -51,7 +51,13 @@ export class ScriptService {
           orderBy: { sortOrder: 'asc' },
         },
         coreChunks: {
-          include: { chunk: true },
+          include: {
+            chunk: {
+              include: {
+                examples: { orderBy: { sortOrder: 'asc' } },
+              },
+            },
+          },
           orderBy: { sortOrder: 'asc' },
         },
         records: {

@@ -44,6 +44,13 @@ export interface TopicDetail {
     suggestedDurationSec: number
     difficulty: string
     sentenceSkeleton: string | null
+    sentencePatterns?: Array<{
+      pattern: string
+      meaning: string
+      slots: string[]
+      example: string
+      difficulty: string
+    }> | null
   }
   scene: { id: string; title: string; location: string; category: string }
   vocabularies: { id: string; word: string; meaning: string }[]
@@ -51,7 +58,8 @@ export interface TopicDetail {
     id: string
     text: string
     meaning: string
-    example: string | null
+    description?: string | null
+    examples?: Array<{ en: string; zh: string; note?: string | null; level?: string }>
     masteryStatus: string
   }[]
 }

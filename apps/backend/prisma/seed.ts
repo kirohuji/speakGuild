@@ -143,6 +143,7 @@ async function main() {
   await prisma.trainingTopicChunk.deleteMany()
   await prisma.trainingTopic.deleteMany()
   await prisma.userChunkProgress.deleteMany()
+  await prisma.chunkExample.deleteMany()
   await prisma.chunk.deleteMany()
   await prisma.sceneVocabulary.deleteMany()
   await prisma.scenePrerequisite.deleteMany()

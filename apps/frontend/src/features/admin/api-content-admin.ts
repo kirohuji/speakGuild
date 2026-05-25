@@ -70,6 +70,7 @@ export interface SceneVocabulary {
   sceneId: string
   word: string
   meaning: string
+  description?: string | null
   sortOrder: number
   scene?: { id: string; title: string }
 }
@@ -96,11 +97,13 @@ export interface TrainingTopic {
   id: string
   sceneId: string
   title: string
+  description?: string | null
   promptEn: string
   promptZh: string
   suggestedDurationSec: number
   difficulty: string
   sentenceSkeleton: string | null
+  sentencePatterns?: SentencePattern[] | null
   sortOrder: number
   scene?: { id: string; title: string }
   activeChunks?: { id: string; chunk: { id: string; text: string } }[]
@@ -128,13 +131,32 @@ export interface Chunk {
   id: string
   text: string
   meaning: string
+  description?: string | null
   category: string | null
   difficulty: string
-  example: string | null
+  examples?: ChunkExample[]
   sceneId: string | null
   applicableSceneIds: string[]
   scene?: { id: string; title: string }
   _count?: { userProgresses: number }
+}
+
+export interface ChunkExample {
+  id?: string
+  en: string
+  zh: string
+  note?: string | null
+  level?: string
+  sceneId?: string | null
+  sortOrder?: number
+}
+
+export interface SentencePattern {
+  pattern: string
+  meaning: string
+  slots: string[]
+  example: string
+  difficulty: string
 }
 
 export async function listAllChunks(): Promise<Chunk[]> {
@@ -161,6 +183,7 @@ export interface ScriptEpisode {
   chapterTitle: string
   episodeOrder: number
   title: string
+  description?: string | null
   sceneId: string
   requiredOutputLevel: string
   requiredUserLevel: number
@@ -181,6 +204,8 @@ export interface ScriptEpisode {
   inkScriptId: string | null
   isPreview: boolean
   scene?: { id: string; title: string }
+  coreChunks?: { id: string; chunkId?: string; chunk?: Chunk }[]
+  coreVocabularies?: { id: string; vocabId?: string; vocab?: SceneVocabulary }[]
   _count?: { records: number; dialogues: number }
 }
 

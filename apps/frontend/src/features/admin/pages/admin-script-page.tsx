@@ -15,7 +15,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
+import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
+import { ChunkMultiSelect, DynamicStringList } from '../components/content-authoring-fields'
 import {
     listScriptEpisodes, getScriptEpisode, createScriptEpisode, updateScriptEpisode, deleteScriptEpisode,
     listSceneCategories, listScenes, listAllChunks, listVocabularies,
@@ -37,6 +39,15 @@ export function AdminScriptPage() {
             setEpisodes(eps)
         } catch { }
         finally { setLoading(false) }
+    }
+
+    const openDetail = async (episode: ScriptEpisode) => {
+        try {
+            const full = await getScriptEpisode(episode.id)
+            setDetail(full)
+        } catch {
+            setDetail(episode)
+        }
     }
 
     useEffect(() => { load() }, [])
@@ -118,7 +129,7 @@ export function AdminScriptPage() {
                                         <tr
                                             key={ep.id}
                                             className="cursor-pointer transition-colors hover:bg-muted/30"
-                                            onClick={() => setDetail(ep)}
+                                            onClick={() => openDetail(ep)}
                                         >
                                             <td className="px-4 py-3">
                                                 <div className="flex min-w-0 items-center gap-3">
@@ -259,17 +270,23 @@ function EpisodeEditDialog({
     const [saving, setSaving] = useState(false)
     const [categories, setCategories] = useState<SceneCategory[]>([])
     const [scenes, setScenes] = useState<Scene[]>([])
+    const [chunks, setChunks] = useState<Chunk[]>([])
 
     useEffect(() => {
         listSceneCategories().then(setCategories).catch(() => { })
         listScenes().then(setScenes).catch(() => { })
+        listAllChunks().then(setChunks).catch(() => { })
     }, [])
 
     useEffect(() => {
-        if (edit) setForm(edit)
+        if (edit) setForm({
+            ...edit,
+            chunkIds: edit.coreChunks?.map((item: any) => item.chunk?.id ?? item.chunkId).filter(Boolean) ?? [],
+            vocabIds: edit.coreVocabularies?.map((item: any) => item.vocab?.id ?? item.vocabId).filter(Boolean) ?? [],
+        })
         else setForm({
             chapterId: 'chapter_0', chapterTitle: '新手体验',
-            episodeOrder: 1, title: '', sceneId: '',
+            episodeOrder: 1, title: '', description: '', sceneId: '',
             requiredOutputLevel: 'L1', requiredUserLevel: 1,
             vocabRequiredCount: 6, vocabTotalCount: 10,
             chunkRequiredCount: 6, chunkTotalCount: 10,
@@ -277,7 +294,7 @@ function EpisodeEditDialog({
             passRetellRequired: true, passMinDialogues: 3,
             objectives: [], prerequisiteEpisodes: [],
             npcName: '', npcRole: '', npcPersonality: '',
-            isPreview: false, rewards: {},
+            chunkIds: [], vocabIds: [], isPreview: false, rewards: {},
         })
     }, [edit, open])
 
@@ -296,7 +313,7 @@ function EpisodeEditDialog({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{edit ? '编辑关卡' : '新增关卡'}</DialogTitle>
                 </DialogHeader>
@@ -322,6 +339,14 @@ function EpisodeEditDialog({
                                 onChange={(e) => setForm({ ...form, episodeOrder: Number(e.target.value) })} />
                         </div>
                     </div>
+                    <MarkdownEditor
+                        label="关卡说明"
+                        value={form.description ?? ''}
+                        onChange={(value) => setForm({ ...form, description: value })}
+                        height={150}
+                        preview="edit"
+                        placeholder="这个关卡训练什么能力、用户需要完成什么情境任务..."
+                    />
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label>关联场景</Label>
@@ -367,21 +392,25 @@ function EpisodeEditDialog({
                             </div>
                         </div>
                         <div>
-                            <Label>NPC 性格</Label>
-                            <Input value={form.npcPersonality ?? ''} onChange={(e) => setForm({ ...form, npcPersonality: e.target.value })} placeholder="友好健谈" />
+                            <MarkdownEditor
+                                label="NPC 性格 / 对话风格"
+                                value={form.npcPersonality ?? ''}
+                                onChange={(value) => setForm({ ...form, npcPersonality: value })}
+                                height={140}
+                                preview="edit"
+                                placeholder="友好健谈；会主动确认信息；语速适中..."
+                            />
                         </div>
 
                         <Separator />
 
-                        <div>
-                            <Label>任务目标（每行一个）</Label>
-                            <Textarea
-                                value={(form.objectives ?? []).join('\n')}
-                                onChange={(e) => setForm({ ...form, objectives: e.target.value.split('\n').filter(Boolean) })}
-                                placeholder="说明自己来办理入住&#10;提供姓名和学生证&#10;询问房间位置"
-                                rows={3}
-                            />
-                        </div>
+                        <DynamicStringList
+                            label="任务目标"
+                            value={form.objectives ?? []}
+                            onChange={(objectives) => setForm({ ...form, objectives: objectives.filter(Boolean) })}
+                            placeholder="说明自己来办理入住"
+                            addLabel="添加目标"
+                        />
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -432,6 +461,15 @@ function EpisodeEditDialog({
                                 </div>
                             </div>
                         </div>
+
+                        <Separator />
+
+                        <ChunkMultiSelect
+                            chunks={chunks}
+                            value={form.chunkIds ?? []}
+                            sceneId={form.sceneId}
+                            onChange={(chunkIds) => setForm({ ...form, chunkIds })}
+                        />
 
                         <Separator />
 

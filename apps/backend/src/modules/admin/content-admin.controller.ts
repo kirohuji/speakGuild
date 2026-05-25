@@ -242,6 +242,7 @@ export class ContentAdminController {
       orderBy: { createdAt: 'desc' },
       include: {
         scene: { select: { id: true, title: true } },
+        examples: { orderBy: { sortOrder: 'asc' } },
         _count: { select: { userProgresses: true } },
       },
     });
@@ -254,11 +255,28 @@ export class ContentAdminController {
       data: {
         text: dto.text,
         meaning: dto.meaning,
+        description: dto.description ?? null,
         category: dto.category ?? '',
         difficulty: dto.difficulty ?? 'L2',
-        example: dto.example ?? null,
         sceneId: dto.sceneId ?? null,
         applicableSceneIds: dto.applicableSceneIds ?? [],
+        examples: dto.examples?.length
+          ? {
+              create: dto.examples.map((example, i) => ({
+                en: example.en,
+                zh: example.zh,
+                note: example.note ?? null,
+                level: example.level ?? 'basic',
+                sceneId: example.sceneId ?? null,
+                sortOrder: i,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        scene: { select: { id: true, title: true } },
+        examples: { orderBy: { sortOrder: 'asc' } },
+        _count: { select: { userProgresses: true } },
       },
     });
   }
@@ -269,12 +287,38 @@ export class ContentAdminController {
     const data: any = {};
     if (dto.text !== undefined) data.text = dto.text;
     if (dto.meaning !== undefined) data.meaning = dto.meaning;
+    if (dto.description !== undefined) data.description = dto.description;
     if (dto.category !== undefined) data.category = dto.category;
     if (dto.difficulty !== undefined) data.difficulty = dto.difficulty;
-    if (dto.example !== undefined) data.example = dto.example;
     if (dto.sceneId !== undefined) data.sceneId = dto.sceneId;
     if (dto.applicableSceneIds !== undefined) data.applicableSceneIds = dto.applicableSceneIds;
-    return this.prisma.chunk.update({ where: { id }, data });
+    return this.prisma.$transaction(async (tx) => {
+      const chunk = await tx.chunk.update({ where: { id }, data });
+      if (dto.examples !== undefined) {
+        await tx.chunkExample.deleteMany({ where: { chunkId: id } });
+        if (dto.examples.length > 0) {
+          await tx.chunkExample.createMany({
+            data: dto.examples.map((example, i) => ({
+              chunkId: id,
+              en: example.en,
+              zh: example.zh,
+              note: example.note ?? null,
+              level: example.level ?? 'basic',
+              sceneId: example.sceneId ?? null,
+              sortOrder: i,
+            })),
+          });
+        }
+      }
+      return tx.chunk.findUnique({
+        where: { id: chunk.id },
+        include: {
+          scene: { select: { id: true, title: true } },
+          examples: { orderBy: { sortOrder: 'asc' } },
+          _count: { select: { userProgresses: true } },
+        },
+      });
+    });
   }
 
   @Delete('chunks/:id')
@@ -322,6 +366,7 @@ export class ContentAdminController {
         chapterTitle: rest.chapterTitle,
         episodeOrder: rest.episodeOrder,
         title: rest.title,
+        description: rest.description ?? null,
         sceneId: rest.sceneId,
         requiredOutputLevel: rest.requiredOutputLevel ?? 'L1',
         requiredUserLevel: rest.requiredUserLevel ?? 1,
@@ -365,6 +410,7 @@ export class ContentAdminController {
     if (rest.chapterTitle !== undefined) data.chapterTitle = rest.chapterTitle;
     if (rest.episodeOrder !== undefined) data.episodeOrder = rest.episodeOrder;
     if (rest.title !== undefined) data.title = rest.title;
+    if (rest.description !== undefined) data.description = rest.description;
     if (rest.sceneId !== undefined) data.sceneId = rest.sceneId;
     if (rest.requiredOutputLevel !== undefined) data.requiredOutputLevel = rest.requiredOutputLevel;
     if (rest.requiredUserLevel !== undefined) data.requiredUserLevel = rest.requiredUserLevel;

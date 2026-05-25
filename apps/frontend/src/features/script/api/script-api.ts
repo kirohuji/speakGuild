@@ -42,6 +42,7 @@ export interface EpisodeDetail {
   episodeOrder: number
   npcName: string
   npcRole: string
+  description?: string
   npcPersonality?: string
   objectives: string[]
   rewards: any
@@ -50,7 +51,7 @@ export interface EpisodeDetail {
   requiredUserLevel: number
   scene: { id: string; title: string; location: string }
   coreVocabularies: { vocab: { id: string; word: string; meaning: string } }[]
-  coreChunks: { chunk: { id: string; text: string; meaning: string; example?: string } }[]
+  coreChunks: { chunk: { id: string; text: string; meaning: string; description?: string | null; examples?: Array<{ en: string; zh: string; note?: string | null; level?: string }> } }[]
   records: { passed: boolean }[]
 }
 
