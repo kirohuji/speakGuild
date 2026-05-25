@@ -372,10 +372,14 @@ model ScriptEpisode {
   // 奖励
   rewards             Json?     // { "unlockScenes": [], "unlockNpc": "alex", "xp": 30, "sceneMasteryBonus": 15 }
   
-  // NPC 配置
+  // NPC 配置（Ink 驱动模式）
   npcName             String    // "Alex（室友）"
   npcRole             String    // "室友，大一新生，友好健谈"
-  npcPersonality      String?   // NPC 性格描述，用于 AI 生成对话
+  npcPersonality      String?   // NPC 性格描述（Ink 脚本外的 AI fallback 用）
+  
+  // 🆕 Ink 叙事脚本（剧本模式的对话由 Ink 驱动，不是 AI 生成）
+  inkScriptId         String?   // 关联的 InkScript.id — 剧本对话的权威来源
+  // Ink 脚本中通过外部函数回调触发：任务目标检测、Chunk 使用统计等
   
   // 核心内容
   coreVocabularies    SceneVocabulary[]
@@ -958,13 +962,14 @@ modules/chunk/
 
 #### 4.2.3 Script Module（剧本模块）
 
+剧本模式的对话由 **Ink 叙事脚本驱动**，不是 AI 实时生成。Ink 脚本是内容的权威来源，AI 只负责**任务判断**（用户回答是否完成目标）和**纠错升级**（语法/表达优化）。
+
 ```
 modules/script/
 ├── script.module.ts
 ├── script.controller.ts
-├── script.service.ts
-├── script-npc.service.ts        # NPC 对话生成（调用 AI）
-├── script-judge.service.ts      # 任务完成判断（调用 AI）
+├── script.service.ts              # 关卡管理（CRUD+解锁检测+准备度计算）
+├── script-judge.service.ts        # AI 任务判断（是否切题? 完成哪些目标? 使用哪些 Chunk?）
 └── dto/
     ├── list-episodes.dto.ts
     ├── start-episode.dto.ts
@@ -972,25 +977,74 @@ modules/script/
     └── episode-result.dto.ts
 ```
 
+**❌ 删除：** `script-npc.service.ts` — NPC 对话不再由 AI 生成，改为 Ink 脚本驱动。
+
 **API 端点：**
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/v1/script/chapters` | 获取所有章节+关卡列表 |
-| GET | `/api/v1/script/episodes/:id` | 关卡详情（含解锁状态） |
+| GET | `/api/v1/script/chapters` | 获取所有章节+关卡列表（含解锁状态） |
+| GET | `/api/v1/script/episodes/:id` | 关卡详情（含 Ink 脚本引用+词汇+Chunk+准备度） |
 | GET | `/api/v1/script/episodes/:id/readiness` | 场景准备度 |
-| POST | `/api/v1/script/episodes/:id/start` | 开始关卡（返回开场 NPC 对话） |
-| POST | `/api/v1/script/episodes/:id/dialogue` | 提交用户语音转写，返回 NPC 回复+判断 |
+| GET | `/api/v1/script/episodes/:id/ink` | 获取该关卡的 Ink 编译 JSON（前端 inkjs 加载） |
+| POST | `/api/v1/script/episodes/:id/judge` | **仅提交用户转写文本做任务判断**（AI，非对话生成） |
 | POST | `/api/v1/script/episodes/:id/retell` | 提交复述结果 |
-| POST | `/api/v1/script/episodes/:id/complete` | 关卡复盘 + 结算 |
+| POST | `/api/v1/script/episodes/:id/complete` | 关卡复盘 + 纠错升级 + 结算 |
 | GET | `/api/v1/script/records` | 我的剧本通关记录 |
 
-**核心业务流程（Script NPC 服务）：**
+**核心业务流程（Ink 驱动 + AI 判断）：**
+
 ```
-用户提交语音 → Whisper 转写 → 
-  AI 任务判断 Prompt（是否切题? 是否完成目标? 使用了哪些 Chunk? 是否需要追问?） →
-  如果未完成 → AI 生成 NPC 追问（引导用户补充） →
-  如果完成 → AI 纠错 + 表达升级 → 推进剧情
+前端 inkjs 运行 Ink 脚本：
+  Ink → Continue() → NPC 对话文本 → PIXI 渲染对话框
+  Ink → 遇到选择 → 展示选项给用户
+  Ink → 遇到 {user_input} 标记 → 暂停，用户录音
+      ↓
+  用户语音 → Whisper 转写 → 
+      ↓
+  前端将转写文本注入 Ink 变量 → Ink 继续运行
+      ↓
+  同时：POST /judge → AI 判断（切题? 完成目标? 使用 Chunk?）
+      ↓
+  前端根据判断结果更新 HUD（任务进度条/Chunk 使用追踪）
+      ↓
+  Ink 继续 → 下一段 NPC 对话...
+  
+  循环直到 Ink 脚本结束 → POST /complete → AI 纠错升级 → 结算
 ```
+
+**Ink 脚本中的约定标记（外部函数）：**
+
+```ink
+// 剧本 Ink 脚本示例片段
+=== dorm_checkin ===
+# 前台 NPC
+FrontDesk: Hi! Welcome to the dormitory. How can I help you?
+*   [I'm here to check in] -> checkin_response
+*   [I'm looking for my room] -> room_response
+*   [Just looking around] -> casual_response
+
+= checkin_response
+FrontDesk: Great! Let me look up your booking.
+-> wait_for_input      // ← 外部函数：暂停叙事，等待用户录音
+// 用户录音 → 转写 → 注入 $user_last_input → AI 判断 → 继续
+
+= after_input
+// Ink 根据 AI 判断结果分支
+{ judge_result == "on_topic":
+    FrontDesk: I found your booking. Could you show me your student ID?
+    -> wait_for_input
+}
+{ judge_result == "off_topic":
+    FrontDesk: I'm sorry, I didn't quite catch that. Are you here to check in?
+    -> wait_for_input
+}
+```
+
+> **为什么剧本模式也用 Ink 而不是 AI 生成 NPC 对话：**
+> 1. **内容可控**：剧本对话由内容团队精心编写，保证教学质量和语言难度精确匹配用户等级
+> 2. **离线可用**：Ink JSON 加载后不依赖网络，对话流畅无延迟
+> 3. **可测试**：Ink 脚本可以独立测试，不依赖 AI 的不确定性
+> 4. **AI 用对地方**：AI 只做它擅长的事——判断用户自由回答的质量（切题/目标完成/Chunk 使用），不做 NPC 对话生成
 
 #### 4.2.4 Expression Module（表达库模块）
 
@@ -1437,237 +1491,161 @@ features/practice/
   保存到表达库
 ```
 
-#### 5.2.3 剧本模式页面
+#### 5.2.3 剧本模式 & 探索模式 — 共享 VN 渲染引擎
+
+剧本模式和探索模式**共用同一套 inkjs + PIXI.js 视觉小说渲染引擎**，区别仅在于外层包装：
+
+| | 剧本模式 | 探索模式 |
+|---|---|---|
+| **叙事驱动** | Ink 脚本（线性/分支剧情，内容团队编写） | Ink 脚本（地点/NPC 对话）+ AI 自由对话 fallback |
+| **入口** | Chapter → Episode 关卡卡片 | 地图 → 地点 → NPC |
+| **HUD** | 任务进度 + Chunk 使用追踪 + 通关条件 | 地图导航 + 存档/读档 + 角色状态 |
+| **对话后** | AI 任务判断 → 反馈注入 Ink → 继续叙事 | AI 纠错反馈（自由对话模式） |
+| **自由度** | 中（有任务目标约束） | 高（可自由选择对话对象和话题） |
+
+##### 5.2.3a 共享 VN 引擎层（`features/vn-engine/`）
+
+```
+features/vn-engine/                   # 🆕 剧本 & 探索共用的 VN 渲染引擎
+├── game-coordinator.ts              # 游戏协调器（核心调度：加载场景→运行 Ink→渲染→响应用户）
+├── pixi/                             # PIXI.js 渲染层
+│   ├── pixi-app.ts                  # PIXI.Application 单例初始化
+│   ├── scenes/
+│   │   └── vn-scene.ts              # VN 场景（背景+立绘+对话框+转场）
+│   ├── layers/
+│   │   ├── background-layer.ts      # 背景图层（渐变/滑动转场）
+│   │   ├── character-layer.ts       # 角色立绘层（表情切换/入场出场动画/抖动）
+│   │   └── dialogue-layer.ts        # 对话框层（Ren'Py 风格底栏+角色名标签）
+│   └── effects/
+│       ├── transition.ts            # 转场效果（淡入淡出/滑动/溶解）
+│       └── character-anim.ts        # 角色动画（入场slide/高亮/抖动）
+├── ink/                              # inkjs 叙事引擎封装
+│   ├── ink-engine.ts                # inkjs Story 封装（加载/continue/选择/存档序列化）
+│   ├── ink-bindings.ts              # 外部函数绑定注册表
+│   │   ├── waitForUserInput()       # 暂停叙事，等待用户录音
+│   │   ├── showExpression(char,expr)# 切换角色立绘表情
+│   │   ├── playBgm(name)            # 播放背景音乐
+│   │   ├── setFlag(key,value)       # 设置游戏旗标
+│   │   └── triggerJudge()           # 触发 AI 任务判断（仅剧本模式）
+│   └── ink-debug.ts                 # Ink 调试工具（开发用：跳转 knot/查看变量）
+├── react/                            # React ↔ PIXI 桥接层
+│   ├── vn-canvas.tsx                # PIXI Canvas 的 React 包装组件
+│   ├── vn-hud-overlay.tsx           # VN 场景上的 React HUD 覆盖层
+│   ├── choice-buttons.tsx           # Ink 分支选项按钮（渲染在 Canvas 上方）
+│   └── use-ink-story.ts             # React Hook：加载 Ink → 驱动 UI 更新
+└── save/
+    └── save-manager.ts              # 存档管理器（Ink state + 世界状态 + 多槽位）
+```
+
+##### 5.2.3b 剧本模式页面（`features/script/`）
 
 ```
 features/script/
 ├── pages/
-│   ├── script-hub-page.tsx         # 章节列表+关卡卡片
-│   └── script-play-page.tsx        # 剧本对话页面
+│   ├── script-hub-page.tsx          # 章节列表+关卡卡片
+│   └── script-play-page.tsx         # 剧本对话页面（嵌入 VN Canvas + 剧本 HUD）
 ├── components/
-│   ├── chapter-list.tsx            # 章节列表
-│   ├── episode-card.tsx            # 关卡卡片（含准备度、要求、奖励）
-│   ├── episode-locked-card.tsx     # 未解锁关卡卡片（含缺失项+推荐练习）
-│   ├── episode-intro.tsx           # 关卡开场（剧情背景+任务目标）
-│   ├── npc-dialogue-bubble.tsx     # NPC 对话气泡
-│   ├── user-response-area.tsx      # 用户录音回答区
-│   ├── task-progress-bar.tsx       # 任务目标完成进度
-│   ├── chunk-usage-tracker.tsx     # Chunk 使用追踪
-│   ├── episode-recap.tsx           # 关卡复盘（纠错+升级+复述）
-│   └── episode-reward.tsx          # 通关奖励展示
-└── api/
-    └── script-api.ts
+│   ├── chapter-list.tsx             # 章节列表
+│   ├── episode-card.tsx             # 关卡卡片（准备度+要求+奖励）
+│   ├── episode-locked-card.tsx      # 未解锁关卡（缺失项+推荐练习）
+│   ├── episode-intro.tsx            # 关卡开场覆盖层（剧情背景+任务目标）
+│   ├── script-hud.tsx               # 🆕 剧本 HUD（任务进度条+Chunk 追踪+轮数）
+│   ├── episode-recap.tsx            # 关卡复盘（纠错+升级+复述）
+│   └── episode-reward.tsx           # 通关奖励展示
+├── api/
+│   └── script-api.ts                # 关卡列表/Ink 加载/AI 判断/结算
+└── stores/
+    └── script.store.ts              # 当前关卡状态+对话历史+任务进度
 ```
 
-**剧本对话页面布局：**
+**剧本模式页面布局（复用 VN 引擎）：**
+
 ```
-┌─────────────────────────────┐
-│  🎬 Chapter 1-3 宿舍 Check-in│
-│  进度：目标 2/4 | Chunk 1/3  │
-├─────────────────────────────┤
-│                             │
-│  ┌─────────────────────┐    │
-│  │ 🧑‍💼 前台：Hi! Welcome  │    │
-│  │ to the dormitory.   │    │
-│  │ How can I help you? │    │
-│  └─────────────────────┘    │
-│                             │
-│  ┌─────────────────────┐    │
-│  │ 🎙️ 你的回答：        │    │
-│  │ "I'm here to check  │    │
-│  │  in. My name is..." │    │
-│  │                     │    │
-│  │ ✅ 目标完成: 说明入住  │    │
-│  │ ✅ Chunk: I'm here   │    │
-│  │    to check in.      │    │
-│  └─────────────────────┘    │
-│                             │
-│  ┌─────────────────────────┐│
-│  │ 🧑‍💼 Great! Let me look ││
-│  │ up your booking.       ││
-│  │ Could you show me your ││
-│  │ student ID?            ││
-│  └─────────────────────────┘│
-│                             │
-│        [🎙️ 按住录音]        │
-│                             │
-│  [词汇提示] [Chunk提示]      │
-└─────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  🎬 Chapter 1-3 宿舍 Check-in                │  ← React HUD
+│  ████████████░░░░ 目标 2/4 | Chunk 2/3       │
+├──────────────────────────────────────────────┤
+│                                              │
+│              PIXI Canvas                     │
+│         🌆 宿舍前台背景                        │
+│                                              │
+│   ┌────────┐              ┌────────┐         │
+│   │ 🧑‍💼 前台 │              │  🧑 你  │         │
+│   │ (left) │              │ (right)│         │
+│   └────────┘              └────────┘         │
+│                                              │
+│  ┌──────────────────────────────────────────┐│
+│  │ 🧑‍💼 前台                                  ││
+│  │ "Great! Let me look up your booking.    ││
+│  │  Could you show me your student ID?"    ││
+│  └──────────────────────────────────────────┘│
+│                                              │
+├──────────────────────────────────────────────┤
+│  [🎙️ 按住录音]    [📋 词汇提示] [💬 Chunk提示] │  ← React 控件
+└──────────────────────────────────────────────┘
 ```
 
-#### 5.2.4 探索模式 — 视觉小说架构
+**剧本模式特有的 Ink 外部函数：**
 
-探索模式采用 **PIXI.js（渲染层）+ inkjs（叙事引擎）** 双层架构，参考 Ren'Py / PixiVN / NQTR 的视觉小说风格。
+| 函数 | 触发时机 | 作用 |
+|------|---------|------|
+| `waitForUserInput()` | Ink 遇到需要用户回答的节点 | 暂停叙事 → 激活录音按钮 → 用户录音 → 转写注入 `$user_last_input` |
+| `triggerJudge()` | 用户回答后 | 调用 AI 判断接口 → 结果注入 Ink 变量 `judge_result`, `completed_objectives`, `used_chunks` |
+| `updateTaskHud()` | AI 判断返回后 | 更新 React HUD 层的任务进度和 Chunk 计数 |
+| `showChunkHint(hint)` | Ink 中标记了 `#chunk_hint` 的节点 | 在 HUD 中展示 Chunk 使用提示 |
 
-**技术选型：**
-
-| 层 | 技术 | 作用 |
-|----|------|------|
-| 渲染引擎 | **PIXI.js v8** | 2D WebGL 渲染：背景图、角色立绘、对话框 UI、地图、转场动画 |
-| 叙事引擎 | **inkjs** | Ink 语言运行时：对话流控制、分支选择、变量管理、状态序列化 |
-| 语音 | **现有 TTS 模块** | NPC 对话配音（可选） |
-| 语音输入 | **现有 Whisper 集成** | 用户语音 → 文本 → Ink 变量或 AI 判断 |
-| 资源管理 | **现有 COS / File-Assets** | 立绘、背景、地图图等静态资源存储 |
-
-**前端目录结构：**
+##### 5.2.3c 探索模式页面（`features/explore/`）— 复用 VN 引擎
 
 ```
 features/explore/
 ├── pages/
-│   ├── explore-map-page.tsx        # 地图页面（PIXI 渲染可点击地图）
-│   └── explore-location-page.tsx   # 地点页面（VN 对话场景）
-│
-├── engine/                          # 🆕 游戏引擎层
-│   ├── game-coordinator.ts         # 游戏协调器（核心调度）
-│   ├── pixi/
-│   │   ├── pixi-app.ts             # PIXI.Application 初始化
-│   │   ├── scenes/
-│   │   │   ├── map-scene.ts        # 地图场景（地点标记+导航）
-│   │   │   └── vn-scene.ts         # 视觉小说场景（背景+立绘+对话框）
-│   │   ├── layers/
-│   │   │   ├── background-layer.ts # 背景图层（渐变/滑动转场）
-│   │   │   ├── character-layer.ts  # 角色立绘层（表情切换/入场出场动画）
-│   │   │   └── dialogue-layer.ts   # 对话框层（Ren'Py 风格底栏）
-│   │   └── effects/
-│   │       ├── transition.ts       # 转场效果（淡入淡出/滑动）
-│   │       └── character-anim.ts   # 角色动画（入场/抖动/高亮）
-│   ├── ink/
-│   │   ├── ink-engine.ts           # inkjs Story 封装（加载/继续/选择/存档）
-│   │   └── ink-bindings.ts         # Ink 外部函数绑定（播放音效/动画触发等）
-│   └── save/
-│       └── save-manager.ts         # 存档管理器（自动存档+多槽位）
-│
-├── components/                      # React 组件层（嵌在 PIXI Canvas 之上）
-│   ├── dialogue-box.tsx            # 对话框 React 实现（备选方案，非 PIXI 模式用）
-│   ├── choice-buttons.tsx          # 分支选择按钮
-│   ├── character-status.tsx        # 角色好感度/状态显示
-│   ├── map-hud.tsx                 # 地图 HUD（地点名称、导航提示）
-│   ├── save-load-panel.tsx         # 存档/读档面板
-│   └── free-dialogue-input.tsx     # 自由对话输入（非 Ink 驱动时使用）
-│
+│   ├── explore-map-page.tsx         # 地图页面（Phase 4: React+CSS | V1.2: PIXI 渲染）
+│   └── explore-location-page.tsx    # 地点 VN 场景（复用 vn-engine）
+├── components/
+│   ├── map/
+│   │   ├── mini-map.tsx             # 小地图（React 版）
+│   │   └── location-pin.tsx         # 地点标记（可点击进入）
+│   ├── vn/                           # 探索模式特有的 VN 组件
+│   │   ├── explore-hud.tsx          # 探索 HUD（地图导航+存档+角色状态）
+│   │   ├── npc-select-dialog.tsx    # NPC 选择对话框（一个地点多个 NPC）
+│   │   └── free-dialogue-input.tsx  # 自由对话输入（非 Ink 驱动时使用）
+│   ├── save/
+│   │   └── save-load-panel.tsx      # 存档/读档面板
+│   └── character/
+│       └── character-status.tsx     # 角色好感度/状态显示
 ├── api/
-│   ├── explore-api.ts              # 地图/地点/角色 API
-│   ├── ink-api.ts                  # Ink 剧本加载 API
-│   └── game-save-api.ts            # 存档 API
-│
+│   ├── explore-api.ts               # 地图/地点/角色 API
+│   ├── ink-api.ts                   # Ink 剧本加载 API
+│   └── game-save-api.ts             # 存档 API
 └── stores/
-    └── explore.store.ts            # 探索模式全局状态（当前位置/NPC/标志位）
+    └── explore.store.ts             # 当前位置/NPC/旗标/存档状态
 ```
 
-**游戏协调器 (GameCoordinator) 核心流程：**
-
-```typescript
-// game-coordinator.ts — 伪代码
-class GameCoordinator {
-  private pixiApp: PIXI.Application;
-  private inkStory: inkjs.Story;
-  private vnScene: VNScene;
-
-  // 进入一个地点
-  async enterLocation(locationId: string) {
-    // 1. 加载地点元数据
-    const location = await exploreApi.getLocation(locationId);
-    
-    // 2. PIXI 渲染场景
-    await this.vnScene.setBackground(location.backgroundUrl);
-    await this.vnScene.setCharacters(location.npcs);  // 立绘定位
-    
-    // 3. 如果有 Ink 剧本，加载并开始播放
-    if (location.inkScriptId) {
-      const inkJson = await inkApi.loadScript(location.inkScriptId);
-      this.inkStory = new inkjs.Story(inkJson);
-      
-      // 注入外部函数（Ink 脚本中调用的 React 侧功能）
-      this.inkStory.BindExternalFunction("playBgm", (name) => { /* ... */ });
-      this.inkStory.BindExternalFunction("showExpression", (char, expr) => {
-        this.vnScene.setExpression(char, expr);  // PIXI 立绘表情切换
-      });
-      
-      // 开始叙事
-      this.continueStory();
-    }
-  }
-
-  // 推进 Ink 叙事
-  continueStory() {
-    while (this.inkStory.canContinue) {
-      const line = this.inkStory.Continue();
-      this.vnScene.showDialogue(line);  // 更新对话框文字
-    }
-    
-    // 如果有分支选择，展示选项
-    if (this.inkStory.currentChoices.length > 0) {
-      this.showChoices(this.inkStory.currentChoices);
-    }
-  }
-
-  // 用户选择了某个分支
-  chooseChoice(index: number) {
-    this.inkStory.ChooseChoiceIndex(index);
-    this.continueStory();
-  }
-
-  // 存档
-  async autoSave() {
-    const saveData = {
-      inkState: this.inkStory.state.toJson(),
-      currentLocationId: this.currentLocationId,
-      flags: this.inkStory.variablesState.GetVariables(),
-    };
-    await gameSaveApi.save(saveData);
-  }
-}
-```
-
-**视觉小说场景布局（PIXI 渲染层）：**
+**两种模式共用引擎的代码关系：**
 
 ```
-┌──────────────────────────────────────────────┐
-│                                              │
-│         🌆 背景图层 (BackgroundLayer)         │
-│         (宿舍大厅 / 咖啡店 / 校园...)          │
-│                                              │
-│   ┌────────┐              ┌────────┐         │
-│   │ 🧑‍💼     │              │  🧑     │         │
-│   │ 前台    │              │  用户   │         │
-│   │ (left) │              │ (right) │         │
-│   │ happy  │              │ neutral │         │
-│   └────────┘              └────────┘         │
-│     角色立绘层 (CharacterLayer)               │
-│                                              │
-│  ┌──────────────────────────────────────────┐│
-│  │ 🧑‍💼 前台                                  ││
-│  │ "Great! Let me look up your booking.     ││
-│  │  Could you show me your student ID?"     ││
-│  │                                          ││
-│  │                         [🎙️ 按住录音]    ││
-│  └──────────────────────────────────────────┘│
-│     对话框层 (DialogueLayer)                  │
-│     Ren'Py 风格底栏 + 角色名标签              │
-└──────────────────────────────────────────────┘
-```
-
-**与练习模式/剧本模式的关系：**
-
-```
-练习模式 ──→ 学会场景表达 ──→ 场景准备度达标
-                                    ↓
-剧本模式 ──→ 固定任务通关 ──→ 解锁探索地点
-                                    ↓
-探索模式 ──→ 自由漫步校园 ──→ Ink 支线任务 + AI 自由对话
-                                    ↓
-                              发现新弱点 ──→ 回到练习模式
+features/vn-engine/           ← 共享（PIXI + inkjs 封装 + React 桥接）
+    ↑                ↑
+    │                │
+features/script/     features/explore/
+  script-play-page     explore-location-page
+  · 加载关卡 Ink       · 加载地点 Ink（或 AI 自由对话）
+  · 剧本 HUD           · 探索 HUD
+  · AI 任务判断        · 存档/读档
+  · 结算+复盘          · NPC 选择
 ```
 
 **分阶段前端实现：**
 
 | 阶段 | PIXI 实现 | React Fallback | 说明 |
 |------|-----------|----------------|------|
-| **Phase 4 MVP** | ❌ 不用 | ✅ 纯 React + CSS | 地图用 CSS/图片 + 点击热点，对话框用 React 组件 |
-| **V1.2** | ✅ 基础 VN 场景 | React 地图 | PIXI 仅渲染对话场景（背景+立绘+对话框），地图仍用 React |
-| **V2.0** | ✅ 完整 PIXI | - | 全 PIXI 渲染（地图+场景+转场），React 仅做 HUD 覆盖层 |
+| **Phase 2 剧本** | ❌ 不用 | ✅ React VN 风格 | 剧本模式：React 实现背景+立绘+对话框，inkjs 驱动对话 |
+| **Phase 4 探索** | ❌ 不用 | ✅ React VN 风格 | 探索模式：复用 Phase 2 的 React VN 组件 + 地图导航 |
+| **V1.1** | ✅ 基础 VN 场景 | React 地图 | PIXI.js 替换 VN 场景渲染（背景+立绘+对话框+转场动画） |
+| **V1.2** | ✅ VN + 地图 | - | PIXI 同时渲染地图和场景 |
+| **V2.0** | ✅ 全 PIXI | - | 完整 PIXI 渲染管线，React 仅做 HUD 覆盖层 |
 
-> **为什么 Phase 4 不用 PIXI：** MVP 阶段先验证探索模式的产品逻辑（地点导航 → NPC 对话 → 学习闭环）是否成立，PIXI.js 集成复杂度高（资源加载管线、Canvas 与 React 通信、移动端适配），更适合在 V1.2 验证通过后投入。
+> **为什么 Phase 2-4 不用 PIXI：** MVP 阶段先验证产品逻辑（练习闭环→剧本关卡→探索地图）是否成立。React+CSS 实现 VN 风格（背景图 + 绝对定位立绘 + 底栏对话框 + inkjs 驱动）完全够用。PIXI.js 集成复杂度高（资源加载管线、Canvas ↔ React 通信、移动端适配），在 V1.1 验证通过后再投入性价比更高。
 
 #### 5.2.5 我的成长页面
 
@@ -1903,41 +1881,46 @@ NPC 性格：{npcPersonality}
 }
 ```
 
-**NPC 对话生成 Prompt：**
+> **注意：** 剧本模式的 NPC 对话由 **Ink 脚本驱动**，不由 AI 生成。AI 仅用于**任务判断**（上述 Prompt），判断结果通过外部函数注入 Ink，Ink 根据 `judge_result` / `needsFollowUp` 等变量自行分支到正确的对话内容。这使得 NPC 对话完全可控、可测试，不受 AI 不确定性影响。
+
+### 6.3 探索模式：自由对话 Prompt（仅当 NPC 无 Ink 脚本时 fallback）
+
+当探索模式中某个 NPC 没有配置 Ink 对话脚本时，使用 AI 生成 NPC 回复：
 
 ```markdown
-你正在扮演剧本中的一个 NPC 角色。当前剧本：
+你正在扮演一个英语学习游戏中的 NPC 角色。
 
-场景：{sceneTitle}
 你的角色：{npcName}，{npcRole}
 你的性格：{npcPersonality}
+当前地点：{locationName}（{locationDescription}）
 
-对话上下文：
-- 任务目标：{objectives}
-- 已完成目标：{completedObjectives}
-- 对话历史（最近 3 轮）：
-  {dialogueHistory}
+对话历史（最近 5 轮）：
+{dialogueHistory}
 
-裁判判断结果：
-- 用户是否切题：{isOnTopic}
-- 是否需要追问：{needsFollowUp}
-- 追问原因：{followUpReason}
-- 是否需要提示 Chunk：{shouldHintChunk}
-- 提示建议：{hintChunkSuggestion}
+用户刚才说（语音转写）：
+{userTranscript}
 
 用户当前输出等级：{outputLevel}
 
-请生成你的下一句对白（英文），要求：
-1. 符合角色身份和性格
-2. 自然推动剧情发展
-3. 如果 needFollowUp=true，自然地追问缺失信息
-4. 如果 isComplete=true，自然地结束当前场景对话
-5. 语言难度适应用户等级（{outputLevel}）
-6. 长度控制在 1-3 句
-7. 如果 shouldHintChunk=true，自然地引导用户使用目标 Chunk，但不要直接说出来
+请生成你的回复（英文），要求：
+1. 符合角色身份和性格，保持一致性
+2. 自然回应上一轮对话，推动对话向前
+3. 语言难度适应用户等级（{outputLevel}）
+4. 长度控制在 1-3 句
+5. 如果用户表达有明显语法/搭配问题，自然地用正确的表达回应（不直接纠错，而是示范正确说法）
+6. 如果对话已经进行了 5 轮以上，自然收尾或提议换个话题
+
+同时给出英语纠错反馈（JSON 格式）：
+{
+  "npcReply": "你的回复文本",
+  "corrections": [
+    { "type": "grammar|collocation|chinglish", "original": "...", "correction": "..." }
+  ],
+  "suggestedChunks": ["可以推荐用户学习的相关 Chunk"]
+}
 ```
 
-### 6.3 口语诊断 Prompt
+### 6.4 口语诊断 Prompt
 
 ```markdown
 你是一个英语口语诊断评估师。用户刚刚完成了 2 分钟的口语诊断，
@@ -1998,17 +1981,19 @@ NPC 性格：{npcPersonality}
 
 ### Phase 2：剧本模式 MVP（第 5-7 周）
 
-**目标：** 完成 Chapter 0（3 个体验关）+ Chapter 1 部分关卡
+**目标：** 完成 Chapter 0（3 个体验关）+ Chapter 1 部分关卡，Ink 叙事引擎 + React VN 渲染
 
 | 任务 | 工时估计 |
 |------|---------|
-| 后端 Script 模块（关卡管理+NPC 对话+任务判断+通关结算） | 5d |
-| 后端 Script NPC 对话 Prompt 调优（成本最高的部分） | 5d |
-| 后端 Script 任务判断 Prompt 调优 | 3d |
+| 后端 Script 模块（关卡 CRUD+准备度计算+解锁检测+Ink 脚本关联） | 3d |
+| 后端 Script Judge 服务（AI 任务判断 Prompt 调优：切题/目标完成/Chunk 使用） | 3d |
+| 后端 Ink 剧本管理（编译 JSON 存储+版本+变量声明提取） | 2d |
+| 前端 VN 引擎基础（inkjs 封装：加载/continue/选择/存档序列化） | 3d |
+| 前端 VN 引擎基础（React VN 场景：背景+立绘+底栏对话框+分支按钮） | 3d |
 | 前端剧本 Hub 页面（章节列表+关卡卡片+准备度+解锁状态） | 3d |
-| 前端剧本 Play 页面（对话界面+NPC 气泡+任务进度+录音+复盘） | 5d |
+| 前端剧本 Play 页面（嵌入 VN 引擎+剧本 HUD+录音+AI 判断+复盘） | 5d |
 | 前端解锁引导（缺失项→推荐练习→跳转练习模式→回到剧本） | 2d |
-| Chapter 0-3 个关卡内容制作 | 3d |
+| Chapter 0 体验关 Ink 脚本编写（3 关 × 内容团队） | 3d |
 | 联调测试 | 3d |
 
 ### Phase 3：新手引导 + 等级系统 + 成就系统（第 8-9 周）
