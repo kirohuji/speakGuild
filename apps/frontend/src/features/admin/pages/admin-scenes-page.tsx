@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
   BookOpen, ChevronDown, ChevronRight, Save, X,
+  Volume2, Sparkles, ExternalLink, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,11 @@ import {
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import {
+  lookupWord, getBestPhonetic, getFirstAudio,
+  type DictEntry,
+} from '@/lib/dictionary-api'
+import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
 import {
   listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory,
@@ -181,11 +187,45 @@ function VocabularyDialog({
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [dictData, setDictData] = useState<DictEntry[] | null>(null)
+  const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null>(null)
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupError, setLookupError] = useState('')
 
   useEffect(() => {
     if (edit) setForm(edit)
     else setForm({ sceneId, word: '', meaning: '', sortOrder: 0 })
+    setDictData(null)
+    setEnrichData(null)
+    setLookupError('')
   }, [edit, open, sceneId])
+
+  const handleLookup = async () => {
+    const word = form.word?.trim()
+    if (!word) return
+    setLookupLoading(true)
+    setLookupError('')
+    try {
+      const dict = await lookupWord(word)
+      setDictData(dict)
+      const summary = dict
+        ? dict.flatMap((entry) => entry.meanings).slice(0, 3)
+            .map((meaning) => `${meaning.partOfSpeech}: ${meaning.definitions[0]?.definition ?? ''}`)
+            .join(' | ')
+        : undefined
+      const enriched = await enrichWord(word, summary)
+      setEnrichData(enriched)
+      if (!form.meaning?.trim() && enriched.chineseTranslation) {
+        setForm((prev: any) => ({ ...prev, meaning: enriched.chineseTranslation }))
+      }
+    } catch (e: any) {
+      setLookupError(e?.message ?? '查词失败')
+      setDictData(null)
+      setEnrichData(null)
+    } finally {
+      setLookupLoading(false)
+    }
+  }
 
   const handleSave = async () => {
     if (!form.word?.trim() || !form.meaning?.trim()) return
@@ -209,12 +249,27 @@ function VocabularyDialog({
         <div className="space-y-4">
           <div>
             <Label>英文</Label>
-            <Input value={form.word ?? ''} onChange={(e) => setForm({ ...form, word: e.target.value })} placeholder="dormitory" />
+            <div className="flex gap-2">
+              <Input value={form.word ?? ''} onChange={(e) => setForm({ ...form, word: e.target.value })} placeholder="dormitory" />
+              <Button type="button" variant="outline" onClick={handleLookup} disabled={lookupLoading || !form.word?.trim()}>
+                {lookupLoading ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Sparkles className="mr-1.5 size-3.5" />}
+                查词
+              </Button>
+            </div>
           </div>
           <div>
             <Label>中文含义</Label>
             <Input value={form.meaning ?? ''} onChange={(e) => setForm({ ...form, meaning: e.target.value })} placeholder="宿舍" />
           </div>
+          {(lookupLoading || lookupError || dictData || enrichData) && (
+            <VocabularyLookupPreview
+              loading={lookupLoading}
+              error={lookupError}
+              dictData={dictData}
+              enrichData={enrichData}
+              onUseMeaning={(meaning) => setForm({ ...form, meaning })}
+            />
+          )}
           <div>
             <Label>排序</Label>
             <Input type="number" value={form.sortOrder ?? 0}
@@ -227,6 +282,114 @@ function VocabularyDialog({
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function VocabularyLookupPreview({
+  loading,
+  error,
+  dictData,
+  enrichData,
+  onUseMeaning,
+}: {
+  loading: boolean
+  error: string
+  dictData: DictEntry[] | null
+  enrichData: WordEnrichmentResult | null
+  onUseMeaning: (meaning: string) => void
+}) {
+  const mainEntry = dictData?.[0]
+  const phonetic = mainEntry ? getBestPhonetic(mainEntry) : null
+  const audioUrl = mainEntry ? getFirstAudio(mainEntry.phonetics) : null
+  const firstMeaning = mainEntry?.meanings[0]
+  const firstDefinition = firstMeaning?.definitions[0]
+
+  const playAudio = () => {
+    if (!audioUrl) return
+    const audio = new Audio(audioUrl.startsWith('//') ? `https:${audioUrl}` : audioUrl)
+    audio.play().catch(() => {})
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+        {error}
+      </div>
+    )
+  }
+
+  if (!mainEntry && !enrichData) return null
+
+  return (
+    <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold">{mainEntry?.word}</span>
+          {phonetic && <span className="rounded-md bg-background px-2 py-0.5 font-mono text-xs text-muted-foreground">{phonetic}</span>}
+          {firstMeaning && <Badge variant="outline" className="text-[10px]">{firstMeaning.partOfSpeech}</Badge>}
+        </div>
+        {audioUrl && (
+          <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={playAudio}>
+            <Volume2 className="mr-1 size-3.5" />
+            发音
+          </Button>
+        )}
+      </div>
+
+      {enrichData?.chineseTranslation && (
+        <div className="flex items-center justify-between gap-3 rounded-md bg-background/70 px-3 py-2">
+          <div>
+            <p className="text-xs text-muted-foreground">AI 中文释义</p>
+            <p className="text-sm font-medium">{enrichData.chineseTranslation}</p>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={() => onUseMeaning(enrichData.chineseTranslation)}>
+            使用
+          </Button>
+        </div>
+      )}
+
+      {firstDefinition && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">词典释义</p>
+          <p className="text-sm leading-relaxed">{firstDefinition.definition}</p>
+          {firstDefinition.example && (
+            <p className="text-xs italic text-muted-foreground">{firstDefinition.example}</p>
+          )}
+        </div>
+      )}
+
+      {enrichData?.examples?.length ? (
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">AI 例句预览</p>
+          <div className="rounded-md bg-background/70 px-3 py-2">
+            <p className="text-sm">{enrichData.examples[0].en}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{enrichData.examples[0].zh}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {mainEntry?.sourceUrls?.[0] && (
+        <a
+          href={mainEntry.sourceUrls[0]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+        >
+          <ExternalLink className="size-3" />
+          查看完整词条
+        </a>
+      )}
+    </div>
   )
 }
 

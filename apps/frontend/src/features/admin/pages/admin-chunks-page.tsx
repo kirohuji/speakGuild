@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
+import { Select } from '@/components/ui/select'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -205,11 +206,11 @@ function ChunkDialog({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label>难度</Label>
-              <select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
+              <Select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
                   {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
                     <option key={l} value={l}>{l}</option>
                   ))}
-                </select>
+                </Select>
             </div>
             <div className="col-span-2">
               <Label>分类标签</Label>
@@ -219,7 +220,7 @@ function ChunkDialog({
           </div>
           <div>
             <Label>关联场景</Label>
-            <select value={form.sceneId ?? ''} onChange={(e) => setForm({ ...form, sceneId: e.target.value || null })}>
+            <Select value={form.sceneId ?? ''} onChange={(e) => setForm({ ...form, sceneId: e.target.value || null })}>
                 <option value="">不关联场景</option>
                 {categories.map((cat) => (
                   <optgroup key={cat.id} label={cat.name}>
@@ -228,7 +229,7 @@ function ChunkDialog({
                     ))}
                   </optgroup>
                 ))}
-              </select>
+              </Select>
           </div>
           <div>
             <Label>示例句子</Label>
