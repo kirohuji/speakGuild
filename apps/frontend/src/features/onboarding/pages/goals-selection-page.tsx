@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { onboardingApi } from '../api/onboarding-api'
 
 const GOAL_OPTIONS = [
   { id: 'daily', label: '日常交流' },
@@ -11,17 +12,19 @@ const GOAL_OPTIONS = [
   { id: 'thinking', label: '提升英语思维' },
 ]
 
-/**
- * 新手引导 - 选择学习目标
- */
 export function GoalsSelectionPage() {
   const navigate = useNavigate()
   const [selected, setSelected] = useState<string[]>([])
+  const [saving, setSaving] = useState(false)
 
   const toggle = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    )
+    setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  const handleNext = async () => {
+    setSaving(true)
+    try { await onboardingApi.selectGoals(selected) } catch {}
+    navigate('/onboarding/ability')
   }
 
   return (
@@ -44,11 +47,11 @@ export function GoalsSelectionPage() {
         ))}
       </div>
       <button
-        disabled={selected.length === 0}
-        onClick={() => navigate('/onboarding/ability')}
+        disabled={selected.length === 0 || saving}
+        onClick={handleNext}
         className="mt-8 rounded-lg bg-primary px-8 py-3 text-primary-foreground disabled:opacity-50"
       >
-        下一步
+        {saving ? '保存中...' : '下一步'}
       </button>
     </div>
   )

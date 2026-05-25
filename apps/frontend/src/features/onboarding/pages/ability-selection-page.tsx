@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { onboardingApi } from '../api/onboarding-api'
 
 const ABILITY_OPTIONS = [
   { level: 'L1', label: 'A. 我能看懂一些英语，但开口很困难' },
@@ -9,12 +10,17 @@ const ABILITY_OPTIONS = [
   { level: 'L5', label: 'E. 我可以自由交流，但想说得更自然、更高级' },
 ]
 
-/**
- * 新手引导 - 自评当前能力
- */
 export function AbilitySelectionPage() {
   const navigate = useNavigate()
   const [selected, setSelected] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const handleStart = async () => {
+    if (!selected) return
+    setSaving(true)
+    try { await onboardingApi.selectAbility(selected) } catch {}
+    navigate('/')
+  }
 
   return (
     <div className="flex flex-col items-center p-6">
@@ -36,11 +42,11 @@ export function AbilitySelectionPage() {
         ))}
       </div>
       <button
-        disabled={!selected}
-        onClick={() => navigate('/')}
+        disabled={!selected || saving}
+        onClick={handleStart}
         className="mt-8 rounded-lg bg-primary px-8 py-3 text-primary-foreground disabled:opacity-50"
       >
-        开始学习
+        {saving ? '保存中...' : '开始学习'}
       </button>
     </div>
   )
