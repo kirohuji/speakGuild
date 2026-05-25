@@ -46,6 +46,8 @@ export interface EpisodeDetail {
   objectives: string[]
   rewards: any
   isPreview: boolean
+  requiredOutputLevel: string
+  requiredUserLevel: number
   scene: { id: string; title: string; location: string }
   coreVocabularies: { vocab: { id: string; word: string; meaning: string } }[]
   coreChunks: { chunk: { id: string; text: string; meaning: string; example?: string } }[]
