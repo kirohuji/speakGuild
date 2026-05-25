@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { NumberTicker } from '@/components/ui/number-ticker'
 import { WordRotate } from '@/components/ui/word-rotate'
@@ -645,6 +646,114 @@ export function PortalPage() {
           </div>
         </FadeInSection>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          FOOTER
+          ═══════════════════════════════════════════════════════════════ */}
+      <footer className="border-t border-border bg-card">
+        <div className="max-w-5xl mx-auto px-4 py-12 lg:py-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {/* 品牌 */}
+            <div className="col-span-2 md:col-span-1">
+              <h3 className="font-display text-lg font-bold text-foreground mb-3">
+                英游记
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                场景化沉浸式英语输出训练平台，帮你把英语从「看得懂」练到「说得出」。
+              </p>
+            </div>
+
+            {/* 产品 */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-3">产品</h4>
+              <ul className="space-y-2">
+                {[
+                  { label: '场景练习', to: '/practice' },
+                  { label: '剧本模式', to: '/script' },
+                  { label: '探索模式', to: '/explore' },
+                  { label: '表达库', to: '/expressions' },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <button
+                      onClick={() => navigate(link.to)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {link.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 成长 */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-3">成长</h4>
+              <ul className="space-y-2">
+                {[
+                  { label: '我的成长', to: '/growth' },
+                  { label: '成就殿堂', to: '/achievements' },
+                  { label: '排行榜', to: '/leaderboard' },
+                  { label: '邀请好友', to: '/invite' },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <button
+                      onClick={() => navigate(link.to)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {link.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 关于 */}
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-3">关于</h4>
+              <ul className="space-y-2">
+                {[
+                  { label: '服务条款', to: '/system/terms' },
+                  { label: '隐私政策', to: '/system/privacy' },
+                  { label: '意见反馈', to: '/feedback' },
+                  { label: '联系客服', to: '/system/contact' },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <button
+                      onClick={() => navigate(link.to)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {link.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <Separator className="my-8" />
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} 英游记（EngJourney）. All rights reserved.
+            </p>
+            <div className="flex items-center gap-4">
+              {[
+                { icon: Languages, text: '8 种语言' },
+                { icon: CheckCircle, text: 'AI 精准评分' },
+                { icon: Zap, text: '实时反馈' },
+              ].map(({ icon: Icon, text }) => (
+                <div
+                  key={text}
+                  className="flex items-center gap-1 text-xs text-muted-foreground"
+                >
+                  <Icon className="h-3 w-3" />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

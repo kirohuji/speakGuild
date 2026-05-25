@@ -12,4 +12,22 @@ export class LevelController {
     const session = await requireAuthSession(req);
     return this.levelService.getOverview(session.user.id);
   }
+
+  @Get('weekly-stats')
+  async getWeeklyStats(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.levelService.getWeeklyStats(session.user.id);
+  }
+
+  @Get('common-errors')
+  async getCommonErrors(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.levelService.getCommonErrors(session.user.id);
+  }
+
+  @Get('recommended-path')
+  async getRecommendedPath(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.levelService.getRecommendedPath(session.user.id);
+  }
 }

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Database, FileText, Settings, BarChart3, Bell,
   ChevronRight, ArrowLeft, CreditCard, Receipt, FolderOpen,
-  Tag, MessageSquare,
+  Tag, MessageSquare, MapPin, BookOpen, Film, Award,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -70,6 +70,30 @@ const menuItems: MenuItem[] = [
     icon: FileText,
     path: '/admin/content',
     soon: true,
+  },
+  {
+    key: 'scenes',
+    label: '场景管理',
+    icon: MapPin,
+    path: '/admin/scenes',
+  },
+  {
+    key: 'chunks',
+    label: 'Chunk 管理',
+    icon: BookOpen,
+    path: '/admin/chunks',
+  },
+  {
+    key: 'script',
+    label: '剧本管理',
+    icon: Film,
+    path: '/admin/script',
+  },
+  {
+    key: 'achievements',
+    label: '成就管理',
+    icon: Award,
+    path: '/admin/achievements',
   },
   {
     key: 'analytics',

@@ -45,6 +45,10 @@ import { AdminCouponsPage } from '@/features/admin/pages/admin-coupons-page'
 import { AdminFeedbacksPage } from '@/features/admin/pages/admin-feedbacks-page'
 import { AdminSettingsPage } from '@/features/admin/pages/admin-settings-page'
 import { AdminAnalyticsPage } from '@/features/admin/pages/admin-analytics-page'
+import { AdminScenesPage } from '@/features/admin/pages/admin-scenes-page'
+import { AdminChunksPage } from '@/features/admin/pages/admin-chunks-page'
+import { AdminScriptPage } from '@/features/admin/pages/admin-script-page'
+import { AdminAchievementsPage } from '@/features/admin/pages/admin-achievements-page'
 
 export default function App() {
   return (
@@ -63,6 +67,10 @@ export default function App() {
                 <Route path="feedbacks" element={<AdminFeedbacksPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
+                <Route path="scenes" element={<AdminScenesPage />} />
+                <Route path="chunks" element={<AdminChunksPage />} />
+                <Route path="script" element={<AdminScriptPage />} />
+                <Route path="achievements" element={<AdminAchievementsPage />} />
               </Route>
 
               {/* 用户端 — RootLayout */}

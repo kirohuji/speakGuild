@@ -119,6 +119,9 @@ export const chunkApi = {
 // ---- 等级 ----
 export const levelApi = {
   getOverview: () => api.get('/level/overview'),
+  getWeeklyStats: () => api.get('/level/weekly-stats'),
+  getCommonErrors: () => api.get('/level/common-errors'),
+  getRecommendedPath: () => api.get('/level/recommended-path'),
 }
 
 export default api
