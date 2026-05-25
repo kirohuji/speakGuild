@@ -4,7 +4,7 @@ import { ScriptService } from './script.service';
 import { ScriptJudgeService } from './script-judge.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/script')
+@Controller('script')
 export class ScriptController {
   constructor(
     private readonly scriptService: ScriptService,

@@ -7,7 +7,7 @@ import { InkScriptService } from './ink/ink-script.service';
 import { GameSaveService } from './game-save/game-save.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/explore')
+@Controller('explore')
 export class ExplorationController {
   constructor(
     private readonly explorationService: ExplorationService,

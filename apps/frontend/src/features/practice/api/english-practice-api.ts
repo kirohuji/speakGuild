@@ -1,9 +1,11 @@
 import axios from 'axios'
 import { getBearerToken } from '@/features/auth/client'
 
-/** 英语输出训练 API 客户端 — 使用 /api/v1 前缀 */
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/guide-exam'
+
+/** 英语输出训练 API 客户端 */
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -93,7 +95,7 @@ export const practiceAiApi = {
     topicTitle?: string
     outputLevel?: string
   }) =>
-    fetch('/api/v1/practice-ai/feedback', {
+    fetch(`${API_BASE}/practice-ai/feedback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getBearerToken()}` },
       body: JSON.stringify(dto),

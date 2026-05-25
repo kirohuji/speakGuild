@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { ChunkService } from './chunk.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/chunks')
+@Controller('chunks')
 export class ChunkController {
   constructor(private readonly chunkService: ChunkService) {}
 

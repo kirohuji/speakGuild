@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { SceneService } from './scene.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/scenes')
+@Controller('scenes')
 export class SceneController {
   constructor(private readonly sceneService: SceneService) {}
 

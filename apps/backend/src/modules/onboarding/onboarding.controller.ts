@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { OnboardingService } from './onboarding.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/onboarding')
+@Controller('onboarding')
 export class OnboardingController {
   constructor(private readonly onboardingService: OnboardingService) {}
 

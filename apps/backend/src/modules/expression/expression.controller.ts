@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { ExpressionService } from './expression.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/expressions')
+@Controller('expressions')
 export class ExpressionController {
   constructor(private readonly expressionService: ExpressionService) {}
 

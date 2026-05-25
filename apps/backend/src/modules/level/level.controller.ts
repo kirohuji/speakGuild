@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { LevelService } from './level.service';
 import { requireAuthSession } from '../auth/session.util';
 
-@Controller('api/v1/level')
+@Controller('level')
 export class LevelController {
   constructor(private readonly levelService: LevelService) {}
 

@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { getBearerToken } from '@/features/auth/client'
 
-const api = axios.create({ baseURL: '/api/v1', timeout: 15000, headers: { 'Content-Type': 'application/json' } })
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/guide-exam'
+const api = axios.create({ baseURL: API_BASE, timeout: 15000, headers: { 'Content-Type': 'application/json' } })
 api.interceptors.request.use((c) => { const t = getBearerToken(); if (t) c.headers.Authorization = `Bearer ${t}`; return c })
 api.interceptors.response.use(
   (r) => (r.data && typeof r.data === 'object' && 'data' in r.data ? r.data.data : r.data),

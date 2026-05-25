@@ -4,7 +4,7 @@ import { EnglishPracticeAiService } from './english-practice-ai.service';
 import { EnglishFeedbackDto, EnglishUpgradeDto } from './dto/english-feedback.dto';
 
 /** 英语输出训练 — AI 纠错 & 表达升级 */
-@Controller('api/v1/practice-ai')
+@Controller('practice-ai')
 export class EnglishPracticeAiController {
   constructor(private readonly service: EnglishPracticeAiService) {}
 

@@ -5,7 +5,7 @@ import { SubmitRecordingDto, SaveExpressionDto } from './dto/english-practice.dt
 import { requireAuthSession } from '../auth/session.util';
 
 /** 英语输出训练 — 练习模式 API */
-@Controller('api/v1/practice')
+@Controller('practice')
 export class EnglishPracticeController {
   constructor(private readonly practiceService: EnglishPracticeService) {}
 

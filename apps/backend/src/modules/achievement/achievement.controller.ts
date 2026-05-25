@@ -4,7 +4,7 @@ import { AchievementService } from './achievement.service'
 import { AchievementEngineService } from './achievement-engine.service'
 import { requireAuthSession } from '../auth/session.util'
 
-@Controller('api/v1/achievements')
+@Controller('achievements')
 export class AchievementController {
   constructor(
     private readonly achievementService: AchievementService,
