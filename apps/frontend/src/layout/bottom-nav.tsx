@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { BookOpen, FileText, User, Bell } from 'lucide-react'
+import { BookOpen, Play, Map, Library, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useAuth } from '@/providers/auth-provider'
 
 const navItems = [
-  { label: '题库', path: '/', icon: BookOpen },
-  { label: '模考', path: '/mock', icon: FileText },
-  { label: '通知', path: '/notifications', icon: Bell },
-  { label: '我的', path: '/profile', icon: User },
+  { label: '练习', path: '/practice', icon: BookOpen },
+  { label: '剧本', path: '/script', icon: Play },
+  { label: '探索', path: '/explore', icon: Map },
+  { label: '表达库', path: '/expressions', icon: Library },
+  { label: '成长', path: '/growth', icon: TrendingUp },
 ]
 
 export function BottomNav() {

@@ -22,6 +22,14 @@ import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { CouponModule } from './modules/coupon/coupon.module';
 import { ReferralModule } from './modules/referral/referral.module';
 import { AchievementModule } from './modules/achievement/achievement.module';
+// --- English Output Training: 新增模块 ---
+import { SceneModule } from './modules/scene/scene.module';
+import { ChunkModule } from './modules/chunk/chunk.module';
+import { LevelModule } from './modules/level/level.module';
+import { ScriptModule } from './modules/script/script.module';
+import { ExpressionModule } from './modules/expression/expression.module';
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { ExplorationModule } from './modules/exploration/exploration.module';
 
 @Module({
   imports: [
@@ -48,6 +56,14 @@ import { AchievementModule } from './modules/achievement/achievement.module';
     CouponModule,
     ReferralModule,
     AchievementModule,
+    // --- English Output Training: 新增模块注册 ---
+    SceneModule,
+    ChunkModule,
+    LevelModule,
+    ScriptModule,
+    ExpressionModule,
+    OnboardingModule,
+    ExplorationModule,
   ],
 })
 export class AppModule {}

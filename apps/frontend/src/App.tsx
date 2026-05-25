@@ -5,7 +5,20 @@ import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
 import { HomePage } from '@/features/question-bank/pages/home-page'
+import { EnglishHomePage } from '@/features/question-bank/pages/english-home-page'
 import { PracticePage } from '@/features/practice/pages/practice-page'
+import { PracticeHubPage } from '@/features/practice/pages/practice-hub-page-v2'
+import { PracticeSessionPage } from '@/features/practice/pages/practice-session-page'
+import { ScriptHubPage } from '@/features/script/pages/script-hub-page'
+import { ScriptPlayPage } from '@/features/script/pages/script-play-page'
+import { ExploreMapPage } from '@/features/explore/pages/explore-map-page'
+import { ExploreLocationPage } from '@/features/explore/pages/explore-location-page'
+import { ExpressionLibraryPage } from '@/features/expression/pages/expression-library-page'
+import { GrowthPage } from '@/features/growth/pages/growth-page'
+import { AchievementHallPage } from '@/features/achievement/pages/achievement-hall-page'
+import { OnboardingLayout } from '@/features/onboarding/pages/onboarding-layout'
+import { GoalsSelectionPage } from '@/features/onboarding/pages/goals-selection-page'
+import { AbilitySelectionPage } from '@/features/onboarding/pages/ability-selection-page'
 import { MockPage } from '@/features/mock-exam/pages/mock-page'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { MemberPage } from '@/features/membership/pages/member-page'
@@ -31,7 +44,6 @@ import { SystemContactPage } from '@/features/system/pages/system-contact-page'
 import { SystemPrivacyConcisePage } from '@/features/system/pages/system-privacy-concise-page'
 import { SystemIcpPage } from '@/features/system/pages/system-icp-page'
 import { FeedbackPage } from '@/features/feedback/pages/feedback-page'
-import { AchievementPage } from '@/features/achievement/pages/achievement-page'
 import { LeaderboardPage } from '@/features/leaderboard/pages/leaderboard-page'
 import { InvitePage } from '@/features/referral/pages/invite-page'
 import { AdminCouponsPage } from '@/features/admin/pages/admin-coupons-page'
@@ -63,9 +75,31 @@ export default function App() {
 
               {/* 用户端 — RootLayout */}
               <Route element={<RootLayout />}>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<EnglishHomePage />} />
                 <Route path="/portal" element={<PortalPage />} />
+
+                {/* 练习模式 */}
+                <Route path="/practice" element={<PracticeHubPage />} />
+                <Route path="/practice/topics" element={<PracticeHubPage />} />
+                <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
                 <Route path="/practice/:topicId" element={<PracticePage />} />
+
+                {/* 剧本模式 */}
+                <Route path="/script" element={<ScriptHubPage />} />
+                <Route path="/script/:episodeId" element={<ScriptPlayPage />} />
+
+                {/* 探索模式 */}
+                <Route path="/explore" element={<ExploreMapPage />} />
+                <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
+
+                {/* 表达库 */}
+                <Route path="/expressions" element={<ExpressionLibraryPage />} />
+
+                {/* 我的成长 */}
+                <Route path="/growth" element={<GrowthPage />} />
+
+                {/* 成就殿堂 */}
+                <Route path="/achievements" element={<AchievementHallPage />} />
                 <Route path="/mock" element={<MockPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/account" element={<AccountPage />} />
@@ -73,9 +107,14 @@ export default function App() {
                 <Route path="/notifications" element={<NotificationListPage />} />
                 <Route path="/notifications/:id" element={<NotificationDetailPage />} />
                 <Route path="/feedback" element={<FeedbackPage />} />
-                <Route path="/achievements" element={<AchievementPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/invite" element={<InvitePage />} />
+
+                {/* 新手引导 */}
+                <Route path="/onboarding" element={<OnboardingLayout />}>
+                  <Route path="goals" element={<GoalsSelectionPage />} />
+                  <Route path="ability" element={<AbilitySelectionPage />} />
+                </Route>
 
                 {/* 系统文档 — 法律与隐私相关 */}
                 <Route path="/system/terms" element={<SystemTermsPage />} />
