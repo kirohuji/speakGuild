@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.git
+.github
+.cursor
+dist
+build
+coverage
+.DS_Store
+*.log
+apps/frontend/package-lock.json

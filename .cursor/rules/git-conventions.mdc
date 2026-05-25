@@ -1,0 +1,59 @@
+---
+description: Git 提交规范 — Conventional Commits 格式、分支管理
+alwaysApply: true
+---
+
+# Git 提交规范
+
+## Commit Message 格式
+
+采用 [Conventional Commits](https://www.conventionalcommits.org/) 格式：
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+```
+
+### Type 类型
+
+| type | 说明 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | Bug 修复 |
+| `docs` | 文档更新 |
+| `style` | 代码格式（不影响功能） |
+| `refactor` | 重构（非新功能、非修复） |
+| `perf` | 性能优化 |
+| `test` | 测试相关 |
+| `chore` | 构建工具、依赖更新等 |
+| `ci` | CI/CD 变更 |
+
+### Scope 示例
+
+- `backend` — 后端变更
+- `frontend` — 前端变更
+- `auth` — 认证相关
+- `practice` — 练习模块
+- `tts` — 语音合成
+- `ai` — AI 反馈
+- `db` — 数据库
+
+### 示例
+
+```
+feat(backend): 添加模拟考试成绩导出接口
+fix(frontend): 修复音频播放器在 iOS 上的自动播放问题
+chore(deps): 升级 Prisma 到 6.x
+```
+
+## 分支管理
+
+- `main` — 生产分支，CI/CD 自动部署
+- 功能分支从 `main` 拉出，完成后合并回 `main`
+- push 到 `main` 触发 GitHub Actions 自动部署
+
+## 注意事项
+
+- 不要提交 `.env` 文件或包含密钥的文件
+- 不要提交 `node_modules/`、`dist/` 等构建产物

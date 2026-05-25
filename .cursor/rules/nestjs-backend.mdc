@@ -1,0 +1,59 @@
+---
+description: NestJS 后端开发规范 — 模块化架构、代码组织、认证模式
+globs: **/apps/backend/src/**/*.ts
+alwaysApply: false
+---
+
+# NestJS 后端开发规范
+
+## 模块化架构
+
+- 每个功能域独立一个 NestJS 模块，位于 `modules/<feature>/`，必须含：
+  - `<feature>.module.ts` — 模块定义
+  - `<feature>.controller.ts` — 路由控制器
+  - `<feature>.service.ts` — 业务逻辑
+  - `dto/` — 请求/响应 DTO（使用 `class-validator` 装饰器校验）
+- 生成新模块命令：
+  ```bash
+  nest g module modules/<new-module>
+  nest g controller modules/<new-module>
+  nest g service modules/<new-module>
+  ```
+
+## 认证模式
+
+- 所有需要鉴权的业务路由使用 `requireAuthSession(request)` 从请求中提取用户身份：
+
+```typescript
+import { requireAuthSession } from './auth-utils';
+
+@Controller('xxx')
+export class XxxController {
+  @Get()
+  async getData(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    const userId = session.user.id;
+    // 后续以 userId 为 owner 操作数据库
+  }
+}
+```
+
+- 新增模块时，需在 `app.module.ts` 的 `imports` 中注册
+
+## DTO 校验
+
+- 所有请求体 DTO 必须使用 `class-validator` 装饰器进行校验
+- ValidationPipe 全局生效，自动校验和转换
+
+## 公共层 (common/)
+
+- `filters/` — 全局异常过滤器 `AllExceptionsFilter`
+- `interceptors/` — 全局响应拦截器 `TransformInterceptor`
+- `prisma/` — Prisma 数据库服务（唯一数据访问层）
+- `response/` — 统一响应格式 `{ code, message, data }`
+
+## 禁止事项
+
+- 禁止在 Controller 中直接操作数据库，必须通过 Service 层
+- 禁止绕过 PrismaService 使用原始 SQL（除非有充分理由）
+- 禁止在模块间循环依赖，使用 forwardRef 谨慎处理

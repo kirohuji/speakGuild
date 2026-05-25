@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ═══════════════════════════════════════════════════════
+     GuideReady · 导游说 品牌配色系统
+     设计关键词：深蓝背景 / 白色留白 / 橙红点睛 / 简洁线条
+     来源：guideready_ui_color_guidelines.md
+     ═══════════════════════════════════════════════════════ */
+
+  :root {
+    /* ── 品牌深蓝（Primary Navy）── */
+    --brand-navy:       212 100% 18.6%;   /* #002E5F */
+    --brand-navy-deep:  210 100% 13.9%;   /* #002247 */
+    --brand-navy-dark:  211 100% 10.4%;   /* #001A35 */
+
+    /* ── 品牌橙红（Coral Red）── 只用于关键行动点 */
+    --brand-coral:         7 100% 63.5%;  /* #FF5A45 */
+    --brand-coral-hover:   7 100% 68.6%;  /* #FF725F */
+    --brand-coral-pressed: 7 80%  56.3%;  /* #E94A36 */
+    --brand-coral-light:   7 100% 94.1%;  /* #FFE6E1 */
+
+    /* ── 辅助蓝 -- */
+    --brand-link:        207 80% 44%;     /* #1677C8 */
+    --brand-link-hover:  207 72% 38%;     /* #005FA8 */
+    --brand-blue-100:    212 100% 97%;    /* #EAF4FF */
+    --brand-blue-50:     212 100% 98.5%;  /* #F4F9FF */
+
+    /* ── 中性色 -- */
+    --brand-text:           211 32% 18%;  /* #1F2D3D */
+    --brand-text-secondary: 212 16% 44%;  /* #5F6F82 */
+    --brand-text-tertiary:  210 16% 60%;  /* #8A98AA */
+    --brand-border:         211 37% 90%;  /* #DCE5EF */
+    --brand-divider:        212 39% 93.5%;/* #E8EEF5 */
+    --brand-page-bg:        214 54% 97.5%;/* #F5F8FC */
+    --brand-card-bg:        0 0% 100%;     /* #FFFFFF */
+
+    /* ── 功能状态色 ── */
+    --brand-success: 147 74% 36%;          /* #18A058 */
+    --brand-warning: 37  91% 55%;          /* #F5A623 */
+    --brand-error:   358 73% 59%;          /* #E5484D */
+    --brand-info:    207 80% 44%;          /* #1677C8 */
+    --brand-recording: 7 100% 63.5%;       /* #FF5A45 — 与 coral 同色 */
+
+    /* ═══════════════════════════════════════════════════════
+       映射到 shadcn/ui CSS 变量体系
+       ═══════════════════════════════════════════════════════ */
+
+    /* 页面底色 */
+    --background: var(--brand-page-bg);
+    --foreground: var(--brand-text);
+
+    /* 卡片 */
+    --card:           var(--brand-card-bg);
+    --card-foreground: var(--brand-text);
+
+    --popover:        var(--brand-card-bg);
+    --popover-foreground: var(--brand-text);
+
+    /* 主色 = 品牌深蓝（导航、选中态、链接） */
+    --primary:           var(--brand-navy);
+    --primary-foreground: 0 0% 100%;
+
+    /* 次色 = 浅蓝灰 */
+    --secondary:         var(--brand-blue-50);
+    --secondary-foreground: var(--brand-text);
+
+    /* 弱化 */
+    --muted:           var(--brand-divider);
+    --muted-foreground: var(--brand-text-secondary);
+
+    /* 强调 / 行动色 = 珊瑚橙红 */
+    --accent:           var(--brand-coral);
+    --accent-foreground: 0 0% 100%;
+
+    /* 错误/破坏 */
+    --destructive:           var(--brand-error);
+    --destructive-foreground: 0 0% 100%;
+
+    /* 边框 / 输入 */
+    --border: var(--brand-border);
+    --input:  var(--brand-border);
+    --ring:   var(--brand-coral);
+
+    /* 语义色 */
+    --success:           var(--brand-success);
+    --success-foreground: 0 0% 100%;
+    --warning:           var(--brand-warning);
+    --warning-foreground: var(--brand-text);
+
+    /* Sidebar */
+    --sidebar-background: var(--brand-page-bg);
+    --sidebar-foreground: var(--brand-text);
+    --sidebar-primary:    var(--brand-navy);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:     var(--brand-blue-50);
+    --sidebar-accent-foreground: var(--brand-text);
+    --sidebar-border:     var(--brand-border);
+    --sidebar-ring:       var(--brand-coral);
+
+    /* 圆角 */
+    --radius: 1rem;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     深色品牌模式（首页、登录页、品牌展示页）
+     关键词：深蓝沉浸 / 白字 / 橙红行动点
+     ═══════════════════════════════════════════════════════ */
+  .dark {
+    /* 底色 = 品牌深蓝 */
+    --background: var(--brand-navy);
+    --foreground: 0 0% 100%;
+
+    /* 半透明卡片 */
+    --card:            212 100% 20%;
+    --card-foreground: 0 0% 100%;
+
+    --popover:         212 100% 20%;
+    --popover-foreground: 0 0% 100%;
+
+    /* 主色 = 白色（深蓝底上的白色更清晰） */
+    --primary:           0 0% 100%;
+    --primary-foreground: var(--brand-navy);
+
+    /* 次色 */
+    --secondary:         212 100% 24%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* 弱化 */
+    --muted:             212 100% 22%;
+    --muted-foreground:  212 30% 80%;
+
+    /* 强调/行动 = 珊瑚橙红（深蓝底上更醒目） */
+    --accent:           var(--brand-coral);
+    --accent-foreground: 0 0% 100%;
+
+    /* 错误 */
+    --destructive:         358 73% 59%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* 边框 */
+    --border: 212 100% 28%;
+    --input:  212 100% 28%;
+    --ring:   var(--brand-coral);
+
+    /* 语义色 */
+    --success:           147 60% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning:           37 91% 55%;
+    --warning-foreground: var(--brand-navy);
+
+    /* Sidebar */
+    --sidebar-background: var(--brand-navy-dark);
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary:    var(--brand-coral);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:     212 100% 24%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border:     212 100% 28%;
+    --sidebar-ring:       var(--brand-coral);
+  }
+
+  /* ── 动画 keyframes ── */
+  .theme {
+    --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+    --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+    --animate-blink-cursor: blink-cursor 1.2s step-end infinite;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+      'Noto Sans SC', sans-serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  /* iOS 弹簧过渡 */
+  .transition-spring {
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition-duration: 300ms;
+  }
+
+  /* 按压反馈 */
+  .press-feedback {
+    @apply active:scale-[0.97] transition-transform duration-150;
+  }
+
+  /* 卡片悬浮上浮 */
+  .card-hover {
+    @apply hover:-translate-y-0.5 transition-transform duration-200;
+  }
+
+  /* 磨砂玻璃 */
+  .glass {
+    @apply backdrop-blur-xl bg-background/70;
+  }
+
+  /* iOS 底部安全区 */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     品牌专用工具类
+     ═══════════════════════════════════════════════════════ */
+
+  /* 深蓝品牌背景 */
+  .bg-brand-navy {
+    background-color: hsl(var(--brand-navy));
+  }
+
+  /* 橙红 CTA 按钮（覆盖 shadcn 默认 primary=navy 的场景） */
+  .btn-cta {
+    @apply text-white;
+    background-color: hsl(var(--brand-coral));
+  }
+  .btn-cta:hover {
+    background-color: hsl(var(--brand-coral-hover));
+  }
+  .btn-cta:active {
+    background-color: hsl(var(--brand-coral-pressed));
+  }
+
+  /* 录音中状态 */
+  .recording-active {
+    background-color: hsl(var(--brand-coral));
+    color: white;
+  }
+}
+
+@theme inline {
+  @keyframes shimmer-slide {
+  to {
+    transform: translate(calc(100cqw - 100%), 0);
+    }
+  }
+  @keyframes spin-around {
+  0% {
+    transform: translateZ(0) rotate(0);
+    }
+  15%, 35% {
+    transform: translateZ(0) rotate(90deg);
+    }
+  65%, 85% {
+    transform: translateZ(0) rotate(270deg);
+    }
+  100% {
+    transform: translateZ(0) rotate(360deg);
+    }
+  }
+  @keyframes blink-cursor {
+  0%, 49% {
+    opacity: 1;
+    }
+  50%, 100% {
+    opacity: 0;
+    }
+  }
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" width="640" height="160">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon -->
+  <g transform="translate(20, 15)">
+    <rect x="0" y="0" width="130" height="130" rx="32" ry="32" fill="url(#brand)" />
+    <path d="M65 38 C48 38 35 48 35 60 C35 72 48 82 65 82 C69 82 73 81.3 76 80 L80 88 L76 80 C73 81.3 69 82 65 82" fill="none" stroke="white" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M90 52 Q98 60 90 68" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M98 46 Q108 60 98 74" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+    <circle cx="96" cy="42" r="4" fill="white" opacity="0.9"/>
+  </g>
+
+  <!-- Brand name -->
+  <text x="180" y="85" font-family="'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="52" font-weight="800" fill="url(#brand)" letter-spacing="5">ü8ô</text>
+
+  <!-- Tagline -->
+  <text x="183" y="118" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="20" font-weight="600" fill="#94A3B8" letter-spacing="3">GuideReady</text>
+
+  <!-- Slogan -->
+  <text x="183" y="148" font-family="'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#CBD5E1" letter-spacing="2">íÍhıü8D<bÕÃ`sğ</text>
+</svg>

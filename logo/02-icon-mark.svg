@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="4" y="4" width="112" height="112" rx="28" ry="28" fill="url(#brand)" />
+
+  <!-- Speech bubble -->
+  <path d="M60 34 C45 34 33 44 33 56 C33 68 45 78 60 78 C64 78 68 77.3 71 76 L75 83 L71 76 C68 77.3 64 78 60 78" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Sound waves -->
+  <path d="M83 48 Q90 56 83 64" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <path d="M90 43 Q100 56 90 69" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Pin/flag dot -->
+  <circle cx="88" cy="40" r="3.5" fill="white" opacity="0.9"/>
+</svg>

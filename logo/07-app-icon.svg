@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB"/>
+      <stop offset="100%" style="stop-color:#0891B2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#bg)" />
+
+  <!-- Speech bubble icon (large) -->
+  <g transform="translate(512, 480)">
+    <!-- Speech bubble path -->
+    <path d="M0 -160 C-120 -160 -220 -70 -220 45 C-220 160 -120 250 0 250 C35 250 68 244 98 233 L140 295 L98 233 C68 244 35 250 0 250" fill="none" stroke="white" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Sound waves right side -->
+    <path d="M280 -10 Q350 50 280 110" fill="none" stroke="white" stroke-width="28" stroke-linecap="round" opacity="0.8"/>
+    <path d="M350 -50 Q440 50 350 150" fill="none" stroke="white" stroke-width="28" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- Pin dot accent -->
+    <circle cx="340" cy="-85" r="24" fill="#FDE047" opacity="0.9"/>
+  </g>
+</svg>

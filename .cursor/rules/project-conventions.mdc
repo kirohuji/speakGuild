@@ -1,0 +1,53 @@
+---
+description: GuideReady 项目全局约定 — 技术栈、目录结构、开发工作流
+alwaysApply: true
+---
+
+# GuideReady 项目全局约定
+
+## 项目定位
+
+GuideReady（导游说）是多语种全国导游资格面试练习平台。包含题库浏览、口语练习、AI 发音反馈、TTS 语音合成、模拟考试、会员系统等功能。
+
+## Monorepo 组织
+
+- **包管理器**：pnpm workspace，两个工作区包 `@guideready/backend` 和 `@guideready/frontend`
+- **依赖隔离**：通过 `pnpm --filter` 精确安装，Docker 构建同样只安装目标子项目的依赖
+- **开发命令**：
+  - `pnpm dev` — 前后端并行开发
+  - `pnpm dev:backend` — 仅后端
+  - `pnpm dev:frontend` — 仅前端
+
+## 核心目录结构
+
+```
+guideready/
+├── apps/backend/src/          # NestJS 后端（按功能域模块化）
+│   ├── common/                # 公共层（filters/interceptors/prisma/response）
+│   └── modules/               # 10 个业务模块（auth/config-guide/question-bank/practice/...）
+├── apps/frontend/src/         # React 前端
+│   ├── features/              # 按功能域组织（每域含 api.ts + pages/）
+│   ├── components/ui/         # shadcn/ui 组件
+│   ├── components/common/     # 业务通用组件
+│   ├── stores/                # Zustand 状态管理
+│   ├── lib/                   # 工具库（request.ts/i18n/API 客户端）
+│   └── providers/             # Context Provider
+├── docs/                      # 项目文档
+├── docker/                    # Dockerfile + Nginx 配置
+└── docker-compose.yml
+```
+
+## 环境要求
+
+- Node.js >= 22
+- pnpm >= 9
+- PostgreSQL >= 16
+- TypeScript strict mode
+
+## 外部依赖服务
+
+- DeepSeek API（AI 评分反馈）
+- MiniMax / Cartesia（TTS 语音合成）
+- 腾讯云 COS（对象存储）
+- Whisper（语音转文字，自部署）
+- Better Auth（认证鉴权）

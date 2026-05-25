@@ -1,0 +1,17 @@
+import { Module } from '@nestjs/common';
+import { AdminController } from './admin.controller';
+import { AdminService } from './admin.service';
+import { AdminStatsService } from './admin-stats.service';
+import { QuestionBankAdminController } from './question-bank-admin.controller';
+import { QuestionBankAdminService } from './question-bank-admin.service';
+import { SystemConfigController } from './system-config/system-config.controller';
+import { SystemConfigService } from './system-config/system-config.service';
+import { PayModule } from '../pay/pay.module';
+
+@Module({
+  imports: [PayModule],
+  controllers: [AdminController, QuestionBankAdminController, SystemConfigController],
+  providers: [AdminService, AdminStatsService, QuestionBankAdminService, SystemConfigService],
+  exports: [SystemConfigService],
+})
+export class AdminModule {}

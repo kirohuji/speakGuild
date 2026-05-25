@@ -1,0 +1,49 @@
+---
+description: Prisma 数据库规范 — Schema 设计、迁移、复合唯一约束、缓存去重
+globs: **/*.prisma
+alwaysApply: false
+---
+
+# Prisma 数据库规范
+
+## 技术栈
+
+- 数据库：PostgreSQL 16
+- ORM：Prisma 6
+- Schema 文件：`apps/backend/prisma/schema.prisma`
+
+## 模型命名规范
+
+- 表名：snake_case（如 `question_bank`、`user_binding_config`）
+- 模型名：PascalCase（如 `QuestionBank`、`UserBindingConfig`）
+- 枚举值：camelCase（如 `monthly`、`active`）
+
+## 关系与删除策略
+
+- 所有用户相关的关联表必须设置 `onDelete: Cascade`
+- 使用复合唯一约束防止重复数据，典型组合：
+  - `FavoriteQuestion`: `[userId, questionId]`
+  - `VocabularyWord`: `[userId, term]`
+  - `PracticeProgress`: `[userId, questionId]`
+  - `DailyActivity`: `[userId, date]`
+  - `QuestionAudio`: `[questionId, configHash]`
+
+## 缓存与去重设计
+
+- **TTS 缓存**：`configHash = SHA1(provider + model + voiceId + serializedParams)`，同一配置命中直接返回
+- **文件去重**：`FileAsset` 以 `sha256` 为唯一键，通过 `refCount` 引用计数管理
+- **引用计数清理**：`refCount=0` 且超期的文件由定时任务自动清理
+
+## Schema 修改流程
+
+```bash
+cd apps/backend
+pnpm prisma:migrate    # 创建迁移文件并应用
+pnpm prisma:generate   # 重新生成 Prisma Client
+```
+
+## 注意事项
+
+- 修改 Schema 后必须运行 `prisma generate` 更新类型
+- 新增枚举类型在 Schema 文件顶部统一定义
+- 所有新增关联表需考虑级联删除和复合唯一约束

@@ -1,0 +1,53 @@
+---
+description: API 设计规范 — 统一响应格式、路由前缀、认证、流式响应
+globs: **/apps/backend/src/modules/**/*.ts
+alwaysApply: false
+---
+
+# API 设计规范
+
+## 路由规范
+
+- **业务 API 前缀**：`/api/v1/guide-exam`
+- **认证路由**：`/api/auth/*`（Better Auth 原生路由，不走业务前缀）
+- **请求方式**：RESTful (GET/POST/PATCH/DELETE)
+- **请求体格式**：JSON
+- **认证方式**：`Authorization: Bearer <token>`（通过 `requireAuthSession` 提取）
+
+## 统一响应格式
+
+所有 API 必须返回以下结构（`TransformInterceptor` 自动封装）：
+
+```typescript
+// 成功
+{ code: 200, message: "Success", data: T }
+
+// 失败
+{ code: 400, message: "错误描述", data: null }
+```
+
+已在 Controller 中手动封装的响应不会被二次封装。
+
+## 新模块创建
+
+1. 生成模块 → 2. 定义 DTO → 3. 实现 Service → 4. 编写 Controller → 5. 注册到 `app.module.ts`
+
+## 外部服务调用
+
+在 Service 中调用外部 API 时，使用统一的 HTTP 客户端，并做好超时和错误处理。
+
+## 流式响应 (SSE)
+
+- AI 反馈接口（`/practice-ai/feedback`）使用 SSE 流式响应
+- 使用 Vercel AI SDK 的 `streamText` 实现
+
+## 文件上传
+
+- 使用 `multer` 处理文件上传
+- COS 上传采用前端直传 + 后端回调确认的模式（STS 临时密钥）
+
+## 禁止事项
+
+- 禁止返回未封装的原始数据
+- 禁止在 Controller 中直接调用外部 API（必须通过 Service）
+- 禁止硬编码敏感信息（API Key、密钥等），统一使用环境变量

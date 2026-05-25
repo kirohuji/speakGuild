@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+.cache/
+coverage/
+prisma/dev.db
+*.tsbuildinfo
+uploads/
+ssl/
+hope-front-main

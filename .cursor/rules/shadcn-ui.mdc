@@ -1,0 +1,209 @@
+---
+description: shadcn/ui 开发规范 — 组件使用、样式约定、注册表、表单、图标
+globs: **/apps/frontend/src/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# shadcn/ui 开发规范
+
+## 项目配置
+
+本项目 shadcn/ui 配置（`components.json`）：
+- **style**: `default`
+- **baseColor**: `slate`
+- **iconLibrary**: `lucide-react`
+- **组件路径别名**: `@/components/ui`
+- **工具函数**: `@/lib/cn`（使用 `cn()` 合并类名）
+- **自定义注册表**: `@magicui` (https://magicui.design/r/{name})
+
+## 样式约定
+
+### 语义化颜色
+
+始终使用 shadcn 语义化 CSS 变量，**禁止使用原生 Tailwind 颜色值**：
+
+```tsx
+// ✅ 正确 — 语义化颜色
+<div className="bg-background text-foreground" />
+<p className="text-muted-foreground">次要文字</p>
+<Button variant="secondary">按钮</Button>
+
+// ❌ 错误 — 原生颜色
+<div className="bg-white text-black" />
+<p className="text-gray-500">次要文字</p>
+<Button className="bg-blue-500">按钮</Button>
+```
+
+### className 规范
+
+- `className` 仅用于布局，**不要用 className 覆盖组件的颜色或字体**
+- **不使用 `space-x-*` / `space-y-*`**，统一用 `flex` + `gap-*`
+- 宽高相等时用 `size-*` 简写（如 `size-10` 代替 `w-10 h-10`）
+- **禁止手动设置 `dark:` 颜色覆盖**，始终用语义化 token
+- 条件类名使用 `cn()` 函数
+
+```tsx
+import { cn } from '@/lib/cn';
+
+// ✅ 正确
+<div className="flex flex-col gap-4" />
+<Avatar className="size-10" />
+<div className={cn("base", isActive && "active")} />
+
+// ❌ 错误
+<div className="space-y-4" />
+<Avatar className="w-10 h-10" />
+```
+
+### 文本溢出
+
+使用 `truncate` 简写，不用 `overflow-hidden text-ellipsis whitespace-nowrap`。
+
+### z-index
+
+**禁止手动给叠加层组件设置 z-index**。Dialog、Sheet、Popover、DropdownMenu 等自带层级管理。
+
+## 组件使用原则
+
+### 核心原则
+
+1. **先用已有组件，不自己造轮子**
+2. **组合优于重写** — 用已有组件拼装功能
+3. **优先用组件内置 variant/size**，不要自定义样式覆盖
+
+### 组件选择速查表
+
+| 需求 | 应使用的组件 |
+|---|---|
+| 数据展示 | `Table`、`Card`、`Badge`、`Avatar` |
+| 导航 | `Tabs`、`Breadcrumb`、`Pagination` |
+| 弹窗/侧栏 | `Dialog`（模态）、`Sheet`（侧面板）、`Drawer`（底部面板） |
+| 表单控件 | `Input`、`Select`、`Combobox`、`Switch`、`Checkbox`、`Textarea`、`Slider` |
+| 2-5 项选项切换 | `ToggleGroup` + `ToggleGroupItem` |
+| 菜单 | `DropdownMenu`、`ContextMenu` |
+| 悬停/提示 | `Tooltip`、`HoverCard`、`Popover` |
+| 反馈 | `sonner`（Toast）、`Alert`、`Progress`、`Skeleton` |
+| 空状态 | `Empty` |
+| 分隔线 | `Separator`（禁止用 `<hr>` 或 `<div className="border-t">`） |
+| 加载占位 | `Skeleton`（禁止自定义 `animate-pulse` div） |
+
+### 组件组合规范
+
+- **Avatar 必须有 `AvatarFallback`**，在图片加载失败时显示回退内容
+- **Dialog / Sheet / Drawer 必须有标题**：`DialogTitle`、`SheetTitle`、`DrawerTitle`，仅视觉隐藏时加 `className="sr-only"`
+- **Card 完整组合**：`CardHeader` → `CardTitle` → `CardDescription` → `CardContent` → `CardFooter`，不要把内容全塞 `CardContent`
+- **`TabsTrigger` 必须在 `TabsList` 内**
+- **`SelectItem` 必须在 `SelectGroup` 内**
+- **分组项必须在 Group 内**：`DropdownMenuItem` → `DropdownMenuGroup`、`CommandItem` → `CommandGroup`
+
+### Button 加载状态
+
+Button 没有 `isPending` 属性，用 `Spinner` + `data-icon` + `disabled` 组合：
+
+```tsx
+<Button disabled={loading}>
+  {loading && <Spinner data-icon="inline-start" />}
+  {loading ? "提交中..." : "提交"}
+</Button>
+```
+
+## 图标规范
+
+- 使用 `lucide-react` 的图标组件
+- 图标在 `Button` 内必须加 `data-icon` 属性：`data-icon="inline-start"` 或 `data-icon="inline-end"`
+- **不要在组件内部的图标上加尺寸类名**（不用 `size-4` / `w-4 h-4`），组件通过 CSS 自动处理图标尺寸
+
+```tsx
+// ✅ 正确
+<Button>
+  <SearchIcon data-icon="inline-start" />
+  搜索
+</Button>
+
+// ❌ 错误
+<Button>
+  <SearchIcon className="size-4" />
+  搜索
+</Button>
+```
+
+## 表单规范
+
+### 布局
+
+使用 `FieldGroup` + `Field` 组合，不要用裸 `<div>` 加间距类：
+
+```tsx
+<FieldGroup>
+  <Field>
+    <FieldLabel htmlFor="email">邮箱</FieldLabel>
+    <Input id="email" placeholder="请输入邮箱" />
+  </Field>
+  <Field>
+    <FieldLabel htmlFor="password">密码</FieldLabel>
+    <Input id="password" type="password" />
+  </Field>
+</FieldGroup>
+```
+
+### 验证状态
+
+- 验证失败：`Field` 上加 `data-invalid`，控件上加 `aria-invalid`
+- 禁用状态：`Field` 上加 `data-disabled`，控件上加 `disabled`
+
+```tsx
+<Field data-invalid>
+  <FieldLabel>邮箱</FieldLabel>
+  <Input aria-invalid />
+  <FieldDescription>邮箱格式不正确</FieldDescription>
+</Field>
+```
+
+## 注册表使用
+
+### 内置注册表 (@shadcn)
+
+```bash
+# 搜索组件
+pnpm dlx shadcn@latest search @shadcn -q "搜索词"
+
+# 添加组件
+pnpm dlx shadcn@latest add button card dialog
+
+# 查看组件文档
+pnpm dlx shadcn@latest docs button dialog
+```
+
+### 自定义注册表 (@magicui)
+
+本项目已配置 `@magicui` 注册表：
+
+```bash
+# 添加 magicui 组件
+pnpm dlx shadcn@latest add @magicui/shimmer-button
+pnpm dlx shadcn@latest add @magicui/animated-beam
+pnpm dlx shadcn@latest add @magicui/magic-card
+
+# 搜索 magicui 组件
+pnpm dlx shadcn@latest search @magicui -q "搜索词"
+```
+
+### 添加组件后必须做的事
+
+1. 检查新增文件的导入路径是否与项目别名匹配（`@/components/ui`）
+2. 检查图标导入是否符合项目图标库（`lucide-react`）
+3. 检查是否有缺失的子组件或错误的组合方式
+4. 修复所有问题后再继续开发
+
+## 暗色模式
+
+使用 `next-themes` 实现暗色模式切换，组件已内置暗色支持（通过 CSS 变量自动适配），**不需要手动添加 `dark:` 前缀**。
+
+## 禁止事项
+
+- 禁止用原生 HTML 元素代替已有组件（如 `<hr>` → 用 `Separator`，自定义 loading div → 用 `Skeleton`）
+- 禁止用原生 Tailwind 颜色值（`bg-blue-500`、`text-gray-400` 等）
+- 禁止手动给叠加层组件设置 `z-index`
+- 禁止在图标上手动设置尺寸类
+- 禁止使用 `space-x-*` / `space-y-*`
+- 添加社区注册表组件后不检查导入路径就直接使用

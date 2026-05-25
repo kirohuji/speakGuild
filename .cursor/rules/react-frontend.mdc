@@ -1,0 +1,54 @@
+---
+description: React 前端开发规范 — shadcn/ui、Zustand、路由、组件组织
+globs: **/apps/frontend/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React 前端开发规范
+
+## 目录组织
+
+- 按功能域组织在 `features/` 下，每域包含：
+  - `api/<feature>-api.ts` — API 调用函数
+  - `pages/<feature>-page.tsx` — 页面组件
+- 通用业务组件放 `components/common/`
+- shadcn/ui 组件放 `components/ui/`
+
+## shadcn/ui 组件
+
+- 使用 `pnpm dlx shadcn-ui@latest add <component>` 添加组件
+- 组件源码位于 `components/ui/`，可自定义修改
+- 样式使用 Tailwind CSS + shadcn CSS 变量（定义在 `index.css`）
+
+## 状态管理 (Zustand)
+
+- 使用 Zustand 管理全局状态，当前有 3 个 Store：
+  - `config.store` — 题库绑定配置（由 bootstrap 注入，内存）
+  - `assets.store` — 收藏/生词列表
+  - `preferences.store` — 用户偏好（localStorage 持久化）
+- 新增 Store 遵循按需订阅模式
+
+## HTTP 请求
+
+- 统一使用 `lib/request.ts` 中的 Axios 实例，**不要直接使用 axios**
+- 请求拦截器自动注入 Bearer Token（从 `localStorage('guideready-bearer-token')`）
+- 响应拦截器自动解包 `data.data`，自动处理 401 跳转
+
+## 认证相关
+
+- `AuthRouteGuard` 组件包裹所有需要登录的路由
+- 未认证用户自动重定向到 `#/auth/login`
+- Token 存储在 localStorage 的 `guideready-bearer-token` 键
+
+## 路由
+
+- 使用 Hash 路由（兼容静态部署 + Capacitor iOS）
+- 路由定义在 `App.tsx`
+- 页面级组件在各自 `features/<name>/pages/` 下
+
+## Provider 链
+
+层级顺序（不可颠倒）：
+```
+<ThemeProvider> → <AuthProvider> → <AuthRouteGuard> → <RouterProvider>
+```
