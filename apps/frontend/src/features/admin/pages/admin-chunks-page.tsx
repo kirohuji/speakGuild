@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { Spinner } from '@/components/ui/spinner'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
 import {
   listAllChunks, createChunk, updateChunk, deleteChunk,
   listSceneCategories, listScenes,
@@ -25,6 +26,8 @@ export function AdminChunksPage() {
   const [scenes, setScenes] = useState<Scene[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const [dialog, setDialog] = useState(false)
   const [edit, setEdit] = useState<Chunk | null>(null)
@@ -45,6 +48,10 @@ export function AdminChunksPage() {
   const filtered = chunks.filter((c) =>
     !search || c.text.toLowerCase().includes(search.toLowerCase()) || c.meaning.includes(search)
   )
+  const totalPages = getTotalPages(filtered.length, pageSize)
+  const pageItems = getPageItems(filtered, Math.min(page, totalPages), pageSize)
+
+  useEffect(() => { setPage(1) }, [search])
 
   return (
     <div className="space-y-6">
@@ -64,48 +71,84 @@ export function AdminChunksPage() {
       </div>
 
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Chunk 列表</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center py-8"><Spinner /></div>
-          ) : filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">暂无数据</p>
-          ) : (
-            <div className="space-y-2">
-              {filtered.map((c) => (
-                <div key={c.id} className="flex items-start justify-between p-3 rounded-lg border hover:bg-muted/50">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{c.text}</span>
-                      <Badge variant="outline" className="text-xs">{c.difficulty}</Badge>
-                      {c.category && <Badge variant="secondary" className="text-xs">{c.category}</Badge>}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{c.meaning}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {c.scene && <span className="text-[11px] text-muted-foreground/60">{c.scene.title}</span>}
-                      {c._count && (
-                        <span className="text-[11px] text-muted-foreground/60">
-                          {c._count.userProgresses} 位用户在学习
-                        </span>
-                      )}
-                    </div>
-                    {c.example && (
-                      <p className="text-xs text-muted-foreground/60 mt-1 italic truncate">{c.example}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-1 shrink-0 ml-2">
-                    <Button size="icon" variant="ghost" className="size-7"
-                      onClick={() => { setEdit(c); setDialog(true) }}>
-                      <Edit3 className="size-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="size-7 text-destructive"
-                      onClick={async () => { await deleteChunk(c.id); load() }}>
-                      <Trash2 className="size-3" />
-                    </Button>
-                  </div>
-                </div>
+            <div className="space-y-2 p-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center py-16 text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground/30" />
+              <p className="mt-4 text-sm font-medium text-muted-foreground">
+                {search ? '没有匹配的 Chunk' : '暂无 Chunk'}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                {search ? '尝试更换搜索关键词' : '新增后会显示在这里'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">表达</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">场景</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">学习人数</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {pageItems.map((c) => (
+                    <tr key={c.id} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium">{c.text}</span>
+                            <Badge variant="outline" className="text-xs">{c.difficulty}</Badge>
+                            {c.category && <Badge variant="secondary" className="text-xs">{c.category}</Badge>}
+                          </div>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{c.meaning}</p>
+                          {c.example && (
+                            <p className="mt-1 max-w-xl truncate text-xs italic text-muted-foreground/60">{c.example}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
+                        {c.scene?.title ?? '-'}
+                      </td>
+                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                        {c._count ? `${c._count.userProgresses} 位` : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="size-8"
+                            onClick={() => { setEdit(c); setDialog(true) }}>
+                            <Edit3 className="size-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="size-8 text-destructive"
+                            onClick={async () => { await deleteChunk(c.id); load() }}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
+          <AdminPagination
+            total={filtered.length}
+            page={Math.min(page, totalPages)}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          />
         </CardContent>
       </Card>
 

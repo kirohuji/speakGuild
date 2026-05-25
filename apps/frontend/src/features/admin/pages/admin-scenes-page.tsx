@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { Select } from '@/components/ui/select'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { Spinner } from '@/components/ui/spinner'
-import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
 import {
   listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory,
   listScenes, getScene, createScene, updateScene, deleteScene,
@@ -125,11 +125,11 @@ function SceneDialog({
         <div className="space-y-4">
           <div>
             <Label>所属分类</Label>
-            <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+            <Select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
-              </select>
+              </Select>
           </div>
           <div>
             <Label>标题</Label>
@@ -146,11 +146,11 @@ function SceneDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>输出等级要求</Label>
-              <select value={form.requiredOutputLevel} onChange={(e) => setForm({ ...form, requiredOutputLevel: e.target.value })}>
+              <Select value={form.requiredOutputLevel} onChange={(e) => setForm({ ...form, requiredOutputLevel: e.target.value })}>
                   {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
                     <option key={l} value={l}>{l}</option>
                   ))}
-                </select>
+                </Select>
             </div>
             <div>
               <Label>用户等级要求</Label>
@@ -285,11 +285,11 @@ function TrainingTopicDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>难度</Label>
-              <select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
+              <Select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
                   {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
                     <option key={l} value={l}>{l}</option>
                   ))}
-                </select>
+                </Select>
             </div>
             <div>
               <Label>建议时长 (秒)</Label>
@@ -344,6 +344,10 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [editVocab, setEditVocab] = useState<SceneVocabulary | null>(null)
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
+  const [vocabPage, setVocabPage] = useState(1)
+  const [vocabPageSize, setVocabPageSize] = useState(10)
+  const [topicPage, setTopicPage] = useState(1)
+  const [topicPageSize, setTopicPageSize] = useState(10)
 
   const load = async () => {
     setLoading(true)
@@ -357,8 +361,21 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   }
 
   useEffect(() => { load() }, [sceneId])
+  useEffect(() => {
+    setVocabPage(1)
+    setTopicPage(1)
+  }, [sceneId])
 
-  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>
+  const vocabTotalPages = getTotalPages(vocabs.length, vocabPageSize)
+  const topicTotalPages = getTotalPages(topics.length, topicPageSize)
+  const vocabItems = getPageItems(vocabs, Math.min(vocabPage, vocabTotalPages), vocabPageSize)
+  const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
+
+  if (loading) return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+    </div>
+  )
   if (!scene) return <p className="text-muted-foreground py-8 text-center">场景未找到</p>
 
   return (
@@ -381,31 +398,54 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
             <Plus className="size-3.5 mr-1" /> 添加
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {vocabs.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">暂无词汇</p>
+            <div className="py-12 text-center">
+              <p className="text-sm font-medium text-muted-foreground">暂无词汇</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">添加后会显示在这里</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {vocabs.map((v) => (
-                <div key={v.id} className="flex items-center justify-between p-2 rounded-lg border hover:bg-muted/50">
-                  <div>
-                    <span className="text-sm font-medium">{v.word}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{v.meaning}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="size-7"
-                      onClick={() => { setEditVocab(v); setVocabDialog(true) }}>
-                      <Edit3 className="size-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="size-7 text-destructive"
-                      onClick={async () => { await deleteVocabulary(v.id); load() }}>
-                      <Trash2 className="size-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">词汇</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">含义</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">排序</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {vocabItems.map((v) => (
+                    <tr key={v.id} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3 text-sm font-medium">{v.word}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{v.meaning}</td>
+                      <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">{v.sortOrder}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="size-8"
+                            onClick={() => { setEditVocab(v); setVocabDialog(true) }}>
+                            <Edit3 className="size-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="size-8 text-destructive"
+                            onClick={async () => { await deleteVocabulary(v.id); load() }}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
+          <AdminPagination
+            total={vocabs.length}
+            page={Math.min(vocabPage, vocabTotalPages)}
+            pageSize={vocabPageSize}
+            onPageChange={setVocabPage}
+            onPageSizeChange={(size) => { setVocabPageSize(size); setVocabPage(1) }}
+          />
         </CardContent>
       </Card>
 
@@ -419,42 +459,74 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
             <Plus className="size-3.5 mr-1" /> 添加
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {topics.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">暂无话题</p>
+            <div className="py-12 text-center">
+              <p className="text-sm font-medium text-muted-foreground">暂无话题</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">添加后会显示在这里</p>
+            </div>
           ) : (
-            <div className="space-y-2">
-              {topics.map((t) => (
-                <div key={t.id} className="flex items-start justify-between p-3 rounded-lg border hover:bg-muted/50">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{t.title}</span>
-                      <Badge variant="outline" className="text-xs">{t.difficulty}</Badge>
-                      <Badge variant="secondary" className="text-xs">{t.suggestedDurationSec}s</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate mt-1">{t.promptEn}</p>
-                    {t.activeChunks && t.activeChunks.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {t.activeChunks.map((ac: any) => (
-                          <Badge key={ac.id} variant="outline" className="text-[10px]">{ac.chunk.text}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-1 shrink-0 ml-2">
-                    <Button size="icon" variant="ghost" className="size-7"
-                      onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
-                      <Edit3 className="size-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="size-7 text-destructive"
-                      onClick={async () => { await deleteTrainingTopic(t.id); load() }}>
-                      <Trash2 className="size-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">话题</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">Chunk</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">配置</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {topicItems.map((t) => (
+                    <tr key={t.id} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium">{t.title}</span>
+                            <Badge variant="outline" className="text-xs">{t.difficulty}</Badge>
+                            <Badge variant="secondary" className="text-xs">{t.suggestedDurationSec}s</Badge>
+                          </div>
+                          <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">{t.promptEn}</p>
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 md:table-cell">
+                        <div className="flex max-w-xs flex-wrap gap-1">
+                          {(t.activeChunks ?? []).slice(0, 3).map((ac: any) => (
+                            <Badge key={ac.id} variant="outline" className="text-[10px]">{ac.chunk.text}</Badge>
+                          ))}
+                          {(t.activeChunks?.length ?? 0) > 3 && (
+                            <Badge variant="secondary" className="text-[10px]">+{(t.activeChunks?.length ?? 0) - 3}</Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                        排序 {t.sortOrder}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="size-8"
+                            onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
+                            <Edit3 className="size-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="size-8 text-destructive"
+                            onClick={async () => { await deleteTrainingTopic(t.id); load() }}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
+          <AdminPagination
+            total={topics.length}
+            page={Math.min(topicPage, topicTotalPages)}
+            pageSize={topicPageSize}
+            onPageChange={setTopicPage}
+            onPageSizeChange={(size) => { setTopicPageSize(size); setTopicPage(1) }}
+          />
         </CardContent>
       </Card>
 
@@ -475,6 +547,8 @@ export function AdminScenesPage() {
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [detailSceneId, setDetailSceneId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const [catDialog, setCatDialog] = useState(false)
   const [editCat, setEditCat] = useState<SceneCategory | null>(null)
@@ -493,6 +567,10 @@ export function AdminScenesPage() {
   }
 
   useEffect(() => { load() }, [selectedCat])
+  useEffect(() => { setPage(1) }, [selectedCat])
+
+  const totalPages = getTotalPages(scenes.length, pageSize)
+  const pageItems = getPageItems(scenes, Math.min(page, totalPages), pageSize)
 
   if (detailSceneId) {
     return (
@@ -555,42 +633,80 @@ export function AdminScenesPage() {
             <Plus className="size-3.5 mr-1" /> 新增场景
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center py-8"><Spinner /></div>
-          ) : scenes.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">暂无场景</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {scenes.map((s) => (
-                <div key={s.id}
-                  className="p-4 rounded-xl border hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setDetailSceneId(s.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs">{s.requiredOutputLevel}</Badge>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="size-7"
-                        onClick={(e) => { e.stopPropagation(); setEditScene(s); setSceneDialog(true) }}>
-                        <Edit3 className="size-3" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="size-7 text-destructive"
-                        onClick={async (e) => { e.stopPropagation(); await deleteScene(s.id); load() }}>
-                        <Trash2 className="size-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-sm">{s.title}</h3>
-                  <p className="text-xs text-muted-foreground">{s.location}</p>
-                  <div className="flex gap-2 mt-2 text-xs text-muted-foreground">
-                    <span>词汇 {s._count?.vocabularies ?? 0}</span>
-                    <span>Chunk {s._count?.chunks ?? 0}</span>
-                    <span>话题 {s._count?.trainingTopics ?? 0}</span>
-                  </div>
-                </div>
+            <div className="space-y-2 p-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
+          ) : scenes.length === 0 ? (
+            <div className="flex flex-col items-center py-16 text-center">
+              <MapPin className="h-12 w-12 text-muted-foreground/30" />
+              <p className="mt-4 text-sm font-medium text-muted-foreground">暂无场景</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">新增后会显示在这里</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">场景</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">要求</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">内容量</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {pageItems.map((s) => (
+                    <tr
+                      key={s.id}
+                      className="cursor-pointer transition-colors hover:bg-muted/30"
+                      onClick={() => setDetailSceneId(s.id)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium">{s.title}</span>
+                            {s.category && <Badge variant="secondary" className="text-xs">{s.category.name}</Badge>}
+                          </div>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{s.location || '未设置地点'}</p>
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">{s.requiredOutputLevel}</Badge>
+                          <span className="text-xs text-muted-foreground">Lv.{s.requiredUserLevel}</span>
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                        词汇 {s._count?.vocabularies ?? 0} · Chunk {s._count?.chunks ?? 0} · 话题 {s._count?.trainingTopics ?? 0}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="size-8"
+                            onClick={(e) => { e.stopPropagation(); setEditScene(s); setSceneDialog(true) }}>
+                            <Edit3 className="size-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="size-8 text-destructive"
+                            onClick={async (e) => { e.stopPropagation(); await deleteScene(s.id); load() }}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
+          <AdminPagination
+            total={scenes.length}
+            page={Math.min(page, totalPages)}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          />
         </CardContent>
       </Card>
 
