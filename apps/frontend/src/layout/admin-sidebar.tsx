@@ -40,12 +40,12 @@ const menuItems: MenuItem[] = [
     icon: Bell,
     path: '/admin/notifications',
   },
-  {
-    key: 'resources',
-    label: '资料库管理',
-    icon: FolderOpen,
-    path: '/admin/resources',
-  },
+  // {
+  //   key: 'resources',
+  //   label: '资料库管理',
+  //   icon: FolderOpen,
+  //   path: '/admin/resources',
+  // },
   // {
   //   key: 'coupons',
   //   label: '优惠券管理',
@@ -58,12 +58,12 @@ const menuItems: MenuItem[] = [
     icon: MessageSquare,
     path: '/admin/feedbacks',
   },
-  {
-    key: 'question-bank',
-    label: '题库管理',
-    icon: Database,
-    path: '/admin/question-bank',
-  },
+  // {
+  //   key: 'question-bank',
+  //   label: '题库管理',
+  //   icon: Database,
+  //   path: '/admin/question-bank',
+  // },
   {
     key: 'content',
     label: '内容审核',
