@@ -302,30 +302,40 @@ export class LearningService {
     // ---- 构建任务列表 ----
     const tasks: any[] = [];
 
-    // 任务1: 学习词汇
+    // ---- 每日限额 ----
+    const DAILY_VOCAB_LIMIT = 5;
+    const DAILY_CHUNK_LIMIT = 3;
+
+    // 任务1: 学习词汇（每日限额 5 个）
     const unlearnedVocabs = sceneDetail.vocabularies.filter(
       (v) => !learnedVocabSet.has(v.word),
     );
+    const dailyVocabs = unlearnedVocabs.slice(0, DAILY_VOCAB_LIMIT);
     if (unlearnedVocabs.length > 0) {
       tasks.push({
         id: `vocab-${currentScene.id}`,
         type: 'vocab',
-        title: '学习场景词汇',
-        description: `还有 ${unlearnedVocabs.length} 个词汇未学习`,
+        title: '今日词汇',
+        description: dailyVocabs.length < unlearnedVocabs.length
+          ? `今日 ${dailyVocabs.length} 个 · 共 ${unlearnedVocabs.length} 个待学`
+          : `${unlearnedVocabs.length} 个词汇`,
         count: unlearnedVocabs.length,
+        dayCount: dailyVocabs.length,
         done: sceneDetail.vocabularies.length - unlearnedVocabs.length,
         total: sceneDetail.vocabularies.length,
+        hasMore: unlearnedVocabs.length > DAILY_VOCAB_LIMIT,
         unitId: currentScene.id,
         unitTitle: currentScene.title,
-        data: unlearnedVocabs.slice(0, 8),
+        data: dailyVocabs,
       });
     }
 
-    // 任务2: 学习 Chunk
+    // 任务2: 学习 Chunk（每日限额 3 个）
     const unlearnedChunks = sceneDetail.chunks.filter((c) => {
       const cp = chunkProgressMap.get(c.id);
       return !cp || cp.status === 'not_learned';
     });
+    const dailyChunks = unlearnedChunks.slice(0, DAILY_CHUNK_LIMIT);
     if (unlearnedChunks.length > 0 || chunkMastered < sceneDetail.chunks.length) {
       const mastered = sceneDetail.chunks.filter((c) => {
         const cp = chunkProgressMap.get(c.id);
@@ -334,16 +344,20 @@ export class LearningService {
       tasks.push({
         id: `chunk-${currentScene.id}`,
         type: 'chunk',
-        title: '掌握核心表达',
-        description: unlearnedChunks.length > 0
-          ? `还有 ${unlearnedChunks.length} 个 Chunk 待学习`
-          : '复习已学 Chunk，提升掌握度',
+        title: '今日表达',
+        description: dailyChunks.length < unlearnedChunks.length
+          ? `今日 ${dailyChunks.length} 个 · 共 ${unlearnedChunks.length} 个待学`
+          : unlearnedChunks.length > 0
+            ? `${unlearnedChunks.length} 个 Chunk`
+            : '全部 Chunk 已掌握，继续复习保持熟练度',
         count: unlearnedChunks.length,
+        dayCount: dailyChunks.length,
         done: mastered,
         total: sceneDetail.chunks.length,
+        hasMore: unlearnedChunks.length > DAILY_CHUNK_LIMIT,
         unitId: currentScene.id,
         unitTitle: currentScene.title,
-        data: unlearnedChunks.slice(0, 5).map((c) => ({
+        data: dailyChunks.map((c) => ({
           id: c.id,
           text: c.text,
           meaning: c.meaning,

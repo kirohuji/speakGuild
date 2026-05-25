@@ -136,10 +136,12 @@ export interface TodayTask {
   description: string
   unitId: string
   unitTitle: string
-  // vocab-specific
-  count?: number
-  done?: number
-  total?: number
+  // vocab/chunk-specific
+  count?: number       // 总待学数
+  dayCount?: number    // 今日限额展示数
+  done?: number        // 已完成数
+  total?: number       // 总数量
+  hasMore?: boolean    // 今日是否只展示了部分
   data?: { id?: string; word?: string; text?: string; meaning?: string }[]
   // practice-specific
   durationSec?: number

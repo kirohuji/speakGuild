@@ -3,20 +3,23 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, Play, Library, TrendingUp, Sparkles, Mic, Target,
   ListChecks, ChevronRight, ArrowRight, BookText, MessageSquareText,
-  CheckCircle2, Eye, EyeOff, Volume2, RotateCw,
+  CheckCircle2, ChevronDown, ChevronUp,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { Spinner } from '@/components/ui/spinner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import api from '@/features/practice/api/english-practice-api'
 import { chunkApi } from '@/features/practice/api/english-practice-api'
-import { learningApi, type TodayPlan, type TodayTask } from '@/features/learning/api/learning-api'
+import { learningApi, type TodayPlan, type UnitDetail } from '@/features/learning/api/learning-api'
+import {
+  LearningInsightDialog,
+  type LearningInsightItem,
+} from '@/features/practice/components/learning-insight-dialog'
 
 interface QuickStats {
   userLevel: number; totalXp: number; xpForNextLevel: number
@@ -31,9 +34,15 @@ export function EnglishHomePage() {
   const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // 追踪用户在首页已查看/翻转过的词汇和 Chunk
+  // Dialog 沉浸式学习
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogIndex, setDialogIndex] = useState(0)
+  const [dialogItems, setDialogItems] = useState<LearningInsightItem[]>([])
+
+  // 追踪用户在首页已查看的词汇和 Chunk
   const [seenVocabIds, setSeenVocabIds] = useState<Set<string>>(new Set())
   const [seenChunkIds, setSeenChunkIds] = useState<Set<string>>(new Set())
+  const [fullUnit, setFullUnit] = useState<UnitDetail | null>(null)
 
   useEffect(() => {
     if (!session?.user?.id) { setLoading(false); return }
@@ -53,24 +62,98 @@ export function EnglishHomePage() {
   const practiceTask = todayPlan?.tasks.find((t) => t.type === 'practice')
   const scriptTask = todayPlan?.tasks.find((t) => t.type === 'script')
 
-  const vocabItems = vocabTask?.data ?? []
-  const chunkItems = chunkTask?.data ?? []
+  // 默认只展示今日限额内的卡片
+  const shownVocabItems = vocabTask?.data ?? []
+  // 如果用户点击了"查看更多"，从全量详情中取所有词汇
+  const [expandedVocabItems, setExpandedVocabItems] = useState<any[]>([])
+  const [expandedChunkItems, setExpandedChunkItems] = useState<any[]>([])
 
-  // 标记词汇已看 → 调用后端激活
-  const markVocabSeen = useCallback(async (word: string) => {
-    // 找 vocab 对应的 chunk（系统里 vocab 以 chunk 形式存储进度）
-    // 目前只是前端标记
-  }, [])
+  const handleShowAllVocab = useCallback(async () => {
+    if (showAllVocab) { setShowAllVocab(false); return }
+    if (expandedVocabItems.length > 0) { setShowAllVocab(true); return }
+    // 首次展开，加载全量
+    const unitId = vocabTask?.unitId
+    if (!unitId) return
+    try {
+      const unit = await learningApi.getUnitDetail(unitId)
+      if (unit) {
+        setFullUnit(unit)
+        setExpandedVocabItems(unit.vocabularies)
+        setShowAllVocab(true)
+      }
+    } catch {}
+  }, [showAllVocab, expandedVocabItems, vocabTask])
 
-  // 标记 Chunk 已看 → 调用后端 activate
+  const handleShowAllChunk = useCallback(async () => {
+    if (showAllChunk) { setShowAllChunk(false); return }
+    if (expandedChunkItems.length > 0) { setShowAllChunk(true); return }
+    const unitId = chunkTask?.unitId
+    if (!unitId) return
+    try {
+      const unit = await learningApi.getUnitDetail(unitId)
+      if (unit) {
+        setFullUnit(unit)
+        setExpandedChunkItems(unit.chunks)
+        setShowAllChunk(true)
+      }
+    } catch {}
+  }, [showAllChunk, expandedChunkItems, chunkTask])
+
+  const displayVocabItems = showAllVocab ? expandedVocabItems : shownVocabItems
+  const displayChunkItems = showAllChunk ? expandedChunkItems : (chunkTask?.data ?? [])
+
+  // 打开 Dialog 学习词汇
+  const openVocabDialog = useCallback((startIndex: number) => {
+    const items: LearningInsightItem[] = shownVocabItems.map((v: any) => ({
+      kind: 'word' as const,
+      id: v.id ?? v.word ?? '',
+      word: v.word ?? '',
+      meaning: v.meaning ?? '',
+      sceneName: vocabTask?.unitTitle,
+    }))
+    setDialogItems(items)
+    setDialogIndex(Math.min(startIndex, items.length - 1))
+    setDialogOpen(true)
+  }, [shownVocabItems, vocabTask])
+
+  // 打开 Dialog 学习 Chunk
+  const openChunkDialog = useCallback((startIndex: number) => {
+    const items: LearningInsightItem[] = (chunkTask?.data ?? []).map((c: any) => ({
+      kind: 'chunk' as const,
+      id: c.id ?? c.text ?? '',
+      text: c.text ?? '',
+      meaning: c.meaning ?? '',
+      sceneName: chunkTask?.unitTitle,
+    }))
+    setDialogItems(items)
+    setDialogIndex(Math.min(startIndex, items.length - 1))
+    setDialogOpen(true)
+  }, [chunkTask])
+
+  // 标记 Chunk 已看
   const markChunkActivated = useCallback(async (chunkId: string) => {
     if (seenChunkIds.has(chunkId)) return
     setSeenChunkIds((prev) => new Set(prev).add(chunkId))
     try { await chunkApi.activate(chunkId) } catch {}
   }, [seenChunkIds])
 
-  const allVocabSeen = vocabItems.length > 0 && vocabItems.every((v) => seenVocabIds.has(v.id ?? ''))
-  const allChunkSeen = chunkItems.length > 0 && chunkItems.every((c) => seenChunkIds.has(c.id ?? ''))
+  // Dialog 关闭时，标记所有展示过的词/Chunk 为已看
+  const handleDialogClose = useCallback((open: boolean) => {
+    if (!open) {
+      // 标记 dialog 中所有 word 为已看
+      for (const item of dialogItems) {
+        if (item.kind === 'word' && item.id) setSeenVocabIds((prev) => new Set(prev).add(item.id))
+        if (item.kind === 'chunk' && item.id) {
+          setSeenChunkIds((prev) => new Set(prev).add(item.id))
+          markChunkActivated(item.id)
+        }
+      }
+    }
+    setDialogOpen(open)
+  }, [dialogItems, markChunkActivated])
+
+  const allVocabSeen = shownVocabItems.length > 0 && shownVocabItems.every((v) => seenVocabIds.has(v.id ?? ''))
+  const allChunkSeen = (chunkTask?.data ?? []).length > 0 && (chunkTask?.data ?? []).every((c) => seenChunkIds.has(c.id ?? ''))
 
   const xpPercent = stats
     ? Math.min(100, Math.round((stats.totalXp % (stats.xpForNextLevel || 100)) / (stats.xpForNextLevel || 100) * 100))
@@ -122,62 +205,109 @@ export function EnglishHomePage() {
         )}
       </div>
 
-      {/* ===== 今日词汇（直接展示卡片） ===== */}
-      {vocabItems.length > 0 && (
+      {/* ===== 今日词汇（最多2个，点击打开 Dialog） ===== */}
+      {shownVocabItems.length > 0 && (
         <section className="mb-5">
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookText className="size-4 text-blue-500" />
               <h2 className="text-sm font-semibold text-foreground">今日词汇</h2>
               <Badge variant="secondary" className="text-[10px]">
-                {seenVocabIds.size}/{vocabItems.length}
+                {seenVocabIds.size}/{vocabTask?.count ?? shownVocabItems.length}
               </Badge>
             </div>
-            {allVocabSeen && <CheckCircle2 className="size-4 text-green-500" />}
+            <div className="flex items-center gap-2">
+              {allVocabSeen && <CheckCircle2 className="size-4 text-green-500" />}
+              {(vocabTask?.count ?? 0) > 2 && (
+                <button
+                  onClick={() => openVocabDialog(0)}
+                  className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  共 {vocabTask?.count} 个 <ChevronRight className="size-3" />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {vocabItems.map((item) => (
-              <VocabMiniCard
+          <div className="grid grid-cols-2 gap-2">
+            {shownVocabItems.slice(0, 2).map((item: any, i: number) => (
+              <button
                 key={item.id ?? item.word}
-                word={item.word ?? ''}
-                meaning={item.meaning ?? ''}
-                seen={seenVocabIds.has(item.id ?? '')}
-                onReveal={() => {
-                  if (item.id) setSeenVocabIds((prev) => new Set(prev).add(item.id))
-                }}
-              />
+                onClick={() => openVocabDialog(i)}
+                className={cn(
+                  'rounded-lg border p-3 text-left transition-all hover:shadow-sm',
+                  seenVocabIds.has(item.id ?? '')
+                    ? 'border-green-500/30 bg-green-500/5'
+                    : 'border-border bg-card hover:border-blue-500/40',
+                )}
+              >
+                <p className="text-sm font-bold text-foreground">{item.word}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {seenVocabIds.has(item.id ?? '') ? item.meaning : '点我查看详情'}
+                </p>
+              </button>
             ))}
           </div>
         </section>
       )}
 
-      {/* ===== 今日表达（Chunk 卡片，点击展开详情） ===== */}
-      {chunkItems.length > 0 && (
+      {/* ===== 今日表达（点击打开 Dialog） ===== */}
+      {(chunkTask?.data ?? []).length > 0 && (
         <section className="mb-5">
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquareText className="size-4 text-purple-500" />
               <h2 className="text-sm font-semibold text-foreground">今日表达</h2>
               <Badge variant="secondary" className="text-[10px]">
-                {seenChunkIds.size}/{chunkItems.length}
+                {seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length}
               </Badge>
             </div>
-            {allChunkSeen && <CheckCircle2 className="size-4 text-green-500" />}
+            <div className="flex items-center gap-2">
+              {allChunkSeen && <CheckCircle2 className="size-4 text-green-500" />}
+              {(chunkTask?.count ?? 0) > 0 && (
+                <button
+                  onClick={() => openChunkDialog(0)}
+                  className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  共 {chunkTask?.count} 个 <ChevronRight className="size-3" />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="space-y-2">
-            {chunkItems.map((item) => (
-              <ChunkMiniCard
+          <div className="space-y-1.5">
+            {(chunkTask?.data ?? []).slice(0, 1).map((item: any, i: number) => (
+              <button
                 key={item.id ?? item.text}
-                id={item.id ?? ''}
-                text={item.text ?? ''}
-                meaning={item.meaning ?? ''}
-                seen={seenChunkIds.has(item.id ?? '')}
-                onActivate={() => markChunkActivated(item.id ?? '')}
-              />
+                onClick={() => openChunkDialog(i)}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all hover:shadow-sm',
+                  seenChunkIds.has(item.id ?? '')
+                    ? 'border-green-500/30 bg-green-500/5'
+                    : 'border-border bg-card hover:border-purple-500/40',
+                )}
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                  <MessageSquareText className="size-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{item.text}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {seenChunkIds.has(item.id ?? '') ? item.meaning : '点我查看详情'}
+                  </p>
+                </div>
+              </button>
             ))}
           </div>
         </section>
       )}
+
+      {/* ===== 沉浸式学习 Dialog ===== */}
+      <LearningInsightDialog
+        items={dialogItems}
+        index={dialogIndex}
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
+        onIndexChange={setDialogIndex}
+      />
 
       {/* ===== 今日练习（词汇和 Chunk 都看过之后才出现） ===== */}
       {practiceTask && (
@@ -297,103 +427,4 @@ export function EnglishHomePage() {
   )
 }
 
-// ===== 词汇迷你卡片（首页直接翻转） =====
 
-function VocabMiniCard({
-  word, meaning, seen, onReveal,
-}: {
-  word: string; meaning: string; seen: boolean; onReveal: () => void
-}) {
-  const [flipped, setFlipped] = useState(false)
-
-  return (
-    <button
-      onClick={() => {
-        if (!flipped) { setFlipped(true); onReveal() }
-        else setFlipped(false)
-      }}
-      className={cn(
-        'group relative min-h-[72px] rounded-lg border p-3 text-left transition-all active:scale-[0.97]',
-        flipped
-          ? 'border-blue-500/40 bg-blue-500/5'
-          : seen
-            ? 'border-green-500/30 bg-green-500/5'
-            : 'border-border bg-card hover:border-blue-500/30 hover:bg-blue-500/5',
-      )}
-    >
-      {flipped ? (
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">{meaning}</p>
-          <p className="text-sm font-bold text-foreground">{word}</p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-foreground">{word}</p>
-          <p className="text-[10px] text-muted-foreground">点击显示释义</p>
-        </div>
-      )}
-      {seen && !flipped && (
-        <CheckCircle2 className="absolute right-1.5 top-1.5 size-3 text-green-500" />
-      )}
-    </button>
-  )
-}
-
-// ===== Chunk 迷你卡片（首页点击展开详情） =====
-
-function ChunkMiniCard({
-  id, text, meaning, seen, onActivate,
-}: {
-  id: string; text: string; meaning: string; seen: boolean; onActivate: () => void
-}) {
-  const [expanded, setExpanded] = useState(false)
-
-  return (
-    <div className={cn(
-      'rounded-lg border transition-all',
-      expanded
-        ? 'border-purple-500/40 bg-purple-500/5'
-        : seen
-          ? 'border-green-500/30 bg-green-500/5'
-          : 'border-border bg-card',
-    )}>
-      <button
-        onClick={() => {
-          const willExpand = !expanded
-          setExpanded(willExpand)
-          if (willExpand && !seen) onActivate()
-        }}
-        className="flex w-full items-center gap-3 p-3 text-left"
-      >
-        <div className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-full',
-          expanded ? 'bg-purple-500/20' : 'bg-muted',
-        )}>
-          <MessageSquareText className={cn('size-4', expanded ? 'text-purple-500' : 'text-muted-foreground')} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className={cn('text-sm font-medium', expanded ? 'text-foreground' : 'text-foreground')}>
-            {text}
-          </p>
-          {!expanded && (
-            <p className="mt-0.5 text-xs text-muted-foreground">{meaning}</p>
-          )}
-        </div>
-        {seen && !expanded && (
-          <CheckCircle2 className="size-4 shrink-0 text-green-500" />
-        )}
-      </button>
-
-      {expanded && (
-        <div className="border-t border-purple-500/20 px-3 pb-3 pt-2">
-          <p className="text-sm font-medium text-foreground">{meaning}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            点击「开口练习」在对话中运用这个表达
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
-  )
-}

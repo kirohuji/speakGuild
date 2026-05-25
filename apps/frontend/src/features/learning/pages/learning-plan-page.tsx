@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, Sparkles, ArrowRight,
+  ShoppingBag, Play,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { learningApi, type LearningCategory, type LearningUnitSummary } from '../api/learning-api'
 
@@ -27,7 +29,7 @@ function getCategoryIcon(name: string) {
 export function LearningPlanPage() {
   const [categories, setCategories] = useState<LearningCategory[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [tab, setTab] = useState<'learning' | 'shop'>('learning')
 
   useEffect(() => {
     learningApi.getUnits()
@@ -36,24 +38,60 @@ export function LearningPlanPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
-    if (categories.length > 0 && !expandedCategory) {
-      // 展开第一个有未完成单元的类别
-      const firstIncomplete = categories.find((c) =>
-        c.units.some((u) => u.isUnlocked && (u.completionPercent ?? 0) < 100),
-      )
-      setExpandedCategory(firstIncomplete?.id ?? categories[0]?.id ?? null)
-    }
-  }, [categories])
-
   if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
+
+  // 搜集所有单元
+  const allUnits = categories.flatMap((c) =>
+    c.units.map((u) => ({ ...u, categoryName: c.name, categoryIcon: c.icon })),
+  )
+
+  const inProgress = allUnits.filter(
+    (u) => u.isUnlocked && (u.completionPercent ?? 0) > 0 && (u.completionPercent ?? 0) < 100,
+  )
+  const notStarted = allUnits.filter(
+    (u) => u.isUnlocked && (u.completionPercent ?? 0) === 0,
+  )
+  const completed = allUnits.filter((u) => (u.completionPercent ?? 0) >= 100)
+  const locked = allUnits.filter((u) => !u.isUnlocked)
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">学习计划</h1>
-        <p className="mt-1 text-muted-foreground">选择一套教材，系统自动安排每日学习任务</p>
+        <p className="mt-1 text-muted-foreground">选择教材，系统自动安排每日任务</p>
+      </div>
+
+      {/* Tab: 进行中 / 学习商店 */}
+      <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
+        <button
+          onClick={() => setTab('learning')}
+          className={cn(
+            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            tab === 'learning' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          当前学习
+          {inProgress.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+              {inProgress.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('shop')}
+          className={cn(
+            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            tab === 'shop' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          学习商店
+          {notStarted.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-muted-foreground/20 px-1.5 text-[10px] text-muted-foreground">
+              {notStarted.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {categories.length === 0 ? (
@@ -61,121 +99,90 @@ export function LearningPlanPage() {
           <BookOpen className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-muted-foreground">学习内容即将上线</p>
         </div>
-      ) : (
+      ) : tab === 'learning' ? (
+        /* ===== 当前学习 Tab ===== */
         <div className="space-y-4">
-          {categories.map((category) => {
-            const CatIcon = getCategoryIcon(category.name)
-            const isExpanded = expandedCategory === category.id
-            const unlockedUnits = category.units.filter((u) => u.isUnlocked)
-            const inProgress = unlockedUnits.filter((u) => {
-              const pct = u.completionPercent ?? 0
-              return pct > 0 && pct < 100
-            })
-            const completed = unlockedUnits.filter((u) => (u.completionPercent ?? 0) >= 100)
+          {/* 进行中的单元 */}
+          {inProgress.length > 0 && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Play className="size-4 text-primary" />
+                继续学习
+              </h2>
+              <div className="space-y-2">
+                {inProgress.map((unit) => (
+                  <UnitCard key={unit.id} unit={unit} />
+                ))}
+              </div>
+            </section>
+          )}
 
-            return (
-              <Card key={category.id} className="overflow-hidden">
-                <button
-                  className="w-full text-left"
-                  onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                          <CatIcon className="size-5 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">{category.name}</CardTitle>
-                          <p className="text-xs text-muted-foreground">
-                            {unlockedUnits.length} 个单元 · 已完成 {completed.length}
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight
-                        className={cn(
-                          'size-4 text-muted-foreground transition-transform',
-                          isExpanded && 'rotate-90',
-                        )}
-                      />
-                    </div>
+          {/* 已完成的单元 */}
+          {completed.length > 0 && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <CheckCircle2 className="size-4 text-green-500" />
+                已完成
+              </h2>
+              <div className="space-y-2">
+                {completed.map((unit) => (
+                  <UnitCard key={unit.id} unit={unit} />
+                ))}
+              </div>
+            </section>
+          )}
 
-                    {/* Mini progress bar */}
-                    {unlockedUnits.length > 0 && (
-                      <div className="mt-2 flex gap-1">
-                        {unlockedUnits.map((u) => {
-                          const pct = u.completionPercent ?? 0
-                          return (
-                            <div
-                              key={u.id}
-                              className={cn(
-                                'h-1.5 flex-1 rounded-full',
-                                pct >= 100
-                                  ? 'bg-green-500'
-                                  : pct > 0
-                                    ? 'bg-primary'
-                                    : 'bg-muted',
-                              )}
-                              title={`${u.title}: ${pct}%`}
-                            />
-                          )
-                        })}
-                      </div>
-                    )}
-                  </CardHeader>
-                </button>
+          {inProgress.length === 0 && completed.length === 0 && (
+            <div className="flex flex-col items-center py-12 text-center">
+              <BookOpen className="size-10 text-muted-foreground/40" />
+              <p className="mt-3 text-sm text-muted-foreground">还没有开始学习</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => setTab('shop')}>
+                去学习商店选教材
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ===== 学习商店 Tab ===== */
+        <div className="space-y-6">
+          {notStarted.length > 0 && (
+            <section>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <ShoppingBag className="size-4 text-primary" />
+                可获取的学习单元
+                <Badge variant="secondary" className="text-[10px]">{notStarted.length}</Badge>
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {notStarted.map((unit) => (
+                  <ShopCard key={unit.id} unit={unit} />
+                ))}
+              </div>
+            </section>
+          )}
 
-                {isExpanded && (
-                  <CardContent className="space-y-2 pt-0">
-                    {inProgress.length > 0 && (
-                      <div className="mb-2">
-                        <p className="mb-1.5 text-xs font-medium text-muted-foreground">继续学习</p>
-                        {inProgress.map((unit) => (
-                          <UnitCard key={unit.id} unit={unit} />
-                        ))}
-                      </div>
-                    )}
-
-                    {unlockedUnits
-                      .filter((u) => (u.completionPercent ?? 0) === 0)
-                      .map((unit) => (
-                        <UnitCard key={unit.id} unit={unit} />
-                      ))}
-
-                    {completed.length > 0 && (
-                      <>
-                        <p className="pt-1 text-xs font-medium text-muted-foreground">已完成</p>
-                        {completed.map((unit) => (
-                          <UnitCard key={unit.id} unit={unit} />
-                        ))}
-                      </>
-                    )}
-
-                    {category.units
-                      .filter((u) => !u.isUnlocked)
-                      .map((unit) => (
-                        <LockedUnitCard key={unit.id} unit={unit} />
-                      ))}
-                  </CardContent>
-                )}
-              </Card>
-            )
-          })}
+          {locked.length > 0 && (
+            <section>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <Lock className="size-4" />
+                等级解锁
+                <Badge variant="outline" className="text-[10px]">{locked.length}</Badge>
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {locked.map((unit) => (
+                  <LockedUnitCard key={unit.id} unit={unit} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
-
-      {/* Bottom CTA */}
-      <div className="mt-8 rounded-lg border border-border bg-muted/30 p-4 text-center">
-        <Sparkles className="mx-auto mb-2 size-6 text-primary" />
-        <p className="text-sm text-muted-foreground">
-          每完成一个单元，你就能在真实场景中更自信地表达
-        </p>
-      </div>
     </div>
   )
 }
 
-function UnitCard({ unit }: { unit: LearningUnitSummary }) {
+// ── 进行中/已完成 单元卡片 ──
+
+function UnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
   const pct = unit.completionPercent ?? 0
   const isCompleted = pct >= 100
 
@@ -206,25 +213,18 @@ function UnitCard({ unit }: { unit: LearningUnitSummary }) {
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-foreground">{unit.title}</p>
           {!isCompleted && pct > 0 && (
-            <Badge variant="secondary" className="text-[10px]">
-              {pct}%
-            </Badge>
+            <Badge variant="secondary" className="text-[10px]">{pct}%</Badge>
           )}
         </div>
         <p className="text-xs text-muted-foreground">{unit.location}</p>
-
         {!isCompleted && (
           <div className="mt-1.5 flex items-center gap-3 text-[10px] text-muted-foreground">
             <span>{unit.vocabCount} 词</span>
             <span>{unit.chunkCount} 表达</span>
             <span>{unit.topicCount} 练习</span>
-            <span>{unit.scriptCount} 剧本</span>
           </div>
         )}
-
-        {!isCompleted && pct > 0 && (
-          <Progress value={pct} className="mt-1.5 h-1" />
-        )}
+        {!isCompleted && pct > 0 && <Progress value={pct} className="mt-1.5 h-1" />}
       </div>
 
       <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -232,18 +232,52 @@ function UnitCard({ unit }: { unit: LearningUnitSummary }) {
   )
 }
 
-function LockedUnitCard({ unit }: { unit: LearningUnitSummary }) {
+// ── 商店卡片 ──
+
+function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-dashed border-border/50 bg-muted/20 p-3 opacity-60">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+    <Link
+      to={`/learning/units/${unit.id}`}
+      className="group rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+          <BookOpen className="size-5 text-primary" />
+        </div>
+        {unit.categoryName && (
+          <Badge variant="outline" className="text-[10px]">{unit.categoryName}</Badge>
+        )}
+      </div>
+      <h3 className="text-sm font-bold text-foreground group-hover:text-primary">{unit.title}</h3>
+      <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
+      <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
+        <span>{unit.vocabCount} 词汇</span>
+        <span>·</span>
+        <span>{unit.chunkCount} 表达</span>
+        <span>·</span>
+        <span>{unit.topicCount} 练习</span>
+      </div>
+      <Button size="sm" variant="outline" className="mt-3 w-full gap-1 text-xs">
+        获取学习
+        <ArrowRight className="size-3" />
+      </Button>
+    </Link>
+  )
+}
+
+// ── 锁定单元卡片 ──
+
+function LockedUnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border/50 bg-muted/20 p-4 opacity-60">
+      <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-muted">
         <Lock className="size-4 text-muted-foreground" />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-muted-foreground">{unit.title}</p>
-        <p className="text-xs text-muted-foreground">
-          需要用户等级 Lv.{unit.requiredUserLevel} 解锁
-        </p>
-      </div>
+      <h3 className="text-sm font-medium text-muted-foreground">{unit.title}</h3>
+      <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
+      <p className="mt-2 text-[10px] text-muted-foreground">
+        需要 Lv.{unit.requiredUserLevel} 解锁
+      </p>
     </div>
   )
 }
