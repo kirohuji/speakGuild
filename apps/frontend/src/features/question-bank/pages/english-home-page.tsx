@@ -1,19 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, TrendingUp, ChevronRight,
+  BookOpen, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/auth-provider'
-import api from '@/features/practice/api/english-practice-api'
-import { learningApi, type TodayPlan } from '@/features/learning/api/learning-api'
-
-interface QuickStats {
-  userLevel: number; totalXp: number; xpForNextLevel: number
-  outputLevel: string; outputLevelDescription: string
-  totalChunks: number; masteredChunks: number
-}
 
 const HOME_SCENE = {
   sentence: 'Could you tell me a little more about it?',
@@ -23,19 +15,10 @@ const HOME_SCENE = {
 export function EnglishHomePage() {
   const { session } = useAuth()
   const navigate = useNavigate()
-  const [stats, setStats] = useState<QuickStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!session?.user?.id) { setLoading(false); return }
-
-    Promise.all([
-      api.get('/level/overview').then((res: any) => {
-        const data = res?.data ?? res
-        if (data?.outputLevel) setStats(data)
-      }).catch(() => {}),
-      learningApi.getTodayTasks().catch(() => null),
-    ]).finally(() => setLoading(false))
+    setLoading(false)
   }, [session])
 
   if (loading) {
@@ -62,7 +45,7 @@ export function EnglishHomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24">
+    <div className="mx-auto max-w-2xl overflow-hidden">
       <style>{`
         @keyframes home-light-breathe {
           0%, 100% { opacity: .32; transform: translate3d(-10%, -4%, 0) scale(1); }
@@ -70,7 +53,7 @@ export function EnglishHomePage() {
         }
       `}</style>
 
-      <section className="relative -mx-4 -mt-[calc(3rem+env(safe-area-inset-top,0px))] flex min-h-[calc(100svh-5rem)] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#d6eee9_0%,#eaf5f1_42%,#ffffff_100%)] px-6 pb-24 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] text-foreground">
+      <section className="relative -mt-[calc(3rem+env(safe-area-inset-top,0px))] flex h-[calc(100svh-4rem)] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#d6eee9_0%,#eaf5f1_42%,#ffffff_100%)] px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-[calc(3rem+env(safe-area-inset-top,0px))] text-foreground">
         <div
           className="absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-white/60 blur-3xl"
           style={{ animation: 'home-light-breathe 9s ease-in-out infinite' }}
@@ -92,19 +75,6 @@ export function EnglishHomePage() {
           </button>
         </div>
       </section>
-
-      {/* ===== 底部成长入口 ===== */}
-      {stats && (
-        <div className="mt-4">
-          <Link to="/growth">
-            <Button variant="ghost" className="w-full rounded-full text-xs text-muted-foreground">
-              <TrendingUp className="size-4" />
-              Lv.{stats.userLevel} · {stats.masteredChunks}/{stats.totalChunks} Chunk · {stats.totalXp} XP
-            </Button>
-          </Link>
-        </div>
-      )}
-
     </div>
   )
 }

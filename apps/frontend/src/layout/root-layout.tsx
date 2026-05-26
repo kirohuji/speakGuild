@@ -16,8 +16,9 @@ export function RootLayout() {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
+  const isHomePage = pathname === '/'
   const isLoggedIn = !!session
-  const showMobileAvatar = isLoggedIn && pathname === '/'
+  const showMobileAvatar = isLoggedIn && isHomePage
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
 
@@ -37,9 +38,11 @@ export function RootLayout() {
       <main className={`flex-1 pt-0 ${
         isAuthPage || !isLoggedIn
           ? 'pb-0 lg:pt-0 lg:pb-0'
-          : `${showMobileAvatar ? 'pt-[calc(3.25rem+env(safe-area-inset-top,0px))]' : 'pt-0'} pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0`
+          : isHomePage
+            ? 'pt-0 pb-0 lg:pt-14 lg:pb-0'
+            : 'pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
       }`}>
-        <div className={isAuthPage ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
+        <div className={isAuthPage || isHomePage ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
           <Outlet />
         </div>
       </main>
