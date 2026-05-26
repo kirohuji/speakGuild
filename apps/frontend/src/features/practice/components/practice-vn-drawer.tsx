@@ -26,6 +26,8 @@ interface PracticeVnDrawerProps {
   coreChunks: ChunkHint[]
   /** 已使用 chunk 文本集合 */
   usedChunkTexts: Set<string>
+  /** 历史 dialog 打开时隐藏抽屉开关 */
+  hideToggles?: boolean
 }
 
 /** VN 练习模式的左右侧抽屉 */
@@ -34,6 +36,7 @@ export function PracticeVnDrawer({
   hints,
   coreChunks,
   usedChunkTexts,
+  hideToggles = false,
 }: PracticeVnDrawerProps) {
   const [leftOpen, setLeftOpen] = useState(false)
   const [rightOpen, setRightOpen] = useState(false)
@@ -43,13 +46,15 @@ export function PracticeVnDrawer({
   return (
     <>
       {/* Left drawer toggle */}
-      <button
-        onClick={() => { setLeftOpen(!leftOpen); if (rightOpen) setRightOpen(false) }}
-        className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
-        title="任务目标"
-      >
-        <ChevronRight className={cn('size-4 transition-transform', leftOpen && 'rotate-180')} />
-      </button>
+      {!hideToggles && (
+        <button
+          onClick={() => { setLeftOpen(!leftOpen); if (rightOpen) setRightOpen(false) }}
+          className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
+          title="任务目标"
+        >
+          <ChevronRight className={cn('size-4 transition-transform', leftOpen && 'rotate-180')} />
+        </button>
+      )}
 
       {/* Left drawer panel */}
       <div
@@ -109,13 +114,15 @@ export function PracticeVnDrawer({
       </div>
 
       {/* Right drawer toggle */}
-      <button
-        onClick={() => { setRightOpen(!rightOpen); if (leftOpen) setLeftOpen(false) }}
-        className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
-        title="表达提示"
-      >
-        <ChevronLeft className={cn('size-4 transition-transform', rightOpen && 'rotate-180')} />
-      </button>
+      {!hideToggles && (
+        <button
+          onClick={() => { setRightOpen(!rightOpen); if (leftOpen) setLeftOpen(false) }}
+          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
+          title="表达提示"
+        >
+          <ChevronLeft className={cn('size-4 transition-transform', rightOpen && 'rotate-180')} />
+        </button>
+      )}
 
       {/* Right drawer panel */}
       <div

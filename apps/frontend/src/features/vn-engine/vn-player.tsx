@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { History, RotateCcw } from 'lucide-react'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import { cn } from '@/lib/cn'
 
@@ -27,6 +28,7 @@ interface VnPlayerProps {
   onAdvance?: () => void
   onChoice?: (index: number) => void
   onReset?: () => void
+  onHistoryOpenChange?: (open: boolean) => void
   className?: string
   stageClassName?: string
 }
@@ -366,10 +368,16 @@ export function VnPlayer({
   onAdvance,
   onChoice,
   onReset,
+  onHistoryOpenChange,
   className,
   stageClassName,
 }: VnPlayerProps) {
   const [historyOpen, setHistoryOpen] = useState(false)
+
+  const toggleHistory = (value: boolean) => {
+    setHistoryOpen(value)
+    onHistoryOpenChange?.(value)
+  }
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen
 
   return (
@@ -389,8 +397,40 @@ export function VnPlayer({
       >
         <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
 
-        {/* History & reset buttons — hidden for now */}
-        <div className="hidden" />
+        <div className="absolute right-3 top-3 z-30 flex gap-2">
+          <span
+            role="button"
+            tabIndex={0}
+            className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+            onClick={(event) => { event.stopPropagation(); toggleHistory(!historyOpen) }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                toggleHistory(!historyOpen)
+              }
+            }}
+          >
+            <History className="size-4" />
+          </span>
+          {onReset && (
+            <span
+              role="button"
+              tabIndex={0}
+              className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+              onClick={(event) => { event.stopPropagation(); onReset() }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onReset()
+                }
+              }}
+            >
+              <RotateCcw className="size-4" />
+            </span>
+          )}
+        </div>
 
         {historyOpen && (
           <div className="absolute inset-0 z-40 bg-background/80 p-4" onClick={(event) => event.stopPropagation()}>
@@ -404,11 +444,11 @@ export function VnPlayer({
                   role="button"
                   tabIndex={0}
                   className="rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  onClick={() => setHistoryOpen(false)}
+                  onClick={() => toggleHistory(false)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault()
-                      setHistoryOpen(false)
+                      toggleHistory(false)
                     }
                   }}
                 >
@@ -436,7 +476,7 @@ export function VnPlayer({
                 key={choice.index}
                 role="button"
                 tabIndex={0}
-                className="rounded-lg border border-border bg-background/80 px-4 py-3 text-center text-sm font-medium text-foreground shadow-xl backdrop-blur-md transition-colors hover:border-primary/40 hover:bg-background/95"
+                className="rounded-lg border border-border/60 bg-background/90 px-4 py-3 text-center text-sm font-medium text-foreground shadow-lg transition-colors hover:border-primary/40 hover:bg-primary/10"
                 onClick={(event) => { event.stopPropagation(); onChoice?.(choice.index) }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -452,15 +492,15 @@ export function VnPlayer({
           </div>
         )}
 
-        <div className="absolute inset-x-3 bottom-3 z-20">
+        <div className="absolute inset-x-0 bottom-0 z-20">
           {currentLine?.speaker && (
-            <div className="ml-3 inline-flex min-w-24 max-w-[82%] items-center rounded-t-lg border border-border border-b-0 bg-card px-4 py-1.5 text-sm font-semibold text-foreground shadow-lg">
-              <span className="truncate">{currentLine.speaker}</span>
+            <div className="ml-3 inline-flex min-w-24 max-w-[82%] items-center justify-center rounded-t-lg border border-border/60 border-b-0 bg-background/95 px-3 py-1">
+              <span className="truncate text-sm font-semibold text-foreground">{currentLine.speaker}</span>
             </div>
           )}
-          <div className="min-h-[112px] rounded-xl border border-border bg-card px-4 py-3 shadow-2xl">
+          <div className="min-h-[140px] border-t border-border/60 bg-background/95 p-4">
             {currentLine ? (
-              <p className="text-[15px] leading-7 text-foreground">{currentLine.text}</p>
+              <p className="text-sm leading-relaxed text-foreground">{currentLine.text}</p>
             ) : isEnded ? (
               <p className="text-center text-sm text-muted-foreground">故事结束</p>
             ) : isWaiting ? (

@@ -85,6 +85,9 @@ export function PracticeSessionPage() {
   const [analysisResult, setAnalysisResult] = useState<any>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
 
+  // ── History dialog visibility (hide drawer toggles when open) ──
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+
   // ── Immersive mode (hide layout chrome during practice) ──
   const setImmersiveMode = useLayoutStore((s) => s.setImmersiveMode)
   useEffect(() => {
@@ -586,6 +589,7 @@ export function PracticeSessionPage() {
               isWaiting={inkWaiting}
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
+              onHistoryOpenChange={setIsHistoryOpen}
             />
           </VnPlayerBoundary>
         </div>
@@ -599,6 +603,7 @@ export function PracticeSessionPage() {
           hints={aiHints}
           coreChunks={coreChunkTexts}
           usedChunkTexts={usedChunks}
+          hideToggles={isHistoryOpen}
         />
       </div>
     )
