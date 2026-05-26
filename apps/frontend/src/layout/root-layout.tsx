@@ -5,6 +5,7 @@ import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
 import { useAuth } from '@/providers/auth-provider'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { NotificationBell } from '@/features/notification/components/notification-bell'
 import { cn } from '@/lib/cn'
 
 export function RootLayout() {
@@ -12,6 +13,7 @@ export function RootLayout() {
   const { session } = useAuth()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isLoggedIn = !!session
+  const showMobileAvatar = isLoggedIn && pathname === '/'
 
   return (
     <div className="flex min-h-screen flex-col pt-safe">
@@ -20,9 +22,11 @@ export function RootLayout() {
           <Header />
         </div>
       )}
-      {!isAuthPage && isLoggedIn && <MobileTopBar />}
+      {!isAuthPage && showMobileAvatar && <MobileTopBar />}
       <main className={`flex-1 pt-0 ${
-        isAuthPage || !isLoggedIn ? 'pb-0 lg:pt-0 lg:pb-0' : 'pt-[calc(3.25rem+env(safe-area-inset-top,0px))] pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
+        isAuthPage || !isLoggedIn
+          ? 'pb-0 lg:pt-0 lg:pb-0'
+          : `${showMobileAvatar ? 'pt-[calc(3.25rem+env(safe-area-inset-top,0px))]' : 'pt-0'} pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0`
       }`}>
         <div className={isAuthPage ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
           <Outlet />
@@ -46,13 +50,14 @@ function MobileTopBar() {
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
 
   return (
-    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 rounded-full border border-border/70 bg-background/90 p-1 shadow-[0_10px_26px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:hidden">
+    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40 lg:hidden">
+      <NotificationBell className="size-8 rounded-full text-muted-foreground hover:bg-muted/70 hover:text-foreground" />
       <Link
         to="/profile"
         aria-label="个人页面"
         className={cn(
           'block rounded-full p-0.5 transition-colors',
-          profileActive ? 'bg-primary/12 ring-1 ring-primary/30' : 'hover:bg-muted',
+          profileActive ? 'bg-primary/10' : 'hover:bg-muted/70',
         )}
       >
         <Avatar className="size-8">

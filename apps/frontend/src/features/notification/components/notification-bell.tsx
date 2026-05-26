@@ -363,7 +363,7 @@ function NotificationDetailDialog({
   )
 }
 
-export function NotificationBell() {
+export function NotificationBell({ className }: { className?: string } = {}) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<TabValue>('all')
   const [detailItem, setDetailItem] = useState<NotificationItem | null>(null)
@@ -387,7 +387,7 @@ export function NotificationBell() {
       <Button
         variant="ghost"
         size="icon"
-        className="relative h-9 w-9"
+        className={cn('relative h-9 w-9', className)}
         onClick={() => { setDetailItem(null); setOpen(true) }}
       >
         <Bell className="h-[18px] w-[18px]" />

@@ -86,14 +86,9 @@ export function ExpressionLibraryPage() {
   }, [])
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">我的学习库</h1>
-        <p className="mt-1 text-muted-foreground">自动沉淀你的单词和表达</p>
-      </div>
-
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
       <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="mb-4 w-full flex-wrap">
+        <TabsList className="mb-4 w-full flex-wrap rounded-full">
           <TabsTrigger value="words" className="flex-1 min-w-[60px]">单词</TabsTrigger>
           <TabsTrigger value="chunk" className="flex-1 min-w-[60px]">表达</TabsTrigger>
           <TabsTrigger value="review" className="flex-1 min-w-[60px] relative">
