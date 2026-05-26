@@ -154,14 +154,50 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${chunkData.length} 个 Chunk`)
 
-  // ═══ 4. 训练话题 ═══
+  // ═══ 4. 训练话题（每个场景 3~6 个，总计 30+） ═══
   const topicData = [
+    // 宿舍入住 (6)
     { sceneTitle: '宿舍入住', title: '办理入住', promptEn: "You've just arrived at the student dormitory. The receptionist asks: 'How can I help you?'", promptZh: '你刚到学生宿舍，前台工作人员问你需要什么帮助。', duration: 60, diff: 'L2', skeleton: "Hi, I'm here to ___. My booking is under the name ___. Here is my ___. Could you tell me where ___ is?" },
     { sceneTitle: '宿舍入住', title: '询问设施', promptEn: "Ask the receptionist about Wi-Fi, laundry, and kitchen facilities.", promptZh: '询问前台关于 Wi-Fi、洗衣房和厨房设施。', duration: 45, diff: 'L2' },
+    { sceneTitle: '宿舍入住', title: '描述宿舍问题', promptEn: "Your room has a problem. Call the reception to report it.", promptZh: '你的房间有问题，打电话向前台报修。', duration: 45, diff: 'L2' },
+    { sceneTitle: '宿舍入住', title: '询问室友生活习惯', promptEn: "Ask your new roommate about their daily habits.", promptZh: '询问新室友的日常生活习惯。', duration: 40, diff: 'L1' },
+    { sceneTitle: '宿舍入住', title: '签收快递', promptEn: "You received a package. Ask the front desk how to pick it up.", promptZh: '你有快递到了，问前台怎么领取。', duration: 30, diff: 'L1' },
+    { sceneTitle: '宿舍入住', title: '申请换房间', promptEn: "You want to change rooms. Explain your reason to the staff.", promptZh: '你想换房间，向工作人员说明原因。', duration: 50, diff: 'L2' },
+    // 机场入境 (4)
     { sceneTitle: '机场入境', title: '说明来访目的', promptEn: "The immigration officer asks: 'What is the purpose of your visit?'", promptZh: '入境官问你来访目的是什么。', duration: 60, diff: 'L2', skeleton: "I'm here to ___. I'll be staying for ___. I've been accepted to ___." },
+    { sceneTitle: '机场入境', title: '行李丢失申报', promptEn: "Your luggage is missing. Report it at the baggage claim office.", promptZh: '你的行李丢了，在行李认领处申报。', duration: 50, diff: 'L2' },
+    { sceneTitle: '机场入境', title: '转机问路', promptEn: "You need to find your connecting flight gate. Ask airport staff.", promptZh: '你需要找转机登机口，向机场工作人员问路。', duration: 40, diff: 'L1' },
+    { sceneTitle: '机场入境', title: '购买交通卡', promptEn: "Ask at the information desk about getting a travel card.", promptZh: '在问讯处询问如何购买交通卡。', duration: 35, diff: 'L1' },
+    // 认识室友 (5)
     { sceneTitle: '认识室友', title: '初次见面', promptEn: "You meet your new roommate for the first time. Introduce yourself.", promptZh: '你第一次见到新室友，请自我介绍。', duration: 45, diff: 'L1', skeleton: "Hi, I'm ___. I'm from ___. My major is ___. It's nice to ___." },
     { sceneTitle: '认识室友', title: '聊家乡', promptEn: "Your roommate asks: 'Tell me about your hometown.'", promptZh: '室友让你介绍一下你的家乡。', duration: 60, diff: 'L2' },
+    { sceneTitle: '认识室友', title: '邀请一起吃饭', promptEn: "Invite your roommate to have dinner together.", promptZh: '邀请室友一起去吃饭。', duration: 35, diff: 'L1' },
+    { sceneTitle: '认识室友', title: '商量宿舍规则', promptEn: "Discuss room rules with your roommate about noise and cleaning.", promptZh: '和室友商量宿舍规则（噪音、卫生等）。', duration: 50, diff: 'L2' },
+    { sceneTitle: '认识室友', title: '分享兴趣爱好', promptEn: "Share your hobbies and interests with your roommate.", promptZh: '和室友分享你的兴趣爱好。', duration: 50, diff: 'L2' },
+    // 咖啡店点餐 (5)
     { sceneTitle: '咖啡店点餐', title: '点咖啡', promptEn: "You're at a coffee shop. Order your favorite drink.", promptZh: '你在咖啡店，请点你喜欢的饮品。', duration: 30, diff: 'L1', skeleton: "I'd like a ___, please. For ___ / to go. How much ___?" },
+    { sceneTitle: '咖啡店点餐', title: '修改订单', promptEn: "You changed your mind. Ask to modify your order.", promptZh: '你改变主意了，要求修改订单。', duration: 30, diff: 'L1' },
+    { sceneTitle: '咖啡店点餐', title: '询问推荐饮品', promptEn: "Ask the barista what they recommend.", promptZh: '问咖啡师有什么推荐的饮品。', duration: 30, diff: 'L1' },
+    { sceneTitle: '咖啡店点餐', title: '办理会员卡', promptEn: "Ask about the loyalty card program at the coffee shop.", promptZh: '询问咖啡店的会员卡计划。', duration: 40, diff: 'L2' },
+    { sceneTitle: '咖啡店点餐', title: '投诉饮品问题', promptEn: "Your drink was made wrong. Politely tell the barista.", promptZh: '你的饮品做错了，礼貌地告诉咖啡师。', duration: 35, diff: 'L2' },
+    // 超市购物 (4)
+    { sceneTitle: '超市购物', title: '询问商品位置', promptEn: "Ask a store employee where to find a specific item.", promptZh: '问店员某个商品在哪。', duration: 30, diff: 'L1' },
+    { sceneTitle: '超市购物', title: '退货', promptEn: "You bought the wrong item. Ask to return it.", promptZh: '你买错了商品，要求退货。', duration: 40, diff: 'L2' },
+    { sceneTitle: '超市购物', title: '询问优惠活动', promptEn: "Ask about current promotions and discounts.", promptZh: '询问当前有什么优惠活动。', duration: 30, diff: 'L1' },
+    { sceneTitle: '超市购物', title: '自助结账遇到问题', promptEn: "The self-checkout machine has an error. Ask for help.", promptZh: '自助结账机出错了，请工作人员帮忙。', duration: 35, diff: 'L1' },
+    // 打车出行 (4)
+    { sceneTitle: '打车出行', title: '打车去机场', promptEn: "Call a taxi to the airport. Tell the driver the address.", promptZh: '打车去机场，告诉司机地址。', duration: 40, diff: 'L1' },
+    { sceneTitle: '打车出行', title: '和司机聊天', promptEn: "Make small talk with the taxi driver.", promptZh: '和出租车司机闲聊。', duration: 45, diff: 'L2' },
+    { sceneTitle: '打车出行', title: '投诉司机', promptEn: "Call the taxi company to complain about a driver.", promptZh: '打电话给出租车公司投诉司机。', duration: 50, diff: 'L2' },
+    { sceneTitle: '打车出行', title: '约车去聚会', promptEn: "Book a taxi to pick you up for a party.", promptZh: '约车去参加聚会。', duration: 35, diff: 'L1' },
+    // 面试自我介绍 (3)
+    { sceneTitle: '面试自我介绍', title: '1分钟自我介绍', promptEn: "Introduce yourself in a job interview in 1 minute.", promptZh: '在面试中做1分钟自我介绍。', duration: 60, diff: 'L3' },
+    { sceneTitle: '面试自我介绍', title: '描述过往经历', promptEn: "Describe your previous work or internship experience.", promptZh: '描述你之前的工作或实习经历。', duration: 60, diff: 'L3' },
+    { sceneTitle: '面试自我介绍', title: '回答优缺点', promptEn: "Answer the classic interview question: what are your strengths and weaknesses?", promptZh: '回答面试经典问题：你的优缺点是什么？', duration: 50, diff: 'L3' },
+    // 小组讨论 (3)
+    { sceneTitle: '小组讨论', title: '提出观点', promptEn: "Express your opinion on the group discussion topic.", promptZh: '在小组讨论中表达你的观点。', duration: 45, diff: 'L3' },
+    { sceneTitle: '小组讨论', title: '回应不同意见', promptEn: "Someone disagrees with you. Respond politely.", promptZh: '有人不同意你的观点，礼貌地回应。', duration: 45, diff: 'L3' },
+    { sceneTitle: '小组讨论', title: '总结讨论', promptEn: "Summarize the group discussion and propose next steps.", promptZh: '总结小组讨论并提出下一步计划。', duration: 50, diff: 'L3' },
   ]
 
   for (const t of topicData) {

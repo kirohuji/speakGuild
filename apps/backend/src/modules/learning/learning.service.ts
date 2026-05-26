@@ -16,6 +16,10 @@ export class LearningService {
           orderBy: { createdAt: 'asc' },
           include: {
             _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
+            trainingTopics: {
+              select: { id: true, title: true, difficulty: true, suggestedDurationSec: true },
+              orderBy: { sortOrder: 'asc' },
+            },
           },
         },
       },
@@ -54,6 +58,12 @@ export class LearningService {
           id: scene.id,
           title: scene.title,
           location: scene.location,
+          topics: (scene as any).trainingTopics.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            difficulty: t.difficulty,
+            suggestedDurationSec: t.suggestedDurationSec,
+          })),
           requiredOutputLevel: scene.requiredOutputLevel,
           requiredUserLevel: scene.requiredUserLevel,
           isUnlocked,
@@ -268,7 +278,7 @@ export class LearningService {
       include: {
         vocabularies: { orderBy: { sortOrder: 'asc' } },
         chunks: { orderBy: { createdAt: 'asc' } },
-        trainingTopics: { orderBy: { sortOrder: 'asc' }, take: 3 },
+        trainingTopics: { orderBy: { sortOrder: 'asc' } },
         scriptEpisodes: { orderBy: { episodeOrder: 'asc' }, take: 1 },
       },
     });
@@ -365,23 +375,22 @@ export class LearningService {
       });
     }
 
-    // 任务3: 开口练习
+    // 任务3: 开口练习（全部未完成话题）
     const uncompletedTopics = sceneDetail.trainingTopics.filter(
       (_, i) => i >= completedPractice,
     );
-    if (uncompletedTopics.length > 0) {
-      const nextTopic = uncompletedTopics[0];
+    for (const topic of uncompletedTopics) {
       tasks.push({
-        id: `practice-${nextTopic.id}`,
+        id: `practice-${topic.id}`,
         type: 'practice',
-        title: '开口练习',
-        description: nextTopic.title,
-        durationSec: nextTopic.suggestedDurationSec,
+        title: topic.title,
+        description: topic.promptZh.slice(0, 60),
+        durationSec: topic.suggestedDurationSec,
         unitId: currentScene.id,
         unitTitle: currentScene.title,
-        topicId: nextTopic.id,
-        topicTitle: nextTopic.title,
-        promptZh: nextTopic.promptZh,
+        topicId: topic.id,
+        topicTitle: topic.title,
+        promptZh: topic.promptZh,
       });
     }
 

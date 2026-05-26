@@ -217,13 +217,23 @@ function UnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
           )}
         </div>
         <p className="text-xs text-muted-foreground">{unit.location}</p>
-        {!isCompleted && (
-          <div className="mt-1.5 flex items-center gap-3 text-[10px] text-muted-foreground">
-            <span>{unit.vocabCount} 词</span>
-            <span>{unit.chunkCount} 表达</span>
-            <span>{unit.topicCount} 练习</span>
+
+        {/* 话题列表 */}
+        {!isCompleted && unit.topics && unit.topics.length > 0 && (
+          <div className="mt-1.5 space-y-0.5">
+            {unit.topics.slice(0, 3).map((t) => (
+              <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <span className="size-1 rounded-full bg-primary/30" />
+                <span>{t.title}</span>
+                <Badge variant="outline" className="ml-auto text-[8px]">{t.difficulty}</Badge>
+              </div>
+            ))}
+            {unit.topics.length > 3 && (
+              <p className="text-[9px] text-muted-foreground/60">+{unit.topics.length - 3} 个更多话题</p>
+            )}
           </div>
         )}
+
         {!isCompleted && pct > 0 && <Progress value={pct} className="mt-1.5 h-1" />}
       </div>
 
@@ -250,13 +260,23 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
       </div>
       <h3 className="text-sm font-bold text-foreground group-hover:text-primary">{unit.title}</h3>
       <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
-      <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
-        <span>{unit.vocabCount} 词汇</span>
-        <span>·</span>
-        <span>{unit.chunkCount} 表达</span>
-        <span>·</span>
-        <span>{unit.topicCount} 练习</span>
-      </div>
+
+      {/* 话题列表 */}
+      {unit.topics && unit.topics.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {unit.topics.slice(0, 3).map((t) => (
+            <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span className="size-1 rounded-full bg-primary/40" />
+              <span>{t.title}</span>
+              <Badge variant="outline" className="ml-auto text-[8px]">{t.difficulty}</Badge>
+            </div>
+          ))}
+          {unit.topics.length > 3 && (
+            <p className="text-[9px] text-muted-foreground/60">+{unit.topics.length - 3} 个更多话题</p>
+          )}
+        </div>
+      )}
+
       <Button size="sm" variant="outline" className="mt-3 w-full gap-1 text-xs">
         获取学习
         <ArrowRight className="size-3" />

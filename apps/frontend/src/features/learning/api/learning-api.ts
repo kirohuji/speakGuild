@@ -29,10 +29,18 @@ api.interceptors.response.use(
 
 // ---- 类型定义 ----
 
+export interface TopicSummary {
+  id: string
+  title: string
+  difficulty: string
+  suggestedDurationSec: number
+}
+
 export interface LearningUnitSummary {
   id: string
   title: string
   location: string
+  topics: TopicSummary[]
   requiredOutputLevel: string
   requiredUserLevel: number
   isUnlocked: boolean

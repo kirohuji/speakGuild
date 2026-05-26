@@ -4,6 +4,7 @@ import { ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Eye, EyeOff, Save } from 'l
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
@@ -11,7 +12,17 @@ import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { SentencePatternPanel } from '../components/sentence-pattern-panel'
 
-type Step = 'preview' | 'chunks' | 'record' | 'feedback' | 'upgrade' | 'retell'
+type Step = 'prepare' | 'record' | 'feedback' | 'upgrade' | 'retell'
+
+const STEPS: Step[] = ['prepare', 'record', 'feedback', 'upgrade', 'retell']
+
+const STEP_LABELS: Record<Step, string> = {
+  prepare: '准备',
+  record: '录音',
+  feedback: '纠错',
+  upgrade: '升级',
+  retell: '复述',
+}
 
 export function PracticeSessionPage() {
   const { topicId } = useParams<{ topicId: string }>()
@@ -22,9 +33,10 @@ export function PracticeSessionPage() {
   const [error, setError] = useState<string | null>(null)
 
   // Flow state
-  const [step, setStep] = useState<Step>('preview')
+  const [step, setStep] = useState<Step>('prepare')
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
+  const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
 
@@ -216,20 +228,21 @@ export function PracticeSessionPage() {
 
       {/* Step indicator */}
       <div className="mb-6 flex gap-1">
-        {(['preview', 'chunks', 'record', 'feedback', 'upgrade', 'retell'] as Step[]).map((s, i) => (
+        {STEPS.map((s, i) => (
           <div
             key={s}
             className={cn(
               'h-1 flex-1 rounded-full transition-colors',
-              step === s ? 'bg-primary' : steps.indexOf(step) > i ? 'bg-primary/40' : 'bg-muted',
+              step === s ? 'bg-primary' : STEPS.indexOf(step) > i ? 'bg-primary/40' : 'bg-muted',
             )}
           />
         ))}
       </div>
 
-      {/* Step: Preview */}
-      {step === 'preview' && (
+      {/* Step: Prepare（题目 + Tabs: 词汇 | 表达） */}
+      {step === 'prepare' && (
         <div className="space-y-4">
+          {/* 题目 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -245,53 +258,58 @@ export function PracticeSessionPage() {
             </CardContent>
           </Card>
 
-          {detail.vocabularies.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <BookOpen className="size-4" /> 场景词汇 ({detail.vocabularies.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {detail.vocabularies.map((v) => (
-                    <Badge
-                      key={v.id}
-                      variant="outline"
-                      className="cursor-pointer text-sm transition-colors hover:border-primary hover:text-primary"
-                      onClick={() => openInsight(`word:${v.id}`)}
-                    >
-                      {v.word}
-                      <span className="ml-1 text-xs text-muted-foreground">{v.meaning}</span>
-                    </Badge>
-                  ))}
+          {/* Tabs: 场景词汇 | 核心表达 */}
+          <Tabs defaultValue="vocab" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="vocab" className="flex-1 text-xs">场景词汇 ({detail.vocabularies.length})</TabsTrigger>
+              <TabsTrigger value="chunk" className="flex-1 text-xs">核心表达 ({detail.activeChunks.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="vocab" className="mt-2">
+              {detail.vocabularies.length > 0 ? (
+                <div className="space-y-1">
+                  {detail.vocabularies.map((v) => {
+                    const isExpanded = expandedVocabId === v.id
+                    return (
+                      <div key={v.id} className={cn(
+                        'rounded-lg border transition-all',
+                        isExpanded ? 'border-blue-500/40 bg-blue-500/5' : 'border-border bg-card',
+                      )}>
+                        <button
+                          onClick={() => setExpandedVocabId((prev) => (prev === v.id ? null : v.id))}
+                          className="flex w-full items-center justify-between p-2.5 text-left"
+                        >
+                          <span className={cn('text-sm font-bold', isExpanded ? 'text-blue-600 dark:text-blue-400' : 'text-foreground')}>
+                            {v.word}
+                          </span>
+                          {isExpanded && <span className="text-xs text-muted-foreground">{v.meaning}</span>}
+                        </button>
+                        {isExpanded && (
+                          <div className="border-t border-blue-500/20 px-3 pb-2.5 pt-1.5">
+                            <p className="text-sm text-foreground">{v.meaning}</p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="py-4 text-center text-sm text-muted-foreground">本话题暂无场景词汇</p>
+              )}
+            </TabsContent>
 
-          <Button className="w-full" onClick={() => setStep('chunks')}>
-            下一步：激活 Chunk
-          </Button>
-        </div>
-      )}
-
-      {/* Step: Chunks */}
-      {step === 'chunks' && (
-        <div className="space-y-4">
-          <ChunkActivationPanel
-            chunks={detail.activeChunks}
-            activatedIds={activatedChunks}
-            expandedId={expandedChunkId}
-            onActivate={activateChunk}
-            onExpand={setExpandedChunkId}
-            onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
-            onContinue={() => setStep('record')}
-          />
-          <SentencePatternPanel
-            topic={detail.topic}
-            onInspect={(index) => openInsight(detail.topic.sentencePatterns?.length ? `pattern:${index}` : 'pattern:skeleton')}
-          />
+            <TabsContent value="chunk" className="mt-2">
+              <ChunkActivationPanel
+                chunks={detail.activeChunks}
+                activatedIds={activatedChunks}
+                expandedId={expandedChunkId}
+                onActivate={activateChunk}
+                onExpand={setExpandedChunkId}
+                onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
+                onContinue={() => setStep('record')}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
 
@@ -321,8 +339,8 @@ export function PracticeSessionPage() {
           </Card>
 
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('chunks')}>
-              返回
+            <Button variant="outline" className="flex-1" onClick={() => setStep('prepare')}>
+              上一步
             </Button>
             <Button
               className="flex-1"
@@ -360,7 +378,7 @@ export function PracticeSessionPage() {
 
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setStep('record')}>
-              重新录音
+              上一步
             </Button>
             <Button className="flex-1" onClick={loadUpgrade} disabled={!feedbackText}>
               查看表达升级
@@ -467,7 +485,7 @@ export function PracticeSessionPage() {
   )
 }
 
-const steps: Step[] = ['preview', 'chunks', 'record', 'feedback', 'upgrade', 'retell']
+const steps: Step[] = ['prepare', 'record', 'feedback', 'upgrade', 'retell']
 
 /** 简单遮挡：每三个词遮一个 */
 function maskText(text: string): string {

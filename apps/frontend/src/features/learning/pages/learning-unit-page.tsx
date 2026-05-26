@@ -1,16 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
-  ChevronLeft, BookText, MessageSquareText,
-  Mic, Play, CheckCircle2, Target, ArrowRight,
-  Quote, ExternalLink, BookmarkPlus, Search,
+  ChevronLeft, ChevronRight, BookText, MessageSquareText,
+  Mic, Target, ArrowRight,
+  ExternalLink, BookmarkPlus, Search,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
@@ -106,229 +104,39 @@ export function LearningUnitPage() {
         <p className="mt-0.5 text-sm text-muted-foreground">{unit.location}</p>
       </div>
 
-      {/* ===== 开始练习按钮（顶部） ===== */}
-      <div className="mb-5">
-        <Button className="w-full gap-2" size="lg" onClick={() => {
-          if (unit.trainingTopics.length > 0) navigate(`/practice/session/${unit.trainingTopics[0].id}`)
-        }}>
-          <Mic className="size-5" /> 开始练习
-          <ArrowRight className="size-4" />
-        </Button>
-      </div>
-
-      {/* ===== Tabs: 场景词汇 | 核心表达 | 句型骨架 ===== */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="w-full">
-          {allVocabCount > 0 && (
-            <TabsTrigger value="vocab" className="flex-1 text-xs">
-              场景词汇
-              <span className="ml-1 text-[10px] text-muted-foreground">{allVocabCount}</span>
-            </TabsTrigger>
-          )}
-          {allChunkCount > 0 && (
-            <TabsTrigger value="chunk" className="flex-1 text-xs">
-              核心表达
-              <span className="ml-1 text-[10px] text-muted-foreground">{allChunkCount}</span>
-            </TabsTrigger>
-          )}
-          {unit.sentencePatterns.length > 0 && (
-            <TabsTrigger value="pattern" className="flex-1 text-xs">
-              句型骨架
-              <span className="ml-1 text-[10px] text-muted-foreground">{unit.sentencePatterns.length}</span>
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        {/* Tab: 场景词汇（列表形式） */}
-        <TabsContent value="vocab" className="mt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">点击单项展开详情 · 点击「查询」进入沉浸式学习</span>
-            <button
-              onClick={() => openDialog(vocabDialogItems, 0)}
-              className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600"
-            >
-              <ExternalLink className="size-3" /> 沉浸式
-            </button>
-          </div>
-          <div className="space-y-1">
-            {unit.vocabularies.map((v, i) => {
-              const isExpanded = expandedItemId === v.id
-              return (
-                <div key={v.id} className={cn(
-                  'rounded-lg border transition-all',
-                  isExpanded ? 'border-blue-500/40 bg-blue-500/5' : 'border-border bg-card',
-                )}>
-                  <button
-                    onClick={() => handleItemClick(v.id)}
-                    className="flex w-full items-center justify-between p-3 text-left"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className={cn('text-sm font-bold', isExpanded ? 'text-blue-600 dark:text-blue-400' : 'text-foreground')}>
-                        {v.word}
-                      </p>
+      {/* ===== 本单元练习话题 ===== */}
+      {unit.trainingTopics.length > 0 && (
+        <section className="mb-6">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Mic className="size-4 text-orange-500" />
+            练习话题 ({unit.trainingTopics.length})
+          </h2>
+          <div className="space-y-2">
+            {unit.trainingTopics.map((topic, i) => (
+              <Card key={topic.id}
+                className="cursor-pointer border-orange-500/30 bg-gradient-to-br from-orange-500/[0.03] to-transparent transition-colors hover:bg-orange-500/[0.08]"
+                onClick={() => navigate(`/practice/session/${topic.id}`)}>
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20">
+                    <span className="text-sm font-bold text-orange-500">{i + 1}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{topic.title}</p>
+                      <Badge variant="secondary" className="text-[10px]">{topic.difficulty}</Badge>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        onClick={(e) => { e.stopPropagation(); openDialog(vocabDialogItems, i) }}
-                        className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="查询"
-                      >
-                        <Search className="size-3.5" />
-                      </span>
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (!hasWord(v.word)) {
-                            addWord(v.word)
-                            toast.success('已收藏到我的学习库')
-                          } else {
-                            toast.info('已在学习库中')
-                          }
-                        }}
-                        className={cn(
-                          'inline-flex size-7 cursor-pointer items-center justify-center rounded-md transition-colors',
-                          hasWord(v.word)
-                            ? 'text-amber-500 hover:text-amber-600'
-                            : 'text-muted-foreground hover:bg-muted hover:text-amber-500',
-                        )}
-                        title="收藏"
-                      >
-                        <BookmarkPlus className="size-3.5" />
-                      </span>
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="border-t border-blue-500/20 px-3 pb-3 pt-2">
-                      <p className="text-sm text-foreground">{v.meaning}</p>
-                      {v.description && <p className="mt-1 text-xs text-muted-foreground">{v.description}</p>}
-                      <div className="mt-2 flex items-center gap-2">
-                        <button
-                          onClick={() => openDialog(vocabDialogItems, i)}
-                          className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600"
-                        >
-                          <ExternalLink className="size-3" /> 查看详情
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </TabsContent>
-
-        {/* Tab: 核心表达（列表形式） */}
-        <TabsContent value="chunk" className="mt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">点击单项展开详情 · 点击「查询」进入沉浸式学习</span>
-            <button
-              onClick={() => openDialog(chunkDialogItems, 0)}
-              className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600"
-            >
-              <ExternalLink className="size-3" /> 沉浸式
-            </button>
-          </div>
-          <div className="space-y-1">
-            {unit.chunks.map((c, i) => {
-              const isExpanded = expandedItemId === c.id
-              return (
-                <div key={c.id} className={cn(
-                  'rounded-lg border transition-all',
-                  isExpanded ? 'border-purple-500/40 bg-purple-500/5' : 'border-border bg-card',
-                )}>
-                  <button
-                    onClick={() => handleItemClick(c.id)}
-                    className="flex w-full items-center justify-between p-3 text-left"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className={cn('text-sm font-medium', isExpanded ? 'text-purple-600 dark:text-purple-400' : 'text-foreground')}>
-                        {c.text}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        onClick={(e) => { e.stopPropagation(); openDialog(chunkDialogItems, i) }}
-                        className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="查询"
-                      >
-                        <Search className="size-3.5" />
-                      </span>
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="border-t border-purple-500/20 px-3 pb-3 pt-2">
-                      <p className="text-sm text-foreground">{c.meaning}</p>
-                      {c.description && <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>}
-                      {c.examples.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {c.examples.slice(0, 1).map((ex, ei) => (
-                            <div key={ei} className="rounded-md bg-background/80 p-2 text-xs">
-                              <p className="text-foreground">{ex.en}</p>
-                              <p className="text-muted-foreground">{ex.zh}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="mt-2 flex items-center gap-2">
-                        <button
-                          onClick={() => openDialog(chunkDialogItems, i)}
-                          className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600"
-                        >
-                          <ExternalLink className="size-3" /> 查看详情
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </TabsContent>
-
-        {/* Tab: 句型骨架 */}
-        <TabsContent value="pattern" className="mt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">点击单项展开详情</span>
-          </div>
-          <div className="space-y-1">
-            {unit.sentencePatterns.map((sp, i) => {
-              const isExpanded = expandedItemId === `pattern-${i}`
-              return (
-                <div key={i} className={cn(
-                  'rounded-lg border transition-all',
-                  isExpanded ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card',
-                )}>
-                  <button
-                    onClick={() => setExpandedItemId((prev) => (prev === `pattern-${i}` ? null : `pattern-${i}`))}
-                    className="flex w-full items-center justify-between p-3 text-left"
-                  >
-                    <p className={cn('text-sm font-mono font-bold', isExpanded ? 'text-amber-600 dark:text-amber-400' : 'text-foreground')}>
-                      {sp.pattern}
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      建议 {Math.round(topic.suggestedDurationSec / 60)} 分钟
                     </p>
-                  </button>
-                  {isExpanded && (
-                    <div className="border-t border-amber-500/20 px-3 pb-3 pt-2">
-                      <p className="text-sm text-foreground">{sp.meaning}</p>
-                      {sp.slots.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {sp.slots.map((slot, si) => (
-                            <Badge key={si} variant="secondary" className="text-[10px]">{slot}</Badge>
-                          ))}
-                        </div>
-                      )}
-                      {sp.example && (
-                        <div className="mt-2 rounded-md bg-background/80 p-2 text-xs text-foreground">{sp.example}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                  </div>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </TabsContent>
-      </Tabs>
-
-
+        </section>
+      )}
 
       {/* Dialog */}
       <LearningInsightDialog
