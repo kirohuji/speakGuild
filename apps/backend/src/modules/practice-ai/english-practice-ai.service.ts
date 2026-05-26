@@ -157,4 +157,97 @@ ${dto.userTranscript}
 
     return { result: result.text };
   }
+
+  /** 构建对话汇总分析 Prompt */
+  buildDialogueSummaryPrompt(params: {
+    topicTitle: string;
+    promptEn: string;
+    dialogues: Array<{
+      round: number;
+      npcText: string;
+      userText: string;
+      isOnTopic?: boolean;
+      objectivesCompleted?: string[];
+      chunksUsed?: string[];
+      grammarIssues?: any;
+    }>;
+    objectives: string[];
+    coreChunks: string[];
+  }): { system: string; user: string } {
+    const dialogueLog = params.dialogues
+      .map(
+        (d) =>
+          `轮次 ${d.round}:\n  NPC: ${d.npcText}\n  用户: ${d.userText}\n  切题: ${d.isOnTopic ?? 'N/A'}\n  完成目标: ${(d.objectivesCompleted ?? []).join(', ') || '无'}\n  使用Chunk: ${(d.chunksUsed ?? []).join(', ') || '无'}`,
+      )
+      .join('\n\n');
+
+    const system = `你是一位专业的英语口语教练。你需要对学生的多轮对话练习进行全面的复盘分析。请用中文回复，结构清晰，语气鼓励为主。`;
+
+    const user = `## 练习话题
+${params.topicTitle}
+题目：${params.promptEn}
+
+## 任务目标
+${params.objectives.map((o, i) => `${i + 1}. ${o}`).join('\n')}
+
+## 核心表达 (Chunks)
+${params.coreChunks.join('\n')}
+
+## 对话记录
+${dialogueLog}
+
+请按以下 JSON 格式进行复盘分析（仅返回 JSON，放在 \`\`\`json 代码块中）：
+
+\`\`\`json
+{
+  "overallScore": 75,
+  "summary": "用2-3句话总体评价这次对话练习的表现",
+  "objectiveAnalysis": [
+    { "objective": "目标文本", "completed": true, "comment": "完成情况评价" }
+  ],
+  "chunkUsageAnalysis": [
+    { "chunk": "表达文本", "used": true, "context": "在哪个轮次使用的" }
+  ],
+  "grammarHighlights": [
+    { "type": "grammar|collocation|chinglish|unnatural", "original": "原文", "correction": "修正", "round": 1 }
+  ],
+  "strengths": ["优势1", "优势2"],
+  "improvements": ["改进建议1", "改进建议2"],
+  "nextStepSuggestion": "下一步学习建议"
+}
+\`\`\``;
+
+    return { system, user };
+  }
+
+  /** 对话汇总分析（非流式） */
+  async summarizeDialogue(params: {
+    topicTitle: string;
+    promptEn: string;
+    dialogues: Array<any>;
+    objectives: string[];
+    coreChunks: string[];
+  }) {
+    const provider = this.getProvider();
+    const { system, user } = this.buildDialogueSummaryPrompt(params);
+
+    const result = await generateText({
+      model: provider('deepseek-chat'),
+      system,
+      prompt: user,
+      temperature: 0.7,
+      maxOutputTokens: 2500,
+    });
+
+    // Try to parse JSON from response
+    const jsonMatch = result.text.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      try {
+        return { analysis: JSON.parse(jsonMatch[1]), raw: result.text };
+      } catch {
+        return { analysis: null, raw: result.text };
+      }
+    }
+    return { analysis: null, raw: result.text };
+  }
 }

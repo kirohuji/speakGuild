@@ -63,3 +63,29 @@ export class SaveExpressionDto {
   @IsOptional()
   sceneName?: string;
 }
+
+/** 提交练习对话记录 */
+export class SubmitPracticeDialogueDto {
+  @IsString()
+  npcText: string;
+
+  @IsString()
+  @IsOptional()
+  userText?: string;
+
+  @IsOptional()
+  round?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isOnTopic?: boolean;
+
+  @IsOptional()
+  objectivesCompleted?: string[];
+
+  @IsOptional()
+  chunksUsed?: string[];
+
+  @IsOptional()
+  grammarIssues?: any;
+}

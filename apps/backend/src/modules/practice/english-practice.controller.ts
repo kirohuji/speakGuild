@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeService } from './english-practice.service';
-import { SubmitRecordingDto, SaveExpressionDto } from './dto/english-practice.dto';
+import { SubmitRecordingDto, SaveExpressionDto, SubmitPracticeDialogueDto } from './dto/english-practice.dto';
 import { requireAuthSession } from '../auth/session.util';
 
 /** 英语输出训练 — 练习模式 API */
@@ -15,11 +15,17 @@ export class EnglishPracticeController {
     return this.practiceService.getTopicsByScene(sceneId);
   }
 
-  /** 话题详情（词汇预热 + Chunk 激活 + 句型骨架） */
+  /** 话题详情（词汇预热 + Chunk 激活 + 句型骨架 + Ink 脚本） */
   @Get('topics/:id')
   async getTopicDetail(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);
     return this.practiceService.getTopicDetail(id, session.user.id);
+  }
+
+  /** 获取话题关联的 Ink 脚本 */
+  @Get('topics/:id/ink')
+  async getTopicInk(@Param('id') id: string) {
+    return this.practiceService.getTopicInkScript(id);
   }
 
   /** 提交录音转写（记录练习行为） */
@@ -31,6 +37,24 @@ export class EnglishPracticeController {
   ) {
     const session = await requireAuthSession(req);
     return this.practiceService.submitRecording(session.user.id, { ...dto, topicId: id });
+  }
+
+  /** 提交练习对话记录 */
+  @Post('topics/:id/dialogue')
+  async submitDialogue(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: SubmitPracticeDialogueDto,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.submitPracticeDialogue(session.user.id, id, dto);
+  }
+
+  /** 获取话题的所有对话记录 */
+  @Get('topics/:id/dialogues')
+  async getTopicDialogues(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.getTopicDialogues(id, session.user.id);
   }
 
   /** 保存表达到表达库 */

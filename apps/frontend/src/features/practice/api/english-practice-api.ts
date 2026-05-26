@@ -41,6 +41,8 @@ export interface TopicDetail {
   topic: {
     id: string
     title: string
+    description?: string | null
+    knowledgePoints?: string | null
     promptEn: string
     promptZh: string
     suggestedDurationSec: number
@@ -53,7 +55,14 @@ export interface TopicDetail {
       example: string
       difficulty: string
     }> | null
+    inkScriptId?: string | null
   }
+  inkScript?: {
+    id: string
+    inkJson: any
+    key: string
+    title: string
+  } | null
   scene: { id: string; title: string; location: string; category: string }
   vocabularies: { id: string; word: string; meaning: string }[]
   activeChunks: {
@@ -73,8 +82,35 @@ export const practiceApi = {
   getTopicDetail: (topicId: string) =>
     api.get<any, TopicDetail>(`/practice/topics/${topicId}`),
 
+  /** 获取话题关联的 Ink 脚本 */
+  getTopicInk: (topicId: string) =>
+    api.get<any, { id: string; inkJson: any; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
+
   submitRecording: (topicId: string, userTranscript: string, audioUrl?: string) =>
     api.post(`/practice/topics/${topicId}/record`, { userTranscript, audioUrl, topicId }),
+
+  /** 提交练习对话记录 */
+  submitDialogue: (topicId: string, data: {
+    round: number
+    npcText: string
+    userText?: string
+    isOnTopic?: boolean
+    objectivesCompleted?: string[]
+    chunksUsed?: string[]
+    grammarIssues?: any
+  }) => api.post(`/practice/topics/${topicId}/dialogue`, data),
+
+  /** 获取话题的所有对话记录 */
+  getTopicDialogues: (topicId: string) =>
+    api.get<any, Array<{
+      round: number
+      npcText: string
+      userText: string
+      isOnTopic?: boolean
+      objectiveCompleted?: string[]
+      chunksUsed?: string[]
+      grammarIssues?: any
+    }>>(`/practice/topics/${topicId}/dialogues`),
 
   saveExpression: (data: {
     type: string
@@ -104,6 +140,15 @@ export const practiceAiApi = {
   /** 表达升级 */
   upgrade: (dto: { userTranscript: string; outputLevel?: string }) =>
     api.post('/practice-ai/upgrade', dto),
+
+  /** 对话汇总分析 */
+  dialogueSummary: (dto: {
+    topicId: string
+    topicTitle: string
+    promptEn: string
+    objectives?: string[]
+    coreChunks?: string[]
+  }) => api.post<any, { analysis: any; raw: string }>('/practice-ai/dialogue-summary', dto),
 }
 
 // ---- 表达库 ----

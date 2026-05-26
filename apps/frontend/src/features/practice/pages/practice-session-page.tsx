@@ -1,60 +1,90 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Eye, EyeOff, Save } from 'lucide-react'
+import {
+  ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Send, Play, Info,
+  Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
+import { VnScene } from '@/features/vn-engine/vn-scene'
+import { DialogueBox } from '@/features/vn-engine/dialogue-box'
+import { ChoiceButtons } from '@/features/vn-engine/choice-buttons'
+import { useInkStory, type InkLine, type InkChoice } from '@/features/vn-engine/use-ink-story'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
-import { SentencePatternPanel } from '../components/sentence-pattern-panel'
+import { PracticeVnDrawer } from '../components/practice-vn-drawer'
+import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 
-type Step = 'prepare' | 'record' | 'feedback' | 'upgrade' | 'retell'
-
-const STEPS: Step[] = ['prepare', 'record', 'feedback', 'upgrade', 'retell']
-
-const STEP_LABELS: Record<Step, string> = {
-  prepare: '准备',
-  record: '录音',
-  feedback: '纠错',
-  upgrade: '升级',
-  retell: '复述',
-}
+type Phase = 'prepare' | 'practice' | 'analysis'
 
 export function PracticeSessionPage() {
   const { topicId } = useParams<{ topicId: string }>()
   const navigate = useNavigate()
 
+  // ── Data ──
   const [detail, setDetail] = useState<TopicDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Flow state
-  const [step, setStep] = useState<Step>('prepare')
+  // ── Phase ──
+  const [phase, setPhase] = useState<Phase>('prepare')
+
+  // ── Prepare state ──
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
   const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
 
-  // Recording
+  // ── Practice (VN) state ──
+  const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
+  const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean }[]>([])
   const [isRecording, setIsRecording] = useState(false)
+  const [inputText, setInputText] = useState('')
   const [transcript, setTranscript] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // AI feedback
-  const [feedbackText, setFeedbackText] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [upgraded, setUpgraded] = useState<{ clear: string; natural: string; advanced: string } | null>(null)
+  // Fallback NPC dialogue (when no Ink script)
+  const [fallbackRound, setFallbackRound] = useState(0)
+  const fallbackNpcName = detail?.scene?.title ?? 'NPC'
 
-  // Retell
-  const [showMask, setShowMask] = useState(true)
-  const [retellText, setRetellText] = useState('')
-  const [selectedUpgrade, setSelectedUpgrade] = useState<'clear' | 'natural' | 'advanced'>('natural')
+  // Side drawer state
+  const [completedObjectives, setCompletedObjectives] = useState<Set<string>>(new Set())
+  const [usedChunks, setUsedChunks] = useState<Set<string>>(new Set())
+  const [aiHints, setAiHints] = useState<{ type: 'chunk' | 'pattern'; text: string; meaning?: string; example?: string }[]>([])
 
+  // ── Analysis state ──
+  const [analysisResult, setAnalysisResult] = useState<any>(null)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+
+  // ── Objectives & chunks from detail ──
+  const objectives = useMemo(() => {
+    const objs: string[] = []
+    if (detail?.topic.sentencePatterns?.length) {
+      detail.topic.sentencePatterns.forEach((p) => objs.push(`使用句型: ${p.pattern}`))
+    }
+    if (detail?.topic.sentenceSkeleton) {
+      objs.push(`参考结构: ${detail.topic.sentenceSkeleton}`)
+    }
+    objs.push(`围绕话题 "${detail?.topic.title}" 展开对话`)
+    if (objs.length === 0) objs.push('完成至少3轮对话互动')
+    return objs
+  }, [detail])
+
+  const coreChunkTexts = useMemo(() => {
+    return (detail?.activeChunks ?? []).map((c) => ({ text: c.text, meaning: c.meaning }))
+  }, [detail])
+
+  // ==================== Load Data ====================
   useEffect(() => {
     if (!topicId) return
     setLoading(true)
@@ -67,11 +97,62 @@ export function PracticeSessionPage() {
           .map((chunk) => chunk.id)
         setActivatedChunks(new Set(learnedChunkIds))
         setExpandedChunkId(data.activeChunks[0]?.id ?? null)
+
+        // Load Ink script if available
+        if (data.inkScript?.inkJson) {
+          setInkJson(data.inkScript.inkJson)
+        } else if (data.topic.inkScriptId) {
+          practiceApi.getTopicInk(topicId).then((ink) => {
+            if (ink?.inkJson) setInkJson(ink.inkJson)
+          }).catch(() => {})
+        }
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [topicId])
 
+  // ==================== Ink Story Hook ====================
+  const handleExternalFn = useCallback((name: string, args: any[]) => {
+    if (name === 'waitForUserInput') return true
+    if (name === 'showExpression') {
+      if (args[0]) setAiHints((prev) => [...prev, { type: 'chunk', text: String(args[0]) }])
+      return true
+    }
+    if (name === 'setFlag') {
+      if (args[0]) setCompletedObjectives((prev) => new Set([...prev, String(args[0])]))
+      return true
+    }
+    return undefined
+  }, [])
+
+  const {
+    lines: inkLines,
+    choices: inkChoices,
+    isEnded: inkEnded,
+    isWaiting: inkWaiting,
+    currentTags,
+    handleChoice,
+    resumeAfterInput,
+    getVariable,
+  } = useInkStory(inkJson, { onExternalFunction: handleExternalFn })
+
+  // Sync Ink lines to dialogue display
+  useEffect(() => {
+    if (inkLines.length === 0) return
+    const newDialogues = inkLines.map((line) => ({
+      speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
+      text: line.text,
+      isNpc: line.tags?.includes('npc') || !!line.speaker,
+    }))
+    setDialogueRounds(newDialogues)
+  }, [inkLines, fallbackNpcName])
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [dialogueRounds, transcript])
+
+  // ==================== Prepare Helpers ====================
   const activateChunk = useCallback(async (chunkId: string) => {
     try { await chunkApi.activate(chunkId) } catch {}
     setActivatedChunks((prev) => new Set([...prev, chunkId]))
@@ -80,52 +161,30 @@ export function PracticeSessionPage() {
   const insightItems = useMemo<LearningInsightItem[]>(() => {
     if (!detail) return []
     const sceneName = detail.scene.title
-    const words: LearningInsightItem[] = detail.vocabularies.map((vocabulary) => ({
-      kind: 'word',
-      id: `word:${vocabulary.id}`,
-      word: vocabulary.word,
-      meaning: vocabulary.meaning,
-      sceneName,
+    const words: LearningInsightItem[] = detail.vocabularies.map((v) => ({
+      kind: 'word', id: `word:${v.id}`, word: v.word, meaning: v.meaning, sceneName,
     }))
-    const chunks: LearningInsightItem[] = detail.activeChunks.map((chunk) => ({
-      kind: 'chunk',
-      id: `chunk:${chunk.id}`,
-      text: chunk.text,
-      meaning: chunk.meaning,
-      description: chunk.description,
-      examples: chunk.examples,
-      sceneName,
+    const chunks: LearningInsightItem[] = detail.activeChunks.map((c) => ({
+      kind: 'chunk', id: `chunk:${c.id}`, text: c.text, meaning: c.meaning,
+      description: c.description, examples: c.examples, sceneName,
     }))
     const patterns: LearningInsightItem[] = detail.topic.sentencePatterns?.length
-      ? detail.topic.sentencePatterns.map((pattern, index) => ({
-        kind: 'pattern',
-        id: `pattern:${index}`,
-        pattern: pattern.pattern,
-        meaning: pattern.meaning,
-        slots: pattern.slots,
-        example: pattern.example,
-        difficulty: pattern.difficulty,
-        sceneName,
-      }))
-      : detail.topic.sentenceSkeleton
-        ? [{
-          kind: 'pattern',
-          id: 'pattern:skeleton',
-          pattern: detail.topic.sentenceSkeleton,
-          meaning: detail.topic.promptZh,
-          sceneName,
-        }]
-        : []
+      ? detail.topic.sentencePatterns.map((p, i) => ({
+          kind: 'pattern', id: `pattern:${i}`, pattern: p.pattern,
+          meaning: p.meaning, example: p.example, difficulty: p.difficulty, sceneName,
+        }))
+      : []
     return [...words, ...chunks, ...patterns]
   }, [detail])
 
   const openInsight = useCallback((id: string) => {
-    const nextIndex = insightItems.findIndex((item) => item.id === id)
-    if (nextIndex < 0) return
-    setInsightIndex(nextIndex)
+    const idx = insightItems.findIndex((item) => item.id === id)
+    if (idx < 0) return
+    setInsightIndex(idx)
     setInsightOpen(true)
   }, [insightItems])
 
+  // ==================== Practice: Recording ====================
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -134,67 +193,125 @@ export function PracticeSessionPage() {
       recorder.start()
       setIsRecording(true)
       setTranscript('')
-
-      // Auto-stop after suggested duration
-      const duration = (detail?.topic.suggestedDurationSec ?? 60) * 1000
-      setTimeout(() => {
-        if (recorder.state === 'recording') recorder.stop()
-      }, duration)
-    } catch {
-      alert('无法访问麦克风，请检查权限设置')
-    }
+      setTimeout(() => { if (recorder.state === 'recording') recorder.stop() }, 60000)
+    } catch { alert('无法访问麦克风，请检查权限设置') }
   }
 
   const stopRecording = () => {
     mediaRecorderRef.current?.stop()
     setIsRecording(false)
-    // Simulate transcript for now (Whisper integration in later phase)
-    setTranscript('[模拟转写] 用户已录音，等待语音转文字...')
+    setTranscript('[语音转写] 用户回答内容...')
   }
 
-  const requestFeedback = async () => {
-    setStep('feedback')
-    setIsStreaming(true)
-    setFeedbackText('')
+  // ==================== Practice: Send Input ====================
+  const sendUserInput = useCallback((text: string) => {
+    if (!text.trim()) return
 
-    try {
-      const res = await practiceAiApi.streamFeedback({
-        userTranscript: transcript,
-        promptEn: detail?.topic.promptEn,
-        sceneTitle: detail?.scene.title,
-        topicTitle: detail?.topic.title,
-        outputLevel: 'L2',
-      })
-      if (!res.body) throw new Error('No stream body')
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        setFeedbackText((prev) => prev + decoder.decode(value, { stream: true }))
+    const round = dialogueRounds.length + 1
+    const userMsg = text.trim()
+
+    setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
+    setTranscript('')
+    setInputText('')
+
+    // Track chunk usage
+    coreChunkTexts.forEach((c) => {
+      if (userMsg.toLowerCase().includes(c.text.toLowerCase())) {
+        setUsedChunks((prev) => new Set([...prev, c.text]))
       }
-    } catch (e: any) {
-      setFeedbackText(`AI 反馈获取失败：${e.message}`)
-    } finally {
-      setIsStreaming(false)
+    })
+
+    // If using Ink engine
+    if (inkJson) {
+      practiceApi.submitDialogue(topicId!, {
+        round,
+        npcText: dialogueRounds[dialogueRounds.length - 1]?.text ?? '',
+        userText: userMsg,
+        objectivesCompleted: [...completedObjectives],
+        chunksUsed: [...usedChunks],
+      }).catch(() => {})
+      resumeAfterInput(userMsg)
+      return
+    }
+
+    // Fallback: simulate NPC response
+    const npcResponses = [
+      `That's interesting! Tell me more about that.`,
+      `I see. Could you give me an example?`,
+      `Great point! What else comes to mind?`,
+      `I understand. Let me ask you another question—why do you think that is?`,
+    ]
+    const npcText = npcResponses[fallbackRound % npcResponses.length]
+
+    setTimeout(() => {
+      setDialogueRounds((prev) => [
+        ...prev,
+        { speaker: fallbackNpcName, text: npcText, isNpc: true },
+      ])
+      setFallbackRound((r) => r + 1)
+
+      const unusedChunks = coreChunkTexts.filter((c) => !usedChunks.has(c.text))
+      if (unusedChunks.length > 0 && fallbackRound > 1) {
+        const hint = unusedChunks[Math.floor(Math.random() * unusedChunks.length)]
+        setAiHints((prev) => [...prev, {
+          type: 'chunk',
+          text: `试试使用: "${hint.text}"`,
+          meaning: hint.meaning,
+        }])
+      }
+    }, 800)
+
+    if (fallbackRound > 0 && fallbackRound % 2 === 0 && objectives.length > 0) {
+      const idx = fallbackRound % objectives.length
+      setCompletedObjectives((prev) => new Set([...prev, objectives[idx]]))
+    }
+  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName])
+
+  const handleSendText = () => {
+    if (!inputText.trim()) return
+    sendUserInput(inputText)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendText()
     }
   }
 
-  const loadUpgrade = async () => {
-    setStep('upgrade')
+  // ==================== Analysis ====================
+  const startAnalysis = useCallback(async () => {
+    if (!topicId || !detail) return
+    setPhase('analysis')
+    setAnalysisLoading(true)
     try {
-      const res: any = await practiceAiApi.upgrade({
-        userTranscript: transcript,
-        outputLevel: 'L2',
+      const res = await practiceAiApi.dialogueSummary({
+        topicId,
+        topicTitle: detail.topic.title,
+        promptEn: detail.topic.promptEn,
+        objectives,
+        coreChunks: coreChunkTexts.map((c) => c.text),
       })
-      // Try to parse JSON from AI response
-      const match = res?.result?.match(/```json\s*([\s\S]*?)\s*```/)
-      if (match) {
-        setUpgraded(JSON.parse(match[1]))
-      }
-    } catch {}
+      setAnalysisResult(res.analysis ?? res)
+    } catch (e: any) {
+      setAnalysisResult({ summary: `分析失败: ${e.message}` })
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }, [topicId, detail, objectives, coreChunkTexts])
+
+  const resetPractice = () => {
+    setDialogueRounds([])
+    setFallbackRound(0)
+    setCompletedObjectives(new Set())
+    setUsedChunks(new Set())
+    setAiHints([])
+    setTranscript('')
+    setInputText('')
+    setPhase('prepare')
   }
 
+  // ==================== Loading / Error ====================
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -212,35 +329,38 @@ export function PracticeSessionPage() {
     )
   }
 
-  return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
-      {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="size-5" />
-        </Button>
-        <div className="flex-1">
-          <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
-          <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+  // ==================== Phase: Prepare ====================
+  if (phase === 'prepare') {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+        {/* Header */}
+        <div className="mb-6 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="size-5" />
+          </Button>
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+            <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+          </div>
+          <Badge variant="secondary">{detail.topic.difficulty}</Badge>
         </div>
-        <Badge variant="secondary">{detail.topic.difficulty}</Badge>
-      </div>
 
-      {/* Step indicator */}
-      <div className="mb-6 flex gap-1">
-        {STEPS.map((s, i) => (
-          <div
-            key={s}
-            className={cn(
-              'h-1 flex-1 rounded-full transition-colors',
-              step === s ? 'bg-primary' : STEPS.indexOf(step) > i ? 'bg-primary/40' : 'bg-muted',
-            )}
-          />
-        ))}
-      </div>
+        {/* Phase indicator */}
+        <div className="mb-6 flex items-center gap-3 rounded-lg bg-primary/10 px-4 py-3">
+          <Info className="size-5 text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">准备阶段</p>
+            <p className="text-xs text-muted-foreground">熟悉话题、词汇和表达，准备好后开始练习</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setPhase('practice')}
+            className="shrink-0"
+          >
+            <Play className="mr-1 size-4" /> 开始练习
+          </Button>
+        </div>
 
-      {/* Step: Prepare（题目 + Tabs: 词汇 | 表达） */}
-      {step === 'prepare' && (
         <div className="space-y-4">
           {/* 题目 */}
           <Card>
@@ -250,13 +370,57 @@ export function PracticeSessionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-foreground">{detail.topic.promptEn}</p>
+              <p className="text-lg font-medium text-foreground">{detail.topic.promptEn}</p>
               <p className="text-sm text-muted-foreground">{detail.topic.promptZh}</p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>建议时长：{detail.topic.suggestedDurationSec} 秒</span>
               </div>
             </CardContent>
           </Card>
+
+          {/* 介绍说明 */}
+          {detail.topic.description && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Info className="size-4" /> 介绍说明
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                  {detail.topic.description}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 知识点讲解 */}
+          {(detail.topic.knowledgePoints || detail.topic.sentencePatterns?.length) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Lightbulb className="size-4" /> 知识点讲解
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {detail.topic.knowledgePoints && (
+                  <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                    {detail.topic.knowledgePoints}
+                  </p>
+                )}
+                {detail.topic.sentencePatterns?.map((p, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
+                    <Badge variant="outline" className="mb-1 text-xs">{p.difficulty ?? '句型'}</Badge>
+                    <p className="text-sm font-mono text-foreground">{p.pattern}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{p.meaning}</p>
+                    {p.example && (
+                      <p className="mt-1 text-xs italic text-muted-foreground">例: {p.example}</p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Tabs: 场景词汇 | 核心表达 */}
           <Tabs defaultValue="vocab" className="w-full">
@@ -282,7 +446,7 @@ export function PracticeSessionPage() {
                           <span className={cn('text-sm font-bold', isExpanded ? 'text-blue-600 dark:text-blue-400' : 'text-foreground')}>
                             {v.word}
                           </span>
-                          {isExpanded && <span className="text-xs text-muted-foreground">{v.meaning}</span>}
+                          {!isExpanded && <span className="text-xs text-muted-foreground">{v.meaning}</span>}
                         </button>
                         {isExpanded && (
                           <div className="border-t border-blue-500/20 px-3 pb-2.5 pt-1.5">
@@ -306,191 +470,238 @@ export function PracticeSessionPage() {
                 onActivate={activateChunk}
                 onExpand={setExpandedChunkId}
                 onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
-                onContinue={() => setStep('record')}
               />
             </TabsContent>
           </Tabs>
+
+          {/* Bottom Start button */}
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={() => setPhase('practice')}
+          >
+            <Play className="mr-2 size-5" /> 开始练习
+          </Button>
         </div>
-      )}
 
-      {/* Step: Record */}
-      {step === 'record' && (
-        <div className="space-y-4">
-          <Card className="text-center">
-            <CardContent className="flex flex-col items-center gap-6 py-12">
-              <p className="text-foreground">{detail.topic.promptEn}</p>
-              <Button
-                size="lg"
-                variant={isRecording ? 'destructive' : 'default'}
-                className={cn('size-24 rounded-full', isRecording && 'animate-pulse')}
-                onClick={isRecording ? stopRecording : startRecording}
-              >
-                {isRecording ? <MicOff className="size-10" /> : <Mic className="size-10" />}
-              </Button>
-              <p className="text-sm text-muted-foreground">
-                {isRecording ? '正在录音...' : '点击开始录音'}
-              </p>
-              {transcript && (
-                <div className="w-full rounded-lg bg-muted p-4 text-left">
-                  <p className="text-sm text-foreground">{transcript}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <LearningInsightDialog
+          items={insightItems}
+          index={Math.min(insightIndex, Math.max(insightItems.length - 1, 0))}
+          open={insightOpen}
+          onOpenChange={setInsightOpen}
+          onIndexChange={setInsightIndex}
+        />
+      </div>
+    )
+  }
 
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('prepare')}>
-              上一步
-            </Button>
+  // ==================== Phase: Practice (VN) ====================
+  if (phase === 'practice') {
+    const showInkChoices = inkChoices.length > 0
+    const isInputDisabled = isRecording || showInkChoices
+
+    return (
+      <div className="relative mx-auto flex h-[calc(100vh-3.5rem)] max-w-2xl flex-col px-4 pt-2">
+        {/* Top bar: exit + start analysis */}
+        <div className="mb-2 flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => setPhase('prepare')}>
+            <ArrowLeft className="mr-1 size-4" /> 返回准备
+          </Button>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              轮次 {dialogueRounds.length}
+            </Badge>
             <Button
-              className="flex-1"
-              disabled={!transcript || isRecording}
-              onClick={requestFeedback}
+              variant="outline"
+              size="sm"
+              onClick={startAnalysis}
+              disabled={dialogueRounds.length < 2}
             >
-              <Sparkles className="mr-1 size-4" /> AI 纠错
+              <CheckCircle2 className="mr-1 size-4" /> 结束对话
             </Button>
           </div>
         </div>
-      )}
 
-      {/* Step: Feedback */}
-      {step === 'feedback' && (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Sparkles className="size-4" /> AI 纠错反馈
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isStreaming && !feedbackText && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Spinner className="size-4" /> AI 分析中...
+        {/* VN Scene */}
+        <VnScene className="min-h-0 flex-1">
+          <ScrollArea className="max-h-full pr-2">
+            <div className="space-y-3 pb-2">
+              {/* Initial prompt if no dialogues yet */}
+              {dialogueRounds.length === 0 && !inkJson && (
+                <div className="flex justify-center py-8">
+                  <div className="max-w-sm rounded-xl bg-background/90 p-4 text-center backdrop-blur-sm">
+                    <p className="text-sm text-foreground">{detail.topic.promptEn}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      开始对话吧！试着围绕这个话题与 NPC 交流
+                    </p>
+                  </div>
                 </div>
               )}
-              {feedbackText && (
-                <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap text-sm text-foreground">
-                  {feedbackText}
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('record')}>
-              上一步
-            </Button>
-            <Button className="flex-1" onClick={loadUpgrade} disabled={!feedbackText}>
-              查看表达升级
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step: Upgrade */}
-      {step === 'upgrade' && (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Sparkles className="size-4" /> 表达升级
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {upgraded ? (
-                <>
-                  {(['clear', 'natural', 'advanced'] as const).map((level) => (
-                    <div key={level} className="space-y-1">
-                      <Badge variant="outline">
-                        {level === 'clear' ? '清楚版' : level === 'natural' ? '自然版' : '进阶版'}
-                      </Badge>
-                      <p className="rounded-lg bg-muted p-3 text-sm text-foreground">{upgraded[level]}</p>
+              {/* Dialogues */}
+              {dialogueRounds.map((msg, i) => (
+                <div key={i} className={cn(msg.isNpc ? 'flex justify-start' : 'flex justify-end')}>
+                  {msg.isNpc ? (
+                    <DialogueBox
+                      speaker={msg.speaker}
+                      text={msg.text}
+                      isCurrent={i === dialogueRounds.length - 1}
+                      className="max-w-[85%]"
+                    />
+                  ) : (
+                    <div className="max-w-[85%] rounded-xl bg-primary/15 px-4 py-2.5">
+                      <p className="text-sm text-foreground">{msg.text}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{msg.speaker}</p>
                     </div>
-                  ))}
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">AI 正在生成升级版本...</p>
+                  )}
+                </div>
+              ))}
+
+              {/* Ink choices */}
+              {showInkChoices && (
+                <div className="px-2">
+                  <ChoiceButtons
+                    choices={inkChoices}
+                    onSelect={handleChoice}
+                  />
+                </div>
               )}
-            </CardContent>
-          </Card>
 
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('feedback')}>
-              返回
-            </Button>
-            <Button className="flex-1" onClick={() => setStep('retell')} disabled={!upgraded}>
-              开始复述
-            </Button>
-          </div>
-        </div>
-      )}
+              {/* Recording indicator */}
+              {isRecording && (
+                <div className="flex items-center justify-center gap-2 rounded-lg bg-destructive/10 py-3">
+                  <Mic className="size-4 animate-pulse text-destructive" />
+                  <span className="text-sm text-destructive">正在录音...</span>
+                </div>
+              )}
 
-      {/* Step: Retell */}
-      {step === 'retell' && upgraded && (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-base">
-                <span>遮挡复述</span>
-                <Button variant="ghost" size="sm" onClick={() => setShowMask(!showMask)}>
-                  {showMask ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {/* Transcript preview */}
+              {transcript && !isRecording && (
+                <div className="flex justify-end">
+                  <div className="max-w-[85%] rounded-xl bg-muted px-4 py-2">
+                    <p className="text-sm text-foreground">{transcript}</p>
+                    <p className="text-xs text-muted-foreground">转写预览</p>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+        </VnScene>
+
+        {/* Input area */}
+        <div className="py-3">
+          {transcript ? (
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setTranscript('')}>
+                重新录音
+              </Button>
+              <Button className="flex-1" onClick={() => sendUserInput(transcript)}>
+                <Send className="mr-1 size-4" /> 发送
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              {/* Voice button */}
+              <Button
+                variant={isRecording ? 'destructive' : 'outline'}
+                size="icon"
+                className="shrink-0"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isInputDisabled && !isRecording}
+              >
+                {isRecording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+              </Button>
+
+              {/* Text input */}
+              <div className="relative flex-1">
+                <textarea
+                  className="w-full resize-none rounded-lg border border-border bg-background p-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  rows={2}
+                  placeholder={isInputDisabled ? '等待 NPC 说完...' : '输入你的回答...'}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isInputDisabled}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="absolute bottom-1 right-1 size-7"
+                  onClick={handleSendText}
+                  disabled={!inputText.trim() || isInputDisabled}
+                >
+                  <Send className="size-3.5" />
                 </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                {(['clear', 'natural', 'advanced'] as const).map((l) => (
-                  <Badge
-                    key={l}
-                    variant={selectedUpgrade === l ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedUpgrade(l)}
-                  >
-                    {l === 'clear' ? '清楚' : l === 'natural' ? '自然' : '进阶'}
-                  </Badge>
-                ))}
               </div>
-              <p className="rounded-lg bg-muted p-4 text-foreground">
-                {showMask ? maskText(upgraded[selectedUpgrade]) : upgraded[selectedUpgrade]}
-              </p>
-              <textarea
-                className="w-full rounded-lg border border-border bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground"
-                rows={3}
-                placeholder="请复述以上内容..."
-                value={retellText}
-                onChange={(e) => setRetellText(e.target.value)}
-              />
-            </CardContent>
-          </Card>
+            </div>
+          )}
+        </div>
 
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('upgrade')}>
-              返回
-            </Button>
-            <Button className="flex-1" onClick={() => navigate('/expressions')}>
-              <Save className="mr-1 size-4" /> 保存并完成
-            </Button>
+        {/* Side drawers */}
+        <PracticeVnDrawer
+          objectives={objectives.map((o) => ({ text: o, completed: completedObjectives.has(o) }))}
+          hints={aiHints}
+          coreChunks={coreChunkTexts}
+          usedChunkTexts={usedChunks}
+        />
+      </div>
+    )
+  }
+
+  // ==================== Phase: Analysis ====================
+  if (phase === 'analysis') {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+        {/* Header */}
+        <div className="mb-6 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="size-5" />
+          </Button>
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+            <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+          </div>
+          <Badge variant="secondary">{detail.topic.difficulty}</Badge>
+        </div>
+
+        {/* Phase indicator */}
+        <div className="mb-6 flex items-center gap-3 rounded-lg bg-green-500/10 px-4 py-3">
+          <CheckCircle2 className="size-5 text-green-500" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">对话复盘</p>
+            <p className="text-xs text-muted-foreground">AI 分析你的对话表现</p>
           </div>
         </div>
-      )}
 
-      <LearningInsightDialog
-        items={insightItems}
-        index={Math.min(insightIndex, Math.max(insightItems.length - 1, 0))}
-        open={insightOpen}
-        onOpenChange={setInsightOpen}
-        onIndexChange={setInsightIndex}
-      />
-    </div>
-  )
-}
+        <PracticeAnalysisPanel
+          analysis={analysisResult}
+          loading={analysisLoading}
+          topicTitle={detail.topic.title}
+          onBack={() => setPhase('practice')}
+          onFinish={() => navigate('/expressions')}
+        />
 
-const steps: Step[] = ['prepare', 'record', 'feedback', 'upgrade', 'retell']
+        {/* Action buttons */}
+        <div className="mt-6 flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={resetPractice}
+          >
+            <RotateCcw className="mr-1 size-4" /> 重新练习
+          </Button>
+          <Button
+            className="flex-1"
+            onClick={() => navigate('/expressions')}
+          >
+            查看表达库 <ChevronRight className="ml-1 size-4" />
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
-/** 简单遮挡：每三个词遮一个 */
-function maskText(text: string): string {
-  return text
-    .split(' ')
-    .map((w, i) => ((i + 1) % 3 === 0 ? '____' : w))
-    .join(' ')
+  return null
 }

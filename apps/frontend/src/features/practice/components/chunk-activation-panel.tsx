@@ -14,7 +14,6 @@ interface ChunkActivationPanelProps {
   onActivate: (chunkId: string) => void
   onExpand: (chunkId: string) => void
   onInspect: (chunkId: string) => void
-  onContinue: () => void
 }
 
 export function ChunkActivationPanel({
@@ -24,7 +23,6 @@ export function ChunkActivationPanel({
   onActivate,
   onExpand,
   onInspect,
-  onContinue,
 }: ChunkActivationPanelProps) {
   const hasChunks = chunks.length > 0
 
@@ -60,15 +58,11 @@ export function ChunkActivationPanel({
             </>
           ) : (
             <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-              这个话题还没有配置核心 Chunk，可以直接进入开口练习。
+              这个话题还没有配置核心 Chunk，可以直接开始练习。
             </div>
           )}
         </CardContent>
       </Card>
-
-      <Button className="w-full" disabled={hasChunks && activatedIds.size === 0} onClick={onContinue}>
-        下一步：开口练习
-      </Button>
     </div>
   )
 }

@@ -853,6 +853,7 @@ model TrainingTopic {
   sceneId              String
   title                String
   description          String?           @db.Text
+  knowledgePoints      String?           @db.Text
   promptEn             String            @db.Text
   promptZh             String            @db.Text
   suggestedDurationSec Int               @default(60)
@@ -860,6 +861,8 @@ model TrainingTopic {
   activeChunks         TrainingTopicChunk[]
   sentenceSkeleton     String?           @db.Text
   sentencePatterns     Json?
+  inkScriptId          String?           @unique
+  inkScript            InkScript?        @relation("TopicInkScript", fields: [inkScriptId], references: [id])
   sortOrder            Int               @default(0)
   createdAt            DateTime          @default(now())
 
@@ -1146,20 +1149,22 @@ model GameLocationNpc {
 // ──── Ink 叙事脚本 & 游戏存档 ────
 
 model InkScript {
-  id                String   @id @default(cuid())
-  key               String   @unique
+  id                String          @id @default(cuid())
+  key               String          @unique
   title             String
-  scriptType        String   @default("episode")
+  scriptType        String          @default("episode")
   inkJson           Json
-  inkSource         String?  @db.Text
+  inkSource         String?         @db.Text
   episodeId         String?
   locationId        String?
   characterId       String?
+  topicId           String?
+  trainingTopic     TrainingTopic?  @relation("TopicInkScript")
   declaredVariables Json?
-  version           Int      @default(1)
+  version           Int             @default(1)
   changelog         String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([scriptType])
   @@index([episodeId])

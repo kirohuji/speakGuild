@@ -63,17 +63,32 @@ export class EnglishPracticeService {
       : [];
     const progressMap = new Map(chunkProgresses.map((p) => [p.chunkId, p]));
 
+    // Fetch ink script if linked
+    let inkScript = null;
+    if (topic.inkScriptId) {
+      inkScript = await this.prisma.inkScript.findUnique({
+        where: { id: topic.inkScriptId },
+        select: { id: true, inkJson: true, key: true, title: true },
+      });
+    }
+
     return {
       topic: {
         id: topic.id,
         title: topic.title,
+        description: topic.description,
+        knowledgePoints: topic.knowledgePoints,
         promptEn: topic.promptEn,
         promptZh: topic.promptZh,
         suggestedDurationSec: topic.suggestedDurationSec,
         difficulty: topic.difficulty,
         sentenceSkeleton: topic.sentenceSkeleton,
         sentencePatterns: topic.sentencePatterns,
+        inkScriptId: topic.inkScriptId,
       },
+      inkScript: inkScript
+        ? { id: inkScript.id, inkJson: inkScript.inkJson, key: inkScript.key, title: inkScript.title }
+        : null,
       scene: {
         id: topic.scene.id,
         title: topic.scene.title,
@@ -131,6 +146,62 @@ export class EnglishPracticeService {
         corrected: dto.corrected,
         chunkText: dto.chunkText,
         sceneName: dto.sceneName,
+      },
+    });
+  }
+
+  /** 获取话题关联的 Ink 脚本 */
+  async getTopicInkScript(topicId: string) {
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      select: { inkScriptId: true },
+    });
+    if (!topic?.inkScriptId) return null;
+
+    return this.prisma.inkScript.findUnique({
+      where: { id: topic.inkScriptId },
+      select: { id: true, inkJson: true, key: true, title: true },
+    });
+  }
+
+  /** 提交练习对话记录 */
+  async submitPracticeDialogue(userId: string, topicId: string, dto: {
+    round?: number;
+    npcText: string;
+    userText?: string;
+    isOnTopic?: boolean;
+    objectivesCompleted?: string[];
+    chunksUsed?: string[];
+    grammarIssues?: any;
+  }) {
+    return this.prisma.scriptDialogue.create({
+      data: {
+        userId,
+        episodeId: topicId,
+        round: dto.round ?? 1,
+        npcText: dto.npcText,
+        userText: dto.userText ?? '',
+        isOnTopic: dto.isOnTopic,
+        objectiveCompleted: dto.objectivesCompleted ?? [],
+        chunksUsed: dto.chunksUsed ?? [],
+        grammarIssues: dto.grammarIssues ?? null,
+      },
+    });
+  }
+
+  /** 获取话题的所有对话记录（用于汇总分析） */
+  async getTopicDialogues(topicId: string, userId: string) {
+    return this.prisma.scriptDialogue.findMany({
+      where: { episodeId: topicId, userId },
+      orderBy: { round: 'asc' },
+      select: {
+        round: true,
+        npcText: true,
+        userText: true,
+        isOnTopic: true,
+        objectiveCompleted: true,
+        chunksUsed: true,
+        grammarIssues: true,
       },
     });
   }

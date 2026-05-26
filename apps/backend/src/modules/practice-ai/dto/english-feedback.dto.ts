@@ -29,3 +29,20 @@ export class EnglishUpgradeDto {
   @IsOptional()
   outputLevel?: string;
 }
+
+export class DialogueSummaryDto {
+  @IsString()
+  topicId: string;
+
+  @IsString()
+  topicTitle: string;
+
+  @IsString()
+  promptEn: string;
+
+  @IsOptional()
+  objectives?: string[];
+
+  @IsOptional()
+  coreChunks?: string[];
+}

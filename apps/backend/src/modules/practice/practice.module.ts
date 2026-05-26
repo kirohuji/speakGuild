@@ -7,5 +7,6 @@ import { EnglishPracticeService } from './english-practice.service';
 @Module({
   controllers: [PracticeController, EnglishPracticeController],
   providers: [PracticeService, EnglishPracticeService],
+  exports: [EnglishPracticeService],
 })
 export class PracticeModule {}
