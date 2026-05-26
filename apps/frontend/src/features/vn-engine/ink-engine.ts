@@ -73,7 +73,6 @@ export class InkEngine {
   choose(choiceIndex: number) {
     if (!this.story) return null
     this.story.ChooseChoiceIndex(choiceIndex)
-    return this.continue()
   }
 
   /** 设置变量值 */

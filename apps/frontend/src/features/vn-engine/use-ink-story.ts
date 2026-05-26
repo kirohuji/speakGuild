@@ -54,23 +54,23 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
       return
     }
 
+    const tags = engine.getCurrentTags()
+    setCurrentTags(tags)
+
+    // Check for #wait tag (user input needed), including empty Ink frames.
+    if (tags.includes('wait') || tags.includes('user_input')) {
+      setIsWaiting(true)
+    }
+
     if (result.hasChoices && result.choices.length > 0) {
       setChoices(result.choices)
-      setCurrentTags(engine.getCurrentTags())
     }
 
     if (result.text) {
       // Parse speaker from Ink tags or text format: "Speaker: text"
-      const tags = engine.getCurrentTags()
       const parsed = parseInkLine(result.text, tags)
 
       setLines((prev) => [...prev, ...parsed])
-      setCurrentTags(tags)
-
-      // Check for #wait tag (user input needed)
-      if (tags.includes('wait') || tags.includes('user_input')) {
-        setIsWaiting(true)
-      }
     }
   }, [])
 
@@ -136,7 +136,7 @@ function parseInkLine(text: string, tags: string[]): InkLine[] {
     .filter(Boolean)
     .map((line) => {
       // Check inline speaker format: "Name: text"
-      const match = line.match(/^([A-Z][a-zA-Z\s]{0,20}):\s*(.+)/)
+      const match = line.match(/^([^:：]{1,32})[:：]\s*(.+)/)
       if (match) {
         return { text: match[2], speaker: match[1], tags }
       }

@@ -65,10 +65,33 @@ export function VnStoryPreview({
     }
   }, [inkSource, inkJson])
 
+  /** 从 tags 中提取 speaker/expression/bg */
+  const parseTags = useCallback((tags: string[]) => {
+    const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
+    const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
+    const bg = tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim()
+    return { speaker, expression, bg }
+  }, [])
+
+  /** 解析文本行，提取 "Speaker: text" 格式 */
+  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string): DialogueLine[] => {
+    return text
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const match = line.match(/^([^:：]{1,32})[:：]\s*(.+)/)
+        if (match) {
+          return { speaker: match[1], text: match[2], expression: fallbackExpression }
+        }
+        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression }
+      })
+  }, [])
+
   const appendResult = useCallback((engine: InkEngine, result: NonNullable<ReturnType<InkEngine['continue']>>) => {
     const tags = engine.getCurrentTags()
+    const waiting = tags.includes('wait') || tags.includes('user_input')
     setCurrentTags(tags)
-    checkWaitTag(tags)
+    setIsWaiting(waiting)
     const { speaker, expression } = parseTags(tags)
 
     if (result.text) {
@@ -79,8 +102,8 @@ export function VnStoryPreview({
     if (result.hasChoices) setChoices(result.choices)
     else setChoices([])
 
-    if (!engine.canContinue && result.choices.length === 0) setIsEnded(true)
-  }, [checkWaitTag, parseTags, parseTextLines])
+    if (!waiting && !engine.canContinue && result.choices.length === 0) setIsEnded(true)
+  }, [parseTags, parseTextLines])
 
   // Initialize engine with compiled JSON
   useEffect(() => {
@@ -110,34 +133,6 @@ export function VnStoryPreview({
       console.warn('[VnPreview] Init failed:', err)
     }
   }, [appendResult, compileResult])
-
-  const checkWaitTag = useCallback((tags: string[]) => {
-    if (tags.includes('wait') || tags.includes('user_input')) {
-      setIsWaiting(true)
-    }
-  }, [])
-
-  /** 从 tags 中提取 speaker/expression/bg */
-  const parseTags = useCallback((tags: string[]) => {
-    const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
-    const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
-    const bg = tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim()
-    return { speaker, expression, bg }
-  }, [])
-
-  /** 解析文本行，提取 "Speaker: text" 格式 */
-  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string): DialogueLine[] => {
-    return text
-      .split('\n')
-      .filter(Boolean)
-      .map((line) => {
-        const match = line.match(/^([A-Za-z\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff\s]{0,20}):\s*(.+)/)
-        if (match) {
-          return { speaker: match[1], text: match[2], expression: fallbackExpression }
-        }
-        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression }
-      })
-  }, [])
 
   const advanceStory = useCallback(() => {
     const engine = engineRef.current
@@ -261,7 +256,7 @@ export function VnStoryPreview({
         </div>
 
         {/* Current line */}
-        {lastLine && !isEnded && choices.length === 0 && (
+        {lastLine && !isEnded && (
           <DialogueBox speaker={lastLine.speaker || undefined} text={lastLine.text} isCurrent={true} />
         )}
 

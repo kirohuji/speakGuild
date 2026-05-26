@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Code, Eye, Wand2, AlertTriangle } from 'lucide-react'
+import { Eye, Wand2, AlertTriangle, MapPin, MessageSquare, GitBranch, UserRound } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { compileInk, extractInkMeta, defaultInkTemplate } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
@@ -43,8 +43,63 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
 
 const INK_SYNTAX_HINT = `Ink 语法速查：
 === knot ===  定义场景    # tag  标签（# speaker:Alex / # expression:happy / # bg:url）
-*  选项文本   分支选项    +  粘性选项（不消失）    -> target  跳转    -> END  结束
+* [选项文本]  分支选项（不会回显）    +  粘性选项（不消失）    -> target  跳转    -> END  结束
 {var}  显示变量    ~ temp  临时变量    VAR x = 0  全局变量`
+
+type VisualScriptItem =
+  | { type: 'knot'; name: string }
+  | { type: 'line'; speaker?: string; text: string; tags: string[] }
+  | { type: 'choice'; text: string; target?: string }
+  | { type: 'tag'; value: string }
+  | { type: 'divert'; target: string }
+
+function parseVisualScript(source: string): VisualScriptItem[] {
+  const { remainingSource } = extractInkMeta(source)
+  const items: VisualScriptItem[] = []
+  let tags: string[] = []
+
+  for (const rawLine of remainingSource.split('\n')) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith('//')) continue
+
+    const knot = line.match(/^={3,}\s*([^=]+?)\s*={3,}$/)
+    if (knot) {
+      items.push({ type: 'knot', name: knot[1].trim() })
+      tags = []
+      continue
+    }
+
+    if (line.startsWith('#')) {
+      const value = line.slice(1).trim()
+      items.push({ type: 'tag', value })
+      tags = [...tags, value]
+      continue
+    }
+
+    const choice = line.match(/^\*\s*(.+?)(?:\s*->\s*(.+))?$/)
+    if (choice) {
+      const text = choice[1].trim().replace(/^\[(.*)\]$/, '$1')
+      items.push({ type: 'choice', text, target: choice[2]?.trim() })
+      continue
+    }
+
+    if (line.startsWith('->')) {
+      items.push({ type: 'divert', target: line.replace(/^->\s*/, '').trim() })
+      continue
+    }
+
+    const spoken = line.match(/^([^:：]{1,24})[:：]\s*(.+)$/)
+    items.push({
+      type: 'line',
+      speaker: spoken?.[1]?.trim(),
+      text: spoken?.[2]?.trim() ?? line,
+      tags,
+    })
+    tags = []
+  }
+
+  return items
+}
 
 // ─── Props ─────────────────────────────────────────────────
 
@@ -83,32 +138,38 @@ export function InkStoryEditor({
   className,
 }: InkStoryEditorProps) {
   const [source, setSource] = useState(initialSource || defaultInkTemplate())
-  const [editorMode, setEditorMode] = useState<'ink' | 'json'>('ink')
-  const [jsonView, setJsonView] = useState('')
+  const [editorMode, setEditorMode] = useState<'design' | 'ink'>('design')
 
   // Meta fields
   const [key, setKey] = useState(initialKey)
   const [title, setTitle] = useState(initialTitle)
   const [locationId, setLocationId] = useState(initialLocationId || '')
   const [characterId, setCharacterId] = useState(initialCharacterId || '')
+  const [visualSpeaker, setVisualSpeaker] = useState('')
+  const [visualExpression, setVisualExpression] = useState('default')
+  const [visualLine, setVisualLine] = useState('')
+  const [visualChoice, setVisualChoice] = useState('')
+  const [visualChoiceTarget, setVisualChoiceTarget] = useState('END')
 
   // Compile on source change
   const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
 
   useEffect(() => {
-    if (editorMode === 'json') {
-      setCompileResult(null)
-      return
-    }
     const result = compileInk(source)
     setCompileResult(result)
-    if (result.success && result.json) {
-      setJsonView(JSON.stringify(result.json, null, 2))
-    }
-  }, [source, editorMode])
+  }, [source])
 
   // Extract meta from source
   const meta = useMemo(() => extractInkMeta(source), [source])
+  const visualScriptItems = useMemo(() => parseVisualScript(source), [source])
+
+  useEffect(() => {
+    setSource(initialSource || defaultInkTemplate({ key: initialKey, title: initialTitle }))
+    setKey(initialKey)
+    setTitle(initialTitle)
+    setLocationId(initialLocationId || '')
+    setCharacterId(initialCharacterId || '')
+  }, [initialSource, initialKey, initialTitle, initialLocationId, initialCharacterId])
 
   // Build character sprite data
   const { sprites: charSprites, positions: charPositions } = useMemo(
@@ -122,6 +183,30 @@ export function InkStoryEditor({
     }
     return undefined
   }, [characterId, characters])
+
+  const selectedLocation = useMemo(
+    () => locations.find((location) => location.id === locationId),
+    [locationId, locations],
+  )
+
+  const selectedCharacter = useMemo(
+    () => characters.find((character) => character.id === characterId),
+    [characterId, characters],
+  )
+
+  const expressionOptions = useMemo(() => {
+    const names = new Set<string>(['default'])
+    const expressions = selectedCharacter?.expressions
+    if (expressions && typeof expressions === 'object') {
+      Object.keys(expressions as Record<string, string>).forEach((name) => names.add(name))
+    }
+    return Array.from(names)
+  }, [selectedCharacter])
+
+  useEffect(() => {
+    if (!selectedCharacter) return
+    setVisualSpeaker(selectedCharacter.name || selectedCharacter.displayName)
+  }, [selectedCharacter])
 
   // Sync meta from source
   const handleSourceChange = useCallback((value: string) => {
@@ -137,27 +222,53 @@ export function InkStoryEditor({
     setSource(defaultInkTemplate({ key, title }))
   }, [key, title])
 
+  const appendToSource = useCallback((block: string) => {
+    setSource((prev) => `${prev.trimEnd()}\n\n${block.trim()}\n`)
+  }, [])
+
+  const applyLocationBackground = useCallback(() => {
+    if (!selectedLocation?.backgroundUrl) return
+    appendToSource(`# bg:${selectedLocation.backgroundUrl}`)
+  }, [appendToSource, selectedLocation])
+
+  const appendDialogue = useCallback(() => {
+    const line = visualLine.trim()
+    if (!line) return
+    const speaker = visualSpeaker.trim()
+    const block = [
+      speaker ? `# speaker:${speaker}` : '',
+      visualExpression ? `# expression:${visualExpression}` : '',
+      speaker ? `${speaker}: ${line}` : line,
+    ].filter(Boolean).join('\n')
+    appendToSource(block)
+    setVisualLine('')
+  }, [appendToSource, visualExpression, visualLine, visualSpeaker])
+
+  const appendWaitPoint = useCallback(() => {
+    appendToSource('# wait')
+  }, [appendToSource])
+
+  const appendChoice = useCallback(() => {
+    const text = visualChoice.trim()
+    if (!text) return
+    const target = visualChoiceTarget.trim() || 'END'
+    appendToSource(`*   [${text}] -> ${target}`)
+    setVisualChoice('')
+  }, [appendToSource, visualChoice, visualChoiceTarget])
+
   const handleSave = useCallback(() => {
     if (!onSave) return
-    let inkJson: Record<string, any>
-
-    if (editorMode === 'json') {
-      try { inkJson = JSON.parse(jsonView) }
-      catch { inkJson = {} }
-    } else {
-      const result = compileInk(source)
-      if (!result.success) return // Don't save invalid Ink
-      inkJson = result.json!
-    }
+    const result = compileInk(source)
+    if (!result.success || !result.json) return
 
     onSave({
       key, title,
       inkSource: source,
-      inkJson,
+      inkJson: result.json,
       locationId: locationId || undefined,
       characterId: characterId || undefined,
     })
-  }, [onSave, editorMode, source, jsonView, key, title, locationId, characterId])
+  }, [onSave, source, key, title, locationId, characterId])
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
@@ -196,12 +307,10 @@ export function InkStoryEditor({
         {/* Editor */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <Tabs value={editorMode} onValueChange={(v) => setEditorMode(v as 'ink' | 'json')}>
+            <Tabs value={editorMode} onValueChange={(v) => setEditorMode(v as 'design' | 'ink')}>
               <TabsList className="h-7">
+                <TabsTrigger value="design" className="text-xs px-2.5">可视化编排</TabsTrigger>
                 <TabsTrigger value="ink" className="text-xs px-2.5">Ink 脚本</TabsTrigger>
-                <TabsTrigger value="json" className="text-xs px-2.5">
-                  <Code className="size-3 mr-1" />JSON
-                </TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex items-center gap-1">
@@ -212,7 +321,7 @@ export function InkStoryEditor({
               )}
               {onSave && !readOnly && (
                 <Button size="sm" onClick={handleSave}
-                  disabled={saving || !key || !title || (editorMode === 'ink' && !compileResult?.success)}
+                  disabled={saving || !key || !title || !compileResult?.success}
                   className="h-7 gap-1 text-xs">
                   {saving ? '保存中...' : '保存'}
                 </Button>
@@ -221,6 +330,143 @@ export function InkStoryEditor({
           </div>
 
           <Tabs value={editorMode}>
+            <TabsContent value="design" className="mt-0">
+              <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+                <div className="rounded-md border border-border/70 bg-background">
+                  <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
+                    <p className="text-sm font-medium">当前脚本结构</p>
+                    <Badge variant={compileResult?.success ? 'success' : 'destructive'} className="text-[10px]">
+                      {compileResult?.success ? '可预览' : '需修正'}
+                    </Badge>
+                  </div>
+                  <div className="max-h-56 space-y-1 overflow-y-auto p-2">
+                    {visualScriptItems.length === 0 ? (
+                      <p className="px-2 py-6 text-center text-xs text-muted-foreground">还没有可显示的脚本内容</p>
+                    ) : visualScriptItems.map((item, index) => {
+                      if (item.type === 'knot') {
+                        return <div key={index} className="rounded bg-muted px-2 py-1 font-mono text-xs font-semibold">=== {item.name} ===</div>
+                      }
+                      if (item.type === 'line') {
+                        return (
+                          <div key={index} className="rounded border border-border/60 px-2 py-1.5">
+                            <div className="flex items-center gap-2">
+                              {item.speaker && <Badge variant="outline" className="text-[10px]">{item.speaker}</Badge>}
+                              {item.tags.filter((tag) => tag.startsWith('expression:')).map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-[10px]">{tag.replace('expression:', '')}</Badge>
+                              ))}
+                            </div>
+                            <p className="mt-1 text-xs leading-relaxed">{item.text}</p>
+                          </div>
+                        )
+                      }
+                      if (item.type === 'choice') {
+                        return <div key={index} className="rounded bg-primary/5 px-2 py-1 text-xs">选项：{item.text}{item.target ? ` -> ${item.target}` : ''}</div>
+                      }
+                      if (item.type === 'tag') {
+                        return <div key={index} className="px-2 py-0.5 font-mono text-[11px] text-muted-foreground">#{item.value}</div>
+                      }
+                      return <div key={index} className="px-2 py-0.5 font-mono text-[11px] text-muted-foreground">-&gt; {item.target}</div>
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label className="text-xs">默认地点</Label>
+                    <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                      value={locationId} onChange={(e) => setLocationId(e.target.value)} disabled={readOnly}>
+                      <option value="">不限地点</option>
+                      {locations.map((l) => <option key={l.id} value={l.id}>{l.displayName}</option>)}
+                    </select>
+                    {selectedLocation?.backgroundUrl && (
+                      <Button type="button" variant="outline" size="sm" className="mt-2 h-7 gap-1.5 text-xs" onClick={applyLocationBackground}>
+                        <MapPin className="size-3" />插入背景标签
+                      </Button>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs">默认角色</Label>
+                    <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                      value={characterId} onChange={(e) => setCharacterId(e.target.value)} disabled={readOnly}>
+                      <option value="">不限角色</option>
+                      {characters.map((c) => <option key={c.id} value={c.id}>{c.displayName}</option>)}
+                    </select>
+                    {selectedCharacter && (
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        Ink speaker: <code className="rounded bg-muted px-1">{selectedCharacter.name || selectedCharacter.displayName}</code>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-border/70 bg-muted/20 p-3">
+                  <div className="mb-3 flex items-center gap-2">
+                    <MessageSquare className="size-4 text-muted-foreground" />
+                    <p className="text-sm font-medium">追加对话</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+                    <div>
+                      <Label className="text-xs">说话人</Label>
+                      <Input className="mt-1 h-8 text-sm" value={visualSpeaker}
+                        onChange={(e) => setVisualSpeaker(e.target.value)}
+                        placeholder={defaultChar || 'Alex'} disabled={readOnly} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">表情</Label>
+                      <select className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
+                        value={visualExpression} onChange={(e) => setVisualExpression(e.target.value)} disabled={readOnly}>
+                        {expressionOptions.map((exp) => <option key={exp} value={exp}>{exp}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <Textarea className="mt-3 min-h-24 text-sm" value={visualLine}
+                    onChange={(e) => setVisualLine(e.target.value)}
+                    placeholder="输入这一句对话，会自动生成 # speaker / # expression 标签..." disabled={readOnly} />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button type="button" size="sm" onClick={appendDialogue} disabled={readOnly || !visualLine.trim()}>
+                      追加对话
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={appendWaitPoint} disabled={readOnly}>
+                      插入等待点
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-border/70 bg-muted/20 p-3">
+                  <div className="mb-3 flex items-center gap-2">
+                    <GitBranch className="size-4 text-muted-foreground" />
+                    <p className="text-sm font-medium">追加选项</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+                    <div>
+                      <Label className="text-xs">选项文本</Label>
+                      <Input className="mt-1 h-8 text-sm" value={visualChoice}
+                        onChange={(e) => setVisualChoice(e.target.value)}
+                        placeholder="挺好的，谢谢！" disabled={readOnly} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">跳转目标</Label>
+                      <Input className="mt-1 h-8 text-sm" value={visualChoiceTarget}
+                        onChange={(e) => setVisualChoiceTarget(e.target.value)}
+                        placeholder="tour / END" disabled={readOnly} />
+                    </div>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" className="mt-3" onClick={appendChoice}
+                    disabled={readOnly || !visualChoice.trim()}>
+                    追加选项
+                  </Button>
+                </div>
+
+                <div className="rounded-md border border-border/70 bg-background p-3">
+                  <div className="flex items-center gap-2">
+                    <UserRound className="size-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      复杂分支、knot 命名和变量仍可在 Ink 脚本 tab 里精修。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
             <TabsContent value="ink" className="mt-0">
               <Textarea
                 className="min-h-[400px] font-mono text-xs leading-relaxed"
@@ -255,15 +501,6 @@ export function InkStoryEditor({
                 <p className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-wrap">{INK_SYNTAX_HINT}</p>
               </div>
             </TabsContent>
-            <TabsContent value="json" className="mt-0">
-              <Textarea
-                className="min-h-[400px] font-mono text-xs"
-                value={jsonView}
-                onChange={(e) => setJsonView(e.target.value)}
-                placeholder='{"inkVersion":21,"root":[...],"listDefs":{}}'
-                disabled={readOnly}
-              />
-            </TabsContent>
           </Tabs>
         </div>
 
@@ -274,10 +511,10 @@ export function InkStoryEditor({
             <span className="text-xs font-medium text-muted-foreground">VN 预览</span>
           </div>
           <VnStoryPreview
-            inkSource={editorMode === 'ink' ? source : undefined}
-            inkJson={editorMode === 'json' ? (() => { try { return JSON.parse(jsonView) } catch { return undefined } })() : undefined}
+            inkSource={source}
             characterSprites={charSprites}
             characterPositions={charPositions}
+            defaultBackgroundUrl={selectedLocation?.backgroundUrl ?? undefined}
             className="flex-1"
           />
         </div>

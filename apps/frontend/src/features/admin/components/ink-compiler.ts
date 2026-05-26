@@ -6,7 +6,7 @@
  * === knot_name ===          ← 定义场景（knot）
  * # tag_name                 ← 标签（# speaker:Alex, # expression:happy, # bg:url）
  * Hello world!               ← 普通文本
- * *  选项文本                 ← 选项（* 开头）
+ * *  [选项文本]               ← 分支选项（方括号内文字不会被追加进剧情文本）
  *     +  粘性选项             ← 粘性选项（不消失）
  * -> target_knot             ← 跳转到目标
  * -> END                     ← 结束
@@ -36,7 +36,7 @@ export function compileInk(source: string): CompileResult {
     // Strip YAML front matter (--- block) before compilation —
     // this is our custom metadata convention, NOT valid Ink syntax
     const { remainingSource } = extractInkMeta(source)
-    const inkSource = remainingSource.trim()
+    const inkSource = ensureEntryPoint(remainingSource.trim())
 
     if (!inkSource) {
       return {
@@ -66,7 +66,7 @@ export function compileInk(source: string): CompileResult {
     }
 
     // Serialize compiled story to JSON for storage
-    const jsonStr = story.ToJson() ?? ''
+    const jsonStr = String(story.ToJson() ?? '')
     const json = JSON.parse(jsonStr)
 
     return {
@@ -129,6 +129,20 @@ export function extractInkMeta(source: string): {
   return { key, title, locationId, characterId, remainingSource }
 }
 
+function ensureEntryPoint(source: string): string {
+  const lines = source.split('\n')
+  const firstContent = lines.find((line) => {
+    const trimmed = line.trim()
+    return trimmed && !trimmed.startsWith('//')
+  })?.trim()
+
+  if (firstContent?.startsWith('===') && source.includes('=== start ===')) {
+    return `-> start\n\n${source}`
+  }
+
+  return source
+}
+
 /**
  * 生成默认 Ink 模板
  */
@@ -144,15 +158,17 @@ key: ${key}
 title: ${title}
 ---
 
+-> start
+
 === start ===
 # speaker: Alex
 # expression: default
 Alex: 嗨！欢迎来到这里。
 今天过得怎么样？
 
-*   挺好的，谢谢！ -> tour
-*   有点累，但是还不错。 -> tour
-*   我想四处看看。 -> look_around
+*   [挺好的，谢谢！] -> tour
+*   [有点累，但是还不错。] -> tour
+*   [我想四处看看。] -> look_around
 
 === tour ===
 # speaker: Alex

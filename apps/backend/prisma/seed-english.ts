@@ -155,12 +155,33 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   console.log(`  ✓ ${chunkData.length} 个 Chunk`)
 
   // ═══ 3.5. Ink 对话脚本（视觉小说多轮对话） ═══
+  const dormCheckInInkSource = `---
+key: practice_check_in
+title: 宿舍入住 - 办理入住对话
+---
+
+-> start
+
+=== start ===
+# speaker: Sarah（前台）
+Sarah（前台）: Hello! Welcome to the student dormitory. I'm Sarah, the receptionist.
+How can I help you today?
+# wait
+# user_input
+Great, let me look up your booking. Could you show me your student ID?
+Thank you! Your room is on the 3rd floor, room 302. Is there anything else you need?
+You can ask about Wi-Fi, laundry, or the shared kitchen.
+Have a great stay! Welcome to the dormitory!
+-> END
+`
+
   // Valid inkjs-compatible JSON format (inkVersion 21)
   const dormCheckInInk = await prisma.inkScript.create({
     data: {
       key: 'practice_check_in',
       title: '宿舍入住 - 办理入住对话',
       scriptType: 'practice',
+      inkSource: dormCheckInInkSource,
       inkJson: {
         inkVersion: 21,
         root: [
