@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, Component, type Reac
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mic, MicOff, BookOpen, Send, Play, Info,
-  Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
+  Lightbulb, CheckCircle2, RotateCcw, ChevronRight, History,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
-import { VnPlayer } from '@/features/vn-engine/vn-player'
+import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
@@ -140,6 +140,7 @@ export function PracticeSessionPage() {
 
   // ── History dialog visibility (hide drawer toggles when open) ──
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const [vnVisual, setVnVisual] = useState<{
     backgroundUrl?: string
     backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
@@ -648,12 +649,13 @@ export function PracticeSessionPage() {
     return (
       <div className="relative flex h-dvh flex-col bg-background">
         {/* Floating minimal top bar — light text on dark bg */}
-        <div className="absolute inset-x-0 top-0 z-30 grid grid-cols-[72px_1fr_72px] items-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+        <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+          <div className="grid h-9 w-full max-w-[342px] grid-cols-[72px_1fr_72px] items-center rounded-full border border-white/10 bg-black/46 px-1.5 shadow-[0_12px_36px_rgba(0,0,0,.24)] backdrop-blur-2xl">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setPhase('prepare')}
-            className="h-8 justify-self-start rounded-full border border-white/10 bg-black/50 px-3 text-xs font-medium text-white/80 shadow-none backdrop-blur-md hover:bg-black/70 hover:text-white"
+            className="h-7 justify-self-start rounded-full px-2.5 text-xs font-medium text-white/72 shadow-none hover:bg-white/10 hover:text-white"
           >
             <ArrowLeft className="size-3.5" /> 返回
           </Button>
@@ -666,23 +668,26 @@ export function PracticeSessionPage() {
             hideToggles={isHistoryOpen}
             compactTrigger
             plainTrigger
-            triggerClassName="mx-auto inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 text-xs font-medium text-white/80 shadow-none backdrop-blur-md transition-all duration-200 hover:bg-black/70 hover:text-white active:scale-[0.97] [&_svg]:size-3.5"
+            showTriggerIcon={false}
+            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center rounded-full bg-white/12 px-3 text-xs font-semibold text-white/88 shadow-none transition-all duration-200 hover:bg-white/18 hover:text-white active:scale-[0.97]"
           />
 
           <Button
             variant="ghost"
             size="sm"
-            onClick={startAnalysis}
-            disabled={dialogueRounds.filter((line) => !line.isNpc).length < 2}
-            className="h-8 justify-self-end rounded-full border border-white/10 bg-black/50 px-3 text-xs font-medium text-white/80 shadow-none backdrop-blur-md hover:bg-black/70 hover:text-white disabled:opacity-35"
+            onClick={() => vnPlayerRef.current?.toggleHistory()}
+            className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-white/72 shadow-none hover:bg-white/10 hover:text-white disabled:opacity-35"
+            aria-label="历史记录"
           >
-            结束
+            <History className="size-3.5" />
           </Button>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 bg-black">
           <VnPlayerBoundary>
             <VnPlayer
+              ref={vnPlayerRef}
               className="h-full max-w-none rounded-none border-none"
               stageClassName="min-h-0"
               backgroundUrl={vnVisual.backgroundUrl || detail.scene.backgroundUrl || undefined}
@@ -697,6 +702,7 @@ export function PracticeSessionPage() {
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
               onHistoryOpenChange={setIsHistoryOpen}
+              showHistoryButton={false}
             />
           </VnPlayerBoundary>
         </div>

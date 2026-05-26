@@ -32,6 +32,7 @@ interface PracticeVnDrawerProps {
   triggerClassName?: string
   compactTrigger?: boolean
   plainTrigger?: boolean
+  showTriggerIcon?: boolean
 }
 
 export function PracticeVnDrawer({
@@ -43,6 +44,7 @@ export function PracticeVnDrawer({
   triggerClassName,
   compactTrigger = false,
   plainTrigger = false,
+  showTriggerIcon = true,
 }: PracticeVnDrawerProps) {
   const [open, setOpen] = useState(false)
   const completedCount = objectives.filter((objective) => objective.completed).length
@@ -64,7 +66,7 @@ export function PracticeVnDrawer({
             triggerClassName,
           )}
         >
-          <Target className="size-3.5 text-rose-100" />
+          {showTriggerIcon && <Target className="size-3.5 text-rose-100" />}
           <span>目标 {completedCount}/{objectives.length || 1}</span>
           {!compactTrigger && (
             <>

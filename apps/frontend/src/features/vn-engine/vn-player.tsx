@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
 import { History, RotateCcw } from 'lucide-react'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import { cn } from '@/lib/cn'
@@ -12,6 +12,10 @@ export interface VnPlayerLine {
 export interface VnPlayerChoice {
   index: number
   text: string
+}
+
+export interface VnPlayerHandle {
+  toggleHistory: (open?: boolean) => void
 }
 
 interface VnPlayerProps {
@@ -31,6 +35,7 @@ interface VnPlayerProps {
   onHistoryOpenChange?: (open: boolean) => void
   className?: string
   stageClassName?: string
+  showHistoryButton?: boolean
 }
 
 export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
@@ -84,12 +89,12 @@ function getDialogueHeight(height: number) {
 function layoutSprite(sprite: Sprite, width: number, height: number, position: 'left' | 'center' | 'right') {
   const dialogueHeight = getDialogueHeight(height)
   const stageTopInset = 58
-  const stageBottomInset = dialogueHeight + 18
-  const availableHeight = Math.max(height - stageTopInset - stageBottomInset, height * 0.48)
-  const scale = Math.min(availableHeight / (sprite.texture.height || 1), (width * 0.78) / (sprite.texture.width || 1))
+  const spriteOverlap = 32
+  const availableHeight = Math.max(height - stageTopInset - dialogueHeight + spriteOverlap, height * 0.5)
+  const scale = Math.min(availableHeight / (sprite.texture.height || 1), (width * 0.82) / (sprite.texture.width || 1))
   sprite.scale.set(scale)
-  sprite.anchor.set(0.5)
-  sprite.y = stageTopInset + availableHeight / 2
+  sprite.anchor.set(0.5, 1)
+  sprite.y = height - dialogueHeight + spriteOverlap
   sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
 }
 
@@ -114,15 +119,14 @@ function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosit
         }}
       />
       {spriteUrl && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(148px,24dvh,196px)+18px)] top-[58px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(148px,24dvh,196px)-32px)] top-[58px]">
           <img
             src={spriteUrl}
             alt=""
-            className="absolute max-h-full max-w-[78%] select-none object-contain"
+            className="absolute bottom-0 max-h-full max-w-[82%] select-none object-contain"
             style={{
               left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
+              transform: 'translateX(-50%)',
             }}
           />
         </div>
@@ -360,7 +364,9 @@ export function VnPlayer({
   onHistoryOpenChange,
   className,
   stageClassName,
-}: VnPlayerProps) {
+  showHistoryButton = true,
+  ref,
+}: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [displayedText, setDisplayedText] = useState(currentLine?.text ?? '')
   const typewriterTimerRef = useRef<number | null>(null)
@@ -392,6 +398,9 @@ export function VnPlayer({
     setHistoryOpen(value)
     onHistoryOpenChange?.(value)
   }
+  useImperativeHandle(ref, () => ({
+    toggleHistory: (open?: boolean) => toggleHistory(open ?? !historyOpen),
+  }), [historyOpen])
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !isTyping
   const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen
@@ -428,22 +437,25 @@ export function VnPlayer({
       >
         <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
 
+        {(showHistoryButton || onReset) && (
         <div className="absolute right-3 top-3 z-30 flex gap-2">
-          <span
-            role="button"
-            tabIndex={0}
-            className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
-            onClick={(event) => { event.stopPropagation(); toggleHistory(!historyOpen) }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                event.stopPropagation()
-                toggleHistory(!historyOpen)
-              }
-            }}
-          >
-            <History className="size-4" />
-          </span>
+          {showHistoryButton && (
+            <span
+              role="button"
+              tabIndex={0}
+              className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+              onClick={(event) => { event.stopPropagation(); toggleHistory(!historyOpen) }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  toggleHistory(!historyOpen)
+                }
+              }}
+            >
+              <History className="size-4" />
+            </span>
+          )}
           {onReset && (
             <span
               role="button"
@@ -462,6 +474,7 @@ export function VnPlayer({
             </span>
           )}
         </div>
+        )}
 
         {historyOpen && (
           <div className="absolute inset-0 z-40 bg-background/80 p-4" onClick={(event) => event.stopPropagation()}>
