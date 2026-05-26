@@ -26,9 +26,9 @@ import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
 import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
 type ComposerItem =
-  | { type: 'line'; speaker: string; expression: string; text: string }
+  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string }
   | { type: 'choice'; text: string; target: string }
-  | { type: 'background'; url: string }
+  | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
   | { type: 'wait' }
   | { type: 'divert'; target: string }
   | { type: 'tag'; value: string }
@@ -103,6 +103,7 @@ function parseComposer(source: string): ComposerScene[] {
   let current: ComposerScene | null = null
   let pendingSpeaker = ''
   let pendingExpression = 'default'
+  let pendingPosition: 'left' | 'center' | 'right' = 'center'
 
   const ensureScene = () => {
     if (!current) {
@@ -122,6 +123,7 @@ function parseComposer(source: string): ComposerScene[] {
       scenes.push(current)
       pendingSpeaker = ''
       pendingExpression = 'default'
+      pendingPosition = 'center'
       continue
     }
 
@@ -134,8 +136,19 @@ function parseComposer(source: string): ComposerScene[] {
         pendingSpeaker = tag.replace(/^speaker:/, '').trim()
       } else if (tag.startsWith('expression:')) {
         pendingExpression = tag.replace(/^expression:/, '').trim() || 'default'
+      } else if (tag.startsWith('position:')) {
+        const position = tag.replace(/^position:/, '').trim()
+        pendingPosition = position === 'left' || position === 'right' ? position : 'center'
       } else if (tag.startsWith('bg:')) {
-        scene.items.push({ type: 'background', url: tag.replace(/^bg:/, '').trim() })
+        scene.items.push({ type: 'background', url: tag.replace(/^bg:/, '').trim(), fit: 'cover' })
+      } else if (tag.startsWith('bgFit:')) {
+        const last = scene.items[scene.items.length - 1]
+        const fit = tag.replace(/^bgFit:/, '').trim()
+        if (last?.type === 'background') {
+          last.fit = fit === 'contain' || fit === 'stretch' || fit === 'repeat' ? fit : 'cover'
+        } else {
+          scene.items.push({ type: 'tag', value: tag })
+        }
       } else if (tag === 'wait') {
         scene.items.push({ type: 'wait' })
       } else {
@@ -164,17 +177,19 @@ function parseComposer(source: string): ComposerScene[] {
       type: 'line',
       speaker: pendingSpeaker || spoken?.[1]?.trim() || '',
       expression: pendingExpression || 'default',
+      position: pendingPosition,
       text: spoken?.[2]?.trim() ?? line,
     })
     pendingSpeaker = ''
     pendingExpression = 'default'
+    pendingPosition = 'center'
   }
 
   if (scenes.length === 0) {
     scenes.push({
       name: 'start',
       items: [
-        { type: 'line', speaker: 'Alex', expression: 'default', text: '你好，欢迎来到这里。' },
+        { type: 'line', speaker: 'Alex', expression: 'default', position: 'center', text: '你好，欢迎来到这里。' },
         { type: 'choice', text: '继续', target: 'END' },
       ],
     })
@@ -200,11 +215,13 @@ function serializeComposer(
       if (item.type === 'line') {
         if (item.speaker) lines.push(`# speaker:${item.speaker}`)
         if (item.expression) lines.push(`# expression:${item.expression}`)
+        if (item.position) lines.push(`# position:${item.position}`)
         lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
       } else if (item.type === 'choice') {
         lines.push(`*   [${item.text || '选项'}] -> ${item.target || 'END'}`)
       } else if (item.type === 'background') {
         lines.push(`# bg:${item.url}`)
+        lines.push(`# bgFit:${item.fit || 'cover'}`)
       } else if (item.type === 'wait') {
         lines.push('# wait')
       } else if (item.type === 'divert') {
@@ -238,7 +255,7 @@ function itemTitle(item: ComposerItem) {
 function itemSummary(item: ComposerItem) {
   if (item.type === 'line') return item.text || '空对白'
   if (item.type === 'choice') return `${item.text || '空选项'} -> ${item.target || 'END'}`
-  if (item.type === 'background') return item.url || '未选择背景'
+  if (item.type === 'background') return `${item.fit || 'cover'} · ${item.url || '未选择背景'}`
   if (item.type === 'wait') return '暂停，等待用户输入'
   if (item.type === 'divert') return `-> ${item.target || 'END'}`
   return `# ${item.value}`
@@ -271,6 +288,7 @@ export function InkStoryEditor({
   const [rawOpen, setRawOpen] = useState(false)
   const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
   const [selection, setSelection] = useState<Selection>({ type: 'scene', sceneIndex: 0 })
+  const [draggedItem, setDraggedItem] = useState<{ sceneIndex: number; itemIndex: number } | null>(null)
 
   const [key, setKey] = useState(initialKey)
   const [title, setTitle] = useState(initialTitle)
@@ -280,6 +298,9 @@ export function InkStoryEditor({
   const scenes = useMemo(() => parseComposer(source), [source])
   const selectedScene = scenes[selection.sceneIndex] ?? scenes[0]
   const selectedItem = selection.type === 'item' ? selectedScene?.items[selection.itemIndex] : null
+  const selectedBackgroundLocationId = selectedItem?.type === 'background'
+    ? locations.find((location) => location.backgroundUrl === selectedItem.url)?.id || ''
+    : ''
 
   const selectedLocation = useMemo(
     () => locations.find((location) => location.id === locationId),
@@ -358,11 +379,11 @@ export function InkStoryEditor({
       const scene = draft[sceneIndex] ?? draft[0]
       const item: ComposerItem =
         type === 'line'
-          ? { type: 'line', speaker: defaultSpeaker, expression: 'default', text: '新的对白' }
+          ? { type: 'line', speaker: defaultSpeaker, expression: 'default', position: 'center', text: '新的对白' }
           : type === 'choice'
             ? { type: 'choice', text: '新的选项', target: 'END' }
             : type === 'background'
-              ? { type: 'background', url: selectedLocation?.backgroundUrl || '' }
+              ? { type: 'background', url: selectedLocation?.backgroundUrl || '', fit: 'cover' }
               : type === 'wait'
                 ? { type: 'wait' }
                 : type === 'divert'
@@ -386,6 +407,17 @@ export function InkStoryEditor({
       if (item) Object.assign(item, patch)
     })
   }, [selection, updateScenes])
+
+  const moveItem = useCallback((sceneIndex: number, fromIndex: number, toIndex: number) => {
+    if (readOnly || fromIndex === toIndex) return
+    updateScenes((draft) => {
+      const items = draft[sceneIndex]?.items
+      if (!items || !items[fromIndex] || toIndex < 0 || toIndex >= items.length) return
+      const [item] = items.splice(fromIndex, 1)
+      items.splice(toIndex, 0, item)
+      setSelection({ type: 'item', sceneIndex, itemIndex: toIndex })
+    })
+  }, [readOnly, updateScenes])
 
   const deleteSelection = useCallback(() => {
     if (readOnly) return
@@ -554,10 +586,27 @@ export function InkStoryEditor({
                     <button
                       key={`${item.type}-${itemIndex}`}
                       type="button"
+                      draggable={!readOnly}
+                      onDragStart={(event) => {
+                        setDraggedItem({ sceneIndex: selection.sceneIndex, itemIndex })
+                        event.dataTransfer.effectAllowed = 'move'
+                      }}
+                      onDragEnd={() => setDraggedItem(null)}
+                      onDragOver={(event) => {
+                        if (!readOnly && draggedItem?.sceneIndex === selection.sceneIndex) event.preventDefault()
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        if (draggedItem?.sceneIndex === selection.sceneIndex) {
+                          moveItem(selection.sceneIndex, draggedItem.itemIndex, itemIndex)
+                        }
+                      }}
                       onClick={() => setSelection({ type: 'item', sceneIndex: selection.sceneIndex, itemIndex })}
                       className={cn(
-                        'grid w-full grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg border border-border bg-background p-3 text-left shadow-sm transition-all hover:border-primary/40 hover:bg-muted/30',
+                        'grid w-full cursor-grab grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg border border-border bg-background p-3 text-left shadow-sm transition-all hover:border-primary/40 hover:bg-muted/30 active:cursor-grabbing',
+                        item.type === 'choice' && 'ml-8 w-[calc(100%-2rem)] scale-[0.98] border-primary/25 bg-primary/5',
                         active && 'border-primary/60 bg-primary/5 shadow-md',
+                        draggedItem?.sceneIndex === selection.sceneIndex && draggedItem.itemIndex === itemIndex && 'opacity-45',
                       )}
                     >
                       <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -621,6 +670,11 @@ export function InkStoryEditor({
                     </div>
                     <div>
                       <Label className="text-xs">对白</Label>
+                      <select className="mb-3 mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" value={selectedItem.position} onChange={(event) => updateSelectedItem({ position: event.target.value as 'left' | 'center' | 'right' })} disabled={readOnly}>
+                        <option value="left">左</option>
+                        <option value="center">中</option>
+                        <option value="right">右</option>
+                      </select>
                       <Textarea value={selectedItem.text} onChange={(event) => updateSelectedItem({ text: event.target.value })} disabled={readOnly} className="mt-1 min-h-32 text-sm" />
                     </div>
                   </div>
@@ -645,10 +699,10 @@ export function InkStoryEditor({
                       <Label className="text-xs">从地点选择</Label>
                       <select
                         className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
-                        value=""
+                        value={selectedBackgroundLocationId}
                         onChange={(event) => {
                           const location = locations.find((item) => item.id === event.target.value)
-                          if (location?.backgroundUrl) updateSelectedItem({ url: location.backgroundUrl })
+                          updateSelectedItem({ url: location?.backgroundUrl || '' })
                         }}
                         disabled={readOnly}
                       >
@@ -658,7 +712,13 @@ export function InkStoryEditor({
                     </div>
                     <div>
                       <Label className="text-xs">背景 URL</Label>
-                      <Input value={selectedItem.url} onChange={(event) => updateSelectedItem({ url: event.target.value })} disabled={readOnly} className="mt-1" />
+                      <select className="mb-3 mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" value={selectedItem.fit} onChange={(event) => updateSelectedItem({ fit: event.target.value as 'cover' | 'contain' | 'stretch' | 'repeat' })} disabled={readOnly}>
+                        <option value="cover">Cover 填满裁切</option>
+                        <option value="contain">Contain 完整显示</option>
+                        <option value="stretch">Stretch 拉伸</option>
+                        <option value="repeat">Repeat 平铺</option>
+                      </select>
+                      <Input value={selectedItem.url} onChange={(event) => updateSelectedItem({ url: event.target.value })} disabled={readOnly} className="mt-1" placeholder="选择地点后自动填入，也可以粘贴自定义 URL" />
                     </div>
                     {selectedItem.url && (
                       <div className="aspect-video overflow-hidden rounded-md border border-border bg-muted">

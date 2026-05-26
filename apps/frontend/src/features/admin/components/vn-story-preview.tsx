@@ -67,7 +67,9 @@ export function VnStoryPreview({
     const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
     const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
     const bg = tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim()
-    return { speaker, expression, bg }
+    const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
+    const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
+    return { speaker, expression, bg, bgFit, position }
   }, [])
 
   /** 解析文本行，提取 "Speaker: text" 格式 */
@@ -180,7 +182,7 @@ export function VnStoryPreview({
 
   // ─── Derive display state ──────────────────────────────────
 
-  const { speaker: currentSpeaker, expression: currentExpression, bg: currentBg } = parseTags(currentTags)
+  const { speaker: currentSpeaker, expression: currentExpression, bg: currentBg, bgFit, position } = parseTags(currentTags)
   const backgroundUrl = currentBg || defaultBackgroundUrl
 
   const speakerSprites = currentSpeaker ? characterSprites[currentSpeaker] : undefined
@@ -188,8 +190,8 @@ export function VnStoryPreview({
     ? speakerSprites?.[currentExpression] || speakerSprites?.['default']
     : speakerSprites?.['default']
   const speakerPosition = currentSpeaker
-    ? characterPositions[currentSpeaker] || 'left'
-    : 'left'
+    ? (position as 'left' | 'center' | 'right') || characterPositions[currentSpeaker] || 'center'
+    : 'center'
 
   const lastLine = history[history.length - 1]
 
@@ -222,6 +224,7 @@ export function VnStoryPreview({
     <VnPlayer
       className={className}
       backgroundUrl={backgroundUrl}
+      backgroundFit={(bgFit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
       currentLine={!isEnded ? lastLine : null}
       history={history}
       choices={choices}

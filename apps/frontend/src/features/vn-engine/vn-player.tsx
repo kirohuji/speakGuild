@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js'
+import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import { History, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -16,6 +16,7 @@ export interface VnPlayerChoice {
 
 interface VnPlayerProps {
   backgroundUrl?: string
+  backgroundFit?: BackgroundFit
   currentLine?: VnPlayerLine | null
   history?: VnPlayerLine[]
   choices?: VnPlayerChoice[]
@@ -31,14 +32,45 @@ interface VnPlayerProps {
   stageClassName?: string
 }
 
+export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
+
 interface PixiVnStageProps {
   backgroundUrl?: string
+  backgroundFit: BackgroundFit
   spriteUrl?: string
   spritePosition: 'left' | 'center' | 'right'
 }
 
 function fitCover(sprite: Sprite, width: number, height: number) {
   const scale = Math.max(width / (sprite.texture.width || 1), height / (sprite.texture.height || 1))
+  sprite.scale.set(scale)
+  sprite.anchor.set(0.5)
+  sprite.position.set(width / 2, height / 2)
+}
+
+function fitBackground(sprite: Sprite | TilingSprite, width: number, height: number, fit: BackgroundFit) {
+  if (sprite instanceof TilingSprite) {
+    sprite.position.set(0, 0)
+    sprite.width = width
+    sprite.height = height
+    sprite.tileScale.set(1)
+    return
+  }
+
+  const textureWidth = sprite.texture.width || 1
+  const textureHeight = sprite.texture.height || 1
+
+  if (fit === 'stretch') {
+    sprite.anchor.set(0)
+    sprite.position.set(0, 0)
+    sprite.width = width
+    sprite.height = height
+    return
+  }
+
+  const scale = fit === 'contain'
+    ? Math.min(width / textureWidth, height / textureHeight)
+    : Math.max(width / textureWidth, height / textureHeight)
   sprite.scale.set(scale)
   sprite.anchor.set(0.5)
   sprite.position.set(width / 2, height / 2)
@@ -52,12 +84,12 @@ function layoutSprite(sprite: Sprite, width: number, height: number, position: '
   sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
 }
 
-function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStageProps) {
+function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const appRef = useRef<Application | null>(null)
   const rootRef = useRef<Container | null>(null)
   const fallbackRef = useRef<Graphics | null>(null)
-  const bgRef = useRef<Sprite | null>(null)
+  const bgRef = useRef<Sprite | TilingSprite | null>(null)
   const spriteRef = useRef<Sprite | null>(null)
   const overlayRef = useRef<Graphics | null>(null)
   const spritePositionRef = useRef(spritePosition)
@@ -74,7 +106,7 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
       fallbackRef.current.rect(0, 0, width, height).fill(0x141827)
       fallbackRef.current.rect(0, height * 0.42, width, height * 0.58).fill({ color: 0x000000, alpha: 0.28 })
     }
-    if (bgRef.current) fitCover(bgRef.current, width, height)
+    if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
     if (spriteRef.current) layoutSprite(spriteRef.current, width, height, spritePositionRef.current)
     if (overlayRef.current) {
       overlayRef.current.clear()
@@ -161,7 +193,9 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
       try {
         const texture = await Assets.load<Texture>(backgroundUrl)
         if (cancelled || !rootRef.current) return
-        const sprite = new Sprite(texture)
+        const sprite = backgroundFit === 'repeat'
+          ? new TilingSprite({ texture, width: 1, height: 1 })
+          : new Sprite(texture)
         bgRef.current = sprite
         rootRef.current.addChildAt(sprite, 1)
         if (overlay) rootRef.current.setChildIndex(overlay, rootRef.current.children.length - 1)
@@ -175,7 +209,7 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
     return () => {
       cancelled = true
     }
-  }, [backgroundUrl, ready])
+  }, [backgroundFit, backgroundUrl, ready])
 
   useEffect(() => {
     if (!ready) return
@@ -229,6 +263,7 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
 
 export function VnPlayer({
   backgroundUrl,
+  backgroundFit = 'cover',
   currentLine,
   history = [],
   choices = [],
@@ -260,7 +295,7 @@ export function VnPlayer({
           }
         }}
       >
-        <PixiVnStage backgroundUrl={backgroundUrl} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
+        <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
 
         <div className="absolute right-3 top-3 z-30 flex gap-2">
           <span
