@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
-  ChevronLeft, ChevronRight, CheckCircle2, Lock, ArrowRight,
+  ChevronRight, CheckCircle2, Lock, ArrowRight,
   ShoppingBag, Play, Search, Heart, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { cn } from '@/lib/cn'
 import {
   learningApi,
@@ -38,7 +39,7 @@ function getCategoryIcon(name: string) {
 }
 
 export function LearningPlanPage() {
-  const [tab, setTab] = useState<'learning' | 'shop'>('learning')
+  const [shopOpen, setShopOpen] = useState(false)
 
   // ── "当前学习" 数据 ──
   const [myUnits, setMyUnits] = useState<MyUnit[]>([])
@@ -83,55 +84,45 @@ export function LearningPlanPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24">
       <div className="mb-3 flex h-10 items-center justify-between">
-        {tab === 'shop' ? (
-          <button
-            type="button"
-            onClick={() => { setTab('learning'); refreshMyUnits() }}
-            className="inline-flex items-center gap-1 rounded-full px-1 py-1 text-sm font-medium text-muted-foreground"
-          >
-            <ChevronLeft className="size-4" />
-            当前学习
-          </button>
-        ) : (
-          <div />
-        )}
+        <div />
 
         <div className="flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40">
-          {tab === 'shop' && (
-            <span className="px-2 text-xs font-medium text-foreground">学习商店</span>
-          )}
           <button
             type="button"
-            onClick={() => { setTab('shop'); refreshShop() }}
-            className={cn(
-              'relative flex size-8 items-center justify-center rounded-full transition-colors',
-              tab === 'shop' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
-            )}
+            onClick={() => { setShopOpen(true); refreshShop() }}
+            className="relative flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
             aria-label="学习商店"
           >
             <ShoppingBag className="size-[18px]" />
-            {tab !== 'shop' && notStarted.length > 0 && (
+            {notStarted.length > 0 && (
               <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-primary ring-2 ring-background" />
             )}
           </button>
         </div>
       </div>
 
-      {tab === 'learning' ? (
-        <MyLearningView
-          myUnits={myUnits}
-          inProgress={inProgress}
-          completed={completed}
-          loading={myLoading}
-          onGoToShop={() => { setTab('shop'); refreshShop() }}
-        />
-      ) : (
-        <ShopView
-          categories={shopCategories}
-          loading={shopLoading}
-          categoriesEmpty={shopCategories.length === 0}
-        />
-      )}
+      <MyLearningView
+        myUnits={myUnits}
+        inProgress={inProgress}
+        completed={completed}
+        loading={myLoading}
+        onGoToShop={() => { setShopOpen(true); refreshShop() }}
+      />
+
+      <Drawer open={shopOpen} onOpenChange={setShopOpen}>
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="text-base font-semibold">学习商店</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <ShopView
+              categories={shopCategories}
+              loading={shopLoading}
+              categoriesEmpty={shopCategories.length === 0}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }
@@ -169,15 +160,23 @@ function MyLearningView({
     )
   }
 
+  const primaryUnit = inProgress[0]
+  const otherUnits = inProgress.slice(1)
+
   return (
     <div className="space-y-5">
-      {inProgress.length > 0 && (
+      {primaryUnit && (
         <section>
-          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
-            继续学习
-          </h2>
-          <div className="space-y-2.5">
-            {inProgress.map((unit) => (
+          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">当前单元</h2>
+          <FeaturedLearningCard unit={primaryUnit} />
+        </section>
+      )}
+
+      {otherUnits.length > 0 && (
+        <section>
+          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">其他学习</h2>
+          <div className="space-y-2">
+            {otherUnits.map((unit) => (
               <MyUnitCard key={unit.id} unit={unit} />
             ))}
           </div>
@@ -197,6 +196,63 @@ function MyLearningView({
         </section>
       )}
     </div>
+  )
+}
+
+function FeaturedLearningCard({ unit }: { unit: MyUnit }) {
+  const pct = unit.completionPercent
+  const Icon = getCategoryIcon(unit.categoryName)
+  const nextTopic = unit.topics?.[0]
+
+  return (
+    <Link
+      to={`/learning/units/${unit.id}`}
+      className="block overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/30"
+    >
+      <div className="p-3.5">
+        <div className="flex gap-3">
+          <div className="relative flex aspect-square size-[92px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+            <Icon className="relative size-8" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-muted-foreground">继续学习</p>
+                <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-5 text-foreground">{unit.title}</h3>
+              </div>
+              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pct}%</Badge>
+            </div>
+            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+              <span>{unit.vocabCount} 词汇</span>
+              <span>{unit.chunkCount} 句块</span>
+              <span>{unit.topicCount} 话题</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Progress value={pct} className="h-1 flex-1" />
+            <span className="text-[10px] text-muted-foreground">{pct}%</span>
+          </div>
+          {nextTopic && (
+            <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+              <Play className="size-3.5 text-primary" />
+              <span className="line-clamp-1 flex-1">{nextTopic.title}</span>
+              <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{nextTopic.difficulty}</Badge>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border/60 px-3.5 py-2.5 text-sm font-medium text-foreground">
+        <span>进入学习</span>
+        <ChevronRight className="size-4 text-muted-foreground" />
+      </div>
+    </Link>
   )
 }
 
@@ -237,7 +293,7 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
         <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
           <span>{unit.vocabCount} 词汇</span>
-          <span>{unit.chunkCount} 表达</span>
+          <span>{unit.chunkCount} 句块</span>
           <span>{unit.topicCount} 话题</span>
         </div>
 

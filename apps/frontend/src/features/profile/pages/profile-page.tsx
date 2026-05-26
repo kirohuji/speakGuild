@@ -254,7 +254,7 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
           {header}
         </p>
       )}
-      <div className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg bg-muted/30">
         {children}
       </div>
     </div>
@@ -266,32 +266,21 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   const { theme, setTheme } = useTheme()
   const { language, setLanguage } = usePreferencesStore()
   const navigate = useNavigate()
-  const [overview, setOverview] = useState<ProfileOverview | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [showThemeDialog, setShowThemeDialog] = useState(false)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.allSettled([
-      getProfileOverview(),
       getUserProfile(),
       getCurrentAvatar(),
-    ]).then(([ovRes, upRes, avRes]) => {
-      if (ovRes.status === 'fulfilled') setOverview(ovRes.value)
+    ]).then(([upRes, avRes]) => {
       if (upRes.status === 'fulfilled') setUserProfile(upRes.value)
       if (avRes.status === 'fulfilled') setAvatarUrl(avRes.value?.url ?? null)
-    }).finally(() => setIsLoading(false))
+    })
   }, [])
 
-  const navItems = [
-    { key: 'overview' as Tab, icon: LayoutDashboard, label: '概览', iconBg: 'bg-blue-500' },
-    { key: 'records' as Tab, icon: ClipboardList, label: '练习记录', iconBg: 'bg-emerald-500' },
-    { key: 'favorites' as Tab, icon: Star, label: '收藏题库', iconBg: 'bg-orange-400' },
-    { key: 'words' as Tab, icon: BookMarked, label: '生词本', iconBg: 'bg-purple-500' },
-    { key: 'account' as Tab, icon: IdCard, label: '账户管理', iconBg: 'bg-sky-400' },
-  ]
   const themeLabel: Record<string, string> = { light: '浅色', dark: '深色', system: '跟随系统' }
   const langLabel: Record<string, string> = { 'zh-CN': '中文', en: 'English' }
 
@@ -309,7 +298,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   return (
     <div className="space-y-3">
       {/* 用户信息区 */}
-      <div className="flex items-center justify-between rounded-lg border border-border/70 bg-card p-3 shadow-sm">
+      <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
         <div className="flex items-center gap-3">
           {/* 头像 */}
           <div className="relative">
@@ -353,52 +342,11 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
         </button>
       </div>
 
-      {/* 统计双卡 */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-border/70 bg-card p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />练习天数
-          </div>
-          {isLoading ? (
-            <Skeleton className="mt-2 h-9 w-14 rounded-lg" />
-          ) : (
-            <p className="mt-1.5 text-2xl font-semibold tracking-tight">{overview?.totalPracticeDays ?? 0}</p>
-          )}
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-            <Flame className="h-3 w-3 text-orange-400" />
-            连续打卡 {isLoading ? '--' : overview?.streakDays ?? 0} 天
-          </p>
-        </div>
-        <div className="rounded-lg border border-border/70 bg-card p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <TrendingUp className="h-3.5 w-3.5" />累计做题
-          </div>
-          {isLoading ? (
-            <Skeleton className="mt-2 h-9 w-14 rounded-lg" />
-          ) : (
-            <p className="mt-1.5 text-2xl font-semibold tracking-tight">{overview?.totalQuestionsAnswered ?? 0}</p>
-          )}
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-            <Target className="h-3 w-3 text-blue-400" />
-            日均 {isLoading ? '--' : overview?.avgDailyQuestions ?? 0} 道
-          </p>
-        </div>
-      </div>
-
       {/* 主导航 */}
       <IosSection>
-        {navItems.map(({ key, icon, label, iconBg }, idx) => (
-          <IosRow
-            key={key}
-            icon={icon}
-            iconBg={iconBg}
-            label={label}
-            last={idx === navItems.length - 1}
-            onTap={() => {
-              onNavigate(key)
-            }}
-          />
-        ))}
+        <IosRow icon={IdCard} iconBg="bg-sky-400" label="账户管理" onTap={() => onNavigate('account')} />
+        <IosRow icon={Crown} iconBg="bg-amber-500" label="会员中心" onTap={() => navigate('/member')} />
+        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label="帮助与反馈" last onTap={() => navigate('/feedback')} />
       </IosSection>
 
       {/* 外观与语言（保留在“我的”首页，点击弹窗切换） */}

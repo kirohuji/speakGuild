@@ -117,7 +117,7 @@ export function MemberPage() {
   }, [payResult])
 
   return (
-    <div className="space-y-5 lg:space-y-6">
+    <div className="mx-auto max-w-2xl space-y-4 px-4 pb-24 lg:max-w-none lg:px-0 lg:pb-0 lg:space-y-6">
       {/* 手机端返回栏 */}
       <div className="relative flex items-center justify-center lg:hidden">
         <button
@@ -132,11 +132,21 @@ export function MemberPage() {
       </div>
 
       {/* 当前套餐 */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t('member.currentPlan')}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <section className="overflow-hidden rounded-lg bg-gradient-to-br from-amber-100 via-orange-50 to-sky-100 p-4 dark:from-amber-950/40 dark:via-orange-950/20 dark:to-sky-950/40">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">会员中心</p>
+            <h2 className="mt-1 text-xl font-semibold tracking-normal text-foreground">解锁更完整的练习体验</h2>
+            <p className="mt-2 max-w-[260px] text-xs leading-5 text-muted-foreground">{t('member.subtitle')}</p>
+          </div>
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-background/70 text-amber-500">
+            <Crown className="size-6" />
+          </div>
+        </div>
+      </section>
+
+      <Card className="rounded-lg border-border/70 shadow-sm">
+        <CardContent className="p-3.5">
           {isLoading ? (
             <Skeleton className="h-[72px] rounded-xl" />
           ) : (
@@ -172,19 +182,18 @@ export function MemberPage() {
       </Card>
 
       {/* 选择套餐 */}
-      <Card>
+      <Card className="rounded-lg border-border/70 shadow-sm">
         <CardHeader className="pb-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-base">选择套餐</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">{t('member.subtitle')}</p>
             </div>
-            <div className="inline-flex rounded-xl bg-muted p-1 self-start">
+            <div className="inline-flex rounded-full bg-muted p-1 self-start">
               <button
                 type="button"
                 onClick={() => setBillingCycle('monthly')}
                 className={cn(
-                  'rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all',
+                  'rounded-full px-3.5 py-1.5 text-sm font-medium transition-all',
                   billingCycle === 'monthly'
                     ? 'bg-background shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
@@ -196,7 +205,7 @@ export function MemberPage() {
                 type="button"
                 onClick={() => setBillingCycle('yearly')}
                 className={cn(
-                  'rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all',
+                  'rounded-full px-3.5 py-1.5 text-sm font-medium transition-all',
                   billingCycle === 'yearly'
                     ? 'bg-background shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
@@ -233,7 +242,7 @@ export function MemberPage() {
       </Card>
 
       {/* 权益对比 */}
-      <Card>
+      <Card className="rounded-lg border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base">{t('member.benefits')}</CardTitle>
         </CardHeader>
@@ -247,7 +256,7 @@ export function MemberPage() {
               {t('common.empty')}
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border">
+            <div className="overflow-hidden rounded-lg bg-muted/30">
               <div className="grid grid-cols-4 items-center gap-2 bg-muted/50 px-4 py-2.5">
                 <span className="text-xs font-semibold text-muted-foreground">{t('member.columns.benefit')}</span>
                 <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.columns.free')}</span>
@@ -274,7 +283,7 @@ export function MemberPage() {
       </Card>
 
       {/* 服务说明 */}
-      <Card>
+      <Card className="rounded-lg border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base">{t('member.service')}</CardTitle>
         </CardHeader>
