@@ -20,6 +20,7 @@ interface VnStoryPreviewProps {
   characterSprites?: Record<string, CharacterSpriteMap>
   /** 角色名 → 立绘位置 */
   characterPositions?: Record<string, 'left' | 'center' | 'right'>
+  defaultBackgroundUrl?: string
   className?: string
 }
 
@@ -38,6 +39,7 @@ export function VnStoryPreview({
   inkJson,
   characterSprites = {},
   characterPositions = {},
+  defaultBackgroundUrl,
   className,
 }: VnStoryPreviewProps) {
   const engineRef = useRef<InkEngine | null>(null)
@@ -63,6 +65,23 @@ export function VnStoryPreview({
     }
   }, [inkSource, inkJson])
 
+  const appendResult = useCallback((engine: InkEngine, result: NonNullable<ReturnType<InkEngine['continue']>>) => {
+    const tags = engine.getCurrentTags()
+    setCurrentTags(tags)
+    checkWaitTag(tags)
+    const { speaker, expression } = parseTags(tags)
+
+    if (result.text) {
+      const lines = parseTextLines(result.text, speaker, expression)
+      setHistory((prev) => [...prev, ...lines])
+    }
+
+    if (result.hasChoices) setChoices(result.choices)
+    else setChoices([])
+
+    if (!engine.canContinue && result.choices.length === 0) setIsEnded(true)
+  }, [checkWaitTag, parseTags, parseTextLines])
+
   // Initialize engine with compiled JSON
   useEffect(() => {
     engineRef.current?.destroy()
@@ -82,10 +101,7 @@ export function VnStoryPreview({
 
       const result = engine.continue()
       if (result) {
-        if (result.hasChoices) setChoices(result.choices)
-        const tags = engine.getCurrentTags()
-        setCurrentTags(tags)
-        checkWaitTag(tags)
+        appendResult(engine, result)
       } else {
         setIsEnded(true)
       }
@@ -93,7 +109,7 @@ export function VnStoryPreview({
     } catch (err) {
       console.warn('[VnPreview] Init failed:', err)
     }
-  }, [compileResult])
+  }, [appendResult, compileResult])
 
   const checkWaitTag = useCallback((tags: string[]) => {
     if (tags.includes('wait') || tags.includes('user_input')) {
@@ -130,21 +146,8 @@ export function VnStoryPreview({
     const result = engine.continue()
     if (!result) { setIsEnded(true); return }
 
-    const tags = engine.getCurrentTags()
-    setCurrentTags(tags)
-    checkWaitTag(tags)
-    const { speaker, expression } = parseTags(tags)
-
-    if (result.text) {
-      const lines = parseTextLines(result.text, speaker, expression)
-      setHistory((prev) => [...prev, ...lines])
-    }
-
-    if (result.hasChoices) setChoices(result.choices)
-    else setChoices([])
-
-    if (!engine.canContinue && result.choices.length === 0) setIsEnded(true)
-  }, [checkWaitTag, parseTags, parseTextLines])
+    appendResult(engine, result)
+  }, [appendResult])
 
   const handleChoice = useCallback((choiceIndex: number) => {
     const engine = engineRef.current
@@ -158,16 +161,8 @@ export function VnStoryPreview({
     const result = engine.continue()
     if (!result) { setIsEnded(true); return }
 
-    const tags = engine.getCurrentTags()
-    setCurrentTags(tags)
-    checkWaitTag(tags)
-    const { speaker, expression } = parseTags(tags)
-
-    if (result.text) {
-      const lines = parseTextLines(result.text, speaker, expression)
-      setHistory((prev) => [...prev, ...lines])
-    }
-  }, [choices, checkWaitTag, parseTags, parseTextLines])
+    appendResult(engine, result)
+  }, [appendResult, choices])
 
   const resetPreview = useCallback(() => {
     if (!compileResult?.json) return
@@ -184,18 +179,16 @@ export function VnStoryPreview({
       engineRef.current = engine
       const result = engine.continue()
       if (result) {
-        if (result.hasChoices) setChoices(result.choices)
-        const tags = engine.getCurrentTags()
-        setCurrentTags(tags)
-        checkWaitTag(tags)
+        appendResult(engine, result)
       }
       setIsReady(true)
     } catch { /* ignore */ }
-  }, [compileResult, checkWaitTag])
+  }, [appendResult, compileResult])
 
   // ─── Derive display state ──────────────────────────────────
 
   const { speaker: currentSpeaker, expression: currentExpression, bg: currentBg } = parseTags(currentTags)
+  const backgroundUrl = currentBg || defaultBackgroundUrl
 
   const speakerSprites = currentSpeaker ? characterSprites[currentSpeaker] : undefined
   const currentSpriteUrl = currentExpression
@@ -234,7 +227,7 @@ export function VnStoryPreview({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <VnScene backgroundUrl={currentBg} className="min-h-[350px]">
+      <VnScene backgroundUrl={backgroundUrl} className="min-h-[350px]">
         {/* Character sprite */}
         {currentSpriteUrl && (
           <div

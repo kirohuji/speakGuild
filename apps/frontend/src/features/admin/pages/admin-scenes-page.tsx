@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
   BookOpen, ChevronRight, X,
   Volume2, Sparkles, ExternalLink, Loader2,
+  CheckCircle2, Link2, Clock3, FileText, Settings2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import {
@@ -428,18 +431,57 @@ function TrainingTopicDialog({
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
   const [stories, setStories] = useState<StoryData[]>([])
+  const [storiesLoading, setStoriesLoading] = useState(false)
+  const [storySearch, setStorySearch] = useState('')
+  const [storyType, setStoryType] = useState('all')
 
   useEffect(() => {
     if (edit) setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [] })
     else setForm({ sceneId, title: '', description: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [], inkScriptId: '' })
+    setStorySearch('')
+    setStoryType('all')
   }, [edit, open, sceneId])
 
   // Load stories for binding
   useEffect(() => {
     if (open) {
-      listStories().then(setStories).catch(() => {})
+      setStoriesLoading(true)
+      listStories()
+        .then(setStories)
+        .catch(() => toast.error('Ink 故事加载失败'))
+        .finally(() => setStoriesLoading(false))
     }
   }, [open])
+
+  const selectedStory = useMemo(
+    () => stories.find((story) => story.id === form.inkScriptId) ?? null,
+    [form.inkScriptId, stories],
+  )
+
+  const storyTypes = useMemo(
+    () => Array.from(new Set(stories.map((story) => story.scriptType).filter(Boolean))),
+    [stories],
+  )
+
+  const filteredStories = useMemo(() => {
+    const keyword = storySearch.trim().toLowerCase()
+    return stories.filter((story) => {
+      const matchesType = storyType === 'all' || story.scriptType === storyType
+      if (!matchesType) return false
+      if (!keyword) return true
+      return [story.title, story.key, story.scriptType, story.trainingTopic?.title]
+        .filter(Boolean)
+        .some((text) => String(text).toLowerCase().includes(keyword))
+    })
+  }, [stories, storySearch, storyType])
+
+  const storyTypeLabel = (type?: string | null) => {
+    if (type === 'practice') return '练习'
+    if (type === 'episode') return '关卡'
+    if (type === 'side_quest') return '支线'
+    if (type === 'free') return '自由'
+    return type || '未分类'
+  }
 
   const handleSave = async () => {
     if (!form.title?.trim() || !form.promptEn?.trim()) return
@@ -460,100 +502,249 @@ function TrainingTopicDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{edit ? '编辑话题' : '新增话题'}</DialogTitle>
+      <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+        <DialogHeader className="border-b border-border/70 px-6 pb-4 pt-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
+            <div>
+              <DialogTitle>{edit ? '编辑话题' : '新增话题'}</DialogTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                组织练习提示、句型 Chunk，并为话题绑定可交互 Ink 故事。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">{form.difficulty ?? 'L2'}</Badge>
+              <Badge variant="secondary">{form.suggestedDurationSec ?? 60}s</Badge>
+              {selectedStory && <Badge variant="outline" className="gap-1"><Link2 className="size-3" />已绑定 Ink</Badge>}
+            </div>
+          </div>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label>标题</Label>
-            <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
+        <Tabs defaultValue="basic" className="flex min-h-0 flex-1 flex-col">
+          <div className="border-b border-border/70 bg-muted/20 px-6 py-3">
+            <TabsList className="h-9 w-full justify-start overflow-x-auto bg-background/80">
+              <TabsTrigger value="basic" className="gap-1.5">
+                <FileText className="size-3.5" />基础信息
+              </TabsTrigger>
+              <TabsTrigger value="training" className="gap-1.5">
+                <Settings2 className="size-3.5" />练习配置
+              </TabsTrigger>
+              <TabsTrigger value="ink" className="gap-1.5">
+                <Link2 className="size-3.5" />Ink 故事
+              </TabsTrigger>
+            </TabsList>
           </div>
-          <div>
-            <MarkdownEditor
-              label="话题说明"
-              value={form.description ?? ''}
-              onChange={(value) => setForm({ ...form, description: value })}
-              height={140}
-              preview="edit"
-              placeholder="这个话题训练什么能力、回答时要注意什么..."
-            />
-          </div>
-          <div>
-            <MarkdownEditor
-              label="英文提示"
-              value={form.promptEn ?? ''}
-              onChange={(value) => setForm({ ...form, promptEn: value })}
-              height={160}
-              preview="edit"
-              placeholder="Tell me about yourself."
-            />
-          </div>
-          <div>
-            <MarkdownEditor
-              label="中文提示"
-              value={form.promptZh ?? ''}
-              onChange={(value) => setForm({ ...form, promptZh: value })}
-              height={160}
-              preview="edit"
-              placeholder="请介绍一下你自己。"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>难度</Label>
-              <Select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
-                  {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </Select>
+
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="px-6 py-5">
+              <TabsContent value="basic" className="mt-0 space-y-5">
+                <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+                  <div className="space-y-1.5">
+                    <Label>标题</Label>
+                    <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>难度</Label>
+                      <Select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
+                        {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>建议时长</Label>
+                      <div className="relative">
+                        <Clock3 className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <Input className="pl-8" type="number" value={form.suggestedDurationSec ?? 60}
+                          onChange={(e) => setForm({ ...form, suggestedDurationSec: Number(e.target.value) })} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <MarkdownEditor
+                  label="话题说明"
+                  value={form.description ?? ''}
+                  onChange={(value) => setForm({ ...form, description: value })}
+                  height={150}
+                  preview="edit"
+                  placeholder="这个话题训练什么能力、回答时要注意什么..."
+                />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <MarkdownEditor
+                    label="英文提示"
+                    value={form.promptEn ?? ''}
+                    onChange={(value) => setForm({ ...form, promptEn: value })}
+                    height={190}
+                    preview="edit"
+                    placeholder="Tell me about yourself."
+                  />
+                  <MarkdownEditor
+                    label="中文提示"
+                    value={form.promptZh ?? ''}
+                    onChange={(value) => setForm({ ...form, promptZh: value })}
+                    height={190}
+                    preview="edit"
+                    placeholder="请介绍一下你自己。"
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="training" className="mt-0 space-y-5">
+                <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
+                  <p className="text-sm font-medium">语言支架</p>
+                  <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达；保存时会同步生成旧字段 sentenceSkeleton。</p>
+                </div>
+                <SentencePatternEditor
+                  value={form.sentencePatterns ?? []}
+                  onChange={(sentencePatterns) => setForm({
+                    ...form,
+                    sentencePatterns,
+                    sentenceSkeleton: sentencePatterns
+                      .filter((item: any) => item.pattern?.trim())
+                      .map((item: any) => `- ${item.pattern}${item.meaning ? ` (${item.meaning})` : ''}`)
+                      .join('\n'),
+                  })}
+                />
+                <ChunkMultiSelect
+                  chunks={chunks}
+                  value={form.chunkIds ?? []}
+                  sceneId={sceneId}
+                  onChange={(chunkIds) => setForm({ ...form, chunkIds })}
+                />
+              </TabsContent>
+
+              <TabsContent value="ink" className="mt-0 space-y-4">
+                <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-border/70 bg-muted/20 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium">当前绑定</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            不绑定时，练习会继续使用默认 AI 对话模式。
+                          </p>
+                        </div>
+                        {selectedStory && (
+                          <Button type="button" size="sm" variant="outline" onClick={() => setForm({ ...form, inkScriptId: null })}>
+                            解绑
+                          </Button>
+                        )}
+                      </div>
+                      {selectedStory ? (
+                        <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3">
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="mt-0.5 size-4 text-primary" />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold">{selectedStory.title}</p>
+                              <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{selectedStory.key}</p>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                <Badge variant="outline" className="text-[10px]">{storyTypeLabel(selectedStory.scriptType)}</Badge>
+                                <Badge variant="secondary" className="text-[10px]">v{selectedStory.version}</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-md border border-dashed border-border bg-background/60 p-4 text-sm text-muted-foreground">
+                          还没有绑定 Ink 故事。
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>搜索故事</Label>
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          className="pl-9"
+                          value={storySearch}
+                          onChange={(e) => setStorySearch(e.target.value)}
+                          placeholder="搜索标题、key、类型或已绑定话题"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>类型筛选</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm" variant={storyType === 'all' ? 'default' : 'outline'} onClick={() => setStoryType('all')}>
+                          全部
+                        </Button>
+                        {storyTypes.map((type) => (
+                          <Button key={type} type="button" size="sm" variant={storyType === type ? 'default' : 'outline'} onClick={() => setStoryType(type)}>
+                            {storyTypeLabel(type)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border/70">
+                    <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+                      <p className="text-sm font-medium">故事列表</p>
+                      <span className="text-xs text-muted-foreground">{filteredStories.length} / {stories.length}</span>
+                    </div>
+                    <ScrollArea className="h-[390px]">
+                      {storiesLoading ? (
+                        <div className="space-y-2 p-3">
+                          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
+                        </div>
+                      ) : filteredStories.length === 0 ? (
+                        <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+                          没有匹配的 Ink 故事
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-border/70">
+                          {filteredStories.map((story) => {
+                            const active = form.inkScriptId === story.id
+                            return (
+                              <button
+                                key={story.id}
+                                type="button"
+                                className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 ${active ? 'bg-primary/5' : ''}`}
+                                onClick={() => setForm({ ...form, inkScriptId: story.id })}
+                              >
+                                <span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background'}`}>
+                                  {active && <CheckCircle2 className="size-3.5" />}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex flex-wrap items-center gap-2">
+                                    <span className="truncate text-sm font-medium">{story.title}</span>
+                                    <Badge variant={story.scriptType === 'practice' ? 'default' : 'outline'} className="text-[10px]">
+                                      {storyTypeLabel(story.scriptType)}
+                                    </Badge>
+                                  </span>
+                                  <span className="mt-1 block truncate font-mono text-xs text-muted-foreground">{story.key}</span>
+                                  <span className="mt-2 flex flex-wrap gap-1.5">
+                                    <Badge variant="secondary" className="text-[10px]">v{story.version}</Badge>
+                                    {story.trainingTopic && (
+                                      <Badge variant="outline" className="max-w-[220px] truncate text-[10px]">
+                                        已绑定：{story.trainingTopic.title}
+                                      </Badge>
+                                    )}
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {new Date(story.updatedAt).toLocaleDateString('zh-CN')}
+                                    </span>
+                                  </span>
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                </div>
+              </TabsContent>
             </div>
-            <div>
-              <Label>建议时长 (秒)</Label>
-              <Input type="number" value={form.suggestedDurationSec ?? 60}
-                onChange={(e) => setForm({ ...form, suggestedDurationSec: Number(e.target.value) })} />
-            </div>
-          </div>
-          <div>
-            <Label>绑定 Ink 故事脚本</Label>
-            <select
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              value={form.inkScriptId ?? ''}
-              onChange={(e) => setForm({ ...form, inkScriptId: e.target.value || null })}
-            >
-              <option value="">不绑定（使用默认 AI 对话模式）</option>
-              {stories.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title} ({s.key}) — {s.scriptType === 'practice' ? '练习' : s.scriptType === 'episode' ? '关卡' : s.scriptType}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              绑定后，用户练习该话题时将使用此 Ink 脚本驱动对话流程。在 NQTR 内容工坊中创建和管理故事脚本。
-            </p>
-          </div>
-          <div>
-            <SentencePatternEditor
-              value={form.sentencePatterns ?? []}
-              onChange={(sentencePatterns) => setForm({
-                ...form,
-                sentencePatterns,
-                sentenceSkeleton: sentencePatterns
-                  .filter((item: any) => item.pattern?.trim())
-                  .map((item: any) => `- ${item.pattern}${item.meaning ? ` (${item.meaning})` : ''}`)
-                  .join('\n'),
-              })}
-            />
-          </div>
-          <ChunkMultiSelect
-            chunks={chunks}
-            value={form.chunkIds ?? []}
-            sceneId={sceneId}
-            onChange={(chunkIds) => setForm({ ...form, chunkIds })}
-          />
+          </ScrollArea>
+        </Tabs>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-background px-6 py-4">
+          <p className="text-xs text-muted-foreground">
+            标题和英文提示为必填；Ink 可稍后绑定。
+          </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>取消</Button>
-            <Button onClick={handleSave} disabled={saving}>保存</Button>
+            <Button onClick={handleSave} disabled={saving || !form.title?.trim() || !form.promptEn?.trim()}>
+              {saving ? '保存中...' : '保存'}
+            </Button>
           </div>
         </div>
       </DialogContent>

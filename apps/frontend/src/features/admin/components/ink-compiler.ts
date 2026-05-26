@@ -14,8 +14,7 @@
  * ```
  */
 
-import { Compiler } from 'inkjs/compiler/Compiler'
-import type { Story } from 'inkjs/engine/Story'
+import { Compiler, type Story } from 'inkjs/full'
 
 export interface CompileResult {
   success: boolean
@@ -67,7 +66,7 @@ export function compileInk(source: string): CompileResult {
     }
 
     // Serialize compiled story to JSON for storage
-    const jsonStr = story.ToJson()
+    const jsonStr = story.ToJson() ?? ''
     const json = JSON.parse(jsonStr)
 
     return {

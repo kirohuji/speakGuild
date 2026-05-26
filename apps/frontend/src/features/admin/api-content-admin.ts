@@ -104,6 +104,7 @@ export interface TrainingTopic {
   difficulty: string
   sentenceSkeleton: string | null
   sentencePatterns?: SentencePattern[] | null
+  inkScriptId?: string | null
   sortOrder: number
   scene?: { id: string; title: string }
   activeChunks?: { id: string; chunk: { id: string; text: string } }[]

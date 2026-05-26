@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
@@ -93,13 +93,18 @@ export function InkStoryEditor({
   const [characterId, setCharacterId] = useState(initialCharacterId || '')
 
   // Compile on source change
-  const compileResult = useMemo(() => {
-    if (editorMode === 'json') return null
+  const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
+
+  useEffect(() => {
+    if (editorMode === 'json') {
+      setCompileResult(null)
+      return
+    }
     const result = compileInk(source)
+    setCompileResult(result)
     if (result.success && result.json) {
       setJsonView(JSON.stringify(result.json, null, 2))
     }
-    return result
   }, [source, editorMode])
 
   // Extract meta from source
