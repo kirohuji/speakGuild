@@ -47,6 +47,10 @@ export function VnStoryPreview({
   const [isWaiting, setIsWaiting] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [currentTags, setCurrentTags] = useState<string[]>([])
+  const [activeBackground, setActiveBackground] = useState<{ url?: string; fit?: string }>({
+    url: defaultBackgroundUrl,
+    fit: 'cover',
+  })
 
   // Compile Ink source
   useEffect(() => {
@@ -92,7 +96,13 @@ export function VnStoryPreview({
     const waiting = tags.includes('wait') || tags.includes('user_input')
     setCurrentTags(tags)
     setIsWaiting(waiting)
-    const { speaker, expression } = parseTags(tags)
+    const { speaker, expression, bg, bgFit } = parseTags(tags)
+    if (bg || bgFit) {
+      setActiveBackground((prev) => ({
+        url: bg || prev.url,
+        fit: bgFit || prev.fit || 'cover',
+      }))
+    }
 
     if (result.text) {
       const lines = parseTextLines(result.text, speaker, expression)
@@ -114,6 +124,7 @@ export function VnStoryPreview({
     setChoices([])
     setIsEnded(false)
     setIsWaiting(false)
+    setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     if (!compileResult?.success || !compileResult.json) return
 
@@ -132,7 +143,7 @@ export function VnStoryPreview({
     } catch (err) {
       console.warn('[VnPreview] Init failed:', err)
     }
-  }, [appendResult, compileResult])
+  }, [appendResult, compileResult, defaultBackgroundUrl])
 
   const advanceStory = useCallback(() => {
     const engine = engineRef.current
@@ -168,6 +179,7 @@ export function VnStoryPreview({
     setChoices([])
     setIsEnded(false)
     setIsWaiting(false)
+    setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     try {
       const engine = new InkEngine()
@@ -179,12 +191,12 @@ export function VnStoryPreview({
       }
       setIsReady(true)
     } catch { /* ignore */ }
-  }, [appendResult, compileResult])
+  }, [appendResult, compileResult, defaultBackgroundUrl])
 
   // ─── Derive display state ──────────────────────────────────
 
-  const { speaker: currentSpeaker, expression: currentExpression, bg: currentBg, bgFit, position, choiceCharacter } = parseTags(currentTags)
-  const backgroundUrl = currentBg || defaultBackgroundUrl
+  const { speaker: currentSpeaker, expression: currentExpression, position, choiceCharacter } = parseTags(currentTags)
+  const backgroundUrl = activeBackground.url || defaultBackgroundUrl
 
   const speakerSprites = currentSpeaker ? characterSprites[currentSpeaker] : undefined
   const currentSpriteUrl = currentExpression
@@ -226,7 +238,7 @@ export function VnStoryPreview({
     <VnPlayer
       className={className}
       backgroundUrl={backgroundUrl}
-      backgroundFit={(bgFit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
+      backgroundFit={(activeBackground.fit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
       currentLine={!isEnded ? lastLine : null}
       history={history}
       choices={choices}

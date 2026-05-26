@@ -74,7 +74,7 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
     inkJson: Record<string, any>
     locationId?: string
     characterId?: string
-  }) => {
+  }, options?: { silent?: boolean }) => {
     setSaving(true)
     try {
       const payload: any = {
@@ -84,20 +84,26 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
         inkSource: data.inkSource,
         scriptType: 'practice',
         version: (editingStory?.version ?? 0) + 1,
+        locationId: null,
+        characterId: null,
       }
-      if (data.locationId) payload.locationId = data.locationId
-      if (data.characterId) payload.characterId = data.characterId
 
       if (editingStory) {
-        await updateStory(editingStory.id, payload)
-        toast.success('故事已更新')
+        const saved = await updateStory(editingStory.id, payload)
+        setEditingStory(saved)
+        if (!options?.silent) toast.success('故事已更新')
       } else {
-        await createStory(payload)
-        toast.success('故事已创建')
+        const saved = await createStory(payload)
+        setEditingStory(saved)
+        setSelectedId(saved.id)
+        if (!options?.silent) toast.success('故事已创建')
         setIsCreating(false)
       }
       await load()
-    } catch { toast.error('保存失败') }
+    } catch {
+      if (!options?.silent) toast.error('保存失败')
+      throw new Error('保存失败')
+    }
     finally { setSaving(false) }
   }, [editingStory, load])
 
@@ -143,8 +149,6 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
           initialSource={editingStory?.inkSource ?? undefined}
           initialKey={editingStory?.key ?? ''}
           initialTitle={editingStory?.title ?? ''}
-          initialLocationId={editingStory?.locationId ?? undefined}
-          initialCharacterId={editingStory?.characterId ?? undefined}
           locations={locations}
           characters={characters}
           onSave={handleSave}

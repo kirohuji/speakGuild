@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -57,7 +57,7 @@ interface InkStoryEditorProps {
     inkJson: Record<string, any>
     locationId?: string
     characterId?: string
-  }) => void
+  }, options?: { silent?: boolean }) => void | Promise<void>
   saving?: boolean
   readOnly?: boolean
   className?: string
@@ -249,6 +249,10 @@ function cloneScenes(scenes: ComposerScene[]) {
   }))
 }
 
+function serializeSourceForSave(source: string, key: string, title: string) {
+  return serializeComposer({ key, title }, parseComposer(source))
+}
+
 function itemTitle(item: ComposerItem) {
   if (item.type === 'line') return item.speaker || '旁白'
   if (item.type === 'choice') return '选项'
@@ -295,6 +299,9 @@ export function InkStoryEditor({
   const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
   const [selection, setSelection] = useState<Selection>({ type: 'scene', sceneIndex: 0 })
   const [draggedItem, setDraggedItem] = useState<{ sceneIndex: number; itemIndex: number } | null>(null)
+  const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const lastAutoSavedSourceRef = useRef('')
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [key, setKey] = useState(initialKey)
   const [title, setTitle] = useState(initialTitle)
@@ -308,23 +315,20 @@ export function InkStoryEditor({
     ? locations.find((location) => location.backgroundUrl === selectedItem.url)?.id || ''
     : ''
 
-  const selectedLocation = useMemo(
-    () => locations.find((location) => location.id === locationId),
-    [locationId, locations],
-  )
   const selectedCharacter = useMemo(
     () => characters.find((character) => character.id === characterId),
     [characterId, characters],
   )
-  const defaultSpeaker = selectedCharacter?.name || selectedCharacter?.displayName || 'Alex'
+  const defaultCharacter = selectedCharacter || characters[0]
+  const defaultSpeaker = defaultCharacter?.name || defaultCharacter?.displayName || 'Alex'
   const expressionOptions = useMemo(() => {
     const names = new Set<string>(['default'])
-    const expressions = selectedCharacter?.expressions
+    const expressions = defaultCharacter?.expressions
     if (expressions && typeof expressions === 'object') {
       Object.keys(expressions as Record<string, string>).forEach((name) => names.add(name))
     }
     return Array.from(names)
-  }, [selectedCharacter])
+  }, [defaultCharacter])
 
   const { sprites: charSprites, positions: charPositions } = useMemo(
     () => buildCharacterSpriteData(characters),
@@ -335,10 +339,8 @@ export function InkStoryEditor({
     (nextScenes = scenes) => serializeComposer({
       key,
       title,
-      locationId: locationId || undefined,
-      characterId: characterId || undefined,
     }, nextScenes),
-    [characterId, key, locationId, scenes, title],
+    [key, scenes, title],
   )
 
   const updateScenes = useCallback((producer: (draft: ComposerScene[]) => void) => {
@@ -348,19 +350,20 @@ export function InkStoryEditor({
       return serializeComposer({
         key,
         title,
-        locationId: locationId || undefined,
-        characterId: characterId || undefined,
       }, draft)
     })
-  }, [characterId, key, locationId, title])
+  }, [key, title])
 
   useEffect(() => {
-    setSource(initialSource || defaultInkTemplate({ key: initialKey, title: initialTitle }))
+    const nextSource = initialSource || defaultInkTemplate({ key: initialKey, title: initialTitle })
+    setSource(nextSource)
     setKey(initialKey)
     setTitle(initialTitle)
     setLocationId(initialLocationId || '')
     setCharacterId(initialCharacterId || '')
     setSelection({ type: 'scene', sceneIndex: 0 })
+    lastAutoSavedSourceRef.current = serializeSourceForSave(nextSource, initialKey, initialTitle)
+    setAutoSaveState('idle')
   }, [initialSource, initialKey, initialTitle, initialLocationId, initialCharacterId])
 
   useEffect(() => {
@@ -383,22 +386,26 @@ export function InkStoryEditor({
     const sceneIndex = selection.sceneIndex < scenes.length ? selection.sceneIndex : 0
     updateScenes((draft) => {
       const scene = draft[sceneIndex] ?? draft[0]
+      if (!scene) return
       const item: ComposerItem =
         type === 'line'
           ? { type: 'line', speaker: defaultSpeaker, expression: 'default', position: 'center', text: '新的对白' }
           : type === 'choice'
             ? { type: 'choice', text: '新的选项', target: 'END', showCharacter: true }
             : type === 'background'
-              ? { type: 'background', url: selectedLocation?.backgroundUrl || '', fit: 'cover' }
+              ? { type: 'background', url: '', fit: 'cover' }
               : type === 'wait'
                 ? { type: 'wait' }
                 : type === 'divert'
                   ? { type: 'divert', target: 'END' }
                   : { type: 'tag', value: 'tag' }
-      scene.items.push(item)
-      setSelection({ type: 'item', sceneIndex, itemIndex: scene.items.length - 1 })
+      const insertIndex = selection.type === 'item'
+        ? Math.min(selection.itemIndex + 1, scene.items.length)
+        : scene.items.length
+      scene.items.splice(insertIndex, 0, item)
+      setSelection({ type: 'item', sceneIndex, itemIndex: insertIndex })
     })
-  }, [defaultSpeaker, scenes.length, selectedLocation?.backgroundUrl, selection.sceneIndex, updateScenes])
+  }, [defaultSpeaker, scenes.length, selection, updateScenes])
 
   const updateSelectedSceneName = useCallback((name: string) => {
     updateScenes((draft) => {
@@ -448,24 +455,46 @@ export function InkStoryEditor({
     if (meta.characterId) setCharacterId(meta.characterId)
   }, [])
 
-  const handleSave = useCallback(() => {
+  const saveCurrentStory = useCallback(async (options?: { silent?: boolean }) => {
     if (!onSave) return
     const nextSource = sourceWithMeta()
     const result = compileInk(nextSource)
     if (!result.success || !result.json) return
-    onSave({
+    await onSave({
       key,
       title,
       inkSource: nextSource,
       inkJson: result.json,
-      locationId: locationId || undefined,
-      characterId: characterId || undefined,
-    })
-  }, [characterId, key, locationId, onSave, sourceWithMeta, title])
+    }, options)
+    lastAutoSavedSourceRef.current = nextSource
+  }, [key, onSave, sourceWithMeta, title])
+
+  const handleSave = useCallback(() => {
+    void saveCurrentStory()
+  }, [saveCurrentStory])
+
+  useEffect(() => {
+    if (!onSave || readOnly || saving || !key.trim() || !title.trim() || !compileResult?.success) return
+    const nextSource = sourceWithMeta()
+    if (!nextSource.trim() || nextSource === lastAutoSavedSourceRef.current) return
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    setAutoSaveState('idle')
+    autoSaveTimerRef.current = setTimeout(() => {
+      setAutoSaveState('saving')
+      void saveCurrentStory({ silent: true })
+        .then(() => setAutoSaveState('saved'))
+        .catch(() => setAutoSaveState('error'))
+    }, 1200)
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    }
+  }, [compileResult?.success, key, onSave, readOnly, saveCurrentStory, saving, source, sourceWithMeta, title])
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 lg:grid-cols-[1fr_1fr_180px_180px]">
+      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 lg:grid-cols-2">
         <div>
           <Label className="text-xs">Key</Label>
           <Input value={key} onChange={(event) => setKey(event.target.value)} placeholder="story_key" className="h-8 text-xs" disabled={readOnly} />
@@ -473,20 +502,6 @@ export function InkStoryEditor({
         <div>
           <Label className="text-xs">标题</Label>
           <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="故事标题" className="h-8 text-xs" disabled={readOnly} />
-        </div>
-        <div>
-          <Label className="text-xs">默认地点</Label>
-          <select className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs" value={locationId} onChange={(event) => setLocationId(event.target.value)} disabled={readOnly}>
-            <option value="">不绑定</option>
-            {locations.map((location) => <option key={location.id} value={location.id}>{location.displayName}</option>)}
-          </select>
-        </div>
-        <div>
-          <Label className="text-xs">默认角色</Label>
-          <select className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs" value={characterId} onChange={(event) => setCharacterId(event.target.value)} disabled={readOnly}>
-            <option value="">不绑定</option>
-            {characters.map((character) => <option key={character.id} value={character.id}>{character.displayName}</option>)}
-          </select>
         </div>
       </div>
 
@@ -500,6 +515,11 @@ export function InkStoryEditor({
             <Badge variant={compileResult?.success ? 'success' : 'destructive'} className="h-7">
               {compileResult?.success ? '格式通过' : '需要修正'}
             </Badge>
+            {onSave && !readOnly && (
+              <Badge variant={autoSaveState === 'error' ? 'destructive' : 'secondary'} className="h-7">
+                {autoSaveState === 'saving' ? '自动保存中' : autoSaveState === 'saved' ? '已自动保存' : autoSaveState === 'error' ? '自动保存失败' : '自动保存'}
+              </Badge>
+            )}
             <Button type="button" variant="outline" size="sm" onClick={() => setRawOpen((value) => !value)} className="h-8 gap-1.5">
               <Code2 className="size-3.5" />源码
             </Button>
@@ -781,7 +801,6 @@ export function InkStoryEditor({
               inkSource={sourceWithMeta()}
               characterSprites={charSprites}
               characterPositions={charPositions}
-              defaultBackgroundUrl={selectedLocation?.backgroundUrl ?? undefined}
               className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
             />
           </div>
