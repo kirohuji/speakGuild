@@ -63,7 +63,21 @@ export interface TopicDetail {
     key: string
     title: string
   } | null
-  scene: { id: string; title: string; location: string; category: string }
+  scene: {
+    id: string
+    title: string
+    location: string
+    category: string
+    backgroundUrl?: string | null
+    characters?: Array<{
+      id: string
+      name: string
+      displayName: string
+      spriteBaseUrl?: string | null
+      expressions?: any
+      defaultPosition: 'left' | 'center' | 'right'
+    }>
+  }
   vocabularies: { id: string; word: string; meaning: string }[]
   activeChunks: {
     id: string

@@ -72,6 +72,29 @@ export class EnglishPracticeService {
       });
     }
 
+    // Fetch scene visual assets from GameLocation
+    const gameLocation = await this.prisma.gameLocation.findFirst({
+      where: { sceneId: topic.scene.id },
+      select: {
+        backgroundUrl: true,
+        npcs: {
+          include: {
+            character: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+                spriteBaseUrl: true,
+                expressions: true,
+                defaultPosition: true,
+              },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+
     return {
       topic: {
         id: topic.id,
@@ -94,6 +117,15 @@ export class EnglishPracticeService {
         title: topic.scene.title,
         location: topic.scene.location,
         category: topic.scene.category.name,
+        backgroundUrl: gameLocation?.backgroundUrl ?? null,
+        characters: (gameLocation?.npcs ?? []).map((npc) => ({
+          id: npc.character.id,
+          name: npc.character.name,
+          displayName: npc.character.displayName,
+          spriteBaseUrl: npc.character.spriteBaseUrl,
+          expressions: npc.character.expressions,
+          defaultPosition: (npc.character.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+        })),
       },
       vocabularies: topic.scene.vocabularies.map((v) => ({
         id: v.id,

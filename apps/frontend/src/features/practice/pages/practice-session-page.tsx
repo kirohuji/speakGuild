@@ -547,7 +547,7 @@ export function PracticeSessionPage() {
     return (
       <div className="relative flex h-dvh flex-col bg-background">
         {/* Floating minimal top bar — light text on dark bg */}
-        <div className="absolute left-0 right-0 top-0 z-30 flex items-center justify-between px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+        <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
           <Button
             variant="ghost"
             size="sm"
@@ -557,15 +557,15 @@ export function PracticeSessionPage() {
             <ArrowLeft className="mr-1 size-3.5" /> 返回
           </Button>
 
-          <div className="flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 backdrop-blur-md">
-            <span className="text-xs text-white/70">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 backdrop-blur-md">
+            <span className="whitespace-nowrap text-xs text-white/70">
               轮次 <span className="font-mono font-medium text-white">{dialogueRounds.filter(d => !d.isNpc).length}</span>
             </span>
-            <span className="mx-1 text-white/20">·</span>
+            <span className="text-white/20">·</span>
             <button
               onClick={startAnalysis}
               disabled={dialogueRounds.filter(d => !d.isNpc).length < 2}
-              className="text-xs text-white/60 transition-colors hover:text-white disabled:opacity-30"
+              className="whitespace-nowrap text-xs text-white/60 transition-colors hover:text-white disabled:opacity-30"
             >
               结束对话
             </button>
@@ -579,6 +579,7 @@ export function PracticeSessionPage() {
             <VnPlayer
               className="h-full max-w-none rounded-none border-none"
               stageClassName="min-h-0"
+              backgroundUrl={detail.scene.backgroundUrl ?? undefined}
               currentLine={currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
               history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
               choices={inkChoices}

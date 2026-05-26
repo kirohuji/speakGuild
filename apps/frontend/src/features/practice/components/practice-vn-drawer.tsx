@@ -45,7 +45,7 @@ export function PracticeVnDrawer({
       {/* Left drawer toggle */}
       <button
         onClick={() => { setLeftOpen(!leftOpen); if (rightOpen) setRightOpen(false) }}
-        className="fixed left-0 top-1/2 z-20 -translate-y-1/2 rounded-r-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
+        className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
         title="任务目标"
       >
         <ChevronRight className={cn('size-4 transition-transform', leftOpen && 'rotate-180')} />
@@ -54,7 +54,7 @@ export function PracticeVnDrawer({
       {/* Left drawer panel */}
       <div
         className={cn(
-          'fixed left-0 top-0 z-20 h-full w-72 border-r border-border bg-background/95 shadow-xl backdrop-blur-md transition-transform duration-300 ease-in-out',
+          'fixed left-0 top-0 z-40 h-full w-72 border-r border-border bg-background/95 shadow-xl backdrop-blur-md transition-transform duration-300 ease-in-out',
           leftOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -111,7 +111,7 @@ export function PracticeVnDrawer({
       {/* Right drawer toggle */}
       <button
         onClick={() => { setRightOpen(!rightOpen); if (leftOpen) setLeftOpen(false) }}
-        className="fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
+        className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
         title="表达提示"
       >
         <ChevronLeft className={cn('size-4 transition-transform', rightOpen && 'rotate-180')} />
@@ -120,7 +120,7 @@ export function PracticeVnDrawer({
       {/* Right drawer panel */}
       <div
         className={cn(
-          'fixed right-0 top-0 z-20 h-full w-72 border-l border-border bg-background/95 shadow-xl backdrop-blur-md transition-transform duration-300 ease-in-out',
+          'fixed right-0 top-0 z-40 h-full w-72 border-l border-border bg-background/95 shadow-xl backdrop-blur-md transition-transform duration-300 ease-in-out',
           rightOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >
