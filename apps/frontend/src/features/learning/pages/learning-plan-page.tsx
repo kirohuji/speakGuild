@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
-  ChevronRight, CheckCircle2, Lock, ArrowRight,
+  ChevronLeft, ChevronRight, CheckCircle2, Lock, ArrowRight,
   ShoppingBag, Play, Search, Heart, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -82,35 +82,39 @@ export function LearningPlanPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24">
-      <div className="mb-3 flex gap-1 rounded-full bg-muted p-1">
-        <button
-          onClick={() => { setTab('learning'); refreshMyUnits() }}
-          className={cn(
-            'flex-1 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors',
-            tab === 'learning' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+      <div className="mb-3 flex h-10 items-center justify-between">
+        {tab === 'shop' ? (
+          <button
+            type="button"
+            onClick={() => { setTab('learning'); refreshMyUnits() }}
+            className="inline-flex items-center gap-1 rounded-full px-1 py-1 text-sm font-medium text-muted-foreground"
+          >
+            <ChevronLeft className="size-4" />
+            当前学习
+          </button>
+        ) : (
+          <div />
+        )}
+
+        <div className="flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40">
+          {tab === 'shop' && (
+            <span className="px-2 text-xs font-medium text-foreground">学习商店</span>
           )}
-        >
-          当前学习
-          {inProgress.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
-              {inProgress.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => { setTab('shop'); refreshShop() }}
-          className={cn(
-            'flex-1 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors',
-            tab === 'shop' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          学习商店
-          {notStarted.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-muted-foreground/20 px-1.5 text-[10px] text-muted-foreground">
-              {notStarted.length}
-            </span>
-          )}
-        </button>
+          <button
+            type="button"
+            onClick={() => { setTab('shop'); refreshShop() }}
+            className={cn(
+              'relative flex size-8 items-center justify-center rounded-full transition-colors',
+              tab === 'shop' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+            )}
+            aria-label="学习商店"
+          >
+            <ShoppingBag className="size-[18px]" />
+            {tab !== 'shop' && notStarted.length > 0 && (
+              <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-primary ring-2 ring-background" />
+            )}
+          </button>
+        </div>
       </div>
 
       {tab === 'learning' ? (

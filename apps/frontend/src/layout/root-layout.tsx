@@ -1,11 +1,12 @@
 import React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Bell } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
 import { useAuth } from '@/providers/auth-provider'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { NotificationBell } from '@/features/notification/components/notification-bell'
+import { useNotificationStore } from '@/features/notification/store'
 import { cn } from '@/lib/cn'
 
 export function RootLayout() {
@@ -45,13 +46,28 @@ export function RootLayout() {
 function MobileTopBar() {
   const { pathname } = useLocation()
   const { session } = useAuth()
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount)
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
 
+  React.useEffect(() => {
+    fetchUnreadCount()
+  }, [fetchUnreadCount])
+
   return (
     <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40 lg:hidden">
-      <NotificationBell className="size-8 rounded-full text-muted-foreground hover:bg-muted/70 hover:text-foreground" />
+      <Link
+        to="/notifications"
+        aria-label="通知"
+        className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+      >
+        <Bell className="size-[18px]" />
+        {unreadCount > 0 && (
+          <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-destructive ring-2 ring-background" />
+        )}
+      </Link>
       <Link
         to="/profile"
         aria-label="个人页面"

@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   BookMarked, RefreshCw, ExternalLink, Search,
-  BookmarkPlus, Trash2, Layers, Eye, EyeOff, Check, X,
+  Trash2, Eye, EyeOff, Check, X,
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
@@ -18,6 +16,9 @@ import { LearningInsightDialog, type LearningInsightItem } from '@/features/prac
 import { cn } from '@/lib/cn'
 import { useWordsStore } from '@/stores/assets.store'
 
+type LibraryTab = 'words' | 'chunk'
+type ReviewState = 'reviewing' | 'done' | 'mastered'
+
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
   chunkText: string | null; sceneName: string | null; masteryStatus: string
@@ -27,7 +28,8 @@ interface Expression {
 export function ExpressionLibraryPage() {
   const [expressions, setExpressions] = useState<Expression[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('words')
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
+  const [reviewState, setReviewState] = useState<ReviewState>('reviewing')
   const { entries: wordEntries, removeWord } = useWordsStore()
 
   // Dialog
@@ -62,21 +64,18 @@ export function ExpressionLibraryPage() {
   }
 
   useEffect(() => {
-    if (filter === 'review') { setLoading(true); loadReview().finally(() => setLoading(false)) }
-    else if (filter === 'words') setLoading(false)
-    else fetchData()
-  }, [filter])
+    if (libraryTab === 'words') {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    Promise.all([fetchData(), loadReview()]).finally(() => setLoading(false))
+  }, [libraryTab])
 
   // Dialog data
   const wordDialogItems: LearningInsightItem[] = wordEntries.map((entry) => ({
     kind: 'word', id: `word:${entry.word}`, word: entry.word,
-  }))
-
-  const chunkDialogItems: LearningInsightItem[] = expressions.map((expr) => ({
-    kind: 'chunk', id: expr.id,
-    text: expr.chunkText ?? expr.corrected ?? '',
-    meaning: expr.original ?? '',
-    sceneName: expr.sceneName ?? undefined,
   }))
 
   const openDialog = useCallback((items: LearningInsightItem[], startIndex: number) => {
@@ -85,27 +84,77 @@ export function ExpressionLibraryPage() {
     setDialogOpen(true)
   }, [])
 
+  const dueReviewIds = new Set(reviewItems.map((item) => item.id))
+  const doneExpressions = expressions.filter(
+    (expr) => expr.reviewCount > 0 && !dueReviewIds.has(expr.id) && expr.masteryStatus !== 'mastered',
+  )
+  const masteredExpressions = expressions.filter((expr) => expr.masteryStatus === 'mastered')
+  const visibleChunks =
+    reviewState === 'reviewing'
+      ? reviewItems
+      : reviewState === 'done'
+        ? doneExpressions
+        : masteredExpressions
+  const visibleChunkDialogItems: LearningInsightItem[] = visibleChunks.map((expr) => ({
+    kind: 'chunk',
+    id: expr.id,
+    text: expr.chunkText ?? expr.corrected ?? '',
+    meaning: expr.original ?? '',
+    sceneName: expr.sceneName ?? undefined,
+  }))
+
+  const wordEmptyText =
+    reviewState === 'reviewing'
+      ? '还没有收藏单词'
+      : reviewState === 'done'
+        ? '暂无复习完成的单词'
+        : '暂无已标熟的单词'
+
+  const chunkEmptyText =
+    reviewState === 'reviewing'
+      ? '暂无待复习句块'
+      : reviewState === 'done'
+        ? '暂无复习完成的句块'
+        : '暂无已标熟的句块'
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
-      <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="mb-4 w-full flex-wrap rounded-full">
-          <TabsTrigger value="words" className="flex-1 min-w-[60px]">单词</TabsTrigger>
-          <TabsTrigger value="chunk" className="flex-1 min-w-[60px]">表达</TabsTrigger>
-          <TabsTrigger value="review" className="flex-1 min-w-[60px] relative">
-            复习
-            {reviewItems.length > 0 && (
-              <Badge variant="destructive" className="ml-1 px-1 text-[10px]">{reviewItems.length}</Badge>
-            )}
-          </TabsTrigger>
+      <Tabs value={libraryTab} onValueChange={(value) => setLibraryTab(value as LibraryTab)}>
+        <TabsList className="mb-3 w-full rounded-full">
+          <TabsTrigger value="words" className="flex-1 rounded-full">单词</TabsTrigger>
+          <TabsTrigger value="chunk" className="flex-1 rounded-full">句块</TabsTrigger>
         </TabsList>
+
+        <div className="mb-4 flex gap-2 overflow-x-auto">
+          {[
+            { value: 'reviewing', label: '复习中', count: libraryTab === 'words' ? wordEntries.length : reviewItems.length },
+            { value: 'done', label: '复习完成', count: libraryTab === 'words' ? 0 : doneExpressions.length },
+            { value: 'mastered', label: '已标熟', count: libraryTab === 'words' ? 0 : masteredExpressions.length },
+          ].map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setReviewState(item.value as ReviewState)}
+              className={cn(
+                'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                reviewState === item.value
+                  ? 'bg-foreground text-background'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              {item.label}
+              <span className="ml-1 opacity-70">{item.count}</span>
+            </button>
+          ))}
+        </div>
 
         {/* 单词 */}
         <TabsContent value="words">
-          {wordEntries.length === 0 ? (
+          {reviewState !== 'reviewing' || wordEntries.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-center">
               <BookMarked className="size-12 text-muted-foreground/40" />
-              <p className="mt-4 text-muted-foreground">还没有收藏单词</p>
-              <p className="text-sm text-muted-foreground">在学习单元页点击 🔖 即可收藏单词</p>
+              <p className="mt-4 text-muted-foreground">{wordEmptyText}</p>
+              {reviewState === 'reviewing' && <p className="text-sm text-muted-foreground">在学习单元页收藏后会出现在这里</p>}
             </div>
           ) : (
             <div>
@@ -159,26 +208,26 @@ export function ExpressionLibraryPage() {
           )}
         </TabsContent>
 
-        {/* 表达 */}
+        {/* 句块 */}
         <TabsContent value="chunk">
           {loading ? <div className="flex justify-center py-12"><Spinner /></div>
-          : expressions.length === 0 ? (
+          : visibleChunks.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-center">
               <BookMarked className="size-12 text-muted-foreground/40" />
-              <p className="mt-4 text-muted-foreground">还没有保存的表达</p>
+              <p className="mt-4 text-muted-foreground">{chunkEmptyText}</p>
               <p className="text-sm text-muted-foreground">学习过程中系统会自动沉淀到这里</p>
             </div>
           ) : (
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">点击单项展开 · 点击「查询」进入沉浸式学习</span>
-                <button onClick={() => openDialog(chunkDialogItems, 0)}
+                <button onClick={() => openDialog(visibleChunkDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600">
                   <ExternalLink className="size-3" /> 沉浸式
                 </button>
               </div>
               <div className="space-y-1">
-                {expressions.map((expr, i) => {
+                {visibleChunks.map((expr, i) => {
                   const text = expr.chunkText ?? expr.corrected ?? ''
                   const isExpanded = expandedItemId === expr.id
                   return (
@@ -191,7 +240,7 @@ export function ExpressionLibraryPage() {
                         <p className={cn('text-sm font-medium', isExpanded ? 'text-purple-600 dark:text-purple-400' : 'text-foreground')}>
                           {text}
                         </p>
-                        <span onClick={(e) => { e.stopPropagation(); openDialog(chunkDialogItems, i) }}
+                        <span onClick={(e) => { e.stopPropagation(); openDialog(visibleChunkDialogItems, i) }}
                           className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title="查询">
                           <Search className="size-3.5" />
                         </span>
@@ -200,7 +249,7 @@ export function ExpressionLibraryPage() {
                         <div className="border-t border-purple-500/20 px-3 pb-3 pt-2">
                           <p className="text-sm text-foreground">{expr.original ?? text}</p>
                           {expr.sceneName && <p className="mt-1 text-xs text-muted-foreground">场景：{expr.sceneName}</p>}
-                          <button onClick={() => openDialog(chunkDialogItems, i)}
+                          <button onClick={() => openDialog(visibleChunkDialogItems, i)}
                             className="mt-2 flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600">
                             <ExternalLink className="size-3" /> 查看详情
                           </button>
@@ -210,47 +259,20 @@ export function ExpressionLibraryPage() {
                   )
                 })}
               </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">共 {expressions.length} 条表达</p>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* 复习 */}
-        <TabsContent value="review">
-          {reviewItems.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-center">
-              <RefreshCw className="size-12 text-muted-foreground/40" />
-              <p className="mt-4 text-muted-foreground">暂无待复习内容</p>
-              <p className="text-sm text-muted-foreground">练习后保存的表达会自动进入复习队列</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">{reviewItems.length} 条待复习</p>
-                <Button onClick={() => { setReviewIndex(0); setRevealed(false); setUserAnswer(''); setReviewOpen(true) }}>
-                  <RefreshCw className="size-4 mr-1" /> 开始复习
-                </Button>
-              </div>
-              {reviewItems.map((expr) => {
-                const text = expr.corrected ?? expr.chunkText ?? expr.original ?? ''
-                return (
-                  <Card key={expr.id} className="border-l-4 border-l-blue-500">
-                    <CardContent className="flex items-start justify-between p-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <Badge variant="outline" className="gap-1 text-xs"><Layers className="size-3" />表达</Badge>
-                          {expr.sceneName && <span className="text-xs text-muted-foreground">{expr.sceneName}</span>}
-                        </div>
-                        <p className="text-sm text-foreground">{text}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+              <p className="mt-3 text-center text-xs text-muted-foreground">共 {visibleChunks.length} 条句块</p>
             </div>
           )}
         </TabsContent>
       </Tabs>
+
+      {libraryTab === 'chunk' && reviewState === 'reviewing' && reviewItems.length > 0 && (
+        <Button
+          className="mt-3 w-full rounded-full"
+          onClick={() => { setReviewIndex(0); setRevealed(false); setUserAnswer(''); setReviewOpen(true) }}
+        >
+          <RefreshCw className="mr-1 size-4" /> 开始复习
+        </Button>
+      )}
 
       <LearningInsightDialog
         items={dialogItems} index={dialogIndex} open={dialogOpen}
