@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
 import { VnPlayer } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
+import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
@@ -20,6 +21,58 @@ import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
+
+function compilePracticeInk(inkSource?: string | null, fallbackJson?: Record<string, any> | null) {
+  if (inkSource) {
+    const result = compileInk(inkSource)
+    if (result.success && result.json) return result.json
+  }
+  return fallbackJson ?? null
+}
+
+function decodeTagValue(value?: string) {
+  if (!value) return value
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+function parseVnTags(tags: string[]) {
+  const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
+  const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
+  const bg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
+  const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
+  const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
+  return { speaker, expression, bg, bgFit, position }
+}
+
+function isBackgroundFit(value?: string): value is 'cover' | 'contain' | 'stretch' | 'repeat' {
+  return value === 'cover' || value === 'contain' || value === 'stretch' || value === 'repeat'
+}
+
+function isSpritePosition(value?: string): value is 'left' | 'center' | 'right' {
+  return value === 'left' || value === 'center' || value === 'right'
+}
+
+function normalizeSpeakerName(value?: string) {
+  return (value || '')
+    .replace(/[（(].*?[）)]/g, '')
+    .replace(/\s+/g, '')
+    .toLowerCase()
+}
+
+function characterMatchesSpeaker(character: NonNullable<TopicDetail['scene']['characters']>[number], speaker?: string) {
+  const normalizedSpeaker = normalizeSpeakerName(speaker)
+  if (!normalizedSpeaker) return false
+  const candidates = [character.name, character.displayName].map(normalizeSpeakerName).filter(Boolean)
+  return candidates.some((candidate) =>
+    candidate === normalizedSpeaker ||
+    normalizedSpeaker.startsWith(candidate) ||
+    candidate.startsWith(normalizedSpeaker),
+  )
+}
 
 /** Catches errors from VnPlayer / PixiVnStage to prevent cascading crashes */
 class VnPlayerBoundary extends Component<
@@ -87,6 +140,13 @@ export function PracticeSessionPage() {
 
   // ── History dialog visibility (hide drawer toggles when open) ──
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [vnVisual, setVnVisual] = useState<{
+    backgroundUrl?: string
+    backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
+    speaker?: string
+    expression?: string
+    position?: 'left' | 'center' | 'right'
+  }>({ backgroundFit: 'cover' })
 
   // ── Immersive mode (hide layout chrome during practice) ──
   const setImmersiveMode = useLayoutStore((s) => s.setImmersiveMode)
@@ -138,11 +198,13 @@ export function PracticeSessionPage() {
         setExpandedChunkId(data.activeChunks[0]?.id ?? null)
 
         // Load Ink script if available
-        if (data.inkScript?.inkJson) {
-          setInkJson(data.inkScript.inkJson)
+        const compiledInk = compilePracticeInk(data.inkScript?.inkSource, data.inkScript?.inkJson)
+        if (compiledInk) {
+          setInkJson(compiledInk)
         } else if (data.topic.inkScriptId) {
           practiceApi.getTopicInk(topicId).then((ink) => {
-            if (ink?.inkJson) setInkJson(ink.inkJson)
+            const compiled = compilePracticeInk(ink?.inkSource, ink?.inkJson)
+            if (compiled) setInkJson(compiled)
           }).catch(() => {})
         }
       })
@@ -168,10 +230,34 @@ export function PracticeSessionPage() {
     lines: inkLines,
     choices: inkChoices,
     isWaiting: inkWaiting,
+    currentTags,
     advanceStory,
     handleChoice,
     resumeAfterInput,
   } = useInkStory(inkJson, { onExternalFunction: handleExternalFn })
+
+  useEffect(() => {
+    setVnVisual({
+      backgroundUrl: detail?.scene.backgroundUrl || undefined,
+      backgroundFit: 'cover',
+    })
+  }, [detail?.scene.backgroundUrl, inkJson])
+
+  useEffect(() => {
+    const tags = currentTags
+    if (tags.length === 0) return
+
+    const parsed = parseVnTags(tags)
+    const latestNpcLine = [...dialogueRounds].reverse().find((line) => line.isNpc && line.speaker)
+
+    setVnVisual((prev) => ({
+      backgroundUrl: parsed.bg || prev.backgroundUrl || detail?.scene.backgroundUrl || undefined,
+      backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
+      speaker: parsed.speaker || latestNpcLine?.speaker || prev.speaker,
+      expression: parsed.expression || prev.expression || 'default',
+      position: isSpritePosition(parsed.position) ? parsed.position : prev.position,
+    }))
+  }, [currentTags, detail?.scene.backgroundUrl, dialogueRounds])
 
   // Sync Ink lines to dialogue display
   useEffect(() => {
@@ -546,6 +632,18 @@ export function PracticeSessionPage() {
     const showInkChoices = inkChoices.length > 0
     const isInputDisabled = isRecording || showInkChoices
     const currentLine = dialogueRounds[dialogueRounds.length - 1]
+    const characters = detail.scene.characters ?? []
+    const currentCharacter = characters.find((character) => {
+      const speaker = vnVisual.speaker || (currentLine?.isNpc ? currentLine.speaker : undefined)
+      return characterMatchesSpeaker(character, speaker)
+    }) || (characters.length === 1 ? characters[0] : undefined)
+    const expressionMap = currentCharacter?.expressions && typeof currentCharacter.expressions === 'object'
+      ? currentCharacter.expressions as Record<string, string>
+      : {}
+    const currentSpriteUrl = currentCharacter
+      ? (vnVisual.expression ? expressionMap[vnVisual.expression] : undefined) || expressionMap.default || currentCharacter.spriteBaseUrl || undefined
+      : undefined
+    const spritePosition = vnVisual.position || currentCharacter?.defaultPosition || 'center'
 
     return (
       <div className="relative flex h-dvh flex-col bg-background">
@@ -582,10 +680,14 @@ export function PracticeSessionPage() {
             <VnPlayer
               className="h-full max-w-none rounded-none border-none"
               stageClassName="min-h-0"
-              backgroundUrl={detail.scene.backgroundUrl ?? undefined}
+              backgroundUrl={vnVisual.backgroundUrl || detail.scene.backgroundUrl || undefined}
+              backgroundFit={vnVisual.backgroundFit}
               currentLine={currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
               history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
               choices={inkChoices}
+              currentSpriteUrl={currentSpriteUrl}
+              spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
+              spritePosition={spritePosition}
               isWaiting={inkWaiting}
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}

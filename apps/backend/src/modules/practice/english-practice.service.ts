@@ -68,7 +68,7 @@ export class EnglishPracticeService {
     if (topic.inkScriptId) {
       inkScript = await this.prisma.inkScript.findUnique({
         where: { id: topic.inkScriptId },
-        select: { id: true, inkJson: true, key: true, title: true },
+        select: { id: true, inkJson: true, inkSource: true, key: true, title: true },
       });
     }
 
@@ -94,6 +94,22 @@ export class EnglishPracticeService {
         },
       },
     });
+    const fallbackCharacters = gameLocation?.npcs.length
+      ? []
+      : await this.prisma.gameCharacter.findMany({
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+            spriteBaseUrl: true,
+            expressions: true,
+            defaultPosition: true,
+          },
+          orderBy: { name: 'asc' },
+        });
+    const sceneCharacters = gameLocation?.npcs.length
+      ? gameLocation.npcs.map((npc) => npc.character)
+      : fallbackCharacters;
 
     return {
       topic: {
@@ -110,7 +126,7 @@ export class EnglishPracticeService {
         inkScriptId: topic.inkScriptId,
       },
       inkScript: inkScript
-        ? { id: inkScript.id, inkJson: inkScript.inkJson, key: inkScript.key, title: inkScript.title }
+        ? { id: inkScript.id, inkJson: inkScript.inkJson, inkSource: inkScript.inkSource, key: inkScript.key, title: inkScript.title }
         : null,
       scene: {
         id: topic.scene.id,
@@ -118,13 +134,13 @@ export class EnglishPracticeService {
         location: topic.scene.location,
         category: topic.scene.category.name,
         backgroundUrl: gameLocation?.backgroundUrl ?? null,
-        characters: (gameLocation?.npcs ?? []).map((npc) => ({
-          id: npc.character.id,
-          name: npc.character.name,
-          displayName: npc.character.displayName,
-          spriteBaseUrl: npc.character.spriteBaseUrl,
-          expressions: npc.character.expressions,
-          defaultPosition: (npc.character.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+        characters: sceneCharacters.map((character) => ({
+          id: character.id,
+          name: character.name,
+          displayName: character.displayName,
+          spriteBaseUrl: character.spriteBaseUrl,
+          expressions: character.expressions,
+          defaultPosition: (character.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
         })),
       },
       vocabularies: topic.scene.vocabularies.map((v) => ({
@@ -192,7 +208,7 @@ export class EnglishPracticeService {
 
     return this.prisma.inkScript.findUnique({
       where: { id: topic.inkScriptId },
-      select: { id: true, inkJson: true, key: true, title: true },
+      select: { id: true, inkJson: true, inkSource: true, key: true, title: true },
     });
   }
 

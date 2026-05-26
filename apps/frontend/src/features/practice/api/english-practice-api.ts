@@ -60,6 +60,7 @@ export interface TopicDetail {
   inkScript?: {
     id: string
     inkJson: any
+    inkSource?: string | null
     key: string
     title: string
   } | null
@@ -98,7 +99,7 @@ export const practiceApi = {
 
   /** 获取话题关联的 Ink 脚本 */
   getTopicInk: (topicId: string) =>
-    api.get<any, { id: string; inkJson: any; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
+    api.get<any, { id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
 
   submitRecording: (topicId: string, userTranscript: string, audioUrl?: string) =>
     api.post(`/practice/topics/${topicId}/record`, { userTranscript, audioUrl, topicId }),
