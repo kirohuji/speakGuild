@@ -213,7 +213,7 @@ export function PracticeSessionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl pb-24 pt-4">
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>

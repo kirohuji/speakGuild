@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import {
@@ -14,21 +14,9 @@ const HOME_SCENE = {
   author: 'Ludwig Wittgenstein',
 }
 
-const WEEKDAY_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
-
-function formatDate(): { monthDay: string; weekday: string } {
-  const now = new Date()
-  const month = now.getMonth() + 1
-  const day = now.getDate()
-  const weekday = WEEKDAY_NAMES[now.getDay()]
-  return { monthDay: `${month}月${day}日`, weekday }
-}
-
 export function EnglishHomePage() {
   const { session } = useAuth()
   const [loading, setLoading] = useState(true)
-
-  const date = useMemo(() => formatDate(), [])
 
   useEffect(() => {
     setLoading(false)
@@ -136,20 +124,6 @@ export function EnglishHomePage() {
             transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
-
-        {/* 日期 */}
-        <motion.div
-          className="absolute left-0 right-0 top-[calc(3.5rem+env(safe-area-inset-top,0px)+0.75rem)] z-10 flex justify-center"
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="flex items-center gap-2 rounded-full bg-white/36 px-4 py-1.5 text-sm font-medium text-slate-600/80 backdrop-blur-md">
-            <span>{date.monthDay}</span>
-            <span className="text-slate-400/60">·</span>
-            <span>{date.weekday}</span>
-          </div>
-        </motion.div>
 
         <motion.div
           className="relative w-full max-w-[330px] rounded-[30px] border border-white/75 bg-white/48 px-6 py-7 text-center shadow-[0_24px_80px_rgba(42,105,96,.18)] backdrop-blur-2xl"
