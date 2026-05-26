@@ -165,7 +165,7 @@ export function EnglishHomePage() {
         </motion.div>
 
         <motion.div
-          className="relative w-full max-w-[330px] rounded-[30px] border border-white/75 bg-white/48 px-6 py-7 text-center shadow-[0_24px_80px_rgba(42,105,96,.18)] backdrop-blur-2xl"
+          className="relative w-full max-w-[330px] rounded-[30px] border border-white/15 bg-white/10 px-6 py-7 text-center shadow-[0_24px_80px_rgba(42,105,96,.18)] backdrop-blur-2xl"
           initial={{ opacity: 0, y: 18, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
