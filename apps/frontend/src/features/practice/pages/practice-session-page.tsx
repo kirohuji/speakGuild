@@ -22,6 +22,7 @@ import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
+import { useLayoutStore } from '@/stores/layout.store'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
 
@@ -65,6 +66,17 @@ export function PracticeSessionPage() {
   // ── Analysis state ──
   const [analysisResult, setAnalysisResult] = useState<any>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
+
+  // ── Immersive mode (hide layout chrome during practice) ──
+  const setImmersiveMode = useLayoutStore((s) => s.setImmersiveMode)
+  useEffect(() => {
+    if (phase === 'practice') {
+      setImmersiveMode(true)
+    } else {
+      setImmersiveMode(false)
+    }
+    return () => { setImmersiveMode(false) }
+  }, [phase, setImmersiveMode])
 
   // ── Objectives & chunks from detail ──
   const objectives = useMemo(() => {
@@ -151,6 +163,20 @@ export function PracticeSessionPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [dialogueRounds, transcript])
+
+  // Fallback NPC greeting when no Ink script
+  useEffect(() => {
+    if (!inkJson && detail && dialogueRounds.length === 0 && phase === 'practice') {
+      const timer = setTimeout(() => {
+        setDialogueRounds([{
+          speaker: fallbackNpcName,
+          text: `Hi! Welcome. ${detail.topic.promptEn}`,
+          isNpc: true,
+        }])
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [inkJson, detail, dialogueRounds.length, phase, fallbackNpcName])
 
   // ==================== Prepare Helpers ====================
   const activateChunk = useCallback(async (chunkId: string) => {
@@ -501,46 +527,42 @@ export function PracticeSessionPage() {
     const isInputDisabled = isRecording || showInkChoices
 
     return (
-      <div className="relative mx-auto flex h-[calc(100vh-3.5rem)] max-w-2xl flex-col px-4 pt-2">
-        {/* Top bar: exit + start analysis */}
-        <div className="mb-2 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => setPhase('prepare')}>
-            <ArrowLeft className="mr-1 size-4" /> 返回准备
+      <div className="relative flex h-dvh flex-col bg-background">
+        {/* Floating minimal top bar */}
+        <div className="absolute left-0 right-0 top-0 z-30 flex items-center justify-between px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPhase('prepare')}
+            className="rounded-full bg-background/40 text-xs text-muted-foreground backdrop-blur-md hover:bg-background/60 hover:text-foreground"
+          >
+            <ArrowLeft className="mr-1 size-3.5" /> 返回
           </Button>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">
-              轮次 {dialogueRounds.length}
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
+
+          <div className="flex items-center gap-1.5 rounded-full bg-background/40 px-2.5 py-1 backdrop-blur-md">
+            <span className="text-xs text-muted-foreground">
+              轮次 <span className="font-mono font-medium text-foreground">{dialogueRounds.filter(d => !d.isNpc).length}</span>
+            </span>
+            <span className="mx-1 text-border">·</span>
+            <button
               onClick={startAnalysis}
-              disabled={dialogueRounds.length < 2}
+              disabled={dialogueRounds.filter(d => !d.isNpc).length < 2}
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
             >
-              <CheckCircle2 className="mr-1 size-4" /> 结束对话
-            </Button>
+              结束对话
+            </button>
           </div>
+
+          <div className="w-[68px]" />
         </div>
 
         {/* VN Scene */}
-        <VnScene className="min-h-0 flex-1">
-          <ScrollArea className="max-h-full pr-2">
-            <div className="space-y-3 pb-2">
-              {/* Initial prompt if no dialogues yet */}
-              {dialogueRounds.length === 0 && !inkJson && (
-                <div className="flex justify-center py-8">
-                  <div className="max-w-sm rounded-xl bg-background/90 p-4 text-center backdrop-blur-sm">
-                    <p className="text-sm text-foreground">{detail.topic.promptEn}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      开始对话吧！试着围绕这个话题与 NPC 交流
-                    </p>
-                  </div>
-                </div>
-              )}
-
+        <VnScene className="min-h-0 flex-1 rounded-none border-none">
+          <ScrollArea className="max-h-full pr-2 pt-10 pb-1">
+            <div className="space-y-3">
               {/* Dialogues */}
               {dialogueRounds.map((msg, i) => (
-                <div key={i} className={cn(msg.isNpc ? 'flex justify-start' : 'flex justify-end')}>
+                <div key={i} className={msg.isNpc ? 'flex justify-start' : 'flex justify-end'}>
                   {msg.isNpc ? (
                     <DialogueBox
                       speaker={msg.speaker}
@@ -549,7 +571,7 @@ export function PracticeSessionPage() {
                       className="max-w-[85%]"
                     />
                   ) : (
-                    <div className="max-w-[85%] rounded-xl bg-primary/15 px-4 py-2.5">
+                    <div className="max-w-[85%] rounded-2xl bg-primary/15 px-4 py-2.5">
                       <p className="text-sm text-foreground">{msg.text}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{msg.speaker}</p>
                     </div>
@@ -560,10 +582,7 @@ export function PracticeSessionPage() {
               {/* Ink choices */}
               {showInkChoices && (
                 <div className="px-2">
-                  <ChoiceButtons
-                    choices={inkChoices}
-                    onSelect={handleChoice}
-                  />
+                  <ChoiceButtons choices={inkChoices} onSelect={handleChoice} />
                 </div>
               )}
 
@@ -591,7 +610,7 @@ export function PracticeSessionPage() {
         </VnScene>
 
         {/* Input area */}
-        <div className="py-3">
+        <div className="px-3 pb-3 pt-2" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))' }}>
           {transcript ? (
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setTranscript('')}>
@@ -603,7 +622,6 @@ export function PracticeSessionPage() {
             </div>
           ) : (
             <div className="flex gap-2">
-              {/* Voice button */}
               <Button
                 variant={isRecording ? 'destructive' : 'outline'}
                 size="icon"
@@ -613,11 +631,9 @@ export function PracticeSessionPage() {
               >
                 {isRecording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
               </Button>
-
-              {/* Text input */}
               <div className="relative flex-1">
                 <textarea
-                  className="w-full resize-none rounded-lg border border-border bg-background p-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full resize-none rounded-xl border border-border bg-background/80 p-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground backdrop-blur-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   rows={2}
                   placeholder={isInputDisabled ? '等待 NPC 说完...' : '输入你的回答...'}
                   value={inputText}

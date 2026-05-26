@@ -154,6 +154,30 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${chunkData.length} 个 Chunk`)
 
+  // ═══ 3.5. Ink 对话脚本（视觉小说多轮对话） ═══
+  // Valid inkjs-compatible JSON format (inkVersion 21)
+  const dormCheckInInk = await prisma.inkScript.create({
+    data: {
+      key: 'practice_check_in',
+      title: '宿舍入住 - 办理入住对话',
+      scriptType: 'practice',
+      inkJson: {
+        inkVersion: 21,
+        root: [
+          ['^Hello! Welcome to the student dormitory. I\'m Sarah, the receptionist.', '\n', '#npc', '#speaker:Sarah（前台）', '\n', 'end', null],
+          ['^How can I help you today?', '\n', '#wait', '#user_input', '\n', 'end', null],
+          ['^Great, let me look up your booking. Could you show me your student ID?', '\n', '#npc', '\n', 'end', null],
+          ['^Thank you! Your room is on the 3rd floor, room 302. Is there anything else you need?', '\n', '#npc', '\n', 'end', null],
+          ['^You can ask about Wi-Fi, laundry, or the shared kitchen.', '\n', '#hint', '#chunk_hint', '\n', 'end', null],
+          ['^Have a great stay! Welcome to the dormitory!', '\n', '#npc', '\n', 'end', null],
+        ],
+        listDefs: {},
+      },
+      version: 1,
+    },
+  })
+  console.log('  ✓ Ink 对话脚本')
+
   // ═══ 4. 训练话题（每个场景 3~6 个，总计 30+） ═══
   const topicData = [
     // 宿舍入住 (6)
@@ -203,11 +227,17 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   for (const t of topicData) {
     const sceneId = scenes[t.sceneTitle]
     if (!sceneId) continue
+    const isFirstTopic = t.sceneTitle === '宿舍入住' && t.title === '办理入住'
     await prisma.trainingTopic.create({
       data: {
         sceneId, title: t.title, promptEn: t.promptEn, promptZh: t.promptZh,
         suggestedDurationSec: t.duration, difficulty: t.diff,
         sentenceSkeleton: t.skeleton ?? null, sortOrder: 0,
+        ...(isFirstTopic ? {
+          description: '你是一名刚到国外的留学生，需要去学校宿舍办理入住。前台工作人员 Sarah 会协助你完成入住流程。你需要准备好护照、录取通知书等材料，并学会用英语进行基本的入住登记对话。',
+          knowledgePoints: '1. 入住登记的常用句式：I\'m here to check in. / I have a booking under the name ___.\n2. 礼貌用语：Could you please... / I was wondering if...\n3. 宿舍相关词汇：dormitory, reception, room key, student ID, Wi-Fi, laundry room\n4. 信息确认：询问 Wi-Fi 密码、洗衣房位置等是入住时的常见话题。',
+          inkScriptId: dormCheckInInk.id,
+        } : {}),
       },
     })
   }
@@ -224,6 +254,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
       passObjectiveCount: 2, passChunkCount: 2, passRetellRequired: false, passMinDialogues: 2,
       npcName: 'Sarah（前台）', npcRole: '宿舍前台工作人员，友好热情',
       isPreview: true,
+      inkScriptId: dormCheckInInk.id,
       rewards: { xp: 20 },
     },
   })

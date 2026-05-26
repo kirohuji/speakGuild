@@ -517,4 +517,147 @@ export class ContentAdminController {
     await this.requireAdmin(req);
     return this.prisma.achievementDef.delete({ where: { id } });
   }
+
+  // ════════════════════════════════════════════════════════════
+  // GAME CHARACTERS (角色管理)
+  // ════════════════════════════════════════════════════════════
+
+  @Get('characters')
+  async listCharacters(@Req() req: Request) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCharacter.findMany({
+      orderBy: { createdAt: 'asc' },
+      include: { locationNpcs: { include: { location: { select: { id: true, displayName: true } } } } },
+    });
+  }
+
+  @Post('characters')
+  async createCharacter(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCharacter.create({ data: dto });
+  }
+
+  @Patch('characters/:id')
+  async updateCharacter(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCharacter.update({ where: { id }, data: dto });
+  }
+
+  @Delete('characters/:id')
+  async deleteCharacter(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCharacter.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // GAME MAPS + LOCATIONS (地图/地点管理)
+  // ════════════════════════════════════════════════════════════
+
+  @Get('maps')
+  async listMaps(@Req() req: Request) {
+    await this.requireAdmin(req);
+    return this.prisma.gameMap.findMany({
+      orderBy: { sortOrder: 'asc' },
+      include: { locations: { orderBy: { sortOrder: 'asc' }, include: { npcs: { include: { character: true } } } } },
+    });
+  }
+
+  @Post('maps')
+  async createMap(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameMap.create({ data: dto });
+  }
+
+  @Patch('maps/:id')
+  async updateMap(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameMap.update({ where: { id }, data: dto });
+  }
+
+  @Delete('maps/:id')
+  async deleteMap(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameMap.delete({ where: { id } });
+  }
+
+  @Get('locations')
+  async listLocations(@Req() req: Request, @Query('mapId') mapId?: string) {
+    await this.requireAdmin(req);
+    const where: any = {};
+    if (mapId) where.mapId = mapId;
+    return this.prisma.gameLocation.findMany({
+      where,
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        map: { select: { id: true, displayName: true } },
+        npcs: { include: { character: true } },
+        exits: { include: { to: { select: { id: true, displayName: true } } } },
+      },
+    });
+  }
+
+  @Post('locations')
+  async createLocation(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameLocation.create({ data: dto });
+  }
+
+  @Patch('locations/:id')
+  async updateLocation(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameLocation.update({ where: { id }, data: dto });
+  }
+
+  @Delete('locations/:id')
+  async deleteLocation(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameLocation.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // STORIES / INK SCRIPTS (故事管理)
+  // ════════════════════════════════════════════════════════════
+
+  @Get('stories')
+  async listStories(@Req() req: Request) {
+    await this.requireAdmin(req);
+    return this.prisma.inkScript.findMany({
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true, key: true, title: true, scriptType: true,
+        episodeId: true, locationId: true, topicId: true,
+        version: true, createdAt: true, updatedAt: true,
+        _count: { select: { trainingTopic: true } },
+      },
+    });
+  }
+
+  @Get('stories/:id')
+  async getStory(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.inkScript.findUnique({
+      where: { id },
+      include: {
+        trainingTopic: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  @Post('stories')
+  async createStory(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.inkScript.create({ data: dto });
+  }
+
+  @Patch('stories/:id')
+  async updateStory(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.inkScript.update({ where: { id }, data: dto });
+  }
+
+  @Delete('stories/:id')
+  async deleteStory(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.inkScript.delete({ where: { id } });
+  }
 }

@@ -10,12 +10,17 @@ export class InkEngine {
 
   /** 加载 Ink 编译后的 JSON */
   load(json: Record<string, any>) {
-    this.story = new Story(json as any)
-    // Bind external functions
-    this.bindExternal('waitForUserInput')
-    this.bindExternal('triggerJudge')
-    this.bindExternal('showExpression')
-    this.bindExternal('setFlag')
+    try {
+      this.story = new Story(json as any)
+      // Bind external functions
+      this.bindExternal('waitForUserInput')
+      this.bindExternal('triggerJudge')
+      this.bindExternal('showExpression')
+      this.bindExternal('setFlag')
+    } catch (err) {
+      console.warn('[InkEngine] Failed to load Ink story:', err)
+      this.story = null
+    }
   }
 
   /** 注册外部函数处理器 */

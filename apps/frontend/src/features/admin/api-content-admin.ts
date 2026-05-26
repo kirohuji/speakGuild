@@ -263,3 +263,141 @@ export async function updateAchievementDef(id: string, data: any): Promise<Achie
 export async function deleteAchievementDef(id: string): Promise<void> {
   return _delete(`/admin/content/achievements/${id}`)
 }
+
+// ─── Game Characters (角色管理) ───────────────────────────────
+
+export interface GameCharacter {
+  id: string
+  name: string
+  displayName: string
+  role: string
+  personality?: string | null
+  avatarUrl?: string | null
+  spriteBaseUrl?: string | null
+  expressions?: any
+  defaultPosition?: string | null
+  locationNpcs?: { location: { id: string; displayName: string } }[]
+}
+
+export async function listCharacters(): Promise<GameCharacter[]> {
+  return get('/admin/content/characters')
+}
+
+export async function createCharacter(data: Partial<GameCharacter>): Promise<GameCharacter> {
+  return post('/admin/content/characters', data)
+}
+
+export async function updateCharacter(id: string, data: Partial<GameCharacter>): Promise<GameCharacter> {
+  return patch(`/admin/content/characters/${id}`, data)
+}
+
+export async function deleteCharacter(id: string): Promise<void> {
+  return _delete(`/admin/content/characters/${id}`)
+}
+
+// ─── Game Maps (地图管理) ─────────────────────────────────────
+
+export interface GameMapData {
+  id: string
+  name: string
+  displayName: string
+  backgroundUrl?: string | null
+  thumbnailUrl?: string | null
+  requiredOutputLevel: string
+  requiredChapterId?: string | null
+  isPreview: boolean
+  sortOrder: number
+  locations?: GameLocationData[]
+}
+
+export interface GameLocationData {
+  id: string
+  mapId: string
+  name: string
+  displayName: string
+  description?: string | null
+  posX: number
+  posY: number
+  icon?: string | null
+  backgroundUrl?: string | null
+  locationType: string
+  sceneId?: string | null
+  requiredOutputLevel: string
+  isPreview: boolean
+  sortOrder: number
+  map?: { id: string; displayName: string }
+  npcs?: { character: GameCharacter }[]
+  exits?: { to: { id: string; displayName: string }; label: string }[]
+}
+
+export async function listMaps(): Promise<GameMapData[]> {
+  return get('/admin/content/maps')
+}
+
+export async function createMap(data: Partial<GameMapData>): Promise<GameMapData> {
+  return post('/admin/content/maps', data)
+}
+
+export async function updateMap(id: string, data: Partial<GameMapData>): Promise<GameMapData> {
+  return patch(`/admin/content/maps/${id}`, data)
+}
+
+export async function deleteMap(id: string): Promise<void> {
+  return _delete(`/admin/content/maps/${id}`)
+}
+
+export async function listLocations(mapId?: string): Promise<GameLocationData[]> {
+  return get('/admin/content/locations', { params: mapId ? { mapId } : undefined })
+}
+
+export async function createLocation(data: Partial<GameLocationData>): Promise<GameLocationData> {
+  return post('/admin/content/locations', data)
+}
+
+export async function updateLocation(id: string, data: Partial<GameLocationData>): Promise<GameLocationData> {
+  return patch(`/admin/content/locations/${id}`, data)
+}
+
+export async function deleteLocation(id: string): Promise<void> {
+  return _delete(`/admin/content/locations/${id}`)
+}
+
+// ─── Stories / Ink Scripts (故事管理) ──────────────────────────
+
+export interface StoryData {
+  id: string
+  key: string
+  title: string
+  scriptType: string
+  inkJson: any
+  inkSource?: string | null
+  episodeId?: string | null
+  locationId?: string | null
+  characterId?: string | null
+  topicId?: string | null
+  version: number
+  createdAt: string
+  updatedAt: string
+  trainingTopic?: { id: string; title: string } | null
+  _count?: { trainingTopic: number }
+}
+
+export async function listStories(): Promise<StoryData[]> {
+  return get('/admin/content/stories')
+}
+
+export async function getStory(id: string): Promise<StoryData> {
+  return get(`/admin/content/stories/${id}`)
+}
+
+export async function createStory(data: Partial<StoryData>): Promise<StoryData> {
+  return post('/admin/content/stories', data)
+}
+
+export async function updateStory(id: string, data: Partial<StoryData>): Promise<StoryData> {
+  return patch(`/admin/content/stories/${id}`, data)
+}
+
+export async function deleteStory(id: string): Promise<void> {
+  return _delete(`/admin/content/stories/${id}`)
+}

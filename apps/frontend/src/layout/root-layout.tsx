@@ -10,17 +10,24 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { useNotificationStore } from '@/features/notification/store'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
+import { useLayoutStore } from '@/stores/layout.store'
 import { cn } from '@/lib/cn'
 
 export function RootLayout() {
   const { pathname } = useLocation()
   const { session } = useAuth()
+  const immersiveMode = useLayoutStore((s) => s.immersiveMode)
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isHomePage = pathname === '/'
   const isLoggedIn = !!session
-  const showMobileAvatar = isLoggedIn && isHomePage
+  const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
+
+  // In immersive mode, the page takes full control of the viewport
+  if (immersiveMode) {
+    return <Outlet />
+  }
 
   return (
     <div className={cn('flex min-h-screen flex-col', !isHomePage && 'pt-safe')}>

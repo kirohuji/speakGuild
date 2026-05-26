@@ -53,6 +53,8 @@ import { AdminScenesPage } from '@/features/admin/pages/admin-scenes-page'
 import { AdminChunksPage } from '@/features/admin/pages/admin-chunks-page'
 import { AdminScriptPage } from '@/features/admin/pages/admin-script-page'
 import { AdminAchievementsPage } from '@/features/admin/pages/admin-achievements-page'
+import { AdminCharactersPage } from '@/features/admin/pages/admin-characters-page'
+import { AdminStoriesPage } from '@/features/admin/pages/admin-stories-page'
 
 export default function App() {
   return (
@@ -73,6 +75,8 @@ export default function App() {
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="scenes" element={<AdminScenesPage />} />
                 <Route path="chunks" element={<AdminChunksPage />} />
+                <Route path="characters" element={<AdminCharactersPage />} />
+                <Route path="stories" element={<AdminStoriesPage />} />
                 <Route path="script" element={<AdminScriptPage />} />
                 <Route path="achievements" element={<AdminAchievementsPage />} />
               </Route>

@@ -27,16 +27,24 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
   // Initialize engine when JSON loads
   useEffect(() => {
     if (!json) return
-    const engine = new InkEngine()
-    engineRef.current = engine
-    engine.load(json)
+    try {
+      const engine = new InkEngine()
+      engineRef.current = engine
+      engine.load(json)
 
-    if (options?.onExternalFunction) {
-      engine.onExternal(options.onExternalFunction)
+      if (options?.onExternalFunction) {
+        engine.onExternal(options.onExternalFunction)
+      }
+
+      // Start the story
+      advanceStory(engine)
+    } catch (err) {
+      console.warn('[useInkStory] Failed to load Ink JSON, falling back to free dialogue mode:', err)
+      engineRef.current = null
+      setIsEnded(false)
+      setLines([])
+      setChoices([])
     }
-
-    // Start the story
-    advanceStory(engine)
   }, [json])
 
   const advanceStory = useCallback((engine: InkEngine) => {
