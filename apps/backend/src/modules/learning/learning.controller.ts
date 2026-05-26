@@ -43,4 +43,11 @@ export class LearningController {
     const session = await requireAuthSession(req);
     return this.learningService.updateUnitProgress(session.user.id, id, body);
   }
+
+  /** 开始学习一个单元 */
+  @Post('units/:id/start')
+  async startUnit(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.learningService.startUnit(session.user.id, id);
+  }
 }

@@ -144,11 +144,6 @@ export function EnglishHomePage() {
           <h1 className="text-xl font-bold text-foreground">
             👋 {session?.user?.name ?? '同学'}
           </h1>
-          {todayPlan?.currentUnit && (
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              正在学习：{todayPlan.currentUnit.title}
-            </p>
-          )}
         </div>
         {stats && (
           <Link to="/growth" className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 transition-colors hover:bg-muted">
@@ -159,71 +154,118 @@ export function EnglishHomePage() {
         )}
       </div>
 
-      {/* ============================================== */}
-      {/* ===== 今日练习（全部话题） ===== */}
-      {/* ============================================== */}
+      {/* ===== 正在学习卡片（含词汇/表达预习） ===== */}
+      {todayPlan?.currentUnit && (() => {
+        const unit = todayPlan.currentUnit
+        const p = unit.progress
+        const totalItems = p ? p.vocabTotal + p.chunkTotal + p.practiceTotal : 0
+        const completedItems = p ? p.vocabLearned + p.chunkMastered + p.completedPractice : 0
+        const overallPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0
 
-      {/* 预习材料：词汇 */}
-      {shownVocabItems.length > 0 && (
-        <div className="mb-3 rounded-lg bg-muted/40 p-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <BookText className="size-3.5 text-blue-500" />
-              需要掌握的词汇
-              <span className="text-[10px] text-muted-foreground/60">
-                ({seenVocabIds.size}/{vocabTask?.count ?? shownVocabItems.length})
-              </span>
-            </div>
-            <button onClick={() => openVocabDialog(0)} className="flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-600">
-              预习 <ChevronRight className="size-3" />
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {shownVocabItems.slice(0, 6).map((item: any) => (
-              <button key={item.id ?? item.word} onClick={() => openVocabDialog(0)}
-                className={cn('rounded-md border px-2 py-0.5 text-xs transition-colors',
-                  seenVocabIds.has(item.id ?? '')
-                    ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                    : 'border-border bg-background text-muted-foreground hover:border-blue-500/40 hover:text-foreground',
-                )}>
-                {item.word}
-              </button>
-            ))}
-            {(vocabTask?.count ?? 0) > 6 && <span className="text-xs text-muted-foreground">+{vocabTask!.count! - 6}</span>}
-          </div>
-        </div>
-      )}
+        return (
+          <Card
+            className="mb-5 border-blue-500/30 bg-gradient-to-br from-blue-500/[0.04] to-transparent transition-colors hover:bg-blue-500/[0.08]"
+          >
+            <CardContent className="p-4">
+              {/* 头部：图标 + 标题 + 地点 */}
+              <div
+                className="flex cursor-pointer items-center gap-4"
+                onClick={() => navigate(`/learning/units/${unit.id}`)}
+              >
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-500/20">
+                  <BookOpen className="size-5 text-blue-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{unit.title}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </div>
 
-      {/* 预习材料：Chunk */}
-      {(chunkTask?.data ?? []).length > 0 && (
-        <div className="mb-4 rounded-lg bg-muted/40 p-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <MessageSquareText className="size-3.5 text-purple-500" />
-              需要掌握的表达
-              <span className="text-[10px] text-muted-foreground/60">
-                ({seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length})
-              </span>
-            </div>
-            <button onClick={() => openChunkDialog(0)} className="flex items-center gap-0.5 text-xs text-purple-500 hover:text-purple-600">
-              预习 <ChevronRight className="size-3" />
-            </button>
-          </div>
-          <div className="space-y-1">
-            {(chunkTask?.data ?? []).slice(0, 3).map((item: any) => (
-              <button key={item.id ?? item.text} onClick={() => openChunkDialog(0)}
-                className={cn('flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors',
-                  seenChunkIds.has(item.id ?? '')
-                    ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                    : 'border-border bg-background text-muted-foreground hover:border-purple-500/40 hover:text-foreground',
-                )}>
-                <span className="font-medium text-foreground">{item.text}</span>
-                {!seenChunkIds.has(item.id ?? '') && <span className="text-muted-foreground/60">— {item.meaning}</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+              {/* 进度 */}
+              {p && totalItems > 0 && (
+                <div className="mt-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Progress value={overallPercent} className="h-1.5 flex-1" />
+                    <span className="text-[10px] text-muted-foreground">{overallPercent}%</span>
+                  </div>
+                  <div className="flex gap-3 text-[10px] text-muted-foreground">
+                    <span>词汇 {p.vocabLearned}/{p.vocabTotal}</span>
+                    <span>表达 {p.chunkMastered}/{p.chunkTotal}</span>
+                    <span>练习 {p.completedPractice}/{p.practiceTotal}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 预习材料：词汇 */}
+              {shownVocabItems.length > 0 && (
+                <div className="mt-3 border-t border-blue-500/10 pt-3">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <BookText className="size-3.5 text-blue-500" />
+                      需要掌握的词汇
+                      <span className="text-[10px] text-muted-foreground/60">
+                        ({seenVocabIds.size}/{vocabTask?.count ?? shownVocabItems.length})
+                      </span>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); openVocabDialog(0) }} className="flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-600">
+                      预习 <ChevronRight className="size-3" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {shownVocabItems.slice(0, 6).map((item: any) => (
+                      <button key={item.id ?? item.word} onClick={(e) => { e.stopPropagation(); openVocabDialog(0) }}
+                        className={cn('rounded-md border px-2 py-0.5 text-xs transition-colors',
+                          seenVocabIds.has(item.id ?? '')
+                            ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                            : 'border-border bg-background text-muted-foreground hover:border-blue-500/40 hover:text-foreground',
+                        )}>
+                        {item.word}
+                      </button>
+                    ))}
+                    {(vocabTask?.count ?? 0) > 6 && <span className="text-xs text-muted-foreground">+{vocabTask!.count! - 6}</span>}
+                  </div>
+                </div>
+              )}
+
+              {/* 预习材料：Chunk */}
+              {(chunkTask?.data ?? []).length > 0 && (
+                <div className="mt-3 border-t border-purple-500/10 pt-3">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <MessageSquareText className="size-3.5 text-purple-500" />
+                      需要掌握的表达
+                      <span className="text-[10px] text-muted-foreground/60">
+                        ({seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length})
+                      </span>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); openChunkDialog(0) }} className="flex items-center gap-0.5 text-xs text-purple-500 hover:text-purple-600">
+                      预习 <ChevronRight className="size-3" />
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {(chunkTask?.data ?? []).slice(0, 3).map((item: any) => (
+                      <button key={item.id ?? item.text} onClick={(e) => { e.stopPropagation(); openChunkDialog(0) }}
+                        className={cn('flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors',
+                          seenChunkIds.has(item.id ?? '')
+                            ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                            : 'border-border bg-background text-muted-foreground hover:border-purple-500/40 hover:text-foreground',
+                        )}>
+                        <span className="font-medium text-foreground">{item.text}</span>
+                        {!seenChunkIds.has(item.id ?? '') && <span className="text-muted-foreground/60">— {item.meaning}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )
+      })()}
+
+      {/* ============================================== */}
+      {/* ===== 今日练习 ===== */}
+      {/* ============================================== */}
 
       {/* 练习话题列表 */}
       {practiceTasks.length > 0 ? (

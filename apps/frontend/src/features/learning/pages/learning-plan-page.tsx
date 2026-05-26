@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, Sparkles, ArrowRight,
-  ShoppingBag, Play,
+  ShoppingBag, Play, Info, BookText, MessageSquareText, Mic,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,13 @@ import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { learningApi, type LearningCategory, type LearningUnitSummary } from '../api/learning-api'
 
@@ -31,12 +38,27 @@ export function LearningPlanPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'learning' | 'shop'>('learning')
 
+  const fetchUnits = useCallback(async () => {
+    try {
+      const data = await learningApi.getUnits()
+      setCategories(data)
+    } catch {
+      // 静默失败
+    }
+  }, [])
+
+  // 首次加载显示 loading
   useEffect(() => {
+    setLoading(true)
     learningApi.getUnits()
       .then(setCategories)
       .catch(() => setCategories([]))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchUnits()
+  }, [fetchUnits])
 
   if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
 
@@ -65,7 +87,7 @@ export function LearningPlanPage() {
       {/* Tab: 进行中 / 学习商店 */}
       <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
         <button
-          onClick={() => setTab('learning')}
+          onClick={() => { setTab('learning'); fetchUnits() }}
           className={cn(
             'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
             tab === 'learning' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
@@ -79,7 +101,7 @@ export function LearningPlanPage() {
           )}
         </button>
         <button
-          onClick={() => setTab('shop')}
+          onClick={() => { setTab('shop'); fetchUnits() }}
           className={cn(
             'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
             tab === 'shop' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
@@ -245,43 +267,154 @@ function UnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
 // ── 商店卡片 ──
 
 function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
-  return (
-    <Link
-      to={`/learning/units/${unit.id}`}
-      className="group rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-          <BookOpen className="size-5 text-primary" />
-        </div>
-        {unit.categoryName && (
-          <Badge variant="outline" className="text-[10px]">{unit.categoryName}</Badge>
-        )}
-      </div>
-      <h3 className="text-sm font-bold text-foreground group-hover:text-primary">{unit.title}</h3>
-      <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
+  const navigate = useNavigate()
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [acquiring, setAcquiring] = useState(false)
 
-      {/* 话题列表 */}
-      {unit.topics && unit.topics.length > 0 && (
-        <div className="mt-2 space-y-1">
-          {unit.topics.slice(0, 3).map((t) => (
-            <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <span className="size-1 rounded-full bg-primary/40" />
-              <span>{t.title}</span>
-              <Badge variant="outline" className="ml-auto text-[8px]">{t.difficulty}</Badge>
-            </div>
-          ))}
-          {unit.topics.length > 3 && (
-            <p className="text-[9px] text-muted-foreground/60">+{unit.topics.length - 3} 个更多话题</p>
+  const handleAcquire = useCallback(async () => {
+    if (acquiring) return
+    setAcquiring(true)
+    try {
+      await learningApi.startUnit(unit.id)
+      navigate(`/learning/units/${unit.id}`)
+    } catch {
+      // 即使失败也允许跳转
+      navigate(`/learning/units/${unit.id}`)
+    }
+  }, [unit.id, acquiring, navigate])
+
+  return (
+    <>
+      <div className="group rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+            <BookOpen className="size-5 text-primary" />
+          </div>
+          {unit.categoryName && (
+            <Badge variant="outline" className="text-[10px]">{unit.categoryName}</Badge>
           )}
         </div>
-      )}
+        <h3 className="text-sm font-bold text-foreground group-hover:text-primary">{unit.title}</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
 
-      <Button size="sm" variant="outline" className="mt-3 w-full gap-1 text-xs">
-        获取学习
-        <ArrowRight className="size-3" />
-      </Button>
-    </Link>
+        {/* 话题预览 */}
+        {unit.topics && unit.topics.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {unit.topics.slice(0, 3).map((t) => (
+              <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <span className="size-1 rounded-full bg-primary/40" />
+                <span>{t.title}</span>
+                <Badge variant="outline" className="ml-auto text-[8px]">{t.difficulty}</Badge>
+              </div>
+            ))}
+            {unit.topics.length > 3 && (
+              <p className="text-[9px] text-muted-foreground/60">+{unit.topics.length - 3} 个更多话题</p>
+            )}
+          </div>
+        )}
+
+        {/* 操作按钮 */}
+        <div className="mt-3 flex items-center gap-2">
+          <Button
+            size="sm"
+            className="flex-1 gap-1 text-xs"
+            disabled={acquiring}
+            onClick={handleAcquire}
+          >
+            {acquiring ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <ArrowRight className="size-3" />
+            )}
+            {acquiring ? '添加中...' : '获取学习'}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="size-8 p-0 text-muted-foreground"
+            onClick={() => setDetailOpen(true)}
+          >
+            <Info className="size-4" />
+            <span className="sr-only">查看详情</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* 详情弹窗 */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{unit.title}</DialogTitle>
+            <DialogDescription>{unit.location}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {unit.categoryName && (
+              <Badge variant="secondary" className="text-xs">{unit.categoryName}</Badge>
+            )}
+
+            {/* 单元统计 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+                <BookText className="size-4 text-blue-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">词汇</p>
+                  <p className="text-sm font-medium text-foreground">{unit.vocabCount} 个</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+                <MessageSquareText className="size-4 text-purple-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">表达</p>
+                  <p className="text-sm font-medium text-foreground">{unit.chunkCount} 个</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+                <Mic className="size-4 text-orange-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">练习话题</p>
+                  <p className="text-sm font-medium text-foreground">{unit.topicCount} 个</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+                <Play className="size-4 text-green-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">剧本</p>
+                  <p className="text-sm font-medium text-foreground">{unit.scriptCount} 个</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 全部话题列表 */}
+            {unit.topics && unit.topics.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">全部话题</p>
+                <div className="space-y-1.5">
+                  {unit.topics.map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="size-1.5 rounded-full bg-primary/40" />
+                      <span className="flex-1">{t.title}</span>
+                      <Badge variant="outline" className="text-[8px]">{t.difficulty}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button
+              className="w-full gap-2"
+              onClick={async () => {
+                setDetailOpen(false);
+                try { await learningApi.startUnit(unit.id) } catch {}
+                navigate(`/learning/units/${unit.id}`)
+              }}
+            >
+              开始学习
+              <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

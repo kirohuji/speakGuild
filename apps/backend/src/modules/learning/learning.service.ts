@@ -315,6 +315,7 @@ export class LearningService {
     // ---- 每日限额 ----
     const DAILY_VOCAB_LIMIT = 5;
     const DAILY_CHUNK_LIMIT = 3;
+    const DAILY_PRACTICE_LIMIT = 3;
 
     // 任务1: 学习词汇（每日限额 5 个）
     const unlearnedVocabs = sceneDetail.vocabularies.filter(
@@ -375,11 +376,12 @@ export class LearningService {
       });
     }
 
-    // 任务3: 开口练习（全部未完成话题）
+    // 任务3: 开口练习（每日限额 3 个）
     const uncompletedTopics = sceneDetail.trainingTopics.filter(
       (_, i) => i >= completedPractice,
     );
-    for (const topic of uncompletedTopics) {
+    const dailyPractices = uncompletedTopics.slice(0, DAILY_PRACTICE_LIMIT);
+    for (const topic of dailyPractices) {
       tasks.push({
         id: `practice-${topic.id}`,
         type: 'practice',
@@ -493,6 +495,34 @@ export class LearningService {
     });
 
     return progressRecord;
+  }
+
+  /**
+   * 开始学习一个单元——创建进度记录（如果不存在），将其设为当前学习
+   */
+  async startUnit(userId: string, unitId: string) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: unitId },
+      select: { id: true },
+    });
+    if (!scene) return null;
+
+    const record = await this.prisma.userSceneProgress.upsert({
+      where: { userId_sceneId: { userId, sceneId: unitId } },
+      create: {
+        userId,
+        sceneId: unitId,
+        vocabLearned: 0,
+        chunkMastered: 0,
+        completedPracticeCount: 0,
+        completedScriptCount: 0,
+        readiness: 0,
+        mastery: 0,
+      },
+      update: {},
+    });
+
+    return record;
   }
 
   private async getCurrentVocabLearned(userId: string, sceneId: string): Promise<number> {

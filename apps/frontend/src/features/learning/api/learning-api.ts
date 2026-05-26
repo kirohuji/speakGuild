@@ -197,4 +197,7 @@ export const learningApi = {
     completedPractice?: boolean
     completedScript?: boolean
   }) => api.post(`/learning/units/${unitId}/progress`, data),
+
+  /** 开始学习一个单元 */
+  startUnit: (unitId: string) => api.post(`/learning/units/${unitId}/start`),
 }
