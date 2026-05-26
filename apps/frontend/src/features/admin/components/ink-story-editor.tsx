@@ -1,18 +1,70 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Code2,
+  GitBranch,
+  ImageIcon,
+  MapPin,
+  MessageSquare,
+  Plus,
+  Route,
+  Save,
+  Trash2,
+  Wand2,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Eye, Wand2, AlertTriangle, MapPin, MessageSquare, GitBranch, UserRound, Pencil, Trash2, ClipboardCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
-import { compileInk, extractInkMeta, defaultInkTemplate } from './ink-compiler'
+import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
-import type { GameLocationData, GameCharacter } from '../api-content-admin'
+import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
-// ─── 从角色列表构建立绘映射 ────────────────────────────────
+type ComposerItem =
+  | { type: 'line'; speaker: string; expression: string; text: string }
+  | { type: 'choice'; text: string; target: string }
+  | { type: 'background'; url: string }
+  | { type: 'wait' }
+  | { type: 'divert'; target: string }
+  | { type: 'tag'; value: string }
+
+type ComposerScene = {
+  name: string
+  items: ComposerItem[]
+}
+
+type Selection =
+  | { type: 'scene'; sceneIndex: number }
+  | { type: 'item'; sceneIndex: number; itemIndex: number }
+
+interface InkStoryEditorProps {
+  initialSource?: string
+  initialKey?: string
+  initialTitle?: string
+  initialLocationId?: string
+  initialCharacterId?: string
+  locations?: GameLocationData[]
+  characters?: GameCharacter[]
+  onSave?: (data: {
+    key: string
+    title: string
+    inkSource: string
+    inkJson: Record<string, any>
+    locationId?: string
+    characterId?: string
+  }) => void
+  saving?: boolean
+  readOnly?: boolean
+  className?: string
+}
+
+const syntaxHint =
+  'Ink: === scene === defines a scene, # speaker / # expression control the VN sprite, * [choice] -> target creates a choice, # wait pauses for input, -> END ends the story.'
 
 function buildCharacterSpriteData(characters: GameCharacter[]): {
   sprites: Record<string, CharacterSpriteMap>
@@ -26,7 +78,7 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
     if (char.expressions && typeof char.expressions === 'object') {
       Object.assign(map, char.expressions as Record<string, string>)
     }
-    if (!map['default'] && char.spriteBaseUrl) map['default'] = char.spriteBaseUrl
+    if (!map.default && char.spriteBaseUrl) map.default = char.spriteBaseUrl
     if (Object.keys(map).length > 0) {
       sprites[char.name] = map
       sprites[char.displayName] = map
@@ -37,97 +89,170 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
       positions[char.displayName] = pos
     }
   }
+
   return { sprites, positions }
 }
 
-// ─── 语法提示 ──────────────────────────────────────────────
+function cleanChoiceText(text: string) {
+  return text.trim().replace(/^\[(.*)\]$/, '$1')
+}
 
-const INK_SYNTAX_HINT = `Ink 语法速查：
-=== knot ===  定义场景    # tag  标签（# speaker:Alex / # expression:happy / # bg:url）
-* [选项文本]  分支选项（不会回显）    +  粘性选项（不消失）    -> target  跳转    -> END  结束
-{var}  显示变量    ~ temp  临时变量    VAR x = 0  全局变量`
-
-type VisualScriptItem =
-  | { type: 'knot'; name: string; lineNumber: number; raw: string }
-  | { type: 'line'; speaker?: string; text: string; tags: string[]; lineNumber: number; raw: string }
-  | { type: 'choice'; text: string; target?: string; lineNumber: number; raw: string }
-  | { type: 'tag'; value: string; lineNumber: number; raw: string }
-  | { type: 'divert'; target: string; lineNumber: number; raw: string }
-
-function parseVisualScript(source: string): VisualScriptItem[] {
+function parseComposer(source: string): ComposerScene[] {
   const { remainingSource } = extractInkMeta(source)
-  const items: VisualScriptItem[] = []
-  let tags: string[] = []
+  const scenes: ComposerScene[] = []
+  let current: ComposerScene | null = null
+  let pendingSpeaker = ''
+  let pendingExpression = 'default'
 
-  for (const [lineIndex, rawLine] of remainingSource.split('\n').entries()) {
-    const lineNumber = lineIndex + 1
+  const ensureScene = () => {
+    if (!current) {
+      current = { name: 'start', items: [] }
+      scenes.push(current)
+    }
+    return current
+  }
+
+  for (const rawLine of remainingSource.split('\n')) {
     const line = rawLine.trim()
     if (!line || line.startsWith('//')) continue
 
     const knot = line.match(/^={3,}\s*([^=]+?)\s*={3,}$/)
     if (knot) {
-      items.push({ type: 'knot', name: knot[1].trim(), lineNumber, raw: rawLine })
-      tags = []
+      current = { name: knot[1].trim() || `scene_${scenes.length + 1}`, items: [] }
+      scenes.push(current)
+      pendingSpeaker = ''
+      pendingExpression = 'default'
       continue
     }
 
+    if (!current && line === '-> start') continue
+    const scene = ensureScene()
+
     if (line.startsWith('#')) {
-      const value = line.slice(1).trim()
-      items.push({ type: 'tag', value, lineNumber, raw: rawLine })
-      tags = [...tags, value]
+      const tag = line.slice(1).trim()
+      if (tag.startsWith('speaker:')) {
+        pendingSpeaker = tag.replace(/^speaker:/, '').trim()
+      } else if (tag.startsWith('expression:')) {
+        pendingExpression = tag.replace(/^expression:/, '').trim() || 'default'
+      } else if (tag.startsWith('bg:')) {
+        scene.items.push({ type: 'background', url: tag.replace(/^bg:/, '').trim() })
+      } else if (tag === 'wait') {
+        scene.items.push({ type: 'wait' })
+      } else {
+        scene.items.push({ type: 'tag', value: tag })
+      }
       continue
     }
 
     const choice = line.match(/^\*\s*(.+?)(?:\s*->\s*(.+))?$/)
     if (choice) {
-      const text = choice[1].trim().replace(/^\[(.*)\]$/, '$1')
-      items.push({ type: 'choice', text, target: choice[2]?.trim(), lineNumber, raw: rawLine })
+      scene.items.push({
+        type: 'choice',
+        text: cleanChoiceText(choice[1]),
+        target: choice[2]?.trim() || 'END',
+      })
       continue
     }
 
     if (line.startsWith('->')) {
-      items.push({ type: 'divert', target: line.replace(/^->\s*/, '').trim(), lineNumber, raw: rawLine })
+      scene.items.push({ type: 'divert', target: line.replace(/^->\s*/, '').trim() || 'END' })
       continue
     }
 
-    const spoken = line.match(/^([^:：]{1,24})[:：]\s*(.+)$/)
-    items.push({
+    const spoken = line.match(/^([^:：]{1,32})[:：]\s*(.+)$/)
+    scene.items.push({
       type: 'line',
-      speaker: spoken?.[1]?.trim(),
+      speaker: pendingSpeaker || spoken?.[1]?.trim() || '',
+      expression: pendingExpression || 'default',
       text: spoken?.[2]?.trim() ?? line,
-      tags,
-      lineNumber,
-      raw: rawLine,
     })
-    tags = []
+    pendingSpeaker = ''
+    pendingExpression = 'default'
   }
 
-  return items
+  if (scenes.length === 0) {
+    scenes.push({
+      name: 'start',
+      items: [
+        { type: 'line', speaker: 'Alex', expression: 'default', text: '你好，欢迎来到这里。' },
+        { type: 'choice', text: '继续', target: 'END' },
+      ],
+    })
+  }
+
+  return scenes
 }
 
-// ─── Props ─────────────────────────────────────────────────
+function serializeComposer(
+  meta: { key: string; title: string; locationId?: string; characterId?: string },
+  scenes: ComposerScene[],
+) {
+  const lines: string[] = ['---']
+  if (meta.key) lines.push(`key: ${meta.key}`)
+  if (meta.title) lines.push(`title: ${meta.title}`)
+  if (meta.locationId) lines.push(`locationId: ${meta.locationId}`)
+  if (meta.characterId) lines.push(`characterId: ${meta.characterId}`)
+  lines.push('---', '', '-> start', '')
 
-interface InkStoryEditorProps {
-  initialSource?: string
-  initialKey?: string
-  initialTitle?: string
-  initialLocationId?: string
-  initialCharacterId?: string
-  locations?: GameLocationData[]
-  characters?: GameCharacter[]
-  onSave?: (data: {
-    key: string; title: string; inkSource: string
-    inkJson: Record<string, any>; locationId?: string; characterId?: string
-  }) => void
-  saving?: boolean
-  readOnly?: boolean
-  className?: string
+  for (const scene of scenes) {
+    lines.push(`=== ${scene.name || 'scene'} ===`)
+    for (const item of scene.items) {
+      if (item.type === 'line') {
+        if (item.speaker) lines.push(`# speaker:${item.speaker}`)
+        if (item.expression) lines.push(`# expression:${item.expression}`)
+        lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
+      } else if (item.type === 'choice') {
+        lines.push(`*   [${item.text || '选项'}] -> ${item.target || 'END'}`)
+      } else if (item.type === 'background') {
+        lines.push(`# bg:${item.url}`)
+      } else if (item.type === 'wait') {
+        lines.push('# wait')
+      } else if (item.type === 'divert') {
+        lines.push(`-> ${item.target || 'END'}`)
+      } else {
+        lines.push(`# ${item.value}`)
+      }
+    }
+    lines.push('')
+  }
+
+  return `${lines.join('\n').trimEnd()}\n`
 }
 
-/**
- * Ink 故事编辑器 — 使用 inkjs v2.4.0 Compiler
- * 编辑标准 Ink 脚本语法，实时编译预览
- */
+function cloneScenes(scenes: ComposerScene[]) {
+  return scenes.map((scene) => ({
+    ...scene,
+    items: scene.items.map((item) => ({ ...item })),
+  }))
+}
+
+function itemTitle(item: ComposerItem) {
+  if (item.type === 'line') return item.speaker || '旁白'
+  if (item.type === 'choice') return '选项'
+  if (item.type === 'background') return '背景'
+  if (item.type === 'wait') return '等待'
+  if (item.type === 'divert') return '跳转'
+  return '标签'
+}
+
+function itemSummary(item: ComposerItem) {
+  if (item.type === 'line') return item.text || '空对白'
+  if (item.type === 'choice') return `${item.text || '空选项'} -> ${item.target || 'END'}`
+  if (item.type === 'background') return item.url || '未选择背景'
+  if (item.type === 'wait') return '暂停，等待用户输入'
+  if (item.type === 'divert') return `-> ${item.target || 'END'}`
+  return `# ${item.value}`
+}
+
+function itemIcon(item: ComposerItem) {
+  if (item.type === 'line') return MessageSquare
+  if (item.type === 'choice') return GitBranch
+  if (item.type === 'background') return ImageIcon
+  if (item.type === 'wait') return Clock3
+  if (item.type === 'divert') return Route
+  return Code2
+}
+
 export function InkStoryEditor({
   initialSource,
   initialKey = '',
@@ -142,67 +267,29 @@ export function InkStoryEditor({
   className,
 }: InkStoryEditorProps) {
   const [source, setSource] = useState(initialSource || defaultInkTemplate())
-  const [editorMode, setEditorMode] = useState<'design' | 'ink'>('design')
-  const [previewOpen, setPreviewOpen] = useState(false)
-  const [formatChecked, setFormatChecked] = useState(false)
+  const [workspaceTab, setWorkspaceTab] = useState<'compose' | 'preview'>('compose')
+  const [rawOpen, setRawOpen] = useState(false)
+  const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
+  const [selection, setSelection] = useState<Selection>({ type: 'scene', sceneIndex: 0 })
 
-  // Meta fields
   const [key, setKey] = useState(initialKey)
   const [title, setTitle] = useState(initialTitle)
   const [locationId, setLocationId] = useState(initialLocationId || '')
   const [characterId, setCharacterId] = useState(initialCharacterId || '')
-  const [visualSpeaker, setVisualSpeaker] = useState('')
-  const [visualExpression, setVisualExpression] = useState('default')
-  const [visualLine, setVisualLine] = useState('')
-  const [visualChoice, setVisualChoice] = useState('')
-  const [visualChoiceTarget, setVisualChoiceTarget] = useState('END')
-  const [selectedLineNumber, setSelectedLineNumber] = useState<number | null>(null)
-  const [selectedLineText, setSelectedLineText] = useState('')
 
-  // Compile on source change
-  const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
-
-  useEffect(() => {
-    const result = compileInk(source)
-    setCompileResult(result)
-    setFormatChecked(false)
-  }, [source])
-
-  // Extract meta from source
-  const meta = useMemo(() => extractInkMeta(source), [source])
-  const visualScriptItems = useMemo(() => parseVisualScript(source), [source])
-
-  useEffect(() => {
-    setSource(initialSource || defaultInkTemplate({ key: initialKey, title: initialTitle }))
-    setKey(initialKey)
-    setTitle(initialTitle)
-    setLocationId(initialLocationId || '')
-    setCharacterId(initialCharacterId || '')
-  }, [initialSource, initialKey, initialTitle, initialLocationId, initialCharacterId])
-
-  // Build character sprite data
-  const { sprites: charSprites, positions: charPositions } = useMemo(
-    () => buildCharacterSpriteData(characters), [characters],
-  )
-
-  const defaultChar = useMemo(() => {
-    if (characterId) {
-      const c = characters.find((ch) => ch.id === characterId)
-      return c?.name || c?.displayName
-    }
-    return undefined
-  }, [characterId, characters])
+  const scenes = useMemo(() => parseComposer(source), [source])
+  const selectedScene = scenes[selection.sceneIndex] ?? scenes[0]
+  const selectedItem = selection.type === 'item' ? selectedScene?.items[selection.itemIndex] : null
 
   const selectedLocation = useMemo(
     () => locations.find((location) => location.id === locationId),
     [locationId, locations],
   )
-
   const selectedCharacter = useMemo(
     () => characters.find((character) => character.id === characterId),
     [characterId, characters],
   )
-
+  const defaultSpeaker = selectedCharacter?.name || selectedCharacter?.displayName || 'Alex'
   const expressionOptions = useMemo(() => {
     const names = new Set<string>(['default'])
     const expressions = selectedCharacter?.expressions
@@ -212,426 +299,418 @@ export function InkStoryEditor({
     return Array.from(names)
   }, [selectedCharacter])
 
+  const { sprites: charSprites, positions: charPositions } = useMemo(
+    () => buildCharacterSpriteData(characters),
+    [characters],
+  )
+
+  const sourceWithMeta = useCallback(
+    (nextScenes = scenes) => serializeComposer({
+      key,
+      title,
+      locationId: locationId || undefined,
+      characterId: characterId || undefined,
+    }, nextScenes),
+    [characterId, key, locationId, scenes, title],
+  )
+
+  const updateScenes = useCallback((producer: (draft: ComposerScene[]) => void) => {
+    setSource((prev) => {
+      const draft = cloneScenes(parseComposer(prev))
+      producer(draft)
+      return serializeComposer({
+        key,
+        title,
+        locationId: locationId || undefined,
+        characterId: characterId || undefined,
+      }, draft)
+    })
+  }, [characterId, key, locationId, title])
+
   useEffect(() => {
-    if (!selectedCharacter) return
-    setVisualSpeaker(selectedCharacter.name || selectedCharacter.displayName)
-  }, [selectedCharacter])
+    setSource(initialSource || defaultInkTemplate({ key: initialKey, title: initialTitle }))
+    setKey(initialKey)
+    setTitle(initialTitle)
+    setLocationId(initialLocationId || '')
+    setCharacterId(initialCharacterId || '')
+    setSelection({ type: 'scene', sceneIndex: 0 })
+  }, [initialSource, initialKey, initialTitle, initialLocationId, initialCharacterId])
 
-  // Sync meta from source
-  const handleSourceChange = useCallback((value: string) => {
-    setSource(value)
-    const m = extractInkMeta(value)
-    if (m.key) setKey(m.key)
-    if (m.title) setTitle(m.title)
-    if (m.locationId) setLocationId(m.locationId)
-    if (m.characterId) setCharacterId(m.characterId)
-  }, [])
-
-  const insertTemplate = useCallback(() => {
-    setSource(defaultInkTemplate({ key, title }))
-  }, [key, title])
+  useEffect(() => {
+    setCompileResult(compileInk(sourceWithMeta()))
+  }, [source, sourceWithMeta])
 
   const checkFormat = useCallback(() => {
-    setCompileResult(compileInk(source))
-    setFormatChecked(true)
-  }, [source])
+    setCompileResult(compileInk(sourceWithMeta()))
+  }, [sourceWithMeta])
 
-  const appendToSource = useCallback((block: string) => {
-    setSource((prev) => `${prev.trimEnd()}\n\n${block.trim()}\n`)
+  const addScene = useCallback(() => {
+    updateScenes((draft) => {
+      const nextIndex = draft.length + 1
+      draft.push({ name: `scene_${nextIndex}`, items: [] })
+      setSelection({ type: 'scene', sceneIndex: draft.length - 1 })
+    })
+  }, [updateScenes])
+
+  const addItem = useCallback((type: ComposerItem['type']) => {
+    const sceneIndex = selection.sceneIndex < scenes.length ? selection.sceneIndex : 0
+    updateScenes((draft) => {
+      const scene = draft[sceneIndex] ?? draft[0]
+      const item: ComposerItem =
+        type === 'line'
+          ? { type: 'line', speaker: defaultSpeaker, expression: 'default', text: '新的对白' }
+          : type === 'choice'
+            ? { type: 'choice', text: '新的选项', target: 'END' }
+            : type === 'background'
+              ? { type: 'background', url: selectedLocation?.backgroundUrl || '' }
+              : type === 'wait'
+                ? { type: 'wait' }
+                : type === 'divert'
+                  ? { type: 'divert', target: 'END' }
+                  : { type: 'tag', value: 'tag' }
+      scene.items.push(item)
+      setSelection({ type: 'item', sceneIndex, itemIndex: scene.items.length - 1 })
+    })
+  }, [defaultSpeaker, scenes.length, selectedLocation?.backgroundUrl, selection.sceneIndex, updateScenes])
+
+  const updateSelectedSceneName = useCallback((name: string) => {
+    updateScenes((draft) => {
+      if (draft[selection.sceneIndex]) draft[selection.sceneIndex].name = name
+    })
+  }, [selection.sceneIndex, updateScenes])
+
+  const updateSelectedItem = useCallback((patch: Partial<ComposerItem>) => {
+    if (selection.type !== 'item') return
+    updateScenes((draft) => {
+      const item = draft[selection.sceneIndex]?.items[selection.itemIndex]
+      if (item) Object.assign(item, patch)
+    })
+  }, [selection, updateScenes])
+
+  const deleteSelection = useCallback(() => {
+    if (readOnly) return
+    updateScenes((draft) => {
+      if (selection.type === 'scene') {
+        if (draft.length <= 1) return
+        draft.splice(selection.sceneIndex, 1)
+        setSelection({ type: 'scene', sceneIndex: Math.max(0, selection.sceneIndex - 1) })
+      } else {
+        draft[selection.sceneIndex]?.items.splice(selection.itemIndex, 1)
+        setSelection({ type: 'scene', sceneIndex: selection.sceneIndex })
+      }
+    })
+  }, [readOnly, selection, updateScenes])
+
+  const handleSourceChange = useCallback((value: string) => {
+    setSource(value)
+    const meta = extractInkMeta(value)
+    if (meta.key) setKey(meta.key)
+    if (meta.title) setTitle(meta.title)
+    if (meta.locationId) setLocationId(meta.locationId)
+    if (meta.characterId) setCharacterId(meta.characterId)
   }, [])
-
-  const replaceVisualLine = useCallback(() => {
-    if (!selectedLineNumber) return
-    const { remainingSource, ...meta } = extractInkMeta(source)
-    const lines = remainingSource.split('\n')
-    lines[selectedLineNumber - 1] = selectedLineText
-    const metaLines = ['---']
-    if (meta.key) metaLines.push(`key: ${meta.key}`)
-    if (meta.title) metaLines.push(`title: ${meta.title}`)
-    if (meta.locationId) metaLines.push(`locationId: ${meta.locationId}`)
-    if (meta.characterId) metaLines.push(`characterId: ${meta.characterId}`)
-    metaLines.push('---', '')
-    setSource(`${metaLines.join('\n')}${lines.join('\n')}`)
-  }, [selectedLineNumber, selectedLineText, source])
-
-  const deleteVisualLine = useCallback(() => {
-    if (!selectedLineNumber) return
-    const { remainingSource, ...meta } = extractInkMeta(source)
-    const lines = remainingSource.split('\n')
-    lines.splice(selectedLineNumber - 1, 1)
-    const metaLines = ['---']
-    if (meta.key) metaLines.push(`key: ${meta.key}`)
-    if (meta.title) metaLines.push(`title: ${meta.title}`)
-    if (meta.locationId) metaLines.push(`locationId: ${meta.locationId}`)
-    if (meta.characterId) metaLines.push(`characterId: ${meta.characterId}`)
-    metaLines.push('---', '')
-    setSource(`${metaLines.join('\n')}${lines.join('\n')}`)
-    setSelectedLineNumber(null)
-    setSelectedLineText('')
-  }, [selectedLineNumber, source])
-
-  const selectVisualItem = useCallback((item: VisualScriptItem) => {
-    setSelectedLineNumber(item.lineNumber)
-    setSelectedLineText(item.raw)
-  }, [])
-
-  const applyLocationBackground = useCallback(() => {
-    if (!selectedLocation?.backgroundUrl) return
-    appendToSource(`# bg:${selectedLocation.backgroundUrl}`)
-  }, [appendToSource, selectedLocation])
-
-  const appendDialogue = useCallback(() => {
-    const line = visualLine.trim()
-    if (!line) return
-    const speaker = visualSpeaker.trim()
-    const block = [
-      speaker ? `# speaker:${speaker}` : '',
-      visualExpression ? `# expression:${visualExpression}` : '',
-      speaker ? `${speaker}: ${line}` : line,
-    ].filter(Boolean).join('\n')
-    appendToSource(block)
-    setVisualLine('')
-  }, [appendToSource, visualExpression, visualLine, visualSpeaker])
-
-  const appendWaitPoint = useCallback(() => {
-    appendToSource('# wait')
-  }, [appendToSource])
-
-  const appendChoice = useCallback(() => {
-    const text = visualChoice.trim()
-    if (!text) return
-    const target = visualChoiceTarget.trim() || 'END'
-    appendToSource(`*   [${text}] -> ${target}`)
-    setVisualChoice('')
-  }, [appendToSource, visualChoice, visualChoiceTarget])
 
   const handleSave = useCallback(() => {
     if (!onSave) return
-    const result = compileInk(source)
+    const nextSource = sourceWithMeta()
+    const result = compileInk(nextSource)
     if (!result.success || !result.json) return
-
     onSave({
-      key, title,
-      inkSource: source,
+      key,
+      title,
+      inkSource: nextSource,
       inkJson: result.json,
       locationId: locationId || undefined,
       characterId: characterId || undefined,
     })
-  }, [onSave, source, key, title, locationId, characterId])
+  }, [characterId, key, locationId, onSave, sourceWithMeta, title])
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      {/* Meta */}
-      <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-4">
+      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 lg:grid-cols-[1fr_1fr_180px_180px]">
         <div>
           <Label className="text-xs">Key</Label>
-          <Input value={key} onChange={(e) => setKey(e.target.value)} placeholder="story_key"
-            className="h-8 text-xs" disabled={readOnly} />
+          <Input value={key} onChange={(event) => setKey(event.target.value)} placeholder="story_key" className="h-8 text-xs" disabled={readOnly} />
         </div>
         <div>
           <Label className="text-xs">标题</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="故事标题"
-            className="h-8 text-xs" disabled={readOnly} />
+          <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="故事标题" className="h-8 text-xs" disabled={readOnly} />
         </div>
         <div>
-          <Label className="text-xs">绑定地点</Label>
-          <select className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
-            value={locationId} onChange={(e) => setLocationId(e.target.value)} disabled={readOnly}>
-            <option value="">不限</option>
-            {locations.map((l) => <option key={l.id} value={l.id}>{l.displayName}</option>)}
+          <Label className="text-xs">默认地点</Label>
+          <select className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs" value={locationId} onChange={(event) => setLocationId(event.target.value)} disabled={readOnly}>
+            <option value="">不绑定</option>
+            {locations.map((location) => <option key={location.id} value={location.id}>{location.displayName}</option>)}
           </select>
         </div>
         <div>
-          <Label className="text-xs">绑定角色</Label>
-          <select className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
-            value={characterId} onChange={(e) => setCharacterId(e.target.value)} disabled={readOnly}>
-            <option value="">不限</option>
-            {characters.map((c) => <option key={c.id} value={c.id}>{c.displayName}</option>)}
+          <Label className="text-xs">默认角色</Label>
+          <select className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs" value={characterId} onChange={(event) => setCharacterId(event.target.value)} disabled={readOnly}>
+            <option value="">不绑定</option>
+            {characters.map((character) => <option key={character.id} value={character.id}>{character.displayName}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Editor */}
-      <div className="flex flex-col gap-4">
-        {/* Editor */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <Tabs value={editorMode} onValueChange={(v) => setEditorMode(v as 'design' | 'ink')}>
-              <TabsList className="h-7">
-                <TabsTrigger value="design" className="text-xs px-2.5">可视化编排</TabsTrigger>
-                <TabsTrigger value="ink" className="text-xs px-2.5">Ink 脚本</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex flex-wrap items-center justify-end gap-1">
-              {editorMode === 'ink' && (
-                <Button variant="ghost" size="sm" onClick={insertTemplate} className="h-7 gap-1 text-xs">
-                  <Wand2 className="size-3" />模板
-                </Button>
-              )}
-              <Button type="button" variant="outline" size="sm" onClick={checkFormat} className="h-7 gap-1 text-xs">
-                <ClipboardCheck className="size-3" />检查格式
+      <Tabs value={workspaceTab} onValueChange={(value) => setWorkspaceTab(value as 'compose' | 'preview')} className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <TabsList>
+            <TabsTrigger value="compose">编排</TabsTrigger>
+            <TabsTrigger value="preview">预览</TabsTrigger>
+          </TabsList>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={compileResult?.success ? 'success' : 'destructive'} className="h-7">
+              {compileResult?.success ? '格式通过' : '需要修正'}
+            </Badge>
+            <Button type="button" variant="outline" size="sm" onClick={() => setRawOpen((value) => !value)} className="h-8 gap-1.5">
+              <Code2 className="size-3.5" />源码
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={checkFormat} className="h-8 gap-1.5">
+              <CheckCircle2 className="size-3.5" />检查格式
+            </Button>
+            {onSave && !readOnly && (
+              <Button size="sm" onClick={handleSave} disabled={saving || !key || !title || !compileResult?.success} className="h-8 gap-1.5">
+                <Save className="size-3.5" />{saving ? '保存中...' : '保存'}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPreviewOpen(true)}
-                disabled={!formatChecked || !compileResult?.success}
-                className="h-7 gap-1 text-xs"
-              >
-                <Eye className="size-3" />预览
-              </Button>
-              {onSave && !readOnly && (
-                <Button size="sm" onClick={handleSave}
-                  disabled={saving || !key || !title || !compileResult?.success}
-                  className="h-7 gap-1 text-xs">
-                  {saving ? '保存中...' : '保存'}
-                </Button>
-              )}
-            </div>
+            )}
           </div>
+        </div>
 
-          <Tabs value={editorMode}>
-            <TabsContent value="design" className="mt-0">
-              <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-                <div className="rounded-md border border-border/70 bg-background">
-                  <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                    <p className="text-sm font-medium">当前脚本结构</p>
-                    <Badge variant={compileResult?.success ? 'success' : 'destructive'} className="text-[10px]">
-                      {compileResult?.success ? '可预览' : '需修正'}
-                    </Badge>
-                  </div>
-                  <div className="max-h-56 space-y-1 overflow-y-auto p-2">
-                    {visualScriptItems.length === 0 ? (
-                      <p className="px-2 py-6 text-center text-xs text-muted-foreground">还没有可显示的脚本内容</p>
-                    ) : visualScriptItems.map((item, index) => {
-                      const active = selectedLineNumber === item.lineNumber
-                      const itemClass = cn(
-                        'w-full rounded text-left transition-colors hover:bg-muted/60',
-                        active && 'bg-primary/10 ring-1 ring-primary/20',
-                      )
-                      if (item.type === 'knot') {
-                        return (
-                          <button key={index} type="button" className={cn(itemClass, 'bg-muted px-2 py-1 font-mono text-xs font-semibold')} onClick={() => selectVisualItem(item)}>
-                            === {item.name} ===
-                          </button>
-                        )
-                      }
-                      if (item.type === 'line') {
-                        return (
-                          <button key={index} type="button" className={cn(itemClass, 'border border-border/60 px-2 py-1.5')} onClick={() => selectVisualItem(item)}>
-                            <div className="flex items-center gap-2">
-                              {item.speaker && <Badge variant="outline" className="text-[10px]">{item.speaker}</Badge>}
-                              {item.tags.filter((tag) => tag.startsWith('expression:')).map((tag) => (
-                                <Badge key={tag} variant="secondary" className="text-[10px]">{tag.replace('expression:', '')}</Badge>
-                              ))}
-                            </div>
-                            <p className="mt-1 text-xs leading-relaxed">{item.text}</p>
-                          </button>
-                        )
-                      }
-                      if (item.type === 'choice') {
-                        return (
-                          <button key={index} type="button" className={cn(itemClass, 'bg-primary/5 px-2 py-1 text-xs')} onClick={() => selectVisualItem(item)}>
-                            选项：{item.text}{item.target ? ` -> ${item.target}` : ''}
-                          </button>
-                        )
-                      }
-                      if (item.type === 'tag') {
-                        return (
-                          <button key={index} type="button" className={cn(itemClass, 'px-2 py-0.5 font-mono text-[11px] text-muted-foreground')} onClick={() => selectVisualItem(item)}>
-                            #{item.value}
-                          </button>
-                        )
-                      }
-                      return (
-                        <button key={index} type="button" className={cn(itemClass, 'px-2 py-0.5 font-mono text-[11px] text-muted-foreground')} onClick={() => selectVisualItem(item)}>
-                          -&gt; {item.target}
-                        </button>
-                      )
-                    })}
-                  </div>
+        <TabsContent value="compose" className="mt-0 space-y-3">
+          {rawOpen && (
+            <div className="rounded-lg border border-border bg-card p-3">
+              <Textarea
+                className="min-h-64 font-mono text-xs leading-relaxed"
+                value={sourceWithMeta()}
+                onChange={(event) => handleSourceChange(event.target.value)}
+                disabled={readOnly}
+                spellCheck={false}
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">{syntaxHint}</p>
+            </div>
+          )}
+
+          <div className="grid gap-3 xl:grid-cols-[230px_minmax(0,1fr)_320px]">
+            <div className="rounded-lg border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                <p className="text-sm font-semibold">场景</p>
+                <Button type="button" variant="ghost" size="icon-sm" onClick={addScene} disabled={readOnly}>
+                  <Plus className="size-4" />
+                </Button>
+              </div>
+              <div className="space-y-1 p-2">
+                {scenes.map((scene, sceneIndex) => {
+                  const active = selection.sceneIndex === sceneIndex
+                  return (
+                    <button
+                      key={`${scene.name}-${sceneIndex}`}
+                      type="button"
+                      onClick={() => setSelection({ type: 'scene', sceneIndex })}
+                      className={cn(
+                        'w-full rounded-md px-3 py-2 text-left transition-colors hover:bg-muted/70',
+                        active && 'bg-primary/10 text-primary ring-1 ring-primary/20',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-mono text-xs">=== {scene.name} ===</span>
+                        <Badge variant="outline" className="shrink-0 text-[10px]">{scene.items.length}</Badge>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold">流程画布</p>
+                  <p className="text-xs text-muted-foreground">{selectedScene ? `正在编辑 ${selectedScene.name}` : '选择一个场景开始'}</p>
                 </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem('line')} disabled={readOnly}>
+                    <MessageSquare className="size-3.5" />对白
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem('choice')} disabled={readOnly}>
+                    <GitBranch className="size-3.5" />选项
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem('background')} disabled={readOnly}>
+                    <ImageIcon className="size-3.5" />背景
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem('wait')} disabled={readOnly}>
+                    <Clock3 className="size-3.5" />等待
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addItem('divert')} disabled={readOnly}>
+                    <Route className="size-3.5" />跳转
+                  </Button>
+                </div>
+              </div>
 
-                {selectedLineNumber && (
-                  <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="text-sm font-medium">编辑第 {selectedLineNumber} 行</p>
-                      <Button type="button" size="icon-sm" variant="ghost" className="text-destructive" onClick={deleteVisualLine}>
-                        <Trash2 className="size-3.5" />
-                      </Button>
+              <div className="max-h-[620px] space-y-3 overflow-y-auto p-4">
+                {selectedScene?.items.length ? selectedScene.items.map((item, itemIndex) => {
+                  const Icon = itemIcon(item)
+                  const active = selection.type === 'item' && selection.sceneIndex === selection.sceneIndex && selection.itemIndex === itemIndex
+                  return (
+                    <button
+                      key={`${item.type}-${itemIndex}`}
+                      type="button"
+                      onClick={() => setSelection({ type: 'item', sceneIndex: selection.sceneIndex, itemIndex })}
+                      className={cn(
+                        'grid w-full grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg border border-border bg-background p-3 text-left shadow-sm transition-all hover:border-primary/40 hover:bg-muted/30',
+                        active && 'border-primary/60 bg-primary/5 shadow-md',
+                      )}
+                    >
+                      <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <Icon className="size-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{itemTitle(item)}</span>
+                          {item.type === 'line' && <Badge variant="secondary" className="text-[10px]">{item.expression}</Badge>}
+                        </span>
+                        <span className="mt-1 block truncate text-xs text-muted-foreground">{itemSummary(item)}</span>
+                      </span>
+                    </button>
+                  )
+                }) : (
+                  <div className="rounded-lg border border-dashed border-border p-8 text-center">
+                    <Wand2 className="mx-auto mb-3 size-8 text-muted-foreground/60" />
+                    <p className="text-sm font-medium">这个场景还没有节点</p>
+                    <p className="mt-1 text-xs text-muted-foreground">从上方添加对白、选项、背景或跳转。</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <p className="text-sm font-semibold">属性</p>
+                <Button type="button" variant="ghost" size="icon-sm" onClick={deleteSelection} disabled={readOnly}>
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </div>
+              <div className="space-y-4 p-4">
+                {selection.type === 'scene' && selectedScene && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs">场景名</Label>
+                      <Input value={selectedScene.name} onChange={(event) => updateSelectedSceneName(event.target.value)} disabled={readOnly} className="mt-1 font-mono text-sm" />
                     </div>
-                    <Input
-                      className="font-mono text-xs"
-                      value={selectedLineText}
-                      onChange={(e) => setSelectedLineText(e.target.value)}
-                      disabled={readOnly}
-                    />
-                    <div className="mt-2 flex justify-end gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => { setSelectedLineNumber(null); setSelectedLineText('') }}>
-                        取消
-                      </Button>
-                      <Button type="button" size="sm" onClick={replaceVisualLine} disabled={readOnly}>
-                        <Pencil className="size-3.5" />应用修改
-                      </Button>
+                    <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                      场景名会生成 Ink 的 <code>=== {selectedScene.name || 'scene'} ===</code>。选中画布中的节点可以编辑对白、选项和跳转。
                     </div>
                   </div>
                 )}
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <Label className="text-xs">默认地点</Label>
-                    <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
-                      value={locationId} onChange={(e) => setLocationId(e.target.value)} disabled={readOnly}>
-                      <option value="">不限地点</option>
-                      {locations.map((l) => <option key={l.id} value={l.id}>{l.displayName}</option>)}
-                    </select>
-                    {selectedLocation?.backgroundUrl && (
-                      <Button type="button" variant="outline" size="sm" className="mt-2 h-7 gap-1.5 text-xs" onClick={applyLocationBackground}>
-                        <MapPin className="size-3" />插入背景标签
-                      </Button>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-xs">默认角色</Label>
-                    <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
-                      value={characterId} onChange={(e) => setCharacterId(e.target.value)} disabled={readOnly}>
-                      <option value="">不限角色</option>
-                      {characters.map((c) => <option key={c.id} value={c.id}>{c.displayName}</option>)}
-                    </select>
-                    {selectedCharacter && (
-                      <p className="mt-2 text-[11px] text-muted-foreground">
-                        Ink speaker: <code className="rounded bg-muted px-1">{selectedCharacter.name || selectedCharacter.displayName}</code>
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-md border border-border/70 bg-muted/20 p-3">
-                  <div className="mb-3 flex items-center gap-2">
-                    <MessageSquare className="size-4 text-muted-foreground" />
-                    <p className="text-sm font-medium">追加对话</p>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+                {selectedItem?.type === 'line' && (
+                  <div className="space-y-3">
                     <div>
-                      <Label className="text-xs">说话人</Label>
-                      <Input className="mt-1 h-8 text-sm" value={visualSpeaker}
-                        onChange={(e) => setVisualSpeaker(e.target.value)}
-                        placeholder={defaultChar || 'Alex'} disabled={readOnly} />
+                      <Label className="text-xs">角色</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" value={selectedItem.speaker} onChange={(event) => updateSelectedItem({ speaker: event.target.value })} disabled={readOnly}>
+                        <option value="">旁白</option>
+                        {characters.map((character) => (
+                          <option key={character.id} value={character.name || character.displayName}>{character.displayName}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label className="text-xs">表情</Label>
-                      <select className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
-                        value={visualExpression} onChange={(e) => setVisualExpression(e.target.value)} disabled={readOnly}>
-                        {expressionOptions.map((exp) => <option key={exp} value={exp}>{exp}</option>)}
+                      <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" value={selectedItem.expression} onChange={(event) => updateSelectedItem({ expression: event.target.value })} disabled={readOnly}>
+                        {expressionOptions.map((expression) => <option key={expression} value={expression}>{expression}</option>)}
                       </select>
                     </div>
+                    <div>
+                      <Label className="text-xs">对白</Label>
+                      <Textarea value={selectedItem.text} onChange={(event) => updateSelectedItem({ text: event.target.value })} disabled={readOnly} className="mt-1 min-h-32 text-sm" />
+                    </div>
                   </div>
-                  <Textarea className="mt-3 min-h-24 text-sm" value={visualLine}
-                    onChange={(e) => setVisualLine(e.target.value)}
-                    placeholder="输入这一句对话，会自动生成 # speaker / # expression 标签..." disabled={readOnly} />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button type="button" size="sm" onClick={appendDialogue} disabled={readOnly || !visualLine.trim()}>
-                      追加对话
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={appendWaitPoint} disabled={readOnly}>
-                      插入等待点
-                    </Button>
-                  </div>
-                </div>
+                )}
 
-                <div className="rounded-md border border-border/70 bg-muted/20 p-3">
-                  <div className="mb-3 flex items-center gap-2">
-                    <GitBranch className="size-4 text-muted-foreground" />
-                    <p className="text-sm font-medium">追加选项</p>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+                {selectedItem?.type === 'choice' && (
+                  <div className="space-y-3">
                     <div>
                       <Label className="text-xs">选项文本</Label>
-                      <Input className="mt-1 h-8 text-sm" value={visualChoice}
-                        onChange={(e) => setVisualChoice(e.target.value)}
-                        placeholder="挺好的，谢谢！" disabled={readOnly} />
+                      <Input value={selectedItem.text} onChange={(event) => updateSelectedItem({ text: event.target.value })} disabled={readOnly} className="mt-1" />
                     </div>
                     <div>
                       <Label className="text-xs">跳转目标</Label>
-                      <Input className="mt-1 h-8 text-sm" value={visualChoiceTarget}
-                        onChange={(e) => setVisualChoiceTarget(e.target.value)}
-                        placeholder="tour / END" disabled={readOnly} />
+                      <Input value={selectedItem.target} onChange={(event) => updateSelectedItem({ target: event.target.value })} disabled={readOnly} className="mt-1 font-mono" placeholder="scene / END" />
                     </div>
                   </div>
-                  <Button type="button" size="sm" variant="outline" className="mt-3" onClick={appendChoice}
-                    disabled={readOnly || !visualChoice.trim()}>
-                    追加选项
-                  </Button>
-                </div>
+                )}
 
-                <div className="rounded-md border border-border/70 bg-background p-3">
-                  <div className="flex items-center gap-2">
-                    <UserRound className="size-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">
-                      复杂分支、knot 命名和变量仍可在 Ink 脚本 tab 里精修。
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="ink" className="mt-0">
-              <Textarea
-                className="min-h-[400px] font-mono text-xs leading-relaxed"
-                value={source}
-                onChange={(e) => handleSourceChange(e.target.value)}
-                placeholder="输入 Ink 脚本..."
-                disabled={readOnly}
-                spellCheck={false}
-              />
-              {/* Compilation status */}
-              {compileResult && (
-                <div className={cn(
-                  'mt-1.5 rounded-md px-3 py-1.5 text-xs',
-                  compileResult.success
-                    ? 'border border-green-500/20 bg-green-500/5 text-green-600'
-                    : 'border border-destructive/20 bg-destructive/5 text-destructive',
-                )}>
-                  {compileResult.success ? (
-                    <span>✓ 编译成功{compileResult.warnings.length > 0 ? ` (${compileResult.warnings.length} 个警告)` : ''}</span>
-                  ) : (
-                    <div className="flex flex-col gap-0.5">
-                      <span className="flex items-center gap-1"><AlertTriangle className="size-3" />编译失败</span>
-                      {compileResult.errors.map((e, i) => (
-                        <span key={i} className="font-mono text-[11px] opacity-80">{e}</span>
-                      ))}
+                {selectedItem?.type === 'background' && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs">从地点选择</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                        value=""
+                        onChange={(event) => {
+                          const location = locations.find((item) => item.id === event.target.value)
+                          if (location?.backgroundUrl) updateSelectedItem({ url: location.backgroundUrl })
+                        }}
+                        disabled={readOnly}
+                      >
+                        <option value="">选择地点背景</option>
+                        {locations.map((location) => <option key={location.id} value={location.id}>{location.displayName}</option>)}
+                      </select>
                     </div>
-                  )}
-                </div>
-              )}
-              {/* Syntax hint */}
-              <div className="mt-1.5 rounded-md border border-border/60 bg-muted/30 p-2">
-                <p className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-wrap">{INK_SYNTAX_HINT}</p>
+                    <div>
+                      <Label className="text-xs">背景 URL</Label>
+                      <Input value={selectedItem.url} onChange={(event) => updateSelectedItem({ url: event.target.value })} disabled={readOnly} className="mt-1" />
+                    </div>
+                    {selectedItem.url && (
+                      <div className="aspect-video overflow-hidden rounded-md border border-border bg-muted">
+                        <img src={selectedItem.url} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedItem?.type === 'wait' && (
+                  <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                    等待节点会生成 <code># wait</code>，VN 会暂停并等待用户输入。
+                  </div>
+                )}
+
+                {selectedItem?.type === 'divert' && (
+                  <div>
+                    <Label className="text-xs">跳转目标</Label>
+                    <Input value={selectedItem.target} onChange={(event) => updateSelectedItem({ target: event.target.value })} disabled={readOnly} className="mt-1 font-mono" placeholder="scene / END" />
+                  </div>
+                )}
+
+                {selectedItem?.type === 'tag' && (
+                  <div>
+                    <Label className="text-xs">Tag</Label>
+                    <Input value={selectedItem.value} onChange={(event) => updateSelectedItem({ value: event.target.value })} disabled={readOnly} className="mt-1 font-mono" />
+                  </div>
+                )}
+
+                {compileResult && !compileResult.success && (
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                    <div className="mb-1 flex items-center gap-1 font-medium"><AlertTriangle className="size-3.5" />格式错误</div>
+                    {compileResult.errors.slice(0, 4).map((error, index) => <p key={index} className="font-mono">{error}</p>)}
+                  </div>
+                )}
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+            </div>
+          </div>
+        </TabsContent>
 
-      </div>
-
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
-          <DialogHeader className="border-b border-border px-5 py-4">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Eye className="size-4" /> VN 预览
-            </DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 bg-muted/30 p-4">
+        <TabsContent value="preview" className="mt-0">
+          <div className="rounded-lg border border-border bg-card p-4">
             <VnStoryPreview
-              inkSource={source}
+              inkSource={sourceWithMeta()}
               characterSprites={charSprites}
               characterPositions={charPositions}
               defaultBackgroundUrl={selectedLocation?.backgroundUrl ?? undefined}
-              className="mx-auto h-[72vh] max-h-[720px] max-w-[390px]"
+              className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
             />
           </div>
-        </DialogContent>
-      </Dialog>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

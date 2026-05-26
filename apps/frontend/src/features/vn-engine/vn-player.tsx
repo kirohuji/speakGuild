@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js'
 import { History, RotateCcw } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
 
 export interface VnPlayerLine {
@@ -40,31 +38,18 @@ interface PixiVnStageProps {
 }
 
 function fitCover(sprite: Sprite, width: number, height: number) {
-  const textureWidth = sprite.texture.width || 1
-  const textureHeight = sprite.texture.height || 1
-  const scale = Math.max(width / textureWidth, height / textureHeight)
+  const scale = Math.max(width / (sprite.texture.width || 1), height / (sprite.texture.height || 1))
   sprite.scale.set(scale)
-  sprite.position.set(width / 2, height / 2)
   sprite.anchor.set(0.5)
+  sprite.position.set(width / 2, height / 2)
 }
 
 function layoutSprite(sprite: Sprite, width: number, height: number, position: 'left' | 'center' | 'right') {
-  const textureWidth = sprite.texture.width || 1
-  const textureHeight = sprite.texture.height || 1
-  const maxHeight = height * 0.62
-  const maxWidth = width * 0.74
-  const scale = Math.min(maxHeight / textureHeight, maxWidth / textureWidth)
+  const scale = Math.min((height * 0.62) / (sprite.texture.height || 1), (width * 0.74) / (sprite.texture.width || 1))
   sprite.scale.set(scale)
   sprite.anchor.set(0.5, 1)
   sprite.y = height - 118
-
-  if (position === 'center') {
-    sprite.x = width / 2
-  } else if (position === 'right') {
-    sprite.x = width * 0.72
-  } else {
-    sprite.x = width * 0.28
-  }
+  sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
 }
 
 function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStageProps) {
@@ -83,6 +68,7 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
     if (!app) return
     const width = app.renderer.width
     const height = app.renderer.height
+
     if (fallbackRef.current) {
       fallbackRef.current.clear()
       fallbackRef.current.rect(0, 0, width, height).fill(0x141827)
@@ -154,12 +140,12 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
   }, [])
 
   useEffect(() => {
+    if (!ready) return
     let cancelled = false
 
     async function loadBackground() {
       const root = rootRef.current
       const overlay = overlayRef.current
-      if (!ready) return
       if (!root) return
 
       if (bgRef.current) {
@@ -174,11 +160,11 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
 
       try {
         const texture = await Assets.load<Texture>(backgroundUrl)
-        if (cancelled || !root) return
+        if (cancelled || !rootRef.current) return
         const sprite = new Sprite(texture)
         bgRef.current = sprite
-        root.addChildAt(sprite, 1)
-        if (overlay) root.setChildIndex(overlay, root.children.length - 1)
+        rootRef.current.addChildAt(sprite, 1)
+        if (overlay) rootRef.current.setChildIndex(overlay, rootRef.current.children.length - 1)
         layout()
       } catch {
         layout()
@@ -192,12 +178,12 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
   }, [backgroundUrl, ready])
 
   useEffect(() => {
+    if (!ready) return
     let cancelled = false
 
     async function loadSprite() {
       const root = rootRef.current
       const overlay = overlayRef.current
-      if (!ready) return
       if (!root) return
 
       if (spriteRef.current) {
@@ -212,12 +198,12 @@ function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStagePr
 
       try {
         const texture = await Assets.load<Texture>(spriteUrl)
-        if (cancelled || !root) return
+        if (cancelled || !rootRef.current) return
         const sprite = new Sprite(texture)
         sprite.alpha = 0
         spriteRef.current = sprite
-        root.addChild(sprite)
-        if (overlay) root.setChildIndex(overlay, root.children.length - 1)
+        rootRef.current.addChild(sprite)
+        if (overlay) rootRef.current.setChildIndex(overlay, rootRef.current.children.length - 1)
         layout()
         appRef.current?.ticker.addOnce(() => {
           if (spriteRef.current === sprite) sprite.alpha = 1
@@ -257,7 +243,7 @@ export function VnPlayer({
   stageClassName,
 }: VnPlayerProps) {
   const [historyOpen, setHistoryOpen] = useState(false)
-  const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0
+  const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen
 
   return (
     <div className={cn('relative mx-auto flex h-full w-full max-w-[520px] flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border', className)}>
@@ -265,36 +251,28 @@ export function VnPlayer({
         role="button"
         tabIndex={canAdvance ? 0 : -1}
         aria-label="推进对话"
-        className={cn(
-          'relative min-h-[620px] flex-1 overflow-hidden text-left outline-none',
-          canAdvance && 'cursor-pointer',
-          stageClassName,
-        )}
+        className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', canAdvance && 'cursor-pointer', stageClassName)}
         onClick={() => { if (canAdvance) onAdvance?.() }}
-        onKeyDown={(e) => {
-          if (canAdvance && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault()
+        onKeyDown={(event) => {
+          if (canAdvance && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault()
             onAdvance?.()
           }
         }}
       >
-        <PixiVnStage
-          backgroundUrl={backgroundUrl}
-          spriteUrl={currentSpriteUrl}
-          spritePosition={spritePosition}
-        />
+        <PixiVnStage backgroundUrl={backgroundUrl} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
 
         <div className="absolute right-3 top-3 z-30 flex gap-2">
           <span
             role="button"
             tabIndex={0}
             className="flex size-9 items-center justify-center rounded-full bg-black/35 text-white/80 backdrop-blur-md transition-colors hover:bg-black/55 hover:text-white"
-            onClick={(e) => { e.stopPropagation(); setHistoryOpen(true) }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                e.stopPropagation()
-                setHistoryOpen(true)
+            onClick={(event) => { event.stopPropagation(); setHistoryOpen((value) => !value) }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                setHistoryOpen((value) => !value)
               }
             }}
           >
@@ -305,11 +283,11 @@ export function VnPlayer({
               role="button"
               tabIndex={0}
               className="flex size-9 items-center justify-center rounded-full bg-black/35 text-white/80 backdrop-blur-md transition-colors hover:bg-black/55 hover:text-white"
-              onClick={(e) => { e.stopPropagation(); onReset() }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  e.stopPropagation()
+              onClick={(event) => { event.stopPropagation(); onReset() }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  event.stopPropagation()
                   onReset()
                 }
               }}
@@ -319,6 +297,43 @@ export function VnPlayer({
           )}
         </div>
 
+        {historyOpen && (
+          <div className="absolute inset-0 z-40 bg-black/38 p-4 backdrop-blur-sm" onClick={(event) => event.stopPropagation()}>
+            <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-white/18 bg-black/72 text-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/12 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold">历史对话</p>
+                  <p className="text-[11px] text-white/50">{history.length} 条记录</p>
+                </div>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="rounded-full px-2 py-1 text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                  onClick={() => setHistoryOpen(false)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setHistoryOpen(false)
+                    }
+                  }}
+                >
+                  关闭
+                </span>
+              </div>
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
+                {history.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-white/52">还没有历史对话</p>
+                ) : history.map((line, index) => (
+                  <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-sky-300/25 bg-sky-300/10' : 'border-white/12 bg-white/7')}>
+                    {line.speaker && <p className="mb-1 text-xs font-semibold text-white/56">{line.speaker}</p>}
+                    <p className="text-sm leading-6 text-white/88">{line.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {choices.length > 0 && (
           <div className="absolute inset-x-5 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2">
             {choices.map((choice) => (
@@ -327,11 +342,11 @@ export function VnPlayer({
                 role="button"
                 tabIndex={0}
                 className="rounded-lg border border-white/20 bg-black/58 px-4 py-3 text-center text-sm font-medium text-white shadow-xl backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/72"
-                onClick={(e) => { e.stopPropagation(); onChoice?.(choice.index) }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    e.stopPropagation()
+                onClick={(event) => { event.stopPropagation(); onChoice?.(choice.index) }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    event.stopPropagation()
                     onChoice?.(choice.index)
                   }
                 }}
@@ -358,32 +373,10 @@ export function VnPlayer({
             ) : (
               <p className="text-center text-sm text-white/55">点击继续</p>
             )}
-            {canAdvance && (
-              <span className="absolute bottom-3 right-5 text-xs text-white/55">点击继续</span>
-            )}
+            {canAdvance && <span className="absolute bottom-3 right-5 text-xs text-white/55">点击继续</span>}
           </div>
         </div>
       </div>
-
-      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="max-h-[82vh] max-w-md overflow-hidden p-0">
-          <DialogHeader className="border-b border-border px-5 py-4">
-            <DialogTitle>历史对话</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[64vh]">
-            <div className="space-y-3 p-5">
-              {history.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">还没有历史对话</p>
-              ) : history.map((line, index) => (
-                <div key={index} className={cn('rounded-lg border p-3', line.isUser ? 'bg-primary/5' : 'bg-muted/30')}>
-                  {line.speaker && <p className="mb-1 text-xs font-semibold text-muted-foreground">{line.speaker}</p>}
-                  <p className="text-sm leading-relaxed">{line.text}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
