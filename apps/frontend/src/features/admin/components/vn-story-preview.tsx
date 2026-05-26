@@ -69,7 +69,8 @@ export function VnStoryPreview({
     const bg = tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim()
     const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
     const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
-    return { speaker, expression, bg, bgFit, position }
+    const choiceCharacter = tags.find((t) => t.startsWith('choiceCharacter:'))?.replace('choiceCharacter:', '').trim()
+    return { speaker, expression, bg, bgFit, position, choiceCharacter }
   }, [])
 
   /** 解析文本行，提取 "Speaker: text" 格式 */
@@ -182,7 +183,7 @@ export function VnStoryPreview({
 
   // ─── Derive display state ──────────────────────────────────
 
-  const { speaker: currentSpeaker, expression: currentExpression, bg: currentBg, bgFit, position } = parseTags(currentTags)
+  const { speaker: currentSpeaker, expression: currentExpression, bg: currentBg, bgFit, position, choiceCharacter } = parseTags(currentTags)
   const backgroundUrl = currentBg || defaultBackgroundUrl
 
   const speakerSprites = currentSpeaker ? characterSprites[currentSpeaker] : undefined
@@ -194,6 +195,7 @@ export function VnStoryPreview({
     : 'center'
 
   const lastLine = history[history.length - 1]
+  const hideSpriteForChoices = choices.length > 0 && choiceCharacter === 'hide'
 
   // ─── Render ────────────────────────────────────────────────
 
@@ -228,7 +230,7 @@ export function VnStoryPreview({
       currentLine={!isEnded ? lastLine : null}
       history={history}
       choices={choices}
-      currentSpriteUrl={currentSpriteUrl}
+      currentSpriteUrl={hideSpriteForChoices ? undefined : currentSpriteUrl}
       spriteAlt={currentSpeaker}
       spritePosition={speakerPosition}
       isWaiting={isWaiting}

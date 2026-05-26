@@ -27,7 +27,7 @@ import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
 type ComposerItem =
   | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string }
-  | { type: 'choice'; text: string; target: string }
+  | { type: 'choice'; text: string; target: string; showCharacter: boolean }
   | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
   | { type: 'wait' }
   | { type: 'divert'; target: string }
@@ -104,6 +104,7 @@ function parseComposer(source: string): ComposerScene[] {
   let pendingSpeaker = ''
   let pendingExpression = 'default'
   let pendingPosition: 'left' | 'center' | 'right' = 'center'
+  let pendingChoiceShowCharacter = true
 
   const ensureScene = () => {
     if (!current) {
@@ -139,6 +140,8 @@ function parseComposer(source: string): ComposerScene[] {
       } else if (tag.startsWith('position:')) {
         const position = tag.replace(/^position:/, '').trim()
         pendingPosition = position === 'left' || position === 'right' ? position : 'center'
+      } else if (tag.startsWith('choiceCharacter:')) {
+        pendingChoiceShowCharacter = tag.replace(/^choiceCharacter:/, '').trim() !== 'hide'
       } else if (tag.startsWith('bg:')) {
         scene.items.push({ type: 'background', url: tag.replace(/^bg:/, '').trim(), fit: 'cover' })
       } else if (tag.startsWith('bgFit:')) {
@@ -163,7 +166,9 @@ function parseComposer(source: string): ComposerScene[] {
         type: 'choice',
         text: cleanChoiceText(choice[1]),
         target: choice[2]?.trim() || 'END',
+        showCharacter: pendingChoiceShowCharacter,
       })
+      pendingChoiceShowCharacter = true
       continue
     }
 
@@ -190,7 +195,7 @@ function parseComposer(source: string): ComposerScene[] {
       name: 'start',
       items: [
         { type: 'line', speaker: 'Alex', expression: 'default', position: 'center', text: '你好，欢迎来到这里。' },
-        { type: 'choice', text: '继续', target: 'END' },
+        { type: 'choice', text: '继续', target: 'END', showCharacter: true },
       ],
     })
   }
@@ -218,6 +223,7 @@ function serializeComposer(
         if (item.position) lines.push(`# position:${item.position}`)
         lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
       } else if (item.type === 'choice') {
+        lines.push(`# choiceCharacter:${item.showCharacter ? 'show' : 'hide'}`)
         lines.push(`*   [${item.text || '选项'}] -> ${item.target || 'END'}`)
       } else if (item.type === 'background') {
         lines.push(`# bg:${item.url}`)
@@ -254,7 +260,7 @@ function itemTitle(item: ComposerItem) {
 
 function itemSummary(item: ComposerItem) {
   if (item.type === 'line') return item.text || '空对白'
-  if (item.type === 'choice') return `${item.text || '空选项'} -> ${item.target || 'END'}`
+  if (item.type === 'choice') return `${item.text || '空选项'} -> ${item.target || 'END'} · ${item.showCharacter ? '保留角色' : '隐藏角色'}`
   if (item.type === 'background') return `${item.fit || 'cover'} · ${item.url || '未选择背景'}`
   if (item.type === 'wait') return '暂停，等待用户输入'
   if (item.type === 'divert') return `-> ${item.target || 'END'}`
@@ -381,7 +387,7 @@ export function InkStoryEditor({
         type === 'line'
           ? { type: 'line', speaker: defaultSpeaker, expression: 'default', position: 'center', text: '新的对白' }
           : type === 'choice'
-            ? { type: 'choice', text: '新的选项', target: 'END' }
+            ? { type: 'choice', text: '新的选项', target: 'END', showCharacter: true }
             : type === 'background'
               ? { type: 'background', url: selectedLocation?.backgroundUrl || '', fit: 'cover' }
               : type === 'wait'
@@ -689,6 +695,16 @@ export function InkStoryEditor({
                     <div>
                       <Label className="text-xs">跳转目标</Label>
                       <Input value={selectedItem.target} onChange={(event) => updateSelectedItem({ target: event.target.value })} disabled={readOnly} className="mt-1 font-mono" placeholder="scene / END" />
+                      <label className="mt-3 flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedItem.showCharacter}
+                          onChange={(event) => updateSelectedItem({ showCharacter: event.target.checked })}
+                          disabled={readOnly}
+                          className="rounded border-border"
+                        />
+                        选项出现时保留角色立绘
+                      </label>
                     </div>
                   </div>
                 )}
