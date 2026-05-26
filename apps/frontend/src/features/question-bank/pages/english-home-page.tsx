@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, Play, Library, TrendingUp, Sparkles, Mic, Target,
   ListChecks, ChevronRight, ArrowRight, BookText, MessageSquareText,
-  CheckCircle2, ChevronDown, ChevronUp,
+  CheckCircle2,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import api from '@/features/practice/api/english-practice-api'
 import { chunkApi } from '@/features/practice/api/english-practice-api'
-import { learningApi, type TodayPlan, type UnitDetail } from '@/features/learning/api/learning-api'
+import { learningApi, type TodayPlan } from '@/features/learning/api/learning-api'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -42,7 +42,6 @@ export function EnglishHomePage() {
   // 追踪用户在首页已查看的词汇和 Chunk
   const [seenVocabIds, setSeenVocabIds] = useState<Set<string>>(new Set())
   const [seenChunkIds, setSeenChunkIds] = useState<Set<string>>(new Set())
-  const [fullUnit, setFullUnit] = useState<UnitDetail | null>(null)
 
   useEffect(() => {
     if (!session?.user?.id) { setLoading(false); return }
@@ -62,45 +61,8 @@ export function EnglishHomePage() {
   const practiceTask = todayPlan?.tasks.find((t) => t.type === 'practice')
   const scriptTask = todayPlan?.tasks.find((t) => t.type === 'script')
 
-  // 默认只展示今日限额内的卡片
+  // 今日词汇/表达数据
   const shownVocabItems = vocabTask?.data ?? []
-  // 如果用户点击了"查看更多"，从全量详情中取所有词汇
-  const [expandedVocabItems, setExpandedVocabItems] = useState<any[]>([])
-  const [expandedChunkItems, setExpandedChunkItems] = useState<any[]>([])
-
-  const handleShowAllVocab = useCallback(async () => {
-    if (showAllVocab) { setShowAllVocab(false); return }
-    if (expandedVocabItems.length > 0) { setShowAllVocab(true); return }
-    // 首次展开，加载全量
-    const unitId = vocabTask?.unitId
-    if (!unitId) return
-    try {
-      const unit = await learningApi.getUnitDetail(unitId)
-      if (unit) {
-        setFullUnit(unit)
-        setExpandedVocabItems(unit.vocabularies)
-        setShowAllVocab(true)
-      }
-    } catch {}
-  }, [showAllVocab, expandedVocabItems, vocabTask])
-
-  const handleShowAllChunk = useCallback(async () => {
-    if (showAllChunk) { setShowAllChunk(false); return }
-    if (expandedChunkItems.length > 0) { setShowAllChunk(true); return }
-    const unitId = chunkTask?.unitId
-    if (!unitId) return
-    try {
-      const unit = await learningApi.getUnitDetail(unitId)
-      if (unit) {
-        setFullUnit(unit)
-        setExpandedChunkItems(unit.chunks)
-        setShowAllChunk(true)
-      }
-    } catch {}
-  }, [showAllChunk, expandedChunkItems, chunkTask])
-
-  const displayVocabItems = showAllVocab ? expandedVocabItems : shownVocabItems
-  const displayChunkItems = showAllChunk ? expandedChunkItems : (chunkTask?.data ?? [])
 
   // 打开 Dialog 学习词汇
   const openVocabDialog = useCallback((startIndex: number) => {
@@ -152,13 +114,6 @@ export function EnglishHomePage() {
     setDialogOpen(open)
   }, [dialogItems, markChunkActivated])
 
-  const allVocabSeen = shownVocabItems.length > 0 && shownVocabItems.every((v) => seenVocabIds.has(v.id ?? ''))
-  const allChunkSeen = (chunkTask?.data ?? []).length > 0 && (chunkTask?.data ?? []).every((c) => seenChunkIds.has(c.id ?? ''))
-
-  const xpPercent = stats
-    ? Math.min(100, Math.round((stats.totalXp % (stats.xpForNextLevel || 100)) / (stats.xpForNextLevel || 100) * 100))
-    : 0
-
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
@@ -205,150 +160,139 @@ export function EnglishHomePage() {
         )}
       </div>
 
-      {/* ===== 今日词汇（最多2个，点击打开 Dialog） ===== */}
-      {shownVocabItems.length > 0 && (
+      {/* ============================================== */}
+      {/* ===== 今日练习（核心入口） ===== */}
+      {/* ============================================== */}
+      {practiceTask ? (
         <section className="mb-5">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BookText className="size-4 text-blue-500" />
-              <h2 className="text-sm font-semibold text-foreground">今日词汇</h2>
-              <Badge variant="secondary" className="text-[10px]">
-                {seenVocabIds.size}/{vocabTask?.count ?? shownVocabItems.length}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              {allVocabSeen && <CheckCircle2 className="size-4 text-green-500" />}
-              {(vocabTask?.count ?? 0) > 2 && (
-                <button
-                  onClick={() => openVocabDialog(0)}
-                  className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  共 {vocabTask?.count} 个 <ChevronRight className="size-3" />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {shownVocabItems.slice(0, 2).map((item: any, i: number) => (
-              <button
-                key={item.id ?? item.word}
-                onClick={() => openVocabDialog(i)}
-                className={cn(
-                  'rounded-lg border p-3 text-left transition-all hover:shadow-sm',
-                  seenVocabIds.has(item.id ?? '')
-                    ? 'border-green-500/30 bg-green-500/5'
-                    : 'border-border bg-card hover:border-blue-500/40',
-                )}
-              >
-                <p className="text-sm font-bold text-foreground">{item.word}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {seenVocabIds.has(item.id ?? '') ? item.meaning : '点我查看详情'}
-                </p>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ===== 今日表达（点击打开 Dialog） ===== */}
-      {(chunkTask?.data ?? []).length > 0 && (
-        <section className="mb-5">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquareText className="size-4 text-purple-500" />
-              <h2 className="text-sm font-semibold text-foreground">今日表达</h2>
-              <Badge variant="secondary" className="text-[10px]">
-                {seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              {allChunkSeen && <CheckCircle2 className="size-4 text-green-500" />}
-              {(chunkTask?.count ?? 0) > 0 && (
-                <button
-                  onClick={() => openChunkDialog(0)}
-                  className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  共 {chunkTask?.count} 个 <ChevronRight className="size-3" />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            {(chunkTask?.data ?? []).slice(0, 1).map((item: any, i: number) => (
-              <button
-                key={item.id ?? item.text}
-                onClick={() => openChunkDialog(i)}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all hover:shadow-sm',
-                  seenChunkIds.has(item.id ?? '')
-                    ? 'border-green-500/30 bg-green-500/5'
-                    : 'border-border bg-card hover:border-purple-500/40',
-                )}
-              >
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                  <MessageSquareText className="size-4 text-muted-foreground" />
+          <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/[0.04] to-transparent">
+            <CardContent className="p-5">
+              {/* 练习标题与信息 */}
+              <div className="mb-4 flex items-start gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-500/20">
+                  <Mic className="size-6 text-orange-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">{item.text}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {seenChunkIds.has(item.id ?? '') ? item.meaning : '点我查看详情'}
+                  <Badge variant="secondary" className="mb-1.5 text-[10px]">今日练习</Badge>
+                  <h2 className="text-lg font-bold text-foreground">
+                    {practiceTask.topicTitle ?? practiceTask.title}
+                  </h2>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {practiceTask.promptZh ?? practiceTask.description}
                   </p>
+                  {practiceTask.durationSec && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      建议 {Math.round(practiceTask.durationSec / 60)} 分钟 · 来自「{practiceTask.unitTitle}」
+                    </p>
+                  )}
                 </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ===== 沉浸式学习 Dialog ===== */}
-      <LearningInsightDialog
-        items={dialogItems}
-        index={dialogIndex}
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        onIndexChange={setDialogIndex}
-      />
-
-      {/* ===== 今日练习（词汇和 Chunk 都看过之后才出现） ===== */}
-      {practiceTask && (
-        <section className="mb-5">
-          <Card className={cn(
-            'transition-all',
-            (!allVocabSeen || !allChunkSeen) && 'opacity-50',
-          )}>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className={cn(
-                'flex size-12 shrink-0 items-center justify-center rounded-full',
-                allVocabSeen && allChunkSeen ? 'bg-orange-500/20' : 'bg-muted',
-              )}>
-                <Mic className={cn(
-                  'size-6',
-                  allVocabSeen && allChunkSeen ? 'text-orange-500' : 'text-muted-foreground',
-                )} />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  {allVocabSeen && allChunkSeen ? '开始今天的口语练习' : '先学完词汇和表达'}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {practiceTask.topicTitle ?? practiceTask.description}
-                  {practiceTask.durationSec && ` · ${Math.round(practiceTask.durationSec / 60)} 分钟`}
-                </p>
-              </div>
+
+              {/* 预习材料：词汇 */}
+              {shownVocabItems.length > 0 && (
+                <div className="mb-3 rounded-lg bg-muted/40 p-3">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <BookText className="size-3.5 text-blue-500" />
+                      需要掌握的词汇
+                      <span className="text-[10px] text-muted-foreground/60">
+                        ({seenVocabIds.size}/{vocabTask?.count ?? shownVocabItems.length})
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => openVocabDialog(0)}
+                      className="flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-600"
+                    >
+                      预习 <ChevronRight className="size-3" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {shownVocabItems.slice(0, 6).map((item: any) => (
+                      <button
+                        key={item.id ?? item.word}
+                        onClick={() => openVocabDialog(0)}
+                        className={cn(
+                          'rounded-md border px-2 py-0.5 text-xs transition-colors',
+                          seenVocabIds.has(item.id ?? '')
+                            ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                            : 'border-border bg-background text-muted-foreground hover:border-blue-500/40 hover:text-foreground',
+                        )}
+                      >
+                        {item.word}
+                      </button>
+                    ))}
+                    {(vocabTask?.count ?? 0) > 6 && (
+                      <span className="text-xs text-muted-foreground">+{vocabTask!.count! - 6}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 预习材料：Chunk */}
+              {(chunkTask?.data ?? []).length > 0 && (
+                <div className="mb-4 rounded-lg bg-muted/40 p-3">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <MessageSquareText className="size-3.5 text-purple-500" />
+                      需要掌握的表达
+                      <span className="text-[10px] text-muted-foreground/60">
+                        ({seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length})
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => openChunkDialog(0)}
+                      className="flex items-center gap-0.5 text-xs text-purple-500 hover:text-purple-600"
+                    >
+                      预习 <ChevronRight className="size-3" />
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {(chunkTask?.data ?? []).slice(0, 3).map((item: any) => (
+                      <button
+                        key={item.id ?? item.text}
+                        onClick={() => openChunkDialog(0)}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors',
+                          seenChunkIds.has(item.id ?? '')
+                            ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                            : 'border-border bg-background text-muted-foreground hover:border-purple-500/40 hover:text-foreground',
+                        )}
+                      >
+                        <span className="font-medium text-foreground">{item.text}</span>
+                        {!seenChunkIds.has(item.id ?? '') && (
+                          <span className="text-muted-foreground/60">— {item.meaning}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 开始练习按钮 */}
               <Button
-                size="sm"
-                disabled={!allVocabSeen || !allChunkSeen}
+                className="w-full gap-2"
+                size="lg"
                 onClick={() => practiceTask.topicId && navigate(`/practice/session/${practiceTask.topicId}`)}
               >
-                开始
-                <ArrowRight className="ml-1 size-3" />
+                <Mic className="size-4" />
+                开始练习
+                <ArrowRight className="size-4" />
               </Button>
             </CardContent>
           </Card>
         </section>
+      ) : (
+        /* ===== 无今日练习时的状态 ===== */
+        <div className="mb-6 flex flex-col items-center py-8 text-center">
+          <Target className="mb-3 size-10 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">今天没有练习任务</p>
+          <Button variant="outline" size="sm" className="mt-3" asChild>
+            <Link to="/learning">浏览学习材料</Link>
+          </Button>
+        </div>
       )}
 
-      {/* ===== 剧本挑战 ===== */}
+      {/* ===== 剧本挑战（作为额外入口） ===== */}
       {scriptTask && (
         <section className="mb-5">
           <Card className="border-green-500/30 bg-gradient-to-br from-green-500/5 to-transparent">
@@ -376,18 +320,7 @@ export function EnglishHomePage() {
         </section>
       )}
 
-      {/* ===== 无今日任务时的空白状态 ===== */}
-      {(!todayPlan || todayPlan.tasks.length === 0) && (
-        <div className="mb-6 flex flex-col items-center py-8 text-center">
-          <Target className="mb-3 size-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">今天没有学习任务</p>
-          <Button variant="outline" size="sm" className="mt-3" asChild>
-            <Link to="/learning">浏览学习材料</Link>
-          </Button>
-        </div>
-      )}
-
-      {/* ===== 快速导航 ===== */}
+      {/* ===== 底部导航区 ===== */}
       <Separator className="mb-4" />
       <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
@@ -423,6 +356,15 @@ export function EnglishHomePage() {
           </Link>
         </div>
       )}
+
+      {/* ===== 沉浸式学习 Dialog ===== */}
+      <LearningInsightDialog
+        items={dialogItems}
+        index={dialogIndex}
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
+        onIndexChange={setDialogIndex}
+      />
     </div>
   )
 }

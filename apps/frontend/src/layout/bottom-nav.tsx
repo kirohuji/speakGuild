@@ -7,9 +7,9 @@ import { useAuth } from '@/providers/auth-provider'
 const navItems = [
   { label: '首页', path: '/', icon: Home },
   { label: '学习计划', path: '/learning', icon: BookOpen },
-  { label: '今日任务', path: '/today', icon: ListChecks },
-  { label: '剧本挑战', path: '/script', icon: Play },
+  // { label: '今日任务', path: '/today', icon: ListChecks },
   { label: '我的学习库', path: '/expressions', icon: Library },
+  { label: '剧本挑战', path: '/script', icon: Play },
 ]
 
 export function BottomNav() {

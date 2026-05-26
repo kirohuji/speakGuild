@@ -10,6 +10,7 @@ import {
   Save,
   Sparkles,
   Volume2,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -95,6 +96,15 @@ export function LearningInsightDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden">
+        {/* 关闭按钮（用 div 包裹避免被 [&>button]:hidden 隐藏） */}
+        <div className="absolute left-3 top-3 z-50 md:left-4 md:top-4">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-background hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
         <div className="flex h-full flex-col">
           <InsightHeader item={current} />
           <ScrollArea className="flex-1">
@@ -126,7 +136,7 @@ function InsightHeader({ item }: { item: LearningInsightItem }) {
   const label = item.kind === 'word' ? '场景词汇' : item.kind === 'chunk' ? '核心 Chunk' : '句型骨架'
 
   return (
-    <div className="border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 py-5 md:px-6">
+    <div className="border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-5 pt-12 md:px-6">
       <div className="flex items-start gap-3">
         <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-5" />
