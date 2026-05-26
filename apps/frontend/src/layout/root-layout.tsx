@@ -25,7 +25,12 @@ export function RootLayout() {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
 
   return (
-    <div className={cn('flex min-h-screen flex-col bg-background text-foreground', !isHomePage && 'pt-safe')}>
+    <div
+      className={cn(
+        'flex min-h-screen flex-col bg-background text-foreground',
+        !isHomePage && !immersiveMode && 'app-surface pt-safe',
+      )}
+    >
       {!isAuthPage && (
         <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
           <Header />

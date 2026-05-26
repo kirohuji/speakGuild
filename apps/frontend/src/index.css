@@ -33,7 +33,7 @@
     --brand-text-tertiary:  210 16% 60%;  /* #8A98AA */
     --brand-border:         211 37% 90%;  /* #DCE5EF */
     --brand-divider:        212 39% 93.5%;/* #E8EEF5 */
-    --brand-page-bg:        214 54% 97.5%;/* #F5F8FC */
+    --brand-page-bg:        156 43% 97%;  /* #F4FAF7 */
     --brand-card-bg:        0 0% 100%;     /* #FFFFFF */
 
     /* ── 功能状态色 ── */
@@ -208,6 +208,24 @@
   /* 磨砂玻璃 */
   .glass {
     @apply backdrop-blur-xl bg-background/70;
+  }
+
+  .app-surface {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 18% 0%, hsl(166 56% 88% / 0.48), transparent 28rem),
+      radial-gradient(circle at 88% 10%, hsl(207 86% 92% / 0.58), transparent 24rem),
+      linear-gradient(180deg, hsl(156 43% 97%) 0%, hsl(204 56% 98%) 52%, hsl(0 0% 100%) 100%);
+    background-attachment: fixed;
+  }
+
+  .dark .app-surface {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 50% 0%, hsl(0 0% 100% / 0.08), transparent 22rem),
+      radial-gradient(circle at 18% 14%, hsl(330 84% 62% / 0.14), transparent 26rem),
+      radial-gradient(circle at 88% 76%, hsl(42 96% 60% / 0.08), transparent 26rem),
+      linear-gradient(155deg, hsl(252 43% 5%) 0%, hsl(258 36% 10%) 50%, hsl(336 36% 11%) 100%);
   }
 
   /* iOS 底部安全区 */
