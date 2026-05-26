@@ -14,9 +14,25 @@ const HOME_SCENE = {
   author: 'Ludwig Wittgenstein',
 }
 
+function useClock() {
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const hours = now.getHours().toString().padStart(2, '0')
+  const minutes = now.getMinutes().toString().padStart(2, '0')
+  const period = now.getHours() < 12 ? '上午' : '下午'
+
+  return { hours, minutes, period }
+}
+
 export function EnglishHomePage() {
   const { session } = useAuth()
   const [loading, setLoading] = useState(true)
+  const clock = useClock()
 
   useEffect(() => {
     setLoading(false)
@@ -48,7 +64,7 @@ export function EnglishHomePage() {
   return (
     <div className="mx-auto max-w-2xl overflow-hidden">
       <motion.section
-        className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#bcece4_0%,#e4f6ef_48%,#ffffff_100%)] px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground"
+        className="relative flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden bg-[linear-gradient(180deg,#bcece4_0%,#e4f6ef_48%,#ffffff_100%)] px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground"
         style={{
           backgroundImage:
             'radial-gradient(ellipse at 50% 8%, rgba(255,255,255,.62), transparent 34%), linear-gradient(180deg,#bcece4 0%,#e4f6ef 48%,#ffffff 100%)',
@@ -124,6 +140,29 @@ export function EnglishHomePage() {
             transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
+
+        {/* 时钟 */}
+        <motion.div
+          className="flex items-baseline gap-1.5"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span
+            className="text-[28px] font-semibold tracking-[0.02em] text-slate-700"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
+            {clock.hours}
+          </span>
+          <span className="text-[24px] font-light text-slate-400 animate-pulse">:</span>
+          <span
+            className="text-[28px] font-semibold tracking-[0.02em] text-slate-700"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
+            {clock.minutes}
+          </span>
+          <span className="ml-1 text-[12px] font-medium text-slate-500/70">{clock.period}</span>
+        </motion.div>
 
         <motion.div
           className="relative w-full max-w-[330px] rounded-[30px] border border-white/75 bg-white/48 px-6 py-7 text-center shadow-[0_24px_80px_rgba(42,105,96,.18)] backdrop-blur-2xl"
