@@ -86,10 +86,15 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
   )
 
   const resumeAfterInput = useCallback(
-    (userInput?: string) => {
+    (userInput?: string, variables?: Record<string, any>) => {
       if (!engineRef.current) return
       if (userInput) {
         engineRef.current.setVariable('user_last_input', userInput)
+      }
+      if (variables) {
+        Object.entries(variables).forEach(([key, value]) => {
+          engineRef.current?.setVariable(key, value)
+        })
       }
       setIsWaiting(false)
       advanceStory(engineRef.current)

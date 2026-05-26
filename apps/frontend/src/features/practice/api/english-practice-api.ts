@@ -164,6 +164,25 @@ export const practiceAiApi = {
     objectives?: string[]
     coreChunks?: string[]
   }) => api.post<any, { analysis: any; raw: string }>('/practice-ai/dialogue-summary', dto),
+
+  judgeDialogueTurn: (dto: {
+    topicId: string
+    inputNodeId?: string
+    npcText: string
+    userText: string
+    expectedIntent?: string
+    objectives?: string[]
+    targetChunks?: string[]
+  }) => api.post<any, {
+    intent: string
+    passed: boolean
+    objectiveCompleted: string[]
+    chunksUsed: string[]
+    inkVariables: Record<string, string | number | boolean>
+    feedback: string
+    confidence: number
+    raw?: string
+  }>('/practice-ai/dialogue-turn', dto),
 }
 
 // ---- 表达库 ----

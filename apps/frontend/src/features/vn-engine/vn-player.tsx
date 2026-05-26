@@ -1,12 +1,23 @@
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
-import { History, RotateCcw } from 'lucide-react'
+import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
+import { History, RotateCcw, Settings, SkipBack } from 'lucide-react'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 
 export interface VnPlayerLine {
   speaker?: string
   text: string
   isUser?: boolean
+  translation?: string
 }
 
 export interface VnPlayerChoice {
@@ -36,6 +47,34 @@ interface VnPlayerProps {
   className?: string
   stageClassName?: string
   showHistoryButton?: boolean
+}
+
+interface VnPlayerSettings {
+  fontSize: number
+  autoAdvance: boolean
+  autoAdvanceDelay: number
+  bilingual: boolean
+}
+
+const DEFAULT_SETTINGS: VnPlayerSettings = {
+  fontSize: 14,
+  autoAdvance: false,
+  autoAdvanceDelay: 2.5,
+  bilingual: false,
+}
+
+const SETTINGS_STORAGE_KEY = 'vn-player-settings'
+
+function loadVnPlayerSettings(): VnPlayerSettings {
+  if (typeof window === 'undefined') return DEFAULT_SETTINGS
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (!raw) return DEFAULT_SETTINGS
+    const saved = JSON.parse(raw) as Partial<VnPlayerSettings>
+    return { ...DEFAULT_SETTINGS, ...saved }
+  } catch {
+    return DEFAULT_SETTINGS
+  }
 }
 
 export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
@@ -368,9 +407,24 @@ export function VnPlayer({
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settings, setSettings] = useState<VnPlayerSettings>(() => loadVnPlayerSettings())
+  const [reviewLineIndex, setReviewLineIndex] = useState<number | null>(null)
   const [displayedText, setDisplayedText] = useState(currentLine?.text ?? '')
   const typewriterTimerRef = useRef<number | null>(null)
-  const fullText = currentLine?.text ?? ''
+  const autoAdvanceTimerRef = useRef<number | null>(null)
+  const lineIndex = reviewLineIndex ?? Math.max(history.length - 1, 0)
+  const reviewLine = reviewLineIndex !== null ? history[reviewLineIndex] : null
+  const activeLine = reviewLine ?? currentLine
+  const fullText = activeLine?.text ?? ''
+
+  useEffect(() => {
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+  }, [settings])
+
+  useEffect(() => {
+    setReviewLineIndex(null)
+  }, [currentLine?.text, currentLine?.speaker])
 
   useEffect(() => {
     if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
@@ -402,8 +456,28 @@ export function VnPlayer({
     toggleHistory: (open?: boolean) => toggleHistory(open ?? !historyOpen),
   }), [historyOpen])
   const isTyping = !!fullText && displayedText.length < fullText.length
-  const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !isTyping
-  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen
+  const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
+  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen
+
+  useEffect(() => {
+    if (autoAdvanceTimerRef.current !== null) window.clearTimeout(autoAdvanceTimerRef.current)
+    if (!settings.autoAdvance || !canAdvance) return
+
+    const timer = window.setTimeout(() => {
+      onAdvance?.()
+    }, settings.autoAdvanceDelay * 1000)
+    autoAdvanceTimerRef.current = timer
+
+    return () => {
+      window.clearTimeout(timer)
+      if (autoAdvanceTimerRef.current === timer) autoAdvanceTimerRef.current = null
+    }
+  }, [canAdvance, onAdvance, settings.autoAdvance, settings.autoAdvanceDelay, fullText])
+
+  const goToPreviousLine = () => {
+    if (history.length <= 1) return
+    setReviewLineIndex(Math.max(0, lineIndex - 1))
+  }
 
   return (
     <div className={cn('relative mx-auto flex h-full w-full max-w-[520px] flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border', className)}>
@@ -414,6 +488,10 @@ export function VnPlayer({
         className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', canInteract && 'cursor-pointer', stageClassName)}
         onClick={() => {
           if (!canInteract) return
+          if (reviewLineIndex !== null) {
+            setReviewLineIndex(null)
+            return
+          }
           if (isTyping) {
             if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
             typewriterTimerRef.current = null
@@ -425,6 +503,10 @@ export function VnPlayer({
         onKeyDown={(event) => {
           if (canInteract && (event.key === 'Enter' || event.key === ' ')) {
             event.preventDefault()
+            if (reviewLineIndex !== null) {
+              setReviewLineIndex(null)
+              return
+            }
             if (isTyping) {
               if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
               typewriterTimerRef.current = null
@@ -438,42 +520,42 @@ export function VnPlayer({
         <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
 
         {(showHistoryButton || onReset) && (
-        <div className="absolute right-3 top-3 z-30 flex gap-2">
-          {showHistoryButton && (
-            <span
-              role="button"
-              tabIndex={0}
-              className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
-              onClick={(event) => { event.stopPropagation(); toggleHistory(!historyOpen) }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  toggleHistory(!historyOpen)
-                }
-              }}
-            >
-              <History className="size-4" />
-            </span>
-          )}
-          {onReset && (
-            <span
-              role="button"
-              tabIndex={0}
-              className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
-              onClick={(event) => { event.stopPropagation(); onReset() }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  onReset()
-                }
-              }}
-            >
-              <RotateCcw className="size-4" />
-            </span>
-          )}
-        </div>
+          <div className="absolute right-3 top-3 z-30 flex gap-2">
+            {showHistoryButton && (
+              <span
+                role="button"
+                tabIndex={0}
+                className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+                onClick={(event) => { event.stopPropagation(); toggleHistory(!historyOpen) }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    toggleHistory(!historyOpen)
+                  }
+                }}
+              >
+                <History className="size-4" />
+              </span>
+            )}
+            {onReset && (
+              <span
+                role="button"
+                tabIndex={0}
+                className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+                onClick={(event) => { event.stopPropagation(); onReset() }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    onReset()
+                  }
+                }}
+              >
+                <RotateCcw className="size-4" />
+              </span>
+            )}
+          </div>
         )}
 
         {historyOpen && (
@@ -537,19 +619,36 @@ export function VnPlayer({
         )}
 
         <div className="absolute inset-x-0 bottom-0 z-20">
-          {currentLine?.speaker && (
-            <div className="absolute left-4 top-0 z-10 inline-flex max-w-[82%] -translate-y-1/2 items-center rounded-md border border-white/10 bg-black/58 px-3 py-1 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
-              <span className="truncate text-xs font-semibold text-white/88">{currentLine.speaker}</span>
+          {activeLine?.speaker && (
+            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center rounded-full border border-white/10 bg-black/58 px-3 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
+              <span className="truncate text-xs font-semibold text-white/88">{activeLine.speaker}</span>
             </div>
           )}
-          <div className="max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] overflow-y-auto border-t border-white/10 bg-black/58 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3.5 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
-            {currentLine ? (
-              <p className="text-sm leading-relaxed text-white/92">
+          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/58 px-1 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
+            <VnIconButton
+              label="上一句"
+              disabled={history.length <= 1 || lineIndex <= 0}
+              onClick={goToPreviousLine}
+            >
+              <SkipBack className="size-3.5" />
+            </VnIconButton>
+            <VnIconButton label="播放设置" onClick={() => setSettingsOpen(true)}>
+              <Settings className="size-3.5" />
+            </VnIconButton>
+          </div>
+          <div className="max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] overflow-y-auto border-t border-white/10 bg-black/58 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-6 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
+            {activeLine ? (
+              <div className="space-y-2">
+              <p className="leading-relaxed text-white/92" style={{ fontSize: settings.fontSize }}>
                 {displayedText}
                 {canAdvance && (
                   <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-white/70 align-middle drop-shadow-[0_0_8px_rgba(255,255,255,.42)]" />
                 )}
               </p>
+              {settings.bilingual && activeLine.translation && (
+                <p className="text-xs leading-relaxed text-white/58">{activeLine.translation}</p>
+              )}
+              </div>
             ) : isEnded ? (
               <p className="text-center text-sm text-white/62">故事结束</p>
             ) : isWaiting ? (
@@ -560,6 +659,125 @@ export function VnPlayer({
           </div>
         </div>
       </div>
+      <VnSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSettingsChange={setSettings}
+      />
+    </div>
+  )
+}
+
+function VnIconButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string
+  disabled?: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      className="flex size-7 items-center justify-center rounded-full text-white/78 transition-colors hover:bg-white/12 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+      onClick={(event) => {
+        event.stopPropagation()
+        onClick()
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function VnSettingsDialog({
+  open,
+  onOpenChange,
+  settings,
+  onSettingsChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  settings: VnPlayerSettings
+  onSettingsChange: (settings: VnPlayerSettings) => void
+}) {
+  const update = (patch: Partial<VnPlayerSettings>) => onSettingsChange({ ...settings, ...patch })
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>播放设置</DialogTitle>
+          <DialogDescription>这些设置会同时用于预览和练习对话。</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>字体大小</Label>
+              <span className="text-xs tabular-nums text-muted-foreground">{settings.fontSize}px</span>
+            </div>
+            <Slider
+              min={12}
+              max={22}
+              step={1}
+              value={[settings.fontSize]}
+              onValueChange={([fontSize]) => update({ fontSize })}
+            />
+          </div>
+
+          <SettingSwitch
+            label="自动下一句"
+            checked={settings.autoAdvance}
+            onCheckedChange={(autoAdvance) => update({ autoAdvance })}
+          />
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>自动间隔</Label>
+              <span className="text-xs tabular-nums text-muted-foreground">{settings.autoAdvanceDelay.toFixed(1)} 秒</span>
+            </div>
+            <Slider
+              min={1}
+              max={8}
+              step={0.5}
+              value={[settings.autoAdvanceDelay]}
+              onValueChange={([autoAdvanceDelay]) => update({ autoAdvanceDelay })}
+              disabled={!settings.autoAdvance}
+            />
+          </div>
+
+          <SettingSwitch
+            label="双语显示"
+            checked={settings.bilingual}
+            onCheckedChange={(bilingual) => update({ bilingual })}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SettingSwitch({
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  label: string
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <Label>{label}</Label>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   )
 }

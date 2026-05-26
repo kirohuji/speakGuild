@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, Component, type Reac
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mic, MicOff, BookOpen, Send, Play, Info,
-  Lightbulb, CheckCircle2, RotateCcw, ChevronRight, History,
+  Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,6 +28,37 @@ function compilePracticeInk(inkSource?: string | null, fallbackJson?: Record<str
     if (result.success && result.json) return result.json
   }
   return fallbackJson ?? null
+}
+
+function readTagValue(tags: string[], prefix: string) {
+  const raw = tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length).trim()
+  if (!raw) return undefined
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
+function readInputNodeId(tags: string[]) {
+  const inputTag = readTagValue(tags, 'input:')
+  if (!inputTag) return undefined
+  return inputTag.match(/(?:^|[;,]\s*)id=([^;,]+)/)?.[1]?.trim() || inputTag
+}
+
+function readExpectedIntent(tags: string[]) {
+  const judgeTag = readTagValue(tags, 'judge:')
+  if (!judgeTag) return undefined
+  return judgeTag.match(/(?:^|[;,]\s*)intent=([^;,]+)/)?.[1]?.trim() || judgeTag
+}
+
+function readListTags(tags: string[], prefix: string) {
+  return tags
+    .filter((tag) => tag.startsWith(prefix))
+    .flatMap((tag) => {
+      const value = readTagValue([tag], prefix)
+      return value ? value.split(/[|,]/).map((item) => item.trim()).filter(Boolean) : []
+    })
 }
 
 function decodeTagValue(value?: string) {
@@ -337,11 +368,12 @@ export function PracticeSessionPage() {
   }
 
   // ==================== Practice: Send Input ====================
-  const sendUserInput = useCallback((text: string) => {
+  const sendUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return
 
     const round = dialogueRounds.length + 1
     const userMsg = text.trim()
+    const npcText = dialogueRounds[dialogueRounds.length - 1]?.text ?? ''
 
     setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
     setTranscript('')
@@ -356,14 +388,43 @@ export function PracticeSessionPage() {
 
     // If using Ink engine
     if (inkJson) {
+      let objectiveCompleted = [...completedObjectives]
+      let chunksUsedForRound = [...usedChunks]
+      let inkVariables: Record<string, string | number | boolean> | undefined
+
+      try {
+        const judgement = await practiceAiApi.judgeDialogueTurn({
+          topicId: topicId!,
+          inputNodeId: readInputNodeId(currentTags),
+          npcText,
+          userText: userMsg,
+          expectedIntent: readExpectedIntent(currentTags),
+          objectives: readListTags(currentTags, 'objective:').length ? readListTags(currentTags, 'objective:') : objectives,
+          targetChunks: readListTags(currentTags, 'chunks:').length ? readListTags(currentTags, 'chunks:') : coreChunkTexts.map((chunk) => chunk.text),
+        })
+
+        objectiveCompleted = judgement.objectiveCompleted ?? objectiveCompleted
+        chunksUsedForRound = judgement.chunksUsed ?? chunksUsedForRound
+        inkVariables = judgement.inkVariables
+
+        if (objectiveCompleted.length) {
+          setCompletedObjectives((prev) => new Set([...prev, ...objectiveCompleted]))
+        }
+        if (chunksUsedForRound.length) {
+          setUsedChunks((prev) => new Set([...prev, ...chunksUsedForRound]))
+        }
+      } catch {
+        // Keep the scripted flow moving even if AI judgement is temporarily unavailable.
+      }
+
       practiceApi.submitDialogue(topicId!, {
         round,
-        npcText: dialogueRounds[dialogueRounds.length - 1]?.text ?? '',
+        npcText,
         userText: userMsg,
-        objectivesCompleted: [...completedObjectives],
-        chunksUsed: [...usedChunks],
+        objectivesCompleted: objectiveCompleted,
+        chunksUsed: chunksUsedForRound,
       }).catch(() => {})
-      resumeAfterInput(userMsg)
+      resumeAfterInput(userMsg, inkVariables)
       return
     }
 
@@ -374,12 +435,12 @@ export function PracticeSessionPage() {
       `Great point! What else comes to mind?`,
       `I understand. Let me ask you another question—why do you think that is?`,
     ]
-    const npcText = npcResponses[fallbackRound % npcResponses.length]
+    const fallbackNpcText = npcResponses[fallbackRound % npcResponses.length]
 
     setTimeout(() => {
       setDialogueRounds((prev) => [
         ...prev,
-        { speaker: fallbackNpcName, text: npcText, isNpc: true },
+        { speaker: fallbackNpcName, text: fallbackNpcText, isNpc: true },
       ])
       setFallbackRound((r) => r + 1)
 
@@ -398,7 +459,7 @@ export function PracticeSessionPage() {
       const idx = fallbackRound % objectives.length
       setCompletedObjectives((prev) => new Set([...prev, objectives[idx]]))
     }
-  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName])
+  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags])
 
   const handleSendText = () => {
     if (!inputText.trim()) return
@@ -672,15 +733,7 @@ export function PracticeSessionPage() {
             triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center rounded-full bg-white/12 px-3 text-xs font-semibold text-white/88 shadow-none transition-all duration-200 hover:bg-white/18 hover:text-white active:scale-[0.97]"
           />
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => vnPlayerRef.current?.toggleHistory()}
-            className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white disabled:opacity-35"
-            aria-label="历史记录"
-          >
-            <History className="size-3.5" />
-          </Button>
+          <span aria-hidden className="h-7 w-[72px]" />
           </div>
         </div>
 
@@ -702,7 +755,6 @@ export function PracticeSessionPage() {
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
               onHistoryOpenChange={setIsHistoryOpen}
-              showHistoryButton={false}
             />
           </VnPlayerBoundary>
         </div>

@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText, generateText } from 'ai';
 import type { Response } from 'express';
-import { EnglishFeedbackDto, EnglishUpgradeDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, EnglishFeedbackDto, EnglishUpgradeDto } from './dto/english-feedback.dto';
 
 const LEVEL_DESCRIPTIONS: Record<string, string> = {
   L1: '能说简单单句，但容易卡住',
@@ -156,6 +156,93 @@ ${dto.userTranscript}
     });
 
     return { result: result.text };
+  }
+
+  /** 单轮 NPC 对话输入判定：把开放式用户输入转换为 Ink 可消费的变量 */
+  async judgeDialogueTurn(dto: DialogueTurnJudgeDto) {
+    const provider = this.getProvider();
+    const objectives = dto.objectives?.length ? dto.objectives : ['respond_to_npc'];
+    const targetChunks = dto.targetChunks ?? [];
+
+    const system = `You evaluate one turn in an English speaking practice dialogue.
+Return only JSON. Be practical and learner-friendly.
+Determine whether the user's message satisfies the expected communicative intent, which objectives it completes, and which target chunks are naturally used.
+Use short snake_case strings for intent and Ink variables.`;
+
+    const user = `## Context
+Input node: ${dto.inputNodeId ?? 'unknown'}
+Expected intent: ${dto.expectedIntent ?? 'infer_from_context'}
+NPC says: ${dto.npcText}
+
+## Practice objectives
+${objectives.map((item, index) => `${index + 1}. ${item}`).join('\n')}
+
+## Target chunks
+${targetChunks.length ? targetChunks.join('\n') : 'None'}
+
+## User response
+${dto.userText}
+
+Return this exact JSON shape:
+{
+  "intent": "short_snake_case_intent",
+  "passed": true,
+  "objectiveCompleted": ["objective text from the list"],
+  "chunksUsed": ["target chunk text from the list"],
+  "inkVariables": {
+    "objective_done": true,
+    "user_intent": "short_snake_case_intent",
+    "needs_retry": false
+  },
+  "feedback": "中文一句话反馈",
+  "confidence": 0.86
+}`;
+
+    const result = await generateText({
+      model: provider('deepseek-chat'),
+      system,
+      prompt: user,
+      temperature: 0.2,
+      maxOutputTokens: 900,
+    });
+
+    const jsonText = result.text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? result.text;
+    try {
+      const parsed = JSON.parse(jsonText);
+      const intent = String(parsed.intent || dto.expectedIntent || 'unknown');
+      const passed = Boolean(parsed.passed);
+      return {
+        intent,
+        passed,
+        objectiveCompleted: Array.isArray(parsed.objectiveCompleted) ? parsed.objectiveCompleted : [],
+        chunksUsed: Array.isArray(parsed.chunksUsed) ? parsed.chunksUsed : [],
+        inkVariables: {
+          objective_done: passed,
+          user_intent: intent,
+          needs_retry: !passed,
+          ...(parsed.inkVariables && typeof parsed.inkVariables === 'object' ? parsed.inkVariables : {}),
+        },
+        feedback: String(parsed.feedback || ''),
+        confidence: Number(parsed.confidence ?? 0),
+        raw: result.text,
+      };
+    } catch {
+      const fallbackIntent = dto.expectedIntent || 'unknown';
+      return {
+        intent: fallbackIntent,
+        passed: false,
+        objectiveCompleted: [],
+        chunksUsed: [],
+        inkVariables: {
+          objective_done: false,
+          user_intent: fallbackIntent,
+          needs_retry: true,
+        },
+        feedback: '暂时无法稳定判断这一轮回答，请再试一次。',
+        confidence: 0,
+        raw: result.text,
+      };
+    }
   }
 
   /** 构建对话汇总分析 Prompt */

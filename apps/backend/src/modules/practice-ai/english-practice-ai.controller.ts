@@ -2,7 +2,7 @@ import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
 import type { Request } from 'express';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
-import { EnglishFeedbackDto, EnglishUpgradeDto, DialogueSummaryDto } from './dto/english-feedback.dto';
+import { DialogueSummaryDto, DialogueTurnJudgeDto, EnglishFeedbackDto, EnglishUpgradeDto } from './dto/english-feedback.dto';
 import { EnglishPracticeService } from '../practice/english-practice.service';
 import { requireAuthSession } from '../auth/session.util';
 
@@ -24,6 +24,13 @@ export class EnglishPracticeAiController {
   @Post('upgrade')
   async upgradeExpression(@Body() dto: EnglishUpgradeDto) {
     return this.service.upgradeExpression(dto);
+  }
+
+  /** 单轮开放式 NPC 对话输入判定 */
+  @Post('dialogue-turn')
+  async judgeDialogueTurn(@Req() req: Request, @Body() dto: DialogueTurnJudgeDto) {
+    await requireAuthSession(req);
+    return this.service.judgeDialogueTurn(dto);
   }
 
   /** 对话汇总分析 */
