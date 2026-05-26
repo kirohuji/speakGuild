@@ -117,6 +117,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     isEnded,
     isWaiting,
     currentTags,
+    advanceStory: () => engineRef.current && advanceStory(engineRef.current),
     handleChoice,
     resumeAfterInput,
     getVariable,

@@ -1,22 +1,17 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Mic, MicOff, Sparkles, BookOpen, Send, Play, Info,
+  ArrowLeft, Mic, MicOff, BookOpen, Send, Play, Info,
   Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/cn'
-import { VnScene } from '@/features/vn-engine/vn-scene'
-import { DialogueBox } from '@/features/vn-engine/dialogue-box'
-import { ChoiceButtons } from '@/features/vn-engine/choice-buttons'
-import { useInkStory, type InkLine, type InkChoice } from '@/features/vn-engine/use-ink-story'
+import { VnPlayer } from '@/features/vn-engine/vn-player'
+import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
@@ -52,7 +47,6 @@ export function PracticeSessionPage() {
   const [inputText, setInputText] = useState('')
   const [transcript, setTranscript] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Fallback NPC dialogue (when no Ink script)
   const [fallbackRound, setFallbackRound] = useState(0)
@@ -140,12 +134,10 @@ export function PracticeSessionPage() {
   const {
     lines: inkLines,
     choices: inkChoices,
-    isEnded: inkEnded,
     isWaiting: inkWaiting,
-    currentTags,
+    advanceStory,
     handleChoice,
     resumeAfterInput,
-    getVariable,
   } = useInkStory(inkJson, { onExternalFunction: handleExternalFn })
 
   // Sync Ink lines to dialogue display
@@ -158,11 +150,6 @@ export function PracticeSessionPage() {
     }))
     setDialogueRounds(newDialogues)
   }, [inkLines, fallbackNpcName])
-
-  // Auto-scroll
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [dialogueRounds, transcript])
 
   // Fallback NPC greeting when no Ink script
   useEffect(() => {
@@ -525,6 +512,7 @@ export function PracticeSessionPage() {
   if (phase === 'practice') {
     const showInkChoices = inkChoices.length > 0
     const isInputDisabled = isRecording || showInkChoices
+    const currentLine = dialogueRounds[dialogueRounds.length - 1]
 
     return (
       <div className="relative flex h-dvh flex-col bg-background">
@@ -556,58 +544,34 @@ export function PracticeSessionPage() {
           <div className="w-[68px]" />
         </div>
 
-        {/* VN Scene */}
-        <VnScene className="min-h-0 flex-1 rounded-none border-none">
-          <ScrollArea className="max-h-full pr-2 pt-10 pb-1">
-            <div className="space-y-3">
-              {/* Dialogues */}
-              {dialogueRounds.map((msg, i) => (
-                <div key={i} className={msg.isNpc ? 'flex justify-start' : 'flex justify-end'}>
-                  {msg.isNpc ? (
-                    <DialogueBox
-                      speaker={msg.speaker}
-                      text={msg.text}
-                      isCurrent={i === dialogueRounds.length - 1}
-                      className="max-w-[85%]"
-                    />
-                  ) : (
-                    <div className="max-w-[85%] rounded-2xl bg-primary/15 px-4 py-2.5">
-                      <p className="text-sm text-foreground">{msg.text}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{msg.speaker}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+        <div className="min-h-0 flex-1 bg-black">
+          <VnPlayer
+            className="h-full max-w-none rounded-none border-none"
+            stageClassName="min-h-0"
+            currentLine={currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
+            history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
+            choices={inkChoices}
+            isWaiting={inkWaiting}
+            onChoice={handleChoice}
+            onAdvance={inkJson ? advanceStory : undefined}
+          />
+        </div>
 
-              {/* Ink choices */}
-              {showInkChoices && (
-                <div className="px-2">
-                  <ChoiceButtons choices={inkChoices} onSelect={handleChoice} />
-                </div>
-              )}
-
-              {/* Recording indicator */}
-              {isRecording && (
-                <div className="flex items-center justify-center gap-2 rounded-lg bg-destructive/10 py-3">
-                  <Mic className="size-4 animate-pulse text-destructive" />
-                  <span className="text-sm text-destructive">正在录音...</span>
-                </div>
-              )}
-
-              {/* Transcript preview */}
-              {transcript && !isRecording && (
-                <div className="flex justify-end">
-                  <div className="max-w-[85%] rounded-xl bg-muted px-4 py-2">
-                    <p className="text-sm text-foreground">{transcript}</p>
-                    <p className="text-xs text-muted-foreground">转写预览</p>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-        </VnScene>
+        {(isRecording || transcript) && (
+          <div className="absolute inset-x-4 bottom-24 z-40 rounded-xl border border-border/60 bg-background/92 p-3 shadow-lg backdrop-blur-md">
+            {isRecording ? (
+              <div className="flex items-center justify-center gap-2 text-sm text-destructive">
+                <Mic className="size-4 animate-pulse" />
+                正在录音...
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-foreground">{transcript}</p>
+                <p className="mt-1 text-xs text-muted-foreground">转写预览</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Input area */}
         <div className="px-3 pb-3 pt-2" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))' }}>

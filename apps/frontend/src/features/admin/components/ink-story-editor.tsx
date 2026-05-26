@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Eye, Wand2, AlertTriangle, MapPin, MessageSquare, GitBranch, UserRound } from 'lucide-react'
+import { Eye, Wand2, AlertTriangle, MapPin, MessageSquare, GitBranch, UserRound, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { compileInk, extractInkMeta, defaultInkTemplate } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
@@ -47,31 +47,32 @@ const INK_SYNTAX_HINT = `Ink 语法速查：
 {var}  显示变量    ~ temp  临时变量    VAR x = 0  全局变量`
 
 type VisualScriptItem =
-  | { type: 'knot'; name: string }
-  | { type: 'line'; speaker?: string; text: string; tags: string[] }
-  | { type: 'choice'; text: string; target?: string }
-  | { type: 'tag'; value: string }
-  | { type: 'divert'; target: string }
+  | { type: 'knot'; name: string; lineNumber: number; raw: string }
+  | { type: 'line'; speaker?: string; text: string; tags: string[]; lineNumber: number; raw: string }
+  | { type: 'choice'; text: string; target?: string; lineNumber: number; raw: string }
+  | { type: 'tag'; value: string; lineNumber: number; raw: string }
+  | { type: 'divert'; target: string; lineNumber: number; raw: string }
 
 function parseVisualScript(source: string): VisualScriptItem[] {
   const { remainingSource } = extractInkMeta(source)
   const items: VisualScriptItem[] = []
   let tags: string[] = []
 
-  for (const rawLine of remainingSource.split('\n')) {
+  for (const [lineIndex, rawLine] of remainingSource.split('\n').entries()) {
+    const lineNumber = lineIndex + 1
     const line = rawLine.trim()
     if (!line || line.startsWith('//')) continue
 
     const knot = line.match(/^={3,}\s*([^=]+?)\s*={3,}$/)
     if (knot) {
-      items.push({ type: 'knot', name: knot[1].trim() })
+      items.push({ type: 'knot', name: knot[1].trim(), lineNumber, raw: rawLine })
       tags = []
       continue
     }
 
     if (line.startsWith('#')) {
       const value = line.slice(1).trim()
-      items.push({ type: 'tag', value })
+      items.push({ type: 'tag', value, lineNumber, raw: rawLine })
       tags = [...tags, value]
       continue
     }
@@ -79,12 +80,12 @@ function parseVisualScript(source: string): VisualScriptItem[] {
     const choice = line.match(/^\*\s*(.+?)(?:\s*->\s*(.+))?$/)
     if (choice) {
       const text = choice[1].trim().replace(/^\[(.*)\]$/, '$1')
-      items.push({ type: 'choice', text, target: choice[2]?.trim() })
+      items.push({ type: 'choice', text, target: choice[2]?.trim(), lineNumber, raw: rawLine })
       continue
     }
 
     if (line.startsWith('->')) {
-      items.push({ type: 'divert', target: line.replace(/^->\s*/, '').trim() })
+      items.push({ type: 'divert', target: line.replace(/^->\s*/, '').trim(), lineNumber, raw: rawLine })
       continue
     }
 
@@ -94,6 +95,8 @@ function parseVisualScript(source: string): VisualScriptItem[] {
       speaker: spoken?.[1]?.trim(),
       text: spoken?.[2]?.trim() ?? line,
       tags,
+      lineNumber,
+      raw: rawLine,
     })
     tags = []
   }
@@ -150,6 +153,8 @@ export function InkStoryEditor({
   const [visualLine, setVisualLine] = useState('')
   const [visualChoice, setVisualChoice] = useState('')
   const [visualChoiceTarget, setVisualChoiceTarget] = useState('END')
+  const [selectedLineNumber, setSelectedLineNumber] = useState<number | null>(null)
+  const [selectedLineText, setSelectedLineText] = useState('')
 
   // Compile on source change
   const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
@@ -224,6 +229,41 @@ export function InkStoryEditor({
 
   const appendToSource = useCallback((block: string) => {
     setSource((prev) => `${prev.trimEnd()}\n\n${block.trim()}\n`)
+  }, [])
+
+  const replaceVisualLine = useCallback(() => {
+    if (!selectedLineNumber) return
+    const { remainingSource, ...meta } = extractInkMeta(source)
+    const lines = remainingSource.split('\n')
+    lines[selectedLineNumber - 1] = selectedLineText
+    const metaLines = ['---']
+    if (meta.key) metaLines.push(`key: ${meta.key}`)
+    if (meta.title) metaLines.push(`title: ${meta.title}`)
+    if (meta.locationId) metaLines.push(`locationId: ${meta.locationId}`)
+    if (meta.characterId) metaLines.push(`characterId: ${meta.characterId}`)
+    metaLines.push('---', '')
+    setSource(`${metaLines.join('\n')}${lines.join('\n')}`)
+  }, [selectedLineNumber, selectedLineText, source])
+
+  const deleteVisualLine = useCallback(() => {
+    if (!selectedLineNumber) return
+    const { remainingSource, ...meta } = extractInkMeta(source)
+    const lines = remainingSource.split('\n')
+    lines.splice(selectedLineNumber - 1, 1)
+    const metaLines = ['---']
+    if (meta.key) metaLines.push(`key: ${meta.key}`)
+    if (meta.title) metaLines.push(`title: ${meta.title}`)
+    if (meta.locationId) metaLines.push(`locationId: ${meta.locationId}`)
+    if (meta.characterId) metaLines.push(`characterId: ${meta.characterId}`)
+    metaLines.push('---', '')
+    setSource(`${metaLines.join('\n')}${lines.join('\n')}`)
+    setSelectedLineNumber(null)
+    setSelectedLineText('')
+  }, [selectedLineNumber, source])
+
+  const selectVisualItem = useCallback((item: VisualScriptItem) => {
+    setSelectedLineNumber(item.lineNumber)
+    setSelectedLineText(item.raw)
   }, [])
 
   const applyLocationBackground = useCallback(() => {
@@ -343,12 +383,21 @@ export function InkStoryEditor({
                     {visualScriptItems.length === 0 ? (
                       <p className="px-2 py-6 text-center text-xs text-muted-foreground">还没有可显示的脚本内容</p>
                     ) : visualScriptItems.map((item, index) => {
+                      const active = selectedLineNumber === item.lineNumber
+                      const itemClass = cn(
+                        'w-full rounded text-left transition-colors hover:bg-muted/60',
+                        active && 'bg-primary/10 ring-1 ring-primary/20',
+                      )
                       if (item.type === 'knot') {
-                        return <div key={index} className="rounded bg-muted px-2 py-1 font-mono text-xs font-semibold">=== {item.name} ===</div>
+                        return (
+                          <button key={index} type="button" className={cn(itemClass, 'bg-muted px-2 py-1 font-mono text-xs font-semibold')} onClick={() => selectVisualItem(item)}>
+                            === {item.name} ===
+                          </button>
+                        )
                       }
                       if (item.type === 'line') {
                         return (
-                          <div key={index} className="rounded border border-border/60 px-2 py-1.5">
+                          <button key={index} type="button" className={cn(itemClass, 'border border-border/60 px-2 py-1.5')} onClick={() => selectVisualItem(item)}>
                             <div className="flex items-center gap-2">
                               {item.speaker && <Badge variant="outline" className="text-[10px]">{item.speaker}</Badge>}
                               {item.tags.filter((tag) => tag.startsWith('expression:')).map((tag) => (
@@ -356,19 +405,56 @@ export function InkStoryEditor({
                               ))}
                             </div>
                             <p className="mt-1 text-xs leading-relaxed">{item.text}</p>
-                          </div>
+                          </button>
                         )
                       }
                       if (item.type === 'choice') {
-                        return <div key={index} className="rounded bg-primary/5 px-2 py-1 text-xs">选项：{item.text}{item.target ? ` -> ${item.target}` : ''}</div>
+                        return (
+                          <button key={index} type="button" className={cn(itemClass, 'bg-primary/5 px-2 py-1 text-xs')} onClick={() => selectVisualItem(item)}>
+                            选项：{item.text}{item.target ? ` -> ${item.target}` : ''}
+                          </button>
+                        )
                       }
                       if (item.type === 'tag') {
-                        return <div key={index} className="px-2 py-0.5 font-mono text-[11px] text-muted-foreground">#{item.value}</div>
+                        return (
+                          <button key={index} type="button" className={cn(itemClass, 'px-2 py-0.5 font-mono text-[11px] text-muted-foreground')} onClick={() => selectVisualItem(item)}>
+                            #{item.value}
+                          </button>
+                        )
                       }
-                      return <div key={index} className="px-2 py-0.5 font-mono text-[11px] text-muted-foreground">-&gt; {item.target}</div>
+                      return (
+                        <button key={index} type="button" className={cn(itemClass, 'px-2 py-0.5 font-mono text-[11px] text-muted-foreground')} onClick={() => selectVisualItem(item)}>
+                          -&gt; {item.target}
+                        </button>
+                      )
                     })}
                   </div>
                 </div>
+
+                {selectedLineNumber && (
+                  <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-sm font-medium">编辑第 {selectedLineNumber} 行</p>
+                      <Button type="button" size="icon-sm" variant="ghost" className="text-destructive" onClick={deleteVisualLine}>
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      className="font-mono text-xs"
+                      value={selectedLineText}
+                      onChange={(e) => setSelectedLineText(e.target.value)}
+                      disabled={readOnly}
+                    />
+                    <div className="mt-2 flex justify-end gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => { setSelectedLineNumber(null); setSelectedLineText('') }}>
+                        取消
+                      </Button>
+                      <Button type="button" size="sm" onClick={replaceVisualLine} disabled={readOnly}>
+                        <Pencil className="size-3.5" />应用修改
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>

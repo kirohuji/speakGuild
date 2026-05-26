@@ -1,10 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { VnScene } from '@/features/vn-engine/vn-scene'
-import { DialogueBox } from '@/features/vn-engine/dialogue-box'
-import { ChoiceButtons } from '@/features/vn-engine/choice-buttons'
 import { InkEngine } from '@/features/vn-engine/ink-engine'
-import { Button } from '@/components/ui/button'
-import { ChevronRight, RotateCcw, Play, AlertTriangle } from 'lucide-react'
+import { VnPlayer } from '@/features/vn-engine/vn-player'
+import { Play, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { compileInk, type CompileResult } from './ink-compiler'
 
@@ -148,7 +145,8 @@ export function VnStoryPreview({
     const engine = engineRef.current
     if (!engine) return
 
-    setHistory((prev) => [...prev, { speaker: 'You', text: choices[choiceIndex]?.text || '(selected)' }])
+    const selectedChoice = choices.find((choice) => choice.index === choiceIndex)
+    setHistory((prev) => [...prev, { speaker: 'You', text: selectedChoice?.text || '(selected)' }])
     engine.choose(choiceIndex)
     setChoices([])
     setIsWaiting(false)
@@ -221,87 +219,20 @@ export function VnStoryPreview({
   }
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      <VnScene backgroundUrl={backgroundUrl} className="min-h-[350px]">
-        {/* Character sprite */}
-        {currentSpriteUrl && (
-          <div
-            className={cn(
-              'absolute bottom-0 z-10 transition-all duration-500 ease-in-out',
-              speakerPosition === 'left' && 'left-8',
-              speakerPosition === 'center' && 'left-1/2 -translate-x-1/2',
-              speakerPosition === 'right' && 'right-8',
-            )}
-            style={{ maxHeight: '70%' }}
-          >
-            <img
-              src={currentSpriteUrl}
-              alt={currentSpeaker}
-              className="max-h-[280px] w-auto object-contain drop-shadow-2xl"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-            {currentExpression && currentExpression !== 'default' && (
-              <div className="absolute -top-2 right-0 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] text-primary-foreground">
-                {currentExpression}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* History (dimmed) */}
-        <div className="mb-auto space-y-1">
-          {history.slice(-3, -1).map((line, i) => (
-            <DialogueBox key={i} speaker={line.speaker || undefined} text={line.text} isCurrent={false} />
-          ))}
-        </div>
-
-        {/* Current line */}
-        {lastLine && !isEnded && (
-          <DialogueBox speaker={lastLine.speaker || undefined} text={lastLine.text} isCurrent={true} />
-        )}
-
-        {/* Choices */}
-        {choices.length > 0 && <ChoiceButtons choices={choices} onSelect={handleChoice} />}
-
-        {/* Continue */}
-        {!isEnded && choices.length === 0 && !isWaiting && (
-          <div className="flex justify-end">
-            <Button variant="ghost" size="sm" onClick={advanceStory} className="gap-1 text-xs text-muted-foreground hover:text-foreground">
-              继续 <ChevronRight className="size-3" />
-            </Button>
-          </div>
-        )}
-
-        {/* Wait */}
-        {isWaiting && (
-          <div className="flex items-center justify-center gap-2 py-2">
-            <span className="inline-block size-2 animate-pulse rounded-full bg-primary/60" />
-            <span className="text-xs text-muted-foreground">等待用户输入...</span>
-            <Button variant="ghost" size="sm" onClick={advanceStory} className="text-xs">跳过</Button>
-          </div>
-        )}
-
-        {/* End */}
-        {isEnded && (
-          <div className="flex flex-col items-center gap-3 py-4">
-            <p className="text-sm font-medium text-muted-foreground">— 故事结束 —</p>
-            <Button variant="outline" size="sm" onClick={resetPreview} className="gap-1.5">
-              <RotateCcw className="size-3.5" />重新播放
-            </Button>
-          </div>
-        )}
-      </VnScene>
-
-      {/* Status */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          {currentSpeaker && <><code className="rounded bg-muted px-1 py-0.5 font-mono">{currentSpeaker}</code> · </>}
-          {currentExpression && <>表情: <code className="rounded bg-muted px-1 py-0.5 font-mono">{currentExpression}</code></>}
-        </span>
-        <Button variant="ghost" size="sm" onClick={resetPreview} className="h-7 gap-1 text-xs">
-          <RotateCcw className="size-3" />重置
-        </Button>
-      </div>
-    </div>
+    <VnPlayer
+      className={className}
+      backgroundUrl={backgroundUrl}
+      currentLine={!isEnded ? lastLine : null}
+      history={history}
+      choices={choices}
+      currentSpriteUrl={currentSpriteUrl}
+      spriteAlt={currentSpeaker}
+      spritePosition={speakerPosition}
+      isWaiting={isWaiting}
+      isEnded={isEnded}
+      onAdvance={advanceStory}
+      onChoice={handleChoice}
+      onReset={resetPreview}
+    />
   )
 }
