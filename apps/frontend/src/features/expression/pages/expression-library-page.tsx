@@ -118,10 +118,7 @@ export function ExpressionLibraryPage() {
         : '暂无已标熟的句块'
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden bg-[linear-gradient(180deg,#e3f5f0_0%,#f7fbf9_44%,#ffffff_100%)]">
-      <div className="pointer-events-none absolute -left-32 top-2 h-72 w-72 rounded-full bg-teal-200/30 blur-3xl" />
-      <div className="pointer-events-none absolute -right-28 top-52 h-80 w-80 rounded-full bg-sky-200/24 blur-3xl" />
-      <div className="relative mx-auto max-w-2xl px-4 pb-24 pt-3">
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
         <Tabs value={libraryTab} onValueChange={(value) => setLibraryTab(value as LibraryTab)}>
           <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
             <TabsTrigger value="words" className="flex-1 rounded-full">单词</TabsTrigger>
@@ -290,7 +287,6 @@ export function ExpressionLibraryPage() {
         setRevealed={setRevealed} userAnswer={userAnswer}
         setUserAnswer={setUserAnswer}
       />
-      </div>
     </div>
   )
 }
