@@ -1,16 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
-  ChevronRight, CheckCircle2, Lock, Sparkles, ArrowRight,
-  ShoppingBag, Play, Info, BookText, MessageSquareText, Mic,
+  ChevronRight, CheckCircle2, Lock, ArrowRight,
+  ShoppingBag, Play, Search, Heart, type LucideIcon,
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -26,7 +25,7 @@ import {
   type MyUnit,
 } from '../api/learning-api'
 
-const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
   '留学生活': GraduationCap,
   '旅行英语': Plane,
   '日常社交': Coffee,
@@ -39,7 +38,6 @@ function getCategoryIcon(name: string) {
 }
 
 export function LearningPlanPage() {
-  const navigate = useNavigate()
   const [tab, setTab] = useState<'learning' | 'shop'>('learning')
 
   // ── "当前学习" 数据 ──
@@ -77,26 +75,18 @@ export function LearningPlanPage() {
   const notStarted = allShopUnits.filter(
     (u) => u.isUnlocked && (u.completionPercent ?? 0) === 0,
   )
-  const locked = allShopUnits.filter((u) => !u.isUnlocked)
 
   // 我的学习数据分组
-  const inProgress = myUnits.filter((u) => u.completionPercent > 0 && u.completionPercent < 100)
+  const inProgress = myUnits.filter((u) => u.completionPercent < 100)
   const completed = myUnits.filter((u) => u.completionPercent >= 100)
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">学习计划</h1>
-        <p className="mt-1 text-muted-foreground">选择教材，系统自动安排每日任务</p>
-      </div>
-
-      {/* Tab */}
-      <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
+    <div className="mx-auto max-w-2xl pb-24">
+      <div className="mb-3 flex gap-1 rounded-full bg-muted p-1">
         <button
           onClick={() => { setTab('learning'); refreshMyUnits() }}
           className={cn(
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            'flex-1 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors',
             tab === 'learning' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
           )}
         >
@@ -110,7 +100,7 @@ export function LearningPlanPage() {
         <button
           onClick={() => { setTab('shop'); refreshShop() }}
           className={cn(
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            'flex-1 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors',
             tab === 'shop' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
           )}
         >
@@ -133,8 +123,7 @@ export function LearningPlanPage() {
         />
       ) : (
         <ShopView
-          notStarted={notStarted}
-          locked={locked}
+          categories={shopCategories}
           loading={shopLoading}
           categoriesEmpty={shopCategories.length === 0}
         />
@@ -275,16 +264,62 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
 // ═══════════════════════════════════════════════════════
 
 function ShopView({
-  notStarted,
-  locked,
+  categories,
   loading,
   categoriesEmpty,
 }: {
-  notStarted: (LearningUnitSummary & { categoryName?: string })[]
-  locked: (LearningUnitSummary & { categoryName?: string })[]
+  categories: LearningCategory[]
   loading: boolean
   categoriesEmpty: boolean
 }) {
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [keyword, setKeyword] = useState('')
+
+  const allUnits = useMemo(
+    () =>
+      categories.flatMap((category) =>
+        category.units.map((unit) => ({
+          ...unit,
+          categoryName: category.name,
+          categoryIcon: category.icon,
+        })),
+      ),
+    [categories],
+  )
+
+  const categoryTabs = useMemo(
+    () => [
+      { id: 'all', label: '全部', count: allUnits.length },
+      ...categories.map((category) => ({
+        id: category.id,
+        label: category.name,
+        count: category.units.length,
+      })),
+    ],
+    [allUnits.length, categories],
+  )
+
+  const filteredUnits = useMemo(() => {
+    const query = keyword.trim().toLowerCase()
+    return allUnits.filter((unit) => {
+      const matchesCategory =
+        activeCategory === 'all' ||
+        categories.find((category) => category.id === activeCategory)?.name === unit.categoryName
+
+      if (!matchesCategory) return false
+      if (!query) return true
+
+      const haystack = [
+        unit.title,
+        unit.location,
+        unit.categoryName,
+        ...unit.topics.map((topic) => topic.title),
+      ].join(' ').toLowerCase()
+
+      return haystack.includes(query)
+    })
+  }, [activeCategory, allUnits, categories, keyword])
+
   if (loading) {
     return <div className="flex min-h-[40vh] items-center justify-center"><Spinner /></div>
   }
@@ -299,35 +334,48 @@ function ShopView({
   }
 
   return (
-    <div className="space-y-6">
-      {notStarted.length > 0 && (
-        <section>
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ShoppingBag className="size-4 text-primary" />
-            可获取的学习单元
-            <Badge variant="secondary" className="text-[10px]">{notStarted.length}</Badge>
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {notStarted.map((unit) => (
-              <ShopCard key={unit.id} unit={unit} />
-            ))}
-          </div>
-        </section>
-      )}
+    <div className="space-y-3">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={keyword}
+          onChange={(event) => setKeyword(event.target.value)}
+          placeholder="搜索学习单元、场景或话题"
+          className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
+        />
+      </div>
 
-      {locked.length > 0 && (
-        <section>
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <Lock className="size-4" />
-            等级解锁
-            <Badge variant="outline" className="text-[10px]">{locked.length}</Badge>
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {locked.map((unit) => (
-              <LockedUnitCard key={unit.id} unit={unit} />
-            ))}
-          </div>
-        </section>
+      <div className="-mx-4 overflow-x-auto px-4">
+        <div className="flex w-max gap-2 pb-1">
+          {categoryTabs.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setActiveCategory(category.id)}
+              className={cn(
+                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
+                activeCategory === category.id
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              {category.label}
+              <span className="ml-1 opacity-70">{category.count}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filteredUnits.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-center">
+          <ShoppingBag className="size-12 text-muted-foreground/40" />
+          <p className="mt-4 text-muted-foreground">没有找到匹配的学习单元</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border/60 rounded-lg bg-card">
+          {filteredUnits.map((unit) => (
+            <ShopCard key={unit.id} unit={unit} />
+          ))}
+        </div>
       )}
     </div>
   )
@@ -339,9 +387,15 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
   const navigate = useNavigate()
   const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
+  const [favorite, setFavorite] = useState(false)
+  const [topicPage, setTopicPage] = useState(1)
+  const pageSize = 6
+  const Icon = unit.isUnlocked ? getCategoryIcon(unit.categoryName ?? '') : Lock
+  const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
+  const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
 
   const handleAcquire = useCallback(async () => {
-    if (acquiring) return
+    if (acquiring || !unit.isUnlocked) return
     setAcquiring(true)
     try {
       await learningApi.startUnit(unit.id)
@@ -350,136 +404,123 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
       // 即使失败也允许跳转
       navigate(`/learning/units/${unit.id}`)
     }
-  }, [unit.id, acquiring, navigate])
+  }, [unit.id, unit.isUnlocked, acquiring, navigate])
 
   return (
     <>
-      <div className="group rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-            <BookOpen className="size-5 text-primary" />
+      <button
+        type="button"
+        onClick={() => { setTopicPage(1); setDetailOpen(true) }}
+        className="flex w-full gap-3 p-3 text-left transition-colors hover:bg-muted/40"
+      >
+        <UnitCover unit={unit} icon={Icon} />
+        <div className="min-w-0 flex-1 py-0.5">
+          <div className="flex items-start gap-2">
+            <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
+            {!unit.isUnlocked && <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
           </div>
-          {unit.categoryName && (
-            <Badge variant="outline" className="text-[10px]">{unit.categoryName}</Badge>
-          )}
-        </div>
-        <h3 className="text-sm font-bold text-foreground group-hover:text-primary">{unit.title}</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
-
-        {/* 话题预览 */}
-        {unit.topics && unit.topics.length > 0 && (
-          <div className="mt-2 space-y-1">
-            {unit.topics.slice(0, 3).map((t) => (
-              <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <span className="size-1 rounded-full bg-primary/40" />
-                <span>{t.title}</span>
-                <Badge variant="outline" className="ml-auto text-[8px]">{t.difficulty}</Badge>
-              </div>
-            ))}
-            {unit.topics.length > 3 && (
-              <p className="text-[9px] text-muted-foreground/60">+{unit.topics.length - 3} 个更多话题</p>
-            )}
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+            {unit.topicCount} 个话题 · {unit.vocabCount} 个词汇 · {unit.chunkCount} 个表达
+          </p>
+          <div className="mt-2 flex items-center gap-1.5">
+            {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
+            <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">
+              Lv.{unit.requiredUserLevel}
+            </Badge>
           </div>
-        )}
-
-        {/* 操作按钮 */}
-        <div className="mt-3 flex items-center gap-2">
-          <Button
-            size="sm"
-            className="flex-1 gap-1 text-xs"
-            disabled={acquiring}
-            onClick={handleAcquire}
-          >
-            {acquiring ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <ArrowRight className="size-3" />
-            )}
-            {acquiring ? '添加中...' : '获取学习'}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="size-8 p-0 text-muted-foreground"
-            onClick={() => setDetailOpen(true)}
-          >
-            <Info className="size-4" />
-            <span className="sr-only">查看详情</span>
-          </Button>
         </div>
-      </div>
+      </button>
 
       {/* 详情弹窗 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-h-[88vh] overflow-hidden p-0 sm:max-w-md">
+          <DialogHeader className="sr-only">
             <DialogTitle>{unit.title}</DialogTitle>
             <DialogDescription>{unit.location}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            {unit.categoryName && (
-              <Badge variant="secondary" className="text-xs">{unit.categoryName}</Badge>
-            )}
-
-            {/* 单元统计 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                <BookText className="size-4 text-blue-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">词汇</p>
-                  <p className="text-sm font-medium text-foreground">{unit.vocabCount} 个</p>
+          <div className="flex max-h-[88vh] flex-col">
+            <div className="flex gap-3 border-b p-4">
+              <UnitCover unit={unit} icon={Icon} className="size-20" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
+                  {!unit.isUnlocked && <Badge variant="outline" className="rounded-full text-[10px]">未解锁</Badge>}
                 </div>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                <MessageSquareText className="size-4 text-purple-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">表达</p>
-                  <p className="text-sm font-medium text-foreground">{unit.chunkCount} 个</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                <Mic className="size-4 text-orange-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">练习话题</p>
-                  <p className="text-sm font-medium text-foreground">{unit.topicCount} 个</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                <Play className="size-4 text-green-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">剧本</p>
-                  <p className="text-sm font-medium text-foreground">{unit.scriptCount} 个</p>
+                <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location}</p>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  <span>{unit.vocabCount} 词汇</span>
+                  <span>{unit.chunkCount} 表达</span>
+                  <span>{unit.topicCount} 话题</span>
                 </div>
               </div>
             </div>
 
-            {/* 全部话题列表 */}
-            {unit.topics && unit.topics.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-medium text-muted-foreground">全部话题</p>
-                <div className="space-y-1.5">
-                  {unit.topics.map((t) => (
-                    <div key={t.id} className="flex items-center gap-2 text-xs text-foreground">
-                      <span className="size-1.5 rounded-full bg-primary/40" />
-                      <span className="flex-1">{t.title}</span>
-                      <Badge variant="outline" className="text-[8px]">{t.difficulty}</Badge>
+            <div className="grid grid-cols-2 gap-2 p-4">
+              <Button
+                variant={favorite ? 'default' : 'outline'}
+                className="gap-2"
+                onClick={() => setFavorite((value) => !value)}
+              >
+                <Heart className={cn('size-4', favorite && 'fill-current')} />
+                收藏
+              </Button>
+              <Button className="gap-2" disabled={!unit.isUnlocked || acquiring} onClick={handleAcquire}>
+                {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
+                {unit.isUnlocked ? '开始学习' : `Lv.${unit.requiredUserLevel} 解锁`}
+              </Button>
+            </div>
+
+            <div className="border-y bg-muted/30 px-4 py-2.5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-foreground">话题列表</p>
+                {unit.topics.length > pageSize && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={topicPage === 1}
+                      onClick={() => setTopicPage((page) => Math.max(1, page - 1))}
+                      className="rounded-full px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40"
+                    >
+                      上一页
+                    </button>
+                    <span className="text-[11px] text-muted-foreground">{topicPage}/{totalTopicPages}</span>
+                    <button
+                      type="button"
+                      disabled={topicPage === totalTopicPages}
+                      onClick={() => setTopicPage((page) => Math.min(totalTopicPages, page + 1))}
+                      className="rounded-full px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40"
+                    >
+                      下一页
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
+              {pagedTopics.length > 0 ? (
+                <div className="divide-y divide-border/60">
+                  {pagedTopics.map((topic, index) => (
+                    <div key={topic.id} className="flex items-center gap-3 py-3">
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                        {(topicPage - 1) * pageSize + index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          建议 {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            <Button
-              className="w-full gap-2"
-              onClick={async () => {
-                setDetailOpen(false);
-                try { await learningApi.startUnit(unit.id) } catch {}
-                navigate(`/learning/units/${unit.id}`)
-              }}
-            >
-              开始学习
-              <ArrowRight className="size-4" />
-            </Button>
+              ) : (
+                <p className="py-8 text-center text-sm text-muted-foreground">这个单元暂时没有话题</p>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -487,19 +528,25 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
   )
 }
 
-// ── 锁定单元卡片 ──
-
-function LockedUnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
+function UnitCover({
+  unit,
+  icon: Icon,
+  className,
+}: {
+  unit: LearningUnitSummary & { categoryName?: string }
+  icon: LucideIcon
+  className?: string
+}) {
   return (
-    <div className="rounded-lg border border-dashed border-border/50 bg-muted/20 p-4 opacity-60">
-      <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-muted">
-        <Lock className="size-4 text-muted-foreground" />
-      </div>
-      <h3 className="text-sm font-medium text-muted-foreground">{unit.title}</h3>
-      <p className="mt-0.5 text-xs text-muted-foreground">{unit.location}</p>
-      <p className="mt-2 text-[10px] text-muted-foreground">
-        需要 Lv.{unit.requiredUserLevel} 解锁
-      </p>
+    <div
+      className={cn(
+        'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
+        !unit.isUnlocked && 'grayscale',
+        className,
+      )}
+    >
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+      <Icon className="relative size-7" />
     </div>
   )
 }
