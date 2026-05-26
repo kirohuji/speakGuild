@@ -81,7 +81,7 @@ export function LearningPlanPage() {
   const completed = myUnits.filter((u) => u.completionPercent >= 100)
 
   return (
-    <div className="mx-auto max-w-2xl pb-24">
+    <div className="mx-auto max-w-2xl px-4 pb-24">
       <div className="mb-3 flex gap-1 rounded-full bg-muted p-1">
         <button
           onClick={() => { setTab('learning'); refreshMyUnits() }}
@@ -155,10 +155,10 @@ function MyLearningView({
 
   if (myUnits.length === 0) {
     return (
-      <div className="flex flex-col items-center py-16 text-center">
-        <BookOpen className="size-12 text-muted-foreground/40" />
-        <p className="mt-4 text-muted-foreground">还没有开始学习</p>
-        <Button variant="outline" size="sm" className="mt-4" onClick={onGoToShop}>
+      <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
+        <BookOpen className="size-10 text-muted-foreground/40" />
+        <p className="mt-4 text-sm text-muted-foreground">还没有开始学习</p>
+        <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onGoToShop}>
           去学习商店选教材
         </Button>
       </div>
@@ -166,14 +166,13 @@ function MyLearningView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {inProgress.length > 0 && (
         <section>
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Play className="size-4 text-primary" />
+          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
             继续学习
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {inProgress.map((unit) => (
               <MyUnitCard key={unit.id} unit={unit} />
             ))}
@@ -183,11 +182,10 @@ function MyLearningView({
 
       {completed.length > 0 && (
         <section>
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <CheckCircle2 className="size-4 text-green-500" />
+          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
             已完成
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {completed.map((unit) => (
               <MyUnitCard key={unit.id} unit={unit} />
             ))}
@@ -203,58 +201,54 @@ function MyLearningView({
 function MyUnitCard({ unit }: { unit: MyUnit }) {
   const pct = unit.completionPercent
   const isCompleted = pct >= 100
+  const Icon = isCompleted ? CheckCircle2 : getCategoryIcon(unit.categoryName)
 
   return (
     <Link
       to={`/learning/units/${unit.id}`}
       className={cn(
-        'flex items-center gap-3 rounded-lg border p-3 transition-colors',
+        'flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm transition-colors',
         isCompleted
-          ? 'border-green-500/30 bg-green-500/5 hover:bg-green-500/10'
-          : 'border-border hover:bg-muted/50',
+          ? 'border-emerald-500/20 hover:bg-emerald-500/[0.04]'
+          : 'border-border/70 hover:bg-muted/40',
       )}
     >
       <div
         className={cn(
-          'flex size-10 shrink-0 items-center justify-center rounded-full',
-          isCompleted ? 'bg-green-500/20' : 'bg-primary/10',
+          'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
+          isCompleted && 'from-emerald-100 via-emerald-50 to-slate-100 text-emerald-600 dark:from-emerald-950/50 dark:via-emerald-950/30 dark:to-slate-950/40',
         )}
       >
-        {isCompleted ? (
-          <CheckCircle2 className="size-5 text-green-500" />
-        ) : (
-          <BookOpen className="size-4 text-primary" />
-        )}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+        <Icon className="relative size-7" />
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-foreground">{unit.title}</p>
-          {!isCompleted && pct > 0 && (
-            <Badge variant="secondary" className="text-[10px]">{pct}%</Badge>
-          )}
+        <div className="flex items-start gap-2">
+          <p className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</p>
+          <Badge variant={isCompleted ? 'secondary' : 'outline'} className="h-5 shrink-0 rounded-full px-2 text-[10px]">
+            {isCompleted ? '完成' : `${pct}%`}
+          </Badge>
         </div>
-        <p className="text-xs text-muted-foreground">{unit.location}</p>
+        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+        <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
+          <span>{unit.vocabCount} 词汇</span>
+          <span>{unit.chunkCount} 表达</span>
+          <span>{unit.topicCount} 话题</span>
+        </div>
 
         {!isCompleted && unit.topics && unit.topics.length > 0 && (
-          <div className="mt-1.5 space-y-0.5">
-            {unit.topics.slice(0, 3).map((t) => (
-              <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <span className="size-1 rounded-full bg-primary/30" />
-                <span>{t.title}</span>
-                <Badge variant="outline" className="ml-auto text-[8px]">{t.difficulty}</Badge>
-              </div>
-            ))}
-            {unit.topics.length > 3 && (
-              <p className="text-[9px] text-muted-foreground/60">+{unit.topics.length - 3} 个更多话题</p>
-            )}
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="size-1 rounded-full bg-primary/40" />
+            <span className="line-clamp-1">{unit.topics[0]?.title}</span>
+            {unit.topics.length > 1 && <span className="shrink-0 text-muted-foreground/70">+{unit.topics.length - 1}</span>}
           </div>
         )}
 
-        {!isCompleted && pct > 0 && <Progress value={pct} className="mt-1.5 h-1" />}
+        {!isCompleted && <Progress value={pct} className="mt-2 h-1" />}
       </div>
 
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground/70" />
     </Link>
   )
 }
