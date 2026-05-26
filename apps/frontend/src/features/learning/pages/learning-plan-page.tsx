@@ -87,48 +87,52 @@ export function LearningPlanPage() {
   const completed = myUnits.filter((u) => u.completionPercent >= 100)
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24">
-      <div className="mb-3 flex h-10 items-center justify-between">
-        <div />
+    <div className="relative min-h-[100svh] overflow-hidden bg-[linear-gradient(180deg,#e1f4ef_0%,#f5fbf8_42%,#ffffff_100%)]">
+      <div className="pointer-events-none absolute -left-28 top-0 h-72 w-72 rounded-full bg-teal-200/35 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-40 h-80 w-80 rounded-full bg-sky-200/30 blur-3xl" />
+      <div className="relative mx-auto max-w-2xl px-4 pb-24">
+        <div className="mb-3 flex h-10 items-center justify-between pt-3">
+          <div />
 
-        <div className="flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40">
-          <button
-            type="button"
-            onClick={() => { setShopOpen(true); refreshShop() }}
-            className="relative flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
-            aria-label="学习商店"
-          >
-            <ShoppingBag className="size-[18px]" />
-            {notStarted.length > 0 && (
-              <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-primary ring-2 ring-background" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      <MyLearningView
-        myUnits={myUnits}
-        inProgress={inProgress}
-        completed={completed}
-        todayPlan={todayPlan}
-        loading={myLoading}
-        onGoToShop={() => { setShopOpen(true); refreshShop() }}
-      />
-
-      <Drawer open={shopOpen} onOpenChange={setShopOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="text-base font-semibold">学习商店</DrawerTitle>
-          </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <ShopView
-              categories={shopCategories}
-              loading={shopLoading}
-              categoriesEmpty={shopCategories.length === 0}
-            />
+          <div className="flex items-center gap-1 rounded-full bg-background/42 p-1 backdrop-blur-2xl ring-1 ring-white/60">
+            <button
+              type="button"
+              onClick={() => { setShopOpen(true); refreshShop() }}
+              className="relative flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+              aria-label="学习商店"
+            >
+              <ShoppingBag className="size-[18px]" />
+              {notStarted.length > 0 && (
+                <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
+            </button>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </div>
+
+        <MyLearningView
+          myUnits={myUnits}
+          inProgress={inProgress}
+          completed={completed}
+          todayPlan={todayPlan}
+          loading={myLoading}
+          onGoToShop={() => { setShopOpen(true); refreshShop() }}
+        />
+
+        <Drawer open={shopOpen} onOpenChange={setShopOpen}>
+          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+            <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+              <DrawerTitle className="text-base font-semibold">学习商店</DrawerTitle>
+            </DrawerHeader>
+            <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <ShopView
+                categories={shopCategories}
+                loading={shopLoading}
+                categoriesEmpty={shopCategories.length === 0}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </div>
     </div>
   )
 }
@@ -158,7 +162,7 @@ function MyLearningView({
 
   if (myUnits.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
+      <div className="flex flex-col items-center rounded-lg bg-background/42 px-6 py-14 text-center backdrop-blur-2xl ring-1 ring-white/55">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="mt-4 text-sm text-muted-foreground">还没有开始学习</p>
         <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onGoToShop}>
@@ -222,7 +226,7 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
   const taskSummary = getTodayTaskSummary(todayPlan)
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-white/60 bg-background/58 shadow-sm backdrop-blur-2xl">
       <div className="p-3.5">
         <Link to={`/learning/units/${unit.id}`} className="flex gap-3">
           <div className="relative flex aspect-square size-[92px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
@@ -253,7 +257,7 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
             <span className="text-[10px] text-muted-foreground">{pct}%</span>
           </div>
           {nextTopic && (
-            <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 rounded-md bg-background/46 px-2.5 py-2 text-xs text-muted-foreground backdrop-blur-xl">
               <Play className="size-3.5 text-primary" />
               <span className="line-clamp-1 flex-1">{nextTopic.title}</span>
               <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{nextTopic.difficulty}</Badge>
@@ -283,7 +287,7 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
             {prepTasks.length > 0 ? prepTasks.map((task) => (
               <TodayTaskRow key={task.id} task={task} compact />
             )) : (
-              <div className="rounded-md bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+              <div className="rounded-md bg-background/42 px-3 py-2 text-xs text-muted-foreground backdrop-blur-xl">
                 预习内容会跟随当前单元自动出现
               </div>
             )}
@@ -301,7 +305,7 @@ function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
   const weekDays = ['一', '二', '三', '四', '五', '六', '日']
 
   return (
-    <section className="rounded-lg bg-muted/30 p-3.5">
+    <section className="rounded-lg bg-background/42 p-3.5 backdrop-blur-2xl ring-1 ring-white/55">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarDays className="size-4 text-primary" />
@@ -341,7 +345,7 @@ function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
 function TodayPracticeSection({ tasks }: { tasks: TodayTask[] }) {
   if (tasks.length === 0) {
     return (
-      <section className="rounded-lg bg-muted/30 px-4 py-5">
+      <section className="rounded-lg bg-background/42 px-4 py-5 backdrop-blur-2xl ring-1 ring-white/55">
         <div className="flex items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground">
             <ListChecks className="size-5" />
@@ -379,8 +383,8 @@ function TodayTaskRow({ task, compact = false }: { task: TodayTask; compact?: bo
     <Link
       to={href}
       className={cn(
-        'flex items-center gap-3 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border/70 transition-colors hover:bg-muted/30',
-        compact && 'rounded-md bg-muted/35 p-2.5 shadow-none ring-0',
+        'flex items-center gap-3 rounded-lg bg-background/58 p-3 shadow-sm ring-1 ring-white/60 backdrop-blur-2xl transition-colors hover:bg-background/72',
+        compact && 'rounded-md bg-background/42 p-2.5 shadow-none ring-0 backdrop-blur-xl',
       )}
     >
       <div className={cn(
@@ -444,10 +448,10 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
     <Link
       to={`/learning/units/${unit.id}`}
       className={cn(
-        'flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm transition-colors',
+        'flex items-center gap-3 rounded-lg border bg-background/58 p-3 shadow-sm backdrop-blur-2xl transition-colors',
         isCompleted
           ? 'border-emerald-500/20 hover:bg-emerald-500/[0.04]'
-          : 'border-border/70 hover:bg-muted/40',
+          : 'border-white/60 hover:bg-background/72',
       )}
     >
       <div
@@ -602,7 +606,7 @@ function ShopView({
           <p className="mt-4 text-muted-foreground">没有找到匹配的学习单元</p>
         </div>
       ) : (
-        <div className="divide-y divide-border/60 rounded-lg bg-card">
+        <div className="divide-y divide-border/50 rounded-lg bg-background/58 backdrop-blur-2xl ring-1 ring-white/60">
           {filteredUnits.map((unit) => (
             <ShopCard key={unit.id} unit={unit} />
           ))}

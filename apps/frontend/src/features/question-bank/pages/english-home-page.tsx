@@ -48,60 +48,97 @@ export function EnglishHomePage() {
   return (
     <div className="mx-auto max-w-2xl overflow-hidden">
       <motion.section
-        className="relative flex h-[100svh] items-center justify-center overflow-hidden px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground"
+        className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#bcece4_0%,#e4f6ef_48%,#ffffff_100%)] px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground"
         style={{
           backgroundImage:
-            'radial-gradient(ellipse at 16% 10%, rgba(20, 184, 166, .72), transparent 36%), radial-gradient(ellipse at 84% 24%, rgba(56, 189, 248, .62), transparent 38%), radial-gradient(ellipse at 34% 78%, rgba(74, 222, 128, .48), transparent 40%), linear-gradient(180deg, #9ce7dc 0%, #d8f4ee 48%, #ffffff 100%)',
-          backgroundSize: '210% 210%, 220% 220%, 190% 190%, 100% 100%',
+            'radial-gradient(ellipse at 50% 8%, rgba(255,255,255,.62), transparent 34%), linear-gradient(180deg,#bcece4 0%,#e4f6ef 48%,#ffffff 100%)',
+          backgroundSize: '140% 140%, 100% 100%',
         }}
         animate={{
           backgroundPosition: [
-            '0% 0%, 100% 8%, 38% 92%, 0% 0%',
-            '58% 22%, 46% 62%, 4% 48%, 0% 0%',
-            '10% 72%, 92% 0%, 86% 72%, 0% 0%',
-            '0% 0%, 100% 8%, 38% 92%, 0% 0%',
+            '50% 0%, 0% 0%',
+            '42% 12%, 0% 0%',
+            '58% 4%, 0% 0%',
+            '50% 0%, 0% 0%',
           ],
         }}
-        transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <motion.div
-          className="absolute inset-0 opacity-70 mix-blend-screen"
-          style={{
-            backgroundImage:
-              'linear-gradient(112deg, transparent 0 20%, rgba(255,255,255,.46) 32%, transparent 48% 100%), linear-gradient(64deg, transparent 0 34%, rgba(34,211,238,.28) 48%, transparent 64% 100%), repeating-linear-gradient(128deg, rgba(255,255,255,0) 0 28px, rgba(255,255,255,.16) 38px, rgba(255,255,255,0) 58px)',
-            backgroundSize: '210% 210%, 190% 190%, 180% 180%',
-          }}
-          animate={{
-            backgroundPosition: ['0% 20%, 100% 0%, 0% 0%', '95% 70%, 0% 90%, 72% 46%', '0% 20%, 100% 0%, 0% 0%'],
-            opacity: [0.45, 0.78, 0.52],
-          }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute inset-x-[-30%] bottom-[-10%] h-80 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,.92),rgba(186,230,253,.46)_38%,rgba(255,255,255,0)_72%)] blur-2xl"
-          animate={{ opacity: [0.44, 0.78, 0.52], y: ['2%', '-10%', '3%'], scaleX: [1, 1.18, 1.04] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-white/50 blur-3xl"
-          animate={{ opacity: [0.24, 0.56, 0.28], scale: [1, 1.28, 1.04] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        <div className="absolute inset-[-18%] blur-3xl saturate-[1.45]">
+          <motion.div
+            className="absolute left-[2%] top-[4%] h-[32rem] w-[32rem] rounded-[43%_57%_46%_54%/52%_44%_56%_48%] bg-teal-300/58 mix-blend-multiply"
+            animate={{
+              x: ['-8%', '22%', '4%', '-8%'],
+              y: ['0%', '16%', '34%', '0%'],
+              rotate: [0, 42, 18, 0],
+              scale: [1, 1.18, 0.96, 1],
+              borderRadius: [
+                '43% 57% 46% 54% / 52% 44% 56% 48%',
+                '58% 42% 62% 38% / 43% 61% 39% 57%',
+                '48% 52% 37% 63% / 62% 44% 56% 38%',
+                '43% 57% 46% 54% / 52% 44% 56% 48%',
+              ],
+            }}
+            transition={{ duration: 17, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute right-[-8%] top-[12%] h-[34rem] w-[34rem] rounded-[55%_45%_52%_48%/46%_58%_42%_54%] bg-sky-300/56 mix-blend-multiply"
+            animate={{
+              x: ['4%', '-28%', '-8%', '4%'],
+              y: ['8%', '2%', '32%', '8%'],
+              rotate: [12, -34, -8, 12],
+              scale: [1.04, 0.94, 1.2, 1.04],
+              borderRadius: [
+                '55% 45% 52% 48% / 46% 58% 42% 54%',
+                '39% 61% 44% 56% / 59% 37% 63% 41%',
+                '62% 38% 55% 45% / 42% 64% 36% 58%',
+                '55% 45% 52% 48% / 46% 58% 42% 54%',
+              ],
+            }}
+            transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute bottom-[-12%] left-[18%] h-[30rem] w-[30rem] rounded-[50%_50%_40%_60%/58%_42%_58%_42%] bg-emerald-200/70 mix-blend-multiply"
+            animate={{
+              x: ['0%', '18%', '42%', '0%'],
+              y: ['8%', '-18%', '-2%', '8%'],
+              rotate: [-18, 24, 52, -18],
+              scale: [1.1, 1, 1.22, 1.1],
+              borderRadius: [
+                '50% 50% 40% 60% / 58% 42% 58% 42%',
+                '65% 35% 56% 44% / 40% 64% 36% 60%',
+                '38% 62% 47% 53% / 63% 39% 61% 37%',
+                '50% 50% 40% 60% / 58% 42% 58% 42%',
+              ],
+            }}
+            transition={{ duration: 21, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute left-[34%] top-[30%] h-[22rem] w-[22rem] rounded-[48%_52%_62%_38%/46%_54%_42%_58%] bg-white/72 mix-blend-screen"
+            animate={{
+              x: ['0%', '-14%', '18%', '0%'],
+              y: ['0%', '18%', '-12%', '0%'],
+              rotate: [0, -26, 18, 0],
+              scale: [1, 1.32, 0.92, 1],
+            }}
+            transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
 
         <motion.div
-          className="relative w-full max-w-[330px] rounded-[30px] border border-white/75 bg-white/48 px-6 py-6 text-center shadow-[0_24px_80px_rgba(42,105,96,.18)] backdrop-blur-2xl"
+          className="relative w-full max-w-[330px] rounded-[30px] border border-white/75 bg-white/48 px-6 py-7 text-center shadow-[0_24px_80px_rgba(42,105,96,.18)] backdrop-blur-2xl"
           initial={{ opacity: 0, y: 18, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-[21px] font-semibold leading-8 tracking-normal text-slate-800">
+          <p className="text-[20px] font-semibold leading-8 tracking-normal text-slate-800">
             “{HOME_SCENE.quote}”
           </p>
-          <p className="mx-auto mt-4 max-w-[250px] text-sm leading-6 text-slate-600">
+          <p className="mx-auto mt-5 max-w-[250px] text-sm leading-6 text-slate-600">
             {HOME_SCENE.translation}
           </p>
-          <div className="mx-auto mt-5 h-px w-12 bg-slate-400/30" />
-          <p className="mx-auto mt-4 max-w-[220px] text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
+          <div className="mx-auto mt-6 h-px w-12 bg-slate-400/30" />
+          <p className="mx-auto mt-5 max-w-[220px] text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
             {HOME_SCENE.author}
           </p>
         </motion.div>

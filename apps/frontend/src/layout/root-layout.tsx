@@ -96,12 +96,12 @@ function MobileTopBar({
   }, [fetchUnreadCount])
 
   return (
-    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40 lg:hidden">
+    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
       <button
         type="button"
         onClick={onNotificationOpen}
         aria-label="通知"
-        className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+        className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
       >
         <Bell className="size-[18px]" />
         {unreadCount > 0 && (
@@ -114,7 +114,7 @@ function MobileTopBar({
         aria-label="个人页面"
         className={cn(
           'block rounded-full p-0.5 transition-colors',
-          profileActive ? 'bg-primary/10' : 'hover:bg-muted/70',
+          profileActive ? 'bg-background/45' : 'hover:bg-background/45',
         )}
       >
         <Avatar className="size-8">

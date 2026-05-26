@@ -26,7 +26,7 @@ export function BottomNav() {
   if (!visible || !isLoggedIn) return null
 
   return (
-    <nav className="fixed inset-x-4 bottom-3 z-40 rounded-full border border-border/70 bg-background/90 shadow-[0_12px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <nav className="fixed inset-x-4 bottom-3 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="flex h-14 items-center justify-around px-1">
         {navItems.map(({ label, path, icon: Icon }) => {
           const active = isActive(path)
@@ -36,7 +36,7 @@ export function BottomNav() {
               to={path}
               className={cn(
                 'relative flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 transition-colors',
-                active ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                active ? 'bg-background/54 text-foreground shadow-sm' : 'text-muted-foreground'
               )}
             >
               <Icon className={cn('h-5 w-5', active && 'stroke-[2.35] text-primary')} />
