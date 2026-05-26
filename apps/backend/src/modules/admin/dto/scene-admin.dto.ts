@@ -157,6 +157,10 @@ export class CreateTrainingTopicDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  inkScriptId?: string;
 }
 
 export class UpdateTrainingTopicDto {
@@ -203,4 +207,8 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  inkScriptId?: string;
 }

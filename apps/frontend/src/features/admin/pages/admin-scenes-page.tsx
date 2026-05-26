@@ -31,8 +31,8 @@ import {
   listScenes, getScene, createScene, updateScene, deleteScene,
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
-  listAllChunks,
-  type SceneCategory, type Scene, type SceneVocabulary, type TrainingTopic, type Chunk,
+  listAllChunks, listStories,
+  type SceneCategory, type Scene, type SceneVocabulary, type TrainingTopic, type Chunk, type StoryData,
 } from '../api-content-admin'
 
 // ─── Category Dialog ────────────────────────────────────────
@@ -427,11 +427,19 @@ function TrainingTopicDialog({
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [stories, setStories] = useState<StoryData[]>([])
 
   useEffect(() => {
     if (edit) setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [] })
-    else setForm({ sceneId, title: '', description: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [] })
+    else setForm({ sceneId, title: '', description: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [], inkScriptId: '' })
   }, [edit, open, sceneId])
+
+  // Load stories for binding
+  useEffect(() => {
+    if (open) {
+      listStories().then(setStories).catch(() => {})
+    }
+  }, [open])
 
   const handleSave = async () => {
     if (!form.title?.trim() || !form.promptEn?.trim()) return
@@ -505,6 +513,24 @@ function TrainingTopicDialog({
               <Input type="number" value={form.suggestedDurationSec ?? 60}
                 onChange={(e) => setForm({ ...form, suggestedDurationSec: Number(e.target.value) })} />
             </div>
+          </div>
+          <div>
+            <Label>绑定 Ink 故事脚本</Label>
+            <select
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              value={form.inkScriptId ?? ''}
+              onChange={(e) => setForm({ ...form, inkScriptId: e.target.value || null })}
+            >
+              <option value="">不绑定（使用默认 AI 对话模式）</option>
+              {stories.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title} ({s.key}) — {s.scriptType === 'practice' ? '练习' : s.scriptType === 'episode' ? '关卡' : s.scriptType}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              绑定后，用户练习该话题时将使用此 Ink 脚本驱动对话流程。在 NQTR 内容工坊中创建和管理故事脚本。
+            </p>
           </div>
           <div>
             <SentencePatternEditor

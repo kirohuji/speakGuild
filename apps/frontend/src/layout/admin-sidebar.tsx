@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Database, FileText, Settings, BarChart3, Bell,
   ChevronRight, ArrowLeft, CreditCard, Receipt, FolderOpen,
-  Tag, MessageSquare, MapPin, Map, BookOpen, Film, Award, UserCircle, ScrollText,
+  Tag, MessageSquare, MapPin, Map, BookOpen, Film, Award, UserCircle, ScrollText, Palette,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -78,28 +78,16 @@ const menuItems: MenuItem[] = [
     path: '/admin/scenes',
   },
   {
+    key: 'nqtr',
+    label: 'NQTR 内容工坊',
+    icon: Palette,
+    path: '/admin/nqtr',
+  },
+  {
     key: 'chunks',
     label: 'Chunk 管理',
     icon: BookOpen,
     path: '/admin/chunks',
-  },
-  {
-    key: 'characters',
-    label: '角色管理',
-    icon: UserCircle,
-    path: '/admin/characters',
-  },
-  {
-    key: 'maps',
-    label: '地图管理',
-    icon: Map,
-    path: '/admin/maps',
-  },
-  {
-    key: 'stories',
-    label: '故事管理',
-    icon: ScrollText,
-    path: '/admin/stories',
   },
   {
     key: 'script',
