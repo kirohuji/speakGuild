@@ -23,7 +23,7 @@ export function RootLayout() {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
 
   return (
-    <div className="flex min-h-screen flex-col pt-safe">
+    <div className={cn('flex min-h-screen flex-col', !isHomePage && 'pt-safe')}>
       {!isAuthPage && (
         <div className="hidden lg:block">
           <Header />

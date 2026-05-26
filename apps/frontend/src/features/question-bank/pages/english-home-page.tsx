@@ -53,7 +53,7 @@ export function EnglishHomePage() {
         }
       `}</style>
 
-      <section className="relative -mt-[calc(3rem+env(safe-area-inset-top,0px))] flex h-[calc(100svh-4rem)] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#d6eee9_0%,#eaf5f1_42%,#ffffff_100%)] px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-[calc(3rem+env(safe-area-inset-top,0px))] text-foreground">
+      <section className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#d6eee9_0%,#eaf5f1_44%,#ffffff_100%)] px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground">
         <div
           className="absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-white/60 blur-3xl"
           style={{ animation: 'home-light-breathe 9s ease-in-out infinite' }}
