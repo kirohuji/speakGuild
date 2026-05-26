@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Trash2, Edit3, MapPin } from 'lucide-react'
+import { Plus, Trash2, Edit3, MapPin, SmilePlus, ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,11 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import {
   listCharacters, createCharacter, updateCharacter, deleteCharacter,
   type GameCharacter,
 } from '../api-content-admin'
+import { ImageUploadField } from './image-upload-field'
+
+/** 支持的立绘表情类型 */
+const EXPRESSION_PRESETS = ['default', 'happy', 'sad', 'angry', 'surprised', 'thinking', 'shy', 'confident']
+
+interface ExpressionEntry {
+  name: string
+  url: string
+}
 
 interface CharactersTabProps {
   /** 当角色列表变化时回调，供故事工坊刷新绑定选项 */
@@ -34,6 +44,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const [defaultPosition, setDefaultPosition] = useState('left')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [spriteBaseUrl, setSpriteBaseUrl] = useState('')
+  const [expressions, setExpressions] = useState<ExpressionEntry[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -51,6 +62,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setEditItem(null)
     setName(''); setDisplayName(''); setRole(''); setPersonality('')
     setDefaultPosition('left'); setAvatarUrl(''); setSpriteBaseUrl('')
+    setExpressions([{ name: 'default', url: '' }])
     setDialogOpen(true)
   }
 
@@ -63,7 +75,30 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setDefaultPosition(item.defaultPosition ?? 'left')
     setAvatarUrl(item.avatarUrl ?? '')
     setSpriteBaseUrl(item.spriteBaseUrl ?? '')
+    // Parse expressions from JSON
+    const exps: ExpressionEntry[] = []
+    if (item.expressions && typeof item.expressions === 'object') {
+      for (const [k, v] of Object.entries(item.expressions as Record<string, string>)) {
+        exps.push({ name: k, url: v as string })
+      }
+    }
+    if (exps.length === 0) exps.push({ name: 'default', url: item.spriteBaseUrl ?? '' })
+    setExpressions(exps)
     setDialogOpen(true)
+  }
+
+  const addExpression = () => {
+    setExpressions([...expressions, { name: '', url: '' }])
+  }
+
+  const removeExpression = (index: number) => {
+    setExpressions(expressions.filter((_, i) => i !== index))
+  }
+
+  const updateExpression = (index: number, field: 'name' | 'url', value: string) => {
+    const updated = [...expressions]
+    updated[index] = { ...updated[index], [field]: value }
+    setExpressions(updated)
   }
 
   const save = async () => {
@@ -73,7 +108,23 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     }
     setSaving(true)
     try {
-      const data = { name, displayName, role, personality, defaultPosition, avatarUrl, spriteBaseUrl }
+      // Convert expressions array to JSON object
+      const expressionsObj: Record<string, string> = {}
+      for (const exp of expressions) {
+        if (exp.name && exp.url) {
+          expressionsObj[exp.name] = exp.url
+        }
+      }
+      // If no expressions defined, use default from spriteBaseUrl
+      if (Object.keys(expressionsObj).length === 0 && spriteBaseUrl) {
+        expressionsObj['default'] = spriteBaseUrl
+      }
+
+      const data = {
+        name, displayName, role, personality, defaultPosition,
+        avatarUrl, spriteBaseUrl,
+        expressions: Object.keys(expressionsObj).length > 0 ? expressionsObj : undefined,
+      }
       if (editItem) {
         await updateCharacter(editItem.id, data)
         toast.success('角色已更新')
@@ -158,6 +209,12 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                     <Badge variant="outline" className="text-[10px]">{item.personality}</Badge>
                   )}
                   <Badge variant="secondary" className="text-[10px]">位置: {item.defaultPosition ?? 'left'}</Badge>
+                  {item.expressions && typeof item.expressions === 'object' && (
+                    <Badge variant="outline" className="text-[10px]">
+                      <SmilePlus className="mr-0.5 size-2.5" />
+                      {Object.keys(item.expressions as object).length} 个表情
+                    </Badge>
+                  )}
                   {item.locationNpcs?.length ? (
                     <Badge variant="outline" className="text-[10px]">
                       <MapPin className="mr-0.5 size-2.5" />
@@ -173,11 +230,11 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editItem ? '编辑角色' : '新建角色'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>英文名 (key)</Label>
@@ -209,15 +266,100 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                   <option value="right">右</option>
                 </select>
               </div>
-              <div>
-                <Label>头像 URL</Label>
-                <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." />
-              </div>
             </div>
+
+            <Separator />
+
+            {/* Avatar upload */}
             <div>
-              <Label>立绘 URL</Label>
-              <Input value={spriteBaseUrl} onChange={(e) => setSpriteBaseUrl(e.target.value)} placeholder="https://..." />
+              <Label className="text-xs font-semibold">头像</Label>
+              <ImageUploadField
+                value={avatarUrl}
+                onChange={setAvatarUrl}
+                placeholder="输入头像 URL 或上传"
+                previewSize="md"
+              />
             </div>
+
+            {/* Default sprite upload */}
+            <div>
+              <Label className="text-xs font-semibold">默认立绘</Label>
+              <ImageUploadField
+                value={spriteBaseUrl}
+                onChange={setSpriteBaseUrl}
+                placeholder="输入立绘 URL 或上传（Ink 中 #expression:default 使用此图）"
+                previewSize="lg"
+              />
+            </div>
+
+            <Separator />
+
+            {/* Expression Manager */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs font-semibold">表情立绘管理</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={addExpression}
+                >
+                  <SmilePlus className="size-3" />
+                  添加表情
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                在 Ink 脚本中使用 <code className="rounded bg-muted px-1 text-[11px]">#expression:happy</code> 标签切换表情。
+                预设表情：{EXPRESSION_PRESETS.join(', ')}
+              </p>
+
+              {expressions.length === 0 ? (
+                <p className="text-xs text-muted-foreground/60 italic">暂无表情配置，将使用默认立绘</p>
+              ) : (
+                <div className="space-y-3">
+                  {expressions.map((exp, i) => (
+                    <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={exp.name}
+                            onChange={(e) => updateExpression(i, 'name', e.target.value)}
+                            placeholder="表情名 (如 happy)"
+                            className="h-7 text-xs w-28"
+                            list="expression-presets"
+                          />
+                          <datalist id="expression-presets">
+                            {EXPRESSION_PRESETS.map((p) => (
+                              <option key={p} value={p} />
+                            ))}
+                          </datalist>
+                          <span className="text-[11px] text-muted-foreground">
+                            Ink 标签: <code className="rounded bg-muted px-1">#expression:{exp.name || '?'}</code>
+                          </span>
+                        </div>
+                        <ImageUploadField
+                          value={exp.url}
+                          onChange={(url) => updateExpression(i, 'url', url)}
+                          placeholder={exp.name === 'default' ? '默认立绘 URL' : `${exp.name || '表情'} 立绘 URL`}
+                          previewSize="md"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 shrink-0 mt-1"
+                        onClick={() => removeExpression(i)}
+                      >
+                        <Trash2 className="size-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <Button className="w-full" onClick={save} disabled={saving}>
               {saving ? '保存中...' : '保存'}
             </Button>

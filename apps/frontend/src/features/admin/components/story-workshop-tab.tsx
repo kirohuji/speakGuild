@@ -133,7 +133,7 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
             </h2>
             <p className="text-xs text-muted-foreground">
               {isCreating
-                ? '使用 Markdown DSL 编写对话脚本，右侧实时预览 VN 效果'
+                ? '使用 Ink 脚本语法编写对话，右侧实时编译预览 VN 效果'
                 : `Key: ${editingStory?.key} · 版本 ${(editingStory?.version ?? 0) + 1}`}
             </p>
           </div>
@@ -169,8 +169,8 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            使用 Markdown DSL 编写 Ink 对话脚本，创建后可在场景管理中绑定到训练话题。
-            共 {stories.length} 个故事。
+            使用 Ink 脚本语法编写对话，inkjs v2.4.0 Compiler 实时编译。
+            创建后可在场景管理中绑定到训练话题。共 {stories.length} 个故事。
           </p>
         </div>
         <Button size="sm" onClick={openCreate}>

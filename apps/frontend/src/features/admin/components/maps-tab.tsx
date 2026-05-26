@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Plus, Trash2, Edit3, Map, MapPin, Users, DoorOpen,
+  Plus, Trash2, Edit3, Map, MapPin, Users, DoorOpen, ImageIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,12 +12,14 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import {
   listMaps, createMap, updateMap, deleteMap,
   listLocations, createLocation, updateLocation, deleteLocation,
   type GameMapData, type GameLocationData,
 } from '../api-content-admin'
+import { ImageUploadField } from './image-upload-field'
 
 interface MapsTabProps {
   onLocationsChange?: (locations: GameLocationData[]) => void
@@ -34,6 +36,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const [mapForm, setMapForm] = useState({
     name: '', displayName: '', requiredOutputLevel: 'L1',
     isPreview: false, sortOrder: 0,
+    backgroundUrl: '', thumbnailUrl: '',
   })
 
   // Location dialog
@@ -43,6 +46,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
     mapId: '', name: '', displayName: '', description: '',
     posX: 50, posY: 50, locationType: 'vn_scene',
     requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0,
+    backgroundUrl: '',
   })
 
   const [saving, setSaving] = useState(false)
@@ -69,7 +73,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
 
   const openCreateMap = () => {
     setEditMap(null)
-    setMapForm({ name: '', displayName: '', requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0 })
+    setMapForm({ name: '', displayName: '', requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0, backgroundUrl: '', thumbnailUrl: '' })
     setMapDialogOpen(true)
   }
 
@@ -79,6 +83,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
       name: m.name, displayName: m.displayName,
       requiredOutputLevel: m.requiredOutputLevel,
       isPreview: m.isPreview ?? false, sortOrder: m.sortOrder ?? 0,
+      backgroundUrl: m.backgroundUrl ?? '', thumbnailUrl: m.thumbnailUrl ?? '',
     })
     setMapDialogOpen(true)
   }
@@ -107,6 +112,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
       mapId, name: '', displayName: '', description: '',
       posX: 50, posY: 50, locationType: 'vn_scene',
       requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0,
+      backgroundUrl: '',
     })
     setLocDialogOpen(true)
   }
@@ -118,6 +124,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
       description: loc.description ?? '', posX: loc.posX, posY: loc.posY,
       locationType: loc.locationType, requiredOutputLevel: loc.requiredOutputLevel,
       isPreview: loc.isPreview ?? false, sortOrder: loc.sortOrder ?? 0,
+      backgroundUrl: loc.backgroundUrl ?? '',
     })
     setLocDialogOpen(true)
   }
@@ -273,6 +280,26 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                 <Input type="number" value={mapForm.sortOrder} onChange={(e) => setMapForm((p) => ({ ...p, sortOrder: +e.target.value }))} />
               </div>
             </div>
+            <Separator />
+            <div>
+              <Label className="text-xs font-semibold">地图背景</Label>
+              <ImageUploadField
+                value={mapForm.backgroundUrl}
+                onChange={(url) => setMapForm((p) => ({ ...p, backgroundUrl: url }))}
+                placeholder="输入背景图 URL 或上传（在 VN 预览中 #bg 标签引用此图作为默认背景）"
+                previewSize="lg"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">缩略图</Label>
+              <ImageUploadField
+                value={mapForm.thumbnailUrl}
+                onChange={(url) => setMapForm((p) => ({ ...p, thumbnailUrl: url }))}
+                placeholder="输入缩略图 URL 或上传"
+                previewSize="sm"
+              />
+            </div>
+            <Separator />
             <div className="flex items-center gap-8">
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -349,6 +376,17 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                 </select>
               </div>
             </div>
+            <Separator />
+            <div>
+              <Label className="text-xs font-semibold">地点背景</Label>
+              <ImageUploadField
+                value={locForm.backgroundUrl}
+                onChange={(url) => setLocForm((p) => ({ ...p, backgroundUrl: url }))}
+                placeholder="输入地点背景图 URL 或上传（Ink DSL 中 #bg 标签优先使用此图）"
+                previewSize="lg"
+              />
+            </div>
+            <Separator />
             <div className="flex items-center gap-8">
               <label className="flex items-center gap-2 text-sm">
                 <input
