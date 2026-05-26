@@ -24,15 +24,10 @@ export function RootLayout() {
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
 
-  // In immersive mode, the page takes full control of the viewport
-  if (immersiveMode) {
-    return <Outlet />
-  }
-
   return (
     <div className={cn('flex min-h-screen flex-col', !isHomePage && 'pt-safe')}>
       {!isAuthPage && (
-        <div className="hidden lg:block">
+        <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
           <Header />
         </div>
       )}
@@ -43,22 +38,24 @@ export function RootLayout() {
         />
       )}
       <main className={`flex-1 pt-0 ${
-        isAuthPage || !isLoggedIn
-          ? 'pb-0 lg:pt-0 lg:pb-0'
-          : isHomePage
-            ? 'pt-0 pb-0 lg:pt-14 lg:pb-0'
-            : 'pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
+        immersiveMode
+          ? 'pb-0'
+          : isAuthPage || !isLoggedIn
+            ? 'pb-0 lg:pt-0 lg:pb-0'
+            : isHomePage
+              ? 'pt-0 pb-0 lg:pt-14 lg:pb-0'
+              : 'pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
       }`}>
-        <div className={isAuthPage || isHomePage ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
+        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
           <Outlet />
         </div>
       </main>
       {!isAuthPage && (
-        <div className="hidden lg:block">
+        <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
           <Footer />
         </div>
       )}
-      {!isAuthPage && <BottomNav />}
+      {!isAuthPage && <div className={cn(immersiveMode && 'hidden')}><BottomNav /></div>}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">

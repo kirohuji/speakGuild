@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mic, MicOff, BookOpen, Send, Play, Info,
@@ -20,6 +20,30 @@ import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
+
+/** Catches errors from VnPlayer / PixiVnStage to prevent cascading crashes */
+class VnPlayerBoundary extends Component<
+  { children: ReactNode; onFallback?: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; onFallback?: () => void }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    console.warn('[VnPlayerBoundary] Caught:', error.message)
+    this.props.onFallback?.()
+  }
+
+  render() {
+    return this.props.children
+  }
+}
 
 export function PracticeSessionPage() {
   const { topicId } = useParams<{ topicId: string }>()
@@ -71,6 +95,12 @@ export function PracticeSessionPage() {
     }
     return () => { setImmersiveMode(false) }
   }, [phase, setImmersiveMode])
+
+  // Switch to immersive mode BEFORE mounting PixiVnStage, so layout is stable
+  const handleStartPractice = useCallback(() => {
+    setImmersiveMode(true)
+    setPhase('practice')
+  }, [setImmersiveMode])
 
   // ── Objectives & chunks from detail ──
   const objectives = useMemo(() => {
@@ -367,7 +397,7 @@ export function PracticeSessionPage() {
           </div>
           <Button
             size="sm"
-            onClick={() => setPhase('practice')}
+            onClick={handleStartPractice}
             className="shrink-0"
           >
             <Play className="mr-1 size-4" /> 开始练习
@@ -491,7 +521,7 @@ export function PracticeSessionPage() {
           <Button
             className="w-full"
             size="lg"
-            onClick={() => setPhase('practice')}
+            onClick={handleStartPractice}
           >
             <Play className="mr-2 size-5" /> 开始练习
           </Button>
@@ -545,16 +575,18 @@ export function PracticeSessionPage() {
         </div>
 
         <div className="min-h-0 flex-1 bg-black">
-          <VnPlayer
-            className="h-full max-w-none rounded-none border-none"
-            stageClassName="min-h-0"
-            currentLine={currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
-            history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
-            choices={inkChoices}
-            isWaiting={inkWaiting}
-            onChoice={handleChoice}
-            onAdvance={inkJson ? advanceStory : undefined}
-          />
+          <VnPlayerBoundary>
+            <VnPlayer
+              className="h-full max-w-none rounded-none border-none"
+              stageClassName="min-h-0"
+              currentLine={currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
+              history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
+              choices={inkChoices}
+              isWaiting={inkWaiting}
+              onChoice={handleChoice}
+              onAdvance={inkJson ? advanceStory : undefined}
+            />
+          </VnPlayerBoundary>
         </div>
 
         {(isRecording || transcript) && (

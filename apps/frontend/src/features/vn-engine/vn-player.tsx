@@ -84,6 +84,48 @@ function layoutSprite(sprite: Sprite, width: number, height: number, position: '
   sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
 }
 
+const BgFitStyle: Record<BackgroundFit, string> = {
+  cover: 'cover',
+  contain: 'contain',
+  stretch: '100% 100%',
+  repeat: 'auto',
+}
+
+/** CSS-only fallback when PixiJS fails to initialize */
+function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#141827]">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
+          backgroundSize: BgFitStyle[backgroundFit],
+          backgroundPosition: 'center',
+          backgroundRepeat: backgroundFit === 'repeat' ? 'repeat' : 'no-repeat',
+        }}
+      />
+      <div className="absolute inset-0 bg-black/16" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/48 via-black/10 to-transparent" />
+      {spriteUrl && (
+        <img
+          src={spriteUrl}
+          alt=""
+          className="pointer-events-none absolute select-none"
+          style={{
+            maxHeight: '62%',
+            maxWidth: '74%',
+            bottom: '118px',
+            left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
+            transform: 'translateX(-50%)',
+            objectFit: 'contain',
+            objectPosition: 'bottom center',
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
 function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const appRef = useRef<Application | null>(null)
@@ -94,10 +136,11 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
   const overlayRef = useRef<Graphics | null>(null)
   const spritePositionRef = useRef(spritePosition)
   const [ready, setReady] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const layout = () => {
     const app = appRef.current
-    if (!app) return
+    if (!app || !app.renderer) return
     const width = app.renderer.width
     const height = app.renderer.height
 
@@ -120,22 +163,61 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     if (!host) return
 
     let cancelled = false
-    const app = new Application()
     const root = new Container()
     const fallback = new Graphics()
     const overlay = new Graphics()
     let resizeObserver: ResizeObserver | null = null
 
     async function init() {
-      await app.init({
-        resizeTo: host,
-        backgroundAlpha: 0,
-        antialias: true,
-        autoDensity: true,
-        resolution: Math.min(window.devicePixelRatio || 1, 2),
-      })
+      // Ensure host has non-zero dimensions before creating WebGL context
+      if (host.clientWidth === 0 || host.clientHeight === 0) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+        if (cancelled) return
+      }
+
+      let app: Application
+      let initOk = false
+
+      // Attempt 1: WebGL (default)
+      app = new Application()
+      try {
+        await app.init({
+          resizeTo: host,
+          backgroundAlpha: 0,
+          antialias: true,
+          autoDensity: true,
+          resolution: Math.min(window.devicePixelRatio || 1, 2),
+        })
+        initOk = true
+      } catch {
+        try { app.destroy(true) } catch { /* ignore */ }
+      }
+
+      // Attempt 2: Canvas2D fallback
+      if (!initOk) {
+        app = new Application()
+        try {
+          await app.init({
+            resizeTo: host,
+            backgroundAlpha: 0,
+            antialias: true,
+            autoDensity: true,
+            resolution: Math.min(window.devicePixelRatio || 1, 2),
+            preference: 'canvas',
+          })
+          initOk = true
+        } catch {
+          try { app.destroy(true) } catch { /* ignore */ }
+        }
+      }
+
+      if (!initOk) {
+        setFailed(true)
+        return
+      }
+
       if (cancelled) {
-        app.destroy(true)
+        try { app.destroy(true) } catch { /* ignore */ }
         return
       }
 
@@ -159,8 +241,15 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     return () => {
       cancelled = true
       resizeObserver?.disconnect()
-      if (app.canvas.parentElement === host) host.removeChild(app.canvas)
-      app.destroy(true)
+      const app = appRef.current
+      if (app) {
+        try {
+          if (app.canvas && app.canvas.parentElement === host) {
+            host.removeChild(app.canvas)
+          }
+        } catch { /* ignore */ }
+        try { app.destroy(true) } catch { /* ignore */ }
+      }
       appRef.current = null
       rootRef.current = null
       fallbackRef.current = null
@@ -257,6 +346,10 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     spritePositionRef.current = spritePosition
     layout()
   }, [spritePosition])
+
+  if (failed) {
+    return <CssFallbackStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={spriteUrl} spritePosition={spritePosition} />
+  }
 
   return <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
 }
