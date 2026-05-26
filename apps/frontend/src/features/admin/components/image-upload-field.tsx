@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
-import { uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 
 interface ImageUploadFieldProps {
   /** 当前图片 URL */
@@ -43,23 +43,20 @@ export function ImageUploadField({
   const [previewUrl, setPreviewUrl] = useState(value || '')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  useEffect(() => {
+    setPreviewUrl(value || '')
+  }, [value])
+
   const handleUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) return
     setUploading(true)
     try {
-      // Upload to COS via existing pipeline
       const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
-      // Get the COS URL — we need to construct it or get it from somewhere
-      // The asset returned is { id: string }, we need the URL
-      // For now, use a placeholder URL pattern; in production, use the proper COS URL
-      const cosUrl = `cos://asset/${asset.id}`
-      // Actually, we need to get the signed URL. Let's construct from the COS pattern.
-      // The file-assets module resolves URLs. For now, we'll use a blob URL as preview
-      // and pass the asset ID. The actual URL resolution happens on the backend.
-      const blobUrl = URL.createObjectURL(file)
-      setPreviewUrl(blobUrl)
-      onUploaded?.(blobUrl, asset.id)
-      onChange?.(blobUrl)
+      const resolved = await getFileAssetLongLivedUrl(asset.id)
+      const cosUrl = resolved.url
+      setPreviewUrl(cosUrl)
+      onUploaded?.(cosUrl, asset.id)
+      onChange?.(cosUrl)
     } catch (err) {
       console.warn('Upload failed, falling back to URL input:', err)
       // Don't clear — user can still enter URL manually

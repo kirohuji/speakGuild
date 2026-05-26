@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Eye, Wand2, AlertTriangle, MapPin, MessageSquare, GitBranch, UserRound, Pencil, Trash2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Eye, Wand2, AlertTriangle, MapPin, MessageSquare, GitBranch, UserRound, Pencil, Trash2, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { compileInk, extractInkMeta, defaultInkTemplate } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
@@ -142,6 +143,8 @@ export function InkStoryEditor({
 }: InkStoryEditorProps) {
   const [source, setSource] = useState(initialSource || defaultInkTemplate())
   const [editorMode, setEditorMode] = useState<'design' | 'ink'>('design')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [formatChecked, setFormatChecked] = useState(false)
 
   // Meta fields
   const [key, setKey] = useState(initialKey)
@@ -162,6 +165,7 @@ export function InkStoryEditor({
   useEffect(() => {
     const result = compileInk(source)
     setCompileResult(result)
+    setFormatChecked(false)
   }, [source])
 
   // Extract meta from source
@@ -226,6 +230,11 @@ export function InkStoryEditor({
   const insertTemplate = useCallback(() => {
     setSource(defaultInkTemplate({ key, title }))
   }, [key, title])
+
+  const checkFormat = useCallback(() => {
+    setCompileResult(compileInk(source))
+    setFormatChecked(true)
+  }, [source])
 
   const appendToSource = useCallback((block: string) => {
     setSource((prev) => `${prev.trimEnd()}\n\n${block.trim()}\n`)
@@ -342,8 +351,8 @@ export function InkStoryEditor({
         </div>
       </div>
 
-      {/* Editor + Preview */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Editor */}
+      <div className="flex flex-col gap-4">
         {/* Editor */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -353,12 +362,25 @@ export function InkStoryEditor({
                 <TabsTrigger value="ink" className="text-xs px-2.5">Ink 脚本</TabsTrigger>
               </TabsList>
             </Tabs>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center justify-end gap-1">
               {editorMode === 'ink' && (
                 <Button variant="ghost" size="sm" onClick={insertTemplate} className="h-7 gap-1 text-xs">
                   <Wand2 className="size-3" />模板
                 </Button>
               )}
+              <Button type="button" variant="outline" size="sm" onClick={checkFormat} className="h-7 gap-1 text-xs">
+                <ClipboardCheck className="size-3" />检查格式
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewOpen(true)}
+                disabled={!formatChecked || !compileResult?.success}
+                className="h-7 gap-1 text-xs"
+              >
+                <Eye className="size-3" />预览
+              </Button>
               {onSave && !readOnly && (
                 <Button size="sm" onClick={handleSave}
                   disabled={saving || !key || !title || !compileResult?.success}
@@ -590,21 +612,26 @@ export function InkStoryEditor({
           </Tabs>
         </div>
 
-        {/* Preview */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Eye className="size-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">VN 预览</span>
-          </div>
-          <VnStoryPreview
-            inkSource={source}
-            characterSprites={charSprites}
-            characterPositions={charPositions}
-            defaultBackgroundUrl={selectedLocation?.backgroundUrl ?? undefined}
-            className="flex-1"
-          />
-        </div>
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+          <DialogHeader className="border-b border-border px-5 py-4">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Eye className="size-4" /> VN 预览
+            </DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 bg-muted/30 p-4">
+            <VnStoryPreview
+              inkSource={source}
+              characterSprites={charSprites}
+              characterPositions={charPositions}
+              defaultBackgroundUrl={selectedLocation?.backgroundUrl ?? undefined}
+              className="mx-auto h-[72vh] max-h-[720px] max-w-[390px]"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

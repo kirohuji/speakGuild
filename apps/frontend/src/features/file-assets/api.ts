@@ -20,6 +20,8 @@ type CompleteUploadResponse = {
 };
 
 type CurrentAvatar = { assetId: string; url: string; expiresInSeconds: number } | null;
+type FileAssetUrlResponse = { id: string; url: string; expiresInSeconds: number };
+type FileAssetLongLivedUrlResponse = { assetId: string; url: string };
 
 let currentAvatarCache:
   | { data: CurrentAvatar; expiresAtMs: number }
@@ -57,6 +59,14 @@ export async function setCurrentAvatar(assetId: string) {
     expiresAtMs: Date.now() + getAvatarCacheTtlMs(data),
   };
   return data;
+}
+
+export async function getFileAssetPrivateUrl(assetId: string) {
+  return get<FileAssetUrlResponse>(`/file-assets/${assetId}/private-url`);
+}
+
+export async function getFileAssetLongLivedUrl(assetId: string) {
+  return get<FileAssetLongLivedUrlResponse>(`/file-assets/${assetId}/long-lived-url`);
 }
 
 export async function uploadFileToCosAndComplete(params: {

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js'
 import { History, RotateCcw } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -32,13 +33,220 @@ interface VnPlayerProps {
   stageClassName?: string
 }
 
+interface PixiVnStageProps {
+  backgroundUrl?: string
+  spriteUrl?: string
+  spritePosition: 'left' | 'center' | 'right'
+}
+
+function fitCover(sprite: Sprite, width: number, height: number) {
+  const textureWidth = sprite.texture.width || 1
+  const textureHeight = sprite.texture.height || 1
+  const scale = Math.max(width / textureWidth, height / textureHeight)
+  sprite.scale.set(scale)
+  sprite.position.set(width / 2, height / 2)
+  sprite.anchor.set(0.5)
+}
+
+function layoutSprite(sprite: Sprite, width: number, height: number, position: 'left' | 'center' | 'right') {
+  const textureWidth = sprite.texture.width || 1
+  const textureHeight = sprite.texture.height || 1
+  const maxHeight = height * 0.62
+  const maxWidth = width * 0.74
+  const scale = Math.min(maxHeight / textureHeight, maxWidth / textureWidth)
+  sprite.scale.set(scale)
+  sprite.anchor.set(0.5, 1)
+  sprite.y = height - 118
+
+  if (position === 'center') {
+    sprite.x = width / 2
+  } else if (position === 'right') {
+    sprite.x = width * 0.72
+  } else {
+    sprite.x = width * 0.28
+  }
+}
+
+function PixiVnStage({ backgroundUrl, spriteUrl, spritePosition }: PixiVnStageProps) {
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  const appRef = useRef<Application | null>(null)
+  const rootRef = useRef<Container | null>(null)
+  const fallbackRef = useRef<Graphics | null>(null)
+  const bgRef = useRef<Sprite | null>(null)
+  const spriteRef = useRef<Sprite | null>(null)
+  const overlayRef = useRef<Graphics | null>(null)
+  const spritePositionRef = useRef(spritePosition)
+  const [ready, setReady] = useState(false)
+
+  const layout = () => {
+    const app = appRef.current
+    if (!app) return
+    const width = app.renderer.width
+    const height = app.renderer.height
+    if (fallbackRef.current) {
+      fallbackRef.current.clear()
+      fallbackRef.current.rect(0, 0, width, height).fill(0x141827)
+      fallbackRef.current.rect(0, height * 0.42, width, height * 0.58).fill({ color: 0x000000, alpha: 0.28 })
+    }
+    if (bgRef.current) fitCover(bgRef.current, width, height)
+    if (spriteRef.current) layoutSprite(spriteRef.current, width, height, spritePositionRef.current)
+    if (overlayRef.current) {
+      overlayRef.current.clear()
+      overlayRef.current.rect(0, 0, width, height).fill({ color: 0x000000, alpha: 0.16 })
+      overlayRef.current.rect(0, height * 0.48, width, height * 0.52).fill({ color: 0x000000, alpha: 0.48 })
+    }
+  }
+
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+
+    let cancelled = false
+    const app = new Application()
+    const root = new Container()
+    const fallback = new Graphics()
+    const overlay = new Graphics()
+    let resizeObserver: ResizeObserver | null = null
+
+    async function init() {
+      await app.init({
+        resizeTo: host,
+        backgroundAlpha: 0,
+        antialias: true,
+        autoDensity: true,
+        resolution: Math.min(window.devicePixelRatio || 1, 2),
+      })
+      if (cancelled) {
+        app.destroy(true)
+        return
+      }
+
+      appRef.current = app
+      rootRef.current = root
+      fallbackRef.current = fallback
+      overlayRef.current = overlay
+      app.stage.addChild(root)
+      root.addChild(fallback)
+      root.addChild(overlay)
+      app.canvas.className = 'absolute inset-0 h-full w-full'
+      host.appendChild(app.canvas)
+      resizeObserver = new ResizeObserver(layout)
+      resizeObserver.observe(host)
+      layout()
+      setReady(true)
+    }
+
+    void init()
+
+    return () => {
+      cancelled = true
+      resizeObserver?.disconnect()
+      if (app.canvas.parentElement === host) host.removeChild(app.canvas)
+      app.destroy(true)
+      appRef.current = null
+      rootRef.current = null
+      fallbackRef.current = null
+      bgRef.current = null
+      spriteRef.current = null
+      overlayRef.current = null
+      setReady(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadBackground() {
+      const root = rootRef.current
+      const overlay = overlayRef.current
+      if (!ready) return
+      if (!root) return
+
+      if (bgRef.current) {
+        root.removeChild(bgRef.current)
+        bgRef.current.destroy()
+        bgRef.current = null
+      }
+      if (!backgroundUrl) {
+        layout()
+        return
+      }
+
+      try {
+        const texture = await Assets.load<Texture>(backgroundUrl)
+        if (cancelled || !root) return
+        const sprite = new Sprite(texture)
+        bgRef.current = sprite
+        root.addChildAt(sprite, 1)
+        if (overlay) root.setChildIndex(overlay, root.children.length - 1)
+        layout()
+      } catch {
+        layout()
+      }
+    }
+
+    void loadBackground()
+    return () => {
+      cancelled = true
+    }
+  }, [backgroundUrl, ready])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadSprite() {
+      const root = rootRef.current
+      const overlay = overlayRef.current
+      if (!ready) return
+      if (!root) return
+
+      if (spriteRef.current) {
+        root.removeChild(spriteRef.current)
+        spriteRef.current.destroy()
+        spriteRef.current = null
+      }
+      if (!spriteUrl) {
+        layout()
+        return
+      }
+
+      try {
+        const texture = await Assets.load<Texture>(spriteUrl)
+        if (cancelled || !root) return
+        const sprite = new Sprite(texture)
+        sprite.alpha = 0
+        spriteRef.current = sprite
+        root.addChild(sprite)
+        if (overlay) root.setChildIndex(overlay, root.children.length - 1)
+        layout()
+        appRef.current?.ticker.addOnce(() => {
+          if (spriteRef.current === sprite) sprite.alpha = 1
+        })
+      } catch {
+        layout()
+      }
+    }
+
+    void loadSprite()
+    return () => {
+      cancelled = true
+    }
+  }, [spriteUrl, ready])
+
+  useEffect(() => {
+    spritePositionRef.current = spritePosition
+    layout()
+  }, [spritePosition])
+
+  return <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
+}
+
 export function VnPlayer({
   backgroundUrl,
   currentLine,
   history = [],
   choices = [],
   currentSpriteUrl,
-  spriteAlt,
   spritePosition = 'left',
   isWaiting = false,
   isEnded = false,
@@ -70,15 +278,11 @@ export function VnPlayer({
           }
         }}
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: backgroundUrl
-              ? `url(${backgroundUrl})`
-              : 'linear-gradient(160deg, #141827 0%, #203647 52%, #0e1118 100%)',
-          }}
+        <PixiVnStage
+          backgroundUrl={backgroundUrl}
+          spriteUrl={currentSpriteUrl}
+          spritePosition={spritePosition}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.16),transparent_34%),linear-gradient(to_top,rgba(0,0,0,0.76),rgba(0,0,0,0.12)_48%,rgba(0,0,0,0.34))]" />
 
         <div className="absolute right-3 top-3 z-30 flex gap-2">
           <span
@@ -114,24 +318,6 @@ export function VnPlayer({
             </span>
           )}
         </div>
-
-        {currentSpriteUrl && (
-          <div
-            className={cn(
-              'absolute bottom-[118px] z-10 flex h-[58%] max-h-[430px] items-end transition-all duration-500',
-              spritePosition === 'left' && 'left-2 justify-start',
-              spritePosition === 'center' && 'left-1/2 -translate-x-1/2 justify-center',
-              spritePosition === 'right' && 'right-2 justify-end',
-            )}
-          >
-            <img
-              src={currentSpriteUrl}
-              alt={spriteAlt}
-              className="h-full max-w-[72vw] object-contain drop-shadow-[0_22px_30px_rgba(0,0,0,0.55)]"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-          </div>
-        )}
 
         {choices.length > 0 && (
           <div className="absolute inset-x-5 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2">

@@ -59,6 +59,11 @@ export class FileAssetsController {
     return this.fileAssetsService.getPrivateUrlByAssetId(id);
   }
 
+  @Get(':id/long-lived-url')
+  getLongLivedUrl(@Param('id') id: string) {
+    return this.fileAssetsService.getAssetLongLivedUrl(id);
+  }
+
   @Get(':id/references')
   listReferences(@Param('id') id: string) {
     return this.fileAssetsService.listReferences(id);
