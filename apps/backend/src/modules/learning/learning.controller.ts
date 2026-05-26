@@ -14,6 +14,13 @@ export class LearningController {
     return this.learningService.getLearningUnits(session.user.id);
   }
 
+  /** 获取用户正在学习的单元（有进度记录的） */
+  @Get('my-units')
+  async getMyUnits(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.learningService.getMyLearningUnits(session.user.id);
+  }
+
   /** 获取学习单元详情（顺序学习内容） */
   @Get('units/:id')
   async getUnitDetail(@Req() req: Request, @Param('id') id: string) {

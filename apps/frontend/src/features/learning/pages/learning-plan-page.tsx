@@ -19,7 +19,12 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
-import { learningApi, type LearningCategory, type LearningUnitSummary } from '../api/learning-api'
+import {
+  learningApi,
+  type LearningCategory,
+  type LearningUnitSummary,
+  type MyUnit,
+} from '../api/learning-api'
 
 const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
   '留学生活': GraduationCap,
@@ -34,47 +39,49 @@ function getCategoryIcon(name: string) {
 }
 
 export function LearningPlanPage() {
-  const [categories, setCategories] = useState<LearningCategory[]>([])
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
   const [tab, setTab] = useState<'learning' | 'shop'>('learning')
 
-  const fetchUnits = useCallback(async () => {
-    try {
-      const data = await learningApi.getUnits()
-      setCategories(data)
-    } catch {
-      // 静默失败
-    }
+  // ── "当前学习" 数据 ──
+  const [myUnits, setMyUnits] = useState<MyUnit[]>([])
+  const [myLoading, setMyLoading] = useState(true)
+
+  // ── "学习商店" 数据 ──
+  const [shopCategories, setShopCategories] = useState<LearningCategory[]>([])
+  const [shopLoading, setShopLoading] = useState(false)
+
+  // 首次加载：两个 Tab 都预拉
+  useEffect(() => {
+    Promise.all([
+      learningApi.getMyUnits().then(setMyUnits).catch(() => setMyUnits([])),
+      learningApi.getUnits().then(setShopCategories).catch(() => setShopCategories([])),
+    ]).finally(() => { setMyLoading(false); setShopLoading(false) })
   }, [])
 
-  // 首次加载显示 loading
-  useEffect(() => {
-    setLoading(true)
+  const refreshMyUnits = useCallback(() => {
+    learningApi.getMyUnits().then(setMyUnits).catch(() => {})
+  }, [])
+
+  const refreshShop = useCallback(() => {
+    setShopLoading(true)
     learningApi.getUnits()
-      .then(setCategories)
-      .catch(() => setCategories([]))
-      .finally(() => setLoading(false))
+      .then(setShopCategories)
+      .catch(() => {})
+      .finally(() => setShopLoading(false))
   }, [])
 
-  useEffect(() => {
-    fetchUnits()
-  }, [fetchUnits])
-
-  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
-
-  // 搜集所有单元
-  const allUnits = categories.flatMap((c) =>
+  // 商店数据平坦化
+  const allShopUnits = shopCategories.flatMap((c) =>
     c.units.map((u) => ({ ...u, categoryName: c.name, categoryIcon: c.icon })),
   )
-
-  const inProgress = allUnits.filter(
-    (u) => u.isUnlocked && (u.completionPercent ?? 0) > 0 && (u.completionPercent ?? 0) < 100,
-  )
-  const notStarted = allUnits.filter(
+  const notStarted = allShopUnits.filter(
     (u) => u.isUnlocked && (u.completionPercent ?? 0) === 0,
   )
-  const completed = allUnits.filter((u) => (u.completionPercent ?? 0) >= 100)
-  const locked = allUnits.filter((u) => !u.isUnlocked)
+  const locked = allShopUnits.filter((u) => !u.isUnlocked)
+
+  // 我的学习数据分组
+  const inProgress = myUnits.filter((u) => u.completionPercent > 0 && u.completionPercent < 100)
+  const completed = myUnits.filter((u) => u.completionPercent >= 100)
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
@@ -84,10 +91,10 @@ export function LearningPlanPage() {
         <p className="mt-1 text-muted-foreground">选择教材，系统自动安排每日任务</p>
       </div>
 
-      {/* Tab: 进行中 / 学习商店 */}
+      {/* Tab */}
       <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
         <button
-          onClick={() => { setTab('learning'); fetchUnits() }}
+          onClick={() => { setTab('learning'); refreshMyUnits() }}
           className={cn(
             'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
             tab === 'learning' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
@@ -101,7 +108,7 @@ export function LearningPlanPage() {
           )}
         </button>
         <button
-          onClick={() => { setTab('shop'); fetchUnits() }}
+          onClick={() => { setTab('shop'); refreshShop() }}
           className={cn(
             'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
             tab === 'shop' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
@@ -116,96 +123,96 @@ export function LearningPlanPage() {
         </button>
       </div>
 
-      {categories.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <BookOpen className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">学习内容即将上线</p>
-        </div>
-      ) : tab === 'learning' ? (
-        /* ===== 当前学习 Tab ===== */
-        <div className="space-y-4">
-          {/* 进行中的单元 */}
-          {inProgress.length > 0 && (
-            <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Play className="size-4 text-primary" />
-                继续学习
-              </h2>
-              <div className="space-y-2">
-                {inProgress.map((unit) => (
-                  <UnitCard key={unit.id} unit={unit} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* 已完成的单元 */}
-          {completed.length > 0 && (
-            <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                <CheckCircle2 className="size-4 text-green-500" />
-                已完成
-              </h2>
-              <div className="space-y-2">
-                {completed.map((unit) => (
-                  <UnitCard key={unit.id} unit={unit} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {inProgress.length === 0 && completed.length === 0 && (
-            <div className="flex flex-col items-center py-12 text-center">
-              <BookOpen className="size-10 text-muted-foreground/40" />
-              <p className="mt-3 text-sm text-muted-foreground">还没有开始学习</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => setTab('shop')}>
-                去学习商店选教材
-              </Button>
-            </div>
-          )}
-        </div>
+      {tab === 'learning' ? (
+        <MyLearningView
+          myUnits={myUnits}
+          inProgress={inProgress}
+          completed={completed}
+          loading={myLoading}
+          onGoToShop={() => { setTab('shop'); refreshShop() }}
+        />
       ) : (
-        /* ===== 学习商店 Tab ===== */
-        <div className="space-y-6">
-          {notStarted.length > 0 && (
-            <section>
-              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <ShoppingBag className="size-4 text-primary" />
-                可获取的学习单元
-                <Badge variant="secondary" className="text-[10px]">{notStarted.length}</Badge>
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {notStarted.map((unit) => (
-                  <ShopCard key={unit.id} unit={unit} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {locked.length > 0 && (
-            <section>
-              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                <Lock className="size-4" />
-                等级解锁
-                <Badge variant="outline" className="text-[10px]">{locked.length}</Badge>
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {locked.map((unit) => (
-                  <LockedUnitCard key={unit.id} unit={unit} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+        <ShopView
+          notStarted={notStarted}
+          locked={locked}
+          loading={shopLoading}
+          categoriesEmpty={shopCategories.length === 0}
+        />
       )}
     </div>
   )
 }
 
-// ── 进行中/已完成 单元卡片 ──
+// ═══════════════════════════════════════════════════════
+//  「当前学习」视图
+// ═══════════════════════════════════════════════════════
 
-function UnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
-  const pct = unit.completionPercent ?? 0
+function MyLearningView({
+  myUnits,
+  inProgress,
+  completed,
+  loading,
+  onGoToShop,
+}: {
+  myUnits: MyUnit[]
+  inProgress: MyUnit[]
+  completed: MyUnit[]
+  loading: boolean
+  onGoToShop: () => void
+}) {
+  if (loading) {
+    return <div className="flex min-h-[40vh] items-center justify-center"><Spinner /></div>
+  }
+
+  if (myUnits.length === 0) {
+    return (
+      <div className="flex flex-col items-center py-16 text-center">
+        <BookOpen className="size-12 text-muted-foreground/40" />
+        <p className="mt-4 text-muted-foreground">还没有开始学习</p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={onGoToShop}>
+          去学习商店选教材
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {inProgress.length > 0 && (
+        <section>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Play className="size-4 text-primary" />
+            继续学习
+          </h2>
+          <div className="space-y-2">
+            {inProgress.map((unit) => (
+              <MyUnitCard key={unit.id} unit={unit} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {completed.length > 0 && (
+        <section>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <CheckCircle2 className="size-4 text-green-500" />
+            已完成
+          </h2>
+          <div className="space-y-2">
+            {completed.map((unit) => (
+              <MyUnitCard key={unit.id} unit={unit} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+// ── 我的学习单元卡片 ──
+
+function MyUnitCard({ unit }: { unit: MyUnit }) {
+  const pct = unit.completionPercent
   const isCompleted = pct >= 100
 
   return (
@@ -240,7 +247,6 @@ function UnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
         </div>
         <p className="text-xs text-muted-foreground">{unit.location}</p>
 
-        {/* 话题列表 */}
         {!isCompleted && unit.topics && unit.topics.length > 0 && (
           <div className="mt-1.5 space-y-0.5">
             {unit.topics.slice(0, 3).map((t) => (
@@ -261,6 +267,69 @@ function UnitCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
 
       <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
     </Link>
+  )
+}
+
+// ═══════════════════════════════════════════════════════
+//  「学习商店」视图
+// ═══════════════════════════════════════════════════════
+
+function ShopView({
+  notStarted,
+  locked,
+  loading,
+  categoriesEmpty,
+}: {
+  notStarted: (LearningUnitSummary & { categoryName?: string })[]
+  locked: (LearningUnitSummary & { categoryName?: string })[]
+  loading: boolean
+  categoriesEmpty: boolean
+}) {
+  if (loading) {
+    return <div className="flex min-h-[40vh] items-center justify-center"><Spinner /></div>
+  }
+
+  if (categoriesEmpty) {
+    return (
+      <div className="flex flex-col items-center py-16 text-center">
+        <BookOpen className="size-12 text-muted-foreground/40" />
+        <p className="mt-4 text-muted-foreground">学习内容即将上线</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {notStarted.length > 0 && (
+        <section>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <ShoppingBag className="size-4 text-primary" />
+            可获取的学习单元
+            <Badge variant="secondary" className="text-[10px]">{notStarted.length}</Badge>
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {notStarted.map((unit) => (
+              <ShopCard key={unit.id} unit={unit} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {locked.length > 0 && (
+        <section>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <Lock className="size-4" />
+            等级解锁
+            <Badge variant="outline" className="text-[10px]">{locked.length}</Badge>
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {locked.map((unit) => (
+              <LockedUnitCard key={unit.id} unit={unit} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   )
 }
 

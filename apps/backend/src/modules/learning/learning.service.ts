@@ -93,6 +93,64 @@ export class LearningService {
   }
 
   /**
+   * 获取用户正在学习/已完成的单元列表（有进度记录的）
+   */
+  async getMyLearningUnits(userId: string) {
+    const progresses = await this.prisma.userSceneProgress.findMany({
+      where: { userId },
+      include: {
+        scene: {
+          include: {
+            category: { select: { name: true } },
+            _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
+            trainingTopics: {
+              select: { id: true, title: true, difficulty: true, suggestedDurationSec: true },
+              orderBy: { sortOrder: 'asc' },
+            },
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return progresses.map((p) => {
+      const scene = p.scene;
+      const totalItems =
+        scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
+      const completedItems = p.vocabLearned + p.chunkMastered + p.completedPracticeCount;
+      const completionPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+      return {
+        id: scene.id,
+        title: scene.title,
+        location: scene.location,
+        categoryName: scene.category.name,
+        topics: scene.trainingTopics.map((t) => ({
+          id: t.id,
+          title: t.title,
+          difficulty: t.difficulty,
+          suggestedDurationSec: t.suggestedDurationSec,
+        })),
+        vocabCount: scene._count.vocabularies,
+        chunkCount: scene._count.chunks,
+        topicCount: scene._count.trainingTopics,
+        scriptCount: scene._count.scriptEpisodes,
+        progress: {
+          readiness: p.readiness,
+          mastery: p.mastery,
+          vocabLearned: p.vocabLearned,
+          vocabTotal: scene._count.vocabularies,
+          chunkMastered: p.chunkMastered,
+          chunkTotal: scene._count.chunks,
+          completedPracticeCount: p.completedPracticeCount,
+          completedScriptCount: p.completedScriptCount,
+        },
+        completionPercent,
+      };
+    });
+  }
+
+  /**
    * 获取某个学习单元的完整顺序内容
    */
   async getLearningUnitDetail(userId: string, unitId: string) {

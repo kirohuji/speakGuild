@@ -178,11 +178,38 @@ export interface TodayPlan {
   tasks: TodayTask[]
 }
 
+/** 用户正在学习的单元（从 my-units 接口返回） */
+export interface MyUnit {
+  id: string
+  title: string
+  location: string
+  categoryName: string
+  topics: TopicSummary[]
+  vocabCount: number
+  chunkCount: number
+  topicCount: number
+  scriptCount: number
+  progress: {
+    readiness: number
+    mastery: number
+    vocabLearned: number
+    vocabTotal: number
+    chunkMastered: number
+    chunkTotal: number
+    completedPracticeCount: number
+    completedScriptCount: number
+  }
+  completionPercent: number
+}
+
 // ---- API 方法 ----
 
 export const learningApi = {
   /** 获取全部教材列表 */
   getUnits: () => api.get<any, LearningCategory[]>('/learning/units'),
+
+  /** 获取用户正在学习的单元 */
+  getMyUnits: () => api.get<any, MyUnit[]>('/learning/my-units'),
 
   /** 获取学习单元详情 */
   getUnitDetail: (unitId: string) => api.get<any, UnitDetail>(`/learning/units/${unitId}`),
