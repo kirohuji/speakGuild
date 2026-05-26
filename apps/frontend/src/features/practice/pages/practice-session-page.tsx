@@ -648,14 +648,14 @@ export function PracticeSessionPage() {
     return (
       <div className="relative flex h-dvh flex-col bg-background">
         {/* Floating minimal top bar — light text on dark bg */}
-        <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+        <div className="absolute inset-x-0 top-0 z-30 grid grid-cols-[72px_1fr_72px] items-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setPhase('prepare')}
-            className="rounded-full bg-black/50 text-xs text-white/80 backdrop-blur-md hover:bg-black/70 hover:text-white"
+            className="h-8 justify-self-start rounded-full border border-white/10 bg-black/50 px-3 text-xs font-medium text-white/80 shadow-none backdrop-blur-md hover:bg-black/70 hover:text-white"
           >
-            <ArrowLeft className="mr-1 size-3.5" /> 返回
+            <ArrowLeft className="size-3.5" /> 返回
           </Button>
 
           <PracticeVnDrawer
@@ -664,10 +664,20 @@ export function PracticeSessionPage() {
             coreChunks={coreChunkTexts}
             usedChunkTexts={usedChunks}
             hideToggles={isHistoryOpen}
-            triggerClassName="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1.5 shadow-none"
+            compactTrigger
+            plainTrigger
+            triggerClassName="mx-auto inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 text-xs font-medium text-white/80 shadow-none backdrop-blur-md transition-all duration-200 hover:bg-black/70 hover:text-white active:scale-[0.97] [&_svg]:size-3.5"
           />
 
-          <div className="w-[68px]" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={startAnalysis}
+            disabled={dialogueRounds.filter((line) => !line.isNpc).length < 2}
+            className="h-8 justify-self-end rounded-full border border-white/10 bg-black/50 px-3 text-xs font-medium text-white/80 shadow-none backdrop-blur-md hover:bg-black/70 hover:text-white disabled:opacity-35"
+          >
+            结束
+          </Button>
         </div>
 
         <div className="min-h-0 flex-1 bg-black">

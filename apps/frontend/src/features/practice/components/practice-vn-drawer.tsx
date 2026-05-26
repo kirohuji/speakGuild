@@ -30,6 +30,8 @@ interface PracticeVnDrawerProps {
   usedChunkTexts: Set<string>
   hideToggles?: boolean
   triggerClassName?: string
+  compactTrigger?: boolean
+  plainTrigger?: boolean
 }
 
 export function PracticeVnDrawer({
@@ -39,6 +41,8 @@ export function PracticeVnDrawer({
   usedChunkTexts,
   hideToggles = false,
   triggerClassName,
+  compactTrigger = false,
+  plainTrigger = false,
 }: PracticeVnDrawerProps) {
   const [open, setOpen] = useState(false)
   const completedCount = objectives.filter((objective) => objective.completed).length
@@ -56,14 +60,18 @@ export function PracticeVnDrawer({
           type="button"
           onClick={() => setOpen(true)}
           className={cn(
-            'flex items-center gap-2 rounded-full border border-white/15 bg-black/58 px-3.5 py-2 text-xs font-medium text-white shadow-[0_16px_48px_rgba(0,0,0,.28)] backdrop-blur-2xl transition-transform active:scale-[0.97]',
+            !plainTrigger && 'flex items-center gap-2 rounded-full border border-white/15 bg-black/58 px-3.5 py-2 text-xs font-medium text-white shadow-[0_16px_48px_rgba(0,0,0,.28)] backdrop-blur-2xl transition-transform active:scale-[0.97]',
             triggerClassName,
           )}
         >
           <Target className="size-3.5 text-rose-100" />
           <span>目标 {completedCount}/{objectives.length || 1}</span>
-          <span className="h-1 w-1 rounded-full bg-white/36" />
-          <span className="text-white/66">练习助手</span>
+          {!compactTrigger && (
+            <>
+              <span className="h-1 w-1 rounded-full bg-white/36" />
+              <span className="text-white/66">练习助手</span>
+            </>
+          )}
         </button>
       )}
 

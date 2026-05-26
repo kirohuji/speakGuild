@@ -77,11 +77,19 @@ function fitBackground(sprite: Sprite | TilingSprite, width: number, height: num
   sprite.position.set(width / 2, height / 2)
 }
 
+function getDialogueHeight(height: number) {
+  return Math.min(Math.max(height * 0.24, 148), 196)
+}
+
 function layoutSprite(sprite: Sprite, width: number, height: number, position: 'left' | 'center' | 'right') {
-  const scale = Math.min((height * 0.62) / (sprite.texture.height || 1), (width * 0.74) / (sprite.texture.width || 1))
+  const dialogueHeight = getDialogueHeight(height)
+  const stageTopInset = 58
+  const stageBottomInset = dialogueHeight + 18
+  const availableHeight = Math.max(height - stageTopInset - stageBottomInset, height * 0.48)
+  const scale = Math.min(availableHeight / (sprite.texture.height || 1), (width * 0.78) / (sprite.texture.width || 1))
   sprite.scale.set(scale)
-  sprite.anchor.set(0.5, 1)
-  sprite.y = height - 118
+  sprite.anchor.set(0.5)
+  sprite.y = stageTopInset + availableHeight / 2
   sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
 }
 
@@ -106,20 +114,18 @@ function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosit
         }}
       />
       {spriteUrl && (
-        <img
-          src={spriteUrl}
-          alt=""
-          className="pointer-events-none absolute select-none"
-          style={{
-            maxHeight: '62%',
-            maxWidth: '74%',
-            bottom: '118px',
-            left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
-            transform: 'translateX(-50%)',
-            objectFit: 'contain',
-            objectPosition: 'bottom center',
-          }}
-        />
+        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(148px,24dvh,196px)+18px)] top-[58px]">
+          <img
+            src={spriteUrl}
+            alt=""
+            className="absolute max-h-full max-w-[78%] select-none object-contain"
+            style={{
+              left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        </div>
       )}
     </div>
   )
@@ -145,7 +151,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     if (fallbackRef.current) {
       fallbackRef.current.clear()
       fallbackRef.current.rect(0, 0, width, height).fill(0x1a1a2e)
-      fallbackRef.current.rect(0, height * 0.42, width, height * 0.58).fill({ color: 0x000000, alpha: 0.28 })
     }
     if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
     if (spriteRef.current) layoutSprite(spriteRef.current, width, height, spritePositionRef.current)
@@ -357,24 +362,66 @@ export function VnPlayer({
   stageClassName,
 }: VnPlayerProps) {
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [displayedText, setDisplayedText] = useState(currentLine?.text ?? '')
+  const typewriterTimerRef = useRef<number | null>(null)
+  const fullText = currentLine?.text ?? ''
+
+  useEffect(() => {
+    if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
+    setDisplayedText('')
+    if (!fullText) return
+
+    let index = 0
+    const timer = window.setInterval(() => {
+      index += 1
+      setDisplayedText(fullText.slice(0, index))
+      if (index >= fullText.length) {
+        window.clearInterval(timer)
+        if (typewriterTimerRef.current === timer) typewriterTimerRef.current = null
+      }
+    }, 18)
+    typewriterTimerRef.current = timer
+
+    return () => {
+      window.clearInterval(timer)
+      if (typewriterTimerRef.current === timer) typewriterTimerRef.current = null
+    }
+  }, [fullText])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)
     onHistoryOpenChange?.(value)
   }
-  const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen
+  const isTyping = !!fullText && displayedText.length < fullText.length
+  const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !isTyping
+  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen
 
   return (
     <div className={cn('relative mx-auto flex h-full w-full max-w-[520px] flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border', className)}>
       <div
         role="button"
-        tabIndex={canAdvance ? 0 : -1}
+        tabIndex={canInteract ? 0 : -1}
         aria-label="推进对话"
-        className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', canAdvance && 'cursor-pointer', stageClassName)}
-        onClick={() => { if (canAdvance) onAdvance?.() }}
+        className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', canInteract && 'cursor-pointer', stageClassName)}
+        onClick={() => {
+          if (!canInteract) return
+          if (isTyping) {
+            if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
+            typewriterTimerRef.current = null
+            setDisplayedText(fullText)
+            return
+          }
+          onAdvance?.()
+        }}
         onKeyDown={(event) => {
-          if (canAdvance && (event.key === 'Enter' || event.key === ' ')) {
+          if (canInteract && (event.key === 'Enter' || event.key === ' ')) {
             event.preventDefault()
+            if (isTyping) {
+              if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
+              typewriterTimerRef.current = null
+              setDisplayedText(fullText)
+              return
+            }
             onAdvance?.()
           }
         }}
@@ -478,21 +525,25 @@ export function VnPlayer({
 
         <div className="absolute inset-x-0 bottom-0 z-20">
           {currentLine?.speaker && (
-            <div className="ml-3 inline-flex min-w-24 max-w-[82%] items-center justify-center rounded-t-lg border border-border/60 border-b-0 bg-background/95 px-3 py-1">
-              <span className="truncate text-sm font-semibold text-foreground">{currentLine.speaker}</span>
+            <div className="absolute left-4 top-0 z-10 inline-flex max-w-[82%] -translate-y-1/2 items-center rounded-md border border-white/10 bg-black/58 px-3 py-1 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
+              <span className="truncate text-xs font-semibold text-white/88">{currentLine.speaker}</span>
             </div>
           )}
-          <div className="min-h-[140px] border-t border-border/60 bg-background/95 p-4">
+          <div className="max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] overflow-y-auto border-t border-white/10 bg-black/58 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3.5 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
             {currentLine ? (
-              <p className="text-sm leading-relaxed text-foreground">{currentLine.text}</p>
+              <p className="text-sm leading-relaxed text-white/92">
+                {displayedText}
+                {canAdvance && (
+                  <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-white/70 align-middle drop-shadow-[0_0_8px_rgba(255,255,255,.42)]" />
+                )}
+              </p>
             ) : isEnded ? (
-              <p className="text-center text-sm text-muted-foreground">故事结束</p>
+              <p className="text-center text-sm text-white/62">故事结束</p>
             ) : isWaiting ? (
-              <p className="text-center text-sm text-muted-foreground">等待用户输入...</p>
+              <p className="text-center text-sm text-white/62">等待用户输入...</p>
             ) : (
-              <p className="text-center text-sm text-muted-foreground">点击继续</p>
+              <p className="text-center text-sm text-white/62">等待继续</p>
             )}
-            {canAdvance && <span className="absolute bottom-3 right-5 text-xs text-muted-foreground">点击继续</span>}
           </div>
         </div>
       </div>
