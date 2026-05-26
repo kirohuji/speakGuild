@@ -254,7 +254,7 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
           {header}
         </p>
       )}
-      <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
         {children}
       </div>
     </div>
@@ -303,25 +303,25 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   const nickname = userProfile?.name || userProfile?.username || '导游说者'
 
   const onTapAvatar = () => {
-    navigate('/account')
+    onNavigate('account')
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* 用户信息区 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-lg border border-border/70 bg-card p-3 shadow-sm">
         <div className="flex items-center gap-3">
           {/* 头像 */}
           <div className="relative">
             <button
               type="button"
               onClick={onTapAvatar}
-              className="group relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary/15"
+              className="group relative flex size-14 items-center justify-center overflow-hidden rounded-full bg-primary/10 ring-1 ring-primary/15"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
               ) : (
-                <User className="h-9 w-9 text-primary" />
+                <User className="size-7 text-primary" />
               )}
               <span className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 bg-black/50 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
                 <Camera className="h-3 w-3" />
@@ -330,9 +330,9 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
             </button>
           </div>
           <div>
-            <p className="text-lg font-bold leading-tight">{nickname}</p>
+            <p className="text-base font-semibold leading-tight">{nickname}</p>
             <div className="mt-1.5 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-muted-foreground/25 px-2 py-0.5 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center rounded-full border border-muted-foreground/20 px-2 py-0.5 text-[11px] text-muted-foreground">
                 免费用户
               </span>
               <Link
@@ -347,36 +347,36 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
         {/* 设置入口 */}
         <button
           onClick={() => onNavigate('settings')}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-colors active:bg-muted"
+          className="flex size-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-colors active:bg-muted"
         >
-          <Settings className="h-4.5 w-4.5" />
+          <Settings className="size-4" />
         </button>
       </div>
 
       {/* 统计双卡 */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border/70 bg-card p-3 shadow-sm">
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />练习天数
           </div>
           {isLoading ? (
             <Skeleton className="mt-2 h-9 w-14 rounded-lg" />
           ) : (
-            <p className="mt-1.5 text-3xl font-bold tracking-tight">{overview?.totalPracticeDays ?? 0}</p>
+            <p className="mt-1.5 text-2xl font-semibold tracking-tight">{overview?.totalPracticeDays ?? 0}</p>
           )}
           <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
             <Flame className="h-3 w-3 text-orange-400" />
             连续打卡 {isLoading ? '--' : overview?.streakDays ?? 0} 天
           </p>
         </div>
-        <div className="rounded-2xl bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border/70 bg-card p-3 shadow-sm">
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <TrendingUp className="h-3.5 w-3.5" />累计做题
           </div>
           {isLoading ? (
             <Skeleton className="mt-2 h-9 w-14 rounded-lg" />
           ) : (
-            <p className="mt-1.5 text-3xl font-bold tracking-tight">{overview?.totalQuestionsAnswered ?? 0}</p>
+            <p className="mt-1.5 text-2xl font-semibold tracking-tight">{overview?.totalQuestionsAnswered ?? 0}</p>
           )}
           <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
             <Target className="h-3 w-3 text-blue-400" />
@@ -395,11 +395,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
             label={label}
             last={idx === navItems.length - 1}
             onTap={() => {
-              if (key === 'account') {
-                navigate('/account')
-              } else {
-                onNavigate(key)
-              }
+              onNavigate(key)
             }}
           />
         ))}

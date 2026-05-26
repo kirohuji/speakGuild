@@ -282,19 +282,26 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
   )
 }
 
-export function NotificationListPage() {
+export function NotificationListPage({ compact = false }: { compact?: boolean }) {
   return (
     <div className="space-y-5">
       {/* 页面标题 */}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">通知中心</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          查看和管理你的所有通知
-        </p>
-      </div>
+      {!compact && (
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">通知中心</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            查看和管理你的所有通知
+          </p>
+        </div>
+      )}
+      {compact && (
+        <div className="pb-1">
+          <h1 className="text-base font-semibold tracking-tight">通知中心</h1>
+        </div>
+      )}
 
       <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="h-10 w-full bg-muted/60 p-0.5">
+        <TabsList className="h-10 w-full rounded-full bg-muted/60 p-0.5">
           {tabConfig.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
               key={value}

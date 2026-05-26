@@ -1,12 +1,15 @@
 import React from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
 import { useAuth } from '@/providers/auth-provider'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useNotificationStore } from '@/features/notification/store'
+import { ProfilePage } from '@/features/profile/pages/profile-page'
+import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { cn } from '@/lib/cn'
 
 export function RootLayout() {
@@ -15,6 +18,8 @@ export function RootLayout() {
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isLoggedIn = !!session
   const showMobileAvatar = isLoggedIn && pathname === '/'
+  const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
+  const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
 
   return (
     <div className="flex min-h-screen flex-col pt-safe">
@@ -23,7 +28,12 @@ export function RootLayout() {
           <Header />
         </div>
       )}
-      {!isAuthPage && showMobileAvatar && <MobileTopBar />}
+      {!isAuthPage && showMobileAvatar && (
+        <MobileTopBar
+          onNotificationOpen={() => setNotificationDrawerOpen(true)}
+          onProfileOpen={() => setProfileDrawerOpen(true)}
+        />
+      )}
       <main className={`flex-1 pt-0 ${
         isAuthPage || !isLoggedIn
           ? 'pb-0 lg:pt-0 lg:pb-0'
@@ -39,11 +49,37 @@ export function RootLayout() {
         </div>
       )}
       {!isAuthPage && <BottomNav />}
+      <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="sr-only">个人中心</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <ProfilePage />
+          </div>
+        </DrawerContent>
+      </Drawer>
+      <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="sr-only">通知中心</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <NotificationListPage compact />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }
 
-function MobileTopBar() {
+function MobileTopBar({
+  onNotificationOpen,
+  onProfileOpen,
+}: {
+  onNotificationOpen: () => void
+  onProfileOpen: () => void
+}) {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const unreadCount = useNotificationStore((s) => s.unreadCount)
@@ -58,8 +94,9 @@ function MobileTopBar() {
 
   return (
     <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40 lg:hidden">
-      <Link
-        to="/notifications"
+      <button
+        type="button"
+        onClick={onNotificationOpen}
         aria-label="通知"
         className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
       >
@@ -67,9 +104,10 @@ function MobileTopBar() {
         {unreadCount > 0 && (
           <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-destructive ring-2 ring-background" />
         )}
-      </Link>
-      <Link
-        to="/profile"
+      </button>
+      <button
+        type="button"
+        onClick={onProfileOpen}
         aria-label="个人页面"
         className={cn(
           'block rounded-full p-0.5 transition-colors',
@@ -82,7 +120,7 @@ function MobileTopBar() {
             {fallback}
           </AvatarFallback>
         </Avatar>
-      </Link>
+      </button>
     </header>
   )
 }
