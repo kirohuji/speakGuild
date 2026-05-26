@@ -104,19 +104,19 @@
   }
 
   /* ═══════════════════════════════════════════════════════
-     深色品牌模式（首页、登录页、品牌展示页）
-     关键词：深蓝沉浸 / 白字 / 橙红行动点
+     深色品牌模式
+     关键词：深紫黑夜间底 / 白字 / 暖珊瑚行动点
      ═══════════════════════════════════════════════════════ */
   .dark {
-    /* 底色 = 品牌深蓝 */
-    --background: var(--brand-navy);
+    /* 底色 = 与移动首页一致的夜间底色 */
+    --background: 252 43% 5%;
     --foreground: 0 0% 100%;
 
     /* 半透明卡片 */
-    --card:            212 100% 20%;
+    --card:            258 36% 10%;
     --card-foreground: 0 0% 100%;
 
-    --popover:         212 100% 20%;
+    --popover:         258 36% 10%;
     --popover-foreground: 0 0% 100%;
 
     /* 主色 = 白色（深蓝底上的白色更清晰） */
@@ -124,12 +124,12 @@
     --primary-foreground: var(--brand-navy);
 
     /* 次色 */
-    --secondary:         212 100% 24%;
+    --secondary:         266 31% 14%;
     --secondary-foreground: 0 0% 100%;
 
     /* 弱化 */
-    --muted:             212 100% 22%;
-    --muted-foreground:  212 30% 80%;
+    --muted:             266 27% 14%;
+    --muted-foreground:  260 18% 78%;
 
     /* 强调/行动 = 珊瑚橙红（深蓝底上更醒目） */
     --accent:           var(--brand-coral);
@@ -140,8 +140,8 @@
     --destructive-foreground: 0 0% 100%;
 
     /* 边框 */
-    --border: 212 100% 28%;
-    --input:  212 100% 28%;
+    --border: 260 22% 22%;
+    --input:  260 22% 22%;
     --ring:   var(--brand-coral);
 
     /* 语义色 */
@@ -151,13 +151,13 @@
     --warning-foreground: var(--brand-navy);
 
     /* Sidebar */
-    --sidebar-background: var(--brand-navy-dark);
+    --sidebar-background: 252 43% 5%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary:    var(--brand-coral);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent:     212 100% 24%;
+    --sidebar-accent:     266 31% 14%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border:     212 100% 28%;
+    --sidebar-border:     260 22% 22%;
     --sidebar-ring:       var(--brand-coral);
   }
 
