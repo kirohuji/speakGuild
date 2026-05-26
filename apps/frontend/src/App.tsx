@@ -55,6 +55,7 @@ import { AdminScriptPage } from '@/features/admin/pages/admin-script-page'
 import { AdminAchievementsPage } from '@/features/admin/pages/admin-achievements-page'
 import { AdminCharactersPage } from '@/features/admin/pages/admin-characters-page'
 import { AdminStoriesPage } from '@/features/admin/pages/admin-stories-page'
+import { AdminMapsPage } from '@/features/admin/pages/admin-maps-page'
 
 export default function App() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
                 <Route path="chunks" element={<AdminChunksPage />} />
                 <Route path="characters" element={<AdminCharactersPage />} />
                 <Route path="stories" element={<AdminStoriesPage />} />
+                <Route path="maps" element={<AdminMapsPage />} />
                 <Route path="script" element={<AdminScriptPage />} />
                 <Route path="achievements" element={<AdminAchievementsPage />} />
               </Route>

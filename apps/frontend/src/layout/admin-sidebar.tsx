@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Database, FileText, Settings, BarChart3, Bell,
   ChevronRight, ArrowLeft, CreditCard, Receipt, FolderOpen,
-  Tag, MessageSquare, MapPin, BookOpen, Film, Award, UserCircle, ScrollText,
+  Tag, MessageSquare, MapPin, Map, BookOpen, Film, Award, UserCircle, ScrollText,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -88,6 +88,12 @@ const menuItems: MenuItem[] = [
     label: '角色管理',
     icon: UserCircle,
     path: '/admin/characters',
+  },
+  {
+    key: 'maps',
+    label: '地图管理',
+    icon: Map,
+    path: '/admin/maps',
   },
   {
     key: 'stories',

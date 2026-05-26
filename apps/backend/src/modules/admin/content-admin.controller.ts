@@ -627,7 +627,6 @@ export class ContentAdminController {
         id: true, key: true, title: true, scriptType: true,
         episodeId: true, locationId: true, topicId: true,
         version: true, createdAt: true, updatedAt: true,
-        _count: { select: { trainingTopic: true } },
       },
     });
   }
