@@ -36,7 +36,7 @@ export function compileInk(source: string): CompileResult {
     // Strip YAML front matter (--- block) before compilation —
     // this is our custom metadata convention, NOT valid Ink syntax
     const { remainingSource } = extractInkMeta(source)
-    const inkSource = ensureEntryPoint(remainingSource.trim())
+    const inkSource = ensureEntryPoint(encodeUrlTags(remainingSource.trim()))
 
     if (!inkSource) {
       return {
@@ -141,6 +141,21 @@ function ensureEntryPoint(source: string): string {
   }
 
   return source
+}
+
+function encodeUrlTags(source: string): string {
+  return source
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(\s*#\s*(?:bg|sprite)\s*:\s*)(.+)$/)
+      if (!match) return line
+
+      const value = match[2].trim()
+      if (!/^https?:\/\//i.test(value)) return line
+
+      return `${match[1]}${encodeURIComponent(value)}`
+    })
+    .join('\n')
 }
 
 /**

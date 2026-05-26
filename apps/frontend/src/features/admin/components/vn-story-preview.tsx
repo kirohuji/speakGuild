@@ -68,9 +68,17 @@ export function VnStoryPreview({
 
   /** 从 tags 中提取 speaker/expression/bg */
   const parseTags = useCallback((tags: string[]) => {
+    const decodeTagValue = (value?: string) => {
+      if (!value) return value
+      try {
+        return decodeURIComponent(value)
+      } catch {
+        return value
+      }
+    }
     const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
     const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
-    const bg = tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim()
+    const bg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
     const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
     const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
     const choiceCharacter = tags.find((t) => t.startsWith('choiceCharacter:'))?.replace('choiceCharacter:', '').trim()

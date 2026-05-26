@@ -105,8 +105,6 @@ function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosit
           backgroundRepeat: backgroundFit === 'repeat' ? 'repeat' : 'no-repeat',
         }}
       />
-      <div className="absolute inset-0 bg-black/16" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/48 via-black/10 to-transparent" />
       {spriteUrl && (
         <img
           src={spriteUrl}
@@ -134,7 +132,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
   const fallbackRef = useRef<Graphics | null>(null)
   const bgRef = useRef<Sprite | TilingSprite | null>(null)
   const spriteRef = useRef<Sprite | null>(null)
-  const overlayRef = useRef<Graphics | null>(null)
   const spritePositionRef = useRef(spritePosition)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -152,11 +149,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     }
     if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
     if (spriteRef.current) layoutSprite(spriteRef.current, width, height, spritePositionRef.current)
-    if (overlayRef.current) {
-      overlayRef.current.clear()
-      overlayRef.current.rect(0, 0, width, height).fill({ color: 0x000000, alpha: 0.16 })
-      overlayRef.current.rect(0, height * 0.48, width, height * 0.52).fill({ color: 0x000000, alpha: 0.48 })
-    }
   }
 
   useEffect(() => {
@@ -166,7 +158,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     let cancelled = false
     const root = new Container()
     const fallback = new Graphics()
-    const overlay = new Graphics()
     let resizeObserver: ResizeObserver | null = null
 
     async function init() {
@@ -225,10 +216,8 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
       appRef.current = app
       rootRef.current = root
       fallbackRef.current = fallback
-      overlayRef.current = overlay
       app.stage.addChild(root)
       root.addChild(fallback)
-      root.addChild(overlay)
       app.canvas.className = 'absolute inset-0 h-full w-full'
       host.appendChild(app.canvas)
       resizeObserver = new ResizeObserver(layout)
@@ -256,7 +245,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
       fallbackRef.current = null
       bgRef.current = null
       spriteRef.current = null
-      overlayRef.current = null
       setReady(false)
     }
   }, [])
@@ -267,7 +255,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
 
     async function loadBackground() {
       const root = rootRef.current
-      const overlay = overlayRef.current
       if (!root) return
 
       if (bgRef.current) {
@@ -288,7 +275,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
           : new Sprite(texture)
         bgRef.current = sprite
         rootRef.current.addChildAt(sprite, 1)
-        if (overlay) rootRef.current.setChildIndex(overlay, rootRef.current.children.length - 1)
         layout()
       } catch {
         layout()
@@ -307,7 +293,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
 
     async function loadSprite() {
       const root = rootRef.current
-      const overlay = overlayRef.current
       if (!root) return
 
       if (spriteRef.current) {
@@ -327,7 +312,6 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
         sprite.alpha = 0
         spriteRef.current = sprite
         rootRef.current.addChild(sprite)
-        if (overlay) rootRef.current.setChildIndex(overlay, rootRef.current.children.length - 1)
         layout()
         appRef.current?.ticker.addOnce(() => {
           if (spriteRef.current === sprite) sprite.alpha = 1
