@@ -546,26 +546,26 @@ export function PracticeSessionPage() {
 
     return (
       <div className="relative flex h-dvh flex-col bg-background">
-        {/* Floating minimal top bar */}
+        {/* Floating minimal top bar — light text on dark bg */}
         <div className="absolute left-0 right-0 top-0 z-30 flex items-center justify-between px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setPhase('prepare')}
-            className="rounded-full bg-background/40 text-xs text-muted-foreground backdrop-blur-md hover:bg-background/60 hover:text-foreground"
+            className="rounded-full bg-black/50 text-xs text-white/80 backdrop-blur-md hover:bg-black/70 hover:text-white"
           >
             <ArrowLeft className="mr-1 size-3.5" /> 返回
           </Button>
 
-          <div className="flex items-center gap-1.5 rounded-full bg-background/40 px-2.5 py-1 backdrop-blur-md">
-            <span className="text-xs text-muted-foreground">
-              轮次 <span className="font-mono font-medium text-foreground">{dialogueRounds.filter(d => !d.isNpc).length}</span>
+          <div className="flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 backdrop-blur-md">
+            <span className="text-xs text-white/70">
+              轮次 <span className="font-mono font-medium text-white">{dialogueRounds.filter(d => !d.isNpc).length}</span>
             </span>
-            <span className="mx-1 text-border">·</span>
+            <span className="mx-1 text-white/20">·</span>
             <button
               onClick={startAnalysis}
               disabled={dialogueRounds.filter(d => !d.isNpc).length < 2}
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+              className="text-xs text-white/60 transition-colors hover:text-white disabled:opacity-30"
             >
               结束对话
             </button>
@@ -589,67 +589,8 @@ export function PracticeSessionPage() {
           </VnPlayerBoundary>
         </div>
 
-        {(isRecording || transcript) && (
-          <div className="absolute inset-x-4 bottom-24 z-40 rounded-xl border border-border/60 bg-background/92 p-3 shadow-lg backdrop-blur-md">
-            {isRecording ? (
-              <div className="flex items-center justify-center gap-2 text-sm text-destructive">
-                <Mic className="size-4 animate-pulse" />
-                正在录音...
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-foreground">{transcript}</p>
-                <p className="mt-1 text-xs text-muted-foreground">转写预览</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Input area */}
-        <div className="px-3 pb-3 pt-2" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))' }}>
-          {transcript ? (
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setTranscript('')}>
-                重新录音
-              </Button>
-              <Button className="flex-1" onClick={() => sendUserInput(transcript)}>
-                <Send className="mr-1 size-4" /> 发送
-              </Button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <Button
-                variant={isRecording ? 'destructive' : 'outline'}
-                size="icon"
-                className="shrink-0"
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isInputDisabled && !isRecording}
-              >
-                {isRecording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
-              </Button>
-              <div className="relative flex-1">
-                <textarea
-                  className="w-full resize-none rounded-xl border border-border bg-background/80 p-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground backdrop-blur-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  rows={2}
-                  placeholder={isInputDisabled ? '等待 NPC 说完...' : '输入你的回答...'}
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={isInputDisabled}
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute bottom-1 right-1 size-7"
-                  onClick={handleSendText}
-                  disabled={!inputText.trim() || isInputDisabled}
-                >
-                  <Send className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Input area — hidden for now */}
+        <div className="hidden" />
 
         {/* Side drawers */}
         <PracticeVnDrawer

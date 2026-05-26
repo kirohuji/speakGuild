@@ -94,7 +94,7 @@ const BgFitStyle: Record<BackgroundFit, string> = {
 /** CSS-only fallback when PixiJS fails to initialize */
 function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#141827]">
+    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
       <div
         className="absolute inset-0"
         style={{
@@ -146,7 +146,7 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
 
     if (fallbackRef.current) {
       fallbackRef.current.clear()
-      fallbackRef.current.rect(0, 0, width, height).fill(0x141827)
+      fallbackRef.current.rect(0, 0, width, height).fill(0x1a1a2e)
       fallbackRef.current.rect(0, height * 0.42, width, height * 0.58).fill({ color: 0x000000, alpha: 0.28 })
     }
     if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
