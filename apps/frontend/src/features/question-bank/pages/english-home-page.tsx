@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, TrendingUp, Mic, Target,
+  BookOpen, TrendingUp,
   ChevronRight, BookText, MessageSquareText,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -56,9 +56,8 @@ export function EnglishHomePage() {
   // 从今日任务中提取词汇和 Chunk 数据
   const vocabTask = todayPlan?.tasks.find((t) => t.type === 'vocab')
   const chunkTask = todayPlan?.tasks.find((t) => t.type === 'chunk')
-  const practiceTasks = todayPlan?.tasks.filter((t) => t.type === 'practice') ?? []
 
-  // 今日词汇/表达数据
+  // 今日词汇/句块数据
   const shownVocabItems = vocabTask?.data ?? []
 
   // 打开 Dialog 学习词汇
@@ -136,7 +135,7 @@ export function EnglishHomePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
-      {/* ===== 正在学习卡片（含词汇/表达预习） ===== */}
+      {/* ===== 学习计划入口（含词汇/句块预习） ===== */}
       {todayPlan?.currentUnit && (() => {
         const unit = todayPlan.currentUnit
         const p = unit.progress
@@ -151,14 +150,14 @@ export function EnglishHomePage() {
             <CardContent className="p-3.5">
               <div
                 className="flex cursor-pointer items-center gap-3"
-                onClick={() => navigate(`/learning/units/${unit.id}`)}
+                onClick={() => navigate('/learning')}
               >
                 <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
                   <BookOpen className="relative size-7" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-muted-foreground">正在学习</p>
+                  <p className="text-xs font-medium text-muted-foreground">学习计划</p>
                   <p className="mt-1 line-clamp-1 text-sm font-semibold text-foreground">{unit.title}</p>
                   <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
                 </div>
@@ -173,7 +172,7 @@ export function EnglishHomePage() {
                   </div>
                   <div className="flex gap-3 text-[11px] text-muted-foreground">
                     <span>词汇 {p.vocabLearned}/{p.vocabTotal}</span>
-                    <span>表达 {p.chunkMastered}/{p.chunkTotal}</span>
+                    <span>句块 {p.chunkMastered}/{p.chunkTotal}</span>
                     <span>练习 {p.completedPractice}/{p.practiceTotal}</span>
                   </div>
                 </div>
@@ -189,7 +188,7 @@ export function EnglishHomePage() {
                     <div>
                       <p className="text-xs font-medium text-foreground">今日预习</p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {shownVocabItems.length} 个词汇 · {(chunkTask?.data ?? []).length} 个表达
+                        {shownVocabItems.length} 个词汇 · {(chunkTask?.data ?? []).length} 个句块
                       </p>
                     </div>
                     <span className="flex items-center gap-0.5 text-xs text-primary">
@@ -235,7 +234,7 @@ export function EnglishHomePage() {
                           <div className="mb-1.5 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                               <MessageSquareText className="size-3.5 text-purple-500" />
-                              需要掌握的表达
+                              需要掌握的句块
                               <span className="text-[10px] text-muted-foreground/60">
                                 ({seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length})
                               </span>
@@ -267,47 +266,6 @@ export function EnglishHomePage() {
           </Card>
         )
       })()}
-
-      {/* ============================================== */}
-      {/* ===== 今日练习 ===== */}
-      {/* ============================================== */}
-
-      {/* 练习话题列表 */}
-      {practiceTasks.length > 0 ? (
-        <section className="mb-5 space-y-2.5">
-          <h2 className="px-1 text-xs font-medium text-muted-foreground">
-            今日练习 ({practiceTasks.length})
-          </h2>
-          {practiceTasks.map((task) => (
-            <Card key={task.id}
-              className="cursor-pointer rounded-lg border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/30"
-              onClick={() => task.topicId && navigate(`/practice/session/${task.topicId}`)}>
-              <CardContent className="flex items-center gap-3 p-3">
-                <div className="relative flex aspect-square size-[56px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-orange-100 via-amber-50 to-sky-100 text-orange-600 dark:from-orange-950/50 dark:via-amber-950/30 dark:to-sky-950/40">
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-                  <Mic className="relative size-6" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-1 text-sm font-semibold text-foreground">{task.topicTitle ?? task.title}</p>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{task.promptZh ?? task.description}</p>
-                  {task.durationSec && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">建议 {Math.round(task.durationSec / 60)} 分钟</p>
-                  )}
-                </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-      ) : (
-        <div className="mb-6 flex flex-col items-center rounded-lg bg-muted/30 px-6 py-10 text-center">
-          <Target className="mb-3 size-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">今天没有练习任务</p>
-          <Button variant="outline" size="sm" className="mt-3 rounded-full" asChild>
-            <Link to="/learning">浏览学习材料</Link>
-          </Button>
-        </div>
-      )}
 
       {/* ===== 底部成长入口 ===== */}
       {stats && (

@@ -38,7 +38,7 @@ const planIcons: Record<string, React.ElementType> = {
   advanced: Zap,
 }
 
-export function MemberPage() {
+export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [plans, setPlans] = useState<MemberPlan[]>([])
@@ -117,9 +117,12 @@ export function MemberPage() {
   }, [payResult])
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 px-4 pb-24 lg:max-w-none lg:px-0 lg:pb-0 lg:space-y-6">
+    <div className={cn(
+      'mx-auto max-w-2xl space-y-4 lg:max-w-none lg:space-y-6',
+      compact ? 'px-0 pb-4' : 'px-4 pb-24 lg:px-0 lg:pb-0',
+    )}>
       {/* 手机端返回栏 */}
-      <div className="relative flex items-center justify-center lg:hidden">
+      {!compact && <div className="relative flex items-center justify-center lg:hidden">
         <button
           type="button"
           aria-label="返回"
@@ -129,7 +132,7 @@ export function MemberPage() {
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-base font-semibold">{t('member.title')}</h1>
-      </div>
+      </div>}
 
       {/* 当前套餐 */}
       <section className="overflow-hidden rounded-lg bg-gradient-to-br from-amber-100 via-orange-50 to-sky-100 p-4 dark:from-amber-950/40 dark:via-orange-950/20 dark:to-sky-950/40">

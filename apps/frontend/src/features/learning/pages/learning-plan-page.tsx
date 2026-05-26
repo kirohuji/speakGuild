@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, ArrowRight,
-  ShoppingBag, Play, Search, Heart, type LucideIcon,
+  ShoppingBag, Play, Search, Heart, CalendarDays, Mic,
+  BookText, MessageSquareText, ListChecks, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -24,6 +25,8 @@ import {
   type LearningCategory,
   type LearningUnitSummary,
   type MyUnit,
+  type TodayPlan,
+  type TodayTask,
 } from '../api/learning-api'
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -43,6 +46,7 @@ export function LearningPlanPage() {
 
   // ── "当前学习" 数据 ──
   const [myUnits, setMyUnits] = useState<MyUnit[]>([])
+  const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null)
   const [myLoading, setMyLoading] = useState(true)
 
   // ── "学习商店" 数据 ──
@@ -53,6 +57,7 @@ export function LearningPlanPage() {
   useEffect(() => {
     Promise.all([
       learningApi.getMyUnits().then(setMyUnits).catch(() => setMyUnits([])),
+      learningApi.getTodayTasks().then(setTodayPlan).catch(() => setTodayPlan(null)),
       learningApi.getUnits().then(setShopCategories).catch(() => setShopCategories([])),
     ]).finally(() => { setMyLoading(false); setShopLoading(false) })
   }, [])
@@ -105,6 +110,7 @@ export function LearningPlanPage() {
         myUnits={myUnits}
         inProgress={inProgress}
         completed={completed}
+        todayPlan={todayPlan}
         loading={myLoading}
         onGoToShop={() => { setShopOpen(true); refreshShop() }}
       />
@@ -135,12 +141,14 @@ function MyLearningView({
   myUnits,
   inProgress,
   completed,
+  todayPlan,
   loading,
   onGoToShop,
 }: {
   myUnits: MyUnit[]
   inProgress: MyUnit[]
   completed: MyUnit[]
+  todayPlan: TodayPlan | null
   loading: boolean
   onGoToShop: () => void
 }) {
@@ -162,15 +170,20 @@ function MyLearningView({
 
   const primaryUnit = inProgress[0]
   const otherUnits = inProgress.slice(1)
+  const tasks = todayPlan?.tasks ?? []
+  const practiceTasks = tasks.filter((task) => task.type === 'practice' || task.type === 'script')
 
   return (
     <div className="space-y-5">
+      <LearningWeekTracker todayPlan={todayPlan} />
+
       {primaryUnit && (
         <section>
-          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">当前单元</h2>
-          <FeaturedLearningCard unit={primaryUnit} />
+          <FeaturedLearningCard unit={primaryUnit} todayPlan={todayPlan} />
         </section>
       )}
+
+      <TodayPracticeSection tasks={practiceTasks} />
 
       {otherUnits.length > 0 && (
         <section>
@@ -199,18 +212,19 @@ function MyLearningView({
   )
 }
 
-function FeaturedLearningCard({ unit }: { unit: MyUnit }) {
+function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: TodayPlan | null }) {
+  const [expanded, setExpanded] = useState(false)
   const pct = unit.completionPercent
   const Icon = getCategoryIcon(unit.categoryName)
   const nextTopic = unit.topics?.[0]
+  const unitTasks = (todayPlan?.tasks ?? []).filter((task) => task.unitId === unit.id)
+  const prepTasks = unitTasks.filter((task) => task.type === 'vocab' || task.type === 'chunk')
+  const taskSummary = getTodayTaskSummary(todayPlan)
 
   return (
-    <Link
-      to={`/learning/units/${unit.id}`}
-      className="block overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/30"
-    >
+    <div className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
       <div className="p-3.5">
-        <div className="flex gap-3">
+        <Link to={`/learning/units/${unit.id}`} className="flex gap-3">
           <div className="relative flex aspect-square size-[92px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
             <Icon className="relative size-8" />
@@ -222,7 +236,7 @@ function FeaturedLearningCard({ unit }: { unit: MyUnit }) {
                 <p className="text-xs font-medium text-muted-foreground">继续学习</p>
                 <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
-              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pct}%</Badge>
+              <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             </div>
             <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
@@ -231,7 +245,7 @@ function FeaturedLearningCard({ unit }: { unit: MyUnit }) {
               <span>{unit.topicCount} 话题</span>
             </div>
           </div>
-        </div>
+        </Link>
 
         <div className="mt-3 space-y-1.5">
           <div className="flex items-center gap-2">
@@ -246,14 +260,177 @@ function FeaturedLearningCard({ unit }: { unit: MyUnit }) {
             </div>
           )}
         </div>
-      </div>
 
-      <div className="flex items-center justify-between border-t border-border/60 px-3.5 py-2.5 text-sm font-medium text-foreground">
-        <span>进入学习</span>
-        <ChevronRight className="size-4 text-muted-foreground" />
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          className="mt-3 flex w-full items-center justify-between border-t border-border/60 pt-3 text-left"
+        >
+          <div>
+            <p className="text-xs font-medium text-foreground">今日学习</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {taskSummary.total > 0 ? `${taskSummary.done}/${taskSummary.total} 已完成` : '今天还没有安排任务'}
+            </p>
+          </div>
+          <span className="flex items-center gap-0.5 text-xs text-primary">
+            {expanded ? '收起' : '展开'}
+            <ChevronRight className={cn('size-3 transition-transform', expanded && 'rotate-90')} />
+          </span>
+        </button>
+
+        {expanded && (
+          <div className="mt-3 space-y-2">
+            {prepTasks.length > 0 ? prepTasks.map((task) => (
+              <TodayTaskRow key={task.id} task={task} compact />
+            )) : (
+              <div className="rounded-md bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+                预习内容会跟随当前单元自动出现
+              </div>
+            )}
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
+  const summary = getTodayTaskSummary(todayPlan)
+  const todayIndex = new Date().getDay()
+  const mondayIndex = todayIndex === 0 ? 6 : todayIndex - 1
+  const weekDays = ['一', '二', '三', '四', '五', '六', '日']
+
+  return (
+    <section className="rounded-lg bg-muted/30 p-3.5">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="size-4 text-primary" />
+          <p className="text-sm font-semibold text-foreground">本周学习</p>
+        </div>
+        <Badge variant={summary.allDone ? 'default' : 'secondary'} className="h-6 rounded-full px-2 text-[10px]">
+          {summary.total > 0 ? `${summary.done}/${summary.total}` : '待开始'}
+        </Badge>
+      </div>
+      <div className="grid grid-cols-7 gap-1.5">
+        {weekDays.map((day, index) => {
+          const isToday = index === mondayIndex
+          const isPast = index < mondayIndex
+          const isDone = isToday && summary.allDone
+          return (
+            <div key={day} className="flex flex-col items-center gap-1">
+              <div
+                className={cn(
+                  'flex size-8 items-center justify-center rounded-full text-xs font-medium',
+                  isDone && 'bg-primary text-primary-foreground',
+                  isToday && !isDone && 'bg-background text-foreground ring-1 ring-border',
+                  isPast && 'bg-background/70 text-muted-foreground',
+                  !isToday && !isPast && 'text-muted-foreground/50',
+                )}
+              >
+                {day}
+              </div>
+              <span className={cn('size-1 rounded-full', isDone ? 'bg-primary' : isToday ? 'bg-muted-foreground/50' : 'bg-transparent')} />
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function TodayPracticeSection({ tasks }: { tasks: TodayTask[] }) {
+  if (tasks.length === 0) {
+    return (
+      <section className="rounded-lg bg-muted/30 px-4 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground">
+            <ListChecks className="size-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">今日练习</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">今天暂无开口练习，先推进当前单元</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section>
+      <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">今日练习</h2>
+      <div className="space-y-2">
+        {tasks.map((task) => (
+          <TodayTaskRow key={task.id} task={task} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function TodayTaskRow({ task, compact = false }: { task: TodayTask; compact?: boolean }) {
+  const Icon = task.type === 'vocab' ? BookText : task.type === 'chunk' ? MessageSquareText : task.type === 'script' ? Play : Mic
+  const href = task.type === 'practice'
+    ? `/practice/session/${task.topicId}`
+    : task.type === 'script'
+      ? `/script/${task.episodeId}`
+      : `/learning/units/${task.unitId}`
+
+  return (
+    <Link
+      to={href}
+      className={cn(
+        'flex items-center gap-3 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border/70 transition-colors hover:bg-muted/30',
+        compact && 'rounded-md bg-muted/35 p-2.5 shadow-none ring-0',
+      )}
+    >
+      <div className={cn(
+        'flex aspect-square shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-orange-100 via-amber-50 to-sky-100 text-orange-600 dark:from-orange-950/50 dark:via-amber-950/30 dark:to-sky-950/40',
+        compact ? 'size-9' : 'size-12',
+      )}>
+        <Icon className={compact ? 'size-4' : 'size-5'} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-1 text-sm font-semibold text-foreground">{task.topicTitle ?? task.episodeTitle ?? task.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{task.promptZh ?? task.description}</p>
+        {(task.type === 'vocab' || task.type === 'chunk') && task.total ? (
+          <div className="mt-1.5 flex items-center gap-2">
+            <Progress value={((task.done ?? 0) / Math.max(task.total, 1)) * 100} className="h-1 flex-1" />
+            <span className="text-[10px] text-muted-foreground">{task.done ?? 0}/{task.total}</span>
+          </div>
+        ) : null}
+      </div>
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
     </Link>
   )
+}
+
+function getTodayTaskSummary(todayPlan: TodayPlan | null) {
+  const tasks = todayPlan?.tasks ?? []
+  let done = 0
+  let total = 0
+  let countedPracticeDone = 0
+  const completedPractice = todayPlan?.currentUnit?.progress?.completedPractice ?? 0
+
+  for (const task of tasks) {
+    if (task.type === 'vocab' || task.type === 'chunk') {
+      done += task.done ?? 0
+      total += task.total ?? task.count ?? 0
+    } else if (task.type === 'practice') {
+      total += 1
+      if (countedPracticeDone < completedPractice) {
+        done += 1
+        countedPracticeDone += 1
+      }
+    } else {
+      total += 1
+    }
+  }
+
+  return {
+    done,
+    total,
+    allDone: total > 0 && done >= total,
+  }
 }
 
 // ── 我的学习单元卡片 ──
@@ -475,7 +652,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
           </div>
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-            {unit.topicCount} 个话题 · {unit.vocabCount} 个词汇 · {unit.chunkCount} 个表达
+            {unit.topicCount} 个话题 · {unit.vocabCount} 个词汇 · {unit.chunkCount} 个句块
           </p>
           <div className="mt-2 flex items-center gap-1.5">
             {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
@@ -505,7 +682,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location}</p>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                   <span>{unit.vocabCount} 词汇</span>
-                  <span>{unit.chunkCount} 表达</span>
+                  <span>{unit.chunkCount} 句块</span>
                   <span>{unit.topicCount} 话题</span>
                 </div>
               </div>

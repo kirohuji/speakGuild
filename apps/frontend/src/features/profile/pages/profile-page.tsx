@@ -66,6 +66,7 @@ import {
   type LinkedAccount,
 } from '@/features/account/api'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { MemberPage } from '@/features/membership/pages/member-page'
 
 type Tab = 'overview' | 'records' | 'favorites' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home'
@@ -269,6 +270,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [showThemeDialog, setShowThemeDialog] = useState(false)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
+  const [showMemberDrawer, setShowMemberDrawer] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -324,12 +326,13 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
               <span className="inline-flex items-center rounded-full border border-muted-foreground/20 px-2 py-0.5 text-[11px] text-muted-foreground">
                 免费用户
               </span>
-              <Link
-                to="/member"
-                className="no-underline inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm"
+              <button
+                type="button"
+                onClick={() => setShowMemberDrawer(true)}
+                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm"
               >
                 <Crown className="h-2.5 w-2.5" />升级 VIP
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -345,7 +348,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
       {/* 主导航 */}
       <IosSection>
         <IosRow icon={IdCard} iconBg="bg-sky-400" label="账户管理" onTap={() => onNavigate('account')} />
-        <IosRow icon={Crown} iconBg="bg-amber-500" label="会员中心" onTap={() => navigate('/member')} />
+        <IosRow icon={Crown} iconBg="bg-amber-500" label="会员中心" onTap={() => setShowMemberDrawer(true)} />
         <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label="帮助与反馈" last onTap={() => navigate('/feedback')} />
       </IosSection>
 
@@ -421,6 +424,17 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
                 {language === item.value && <CheckCircle2 className="h-4 w-4 text-primary" />}
               </button>
             ))}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={showMemberDrawer} onOpenChange={setShowMemberDrawer}>
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="sr-only">会员中心</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <MemberPage compact />
           </div>
         </DrawerContent>
       </Drawer>
