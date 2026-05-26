@@ -1,22 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, TrendingUp,
-  ChevronRight, BookText, MessageSquareText,
+  BookOpen, TrendingUp, ChevronRight,
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import api from '@/features/practice/api/english-practice-api'
-import { chunkApi } from '@/features/practice/api/english-practice-api'
 import { learningApi, type TodayPlan } from '@/features/learning/api/learning-api'
-import {
-  LearningInsightDialog,
-  type LearningInsightItem,
-} from '@/features/practice/components/learning-insight-dialog'
 
 interface QuickStats {
   userLevel: number; totalXp: number; xpForNextLevel: number
@@ -24,22 +15,16 @@ interface QuickStats {
   totalChunks: number; masteredChunks: number
 }
 
+const HOME_SCENE = {
+  sentence: 'Could you tell me a little more about it?',
+  hint: 'Try saying it slowly, then naturally.',
+}
+
 export function EnglishHomePage() {
   const { session } = useAuth()
   const navigate = useNavigate()
   const [stats, setStats] = useState<QuickStats | null>(null)
-  const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null)
   const [loading, setLoading] = useState(true)
-
-  // Dialog 沉浸式学习
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogIndex, setDialogIndex] = useState(0)
-  const [dialogItems, setDialogItems] = useState<LearningInsightItem[]>([])
-  const [prepOpen, setPrepOpen] = useState(false)
-
-  // 追踪用户在首页已查看的词汇和 Chunk
-  const [seenVocabIds, setSeenVocabIds] = useState<Set<string>>(new Set())
-  const [seenChunkIds, setSeenChunkIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!session?.user?.id) { setLoading(false); return }
@@ -49,66 +34,9 @@ export function EnglishHomePage() {
         const data = res?.data ?? res
         if (data?.outputLevel) setStats(data)
       }).catch(() => {}),
-      learningApi.getTodayTasks().then(setTodayPlan).catch(() => setTodayPlan(null)),
+      learningApi.getTodayTasks().catch(() => null),
     ]).finally(() => setLoading(false))
   }, [session])
-
-  // 从今日任务中提取词汇和 Chunk 数据
-  const vocabTask = todayPlan?.tasks.find((t) => t.type === 'vocab')
-  const chunkTask = todayPlan?.tasks.find((t) => t.type === 'chunk')
-
-  // 今日词汇/句块数据
-  const shownVocabItems = vocabTask?.data ?? []
-
-  // 打开 Dialog 学习词汇
-  const openVocabDialog = useCallback((startIndex: number) => {
-    const items: LearningInsightItem[] = shownVocabItems.map((v: any) => ({
-      kind: 'word' as const,
-      id: v.id ?? v.word ?? '',
-      word: v.word ?? '',
-      meaning: v.meaning ?? '',
-      sceneName: vocabTask?.unitTitle,
-    }))
-    setDialogItems(items)
-    setDialogIndex(Math.min(startIndex, items.length - 1))
-    setDialogOpen(true)
-  }, [shownVocabItems, vocabTask])
-
-  // 打开 Dialog 学习 Chunk
-  const openChunkDialog = useCallback((startIndex: number) => {
-    const items: LearningInsightItem[] = (chunkTask?.data ?? []).map((c: any) => ({
-      kind: 'chunk' as const,
-      id: c.id ?? c.text ?? '',
-      text: c.text ?? '',
-      meaning: c.meaning ?? '',
-      sceneName: chunkTask?.unitTitle,
-    }))
-    setDialogItems(items)
-    setDialogIndex(Math.min(startIndex, items.length - 1))
-    setDialogOpen(true)
-  }, [chunkTask])
-
-  // 标记 Chunk 已看
-  const markChunkActivated = useCallback(async (chunkId: string) => {
-    if (seenChunkIds.has(chunkId)) return
-    setSeenChunkIds((prev) => new Set(prev).add(chunkId))
-    try { await chunkApi.activate(chunkId) } catch {}
-  }, [seenChunkIds])
-
-  // Dialog 关闭时，标记所有展示过的词/Chunk 为已看
-  const handleDialogClose = useCallback((open: boolean) => {
-    if (!open) {
-      // 标记 dialog 中所有 word 为已看
-      for (const item of dialogItems) {
-        if (item.kind === 'word' && item.id) setSeenVocabIds((prev) => new Set(prev).add(item.id))
-        if (item.kind === 'chunk' && item.id) {
-          setSeenChunkIds((prev) => new Set(prev).add(item.id))
-          markChunkActivated(item.id)
-        }
-      }
-    }
-    setDialogOpen(open)
-  }, [dialogItems, markChunkActivated])
 
   if (loading) {
     return (
@@ -134,138 +62,36 @@ export function EnglishHomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
-      {/* ===== 学习计划入口（含词汇/句块预习） ===== */}
-      {todayPlan?.currentUnit && (() => {
-        const unit = todayPlan.currentUnit
-        const p = unit.progress
-        const totalItems = p ? p.vocabTotal + p.chunkTotal + p.practiceTotal : 0
-        const completedItems = p ? p.vocabLearned + p.chunkMastered + p.completedPractice : 0
-        const overallPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0
+    <div className="mx-auto max-w-2xl px-4 pb-24">
+      <style>{`
+        @keyframes home-light-breathe {
+          0%, 100% { opacity: .32; transform: translate3d(-10%, -4%, 0) scale(1); }
+          50% { opacity: .54; transform: translate3d(8%, 5%, 0) scale(1.08); }
+        }
+      `}</style>
 
-        return (
-          <Card
-            className="mb-4 overflow-hidden rounded-lg border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/30"
+      <section className="relative -mx-4 -mt-[calc(3rem+env(safe-area-inset-top,0px))] flex min-h-[calc(100svh-5rem)] items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#d6eee9_0%,#eaf5f1_42%,#ffffff_100%)] px-6 pb-24 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] text-foreground">
+        <div
+          className="absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-white/60 blur-3xl"
+          style={{ animation: 'home-light-breathe 9s ease-in-out infinite' }}
+        />
+        <div className="absolute -left-20 top-28 h-64 w-64 rounded-full bg-cyan-100/50 blur-3xl" />
+        <div className="absolute -right-24 bottom-24 h-72 w-72 rounded-full bg-emerald-100/60 blur-3xl" />
+
+        <div className="relative w-full max-w-[320px] rounded-[28px] border border-white/70 bg-white/46 p-5 text-center shadow-[0_24px_80px_rgba(88,126,118,.16)] backdrop-blur-2xl">
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-emerald-300/70" />
+          <p className="text-[22px] font-semibold leading-8 tracking-normal text-slate-800">{HOME_SCENE.sentence}</p>
+          <p className="mx-auto mt-3 max-w-[220px] text-xs leading-5 text-slate-500">{HOME_SCENE.hint}</p>
+          <button
+            type="button"
+            onClick={() => navigate('/learning')}
+            className="mt-6 inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-900/85 px-4 text-sm font-semibold text-white shadow-sm active:scale-[0.98]"
           >
-            <CardContent className="p-3.5">
-              <div
-                className="flex cursor-pointer items-center gap-3"
-                onClick={() => navigate('/learning')}
-              >
-                <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-                  <BookOpen className="relative size-7" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-muted-foreground">学习计划</p>
-                  <p className="mt-1 line-clamp-1 text-sm font-semibold text-foreground">{unit.title}</p>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
-                </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </div>
-
-              {p && totalItems > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Progress value={overallPercent} className="h-1 flex-1" />
-                    <span className="text-[10px] text-muted-foreground">{overallPercent}%</span>
-                  </div>
-                  <div className="flex gap-3 text-[11px] text-muted-foreground">
-                    <span>词汇 {p.vocabLearned}/{p.vocabTotal}</span>
-                    <span>句块 {p.chunkMastered}/{p.chunkTotal}</span>
-                    <span>练习 {p.completedPractice}/{p.practiceTotal}</span>
-                  </div>
-                </div>
-              )}
-
-              {(shownVocabItems.length > 0 || (chunkTask?.data ?? []).length > 0) && (
-                <div className="mt-3 border-t border-border/60 pt-3">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setPrepOpen((open) => !open) }}
-                    className="flex w-full items-center justify-between rounded-md px-0.5 py-1 text-left"
-                  >
-                    <div>
-                      <p className="text-xs font-medium text-foreground">今日预习</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {shownVocabItems.length} 个词汇 · {(chunkTask?.data ?? []).length} 个句块
-                      </p>
-                    </div>
-                    <span className="flex items-center gap-0.5 text-xs text-primary">
-                      {prepOpen ? '收起' : '展开'}
-                      <ChevronRight className={cn('size-3 transition-transform', prepOpen && 'rotate-90')} />
-                    </span>
-                  </button>
-
-                  {prepOpen && (
-                    <div className="mt-2 space-y-3">
-                      {shownVocabItems.length > 0 && (
-                        <div>
-                          <div className="mb-1.5 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                              <BookText className="size-3.5 text-blue-500" />
-                              需要掌握的词汇
-                              <span className="text-[10px] text-muted-foreground/60">
-                                ({seenVocabIds.size}/{vocabTask?.count ?? shownVocabItems.length})
-                              </span>
-                            </div>
-                            <button onClick={(e) => { e.stopPropagation(); openVocabDialog(0) }} className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80">
-                              预习 <ChevronRight className="size-3" />
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {shownVocabItems.slice(0, 6).map((item: any) => (
-                              <button key={item.id ?? item.word} onClick={(e) => { e.stopPropagation(); openVocabDialog(0) }}
-                                className={cn('rounded-full border px-2.5 py-1 text-xs transition-colors',
-                                  seenVocabIds.has(item.id ?? '')
-                                    ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                                    : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                                )}>
-                                {item.word}
-                              </button>
-                            ))}
-                            {(vocabTask?.count ?? 0) > 6 && <span className="text-xs text-muted-foreground">+{vocabTask!.count! - 6}</span>}
-                          </div>
-                        </div>
-                      )}
-
-                      {(chunkTask?.data ?? []).length > 0 && (
-                        <div>
-                          <div className="mb-1.5 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                              <MessageSquareText className="size-3.5 text-purple-500" />
-                              需要掌握的句块
-                              <span className="text-[10px] text-muted-foreground/60">
-                                ({seenChunkIds.size}/{chunkTask?.count ?? (chunkTask?.data ?? []).length})
-                              </span>
-                            </div>
-                            <button onClick={(e) => { e.stopPropagation(); openChunkDialog(0) }} className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80">
-                              预习 <ChevronRight className="size-3" />
-                            </button>
-                          </div>
-                          <div className="space-y-1">
-                            {(chunkTask?.data ?? []).slice(0, 3).map((item: any) => (
-                              <button key={item.id ?? item.text} onClick={(e) => { e.stopPropagation(); openChunkDialog(0) }}
-                                className={cn('flex w-full items-center gap-2 rounded-md border px-2.5 py-2 text-left text-xs transition-colors',
-                                  seenChunkIds.has(item.id ?? '')
-                                    ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                                    : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                                )}>
-                                <span className="font-medium text-foreground">{item.text}</span>
-                                {!seenChunkIds.has(item.id ?? '') && <span className="text-muted-foreground/60">— {item.meaning}</span>}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      })()}
+            开始
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      </section>
 
       {/* ===== 底部成长入口 ===== */}
       {stats && (
@@ -279,14 +105,6 @@ export function EnglishHomePage() {
         </div>
       )}
 
-      {/* ===== 沉浸式学习 Dialog ===== */}
-      <LearningInsightDialog
-        items={dialogItems}
-        index={dialogIndex}
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        onIndexChange={setDialogIndex}
-      />
     </div>
   )
 }
