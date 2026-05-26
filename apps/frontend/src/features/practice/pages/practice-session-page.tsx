@@ -658,19 +658,14 @@ export function PracticeSessionPage() {
             <ArrowLeft className="mr-1 size-3.5" /> 返回
           </Button>
 
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 backdrop-blur-md">
-            <span className="whitespace-nowrap text-xs text-white/70">
-              轮次 <span className="font-mono font-medium text-white">{dialogueRounds.filter(d => !d.isNpc).length}</span>
-            </span>
-            <span className="text-white/20">·</span>
-            <button
-              onClick={startAnalysis}
-              disabled={dialogueRounds.filter(d => !d.isNpc).length < 2}
-              className="whitespace-nowrap text-xs text-white/60 transition-colors hover:text-white disabled:opacity-30"
-            >
-              结束对话
-            </button>
-          </div>
+          <PracticeVnDrawer
+            objectives={objectives.map((o) => ({ text: o, completed: completedObjectives.has(o) }))}
+            hints={aiHints}
+            coreChunks={coreChunkTexts}
+            usedChunkTexts={usedChunks}
+            hideToggles={isHistoryOpen}
+            triggerClassName="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1.5 shadow-none"
+          />
 
           <div className="w-[68px]" />
         </div>
@@ -699,14 +694,6 @@ export function PracticeSessionPage() {
         {/* Input area — hidden for now */}
         <div className="hidden" />
 
-        {/* Side drawers */}
-        <PracticeVnDrawer
-          objectives={objectives.map((o) => ({ text: o, completed: completedObjectives.has(o) }))}
-          hints={aiHints}
-          coreChunks={coreChunkTexts}
-          usedChunkTexts={usedChunks}
-          hideToggles={isHistoryOpen}
-        />
       </div>
     )
   }

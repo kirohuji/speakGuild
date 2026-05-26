@@ -1,10 +1,16 @@
-import { useState } from 'react'
-import { BookOpen, Target, Lightbulb, ChevronLeft, ChevronRight, CheckCircle2, Circle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useMemo, useState } from 'react'
+import { BookOpen, CheckCircle2, Circle, Lightbulb, Target, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 
 interface Objective {
@@ -18,209 +24,174 @@ interface ChunkHint {
 }
 
 interface PracticeVnDrawerProps {
-  /** 左侧：任务目标 */
   objectives: Objective[]
-  /** 右侧：当前提示（AI 给的关键词/句型建议） */
   hints: { type: 'chunk' | 'pattern'; text: string; meaning?: string; example?: string }[]
-  /** 右侧：核心表达列表 */
   coreChunks: ChunkHint[]
-  /** 已使用 chunk 文本集合 */
   usedChunkTexts: Set<string>
-  /** 历史 dialog 打开时隐藏抽屉开关 */
   hideToggles?: boolean
+  triggerClassName?: string
 }
 
-/** VN 练习模式的左右侧抽屉 */
 export function PracticeVnDrawer({
   objectives,
   hints,
   coreChunks,
   usedChunkTexts,
   hideToggles = false,
+  triggerClassName,
 }: PracticeVnDrawerProps) {
-  const [leftOpen, setLeftOpen] = useState(false)
-  const [rightOpen, setRightOpen] = useState(false)
-
-  const completedCount = objectives.filter((o) => o.completed).length
+  const [open, setOpen] = useState(false)
+  const completedCount = objectives.filter((objective) => objective.completed).length
+  const currentObjective = objectives.find((objective) => !objective.completed) ?? objectives[0]
+  const suggestedChunks = useMemo(() => {
+    const unused = coreChunks.filter((chunk) => !usedChunkTexts.has(chunk.text))
+    return (unused.length > 0 ? unused : coreChunks).slice(0, 3)
+  }, [coreChunks, usedChunkTexts])
+  const latestHint = hints[hints.length - 1]
 
   return (
     <>
-      {/* Left drawer toggle */}
       {!hideToggles && (
         <button
-          onClick={() => { setLeftOpen(!leftOpen); if (rightOpen) setRightOpen(false) }}
-          className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
-          title="任务目标"
+          type="button"
+          onClick={() => setOpen(true)}
+          className={cn(
+            'flex items-center gap-2 rounded-full border border-white/15 bg-black/58 px-3.5 py-2 text-xs font-medium text-white shadow-[0_16px_48px_rgba(0,0,0,.28)] backdrop-blur-2xl transition-transform active:scale-[0.97]',
+            triggerClassName,
+          )}
         >
-          <ChevronRight className={cn('size-4 transition-transform', leftOpen && 'rotate-180')} />
+          <Target className="size-3.5 text-rose-100" />
+          <span>目标 {completedCount}/{objectives.length || 1}</span>
+          <span className="h-1 w-1 rounded-full bg-white/36" />
+          <span className="text-white/66">练习助手</span>
         </button>
       )}
 
-      {/* Left drawer panel */}
-      <div
-        className={cn(
-          'fixed left-0 top-0 z-40 h-full w-72 border-r border-border bg-background/95 shadow-xl backdrop-blur-md transition-transform duration-300 ease-in-out',
-          leftOpen ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between p-4 pb-2">
-            <div className="flex items-center gap-2">
-              <Target className="size-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">任务目标</span>
+      <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
+        <DrawerContent className="max-h-[82vh] rounded-t-[28px] border-white/10 bg-background/96 text-foreground shadow-[0_-24px_80px_rgba(0,0,0,.42)] backdrop-blur-2xl">
+          <DrawerHeader className="px-5 pb-2 pt-3 text-left">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DrawerTitle className="text-base">练习助手</DrawerTitle>
+                <DrawerDescription className="mt-1 text-xs">
+                  看清这一轮要表达什么，再用自己的英语说出来。
+                </DrawerDescription>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0 rounded-full"
+                onClick={() => setOpen(false)}
+              >
+                <X className="size-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setLeftOpen(false)}>
-              <ChevronLeft className="size-4" />
-            </Button>
-          </div>
+          </DrawerHeader>
 
-          <div className="px-4 pb-2">
+          <div className="px-5 pb-3">
             <Progress value={(completedCount / Math.max(objectives.length, 1)) * 100} className="h-1.5" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {completedCount}/{objectives.length} 完成
-            </p>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>任务进度</span>
+              <span>{completedCount}/{objectives.length || 1}</span>
+            </div>
           </div>
 
-          <Separator />
-
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-3">
-              {objectives.map((obj, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'flex items-start gap-3 rounded-lg border p-3 transition-all',
-                    obj.completed
-                      ? 'border-green-500/30 bg-green-500/5'
-                      : 'border-border bg-card',
-                  )}
-                >
-                  {obj.completed ? (
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" />
-                  ) : (
-                    <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  )}
-                  <span className={cn(
-                    'text-sm',
-                    obj.completed ? 'text-foreground line-through opacity-60' : 'text-foreground',
-                  )}>
-                    {obj.text}
+          <ScrollArea className="min-h-0 flex-1 px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <div className="space-y-3 pb-5">
+              <section className="rounded-2xl border border-border/70 bg-card/80 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="flex size-8 items-center justify-center rounded-full bg-rose-500/12 text-rose-300">
+                    <Target className="size-4" />
                   </span>
+                  <div>
+                    <p className="text-sm font-semibold">当前要说什么</p>
+                    <p className="text-[11px] text-muted-foreground">只给意图，不直接给完整答案</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      </div>
+                <p className="text-sm leading-6 text-foreground">
+                  {currentObjective?.text || '围绕当前话题完成一轮自然回应'}
+                </p>
+              </section>
 
-      {/* Right drawer toggle */}
-      {!hideToggles && (
-        <button
-          onClick={() => { setRightOpen(!rightOpen); if (leftOpen) setLeftOpen(false) }}
-          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-border bg-background/90 p-2 shadow-md backdrop-blur-sm transition-all hover:bg-muted"
-          title="表达提示"
-        >
-          <ChevronLeft className={cn('size-4 transition-transform', rightOpen && 'rotate-180')} />
-        </button>
-      )}
-
-      {/* Right drawer panel */}
-      <div
-        className={cn(
-          'fixed right-0 top-0 z-40 h-full w-72 border-l border-border bg-background/95 shadow-xl backdrop-blur-md transition-transform duration-300 ease-in-out',
-          rightOpen ? 'translate-x-0' : 'translate-x-full',
-        )}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between p-4 pb-2">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="size-4 text-amber-500" />
-              <span className="text-sm font-semibold text-foreground">表达提示</span>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => setRightOpen(false)}>
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-
-          <Separator />
-
-          <ScrollArea className="flex-1 p-4">
-            {/* AI 实时提示 */}
-            {hints.length > 0 && (
-              <div className="mb-4">
-                <p className="mb-2 text-xs font-semibold text-muted-foreground">💡 当前提示</p>
+              <section className="rounded-2xl border border-border/70 bg-card/70 p-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="size-4 text-amber-300" />
+                    <p className="text-sm font-semibold">可用表达</p>
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">
+                    {usedChunkTexts.size}/{coreChunks.length || 1}
+                  </Badge>
+                </div>
                 <div className="space-y-2">
-                  {hints.map((hint, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'rounded-lg border p-3',
-                        hint.type === 'chunk'
-                          ? 'border-amber-500/30 bg-amber-500/5'
-                          : 'border-blue-500/30 bg-blue-500/5',
+                  {suggestedChunks.length > 0 ? suggestedChunks.map((chunk) => {
+                    const used = usedChunkTexts.has(chunk.text)
+                    return (
+                      <div
+                        key={chunk.text}
+                        className={cn(
+                          'rounded-xl border px-3 py-2.5',
+                          used ? 'border-green-400/30 bg-green-500/[0.08]' : 'border-border/70 bg-background/[0.42]',
+                        )}
+                      >
+                        <div className="flex items-start gap-2">
+                          {used ? (
+                            <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-green-400" />
+                          ) : (
+                            <Circle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-5 text-foreground">{chunk.text}</p>
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">{chunk.meaning}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }) : (
+                    <p className="rounded-xl border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground">
+                      暂无推荐表达，先按当前目标自由回答。
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-border/70 bg-card/70 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-green-400" />
+                  <p className="text-sm font-semibold">任务进度</p>
+                </div>
+                <div className="space-y-2">
+                  {objectives.map((objective, index) => (
+                    <div key={`${objective.text}-${index}`} className="flex items-start gap-2 rounded-xl bg-background/[0.34] px-3 py-2.5">
+                      {objective.completed ? (
+                        <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-green-400" />
+                      ) : (
+                        <Circle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
                       )}
-                    >
-                      <p className="text-sm font-medium text-foreground">{hint.text}</p>
-                      {hint.meaning && (
-                        <p className="mt-1 text-xs text-muted-foreground">{hint.meaning}</p>
-                      )}
-                      {hint.example && (
-                        <p className="mt-1 text-xs italic text-muted-foreground">{hint.example}</p>
-                      )}
+                      <p className={cn('text-xs leading-5', objective.completed ? 'text-muted-foreground line-through' : 'text-foreground')}>
+                        {objective.text}
+                      </p>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              </section>
 
-            {/* 核心表达 CheckList */}
-            <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                <BookOpen className="mr-1 inline size-3" />
-                核心表达 ({usedChunkTexts.size}/{coreChunks.length})
-              </p>
-              <div className="space-y-2">
-                {coreChunks.map((chunk, i) => {
-                  const isUsed = usedChunkTexts.has(chunk.text)
-                  return (
-                    <div
-                      key={i}
-                      className={cn(
-                        'rounded-lg border p-2.5 transition-all',
-                        isUsed
-                          ? 'border-green-500/30 bg-green-500/5'
-                          : 'border-border bg-card',
-                      )}
-                    >
-                      <div className="flex items-start gap-2">
-                        {isUsed ? (
-                          <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-green-500" />
-                        ) : (
-                          <Circle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-                        )}
-                        <div>
-                          <Badge variant={isUsed ? 'default' : 'outline'} className="text-xs">
-                            {chunk.text}
-                          </Badge>
-                          <p className="mt-1 text-xs text-muted-foreground">{chunk.meaning}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              {latestHint && (
+                <section className="rounded-2xl border border-amber-300/24 bg-amber-300/[0.08] p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Lightbulb className="size-4 text-amber-300" />
+                    <p className="text-sm font-semibold">最近提示</p>
+                  </div>
+                  <p className="text-sm leading-6 text-foreground">{latestHint.text}</p>
+                  {latestHint.meaning && <p className="mt-1 text-xs leading-5 text-muted-foreground">{latestHint.meaning}</p>}
+                  {latestHint.example && <p className="mt-1 text-xs leading-5 text-muted-foreground">{latestHint.example}</p>}
+                </section>
+              )}
             </div>
           </ScrollArea>
-        </div>
-      </div>
-
-      {/* Overlay when any drawer is open */}
-      {(leftOpen || rightOpen) && (
-        <div
-          className="fixed inset-0 z-10 bg-black/20 backdrop-blur-sm"
-          onClick={() => { setLeftOpen(false); setRightOpen(false) }}
-        />
-      )}
+        </DrawerContent>
+      </Drawer>
     </>
   )
 }
