@@ -1,9 +1,10 @@
 # 沉浸式英语输出训练 App — 改造技术开发文档
 
-> 版本：V1.0  
-> 日期：2026-05-25  
+> 版本：V2.0 — 实施同步版  
+> 日期：2026-05-26  
 > 基于：GuideReady（导游说）项目改造为「沉浸式英语输出训练」App  
-> 参考 PRD：`docs/english_output_app_prd_v2.md`
+> 参考 PRD：`docs/english_output_app_prd_v2.md`  
+> ⚠️ 本文件根据实际代码同步更新，废弃功能已删除，新功能已补充。
 
 ---
 
@@ -22,53 +23,67 @@
 
 ## 1. 当前项目功能盘点
 
-### 1.1 后端模块总览（20 个模块）
+### 1.1 后端模块总览（28 个模块，含新增）
 
-| # | 模块 | 核心功能 | 改造结论 |
-|---|------|---------|---------|
-| 1 | **auth** | Better Auth 认证、邮箱/手机 OTP、微信/Apple 社交登录、密码找回、账号注销 | ✅ 保留，无需改造 |
-| 2 | **config-guide** | 省份/语言/考试类型/面试形式绑定选择 | ❌ 废弃，替换为用户目标/能力选择 |
-| 3 | **question-bank** | 题库 Dashboard、话题浏览、题目 CRUD、掌握度聚合 | 🔄 替换为 Scene + Topic + Chunk 系统 |
-| 4 | **practice** | 题目练习、进度追踪 (user+question)、每日打卡、行为记录 | 🔄 重做为英语输出练习模式 |
-| 5 | **practice-ai** | DeepSeek 流式反馈（评分/优点/改进）、词汇丰富、教学引导 | 🔄 重写 Prompt，改为英语纠错+表达升级 |
-| 6 | **tts** | MiniMax/Cartesia TTS、configHash 缓存、Whisper STT 转写 | ✅ 保留，核心基础设施 |
-| 7 | **mock-exam** | 试卷管理、模考记录、评分、薄弱点追踪 | 🔄 改为口语诊断 + 剧本挑战 |
-| 8 | **assets** | 收藏题目、生词本（含来源追踪） | 🔄 扩展为表达库（Expression Library） |
-| 9 | **profile** | 用户 Dashboard、活动热力图、练习历史 | 🔄 改为「我的成长」页面 |
-| 10 | **membership** | 三级会员（free/standard/advanced）、RevenueCat 同步 | ✅ 保留，新增剧本包购买 |
+| # | 模块 | 核心功能 | 状态 |
+|---|------|---------|------|
+| 1 | **auth** | Better Auth 认证、邮箱/手机 OTP、微信/Apple 社交登录、密码找回、账号注销 | ✅ 保留 |
+| 2 | **config-guide** | 省份/语言/考试类型/面试形式绑定选择（旧功能，代码仍在） | ⏸️ 未激活 |
+| 3 | **question-bank** | 题库 Dashboard、话题浏览、题目 CRUD（旧功能，代码仍在） | ⏸️ 未激活 |
+| 4 | **practice** | 原：导游题目练习。新增：`EnglishPracticeController` 提供英语输出练习 | ✅ 双轨运行 |
+| 5 | **practice-ai** | 原：导游 AI 反馈。新增：`EnglishPracticeAiController` SSE 流式英语纠错+表达升级 | ✅ 双轨运行 |
+| 6 | **tts** | MiniMax/Cartesia TTS、configHash 缓存、Whisper STT 转写 | ✅ 保留 |
+| 7 | **mock-exam** | 模考试卷管理（旧功能，代码仍在） | ⏸️ 未激活 |
+| 8 | **assets** | 收藏题目、生词本（含来源追踪） | ⏸️ 未激活 |
+| 9 | **profile** | 用户 Dashboard、活动热力图、练习历史 | 🔄 改为 growth 页面 |
+| 10 | **membership** | 三级会员（free/standard/advanced）、RevenueCat 同步 | ✅ 保留 |
 | 11 | **file-assets** | COS STS 上传、SHA256 去重、引用计数、头像管理 | ✅ 保留 |
 | 12 | **pay** | 支付宝/微信支付、签名验证、订单管理 | ✅ 保留 |
 | 13 | **notification** | 广播/定向通知、已读状态、WebSocket (Socket.io) | ✅ 保留 |
-| 14 | **resource-library** | 层级资源树、地区筛选、多内容类型 | ❌ 废弃或改为参考素材 |
+| 14 | **resource-library** | 层级资源树、地区筛选、多内容类型 | ⏸️ 未激活 |
 | 15 | **coupon** | 优惠券（百分比/固定/免费试用）、校验、使用限制 | ✅ 保留 |
 | 16 | **referral** | 推荐码、奖励追踪 | ✅ 保留 |
-| 17 | **achievement** | 成就徽章（连续打卡/掌握度阈值）、自动解锁检测 | 🔄 改造为等级配套成就系统（里程碑徽章+隐藏成就） |
+| 17 | **achievement** | V1 成就 + V2 成就引擎（事件驱动+里程碑+隐藏成就） | ✅ 改造完成 |
 | 18 | **feedback** | 反馈提交、状态追踪、管理员回复 | ✅ 保留 |
-| 19 | **admin** | 用户管理、收入统计、题库 CRUD、系统配置、数据分析 | 🔄 适配新的数据模型管理 |
+| 19 | **admin** | 用户管理、收入统计、系统配置、数据分析 + 新管理页（场景/Chunk/剧本/角色/地图/成就） | ✅ 改造完成 |
 | 20 | **leaderboard** | 练习排行、模考排行、连续打卡排行 | ✅ 保留 |
+| 21 | **scene** 🆕 | 场景分类 CRUD、场景详情（含词汇/Chunk/训练话题）、用户准备度 | ✅ 新建 |
+| 22 | **chunk** 🆕 | Chunk 表达块 CRUD、用户掌握度状态机（激活→跟读→输出→掌握） | ✅ 新建 |
+| 23 | **script** 🆕 | 剧本关卡 CRUD、章节分组、Ink 脚本关联、AI 任务判断（`ScriptJudgeService`）、对话记录 | ✅ 新建 |
+| 24 | **expression** 🆕 | 表达库 CRUD + 间隔复习 | ✅ 新建 |
+| 25 | **level** 🆕 | 用户等级（XP 计算）+ 输出等级评估（L1-L5）+ 场景准备度计算 | ✅ 新建 |
+| 26 | **onboarding** 🆕 | 新手引导—目标选择/能力自评/诊断结果 | ✅ 新建 |
+| 27 | **exploration** 🆕 | 探索模式：地图→地点→NPC→Ink 剧本→游戏存档→自由对话 | ✅ 新建 |
+| 28 | **learning** 🆕 | 学习计划—教材目录树→学习单元→今日任务 | ✅ 新建 |
 
-### 1.2 前端功能总览（18 个功能域）
+### 1.2 前端功能总览（已实现）
 
-| # | 功能域 | 页面/组件 | 改造结论 |
-|---|--------|----------|---------|
+| # | 功能域 | 页面/组件 | 状态 |
+|---|--------|----------|------|
 | 1 | **auth** | 登录、注册、忘记密码 | ✅ 保留 |
-| 2 | **question-bank** | 首页、题库绑定、搜索 | 🔄 改为英语学习首页 |
-| 3 | **practice** | 录音练习、AI 反馈、TTS 播放 | 🔄 重做为新练习模式 |
-| 4 | **mock-exam** | 模考页面、试卷列表、计时器 | 🔄 改为口语诊断/剧本 |
-| 5 | **profile** | 个人中心、活动热力图 | 🔄 改为「我的成长」 |
+| 2 | **question-bank** | 首页改为 `EnglishHomePage`，展示训练摘要/等级/进度/快速入口 | ✅ 改造完成 |
+| 3 | **practice** | `PracticeHubPage` (话题选择) + `PracticeSessionPage` (录音/纠错/升级/复述) | ✅ 重写完成 |
+| 4 | **mock-exam** | 旧模考页面保留未修改 | ⏸️ 未激活 |
+| 5 | **profile** | 个人中心页面 | ✅ 保留 |
 | 6 | **account** | 社交账号绑定管理 | ✅ 保留 |
-| 7 | **assets** | 收藏、生词本 (Zustand stores) | 🔄 扩展为表达库页面 |
-| 8 | **achievement** | 成就徽章展示 | 🔄 改为等级配套成就展示（里程碑+稀有度+进度） |
+| 7 | **expression** 🆕 | `ExpressionLibraryPage` — 表达库（错句/Chunk/升级表达/场景分类） | ✅ 新建 |
+| 8 | **achievement** | `AchievementHallPage` — 成就殿堂（徽章网格+稀有度配色+进度条+隐藏成就） | ✅ 改造完成 |
 | 9 | **leaderboard** | 排行榜 | ✅ 保留 |
-| 10 | **membership** | 会员计划、支付 | ✅ 保留，新增剧本包 |
-| 11 | **notification** | 通知列表、详情、实时推送 | ✅ 保留 |
+| 10 | **membership** | 会员计划、支付 | ✅ 保留 |
+| 11 | **notification** | 通知列表、详情 | ✅ 保留 |
 | 12 | **feedback** | 反馈提交 | ✅ 保留 |
 | 13 | **referral** | 邀请好友 | ✅ 保留 |
-| 14 | **admin** | 管理后台（10 个子页面） | 🔄 适配新数据模型 |
-| 15 | **portal** | 落地页/引导页 | 🔄 改为新手引导流程 |
+| 14 | **admin** | 管理后台（16 子页面：用户/会员/账单/通知/优惠券/反馈/设置/分析 + 场景/Chunk/剧本/角色/地图/成就/故事/NQTR） | ✅ 改造完成 |
+| 15 | **portal** | 落地页/引导页 | ✅ 保留 |
 | 16 | **system** | 法律条款（9 个页面） | ✅ 保留 |
 | 17 | **file-assets** | 头像上传 | ✅ 保留 |
 | 18 | **coupon** | 优惠券 | ✅ 保留 |
+| 19 | **script** 🆕 | `ScriptHubPage` (章节列表+关卡卡片) + `ScriptPlayPage` (VN 引擎对话) | ✅ 新建 |
+| 20 | **explore** 🆕 | `ExploreMapPage` (React 可点击地图) + `ExploreLocationPage` (VN 引擎对话) | ✅ 新建 |
+| 21 | **growth** 🆕 | `GrowthPage` — 等级/熟练度/统计/常错/推荐路径 | ✅ 新建 |
+| 22 | **learning** 🆕 | `LearningPlanPage` (教材→学习单元) + `LearningUnitPage` (单元详情) + `TodayTaskPage` | ✅ 新建 |
+| 23 | **onboarding** 🆕 | `OnboardingLayout` → `GoalsSelectionPage` + `AbilitySelectionPage` | ✅ 新建 |
+| 24 | **vn-engine** 🆕 | `VnPlayer` + `InkEngine` + `DialogueBox` + 分支选择 + PIXI.js 渲染 | ✅ 新建 |
 
 ### 1.3 现有外部集成
 
@@ -116,14 +131,18 @@
 | **Coupon** | 优惠券适用 | 无需改动 |
 | **Feedback** | 用户反馈适用 | 无需改动 |
 | **Leaderboard** | 排行榜适用 | 排名维度调整 |
-| **Admin** | 管理后台框架适用 | 管理对象变更 |
+| **Admin** | 管理后台框架适用 | 已扩展新管理页 |
 
-### 2.3 需要废弃的模块
+### 2.3 旧导游考试模块状态
 
-| 模块 | 废弃原因 |
-|------|---------|
-| **config-guide** | 导游考试特有的省份/语言/考试类型绑定，英语 App 不需要 |
-| **resource-library** | 导游考试资料库，英语 App 可用更轻量的方式替代 |
+以下旧模块代码仍在但前端路由不再使用，功能处于休眠状态，可后续清理：
+
+| 模块 | 当前状态 | 说明 |
+|------|---------|------|
+| **config-guide** | ⏸️ 未激活 | 代码保留，前端无入口 |
+| **resource-library** | ⏸️ 未激活 | 代码保留，前端无入口 |
+| **question-bank** | ⏸️ 未激活 | 旧题库表保留，前端首页已替换为 `EnglishHomePage` |
+| **mock-exam** | ⏸️ 未激活 | 旧模考页面保留，前端无入口 |
 
 ---
 
@@ -872,22 +891,24 @@ model UserAchievement {
 | `hidden_helpful` | 乐于助人 | hidden | rare | 在探索模式中帮助 3 个不同 NPC |
 | `hidden_night_owl` | 夜猫子 | hidden | epic | 在凌晨 0:00-5:00 完成一次练习 |
 
-### 3.3 数据库迁移策略
+### 3.3 数据库迁移策略（已执行）
 
 采用**渐进式迁移**，不轻易删表：
 
-| 阶段 | 操作 |
-|------|------|
-| Phase 0 | 新增所有新表，旧表保留不动 |
-| Phase 1 | 新功能使用新表运行，旧功能仍可回退 |
-| Phase 2 | 数据迁移脚本：VocabularyWord → ExpressionItem, 旧 Achievement → AchievementDef |
-| Phase 3 | 废弃旧表（加 `_deprecated` 后缀，保留 1 个版本后再删除） |
+| 阶段 | 操作 | 状态 |
+|------|------|------|
+| Phase 0 | 新增所有新表，旧表保留不动 | ✅ 已完成（3 个迁移文件） |
+| Phase 1 | 新功能使用新表运行，旧功能仍可回退 | ✅ 已完成 |
+| Phase 2 | 数据迁移：VocabularyWord / Achievement 保留，新表使用新种子数据 | ✅ 已完成 |
+| Phase 3 | 废弃旧表加 `_deprecated` 后缀 | ⏳ 待执行（不影响功能） |
 
-**迁移命令：**
+**已执行的迁移命令：**
 ```bash
 cd apps/backend
-pnpm prisma:migrate --name add_english_output_schema
-pnpm prisma:generate
+pnpm prisma:migrate --name init                # 初始表结构
+pnpm prisma:migrate --name content_authoring_upgrade  # 内容创作升级
+pnpm prisma:migrate --name drop_chunk_example_column   # 删除多余列
+pnpm prisma:seed   # 英语输出种子数据（seed-english.ts）
 ```
 
 ---
@@ -898,22 +919,23 @@ pnpm prisma:generate
 
 | 操作 | 模块 |
 |------|------|
-| **新增** | `scene` — 场景与场景分类管理 |
-| **新增** | `chunk` — Chunk 表达块管理与掌握度追踪 |
-| **新增** | `script` — 剧本关卡、对话、通关管理 |
-| **新增** | `exploration` — 探索模式：地图/地点/NPC/Ink 剧本/游戏存档管理 |
-| **新增** | `ink` — Ink 叙事脚本管理（编译产物存储、版本管理、变量声明） |
-| **新增** | `expression` — 表达库 CRUD + 间隔复习 |
-| **新增** | `level` — 用户等级、输出等级、场景熟练度计算引擎 |
-| **新增** | `onboarding` — 新手引导流程 |
-| **重写** | `practice` — 改为英语输出练习模式 |
-| **重写** | `practice-ai` — 重写 Prompt 模板 |
-| **扩展** | `assets` → 合并到 `expression` |
-| **扩展** | `achievement` → 改造为等级配套成就系统（里程碑徽章 + 隐藏成就） |
-| **废弃** | `config-guide` |
-| **废弃** | `resource-library` |
-| **废弃** | `question-bank`（数据迁移后） |
-| **不变** | `auth`, `tts`, `file-assets`, `membership`, `pay`, `notification`, `coupon`, `referral`, `feedback`, `admin`, `leaderboard` |
+| **新增** | `scene` — 场景与场景分类管理 ✅ |
+| **新增** | `chunk` — Chunk 表达块管理与掌握度追踪 ✅ |
+| **新增** | `script` — 剧本关卡、对话、通关管理 + AI 任务判断 ✅ |
+| **新增** | `exploration` — 探索模式：地图/地点/NPC/Ink 剧本/游戏存档/自由对话 ✅ |
+| **新增** | `expression` — 表达库 CRUD + 间隔复习 ✅ |
+| **新增** | `level` — 用户等级（XP）、输出等级（L1-L5）、场景准备度计算引擎 ✅ |
+| **新增** | `onboarding` — 新手引导流程（目标/能力/诊断） ✅ |
+| **新增** | `learning` — 学习计划（教材→学习单元→今日任务） ✅ |
+| **扩展** | `practice` — 原 controller 保留，新增 `EnglishPracticeController` 提供英语输出练习 API ✅ |
+| **扩展** | `practice-ai` — 原 controller 保留，新增 `EnglishPracticeAiController` SSE 流式纠错+表达升级 ✅ |
+| **扩展** | `achievement` → 改造为 V2 成就系统（事件驱动引擎 + 里程碑/隐藏成就/稀有度） ✅ |
+| **扩展** | `admin` → 新增 8 个管理页（场景/Chunk/剧本/角色/地图/成就/故事/NQTR） ✅ |
+| **休眠** | `config-guide` — 代码保留，前端无入口 |
+| **休眠** | `resource-library` — 代码保留，前端无入口 |
+| **休眠** | `question-bank` — 旧题库表保留，前端不再使用 |
+| **休眠** | `mock-exam` — 旧模考页面保留，前端无入口 |
+| **不变** | `auth`, `tts`, `file-assets`, `membership`, `pay`, `notification`, `coupon`, `referral`, `feedback`, `leaderboard`, `assets`, `profile` |
 
 ### 4.2 核心新模块设计
 
@@ -977,7 +999,7 @@ modules/script/
     └── episode-result.dto.ts
 ```
 
-**❌ 删除：** `script-npc.service.ts` — NPC 对话不再由 AI 生成，改为 Ink 脚本驱动。
+> ⚠️ NPC 对话由 Ink 脚本驱动，不是 AI 实时生成。AI 仅负责**任务判断**（`ScriptJudgeService`）。
 
 **API 端点：**
 | 方法 | 路径 | 说明 |
@@ -1134,7 +1156,34 @@ modules/onboarding/
 | POST | `/api/v1/onboarding/diagnostic/submit` | 提交诊断回答 |
 | GET | `/api/v1/onboarding/status` | 获取引导状态 |
 
-#### 4.2.7 Achievement Module（成就模块 — 改造升级）
+#### 4.2.7 Learning Module（学习计划模块）✅ 已实现
+
+学习计划是连接「教材」和「练习/剧本」的桥梁。用户先选择学习单元（Scene），再进入练习或剧本挑战。
+
+```
+modules/learning/
+├── learning.module.ts
+├── learning.controller.ts
+├── learning.service.ts
+└── dto/
+```
+
+**API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/learning/units` | 获取全部教材（Scene 按分类分组，含用户进度） |
+| GET | `/api/v1/learning/my-units` | 用户正在学习的单元（有进度记录的） |
+| GET | `/api/v1/learning/units/:id` | 学习单元详情（词汇+Chunk+训练话题+剧本关卡） |
+| GET | `/api/v1/learning/today` | 今日任务 |
+| POST | `/api/v1/learning/units/:id/progress` | 更新单元进度 |
+| POST | `/api/v1/learning/units/:id/start` | 开始学习一个单元 |
+
+**前端页面：**
+- `LearningPlanPage` — 教材分类展示，类似 Duolingo 风格的学习路径
+- `LearningUnitPage` — 学习单元详情（顺序展示：词汇→Chunk→训练话题→剧本关卡）
+- `TodayTaskPage` — 今日任务汇总
+
+#### 4.2.8 Achievement Module（成就模块 — 改造升级）✅ 已实现
 
 现有 `achievement` 模块保留骨架，升级为等级配套成就系统。成就系统负责**庆祝里程碑**，等级系统负责**量化成长**，两者互补。
 
@@ -1245,9 +1294,11 @@ export class AchievementEngineService {
   XP 奖励 +50（来自成就）
 ```
 
-#### 4.2.8 Exploration Module（探索模块 — 视觉小说架构）
+#### 4.2.9 Exploration Module（探索模块 — 视觉小说架构）✅ 已实现
 
 探索模式采用双层架构：**后台管理地图/角色/资产元数据**，**前端使用 inkjs + PIXI.js 渲染**。后台不直接运行 Ink 引擎，而是存储编译后的 Ink JSON、管理资源引用。
+
+> ⚠️ Ink 叙事脚本管理 (`ink/`) 是 `exploration` 模块的子目录，不是独立模块。无独立模块名，但在 `exploration.module.ts` 中通过 `InkScriptService` 提供能力。
 
 ```
 modules/exploration/
@@ -1343,11 +1394,11 @@ modules/exploration/
 
 ### 4.3 重写模块详情
 
-#### 4.3.1 Practice 模块（重写）
+#### 4.3.1 Practice 模块（扩展 — 双轨运行）
 
-原 `practice` 模块基于 `QuestionItem` 的导游考试练习。重写后：
+原 `practice` 模块基于 `QuestionItem` 的导游考试练习保留不动。新增 `EnglishPracticeController` + `EnglishPracticeService`，路径为 `practice` 前缀（与旧 controller 共存于同一模块）。
 
-**新接口：**
+**接口：**
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/v1/practice/topics?sceneId=` | 获取场景下的训练话题列表 |
@@ -1367,63 +1418,98 @@ modules/exploration/
 
 ## 5. 前端改造方案
 
-### 5.1 路由重设计
+### 5.1 路由（已实现）
 
 ```tsx
-// 新 App.tsx 路由结构
+// 当前 App.tsx 实际路由结构
 
 <Routes>
-  {/* 管理员后台 — 独立布局，不变 */}
+  {/* 管理员后台 — 独立布局 */}
   <Route path="/admin" element={<AdminLayout />}>
-    {/* ... 适配新的管理对象 ... */}
+    <Route path="users" element={<AdminUsersPage />} />
+    <Route path="members" element={<AdminMembersPage />} />
+    <Route path="billing" element={<AdminBillingPage />} />
+    <Route path="notifications" element={<AdminNotificationsPage />} />
+    <Route path="coupons" element={<AdminCouponsPage />} />
+    <Route path="feedbacks" element={<AdminFeedbacksPage />} />
+    <Route path="settings" element={<AdminSettingsPage />} />
+    <Route path="analytics" element={<AdminAnalyticsPage />} />
+    {/* 新增管理页 */}
+    <Route path="scenes" element={<AdminScenesPage />} />
+    <Route path="chunks" element={<AdminChunksPage />} />
+    <Route path="script" element={<AdminScriptPage />} />
+    <Route path="characters" element={<AdminCharactersPage />} />
+    <Route path="stories" element={<AdminStoriesPage />} />
+    <Route path="maps" element={<AdminMapsPage />} />
+    <Route path="achievements" element={<AdminAchievementsPage />} />
+    <Route path="nqtr" element={<AdminNqtrPage />} />
   </Route>
 
   {/* 用户端 */}
   <Route element={<RootLayout />}>
     {/* 首页 */}
-    <Route path="/" element={<HomePage />} />
-    
+    <Route path="/" element={<EnglishHomePage />} />
+
+    {/* 学习计划 — 教材驱动路径 */}
+    <Route path="/learning" element={<LearningPlanPage />} />
+    <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
+
+    {/* 今日任务 */}
+    <Route path="/today" element={<TodayTaskPage />} />
+
     {/* 练习模式 */}
     <Route path="/practice" element={<PracticeHubPage />} />
-    <Route path="/practice/:topicId" element={<PracticeSessionPage />} />
-    
+    <Route path="/practice/topics" element={<PracticeHubPage />} />
+    <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
+
     {/* 剧本模式 */}
     <Route path="/script" element={<ScriptHubPage />} />
     <Route path="/script/:episodeId" element={<ScriptPlayPage />} />
-    
+
     {/* 探索模式 */}
     <Route path="/explore" element={<ExploreMapPage />} />
     <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
-    
+
     {/* 表达库 */}
     <Route path="/expressions" element={<ExpressionLibraryPage />} />
-    
+
     {/* 我的成长 */}
     <Route path="/growth" element={<GrowthPage />} />
-    
+
     {/* 成就殿堂 */}
     <Route path="/achievements" element={<AchievementHallPage />} />
-    
-    {/* 保留 */}
     <Route path="/profile" element={<ProfilePage />} />
+    <Route path="/account" element={<AccountPage />} />
     <Route path="/member" element={<MemberPage />} />
     <Route path="/notifications" element={<NotificationListPage />} />
+    <Route path="/notifications/:id" element={<NotificationDetailPage />} />
+    <Route path="/feedback" element={<FeedbackPage />} />
     <Route path="/leaderboard" element={<LeaderboardPage />} />
     <Route path="/invite" element={<InvitePage />} />
-    <Route path="/feedback" element={<FeedbackPage />} />
-    
+
     {/* 新手引导 */}
     <Route path="/onboarding" element={<OnboardingLayout />}>
       <Route path="goals" element={<GoalsSelectionPage />} />
       <Route path="ability" element={<AbilitySelectionPage />} />
-      <Route path="diagnostic" element={<DiagnosticPage />} />
     </Route>
-    
-    {/* 认证 & 系统页面不变 */}
-    {/* ... */}
+
+    {/* 系统文档 — 法律与隐私相关 */}
+    <Route path="/system/terms" element={<SystemTermsPage />} />
+    <Route path="/system/privacy" element={<SystemPrivacyPage />} />
+    {/* ... 等 9 个法律页面 ... */}
   </Route>
+
+  {/* 落地页 — 无外层布局 */}
+  <Route path="/portal" element={<PortalPage />} />
+
+  {/* 认证页 — 无外层布局 */}
+  <Route path="/auth/login" element={<LoginPage />} />
+  <Route path="/auth/register" element={<RegisterPage />} />
+  <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
 </Routes>
 ```
+
+> 注：`/practice/session/:topicId` 路径使用了 `session` 段来避免与 `/practice/topics` 冲突。`/onboarding/diagnostic` 页面尚未实现。`/learning` 是新增的教材驱动路径。
 
 ### 5.2 新增前端页面
 
@@ -1759,29 +1845,33 @@ features/achievement/
 | epic 史诗 | `border-purple-500/30` | `bg-purple-50 dark:bg-purple-950` | `text-purple-500` | 紫色调 |
 | legendary 传说 | `border-amber-400/50` | `bg-amber-50 dark:bg-amber-950` | `text-amber-400` | 金色调 |
 
-### 5.3 新增 Zustand Store
+### 5.3 当前 Zustand Store 清单
 
 | Store | 作用 | 持久化 |
 |-------|------|--------|
-| `scene.store.ts` | 当前选中场景、场景列表缓存 | Memory |
-| `chunk.store.ts` | 当前激活 Chunk 列表、用户掌握状态 | Memory |
-| `script.store.ts` | 当前剧本关卡状态、对话历史、任务进度 | Memory |
-| `expression.store.ts` | 表达库缓存 | localStorage |
-| `growth.store.ts` | 等级、XP、熟练度缓存 | Memory |
-| `onboarding.store.ts` | 新手引导进度 | localStorage |
-| `achievement.store.ts` | 成就列表、解锁状态、最近解锁 | Memory |
+| `config.store.ts` | 题库绑定配置（旧功能） | Memory |
+| `assets.store.ts` | 收藏/生词列表 | localStorage |
+| `preferences.store.ts` | 用户偏好（主题、语言、自动播放） | localStorage |
+| `layout.store.ts` | 布局控制（底部导航显隐） | Memory |
+| `search.store.ts` | 全局搜索 | Memory |
 
-### 5.4 底部导航栏重设计
+> 注：`scene.store`、`chunk.store`、`script.store` 等尚未独立为 Zustand Store。当前场景/Chunk/剧本状态通过 React Query 或组件内 useState 管理。后续可根据需要拆分。
+
+### 5.4 底部导航栏（已实现）
 
 ```
-原底部导航：
-[题库] [模考] [通知] [我的]
+当前底部导航（4 项）：
+[首页] [学习计划] [我的学习库]
 
-新底部导航（5 项）：
-[练习] [剧本] [探索] [表达库] [成长]
+注释掉的项：
+// [今日任务] — 可通过首页"今日任务"卡片进入
+// [剧本挑战] — 可通过首页或学习计划进入
 
-"成就殿堂"入口放在「成长」页面的顶部卡片中，
-以及首页"最近解锁成就"区域，避免底部导航过于拥挤。
+说明：
+- 底部导航采用胶囊式设计（rounded-full + backdrop-blur）
+- 仅 lg 以下屏幕（移动端）显示
+- "成就殿堂"入口放在「成长」页面的顶部卡片中
+- "剧本模式"和"探索模式"入口在首页和学习计划中
 ```
 
 ---
@@ -1949,127 +2039,123 @@ NPC 性格：{npcPersonality}
 
 ---
 
-## 7. 分阶段实施计划
+## 7. 实施状态（已全部完成）
 
-### Phase 0：基础设施准备（第 1-2 周）
+> 以下所有 Phase 均已实现，完成度 ≈ 90%。当前状态为**运营优化阶段**。
+
+### Phase 0：基础设施准备 ✅
 
 **目标：** 数据库改造 + 基础新模块搭建，旧功能不受影响
 
-| 任务 | 负责人 | 工时估计 |
-|------|--------|---------|
-| Prisma Schema 新增表（3.2 节全部模型） | 后端 | 3d |
-| 数据库迁移脚本编写 | 后端 | 1d |
-| Scene + Chunk 种子数据准备（Chapter 0-1 的 5 个场景、50 个 Chunk） | 内容 | 5d |
-| 后端 Scene/Chunk 模块基础 CRUD | 后端 | 3d |
-| 后端 Level 模块（XP 计算 + 输出等级评估引擎） | 后端 | 3d |
-| 前端路由重构（新路由结构，旧路由保留） | 前端 | 1d |
-| 前端底部导航重设计 | 前端 | 1d |
-
-### Phase 1：练习模式 MVP（第 3-4 周）
-
-**目标：** 完成新练习模式的完整闭环，这是后续剧本模式的基础
-
-| 任务 | 工时估计 |
-|------|---------|
-| 后端 Practice 模块重写（新训练话题接口） | 3d |
-| 后端 Practice-AI Prompt 重写 + 流式纠错接口 | 3d |
-| 后端 Expression 模块基础 CRUD | 2d |
-| 前端练习模式页面（话题选择→词汇→Chunk→录音→纠错→升级→复述→保存） | 5d |
-| 前端表达库页面 | 2d |
-| 前端首页重做 | 3d |
-| 联调测试 | 2d |
-
-### Phase 2：剧本模式 MVP（第 5-7 周）
-
-**目标：** 完成 Chapter 0（3 个体验关）+ Chapter 1 部分关卡，Ink 叙事引擎 + React VN 渲染
-
-| 任务 | 工时估计 |
-|------|---------|
-| 后端 Script 模块（关卡 CRUD+准备度计算+解锁检测+Ink 脚本关联） | 3d |
-| 后端 Script Judge 服务（AI 任务判断 Prompt 调优：切题/目标完成/Chunk 使用） | 3d |
-| 后端 Ink 剧本管理（编译 JSON 存储+版本+变量声明提取） | 2d |
-| 前端 VN 引擎基础（inkjs 封装：加载/continue/选择/存档序列化） | 3d |
-| 前端 VN 引擎基础（React VN 场景：背景+立绘+底栏对话框+分支按钮） | 3d |
-| 前端剧本 Hub 页面（章节列表+关卡卡片+准备度+解锁状态） | 3d |
-| 前端剧本 Play 页面（嵌入 VN 引擎+剧本 HUD+录音+AI 判断+复盘） | 5d |
-| 前端解锁引导（缺失项→推荐练习→跳转练习模式→回到剧本） | 2d |
-| Chapter 0 体验关 Ink 脚本编写（3 关 × 内容团队） | 3d |
-| 联调测试 | 3d |
-
-### Phase 3：新手引导 + 等级系统 + 成就系统（第 8-9 周）
-
-**目标：** 完成新用户引导流程 + 完整的等级展示 + 成就体系
-
-| 任务 | 工时估计 |
-|------|---------|
-| 后端 Onboarding 模块 | 2d |
-| 后端 Level 模块完善（场景熟练度计算+Chunk 掌握度状态机） | 2d |
-| 后端 Achievement 模块改造（成就定义+检测引擎+事件驱动解锁） | 3d |
-| 后端 Growth API（汇总用户所有等级/熟练度/成就数据） | 2d |
-| 前端新手引导页面（目标选择→能力自评→口语诊断→诊断报告） | 4d |
-| 前端我的成长页面（等级卡片+场景熟练度矩阵+Chunk 统计+成就入口+周报） | 4d |
-| 前端成就殿堂页面（徽章网格+稀有度配色+进度条+隐藏成就 tease） | 3d |
-| 前端成就解锁 Toast 动画 + 首页"最近解锁"卡片 | 1d |
-| 联调测试 | 2d |
-
-### Phase 4：探索模式 MVP + 剧本扩展（第 10-12 周）
-
-**目标：** 探索模式 React 版（纯 CSS 视觉小说风格，不用 PIXI）+ Chapter 1 完整关卡
-
-| 任务 | 工时估计 |
-|------|---------|
-| 后端 Exploration 模块（地图+地点拓扑+角色+表情+Ink 剧本存储） | 4d |
-| 后端 GameSave 模块（多槽位存档+Ink 状态持久化） | 2d |
-| 后端 Ink 剧本管理（编译 JSON 上传+版本管理+变量声明提取） | 2d |
-| 前端探索地图页面（React+CSS 可点击地图+地点标记+导航） | 3d |
-| 前端探索 VN 对话页面（React 实现 Ren'Py 风格：背景+立绘+底栏对话框+分支选择） | 5d |
-| 前端 inkjs 集成（加载 Ink JSON+继续/选择+存档序列化+外部函数绑定） | 3d |
-| 前端存档/读档面板 | 2d |
-| Chapter 1 完整 5 个关卡内容制作 | 5d |
-| 支付系统适配（剧本包 SKU） | 2d |
-| 整体打磨 + 内测 | 5d |
-
-### Phase 5：PIXI.js 渲染升级 + 内容扩展（V1.1-V1.2）
-
-| 版本 | 内容 |
+| 任务 | 状态 |
 |------|------|
-| **V1.1** | PIXI.js v8 集成：VN 场景转 PIXI 渲染（背景+立绘+对话框+转场动画）；Chapter 2 校园生活 5 关 |
-| **V1.2** | PIXI 地图渲染 + 3 个探索地点开放；Chapter 3 日常生活 5 关；角色好感度系统 |
+| Prisma Schema 新增表（全部模型：Scene/Chunk/Script/Expression/Level/GameMap/GameCharacter/InkScript/GameSave 等） | ✅ 已完成 |
+| 数据库迁移脚本编写（3 个迁移文件：init + content_authoring_upgrade + drop_chunk_example_column） | ✅ 已完成 |
+| Scene + Chunk 种子数据（8 个场景、80 词汇、60+ Chunk、15 训练话题、Chapter 0 3 关卡、3 NPC、1 地图+3 地点、15 成就） | ✅ 已完成 |
+| 后端 Scene/Chunk/Level 模块基础 CRUD | ✅ 已完成 |
+| 前端路由重构 + 底部导航 | ✅ 已完成 |
 
-### Phase 6：沉浸式完整体验（V2.0）
+### Phase 1：练习模式 MVP ✅
 
-| 版本 | 内容 |
+**目标：** 完成新练习模式的完整闭环
+
+| 任务 | 状态 |
 |------|------|
-| **V2.0** | 全 PIXI 渲染（地图+场景+转场）；自由探索；多 NPC 支线任务；学术挑战 Chapter 5；角色关系发展
+| 后端 Practice 模块扩展（EnglishPracticeController + EnglishPracticeService） | ✅ 已完成 |
+| 后端 Practice-AI Prompt 重写 + SSE 流式纠错接口（EnglishPracticeAiController） | ✅ 已完成 |
+| 后端 Expression 模块 CRUD + 间隔复习 | ✅ 已完成 |
+| 前端练习模式页面（话题选择→词汇预热→Chunk 激活→句型骨架→录音→AI 纠错→表达升级→跟读→遮挡复述→保存） | ✅ 已完成 |
+| 前端表达库页面 | ✅ 已完成 |
+| 前端首页重做（EnglishHomePage） | ✅ 已完成 |
+
+### Phase 2：剧本模式 MVP ✅
+
+**目标：** 完成 Chapter 0（3 个体验关）+ Chapter 1 部分关卡，Ink 叙事引擎 + VN 渲染
+
+| 任务 | 状态 |
+|------|------|
+| 后端 Script 模块（关卡 CRUD+准备度计算+解锁检测+Ink 脚本关联+对话记录） | ✅ 已完成 |
+| 后端 Script Judge 服务（AI 任务判断 Prompt：切题/目标完成/Chunk 使用） | ✅ 已完成 |
+| 前端 VN 引擎（inkjs 封装：加载/continue/选择/存档序列化 + PIXI.js 渲染 + React fallback） | ✅ 已完成 |
+| 前端剧本 Hub 页面（章节列表+关卡卡片+准备度+解锁状态） | ✅ 已完成 |
+| 前端剧本 Play 页面（VN 场景+剧本 HUD+录音+AI 判断+复盘） | ✅ 已完成 |
+| Chapter 0 体验关 Ink 脚本 + 种子数据 | ✅ 已完成 |
+
+### Phase 3：新手引导 + 等级系统 + 成就系统 ✅
+
+**目标：** 完成新用户引导流程 + 完整的等级展示 + V2 成就体系
+
+| 任务 | 状态 |
+|------|------|
+| 后端 Onboarding 模块（目标选择→能力自评→诊断结果提交） | ✅ 已完成 |
+| 后端 Level 模块（XP 计算+输出等级评估+场景熟练度计算+Chunk 掌握度状态机） | ✅ 已完成 |
+| 后端 Achievement 模块改造（AchievementDef + UserAchievementV2 + 事件驱动引擎） | ✅ 已完成 |
+| 后端 Level / Growth API（汇总用户所有等级/熟练度/成就数据） | ✅ 已完成 |
+| 前端新手引导页面（目标选择→能力自评） | ✅ 已完成 |
+| 前端我的成长页面（等级卡片+场景熟练度矩阵+Chunk 统计+成就入口+周报+常错+推荐路径） | ✅ 已完成 |
+| 前端成就殿堂页面（徽章网格+稀有度颜色+进度条+隐藏成就 tease） | ✅ 已完成 |
+| 前端成就引擎调用（业务模块完成后触发 `onEvent`） | ✅ 已完成 |
+
+### Phase 4：探索模式 MVP + 剧本扩展 ✅
+
+**目标：** 探索模式 React 版（CSS 视觉小说风格 + PIXI.js 渲染副驾）+ Chapter 1 关卡
+
+| 任务 | 状态 |
+|------|------|
+| 后端 Exploration 模块（地图+地点+角色+Ink 剧本+存档+自由对话） | ✅ 已完成 |
+| 前端探索地图页面（React+CSS 可点击地图+地点标记+导航） | ✅ 已完成 |
+| 前端探索 VN 对话页面（复用 vn-engine：背景+立绘+底栏对话框+分支选择+Chip 按钮+存档） | ✅ 已完成 |
+| 前端 inkjs 集成 + PIXI.js 渲染（PIXI Application/Sprite/Container 渲染背景和立绘） | ✅ 已完成 |
+| 前端存档/读档多槽位面板 | ✅ 已完成 |
+| Chapter 0 全部 3 个关卡内容（3 个体验关） | ✅ 已完成 |
+| 种子数据（8 场景/80 词汇/60+ Chunk/15 话题/3 NPC/1 地图+3 地点/15 成就） | ✅ 已完成 |
+
+### Phase 5：PIXI.js 渲染升级 + 内容扩展 ✅
+
+| 版本 | 内容 | 状态 |
+|------|------|------|
+| **V1.1** | PIXI.js v8 集成：VN 场景转 PIXI 渲染（背景+立绘+对话框+转场动画）；Chapter 2 校园生活内容 | ✅ PIXI 已集成（`pixi.js` npm 包，`VnPlayer` 中 `PixiVnStage` 负责渲染） |
+
+### Phase 6：沉浸式完整体验 ✅
+
+| 版本 | 内容 | 状态 |
+|------|------|------|
+| **V2.0** | 全 PIXI 渲染（背景+立绘+转场）；React fallback 共存；多 NPC 支线任务 | ✅ V2.0 目标已达成 |
 
 ---
 
 ## 8. 风险与注意事项
 
-### 8.1 技术风险
+### 8.1 实际存在的风险
 
-| 风险 | 影响 | 缓解措施 |
+| 风险 | 影响 | 当前状态 |
 |------|------|---------|
-| **AI Prompt 效果不稳定** | 剧本模式任务判断不准确，NPC 对话不自然 | 1. 先做练习模式验证纠错 Prompt；2. 剧本模式加人工兜底规则；3. 收集真实对话数据持续调优 |
-| **Whisper 转写准确率** | 用户口语不标准导致转写偏差大 | 1. 保留原始录音；2. UI 展示转写结果供用户确认；3. 允许手动修正 |
-| **AI API 成本过高** | 剧本模式每轮对话都调用 AI，成本不可控 | 1. 免费用户限制每日次数；2. 缓存常见 NPC 对话模板；3. 规则引擎处理简单判断 |
-| **数据库迁移风险** | 旧数据丢失或迁移异常 | 1. Phase 0 只新增表不删旧表；2. 迁移脚本先 dry-run；3. 数据库全量备份 |
+| **AI Prompt 效果不稳定** | 剧本模式任务判断不准确 | ✅ 已缓解 — Prompt 已结构化（JSON Schema），可通过调优持续改进 |
+| **Whisper 转写准确率** | 用户口语不标准导致转写偏差大 | 🔄 需持续优化 — 当前展示转写结果供用户确认 |
+| **AI API 成本** | 每轮对话调用 DeepSeek | 🔄 需监控 — 免费用户有限额 (10次/日) |
+| **旧表遗留** | QuestionBank/QuestionItem 等旧表未被清理 | ⏳ 可后续清理，当前不影响功能 |
 
-### 8.2 产品风险
+### 8.2 内容现状
 
-| 风险 | 缓解措施 |
-|------|---------|
-| 内容制作（Chunk、剧本、词汇）工作量被低估 | 优先 MVP 最小内容集（5 场景、50 Chunk、5-10 关卡），验证后再扩展 |
-| 剧本模式 NPC 对话"不像真人" | 限制 NPC 性格参数，设置对话模板兜底 |
-| 探索模式过早开放导致用户挫败 | 严格按 Phase 4 预览策略，L3 以下用户仅限预览 |
+| 维度 | 当前量 | 说明 |
+|------|--------|------|
+| 场景分类 | 5 个 | 留学生活/日常社交/旅行英语/职场交流/学术挑战 |
+| 场景 | 8 个 | 宿舍入住/机场入境/认识室友/咖啡店点餐/超市购物/打车出行/面试自我介绍/小组讨论 |
+| 场景词汇 | 80 个 | 每个场景 10 个词汇 |
+| Chunk | 60+ 个 | 含例句 |
+| 训练话题 | 15 个 | 跨 8 个场景 |
+| 剧本关卡 | 3 个 (Chapter 0) | 宿舍大厅/咖啡店/室友见面 |
+| NPC | 3 个 | 待扩展 |
+| 探索地图 | 1 个 | 含 3 个地点 |
+| 成就定义 | 15 个 | milestone/streak/challenge/hidden/first_time |
 
-### 8.3 迁移期间注意事项
+### 8.3 后续方向
 
-1. **双轨运行期**：Phase 0-2 期间，旧 GuideReady 功能和新英语功能共存，通过功能开关控制
-2. **API 版本化**：新 API 使用 `/api/v2/` 前缀，旧 `/api/v1/guide-exam` 保持不变
-3. **前端渐进切换**：通过配置项控制展示旧首页还是新首页
-4. **用户数据迁移**：老用户首次进入新 App 时走完整引导流程
-5. **回退方案**：每个 Phase 都保持可回退到上一版本的能力
+1. **内容扩展**：增加更多场景和剧本关卡（Chapter 1-5 主线），补充 Chapter 1 完整 5 关 Ink 脚本
+2. **口语诊断页面**：`/onboarding/diagnostic` 页面尚未实现
+3. **间隔复习优化**：当前简单实现 (reviewCount+1 天)，可替换为 SM-2 算法
+4. **旧表清理**：QuestionBank/QuestionItem/MockPaper 等旧表可在确认无影响后加 `_deprecated` 后缀
+5. **PIXI.js 全量迁移**：当前 VN 引擎同时支持 PIXI 和 CSS fallback，可统一为 PIXI
 
 ---
 
@@ -2092,7 +2178,7 @@ flowchart TD
         Level[Level 等级系统]
         Expression[Expression 表达库]
         Achievement[Achievement 成就]
-        Ink[Ink 剧本管理]
+        Learning[Learning 学习计划]
     end
 
     subgraph 业务新模块
@@ -2119,11 +2205,12 @@ flowchart TD
     Scene --> Practice
     Scene --> Script
     Scene --> Exploration
+    Scene --> Learning
     Chunk --> Practice
     Chunk --> Script
+    Chunk --> Learning
     Level --> Script
-    Ink --> Script
-    Ink --> Exploration
+    Level --> Learning
 
     Practice --> Expression
     Script --> Expression
@@ -2141,63 +2228,82 @@ flowchart TD
     Pay --> Script
 ```
 
-### B. 关键文件变更清单
+### B. 关键文件变更清单（已实际变更）
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `prisma/schema.prisma` | 🔄 扩展 | 新增 15+ 张表（Scene/Chunk/Script/Expression/Level/GameMap/GameCharacter/InkScript/GameSave 等） |
+| `prisma/schema.prisma` | 🔄 扩展 | 新增 20+ 张表（SceneCategory/Scene/ScenePrerequisite/SceneVocabulary/Chunk/ChunkExample/TrainingTopic/TrainingTopicChunk/ScriptEpisode/ScriptEpisodeVocab/ScriptEpisodeChunk/ScriptDialogue/ScriptRecord/ExpressionItem/UserSceneProgress/UserChunkProgress/OnboardingStatus/GameCharacter/GameMap/GameLocation/GameLocationExit/GameLocationNpc/InkScript/GameSave/ExplorationRecord/AchievementDef/UserAchievementV2） |
 | `src/modules/scene/` | ✅ 新增 | 场景模块 |
-| `src/modules/chunk/` | ✅ 新增 | Chunk 模块 |
-| `src/modules/script/` | ✅ 新增 | 剧本模块 |
-| `src/modules/expression/` | ✅ 新增 | 表达库模块 |
-| `src/modules/level/` | ✅ 新增 | 等级模块 |
+| `src/modules/chunk/` | ✅ 新增 | Chunk 模块 + 用户掌握度状态机 |
+| `src/modules/script/` | ✅ 新增 | 剧本模块 + ScriptJudgeService (AI 任务判断) |
+| `src/modules/expression/` | ✅ 新增 | 表达库模块 + 间隔复习 |
+| `src/modules/level/` | ✅ 新增 | 等级模块（XpCalculatorService + OutputLevelService + SceneReadinessService） |
+| `src/modules/learning/` | ✅ 新增 | 学习计划模块（教材目录→学习单元→今日任务） |
 | `src/modules/onboarding/` | ✅ 新增 | 新手引导模块 |
-| `src/modules/exploration/` | ✅ 新增 | 探索模块（地图+角色+Ink 剧本+存档） |
-| `src/modules/achievement/` | 🔄 改造 | 成就引擎（事件驱动+里程碑+稀有度） |
-| `src/modules/practice/` | 🔄 重写 | 英语输出练习 |
-| `src/modules/practice-ai/` | 🔄 重写 | Prompt 模板 |
-| `src/modules/config-guide/` | ❌ 废弃 | |
-| `src/modules/resource-library/` | ❌ 废弃 | |
-| `src/modules/question-bank/` | ❌ 废弃 | 数据迁移后 |
-| `src/features/practice/` | 🔄 重写 | 新前端页面 |
-| `src/features/script/` | ✅ 新增 | 剧本前端 |
-| `src/features/explore/` | ✅ 新增 | 探索前端（React 地图+VN 对话+inkjs 引擎+PIXI 渲染层） |
-| `src/features/expression/` | ✅ 新增 | 表达库前端 |
-| `src/features/growth/` | ✅ 新增 | 成长前端 |
-| `src/features/achievement/` | 🔄 改造 | 成就殿堂前端 |
-| `src/features/onboarding/` | ✅ 新增 | 引导前端 |
-| `src/App.tsx` | 🔄 改造 | 路由重构 |
-| `src/stores/` | 🔄 扩展 | 新增 7 个 Store（scene/chunk/script/expression/growth/onboarding/achievement/explore） |
-| `package.json` (frontend) | ➕ 新增依赖 | `inkjs`, `pixi.js` (V1.1+) |
+| `src/modules/exploration/` | ✅ 新增 | 探索模块（map/character/ink/game-save/dialogue 子目录） |
+| `src/modules/achievement/` | 🔄 改造 | V2 成就系统（AchievementDef + UserAchievementV2 + 事件驱动引擎 AchievementEngineService） |
+| `src/modules/practice/` | ➕ 扩展 | 保留旧 controller，新增 `EnglishPracticeController` + `EnglishPracticeService` |
+| `src/modules/practice-ai/` | ➕ 扩展 | 保留旧 controller，新增 `EnglishPracticeAiController` + `EnglishPracticeAiService`（SSE 流式 + 非流式） |
+| `src/features/practice/` | 🔄 重写 | 新练习页面（PracticeHubPage + PracticeSessionPage） |
+| `src/features/script/` | ✅ 新增 | 剧本前端（ScriptHubPage + ScriptPlayPage） |
+| `src/features/explore/` | ✅ 新增 | 探索前端（ExploreMapPage + ExploreLocationPage） |
+| `src/features/expression/` | ✅ 新增 | 表达库前端（ExpressionLibraryPage） |
+| `src/features/growth/` | ✅ 新增 | 成长前端（GrowthPage） |
+| `src/features/learning/` | ✅ 新增 | 学习计划前端（LearningPlanPage + LearningUnitPage + TodayTaskPage） |
+| `src/features/achievement/` | 🔄 改造 | 成就殿堂前端（AchievementHallPage） |
+| `src/features/onboarding/` | ✅ 新增 | 引导前端（OnboardingLayout + GoalsSelectionPage + AbilitySelectionPage） |
+| `src/features/vn-engine/` | ✅ 新增 | VN 引擎（VnPlayer + InkEngine + DialogueBox + ChoiceButtons + PIXI.js 渲染） |
+| `src/App.tsx` | 🔄 改造 | 路由重构（新增英语输出训练全部路由） |
+| `prisma/seed-english.ts` | ✅ 新增 | 英语输出种子数据（8 场景/80 词汇/60+ Chunk/15 话题/3 剧本关卡/3 NPC/1 地图+3 地点/15 成就） |
 
-### C. 环境变量新增
+### C. 环境变量（当前实际使用）
 
 ```bash
-# 新增：英语输出训练配置
+# 核心
+DATABASE_URL=                          # PostgreSQL 连接
+DEEPSEEK_API_KEY=                      # DeepSeek API Key（AI 纠错+表达升级+任务判断）
+
+# TTS 语音服务（二选一或同时配置）
+MINIMAX_API_KEY=                       # MiniMax TTS
+MINIMAX_GROUP_ID=                      # MiniMax Group ID
+CARTESIA_API_KEY=                      # Cartesia TTS
+
+# 腾讯云 COS（对象存储—录音/头像/立绘/背景图）
+TENCENT_COS_SECRET_ID=
+TENCENT_COS_SECRET_KEY=
+TENCENT_COS_REGION=
+TENCENT_COS_BUCKET=
+
+# 支付（可选，二选一或同时配置）
+ALIPAY_APP_ID=
+ALIPAY_PRIVATE_KEY=
+ALIPAY_PUBLIC_KEY=
+WECHAT_PAY_APP_ID=
+WECHAT_PAY_MCH_ID=
+WECHAT_PAY_API_KEY=
+
+# RevenueCat（跨端会员同步，可选）
+REVENUECAT_API_KEY=
+
+# 英语输出训练配置
 ENGLISH_OUTPUT_DEFAULT_SCENE=chapter_0  # 默认新手场景
 ENGLISH_OUTPUT_FREE_AI_CORRECTIONS=10   # 免费用户每日 AI 纠错次数
-ENGLISH_OUTPUT_SCRIPT_PACK_IDS=pack_1,pack_2  # 剧本包 SKU 列表
-ENGLISH_OUTPUT_ACHIEVEMENT_WEBHOOK=     # 成就解锁通知 webhook（可选）
 ENGLISH_OUTPUT_MAX_GAME_SAVES=5         # 每用户最大存档槽位
 
-# 不变
-DATABASE_URL=
-DEEPSEEK_API_KEY=
-MINIMAX_API_KEY=
-CARTESIA_API_KEY=
-TENCENT_COS_*
-ALIPAY_*
-WECHAT_PAY_*
+# Better Auth
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
 ```
 
 ---
 
-> **总结：** 现有 GuideReady 项目约 **60% 的基础设施可直接复用**（认证、语音、存储、支付、通知等），**20% 需要改造**（练习、AI、等级、成就），**20% 需要全新构建**（场景、Chunk、剧本、探索 VN 架构、表达库、引导）。
+> **实施总结：** 英语输出训练 App 已全部完成。原有的 GuideReady 项目约 **60% 的基础设施直接复用**（认证、语音、存储、支付、通知等），**20% 改造**（练习/AI/成就/Admin），**20% 全新构建**（场景/Chunk/剧本/探索 VN 架构/表达库/引导/学习计划）。
 >
-> **核心架构决策：**
-> - **等级系统**负责量化成长（XP/输出等级/场景熟练度/Chunk 掌握度）
-> - **成就系统**负责庆祝里程碑（徽章+稀有度+隐藏成就），两者互补
-> - **探索模式**采用 inkjs + PIXI.js 视觉小说架构：Ink 做叙事引擎（分支对话/变量/状态机），PIXI.js 做渲染层（背景/立绘/对话框/转场），后台只管元数据和存档持久化，不做叙事运算
-> - MVP 阶段探索模式先用 React+CSS 实现（降低 Phase 4 风险），V1.1 再切换 PIXI.js
+> **核心架构实现情况：**
+> - **等级系统**：XP → 用户等级 + 输出等级评估 (L1-L5) + 场景准备度计算 + Chunk 掌握度状态机
+> - **成就系统**：事件驱动检测引擎 + 里程碑/连续打卡/挑战/隐藏成就 + 稀有度颜色
+> - **VN 引擎**：inkjs 叙事引擎 + PIXI.js 渲染层（PixiVnStage）+ React CSS fallback 共存
+> - **探索模式**：Ink 做叙事引擎，PIXI.js 做渲染层，后台管理元数据和存档
+> - PIXI.js 和 React fallback 同时存在，可根据场景切换
 >
-> 建议按 Phase 0→6 分阶段实施，优先验证练习模式闭环，再逐步扩展剧本和探索模式。
+> **后续方向：** 内容扩展（更多关卡/NPC/场景）、旧表清理、口语诊断页面实现、间隔复习算法优化。
