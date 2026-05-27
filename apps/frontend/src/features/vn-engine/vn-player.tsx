@@ -19,6 +19,7 @@ export interface VnPlayerLine {
   text: string
   isUser?: boolean
   translation?: string
+  audioUrl?: string
 }
 
 export interface VnPlayerChoice {
@@ -420,6 +421,7 @@ export function VnPlayer({
   const reviewLine = reviewLineIndex !== null ? history[reviewLineIndex] : null
   const activeLine = reviewLine ?? currentLine
   const fullText = activeLine?.text ?? ''
+  const audioUrl = activeLine?.audioUrl
 
   useEffect(() => {
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
@@ -450,6 +452,15 @@ export function VnPlayer({
       if (typewriterTimerRef.current === timer) typewriterTimerRef.current = null
     }
   }, [fullText])
+
+  useEffect(() => {
+    if (!audioUrl) return
+    const audio = new Audio(audioUrl)
+    void audio.play().catch(() => undefined)
+    return () => {
+      audio.pause()
+    }
+  }, [audioUrl])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)

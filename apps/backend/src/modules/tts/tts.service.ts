@@ -7,7 +7,7 @@ import { FileAssetGroup, TtsProvider } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TtsProviderFactory } from './tts-provider.factory';
 import { TTS_PARAMS_SCHEMA, sanitizeTtsParams } from './tts-params.schema';
-import { SynthesizeQuestionDto, SynthesizeTextDto } from './dto/synthesize.dto';
+import { SynthesizeAssetDto, SynthesizeQuestionDto, SynthesizeTextDto } from './dto/synthesize.dto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 
 @Injectable()
@@ -198,6 +198,48 @@ export class TtsService {
       mimeType: result.mimeType,
       audioBase64: result.audioBuffer.toString('base64'),
       wordTimestamps: result.wordTimestamps,
+    };
+  }
+
+  async synthesizeAsset(dto: SynthesizeAssetDto) {
+    const text = dto.text.trim();
+    if (!text) throw new BadRequestException('合成文本不能为空');
+
+    const sanitizedParams = sanitizeTtsParams(dto.provider, dto.model, dto.params);
+    const provider = this.factory.getProvider(dto.provider);
+    const configHash = this.buildConfigHash(dto.provider, dto.model, dto.voiceId, sanitizedParams, text);
+    const generatedId = `story-line-${configHash}-${randomUUID()}`;
+
+    const result = await provider.generateAudio({
+      id: generatedId,
+      text,
+      model: dto.model,
+      voiceId: dto.voiceId,
+      params: sanitizedParams,
+    });
+
+    const asset = await this.fileAssetsService.createAssetFromBuffer({
+      buffer: result.audioBuffer,
+      filename: `${generatedId}.${result.fileExtension}`,
+      mimeType: result.mimeType,
+      group: FileAssetGroup.tts,
+    });
+
+    const bizType = dto.bizType?.trim() || 'tts_story_line';
+    const bizId = dto.bizId?.trim() || configHash;
+    await this.fileAssetsService.createSystemReference(asset.id, bizType, bizId);
+
+    const signed = await this.fileAssetsService.getPrivateUrlByAssetId(asset.id);
+    return {
+      assetId: asset.id,
+      url: signed.url,
+      expiresInSeconds: signed.expiresInSeconds,
+      mimeType: result.mimeType,
+      wordTimestamps: result.wordTimestamps,
+      provider: dto.provider,
+      model: dto.model,
+      voiceId: dto.voiceId ?? null,
+      configHash,
     };
   }
 

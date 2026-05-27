@@ -46,3 +46,13 @@ export class SynthesizeTextDto {
   @IsOptional()
   params?: Record<string, unknown>;
 }
+
+export class SynthesizeAssetDto extends SynthesizeTextDto {
+  @IsOptional()
+  @IsString()
+  bizType?: string;
+
+  @IsOptional()
+  @IsString()
+  bizId?: string;
+}

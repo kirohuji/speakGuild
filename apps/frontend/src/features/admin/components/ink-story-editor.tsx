@@ -24,10 +24,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
+import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
 type ComposerItem =
-  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string }
+  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; audioUrl?: string }
   | { type: 'choice'; text: string; target: string; showCharacter: boolean }
   | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
   | { type: 'wait' }
@@ -116,6 +117,7 @@ function parseComposer(source: string): ComposerScene[] {
   let pendingSpeaker = ''
   let pendingExpression = 'default'
   let pendingPosition: 'left' | 'center' | 'right' = 'center'
+  let pendingAudioUrl = ''
   let pendingChoiceShowCharacter = true
 
   const ensureScene = () => {
@@ -152,6 +154,8 @@ function parseComposer(source: string): ComposerScene[] {
       } else if (tag.startsWith('position:')) {
         const position = tag.replace(/^position:/, '').trim()
         pendingPosition = position === 'left' || position === 'right' ? position : 'center'
+      } else if (tag.startsWith('audio:')) {
+        pendingAudioUrl = tag.replace(/^audio:/, '').trim()
       } else if (tag.startsWith('choiceCharacter:')) {
         pendingChoiceShowCharacter = tag.replace(/^choiceCharacter:/, '').trim() !== 'hide'
       } else if (tag.startsWith('bg:')) {
@@ -196,10 +200,12 @@ function parseComposer(source: string): ComposerScene[] {
       expression: pendingExpression || 'default',
       position: pendingPosition,
       text: spoken?.[2]?.trim() ?? line,
+      audioUrl: pendingAudioUrl,
     })
     pendingSpeaker = ''
     pendingExpression = 'default'
     pendingPosition = 'center'
+    pendingAudioUrl = ''
   }
 
   if (scenes.length === 0) {
@@ -233,6 +239,7 @@ function serializeComposer(
         if (item.speaker) lines.push(`# speaker:${item.speaker}`)
         if (item.expression) lines.push(`# expression:${item.expression}`)
         if (item.position) lines.push(`# position:${item.position}`)
+        if (item.audioUrl) lines.push(`# audio:${item.audioUrl}`)
         lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
       } else if (item.type === 'choice') {
         lines.push(`# choiceCharacter:${item.showCharacter ? 'show' : 'hide'}`)
@@ -723,6 +730,14 @@ export function InkStoryEditor({
                       </select>
                       <Textarea value={selectedItem.text} onChange={(event) => updateSelectedItem({ text: event.target.value })} disabled={readOnly} className="mt-1 min-h-32 text-sm" />
                     </div>
+                    <VnLineAudioGenerator
+                      text={selectedItem.text}
+                      audioUrl={selectedItem.audioUrl}
+                      storyKey={key}
+                      sceneName={selectedScene?.name}
+                      lineIndex={selection.type === 'item' ? selection.itemIndex : undefined}
+                      onChange={(audioUrl) => updateSelectedItem({ audioUrl })}
+                    />
                   </div>
                 )}
 

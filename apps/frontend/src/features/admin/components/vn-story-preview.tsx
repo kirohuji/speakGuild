@@ -43,6 +43,7 @@ interface DialogueLine {
   speaker: string
   text: string
   expression?: string
+  audioUrl?: string
 }
 
 /**
@@ -102,20 +103,21 @@ export function VnStoryPreview({
     const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
     const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
     const choiceCharacter = tags.find((t) => t.startsWith('choiceCharacter:'))?.replace('choiceCharacter:', '').trim()
-    return { speaker, expression, bg, bgFit, position, choiceCharacter }
+    const audioUrl = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
+    return { speaker, expression, bg, bgFit, position, choiceCharacter, audioUrl }
   }, [])
 
   /** 解析文本行，提取 "Speaker: text" 格式 */
-  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string): DialogueLine[] => {
+  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string, fallbackAudioUrl?: string): DialogueLine[] => {
     return text
       .split('\n')
       .filter(Boolean)
       .map((line) => {
         const match = line.match(/^([^:：]{1,32})[:：]\s*(.+)/)
         if (match) {
-          return { speaker: match[1], text: match[2], expression: fallbackExpression }
+          return { speaker: match[1], text: match[2], expression: fallbackExpression, audioUrl: fallbackAudioUrl }
         }
-        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression }
+        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression, audioUrl: fallbackAudioUrl }
       })
   }, [])
 
@@ -124,7 +126,7 @@ export function VnStoryPreview({
     const waiting = tags.includes('wait') || tags.some((tag) => tag === 'input' || tag === 'user_input' || tag.startsWith('wait:') || tag.startsWith('input:'))
     setCurrentTags(tags)
     setIsWaiting(waiting)
-    const { speaker, expression, bg, bgFit } = parseTags(tags)
+    const { speaker, expression, bg, bgFit, audioUrl } = parseTags(tags)
     if (bg || bgFit) {
       setActiveBackground((prev) => ({
         url: bg || prev.url,
@@ -133,7 +135,7 @@ export function VnStoryPreview({
     }
 
     if (result.text) {
-      const lines = parseTextLines(result.text, speaker, expression)
+      const lines = parseTextLines(result.text, speaker, expression, audioUrl)
       setHistory((prev) => [...prev, ...lines])
     }
 
@@ -267,6 +269,7 @@ export function VnStoryPreview({
       role: line.speaker === 'You' ? 'user' : 'npc',
       text: line.text,
       expression: line.expression,
+      audioUrl: line.audioUrl,
     })),
     userInputs: history
       .filter((line) => line.speaker === 'You')

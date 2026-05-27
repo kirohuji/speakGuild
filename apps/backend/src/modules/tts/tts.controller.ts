@@ -14,7 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { TtsService } from './tts.service';
-import { SynthesizeQuestionDto, SynthesizeTextDto } from './dto/synthesize.dto';
+import { SynthesizeAssetDto, SynthesizeQuestionDto, SynthesizeTextDto } from './dto/synthesize.dto';
 
 @Controller('tts')
 export class TtsController {
@@ -36,6 +36,12 @@ export class TtsController {
   @HttpCode(HttpStatus.OK)
   synthesizeText(@Body() dto: SynthesizeTextDto) {
     return this.ttsService.synthesizeText(dto);
+  }
+
+  @Post('synthesize-asset')
+  @HttpCode(HttpStatus.OK)
+  synthesizeAsset(@Body() dto: SynthesizeAssetDto) {
+    return this.ttsService.synthesizeAsset(dto);
   }
 
   @Get('audio/:id')

@@ -65,6 +65,23 @@ export type SynthesizeTextResult = {
   wordTimestamps: TtsWordTimestamp[] | null
 }
 
+export type SynthesizeAssetPayload = SynthesizeTextPayload & {
+  bizType?: string
+  bizId?: string
+}
+
+export type SynthesizeAssetResult = {
+  assetId: string
+  url: string
+  expiresInSeconds: number
+  mimeType: string
+  wordTimestamps: TtsWordTimestamp[] | null
+  provider: TtsProviderKey
+  model: string
+  voiceId?: string | null
+  configHash: string
+}
+
 // ---------- API ----------
 
 /** 获取所有支持的 Provider/Model/参数 Schema */
@@ -81,6 +98,10 @@ export const synthesizeQuestion = (payload: SynthesizeQuestionPayload): Promise<
 /** 短文本即时合成，用于设置页试听预览 */
 export const synthesizeText = (payload: SynthesizeTextPayload): Promise<SynthesizeTextResult> =>
   post('/tts/synthesize-text', payload)
+
+/** 任意文本合成并保存到 COS，返回可预览 URL */
+export const synthesizeAsset = (payload: SynthesizeAssetPayload): Promise<SynthesizeAssetResult> =>
+  post('/tts/synthesize-asset', payload)
 
 /** 获取音频文件的流式 URL（直接作为 <audio> src 使用） */
 export const getAudioUrl = (id: string): string => {
