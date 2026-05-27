@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, BookText, MessageSquareText,
-  Mic, Target, ArrowRight,
-  ExternalLink, BookmarkPlus, Search,
+  Target,
+  BookmarkPlus, Search,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,13 +12,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
-import { learningApi, type UnitDetail } from '../api/learning-api'
-import { chunkApi } from '@/features/practice/api/english-practice-api'
+import { learningApi, type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useWordsStore } from '@/stores/assets.store'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
 } from '@/features/practice/components/learning-insight-dialog'
+
+const PREP_PAGE_SIZE = 8
 
 export function LearningUnitPage() {
   const { unitId } = useParams<{ unitId: string }>()
@@ -26,6 +27,7 @@ export function LearningUnitPage() {
   const [unit, setUnit] = useState<UnitDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('vocab')
+  const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -67,6 +69,17 @@ export function LearningUnitPage() {
 
   const allVocabCount = vocabDialogItems.length
   const allChunkCount = chunkDialogItems.length
+  const patternDialogItems = useMemo<LearningInsightItem[]>(() =>
+    (unit?.sentencePatterns ?? []).map((p, index) => ({
+      kind: 'pattern' as const,
+      id: `${p.topicId}-${index}`,
+      pattern: p.pattern,
+      meaning: p.meaning,
+      slots: p.slots,
+      example: p.example,
+      difficulty: p.difficulty,
+      sceneName: unit?.title,
+    })), [unit])
 
   // 打开 Dialog
   const openDialog = useCallback((items: LearningInsightItem[], startIndex: number) => {
@@ -82,6 +95,35 @@ export function LearningUnitPage() {
 
   const handleDialogClose = useCallback((open: boolean) => {
     setDialogOpen(open)
+  }, [])
+
+  const handleSaveWord = useCallback((word: string) => {
+    const saved = hasWord(word)
+    addWord(word)
+    toast.success(saved ? '已在生词本中' : '已加入生词本')
+  }, [addWord, hasWord])
+
+  const vocabPageItems = useMemo(
+    () => paginateItems(unit?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
+    [prepPage.vocab, unit?.vocabularies],
+  )
+  const chunkPageItems = useMemo(
+    () => paginateItems(unit?.chunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
+    [prepPage.chunk, unit?.chunks],
+  )
+  const patternPageItems = useMemo(
+    () => paginateItems(unit?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
+    [prepPage.pattern, unit?.sentencePatterns],
+  )
+
+  const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
+    setPrepPage((current) => ({ ...current, [kind]: page }))
+    setExpandedItemId(null)
+  }, [])
+
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value)
+    setExpandedItemId(null)
   }, [])
 
   if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
@@ -100,43 +142,162 @@ export function LearningUnitPage() {
         <Link to="/learning" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="size-4" /> 学习计划
         </Link>
-        <h1 className="text-xl font-bold text-foreground">{unit.title}</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">{unit.location}</p>
+        <div className="flex items-start justify-between gap-3 px-1">
+          <div className="min-w-0">
+            <Badge variant="secondary" className="mb-2 rounded-full">{unit.category}</Badge>
+            <h1 className="text-xl font-bold leading-tight text-foreground">{unit.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{unit.location}</p>
+          </div>
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Target className="size-5" />
+          </div>
+        </div>
       </div>
 
-      {/* ===== 本单元练习话题 ===== */}
+      {/* ===== 题目 ===== */}
       {unit.trainingTopics.length > 0 && (
-        <section className="mb-6">
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Mic className="size-4 text-orange-500" />
-            练习话题 ({unit.trainingTopics.length})
-          </h2>
+        <section className="mb-5">
+          <SectionHeader
+            eyebrow="1"
+            title="练习题目"
+            subtitle="先知道最后要输出什么，再看知识点"
+            meta={`${unit.trainingTopics.length} 题`}
+          />
           <div className="space-y-2">
             {unit.trainingTopics.map((topic, i) => (
-              <Card key={topic.id}
-                className="cursor-pointer border-orange-500/30 bg-gradient-to-br from-orange-500/[0.03] to-transparent transition-colors hover:bg-orange-500/[0.08]"
-                onClick={() => navigate(`/practice/session/${topic.id}`)}>
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20">
-                    <span className="text-sm font-bold text-orange-500">{i + 1}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{topic.title}</p>
-                      <Badge variant="secondary" className="text-[10px]">{topic.difficulty}</Badge>
-                    </div>
-                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      建议 {Math.round(topic.suggestedDurationSec / 60)} 分钟
-                    </p>
-                  </div>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                </CardContent>
-              </Card>
+              <PracticeTopicCard
+                key={topic.id}
+                topic={topic}
+                index={i}
+                onStart={() => navigate(`/practice/session/${topic.id}`)}
+              />
             ))}
           </div>
         </section>
       )}
+
+      {/* ===== 说明 ===== */}
+      <section className="mb-5">
+        <SectionHeader
+          eyebrow="2"
+          title="准备说明"
+          subtitle="这个单元需要先补齐的材料"
+        />
+        <div className="rounded-lg bg-muted/30 p-4">
+          {unit.description ? (
+            <p className="text-sm leading-6 text-muted-foreground">{unit.description}</p>
+          ) : (
+            <p className="text-sm leading-6 text-muted-foreground">本单元会围绕当前场景补充词汇、表达和句型，再进入开口练习。</p>
+          )}
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <UnitMetric label="准备度" value={`${unit.progress?.readiness ?? 0}%`} />
+            <UnitMetric label="词汇" value={`${unit.progress?.vocabLearned ?? 0}/${unit.vocabCount}`} />
+            <UnitMetric label="表达" value={`${unit.progress?.chunkMastered ?? 0}/${unit.chunkCount}`} />
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 知识点 ===== */}
+      <section className="mb-6">
+        <SectionHeader
+          eyebrow="3"
+          title="知识点讲解"
+          subtitle="按类型分开看，列表过长时分页"
+          meta={`${allVocabCount + allChunkCount + patternDialogItems.length} 项`}
+        />
+
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
+          <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
+            <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
+              <BookText className="size-3.5" /> 词汇 {allVocabCount}
+            </TabsTrigger>
+            <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
+              <MessageSquareText className="size-3.5" /> 表达 {allChunkCount}
+            </TabsTrigger>
+            <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
+              <Search className="size-3.5" /> 句型 {patternDialogItems.length}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="vocab" className="mt-0 space-y-2">
+            {unit.vocabularies.length > 0 ? (
+              <>
+                {vocabPageItems.items.map((vocab, index) => (
+                  <VocabPrepCard
+                    key={vocab.id}
+                    vocab={vocab}
+                    saved={hasWord(vocab.word)}
+                    expanded={expandedItemId === vocab.id}
+                    onToggle={() => handleItemClick(vocab.id)}
+                    onOpen={() => openDialog(vocabDialogItems, vocabPageItems.startIndex + index)}
+                    onSave={() => handleSaveWord(vocab.word)}
+                  />
+                ))}
+                <PrepPager
+                  currentPage={prepPage.vocab}
+                  totalPages={vocabPageItems.totalPages}
+                  totalItems={unit.vocabularies.length}
+                  onPageChange={(page) => changePrepPage('vocab', page)}
+                />
+              </>
+            ) : (
+              <EmptyPrepState label="暂无词汇材料" />
+            )}
+          </TabsContent>
+
+          <TabsContent value="chunk" className="mt-0 space-y-2">
+            {unit.chunks.length > 0 ? (
+              <>
+                {chunkPageItems.items.map((chunk, index) => (
+                  <ChunkPrepCard
+                    key={chunk.id}
+                    chunk={chunk}
+                    expanded={expandedItemId === chunk.id}
+                    onToggle={() => handleItemClick(chunk.id)}
+                    onOpen={() => openDialog(chunkDialogItems, chunkPageItems.startIndex + index)}
+                  />
+                ))}
+                <PrepPager
+                  currentPage={prepPage.chunk}
+                  totalPages={chunkPageItems.totalPages}
+                  totalItems={unit.chunks.length}
+                  onPageChange={(page) => changePrepPage('chunk', page)}
+                />
+              </>
+            ) : (
+              <EmptyPrepState label="暂无表达材料" />
+            )}
+          </TabsContent>
+
+          <TabsContent value="pattern" className="mt-0 space-y-2">
+            {unit.sentencePatterns.length > 0 ? (
+              <>
+                {patternPageItems.items.map((pattern, index) => {
+                  const absoluteIndex = patternPageItems.startIndex + index
+                  const key = `${pattern.topicId}-${absoluteIndex}`
+                  return (
+                    <PatternPrepCard
+                      key={key}
+                      pattern={pattern}
+                      expanded={expandedItemId === key}
+                      onToggle={() => handleItemClick(key)}
+                      onOpen={() => openDialog(patternDialogItems, absoluteIndex)}
+                    />
+                  )
+                })}
+                <PrepPager
+                  currentPage={prepPage.pattern}
+                  totalPages={patternPageItems.totalPages}
+                  totalItems={unit.sentencePatterns.length}
+                  onPageChange={(page) => changePrepPage('pattern', page)}
+                />
+              </>
+            ) : (
+              <EmptyPrepState label="暂无句型材料" />
+            )}
+          </TabsContent>
+        </Tabs>
+      </section>
 
       {/* Dialog */}
       <LearningInsightDialog
@@ -146,6 +307,306 @@ export function LearningUnitPage() {
         onOpenChange={handleDialogClose}
         onIndexChange={setDialogIndex}
       />
+    </div>
+  )
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+  meta,
+}: {
+  eyebrow: string
+  title: string
+  subtitle?: string
+  meta?: string
+}) {
+  return (
+    <div className="mb-3 flex items-end justify-between gap-3 px-1">
+      <div className="flex min-w-0 items-start gap-2">
+        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+          {eyebrow}
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          {subtitle && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+      </div>
+      {meta && (
+        <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">
+          {meta}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
+function paginateItems<T>(items: T[], page: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const currentPage = Math.min(Math.max(page, 1), totalPages)
+  const startIndex = (currentPage - 1) * pageSize
+
+  return {
+    items: items.slice(startIndex, startIndex + pageSize),
+    startIndex,
+    totalPages,
+  }
+}
+
+function PrepPager({
+  currentPage,
+  totalPages,
+  totalItems,
+  onPageChange,
+}: {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  onPageChange: (page: number) => void
+}) {
+  if (totalPages <= 1) return null
+
+  return (
+    <div className="flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
+      <span className="text-[11px] text-muted-foreground">
+        共 {totalItems} 项
+      </span>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          上一页
+        </Button>
+        <span className="min-w-10 text-center text-[11px] text-muted-foreground">
+          {currentPage}/{totalPages}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          下一页
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function UnitMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-muted/45 px-3 py-2">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
+    </div>
+  )
+}
+
+function VocabPrepCard({
+  vocab,
+  saved,
+  expanded,
+  onToggle,
+  onOpen,
+  onSave,
+}: {
+  vocab: VocabItem
+  saved: boolean
+  expanded: boolean
+  onToggle: () => void
+  onOpen: () => void
+  onSave: () => void
+}) {
+  return (
+    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
+      <CardContent className="p-0">
+        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
+            <BookText className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-semibold text-foreground">{vocab.word}</p>
+              {saved && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+            </div>
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{vocab.meaning}</p>
+          </div>
+          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
+        </button>
+
+        {expanded && (
+          <div className="px-3 pb-3 pt-2">
+            {vocab.description && <p className="mb-3 text-xs leading-5 text-muted-foreground">{vocab.description}</p>}
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
+                <Search className="size-3.5" /> 查看
+              </Button>
+              <Button size="sm" variant={saved ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" onClick={onSave}>
+                <BookmarkPlus className="size-3.5" /> {saved ? '已加入' : '加入生词本'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function ChunkPrepCard({
+  chunk,
+  expanded,
+  onToggle,
+  onOpen,
+}: {
+  chunk: ChunkItem
+  expanded: boolean
+  onToggle: () => void
+  onOpen: () => void
+}) {
+  return (
+    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
+      <CardContent className="p-0">
+        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <MessageSquareText className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
+              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{chunk.difficulty}</Badge>
+            </div>
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
+          </div>
+          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
+        </button>
+
+        {expanded && (
+          <div className="px-3 pb-3 pt-2">
+            {chunk.description && <p className="mb-3 text-xs leading-5 text-muted-foreground">{chunk.description}</p>}
+            {chunk.examples[0] && (
+              <div className="mb-3 rounded-md bg-muted/45 p-2.5">
+                <p className="text-xs font-medium leading-5 text-foreground">{chunk.examples[0].en}</p>
+                <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{chunk.examples[0].zh}</p>
+              </div>
+            )}
+            <Button size="sm" variant="outline" className="h-8 w-full gap-1.5 text-xs" onClick={onOpen}>
+              <Search className="size-3.5" /> 查看表达用法
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function PatternPrepCard({
+  pattern,
+  expanded,
+  onToggle,
+  onOpen,
+}: {
+  pattern: SentencePattern
+  expanded: boolean
+  onToggle: () => void
+  onOpen: () => void
+}) {
+  return (
+    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
+      <CardContent className="p-0">
+        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
+            <Search className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-semibold text-foreground">{pattern.pattern}</p>
+              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pattern.difficulty}</Badge>
+            </div>
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{pattern.meaning}</p>
+          </div>
+          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
+        </button>
+
+        {expanded && (
+          <div className="px-3 pb-3 pt-2">
+            <div className="mb-3 rounded-md bg-muted/45 p-2.5">
+              <p className="text-xs font-medium leading-5 text-foreground">{pattern.example}</p>
+              <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{pattern.topicTitle}</p>
+            </div>
+            {pattern.slots.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {pattern.slots.map((slot) => (
+                  <Badge key={slot} variant="secondary" className="rounded-full px-2 text-[10px]">{slot}</Badge>
+                ))}
+              </div>
+            )}
+            <Button size="sm" variant="outline" className="h-8 w-full gap-1.5 text-xs" onClick={onOpen}>
+              <Search className="size-3.5" /> 查看句型
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function PracticeTopicCard({
+  topic,
+  index,
+  onStart,
+}: {
+  topic: TrainingTopicItem
+  index: number
+  onStart: () => void
+}) {
+  return (
+    <Card
+      className="cursor-pointer border-0 bg-orange-500/[0.06] shadow-none transition-colors hover:bg-orange-500/[0.1]"
+      onClick={onStart}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20">
+            <span className="text-sm font-bold text-orange-500">{index + 1}</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-medium text-foreground">{topic.title}</p>
+              <Badge variant="secondary" className="text-[10px]">{topic.difficulty}</Badge>
+            </div>
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              建议 {Math.round(topic.suggestedDurationSec / 60)} 分钟
+            </p>
+          </div>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+        </div>
+        {topic.activeChunks.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5 rounded-md bg-background/45 p-2.5">
+            {topic.activeChunks.slice(0, 3).map((chunk) => (
+              <Badge key={chunk.id} variant="outline" className="rounded-full px-2 text-[10px]">
+                {chunk.text}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmptyPrepState({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">
+      {label}
     </div>
   )
 }

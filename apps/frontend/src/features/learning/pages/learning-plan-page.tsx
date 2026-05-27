@@ -91,7 +91,7 @@ export function LearningPlanPage() {
         <div className="mb-3 flex h-10 items-center justify-between">
           <div />
 
-          <div className="flex items-center gap-1 rounded-full bg-background/70 p-1 backdrop-blur-xl ring-1 ring-border/40">
+          <div className="flex items-center gap-1 rounded-full bg-muted/60 p-1 backdrop-blur-xl">
             <button
               type="button"
               onClick={() => { setShopOpen(true); refreshShop() }}
@@ -116,7 +116,7 @@ export function LearningPlanPage() {
         />
 
         <Drawer open={shopOpen} onOpenChange={setShopOpen}>
-          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
               <DrawerTitle className="text-base font-semibold">学习商店</DrawerTitle>
             </DrawerHeader>
@@ -222,7 +222,7 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
   const taskSummary = getTodayTaskSummary(todayPlan)
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg bg-muted/30">
       <div className="p-3.5">
         <Link to={`/learning/units/${unit.id}`} className="flex gap-3">
           <div className="relative flex aspect-square size-[92px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
@@ -264,7 +264,7 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
         <button
           type="button"
           onClick={() => setExpanded((open) => !open)}
-          className="mt-3 flex w-full items-center justify-between border-t border-border/60 pt-3 text-left"
+          className="mt-3 flex w-full items-center justify-between rounded-md bg-background/60 px-3 py-2 text-left"
         >
           <div>
             <p className="text-xs font-medium text-foreground">今日学习</p>
@@ -322,7 +322,7 @@ function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
                 className={cn(
                   'flex size-8 items-center justify-center rounded-full text-xs font-medium',
                   isDone && 'bg-primary text-primary-foreground',
-                  isToday && !isDone && 'bg-background text-foreground ring-1 ring-border',
+                  isToday && !isDone && 'bg-background text-foreground',
                   isPast && 'bg-background/70 text-muted-foreground',
                   !isToday && !isPast && 'text-muted-foreground/50',
                 )}
@@ -379,7 +379,7 @@ function TodayTaskRow({ task, compact = false }: { task: TodayTask; compact?: bo
     <Link
       to={href}
       className={cn(
-        'flex items-center gap-3 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border/70 transition-colors hover:bg-muted/30',
+        'flex items-center gap-3 rounded-lg bg-muted/30 p-3 transition-colors hover:bg-muted/50',
         compact && 'rounded-md bg-muted/35 p-2.5 shadow-none ring-0',
       )}
     >
@@ -444,10 +444,10 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
     <Link
       to={`/learning/units/${unit.id}`}
       className={cn(
-        'flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm transition-colors',
+        'flex items-center gap-3 rounded-lg bg-muted/30 p-3 transition-colors',
         isCompleted
-          ? 'border-emerald-500/20 hover:bg-emerald-500/[0.04]'
-          : 'border-border/70 hover:bg-muted/40',
+          ? 'hover:bg-emerald-500/[0.06]'
+          : 'hover:bg-muted/50',
       )}
     >
       <div
@@ -602,7 +602,7 @@ function ShopView({
           <p className="mt-4 text-muted-foreground">没有找到匹配的学习单元</p>
         </div>
       ) : (
-        <div className="divide-y divide-border/60 rounded-lg bg-card">
+        <div className="space-y-2 rounded-lg">
           {filteredUnits.map((unit) => (
             <ShopCard key={unit.id} unit={unit} />
           ))}
@@ -642,7 +642,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
       <button
         type="button"
         onClick={() => { setTopicPage(1); setDetailOpen(true) }}
-        className="flex w-full gap-3 p-3 text-left transition-colors hover:bg-muted/40"
+        className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
       >
         <UnitCover unit={unit} icon={Icon} />
         <div className="min-w-0 flex-1 py-0.5">
@@ -671,7 +671,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
             <DialogDescription>{unit.location}</DialogDescription>
           </DialogHeader>
           <div className="flex max-h-[88vh] flex-col">
-            <div className="flex gap-3 border-b p-4">
+            <div className="flex gap-3 bg-muted/30 p-4">
               <UnitCover unit={unit} icon={Icon} className="size-20" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
@@ -703,7 +703,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
               </Button>
             </div>
 
-            <div className="border-y bg-muted/30 px-4 py-2.5">
+            <div className="bg-muted/30 px-4 py-2.5">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-foreground">话题列表</p>
                 {unit.topics.length > pageSize && (
@@ -732,9 +732,9 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
               {pagedTopics.length > 0 ? (
-                <div className="divide-y divide-border/60">
+                <div className="space-y-1.5">
                   {pagedTopics.map((topic, index) => (
-                    <div key={topic.id} className="flex items-center gap-3 py-3">
+                    <div key={topic.id} className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3">
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
                         {(topicPage - 1) * pageSize + index + 1}
                       </div>

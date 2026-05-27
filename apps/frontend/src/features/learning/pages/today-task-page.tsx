@@ -4,12 +4,11 @@ import {
   BookText, MessageSquareText, Mic, Play, ChevronRight,
   CheckCircle2, Target, Clock, ArrowRight, Sparkles, ListChecks,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import {
   learningApi,
@@ -103,7 +102,7 @@ export function TodayTaskPage() {
       </div>
 
       {/* Overall Progress */}
-      <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10">
+      <Card className="mb-6 border-0 bg-primary/[0.07] shadow-none">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -141,7 +140,7 @@ export function TodayTaskPage() {
             <Card
               key={task.id}
               className={cn(
-                'transition-all',
+                'border-0 bg-muted/30 shadow-none transition-all',
                 isDone && 'opacity-60',
               )}
             >
@@ -150,10 +149,10 @@ export function TodayTaskPage() {
                 <button
                   onClick={() => toggleTask(task.id)}
                   className={cn(
-                    'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+                    'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full transition-colors',
                     isDone
-                      ? 'border-green-500 bg-green-500 text-white'
-                      : 'border-muted-foreground/30 hover:border-primary',
+                      ? 'bg-green-500 text-white'
+                      : 'bg-background/80 hover:bg-primary/15',
                   )}
                 >
                   {isDone && <CheckCircle2 className="size-5" />}
@@ -210,7 +209,7 @@ export function TodayTaskPage() {
 
       {/* Completion Message */}
       {allDone && (
-        <div className="mt-6 rounded-lg border border-green-500/30 bg-green-500/5 p-4 text-center">
+        <div className="mt-6 rounded-lg bg-green-500/10 p-4 text-center">
           <Sparkles className="mx-auto mb-2 size-6 text-amber-500" />
           <p className="font-medium text-foreground">太棒了！今日任务全部完成</p>
           <p className="mt-1 text-sm text-muted-foreground">
