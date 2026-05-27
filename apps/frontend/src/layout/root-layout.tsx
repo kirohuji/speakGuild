@@ -19,7 +19,12 @@ export function RootLayout() {
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isHomePage = pathname === '/'
+  const isLearningSubPage =
+    pathname.startsWith('/learning/units/') ||
+    pathname.startsWith('/practice/session/') ||
+    pathname.startsWith('/script/')
   const isLoggedIn = !!session
+  const showBottomNav = !immersiveMode && !isLearningSubPage
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
@@ -49,7 +54,9 @@ export function RootLayout() {
             ? 'pb-0 lg:pt-0 lg:pb-0'
             : isHomePage
               ? 'pt-0 pb-0 lg:pt-14 lg:pb-0'
-              : 'pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
+              : showBottomNav
+                ? 'pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
+                : 'pt-0 pb-0 lg:pt-14 lg:pb-0'
       }`}>
         <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
           <Outlet />
@@ -60,7 +67,7 @@ export function RootLayout() {
           <Footer />
         </div>
       )}
-      {!isAuthPage && <div className={cn(immersiveMode && 'hidden')}><BottomNav /></div>}
+      {!isAuthPage && showBottomNav && <BottomNav />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">

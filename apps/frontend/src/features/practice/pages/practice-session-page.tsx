@@ -19,6 +19,7 @@ import { LearningInsightDialog, type LearningInsightItem } from '../components/l
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
+import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
 
@@ -521,23 +522,6 @@ export function PracticeSessionPage() {
         </div>
 
         <div className="space-y-5">
-          <section className="rounded-lg bg-orange-500/[0.06] p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <BookOpen className="size-4 text-orange-500" />
-                <p className="text-sm font-semibold text-foreground">练习题目</p>
-              </div>
-              <span className="shrink-0 text-[11px] text-muted-foreground">
-                建议 {Math.max(1, Math.round(detail.topic.suggestedDurationSec / 60))} 分钟
-              </span>
-            </div>
-            <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
-            <Button className="mt-4 w-full" size="lg" onClick={handleStartPractice}>
-              <Play className="mr-2 size-5" /> 开始练习
-            </Button>
-          </section>
-
           {(detail.topic.description || detail.topic.knowledgePoints || detail.topic.sentencePatterns?.length) && (
             <section className="rounded-lg bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2">
@@ -546,18 +530,20 @@ export function PracticeSessionPage() {
               </div>
               <div className="space-y-3">
                 {detail.topic.description && (
-                  <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                    {detail.topic.description}
-                  </p>
+                  <MarkdownRenderer
+                    content={detail.topic.description}
+                    className="text-muted-foreground prose-p:my-0 prose-ul:my-1 prose-ol:my-1"
+                  />
                 )}
                 {detail.topic.knowledgePoints && (
                   <div className="rounded-md bg-background/55 p-3">
                     <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground">
                       <Lightbulb className="size-3.5 text-primary" /> 本题要点
                     </div>
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                      {detail.topic.knowledgePoints}
-                    </p>
+                    <MarkdownRenderer
+                      content={detail.topic.knowledgePoints}
+                      className="text-muted-foreground prose-p:my-0 prose-ul:my-1 prose-ol:my-1"
+                    />
                   </div>
                 )}
                 {detail.topic.sentencePatterns?.length ? (
@@ -654,6 +640,23 @@ export function PracticeSessionPage() {
                 />
               </TabsContent>
             </Tabs>
+          </section>
+
+          <section className="rounded-lg bg-orange-500/[0.06] p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-4 text-orange-500" />
+                <p className="text-sm font-semibold text-foreground">练习题目</p>
+              </div>
+              <span className="shrink-0 text-[11px] text-muted-foreground">
+                建议 {Math.max(1, Math.round(detail.topic.suggestedDurationSec / 60))} 分钟
+              </span>
+            </div>
+            <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
+            <Button className="mt-4 w-full" size="lg" onClick={handleStartPractice}>
+              <Play className="mr-2 size-5" /> 开始练习
+            </Button>
           </section>
         </div>
 
