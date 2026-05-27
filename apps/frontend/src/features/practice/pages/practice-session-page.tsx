@@ -251,15 +251,31 @@ export function PracticeSessionPage() {
     return undefined
   }, [])
 
+  // Restart from header — reset state and re-trigger Ink init without leaving practice phase
+  const [restartKey, setRestartKey] = useState(0)
+  const restartPractice = useCallback(() => {
+    setDialogueRounds([])
+    syncedInkLineCountRef.current = 0
+    setFallbackRound(0)
+    setCompletedObjectives(new Set())
+    setUsedChunks(new Set())
+    setAiHints([])
+    setRestartKey((k) => k + 1)
+  }, [])
+
   const {
     lines: inkLines,
     choices: inkChoices,
     isWaiting: inkWaiting,
+    isEnded: inkEnded,
     currentTags,
     advanceStory,
     handleChoice,
     resumeAfterInput,
-  } = useInkStory(inkJson, { onExternalFunction: handleExternalFn })
+  } = useInkStory(
+    useMemo(() => inkJson ? { ...inkJson, __restartKey: restartKey } : null, [inkJson, restartKey]),
+    { onExternalFunction: handleExternalFn },
+  )
 
   useEffect(() => {
     syncedInkLineCountRef.current = 0
@@ -693,7 +709,14 @@ export function PracticeSessionPage() {
             triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-white/82 transition-opacity active:opacity-70"
           />
 
-          <span aria-hidden className="h-7 w-[72px]" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={restartPractice}
+            className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white"
+          >
+            <RotateCcw className="size-3.5" /> 重来
+          </Button>
           </div>
         </div>
 
@@ -705,13 +728,14 @@ export function PracticeSessionPage() {
               stageClassName="min-h-0"
               backgroundUrl={vnVisual.backgroundUrl || detail.scene.backgroundUrl || undefined}
               backgroundFit={vnVisual.backgroundFit}
-              currentLine={currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
+              currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
               history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
               choices={inkChoices}
               currentSpriteUrl={currentSpriteUrl}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
               spritePosition={spritePosition}
               isWaiting={inkWaiting}
+              isEnded={inkEnded}
               onSubmitInput={sendUserInput}
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
