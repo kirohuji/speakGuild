@@ -19,7 +19,7 @@ export function AbilitySelectionPage() {
     if (!selected) return
     setSaving(true)
     try { await onboardingApi.selectAbility(selected) } catch {}
-    navigate('/')
+    navigate('/onboarding/diagnostic')
   }
 
   return (

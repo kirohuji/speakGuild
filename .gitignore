@@ -11,3 +11,5 @@ prisma/dev.db
 uploads/
 ssl/
 hope-front-main
+ios/
+android/

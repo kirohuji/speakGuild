@@ -20,6 +20,7 @@ import { AchievementHallPage } from '@/features/achievement/pages/achievement-ha
 import { OnboardingLayout } from '@/features/onboarding/pages/onboarding-layout'
 import { GoalsSelectionPage } from '@/features/onboarding/pages/goals-selection-page'
 import { AbilitySelectionPage } from '@/features/onboarding/pages/ability-selection-page'
+import { DiagnosticPage } from '@/features/onboarding/pages/diagnostic-page'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { AccountPage } from '@/features/account/pages/account-page'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
@@ -130,6 +131,7 @@ export default function App() {
                 <Route path="/onboarding" element={<OnboardingLayout />}>
                   <Route path="goals" element={<GoalsSelectionPage />} />
                   <Route path="ability" element={<AbilitySelectionPage />} />
+                  <Route path="diagnostic" element={<DiagnosticPage />} />
                 </Route>
 
                 {/* 系统文档 — 法律与隐私相关 */}
