@@ -1,0 +1,6 @@
+map_name,name,display_name,description,pos_x,pos_y,location_type,is_preview,required_output_level,background_url
+campus,宿舍大厅,🏠 宿舍大厅,你住的地方，前台Sarah和室友Alex经常在这里。,25,40,vn_scene,false,L1,
+campus,校园咖啡店,☕ 校园咖啡店,课间休息的好去处，Tom在这里工作。,60,30,vn_scene,true,L2,
+campus,图书馆,📚 图书馆,安静的学习空间。,75,65,vn_scene,true,L2,
+campus,校医室,🏥 校医室,身体不舒服时来这里找Dr.Emily。,40,70,vn_scene,true,L2,
+campus,银行,🏦 银行,办理开户和金融业务。,85,40,vn_scene,true,L2,

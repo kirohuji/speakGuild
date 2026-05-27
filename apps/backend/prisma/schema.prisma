@@ -798,8 +798,17 @@ model SceneVocabulary {
   scene         Scene                @relation(fields: [sceneId], references: [id])
   sceneId       String
   word          String
-  meaning       String
-  description   String?              @db.Text
+  meaning       String               // 中文释义
+  partOfSpeech  String?              // 词性：noun/verb/adj/phrase
+  phoneticUs    String?              // 美式音标
+  phoneticUk    String?              // 英式音标
+  audioUsUrl    String?              // 美式发音音频
+  audioUkUrl    String?              // 英式发音音频
+  definitionEn  String?              @db.Text  // 英文释义
+  synonyms      String[]             @default([])  // 同义词
+  examples      Json?                // 例句 [{ en, zh, note? }]
+  description   String?              @db.Text  // 用法讲解/搭配说明
+  difficulty    String               @default("L1")  // L1~L5
   sortOrder     Int                  @default(0)
   episodeVocabs ScriptEpisodeVocab[]
 

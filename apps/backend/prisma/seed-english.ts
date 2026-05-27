@@ -1,388 +1,360 @@
 import { PrismaClient, AchievementCategory, AchievementRarity } from '@prisma/client'
+import { readCsv, parseJson } from './seed-csv'
+import { enrichVocabulary } from './seed-vocab-enrich'
+import * as fs from 'fs'
+import * as path from 'path'
 
-/**
- * 英语输出训练 — 种子数据
- *
- * MVP 内容规模：
- * - 5 个场景分类
- * - 8 个场景 + 80 词汇
- * - 60+ 个 Chunk
- * - 15 个训练话题
- * - Chapter 0: 3 个体验关卡
- * - 3 个 NPC
- * - 1 个探索地图 + 3 个地点
- * - 15 个成就定义
- */
+type CsvSceneCategory = { name: string; icon: string; sort_order: string }
+type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string }
+type CsvVocab = { scene_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
+type CsvChunk = { scene_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string; applicable_scenes_json: string }
+type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; skeleton: string; description: string; knowledge_points: string; ink_script_key: string }
+type CsvEpisode = { chapter_id: string; chapter_title: string; episode_order: string; title: string; scene_title: string; required_output_level: string; required_user_level: string; vocab_required_count: string; vocab_total_count: string; chunk_required_count: string; chunk_total_count: string; objectives_json: string; pass_objective_count: string; pass_chunk_count: string; pass_min_dialogues: string; npc_name: string; npc_role: string; is_preview: string; ink_script_key: string; rewards_json: string }
+type CsvEpChunk = { episode_chapter: string; episode_order: string; chunk_text_match: string; sort_order: string }
+type CsvChar = { name: string; display_name: string; role: string; personality: string; default_position: string; avatar_url: string; sprite_base_url: string }
+type CsvMap = { name: string; display_name: string; required_output_level: string; is_preview: string; sort_order: string }
+type CsvLocation = { map_name: string; name: string; display_name: string; description: string; pos_x: string; pos_y: string; location_type: string; is_preview: string; required_output_level: string; background_url: string }
+type CsvLocNpc = { location_name: string; character_name: string; default_greeting: string; sort_order: string }
+type CsvLocExit = { from_location: string; to_location: string; label: string }
+type CsvAchievement = { key: string; title: string; description: string; category: string; rarity: string; sort_order: string; is_hidden: string; hint_text: string; condition_json: string; reward_xp: string }
+
+const DATA_DIR = path.resolve(__dirname, 'data')
+const INK_DIR = path.resolve(DATA_DIR, 'ink-scripts')
+
 export async function seedEnglishOutput(prisma: PrismaClient) {
   console.log('🌍 开始创建英语输出训练种子数据...\n')
 
   // ═══ 1. 场景分类 ═══
-  const categories = await Promise.all([
-    prisma.sceneCategory.create({ data: { name: '留学生活', icon: 'GraduationCap', sortOrder: 1 } }),
-    prisma.sceneCategory.create({ data: { name: '日常社交', icon: 'Coffee', sortOrder: 2 } }),
-    prisma.sceneCategory.create({ data: { name: '旅行英语', icon: 'Plane', sortOrder: 3 } }),
-    prisma.sceneCategory.create({ data: { name: '职场交流', icon: 'Briefcase', sortOrder: 4 } }),
-    prisma.sceneCategory.create({ data: { name: '学术挑战', icon: 'BookOpen', sortOrder: 5 } }),
-  ])
-  const [catStudy, catSocial, catTravel, catWork, catAcademic] = categories
-  console.log(`  ✓ 5 个场景分类`)
-
-  // ═══ 2. 场景 + 词汇 ═══
-  const sceneDefs = [
-    { catId: catStudy.id, title: '宿舍入住', location: '宿舍前台', level: 'L2' },
-    { catId: catStudy.id, title: '机场入境', location: '机场入境大厅', level: 'L2' },
-    { catId: catStudy.id, title: '认识室友', location: '宿舍房间', level: 'L2' },
-    { catId: catSocial.id, title: '咖啡店点餐', location: '校园咖啡店', level: 'L1' },
-    { catId: catSocial.id, title: '超市购物', location: '超市', level: 'L1' },
-    { catId: catTravel.id, title: '打车出行', location: '机场出租车站', level: 'L1' },
-    { catId: catWork.id, title: '面试自我介绍', location: '面试室', level: 'L3' },
-    { catId: catAcademic.id, title: '小组讨论', location: '教室', level: 'L3' },
-  ]
-
-  const scenes: Record<string, string> = {}
-  for (const s of sceneDefs) {
-    const scene = await prisma.scene.create({
-      data: { categoryId: s.catId, title: s.title, location: s.location, requiredOutputLevel: s.level, requiredUserLevel: 1 },
+  const catRows = readCsv<CsvSceneCategory>('scene_categories.csv')
+  const catMap = new Map<string, string>()
+  for (const row of catRows) {
+    const cat = await prisma.sceneCategory.create({
+      data: { name: row.name, icon: row.icon || null, sortOrder: parseInt(row.sort_order) },
     })
-    scenes[s.title] = scene.id
+    catMap.set(row.name, cat.id)
   }
-  console.log(`  ✓ ${sceneDefs.length} 个场景`)
+  console.log(`  ✓ ${catRows.length} 个场景分类`)
 
-  // 场景词汇
-  const vocabData: Record<string, string[]> = {
-    '宿舍入住': ['dormitory,宿舍', 'reception,前台', 'check in,办理入住', 'booking,预订', 'room key,房间钥匙', 'student ID,学生证', 'Wi-Fi,无线网', 'laundry room,洗衣房', 'shared kitchen,共享厨房', 'elevator,电梯'],
-    '机场入境': ['passport,护照', 'visa,签证', 'customs,海关', 'declare,申报', 'luggage,行李', 'boarding pass,登机牌', 'immigration,入境', 'arrival hall,到达大厅', 'study abroad,留学', 'purpose of visit,来访目的'],
-    '认识室友': ['introduce,介绍', 'hometown,家乡', 'major,专业', 'get used to,适应', 'hang out,出去玩', 'schedule,日程', 'dorm mate,室友', 'semester,学期', 'campus,校园', 'freshman,大一新生'],
-    '咖啡店点餐': ['latte,拿铁', 'cappuccino,卡布奇诺', 'espresso,浓缩咖啡', 'take away,打包', 'for here,堂食', 'menu,菜单', 'order,点餐', 'receipt,收据', 'tip,小费', 'straw,吸管'],
-    '超市购物': ['shopping cart,购物车', 'checkout,结账', 'discount,折扣', 'receipt,收据', 'aisle,过道', 'produce,农产品', 'dairy,乳制品', 'frozen food,冷冻食品', 'plastic bag,塑料袋', 'price tag,价签'],
-    '打车出行': ['taxi,出租车', 'destination,目的地', 'address,地址', 'meter,计价器', 'fare,车费', 'trunk,后备箱', 'seatbelt,安全带', 'intersection,十字路口', 'drop off,下车', 'pick up,接人'],
-    '面试自我介绍': ['background,背景', 'experience,经验', 'strength,优势', 'qualification,资质', 'achievement,成就', 'career goal,职业目标', 'team player,团队合作者', 'problem-solving,解决问题', 'internship,实习', 'reference,推荐人'],
-    '小组讨论': ['presentation,展示', 'argument,论点', 'evidence,证据', 'agree,同意', 'disagree,不同意', 'perspective,观点', 'compromise,妥协', 'brainstorm,头脑风暴', 'conclusion,结论', 'deadline,截止日期'],
-  }
-
-  for (const [sceneTitle, words] of Object.entries(vocabData)) {
-    const sceneId = scenes[sceneTitle]
-    if (!sceneId) continue
-    for (let i = 0; i < words.length; i++) {
-      const [word, meaning] = words[i].split(',')
-      await prisma.sceneVocabulary.create({ data: { sceneId, word, meaning, sortOrder: i } })
+  // ═══ 2. 场景 ═══
+  const sceneRows = readCsv<CsvScene>('scenes.csv')
+  const sceneMap = new Map<string, string>()
+  for (const row of sceneRows) {
+    const catId = catMap.get(row.category_name)
+    if (!catId) {
+      console.warn(`  ⚠️  Category not found: ${row.category_name}, skipping scene: ${row.title}`)
+      continue
     }
+    const scene = await prisma.scene.create({
+      data: {
+        categoryId: catId,
+        title: row.title,
+        location: row.location,
+        description: row.description || null,
+        requiredOutputLevel: row.required_output_level,
+        requiredUserLevel: parseInt(row.required_user_level) || 1,
+      },
+    })
+    sceneMap.set(row.title, scene.id)
   }
-  console.log(`  ✓ 80 个场景词汇`)
+  console.log(`  ✓ ${sceneRows.length} 个场景`)
 
-  // ═══ 3. Chunk 表达块 ═══
-  const chunkData: { text: string; meaning: string; category: string; sceneTitle: string; difficulty: string; examples?: { en: string; zh: string; note?: string; level?: string }[] }[] = [
-    // 宿舍入住
-    { text: "I'm here to check in.", meaning: '我是来办理入住的。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2', examples: [{ en: "Hi, I'm here to check in. My booking is under the name Li.", zh: '你好，我是来办理入住的。我的预订姓名是李。', level: 'basic' }] },
-    { text: 'My booking is under the name...', meaning: '我的预订名字是...', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
-    { text: 'Here is my student ID.', meaning: '这是我的学生证。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
-    { text: 'Could you tell me where my room is?', meaning: '能告诉我房间在哪吗？', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
-    { text: 'Is there Wi-Fi in the building?', meaning: '楼里有 Wi-Fi 吗？', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
-    { text: 'Where is the laundry room?', meaning: '洗衣房在哪？', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L2' },
-    { text: 'Thank you for your help.', meaning: '谢谢你的帮助。', category: '宿舍入住', sceneTitle: '宿舍入住', difficulty: 'L1' },
-    // 机场入境
-    { text: "I'm here to study.", meaning: '我是来读书的。', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2', examples: [{ en: "I'm here to study at the University of Manchester.", zh: '我是来曼彻斯特大学读书的。', level: 'basic' }] },
-    { text: 'I will be staying for...', meaning: '我会待...', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2' },
-    { text: 'My luggage is...', meaning: '我的行李是...', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L1' },
-    { text: 'I have nothing to declare.', meaning: '我没有需要申报的。', category: '机场入境', sceneTitle: '机场入境', difficulty: 'L2' },
-    // 认识室友
-    { text: "I'm from...", meaning: '我来自...', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1', examples: [{ en: "I'm from Shanghai. It's a big city in China.", zh: '我来自上海，那是中国的一座大城市。', level: 'basic' }] },
-    { text: "My major is...", meaning: '我的专业是...', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1' },
-    { text: "I'm still getting used to everything.", meaning: '我还在适应一切。', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L2' },
-    { text: 'Would you like to grab a coffee sometime?', meaning: '改天一起喝杯咖啡？', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L2' },
-    { text: "It's nice to meet you.", meaning: '很高兴认识你。', category: '认识室友', sceneTitle: '认识室友', difficulty: 'L1' },
-    // 咖啡店
-    { text: "I'd like a..., please.", meaning: '我想要一杯...', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1', examples: [{ en: "I'd like a latte, please.", zh: '我想要一杯拿铁，谢谢。', level: 'basic' }] },
-    { text: 'For here or to go?', meaning: '堂食还是打包？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1' },
-    { text: 'Can I get the bill, please?', meaning: '能给我账单吗？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1' },
-    { text: 'Do you have any dairy-free options?', meaning: '有非乳制品的选项吗？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L2' },
-    { text: 'How much is it?', meaning: '多少钱？', category: '咖啡店', sceneTitle: '咖啡店点餐', difficulty: 'L1' },
-    // 超市
-    { text: 'Where can I find...?', meaning: '我在哪能找到...？', category: '超市', sceneTitle: '超市购物', difficulty: 'L1', examples: [{ en: 'Where can I find the milk?', zh: '我在哪能找到牛奶？', level: 'basic' }] },
-    { text: 'Do you have this in a different size?', meaning: '这个有其他尺寸吗？', category: '超市', sceneTitle: '超市购物', difficulty: 'L2' },
-    { text: "I'm looking for...", meaning: '我在找...', category: '超市', sceneTitle: '超市购物', difficulty: 'L1' },
-    { text: 'Is this on sale?', meaning: '这个在打折吗？', category: '超市', sceneTitle: '超市购物', difficulty: 'L1' },
-    // 打车
-    { text: "Could you take me to..., please?", meaning: '能带我去...吗？', category: '打车', sceneTitle: '打车出行', difficulty: 'L1' },
-    { text: 'How much will it cost?', meaning: '大概多少钱？', category: '打车', sceneTitle: '打车出行', difficulty: 'L1' },
-    { text: 'How long does it take to get there?', meaning: '到那要多久？', category: '打车', sceneTitle: '打车出行', difficulty: 'L1' },
-    // 面试
-    { text: "I have experience in...", meaning: '我在...方面有经验。', category: '面试', sceneTitle: '面试自我介绍', difficulty: 'L3' },
-    { text: "One of my strengths is...", meaning: '我的一个优势是...', category: '面试', sceneTitle: '面试自我介绍', difficulty: 'L3' },
-    { text: "I'm looking for a position where I can...", meaning: '我在找一个能让我...的职位。', category: '面试', sceneTitle: '面试自我介绍', difficulty: 'L3' },
-    // 小组讨论
-    { text: "I see your point, but...", meaning: '我理解你的观点，但是...', category: '小组讨论', sceneTitle: '小组讨论', difficulty: 'L3' },
-    { text: "What do you think about...?", meaning: '你觉得...怎么样？', category: '小组讨论', sceneTitle: '小组讨论', difficulty: 'L2' },
-    { text: "I agree with... to some extent.", meaning: '我在某种程度上同意...', category: '小组讨论', sceneTitle: '小组讨论', difficulty: 'L3' },
-    { text: "Let's look at this from a different angle.", meaning: '我们换个角度看。', category: '小组讨论', sceneTitle: '小组讨论', difficulty: 'L3' },
-    // 通用日常
-    { text: "I'm not sure how to say this, but...", meaning: '我不确定怎么说，但是...', category: '日常表达', sceneTitle: '认识室友', difficulty: 'L1' },
-    { text: 'Could you repeat that, please?', meaning: '能重复一遍吗？', category: '日常表达', sceneTitle: '宿舍入住', difficulty: 'L1' },
-    { text: "I was wondering if...", meaning: '我在想是否...', category: '日常表达', sceneTitle: '咖啡店点餐', difficulty: 'L2', examples: [{ en: 'I was wondering if you could help me.', zh: '我想问问你是否可以帮我一下。', level: 'intermediate' }] },
-    { text: "I'm afraid I...", meaning: '恐怕我...', category: '日常表达', sceneTitle: '小组讨论', difficulty: 'L2' },
-    { text: "It depends on...", meaning: '这取决于...', category: '日常表达', sceneTitle: '小组讨论', difficulty: 'L2' },
-    { text: "To be honest...", meaning: '说实话...', category: '日常表达', sceneTitle: '认识室友', difficulty: 'L2' },
-    { text: "As far as I know...", meaning: '据我所知...', category: '日常表达', sceneTitle: '小组讨论', difficulty: 'L3' },
-    { text: 'Would you mind...?', meaning: '你介意...吗？', category: '日常表达', sceneTitle: '咖啡店点餐', difficulty: 'L2', examples: [{ en: 'Would you mind opening the window?', zh: '你介意打开窗户吗？', level: 'intermediate' }] },
-  ]
+  // ═══ 3. 场景词汇 ═══
+  const vocabRows = readCsv<CsvVocab>('scene_vocabulary.csv')
+  let vocabCount = 0
+  for (const row of vocabRows) {
+    const sceneId = sceneMap.get(row.scene_title)
+    if (!sceneId) continue
+    await prisma.sceneVocabulary.create({
+      data: {
+        sceneId,
+        word: row.word,
+        meaning: row.meaning,
+        partOfSpeech: row.part_of_speech || null,
+        phoneticUs: row.phonetic_us || null,
+        phoneticUk: row.phonetic_uk || null,
+        audioUsUrl: null,
+        audioUkUrl: null,
+        definitionEn: null,
+        synonyms: [],
+        examples: parseJson(row.examples_json),
+        description: row.description || null,
+        difficulty: row.difficulty || 'L1',
+        sortOrder: parseInt(row.sort_order) || 0,
+      },
+    })
+    vocabCount++
+  }
+  console.log(`  ✓ ${vocabCount} 个场景词汇`)
 
-  const chunkIds: Record<string, string> = {}
-  for (const c of chunkData) {
-    const sceneId = scenes[c.sceneTitle]
+  // Enrich from dictionaryapi.dev
+  await enrichVocabulary(prisma)
+
+  // ═══ 4. Chunk 表达块 ═══
+  const chunkRows = readCsv<CsvChunk>('chunks.csv')
+  const chunkTextToId = new Map<string, string>()
+  let chunkCount = 0
+  for (const row of chunkRows) {
+    const sceneId = sceneMap.get(row.scene_title)
+    const examples = parseJson<{ en: string; zh: string; note?: string; level?: string }[]>(row.examples_json)
+    const appScenes = parseJson<string[]>(row.applicable_scenes_json)
+    // Auto-compute applicableSceneIds from scene_title if not provided
+    const computedAppScenes = appScenes?.length
+      ? appScenes.map((s) => sceneMap.get(s)).filter(Boolean) as string[]
+      : (sceneId ? [sceneId] : [])
+
     const chunk = await prisma.chunk.create({
       data: {
-        text: c.text, meaning: c.meaning, category: c.category,
-        difficulty: c.difficulty,
-        description: `${c.meaning} 常用于${c.category}场景，可替换省略号部分来表达具体信息。`,
+        text: row.text,
+        meaning: row.meaning,
+        category: row.category,
+        difficulty: row.difficulty || 'L2',
+        description: row.description || null,
         sceneId,
-        applicableSceneIds: [sceneId].filter(Boolean) as string[],
-        examples: c.examples?.length
+        applicableSceneIds: computedAppScenes,
+        examples: examples?.length
           ? {
-              create: c.examples.map((example, i) => ({
-                en: example.en,
-                zh: example.zh,
-                note: example.note ?? null,
-                level: example.level ?? 'basic',
+              create: examples.map((ex, i) => ({
+                en: ex.en,
+                zh: ex.zh,
+                note: ex.note || null,
+                level: ex.level || 'basic',
                 sortOrder: i,
               })),
             }
           : undefined,
       },
     })
-    const key = c.text.slice(0, 20)
-    chunkIds[key] = chunk.id
+    const key = row.text.slice(0, 20)
+    chunkTextToId.set(key, chunk.id)
+    chunkCount++
   }
-  console.log(`  ✓ ${chunkData.length} 个 Chunk`)
+  console.log(`  ✓ ${chunkCount} 个 Chunk`)
 
-  // ═══ 3.5. Ink 对话脚本（视觉小说多轮对话） ═══
-  const dormCheckInInkSource = `---
-key: practice_check_in
-title: 宿舍入住 - 办理入住对话
----
+  // ═══ 5. Ink 对话脚本 ═══
+  try {
+    const inkFiles = fs.readdirSync(INK_DIR).filter((f: string) => f.endsWith('.json'))
+    let inkCount = 0
+    for (const file of inkFiles) {
+      const inkData = JSON.parse(fs.readFileSync(path.resolve(INK_DIR, file), 'utf-8'))
+      await prisma.inkScript.upsert({
+        where: { key: inkData.key },
+        create: inkData,
+        update: {},
+      })
+      inkCount++
+    }
+    console.log(`  ✓ ${inkCount} 个 Ink 对话脚本`)
+  } catch {
+    console.log('  ⚠️  No ink scripts directory or files found')
+  }
 
--> start
+  // Build a map from ink_script_key → id
+  const allInkScripts = await prisma.inkScript.findMany()
+  const inkKeyToId = new Map<string, string>()
+  for (const ink of allInkScripts) {
+    inkKeyToId.set(ink.key, ink.id)
+  }
 
-=== start ===
-# speaker: Sarah（前台）
-Sarah（前台）: Hello! Welcome to the student dormitory. I'm Sarah, the receptionist.
-How can I help you today?
-# wait
-# user_input
-Great, let me look up your booking. Could you show me your student ID?
-Thank you! Your room is on the 3rd floor, room 302. Is there anything else you need?
-You can ask about Wi-Fi, laundry, or the shared kitchen.
-Have a great stay! Welcome to the dormitory!
--> END
-`
-
-  // Valid inkjs-compatible JSON format (inkVersion 21)
-  const dormCheckInInk = await prisma.inkScript.create({
-    data: {
-      key: 'practice_check_in',
-      title: '宿舍入住 - 办理入住对话',
-      scriptType: 'practice',
-      inkSource: dormCheckInInkSource,
-      inkJson: {
-        inkVersion: 21,
-        root: [
-          ['^Hello! Welcome to the student dormitory. I\'m Sarah, the receptionist.', '\n', '#npc', '#speaker:Sarah（前台）', '\n', 'end', null],
-          ['^How can I help you today?', '\n', '#wait', '#user_input', '\n', 'end', null],
-          ['^Great, let me look up your booking. Could you show me your student ID?', '\n', '#npc', '\n', 'end', null],
-          ['^Thank you! Your room is on the 3rd floor, room 302. Is there anything else you need?', '\n', '#npc', '\n', 'end', null],
-          ['^You can ask about Wi-Fi, laundry, or the shared kitchen.', '\n', '#hint', '#chunk_hint', '\n', 'end', null],
-          ['^Have a great stay! Welcome to the dormitory!', '\n', '#npc', '\n', 'end', null],
-        ],
-        listDefs: {},
-      },
-      version: 1,
-    },
-  })
-  console.log('  ✓ Ink 对话脚本')
-
-  // ═══ 4. 训练话题（每个场景 3~6 个，总计 30+） ═══
-  const topicData = [
-    // 宿舍入住 (6)
-    { sceneTitle: '宿舍入住', title: '办理入住', promptEn: "You've just arrived at the student dormitory. The receptionist asks: 'How can I help you?'", promptZh: '你刚到学生宿舍，前台工作人员问你需要什么帮助。', duration: 60, diff: 'L2', skeleton: "Hi, I'm here to ___. My booking is under the name ___. Here is my ___. Could you tell me where ___ is?" },
-    { sceneTitle: '宿舍入住', title: '询问设施', promptEn: "Ask the receptionist about Wi-Fi, laundry, and kitchen facilities.", promptZh: '询问前台关于 Wi-Fi、洗衣房和厨房设施。', duration: 45, diff: 'L2' },
-    { sceneTitle: '宿舍入住', title: '描述宿舍问题', promptEn: "Your room has a problem. Call the reception to report it.", promptZh: '你的房间有问题，打电话向前台报修。', duration: 45, diff: 'L2' },
-    { sceneTitle: '宿舍入住', title: '询问室友生活习惯', promptEn: "Ask your new roommate about their daily habits.", promptZh: '询问新室友的日常生活习惯。', duration: 40, diff: 'L1' },
-    { sceneTitle: '宿舍入住', title: '签收快递', promptEn: "You received a package. Ask the front desk how to pick it up.", promptZh: '你有快递到了，问前台怎么领取。', duration: 30, diff: 'L1' },
-    { sceneTitle: '宿舍入住', title: '申请换房间', promptEn: "You want to change rooms. Explain your reason to the staff.", promptZh: '你想换房间，向工作人员说明原因。', duration: 50, diff: 'L2' },
-    // 机场入境 (4)
-    { sceneTitle: '机场入境', title: '说明来访目的', promptEn: "The immigration officer asks: 'What is the purpose of your visit?'", promptZh: '入境官问你来访目的是什么。', duration: 60, diff: 'L2', skeleton: "I'm here to ___. I'll be staying for ___. I've been accepted to ___." },
-    { sceneTitle: '机场入境', title: '行李丢失申报', promptEn: "Your luggage is missing. Report it at the baggage claim office.", promptZh: '你的行李丢了，在行李认领处申报。', duration: 50, diff: 'L2' },
-    { sceneTitle: '机场入境', title: '转机问路', promptEn: "You need to find your connecting flight gate. Ask airport staff.", promptZh: '你需要找转机登机口，向机场工作人员问路。', duration: 40, diff: 'L1' },
-    { sceneTitle: '机场入境', title: '购买交通卡', promptEn: "Ask at the information desk about getting a travel card.", promptZh: '在问讯处询问如何购买交通卡。', duration: 35, diff: 'L1' },
-    // 认识室友 (5)
-    { sceneTitle: '认识室友', title: '初次见面', promptEn: "You meet your new roommate for the first time. Introduce yourself.", promptZh: '你第一次见到新室友，请自我介绍。', duration: 45, diff: 'L1', skeleton: "Hi, I'm ___. I'm from ___. My major is ___. It's nice to ___." },
-    { sceneTitle: '认识室友', title: '聊家乡', promptEn: "Your roommate asks: 'Tell me about your hometown.'", promptZh: '室友让你介绍一下你的家乡。', duration: 60, diff: 'L2' },
-    { sceneTitle: '认识室友', title: '邀请一起吃饭', promptEn: "Invite your roommate to have dinner together.", promptZh: '邀请室友一起去吃饭。', duration: 35, diff: 'L1' },
-    { sceneTitle: '认识室友', title: '商量宿舍规则', promptEn: "Discuss room rules with your roommate about noise and cleaning.", promptZh: '和室友商量宿舍规则（噪音、卫生等）。', duration: 50, diff: 'L2' },
-    { sceneTitle: '认识室友', title: '分享兴趣爱好', promptEn: "Share your hobbies and interests with your roommate.", promptZh: '和室友分享你的兴趣爱好。', duration: 50, diff: 'L2' },
-    // 咖啡店点餐 (5)
-    { sceneTitle: '咖啡店点餐', title: '点咖啡', promptEn: "You're at a coffee shop. Order your favorite drink.", promptZh: '你在咖啡店，请点你喜欢的饮品。', duration: 30, diff: 'L1', skeleton: "I'd like a ___, please. For ___ / to go. How much ___?" },
-    { sceneTitle: '咖啡店点餐', title: '修改订单', promptEn: "You changed your mind. Ask to modify your order.", promptZh: '你改变主意了，要求修改订单。', duration: 30, diff: 'L1' },
-    { sceneTitle: '咖啡店点餐', title: '询问推荐饮品', promptEn: "Ask the barista what they recommend.", promptZh: '问咖啡师有什么推荐的饮品。', duration: 30, diff: 'L1' },
-    { sceneTitle: '咖啡店点餐', title: '办理会员卡', promptEn: "Ask about the loyalty card program at the coffee shop.", promptZh: '询问咖啡店的会员卡计划。', duration: 40, diff: 'L2' },
-    { sceneTitle: '咖啡店点餐', title: '投诉饮品问题', promptEn: "Your drink was made wrong. Politely tell the barista.", promptZh: '你的饮品做错了，礼貌地告诉咖啡师。', duration: 35, diff: 'L2' },
-    // 超市购物 (4)
-    { sceneTitle: '超市购物', title: '询问商品位置', promptEn: "Ask a store employee where to find a specific item.", promptZh: '问店员某个商品在哪。', duration: 30, diff: 'L1' },
-    { sceneTitle: '超市购物', title: '退货', promptEn: "You bought the wrong item. Ask to return it.", promptZh: '你买错了商品，要求退货。', duration: 40, diff: 'L2' },
-    { sceneTitle: '超市购物', title: '询问优惠活动', promptEn: "Ask about current promotions and discounts.", promptZh: '询问当前有什么优惠活动。', duration: 30, diff: 'L1' },
-    { sceneTitle: '超市购物', title: '自助结账遇到问题', promptEn: "The self-checkout machine has an error. Ask for help.", promptZh: '自助结账机出错了，请工作人员帮忙。', duration: 35, diff: 'L1' },
-    // 打车出行 (4)
-    { sceneTitle: '打车出行', title: '打车去机场', promptEn: "Call a taxi to the airport. Tell the driver the address.", promptZh: '打车去机场，告诉司机地址。', duration: 40, diff: 'L1' },
-    { sceneTitle: '打车出行', title: '和司机聊天', promptEn: "Make small talk with the taxi driver.", promptZh: '和出租车司机闲聊。', duration: 45, diff: 'L2' },
-    { sceneTitle: '打车出行', title: '投诉司机', promptEn: "Call the taxi company to complain about a driver.", promptZh: '打电话给出租车公司投诉司机。', duration: 50, diff: 'L2' },
-    { sceneTitle: '打车出行', title: '约车去聚会', promptEn: "Book a taxi to pick you up for a party.", promptZh: '约车去参加聚会。', duration: 35, diff: 'L1' },
-    // 面试自我介绍 (3)
-    { sceneTitle: '面试自我介绍', title: '1分钟自我介绍', promptEn: "Introduce yourself in a job interview in 1 minute.", promptZh: '在面试中做1分钟自我介绍。', duration: 60, diff: 'L3' },
-    { sceneTitle: '面试自我介绍', title: '描述过往经历', promptEn: "Describe your previous work or internship experience.", promptZh: '描述你之前的工作或实习经历。', duration: 60, diff: 'L3' },
-    { sceneTitle: '面试自我介绍', title: '回答优缺点', promptEn: "Answer the classic interview question: what are your strengths and weaknesses?", promptZh: '回答面试经典问题：你的优缺点是什么？', duration: 50, diff: 'L3' },
-    // 小组讨论 (3)
-    { sceneTitle: '小组讨论', title: '提出观点', promptEn: "Express your opinion on the group discussion topic.", promptZh: '在小组讨论中表达你的观点。', duration: 45, diff: 'L3' },
-    { sceneTitle: '小组讨论', title: '回应不同意见', promptEn: "Someone disagrees with you. Respond politely.", promptZh: '有人不同意你的观点，礼貌地回应。', duration: 45, diff: 'L3' },
-    { sceneTitle: '小组讨论', title: '总结讨论', promptEn: "Summarize the group discussion and propose next steps.", promptZh: '总结小组讨论并提出下一步计划。', duration: 50, diff: 'L3' },
-  ]
-
-  for (const t of topicData) {
-    const sceneId = scenes[t.sceneTitle]
+  // ═══ 6. 训练话题 ═══
+  const topicRows = readCsv<CsvTopic>('training_topics.csv')
+  let topicCount = 0
+  for (const row of topicRows) {
+    const sceneId = sceneMap.get(row.scene_title)
     if (!sceneId) continue
-    const isFirstTopic = t.sceneTitle === '宿舍入住' && t.title === '办理入住'
+
     await prisma.trainingTopic.create({
       data: {
-        sceneId, title: t.title, promptEn: t.promptEn, promptZh: t.promptZh,
-        suggestedDurationSec: t.duration, difficulty: t.diff,
-        sentenceSkeleton: t.skeleton ?? null, sortOrder: 0,
-        ...(isFirstTopic ? {
-          description: '你是一名刚到国外的留学生，需要去学校宿舍办理入住。前台工作人员 Sarah 会协助你完成入住流程。你需要准备好护照、录取通知书等材料，并学会用英语进行基本的入住登记对话。',
-          knowledgePoints: '1. 入住登记的常用句式：I\'m here to check in. / I have a booking under the name ___.\n2. 礼貌用语：Could you please... / I was wondering if...\n3. 宿舍相关词汇：dormitory, reception, room key, student ID, Wi-Fi, laundry room\n4. 信息确认：询问 Wi-Fi 密码、洗衣房位置等是入住时的常见话题。',
-          inkScriptId: dormCheckInInk.id,
-        } : {}),
+        sceneId,
+        title: row.title,
+        promptEn: row.prompt_en,
+        promptZh: row.prompt_zh,
+        suggestedDurationSec: parseInt(row.duration_sec) || 60,
+        difficulty: row.difficulty || 'L2',
+        sentenceSkeleton: row.skeleton || null,
+        description: row.description || null,
+        knowledgePoints: row.knowledge_points || null,
+        inkScriptId: inkKeyToId.get(row.ink_script_key) || null,
+        sortOrder: 0,
       },
     })
+    topicCount++
   }
-  console.log(`  ✓ ${topicData.length} 个训练话题`)
+  console.log(`  ✓ ${topicCount} 个训练话题`)
 
-  // ═══ 5. Chapter 0 体验关卡 ═══
-  const ep1 = await prisma.scriptEpisode.create({
-    data: {
-      chapterId: 'chapter_0', chapterTitle: '新手体验', episodeOrder: 1,
-      title: '和前台打招呼', sceneId: scenes['宿舍入住'],
-      requiredOutputLevel: 'L1', requiredUserLevel: 1,
-      vocabRequiredCount: 3, vocabTotalCount: 10, chunkRequiredCount: 2, chunkTotalCount: 6,
-      objectives: ['打招呼', '说明来办理入住', '提供姓名'],
-      passObjectiveCount: 2, passChunkCount: 2, passRetellRequired: false, passMinDialogues: 2,
-      npcName: 'Sarah（前台）', npcRole: '宿舍前台工作人员，友好热情',
-      isPreview: true,
-      inkScriptId: dormCheckInInk.id,
-      rewards: { xp: 20 },
-    },
-  })
-  const ep2 = await prisma.scriptEpisode.create({
-    data: {
-      chapterId: 'chapter_0', chapterTitle: '新手体验', episodeOrder: 2,
-      title: '咖啡店点一杯咖啡', sceneId: scenes['咖啡店点餐'],
-      requiredOutputLevel: 'L1', requiredUserLevel: 1,
-      vocabRequiredCount: 2, vocabTotalCount: 10, chunkRequiredCount: 2, chunkTotalCount: 5,
-      objectives: ['和店员打招呼', '点一杯饮品', '指定大小和温度', '确认价格'],
-      passObjectiveCount: 3, passChunkCount: 2, passRetellRequired: false, passMinDialogues: 2,
-      npcName: 'Tom（咖啡师）', npcRole: '校园咖啡店咖啡师，友好随和',
-      isPreview: true,
-      rewards: { xp: 20 },
-    },
-  })
-  const ep3 = await prisma.scriptEpisode.create({
-    data: {
-      chapterId: 'chapter_0', chapterTitle: '新手体验', episodeOrder: 3,
-      title: '室友见面', sceneId: scenes['认识室友'],
-      requiredOutputLevel: 'L1', requiredUserLevel: 1,
-      vocabRequiredCount: 2, vocabTotalCount: 10, chunkRequiredCount: 2, chunkTotalCount: 5,
-      prerequisiteEpisodes: [], passObjectiveCount: 2, passChunkCount: 2, passRetellRequired: false, passMinDialogues: 2,
-      objectives: ['打招呼', '自我介绍', '说明来自哪里', '说明专业'],
-      npcName: 'Alex（室友）', npcRole: '大一新生，友好健谈',
-      isPreview: true,
-      rewards: { xp: 20, unlockNpc: 'alex' },
-    },
-  })
+  // ═══ 7. 剧本关卡 ═══
+  const episodeRows = readCsv<CsvEpisode>('script_episodes.csv')
+  const episodeIdMap = new Map<string, string>() // "chapter_id,episode_order" → id
+  for (const row of episodeRows) {
+    const sceneId = sceneMap.get(row.scene_title)
+    if (!sceneId) continue
 
-  // Link chunks to episodes
-  for (const [key, epId] of [['check in', ep1.id], ['latte', ep2.id], ['from', ep3.id]] as const) {
-    const matchingChunks = chunkData.filter((c) => c.text.toLowerCase().includes(key))
+    const episode = await prisma.scriptEpisode.create({
+      data: {
+        chapterId: row.chapter_id,
+        chapterTitle: row.chapter_title,
+        episodeOrder: parseInt(row.episode_order),
+        title: row.title,
+        sceneId,
+        requiredOutputLevel: row.required_output_level || 'L1',
+        requiredUserLevel: parseInt(row.required_user_level) || 1,
+        vocabRequiredCount: parseInt(row.vocab_required_count) || 2,
+        vocabTotalCount: parseInt(row.vocab_total_count) || 10,
+        chunkRequiredCount: parseInt(row.chunk_required_count) || 2,
+        chunkTotalCount: parseInt(row.chunk_total_count) || 10,
+        objectives: parseJson<string[]>(row.objectives_json) || [],
+        passObjectiveCount: parseInt(row.pass_objective_count) || 2,
+        passChunkCount: parseInt(row.pass_chunk_count) || 2,
+        passRetellRequired: false,
+        passMinDialogues: parseInt(row.pass_min_dialogues) || 2,
+        npcName: row.npc_name,
+        npcRole: row.npc_role,
+        isPreview: row.is_preview === 'true',
+        inkScriptId: inkKeyToId.get(row.ink_script_key) || null,
+        rewards: parseJson(row.rewards_json),
+        prerequisiteEpisodes: [],
+      },
+    })
+    episodeIdMap.set(`${row.chapter_id},${row.episode_order}`, episode.id)
+  }
+  console.log(`  ✓ ${episodeRows.length} 个剧本关卡`)
+
+  // ═══ 8. 关卡↔Chunk 关联 ═══
+  const epChunkRows = readCsv<CsvEpChunk>('episode_chunks.csv')
+  let epChunkCount = 0
+  for (const row of epChunkRows) {
+    const epId = episodeIdMap.get(`${row.episode_chapter},${row.episode_order}`)
+    if (!epId) continue
+
+    // Find chunks matching the text
+    const matchingChunks = chunkRows.filter((c) =>
+      c.text.toLowerCase().includes(row.chunk_text_match.toLowerCase()),
+    )
     for (let i = 0; i < Math.min(matchingChunks.length, 5); i++) {
-      const ckId = chunkIds[matchingChunks[i].text.slice(0, 20)]
+      const ckId = chunkTextToId.get(matchingChunks[i].text.slice(0, 20))
       if (ckId) {
         await prisma.scriptEpisodeChunk.create({
-          data: { episodeId: epId, chunkId: ckId, sortOrder: i },
+          data: { episodeId: epId, chunkId: ckId, sortOrder: parseInt(row.sort_order) || i },
         }).catch(() => {})
+        epChunkCount++
       }
     }
   }
-  console.log(`  ✓ 3 个 Chapter 0 体验关卡`)
+  console.log(`  ✓ ${epChunkCount} 个关卡↔Chunk 关联`)
 
-  // ═══ 6. NPC ═══
-  const npcAlex = await prisma.gameCharacter.create({
-    data: { name: 'alex', displayName: 'Alex', role: '室友，大一新生，友好健谈', personality: 'friendly, curious about your culture', defaultPosition: 'right' },
-  })
-  const npcSarah = await prisma.gameCharacter.create({
-    data: { name: 'sarah_front_desk', displayName: 'Sarah', role: '宿舍前台，乐于助人', personality: 'professional and warm', defaultPosition: 'left' },
-  })
-  const npcTom = await prisma.gameCharacter.create({
-    data: { name: 'tom_barista', displayName: 'Tom', role: '咖啡师，友好健谈', personality: 'laid-back, loves coffee culture', defaultPosition: 'left' },
-  })
-  console.log(`  ✓ 3 个 NPC`)
+  // ═══ 9. NPC ═══
+  const charRows = readCsv<CsvChar>('game_characters.csv')
+  const charNameToId = new Map<string, string>()
+  for (const row of charRows) {
+    const char = await prisma.gameCharacter.create({
+      data: {
+        name: row.name,
+        displayName: row.display_name,
+        role: row.role,
+        personality: row.personality || null,
+        defaultPosition: row.default_position || 'center',
+        avatarUrl: row.avatar_url || null,
+        spriteBaseUrl: row.sprite_base_url || null,
+      },
+    })
+    charNameToId.set(row.name, char.id)
+  }
+  console.log(`  ✓ ${charRows.length} 个 NPC`)
 
-  // ═══ 7. 探索地图 + 地点 ═══
-  const map1 = await prisma.gameMap.create({
-    data: { name: 'campus', displayName: '大学校园', requiredOutputLevel: 'L1', isPreview: true, sortOrder: 1 },
-  })
+  // ═══ 10. 探索地图 + 地点 ═══
+  const mapRows = readCsv<CsvMap>('game_maps.csv')
+  const mapNameToId = new Map<string, string>()
+  for (const row of mapRows) {
+    const map = await prisma.gameMap.create({
+      data: {
+        name: row.name,
+        displayName: row.display_name,
+        requiredOutputLevel: row.required_output_level || 'L1',
+        isPreview: row.is_preview === 'true',
+        sortOrder: parseInt(row.sort_order) || 0,
+      },
+    })
+    mapNameToId.set(row.name, map.id)
+  }
 
-  const locDorm = await prisma.gameLocation.create({
-    data: { mapId: map1.id, name: '宿舍大厅', displayName: '🏠 宿舍大厅', description: '你住的地方，前台 Sarah 和室友 Alex 经常在这里。', posX: 25, posY: 40, locationType: 'vn_scene', isPreview: false },
-  })
-  const locCafe = await prisma.gameLocation.create({
-    data: { mapId: map1.id, name: '校园咖啡店', displayName: '☕ 校园咖啡店', description: '课间休息的好去处，Tom 在这里工作。', posX: 60, posY: 30, locationType: 'vn_scene', isPreview: true, requiredOutputLevel: 'L2' },
-  })
-  const locLibrary = await prisma.gameLocation.create({
-    data: { mapId: map1.id, name: '图书馆', displayName: '📚 图书馆', description: '安静的学习空间。', posX: 75, posY: 65, locationType: 'vn_scene', isPreview: true, requiredOutputLevel: 'L2' },
-  })
+  const locRows = readCsv<CsvLocation>('game_locations.csv')
+  const locNameToId = new Map<string, string>()
+  for (const row of locRows) {
+    const mapId = mapNameToId.get(row.map_name)
+    if (!mapId) continue
+    const loc = await prisma.gameLocation.create({
+      data: {
+        mapId,
+        name: row.name,
+        displayName: row.display_name,
+        description: row.description || null,
+        posX: parseFloat(row.pos_x) || 0,
+        posY: parseFloat(row.pos_y) || 0,
+        locationType: row.location_type || 'vn_scene',
+        isPreview: row.is_preview === 'true',
+        requiredOutputLevel: row.required_output_level || 'L1',
+        backgroundUrl: row.background_url || null,
+      },
+    })
+    locNameToId.set(row.name, loc.id)
+  }
 
-  // Link NPCs to locations
-  await prisma.gameLocationNpc.create({ data: { locationId: locDorm.id, characterId: npcSarah.id, defaultGreeting: "Hi! Welcome to the dormitory. How can I help you?", sortOrder: 1 } })
-  await prisma.gameLocationNpc.create({ data: { locationId: locDorm.id, characterId: npcAlex.id, defaultGreeting: "Hey! You must be my new roommate. I'm Alex!", sortOrder: 2 } })
-  await prisma.gameLocationNpc.create({ data: { locationId: locCafe.id, characterId: npcTom.id, defaultGreeting: "Hey! What can I get for you today?", sortOrder: 1 } })
+  // ═══ 11. 地点↔NPC 关联 ═══
+  const locNpcRows = readCsv<CsvLocNpc>('location_npcs.csv')
+  for (const row of locNpcRows) {
+    const locId = locNameToId.get(row.location_name)
+    const charId = charNameToId.get(row.character_name)
+    if (!locId || !charId) continue
+    await prisma.gameLocationNpc.create({
+      data: {
+        locationId: locId,
+        characterId: charId,
+        defaultGreeting: row.default_greeting || null,
+        sortOrder: parseInt(row.sort_order) || 0,
+      },
+    })
+  }
 
-  // Exits
-  await prisma.gameLocationExit.create({ data: { fromId: locDorm.id, toId: locCafe.id, label: '去校园咖啡店 →' } })
-  await prisma.gameLocationExit.create({ data: { fromId: locCafe.id, toId: locDorm.id, label: '回宿舍大厅 →' } })
-  await prisma.gameLocationExit.create({ data: { fromId: locCafe.id, toId: locLibrary.id, label: '去图书馆 →' } })
-  console.log(`  ✓ 1 个地图 + 3 个地点 + 出口 + NPC 关联`)
+  // ═══ 12. 地点出口 ═══
+  const exitRows = readCsv<CsvLocExit>('location_exits.csv')
+  for (const row of exitRows) {
+    const fromId = locNameToId.get(row.from_location)
+    const toId = locNameToId.get(row.to_location)
+    if (!fromId || !toId) continue
+    await prisma.gameLocationExit.create({
+      data: {
+        fromId,
+        toId,
+        label: row.label || '→',
+      },
+    })
+  }
+  console.log(`  ✓ ${mapRows.length} 个地图 + ${locRows.length} 个地点 + 关联`)
 
-  // ═══ 8. 成就定义 ═══
-  const achievementDefs: { key: string; title: string; description: string; category: AchievementCategory; rarity: AchievementRarity; sortOrder: number; condition?: any; isHidden?: boolean; hintText?: string }[] = [
-    { key: 'first_recording', title: '初次开口', description: '完成第一次录音回答', category: 'first_time', rarity: 'common', sortOrder: 1 },
-    { key: 'first_script_clear', title: '初出茅庐', description: '通关第一个剧本关卡', category: 'first_time', rarity: 'common', sortOrder: 2 },
-    { key: 'first_retell', title: '过目不忘', description: '完成第一次遮挡复述', category: 'first_time', rarity: 'common', sortOrder: 3 },
-    { key: 'recording_10', title: '开口十次', description: '累计完成 10 次录音回答', category: 'milestone', rarity: 'rare', sortOrder: 10, condition: { type: 'recording_count', threshold: 10 } },
-    { key: 'recording_50', title: '话筒常客', description: '累计完成 50 次录音回答', category: 'milestone', rarity: 'epic', sortOrder: 11, condition: { type: 'recording_count', threshold: 50 } },
-    { key: 'chunk_20', title: '表达学徒', description: '掌握 20 个 Chunk', category: 'milestone', rarity: 'rare', sortOrder: 20, condition: { type: 'chunk_mastered', threshold: 20 } },
-    { key: 'chunk_50', title: '表达达人', description: '掌握 50 个 Chunk', category: 'milestone', rarity: 'epic', sortOrder: 21, condition: { type: 'chunk_mastered', threshold: 50 } },
-    { key: 'streak_7', title: '七日之约', description: '连续打卡 7 天', category: 'streak', rarity: 'rare', sortOrder: 30, condition: { type: 'streak_days', threshold: 7 } },
-    { key: 'streak_30', title: '铁嘴铜牙', description: '连续打卡 30 天', category: 'streak', rarity: 'epic', sortOrder: 31, condition: { type: 'streak_days', threshold: 30 } },
-    { key: 'level_l3', title: '能说完整', description: '输出等级达到 L3', category: 'mastery', rarity: 'rare', sortOrder: 40, condition: { type: 'output_level', threshold: 'L3' } },
-    { key: 'chapter_0_all', title: '初来乍到', description: '通关 Chapter 0 全部关卡', category: 'challenge', rarity: 'common', sortOrder: 50, condition: { type: 'chapter_complete', chapterId: 'chapter_0' } },
-    { key: 'one_take', title: '一遍过', description: '连续通关 3 个剧本关卡无失败', category: 'challenge', rarity: 'epic', sortOrder: 51, condition: { type: 'script_streak', threshold: 3 } },
-    { key: 'hidden_polite', title: '彬彬有礼', description: '在对话中自然使用多种礼貌表达', category: 'hidden', rarity: 'rare', isHidden: true, hintText: '礼貌是最好的通行证...', sortOrder: 90 },
-  ]
-
-  for (const a of achievementDefs) {
+  // ═══ 13. 成就定义 ═══
+  const achRows = readCsv<CsvAchievement>('achievement_defs.csv')
+  for (const row of achRows) {
+    const rarity = row.rarity as AchievementRarity
+    const rewardXp = row.rarity === 'legendary' ? 100 : row.rarity === 'epic' ? 50 : row.rarity === 'rare' ? 20 : 10
     await prisma.achievementDef.upsert({
-      where: { key: a.key },
-      create: { ...a, condition: (a as any).condition ?? {}, rewardXp: a.rarity === 'legendary' ? 100 : a.rarity === 'epic' ? 50 : a.rarity === 'rare' ? 20 : 10 },
+      where: { key: row.key },
+      create: {
+        key: row.key,
+        title: row.title,
+        description: row.description,
+        category: row.category as AchievementCategory,
+        rarity,
+        icon: null,
+        sortOrder: parseInt(row.sort_order) || 0,
+        isHidden: row.is_hidden === 'true',
+        hintText: row.hint_text || null,
+        condition: parseJson(row.condition_json) || {},
+        rewardXp: parseInt(row.reward_xp) || rewardXp,
+        rewardTitle: null,
+      },
       update: {},
     })
   }
-  console.log(`  ✓ ${achievementDefs.length} 个成就定义`)
+  console.log(`  ✓ ${achRows.length} 个成就定义`)
 
   console.log('\n✅ 英语输出训练种子数据创建完成!\n')
 }

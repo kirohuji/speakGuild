@@ -1,0 +1,14 @@
+key,title,description,category,rarity,sort_order,is_hidden,hint_text,condition_json,reward_xp
+first_recording,初次开口,完成第一次录音回答,first_time,common,1,false,,"{""type"":""recording_count"",""threshold"":1}",10
+first_script_clear,初出茅庐,通关第一个剧本关卡,first_time,common,2,false,,"{""type"":""script_completed"",""threshold"":1}",10
+first_retell,过目不忘,完成第一次遮挡复述,first_time,common,3,false,,"{""type"":""retell_completed"",""threshold"":1}",10
+recording_10,开口十次,累计完成10次录音回答,milestone,rare,10,false,,"{""type"":""recording_count"",""threshold"":10}",20
+recording_50,话筒常客,累计完成50次录音回答,milestone,epic,11,false,,"{""type"":""recording_count"",""threshold"":50}",50
+chunk_20,表达学徒,掌握20个Chunk,milestone,rare,20,false,,"{""type"":""chunk_mastered"",""threshold"":20}",20
+chunk_50,表达达人,掌握50个Chunk,milestone,epic,21,false,,"{""type"":""chunk_mastered"",""threshold"":50}",50
+streak_7,七日之约,连续打卡7天,streak,rare,30,false,,"{""type"":""streak_days"",""threshold"":7}",20
+streak_30,铁嘴铜牙,连续打卡30天,streak,epic,31,false,,"{""type"":""streak_days"",""threshold"":30}",50
+level_l3,能说完整,输出等级达到L3,mastery,rare,40,false,,"{""type"":""output_level"",""threshold"":""L3""}",20
+chapter_0_all,初来乍到,通关Chapter0全部关卡,challenge,common,50,false,,"{""type"":""chapter_complete"",""chapterId"":""chapter_0""}",20
+one_take,一遍过,连续通关3个剧本关卡无失败,challenge,epic,51,false,,"{""type"":""script_streak"",""threshold"":3}",50
+hidden_polite,彬彬有礼,在对话中自然使用多种礼貌表达,hidden,rare,90,true,礼貌是最好的通行证...,{},10

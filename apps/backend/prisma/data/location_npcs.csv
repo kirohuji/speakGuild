@@ -1,0 +1,7 @@
+location_name,character_name,default_greeting,sort_order
+宿舍大厅,sarah_front_desk,"Hi! Welcome to the dormitory. How can I help you?",1
+宿舍大厅,alex,"Hey! You must be my new roommate. I'm Alex!",2
+校园咖啡店,tom_barista,"Hey! What can I get for you today?",1
+校医室,dr_emily,"Hello, please take a seat. What seems to be the problem?",1
+图书馆,librarian_lisa,"Welcome to the library. Let me know if you need help finding anything.",1
+银行,bank_clerk_wang,"Good morning! How can I help you today?",1

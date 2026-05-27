@@ -1,0 +1,19 @@
+{
+  "key": "practice_check_in",
+  "title": "宿舍入住 - 办理入住对话",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_check_in\ntitle: 宿舍入住 - 办理入住对话\n---\n\n-> start\n\n=== start ===\n# speaker: Sarah（前台）\nSarah（前台）: Hello! Welcome to the student dormitory. I'm Sarah, the receptionist.\nHow can I help you today?\n# wait\n# user_input\nGreat, let me look up your booking. Could you show me your student ID?\nThank you! Your room is on the 3rd floor, room 302. Is there anything else you need?\nYou can ask about Wi-Fi, laundry, or the shared kitchen.\nHave a great stay! Welcome to the dormitory!\n-> END\n",
+  "inkJson": {
+    "inkVersion": 21,
+    "root": [
+      ["^Hello! Welcome to the student dormitory. I'm Sarah, the receptionist.", "\n", "#npc", "#speaker:Sarah（前台）", "\n", "end", null],
+      ["^How can I help you today?", "\n", "#wait", "#user_input", "\n", "end", null],
+      ["^Great, let me look up your booking. Could you show me your student ID?", "\n", "#npc", "\n", "end", null],
+      ["^Thank you! Your room is on the 3rd floor, room 302. Is there anything else you need?", "\n", "#npc", "\n", "end", null],
+      ["^You can ask about Wi-Fi, laundry, or the shared kitchen.", "\n", "#hint", "#chunk_hint", "\n", "end", null],
+      ["^Have a great stay! Welcome to the dormitory!", "\n", "#npc", "\n", "end", null]
+    ],
+    "listDefs": {}
+  },
+  "version": 1
+}
