@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '@/providers/theme-provider'
+import { NativeBridgeProvider } from '@/lib/native'
 import { AuthProvider } from '@/providers/auth-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { RootLayout } from '@/layout/root-layout'
@@ -62,8 +63,9 @@ import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <HashRouter>
+      <NativeBridgeProvider>
+        <AuthProvider>
+          <HashRouter>
           <AuthRouteGate>
             <Routes>
               {/* 管理员后台 — 独立布局 */}
@@ -157,6 +159,7 @@ export default function App() {
           </AuthRouteGate>
         </HashRouter>
       </AuthProvider>
+      </NativeBridgeProvider>
     </ThemeProvider>
   )
 }
