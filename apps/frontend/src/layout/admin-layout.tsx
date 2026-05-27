@@ -19,7 +19,7 @@ export function AdminLayout() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      <header className="flex h-12 flex-shrink-0 items-center gap-3 border-b border-border/50 bg-card px-4">
+      <header className="flex h-12 flex-shrink-0 items-center gap-3 border-b border-border/50 bg-card px-4 pt-[env(safe-area-inset-top,0px)]">
         {isMobile && (
           <Button
             variant="ghost"

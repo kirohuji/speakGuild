@@ -35,7 +35,7 @@ export function RootLayout() {
     <div
       className={cn(
         'flex min-h-screen flex-col bg-background text-foreground',
-        !isHomePage && !immersiveMode && 'app-surface pt-safe',
+        !isHomePage && !immersiveMode && 'app-surface',
       )}
     >
       {!isAuthPage && (
@@ -57,8 +57,8 @@ export function RootLayout() {
             : isHomePage
               ? 'pt-0 pb-0 lg:pt-14 lg:pb-0'
               : showBottomNav
-                ? 'pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
-                : 'pt-0 pb-0 lg:pt-14 lg:pb-0'
+                ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
+                : 'pt-[env(safe-area-inset-top,0px)] pb-0 lg:pt-14 lg:pb-0'
       }`}>
         <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
           <Outlet />

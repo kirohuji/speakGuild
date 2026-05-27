@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════
+   iOS Safe Area 常量 — 解决刘海屏 / Home Indicator 遮挡
+   ═══════════════════════════════════════════════════════ */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
+
 @layer base {
   /* ═══════════════════════════════════════════════════════
      GuideReady · 导游说 品牌配色系统
@@ -189,6 +199,15 @@
 }
 
 @layer utilities {
+  /* ═══════════════════════════════════════════
+     iOS Safe Area 工具类 — 解决刘海屏遮挡
+     ═══════════════════════════════════════════ */
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pl-safe { padding-left: env(safe-area-inset-left, 0px); }
+  .pr-safe { padding-right: env(safe-area-inset-right, 0px); }
+  .mt-safe { margin-top: env(safe-area-inset-top, 0px); }
+
   /* iOS 弹簧过渡 */
   .transition-spring {
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);

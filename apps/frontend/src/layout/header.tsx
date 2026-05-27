@@ -56,7 +56,7 @@ export function Header() {
   }, [themeMenuOpen])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50">
+    <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50 pt-[env(safe-area-inset-top,0px)]">
       <div className="mx-auto flex h-14 max-w-[1480px] items-center px-3 lg:px-4">
         {/* Logo - 桌面端 */}
         <Link to="/" className="mr-8 hidden lg:flex items-center gap-2 shrink-0">

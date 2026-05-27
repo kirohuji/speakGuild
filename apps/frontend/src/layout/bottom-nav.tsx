@@ -28,7 +28,8 @@ export function BottomNav() {
   if (!visible || !isLoggedIn) return null
 
   return (
-    <nav className="fixed inset-x-4 bottom-3 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <nav className="fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl lg:hidden"
+         style={{ bottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px))` }}>
       <div className="flex h-14 items-center justify-around px-1">
         {navItems.map(({ label, path, icon: Icon }) => {
           const active = isActive(path)
