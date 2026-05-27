@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +10,7 @@ import { sendForgotPasswordOtp } from '@/features/auth/api'
 import { cn } from '@/lib/cn'
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +21,7 @@ export function ForgotPasswordPage() {
 
   const handleSendOtp = async () => {
     if (!email.trim()) {
-      setMessage('请输入邮箱地址')
+      setMessage(t('auth.enterEmailFirst'))
       return
     }
     try {
@@ -27,9 +29,9 @@ export function ForgotPasswordPage() {
       setMessage('')
       await sendForgotPasswordOtp(email)
       setSent(true)
-      setMessage('验证码已发送（开发环境请查看后端日志）')
+      setMessage(t('auth.otpSent'))
     } catch (error: any) {
-      setMessage(error?.response?.data?.message || error?.message || '发送失败，请稍后重试')
+      setMessage(error?.response?.data?.message || error?.message || t('auth.sendFailed'))
     } finally {
       setLoading(false)
     }
@@ -37,11 +39,11 @@ export function ForgotPasswordPage() {
 
   const handleReset = async () => {
     if (!otp.trim() || otp.length !== 6) {
-      setMessage('请输入6位验证码')
+      setMessage(t('auth.otpLengthHint'))
       return
     }
     if (newPassword.length < 8) {
-      setMessage('新密码至少需要8位字符')
+      setMessage(t('auth.passwordMinLengthHint'))
       return
     }
 
@@ -50,10 +52,10 @@ export function ForgotPasswordPage() {
       setMessage('')
       const { resetPasswordByOtp: resetApi } = await import('@/features/auth/api')
       await resetApi(email, otp, newPassword)
-      setMessage('密码重置成功，即将跳转到登录页')
+      setMessage(t('auth.resetSuccess'))
       setTimeout(() => navigate('/auth/login'), 1500)
     } catch (error: any) {
-      setMessage(error?.response?.data?.message || error?.message || '重置失败，请检查验证码')
+      setMessage(error?.response?.data?.message || error?.message || t('auth.resetFailed'))
     } finally {
       setLoading(false)
     }
@@ -69,23 +71,23 @@ export function ForgotPasswordPage() {
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                   <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <h2 className="text-lg font-semibold">验证码已发送</h2>
+                <h2 className="text-lg font-semibold">{t('auth.otpSentTitle')}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  请查看后端日志获取验证码，输入后设置新密码
+                  {t('auth.otpSentHint')}
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm">邮箱</Label>
+                <Label className="text-sm">{t('auth.emailPlaceholder')}</Label>
                 <Input value={email} disabled className="h-10 opacity-60" />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm">验证码</Label>
+                <Label className="text-sm">{t('auth.enterOtp')}</Label>
                 <Input
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                  placeholder="6位验证码"
+                  placeholder={t('auth.otpPlaceholder')}
                   className="h-10"
                   maxLength={6}
                   autoComplete="one-time-code"
@@ -93,12 +95,12 @@ export function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm">新密码</Label>
+                <Label className="text-sm">{t('auth.newPassword')}</Label>
                 <Input
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   type="password"
-                  placeholder="至少8位字符"
+                  placeholder={t('auth.passwordMinLengthHint')}
                   className="h-10"
                   autoComplete="new-password"
                 />
@@ -110,7 +112,7 @@ export function ForgotPasswordPage() {
                 disabled={loading}
                 onClick={handleReset}
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '重置密码'}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.resetPassword')}
               </Button>
 
               <button

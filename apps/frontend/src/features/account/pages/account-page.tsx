@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, Camera, User, Loader2,
@@ -136,13 +137,13 @@ function NicknameEditDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="rounded-t-3xl">
         <DrawerHeader>
-          <DrawerTitle className="text-base">修改昵称</DrawerTitle>
+          <DrawerTitle className="text-base">{t('profile.editNicknameTitle')}</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pb-2">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="请输入昵称"
+            placeholder={t('account.nicknamePlaceholder')}
             maxLength={20}
             autoFocus
           />
@@ -189,23 +190,23 @@ function ChangePasswordDrawer({
   }, [open])
 
   const handleChange = async () => {
-    if (!currentPassword) { setMessage('请输入当前密码'); return }
-    if (newPassword.length < 8) { setMessage('新密码至少需要8位字符'); return }
-    if (newPassword !== confirmPassword) { setMessage('两次密码不一致'); return }
-    if (currentPassword === newPassword) { setMessage('新密码不能与旧密码相同'); return }
+    if (!currentPassword) { setMessage(t('auth.enterCurrentPassword')); return }
+    if (newPassword.length < 8) { setMessage(t('auth.passwordMinLengthHint')); return }
+    if (newPassword !== confirmPassword) { setMessage(t('auth.passwordMismatch')); return }
+    if (currentPassword === newPassword) { setMessage(t('auth.samePassword')); return }
 
     setLoading(true)
     setMessage('')
     try {
       await changePassword(currentPassword, newPassword)
       setSuccess(true)
-      setMessage('密码修改成功')
+      setMessage(t('auth.passwordChanged'))
       setTimeout(() => {
         onOpenChange(false)
         onDone?.()
       }, 1500)
     } catch (error: any) {
-      setMessage(error?.response?.data?.message || error?.message || '修改失败')
+      setMessage(error?.response?.data?.message || error?.message || t('account.changeFailed'))
     } finally {
       setLoading(false)
     }
@@ -219,8 +220,8 @@ function ChangePasswordDrawer({
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
               <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-lg font-semibold">密码修改成功</p>
-            <p className="mt-1 text-sm text-muted-foreground">下次登录请使用新密码</p>
+            <p className="text-lg font-semibold">{t('auth.passwordChanged')}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('account.useNewPassword')}</p>
           </div>
         </DrawerContent>
       </Drawer>
@@ -231,7 +232,7 @@ function ChangePasswordDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="rounded-t-3xl">
         <DrawerHeader>
-          <DrawerTitle className="text-base">修改密码</DrawerTitle>
+          <DrawerTitle className="text-base">{t('profile.changePassword')}</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 space-y-3 pb-4">
           <div className="space-y-1.5">
@@ -414,7 +415,7 @@ export function AccountPage() {
   const wechatAccount = linkedAccounts.find((a) => a.provider === 'wechat')
   const appleAccount = linkedAccounts.find((a) => a.provider === 'apple')
 
-  const nickname = profile?.name || sessionUser?.name || '未设置'
+  const nickname = profile?.name || sessionUser?.name || t('common.notSet')
   const phoneNumber = profile?.phoneNumber || sessionUser?.phoneNumber || null
 
   return (
@@ -426,17 +427,17 @@ export function AccountPage() {
       <div className="relative flex items-center justify-center">
         <button
           type="button"
-          aria-label="返回"
+          aria-label={t('common.back')}
           onClick={() => navigate(-1)}
           className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-base font-semibold">账号信息</h1>
+        <h1 className="text-base font-semibold">{t('profile.accountSection')}</h1>
       </div>
 
       {/* 区域一：头像 */}
-      <IosSection header="头像">
+      <IosSection header={t('profile.avatar')}>
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
             <input
@@ -459,7 +460,7 @@ export function AccountPage() {
               )}
               <span className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-0.5 bg-black/50 py-0.5 text-[9px] text-white opacity-0 transition-opacity group-hover:opacity-100">
                 <Camera className="h-3 w-3" />
-                {avatarUploading ? '上传中' : '更换'}
+                {avatarUploading ? t('common.uploading') : t('profile.changeAvatar')}
               </span>
             </button>
             {avatarUploading && (
@@ -468,8 +469,8 @@ export function AccountPage() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">点击更换头像</p>
-              <p className="text-xs text-muted-foreground">支持 JPG、PNG、WebP 格式</p>
+              <p className="text-sm font-medium">{t('profile.changeAvatar')}</p>
+              <p className="text-xs text-muted-foreground">{t('profile.avatarHint')}</p>
             </div>
             <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
           </div>
@@ -477,7 +478,7 @@ export function AccountPage() {
       </IosSection>
 
       {/* 区域二：昵称 + 手机号 */}
-      <IosSection header="个人信息">
+      <IosSection header={t('profile.basicInfo')}>
         {isLoading ? (
           <>
             <div className="px-4 py-4">
@@ -496,9 +497,9 @@ export function AccountPage() {
         ) : (
           <>
             <IosRow
-              label="邮箱"
-              value={sessionUser?.email || '未设置'}
-              subtitle={sessionUser?.emailVerified ? '已验证' : '未验证'}
+              label={t('profile.email')}
+              value={sessionUser?.email || t('common.notSet')}
+              subtitle={sessionUser?.emailVerified ? t('profile.verified') : t('profile.unverified')}
               iconBg="bg-blue-500"
               icon={Mail}
               right={!sessionUser?.emailVerified && sessionUser?.email ? (
@@ -508,22 +509,22 @@ export function AccountPage() {
                   onClick={handleSendVerification}
                   className="text-xs font-medium text-primary"
                 >
-                  {verificationSent ? '已发送' : sendingVerification ? '发送中...' : '验证'}
+                  {verificationSent ? t('common.sent') : sendingVerification ? t('common.sending') : t('profile.verify')}
                 </button>
               ) : undefined}
             />
             <IosRow
-              label="昵称"
+              label={t('profile.nickname')}
               value={nickname}
               onTap={() => setNicknameDrawerOpen(true)}
-              subtitle="点击修改昵称"
+              subtitle={t('profile.editNicknameSubtitle')}
             />
             <IosRow
               icon={Phone}
               iconBg="bg-green-500"
-              label="手机号"
-              value={phoneNumber || '未绑定'}
-              subtitle={phoneNumber ? (profile?.phoneNumberVerified ? '已验证' : '未验证') : undefined}
+              label={t('profile.phone')}
+              value={phoneNumber || t('profile.notBound')}
+              subtitle={phoneNumber ? (profile?.phoneNumberVerified ? t('profile.verified') : t('profile.unverified')) : undefined}
               last
             />
           </>
@@ -531,7 +532,7 @@ export function AccountPage() {
       </IosSection>
 
       {/* 区域三：第三方账号绑定 */}
-      <IosSection header="账号绑定">
+      <IosSection header={t('profile.accountBinding')}>
         {isLoading ? (
           <>
             <div className="px-4 py-4">
@@ -548,8 +549,8 @@ export function AccountPage() {
             {/* 微信 */}
             <IosRow
               iconBg="bg-[#07C160]"
-              label="微信"
-              subtitle={wechatBound ? `已绑定${wechatAccount?.name ? `：${wechatAccount.name}` : ''}` : '绑定后可用微信登录'}
+              label={t('profile.wechat')}
+              subtitle={wechatBound ? `${t('account.bound')}${wechatAccount?.name ? `：${wechatAccount.name}` : ''}` : t('profile.wechatBind')}
               right={
                 wechatBound ? (
                   <button
@@ -591,7 +592,7 @@ export function AccountPage() {
             <IosRow
               iconBg="bg-black dark:bg-white"
               label="Apple ID"
-              subtitle={appleBound ? `已绑定${appleAccount?.name ? `：${appleAccount.name}` : ''}` : '绑定后可用 Apple ID 登录'}
+              subtitle={appleBound ? `${t('account.bound')}${appleAccount?.name ? `：${appleAccount.name}` : ''}` : t('profile.appleIdBind')}
               last
               right={
                 appleBound ? (
@@ -635,7 +636,7 @@ export function AccountPage() {
       </IosSection>
 
       {/* 区域四：安全设置 */}
-      <IosSection header="安全设置">
+      <IosSection header={t('profile.dangerZone')}>
         <IosRow
           icon={KeyRound}
           iconBg="bg-amber-500"

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp, Star, BarChart3, Target, BookOpen, Award, ChevronRight,
@@ -96,6 +97,7 @@ function RadarChart({ dimensions }: { dimensions: Record<string, number> }) {
 // ─── Main Page ──────────────────────────────────────────────
 
 export function GrowthPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState<LevelOverview | null>(null)
   const [weekly, setWeekly] = useState<WeeklyStats | null>(null)
   const [errors, setErrors] = useState<CommonError[]>([])
@@ -119,16 +121,16 @@ export function GrowthPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">我的成长</h1>
-        <p className="mt-1 text-muted-foreground">追踪你的英语输出成长轨迹</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('growth.title')}</h1>
+        <p className="mt-1 text-muted-foreground">{t('growth.subtitle')}</p>
       </div>
 
       {!data ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <Target className="size-10 text-muted-foreground/40" />
-            <p className="text-muted-foreground">完成首次练习后查看成长数据</p>
-            <Link to="/practice"><Badge variant="secondary">去练习</Badge></Link>
+            <p className="text-muted-foreground">{t('growth.emptyHint')}</p>
+            <Link to="/practice"><Badge variant="secondary">{t('common.goTo')}</Badge></Link>
           </CardContent>
         </Card>
       ) : (
@@ -142,11 +144,11 @@ export function GrowthPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <Badge>Lv.{data.userLevel}</Badge>
-                  <span className="text-sm text-muted-foreground">总 XP: {data.totalXp}</span>
+                  <span className="text-sm text-muted-foreground">{t('growth.totalXp')}{data.totalXp}</span>
                 </div>
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>距下一级</span><span>{data.totalXp - xpForCurrentLevel} / {data.xpForNextLevel} XP</span>
+                    <span>{t('growth.nextLevel')}</span><span>{data.totalXp - xpForCurrentLevel} / {data.xpForNextLevel} XP</span>
                   </div>
                   <Progress value={xpProgress} className="h-2" />
                 </div>
@@ -158,7 +160,7 @@ export function GrowthPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <BarChart3 className="size-4 text-primary" /> 输出能力
+                <BarChart3 className="size-4 text-primary" /> {t('growth.outputAbility')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -180,11 +182,7 @@ export function GrowthPage() {
                   {Object.entries(data.outputLevelDetail).map(([key, val]) => (
                     <div key={key} className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">{{
-                          answerLength: '回答长度', grammarAccuracy: '语法准确性',
-                          chunkUsage: 'Chunk 使用', logicCompleteness: '逻辑完整度',
-                          naturalness: '自然度', fluency: '流利度',
-                        }[key] ?? key}</span>
+                        <span className="text-muted-foreground">{{answerLength:t('growth.answerLength'),grammarAccuracy:t('growth.grammarAccuracy'),chunkUsage:t('growth.chunkUsage'),logicCompleteness:t('growth.logicCompleteness'),naturalness:t('growth.naturalness'),fluency:t('growth.fluency')}[key]??key}</span>
                         <span className="font-medium">{val}/10</span>
                       </div>
                       <Progress value={(val as number) * 10} className="h-1.5" />
@@ -200,7 +198,7 @@ export function GrowthPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <RefreshCw className="size-4 text-primary" /> 本周统计
+                  <RefreshCw className="size-4 text-primary" /> {t('growth.weeklyStats')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -208,22 +206,22 @@ export function GrowthPage() {
                   <div className="text-center p-3 rounded-xl bg-muted/50">
                     <Mic className="size-5 mx-auto mb-1 text-primary" />
                     <p className="text-xl font-bold text-foreground">{weekly.recordings}</p>
-                    <p className="text-[11px] text-muted-foreground">录音</p>
+                    <p className="text-[11px] text-muted-foreground">{t('growth.recordings')}</p>
                   </div>
                   <div className="text-center p-3 rounded-xl bg-muted/50">
                     <BookOpen className="size-5 mx-auto mb-1 text-primary" />
                     <p className="text-xl font-bold text-foreground">{weekly.chunksMastered}</p>
-                    <p className="text-[11px] text-muted-foreground">新 Chunk</p>
+                    <p className="text-[11px] text-muted-foreground">{t('growth.newChunks')}</p>
                   </div>
                   <div className="text-center p-3 rounded-xl bg-muted/50">
                     <Clock className="size-5 mx-auto mb-1 text-primary" />
                     <p className="text-xl font-bold text-foreground">{weekly.totalPracticeMinutes}</p>
-                    <p className="text-[11px] text-muted-foreground">分钟</p>
+                    <p className="text-[11px] text-muted-foreground">{t('growth.minutes')}</p>
                   </div>
                   <div className="text-center p-3 rounded-xl bg-muted/50">
                     <Zap className="size-5 mx-auto mb-1 text-amber-500" />
                     <p className="text-xl font-bold text-foreground">{weekly.streakDays}</p>
-                    <p className="text-[11px] text-muted-foreground">连续天</p>
+                    <p className="text-[11px] text-muted-foreground">{t('growth.streakDays')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -235,7 +233,7 @@ export function GrowthPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <AlertTriangle className="size-4 text-amber-500" /> 常错表达
+                  <AlertTriangle className="size-4 text-amber-500" /> {t('growth.commonErrors')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -263,7 +261,7 @@ export function GrowthPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Lightbulb className="size-4 text-amber-500" /> 推荐提升路径
+                  <Lightbulb className="size-4 text-amber-500" /> {t('growth.recommendedPath')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -278,7 +276,7 @@ export function GrowthPage() {
                           <Target className="size-5 text-primary/60" />
                           <div>
                             <p className="text-sm font-medium text-foreground">{s.sceneTitle}</p>
-                            <p className="text-xs text-muted-foreground">准备度 {s.readiness}%</p>
+                            <p className="text-xs text-muted-foreground">{t('growth.readiness')} {s.readiness}%</p>
                           </div>
                         </div>
                         <ChevronRight className="size-4 text-muted-foreground" />
@@ -294,7 +292,7 @@ export function GrowthPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <BookOpen className="size-4 text-primary" /> Chunk 掌握
+                <BookOpen className="size-4 text-primary" /> {t('growth.chunkMastery')}
               </CardTitle>
             </CardHeader>
             <CardContent>

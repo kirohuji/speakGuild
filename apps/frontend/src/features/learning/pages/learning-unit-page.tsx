@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, BookText, MessageSquareText,
@@ -22,6 +23,7 @@ import {
 const PREP_PAGE_SIZE = 8
 
 export function LearningUnitPage() {
+  const { t } = useTranslation()
   const { unitId } = useParams<{ unitId: string }>()
   const navigate = useNavigate()
   const [unit, setUnit] = useState<UnitDetail | null>(null)
@@ -100,7 +102,7 @@ export function LearningUnitPage() {
   const handleSaveWord = useCallback((word: string) => {
     const saved = hasWord(word)
     addWord(word)
-    toast.success(saved ? '已在生词本中' : '已加入生词本')
+    toast.success(saved ? t('learning.wordAlreadyAdded') : t('learning.wordAdded'))
   }, [addWord, hasWord])
 
   const vocabPageItems = useMemo(
@@ -130,8 +132,8 @@ export function LearningUnitPage() {
   if (!unit) return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
       <Target className="size-12 text-muted-foreground/40" />
-      <p className="text-muted-foreground">学习单元不存在</p>
-      <Button variant="outline" asChild><Link to="/learning">返回学习计划</Link></Button>
+      <p className="text-muted-foreground">{t('learning.unitNotFound')}</p>
+      <Button variant="outline" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
     </div>
   )
 
@@ -140,7 +142,7 @@ export function LearningUnitPage() {
       {/* ===== Header ===== */}
       <div className="mb-4">
         <Link to="/learning" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-4" /> 学习计划
+          <ChevronLeft className="size-4" /> {t('learning.learningPlan')}
         </Link>
         <div className="flex items-start justify-between gap-3 px-1">
           <div className="min-w-0">
@@ -159,9 +161,9 @@ export function LearningUnitPage() {
         <section className="mb-5">
           <SectionHeader
             eyebrow="1"
-            title="练习题目"
-            subtitle="先知道最后要输出什么，再看知识点"
-            meta={`${unit.trainingTopics.length} 题`}
+            title={t('learning.practiceTitle')}
+            subtitle={t('learning.practiceSubtitle')}
+            meta={`${unit.trainingTopics.length}${t('learning.questions')}`}
           />
           <div className="space-y-2">
             {unit.trainingTopics.map((topic, i) => (
@@ -180,19 +182,19 @@ export function LearningUnitPage() {
       <section className="mb-5">
         <SectionHeader
           eyebrow="2"
-          title="准备说明"
-          subtitle="这个单元需要先补齐的材料"
+          title={t('learning.preparationTitle')}
+          subtitle={t('learning.prepSubtitle')}
         />
         <div className="rounded-lg bg-muted/30 p-4">
           {unit.description ? (
             <p className="text-sm leading-6 text-muted-foreground">{unit.description}</p>
           ) : (
-            <p className="text-sm leading-6 text-muted-foreground">本单元会围绕当前场景补充词汇、表达和句型，再进入开口练习。</p>
+            <p className="text-sm leading-6 text-muted-foreground">{t('learning.prepFallback')}</p>
           )}
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <UnitMetric label="准备度" value={`${unit.progress?.readiness ?? 0}%`} />
-            <UnitMetric label="词汇" value={`${unit.progress?.vocabLearned ?? 0}/${unit.vocabCount}`} />
-            <UnitMetric label="表达" value={`${unit.progress?.chunkMastered ?? 0}/${unit.chunkCount}`} />
+            <UnitMetric label={t('learning.readiness')} value={`${unit.progress?.readiness ?? 0}%`} />
+            <UnitMetric label={t('learning.vocab')} value={`${unit.progress?.vocabLearned ?? 0}/${unit.vocabCount}`} />
+            <UnitMetric label={t('learning.chunks')} value={`${unit.progress?.chunkMastered ?? 0}/${unit.chunkCount}`} />
           </div>
         </div>
       </section>
@@ -201,21 +203,21 @@ export function LearningUnitPage() {
       <section className="mb-6">
         <SectionHeader
           eyebrow="3"
-          title="知识点讲解"
-          subtitle="按类型分开看，列表过长时分页"
-          meta={`${allVocabCount + allChunkCount + patternDialogItems.length} 项`}
+          title={t('learning.knowledgePoints')}
+          subtitle={t('learning.knowledgeSubtitle')}
+          meta={`${allVocabCount + allChunkCount + patternDialogItems.length}${t('learning.items')}`}
         />
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
           <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
             <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-              <BookText className="size-3.5" /> 词汇 {allVocabCount}
+              <BookText className="size-3.5" /> {t('learning.vocab')} {allVocabCount}
             </TabsTrigger>
             <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-              <MessageSquareText className="size-3.5" /> 表达 {allChunkCount}
+              <MessageSquareText className="size-3.5" /> {t('learning.chunks')} {allChunkCount}
             </TabsTrigger>
             <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-              <Search className="size-3.5" /> 句型 {patternDialogItems.length}
+              <Search className="size-3.5" /> {t('learning.patterns')} {patternDialogItems.length}
             </TabsTrigger>
           </TabsList>
 
@@ -241,7 +243,7 @@ export function LearningUnitPage() {
                 />
               </>
             ) : (
-              <EmptyPrepState label="暂无词汇材料" />
+              <EmptyPrepState label={t('learning.noVocab')} />
             )}
           </TabsContent>
 
@@ -265,7 +267,7 @@ export function LearningUnitPage() {
                 />
               </>
             ) : (
-              <EmptyPrepState label="暂无表达材料" />
+              <EmptyPrepState label={t('learning.noChunks')} />
             )}
           </TabsContent>
 
@@ -293,7 +295,7 @@ export function LearningUnitPage() {
                 />
               </>
             ) : (
-              <EmptyPrepState label="暂无句型材料" />
+              <EmptyPrepState label={t('learning.noPatterns')} />
             )}
           </TabsContent>
         </Tabs>
@@ -365,12 +367,13 @@ function PrepPager({
   totalItems: number
   onPageChange: (page: number) => void
 }) {
+  const { t } = useTranslation()
   if (totalPages <= 1) return null
 
   return (
     <div className="flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
       <span className="text-[11px] text-muted-foreground">
-        共 {totalItems} 项
+        {t('common.total')} {totalItems} {t('learning.items')}
       </span>
       <div className="flex items-center gap-2">
         <Button
@@ -381,7 +384,7 @@ function PrepPager({
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
         >
-          上一页
+          {t('common.prevPage')}
         </Button>
         <span className="min-w-10 text-center text-[11px] text-muted-foreground">
           {currentPage}/{totalPages}
@@ -394,7 +397,7 @@ function PrepPager({
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
         >
-          下一页
+          {t('common.nextPage')}
         </Button>
       </div>
     </div>
@@ -567,6 +570,7 @@ function PracticeTopicCard({
   index: number
   onStart: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <Card
       className="cursor-pointer border-0 bg-orange-500/[0.06] shadow-none transition-colors hover:bg-orange-500/[0.1]"
@@ -584,7 +588,7 @@ function PracticeTopicCard({
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              建议 {Math.round(topic.suggestedDurationSec / 60)} 分钟
+              {t('practiceHub.suggested')} {Math.round(topic.suggestedDurationSec / 60)} {t('practiceSession.minutes')}
             </p>
           </div>
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />

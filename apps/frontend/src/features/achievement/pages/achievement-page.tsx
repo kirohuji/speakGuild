@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, Crown, Flame, Medal, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export function AchievementPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [items, setItems] = useState<AchievementItem[]>([])
@@ -53,11 +55,11 @@ export function AchievementPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-lg font-bold">成就</h1>
-          <p className="text-xs text-muted-foreground">已解锁 {unlocked}/{total}</p>
+          <h1 className="text-lg font-bold">{t('achievement.title')}</h1>
+          <p className="text-xs text-muted-foreground">{t('achievement.unlocked')} {unlocked}/{total}</p>
         </div>
         <Button variant="outline" size="sm" onClick={handleCheck} disabled={checking}>
-          {checking ? '检测中...' : '刷新'}
+          {checking ? t('achievement.checking') : t('achievement.refresh')}
         </Button>
       </div>
 

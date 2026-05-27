@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Play, Lock, CheckCircle2, ChevronRight, Star, BookOpen } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +10,7 @@ import { scriptApi, type ScriptChapter, type ScriptEpisodeCard, type EpisodeRead
 import { cn } from '@/lib/cn'
 
 export function ScriptHubPage() {
+  const { t } = useTranslation()
   const [chapters, setChapters] = useState<ScriptChapter[]>([])
   const [loading, setLoading] = useState(true)
   const [readinessMap, setReadinessMap] = useState<Record<string, EpisodeReadiness>>({})
@@ -38,14 +40,14 @@ export function ScriptHubPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">剧本模式</h1>
-        <p className="mt-1 text-muted-foreground">在剧情任务中使用英语，推动故事发展</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('scriptHub.title')}</h1>
+        <p className="mt-1 text-muted-foreground">{t('scriptHub.subtitle')}</p>
       </div>
 
       {chapters.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <BookOpen className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">剧本内容即将上线</p>
+          <p className="mt-4 text-muted-foreground">{t('scriptHub.comingSoon')}</p>
         </div>
       ) : (
         <div className="space-y-4">

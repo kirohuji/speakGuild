@@ -81,12 +81,12 @@ const tabs: { key: Tab; icon: React.ElementType }[] = [
 ]
 
 const mobileTitles: Record<Tab, string> = {
-  overview: '概览',
-  records: '练习记录',
-  favorites: '收藏题库',
-  words: '生词本',
-  account: '账户管理',
-  settings: '偏好设置',
+  overview: 'profile.overview',
+  records: 'profile.records',
+  favorites: 'profile.favorites',
+  words: 'profile.words',
+  account: 'profile.account',
+  settings: 'profile.settings',
 }
 
 export function ProfilePage() {
@@ -108,7 +108,7 @@ export function ProfilePage() {
     setBottomNavVisible(mobileView === 'home')
   }, [mobileView, setBottomNavVisible])
 
-  const nickname = userProfile?.name || userProfile?.username || '导游说者'
+  const nickname = userProfile?.name || userProfile?.username || t('app.name')
 
   return (
     <div>
@@ -129,7 +129,7 @@ export function ProfilePage() {
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <h1 className="text-base font-semibold">
-                  {mobileTitles[mobileView as Tab]}
+                  {t(mobileTitles[mobileView as Tab])}
                 </h1>
               </div>
               {mobileView === 'overview' && <OverviewTab />}
@@ -264,6 +264,7 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
 
 // ─── 手机端：个人中心首页 ──────────────────────────────────────────────────
 function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => void }) {
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   const { language, setLanguage } = usePreferencesStore()
   const navigate = useNavigate()
@@ -283,15 +284,15 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
     })
   }, [])
 
-  const themeLabel: Record<string, string> = { light: '浅色', dark: '深色', system: '跟随系统' }
-  const langLabel: Record<string, string> = { 'zh-CN': '中文', en: 'English' }
+  const themeLabel: Record<string, string> = { light: t('profile.themeLight'), dark: t('profile.themeDark'), system: t('profile.themeSystem') }
+  const langLabel: Record<string, string> = { 'zh-CN': t('profile.langZh'), en: t('profile.langEn'), ja: t('profile.langJa') }
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     i18n.changeLanguage(lang)
   }
 
-  const nickname = userProfile?.name || userProfile?.username || '导游说者'
+  const nickname = userProfile?.name || userProfile?.username || t('app.name')
 
   const onTapAvatar = () => {
     onNavigate('account')
@@ -324,14 +325,14 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
             <p className="text-base font-semibold leading-tight">{nickname}</p>
             <div className="mt-1.5 flex items-center gap-2">
               <span className="inline-flex items-center rounded-full border border-muted-foreground/20 px-2 py-0.5 text-[11px] text-muted-foreground">
-                免费用户
+                {t('member.freeUser')}
               </span>
               <button
                 type="button"
                 onClick={() => setShowMemberDrawer(true)}
                 className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm"
               >
-                <Crown className="h-2.5 w-2.5" />升级 VIP
+                <Crown className="h-2.5 w-2.5" />{t('profile.upgradeVip')}
               </button>
             </div>
           </div>
@@ -347,21 +348,21 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
 
       {/* 主导航 */}
       <IosSection>
-        <IosRow icon={IdCard} iconBg="bg-sky-400" label="账户管理" onTap={() => onNavigate('account')} />
-        <IosRow icon={Crown} iconBg="bg-amber-500" label="会员中心" onTap={() => setShowMemberDrawer(true)} />
-        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label="帮助与反馈" last onTap={() => navigate('/feedback')} />
+        <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
+        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => setShowMemberDrawer(true)} />
+        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={() => navigate('/feedback')} />
       </IosSection>
 
       {/* 外观与语言（保留在“我的”首页，点击弹窗切换） */}
       <IosSection>
         <IosRow
-          label="主题"
-          value={themeLabel[theme || 'system'] ?? '跟随系统'}
+          label={t('profile.theme')}
+          value={themeLabel[theme || 'system'] ?? t('profile.themeSystem')}
           onTap={() => setShowThemeDialog(true)}
         />
         <IosRow
-          label="界面语言"
-          value={langLabel[language] ?? '中文'}
+          label={t('profile.language')}
+          value={langLabel[language] ?? t('profile.langZh')}
           last
           onTap={() => setShowLanguageDialog(true)}
         />
@@ -374,9 +375,9 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
           </DrawerHeader>
           <div className="px-4 pb-6">
             {[
-              { value: 'light', label: '浅色' },
-              { value: 'dark', label: '深色' },
-              { value: 'system', label: '跟随系统' },
+              { value: 'light', label: t('profile.themeLight') },
+              { value: 'dark', label: t('profile.themeDark') },
+              { value: 'system', label: t('profile.themeSystem') },
             ].map((item) => (
               <button
                 key={item.value}
@@ -405,8 +406,9 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
           </DrawerHeader>
           <div className="px-4 pb-6">
             {[
-              { value: 'zh-CN', label: '中文' },
-              { value: 'en', label: 'English' },
+              { value: 'zh-CN', label: t('profile.langZh') },
+              { value: 'en', label: t('profile.langEn') },
+              { value: 'ja', label: t('profile.langJa') },
             ].map((item) => (
               <button
                 key={item.value}
@@ -431,7 +433,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
       <Drawer open={showMemberDrawer} onOpenChange={setShowMemberDrawer}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="sr-only">会员中心</DrawerTitle>
+            <DrawerTitle className="sr-only">{t('nav.member')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <MemberPage compact />
@@ -2380,6 +2382,7 @@ function SettingsTab() {
             >
               <SelectItem value="zh-CN">{t('profile.langZh')}</SelectItem>
               <SelectItem value="en">{t('profile.langEn')}</SelectItem>
+              <SelectItem value="ja">{t('profile.langJa')}</SelectItem>
             </Select>
           </div>
         </CardContent>

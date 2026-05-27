@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, Inbox, Mail, MailOpen, CheckCheck, ArrowRight, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -283,20 +284,21 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
 }
 
 export function NotificationListPage({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-5">
       {/* 页面标题 */}
       {!compact && (
         <div>
-          <h1 className="text-xl font-bold tracking-tight">通知中心</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t('notification.title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            查看和管理你的所有通知
+            {t('notification.subtitle')}
           </p>
         </div>
       )}
       {compact && (
         <div className="pb-1">
-          <h1 className="text-base font-semibold tracking-tight">通知中心</h1>
+          <h1 className="text-base font-semibold tracking-tight">{t('notification.title')}</h1>
         </div>
       )}
 

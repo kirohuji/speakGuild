@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from 'next-themes'
 import { Sun, Moon, Monitor, User, Shield } from 'lucide-react'
@@ -7,17 +8,8 @@ import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { NotificationBell } from '@/features/notification/components/notification-bell'
 
-const navItems = [
-  { label: '首页', path: '/' },
-  { label: '学习计划', path: '/learning' },
-  { label: '今日任务', path: '/today' },
-  { label: '剧本挑战', path: '/script' },
-  { label: '我的学习库', path: '/expressions' },
-  { label: '成长', path: '/growth' },
-  { label: '会员', path: '/member' },
-]
-
 export function Header() {
+  const { t } = useTranslation()
   const location = useLocation()
   const { theme, setTheme } = useTheme()
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
@@ -25,6 +17,16 @@ export function Header() {
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'admin'
   const isLoggedIn = !!session
+
+  const navItems = [
+    { label: t('nav.home'), path: '/' },
+    { label: t('nav.learningPlan'), path: '/learning' },
+    { label: t('nav.todayTask'), path: '/today' },
+    { label: t('nav.script'), path: '/script' },
+    { label: t('nav.myLibrary'), path: '/expressions' },
+    { label: t('nav.growth'), path: '/growth' },
+    { label: t('nav.member'), path: '/member' },
+  ]
 
   const currentPath = location.pathname
 
@@ -34,9 +36,9 @@ export function Header() {
   }
 
   const themeOptions = [
-    { value: 'light', label: '浅色', icon: Sun },
-    { value: 'dark', label: '深色', icon: Moon },
-    { value: 'system', label: '跟随系统', icon: Monitor },
+    { value: 'light', label: t('profile.themeLight'), icon: Sun },
+    { value: 'dark', label: t('profile.themeDark'), icon: Moon },
+    { value: 'system', label: t('profile.themeSystem'), icon: Monitor },
   ]
 
   const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor

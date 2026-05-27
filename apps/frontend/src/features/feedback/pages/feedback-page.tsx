@@ -9,6 +9,7 @@ import { Select, SelectItem } from '@/components/ui/select'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { submitFeedback, getMyFeedbacks, type FeedbackResult } from '@/features/feedback/api'
 import { cn } from '@/lib/cn'
+import { useTranslation } from 'react-i18next'
 
 const TYPE_OPTIONS = [
   { value: 'bug', label: '问题反馈' },
@@ -23,6 +24,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondar
 }
 
 export function FeedbackPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [type, setType] = useState('bug')
@@ -60,8 +62,8 @@ export function FeedbackPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold">帮助与反馈</h1>
-          <p className="text-xs text-muted-foreground">提交问题或建议，帮助我们做得更好</p>
+          <h1 className="text-lg font-bold">{t('feedback.title')}</h1>
+          <p className="text-xs text-muted-foreground">{t('feedback.subtitle')}</p>
         </div>
       </div>
 
@@ -70,23 +72,23 @@ export function FeedbackPage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
-            提交反馈
+            {t('feedback.submit')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {submitted ? (
             <div className="flex flex-col items-center py-6 text-center">
               <CheckCircle2 className="h-12 w-12 text-success mb-3" />
-              <p className="font-medium">感谢您的反馈！</p>
-              <p className="text-sm text-muted-foreground mt-1">我们会在 15 个工作日内处理</p>
+              <p className="font-medium">{t('feedback.thanks')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('feedback.processingHint')}</p>
               <Button variant="outline" size="sm" className="mt-4" onClick={() => setSubmitted(false)}>
-                继续提交
+                {t('feedback.continue')}
               </Button>
             </div>
           ) : (
             <>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">反馈类型</label>
+                <label className="text-sm font-medium mb-1.5 block">{t('feedback.type')}</label>
                 <Select value={type} onChange={(e) => setType(e.target.value)} className="w-full">
                   {TYPE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -94,26 +96,26 @@ export function FeedbackPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">详细描述</label>
+                <label className="text-sm font-medium mb-1.5 block">{t('feedback.detail')}</label>
                 <textarea
                   className="w-full min-h-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="请详细描述您遇到的问题或建议..."
+                  placeholder={t('feedback.placeholder')}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">联系方式（选填）</label>
+                <label className="text-sm font-medium mb-1.5 block">{t('feedback.contact')}</label>
                 <input
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="手机号或邮箱，方便我们联系您"
+                  placeholder={t('feedback.contactPlaceholder')}
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
                 />
               </div>
               <Button onClick={handleSubmit} disabled={!content.trim() || submitting} className="w-full gap-2">
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {submitting ? '提交中...' : '提交反馈'}
+                {submitting ? t('common.submitting') : t('feedback.submit')}
               </Button>
             </>
           )}

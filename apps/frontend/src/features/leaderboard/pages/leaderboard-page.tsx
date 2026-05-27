@@ -45,8 +45,8 @@ export function LeaderboardPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold">排行榜</h1>
-          <p className="text-xs text-muted-foreground">看看谁是学习之星</p>
+          <h1 className="text-lg font-bold">{t('leaderboard.title')}</h1>
+          <p className="text-xs text-muted-foreground">{t('leaderboard.subtitle')}</p>
         </div>
       </div>
 

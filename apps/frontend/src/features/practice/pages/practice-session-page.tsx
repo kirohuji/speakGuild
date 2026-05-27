@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
@@ -128,6 +129,7 @@ class VnPlayerBoundary extends Component<
 }
 
 export function PracticeSessionPage() {
+  const { t } = useTranslation()
   const { topicId } = useParams<{ topicId: string }>()
   const navigate = useNavigate()
 
@@ -204,13 +206,13 @@ export function PracticeSessionPage() {
   const objectives = useMemo(() => {
     const objs: string[] = []
     if (detail?.topic.sentencePatterns?.length) {
-      detail.topic.sentencePatterns.forEach((p) => objs.push(`使用句型: ${p.pattern}`))
+      detail.topic.sentencePatterns.forEach((p) => objs.push(`${t('practiceSession.usePattern')}: ${p.pattern}`))
     }
     if (detail?.topic.sentenceSkeleton) {
-      objs.push(`参考结构: ${detail.topic.sentenceSkeleton}`)
+      objs.push(`${t('practiceSession.refStructure')}: ${detail.topic.sentenceSkeleton}`)
     }
-    objs.push(`围绕话题 "${detail?.topic.title}" 展开对话`)
-    if (objs.length === 0) objs.push('完成至少3轮对话互动')
+    objs.push(`${t('practiceSession.aroundTopic')} "${detail?.topic.title}" ${t('practiceSession.startDialogue')}`)
+    if (objs.length === 0) objs.push(t('practiceSession.completionHint'))
     return objs
   }, [detail])
 
@@ -575,8 +577,8 @@ export function PracticeSessionPage() {
   if (error || !detail) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-destructive">{error || '话题不存在'}</p>
-        <Button variant="outline" onClick={() => navigate(-1)}>返回</Button>
+        <p className="text-destructive">{error || t('practiceSession.notFound')}</p>
+        <Button variant="outline" onClick={() => navigate(-1)}>{t('practiceSession.back')}</Button>
       </div>
     )
   }
@@ -602,7 +604,7 @@ export function PracticeSessionPage() {
             <section className="rounded-lg bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Info className="size-4 text-primary" />
-                <p className="text-sm font-semibold text-foreground">讲解摘要</p>
+                <p className="text-sm font-semibold text-foreground">{t('practiceSession.explanationTitle')}</p>
               </div>
               <div className="space-y-3">
                 {detail.topic.description && (
@@ -614,7 +616,7 @@ export function PracticeSessionPage() {
                 {detail.topic.knowledgePoints && (
                   <div className="rounded-md bg-background/55 p-3">
                     <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground">
-                      <Lightbulb className="size-3.5 text-primary" /> 本题要点
+                      <Lightbulb className="size-3.5 text-primary" /> {t('practiceSession.keyPoint')}
                     </div>
                     <MarkdownRenderer
                       content={detail.topic.knowledgePoints}
@@ -637,7 +639,7 @@ export function PracticeSessionPage() {
                         </div>
                         <p className="text-sm font-semibold text-foreground">{p.pattern}</p>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">{p.meaning}</p>
-                        {p.example && <p className="mt-1 text-xs leading-5 text-muted-foreground">例: {p.example}</p>}
+                        {p.example && <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
                       </button>
                     ))}
                   </div>
@@ -649,18 +651,18 @@ export function PracticeSessionPage() {
           <section>
             <div className="mb-3 flex items-end justify-between gap-3 px-1">
               <div>
-                <h2 className="text-base font-semibold text-foreground">本题准备</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">先扫关键词和可直接套用的表达</p>
+                <h2 className="text-base font-semibold text-foreground">{t('practiceSession.preparationTitle')}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('practiceSession.preparationSubtitle')}</p>
               </div>
               <Badge variant="outline" className="rounded-full text-[11px]">
-                {detail.vocabularies.length + detail.activeChunks.length} 项
+                {detail.vocabularies.length + detail.activeChunks.length} {t('practiceSession.items')}
               </Badge>
             </div>
 
             <Tabs defaultValue="vocab" className="w-full">
               <TabsList className="grid h-10 w-full grid-cols-2 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="rounded-md text-xs">场景词汇 ({detail.vocabularies.length})</TabsTrigger>
-                <TabsTrigger value="chunk" className="rounded-md text-xs">核心表达 ({detail.activeChunks.length})</TabsTrigger>
+                <TabsTrigger value="vocab" className="rounded-md text-xs">{t('practiceSession.sceneVocab')} ({detail.vocabularies.length})</TabsTrigger>
+                <TabsTrigger value="chunk" className="rounded-md text-xs">{t('practiceSession.coreExpressions')} ({detail.activeChunks.length})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="vocab" className="mt-3">
@@ -692,7 +694,7 @@ export function PracticeSessionPage() {
                                 className="mt-1 h-7 px-0 text-xs text-primary"
                                 onClick={() => openInsight(`word:${v.id}`)}
                               >
-                                查看完整讲解
+                                {t('practiceSession.viewFullExplanation')}
                               </Button>
                             </div>
                           )}
@@ -701,7 +703,7 @@ export function PracticeSessionPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">本话题暂无场景词汇</p>
+                  <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('practiceSession.noVocab')}</p>
                 )}
               </TabsContent>
 
@@ -722,16 +724,16 @@ export function PracticeSessionPage() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <BookOpen className="size-4 text-orange-500" />
-                <p className="text-sm font-semibold text-foreground">练习题目</p>
+                <p className="text-sm font-semibold text-foreground">{t('practiceSession.practiceTitle')}</p>
               </div>
               <span className="shrink-0 text-[11px] text-muted-foreground">
-                建议 {Math.max(1, Math.round(detail.topic.suggestedDurationSec / 60))} 分钟
+                {t('practiceHub.suggested')} {Math.max(1, Math.round(detail.topic.suggestedDurationSec / 60))} {t('practiceSession.minutes')}
               </span>
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
             <Button className="mt-4 w-full" size="lg" onClick={handleStartPractice}>
-              <Play className="mr-2 size-5" /> 开始练习
+              <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
             </Button>
           </section>
         </div>
@@ -775,7 +777,7 @@ export function PracticeSessionPage() {
             onClick={() => setPhase('prepare')}
             className="h-7 justify-self-start rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white"
           >
-            <ArrowLeft className="size-3.5" /> 返回
+            <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
           </Button>
 
           <PracticeVnDrawer
@@ -796,7 +798,7 @@ export function PracticeSessionPage() {
             className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white"
           >
             {canReview ? <CheckCircle2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
-            {canReview ? '复盘' : '重来'}
+            {canReview ? t('practiceSession.review') : t('practiceSession.retry')}
           </Button>
           </div>
         </div>
@@ -823,7 +825,7 @@ export function PracticeSessionPage() {
               endedActions={(
                 <div className="flex gap-2">
                   <Button type="button" size="sm" className="h-8 rounded-full px-4 text-xs" onClick={startAnalysis}>
-                    查看复盘
+                    {t('practiceSession.viewReview')}
                   </Button>
                   <Button
                     type="button"
@@ -832,7 +834,7 @@ export function PracticeSessionPage() {
                     className="h-8 rounded-full border-white/20 bg-white/8 px-4 text-xs text-white hover:bg-white/12 hover:text-white"
                     onClick={restartPractice}
                   >
-                    再练一次
+                    {t('practiceSession.retry')}
                   </Button>
                 </div>
               )}
@@ -868,8 +870,8 @@ export function PracticeSessionPage() {
         <div className="mb-6 flex items-center gap-3 rounded-lg bg-green-500/10 px-4 py-3">
           <CheckCircle2 className="size-5 text-green-500" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">对话复盘</p>
-            <p className="text-xs text-muted-foreground">AI 分析你的对话表现</p>
+            <p className="text-sm font-semibold text-foreground">{t('practiceSession.reviewTitle')}</p>
+            <p className="text-xs text-muted-foreground">{t('practiceSession.reviewSubtitle')}</p>
           </div>
         </div>
 

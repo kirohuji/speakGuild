@@ -30,14 +30,8 @@ const TASK_COLORS = {
   script: 'text-green-500 bg-green-500/10',
 } as const
 
-const TASK_LABELS = {
-  vocab: '词汇学习',
-  chunk: '表达积累',
-  practice: '开口练习',
-  script: '剧本挑战',
-} as const
-
 export function TodayTaskPage() {
+  const { t } = useTranslation()
   const [plan, setPlan] = useState<TodayPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
@@ -69,15 +63,15 @@ export function TodayTaskPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">今日任务</h1>
-          <p className="mt-1 text-muted-foreground">今天还没有任务安排</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('learning.todayTaskTitle')}</h1>
+          <p className="mt-1 text-muted-foreground">{t('learning.noTasks')}</p>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Target className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">先去选择一套学习材料吧</p>
+          <p className="mt-4 text-muted-foreground">{t('learning.chooseMaterial')}</p>
           <Button className="mt-4" asChild>
             <Link to="/learning">
-              浏览学习计划
+              {t('learning.browsePlan')}
               <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
@@ -91,13 +85,13 @@ export function TodayTaskPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">今日任务</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('learning.todayTaskTitle')}</h1>
           <Badge variant={allDone ? 'default' : 'secondary'} className="text-xs">
-            {doneTasks}/{totalTasks} 完成
+            {doneTasks}/{totalTasks} {t('learning.done')}
           </Badge>
         </div>
         <p className="mt-1 text-muted-foreground">
-          继续学习：{plan.currentUnit?.title ?? '未选择'}
+          {t('learning.continueLearning')}{plan.currentUnit?.title ?? t('common.notSet')}
         </p>
       </div>
 
@@ -111,12 +105,12 @@ export function TodayTaskPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {allDone ? '今日任务已完成！' : `今日进度 ${doneTasks}/${totalTasks}`}
+                  {allDone ? t('learning.allDone') : `${t('learning.todayProgress')} ${doneTasks}/${totalTasks}`}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {plan.currentUnit?.title}
                   {plan.currentUnit?.progress && (
-                    <> · 词汇 {plan.currentUnit.progress.vocabLearned}/{plan.currentUnit.progress.vocabTotal} · 表达 {plan.currentUnit.progress.chunkMastered}/{plan.currentUnit.progress.chunkTotal}</>
+                    <> · {t('learning.vocab')} {plan.currentUnit.progress.vocabLearned}/{plan.currentUnit.progress.vocabTotal} · {t('learning.chunks')} {plan.currentUnit.progress.chunkMastered}/{plan.currentUnit.progress.chunkTotal}</>
                   )}
                 </p>
               </div>
@@ -170,7 +164,7 @@ export function TodayTaskPage() {
                       {task.title}
                     </p>
                     <Badge variant="outline" className="text-[10px]">
-                      {TASK_LABELS[task.type]}
+                      {t(`learning.taskLabel.${task.type}`)}
                     </Badge>
                   </div>
                   <p className={cn('mt-0.5 text-xs', isDone ? 'text-muted-foreground/60' : 'text-muted-foreground')}>
@@ -194,7 +188,7 @@ export function TodayTaskPage() {
                   {task.type === 'practice' && task.durationSec && (
                     <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
                       <Clock className="size-3" />
-                      <span>建议 {Math.round(task.durationSec / 60)} 分钟</span>
+                      <span>{t('practiceHub.suggested')} {Math.round(task.durationSec / 60)} {t('practiceSession.minutes')}</span>
                     </div>
                   )}
                 </div>
@@ -211,7 +205,7 @@ export function TodayTaskPage() {
       {allDone && (
         <div className="mt-6 rounded-lg bg-green-500/10 p-4 text-center">
           <Sparkles className="mx-auto mb-2 size-6 text-amber-500" />
-          <p className="font-medium text-foreground">太棒了！今日任务全部完成</p>
+          <p className="font-medium text-foreground">{t('learning.allTasksDone')}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             坚持每天练习，英语表达会越来越自然
           </p>

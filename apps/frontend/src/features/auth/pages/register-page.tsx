@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +10,7 @@ import { signUpWithEmailPassword } from '@/features/auth/api'
 import { cn } from '@/lib/cn'
 
 export function RegisterPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -18,10 +20,10 @@ export function RegisterPage() {
   const [message, setMessage] = useState('')
 
   const validate = () => {
-    if (!name.trim()) { setMessage('请输入用户名'); return false }
-    if (!email.trim()) { setMessage('请输入邮箱'); return false }
-    if (password.length < 8) { setMessage('密码至少8位'); return false }
-    if (password !== confirmPassword) { setMessage('两次密码不一致'); return false }
+    if (!name.trim()) { setMessage(t('auth.enterName')); return false }
+    if (!email.trim()) { setMessage(t('auth.enterEmail')); return false }
+    if (password.length < 8) { setMessage(t('auth.passwordMinLength')); return false }
+    if (password !== confirmPassword) { setMessage(t('auth.passwordMismatch')); return false }
     return true
   }
 
@@ -31,10 +33,10 @@ export function RegisterPage() {
       setLoading(true)
       setMessage('')
       await signUpWithEmailPassword(email, password, name.trim())
-      setMessage('注册成功，正在跳转个人中心')
+      setMessage(t('auth.registerSuccess'))
       setTimeout(() => navigate('/profile'), 1200)
     } catch (error: any) {
-      setMessage(error?.response?.data?.message || error?.message || '注册失败')
+      setMessage(error?.response?.data?.message || error?.message || t('auth.registerFailed'))
     } finally {
       setLoading(false)
     }
@@ -46,22 +48,22 @@ export function RegisterPage() {
     return 'bg-green-400'
   }
 
-  const strengthLabel = (p: string) => {
+  const strengthLabel = (p: string, t: (key: string) => string) => {
     if (p.length === 0) return null
-    if (p.length < 8) return '弱'
-    if (p.length < 12) return '中'
-    return '强'
+    if (p.length < 8) return t('auth.passwordStrength.weak')
+    if (p.length < 12) return t('auth.passwordStrength.medium')
+    return t('auth.passwordStrength.strong')
   }
 
   return (
     <div className="min-h-[100dvh] flex flex-col items-center justify-center px-4 py-6 md:py-8">
       {/* 品牌标题区 */}
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">创建账号</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('auth.createAccount')}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          已有账号？
+          {t('auth.hasAccount')}
           <Link to="/auth/login" className="ml-1 text-primary hover:underline font-medium">
-            去登录
+            {t('auth.goLogin')}
           </Link>
         </p>
       </div>
@@ -71,20 +73,20 @@ export function RegisterPage() {
         <Card className="shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)]">
           <CardContent className="p-6 space-y-5">
             <div className="space-y-1.5">
-              <Label className="text-sm">用户名</Label>
+              <Label className="text-sm">{t('auth.userName')}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="你的显示名称"
+                placeholder={t('auth.displayNameHint')}
                 className="h-10"
                 autoComplete="name"
                 maxLength={30}
               />
-              <p className="text-xs text-muted-foreground">将显示在你的个人中心和练习记录中</p>
+              <p className="text-xs text-muted-foreground">{t('auth.showInProfile')}</p>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">邮箱</Label>
+              <Label className="text-sm">{t('auth.emailPlaceholder')}</Label>
               <Input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -96,7 +98,7 @@ export function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">密码</Label>
+              <Label className="text-sm">{t('auth.passwordPlaceholder')}</Label>
               <Input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -111,19 +113,19 @@ export function RegisterPage() {
                     <div className={cn('h-full rounded-full transition-all duration-300', strengthColor(password))} style={{ width: `${Math.min(100, (password.length / 16) * 100)}%` }} />
                   </div>
                   <span className={cn('text-xs font-medium', password.length < 8 ? 'text-red-500' : password.length < 12 ? 'text-yellow-500' : 'text-green-600')}>
-                    {strengthLabel(password)}
+                    {strengthLabel(password, t)}
                   </span>
                 </div>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">确认密码</Label>
+              <Label className="text-sm">{t('auth.confirmPassword')}</Label>
               <Input
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 type="password"
-                placeholder="再次输入密码"
+                placeholder={t('auth.confirmPasswordHint')}
                 className="h-10"
                 autoComplete="new-password"
               />
@@ -135,7 +137,7 @@ export function RegisterPage() {
               disabled={loading}
               onClick={onRegister}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '立即注册'}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.registerButton')}
             </Button>
 
             {message && (
@@ -148,10 +150,10 @@ export function RegisterPage() {
             )}
 
             <p className="text-xs text-center text-muted-foreground leading-relaxed">
-              注册即表示同意
-              <Link to="/terms" className="text-primary hover:underline">服务条款</Link>
-              和
-              <Link to="/privacy" className="text-primary hover:underline">隐私政策</Link>
+              {t('auth.agreeToTerms')}
+              <Link to="/terms" className="text-primary hover:underline">{t('auth.termsOfService')}</Link>
+              {t('auth.and')}
+              <Link to="/privacy" className="text-primary hover:underline">{t('auth.privacyPolicy')}</Link>
             </p>
           </CardContent>
         </Card>

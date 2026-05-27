@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,7 +18,7 @@ import { useAuth } from '@/providers/auth-provider'
 
 type AuthTab = 'password' | 'email-otp' | 'phone-otp'
 
-function getLoginErrorMessage(error: any): string {
+function getLoginErrorMessage(error: any, t: (key: string) => string): string {
   const rawMessage =
     error?.data?.message ||
     error?.response?.data?.message ||
@@ -26,18 +27,19 @@ function getLoginErrorMessage(error: any): string {
 
   const message = String(rawMessage).toLowerCase()
 
-  if (!message) return '登录失败，请稍后重试'
-  if (message.includes('invalid email') || message.includes('password')) return '邮箱或密码错误'
-  if (message.includes('otp') || message.includes('verification code')) return '验证码错误或已过期'
-  if (message.includes('user not found')) return '账号不存在'
-  if (message.includes('too many requests') || message.includes('rate limit')) return '请求过于频繁，请稍后再试'
-  if (message.includes('network') || message.includes('failed to fetch')) return '网络异常，请检查网络后重试'
-  if (message.includes('email')) return '邮箱格式不正确'
+  if (!message) return t('auth.loginFailed')
+  if (message.includes('invalid email') || message.includes('password')) return t('auth.invalidCredentials')
+  if (message.includes('otp') || message.includes('verification code')) return t('auth.invalidOtp')
+  if (message.includes('user not found')) return t('auth.userNotFound')
+  if (message.includes('too many requests') || message.includes('rate limit')) return t('auth.rateLimit')
+  if (message.includes('network') || message.includes('failed to fetch')) return t('auth.networkError')
+  if (message.includes('email')) return t('auth.invalidEmail')
 
-  return rawMessage || '登录失败，请稍后重试'
+  return rawMessage || t('auth.loginFailed')
 }
 
 export function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn, refreshSession } = useAuth()
@@ -69,26 +71,26 @@ export function LoginPage() {
       setMessage(successMessage)
       if (onSuccess) onSuccess()
     } catch (error: any) {
-      setMessage(getLoginErrorMessage(error))
+      setMessage(getLoginErrorMessage(error, t))
     } finally {
       setLoading(false)
     }
   }
 
   const handleSendEmailOtp = async () => {
-    if (!email) { setMessage('请先输入邮箱'); return }
+    if (!email) { setMessage(t('auth.enterEmail')); return }
     await runAction(
       () => sendEmailOtp(email),
-      '验证码已发送（开发环境请看后端日志）',
+      t('auth.otpSent'),
       () => setOtpsent(true),
     )
   }
 
   const handleSendPhoneOtp = async () => {
-    if (!phoneNumber) { setMessage('请先输入手机号'); return }
+    if (!phoneNumber) { setMessage(t('auth.enterPhone')); return }
     await runAction(
       () => sendPhoneOtp(phoneNumber),
-      '验证码已发送（开发环境请看后端日志）',
+      t('auth.otpSent'),
       () => setPhoneOtpSent(true),
     )
   }
@@ -107,13 +109,13 @@ export function LoginPage() {
       <div className="mb-8 text-center">
         <img
           src="/logo.png"
-          alt="GuideReady 导游说"
+          alt={t('app.name')}
           className="h-8 w-auto mx-auto mb-3 dark:invert"
         />
         <p className="mt-2 text-sm text-muted-foreground">
-          还没有账号？
+          {t('auth.noAccount')}
           <Link to="/auth/register" className="ml-1 text-primary hover:underline font-medium">
-            立即注册
+            {t('auth.goRegister')}
           </Link>
         </p>
       </div>
@@ -125,13 +127,13 @@ export function LoginPage() {
             {/* Tab 切换 */}
             <div className="flex rounded-lg bg-muted/60 p-1">
               <button type="button" onClick={() => setActiveTab('password')} className={tabButtonClass('password')}>
-                密码登录
+                {t('auth.passwordLogin')}
               </button>
               <button type="button" onClick={() => setActiveTab('email-otp')} className={tabButtonClass('email-otp')}>
-                邮箱
+                {t('auth.emailPlaceholder')}
               </button>
               <button type="button" onClick={() => setActiveTab('phone-otp')} className={tabButtonClass('phone-otp')}>
-                手机
+                {t('auth.phone')}
               </button>
             </div>
 
@@ -139,7 +141,7 @@ export function LoginPage() {
             {activeTab === 'password' && (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-sm">邮箱</Label>
+                  <Label className="text-sm">{t('auth.emailPlaceholder')}</Label>
                   <Input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -149,12 +151,12 @@ export function LoginPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">密码</Label>
+                  <Label className="text-sm">{t('auth.passwordPlaceholder')}</Label>
                   <Input
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     type="password"
-                    placeholder="请输入密码"
+                    placeholder={t('auth.enterPassword')}
                     className="h-10"
                     autoComplete="current-password"
                   />
@@ -166,24 +168,24 @@ export function LoginPage() {
                   onClick={() =>
                     runAction(
                       async () => {
-                        if (!email.trim()) throw new Error('请输入邮箱')
-                        if (!password) throw new Error('请输入密码')
+                        if (!email.trim()) throw new Error(t('auth.enterEmail'))
+                        if (!password) throw new Error(t('auth.enterPassword'))
                         await signIn(email, password)
                       },
-                      '登录成功，即将跳转',
+                      t('auth.loginSuccess'),
                       navigateAfterLogin,
                     )
                   }
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '登录'}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.loginButton')}
                 </Button>
 
                 <div className="flex items-center justify-between text-sm">
                   <Link to="/auth/forgot-password" className="text-muted-foreground hover:text-primary transition-colors">
-                    忘记密码？
+                    {t('auth.forgotPasswordHint')}
                   </Link>
                   <Link to="/auth/register" className="text-muted-foreground hover:text-primary transition-colors">
-                    注册账号
+                    {t('auth.register')}
                   </Link>
                 </div>
               </div>
@@ -193,7 +195,7 @@ export function LoginPage() {
             {activeTab === 'email-otp' && (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-sm">邮箱</Label>
+                  <Label className="text-sm">{t('auth.emailPlaceholder')}</Label>
                   <Input
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setOtpsent(false) }}
@@ -203,12 +205,12 @@ export function LoginPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">验证码</Label>
+                  <Label className="text-sm">{t('auth.verificationCode')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={emailOtp}
                       onChange={(e) => setEmailOtp(e.target.value)}
-                      placeholder="6位验证码"
+                      placeholder={t('auth.otpPlaceholder')}
                       className="h-10 flex-1"
                       maxLength={6}
                     />
@@ -219,7 +221,7 @@ export function LoginPage() {
                       disabled={loading || otpsent}
                       onClick={handleSendEmailOtp}
                     >
-                      {otpsent ? '已发' : '获取'}
+                      {otpsent ? t('auth.sent') : t('auth.getOtp')}
                     </Button>
                   </div>
                 </div>
@@ -230,20 +232,20 @@ export function LoginPage() {
                   onClick={() =>
                     runAction(
                       async () => {
-                        if (!email.trim()) throw new Error('请输入邮箱')
-                        if (!emailOtp.trim()) throw new Error('请输入验证码')
+                        if (!email.trim()) throw new Error(t('auth.enterEmail'))
+                        if (!emailOtp.trim()) throw new Error(t('auth.enterOtp'))
                         await signInWithEmailOtp(email, emailOtp)
                         const nextSession = await refreshSession()
                         if (!nextSession?.user?.id) {
-                          throw new Error('登录失败，请检查验证码后重试')
+                          throw new Error(t('auth.loginFailedOtp'))
                         }
                       },
-                      '登录成功，即将跳转',
+                      t('auth.loginSuccess'),
                       navigateAfterLogin,
                     )
                   }
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '验证并登录'}
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.verifyAndLogin')}
                 </Button>
               </div>
             )}
@@ -252,7 +254,7 @@ export function LoginPage() {
             {activeTab === 'phone-otp' && (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-sm">手机号</Label>
+                  <Label className="text-sm">{t('auth.phoneNumber')}</Label>
                   <Input
                     value={phoneNumber}
                     onChange={(e) => { setPhoneNumber(e.target.value); setPhoneOtpSent(false) }}
@@ -262,12 +264,12 @@ export function LoginPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">验证码</Label>
+                  <Label className="text-sm">{t('auth.verificationCode')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={phoneOtp}
                       onChange={(e) => setPhoneOtp(e.target.value)}
-                      placeholder="6位验证码"
+                      placeholder={t('auth.otpPlaceholder')}
                       className="h-10 flex-1"
                       maxLength={6}
                     />
@@ -278,7 +280,7 @@ export function LoginPage() {
                       disabled={loading || phoneOtpSent}
                       onClick={handleSendPhoneOtp}
                     >
-                      {phoneOtpSent ? '已发' : '获取'}
+                      {phoneOtpSent ? t('auth.sent') : t('auth.getOtp')}
                     </Button>
                   </div>
                 </div>
@@ -289,20 +291,20 @@ export function LoginPage() {
                   onClick={() =>
                     runAction(
                       async () => {
-                        if (!phoneNumber.trim()) throw new Error('请输入手机号')
-                        if (!phoneOtp.trim()) throw new Error('请输入验证码')
+                        if (!phoneNumber.trim()) throw new Error(t('auth.enterPhone'))
+                        if (!phoneOtp.trim()) throw new Error(t('auth.enterOtp'))
                         await verifyPhoneOtp(phoneNumber, phoneOtp)
                         const nextSession = await refreshSession()
                         if (!nextSession?.user?.id) {
-                          throw new Error('登录失败，请检查验证码后重试')
+                          throw new Error(t('auth.loginFailedOtp'))
                         }
                       },
-                      '登录成功，即将跳转',
+                      t('auth.loginSuccess'),
                       navigateAfterLogin,
                     )
                   }
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '验证并登录'}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.verifyAndLogin')}
                 </Button>
               </div>
             )}
@@ -313,7 +315,7 @@ export function LoginPage() {
                 <div className="w-full border-t border-border/60" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-card px-3 text-xs text-muted-foreground">其他登录方式</span>
+                <span className="bg-card px-3 text-xs text-muted-foreground">{t('auth.otherLogin')}</span>
               </div>
             </div>
 
@@ -335,13 +337,13 @@ export function LoginPage() {
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
                 <path d="M8.5 11.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 2C6.48 2 2 6.03 2 11c0 2.76 1.36 5.22 3.57 6.87L2 20l3.89-2.14A9.36 9.36 0 0012 22c5.52 0 10-4.03 10-9S17.52 2 12 2z" />
               </svg>
-              微信登录
+              {t('auth.wechatLogin')}
             </Button>
 
             {message && (
               <p className={cn(
                 'text-sm text-center rounded-lg px-4 py-3',
-                message.includes('成功') ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+                message.includes(t('auth.success')) ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
               )}>
                 {message}
               </p>

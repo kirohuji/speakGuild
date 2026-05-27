@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, ArrowRight,
@@ -44,6 +45,7 @@ function getCategoryIcon(name: string) {
 }
 
 export function LearningPlanPage() {
+  const { t } = useTranslation()
   const [shopOpen, setShopOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
 
@@ -99,7 +101,7 @@ export function LearningPlanPage() {
               type="button"
               onClick={() => setRecordsOpen(true)}
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-              aria-label="练习记录"
+              aria-label={t('profile.records')}
             >
               <ClipboardList className="size-[18px]" />
             </button>
@@ -107,7 +109,7 @@ export function LearningPlanPage() {
               type="button"
               onClick={() => { setShopOpen(true); refreshShop() }}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-              aria-label="学习商店"
+              aria-label={t('member.title')}
             >
               <ShoppingBag className="size-[18px]" />
               {notStarted.length > 0 && (
@@ -129,7 +131,7 @@ export function LearningPlanPage() {
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
           <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-              <DrawerTitle className="text-base font-semibold">练习记录</DrawerTitle>
+              <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
               <PracticeRecordsContent />
@@ -139,7 +141,7 @@ export function LearningPlanPage() {
         <Drawer open={shopOpen} onOpenChange={setShopOpen}>
           <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-              <DrawerTitle className="text-base font-semibold">学习商店</DrawerTitle>
+              <DrawerTitle className="text-base font-semibold">{t('learning.shopTitle')}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
               <ShopView
@@ -173,6 +175,7 @@ function MyLearningView({
   loading: boolean
   onGoToShop: () => void
 }) {
+  const { t } = useTranslation()
   if (loading) {
     return <div className="flex min-h-[40vh] items-center justify-center"><Spinner /></div>
   }
@@ -181,9 +184,9 @@ function MyLearningView({
     return (
       <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
         <BookOpen className="size-10 text-muted-foreground/40" />
-        <p className="mt-4 text-sm text-muted-foreground">还没有开始学习</p>
+        <p className="mt-4 text-sm text-muted-foreground">{t('learning.notStarted')}</p>
         <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onGoToShop}>
-          去学习商店选教材
+          {t('learning.goToShop')}
         </Button>
       </div>
     )
@@ -208,7 +211,7 @@ function MyLearningView({
 
       {otherUnits.length > 0 && (
         <section>
-          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">其他学习</h2>
+          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.otherLearning')}</h2>
           <div className="space-y-2">
             {otherUnits.map((unit) => (
               <MyUnitCard key={unit.id} unit={unit} />
@@ -220,7 +223,7 @@ function MyLearningView({
       {completed.length > 0 && (
         <section>
           <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
-            已完成
+            {t('learning.completed')}
           </h2>
           <div className="space-y-2.5">
             {completed.map((unit) => (
@@ -234,6 +237,7 @@ function MyLearningView({
 }
 
 function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: TodayPlan | null }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const pct = unit.completionPercent
   const Icon = getCategoryIcon(unit.categoryName)
@@ -254,16 +258,16 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-muted-foreground">继续学习</p>
+                <p className="text-xs font-medium text-muted-foreground">{t('learning.continue')}</p>
                 <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
               <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             </div>
             <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-              <span>{unit.vocabCount} 词汇</span>
-              <span>{unit.chunkCount} 句块</span>
-              <span>{unit.topicCount} 话题</span>
+              <span>{unit.vocabCount} {t('learning.vocab')}</span>
+              <span>{unit.chunkCount} {t('learning.chunks')}</span>
+              <span>{unit.topicCount} {t('learning.topics')}</span>
             </div>
           </div>
         </Link>
@@ -288,13 +292,13 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
           className="mt-3 flex w-full items-center justify-between rounded-md bg-background/60 px-3 py-2 text-left"
         >
           <div>
-            <p className="text-xs font-medium text-foreground">今日学习</p>
+            <p className="text-xs font-medium text-foreground">{t('learning.todayStudy')}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {taskSummary.total > 0 ? `${taskSummary.done}/${taskSummary.total} 已完成` : '今天还没有安排任务'}
+              {taskSummary.total > 0 ? `${taskSummary.done}/${taskSummary.total} ${t('learning.completed')}` : t('learning.noTasks')}
             </p>
           </div>
           <span className="flex items-center gap-0.5 text-xs text-primary">
-            {expanded ? '收起' : '展开'}
+            {expanded ? t('learning.collapse') : t('learning.expand')}
             <ChevronRight className={cn('size-3 transition-transform', expanded && 'rotate-90')} />
           </span>
         </button>
@@ -305,7 +309,7 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
               <TodayTaskRow key={task.id} task={task} compact />
             )) : (
               <div className="rounded-md bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                预习内容会跟随当前单元自动出现
+                {t('learning.previewHint')}
               </div>
             )}
           </div>
@@ -316,20 +320,21 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
 }
 
 function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
+  const { t } = useTranslation()
   const summary = getTodayTaskSummary(todayPlan)
   const todayIndex = new Date().getDay()
   const mondayIndex = todayIndex === 0 ? 6 : todayIndex - 1
-  const weekDays = ['一', '二', '三', '四', '五', '六', '日']
+  const weekDays = [t('learning.weekDays.0'), t('learning.weekDays.1'), t('learning.weekDays.2'), t('learning.weekDays.3'), t('learning.weekDays.4'), t('learning.weekDays.5'), t('learning.weekDays.6')]
 
   return (
     <section className="rounded-lg bg-muted/30 p-3.5">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarDays className="size-4 text-primary" />
-          <p className="text-sm font-semibold text-foreground">本周学习</p>
+          <p className="text-sm font-semibold text-foreground">{t('learning.thisWeek')}</p>
         </div>
         <Badge variant={summary.allDone ? 'default' : 'secondary'} className="h-6 rounded-full px-2 text-[10px]">
-          {summary.total > 0 ? `${summary.done}/${summary.total}` : '待开始'}
+          {summary.total > 0 ? `${summary.done}/${summary.total}` : t('learning.pending')}
         </Badge>
       </div>
       <div className="grid grid-cols-7 gap-1.5">
@@ -360,6 +365,7 @@ function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
 }
 
 function TodayPracticeSection({ tasks }: { tasks: TodayTask[] }) {
+  const { t } = useTranslation()
   if (tasks.length === 0) {
     return (
       <section className="rounded-lg bg-muted/30 px-4 py-5">
@@ -368,8 +374,8 @@ function TodayPracticeSection({ tasks }: { tasks: TodayTask[] }) {
             <ListChecks className="size-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">今日练习</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">今天暂无开口练习，先推进当前单元</p>
+            <p className="text-sm font-semibold text-foreground">{t('learning.todayPractice')}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.noPracticeHint')}</p>
           </div>
         </div>
       </section>
@@ -378,7 +384,7 @@ function TodayPracticeSection({ tasks }: { tasks: TodayTask[] }) {
 
   return (
     <section>
-      <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">今日练习</h2>
+      <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.todayPractice')}</h2>
       <div className="space-y-2">
         {tasks.map((task) => (
           <TodayTaskRow key={task.id} task={task} />
@@ -457,6 +463,7 @@ function getTodayTaskSummary(todayPlan: TodayPlan | null) {
 // ── 我的学习单元卡片 ──
 
 function MyUnitCard({ unit }: { unit: MyUnit }) {
+  const { t } = useTranslation()
   const pct = unit.completionPercent
   const isCompleted = pct >= 100
   const Icon = isCompleted ? CheckCircle2 : getCategoryIcon(unit.categoryName)
@@ -485,14 +492,14 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
         <div className="flex items-start gap-2">
           <p className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</p>
           <Badge variant={isCompleted ? 'secondary' : 'outline'} className="h-5 shrink-0 rounded-full px-2 text-[10px]">
-            {isCompleted ? '完成' : `${pct}%`}
+            {isCompleted ? t('learning.done') : `${pct}%`}
           </Badge>
         </div>
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
         <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
-          <span>{unit.vocabCount} 词汇</span>
-          <span>{unit.chunkCount} 句块</span>
-          <span>{unit.topicCount} 话题</span>
+          <span>{unit.vocabCount} {t('learning.vocab')}</span>
+          <span>{unit.chunkCount} {t('learning.chunks')}</span>
+          <span>{unit.topicCount} {t('learning.topics')}</span>
         </div>
 
         {!isCompleted && unit.topics && unit.topics.length > 0 && (
@@ -524,6 +531,7 @@ function ShopView({
   loading: boolean
   categoriesEmpty: boolean
 }) {
+  const { t } = useTranslation()
   const [activeCategory, setActiveCategory] = useState('all')
   const [keyword, setKeyword] = useState('')
 
@@ -541,7 +549,7 @@ function ShopView({
 
   const categoryTabs = useMemo(
     () => [
-      { id: 'all', label: '全部', count: allUnits.length },
+      { id: 'all', label: t('learning.all'), count: allUnits.length },
       ...categories.map((category) => ({
         id: category.id,
         label: category.name,
@@ -580,7 +588,7 @@ function ShopView({
     return (
       <div className="flex flex-col items-center py-16 text-center">
         <BookOpen className="size-12 text-muted-foreground/40" />
-        <p className="mt-4 text-muted-foreground">学习内容即将上线</p>
+        <p className="mt-4 text-muted-foreground">{t('learning.comingSoon')}</p>
       </div>
     )
   }
@@ -592,7 +600,7 @@ function ShopView({
         <Input
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
-          placeholder="搜索学习单元、场景或话题"
+          placeholder={t('learning.searchPlaceholder')}
           className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
         />
       </div>
@@ -620,7 +628,7 @@ function ShopView({
       {filteredUnits.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
           <ShoppingBag className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">没有找到匹配的学习单元</p>
+          <p className="mt-4 text-muted-foreground">{t('learning.noMatch')}</p>
         </div>
       ) : (
         <div className="space-y-2 rounded-lg">
@@ -636,6 +644,7 @@ function ShopView({
 // ── 商店卡片 ──
 
 function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
@@ -673,7 +682,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
           </div>
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-            {unit.topicCount} 个话题 · {unit.vocabCount} 个词汇 · {unit.chunkCount} 个句块
+            {unit.topicCount}{t('learning.topics')} · {unit.vocabCount}{t('learning.vocab')} · {unit.chunkCount}{t('learning.chunks')}
           </p>
           <div className="mt-2 flex items-center gap-1.5">
             {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
@@ -697,14 +706,14 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
-                  {!unit.isUnlocked && <Badge variant="outline" className="rounded-full text-[10px]">未解锁</Badge>}
+                  {!unit.isUnlocked && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location}</p>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                  <span>{unit.vocabCount} 词汇</span>
-                  <span>{unit.chunkCount} 句块</span>
-                  <span>{unit.topicCount} 话题</span>
+                  <span>{unit.vocabCount} {t('learning.vocab')}</span>
+                  <span>{unit.chunkCount} {t('learning.chunks')}</span>
+                  <span>{unit.topicCount} {t('learning.topics')}</span>
                 </div>
               </div>
             </div>
@@ -716,17 +725,17 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
                 onClick={() => setFavorite((value) => !value)}
               >
                 <Heart className={cn('size-4', favorite && 'fill-current')} />
-                收藏
+                {t('learning.favorite')}
               </Button>
               <Button className="gap-2" disabled={!unit.isUnlocked || acquiring} onClick={handleAcquire}>
                 {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                {unit.isUnlocked ? '开始学习' : `Lv.${unit.requiredUserLevel} 解锁`}
+                {unit.isUnlocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
               </Button>
             </div>
 
             <div className="bg-muted/30 px-4 py-2.5">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-foreground">话题列表</p>
+                <p className="text-xs font-medium text-foreground">{t('learning.topicList')}</p>
                 {unit.topics.length > pageSize && (
                   <div className="flex items-center gap-2">
                     <button
@@ -735,7 +744,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
                       onClick={() => setTopicPage((page) => Math.max(1, page - 1))}
                       className="rounded-full px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40"
                     >
-                      上一页
+                      {t('common.prevPage')}
                     </button>
                     <span className="text-[11px] text-muted-foreground">{topicPage}/{totalTopicPages}</span>
                     <button
@@ -744,7 +753,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
                       onClick={() => setTopicPage((page) => Math.min(totalTopicPages, page + 1))}
                       className="rounded-full px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40"
                     >
-                      下一页
+                      {t('common.nextPage')}
                     </button>
                   </div>
                 )}
@@ -762,7 +771,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
                       <div className="min-w-0 flex-1">
                         <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          建议 {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟
+                          {t('practiceHub.suggested')} {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} {t('practiceSession.minutes')}
                         </p>
                       </div>
                       <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
@@ -770,7 +779,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
                   ))}
                 </div>
               ) : (
-                <p className="py-8 text-center text-sm text-muted-foreground">这个单元暂时没有话题</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">{t('learning.noTopics')}</p>
               )}
             </div>
           </div>
@@ -805,6 +814,7 @@ function UnitCover({
 
 // ─── 练习记录列表内容 ──────────────────────────────────────────────────────
 function PracticeRecordsContent() {
+  const { t } = useTranslation()
   const [data, setData] = useState<PracticeRecordsResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -821,12 +831,12 @@ function PracticeRecordsContent() {
   const columns: ColumnConfig<PracticeRecord>[] = [
     {
       key: 'topicName',
-      header: '话题',
+      header: t('profile.practiceRecords.columns.topic'),
       cell: (v) => <span className="text-sm font-medium">{v}</span>,
     },
     {
       key: 'questionText',
-      header: '题目',
+      header: t('profile.practiceRecords.columns.question'),
       cell: (v, row) => (
         <div className="max-w-[360px]">
           <span className="line-clamp-1 text-sm text-muted-foreground">{v}</span>
@@ -836,11 +846,11 @@ function PracticeRecordsContent() {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('profile.practiceRecords.columns.status'),
       cell: (v, row) => (
         <div className="flex items-center gap-2">
           <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-xs">
-            {v === 'analyzed' ? '已分析' : v === 'analyzing' ? '分析中' : v === 'completed' ? '待分析' : v === 'failed' ? '失败' : '进行中'}
+            {v === 'analyzed' ? t('profile.practiceRecords.status.analyzed') : v === 'analyzing' ? t('profile.practiceRecords.status.analyzing') : v === 'completed' ? t('profile.practiceRecords.status.completed') : v === 'failed' ? t('profile.practiceRecords.status.failed') : t('profile.practiceRecords.status.inProgress')}
           </Badge>
           {typeof row.score === 'number' && <span className="text-xs font-semibold text-primary">{row.score}</span>}
         </div>
@@ -849,13 +859,13 @@ function PracticeRecordsContent() {
     },
     {
       key: 'practiceCount',
-      header: '次数',
-      cell: (v) => <Badge variant="secondary" className="text-xs">{v} 次</Badge>,
+      header: t('profile.practiceRecords.columns.count'),
+      cell: (v) => <Badge variant="secondary" className="text-xs">{v} {t('common.records')}</Badge>,
       width: 80,
     },
     {
       key: 'lastPracticeAt',
-      header: '日期',
+      header: t('profile.practiceRecords.columns.date'),
       cell: (v) => (
         <span className="text-xs text-muted-foreground">
           {new Date(v).toLocaleDateString('zh-CN')}
@@ -875,7 +885,7 @@ function PracticeRecordsContent() {
         pageSize={pageSize}
         onPageChange={setPage}
         isLoading={isLoading}
-        emptyMessage="暂无练习记录"
+        emptyMessage={t('profile.practiceRecords.empty')}
       />
     </div>
   )

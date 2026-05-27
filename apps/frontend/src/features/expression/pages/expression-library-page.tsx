@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   BookMarked, RefreshCw, ExternalLink, Search,
   Trash2, Eye, EyeOff, Check, X,
@@ -103,33 +104,35 @@ export function ExpressionLibraryPage() {
     sceneName: expr.sceneName ?? undefined,
   }))
 
+  const { t } = useTranslation()
+
   const wordEmptyText =
     reviewState === 'reviewing'
-      ? '还没有收藏单词'
+      ? t('expressionLib.emptyWords')
       : reviewState === 'done'
-        ? '暂无复习完成的单词'
-        : '暂无已标熟的单词'
+        ? t('expressionLib.emptyWordsDone')
+        : t('expressionLib.emptyWordsMastered')
 
   const chunkEmptyText =
     reviewState === 'reviewing'
-      ? '暂无待复习句块'
+      ? t('expressionLib.emptyChunks')
       : reviewState === 'done'
-        ? '暂无复习完成的句块'
-        : '暂无已标熟的句块'
+        ? t('expressionLib.emptyChunksDone')
+        : t('expressionLib.emptyChunksMastered')
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
         <Tabs value={libraryTab} onValueChange={(value) => setLibraryTab(value as LibraryTab)}>
           <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
-            <TabsTrigger value="words" className="flex-1 rounded-full">单词</TabsTrigger>
-            <TabsTrigger value="chunk" className="flex-1 rounded-full">句块</TabsTrigger>
+            <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
+            <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
           </TabsList>
 
         <div className="mb-4 flex gap-2 overflow-x-auto">
           {[
-            { value: 'reviewing', label: '复习中', count: libraryTab === 'words' ? wordEntries.length : reviewItems.length },
-            { value: 'done', label: '复习完成', count: libraryTab === 'words' ? 0 : doneExpressions.length },
-            { value: 'mastered', label: '已标熟', count: libraryTab === 'words' ? 0 : masteredExpressions.length },
+            { value: 'reviewing', label: t('expressionLib.reviewing'), count: libraryTab === 'words' ? wordEntries.length : reviewItems.length },
+            { value: 'done', label: t('expressionLib.done'), count: libraryTab === 'words' ? 0 : doneExpressions.length },
+            { value: 'mastered', label: t('expressionLib.mastered'), count: libraryTab === 'words' ? 0 : masteredExpressions.length },
           ].map((item) => (
             <button
               key={item.value}
@@ -154,15 +157,15 @@ export function ExpressionLibraryPage() {
             <div className="flex flex-col items-center py-12 text-center">
               <BookMarked className="size-12 text-muted-foreground/40" />
               <p className="mt-4 text-muted-foreground">{wordEmptyText}</p>
-              {reviewState === 'reviewing' && <p className="text-sm text-muted-foreground">在学习单元页收藏后会出现在这里</p>}
+              {reviewState === 'reviewing' && <p className="text-sm text-muted-foreground">{t('expressionLib.hintCollectInUnit')}</p>}
             </div>
           ) : (
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">点击单项展开 · 点击「查询」进入沉浸式学习</span>
+                <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
                 <button onClick={() => openDialog(wordDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600">
-                  <ExternalLink className="size-3" /> 沉浸式
+                  <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
                 </button>
               </div>
               <div className="space-y-1">
@@ -181,11 +184,11 @@ export function ExpressionLibraryPage() {
                         </p>
                         <div className="flex items-center gap-1.5">
                           <span onClick={(e) => { e.stopPropagation(); openDialog(wordDialogItems, i) }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title="查询">
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title={t('expressionLib.search')}>
                             <Search className="size-3.5" />
                           </span>
-                          <span onClick={(e) => { e.stopPropagation(); removeWord(entry.word); toast.success('已移除') }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500" title="移除">
+                          <span onClick={(e) => { e.stopPropagation(); removeWord(entry.word); toast.success(t('expressionLib.removed')) }}
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500" title={t('expressionLib.remove')}>
                             <Trash2 className="size-3.5" />
                           </span>
                         </div>
@@ -195,7 +198,7 @@ export function ExpressionLibraryPage() {
                           <p className="text-xs text-muted-foreground">收藏于 {new Date(entry.addedAt).toLocaleDateString('zh-CN')}</p>
                           <button onClick={() => openDialog(wordDialogItems, i)}
                             className="mt-2 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600">
-                            <ExternalLink className="size-3" /> 查看详情
+                            <ExternalLink className="size-3" /> {t('expressionLib.viewDetails')}
                           </button>
                         </div>
                       )}
@@ -203,7 +206,7 @@ export function ExpressionLibraryPage() {
                   )
                 })}
               </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">共 {wordEntries.length} 个单词</p>
+              <p className="mt-3 text-center text-xs text-muted-foreground">{t('expressionLib.totalWords', { count: wordEntries.length })}</p>
             </div>
           )}
         </TabsContent>
@@ -215,7 +218,7 @@ export function ExpressionLibraryPage() {
             <div className="flex flex-col items-center py-12 text-center">
               <BookMarked className="size-12 text-muted-foreground/40" />
               <p className="mt-4 text-muted-foreground">{chunkEmptyText}</p>
-              <p className="text-sm text-muted-foreground">学习过程中系统会自动沉淀到这里</p>
+              <p className="text-sm text-muted-foreground">{t('expressionLib.hintAutoCollect')}</p>
             </div>
           ) : (
             <div>

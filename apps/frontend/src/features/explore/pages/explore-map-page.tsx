@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { MapPin, Lock, ChevronRight, Home, Coffee, Building, GraduationCap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,7 @@ const LOCATION_ICONS: Record<string, typeof MapPin> = {
 }
 
 export function ExploreMapPage() {
+  const { t } = useTranslation()
   const [maps, setMaps] = useState<GameMap[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMap, setSelectedMap] = useState<GameMap | null>(null)
@@ -33,14 +35,14 @@ export function ExploreMapPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">探索模式</h1>
-          <p className="mt-1 text-muted-foreground">在小地图中自由选择地点和 NPC</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('exploreMap.title')}</h1>
+          <p className="mt-1 text-muted-foreground">{t('exploreMap.subtitleNoMap')}</p>
         </div>
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <MapPin className="size-12 text-muted-foreground/40" />
-            <p className="text-muted-foreground">地图内容即将开放</p>
-            <p className="text-sm text-muted-foreground">请先完成剧本 Chapter 0 解锁探索区域</p>
+            <p className="text-muted-foreground">{t('exploreMap.comingSoon')}</p>
+            <p className="text-sm text-muted-foreground">{t('exploreMap.unlockHint')}</p>
           </CardContent>
         </Card>
       </div>
@@ -50,8 +52,8 @@ export function ExploreMapPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">探索模式</h1>
-        <p className="mt-1 text-muted-foreground">选择地点，与 NPC 自由英语互动</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('exploreMap.title')}</h1>
+        <p className="mt-1 text-muted-foreground">{t('exploreMap.subtitle')}</p>
       </div>
 
       {/* Map selector */}
@@ -78,7 +80,7 @@ export function ExploreMapPage() {
               <span>{selectedMap.displayName}</span>
               {!selectedMap.unlocked && (
                 <Badge variant="outline" className="gap-1 text-amber-500">
-                  <Lock className="size-3" /> 预览
+                  <Lock className="size-3" /> {t('exploreMap.preview')}
                 </Badge>
               )}
             </CardTitle>
@@ -108,7 +110,7 @@ export function ExploreMapPage() {
 
             {/* Location list */}
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">可前往的地点</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('exploreMap.locations')}</p>
               {selectedMap.locations.map((loc) => {
                 const Icon = LOCATION_ICONS[loc.name] ?? MapPin
                 return (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Award, Lock, Star, Trophy, Zap, Flame, Sparkles, Eye, EyeOff } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +25,7 @@ const RARITY_ICONS: Record<string, typeof Star> = {
 }
 
 export function AchievementHallPage() {
+  const { t } = useTranslation()
   const [achievements, setAchievements] = useState<AchievementItem[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('all')
@@ -44,23 +46,23 @@ export function AchievementHallPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-foreground">🏆 成就殿堂</h1>
-        <p className="mt-1 text-muted-foreground">已解锁 {unlocked.length} / {achievements.length}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('achievementHall.title')}</h1>
+        <p className="mt-1 text-muted-foreground">{t('achievementHall.unlocked')} {unlocked.length} / {achievements.length}</p>
       </div>
 
       {achievements.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <Award className="size-12 text-muted-foreground/40" />
-            <p className="text-muted-foreground">完成首次练习，解锁你的第一个成就！</p>
-            <p className="text-sm text-muted-foreground">成就系统将在首次练习后激活</p>
+            <p className="text-muted-foreground">{t('achievementHall.emptyTitle')}</p>
+            <p className="text-sm text-muted-foreground">{t('achievementHall.emptySubtitle')}</p>
           </CardContent>
         </Card>
       ) : (
         <>
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="mb-4 w-full flex-wrap">
-              <TabsTrigger value="all" className="text-xs">全部</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs">{t('achievementHall.all')}</TabsTrigger>
               {categories.map((cat) => (
                 <TabsTrigger key={cat} value={cat} className="text-xs">
                   {CATEGORY_LABELS[cat] ?? cat}
@@ -80,7 +82,7 @@ export function AchievementHallPage() {
           {/* Recently unlocked */}
           {unlocked.length > 0 && (
             <div className="mt-6">
-              <p className="mb-2 text-sm font-medium text-foreground">最近解锁</p>
+              <p className="mb-2 text-sm font-medium text-foreground">{t('achievementHall.recentUnlock')}</p>
               <div className="flex gap-2 overflow-x-auto">
                 {unlocked.slice(0, 3).map((ach) => (
                   <Badge key={ach.id} variant="secondary" className="shrink-0 gap-1">
@@ -101,7 +103,7 @@ function AchievementBadge({ achievement: a }: { achievement: AchievementItem }) 
   const isLocked = a.userStatus === 'locked'
   const isHidden = a.isHidden && isLocked
   const Icon = RARITY_ICONS[a.rarity] ?? Star
-
+  const { t } = useTranslation()
   return (
     <Card className={cn('overflow-hidden border-2 transition-all', style.border, isLocked ? style.bg : 'bg-card')}>
       <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
@@ -109,7 +111,7 @@ function AchievementBadge({ achievement: a }: { achievement: AchievementItem }) 
           <>
             <EyeOff className="size-10 text-muted-foreground/30" />
             <p className="text-xs font-bold text-muted-foreground">???</p>
-            <p className="text-[10px] leading-tight text-muted-foreground/60">{a.hintText ?? '神秘的成就'}</p>
+            <p className="text-[10px] leading-tight text-muted-foreground/60">{a.hintText ?? t('achievementHall.mysteryAchievement')}</p>
           </>
         ) : (
           <>

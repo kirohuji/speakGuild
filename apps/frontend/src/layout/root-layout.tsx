@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { Header } from './header'
@@ -14,6 +15,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { cn } from '@/lib/cn'
 
 export function RootLayout() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
@@ -71,7 +73,7 @@ export function RootLayout() {
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="sr-only">个人中心</DrawerTitle>
+            <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <ProfilePage />
@@ -81,7 +83,7 @@ export function RootLayout() {
       <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="sr-only">通知中心</DrawerTitle>
+            <DrawerTitle className="sr-only">{t('notification.title')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <NotificationListPage compact />
@@ -99,6 +101,7 @@ function MobileTopBar({
   onNotificationOpen: () => void
   onProfileOpen: () => void
 }) {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const { session } = useAuth()
   const unreadCount = useNotificationStore((s) => s.unreadCount)
@@ -116,7 +119,7 @@ function MobileTopBar({
       <button
         type="button"
         onClick={onNotificationOpen}
-        aria-label="通知"
+        aria-label={t('notification.title')}
         className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
       >
         <Bell className="size-[18px]" />
@@ -127,14 +130,14 @@ function MobileTopBar({
       <button
         type="button"
         onClick={onProfileOpen}
-        aria-label="个人页面"
+        aria-label={t('nav.profile')}
         className={cn(
           'block rounded-full p-0.5 transition-colors',
           profileActive ? 'bg-background/45' : 'hover:bg-background/45',
         )}
       >
         <Avatar className="size-8">
-          <AvatarImage src={user?.image} alt={user?.name || '个人头像'} />
+          <AvatarImage src={user?.image} alt={user?.name || t('nav.profile')} />
           <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
             {fallback}
           </AvatarFallback>

@@ -1,22 +1,24 @@
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { BookOpen, Home, Library } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useAuth } from '@/providers/auth-provider'
 
-const navItems = [
-  { label: '首页', path: '/', icon: Home },
-  { label: '学习计划', path: '/learning', icon: BookOpen },
-  // { label: '今日任务', path: '/today', icon: ListChecks },
-  { label: '我的学习库', path: '/expressions', icon: Library },
-  // { label: '剧本挑战', path: '/script', icon: Play },
-]
-
 export function BottomNav() {
+  const { t } = useTranslation()
   const location = useLocation()
   const visible = useLayoutStore((s) => s.bottomNavVisible)
   const { session } = useAuth()
   const isLoggedIn = !!session
+
+  const navItems = [
+    { label: t('nav.home'), path: '/', icon: Home },
+    { label: t('nav.learningPlan'), path: '/learning', icon: BookOpen },
+    { label: t('nav.myLibrary'), path: '/expressions', icon: Library },
+  ]
+
+
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'

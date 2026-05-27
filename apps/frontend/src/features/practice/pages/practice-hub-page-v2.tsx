@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { BookOpen, ChevronLeft, ChevronRight, GraduationCap, Plane, Coffee, Briefcase, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Spinner } from '@/components/ui/spinner'
@@ -24,6 +25,7 @@ interface TrainingTopic {
 }
 
 export function PracticeHubPage() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const sceneId = searchParams.get('sceneId')
   const [categories, setCategories] = useState<SceneCategory[]>([])
@@ -59,16 +61,16 @@ export function PracticeHubPage() {
         <div className="mb-6">
           <Link to="/practice" className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ChevronLeft className="size-4" />
-            返回场景
+            {t('practiceHub.backToScene')}
           </Link>
-          <h1 className="text-2xl font-bold text-foreground">{scene?.title ?? '训练话题'}</h1>
-          <p className="mt-1 text-muted-foreground">{scene?.location ?? '选择一个话题开始练习'}</p>
+          <h1 className="text-2xl font-bold text-foreground">{scene?.title ?? t('practiceHub.fallbackTitle')}</h1>
+          <p className="mt-1 text-muted-foreground">{scene?.location ?? t('practiceHub.fallbackSubtitle')}</p>
         </div>
 
         {topics.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <BookOpen className="size-12 text-muted-foreground/40" />
-            <p className="mt-4 text-muted-foreground">这个场景还没有训练话题</p>
+            <p className="mt-4 text-muted-foreground">{t('practiceHub.emptyScene')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -84,7 +86,7 @@ export function PracticeHubPage() {
                     <Badge variant="secondary" className="text-xs">{topic.difficulty}</Badge>
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{topic.promptZh}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">建议 {topic.suggestedDurationSec}s</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('practiceHub.suggested')} {topic.suggestedDurationSec}{t('practiceHub.sec')}</p>
                 </div>
                 <ChevronRight className="ml-3 size-4 shrink-0 text-muted-foreground" />
               </Link>
@@ -98,14 +100,14 @@ export function PracticeHubPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-24 pt-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">练习模式</h1>
-        <p className="mt-1 text-muted-foreground">选择场景，激活 Chunk，开口练习</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('practiceHub.title')}</h1>
+        <p className="mt-1 text-muted-foreground">{t('practiceHub.subtitle')}</p>
       </div>
 
       {categories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <BookOpen className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">场景内容即将上线</p>
+          <p className="mt-4 text-muted-foreground">{t('practiceHub.comingSoon')}</p>
         </div>
       ) : (
         <div className="space-y-6">
