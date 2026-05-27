@@ -123,7 +123,14 @@ export function VnStoryPreview({
 
   const appendResult = useCallback((engine: InkEngine, result: NonNullable<ReturnType<InkEngine['continue']>>) => {
     const tags = engine.getCurrentTags()
-    const waiting = tags.includes('wait') || tags.some((tag) => tag === 'input' || tag === 'user_input' || tag.startsWith('wait:') || tag.startsWith('input:'))
+    const waiting = tags.some((tag) => {
+      const normalized = tag.trim()
+      return normalized === 'input'
+        || normalized === 'user_input'
+        || normalized === 'wait:input'
+        || normalized === 'wait:user_input'
+        || normalized.startsWith('input:')
+    })
     setCurrentTags(tags)
     setIsWaiting(waiting)
     const { speaker, expression, bg, bgFit, audioUrl } = parseTags(tags)

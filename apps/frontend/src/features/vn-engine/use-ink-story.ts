@@ -58,10 +58,14 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     setCurrentTags(tags)
 
     // Check for tags that mark a user-input pause.
-    if (
-      tags.includes('wait') ||
-      tags.some((tag) => tag === 'input' || tag === 'user_input' || tag.startsWith('wait:') || tag.startsWith('input:'))
-    ) {
+    if (tags.some((tag) => {
+      const normalized = tag.trim()
+      return normalized === 'input'
+        || normalized === 'user_input'
+        || normalized === 'wait:input'
+        || normalized === 'wait:user_input'
+        || normalized.startsWith('input:')
+    })) {
       setIsWaiting(true)
     }
 

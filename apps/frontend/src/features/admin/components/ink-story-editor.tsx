@@ -31,7 +31,7 @@ type ComposerItem =
   | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; audioUrl?: string }
   | { type: 'choice'; text: string; target: string; showCharacter: boolean }
   | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
-  | { type: 'wait' }
+  | { type: 'wait'; requiresInput: boolean }
   | { type: 'divert'; target: string }
   | { type: 'tag'; value: string }
 
@@ -168,8 +168,16 @@ function parseComposer(source: string): ComposerScene[] {
         } else {
           scene.items.push({ type: 'tag', value: tag })
         }
-      } else if (tag === 'wait') {
-        scene.items.push({ type: 'wait' })
+      } else if (tag === 'wait' || tag.startsWith('wait:')) {
+        const waitMode = tag.replace(/^wait:?/, '').trim()
+        scene.items.push({ type: 'wait', requiresInput: waitMode === 'input' || waitMode === 'user_input' })
+      } else if (tag === 'input' || tag === 'user_input') {
+        const last = scene.items[scene.items.length - 1]
+        if (last?.type === 'wait') {
+          last.requiresInput = true
+        } else {
+          scene.items.push({ type: 'wait', requiresInput: true })
+        }
       } else {
         scene.items.push({ type: 'tag', value: tag })
       }
@@ -248,8 +256,7 @@ function serializeComposer(
         lines.push(`# bg:${item.url}`)
         lines.push(`# bgFit:${item.fit || 'cover'}`)
       } else if (item.type === 'wait') {
-        lines.push('# wait')
-        lines.push('# input')
+        lines.push(item.requiresInput ? '# wait:input' : '# wait')
       } else if (item.type === 'divert') {
         lines.push(`-> ${item.target || 'END'}`)
       } else {
@@ -286,7 +293,7 @@ function itemSummary(item: ComposerItem) {
   if (item.type === 'line') return item.text || '空对白'
   if (item.type === 'choice') return `${item.text || '空选项'} -> ${item.target || 'END'} · ${item.showCharacter ? '保留角色' : '隐藏角色'}`
   if (item.type === 'background') return `${item.fit || 'cover'} · ${item.url || '未选择背景'}`
-  if (item.type === 'wait') return '暂停，等待用户输入'
+  if (item.type === 'wait') return item.requiresInput ? '暂停，等待用户输入' : '暂停'
   if (item.type === 'divert') return `-> ${item.target || 'END'}`
   return `# ${item.value}`
 }
@@ -420,7 +427,7 @@ export function InkStoryEditor({
             : type === 'background'
               ? { type: 'background', url: '', fit: 'cover' }
               : type === 'wait'
-                ? { type: 'wait' }
+                ? { type: 'wait', requiresInput: true }
                 : type === 'divert'
                   ? { type: 'divert', target: 'END' }
                   : { type: 'tag', value: 'tag' }
@@ -800,8 +807,20 @@ export function InkStoryEditor({
                 )}
 
                 {selectedItem?.type === 'wait' && (
-                  <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-                    等待节点会生成 <code># wait</code>，VN 会暂停并等待用户输入。
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedItem.requiresInput}
+                        onChange={(event) => updateSelectedItem({ requiresInput: event.target.checked })}
+                        disabled={readOnly}
+                        className="rounded border-border"
+                      />
+                      等待用户输入
+                    </label>
+                    <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                      会生成 <code>{selectedItem.requiresInput ? '# wait:input' : '# wait'}</code>。
+                    </div>
                   </div>
                 )}
 
