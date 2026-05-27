@@ -149,6 +149,7 @@ export function PracticeSessionPage() {
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
   const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; audioUrl?: string }[]>([])
+  const [practiceSessionId, setPracticeSessionId] = useState<string | null>(null)
 
   // Fallback NPC dialogue (when no Ink script)
   const [fallbackRound, setFallbackRound] = useState(0)
@@ -187,10 +188,17 @@ export function PracticeSessionPage() {
   }, [phase, setImmersiveMode])
 
   // Switch to immersive mode BEFORE mounting PixiVnStage, so layout is stable
-  const handleStartPractice = useCallback(() => {
+  const handleStartPractice = useCallback(async () => {
     setImmersiveMode(true)
     setPhase('practice')
-  }, [setImmersiveMode])
+    if (!topicId) return
+    try {
+      const session = await practiceApi.createSession(topicId)
+      setPracticeSessionId(session.id)
+    } catch {
+      // Keep local practice usable even if session persistence is temporarily unavailable.
+    }
+  }, [setImmersiveMode, topicId])
 
   // ── Objectives & chunks from detail ──
   const objectives = useMemo(() => {
@@ -257,6 +265,7 @@ export function PracticeSessionPage() {
   const [restartKey, setRestartKey] = useState(0)
   const restartPractice = useCallback(() => {
     setDialogueRounds([])
+    setPracticeSessionId(null)
     syncedInkLineCountRef.current = 0
     setFallbackRound(0)
     setCompletedObjectives(new Set())
@@ -388,6 +397,7 @@ export function PracticeSessionPage() {
       let objectiveCompleted = [...completedObjectives]
       let chunksUsedForRound = [...usedChunks]
       let inkVariables: Record<string, string | number | boolean> | undefined
+      let turnJudgement: any
 
       try {
         const judgement = await practiceAiApi.judgeDialogueTurn({
@@ -396,11 +406,13 @@ export function PracticeSessionPage() {
           npcText,
           userText: userMsg,
           objectives: readListTags(currentTags, 'objective:').length ? readListTags(currentTags, 'objective:') : objectives,
+          targetChunks: coreChunkTexts.map((chunk) => chunk.text),
         })
 
         objectiveCompleted = judgement.objectiveCompleted ?? objectiveCompleted
         chunksUsedForRound = judgement.chunksUsed ?? chunksUsedForRound
         inkVariables = judgement.inkVariables
+        turnJudgement = judgement
 
         if (objectiveCompleted.length) {
           setCompletedObjectives((prev) => new Set([...prev, ...objectiveCompleted]))
@@ -410,6 +422,19 @@ export function PracticeSessionPage() {
         }
       } catch {
         // Keep the scripted flow moving even if AI judgement is temporarily unavailable.
+      }
+
+      if (practiceSessionId) {
+        practiceApi.submitTurn(practiceSessionId, {
+          round,
+          npcText,
+          userText: userMsg,
+          inputNodeId: readInputNodeId(currentTags),
+          tags: currentTags,
+          judgement: turnJudgement,
+          objectivesCompleted: objectiveCompleted,
+          chunksUsed: chunksUsedForRound,
+        }).catch(() => {})
       }
 
       practiceApi.submitDialogue(topicId!, {
@@ -431,6 +456,16 @@ export function PracticeSessionPage() {
       `I understand. Let me ask you another question—why do you think that is?`,
     ]
     const fallbackNpcText = npcResponses[fallbackRound % npcResponses.length]
+
+    if (practiceSessionId) {
+      practiceApi.submitTurn(practiceSessionId, {
+        round,
+        npcText,
+        userText: userMsg,
+        objectivesCompleted: [...completedObjectives],
+        chunksUsed: [...usedChunks],
+      }).catch(() => {})
+    }
 
     setTimeout(() => {
       setDialogueRounds((prev) => [
@@ -454,7 +489,7 @@ export function PracticeSessionPage() {
       const idx = fallbackRound % objectives.length
       setCompletedObjectives((prev) => new Set([...prev, objectives[idx]]))
     }
-  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags])
+  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags, practiceSessionId])
 
   // ==================== Analysis ====================
   const currentSessionDialogues = useMemo(() => {
@@ -486,21 +521,23 @@ export function PracticeSessionPage() {
     setPhase('analysis')
     setAnalysisLoading(true)
     try {
-      const res = await practiceAiApi.dialogueSummary({
-        topicId,
-        topicTitle: detail.topic.title,
-        promptEn: detail.topic.promptEn,
-        objectives,
-        coreChunks: coreChunkTexts.map((c) => c.text),
-        dialogues: currentSessionDialogues,
-      })
+      const res = practiceSessionId
+        ? await practiceApi.completeSession(practiceSessionId).then(() => practiceAiApi.analyzeSession(practiceSessionId))
+        : await practiceAiApi.dialogueSummary({
+            topicId,
+            topicTitle: detail.topic.title,
+            promptEn: detail.topic.promptEn,
+            objectives,
+            coreChunks: coreChunkTexts.map((c) => c.text),
+            dialogues: currentSessionDialogues,
+          })
       setAnalysisResult(res.analysis ?? res)
     } catch (e: any) {
       setAnalysisResult({ summary: `分析失败: ${e.message}` })
     } finally {
       setAnalysisLoading(false)
     }
-  }, [topicId, detail, objectives, coreChunkTexts, currentSessionDialogues])
+  }, [topicId, detail, objectives, coreChunkTexts, currentSessionDialogues, practiceSessionId])
 
   const saveAnalysisExpression = useCallback(async (data: {
     type: string
@@ -517,6 +554,7 @@ export function PracticeSessionPage() {
 
   const resetPractice = () => {
     setDialogueRounds([])
+    setPracticeSessionId(null)
     syncedInkLineCountRef.current = 0
     setFallbackRound(0)
     setCompletedObjectives(new Set())

@@ -947,9 +947,25 @@ function RecordsTab() {
     {
       key: 'questionText',
       header: t('profile.columns.question'),
-      cell: (v) => (
-        <span className="text-sm text-muted-foreground line-clamp-1 max-w-[300px]">{v}</span>
+      cell: (v, row) => (
+        <div className="max-w-[360px]">
+          <span className="line-clamp-1 text-sm text-muted-foreground">{v}</span>
+          {row.summary && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/80">{row.summary}</p>}
+        </div>
       ),
+    },
+    {
+      key: 'status',
+      header: '状态',
+      cell: (v, row) => (
+        <div className="flex items-center gap-2">
+          <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-xs">
+            {v === 'analyzed' ? '已分析' : v === 'analyzing' ? '分析中' : v === 'completed' ? '待分析' : v === 'failed' ? '失败' : '进行中'}
+          </Badge>
+          {typeof row.score === 'number' && <span className="text-xs font-semibold text-primary">{row.score}</span>}
+        </div>
+      ),
+      width: 120,
     },
     {
       key: 'practiceCount',

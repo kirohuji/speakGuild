@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeService } from './english-practice.service';
-import { SubmitRecordingDto, SaveExpressionDto, SubmitPracticeDialogueDto } from './dto/english-practice.dto';
+import { CreatePracticeSessionDto, SaveExpressionDto, SubmitPracticeDialogueDto, SubmitPracticeTurnDto, SubmitRecordingDto } from './dto/english-practice.dto';
 import { requireAuthSession } from '../auth/session.util';
 
 /** 英语输出训练 — 练习模式 API */
@@ -26,6 +26,38 @@ export class EnglishPracticeController {
   @Get('topics/:id/ink')
   async getTopicInk(@Param('id') id: string) {
     return this.practiceService.getTopicInkScript(id);
+  }
+
+  @Post('topics/:id/sessions')
+  async createSession(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() _dto: Partial<CreatePracticeSessionDto>,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.createPracticeSession(session.user.id, id);
+  }
+
+  @Get('sessions/:sessionId')
+  async getSession(@Req() req: Request, @Param('sessionId') sessionId: string) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.getPracticeSession(session.user.id, sessionId);
+  }
+
+  @Post('sessions/:sessionId/turns')
+  async submitTurn(
+    @Req() req: Request,
+    @Param('sessionId') sessionId: string,
+    @Body() dto: SubmitPracticeTurnDto,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.submitPracticeTurn(session.user.id, sessionId, dto);
+  }
+
+  @Post('sessions/:sessionId/complete')
+  async completeSession(@Req() req: Request, @Param('sessionId') sessionId: string) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.completePracticeSession(session.user.id, sessionId);
   }
 
   /** 提交录音转写（记录练习行为） */

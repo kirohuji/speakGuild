@@ -56,6 +56,7 @@ model User {
   expressionItems      ExpressionItem[]
   scriptRecords        ScriptRecord[]
   scriptDialogues      ScriptDialogue[]
+  practiceSessions     PracticeSession[]
   explorationRecords   ExplorationRecord[]
   onboardingStatus     OnboardingStatus?
   userAchievementsV2   UserAchievementV2[]
@@ -868,6 +869,7 @@ model TrainingTopic {
   suggestedDurationSec Int               @default(60)
   difficulty           String            @default("L2")
   activeChunks         TrainingTopicChunk[]
+  practiceSessions     PracticeSession[]
   sentenceSkeleton     String?           @db.Text
   sentencePatterns     Json?
   inkScriptId          String?           @unique
@@ -877,6 +879,56 @@ model TrainingTopic {
 
   @@index([sceneId, difficulty])
   @@map("training_topic")
+}
+
+model PracticeSession {
+  id                       String         @id @default(cuid())
+  user                     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                   String
+  topic                    TrainingTopic  @relation(fields: [topicId], references: [id])
+  topicId                  String
+  sceneId                  String
+  inkScriptId              String?
+  status                   String         @default("active")
+  topicSnapshot            Json
+  sceneSnapshot            Json
+  objectivesSnapshot       Json
+  chunksSnapshot           Json
+  vocabSnapshot            Json
+  sentencePatternsSnapshot Json?
+  turnCount                Int            @default(0)
+  analysisResult           Json?
+  analysisRaw              String?        @db.Text
+  analysisError            String?        @db.Text
+  startedAt                DateTime       @default(now())
+  completedAt              DateTime?
+  analyzedAt               DateTime?
+  updatedAt                DateTime       @updatedAt
+  turns                    PracticeTurn[]
+
+  @@index([userId, startedAt(sort: Desc)])
+  @@index([topicId, startedAt(sort: Desc)])
+  @@index([status])
+  @@map("practice_session")
+}
+
+model PracticeTurn {
+  id                 String          @id @default(cuid())
+  session            PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId          String
+  round              Int
+  npcText            String          @db.Text
+  userText           String          @db.Text
+  userAudioUrl       String?
+  inputNodeId        String?
+  tags               Json?
+  judgement          Json?
+  objectivesCompleted String[]       @default([])
+  chunksUsed         String[]        @default([])
+  createdAt          DateTime        @default(now())
+
+  @@index([sessionId, round])
+  @@map("practice_turn")
 }
 
 model TrainingTopicChunk {

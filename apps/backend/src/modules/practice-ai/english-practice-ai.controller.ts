@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Param, Post, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
 import type { Request } from 'express';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
@@ -49,5 +49,30 @@ export class EnglishPracticeAiController {
       objectives: dto.objectives ?? [],
       coreChunks: dto.coreChunks ?? [],
     });
+  }
+
+  @Post('sessions/:sessionId/analyze')
+  async analyzePracticeSession(@Req() req: Request, @Param('sessionId') sessionId: string) {
+    const session = await requireAuthSession(req);
+    await this.practiceService.markPracticeSessionAnalyzing(session.user.id, sessionId);
+
+    try {
+      const practiceSession = await this.practiceService.getPracticeSessionForAnalysis(session.user.id, sessionId);
+      const result = await this.service.summarizePracticeSession(practiceSession);
+      await this.practiceService.savePracticeSessionAnalysis(
+        session.user.id,
+        sessionId,
+        result.analysis,
+        result.raw,
+      );
+      return result;
+    } catch (error: any) {
+      await this.practiceService.savePracticeSessionAnalysisError(
+        session.user.id,
+        sessionId,
+        error?.message || '分析失败',
+      );
+      throw error;
+    }
   }
 }

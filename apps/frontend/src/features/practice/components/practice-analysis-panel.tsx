@@ -276,7 +276,7 @@ export function PracticeAnalysisPanel({
                       className="mt-3 h-8 gap-1.5 text-xs"
                       disabled={savingKey === `correction:${index}`}
                       onClick={() => saveExpression(`correction:${index}`, {
-                        type: 'correction',
+                        type: 'error_sentence',
                         original: issue.original,
                         corrected: issue.correction,
                         sceneName: topicTitle,

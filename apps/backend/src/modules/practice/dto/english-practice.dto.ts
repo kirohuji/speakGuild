@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 
 /** 提交录音转写 */
 export class SubmitRecordingDto {
@@ -88,4 +88,45 @@ export class SubmitPracticeDialogueDto {
 
   @IsOptional()
   grammarIssues?: any;
+}
+
+export class CreatePracticeSessionDto {
+  @IsString()
+  topicId: string;
+}
+
+export class SubmitPracticeTurnDto {
+  @IsNumber()
+  @IsOptional()
+  round?: number;
+
+  @IsString()
+  npcText: string;
+
+  @IsString()
+  userText: string;
+
+  @IsString()
+  @IsOptional()
+  userAudioUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  inputNodeId?: string;
+
+  @IsArray()
+  @IsOptional()
+  tags?: string[];
+
+  @IsObject()
+  @IsOptional()
+  judgement?: any;
+
+  @IsArray()
+  @IsOptional()
+  objectivesCompleted?: string[];
+
+  @IsArray()
+  @IsOptional()
+  chunksUsed?: string[];
 }

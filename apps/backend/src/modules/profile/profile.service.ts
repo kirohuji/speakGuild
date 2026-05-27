@@ -178,6 +178,53 @@ export class ProfileService {
     const { page = 1, pageSize = 20 } = pagination;
     const skip = (page - 1) * pageSize;
 
+    const [sessions, sessionTotal] = await Promise.all([
+      this.prisma.practiceSession.findMany({
+        where: { userId },
+        orderBy: { startedAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          topic: {
+            select: {
+              id: true,
+              title: true,
+              scene: { select: { id: true, title: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.practiceSession.count({ where: { userId } }),
+    ]);
+
+    if (sessionTotal > 0) {
+      return {
+        list: sessions.map((session) => {
+          const analysis = session.analysisResult as any;
+          const topicSnapshot = session.topicSnapshot as any;
+          const sceneSnapshot = session.sceneSnapshot as any;
+          return {
+            recordId: session.id,
+            sessionId: session.id,
+            topicId: session.topicId,
+            topicName: sceneSnapshot?.title || session.topic.scene?.title || '英语输出训练',
+            questionId: session.topicId,
+            questionText: topicSnapshot?.title || session.topic.title,
+            practiceCount: session.turnCount,
+            lastPracticeAt: session.startedAt.toISOString(),
+            status: session.status,
+            score: analysis?.overallScore ?? null,
+            summary: analysis?.summary ?? null,
+            completedAt: session.completedAt?.toISOString() ?? null,
+            analyzedAt: session.analyzedAt?.toISOString() ?? null,
+          };
+        }),
+        total: sessionTotal,
+        page,
+        pageSize,
+      };
+    }
+
     // Aggregate by question: count practices + last practice date per question
     const records = await this.prisma.practiceRecord.groupBy({
       by: ['questionId'],

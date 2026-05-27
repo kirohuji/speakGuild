@@ -90,6 +90,33 @@ export interface TopicDetail {
   }[]
 }
 
+export interface PracticeSession {
+  id: string
+  topicId: string
+  sceneId: string
+  inkScriptId?: string | null
+  status: 'active' | 'completed' | 'analyzing' | 'analyzed' | 'failed' | string
+  turnCount: number
+  analysisResult?: any
+  analysisRaw?: string | null
+  analysisError?: string | null
+  startedAt: string
+  completedAt?: string | null
+  analyzedAt?: string | null
+  turns?: Array<{
+    id: string
+    round: number
+    npcText: string
+    userText: string
+    inputNodeId?: string | null
+    tags?: any
+    judgement?: any
+    objectivesCompleted: string[]
+    chunksUsed: string[]
+    createdAt: string
+  }>
+}
+
 export const practiceApi = {
   getTopics: (sceneId: string) =>
     api.get<any, { scene: any; topics: TrainingTopic[] }>(`/practice/topics`, { params: { sceneId } }),
@@ -100,6 +127,27 @@ export const practiceApi = {
   /** 获取话题关联的 Ink 脚本 */
   getTopicInk: (topicId: string) =>
     api.get<any, { id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
+
+  createSession: (topicId: string) =>
+    api.post<any, PracticeSession>(`/practice/topics/${topicId}/sessions`, { topicId }),
+
+  getSession: (sessionId: string) =>
+    api.get<any, PracticeSession>(`/practice/sessions/${sessionId}`),
+
+  submitTurn: (sessionId: string, data: {
+    round?: number
+    npcText: string
+    userText: string
+    userAudioUrl?: string
+    inputNodeId?: string
+    tags?: string[]
+    judgement?: any
+    objectivesCompleted?: string[]
+    chunksUsed?: string[]
+  }) => api.post(`/practice/sessions/${sessionId}/turns`, data),
+
+  completeSession: (sessionId: string) =>
+    api.post<any, PracticeSession>(`/practice/sessions/${sessionId}/complete`, {}),
 
   submitRecording: (topicId: string, userTranscript: string, audioUrl?: string) =>
     api.post(`/practice/topics/${topicId}/record`, { userTranscript, audioUrl, topicId }),
@@ -192,6 +240,9 @@ export const practiceAiApi = {
     confidence: number
     raw?: string
   }>('/practice-ai/dialogue-turn', dto),
+
+  analyzeSession: (sessionId: string) =>
+    api.post<any, { analysis: any; raw: string }>(`/practice-ai/sessions/${sessionId}/analyze`, {}),
 }
 
 // ---- 表达库 ----

@@ -21,12 +21,18 @@ export interface ActivityDay {
 
 export interface PracticeRecord {
   recordId: string
+  sessionId?: string
   topicId: string
   topicName: string
   questionId: string
   questionText: string
   practiceCount: number
   lastPracticeAt: string
+  status?: string
+  score?: number | null
+  summary?: string | null
+  completedAt?: string | null
+  analyzedAt?: string | null
 }
 
 export interface PracticeRecordsResult {

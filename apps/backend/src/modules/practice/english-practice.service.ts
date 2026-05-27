@@ -1,10 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { SubmitRecordingDto, SaveExpressionDto } from './dto/english-practice.dto';
+import { SaveExpressionDto, SubmitPracticeTurnDto, SubmitRecordingDto } from './dto/english-practice.dto';
 
 @Injectable()
 export class EnglishPracticeService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private buildObjectives(topic: {
+    title: string;
+    sentencePatterns?: any;
+    sentenceSkeleton?: string | null;
+  }) {
+    const objectives: string[] = [];
+    const patterns = Array.isArray(topic.sentencePatterns) ? topic.sentencePatterns : [];
+    patterns.forEach((pattern) => {
+      if (pattern?.pattern) objectives.push(`使用句型: ${pattern.pattern}`);
+    });
+    if (topic.sentenceSkeleton) objectives.push(`参考结构: ${topic.sentenceSkeleton}`);
+    objectives.push(`围绕话题 "${topic.title}" 展开对话`);
+    return objectives;
+  }
 
   /** 获取场景下的训练话题列表 */
   async getTopicsByScene(sceneId: string) {
@@ -160,6 +175,208 @@ export class EnglishPracticeService {
         };
       }),
     };
+  }
+
+  async createPracticeSession(userId: string, topicId: string) {
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      include: {
+        scene: {
+          include: {
+            category: true,
+            vocabularies: { orderBy: { sortOrder: 'asc' } },
+          },
+        },
+        activeChunks: {
+          include: {
+            chunk: {
+              include: {
+                examples: { orderBy: { sortOrder: 'asc' }, take: 3 },
+              },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+    if (!topic) throw new NotFoundException('练习话题不存在');
+
+    const topicSnapshot = {
+      id: topic.id,
+      title: topic.title,
+      description: topic.description,
+      knowledgePoints: topic.knowledgePoints,
+      promptEn: topic.promptEn,
+      promptZh: topic.promptZh,
+      difficulty: topic.difficulty,
+      suggestedDurationSec: topic.suggestedDurationSec,
+      sentenceSkeleton: topic.sentenceSkeleton,
+    };
+    const sceneSnapshot = {
+      id: topic.scene.id,
+      title: topic.scene.title,
+      location: topic.scene.location,
+      description: topic.scene.description,
+      category: topic.scene.category.name,
+    };
+    const chunksSnapshot = topic.activeChunks.map((item) => ({
+      id: item.chunk.id,
+      text: item.chunk.text,
+      meaning: item.chunk.meaning,
+      description: item.chunk.description,
+      difficulty: item.chunk.difficulty,
+      examples: item.chunk.examples,
+    }));
+    const vocabSnapshot = topic.scene.vocabularies.map((item) => ({
+      id: item.id,
+      word: item.word,
+      meaning: item.meaning,
+      partOfSpeech: item.partOfSpeech,
+      difficulty: item.difficulty,
+      examples: item.examples,
+      description: item.description,
+    }));
+    const objectivesSnapshot = this.buildObjectives(topic);
+
+    return this.prisma.practiceSession.create({
+      data: {
+        userId,
+        topicId: topic.id,
+        sceneId: topic.sceneId,
+        inkScriptId: topic.inkScriptId,
+        topicSnapshot,
+        sceneSnapshot,
+        objectivesSnapshot,
+        chunksSnapshot,
+        vocabSnapshot,
+        sentencePatternsSnapshot: topic.sentencePatterns ?? null,
+      },
+    });
+  }
+
+  async submitPracticeTurn(userId: string, sessionId: string, dto: SubmitPracticeTurnDto) {
+    const session = await this.prisma.practiceSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true, turnCount: true },
+    });
+    if (!session) throw new NotFoundException('练习会话不存在');
+
+    const round = dto.round ?? session.turnCount + 1;
+    const turn = await this.prisma.practiceTurn.create({
+      data: {
+        sessionId,
+        round,
+        npcText: dto.npcText,
+        userText: dto.userText,
+        userAudioUrl: dto.userAudioUrl,
+        inputNodeId: dto.inputNodeId,
+        tags: dto.tags ?? undefined,
+        judgement: dto.judgement ?? undefined,
+        objectivesCompleted: dto.objectivesCompleted ?? [],
+        chunksUsed: dto.chunksUsed ?? [],
+      },
+    });
+
+    await this.prisma.practiceSession.update({
+      where: { id: sessionId },
+      data: {
+        turnCount: { increment: 1 },
+        status: 'active',
+      },
+    });
+
+    return turn;
+  }
+
+  async completePracticeSession(userId: string, sessionId: string) {
+    const session = await this.prisma.practiceSession.findFirst({
+      where: { id: sessionId, userId },
+    });
+    if (!session) throw new NotFoundException('练习会话不存在');
+
+    if (session.status === 'analyzed') return session;
+
+    const updated = await this.prisma.practiceSession.update({
+      where: { id: sessionId },
+      data: {
+        status: session.status === 'analyzing' ? 'analyzing' : 'completed',
+        completedAt: session.completedAt ?? new Date(),
+      },
+    });
+
+    if (!session.completedAt) {
+      await this.prisma.dailyActivity.upsert({
+        where: {
+          userId_date: {
+            userId,
+            date: new Date(),
+          },
+        },
+        create: { userId, date: new Date(), count: 1 },
+        update: { count: { increment: 1 } },
+      });
+    }
+
+    return updated;
+  }
+
+  async getPracticeSession(userId: string, sessionId: string) {
+    const session = await this.prisma.practiceSession.findFirst({
+      where: { id: sessionId, userId },
+      include: { turns: { orderBy: { round: 'asc' } } },
+    });
+    if (!session) throw new NotFoundException('练习会话不存在');
+    return session;
+  }
+
+  async getPracticeSessionForAnalysis(userId: string, sessionId: string) {
+    return this.getPracticeSession(userId, sessionId);
+  }
+
+  async markPracticeSessionAnalyzing(userId: string, sessionId: string) {
+    const session = await this.prisma.practiceSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true },
+    });
+    if (!session) throw new NotFoundException('练习会话不存在');
+    return this.prisma.practiceSession.update({
+      where: { id: sessionId },
+      data: { status: 'analyzing', analysisError: null },
+    });
+  }
+
+  async savePracticeSessionAnalysis(userId: string, sessionId: string, analysis: any, raw?: string | null) {
+    const session = await this.prisma.practiceSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true },
+    });
+    if (!session) throw new NotFoundException('练习会话不存在');
+    return this.prisma.practiceSession.update({
+      where: { id: sessionId },
+      data: {
+        status: 'analyzed',
+        analysisResult: analysis ?? undefined,
+        analysisRaw: raw ?? undefined,
+        analysisError: null,
+        analyzedAt: new Date(),
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  async savePracticeSessionAnalysisError(userId: string, sessionId: string, error: string) {
+    const session = await this.prisma.practiceSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true },
+    });
+    if (!session) throw new NotFoundException('练习会话不存在');
+    return this.prisma.practiceSession.update({
+      where: { id: sessionId },
+      data: {
+        status: 'failed',
+        analysisError: error,
+      },
+    });
   }
 
   /** 提交录音转写 — 记录练习行为 */
