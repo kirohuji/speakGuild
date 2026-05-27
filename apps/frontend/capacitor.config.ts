@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
 
   ios: {
     contentInset: 'always',
-    scrollEnabled: true,
+    scrollEnabled: false,
   },
 
   // ── Capacitor 插件配置 ──

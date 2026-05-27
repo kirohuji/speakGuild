@@ -34,7 +34,7 @@ export function RootLayout() {
   return (
     <div
       className={cn(
-        'flex min-h-screen flex-col bg-background text-foreground',
+        'flex h-dvh flex-col overflow-hidden bg-background text-foreground lg:h-auto lg:min-h-screen lg:overflow-visible',
         !isHomePage && !immersiveMode && 'app-surface',
       )}
     >
@@ -49,7 +49,7 @@ export function RootLayout() {
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
       )}
-      <main className={`flex-1 pt-0 ${
+      <main className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pt-0 lg:overflow-visible ${
         immersiveMode
           ? 'pb-0'
           : isAuthPage || !isLoggedIn
