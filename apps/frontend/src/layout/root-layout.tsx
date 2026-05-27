@@ -39,9 +39,13 @@ export function RootLayout() {
       )}
     >
       {!isAuthPage && (
-        <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
-          <Header />
-        </div>
+        <>
+          {/* Frosted glass top bar for safe area */}
+          <div className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top,0px)] bg-background/70 backdrop-blur-xl lg:hidden" />
+          <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
+            <Header />
+          </div>
+        </>
       )}
       {!isAuthPage && showMobileAvatar && (
         <MobileTopBar
