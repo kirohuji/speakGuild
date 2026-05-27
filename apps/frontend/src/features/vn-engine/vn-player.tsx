@@ -534,42 +534,23 @@ export function VnPlayer({
       >
         <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
 
-        {(showHistoryButton || onReset) && (
+        {onReset && (
           <div className="absolute right-3 top-3 z-30 flex gap-2">
-            {showHistoryButton && (
-              <span
-                role="button"
-                tabIndex={0}
-                className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
-                onClick={(event) => { event.stopPropagation(); toggleHistory(!historyOpen) }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    toggleHistory(!historyOpen)
-                  }
-                }}
-              >
-                <History className="size-4" />
-              </span>
-            )}
-            {onReset && (
-              <span
-                role="button"
-                tabIndex={0}
-                className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
-                onClick={(event) => { event.stopPropagation(); onReset() }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    onReset()
-                  }
-                }}
-              >
-                <RotateCcw className="size-4" />
-              </span>
-            )}
+            <span
+              role="button"
+              tabIndex={0}
+              className="flex size-9 items-center justify-center rounded-full bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+              onClick={(event) => { event.stopPropagation(); onReset() }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onReset()
+                }
+              }}
+            >
+              <RotateCcw className="size-4" />
+            </span>
           </div>
         )}
 
@@ -647,6 +628,11 @@ export function VnPlayer({
             >
               <SkipBack className="size-3.5" />
             </VnIconButton>
+            {showHistoryButton && (
+              <VnIconButton label="历史对话" onClick={() => toggleHistory(!historyOpen)}>
+                <History className="size-3.5" />
+              </VnIconButton>
+            )}
             <VnIconButton label="播放设置" onClick={() => setSettingsOpen(true)}>
               <Settings className="size-3.5" />
             </VnIconButton>

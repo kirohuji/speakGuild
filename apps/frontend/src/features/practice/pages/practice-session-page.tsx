@@ -682,8 +682,7 @@ export function PracticeSessionPage() {
             hideToggles={isHistoryOpen}
             compactTrigger
             plainTrigger
-            showTriggerIcon={false}
-            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center rounded-full bg-white/12 px-3 text-xs font-semibold text-white/88 shadow-none transition-all duration-200 hover:bg-white/18 hover:text-white active:scale-[0.97]"
+            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-white/82 transition-opacity active:opacity-70"
           />
 
           <span aria-hidden className="h-7 w-[72px]" />

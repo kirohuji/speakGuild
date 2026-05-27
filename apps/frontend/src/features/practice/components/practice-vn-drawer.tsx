@@ -66,8 +66,12 @@ export function PracticeVnDrawer({
             triggerClassName,
           )}
         >
-          {showTriggerIcon && <Target className="size-3.5 text-rose-100" />}
-          <span>目标 {completedCount}/{objectives.length || 1}</span>
+          {showTriggerIcon && (
+            compactTrigger
+              ? <Lightbulb className="size-3.5 text-white/82" />
+              : <Target className="size-3.5 text-rose-100" />
+          )}
+          <span>{compactTrigger ? '提示' : '目标'} {completedCount}/{objectives.length || 1}</span>
           {!compactTrigger && (
             <>
               <span className="h-1 w-1 rounded-full bg-white/36" />
