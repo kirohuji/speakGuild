@@ -457,6 +457,30 @@ export function PracticeSessionPage() {
   }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags])
 
   // ==================== Analysis ====================
+  const currentSessionDialogues = useMemo(() => {
+    const turns: Array<{
+      round: number
+      npcText: string
+      userText: string
+      objectivesCompleted?: string[]
+      chunksUsed?: string[]
+    }> = []
+
+    dialogueRounds.forEach((line, index) => {
+      if (line.isNpc) return
+      const npcLine = [...dialogueRounds.slice(0, index)].reverse().find((item) => item.isNpc)
+      turns.push({
+        round: turns.length + 1,
+        npcText: npcLine?.text ?? '',
+        userText: line.text,
+        objectivesCompleted: [...completedObjectives],
+        chunksUsed: [...usedChunks],
+      })
+    })
+
+    return turns
+  }, [completedObjectives, dialogueRounds, usedChunks])
+
   const startAnalysis = useCallback(async () => {
     if (!topicId || !detail) return
     setPhase('analysis')
@@ -468,6 +492,7 @@ export function PracticeSessionPage() {
         promptEn: detail.topic.promptEn,
         objectives,
         coreChunks: coreChunkTexts.map((c) => c.text),
+        dialogues: currentSessionDialogues,
       })
       setAnalysisResult(res.analysis ?? res)
     } catch (e: any) {
@@ -475,7 +500,20 @@ export function PracticeSessionPage() {
     } finally {
       setAnalysisLoading(false)
     }
-  }, [topicId, detail, objectives, coreChunkTexts])
+  }, [topicId, detail, objectives, coreChunkTexts, currentSessionDialogues])
+
+  const saveAnalysisExpression = useCallback(async (data: {
+    type: string
+    original?: string
+    corrected?: string
+    chunkText?: string
+    sceneName?: string
+  }) => {
+    await practiceApi.saveExpression({
+      ...data,
+      sceneName: data.sceneName || detail?.scene.title,
+    })
+  }, [detail?.scene.title])
 
   const resetPractice = () => {
     setDialogueRounds([])
@@ -674,6 +712,7 @@ export function PracticeSessionPage() {
   // ==================== Phase: Practice (VN) ====================
   if (phase === 'practice') {
     const currentLine = dialogueRounds[dialogueRounds.length - 1]
+    const canReview = inkEnded || dialogueRounds.some((line) => !line.isNpc)
     const characters = detail.scene.characters ?? []
     const currentCharacter = characters.find((character) => {
       const speaker = vnVisual.speaker || (currentLine?.isNpc ? currentLine.speaker : undefined)
@@ -715,10 +754,11 @@ export function PracticeSessionPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={restartPractice}
+            onClick={canReview ? startAnalysis : restartPractice}
             className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white"
           >
-            <RotateCcw className="size-3.5" /> 重来
+            {canReview ? <CheckCircle2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
+            {canReview ? '复盘' : '重来'}
           </Button>
           </div>
         </div>
@@ -742,6 +782,22 @@ export function PracticeSessionPage() {
               onSubmitInput={sendUserInput}
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
+              endedActions={(
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" className="h-8 rounded-full px-4 text-xs" onClick={startAnalysis}>
+                    查看复盘
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-full border-white/20 bg-white/8 px-4 text-xs text-white hover:bg-white/12 hover:text-white"
+                    onClick={restartPractice}
+                  >
+                    再练一次
+                  </Button>
+                </div>
+              )}
               onHistoryOpenChange={setIsHistoryOpen}
             />
           </VnPlayerBoundary>
@@ -785,24 +841,9 @@ export function PracticeSessionPage() {
           topicTitle={detail.topic.title}
           onBack={() => setPhase('practice')}
           onFinish={() => navigate('/expressions')}
+          onRestart={resetPractice}
+          onSaveExpression={saveAnalysisExpression}
         />
-
-        {/* Action buttons */}
-        <div className="mt-6 flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={resetPractice}
-          >
-            <RotateCcw className="mr-1 size-4" /> 重新练习
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => navigate('/expressions')}
-          >
-            查看表达库 <ChevronRight className="ml-1 size-4" />
-          </Button>
-        </div>
       </div>
     )
   }

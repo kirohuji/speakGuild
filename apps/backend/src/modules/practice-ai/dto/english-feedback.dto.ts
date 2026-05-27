@@ -45,6 +45,17 @@ export class DialogueSummaryDto {
 
   @IsOptional()
   coreChunks?: string[];
+
+  @IsOptional()
+  dialogues?: Array<{
+    round: number;
+    npcText: string;
+    userText: string;
+    isOnTopic?: boolean;
+    objectivesCompleted?: string[];
+    chunksUsed?: string[];
+    grammarIssues?: any;
+  }>;
 }
 
 export class DialogueTurnJudgeDto {

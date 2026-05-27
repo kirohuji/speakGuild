@@ -163,6 +163,15 @@ export const practiceAiApi = {
     promptEn: string
     objectives?: string[]
     coreChunks?: string[]
+    dialogues?: Array<{
+      round: number
+      npcText: string
+      userText: string
+      isOnTopic?: boolean
+      objectivesCompleted?: string[]
+      chunksUsed?: string[]
+      grammarIssues?: any
+    }>
   }) => api.post<any, { analysis: any; raw: string }>('/practice-ai/dialogue-summary', dto),
 
   judgeDialogueTurn: (dto: {

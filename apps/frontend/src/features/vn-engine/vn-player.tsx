@@ -46,6 +46,7 @@ interface VnPlayerProps {
   onChoice?: (index: number) => void
   onSubmitInput?: (text: string) => void | Promise<void>
   onReset?: () => void
+  endedActions?: ReactNode
   onHistoryOpenChange?: (open: boolean) => void
   className?: string
   stageClassName?: string
@@ -406,6 +407,7 @@ export function VnPlayer({
   onChoice,
   onSubmitInput,
   onReset,
+  endedActions,
   onHistoryOpenChange,
   className,
   stageClassName,
@@ -668,7 +670,10 @@ export function VnPlayer({
                   )}
                 </div>
               ) : isEnded ? (
-                <p className="text-center text-sm text-white/62">故事结束</p>
+                <div className="flex flex-col items-center justify-center gap-3 py-1">
+                  <p className="text-center text-sm text-white/62">故事结束</p>
+                  {endedActions}
+                </div>
               ) : isWaiting ? (
                 <div className="flex items-center justify-center py-2">
                   <span className="inline-flex gap-1">

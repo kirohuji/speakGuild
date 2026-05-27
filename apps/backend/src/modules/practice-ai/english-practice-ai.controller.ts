@@ -37,8 +37,10 @@ export class EnglishPracticeAiController {
   @Post('dialogue-summary')
   async summarizeDialogue(@Req() req: Request, @Body() dto: DialogueSummaryDto) {
     const session = await requireAuthSession(req);
-    // Fetch dialogue records for this topic
-    const dialogues = await this.practiceService.getTopicDialogues(dto.topicId, session.user.id);
+    const providedDialogues = Array.isArray(dto.dialogues) ? dto.dialogues : [];
+    const dialogues = providedDialogues.length > 0
+      ? providedDialogues
+      : await this.practiceService.getTopicDialogues(dto.topicId, session.user.id);
 
     return this.service.summarizeDialogue({
       topicTitle: dto.topicTitle,
