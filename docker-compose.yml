@@ -1,18 +1,18 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: guideready-db
+    container_name: manyu-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-guideready}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guideready}
-      POSTGRES_DB: ${POSTGRES_DB:-guideready}
+      POSTGRES_USER: ${POSTGRES_USER:-manyu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-manyu}
+      POSTGRES_DB: ${POSTGRES_DB:-manyu}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-guideready} -d ${POSTGRES_DB:-guideready}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-manyu} -d ${POSTGRES_DB:-manyu}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,12 +23,12 @@ services:
       dockerfile: docker/backend.Dockerfile
       args:
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
-    container_name: guideready-backend
+    container_name: manyu-backend
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://${POSTGRES_USER:-guideready}:${POSTGRES_PASSWORD:-guideready}@db:5432/${POSTGRES_DB:-guideready}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-manyu}:${POSTGRES_PASSWORD:-manyu}@db:5432/${POSTGRES_DB:-manyu}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
@@ -58,7 +58,7 @@ services:
       args:
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
         VITE_API_BASE_URL: /api/v1/guide-exam
-    container_name: guideready-nginx
+    container_name: manyu-nginx
     restart: unless-stopped
     depends_on:
       - backend

@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion, useInView } from 'motion/react'
 import {
@@ -176,6 +177,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function PortalPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { session } = useAuth()
   const isLoggedIn = !!session
 
@@ -236,7 +238,7 @@ export function PortalPage() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed"
           >
-            英游记（EngJourney）通过场景 + Chunk + AI 纠错 + 剧本任务，
+              漫语町（ManYu）通过场景 + Chunk + AI 纠错 + 剧本任务，
             帮你把英语从「看得懂」练到「说得出」。
             不是背英语，而是练到真正能开口。
           </motion.p>
@@ -264,7 +266,7 @@ export function PortalPage() {
               className="px-8 py-3.5 text-base font-semibold shadow-lg shadow-primary/25"
               onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
             >
-              {isLoggedIn ? '进入练习模式' : '免费开始练习'}
+              {isLoggedIn ? t('portal.startPractice') : t('portal.startFree')}
               <ArrowRight className="ml-2 h-5 w-5" />
             </ShimmerButton>
 
@@ -275,7 +277,7 @@ export function PortalPage() {
               onClick={() => navigate(isLoggedIn ? '/script' : '/auth/register')}
             >
               <Play className="mr-2 h-5 w-5" />
-              免费体验剧本
+              {t('portal.freeTrial')}
             </Button>
           </motion.div>
 
@@ -347,7 +349,7 @@ export function PortalPage() {
             场景化英语，真正说出口
           </h2>
           <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            英游记（EngJourney）覆盖英语输出训练全流程，从 Chunk 激活到剧本实战，帮你练到真正能开口
+            漫语町（ManYu）覆盖英语输出训练全流程，从 Chunk 激活到剧本实战，帮你练到真正能开口
           </p>
         </FadeInSection>
 

@@ -73,13 +73,13 @@ jobs:
         run: |
           set -euo pipefail
           trap 'echo "Prisma db push failed, print backend logs:"; docker compose logs --tail=200 backend' ERR
-          docker compose exec -T backend pnpm --filter @guideready/backend exec prisma db push --force-reset
+          docker compose exec -T backend pnpm --filter @manyu/backend exec prisma db push --force-reset
 
       - name: Seed database
         run: |
           set -euo pipefail
           trap 'echo "Seed step failed, print backend logs:"; docker compose logs --tail=200 backend' ERR
-          docker compose exec -T backend pnpm --filter @guideready/backend prisma:seed
+          docker compose exec -T backend pnpm --filter @manyu/backend prisma:seed
 
       - name: Cleanup dangling images
         run: |

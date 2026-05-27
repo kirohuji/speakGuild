@@ -1,4 +1,4 @@
-# GuideReady（导游说）项目开发规范
+# 漫语町（ManYu）项目开发规范
 
 > 本文件由 `.cursor/rules/` 迁移而来，GitHub Copilot 会自动读取。
 
@@ -6,7 +6,7 @@
 
 ## 项目定位与技术栈
 
-GuideReady 是多语种全国导游资格面试练习平台，包含题库浏览、口语练习、AI 发音反馈、TTS 语音合成、模拟考试、会员系统等功能。
+ManYu（漫语町）是多语种全国导游资格面试练习平台，包含题库浏览、口语练习、AI 发音反馈、TTS 语音合成、模拟考试、会员系统等功能。
 
 ### 技术栈
 
@@ -17,7 +17,7 @@ GuideReady 是多语种全国导游资格面试练习平台，包含题库浏览
 
 ### Monorepo 组织
 
-- **包管理器**：pnpm workspace，两个包 `@guideready/backend` 和 `@guideready/frontend`
+- **包管理器**：pnpm workspace，两个包 `@manyu/backend` 和 `@manyu/frontend`
 - **依赖隔离**：通过 `pnpm --filter` 精确安装，Docker 构建同样只安装目标子项目依赖
 - **开发命令**：
   - `pnpm dev` — 前后端并行开发
@@ -27,7 +27,7 @@ GuideReady 是多语种全国导游资格面试练习平台，包含题库浏览
 ### 核心目录结构
 
 ```
-guideready/
+manyu/
 ├── apps/backend/src/          # NestJS 后端（按功能域模块化）
 │   ├── common/                # 公共层（filters/interceptors/prisma/response）
 │   └── modules/               # 业务模块（auth/config-guide/question-bank/practice/...）
@@ -235,14 +235,14 @@ pnpm prisma:generate   # 重新生成 Prisma Client
 ### HTTP 请求
 
 - 统一使用 `lib/request.ts` 中的 Axios 实例，**不要直接使用 axios**
-- 请求拦截器自动注入 Bearer Token（从 `localStorage('guideready-bearer-token')`）
+- 请求拦截器自动注入 Bearer Token（从 `localStorage('manyu-bearer-token')`）
 - 响应拦截器自动解包 `data.data`，自动处理 401 跳转
 
 ### 认证相关
 
 - `AuthRouteGuard` 组件包裹所有需要登录的路由
 - 未认证用户自动重定向到 `#/auth/login`
-- Token 存储在 localStorage 的 `guideready-bearer-token` 键
+- Token 存储在 localStorage 的 `manyu-bearer-token` 键
 
 ### 路由
 

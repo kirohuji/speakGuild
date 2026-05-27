@@ -1,7 +1,7 @@
 import { createAuthClient } from 'better-auth/client'
 import { emailOTPClient, phoneNumberClient } from 'better-auth/client/plugins'
 
-const TOKEN_KEY = 'guideready-bearer-token'
+const TOKEN_KEY = 'manyu-bearer-token'
 
 export function getBearerToken() {
   return localStorage.getItem(TOKEN_KEY) || ''

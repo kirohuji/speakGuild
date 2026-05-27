@@ -1,4 +1,4 @@
-# 导游说 · GuideReady — Logo 资源
+# 漫语町 · ManYu — Logo 资源
 
 ## 文件说明
 

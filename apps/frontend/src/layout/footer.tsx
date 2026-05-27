@@ -32,7 +32,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} 导游说. All rights reserved.
+          © {new Date().getFullYear()} 漫语町. All rights reserved.
         </div>
       </div>
     </footer>

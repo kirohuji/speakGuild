@@ -1,17 +1,17 @@
 ---
-description: GuideReady 项目全局约定 — 技术栈、目录结构、开发工作流
+description: ManYu 项目全局约定 — 技术栈、目录结构、开发工作流
 alwaysApply: true
 ---
 
-# GuideReady 项目全局约定
+# ManYu 项目全局约定
 
 ## 项目定位
 
-GuideReady（导游说）是多语种全国导游资格面试练习平台。包含题库浏览、口语练习、AI 发音反馈、TTS 语音合成、模拟考试、会员系统等功能。
+漫语町（ManYu）是沉浸式英语输出训练平台。通过场景化练习 + Chunk 激活 + AI 纠错 + 剧本任务，帮助用户从「看得懂」练到「说得出」。
 
 ## Monorepo 组织
 
-- **包管理器**：pnpm workspace，两个工作区包 `@guideready/backend` 和 `@guideready/frontend`
+- **包管理器**：pnpm workspace，两个工作区包 `@manyu/backend` 和 `@manyu/frontend`
 - **依赖隔离**：通过 `pnpm --filter` 精确安装，Docker 构建同样只安装目标子项目的依赖
 - **开发命令**：
   - `pnpm dev` — 前后端并行开发

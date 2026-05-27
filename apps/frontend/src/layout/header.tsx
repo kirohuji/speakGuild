@@ -62,7 +62,7 @@ export function Header() {
         <Link to="/" className="mr-8 hidden lg:flex items-center gap-2 shrink-0">
           <img
             src="/logo.png"
-            alt="GuideReady 导游说"
+            alt="ManYu 漫语町"
             className="h-7 w-auto dark:invert"
           />
         </Link>

@@ -498,7 +498,7 @@ function UpdateListItem({ card }: { card: ScenicCard }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">{card.name}</p>
-          <p className="mt-1 text-xs text-muted-foreground">导游说</p>
+          <p className="mt-1 text-xs text-muted-foreground">漫语町</p>
           <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <span>{card.questionCount} 道题</span>
             <span>·</span>

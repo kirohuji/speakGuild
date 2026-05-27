@@ -33,7 +33,7 @@ export function InvitePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '导游说 - 邀请你一起学习',
+          title: '漫语町 - 邀请你一起学习',
           text: `用我的邀请码 ${codeData?.code} 注册，双方各得 3 天免费会员！`,
           url: inviteLink,
         })

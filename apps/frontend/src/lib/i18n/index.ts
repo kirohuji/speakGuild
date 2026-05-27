@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next'
 const zhCN = {
   translation: {
     app: {
-      name: '导游说',
+      name: '漫语町',
       tagline: '专业导游外语口试备考平台',
     },
     nav: {
@@ -21,7 +21,7 @@ const zhCN = {
       growth: '成长',
     },
     home: {
-      title: '导游说',
+      title: '漫语町',
       hero: {
         mode: '训练模式',
         practice: '练习模式',
@@ -569,6 +569,11 @@ const zhCN = {
       contact: '联系方式（选填）',
       contactPlaceholder: '手机号或邮箱，方便我们联系您',
     },
+    portal: {
+      startPractice: '进入练习模式',
+      startFree: '免费开始练习',
+      freeTrial: '免费体验剧本',
+    },
     invite: {
       title: '邀请好友',
       subtitle: '邀请好友一起学习，双方获得奖励',
@@ -585,7 +590,7 @@ const zhCN = {
 const en = {
   translation: {
     app: {
-      name: 'GuideReady',
+      name: 'ManYu',
       tagline: 'Professional tour guide exam prep platform',
     },
     nav: {
@@ -1151,6 +1156,11 @@ const en = {
       contact: 'Contact (Optional)',
       contactPlaceholder: 'Phone or email so we can reach you',
     },
+    portal: {
+      startPractice: 'Start Practice',
+      startFree: 'Start Free',
+      freeTrial: 'Free Trial',
+    },
     invite: {
       title: 'Invite Friends',
       subtitle: 'Invite friends to learn together and earn rewards',
@@ -1167,7 +1177,7 @@ const en = {
 const ja = {
   translation: {
     app: {
-      name: 'GuideReady',
+      name: 'ManYu',
       tagline: '専門ガイド外国語試験対策プラットフォーム',
     },
     nav: {
@@ -1732,6 +1742,11 @@ const ja = {
       detail: '詳細説明',
       contact: '連絡先（任意）',
       contactPlaceholder: '電話番号またはメールアドレス',
+    },
+    portal: {
+      startPractice: '練習を開始',
+      startFree: '無料で始める',
+      freeTrial: '無料体験',
     },
     invite: {
       title: '友達を招待',
