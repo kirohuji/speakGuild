@@ -109,6 +109,7 @@ function NicknameEditDrawer({
   currentName: string
   onSaved: (name: string) => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState(currentName)
   const [saving, setSaving] = useState(false)
 
@@ -172,6 +173,7 @@ function ChangePasswordDrawer({
   onOpenChange: (open: boolean) => void
   onDone?: () => void
 }) {
+  const { t } = useTranslation()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -290,6 +292,7 @@ function ChangePasswordDrawer({
 
 export function AccountPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { session } = useAuth()
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 

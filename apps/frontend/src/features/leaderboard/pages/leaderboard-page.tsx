@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, PenLine, Flame, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 
 export function LeaderboardPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('practice')
   const [items, setItems] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
