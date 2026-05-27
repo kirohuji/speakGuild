@@ -87,6 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchSession()
+
+    // ⏱ 加载超时兜底：5 秒后无论是否完成都退出加载态
+    // 防止 iOS 模拟器或弱网环境下 auth 请求卡住导致白屏
+    const timeout = window.setTimeout(() => {
+      setIsLoading(false)
+    }, 5000)
+
+    return () => window.clearTimeout(timeout)
   }, [])
 
   const refreshSession = async () => {

@@ -21,7 +21,7 @@ import { updater }        from './updater';
 import { preferences }    from './preferences';
 import { pushNotifications } from './push-notifications';
 import { filesystem }     from './filesystem';
-import { Style } from '@capacitor/status-bar/dist/esm/definitions';
+import { Style } from '@capacitor/status-bar';
 
 const capabilities: NativeCapabilities = {
   splashScreen,
@@ -38,19 +38,25 @@ const InitReadyContext = createContext<(() => void) | null>(null);
 
 export function NativeBridgeProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = React.useState(false);
+  const initializedRef = React.useRef(false);
 
   const init = React.useCallback(() => {
-    if (!ready) {
-      setReady(true);
-      console.log('[NativeBridge] initialized, platform:', isNative() ? 'native' : 'web');
-    }
-  }, [ready]);
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    setReady(true);
+    console.log('[NativeBridge] initialized, platform:', isNative() ? 'native' : 'web');
+  }, []);
+
+  React.useEffect(() => {
+    const raf = window.requestAnimationFrame(init);
+    return () => window.cancelAnimationFrame(raf);
+  }, [init]);
 
   // 自动隐藏 SplashScreen + 设置状态栏
   React.useEffect(() => {
     if (ready && isNative()) {
-      capabilities.splashScreen.hide();
-      capabilities.statusBar.setStyle({ style: Style.Dark}).catch(() => {}); // 兼容不支持的环境
+      void capabilities.splashScreen.hide().catch(() => {});
+      void capabilities.statusBar.setStyle({ style: Style.Dark }).catch(() => {}); // 兼容不支持的环境
     }
   }, [ready]);
 
