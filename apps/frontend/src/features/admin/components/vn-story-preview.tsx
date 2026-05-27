@@ -1,7 +1,15 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { InkEngine } from '@/features/vn-engine/ink-engine'
 import { VnPlayer } from '@/features/vn-engine/vn-player'
 import { Play, AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { compileInk, type CompileResult } from './ink-compiler'
 
@@ -19,6 +27,16 @@ interface VnStoryPreviewProps {
   characterPositions?: Record<string, 'left' | 'center' | 'right'>
   defaultBackgroundUrl?: string
   className?: string
+  onDebugChange?: (state: {
+    isReady: boolean
+    isWaiting: boolean
+    isEnded: boolean
+    currentTags: string[]
+    history: DialogueLine[]
+    choices: { index: number; text: string }[]
+    activeBackground: { url?: string; fit?: string }
+    aiPayload: Record<string, any>
+  }) => void
 }
 
 interface DialogueLine {
@@ -38,6 +56,7 @@ export function VnStoryPreview({
   characterPositions = {},
   defaultBackgroundUrl,
   className,
+  onDebugChange,
 }: VnStoryPreviewProps) {
   const engineRef = useRef<InkEngine | null>(null)
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null)
@@ -51,6 +70,7 @@ export function VnStoryPreview({
     url: defaultBackgroundUrl,
     fit: 'cover',
   })
+  const [completionOpen, setCompletionOpen] = useState(false)
 
   // Compile Ink source
   useEffect(() => {
@@ -101,7 +121,7 @@ export function VnStoryPreview({
 
   const appendResult = useCallback((engine: InkEngine, result: NonNullable<ReturnType<InkEngine['continue']>>) => {
     const tags = engine.getCurrentTags()
-    const waiting = tags.includes('wait') || tags.includes('user_input')
+    const waiting = tags.includes('wait') || tags.some((tag) => tag === 'input' || tag === 'user_input' || tag.startsWith('wait:') || tag.startsWith('input:'))
     setCurrentTags(tags)
     setIsWaiting(waiting)
     const { speaker, expression, bg, bgFit } = parseTags(tags)
@@ -120,7 +140,10 @@ export function VnStoryPreview({
     if (result.hasChoices) setChoices(result.choices)
     else setChoices([])
 
-    if (!waiting && !engine.canContinue && result.choices.length === 0) setIsEnded(true)
+    if (!waiting && !engine.canContinue && result.choices.length === 0) {
+      setIsEnded(true)
+      setCompletionOpen(true)
+    }
   }, [parseTags, parseTextLines])
 
   // Initialize engine with compiled JSON
@@ -132,6 +155,7 @@ export function VnStoryPreview({
     setChoices([])
     setIsEnded(false)
     setIsWaiting(false)
+    setCompletionOpen(false)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     if (!compileResult?.success || !compileResult.json) return
@@ -158,7 +182,7 @@ export function VnStoryPreview({
     if (!engine) return
 
     const result = engine.continue()
-    if (!result) { setIsEnded(true); return }
+    if (!result) { setIsEnded(true); setCompletionOpen(true); return }
 
     appendResult(engine, result)
   }, [appendResult])
@@ -174,10 +198,24 @@ export function VnStoryPreview({
     setIsWaiting(false)
 
     const result = engine.continue()
-    if (!result) { setIsEnded(true); return }
+    if (!result) { setIsEnded(true); setCompletionOpen(true); return }
 
     appendResult(engine, result)
   }, [appendResult, choices])
+
+  const handleInput = useCallback((text: string) => {
+    const engine = engineRef.current
+    if (!engine) return
+
+    setHistory((prev) => [...prev, { speaker: 'You', text }])
+    setIsWaiting(false)
+    engine.setVariable('user_last_input', text)
+
+    const result = engine.continue()
+    if (!result) { setIsEnded(true); setCompletionOpen(true); return }
+
+    appendResult(engine, result)
+  }, [appendResult])
 
   const resetPreview = useCallback(() => {
     if (!compileResult?.json) return
@@ -187,6 +225,7 @@ export function VnStoryPreview({
     setChoices([])
     setIsEnded(false)
     setIsWaiting(false)
+    setCompletionOpen(false)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     try {
@@ -216,6 +255,36 @@ export function VnStoryPreview({
 
   const lastLine = history[history.length - 1]
   const hideSpriteForChoices = choices.length > 0 && choiceCharacter === 'hide'
+  const aiPayload = useMemo(() => ({
+    story: {
+      ended: isEnded,
+      currentTags,
+      background: activeBackground,
+    },
+    turns: history.map((line, index) => ({
+      round: index + 1,
+      speaker: line.speaker || (line.text ? 'Narrator' : ''),
+      role: line.speaker === 'You' ? 'user' : 'npc',
+      text: line.text,
+      expression: line.expression,
+    })),
+    userInputs: history
+      .filter((line) => line.speaker === 'You')
+      .map((line, index) => ({ inputIndex: index + 1, text: line.text })),
+  }), [activeBackground, currentTags, history, isEnded])
+
+  useEffect(() => {
+    onDebugChange?.({
+      isReady,
+      isWaiting,
+      isEnded,
+      currentTags,
+      history,
+      choices,
+      activeBackground,
+      aiPayload,
+    })
+  }, [activeBackground, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, onDebugChange])
 
   // ─── Render ────────────────────────────────────────────────
 
@@ -243,21 +312,41 @@ export function VnStoryPreview({
   }
 
   return (
-    <VnPlayer
-      className={className}
-      backgroundUrl={backgroundUrl}
-      backgroundFit={(activeBackground.fit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
-      currentLine={!isEnded ? lastLine : null}
-      history={history}
-      choices={choices}
-      currentSpriteUrl={hideSpriteForChoices ? undefined : currentSpriteUrl}
-      spriteAlt={currentSpeaker}
-      spritePosition={speakerPosition}
-      isWaiting={isWaiting}
-      isEnded={isEnded}
-      onAdvance={advanceStory}
-      onChoice={handleChoice}
-      onReset={resetPreview}
-    />
+    <>
+      <VnPlayer
+        className={className}
+        backgroundUrl={backgroundUrl}
+        backgroundFit={(activeBackground.fit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
+        currentLine={!isEnded ? lastLine : null}
+        history={history}
+        choices={choices}
+        currentSpriteUrl={hideSpriteForChoices ? undefined : currentSpriteUrl}
+        spriteAlt={currentSpeaker}
+        spritePosition={speakerPosition}
+        isWaiting={isWaiting}
+        isEnded={isEnded}
+        onAdvance={advanceStory}
+        onChoice={handleChoice}
+        onSubmitInput={handleInput}
+        onReset={resetPreview}
+      />
+      <Dialog open={completionOpen} onOpenChange={setCompletionOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>对话完成</DialogTitle>
+            <DialogDescription>
+              已收集 {history.length} 条对话，右侧可以查看整理后的 AI 评估数据。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Button className="w-full" onClick={() => setCompletionOpen(false)}>退出</Button>
+            <div className="flex justify-center gap-2">
+            <Button variant="outline" onClick={resetPreview}>重新预览</Button>
+            <Button variant="secondary" onClick={() => setCompletionOpen(false)}>查看数据</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

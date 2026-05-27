@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Mic, MicOff, BookOpen, Send, Play, Info,
+  ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -41,15 +41,11 @@ function readTagValue(tags: string[], prefix: string) {
 }
 
 function readInputNodeId(tags: string[]) {
-  const inputTag = readTagValue(tags, 'input:')
-  if (!inputTag) return undefined
-  return inputTag.match(/(?:^|[;,]\s*)id=([^;,]+)/)?.[1]?.trim() || inputTag
-}
-
-function readExpectedIntent(tags: string[]) {
-  const judgeTag = readTagValue(tags, 'judge:')
-  if (!judgeTag) return undefined
-  return judgeTag.match(/(?:^|[;,]\s*)intent=([^;,]+)/)?.[1]?.trim() || judgeTag
+  const inputTag = readTagValue(tags, 'input:') || readTagValue(tags, 'wait:')
+  if (inputTag) return inputTag.match(/(?:^|[;,]\s*)id=([^;,]+)/)?.[1]?.trim() || inputTag
+  if (tags.includes('input')) return 'input'
+  if (tags.includes('wait')) return 'wait'
+  return undefined
 }
 
 function readListTags(tags: string[], prefix: string) {
@@ -151,10 +147,6 @@ export function PracticeSessionPage() {
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
   const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean }[]>([])
-  const [isRecording, setIsRecording] = useState(false)
-  const [inputText, setInputText] = useState('')
-  const [transcript, setTranscript] = useState('')
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
 
   // Fallback NPC dialogue (when no Ink script)
   const [fallbackRound, setFallbackRound] = useState(0)
@@ -348,25 +340,6 @@ export function PracticeSessionPage() {
     setInsightOpen(true)
   }, [insightItems])
 
-  // ==================== Practice: Recording ====================
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = recorder
-      recorder.start()
-      setIsRecording(true)
-      setTranscript('')
-      setTimeout(() => { if (recorder.state === 'recording') recorder.stop() }, 60000)
-    } catch { alert('无法访问麦克风，请检查权限设置') }
-  }
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop()
-    setIsRecording(false)
-    setTranscript('[语音转写] 用户回答内容...')
-  }
-
   // ==================== Practice: Send Input ====================
   const sendUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return
@@ -376,8 +349,6 @@ export function PracticeSessionPage() {
     const npcText = dialogueRounds[dialogueRounds.length - 1]?.text ?? ''
 
     setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
-    setTranscript('')
-    setInputText('')
 
     // Track chunk usage
     coreChunkTexts.forEach((c) => {
@@ -398,9 +369,7 @@ export function PracticeSessionPage() {
           inputNodeId: readInputNodeId(currentTags),
           npcText,
           userText: userMsg,
-          expectedIntent: readExpectedIntent(currentTags),
           objectives: readListTags(currentTags, 'objective:').length ? readListTags(currentTags, 'objective:') : objectives,
-          targetChunks: readListTags(currentTags, 'chunks:').length ? readListTags(currentTags, 'chunks:') : coreChunkTexts.map((chunk) => chunk.text),
         })
 
         objectiveCompleted = judgement.objectiveCompleted ?? objectiveCompleted
@@ -461,18 +430,6 @@ export function PracticeSessionPage() {
     }
   }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags])
 
-  const handleSendText = () => {
-    if (!inputText.trim()) return
-    sendUserInput(inputText)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendText()
-    }
-  }
-
   // ==================== Analysis ====================
   const startAnalysis = useCallback(async () => {
     if (!topicId || !detail) return
@@ -500,8 +457,6 @@ export function PracticeSessionPage() {
     setCompletedObjectives(new Set())
     setUsedChunks(new Set())
     setAiHints([])
-    setTranscript('')
-    setInputText('')
     setPhase('prepare')
   }
 
@@ -691,8 +646,6 @@ export function PracticeSessionPage() {
 
   // ==================== Phase: Practice (VN) ====================
   if (phase === 'practice') {
-    const showInkChoices = inkChoices.length > 0
-    const isInputDisabled = isRecording || showInkChoices
     const currentLine = dialogueRounds[dialogueRounds.length - 1]
     const characters = detail.scene.characters ?? []
     const currentCharacter = characters.find((character) => {
@@ -752,6 +705,7 @@ export function PracticeSessionPage() {
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
               spritePosition={spritePosition}
               isWaiting={inkWaiting}
+              onSubmitInput={sendUserInput}
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
               onHistoryOpenChange={setIsHistoryOpen}

@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
@@ -41,6 +42,17 @@ type ComposerScene = {
 type Selection =
   | { type: 'scene'; sceneIndex: number }
   | { type: 'item'; sceneIndex: number; itemIndex: number }
+
+interface VnPreviewDebugState {
+  isReady: boolean
+  isWaiting: boolean
+  isEnded: boolean
+  currentTags: string[]
+  history: Array<{ speaker: string; text: string; expression?: string }>
+  choices: Array<{ index: number; text: string }>
+  activeBackground: { url?: string; fit?: string }
+  aiPayload: Record<string, any>
+}
 
 interface InkStoryEditorProps {
   initialSource?: string
@@ -230,6 +242,7 @@ function serializeComposer(
         lines.push(`# bgFit:${item.fit || 'cover'}`)
       } else if (item.type === 'wait') {
         lines.push('# wait')
+        lines.push('# input')
       } else if (item.type === 'divert') {
         lines.push(`-> ${item.target || 'END'}`)
       } else {
@@ -300,6 +313,7 @@ export function InkStoryEditor({
   const [selection, setSelection] = useState<Selection>({ type: 'scene', sceneIndex: 0 })
   const [draggedItem, setDraggedItem] = useState<{ sceneIndex: number; itemIndex: number } | null>(null)
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [previewDebug, setPreviewDebug] = useState<VnPreviewDebugState | null>(null)
   const lastAutoSavedSourceRef = useRef('')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -339,8 +353,10 @@ export function InkStoryEditor({
     (nextScenes = scenes) => serializeComposer({
       key,
       title,
+      locationId,
+      characterId,
     }, nextScenes),
-    [key, scenes, title],
+    [characterId, key, locationId, scenes, title],
   )
 
   const updateScenes = useCallback((producer: (draft: ComposerScene[]) => void) => {
@@ -350,9 +366,11 @@ export function InkStoryEditor({
       return serializeComposer({
         key,
         title,
+        locationId,
+        characterId,
       }, draft)
     })
-  }, [key, title])
+  }, [characterId, key, locationId, title])
 
   useEffect(() => {
     const nextSource = initialSource || defaultInkTemplate({ key: initialKey, title: initialTitle })
@@ -465,9 +483,11 @@ export function InkStoryEditor({
       title,
       inkSource: nextSource,
       inkJson: result.json,
+      locationId: locationId || undefined,
+      characterId: characterId || undefined,
     }, options)
     lastAutoSavedSourceRef.current = nextSource
-  }, [key, onSave, sourceWithMeta, title])
+  }, [characterId, key, locationId, onSave, sourceWithMeta, title])
 
   const handleSave = useCallback(() => {
     void saveCurrentStory()
@@ -796,16 +816,88 @@ export function InkStoryEditor({
         </TabsContent>
 
         <TabsContent value="preview" className="mt-0">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <VnStoryPreview
-              inkSource={sourceWithMeta()}
-              characterSprites={charSprites}
-              characterPositions={charPositions}
-              className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
-            />
+          <div className="grid gap-4 rounded-lg border border-border bg-card p-4 xl:grid-cols-[minmax(360px,460px)_minmax(0,1fr)]">
+            <div className="min-w-0">
+              <VnStoryPreview
+                inkSource={sourceWithMeta()}
+                characterSprites={charSprites}
+                characterPositions={charPositions}
+                className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
+                onDebugChange={setPreviewDebug}
+              />
+            </div>
+            <PreviewDebugPanel debug={previewDebug} />
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function PreviewDebugPanel({ debug }: { debug: VnPreviewDebugState | null }) {
+  const formattedPayload = JSON.stringify(debug?.aiPayload ?? {}, null, 2)
+
+  return (
+    <div className="min-w-0 rounded-lg border border-border bg-background">
+      <div className="border-b border-border px-4 py-3">
+        <p className="text-sm font-semibold">实时状态与评估数据</p>
+        <p className="mt-1 text-xs text-muted-foreground">用于检查 #wait / #input 流程和最终 AI 评估 payload。</p>
+      </div>
+
+      <ScrollArea className="h-[78vh] max-h-[760px]">
+        <div className="space-y-4 p-4">
+          <div className="grid grid-cols-3 gap-2">
+            <DebugMetric label="状态" value={debug?.isEnded ? '已完成' : debug?.isWaiting ? '等待输入' : debug?.isReady ? '播放中' : '未开始'} />
+            <DebugMetric label="对话" value={`${debug?.history.length ?? 0} 条`} />
+            <DebugMetric label="选项" value={`${debug?.choices.length ?? 0} 个`} />
+          </div>
+
+          <section className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground">当前 Tags</p>
+            <div className="flex min-h-8 flex-wrap gap-1.5 rounded-md border border-border bg-muted/20 p-2">
+              {debug?.currentTags.length ? debug.currentTags.map((tag) => (
+                <Badge key={tag} variant={tag === 'input' || tag === 'wait' ? 'default' : 'secondary'} className="text-[10px]">#{tag}</Badge>
+              )) : <span className="text-xs text-muted-foreground">暂无 tags</span>}
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground">背景</p>
+            <div className="rounded-md border border-border bg-muted/20 p-3 text-xs">
+              <p>fit: <span className="font-mono">{debug?.activeBackground.fit ?? '-'}</span></p>
+              <p className="mt-1 truncate">url: <span className="font-mono">{debug?.activeBackground.url ?? '-'}</span></p>
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground">收集到的对话</p>
+            <div className="space-y-2">
+              {debug?.history.length ? debug.history.map((line, index) => (
+                <div key={`${line.speaker}-${index}`} className="rounded-md border border-border bg-card px-3 py-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground">{index + 1}. {line.speaker || 'Narrator'}</p>
+                  <p className="mt-1 text-sm leading-6">{line.text}</p>
+                </div>
+              )) : <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">开始预览后这里会显示台词和用户输入。</p>}
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground">AI 评估 Payload</p>
+            <pre className="max-h-[360px] overflow-auto rounded-md border border-border bg-muted/30 p-3 text-[11px] leading-relaxed">
+              {formattedPayload}
+            </pre>
+          </section>
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
+
+function DebugMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-card p-3">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
     </div>
   )
 }

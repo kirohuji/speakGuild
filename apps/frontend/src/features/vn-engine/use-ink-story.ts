@@ -57,8 +57,11 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     const tags = engine.getCurrentTags()
     setCurrentTags(tags)
 
-    // Check for #wait tag (user input needed), including empty Ink frames.
-    if (tags.includes('wait') || tags.includes('user_input')) {
+    // Check for tags that mark a user-input pause.
+    if (
+      tags.includes('wait') ||
+      tags.some((tag) => tag === 'input' || tag === 'user_input' || tag.startsWith('wait:') || tag.startsWith('input:'))
+    ) {
       setIsWaiting(true)
     }
 

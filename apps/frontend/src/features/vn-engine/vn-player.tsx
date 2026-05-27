@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
+import { VnInputPanel } from './vn-input-panel'
 
 export interface VnPlayerLine {
   speaker?: string
@@ -42,6 +43,7 @@ interface VnPlayerProps {
   isEnded?: boolean
   onAdvance?: () => void
   onChoice?: (index: number) => void
+  onSubmitInput?: (text: string) => void | Promise<void>
   onReset?: () => void
   onHistoryOpenChange?: (open: boolean) => void
   className?: string
@@ -399,6 +401,7 @@ export function VnPlayer({
   isEnded = false,
   onAdvance,
   onChoice,
+  onSubmitInput,
   onReset,
   onHistoryOpenChange,
   className,
@@ -458,6 +461,7 @@ export function VnPlayer({
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
   const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen
+  const canSubmitInput = !!onSubmitInput && isWaiting && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
 
   useEffect(() => {
     if (autoAdvanceTimerRef.current !== null) window.clearTimeout(autoAdvanceTimerRef.current)
@@ -636,25 +640,30 @@ export function VnPlayer({
               <Settings className="size-3.5" />
             </VnIconButton>
           </div>
-          <div className="max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] overflow-y-auto border-t border-white/10 bg-black/58 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-6 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
-            {activeLine ? (
-              <div className="space-y-2">
-              <p className="leading-relaxed text-white/92" style={{ fontSize: settings.fontSize }}>
-                {displayedText}
-                {canAdvance && (
-                  <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-white/70 align-middle drop-shadow-[0_0_8px_rgba(255,255,255,.42)]" />
-                )}
-              </p>
-              {settings.bilingual && activeLine.translation && (
-                <p className="text-xs leading-relaxed text-white/58">{activeLine.translation}</p>
+          <div className="flex max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-white/10 bg-black/58 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-6">
+              {activeLine ? (
+                <div className="space-y-2">
+                  <p className="leading-relaxed text-white/92" style={{ fontSize: settings.fontSize }}>
+                    {displayedText}
+                    {canAdvance && (
+                      <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-white/70 align-middle drop-shadow-[0_0_8px_rgba(255,255,255,.42)]" />
+                    )}
+                  </p>
+                  {settings.bilingual && activeLine.translation && (
+                    <p className="text-xs leading-relaxed text-white/58">{activeLine.translation}</p>
+                  )}
+                </div>
+              ) : isEnded ? (
+                <p className="text-center text-sm text-white/62">故事结束</p>
+              ) : isWaiting ? (
+                <p className="text-center text-sm text-white/62">等待用户输入...</p>
+              ) : (
+                <p className="text-center text-sm text-white/62">等待继续</p>
               )}
-              </div>
-            ) : isEnded ? (
-              <p className="text-center text-sm text-white/62">故事结束</p>
-            ) : isWaiting ? (
-              <p className="text-center text-sm text-white/62">等待用户输入...</p>
-            ) : (
-              <p className="text-center text-sm text-white/62">等待继续</p>
+            </div>
+            {canSubmitInput && (
+              <VnInputPanel onSubmit={onSubmitInput} />
             )}
           </div>
         </div>

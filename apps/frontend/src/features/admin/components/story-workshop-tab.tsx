@@ -84,8 +84,8 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
         inkSource: data.inkSource,
         scriptType: 'practice',
         version: (editingStory?.version ?? 0) + 1,
-        locationId: null,
-        characterId: null,
+        locationId: data.locationId ?? null,
+        characterId: data.characterId ?? null,
       }
 
       if (editingStory) {

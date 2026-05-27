@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   UserCircle, Map, ScrollText, Palette,
@@ -6,7 +6,7 @@ import {
 import { CharactersTab } from '../components/characters-tab'
 import { MapsTab } from '../components/maps-tab'
 import { StoryWorkshopTab } from '../components/story-workshop-tab'
-import type { GameCharacter, GameLocationData } from '../api-content-admin'
+import { listCharacters, listLocations, type GameCharacter, type GameLocationData } from '../api-content-admin'
 
 /**
  * NQTR 内容工坊 — 统一管理角色、地图、故事
@@ -23,6 +23,19 @@ export function AdminNqtrPage() {
   const [characters, setCharacters] = useState<GameCharacter[]>([])
   const [locations, setLocations] = useState<GameLocationData[]>([])
   const [activeTab, setActiveTab] = useState('stories')
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      listCharacters().catch(() => []),
+      listLocations().catch(() => []),
+    ]).then(([chars, locs]) => {
+      if (cancelled) return
+      setCharacters(chars)
+      setLocations(locs)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   const handleCharactersChange = useCallback((chars: GameCharacter[]) => {
     setCharacters(chars)
