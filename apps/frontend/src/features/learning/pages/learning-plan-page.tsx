@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, ArrowRight,
-  ShoppingBag, Play, Search, Heart, CalendarDays, Mic,
+  ClipboardList, ShoppingBag, Play, Search, Heart, CalendarDays, Mic,
   BookText, MessageSquareText, ListChecks, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
+import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { cn } from '@/lib/cn'
 import {
   learningApi,
@@ -43,6 +45,7 @@ function getCategoryIcon(name: string) {
 
 export function LearningPlanPage() {
   const [shopOpen, setShopOpen] = useState(false)
+  const [recordsOpen, setRecordsOpen] = useState(false)
 
   // ── "当前学习" 数据 ──
   const [myUnits, setMyUnits] = useState<MyUnit[]>([])
@@ -88,14 +91,22 @@ export function LearningPlanPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24">
-        <div className="mb-3 flex h-10 items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <div />
 
-          <div className="flex items-center gap-1 rounded-full bg-muted/60 p-1 backdrop-blur-xl">
+          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setRecordsOpen(true)}
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+              aria-label="练习记录"
+            >
+              <ClipboardList className="size-[18px]" />
+            </button>
             <button
               type="button"
               onClick={() => { setShopOpen(true); refreshShop() }}
-              className="relative flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
               aria-label="学习商店"
             >
               <ShoppingBag className="size-[18px]" />
@@ -115,6 +126,16 @@ export function LearningPlanPage() {
           onGoToShop={() => { setShopOpen(true); refreshShop() }}
         />
 
+        <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
+          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+            <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+              <DrawerTitle className="text-base font-semibold">练习记录</DrawerTitle>
+            </DrawerHeader>
+            <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <PracticeRecordsContent />
+            </div>
+          </DrawerContent>
+        </Drawer>
         <Drawer open={shopOpen} onOpenChange={setShopOpen}>
           <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
@@ -778,6 +799,84 @@ function UnitCover({
     >
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
       <Icon className="relative size-7" />
+    </div>
+  )
+}
+
+// ─── 练习记录列表内容 ──────────────────────────────────────────────────────
+function PracticeRecordsContent() {
+  const [data, setData] = useState<PracticeRecordsResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const pageSize = 15
+
+  useEffect(() => {
+    setIsLoading(true)
+    getPracticeRecords({ page, pageSize })
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [page])
+
+  const columns: ColumnConfig<PracticeRecord>[] = [
+    {
+      key: 'topicName',
+      header: '话题',
+      cell: (v) => <span className="text-sm font-medium">{v}</span>,
+    },
+    {
+      key: 'questionText',
+      header: '题目',
+      cell: (v, row) => (
+        <div className="max-w-[360px]">
+          <span className="line-clamp-1 text-sm text-muted-foreground">{v}</span>
+          {row.summary && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/80">{row.summary}</p>}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: '状态',
+      cell: (v, row) => (
+        <div className="flex items-center gap-2">
+          <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-xs">
+            {v === 'analyzed' ? '已分析' : v === 'analyzing' ? '分析中' : v === 'completed' ? '待分析' : v === 'failed' ? '失败' : '进行中'}
+          </Badge>
+          {typeof row.score === 'number' && <span className="text-xs font-semibold text-primary">{row.score}</span>}
+        </div>
+      ),
+      width: 120,
+    },
+    {
+      key: 'practiceCount',
+      header: '次数',
+      cell: (v) => <Badge variant="secondary" className="text-xs">{v} 次</Badge>,
+      width: 80,
+    },
+    {
+      key: 'lastPracticeAt',
+      header: '日期',
+      cell: (v) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(v).toLocaleDateString('zh-CN')}
+        </span>
+      ),
+      width: 100,
+    },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <ConfigDataTable
+        data={data?.list || []}
+        columns={columns}
+        total={data?.total || 0}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        isLoading={isLoading}
+        emptyMessage="暂无练习记录"
+      />
     </div>
   )
 }
