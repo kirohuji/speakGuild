@@ -162,6 +162,18 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
     const sceneId = sceneMap.get(row.scene_title)
     if (!sceneId) continue
 
+    // Parse skeleton into structured sentencePatterns
+    let sentencePatterns: any[] | undefined
+    if (row.skeleton?.trim()) {
+      sentencePatterns = [{
+        pattern: row.skeleton.trim(),
+        meaning: row.title,
+        slots: [],
+        example: '',
+        difficulty: row.difficulty || 'L2',
+      }]
+    }
+
     await prisma.trainingTopic.create({
       data: {
         sceneId,
@@ -171,6 +183,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
         suggestedDurationSec: parseInt(row.duration_sec) || 60,
         difficulty: row.difficulty || 'L2',
         sentenceSkeleton: row.skeleton || null,
+        sentencePatterns: sentencePatterns ?? undefined,
         description: row.description || null,
         knowledgePoints: row.knowledge_points || null,
         inkScriptId: inkKeyToId.get(row.ink_script_key) || null,
@@ -181,7 +194,41 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${topicCount} 个训练话题`)
 
-  // ═══ 7. 剧本关卡 ═══
+  // ═══ 7. 话题↔Chunk 关联 ═══
+  // 每个话题关联同场景的句块 + 通用句块
+  const allChunks = await prisma.chunk.findMany()
+  const sceneChunks = new Map<string, string[]>() // sceneId → chunkIds
+  const generalChunkIds: string[] = []
+  for (const ck of allChunks) {
+    if (!ck.sceneId) {
+      generalChunkIds.push(ck.id)
+    } else {
+      const list = sceneChunks.get(ck.sceneId) || []
+      list.push(ck.id)
+      sceneChunks.set(ck.sceneId, list)
+    }
+  }
+  const allTopics = await prisma.trainingTopic.findMany({ include: { scene: true } })
+  let tccCount = 0
+  for (const topic of allTopics) {
+    const chunkIds = [...(sceneChunks.get(topic.sceneId) || []), ...generalChunkIds]
+    // Deduplicate
+    const uniqueChunkIds = [...new Set(chunkIds)]
+    if (uniqueChunkIds.length > 0) {
+      await prisma.trainingTopicChunk.createMany({
+        data: uniqueChunkIds.map((chunkId, i) => ({
+          topicId: topic.id,
+          chunkId,
+          sortOrder: i,
+        })),
+        skipDuplicates: true,
+      })
+      tccCount += uniqueChunkIds.length
+    }
+  }
+  console.log(`  ✓ ${tccCount} 个话题↔Chunk 关联`)
+
+  // ═══ 8. 剧本关卡 ═══
   const episodeRows = readCsv<CsvEpisode>('script_episodes.csv')
   const episodeIdMap = new Map<string, string>() // "chapter_id,episode_order" → id
   for (const row of episodeRows) {
@@ -218,7 +265,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${episodeRows.length} 个剧本关卡`)
 
-  // ═══ 8. 关卡↔Chunk 关联 ═══
+  // ═══ 9. 关卡↔Chunk 关联 ═══
   const epChunkRows = readCsv<CsvEpChunk>('episode_chunks.csv')
   let epChunkCount = 0
   for (const row of epChunkRows) {
@@ -241,7 +288,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${epChunkCount} 个关卡↔Chunk 关联`)
 
-  // ═══ 9. NPC ═══
+  // ═══ 10. NPC ═══
   const charRows = readCsv<CsvChar>('game_characters.csv')
   const charNameToId = new Map<string, string>()
   for (const row of charRows) {
@@ -260,7 +307,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${charRows.length} 个 NPC`)
 
-  // ═══ 10. 探索地图 + 地点 ═══
+  // ═══ 11. 探索地图 + 地点 ═══
   const mapRows = readCsv<CsvMap>('game_maps.csv')
   const mapNameToId = new Map<string, string>()
   for (const row of mapRows) {
@@ -298,7 +345,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
     locNameToId.set(row.name, loc.id)
   }
 
-  // ═══ 11. 地点↔NPC 关联 ═══
+  // ═══ 12. 地点↔NPC 关联 ═══
   const locNpcRows = readCsv<CsvLocNpc>('location_npcs.csv')
   for (const row of locNpcRows) {
     const locId = locNameToId.get(row.location_name)
@@ -314,7 +361,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
     })
   }
 
-  // ═══ 12. 地点出口 ═══
+  // ═══ 13. 地点出口 ═══
   const exitRows = readCsv<CsvLocExit>('location_exits.csv')
   for (const row of exitRows) {
     const fromId = locNameToId.get(row.from_location)
@@ -330,7 +377,7 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${mapRows.length} 个地图 + ${locRows.length} 个地点 + 关联`)
 
-  // ═══ 13. 成就定义 ═══
+  // ═══ 14. 成就定义 ═══
   const achRows = readCsv<CsvAchievement>('achievement_defs.csv')
   for (const row of achRows) {
     const rarity = row.rarity as AchievementRarity
