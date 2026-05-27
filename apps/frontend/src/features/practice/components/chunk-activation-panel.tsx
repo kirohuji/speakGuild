@@ -1,6 +1,5 @@
 import { Check, ChevronDown, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/cn'
 import type { TopicDetail } from '../api/english-practice-api'
@@ -27,42 +26,42 @@ export function ChunkActivationPanel({
   const hasChunks = chunks.length > 0
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Lightbulb className="size-4" /> 核心表达块 ({activatedIds.size}/{chunks.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {hasChunks ? (
-            <>
-              <p className="mb-4 text-sm text-muted-foreground">
-                先点开表达块确认含义和例句，系统会同步标记为已激活。
-              </p>
-              <div className="space-y-2">
-                {chunks.map((chunk) => (
-                  <ChunkActivationItem
-                    key={chunk.id}
-                    chunk={chunk}
-                    active={activatedIds.has(chunk.id)}
-                    expanded={expandedId === chunk.id}
-                    onClick={() => {
-                      onExpand(chunk.id)
-                      if (!activatedIds.has(chunk.id)) onActivate(chunk.id)
-                    }}
-                    onInspect={() => onInspect(chunk.id)}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-              这个话题还没有配置核心 Chunk，可以直接开始练习。
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="rounded-lg bg-muted/30 p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Lightbulb className="size-4 text-primary" />
+          <p className="text-sm font-semibold text-foreground">核心表达块</p>
+        </div>
+        <Badge variant="secondary" className="rounded-full text-[10px]">
+          {activatedIds.size}/{chunks.length}
+        </Badge>
+      </div>
+      {hasChunks ? (
+        <>
+          <p className="mb-3 text-xs leading-5 text-muted-foreground">
+            点开表达块确认含义和例句，系统会同步标记为已激活。
+          </p>
+          <div className="space-y-2">
+            {chunks.map((chunk) => (
+              <ChunkActivationItem
+                key={chunk.id}
+                chunk={chunk}
+                active={activatedIds.has(chunk.id)}
+                expanded={expandedId === chunk.id}
+                onClick={() => {
+                  onExpand(chunk.id)
+                  if (!activatedIds.has(chunk.id)) onActivate(chunk.id)
+                }}
+                onInspect={() => onInspect(chunk.id)}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="rounded-lg bg-background/55 p-4 text-sm text-muted-foreground">
+          这个话题还没有配置核心 Chunk，可以直接开始练习。
+        </div>
+      )}
     </div>
   )
 }
@@ -85,8 +84,8 @@ function ChunkActivationItem({
       role="button"
       tabIndex={0}
       className={cn(
-        'w-full rounded-lg border p-3 text-left transition-colors',
-        active ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/30 hover:bg-muted/40',
+        'w-full rounded-lg p-3 text-left transition-colors',
+        active ? 'bg-primary/[0.08]' : 'bg-background/55 hover:bg-background/80',
       )}
       onClick={onClick}
       onKeyDown={(event) => {
@@ -112,7 +111,7 @@ function ChunkActivationItem({
       </div>
 
       {expanded && (
-        <div className="mt-3 space-y-2 border-t border-border/70 pt-3">
+        <div className="mt-3 space-y-2">
           <p className="text-sm text-foreground">{chunk.meaning}</p>
           {chunk.description && <p className="text-xs leading-relaxed text-muted-foreground">{chunk.description}</p>}
           {chunk.examples?.slice(0, 2).map((example, index) => (
