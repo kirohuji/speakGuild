@@ -458,8 +458,12 @@ export function VnPlayer({
 
   useEffect(() => {
     if (!audioUrl) return
+    console.log('[VnPlayer] Playing audio:', audioUrl.slice(0, 100))
     const audio = new Audio(audioUrl)
-    void audio.play().catch(() => undefined)
+    const promise = audio.play()
+    if (promise) {
+      promise.catch((err) => console.warn('[VnPlayer] Audio play failed:', err.message))
+    }
     return () => {
       audio.pause()
     }

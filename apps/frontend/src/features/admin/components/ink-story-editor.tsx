@@ -155,7 +155,7 @@ function parseComposer(source: string): ComposerScene[] {
         const position = tag.replace(/^position:/, '').trim()
         pendingPosition = position === 'left' || position === 'right' ? position : 'center'
       } else if (tag.startsWith('audio:')) {
-        pendingAudioUrl = tag.replace(/^audio:/, '').trim()
+        pendingAudioUrl = decodeURIComponent(tag.replace(/^audio:/, '').trim())
       } else if (tag.startsWith('choiceCharacter:')) {
         pendingChoiceShowCharacter = tag.replace(/^choiceCharacter:/, '').trim() !== 'hide'
       } else if (tag.startsWith('bg:')) {
@@ -247,7 +247,7 @@ function serializeComposer(
         if (item.speaker) lines.push(`# speaker:${item.speaker}`)
         if (item.expression) lines.push(`# expression:${item.expression}`)
         if (item.position) lines.push(`# position:${item.position}`)
-        if (item.audioUrl) lines.push(`# audio:${item.audioUrl}`)
+        if (item.audioUrl) lines.push(`# audio:${encodeURIComponent(item.audioUrl)}`)
         lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
       } else if (item.type === 'choice') {
         lines.push(`# choiceCharacter:${item.showCharacter ? 'show' : 'hide'}`)

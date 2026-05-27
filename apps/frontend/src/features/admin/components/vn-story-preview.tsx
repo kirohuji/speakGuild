@@ -143,6 +143,7 @@ export function VnStoryPreview({
 
     if (result.text) {
       const lines = parseTextLines(result.text, speaker, expression, audioUrl)
+      if (audioUrl) console.log('[VnPreview] Line with audio:', result.text.slice(0, 50), 'url:', audioUrl.slice(0, 80))
       setHistory((prev) => [...prev, ...lines])
     }
 
