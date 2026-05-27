@@ -69,10 +69,11 @@ function decodeTagValue(value?: string) {
 function parseVnTags(tags: string[]) {
   const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
   const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
+  const audio = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
   const bg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
   const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
   const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
-  return { speaker, expression, bg, bgFit, position }
+  return { speaker, expression, audio, bg, bgFit, position }
 }
 
 function isBackgroundFit(value?: string): value is 'cover' | 'contain' | 'stretch' | 'repeat' {
@@ -146,7 +147,7 @@ export function PracticeSessionPage() {
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
-  const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean }[]>([])
+  const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; audioUrl?: string }[]>([])
 
   // Fallback NPC dialogue (when no Ink script)
   const [fallbackRound, setFallbackRound] = useState(0)
@@ -313,6 +314,7 @@ export function PracticeSessionPage() {
       speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
       text: line.text,
       isNpc: line.tags?.includes('npc') || !!line.speaker,
+      audioUrl: parseVnTags(line.tags).audio,
     }))
     setDialogueRounds((prev) => [...prev, ...newDialogues])
   }, [inkLines, fallbackNpcName])
@@ -728,8 +730,8 @@ export function PracticeSessionPage() {
               stageClassName="min-h-0"
               backgroundUrl={vnVisual.backgroundUrl || detail.scene.backgroundUrl || undefined}
               backgroundFit={vnVisual.backgroundFit}
-              currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc } : null}
-              history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc }))}
+              currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, audioUrl: currentLine.audioUrl } : null}
+              history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, audioUrl: line.audioUrl }))}
               choices={inkChoices}
               currentSpriteUrl={currentSpriteUrl}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
