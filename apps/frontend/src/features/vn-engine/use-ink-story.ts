@@ -104,9 +104,8 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
         })
       }
       setIsWaiting(false)
-      advanceStory(engineRef.current)
     },
-    [advanceStory],
+    [],
   )
 
   const getVariable = useCallback((name: string) => {

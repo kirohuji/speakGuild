@@ -57,6 +57,7 @@ interface VnPlayerSettings {
   autoAdvance: boolean
   autoAdvanceDelay: number
   bilingual: boolean
+  showUserInputInDialogue: boolean
 }
 
 const DEFAULT_SETTINGS: VnPlayerSettings = {
@@ -64,6 +65,7 @@ const DEFAULT_SETTINGS: VnPlayerSettings = {
   autoAdvance: false,
   autoAdvanceDelay: 2.5,
   bilingual: false,
+  showUserInputInDialogue: true,
 }
 
 const SETTINGS_STORAGE_KEY = 'vn-player-settings'
@@ -420,8 +422,9 @@ export function VnPlayer({
   const lineIndex = reviewLineIndex ?? Math.max(history.length - 1, 0)
   const reviewLine = reviewLineIndex !== null ? history[reviewLineIndex] : null
   const activeLine = reviewLine ?? currentLine
-  const fullText = activeLine?.text ?? ''
-  const audioUrl = activeLine?.audioUrl
+  const displayLine = activeLine?.isUser && reviewLineIndex === null && !settings.showUserInputInDialogue ? null : activeLine
+  const fullText = displayLine?.text ?? ''
+  const audioUrl = displayLine?.audioUrl
 
   useEffect(() => {
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
@@ -472,7 +475,7 @@ export function VnPlayer({
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
   const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen
-  const canSubmitInput = !!onSubmitInput && isWaiting && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
+  const canSubmitInput = !!onSubmitInput && isWaiting && !activeLine?.isUser && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
 
   useEffect(() => {
     if (autoAdvanceTimerRef.current !== null) window.clearTimeout(autoAdvanceTimerRef.current)
@@ -488,6 +491,15 @@ export function VnPlayer({
       if (autoAdvanceTimerRef.current === timer) autoAdvanceTimerRef.current = null
     }
   }, [canAdvance, onAdvance, settings.autoAdvance, settings.autoAdvanceDelay, fullText])
+
+  // Auto-advance when story can continue but nothing to display (no line, no choices)
+  useEffect(() => {
+    if (!canAdvance || displayLine || choices.length > 0 || isEnded) return
+    const timer = window.setTimeout(() => {
+      onAdvance?.()
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [canAdvance, displayLine, choices.length, isEnded, onAdvance])
 
   const goToPreviousLine = () => {
     if (history.length <= 1) return
@@ -615,9 +627,9 @@ export function VnPlayer({
         )}
 
         <div className="absolute inset-x-0 bottom-0 z-20">
-          {activeLine?.speaker && (
+          {displayLine?.speaker && (
             <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center rounded-full border border-white/10 bg-black/58 px-3 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
-              <span className="truncate text-xs font-semibold text-white/88">{activeLine.speaker}</span>
+              <span className="truncate text-xs font-semibold text-white/88">{displayLine.speaker}</span>
             </div>
           )}
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/58 px-1 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
@@ -639,7 +651,7 @@ export function VnPlayer({
           </div>
           <div className="flex max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-white/10 bg-black/58 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-6">
-              {activeLine ? (
+              {displayLine ? (
                 <div className="space-y-2">
                   <p className="leading-relaxed text-white/92" style={{ fontSize: settings.fontSize }}>
                     {displayedText}
@@ -647,16 +659,28 @@ export function VnPlayer({
                       <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-white/70 align-middle drop-shadow-[0_0_8px_rgba(255,255,255,.42)]" />
                     )}
                   </p>
-                  {settings.bilingual && activeLine.translation && (
-                    <p className="text-xs leading-relaxed text-white/58">{activeLine.translation}</p>
+                  {settings.bilingual && displayLine.translation && (
+                    <p className="text-xs leading-relaxed text-white/58">{displayLine.translation}</p>
                   )}
                 </div>
               ) : isEnded ? (
                 <p className="text-center text-sm text-white/62">故事结束</p>
               ) : isWaiting ? (
-                <p className="text-center text-sm text-white/62">等待用户输入...</p>
+                <div className="flex items-center justify-center py-2">
+                  <span className="inline-flex gap-1">
+                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '0ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '150ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '300ms' }} />
+                  </span>
+                </div>
               ) : (
-                <p className="text-center text-sm text-white/62">等待继续</p>
+                <div className="flex items-center justify-center py-2">
+                  <span className="inline-flex gap-1">
+                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '0ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '150ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '300ms' }} />
+                  </span>
+                </div>
               )}
             </div>
             {canSubmitInput && (
@@ -764,6 +788,12 @@ function VnSettingsDialog({
             label="双语显示"
             checked={settings.bilingual}
             onCheckedChange={(bilingual) => update({ bilingual })}
+          />
+
+          <SettingSwitch
+            label="显示我的输入"
+            checked={settings.showUserInputInDialogue}
+            onCheckedChange={(showUserInputInDialogue) => update({ showUserInputInDialogue })}
           />
         </div>
       </DialogContent>

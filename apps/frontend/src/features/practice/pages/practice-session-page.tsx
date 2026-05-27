@@ -164,6 +164,7 @@ export function PracticeSessionPage() {
   // ── History dialog visibility (hide drawer toggles when open) ──
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
+  const syncedInkLineCountRef = useRef(0)
   const [vnVisual, setVnVisual] = useState<{
     backgroundUrl?: string
     backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
@@ -261,6 +262,10 @@ export function PracticeSessionPage() {
   } = useInkStory(inkJson, { onExternalFunction: handleExternalFn })
 
   useEffect(() => {
+    syncedInkLineCountRef.current = 0
+  }, [inkJson])
+
+  useEffect(() => {
     setVnVisual({
       backgroundUrl: detail?.scene.backgroundUrl || undefined,
       backgroundFit: 'cover',
@@ -285,13 +290,15 @@ export function PracticeSessionPage() {
 
   // Sync Ink lines to dialogue display
   useEffect(() => {
-    if (inkLines.length === 0) return
-    const newDialogues = inkLines.map((line) => ({
+    const newLines = inkLines.slice(syncedInkLineCountRef.current)
+    if (newLines.length === 0) return
+    syncedInkLineCountRef.current = inkLines.length
+    const newDialogues = newLines.map((line) => ({
       speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
       text: line.text,
       isNpc: line.tags?.includes('npc') || !!line.speaker,
     }))
-    setDialogueRounds(newDialogues)
+    setDialogueRounds((prev) => [...prev, ...newDialogues])
   }, [inkLines, fallbackNpcName])
 
   // Fallback NPC greeting when no Ink script
@@ -453,6 +460,7 @@ export function PracticeSessionPage() {
 
   const resetPractice = () => {
     setDialogueRounds([])
+    syncedInkLineCountRef.current = 0
     setFallbackRound(0)
     setCompletedObjectives(new Set())
     setUsedChunks(new Set())

@@ -219,12 +219,7 @@ export function VnStoryPreview({
     setHistory((prev) => [...prev, { speaker: 'You', text }])
     setIsWaiting(false)
     engine.setVariable('user_last_input', text)
-
-    const result = engine.continue()
-    if (!result) { setIsEnded(true); setCompletionOpen(true); return }
-
-    appendResult(engine, result)
-  }, [appendResult])
+  }, [])
 
   const resetPreview = useCallback(() => {
     if (!compileResult?.json) return
