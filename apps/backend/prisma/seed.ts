@@ -92,7 +92,14 @@ async function seedUsers() {
     data: { outputLevel: 'L2', userLevel: 3, totalXp: 350, learningGoals: ['留学生活', '日常社交', '提升英语思维'] },
   })
 
-  console.log('    ↳ 2 个用户（管理员 + 测试用户）')
+  // System user for file references (TTS cache, etc.)
+  await prisma.user.upsert({
+    where: { id: 'system' },
+    create: { id: 'system', name: 'System', email: 'system@engjourney.local', emailVerified: true },
+    update: {},
+  })
+
+  console.log('    ↳ 3 个用户（管理员 + 测试用户 + 系统用户）')
   return { adminUser, normalUser }
 }
 
