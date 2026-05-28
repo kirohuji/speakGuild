@@ -45,7 +45,7 @@ type ChunkInsight = {
   description?: string | null
   examples?: TopicDetail['activeChunks'][number]['examples']
   sceneName?: string
-  /** 是否已保存到表达库 */
+  /** 是否已保存到学习库 */
   saved?: boolean
 }
 
@@ -58,7 +58,7 @@ type PatternInsight = {
   example?: string
   difficulty?: string
   sceneName?: string
-  /** 是否已保存到表达库 */
+  /** 是否已保存到学习库 */
   saved?: boolean
 }
 

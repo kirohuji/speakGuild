@@ -33,7 +33,7 @@ const FALLBACK_BENEFITS: MemberBenefit[] = [
   { benefitId: '3', name: 'Chunk 学习法', freeSupport: '预览', standardSupport: true, advancedSupport: true },
   { benefitId: '4', name: '剧本模式', freeSupport: 'Ch.0 体验', standardSupport: '全部章节', advancedSupport: '全部章节' },
   { benefitId: '5', name: '探索模式', freeSupport: false, standardSupport: '预览', advancedSupport: '全部地点' },
-  { benefitId: '6', name: '表达库', freeSupport: '20 条', standardSupport: '200 条', advancedSupport: '无限' },
+  { benefitId: '6', name: '学习库', freeSupport: '20 条', standardSupport: '200 条', advancedSupport: '无限' },
   { benefitId: '7', name: '输出等级追踪', freeSupport: '基础', standardSupport: '详细分析', advancedSupport: '完整报告' },
   { benefitId: '8', name: '客服支持', freeSupport: false, standardSupport: '工作日', advancedSupport: '全天优先' },
 ]

@@ -146,6 +146,7 @@ export function PracticeSessionPage() {
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
   const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
+  const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
@@ -636,30 +637,45 @@ export function PracticeSessionPage() {
                 )}
                 {detail.topic.sentencePatterns?.length ? (
                   <div className="space-y-2">
-                    {detail.topic.sentencePatterns.map((p, i) => (
-                      <Card key={i} className="border-0 bg-muted/30 shadow-none transition-colors hover:bg-muted/50">
-                        <CardContent className="p-0">
-                          <button
-                            type="button"
-                            onClick={() => openInsight(`pattern:${i}`)}
-                            className="flex w-full items-center gap-3 p-3 text-left"
-                          >
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                              <Search className="size-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
-                                <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
+                    {detail.topic.sentencePatterns.map((p, i) => {
+                      const isExpanded = expandedPatternIdx === i
+                      return (
+                        <Card key={i} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
+                          <CardContent className="p-0">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedPatternIdx((prev) => (prev === i ? null : i))}
+                              className="flex w-full items-center gap-3 p-3 text-left"
+                            >
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                                <Search className="size-4" />
                               </div>
-                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
-                              {p.example && <p className="mt-1 text-xs text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
-                            </div>
-                            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                          </button>
-                        </CardContent>
-                      </Card>
-                    ))}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
+                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
+                                </div>
+                                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
+                              </div>
+                              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
+                            </button>
+                            {isExpanded && (
+                              <div className="border-t border-border/50 px-3 pb-3 pt-2">
+                                {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-1 h-7 px-0 text-xs text-primary"
+                                  onClick={() => openInsight(`pattern:${i}`)}
+                                >
+                                  {t('practiceSession.viewFullExplanation')}
+                                </Button>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
                   </div>
                 ) : null}
               </div>

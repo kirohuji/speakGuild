@@ -244,7 +244,7 @@ export const practiceAiApi = {
     api.post<any, { analysis: any; raw: string }>(`/practice-ai/sessions/${sessionId}/analyze`, {}),
 }
 
-// ---- 表达库 ----
+// ---- 学习库 ----
 export const expressionApi = {
   list: (params?: {
     type?: string

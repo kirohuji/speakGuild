@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BookMarked, Search, Trash2, BookOpen,
-  BookText, MessageSquareText, ChevronRight, ExternalLink,
+  BookText, MessageSquareText, ChevronRight, ExternalLink, Layers,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,7 @@ import { expressionApi } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { cn } from '@/lib/cn'
 
-type LibraryTab = 'words' | 'chunk'
+type LibraryTab = 'words' | 'chunk' | 'pattern'
 type ReviewState = 'reviewing' | 'done' | 'mastered'
 
 interface Expression {
@@ -93,7 +93,7 @@ export function ExpressionLibraryPage() {
   }, [])
 
   // ---- dialog ----
-  const apiType = libraryTab === 'words' ? 'word' : 'chunk'
+  const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
   const visibleDialogItems: LearningInsightItem[] = result.items.map((expr) => {
     if (apiType === 'word') {
       return {
@@ -102,13 +102,22 @@ export function ExpressionLibraryPage() {
         word: expr.original ?? '',
       }
     }
+    if (apiType === 'scene_phrase') {
+      return {
+        kind: 'pattern' as const,
+        id: expr.id,
+        pattern: expr.chunkText ?? expr.corrected ?? '',
+        meaning: expr.original ?? '',
+        sceneName: expr.sceneName ?? undefined,
+      }
+    }
     return {
       kind: 'chunk' as const,
       id: expr.id,
       text: expr.chunkText ?? expr.corrected ?? '',
       meaning: expr.original ?? '',
       sceneName: expr.sceneName ?? undefined,
-      saved: true, // 已在表达库中
+      saved: true, // 已在学习库中
     }
   })
 
@@ -152,6 +161,7 @@ export function ExpressionLibraryPage() {
   // ---- 列表项渲染 ----
   const renderExpressionItem = (expr: Expression, index: number) => {
     const isWord = expr.type === 'word'
+    const isPattern = expr.type === 'scene_phrase'
     const text = isWord ? (expr.original ?? '') : (expr.chunkText ?? expr.corrected ?? '')
     const displayKey = isWord ? (expr.original ?? expr.id) : expr.id
     const isExpanded = expandedItemId === displayKey
@@ -159,6 +169,10 @@ export function ExpressionLibraryPage() {
     const iconEl = isWord ? (
       <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
         <BookText className="size-4" />
+      </div>
+    ) : isPattern ? (
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
+        <Layers className="size-4" />
       </div>
     ) : (
       <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -248,6 +262,9 @@ export function ExpressionLibraryPage() {
     'chunk-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunks'), hint: t('expressionLib.hintAutoCollect') },
     'chunk-done': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksDone') },
     'chunk-mastered': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksMastered') },
+    'pattern-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatterns'), hint: t('expressionLib.hintCollectPatterns') },
+    'pattern-done': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsDone') },
+    'pattern-mastered': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsMastered') },
   }
 
   const emptyKey = `${libraryTab}-${reviewState}`
@@ -259,6 +276,7 @@ export function ExpressionLibraryPage() {
         <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
           <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
           <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
+          <TabsTrigger value="pattern" className="flex-1 rounded-full">{t('expressionLib.patterns')}</TabsTrigger>
         </TabsList>
 
         {/* ---- 二级状态过滤 ---- */}
@@ -322,6 +340,32 @@ export function ExpressionLibraryPage() {
                 <button
                   onClick={() => openDialog(visibleDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600"
+                >
+                  <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
+                </button>
+              </div>
+              <div className="space-y-2">
+                {result.items.map((expr, i) => renderExpressionItem(expr, i))}
+              </div>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                {t('expressionLib.totalItems', { count: result.total })}
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pattern" forceMount className="data-[state=inactive]:hidden">
+          {loading ? (
+            <div className="flex justify-center py-12"><Spinner /></div>
+          ) : result.items.length === 0 ? (
+            emptyState(empty.icon, empty.title, empty.hint)
+          ) : (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
+                <button
+                  onClick={() => openDialog(visibleDialogItems, 0)}
+                  className="flex items-center gap-1 text-xs text-violet-500 hover:text-violet-600"
                 >
                   <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
                 </button>

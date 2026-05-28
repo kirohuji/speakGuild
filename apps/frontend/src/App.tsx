@@ -118,7 +118,7 @@ export default function App() {
                 <Route path="/explore" element={<ExploreMapPage />} />
                 <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
 
-                {/* 表达库 */}
+                {/* 学习库 */}
                 <Route path="/expressions" element={<ExpressionLibraryPage />} />
 
                 {/* 我的成长 */}

@@ -121,7 +121,7 @@ const steps = [
     number: '04',
     icon: TrendingUp,
     title: '复述 & 升级 & 沉淀',
-    description: '遮挡复述升级表达 → 保存到表达库 → 在剧本任务中实战使用',
+    description: '遮挡复述升级表达 → 保存到学习库 → 在剧本任务中实战使用',
   },
 ]
 
@@ -673,7 +673,7 @@ export function PortalPage() {
                   { label: '场景练习', to: '/practice' },
                   { label: '剧本模式', to: '/script' },
                   { label: '探索模式', to: '/explore' },
-                  { label: '表达库', to: '/expressions' },
+                  { label: '学习库', to: '/expressions' },
                 ].map((link) => (
                   <li key={link.label}>
                     <button
