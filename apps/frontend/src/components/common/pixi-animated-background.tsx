@@ -157,124 +157,234 @@ function setupOcean(app: PIXI.Application, w: number, h: number): ThemeSetup {
 }
 
 // ═══════════════════════════════════════════════════════════
-// ⭐ Stars — 深空星河 + 星座连线 + 彗星拖尾
+// ⭐ Stars — 十字星芒 · 斗转星移
 // ═══════════════════════════════════════════════════════════
 
-/** 用路径画圆（与 Ocean/Aurora 相同的可靠模式） */
-function drawCirclePath(g: PIXI.Graphics, cx: number, cy: number, r: number) {
-  const segs = 8;
-  g.moveTo(cx + r, cy);
-  for (let i = 1; i <= segs; i++) {
-    const a = (Math.PI * 2 * i) / segs;
-    g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-  }
-  g.closePath();
+/** 画十字星：两条垂直相交的线 */
+function drawCross(g: PIXI.Graphics, half: number, thickness: number, color: number, alpha: number) {
+  g.moveTo(-half, 0);
+  g.lineTo(half, 0);
+  g.moveTo(0, -half);
+  g.lineTo(0, half);
+  g.stroke({ color, width: thickness, alpha });
 }
 
-class GalaxyStar extends PIXI.Graphics {
-  twinklePhase = 0; twinkleSpeed = 0;
+/** 不规则闪烁：多频叠加，自然的"抖动感" */
+function organicTwinkle(phase: number): number {
+  return Math.sin(phase) * 0.6 + Math.sin(phase * 2.7 + 0.8) * 0.25 + Math.sin(phase * 5.3 + 1.5) * 0.15;
+}
+
+/** 聚簇随机位置 */
+function clusterPos(w: number, h: number, maxY: number): { x: number; y: number } {
+  if (Math.random() < 0.3) {
+    const cx = w * (0.15 + Math.random() * 0.7);
+    const cy = h * (0.1 + Math.random() * maxY * 0.6);
+    const a = Math.random() * Math.PI * 2;
+    const d = (Math.random() + Math.random() + Math.random()) / 3 * w * 0.12;
+    return {
+      x: Math.max(0, Math.min(w, cx + Math.cos(a) * d)),
+      y: Math.max(0, Math.min(h * maxY, cy + Math.sin(a) * d)),
+    };
+  }
+  return { x: Math.random() * w, y: Math.random() * h * maxY };
+}
+
+function starColor(): number {
+  const r = Math.random();
+  if (r < 0.60) return 0xffffff;
+  if (r < 0.80) return 0xddeeff;
+  if (r < 0.95) return 0xffeedd;
+  return 0xffeecc;
+}
+
+// ── 十字星 ──
+class Star extends PIXI.Graphics {
+  twinklePhase = 0;
   constructor(
-    x: number, y: number, color: number, size: number,
-    private baseAlpha: number, private driftVx = 0,
+    private starColor: number,
+    private half: number,
+    private thickness: number,
+    private baseAlpha: number,
+    private twinkleSpeed: number,
+    private twinkleAmp: number,
   ) {
     super();
     this.twinklePhase = Math.random() * Math.PI * 2;
-    this.twinkleSpeed = 0.03 + Math.random() * 0.07;
-    drawCirclePath(this, 0, 0, size);
-    this.fill({ color, alpha: 1 });
-    this.position.set(x, y);
-    this.alpha = baseAlpha;
+    this.redraw(1);
   }
-  update(dt: number, _w: number, _h: number) {
-    this.position.x += this.driftVx * dt * 0.02;
-    if (this.position.x < -10) this.position.x = _w + 10;
-    if (this.position.x > _w + 10) this.position.x = -10;
+  private redraw(brightness: number) {
+    this.clear();
+    const a = this.baseAlpha * brightness;
+    drawCross(this, this.half, this.thickness, this.starColor, a);
+  }
+  update(dt: number) {
     this.twinklePhase += this.twinkleSpeed * dt;
-    this.alpha = this.baseAlpha * (0.4 + 0.6 * Math.sin(this.twinklePhase));
+    const raw = organicTwinkle(this.twinklePhase);
+    const brightness = 1 - this.twinkleAmp + this.twinkleAmp * (0.5 + 0.5 * raw);
+    this.alpha = brightness; // DisplayObject alpha 控制整体
     return true;
   }
 }
 
+// ── 亮星：单层十字星芒 ──
+class BrightStar extends PIXI.Graphics {
+  twinklePhase = 0;
+  private starColor: number;
+  private half: number;
+  private baseAlpha: number;
+  private twinkleSpd: number;
+
+  constructor(color: number, half: number, baseAlpha: number, twinkleSpeed: number) {
+    super();
+    this.starColor = color;
+    this.half = half;
+    this.baseAlpha = baseAlpha;
+    this.twinkleSpd = twinkleSpeed;
+    this.twinklePhase = Math.random() * Math.PI * 2;
+    this.draw(1);
+  }
+  private draw(brightness: number) {
+    this.clear();
+    const a = this.baseAlpha * brightness;
+    // 单层十字星芒：细长
+    drawCross(this, this.half * 3, 0.35, this.starColor, a * 0.5);
+    // 核心粗十字
+    drawCross(this, this.half, 0.9, this.starColor, a);
+  }
+  update(dt: number) {
+    this.twinklePhase += this.twinkleSpd * dt;
+    const raw = organicTwinkle(this.twinklePhase);
+    const brightness = 0.4 + 0.6 * (0.5 + 0.5 * raw);
+    this.alpha = brightness;
+    return true;
+  }
+}
+
+// ── 流星：亮点 + 直线拖尾 ──
 class Comet extends PIXI.Graphics {
   vx = 0; vy = 0; life = 0; maxLife = 0; tailLen = 0;
   constructor(w: number, h: number) {
     super();
     this.vx = -3 - Math.random() * 2;
     this.vy = 1 + Math.random() * 1.5;
-    this.maxLife = 50 + Math.random() * 50;
+    this.maxLife = 45 + Math.random() * 45;
     this.life = this.maxLife;
-    this.tailLen = 6 + Math.floor(Math.random() * 4);
-    drawCirclePath(this, 0, 0, 2.5);
-    this.fill({ color: 0xffffff, alpha: 1 });
-    this.position.set(w * (0.3 + Math.random() * 0.5), h * (0.05 + Math.random() * 0.25));
+    this.tailLen = 60 + Math.random() * 80;
+    this.position.set(w * (0.3 + Math.random() * 0.5), h * (0.05 + Math.random() * 0.2));
+    this.draw();
+  }
+  private draw() {
+    this.clear();
+    const fade = Math.max(0, this.life / this.maxLife);
+    // 直线拖尾
+    const tx = -this.tailLen * (this.vx / Math.hypot(this.vx, this.vy));
+    const ty = -this.tailLen * (this.vy / Math.hypot(this.vx, this.vy));
+    this.moveTo(0, 0);
+    this.lineTo(tx, ty);
+    this.stroke({ color: 0xffffff, width: 0.6, alpha: fade * 0.4 });
+    // 头部亮点（十字）
+    this.moveTo(-3, 0); this.lineTo(3, 0);
+    this.moveTo(0, -3); this.lineTo(0, 3);
+    this.stroke({ color: 0xffffff, width: 1, alpha: fade });
   }
   update(dt: number) {
     this.life -= dt;
     this.position.x += this.vx * dt;
     this.position.y += this.vy * dt;
-    this.clear();
-    const fade = Math.max(0, this.life / this.maxLife);
-    // 拖尾（从远到近画，远的更淡更小）
-    for (let i = this.tailLen; i >= 0; i--) {
-      const tx = -i * 10 * this.vx * 0.3;
-      const ty = -i * 10 * this.vy * 0.3;
-      drawCirclePath(this, tx, ty, 2 - i * 0.2);
-      this.fill({ color: 0xffffff, alpha: fade * (1 - i / (this.tailLen + 1)) * 0.6 });
-    }
-    // 头部亮点
-    drawCirclePath(this, 0, 0, 2.5);
-    this.fill({ color: 0xffffff, alpha: fade });
+    this.draw();
     return this.life > 0;
   }
 }
 
 function setupStars(app: PIXI.Application, w: number, h: number): ThemeSetup {
-  console.log('[PixiBG] setupStars() called, w=%d h=%d', w, h);
   const items: Updatable[] = [];
-  const starColors = [0xffffff, 0xaaccff, 0xffeedd, 0xffccaa, 0xffccee];
 
-  // 远景星（小、多、慢速视差漂移）
-  for (let i = 0; i < 180; i++) {
-    const s = new GalaxyStar(
-      Math.random() * w, Math.random() * h * 0.88,
-      starColors[i % 5], 1.2 + Math.random() * 2.5,
-      0.3 + Math.random() * 0.45, 0.03 + Math.random() * 0.12,
-    );
-    app.stage.addChild(s as any); items.push(s as any);
-  }
-  // 中景星（中等大小和亮度）
-  for (let i = 0; i < 60; i++) {
-    const s = new GalaxyStar(
-      Math.random() * w, Math.random() * h * 0.78,
-      starColors[i % 5], 2 + Math.random() * 3.5,
-      0.45 + Math.random() * 0.4, 0.08 + Math.random() * 0.2,
-    );
-    app.stage.addChild(s as any); items.push(s as any);
-  }
-  // 亮星 + 光晕（路径画圆）
-  for (let i = 0; i < 12; i++) {
-    const x = Math.random() * w; const y = Math.random() * h * 0.6;
-    const halo = new PIXI.Graphics();
-    drawCirclePath(halo, 0, 0, 16 + Math.random() * 16);
-    halo.fill({ color: 0xffffff, alpha: 0.08 });
-    halo.position.set(x, y);
-    (halo as any).update = () => true;
-    app.stage.addChild(halo as any); items.push(halo as any);
-
-    const s = new GalaxyStar(x, y, 0xffffdd, 3 + Math.random() * 4, 0.6 + Math.random() * 0.35);
+  // ═══ 深空纹理：极微十字星，密密麻麻 ═══
+  for (let i = 0; i < 80; i++) {
+    const pos = clusterPos(w, h, 0.92);
+    const s = new Star(starColor(), 0.4 + Math.random() * 1.0, 0.12, 0.12 + Math.random() * 0.26, 0.003 + Math.random() * 0.01, 0.15 + Math.random() * 0.25);
+    s.position.set(pos.x, pos.y);
     app.stage.addChild(s as any); items.push(s as any);
   }
 
-  console.log('[PixiBG] stars created: %d items on stage', items.length);
+  // ═══ 星野：可见十字星，密集分布 ═══
+  for (let i = 0; i < 50; i++) {
+    const pos = clusterPos(w, h, 0.85);
+    const s = new Star(starColor(), 1 + Math.random() * 2.2, 0.22, 0.35 + Math.random() * 0.40, 0.010 + Math.random() * 0.022, 0.40 + Math.random() * 0.40);
+    s.position.set(pos.x, pos.y);
+    app.stage.addChild(s as any); items.push(s as any);
+  }
 
-  let cometTimer = 40 + Math.random() * 60;
+  // ═══ 亮星：单层十字星芒 ═══
+  const brightColors = [0xffffdd, 0xffeecc, 0xffeedd, 0xffffff, 0xddeeff, 0xffffff, 0xffffdd];
+  for (let i = 0; i < 7; i++) {
+    const pos = clusterPos(w, h, 0.6);
+    const s = new BrightStar(brightColors[i], 1.8 + Math.random() * 2, 0.55 + Math.random() * 0.40, 0.015 + Math.random() * 0.020);
+    s.position.set(pos.x, pos.y);
+    app.stage.addChild(s as any); items.push(s as any);
+  }
 
+  // ═══ 左下角地面树影 ═══
+  const treeColor = 0x030610;
+  const treeAlpha = 0.92;
+  const trees = new PIXI.Graphics();
+  const pine = (tx: number, baseY: number, treeH: number, treeW: number) => {
+    const layers = 3;
+    for (let i = 0; i < layers; i++) {
+      const topY = baseY - treeH + (i / layers) * treeH * 0.75;
+      const botY = topY + (treeH / layers) * 1.4;
+      const lw = treeW * (1 - i * 0.22);
+      trees.moveTo(tx, topY);
+      trees.lineTo(tx - lw / 2, botY);
+      trees.lineTo(tx + lw / 2, botY);
+      trees.closePath();
+    }
+    trees.moveTo(tx - 2, baseY);
+    trees.lineTo(tx - 2, baseY + treeH * 0.15);
+    trees.lineTo(tx + 2, baseY + treeH * 0.15);
+    trees.lineTo(tx + 2, baseY);
+    trees.closePath();
+  };
+  // 从左边延伸过来的树线，作为地面轮廓
+  for (let i = 0; i < 6; i++) {
+    const tx = w * (0.0 + i * 0.045);
+    const th = h * (0.15 + Math.random() * 0.25);
+    const tw = 30 + Math.random() * 50;
+    pine(tx, h, th, tw);
+  }
+  // 右下角也来几棵小的，形成地面线
+  for (let i = 0; i < 4; i++) {
+    const tx = w * (0.82 + i * 0.04);
+    const th = h * (0.10 + Math.random() * 0.15);
+    const tw = 20 + Math.random() * 30;
+    pine(tx, h, th, tw);
+  }
+  trees.fill({ color: treeColor, alpha: treeAlpha });
+  app.stage.addChild(trees as any);
+
+  // ═══ 斗转星移 ═══
+  const cosmos = new PIXI.Container();
+  cosmos.x = w / 2;
+  cosmos.y = h / 2;
+  for (const item of items) {
+    app.stage.removeChild(item);
+    item.position.x -= w / 2;
+    item.position.y -= h / 2;
+    cosmos.addChild(item);
+  }
+  app.stage.addChild(cosmos as any);
+
+  let cometTimer = 80 + Math.random() * 140;
   const onTick = (dt: number) => {
+    cosmos.rotation += 0.00006 * dt;
     cometTimer -= dt;
     if (cometTimer <= 0) {
-      cometTimer = 40 + Math.random() * 80;
+      cometTimer = 80 + Math.random() * 160;
       const comet = new Comet(w, h);
-      app.stage.addChild(comet as any); items.push(comet as any);
+      comet.position.x -= w / 2;
+      comet.position.y -= h / 2;
+      cosmos.addChild(comet as any);
+      items.push(comet as any);
     }
   };
 
@@ -520,7 +630,6 @@ export function PixiAnimatedBackground({ themeId }: AnimatedBackgroundProps) {
 
     const w = container.clientWidth;
     const h = container.clientHeight;
-    console.log('[PixiBG] useEffect fired, themeId=%s, size=%dx%d', themeId, w, h);
     if (w === 0 || h === 0) return;
 
     const app = new PIXI.Application();
@@ -536,14 +645,12 @@ export function PixiAnimatedBackground({ themeId }: AnimatedBackgroundProps) {
       container.appendChild(app.canvas);
       appRef.current = app;
 
-      console.log('[PixiBG] app.init() done, themeId=%s, picking setup...', themeId);
       const setup: ThemeSetup =
-        themeId?.includes('ocean')  ? (console.log('[PixiBG] → ocean'), setupOcean(app, w, h)) :
-        themeId?.includes('rain')   ? (console.log('[PixiBG] → rain'), setupRain(app, w, h)) :
-        themeId?.includes('aurora') ? (console.log('[PixiBG] → aurora'), setupAurora(app, w, h)) :
-                                      (console.log('[PixiBG] → stars (default)'), setupStars(app, w, h));
+        themeId?.includes('ocean')  ? setupOcean(app, w, h) :
+        themeId?.includes('rain')   ? setupRain(app, w, h) :
+        themeId?.includes('aurora') ? setupAurora(app, w, h) :
+                                      setupStars(app, w, h);
       setupRef.current = setup;
-      console.log('[PixiBG] setup done, items=%d', setup.items.length);
 
       app.ticker.add((ticker) => {
         const dt = ticker.deltaTime;
