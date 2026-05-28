@@ -357,6 +357,21 @@ model SystemConfig {
   @@map("system_config")
 }
 
+/// 每日一句：按日期管理的每日句子（首页展示）
+model DailySentence {
+  id          String   @id @default(cuid())
+  date        DateTime @unique         /// 句子所属日期（仅日期部分有效）
+  quote       String                   /// 英文句子
+  translation String                   /// 中文翻译
+  author      String   @default("")    /// 出处/作者
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date, sortOrder])
+  @@map("daily_sentence")
+}
+
 enum MembershipLevel {
   free
   standard
