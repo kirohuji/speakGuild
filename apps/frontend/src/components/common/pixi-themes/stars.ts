@@ -17,10 +17,15 @@
  *   树影:     #030610  alpha 0.92
  *   流星:     #ffffff  直线拖尾 60-140px  alpha fade*0.4
  *
- * Light 模式:
+ * Light 模式（暮光星色）:
  *   天空渐变: linear-gradient(135deg, #e8ecf4 0%, #f0f2f8 50%, #e4e8f2 100%)
  *   光晕装饰: hsla(260 50% 70% / 0.30) + hsla(220 40% 75% / 0.25)
- *   ⚠️ 当前 PixiJS 动画仅适配 Dark 模式，Light 模式下建议使用静态渐变背景
+ *   星空策略: 用深色星替代白色星（深蓝/钢蓝/暖棕），在浅背景上产生对比度
+ *     深空(50颗)  alpha 0.15-0.35  色: 深蓝#334466 / 钢蓝#445577 / 暖棕#554433
+ *     星野(30颗)  alpha 0.35-0.60  色: 同上
+ *     亮星(5颗)   alpha 0.50-0.80  色: 深蓝#223355 / 深紫#443355 / 暖棕#554422
+ *   树影:     #5a6b5a  alpha 0.55 (灰绿, 融入浅色天空)
+ *   流星:     使用深蓝拖尾 #445577
  */
 
 import * as PIXI from 'pixi.js';
@@ -55,12 +60,20 @@ function clusterPos(w: number, h: number, maxY: number): { x: number; y: number 
   return { x: Math.random() * w, y: Math.random() * h * maxY };
 }
 
-function starColor(): number {
+function starColor(isDark: boolean): number {
+  if (isDark) {
+    const r = Math.random();
+    if (r < 0.60) return 0xffffff;
+    if (r < 0.80) return 0xddeeff;
+    if (r < 0.95) return 0xffeedd;
+    return 0xffeecc;
+  }
+  // Light 模式：深色星在浅背景上产生对比度（暮光星）
   const r = Math.random();
-  if (r < 0.60) return 0xffffff;
-  if (r < 0.80) return 0xddeeff;
-  if (r < 0.95) return 0xffeedd;
-  return 0xffeecc;
+  if (r < 0.40) return 0x334466; // 深蓝
+  if (r < 0.65) return 0x445577; // 钢蓝
+  if (r < 0.85) return 0x554433; // 暖棕
+  return 0x554455;                // 暗紫
 }
 
 // ── 十字星 ──
@@ -80,14 +93,13 @@ class Star extends PIXI.Graphics {
   }
   private redraw(brightness: number) {
     this.clear();
-    const a = this.baseAlpha * brightness;
-    drawCross(this, this.half, this.thickness, this.starColor, a);
+    drawCross(this, this.half, this.thickness, this.starColor, 1);
   }
   update(dt: number) {
     this.twinklePhase += this.twinkleSpeed * dt;
     const raw = organicTwinkle(this.twinklePhase);
-    const brightness = 1 - this.twinkleAmp + this.twinkleAmp * (0.5 + 0.5 * raw);
-    this.alpha = brightness;
+    const blink = 1 - this.twinkleAmp + this.twinkleAmp * (0.5 + 0.5 * raw);
+    this.alpha = this.baseAlpha * blink;
     return true;
   }
 }
@@ -119,7 +131,7 @@ class BrightStar extends PIXI.Graphics {
     this.twinklePhase += this.twinkleSpd * dt;
     const raw = organicTwinkle(this.twinklePhase);
     const brightness = 0.4 + 0.6 * (0.5 + 0.5 * raw);
-    this.alpha = brightness;
+    this.draw(brightness);
     return true;
   }
 }
@@ -127,13 +139,17 @@ class BrightStar extends PIXI.Graphics {
 // ── 流星：亮点 + 直线拖尾 ──
 class Comet extends PIXI.Graphics {
   vx = 0; vy = 0; life = 0; maxLife = 0; tailLen = 0;
-  constructor(w: number, h: number) {
+  private tailColor: number;
+  private headColor: number;
+  constructor(w: number, h: number, isDark: boolean) {
     super();
     this.vx = -3 - Math.random() * 2;
     this.vy = 1 + Math.random() * 1.5;
     this.maxLife = 45 + Math.random() * 45;
     this.life = this.maxLife;
     this.tailLen = 60 + Math.random() * 80;
+    this.tailColor = isDark ? 0xffffff : 0x445577;
+    this.headColor = isDark ? 0xffffff : 0x334466;
     this.position.set(w * (0.3 + Math.random() * 0.5), h * (0.05 + Math.random() * 0.2));
     this.draw();
   }
@@ -144,10 +160,10 @@ class Comet extends PIXI.Graphics {
     const ty = -this.tailLen * (this.vy / Math.hypot(this.vx, this.vy));
     this.moveTo(0, 0);
     this.lineTo(tx, ty);
-    this.stroke({ color: 0xffffff, width: 0.6, alpha: fade * 0.4 });
+    this.stroke({ color: this.tailColor, width: 0.6, alpha: fade * 0.4 });
     this.moveTo(-3, 0); this.lineTo(3, 0);
     this.moveTo(0, -3); this.lineTo(0, 3);
-    this.stroke({ color: 0xffffff, width: 1, alpha: fade });
+    this.stroke({ color: this.headColor, width: 1, alpha: fade });
   }
   update(dt: number) {
     this.life -= dt;
@@ -158,28 +174,35 @@ class Comet extends PIXI.Graphics {
   }
 }
 
-export function setupStars(app: PIXI.Application, w: number, h: number, _isDark: boolean): ThemeSetup {
+export function setupStars(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
   const items: Updatable[] = [];
 
-  // ═══ 深空纹理：极微十字星，密密麻麻 ═══
-  for (let i = 0; i < 80; i++) {
+  // Light 模式：星少但更明显，顶部加微暗渐变营造暮光感
+  const deepCount = isDark ? 80 : 50;
+  const fieldCount = isDark ? 50 : 30;
+  const brightCount = isDark ? 7 : 5;
+  const brightColors = isDark
+    ? [0xffffdd, 0xffeecc, 0xffeedd, 0xffffff, 0xddeeff, 0xffffff, 0xffffdd]
+    : [0x223355, 0x334466, 0x443355, 0x554422, 0x334455];
+
+  // ═══ 深空纹理 ═══
+  for (let i = 0; i < deepCount; i++) {
     const pos = clusterPos(w, h, 0.92);
-    const s = new Star(starColor(), 0.4 + Math.random() * 1.0, 0.12, 0.12 + Math.random() * 0.26, 0.003 + Math.random() * 0.01, 0.15 + Math.random() * 0.25);
+    const s = new Star(starColor(isDark), 0.4 + Math.random() * 1.0, 0.12, 0.20 + Math.random() * 0.30, 0.003 + Math.random() * 0.01, 0.15 + Math.random() * 0.25);
     s.position.set(pos.x, pos.y);
     app.stage.addChild(s as any); items.push(s as any);
   }
 
-  // ═══ 星野：可见十字星，密集分布 ═══
-  for (let i = 0; i < 50; i++) {
+  // ═══ 星野 ═══
+  for (let i = 0; i < fieldCount; i++) {
     const pos = clusterPos(w, h, 0.85);
-    const s = new Star(starColor(), 1 + Math.random() * 2.2, 0.22, 0.35 + Math.random() * 0.40, 0.010 + Math.random() * 0.022, 0.40 + Math.random() * 0.40);
+    const s = new Star(starColor(isDark), 1 + Math.random() * 2.2, 0.22, 0.45 + Math.random() * 0.40, 0.010 + Math.random() * 0.022, 0.40 + Math.random() * 0.40);
     s.position.set(pos.x, pos.y);
     app.stage.addChild(s as any); items.push(s as any);
   }
 
-  // ═══ 亮星：单层十字星芒 ═══
-  const brightColors = [0xffffdd, 0xffeecc, 0xffeedd, 0xffffff, 0xddeeff, 0xffffff, 0xffffdd];
-  for (let i = 0; i < 7; i++) {
+  // ═══ 亮星 ═══
+  for (let i = 0; i < brightCount; i++) {
     const pos = clusterPos(w, h, 0.6);
     const s = new BrightStar(brightColors[i], 1.8 + Math.random() * 2, 0.55 + Math.random() * 0.40, 0.015 + Math.random() * 0.020);
     s.position.set(pos.x, pos.y);
@@ -211,7 +234,7 @@ export function setupStars(app: PIXI.Application, w: number, h: number, _isDark:
   for (let i = 0; i < 4; i++) {
     pine(w * (0.82 + i * 0.04), h, h * (0.10 + Math.random() * 0.15), 20 + Math.random() * 30);
   }
-  trees.fill({ color: 0x030610, alpha: 0.92 });
+  trees.fill({ color: isDark ? 0x030610 : 0x5a6b5a, alpha: isDark ? 0.92 : 0.55 });
   app.stage.addChild(trees as any);
 
   // ═══ 斗转星移 ═══
@@ -232,7 +255,7 @@ export function setupStars(app: PIXI.Application, w: number, h: number, _isDark:
     cometTimer -= dt;
     if (cometTimer <= 0) {
       cometTimer = 80 + Math.random() * 160;
-      const comet = new Comet(w, h);
+      const comet = new Comet(w, h, isDark);
       comet.position.x -= w / 2;
       comet.position.y -= h / 2;
       cosmos.addChild(comet as any);
