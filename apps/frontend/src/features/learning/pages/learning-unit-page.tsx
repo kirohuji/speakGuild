@@ -51,12 +51,15 @@ export function LearningUnitPage() {
       learningApi.getUnitDetail(unitId),
       expressionApi.list({ type: 'chunk' }).catch(() => []),
       expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
-    ]).then(([unitData, chunks, phrases]) => {
+      expressionApi.list({ type: 'word' }).catch(() => []),
+    ]).then(([unitData, chunks, phrases, words]) => {
       setUnit(unitData)
       const texts = new Set<string>()
-      const allItems = [...(Array.isArray(chunks) ? chunks : []), ...(Array.isArray(phrases) ? phrases : [])]
-      for (const item of allItems) {
+      for (const item of [...(Array.isArray(chunks) ? chunks : []), ...(Array.isArray(phrases) ? phrases : [])]) {
         if (item.chunkText) texts.add(item.chunkText)
+      }
+      for (const item of (Array.isArray(words) ? words : [])) {
+        if (item.original) texts.add(item.original)
       }
       setCollectedTexts(texts)
     }).catch(() => setUnit(null))
@@ -75,7 +78,7 @@ export function LearningUnitPage() {
     // Also save to local Zustand
     addWord(word)
     try {
-      await expressionApi.create({ type: 'word', chunkText: word, original: meaning, sceneName: unit?.title })
+      await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }

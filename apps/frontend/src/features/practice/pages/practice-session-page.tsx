@@ -252,10 +252,14 @@ export function PracticeSessionPage() {
     Promise.all([
       expressionApi.list({ type: 'chunk' }).catch(() => []),
       expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
-    ]).then(([chunkItems, phraseItems]) => {
+      expressionApi.list({ type: 'word' }).catch(() => []),
+    ]).then(([chunkItems, phraseItems, wordItems]) => {
       const set = new Set<string>()
       for (const item of [...(Array.isArray(chunkItems) ? chunkItems : []), ...(Array.isArray(phraseItems) ? phraseItems : [])]) {
         if (item.chunkText) set.add(item.chunkText)
+      }
+      for (const item of (Array.isArray(wordItems) ? wordItems : [])) {
+        if (item.original) set.add(item.original)
       }
       setCollectedTexts(set)
     }).catch(() => {})
@@ -391,7 +395,7 @@ export function PracticeSessionPage() {
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
     try {
-      await expressionApi.create({ type: 'word', chunkText: word, original: meaning, sceneName: detail?.scene.title })
+      await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
