@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Palette, Sun, Moon, ImageIcon, Music, Info, Plus, Trash2,
   Check, Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -495,20 +496,15 @@ function BackgroundTab({
   addDecoration: (mode: 'lightDecorations' | 'darkDecorations') => void;
   removeDecoration: (mode: 'lightDecorations' | 'darkDecorations', index: number) => void;
 }) {
-  const bgLabel =
-    form.bgType === 'gradient' ? 'CSS 渐变' :
-    form.bgType === 'image' ? '图片背景' : '视频背景';
-
-  const bgIcon =
-    form.bgType === 'gradient' ? Palette :
-    form.bgType === 'image' ? ImageIcon : Music; // Music icon for video placeholder
 
   const bgDesc =
     form.bgType === 'gradient'
       ? '粘贴 CSS gradient 字符串，支持多层叠加'
       : form.bgType === 'image'
         ? '上传背景图片，支持 JPG/PNG/WebP，建议分辨率 ≥ 1920×1080'
-        : '上传背景视频，支持 MP4/WebM，建议静音循环播放';
+        : form.bgType === 'video'
+          ? '上传背景视频，支持 MP4/WebV，建议静音循环播放'
+          : 'PixiJS 粒子动画：星空/雨滴/浪花/极光，需要在代码中配置动画类型';
 
   return (
     <>
@@ -516,8 +512,9 @@ function BackgroundTab({
       <fieldset className="space-y-3 rounded-lg border p-4">
         <legend className="px-1 text-sm font-semibold text-foreground">背景类型</legend>
         <div className="flex gap-4">
-          {(['gradient', 'image', 'video'] as const).map((type) => {
-            const Icon = type === 'gradient' ? Palette : type === 'image' ? ImageIcon : Music;
+            {(['gradient', 'image', 'video', 'animation'] as const).map((type) => {
+            const Icon = type === 'gradient' ? Palette : type === 'image' ? ImageIcon : type === 'video' ? Music : Sparkles;
+            const label = type === 'gradient' ? 'CSS 渐变' : type === 'image' ? '背景图片' : type === 'video' ? '背景视频' : 'PixiJS 动画';
             return (
               <label
                 key={type}
@@ -529,9 +526,7 @@ function BackgroundTab({
                 )}
               >
                 <Icon className="size-5" />
-                <span className="text-xs font-medium">
-                  {type === 'gradient' ? 'CSS 渐变' : type === 'image' ? '背景图片' : '背景视频'}
-                </span>
+                <span className="text-xs font-medium">{label}</span>
                 <input
                   type="radio"
                   name="bgType"
@@ -552,7 +547,7 @@ function BackgroundTab({
         <legend className="flex items-center gap-1.5 px-1 text-sm font-semibold text-foreground">
           <Sun className="size-3.5" /> Light 模式背景
         </legend>
-        {form.bgType === 'gradient' && (
+        {(form.bgType === 'gradient' || form.bgType === 'animation') && (
           <>
             <Textarea
               value={form.lightBackground ?? ''}
@@ -570,6 +565,11 @@ function BackgroundTab({
                 className="h-10 rounded-md border border-border"
                 style={{ background: form.lightBackground }}
               />
+            )}
+            {form.bgType === 'animation' && (
+              <p className="text-xs text-muted-foreground">
+                PixiJS 动画将由主题 ID 自动匹配（如 theme-ocean, theme-stars）
+              </p>
             )}
           </>
         )}
@@ -599,7 +599,7 @@ function BackgroundTab({
         <legend className="flex items-center gap-1.5 px-1 text-sm font-semibold text-foreground">
           <Moon className="size-3.5" /> Dark 模式背景
         </legend>
-        {form.bgType === 'gradient' && (
+        {(form.bgType === 'gradient' || form.bgType === 'animation') && (
           <>
             <Textarea
               value={form.darkBackground ?? ''}
@@ -617,6 +617,11 @@ function BackgroundTab({
                 className="h-10 rounded-md border border-border"
                 style={{ background: form.darkBackground }}
               />
+            )}
+            {form.bgType === 'animation' && (
+              <p className="text-xs text-muted-foreground">
+                PixiJS 动画将由主题 ID 自动匹配（如 theme-ocean, theme-stars）
+              </p>
             )}
           </>
         )}

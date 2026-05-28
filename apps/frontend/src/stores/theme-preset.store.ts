@@ -60,19 +60,25 @@ export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
 
   setActivePreset: async (presetId: string | null) => {
     const { presets } = get();
+    // ── 乐观更新：先立即切换 UI，API 后台同步 ──
+    if (presetId) {
+      const preset = presets.find((p) => p.id === presetId);
+      if (preset) {
+        set({ activePreset: preset });
+      }
+    }
+
     try {
       await themeApi.setActive(presetId);
-      if (presetId) {
-        const preset = presets.find((p) => p.id === presetId);
-        if (preset) {
-          set({ activePreset: preset });
-        }
-      } else {
-        // 重置为默认：重新加载
+      // API 同步成功，无需额外操作（乐观值即最终值）
+    } catch (err: any) {
+      // ── 同步失败，回滚到上一个状态 ──
+      try {
         const defaultPreset = await themeApi.getDefault();
         set({ activePreset: defaultPreset });
+      } catch {
+        set({ activePreset: null });
       }
-    } catch (err: any) {
       throw new Error(err?.response?.data?.message || '切换主题失败');
     }
   },

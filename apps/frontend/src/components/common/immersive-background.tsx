@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useThemePreset } from '@/providers/theme-preset-provider';
 import type { ThemeDecoration } from '@/features/admin/theme-manage/api/theme-api';
+import { PixiAnimatedBackground } from '@/components/common/pixi-animated-background';
 
 /**
  * 沉浸式背景组件
@@ -28,15 +29,22 @@ export function ImmersiveBackground() {
     return raw;
   }, [activePreset, isDark]);
 
+  const bgType = activePreset?.bgType;
   const isGradient = bg?.startsWith('linear-gradient') || bg?.startsWith('radial-gradient');
+  const isAnimation = bgType === 'animation';
 
-  // 如果没有背景且没有装饰，不渲染
-  if (!bg && !decorations.length) return null;
+  // 如果没有背景且没有装饰且不是动画，不渲染
+  if (!bg && !decorations.length && !isAnimation) return null;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+      {/* PixiJS 动画背景 */}
+      {isAnimation && (
+        <PixiAnimatedBackground themeId={activePreset?.id} />
+      )}
+
       {/* 背景层 — 渐变背景带缓慢位移动画 */}
-      {bg && isGradient ? (
+      {bg && !isAnimation && isGradient ? (
         <motion.div
           className="absolute inset-0"
           style={{
@@ -48,7 +56,7 @@ export function ImmersiveBackground() {
           }}
           transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
         />
-      ) : bg ? (
+      ) : bg && !isAnimation ? (
         <div
           className="absolute inset-0"
           style={{ background: `url(${bg}) center / cover no-repeat` }}
