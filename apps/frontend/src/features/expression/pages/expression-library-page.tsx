@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BookMarked, RefreshCw, ExternalLink, Search,
-  Trash2, Eye, EyeOff, Check, X,
+  Trash2, Eye, EyeOff, Check, X, BookOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,15 +24,20 @@ type ReviewState = 'reviewing' | 'done' | 'mastered'
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
   chunkText: string | null; sceneName: string | null; masteryStatus: string
-  reviewCount: number; createdAt: string
+  reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
+  createdAt: string
 }
 
 export function ExpressionLibraryPage() {
-  const [expressions, setExpressions] = useState<Expression[]>([])
-  const [loading, setLoading] = useState(true)
+  const { t } = useTranslation()
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
   const [reviewState, setReviewState] = useState<ReviewState>('reviewing')
   const { entries: wordEntries, removeWord } = useWordsStore()
+
+  // Chunk data from backend
+  const [allChunks, setAllChunks] = useState<Expression[]>([])
+  const [reviewChunks, setReviewChunks] = useState<Expression[]>([])
+  const [chunksLoading, setChunksLoading] = useState(false)
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -42,60 +48,50 @@ export function ExpressionLibraryPage() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
 
   // Review
-  const [reviewItems, setReviewItems] = useState<Expression[]>([])
   const [reviewOpen, setReviewOpen] = useState(false)
   const [reviewIndex, setReviewIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [userAnswer, setUserAnswer] = useState('')
 
-  const fetchData = async () => {
-    setLoading(true)
+  // ---- fetch chunk data ----
+  const fetchChunks = useCallback(async () => {
+    setChunksLoading(true)
     try {
-      const res: any = await expressionApi.list({ type: 'chunk' })
-      setExpressions(Array.isArray(res) ? res : res?.data ?? [])
-    } catch { setExpressions([]) }
-    finally { setLoading(false) }
-  }
-
-  const loadReview = async () => {
-    try {
-      const res: any = await expressionApi.getReview()
-      setReviewItems(Array.isArray(res) ? res : res?.data ?? [])
-    } catch { setReviewItems([]) }
-  }
-
-  useEffect(() => {
-    if (libraryTab === 'words') {
-      setLoading(false)
-      return
+      const [all, review] = await Promise.all([
+        expressionApi.list({ type: 'chunk' }).catch(() => []),
+        expressionApi.getReview().catch(() => []),
+      ])
+      setAllChunks(Array.isArray(all) ? all : all?.data ?? [])
+      setReviewChunks(Array.isArray(review) ? review : review?.data ?? [])
+    } catch {
+      setAllChunks([])
+      setReviewChunks([])
+    } finally {
+      setChunksLoading(false)
     }
-
-    setLoading(true)
-    Promise.all([fetchData(), loadReview()]).finally(() => setLoading(false))
-  }, [libraryTab])
-
-  // Dialog data
-  const wordDialogItems: LearningInsightItem[] = wordEntries.map((entry) => ({
-    kind: 'word', id: `word:${entry.word}`, word: entry.word,
-  }))
-
-  const openDialog = useCallback((items: LearningInsightItem[], startIndex: number) => {
-    setDialogItems(items)
-    setDialogIndex(Math.min(startIndex, items.length - 1))
-    setDialogOpen(true)
   }, [])
 
-  const dueReviewIds = new Set(reviewItems.map((item) => item.id))
-  const doneExpressions = expressions.filter(
-    (expr) => expr.reviewCount > 0 && !dueReviewIds.has(expr.id) && expr.masteryStatus !== 'mastered',
+  useEffect(() => {
+    if (libraryTab === 'chunk') fetchChunks()
+  }, [libraryTab, fetchChunks])
+
+  // ---- computed visible data ----
+  const dueReviewIds = new Set(reviewChunks.map((item) => item.id))
+
+  // 已复习过但不在待复习列表中的 = "已标熟" (done)
+  const doneChunks = allChunks.filter(
+    (c) => c.reviewCount > 0 && !dueReviewIds.has(c.id) && c.masteryStatus !== 'mastered',
   )
-  const masteredExpressions = expressions.filter((expr) => expr.masteryStatus === 'mastered')
+  // masteryStatus === 'mastered' = 已掌握
+  const masteredChunks = allChunks.filter((c) => c.masteryStatus === 'mastered')
+
   const visibleChunks =
     reviewState === 'reviewing'
-      ? reviewItems
+      ? reviewChunks
       : reviewState === 'done'
-        ? doneExpressions
-        : masteredExpressions
+        ? doneChunks
+        : masteredChunks
+
   const visibleChunkDialogItems: LearningInsightItem[] = visibleChunks.map((expr) => ({
     kind: 'chunk',
     id: expr.id,
@@ -104,40 +100,64 @@ export function ExpressionLibraryPage() {
     sceneName: expr.sceneName ?? undefined,
   }))
 
-  const { t } = useTranslation()
+  const wordDialogItems: LearningInsightItem[] = wordEntries.map((entry) => ({
+    kind: 'word', id: `word:${entry.word}`, word: entry.word,
+  }))
 
-  const wordEmptyText =
-    reviewState === 'reviewing'
-      ? t('expressionLib.emptyWords')
-      : reviewState === 'done'
-        ? t('expressionLib.emptyWordsDone')
-        : t('expressionLib.emptyWordsMastered')
+  const openDialog = useCallback((items: LearningInsightItem[], startIndex: number) => {
+    if (items.length === 0) return
+    setDialogItems(items)
+    setDialogIndex(Math.min(startIndex, items.length - 1))
+    setDialogOpen(true)
+  }, [])
 
-  const chunkEmptyText =
-    reviewState === 'reviewing'
-      ? t('expressionLib.emptyChunks')
-      : reviewState === 'done'
-        ? t('expressionLib.emptyChunksDone')
-        : t('expressionLib.emptyChunksMastered')
+  const refreshAfterReview = () => {
+    fetchChunks()
+  }
+
+  // ---- counts ----
+  const filterPills = [
+    {
+      value: 'reviewing' as ReviewState,
+      label: t('expressionLib.reviewing'),
+      count: libraryTab === 'words' ? wordEntries.length : reviewChunks.length,
+    },
+    {
+      value: 'done' as ReviewState,
+      label: t('expressionLib.done'),
+      count: libraryTab === 'words' ? 0 : doneChunks.length,
+    },
+    {
+      value: 'mastered' as ReviewState,
+      label: t('expressionLib.mastered'),
+      count: libraryTab === 'words' ? 0 : masteredChunks.length,
+    },
+  ]
+
+  // ---- empty states ----
+  const emptyState = (icon: React.ReactNode, title: string, hint?: string) => (
+    <div className="flex flex-col items-center py-12 text-center">
+      <div className="text-muted-foreground/40">{icon}</div>
+      <p className="mt-4 text-muted-foreground">{title}</p>
+      {hint && <p className="mt-1 text-sm text-muted-foreground/70">{hint}</p>}
+    </div>
+  )
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
-        <Tabs value={libraryTab} onValueChange={(value) => setLibraryTab(value as LibraryTab)}>
-          <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
-            <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
-            <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
-          </TabsList>
+      <Tabs value={libraryTab} onValueChange={(value) => setLibraryTab(value as LibraryTab)}>
+        <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
+          <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
+          <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
+        </TabsList>
 
+        {/* ---- 状态过滤 ---- */}
         <div className="mb-4 flex gap-2 overflow-x-auto">
-          {[
-            { value: 'reviewing', label: t('expressionLib.reviewing'), count: libraryTab === 'words' ? wordEntries.length : reviewItems.length },
-            { value: 'done', label: t('expressionLib.done'), count: libraryTab === 'words' ? 0 : doneExpressions.length },
-            { value: 'mastered', label: t('expressionLib.mastered'), count: libraryTab === 'words' ? 0 : masteredExpressions.length },
-          ].map((item) => (
+          {filterPills.map((item) => (
             <button
               key={item.value}
               type="button"
-              onClick={() => setReviewState(item.value as ReviewState)}
+              onClick={() => setReviewState(item.value)}
               className={cn(
                 'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                 reviewState === item.value
@@ -151,14 +171,12 @@ export function ExpressionLibraryPage() {
           ))}
         </div>
 
-        {/* 单词 */}
+        {/* ═══ 单词 ═══ */}
         <TabsContent value="words">
-          {reviewState !== 'reviewing' || wordEntries.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-center">
-              <BookMarked className="size-12 text-muted-foreground/40" />
-              <p className="mt-4 text-muted-foreground">{wordEmptyText}</p>
-              {reviewState === 'reviewing' && <p className="text-sm text-muted-foreground">{t('expressionLib.hintCollectInUnit')}</p>}
-            </div>
+          {reviewState !== 'reviewing' ? (
+            emptyState(<BookOpen className="size-12" />, t('expressionLib.emptyWordsDone'))
+          ) : wordEntries.length === 0 ? (
+            emptyState(<BookMarked className="size-12" />, t('expressionLib.emptyWords'), t('expressionLib.hintCollectInUnit'))
           ) : (
             <div>
               <div className="mb-2 flex items-center justify-between">
@@ -179,51 +197,54 @@ export function ExpressionLibraryPage() {
                       <button onClick={() => setExpandedItemId((prev) => (prev === entry.word ? null : entry.word))}
                         className="flex w-full items-center justify-between p-3 text-left"
                       >
-                        <p className={cn('text-sm font-bold', isExpanded ? 'text-blue-600 dark:text-blue-400' : 'text-foreground')}>
-                          {entry.word}
-                        </p>
-                        <div className="flex items-center gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          <p className={cn('text-sm font-bold', isExpanded ? 'text-blue-600 dark:text-blue-400' : 'text-foreground')}>
+                            {entry.word}
+                          </p>
+                          {isExpanded && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              收藏于 {new Date(entry.addedAt).toLocaleDateString('zh-CN')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
                           <span onClick={(e) => { e.stopPropagation(); openDialog(wordDialogItems, i) }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title={t('expressionLib.search')}>
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                            title={t('expressionLib.search')}>
                             <Search className="size-3.5" />
                           </span>
                           <span onClick={(e) => { e.stopPropagation(); removeWord(entry.word); toast.success(t('expressionLib.removed')) }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500" title={t('expressionLib.remove')}>
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
+                            title={t('expressionLib.remove')}>
                             <Trash2 className="size-3.5" />
                           </span>
                         </div>
                       </button>
-                      {isExpanded && (
-                        <div className="border-t border-blue-500/20 px-3 pb-3 pt-2">
-                          <p className="text-xs text-muted-foreground">收藏于 {new Date(entry.addedAt).toLocaleDateString('zh-CN')}</p>
-                          <button onClick={() => openDialog(wordDialogItems, i)}
-                            className="mt-2 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600">
-                            <ExternalLink className="size-3" /> {t('expressionLib.viewDetails')}
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )
                 })}
               </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">{t('expressionLib.totalWords', { count: wordEntries.length })}</p>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                {t('expressionLib.totalWords', { count: wordEntries.length })}
+              </p>
             </div>
           )}
         </TabsContent>
 
-        {/* 句块 */}
+        {/* ═══ 句块 ═══ */}
         <TabsContent value="chunk">
-          {loading ? <div className="flex justify-center py-12"><Spinner /></div>
-          : visibleChunks.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-center">
-              <BookMarked className="size-12 text-muted-foreground/40" />
-              <p className="mt-4 text-muted-foreground">{chunkEmptyText}</p>
-              <p className="text-sm text-muted-foreground">{t('expressionLib.hintAutoCollect')}</p>
-            </div>
+          {chunksLoading ? (
+            <div className="flex justify-center py-12"><Spinner /></div>
+          ) : visibleChunks.length === 0 ? (
+            reviewState === 'reviewing'
+              ? emptyState(<BookMarked className="size-12" />, t('expressionLib.emptyChunks'), t('expressionLib.hintAutoCollect'))
+              : reviewState === 'done'
+                ? emptyState(<BookMarked className="size-12" />, t('expressionLib.emptyChunksDone'))
+                : emptyState(<BookMarked className="size-12" />, t('expressionLib.emptyChunksMastered'))
           ) : (
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">点击单项展开 · 点击「查询」进入沉浸式学习</span>
+                <span className="text-xs text-muted-foreground">点击查看详情 · 右侧按钮沉浸式学习</span>
                 <button onClick={() => openDialog(visibleChunkDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600">
                   <ExternalLink className="size-3" /> 沉浸式
@@ -239,19 +260,52 @@ export function ExpressionLibraryPage() {
                       isExpanded ? 'border-purple-500/40 bg-purple-500/5' : 'border-border bg-card',
                     )}>
                       <button onClick={() => setExpandedItemId((prev) => (prev === expr.id ? null : expr.id))}
-                        className="flex w-full items-center justify-between p-3 text-left">
-                        <p className={cn('text-sm font-medium', isExpanded ? 'text-purple-600 dark:text-purple-400' : 'text-foreground')}>
-                          {text}
-                        </p>
-                        <span onClick={(e) => { e.stopPropagation(); openDialog(visibleChunkDialogItems, i) }}
-                          className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title="查询">
-                          <Search className="size-3.5" />
-                        </span>
+                        className="flex w-full items-center justify-between p-3 text-left"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className={cn('text-sm font-medium truncate', isExpanded ? 'text-purple-600 dark:text-purple-400' : 'text-foreground')}>
+                            {text}
+                          </p>
+                          {expr.sceneName && (
+                            <p className="mt-0.5 text-xs text-muted-foreground">场景：{expr.sceneName}</p>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {isExpanded && expr.reviewCount > 0 && (
+                            <Badge variant="secondary" className="text-[10px]">已复习{expr.reviewCount}次</Badge>
+                          )}
+                          <span onClick={(e) => { e.stopPropagation(); openDialog(visibleChunkDialogItems, i) }}
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                            title="查询">
+                            <Search className="size-3.5" />
+                          </span>
+                          <span onClick={async (e) => {
+                            e.stopPropagation()
+                            try {
+                              await expressionApi.remove(expr.id)
+                              toast.success('已移除')
+                              fetchChunks()
+                            } catch { toast.error('移除失败') }
+                          }}
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
+                            title="移除">
+                            <Trash2 className="size-3.5" />
+                          </span>
+                        </div>
                       </button>
                       {isExpanded && (
                         <div className="border-t border-purple-500/20 px-3 pb-3 pt-2">
-                          <p className="text-sm text-foreground">{expr.original ?? text}</p>
-                          {expr.sceneName && <p className="mt-1 text-xs text-muted-foreground">场景：{expr.sceneName}</p>}
+                          {expr.original && (
+                            <>
+                              <p className="text-xs text-muted-foreground">释义</p>
+                              <p className="text-sm text-foreground">{expr.original}</p>
+                            </>
+                          )}
+                          {expr.lastReviewedAt && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              上次复习：{new Date(expr.lastReviewedAt).toLocaleDateString('zh-CN')}
+                            </p>
+                          )}
                           <button onClick={() => openDialog(visibleChunkDialogItems, i)}
                             className="mt-2 flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600">
                             <ExternalLink className="size-3" /> 查看详情
@@ -268,12 +322,13 @@ export function ExpressionLibraryPage() {
         </TabsContent>
       </Tabs>
 
-      {libraryTab === 'chunk' && reviewState === 'reviewing' && reviewItems.length > 0 && (
+      {/* ---- 复习按钮 ---- */}
+      {libraryTab === 'chunk' && reviewState === 'reviewing' && reviewChunks.length > 0 && (
         <Button
           className="mt-3 w-full rounded-full"
           onClick={() => { setReviewIndex(0); setRevealed(false); setUserAnswer(''); setReviewOpen(true) }}
         >
-          <RefreshCw className="mr-1 size-4" /> 开始复习
+          <RefreshCw className="mr-1 size-4" /> 开始复习（{reviewChunks.length} 项）
         </Button>
       )}
 
@@ -284,8 +339,8 @@ export function ExpressionLibraryPage() {
 
       <ReviewDialog
         open={reviewOpen}
-        onOpenChange={(open) => { setReviewOpen(open); if (!open) loadReview() }}
-        items={reviewItems} index={reviewIndex}
+        onOpenChange={(open) => { setReviewOpen(open); if (!open) refreshAfterReview() }}
+        items={reviewChunks} index={reviewIndex}
         setIndex={setReviewIndex} revealed={revealed}
         setRevealed={setRevealed} userAnswer={userAnswer}
         setUserAnswer={setUserAnswer}

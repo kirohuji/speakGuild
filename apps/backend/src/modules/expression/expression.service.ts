@@ -43,9 +43,14 @@ export class ExpressionService {
     return this.prisma.expressionItem.findMany({
       where: {
         userId,
-        nextReviewAt: { lte: now },
+        OR: [
+          { nextReviewAt: { lte: now } },
+          { nextReviewAt: null },
+        ],
       },
-      orderBy: { nextReviewAt: 'asc' },
+      orderBy: [
+        { nextReviewAt: { sort: 'asc', nulls: 'first' } },
+      ],
     });
   }
 

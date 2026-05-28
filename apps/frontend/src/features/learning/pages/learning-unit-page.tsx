@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { learningApi, type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useWordsStore } from '@/stores/assets.store'
+import { expressionApi } from '@/features/practice/api/english-practice-api'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -38,16 +39,47 @@ export function LearningUnitPage() {
 
   // 展开的列表项（点击高亮 + 展开显示详情）
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
-  const { addWord, hasWord } = useWordsStore()
+  const { addWord } = useWordsStore()
+
+  // 已收集到学习库的文本集合 (chunkText / word)
+  const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!unitId) return
     setLoading(true)
-    learningApi.getUnitDetail(unitId)
-      .then(setUnit)
-      .catch(() => setUnit(null))
+    Promise.all([
+      learningApi.getUnitDetail(unitId),
+      expressionApi.list({ type: 'chunk' }).catch(() => []),
+      expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
+    ]).then(([unitData, chunks, phrases]) => {
+      setUnit(unitData)
+      const texts = new Set<string>()
+      const allItems = [...(Array.isArray(chunks) ? chunks : []), ...(Array.isArray(phrases) ? phrases : [])]
+      for (const item of allItems) {
+        if (item.chunkText) texts.add(item.chunkText)
+      }
+      setCollectedTexts(texts)
+    }).catch(() => setUnit(null))
       .finally(() => setLoading(false))
   }, [unitId])
+
+  const handleCollectChunk = useCallback(async (text: string, meaning: string) => {
+    try {
+      await expressionApi.create({ type: 'chunk', chunkText: text, original: meaning, sceneName: unit?.title })
+      setCollectedTexts((prev) => new Set([...prev, text]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [unit?.title])
+
+  const handleCollectWord = useCallback(async (word: string, meaning: string) => {
+    // Also save to local Zustand
+    addWord(word)
+    try {
+      await expressionApi.create({ type: 'scene_phrase', chunkText: word, original: meaning, sceneName: unit?.title })
+      setCollectedTexts((prev) => new Set([...prev, word]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [addWord, unit?.title])
 
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>
     (unit?.vocabularies ?? []).map((v) => ({
@@ -98,12 +130,6 @@ export function LearningUnitPage() {
   const handleDialogClose = useCallback((open: boolean) => {
     setDialogOpen(open)
   }, [])
-
-  const handleSaveWord = useCallback((word: string) => {
-    const saved = hasWord(word)
-    addWord(word)
-    toast.success(saved ? t('learning.wordAlreadyAdded') : t('learning.wordAdded'))
-  }, [addWord, hasWord])
 
   const vocabPageItems = useMemo(
     () => paginateItems(unit?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
@@ -228,11 +254,11 @@ export function LearningUnitPage() {
                   <VocabPrepCard
                     key={vocab.id}
                     vocab={vocab}
-                    saved={hasWord(vocab.word)}
+                    collected={collectedTexts.has(vocab.word)}
                     expanded={expandedItemId === vocab.id}
                     onToggle={() => handleItemClick(vocab.id)}
                     onOpen={() => openDialog(vocabDialogItems, vocabPageItems.startIndex + index)}
-                    onSave={() => handleSaveWord(vocab.word)}
+                    onCollect={() => handleCollectWord(vocab.word, vocab.meaning)}
                   />
                 ))}
                 <PrepPager
@@ -254,9 +280,11 @@ export function LearningUnitPage() {
                   <ChunkPrepCard
                     key={chunk.id}
                     chunk={chunk}
+                    collected={collectedTexts.has(chunk.text)}
                     expanded={expandedItemId === chunk.id}
                     onToggle={() => handleItemClick(chunk.id)}
                     onOpen={() => openDialog(chunkDialogItems, chunkPageItems.startIndex + index)}
+                    onCollect={() => handleCollectChunk(chunk.text, chunk.meaning)}
                   />
                 ))}
                 <PrepPager
@@ -415,19 +443,22 @@ function UnitMetric({ label, value }: { label: string; value: string }) {
 
 function VocabPrepCard({
   vocab,
-  saved,
+  collected,
   expanded,
   onToggle,
   onOpen,
-  onSave,
+  onCollect,
 }: {
   vocab: VocabItem
-  saved: boolean
+  collected: boolean
   expanded: boolean
   onToggle: () => void
   onOpen: () => void
-  onSave: () => void
+  onCollect: () => void
 }) {
+  const [saving, setSaving] = useState(false)
+  const handleClick = () => { setSaving(true); onCollect(); setTimeout(() => setSaving(false), 1000) }
+
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
       <CardContent className="p-0">
@@ -438,7 +469,7 @@ function VocabPrepCard({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{vocab.word}</p>
-              {saved && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{vocab.meaning}</p>
           </div>
@@ -452,8 +483,8 @@ function VocabPrepCard({
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
                 <Search className="size-3.5" /> 查看
               </Button>
-              <Button size="sm" variant={saved ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" onClick={onSave}>
-                <BookmarkPlus className="size-3.5" /> {saved ? '已加入' : '加入生词本'}
+              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collected || saving} onClick={handleClick}>
+                <BookmarkPlus className="size-3.5" /> {collected ? '已加入' : saving ? '加入中...' : '加入学习库'}
               </Button>
             </div>
           </div>
@@ -465,15 +496,22 @@ function VocabPrepCard({
 
 function ChunkPrepCard({
   chunk,
+  collected,
   expanded,
   onToggle,
   onOpen,
+  onCollect,
 }: {
   chunk: ChunkItem
+  collected: boolean
   expanded: boolean
   onToggle: () => void
   onOpen: () => void
+  onCollect: () => void
 }) {
+  const [saving, setSaving] = useState(false)
+  const handleClick = () => { setSaving(true); onCollect(); setTimeout(() => setSaving(false), 1000) }
+
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
       <CardContent className="p-0">
@@ -500,9 +538,21 @@ function ChunkPrepCard({
                 <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{chunk.examples[0].zh}</p>
               </div>
             )}
-            <Button size="sm" variant="outline" className="h-8 w-full gap-1.5 text-xs" onClick={onOpen}>
-              <Search className="size-3.5" /> 查看表达用法
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
+                <Search className="size-3.5" /> 查看表达用法
+              </Button>
+              <Button
+                size="sm"
+                variant={collected ? 'secondary' : 'default'}
+                className="h-8 flex-1 gap-1.5 text-xs"
+                disabled={collected || saving}
+                onClick={handleClick}
+              >
+                <BookmarkPlus className="size-3.5" />
+                {collected ? '已加入' : saving ? '加入中...' : '加入学习库'}
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
