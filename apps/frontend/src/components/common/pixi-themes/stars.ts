@@ -304,34 +304,193 @@ export function setupStars(app: PIXI.Application, w: number, h: number, isDark: 
     app.stage.addChild(moon as any);
     items.push(moon as any); // 月亮不旋转，留在 stage
 
-    // 银河粒子带：极亮、紧密挤在一起的暖金十字星
-    const gStartY = h * 0.02;
-    const gSlope = (h * 0.2 - gStartY) / w;
-    const gHalfWidth = h * 0.02; // 很窄的带，星星挤在一起
-    const galaxyStars: Updatable[] = [];
-    for (let i = 0; i < 800; i++) {
-      const t = Math.random();
-      const gx = t * w;
-      const gy = gStartY + gSlope * gx + (Math.random() + Math.random() + Math.random()) / 3 * gHalfWidth * 2 - gHalfWidth;
-      if (gy < 0 || gy > h * 0.55) continue;
-      const c = [0xffeecc, 0xffeedd, 0xffffdd, 0xffeebb, 0xffffff][Math.floor(Math.random() * 5)];
-      // 亮！大！
-      // 自然大小分布：多数小，少数大
+    // 银河粒子带：位置上移 + 无光晕 + 星尘宽带 + 暗尘缝 + 非均匀聚簇
+    const galaxy = new PIXI.Container();
+    const galaxyDust = new PIXI.Graphics();
+
+    /** 正态分布随机：让星星集中在银河中心线附近，而不是平均铺开 */
+    const gaussian = () => {
+      const u = 1 - Math.random();
+      const v = 1 - Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * v);
+    };
+
+    /** 银河中心线：整体靠上，带一点弯曲，不是死直线 */
+    const galaxyCenter = (t: number) => {
+      const x = w * (-0.14 + t * 1.28);
+      const y = h * (0.005 + t * 0.205 + Math.sin(t * Math.PI * 2 - 0.75) * 0.026);
+      return { x, y };
+    };
+
+    /** 宽度：中间厚，两端散 */
+    const galaxyWidth = (t: number) => {
+      return h * (0.026 + Math.sin(t * Math.PI) * 0.060);
+    };
+
+    /** 密度：中间更密，两端稀疏 */
+    const galaxyDensity = (t: number) => {
+      const core = Math.exp(-Math.pow((t - 0.48) / 0.22, 2));
+      const side = Math.exp(-Math.pow((t - 0.70) / 0.13, 2)) * 0.36;
+      return Math.min(1, 0.16 + core * 0.78 + side);
+    };
+
+    /** 按银河斜率计算法线方向，让星带沿斜向自然散开 */
+    const galaxyPoint = (t: number, offset: number) => {
+      const c = galaxyCenter(t);
+      const c2 = galaxyCenter(Math.min(1, t + 0.01));
+      const dx = c2.x - c.x;
+      const dy = c2.y - c.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      return {
+        x: c.x + nx * offset,
+        y: c.y + ny * offset,
+      };
+    };
+
+    // 暗尘缝：没有光晕，只用暗裂缝切开星尘，让银河更像真实的银河带
+    for (let i = 0; i < 18; i++) {
+      const t = 0.08 + i / 20 + (Math.random() - 0.5) * 0.028;
+      const width = galaxyWidth(t);
+      const c = galaxyPoint(t, gaussian() * width * 0.22);
+
+      galaxyDust.fill({ color: 0x05040c, alpha: 0.10 + Math.random() * 0.10 });
+      galaxyDust.ellipse(
+        c.x - w / 2,
+        c.y - h / 2,
+        width * (0.30 + Math.random() * 0.58),
+        width * (0.035 + Math.random() * 0.055),
+      );
+      galaxyDust.fill();
+    }
+
+    galaxy.addChild(galaxyDust as any);
+
+    // 星点颜色：银河主体偏冷白，核心混一点暖金
+    const galaxyColor = (t: number) => {
       const r = Math.random();
-      const size = r < 0.65 ? 0.5 + Math.random() * 1.2 : r < 0.90 ? 1.5 + Math.random() * 1.5 : 2.5 + Math.random() * 2.0;
-      const s = new Star(c, size, 0.14, 0.30 + Math.random() * 0.40, 0.005 + Math.random() * 0.010, 0.10 + Math.random() * 0.22);
-      s.position.set(gx, gy);
-      app.stage.addChild(s as any);
+      const coreWarm = Math.exp(-Math.pow((t - 0.48) / 0.18, 2));
+      if (r < 0.40 + coreWarm * 0.16) return 0xffffff;
+      if (r < 0.66) return 0xddeeff;
+      if (r < 0.84) return 0xffeedd;
+      if (r < 0.95) return 0xffeecc;
+      return 0xbfd7ff;
+    };
+
+    const galaxyStars: Updatable[] = [];
+
+    // 主银河星尘：大量小星 + 少量中星 + 极少大星，避免间距平均
+    const dustCount = 1250;
+    for (let i = 0; i < dustCount; i++) {
+      let t: number;
+
+      // 大部分集中在核心附近，少部分散到两端
+      if (Math.random() < 0.64) {
+        t = Math.max(0, Math.min(1, 0.48 + gaussian() * 0.22));
+      } else {
+        t = Math.random();
+      }
+
+      const density = galaxyDensity(t);
+      if (Math.random() > density) continue;
+
+      const width = galaxyWidth(t);
+      const offset = gaussian() * width * (0.34 + Math.random() * 0.52);
+      const p = galaxyPoint(t, offset);
+
+      if (p.x < -w * 0.12 || p.x > w * 1.12 || p.y < -h * 0.08 || p.y > h * 0.42) continue;
+
+      const r = Math.random();
+      const size =
+        r < 0.76 ? 0.14 + Math.random() * 0.42 :
+        r < 0.94 ? 0.52 + Math.random() * 0.82 :
+                   1.20 + Math.random() * 1.45;
+
+      const thickness =
+        size < 0.50 ? 0.07 :
+        size < 1.15 ? 0.11 :
+                      0.17;
+
+      const alpha =
+        size < 0.50 ? 0.14 + Math.random() * 0.26 :
+        size < 1.15 ? 0.24 + Math.random() * 0.36 :
+                      0.36 + Math.random() * 0.40;
+
+      const s = new Star(
+        galaxyColor(t),
+        size,
+        thickness,
+        alpha,
+        0.003 + Math.random() * 0.012,
+        0.08 + Math.random() * 0.20,
+      );
+
+      s.position.set(p.x - w / 2, p.y - h / 2);
+      galaxy.addChild(s as any);
       items.push(s as any);
       galaxyStars.push(s as any);
     }
-    // 银河星也移入 cosmos 参与旋转
-    for (const gs of galaxyStars) {
-      app.stage.removeChild(gs);
-      gs.position.x -= w / 2;
-      gs.position.y -= h / 2;
-      cosmos.addChild(gs);
+
+    // 局部星团：打破“平均撒点”，形成几块自然的银河亮斑
+    const clusters = [
+      { t: 0.22, count: 45, spread: 0.72 },
+      { t: 0.36, count: 80, spread: 0.60 },
+      { t: 0.49, count: 120, spread: 0.52 },
+      { t: 0.61, count: 70, spread: 0.62 },
+      { t: 0.76, count: 40, spread: 0.78 },
+    ];
+
+    for (const cluster of clusters) {
+      for (let i = 0; i < cluster.count; i++) {
+        const t = Math.max(0, Math.min(1, cluster.t + gaussian() * 0.030));
+        const width = galaxyWidth(t);
+        const p = galaxyPoint(t, gaussian() * width * cluster.spread);
+
+        const r = Math.random();
+        const size =
+          r < 0.58 ? 0.30 + Math.random() * 0.50 :
+          r < 0.90 ? 0.78 + Math.random() * 1.00 :
+                     1.65 + Math.random() * 1.55;
+
+        const s = new Star(
+          galaxyColor(t),
+          size,
+          size > 1.45 ? 0.20 : 0.11,
+          0.24 + Math.random() * 0.46,
+          0.004 + Math.random() * 0.014,
+          0.10 + Math.random() * 0.24,
+        );
+
+        s.position.set(p.x - w / 2, p.y - h / 2);
+        galaxy.addChild(s as any);
+        items.push(s as any);
+        galaxyStars.push(s as any);
+      }
     }
+
+    // 少量亮星：增强层次，但不做光晕
+    for (let i = 0; i < 12; i++) {
+      const t = Math.max(0, Math.min(1, 0.47 + gaussian() * 0.25));
+      const width = galaxyWidth(t);
+      const p = galaxyPoint(t, gaussian() * width * 0.66);
+      const c = [0xffffdd, 0xffeecc, 0xffeedd, 0xffffff, 0xddeeff][Math.floor(Math.random() * 5)];
+
+      const s = new BrightStar(
+        c,
+        1.25 + Math.random() * 1.65,
+        0.30 + Math.random() * 0.34,
+        0.008 + Math.random() * 0.015,
+      );
+
+      s.position.set(p.x - w / 2, p.y - h / 2);
+      galaxy.addChild(s as any);
+      items.push(s as any);
+      galaxyStars.push(s as any);
+    }
+
+    // 银河整体放在普通星空后面，避免抢走所有层级
+    cosmos.addChildAt(galaxy as any, 0);
   }
 
   let cometTimer = 80 + Math.random() * 140;

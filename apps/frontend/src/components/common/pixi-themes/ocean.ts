@@ -76,25 +76,24 @@ class OceanWaveLayer extends PIXI.Graphics {
     this.closePath();
     this.fill({ color: this.color, alpha: this.fillAlpha });
 
-    // ── 浪尖白线 — 仅在波峰段绘制 ──
-    // 计算每个点的一阶导数（前后差分）判断上升/下降
+    // ── 连续浪线（基础描边，贯穿始终） ──
     this.moveTo(this.xPoints[0], ys[0]);
     for (let i = 1; i < ys.length; i++) {
-      // 仅在波峰附近绘制 (斜率变号处: 从上升变下降 = 波峰)
+      this.lineTo(this.xPoints[i], ys[i]);
+    }
+    this.stroke({ color: 0xffffff, width: 0.7, alpha: 0.18 });
+
+    // ── 波峰高光（峰顶独立短线段，不打断主线条） ──
+    for (let i = 2; i < ys.length - 2; i++) {
       const prevSlope = ys[i] - ys[i - 1];
-      const nextSlope = i < ys.length - 1 ? ys[i + 1] - ys[i] : 0;
-      // 波峰：prevSlope < 0 (上升) 且 nextSlope > 0 (下降)
-      // 注：Y向下增加，所以上升是负斜率
+      const nextSlope = ys[i + 1] - ys[i];
       if (prevSlope < 0 && nextSlope > 0 && ys[i] < this.baseY) {
-        // 波峰处画一段白线点缀
-        this.stroke({ color: 0xffffff, width: 1.2, alpha: 0.40 });
-        this.moveTo(this.xPoints[i], ys[i]);
-      } else {
+        this.moveTo(this.xPoints[i - 1], ys[i - 1]);
         this.lineTo(this.xPoints[i], ys[i]);
+        this.lineTo(this.xPoints[i + 1], ys[i + 1]);
+        this.stroke({ color: 0xffffff, width: 1.0, alpha: 0.30 });
       }
     }
-    // 补上描边保证连续
-    this.stroke({ color: 0xffffff, width: 0.6, alpha: 0.15 });
   }
 
   update(dt: number, w: number) { this.phase += this.speed * 0.015 * dt; this.draw(w); return true; }
@@ -224,6 +223,292 @@ class DriftBottle extends PIXI.Graphics {
 }
 
 // ═══════════════════════════════════════════════════════════
+// 远岛 — 山影 · 灯塔
+// ═══════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════
+// 远山 — 纯山体剪影（无灯塔）
+// ═══════════════════════════════════════════════════════════
+
+class Mountain extends PIXI.Container {
+  constructor(w: number, h: number, isDark: boolean) {
+    super();
+
+    this.position.set(w * (0.02 + Math.random() * 0.06), h * 0.19);
+    const s = 0.6 + Math.random() * 0.4;
+    const color = isDark ? 0x061a2e : 0x5a7a6a;
+
+    const land = new PIXI.Graphics();
+    land.fill({ color, alpha: 1 });
+    land.moveTo(-28 * s, 0);
+    land.lineTo(-22 * s, -8 * s);
+    land.lineTo(-16 * s, -22 * s);
+    land.lineTo(-10 * s, -28 * s);
+    land.lineTo(-4 * s, -20 * s);
+    land.lineTo(3 * s, -26 * s);
+    land.lineTo(10 * s, -34 * s);
+    land.lineTo(18 * s, -20 * s);
+    land.lineTo(25 * s, -6 * s);
+    land.lineTo(30 * s, 0);
+    land.lineTo(30 * s, 6 * s);
+    land.lineTo(-30 * s, 6 * s);
+    land.closePath();
+    land.fill();
+    this.addChild(land);
+
+    this.alpha = isDark ? 0.35 : 0.25;
+  }
+
+  update() { return true; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 灯塔 — 水上塔身 + 旋转光束（scale 动画实现扫射）
+// ═══════════════════════════════════════════════════════════
+
+class Lighthouse extends PIXI.Container {
+  private beam: PIXI.Graphics;
+  private beamAngle = Math.random() * Math.PI * 2;
+  private rotSpeed: number;
+  private _s: number;
+
+  constructor(w: number, h: number, isDark: boolean) {
+    super();
+
+    this.position.set(w * (0.03 + Math.random() * 0.06), h * 0.19);
+    this._s = 0.7 + Math.random() * 0.4;
+    const s = this._s;
+
+    // ── 塔身 ──
+    const tower = new PIXI.Graphics();
+    tower.fill({ color: 0xeeeeee, alpha: isDark ? 0.65 : 0.45 });
+    tower.moveTo(-3 * s, 0);
+    tower.lineTo(-2.2 * s, -26 * s);
+    tower.lineTo(2.2 * s, -26 * s);
+    tower.lineTo(3 * s, 0);
+    tower.closePath();
+    tower.fill();
+    for (let i = 0; i < 3; i++) {
+      const y1 = -6 * s - i * 7 * s;
+      tower.fill({ color: 0xcc3333, alpha: isDark ? 0.55 : 0.35 });
+      tower.rect(-2.7 * s + i * 0.15 * s, y1, 5.4 * s - i * 0.3 * s, 2.5 * s);
+      tower.fill();
+    }
+    tower.fill({ color: 0x443322, alpha: isDark ? 0.6 : 0.4 });
+    tower.rect(-0.8 * s, -4 * s, 1.6 * s, 4 * s);
+    tower.fill();
+    this.addChild(tower);
+
+    // ── 灯室 ──
+    const lantern = new PIXI.Graphics();
+    lantern.fill({ color: 0xdddddd, alpha: isDark ? 0.70 : 0.50 });
+    lantern.rect(-3.2 * s, -30 * s, 6.4 * s, 4 * s);
+    lantern.fill();
+    lantern.fill({ color: 0xaaccee, alpha: isDark ? 0.25 : 0.15 });
+    lantern.rect(-2.5 * s, -29.5 * s, 5 * s, 2.5 * s);
+    lantern.fill();
+    lantern.fill({ color: 0xcc4444, alpha: isDark ? 0.6 : 0.4 });
+    lantern.moveTo(-3.5 * s, -30 * s);
+    lantern.lineTo(0, -34 * s);
+    lantern.lineTo(3.5 * s, -30 * s);
+    lantern.closePath();
+    lantern.fill();
+    this.addChild(lantern);
+
+    // ── 光束容器（放在灯室位置） ──
+    this.beam = new PIXI.Graphics();
+    this.beam.position.set(0, -29 * s);
+    this.addChild(this.beam);
+
+    this.rotSpeed = Math.random() > 0.5 ? 0.015 : -0.015;
+    this.alpha = isDark ? 0.92 : 0.55;
+  }
+
+  update(dt: number) {
+    this.beamAngle += this.rotSpeed * dt;
+
+    // angle：0° 朝右 → 90° 朝屏幕 → 180° 朝左 → 270° 朝背面
+    const a = ((this.beamAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+    const s = this._s;
+    const L = 32 * s;          // 光束全长
+    const H = 12 * s;          // 半高
+
+    const cosA = Math.cos(a);
+    const rightVis = Math.max(0, cosA);
+    const leftVis = Math.max(0, -cosA);
+    const centerGlow = Math.max(0, 1 - Math.abs(cosA) * 4);
+
+    // 锥口宽度 & 垂直高度（中心时展开为十字）
+    const wF = Math.max(centerGlow * 0.35, 0.04 + 0.96 * Math.abs(cosA));
+    const tipH = H * wF;
+    const vertH = tipH * centerGlow * 1.5;        // 中心时十字垂直臂，侧面时为 0 退化为三角形
+
+    const rightLen = L * (rightVis + centerGlow * 0.2);
+    const leftLen = L * (leftVis + centerGlow * 0.2);
+
+    // 连续菱形：窄腰在灯塔(0,0)，宽口在两端
+    // 侧面时一侧长度 0，退化为一个三角形（窄在灯塔、宽在尖端）
+    // 中心时左右展开，上下尖形成十字垂直臂
+    this.beam.clear();
+    this.beam.fill({ color: 0xffffdd, alpha: 1 });
+    this.beam.moveTo(-leftLen, -tipH);  // 左上尖
+    this.beam.lineTo(0, -vertH);         // 正上尖（十字垂直）
+    this.beam.lineTo(rightLen, -tipH);   // 右上尖
+    this.beam.lineTo(rightLen, tipH);    // 右下尖
+    this.beam.lineTo(0, vertH);          // 正下尖（十字垂直）
+    this.beam.lineTo(-leftLen, tipH);    // 左下尖
+    this.beam.closePath();
+    this.beam.fill();
+
+    // 中心内核光晕
+    if (centerGlow > 0.05) {
+      this.beam.fill({ color: 0xffffff, alpha: centerGlow * 0.35 });
+      this.beam.circle(0, 0, 5 * s);
+      this.beam.fill();
+    }
+
+    // 朝背面时渐隐，朝正面时增亮
+    const backVis = Math.cos(a - Math.PI * 1.5);
+    const fade = backVis > 0.5 ? 1 - backVis * 0.8 : 1;
+    const brightBoost = 1 + Math.abs(Math.sin(a)) * 0.8; // 越靠近正面越亮，平滑过渡
+    this.beam.alpha = 0.40 * fade * brightBoost;
+
+    return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 海豚 — 抛物线跃水 · 流线型体 · 中下海域
+// ═══════════════════════════════════════════════════════════
+
+class Dolphin extends PIXI.Graphics {
+  progress = 0;
+  speed: number;
+  jumpWidth: number;
+  jumpHeight: number;
+  baseY: number;
+  startX: number;
+  direction: number;
+  bodyColor: number;
+  bellyColor: number;
+  private sz: number;
+
+  constructor(w: number, h: number, isDark: boolean) {
+    super();
+    this.speed = 0.006 + Math.random() * 0.005;
+    this.jumpWidth = 130 + Math.random() * 100;
+    this.jumpHeight = 50 + Math.random() * 40;
+    // 中下海域跳跃（50%~75% 屏高，正是海浪翻涌区域）
+    this.baseY = h * (0.50 + Math.random() * 0.25);
+    this.direction = Math.random() > 0.5 ? 1 : -1;
+    // 真实海豚色：深蓝灰背 + 浅灰白腹
+    this.bodyColor = isDark ? 0x1a2a3a : 0x2a3a4a;
+    this.bellyColor = isDark ? 0x5a6a7a : 0x7a8a9a;
+    this.sz = 0.6 + Math.random() * 0.5;
+
+    this.startX = this.direction > 0 ? -80 : w + 80;
+    this.scale.x = this.direction;
+    this.drawShape();
+    this.alpha = 0;
+  }
+
+  private drawShape() {
+    this.clear();
+    const s = this.sz;
+    const col = this.bodyColor;
+    const belly = this.bellyColor;
+
+    // ── 身体（3 个椭圆融合为流畅流线型） ──
+    this.fill({ color: col, alpha: 0.92 });
+    this.ellipse(2 * s, 0, 12 * s, 3.6 * s);       // 躯干
+    this.ellipse(10 * s, 0.3 * s, 5 * s, 3 * s);   // 胸/头
+    this.ellipse(-7 * s, 0, 6 * s, 2.8 * s);        // 尾柄（收窄）
+    this.fill();
+
+    // ── 腹部（浅色，偏下方） ──
+    this.fill({ color: belly, alpha: 0.50 });
+    this.ellipse(3 * s, 1.6 * s, 10 * s, 1.6 * s);
+    this.fill();
+
+    // ── 喙（前伸尖嘴） ──
+    this.fill({ color: col, alpha: 0.90 });
+    this.ellipse(16 * s, 1.0 * s, 3 * s, 0.9 * s);
+    this.fill();
+
+    // ── 背鳍（弧形，不是直三角） ──
+    this.fill({ color: col, alpha: 0.85 });
+    this.moveTo(-1 * s, -3.6 * s);
+    this.quadraticCurveTo(0, -8 * s, 3 * s, -3.6 * s);
+    this.lineTo(4.5 * s, -3.6 * s);
+    this.lineTo(1 * s, -0.5 * s);
+    this.closePath();
+    this.fill();
+
+    // ── 尾鳍上叶 ──
+    this.fill({ color: col, alpha: 0.85 });
+    this.moveTo(-13 * s, 0);
+    this.lineTo(-18 * s, -3.5 * s);
+    this.lineTo(-15.5 * s, -0.3 * s);
+    this.closePath();
+    this.fill();
+
+    // ── 尾鳍下叶 ──
+    this.fill({ color: col, alpha: 0.85 });
+    this.moveTo(-13 * s, 0);
+    this.lineTo(-18 * s, 3.5 * s);
+    this.lineTo(-15.5 * s, 0.3 * s);
+    this.closePath();
+    this.fill();
+
+    // ── 眼睛 + 高光 ──
+    this.fill({ color: 0x000000, alpha: 0.75 });
+    this.circle(10 * s, -0.8 * s, 0.6 * s);
+    this.fill();
+    this.fill({ color: 0xffffff, alpha: 0.35 });
+    this.circle(10.3 * s, -1.1 * s, 0.2 * s);
+    this.fill();
+
+    // ── 胸鳍（小三角，偏下） ──
+    this.fill({ color: col, alpha: 0.70 });
+    this.moveTo(4 * s, 1.8 * s);
+    this.lineTo(3 * s, 4 * s);
+    this.lineTo(5.5 * s, 4 * s);
+    this.closePath();
+    this.fill();
+  }
+
+  update(dt: number, _w: number) {
+    this.progress += this.speed * dt;
+    if (this.progress > 1) return false;
+
+    const t = this.progress;
+    // 抛物线：y = -4 * h * t * (1 - t)
+    const x = (t * this.jumpWidth - this.jumpWidth * 0.5);
+    const y = -4 * this.jumpHeight * t * (1 - t);
+
+    // 速度方向（抛物线切线）
+    const dx = this.jumpWidth;
+    const dy = -4 * this.jumpHeight * (1 - 2 * t);
+    this.rotation = Math.atan2(dy, dx);
+
+    this.position.x = this.startX + x * this.direction;
+    this.position.y = this.baseY + y;
+
+    // 出入水渐隐
+    const fadeIn = Math.min(1, t / 0.12);
+    const fadeOut = Math.min(1, (1 - t) / 0.12);
+    this.alpha = Math.min(fadeIn, fadeOut) * 0.88;
+
+    // 透视缩放：顶点处略小
+    const peakScale = 0.82;
+    this.scale.y = 1 - (1 - peakScale) * Math.sin(t * Math.PI);
+
+    return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 // 月光闪烁
 // ═══════════════════════════════════════════════════════════
 
@@ -286,6 +571,15 @@ export function setupOcean(
   }
 
   // ── 计时器 ──
+  // ── 远景（测试模式必出）：要么远山，要么灯塔 ──
+  if (testMode) {
+    const view = Math.random() < 0.1
+      ? new Mountain(w, h, isDark)
+      : new Lighthouse(w, h, isDark);
+    app.stage.addChild(view as any);
+    items.push(view as any);
+  }
+
   // ── 漂流瓶（初始 3 个） ──
   for (let i = 0; i < 3; i++) {
     const b = new DriftBottle(w, h, isDark);
@@ -298,8 +592,10 @@ export function setupOcean(
   let shimmerCooldown = 200 + Math.random() * 300;
   let sparkleTimer = 10 + Math.random() * 20;
   let bottleTimer = 400 + Math.random() * 300;
+  let dolphinTimer = testMode ? 60 : 200 + Math.random() * 200;
   const maxSparkles = 20;
   const maxBottles = 5;
+  const maxDolphins = 2;
 
   const onTick = (_dt: number, _w: number, _h: number) => {
     const dt = _dt;
@@ -326,6 +622,24 @@ export function setupOcean(
         items.push(b as any);
       }
       bottleTimer = 500 + Math.random() * 400;
+    }
+
+    // ── 海豚跃水 ──
+    dolphinTimer -= dt;
+    if (dolphinTimer <= 0) {
+      const current = items.filter(i => i instanceof Dolphin).length;
+      if (current < maxDolphins) {
+        const count = testMode ? 1 + Math.floor(Math.random() * 2) : 1;
+        for (let i = 0; i < count; i++) {
+          const d = new Dolphin(w, h, isDark);
+          d.position.x += i * 30 * d.direction;
+          app.stage.addChild(d as any);
+          items.push(d as any);
+        }
+      }
+      dolphinTimer = testMode
+        ? 80 + Math.random() * 80
+        : 300 + Math.random() * 350;
     }
 
     // ── 月光闪烁 ──
