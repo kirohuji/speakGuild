@@ -247,8 +247,13 @@ export const practiceAiApi = {
 
 // ---- 表达库 ----
 export const expressionApi = {
-  list: (params?: { type?: string; sceneName?: string }) =>
-    api.get('/expressions', { params }),
+  list: (params?: {
+    type?: string
+    sceneName?: string
+    reviewState?: 'reviewing' | 'done' | 'mastered'
+    page?: number
+    pageSize?: number
+  }) => api.get('/expressions', { params }),
 
   create: (data: any) => api.post('/expressions', data),
 

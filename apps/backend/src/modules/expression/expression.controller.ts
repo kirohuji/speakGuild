@@ -12,11 +12,17 @@ export class ExpressionController {
     @Req() req: Request,
     @Query('type') type?: string,
     @Query('sceneName') sceneName?: string,
+    @Query('reviewState') reviewState?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
     const session = await requireAuthSession(req);
     return this.expressionService.listExpressions(session.user.id, {
       type: type as any,
       sceneName,
+      reviewState: reviewState as any,
+      page: page ? parseInt(page, 10) : undefined,
+      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
     });
   }
 

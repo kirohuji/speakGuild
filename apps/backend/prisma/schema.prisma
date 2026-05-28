@@ -694,6 +694,7 @@ enum ChunkMasteryStatus {
 
 // ──── 表达库条目类型 ────
 enum ExpressionType {
+  word
   chunk
   error_sentence
   upgraded

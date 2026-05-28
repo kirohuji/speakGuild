@@ -1,23 +1,61 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ExpressionType } from '@prisma/client';
+import { ExpressionType, Prisma } from '@prisma/client';
+
+export interface ListExpressionsParams {
+  type?: ExpressionType;
+  sceneName?: string;
+  reviewState?: 'reviewing' | 'done' | 'mastered';
+  page?: number;
+  pageSize?: number;
+}
 
 @Injectable()
 export class ExpressionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listExpressions(
-    userId: string,
-    filters?: { type?: ExpressionType; sceneName?: string },
-  ) {
-    return this.prisma.expressionItem.findMany({
-      where: {
-        userId,
-        ...(filters?.type && { type: filters.type }),
-        ...(filters?.sceneName && { sceneName: filters.sceneName }),
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listExpressions(userId: string, params?: ListExpressionsParams) {
+    const { type, sceneName, reviewState, page = 1, pageSize = 30 } = params ?? {};
+
+    const where: Prisma.ExpressionItemWhereInput = { userId };
+
+    if (type) where.type = type;
+    if (sceneName) where.sceneName = sceneName;
+
+    // reviewState 过滤
+    const now = new Date();
+    if (reviewState === 'reviewing') {
+      where.OR = [
+        { nextReviewAt: { lte: now } },
+        { nextReviewAt: null },
+      ];
+    } else if (reviewState === 'done') {
+      where.AND = [
+        { reviewCount: { gt: 0 } },
+        { masteryStatus: { not: 'mastered' } },
+        { nextReviewAt: { gt: now } },
+      ];
+    } else if (reviewState === 'mastered') {
+      where.masteryStatus = 'mastered';
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.expressionItem.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.expressionItem.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   async createExpression(userId: string, data: {
