@@ -94,15 +94,16 @@ class WaterStreak extends PIXI.Graphics {
   }
 }
 
-export function setupRain(app: PIXI.Application, w: number, h: number): ThemeSetup {
+export function setupRain(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
   const items: Updatable[] = [];
+  const alphaMul = isDark ? 1 : 1.5;
 
   for (let i = 0; i < 50; i++) {
-    const r = new WindRain(w, h, 3 + Math.random() * 2, 0.12 + Math.random() * 0.15, false);
+    const r = new WindRain(w, h, 3 + Math.random() * 2, (0.12 + Math.random() * 0.15) * alphaMul, false);
     app.stage.addChild(r as any); items.push(r as any);
   }
   for (let i = 0; i < 25; i++) {
-    const r = new WindRain(w, h, 5 + Math.random() * 4, 0.22 + Math.random() * 0.2, true);
+    const r = new WindRain(w, h, 5 + Math.random() * 4, (0.22 + Math.random() * 0.2) * alphaMul, true);
     app.stage.addChild(r as any); items.push(r as any);
   }
 

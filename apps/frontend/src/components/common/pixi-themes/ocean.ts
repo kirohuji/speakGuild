@@ -114,16 +114,17 @@ class MoonShimmer extends PIXI.Graphics {
   }
 }
 
-export function setupOcean(app: PIXI.Application, w: number, h: number): ThemeSetup {
+export function setupOcean(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
   const items: Updatable[] = [];
+  const alphaMul = isDark ? 1 : 1.4;
   const xPoints: number[] = [];
   for (let i = 0; i <= 100; i++) xPoints.push((i / 100) * w);
 
   const waveDefs = [
-    { y: h * 0.22, amp: 10, freq: 0.005, color: 0x0a3d5c, alpha: 0.07, speed: 0.22 },
-    { y: h * 0.35, amp: 18, freq: 0.007, color: 0x0d5e8c, alpha: 0.10, speed: 0.40 },
-    { y: h * 0.50, amp: 28, freq: 0.009, color: 0x1a8cba, alpha: 0.14, speed: 0.60 },
-    { y: h * 0.66, amp: 40, freq: 0.012, color: 0x2db5d4, alpha: 0.18, speed: 0.85 },
+    { y: h * 0.22, amp: 10, freq: 0.005, color: 0x0a3d5c, alpha: 0.07 * alphaMul, speed: 0.22 },
+    { y: h * 0.35, amp: 18, freq: 0.007, color: 0x0d5e8c, alpha: 0.10 * alphaMul, speed: 0.40 },
+    { y: h * 0.50, amp: 28, freq: 0.009, color: 0x1a8cba, alpha: 0.14 * alphaMul, speed: 0.60 },
+    { y: h * 0.66, amp: 40, freq: 0.012, color: 0x2db5d4, alpha: 0.18 * alphaMul, speed: 0.85 },
   ];
   for (const def of waveDefs) {
     const wave = new OceanWaveLayer(def.amp, def.freq, def.y, def.color, def.alpha, def.speed, xPoints);

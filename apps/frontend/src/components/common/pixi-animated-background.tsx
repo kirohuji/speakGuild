@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
+import { useTheme } from 'next-themes';
 import type { ThemeSetup } from './pixi-themes/types';
 import { setupOcean } from './pixi-themes/ocean';
 import { setupStars } from './pixi-themes/stars';
@@ -19,6 +20,8 @@ export function PixiAnimatedBackground({ themeId }: AnimatedBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const setupRef = useRef<ThemeSetup | null>(null);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme !== 'light';
 
   useEffect(() => {
     if (appRef.current) {
@@ -48,10 +51,10 @@ export function PixiAnimatedBackground({ themeId }: AnimatedBackgroundProps) {
       appRef.current = app;
 
       const setup: ThemeSetup =
-        themeId?.includes('ocean')  ? setupOcean(app, w, h) :
-        themeId?.includes('rain')   ? setupRain(app, w, h) :
-        themeId?.includes('aurora') ? setupAurora(app, w, h) :
-                                      setupStars(app, w, h);
+        themeId?.includes('ocean')  ? setupOcean(app, w, h, isDark) :
+        themeId?.includes('rain')   ? setupRain(app, w, h, isDark) :
+        themeId?.includes('aurora') ? setupAurora(app, w, h, isDark) :
+                                      setupStars(app, w, h, isDark);
       setupRef.current = setup;
 
       app.ticker.add((ticker) => {

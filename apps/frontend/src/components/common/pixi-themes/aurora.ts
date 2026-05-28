@@ -73,17 +73,23 @@ class AuroraCurtain extends PIXI.Graphics {
   }
 }
 
-export function setupAurora(app: PIXI.Application, w: number, h: number): ThemeSetup {
+export function setupAurora(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
   const items: Updatable[] = [];
 
+  // Light 模式下提升 alpha、用更深色星点
+  const alphaMul = isDark ? 1 : 1.5;
+  const starColors = isDark
+    ? [0xffffff, 0xaaccff, 0xffeedd]
+    : [0x8899bb, 0x7788aa, 0x998877]; // light 模式用灰蓝/灰暖色，在浅背景上可见
+
   const curtainDefs = [
-    { x: w * -0.01, width: 140, color: 0x00ff88, alpha: 0.13, speed: 0.35 },
-    { x: w * 0.13, width: 110, color: 0x00ddbb, alpha: 0.11, speed: 0.50 },
-    { x: w * 0.27, width: 160, color: 0x8844ff, alpha: 0.10, speed: 0.30 },
-    { x: w * 0.41, width: 120, color: 0x00ff88, alpha: 0.14, speed: 0.45 },
-    { x: w * 0.55, width: 110, color: 0x4488ff, alpha: 0.11, speed: 0.40 },
-    { x: w * 0.69, width: 140, color: 0x00ddbb, alpha: 0.12, speed: 0.55 },
-    { x: w * 0.83, width: 110, color: 0xff66aa, alpha: 0.09, speed: 0.48 },
+    { x: w * -0.01, width: 140, color: 0x00ff88, alpha: 0.13 * alphaMul, speed: 0.35 },
+    { x: w * 0.13, width: 110, color: 0x00ddbb, alpha: 0.11 * alphaMul, speed: 0.50 },
+    { x: w * 0.27, width: 160, color: 0x8844ff, alpha: 0.10 * alphaMul, speed: 0.30 },
+    { x: w * 0.41, width: 120, color: 0x00ff88, alpha: 0.14 * alphaMul, speed: 0.45 },
+    { x: w * 0.55, width: 110, color: 0x4488ff, alpha: 0.11 * alphaMul, speed: 0.40 },
+    { x: w * 0.69, width: 140, color: 0x00ddbb, alpha: 0.12 * alphaMul, speed: 0.55 },
+    { x: w * 0.83, width: 110, color: 0xff66aa, alpha: 0.09 * alphaMul, speed: 0.48 },
   ];
   for (const def of curtainDefs) {
     const curtain = new AuroraCurtain(h, def.x, def.width, def.color, def.alpha, def.speed);
@@ -92,7 +98,6 @@ export function setupAurora(app: PIXI.Application, w: number, h: number): ThemeS
     items.push(curtain as any);
   }
 
-  const starColors = [0xffffff, 0xaaccff, 0xffeedd];
   for (let i = 0; i < 50; i++) {
     const g = new PIXI.Graphics();
     g.fill({ color: starColors[i % 3], alpha: 0.2 + Math.random() * 0.4 });

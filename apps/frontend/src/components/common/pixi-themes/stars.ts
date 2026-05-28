@@ -158,7 +158,7 @@ class Comet extends PIXI.Graphics {
   }
 }
 
-export function setupStars(app: PIXI.Application, w: number, h: number): ThemeSetup {
+export function setupStars(app: PIXI.Application, w: number, h: number, _isDark: boolean): ThemeSetup {
   const items: Updatable[] = [];
 
   // ═══ 深空纹理：极微十字星，密密麻麻 ═══

@@ -42,12 +42,12 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[88vh] rounded-t-[28px]">
-        <DrawerHeader className="pb-1">
+      <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px]">
+        <DrawerHeader className="shrink-0 pb-1">
           <DrawerTitle className="text-base">{t('profile.theme')}</DrawerTitle>
         </DrawerHeader>
 
-        <ScrollArea className="max-h-[70vh] px-4 pb-8">
+        <ScrollArea className="flex-1 min-h-0 px-4 pb-8">
           <div className="space-y-4">
 
             {/* ═══ 1. 沉浸式主题套装 ═══ */}
