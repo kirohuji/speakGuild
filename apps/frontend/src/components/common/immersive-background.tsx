@@ -28,22 +28,32 @@ export function ImmersiveBackground() {
     return raw;
   }, [activePreset, isDark]);
 
+  const isGradient = bg?.startsWith('linear-gradient') || bg?.startsWith('radial-gradient');
+
   // 如果没有背景且没有装饰，不渲染
   if (!bg && !decorations.length) return null;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-      {/* 背景层 */}
-      {bg && (
-        <div
+      {/* 背景层 — 渐变背景带缓慢位移动画 */}
+      {bg && isGradient ? (
+        <motion.div
           className="absolute inset-0"
           style={{
-            background: bg.startsWith('linear-gradient') || bg.startsWith('radial-gradient')
-              ? bg
-              : `url(${bg}) center / cover no-repeat`,
+            background: bg,
+            backgroundSize: '160% 160%',
           }}
+          animate={{
+            backgroundPosition: ['50% 0%', '42% 12%', '58% 4%', '50% 0%'],
+          }}
+          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
         />
-      )}
+      ) : bg ? (
+        <div
+          className="absolute inset-0"
+          style={{ background: `url(${bg}) center / cover no-repeat` }}
+        />
+      ) : null}
 
       {/* 装饰元素 */}
       {decorations.map((deco, i) => {
