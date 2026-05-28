@@ -156,7 +156,7 @@ export function ProfilePage() {
                     </AvatarFallback>
                   </Avatar>
                   <p className="font-semibold">{nickname}</p>
-                  <Badge variant="secondary" className="text-xs">免费用户</Badge>
+                  <Badge variant="secondary" className="text-xs">{t('member.freeUser')}</Badge>
                 </div>
                 <Separator className="mb-4" />
                 <nav className="space-y-1">
@@ -373,7 +373,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
         <DrawerContent className="rounded-t-3xl">
           <DrawerHeader>
-            <DrawerTitle className="text-base">选择界面语言</DrawerTitle>
+            <DrawerTitle className="text-base">{t('profile.selectLanguage')}</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-6">
             {[
@@ -420,6 +420,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
 
 // ─── 手机端：设置页 ────────────────────────────────────────────────────────
 function MobileSettingsView() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { signOut } = useAuth()
   const { autoPlay, setAutoPlay } = usePreferencesStore()
@@ -442,7 +443,7 @@ function MobileSettingsView() {
   // 处理账户删除
   const handleDeleteAccount = async () => {
     if (!deletePassword) {
-      setDeleteError('请输入密码以确认删除')
+      setDeleteError(t('profile.auth.passwordRequired'))
       return
     }
     setDeleteLoading(true)
@@ -454,7 +455,7 @@ function MobileSettingsView() {
       window.location.hash = '#/portal'
       window.location.reload()
     } catch (error: any) {
-      setDeleteError(error?.response?.data?.message || error?.message || '删除失败，请稍后重试')
+      setDeleteError(error?.response?.data?.message || error?.message || t('profile.auth.deleteFailed'))
     } finally {
       setDeleteLoading(false)
     }
@@ -482,25 +483,30 @@ function MobileSettingsView() {
         case 'permissions': mod = await import('@/features/system/content/permissions.md?raw'); break
         case 'sdk-list': mod = await import('@/features/system/content/sdk-list.md?raw'); break
         case 'contact': mod = await import('@/features/system/content/contact-us.md?raw'); break
-        default: mod = { default: '# 暂无内容' }
+        default: mod = { default: t('profile.auth.noContent') }
       }
       const content = mod.default
       setMdContents((prev) => ({ ...prev, [key]: content }))
       setLegalDrawer({ title, content })
     } catch {
-      setLegalDrawer({ title, content: '# 加载失败，请稍后重试' })
+      setLegalDrawer({ title, content: t('profile.auth.loadFailed') })
     }
   }
 
-  const legalDocList = [
-    { key: 'terms', label: '服务条款' },
-    { key: 'privacy', label: '隐私政策' },
-    { key: 'privacy-children', label: '儿童信息保护' },
-    { key: 'collect-info', label: '个人信息收集清单' },
-    { key: 'permissions', label: '权限申请说明' },
-    { key: 'sdk-list', label: '第三方SDK目录' },
-    { key: 'contact', label: '联系我们' },
-  ]
+  const legalDocKeyToTKey: Record<string, string> = {
+    terms: 'footer.termsOfService',
+    privacy: 'footer.privacy',
+    'privacy-children': 'footer.privacyChildren',
+    'collect-info': 'footer.collectInfo',
+    permissions: 'footer.permissionsApply',
+    'sdk-list': 'footer.sdkList',
+    contact: 'footer.contactUs',
+  }
+
+  const legalDocList = Object.entries(legalDocKeyToTKey).map(([key, tKey]) => ({
+    key,
+    label: t(tKey),
+  }))
 
   return (
     <div className="space-y-5">
@@ -508,28 +514,28 @@ function MobileSettingsView() {
 
       <IosSection>
         <IosRow
-          label="查词自动发音"
+          label={t('profile.autoSpeakLabel')}
           right={<Switch checked={autoPlay} onCheckedChange={setAutoPlay} />}
         />
         <IosRow
-          label="查词发音类型"
+          label={t('profile.pronunciationTypeLabel')}
           right={
             <select
               value={pronunciationType}
               onChange={(e) => setPronunciationType(e.target.value as 'us' | 'uk')}
               className="bg-transparent text-sm text-muted-foreground outline-none"
             >
-              <option value="us">美式发音</option>
-              <option value="uk">英式发音</option>
+              <option value="us">{t('profile.pronunciationUs')}</option>
+              <option value="uk">{t('profile.pronunciationUk')}</option>
             </select>
           }
         />
         <IosRow
-          label="查词自动复制单词到剪切板"
+          label={t('profile.autoCopyLabel')}
           right={<Switch checked={autoCopyWord} onCheckedChange={setAutoCopyWord} />}
         />
         <IosRow
-          label="仅使用 WIFI 播放&下载"
+          label={t('profile.wifiOnlyLabel')}
           last
           right={<Switch checked={wifiOnlyMedia} onCheckedChange={setWifiOnlyMedia} />}
         />
@@ -537,21 +543,21 @@ function MobileSettingsView() {
 
       <IosSection>
         <IosRow
-          label="设置打卡目标"
+          label={t('profile.dailyGoalLabel')}
           right={
             <select
               value={dailyGoal}
               onChange={(e) => setDailyGoal(e.target.value)}
               className="bg-transparent text-sm text-muted-foreground outline-none"
             >
-              <option value="10">每天 10 题</option>
-              <option value="20">每天 20 题</option>
-              <option value="30">每天 30 题</option>
+              <option value="10">{t('profile.dailyGoal10')}</option>
+              <option value="20">{t('profile.dailyGoal20')}</option>
+              <option value="30">{t('profile.dailyGoal30')}</option>
             </select>
           }
         />
         <IosRow
-          label="设置学习偏好"
+          label={t('profile.learningPreferenceLabel')}
           last
           right={
             <select
@@ -559,9 +565,9 @@ function MobileSettingsView() {
               onChange={(e) => setLearningPreference(e.target.value)}
               className="bg-transparent text-sm text-muted-foreground outline-none"
             >
-              <option value="balanced">均衡模式</option>
-              <option value="exam">考试冲刺</option>
-              <option value="speaking">口语优先</option>
+              <option value="balanced">{t('profile.balanceMode')}</option>
+              <option value="exam">{t('profile.examMode')}</option>
+              <option value="speaking">{t('profile.speakingMode')}</option>
             </select>
           }
         />
@@ -569,13 +575,13 @@ function MobileSettingsView() {
 
       <IosSection>
         <IosRow
-          label="个性化推荐"
+          label={t('profile.personalizedRecommendationLabel')}
           right={<Switch checked={personalizedRecommendation} onCheckedChange={setPersonalizedRecommendation} />}
         />
       </IosSection>
 
       {/* 法律与隐私 — 移动端使用 Drawer 全屏查看 */}
-      <IosSection header="法律与隐私">
+      <IosSection header={t('profile.legalPrivacy')}>
         {legalDocList.map((doc, idx) => (
           <IosRow
             key={doc.key}
@@ -588,20 +594,20 @@ function MobileSettingsView() {
 
       <IosSection>
         <IosRow
-          label="清除播放缓存"
+          label={t('profile.clearCache')}
           onTap={() => {}}
         />
         <IosRow
-          label="应用权限管理"
+          label={t('profile.appPermissions')}
           onTap={() => {}}
         />
         <IosRow
-          label="切换当前题库"
-          subtitle={config?.bankName || '未配置题库'}
+          label={t('profile.switchBank')}
+          subtitle={config?.bankName || t('profile.currentBankNotSet')}
           onTap={() => setShowBinding(true)}
         />
         <IosRow
-          label="注销账户"
+          label={t('profile.deleteAccount')}
           last
           onTap={() => setShowDeleteDialog(true)}
         />
@@ -614,7 +620,7 @@ function MobileSettingsView() {
             onClick={async () => { await signOut(); navigate('/auth/login'); }}
             className="w-full text-center text-sm font-medium text-red-500"
           >
-            退出登录
+            {t('profile.logout')}
           </button>
         </div>
       </IosSection>
@@ -633,9 +639,9 @@ function MobileSettingsView() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-destructive">注销账户</DialogTitle>
+            <DialogTitle className="text-destructive">{t('profile.deleteAccount')}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              此操作不可撤销。所有学习记录、收藏、生词本、模考成绩等数据将被永久删除。请输入密码以确认。
+              {t('profile.auth.deleteAccountWarning')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -643,7 +649,7 @@ function MobileSettingsView() {
               value={deletePassword}
               onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
               type="password"
-              placeholder="输入当前密码"
+              placeholder={t('profile.auth.currentPasswordPlaceholder')}
               autoComplete="current-password"
             />
             {deleteError && (
@@ -652,7 +658,7 @@ function MobileSettingsView() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleteLoading}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -660,7 +666,7 @@ function MobileSettingsView() {
               disabled={deleteLoading}
             >
               {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              确认删除
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -696,12 +702,12 @@ function OverviewTab() {
   }, [year])
 
   const stats = [
-    { label: '练习天数', value: overview?.totalPracticeDays ?? 0, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: '累计做题', value: overview?.totalQuestionsAnswered ?? 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: '收藏题目', value: overview?.totalFavorites ?? 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: '生词本', value: overview?.totalWords ?? 0, icon: BookMarked, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: '连续打卡', value: `${overview?.streakDays ?? 0}天`, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { label: '日均做题', value: overview?.avgDailyQuestions ?? 0, icon: TrendingUp, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+    { label: t('profile.stats.practiceDays'), value: overview?.totalPracticeDays ?? 0, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: t('profile.stats.totalQuestions'), value: overview?.totalQuestionsAnswered ?? 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: t('profile.stats.favorites'), value: overview?.totalFavorites ?? 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: t('profile.stats.words'), value: overview?.totalWords ?? 0, icon: BookMarked, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: t('profile.stats.streakDays'), value: `${overview?.streakDays ?? 0}`, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { label: t('profile.stats.dailyAvg'), value: overview?.avgDailyQuestions ?? 0, icon: TrendingUp, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
   ]
 
   return (
@@ -750,7 +756,7 @@ function OverviewTab() {
               </div>
               <div>
                 <p className="font-semibold">{overview.currentBank.bankName}</p>
-                <p className="text-xs text-muted-foreground">当前正在使用的备考题库</p>
+                <p className="text-xs text-muted-foreground">{t('profile.stats.currentBankDesc')}</p>
               </div>
             </div>
           </CardContent>
@@ -799,6 +805,7 @@ function ActivityCalendarSection({
   onNextYear: () => void
   maxYear: number
 }) {
+  const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
@@ -850,8 +857,8 @@ function ActivityCalendarSection({
             dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
           }}
           labels={{
-            totalCount: '{{year}} 年共 {{count}} 次练习',
-            legend: { less: '少', more: '多' },
+            totalCount: t('common.activityTotal', { year, count: yearData.filter(d => d.count > 0).length }),
+            legend: { less: t('common.activityLess'), more: t('common.activityMore') },
           }}
           weekStart={0}
         />
@@ -931,21 +938,30 @@ function RecordsTab() {
     },
     {
       key: 'status',
-      header: '状态',
-      cell: (v, row) => (
-        <div className="flex items-center gap-2">
-          <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-xs">
-            {v === 'analyzed' ? '已分析' : v === 'analyzing' ? '分析中' : v === 'completed' ? '待分析' : v === 'failed' ? '失败' : '进行中'}
-          </Badge>
-          {typeof row.score === 'number' && <span className="text-xs font-semibold text-primary">{row.score}</span>}
-        </div>
-      ),
+      header: t('profile.columns.status'),
+      cell: (v, row) => {
+        const statusMap: Record<string, string> = {
+          analyzed: t('profile.statusAnalyzed'),
+          analyzing: t('profile.statusAnalyzing'),
+          completed: t('profile.statusCompleted'),
+          failed: t('profile.statusFailed'),
+          inProgress: t('profile.statusInProgress'),
+        }
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-xs">
+              {statusMap[v] || v}
+            </Badge>
+            {typeof row.score === 'number' && <span className="text-xs font-semibold text-primary">{row.score}</span>}
+          </div>
+        )
+      },
       width: 120,
     },
     {
       key: 'practiceCount',
       header: t('profile.columns.count'),
-      cell: (v) => <Badge variant="secondary" className="text-xs">{v} 次</Badge>,
+      cell: (v) => <Badge variant="secondary" className="text-xs">{t('profile.practiceCount', { count: v })}</Badge>,
       width: 80,
     },
     {
@@ -953,7 +969,7 @@ function RecordsTab() {
       header: t('profile.columns.date'),
       cell: (v) => (
         <span className="text-xs text-muted-foreground">
-          {new Date(v).toLocaleDateString('zh-CN')}
+          {new Date(v).toLocaleDateString()}
         </span>
       ),
       width: 100,
@@ -1017,7 +1033,7 @@ function FavoritesTab() {
                 <Badge variant="outline" className="mb-1 text-xs">{item.topicName}</Badge>
                 <p className="text-sm">{item.questionText}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  收藏于 {new Date(item.createdAt).toLocaleDateString('zh-CN')}
+                  {t('profile.favoritedAt', { date: new Date(item.createdAt).toLocaleDateString() })}
                 </p>
               </div>
             </div>
@@ -1034,16 +1050,16 @@ function FavoritesTab() {
 
 type GroupMode = 'date' | 'alpha'
 
-function getDateLabel(iso: string): string {
+function getDateLabel(iso: string, t: (key: string, options?: any) => string): string {
   const d = new Date(iso)
   const diffDays = Math.floor((Date.now() - d.getTime()) / 86400000)
-  if (diffDays === 0) return '今天'
-  if (diffDays === 1) return '昨天'
-  if (diffDays < 7) return `${diffDays} 天前`
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+  if (diffDays === 0) return t('profile.wordToday')
+  if (diffDays === 1) return t('profile.wordYesterday')
+  if (diffDays < 7) return t('profile.wordDaysAgo', { count: diffDays })
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function groupEntries(entries: WordEntry[], mode: GroupMode) {
+function groupEntries(entries: WordEntry[], mode: GroupMode, t: (key: string, opts?: any) => string) {
   if (mode === 'alpha') {
     const map = new Map<string, WordEntry[]>()
     for (const e of [...entries].sort((a, b) => a.word.localeCompare(b.word))) {
@@ -1057,7 +1073,7 @@ function groupEntries(entries: WordEntry[], mode: GroupMode) {
   for (const e of [...entries].sort(
     (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime()
   )) {
-    const label = getDateLabel(e.addedAt)
+    const label = getDateLabel(e.addedAt, t)
     if (!map.has(label)) map.set(label, [])
     map.get(label)!.push(e)
   }
@@ -1076,6 +1092,7 @@ const POS_COLORS: Record<string, string> = {
 
 
 function MeaningSection({ meaning, chineseGloss }: { meaning: Meaning; chineseGloss?: string }) {
+  const { t } = useTranslation()
   const posColor = POS_COLORS[meaning.partOfSpeech] ?? 'bg-muted text-muted-foreground'
   const [playingIdx, setPlayingIdx] = useState<number | null>(null)
 
@@ -1124,7 +1141,7 @@ function MeaningSection({ meaning, chineseGloss }: { meaning: Meaning; chineseGl
               <div className="ml-7 flex flex-wrap gap-3 text-xs">
                 {def.synonyms.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-muted-foreground">近义：</span>
+                    <span className="text-muted-foreground">{t('profile.synonymLabel')}</span>
                     {def.synonyms.slice(0, 5).map((s) => (
                       <span key={s} className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">{s}</span>
                     ))}
@@ -1132,7 +1149,7 @@ function MeaningSection({ meaning, chineseGloss }: { meaning: Meaning; chineseGl
                 )}
                 {def.antonyms.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-muted-foreground">反义：</span>
+                    <span className="text-muted-foreground">{t('profile.antonymLabel')}</span>
                     {def.antonyms.slice(0, 4).map((a) => (
                       <span key={a} className="rounded-md bg-red-50 px-1.5 py-0.5 text-red-700 dark:bg-red-900/20 dark:text-red-300">{a}</span>
                     ))}
@@ -1147,18 +1164,23 @@ function MeaningSection({ meaning, chineseGloss }: { meaning: Meaning; chineseGl
   )
 }
 
-const LEVEL_CONFIG = {
-  basic: { label: '基础', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
-  intermediate: { label: '进阶', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  advanced: { label: '高级', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+function useLevelConfig() {
+  const { t } = useTranslation()
+  return {
+    basic: { label: t('profile.levelBasic'), color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    intermediate: { label: t('profile.levelIntermediate'), color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+    advanced: { label: t('profile.levelAdvanced'), color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+  }
 }
 
 function ExampleCard({ ex, idx }: { ex: WordExampleItem; idx: number }) {
+  const { t } = useTranslation()
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle')
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const cachedUrlRef = useRef<string | null>(null)
   const { ttsBackend, setTtsBackend } = usePreferencesStore()
-  const cfg = LEVEL_CONFIG[ex.level]
+  const levelConfig = useLevelConfig()
+  const cfg = levelConfig[ex.level]
   const isMiniMax = ttsBackend.provider === 'minimax'
 
   const toggleTtsProvider = () => {
@@ -1215,7 +1237,7 @@ function ExampleCard({ ex, idx }: { ex: WordExampleItem; idx: number }) {
     <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40 bg-muted/30">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">例句 {idx + 1}</span>
+          <span className="text-xs font-medium text-muted-foreground">{t('profile.exampleLabel', { count: idx + 1 })}</span>
           <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', cfg.color)}>{cfg.label}</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -1223,7 +1245,7 @@ function ExampleCard({ ex, idx }: { ex: WordExampleItem; idx: number }) {
             type="button"
             onClick={toggleTtsProvider}
             className="rounded-full border border-border bg-background px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
-            title="切换发音引擎"
+            title={t('profile.switchEngine')}
           >
             {isMiniMax ? 'MiniMax' : 'Cartesia'}
           </button>
@@ -1231,12 +1253,12 @@ function ExampleCard({ ex, idx }: { ex: WordExampleItem; idx: number }) {
             disabled={state === 'loading'}
             className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary hover:bg-primary/20 transition-colors disabled:opacity-60">
             {state === 'loading'
-              ? <><Loader2 className="h-3 w-3 animate-spin" />合成中</>
+              ? <><Loader2 className="h-3 w-3 animate-spin" />{t('profile.synthesizing')}</>
               : state === 'playing'
-              ? <><Volume2 className="h-3 w-3" />朗读中</>
+              ? <><Volume2 className="h-3 w-3" />{t('profile.playing')}</>
               : state === 'error'
-              ? <><Volume2 className="h-3 w-3 text-destructive" />重试</>
-              : <><Volume2 className="h-3 w-3" />朗读</>}
+              ? <><Volume2 className="h-3 w-3 text-destructive" />{t('profile.retry')}</>
+              : <><Volume2 className="h-3 w-3" />{t('profile.play')}</>}
           </button>
         </div>
       </div>
@@ -1263,6 +1285,7 @@ function WordDetailDialog({
   hasPrev: boolean
   hasNext: boolean
 }) {
+  const { t } = useTranslation()
   const [dictData, setDictData] = useState<DictEntry[] | null | 'loading'>(null)
   const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>(null)
   const [enrichError, setEnrichError] = useState('')
@@ -1285,7 +1308,7 @@ function WordDetailDialog({
         : undefined
       enrichWord(entry.word, summary)
         .then(setEnrichData)
-        .catch((e) => { setEnrichData(null); setEnrichError(e?.message ?? '加载失败') })
+        .catch((e) => { setEnrichData(null); setEnrichError(e?.message ?? t('common.error')) })
     })
   }, [entry?.word])
 
@@ -1337,7 +1360,7 @@ function WordDetailDialog({
                     {p.audio && (
                       <button type="button" onClick={() => playAudio(p.audio!)}
                         className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/20 transition-colors">
-                        <Volume2 className="h-3 w-3" />{i === 0 ? 'UK' : i === 1 ? 'US' : '发音'}
+                        <Volume2 className="h-3 w-3" />{i === 0 ? 'UK' : i === 1 ? 'US' : t('profile.pronounce')}
                       </button>
                     )}
                   </div>
@@ -1347,7 +1370,7 @@ function WordDetailDialog({
                 {audioUrl && !phonetics.some(p => p.audio) && (
                   <button type="button" onClick={() => playAudio(audioUrl)}
                     className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary hover:bg-primary/20 transition-colors">
-                    <Volume2 className="h-3.5 w-3.5" />发音
+                    <Volume2 className="h-3.5 w-3.5" />{t('profile.pronounce')}
                   </button>
                 )}
               </div>
@@ -1364,7 +1387,7 @@ function WordDetailDialog({
               type="button"
               onClick={onClose}
               className="shrink-0 rounded-xl p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
-              title="关闭"
+              title={t('profile.close')}
             >
               <X className="h-4 w-4" />
             </button>
@@ -1374,7 +1397,7 @@ function WordDetailDialog({
             <div className="mt-3 flex items-start gap-2">
               <Link2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
               <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="font-medium">词源：</span>{mainEntry.origin}
+                <span className="font-medium">{t('profile.origin')}</span>{mainEntry.origin}
               </p>
             </div>
           )}
@@ -1383,9 +1406,9 @@ function WordDetailDialog({
         {/* Tab 切换 */}
         <div className="flex items-center gap-1 border-b border-border/50 px-6 bg-muted/20">
           {([
-            { key: 'meanings', icon: BookOpen, label: '释义', count: allMeanings.length },
-            { key: 'examples', icon: GraduationCap, label: 'AI 例句', count: enriched?.examples.length ?? 0 },
-            { key: 'synonyms', icon: BarChart2, label: '近反义词', count: allSynonyms.length + allAntonyms.length },
+            { key: 'meanings', icon: BookOpen, label: t('profile.tabMeanings'), count: allMeanings.length },
+            { key: 'examples', icon: GraduationCap, label: t('profile.tabExamples'), count: enriched?.examples.length ?? 0 },
+            { key: 'synonyms', icon: BarChart2, label: t('profile.tabSynonyms'), count: allSynonyms.length + allAntonyms.length },
           ] as const).map(({ key, icon: Icon, label, count }) => (
             <button key={key} type="button" onClick={() => setActiveTab(key)}
               className={cn(
@@ -1412,7 +1435,7 @@ function WordDetailDialog({
               ) : !mainEntry ? (
                 <div className="py-12 text-center text-muted-foreground">
                   <BookOpen className="mx-auto mb-3 h-10 w-10 opacity-20" />
-                  <p className="text-sm">未找到词典数据</p>
+                  <p className="text-sm">{t('profile.noDictData')}</p>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1422,7 +1445,7 @@ function WordDetailDialog({
                   {mainEntry.sourceUrls?.map(url => (
                     <a key={url} href={url} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
-                      <ExternalLink className="h-3 w-3" />查看完整词条
+                      <ExternalLink className="h-3 w-3" />{t('profile.viewFullEntry')}
                     </a>
                   ))}
                 </div>
@@ -1437,13 +1460,13 @@ function WordDetailDialog({
               ) : !enriched?.examples.length ? (
                 <div className="py-10 text-center text-muted-foreground">
                   <GraduationCap className="mx-auto mb-2 h-8 w-8 opacity-20" />
-                  <p className="text-sm">AI 例句需要配置 DEEPSEEK_API_KEY</p>
+                  <p className="text-sm">{t('profile.aiExamplesRequireKey')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                    AI 生成 · 覆盖基础、进阶、高级三个难度 · 点击朗读可播放
+                    {t('profile.aiExamplesDesc')}
                   </p>
                   {enriched.examples.map((ex, i) => <ExampleCard key={i} ex={ex} idx={i} />)}
                 </div>
@@ -1477,7 +1500,7 @@ function WordDetailDialog({
                   </div>
                 )}
                 {allSynonyms.length === 0 && allAntonyms.length === 0 && (
-                  <div className="py-10 text-center text-muted-foreground text-sm">暂无近反义词数据</div>
+                  <div className="py-10 text-center text-muted-foreground text-sm">{t('profile.noSynonymData')}</div>
                 )}
               </div>
             )}
@@ -1487,13 +1510,13 @@ function WordDetailDialog({
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-border/50 px-6 py-3 bg-muted/10">
           <Button variant="outline" size="sm" onClick={onPrev} disabled={!hasPrev} className="gap-1.5">
-            <ChevronLeft className="h-4 w-4" />上一个
+            <ChevronLeft className="h-4 w-4" />{t('profile.prevWord')}
           </Button>
           <span className="text-xs text-muted-foreground">
-            {new Date(entry.addedAt).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}添加 · ←→ 切换
+            {t('profile.addedAt', { date: new Date(entry.addedAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) })}
           </span>
           <Button variant="outline" size="sm" onClick={onNext} disabled={!hasNext} className="gap-1.5">
-            下一个<ChevronRight className="h-4 w-4" />
+            {t('profile.nextWord')}<ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </DialogContent>
@@ -1512,6 +1535,7 @@ function WordCard({
   checked: boolean
   onToggleSelect: () => void
 }) {
+  const { t } = useTranslation()
   const [dictData, setDictData] = useState<DictEntry[] | null | 'loading'>('loading')
 
   useEffect(() => { lookupWord(entry.word).then(setDictData) }, [entry.word])
@@ -1555,7 +1579,7 @@ function WordCard({
         ) : firstDef ? (
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{firstDef}</p>
         ) : (
-          <p className="text-xs text-muted-foreground/40 italic">暂无定义</p>
+          <p className="text-xs text-muted-foreground/40 italic">{t('profile.noDefinition')}</p>
         )}
       </CardContent>
     </Card>
@@ -1582,7 +1606,7 @@ function WordsTab() {
     [filtered]
   )
 
-  const groups = useMemo(() => groupEntries(filtered, groupMode), [filtered, groupMode])
+  const groups = useMemo(() => groupEntries(filtered, groupMode, t), [filtered, groupMode, t])
 
   const selectedEntry = flatList.find((e) => e.word === selectedWord) ?? null
   const selectedIdx = selectedEntry ? flatList.indexOf(selectedEntry) : -1
@@ -1634,7 +1658,7 @@ function WordsTab() {
         <div className="rounded-2xl bg-muted/40 py-16 text-center text-muted-foreground">
           <BookMarked className="mx-auto mb-3 h-10 w-10 opacity-30" />
           <p>{t('profile.noWords')}</p>
-          <p className="mt-1 text-xs opacity-70">在练习页面点击单词旁的 ＋ 按钮添加</p>
+          <p className="mt-1 text-xs opacity-70">{t('profile.addWordHint')}</p>
         </div>
       </div>
     )
@@ -1652,7 +1676,7 @@ function WordsTab() {
         <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="搜索…"
+            placeholder={t('profile.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-sm"
@@ -1663,8 +1687,8 @@ function WordsTab() {
         <div className="flex w-full items-center justify-between gap-2">
           <div className="flex rounded-lg bg-muted p-0.5">
             {([
-              { mode: 'date', icon: Calendar, label: '按日期' },
-              { mode: 'alpha', icon: SortAsc, label: '字母序' },
+              { mode: 'date', icon: Calendar, label: t('profile.groupByDate') },
+              { mode: 'alpha', icon: SortAsc, label: t('profile.groupByAlpha') },
             ] as const).map(({ mode, icon: Icon, label }) => (
               <button
                 key={mode}
@@ -1687,8 +1711,8 @@ function WordsTab() {
               variant={multiSelectMode ? 'default' : 'outline'}
               className="h-8 w-8 p-0"
               onClick={toggleMultiSelectMode}
-              title={multiSelectMode ? '取消多选' : '多选'}
-              aria-label={multiSelectMode ? '取消多选' : '开启多选'}
+              title={multiSelectMode ? t('profile.cancelMultiSelect') : t('profile.multiSelect')}
+              aria-label={multiSelectMode ? t('profile.cancelMultiSelect') : t('profile.enableMultiSelect')}
             >
               <CheckSquare className="h-4 w-4" />
             </Button>
@@ -1700,7 +1724,7 @@ function WordsTab() {
                 onClick={deleteSelectedWords}
                 disabled={selectedWords.length === 0}
               >
-                删除({selectedWords.length})
+                {t('profile.deleteCount', { count: selectedWords.length })}
               </Button>
             )}
           </div>
@@ -1711,7 +1735,7 @@ function WordsTab() {
       {filtered.length === 0 ? (
         <div className="py-8 text-center text-sm text-muted-foreground">
           <Search className="mx-auto mb-2 h-7 w-7 opacity-30" />
-          没有找到匹配的单词
+          {t('profile.noMatchWord')}
         </div>
       ) : (
         <div className="space-y-5">
@@ -1800,13 +1824,13 @@ function NicknameEditDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{t('profile.editNicknameTitle')}</DialogTitle>
-          <DialogDescription>修改后将会在所有页面展示新的昵称</DialogDescription>
+          <DialogDescription>{t('profile.nicknameDesc')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-2 py-2">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="请输入昵称"
+            placeholder={t('profile.nicknamePlaceholder')}
             maxLength={20}
             autoFocus
           />
@@ -1983,7 +2007,7 @@ function AccountTab() {
             {avatarUploading && (
               <p className="mt-1 flex items-center gap-1 text-xs text-primary">
                 <Loader2 className="size-3 animate-spin" />
-                上传中...
+                {t('common.uploading')}
               </p>
             )}
           </div>
@@ -2055,7 +2079,7 @@ function AccountTab() {
               <div>
                 <p className="text-sm">{t('profile.wechat')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {wechatBound ? `已绑定${wechatAccount?.name ? `：${wechatAccount.name}` : ''}` : t('profile.wechatBind')}
+                  {wechatBound ? (wechatAccount?.name ? `${t('profile.boundPrefix')}：${wechatAccount.name}` : t('profile.boundPrefix')) : t('profile.wechatBind')}
                 </p>
               </div>
             </div>
@@ -2078,7 +2102,7 @@ function AccountTab() {
               <div>
                 <p className="text-sm">{t('profile.appleId')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {appleBound ? `已绑定${appleAccount?.name ? `：${appleAccount.name}` : ''}` : t('profile.appleIdBind')}
+                  {appleBound ? (appleAccount?.name ? `${t('profile.boundPrefix')}：${appleAccount.name}` : t('profile.boundPrefix')) : t('profile.appleIdBind')}
                 </p>
               </div>
             </div>
@@ -2145,7 +2169,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <Label>{t('profile.autoPlay')}</Label>
-              <p className="text-xs text-muted-foreground">进入练习页自动播放题目音频</p>
+              <p className="text-xs text-muted-foreground">{t('profile.autoPlay')}</p>
             </div>
             <Switch checked={autoPlay} onCheckedChange={setAutoPlay} />
           </div>
@@ -2155,7 +2179,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <Label>{t('profile.autoSpeak')}</Label>
-              <p className="text-xs text-muted-foreground">查词时自动朗读单词发音</p>
+              <p className="text-xs text-muted-foreground">{t('profile.autoSpeak')}</p>
             </div>
             <Switch checked={autoSpeakOnLookup} onCheckedChange={setAutoSpeakOnLookup} />
           </div>
@@ -2179,7 +2203,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <Label>{t('profile.autoCopyWord')}</Label>
-              <p className="text-xs text-muted-foreground">查词后自动将单词复制到剪切板</p>
+              <p className="text-xs text-muted-foreground">{t('profile.autoCopyWord')}</p>
             </div>
             <Switch checked={autoCopyWord} onCheckedChange={setAutoCopyWord} />
           </div>
@@ -2189,7 +2213,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <Label>{t('profile.wifiOnlyMedia')}</Label>
-              <p className="text-xs text-muted-foreground">仅在 WiFi 环境下播放和下载音频</p>
+              <p className="text-xs text-muted-foreground">{t('profile.wifiOnlyMedia')}</p>
             </div>
             <Switch checked={wifiOnlyMedia} onCheckedChange={setWifiOnlyMedia} />
           </div>
@@ -2235,7 +2259,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <Label>{t('profile.personalizedRecommendation')}</Label>
-              <p className="text-xs text-muted-foreground">根据学习数据智能推荐练习内容</p>
+              <p className="text-xs text-muted-foreground">{t('profile.personalizedRecommendationDesc')}</p>
             </div>
             <Switch checked={personalizedRecommendation} onCheckedChange={setPersonalizedRecommendation} />
           </div>
@@ -2287,7 +2311,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">
-                {config?.bankName || '未配置题库'}
+                {config?.bankName || t('profile.currentBankNotSet')}
               </p>
               {config && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -2314,7 +2338,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{t('profile.clearCache')}</p>
-              <p className="text-xs text-muted-foreground">清理本地存储的音频缓存文件</p>
+              <p className="text-xs text-muted-foreground">{t('profile.clearCacheDesc')}</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => {}}>
               {t('common.confirm')}
@@ -2326,19 +2350,19 @@ function SettingsTab() {
       {/* 法律与隐私 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">法律与隐私</CardTitle>
+          <CardTitle className="text-base">{t('profile.legalPrivacy')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {[
-            { label: '服务条款', to: '/system/terms' },
-            { label: '隐私政策', to: '/system/privacy' },
-            { label: '儿童信息保护', to: '/system/privacy-children' },
-            { label: '个人信息收集清单', to: '/system/collect-info' },
-            { label: '权限申请说明', to: '/system/permissions' },
-            { label: '第三方SDK目录', to: '/system/sdk-list' },
-            { label: '隐私政策简明版', to: '/system/privacy-concise' },
-            { label: 'ICP备案信息', to: '/system/icp' },
-            { label: '联系我们', to: '/system/contact' },
+            { label: t('footer.termsOfService'), to: '/system/terms' },
+            { label: t('footer.privacy'), to: '/system/privacy' },
+            { label: t('footer.privacyChildren'), to: '/system/privacy-children' },
+            { label: t('footer.collectInfo'), to: '/system/collect-info' },
+            { label: t('footer.permissionsApply'), to: '/system/permissions' },
+            { label: t('footer.sdkList'), to: '/system/sdk-list' },
+            { label: t('footer.privacyConcise'), to: '/system/privacy-concise' },
+            { label: t('footer.icp'), to: '/system/icp' },
+            { label: t('footer.contactUs'), to: '/system/contact' },
           ].map((item, idx, arr) => (
             <div key={item.to}>
               <Link
@@ -2357,7 +2381,7 @@ function SettingsTab() {
       {/* 账户安全 — 修改密码 / 退出 / 注销 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">账户安全</CardTitle>
+          <CardTitle className="text-base">{t('profile.security')}</CardTitle>
         </CardHeader>
         <CardContent>
           <AuthSettingsPanel compact={false} />
@@ -2368,6 +2392,7 @@ function SettingsTab() {
 }
 
 function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { session, refreshSession, signOut } = useAuth()
   const sessionUser = session?.user ?? null
@@ -2417,9 +2442,9 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
   }, [passwordDialogOpen])
 
   const handleChangePassword = async () => {
-    if (!currentPassword) { setPasswordError('请输入当前密码'); return }
-    if (newPassword.length < 8) { setPasswordError('新密码至少需要8位字符'); return }
-    if (newPassword !== confirmPassword) { setPasswordError('两次密码不一致'); return }
+    if (!currentPassword) { setPasswordError(t('profile.auth.passwordRequired')); return }
+    if (newPassword.length < 8) { setPasswordError(t('profile.auth.newPasswordPlaceholder')); return }
+    if (newPassword !== confirmPassword) { setPasswordError(t('auth.passwordMismatch')); return }
 
     setPasswordLoading(true)
     setPasswordError('')
@@ -2428,7 +2453,7 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       await changePassword(currentPassword, newPassword)
       setPasswordDialogOpen(false)
     } catch (error: any) {
-      setPasswordError(error?.response?.data?.message || error?.message || '修改失败')
+      setPasswordError(error?.response?.data?.message || error?.message || t('profile.auth.deleteFailed'))
     } finally {
       setPasswordLoading(false)
     }
@@ -2451,7 +2476,7 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
   }, [deleteDialogOpen])
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword) { setDeleteError('请输入密码以确认删除'); return }
+    if (!deletePassword) { setDeleteError(t('profile.auth.passwordRequired')); return }
     setDeleteLoading(true)
     setDeleteError('')
     try {
@@ -2461,13 +2486,13 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       window.location.hash = '#/portal'
       window.location.reload()
     } catch (error: any) {
-      setDeleteError(error?.response?.data?.message || error?.message || '删除失败')
+      setDeleteError(error?.response?.data?.message || error?.message || t('profile.auth.deleteFailed'))
     } finally {
       setDeleteLoading(false)
     }
   }
 
-  const currentName = name || sessionUser?.name || '未设置'
+  const currentName = name || sessionUser?.name || t('profile.auth.notSet')
 
   // ── 列表行组件 ──
   const Row = ({ label, value, subtitle, danger, onClick, last }: {
@@ -2503,8 +2528,8 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
   if (!sessionUser) {
     return (
       <div className="space-y-3 px-4 py-3">
-        <p className="text-xs text-muted-foreground">请前往登录或注册。</p>
-        <Button size="sm" onClick={() => navigate('/auth/login')}>去登录</Button>
+        <p className="text-xs text-muted-foreground">{t('profile.auth.loginPrompt')}</p>
+        <Button size="sm" onClick={() => navigate('/auth/login')}>{t('profile.auth.goLogin')}</Button>
       </div>
     )
   }
@@ -2513,29 +2538,29 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
     <div>
       <div className="-mx-4 -my-4 divide-y-0">
         <Row
-          label="个人信息"
+          label={t('profile.auth.personalInfo')}
           value={currentName}
-          subtitle={`${sessionUser.email}${sessionUser.emailVerified ? ' · 已验证' : ''}`}
+          subtitle={`${sessionUser.email}${sessionUser.emailVerified ? t('profile.auth.emailVerified') : ''}`}
           onClick={() => setProfileDialogOpen(true)}
         />
         <Row
-          label="修改密码"
-          subtitle="定期更换密码保障账户安全"
+          label={t('profile.auth.changePassword')}
+          subtitle={t('profile.auth.passwordSecurity')}
           onClick={() => setPasswordDialogOpen(true)}
         />
         <Row
-          label="退出登录"
-          subtitle="清除本地登录状态，返回登录页"
+          label={t('profile.logout')}
+          subtitle={t('profile.auth.logoutDesc')}
           onClick={() => signOut().then(() => navigate('/auth/login'))}
         />
         <Row
-          label="帮助与反馈"
-          subtitle="提交问题或建议，帮助我们做得更好"
+          label={t('profile.auth.helpFeedback')}
+          subtitle={t('profile.auth.helpFeedbackDesc')}
           onClick={() => setFeedbackDialogOpen(true)}
         />
         <Row
-          label="注销账户"
-          subtitle="永久删除账户及所有学习数据，不可恢复"
+          label={t('profile.deleteAccount')}
+          subtitle={t('profile.auth.deleteAccountDesc')}
           danger
           onClick={() => setDeleteDialogOpen(true)}
           last
@@ -2546,24 +2571,24 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>编辑个人信息</DialogTitle>
-            <DialogDescription>修改后点击保存即可生效</DialogDescription>
+            <DialogTitle>{t('profile.auth.editProfile')}</DialogTitle>
+            <DialogDescription>{t('profile.auth.saveHint')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">名称 (name)</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="显示名称" />
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.nameField')}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('profile.auth.namePlaceholder')} />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">昵称 (username)</Label>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="昵称" />
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.usernameField')}</Label>
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t('profile.auth.usernamePlaceholder')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setProfileDialogOpen(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setProfileDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSaveProfile} disabled={profileLoading}>
               {profileLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              保存
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2573,37 +2598,37 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>修改密码</DialogTitle>
-            <DialogDescription>输入当前密码和新密码</DialogDescription>
+            <DialogTitle>{t('profile.auth.changePassword')}</DialogTitle>
+            <DialogDescription>{t('profile.auth.changePasswordDesc')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">当前密码</Label>
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.currentPassword')}</Label>
               <Input
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 type="password"
-                placeholder="输入当前密码"
+                placeholder={t('profile.auth.currentPasswordPlaceholder')}
                 autoComplete="current-password"
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">新密码</Label>
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.newPassword')}</Label>
               <Input
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 type="password"
-                placeholder="至少 8 位字符"
+                placeholder={t('profile.auth.newPasswordPlaceholder')}
                 autoComplete="new-password"
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">确认新密码</Label>
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.confirmPassword')}</Label>
               <Input
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 type="password"
-                placeholder="再次输入新密码"
+                placeholder={t('profile.auth.confirmPasswordPlaceholder')}
                 autoComplete="new-password"
               />
             </div>
@@ -2612,10 +2637,10 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleChangePassword} disabled={passwordLoading}>
               {passwordLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              确认修改
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2625,9 +2650,9 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-destructive">注销账户</DialogTitle>
+            <DialogTitle className="text-destructive">{t('profile.deleteAccount')}</DialogTitle>
             <DialogDescription>
-              此操作不可撤销。所有学习记录、收藏、生词本、模考成绩等数据将被永久删除。请输入密码以确认。
+              {t('profile.auth.deleteAccountWarning')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -2635,16 +2660,16 @@ function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
               value={deletePassword}
               onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
               type="password"
-              placeholder="输入当前密码"
+              placeholder={t('profile.auth.currentPasswordPlaceholder')}
               autoComplete="current-password"
             />
             {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>取消</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>{t('common.cancel')}</Button>
             <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteLoading}>
               {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              确认删除
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

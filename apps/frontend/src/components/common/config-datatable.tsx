@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useReactTable,
   getCoreRowModel,
@@ -45,10 +46,11 @@ export function ConfigDataTable<T extends Record<string, any>>({
   onPageChange,
   onPageSizeChange,
   isLoading = false,
-  emptyMessage = '暂无数据',
+  emptyMessage,
   onRowClick,
   className,
 }: ConfigDataTableProps<T>) {
+  const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
@@ -129,7 +131,7 @@ export function ConfigDataTable<T extends Record<string, any>>({
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  {emptyMessage}
+                  {emptyMessage ?? t('common.empty')}
                 </td>
               </tr>
             ) : (
@@ -156,12 +158,12 @@ export function ConfigDataTable<T extends Record<string, any>>({
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          共 {total} 条记录，第 {page} / {totalPages} 页
+          {t('common.paginationInfo', { total, page, totalPages })}
         </span>
         <div className="flex items-center gap-2">
           {onPageSizeChange && (
             <div className="flex items-center gap-1">
-              <span>每页</span>
+              <span>{t('common.perPage')}</span>
               <Select
                 value={String(pageSize)}
                 onChange={(e) => onPageSizeChange(Number(e.target.value))}
@@ -173,7 +175,7 @@ export function ConfigDataTable<T extends Record<string, any>>({
                   </SelectItem>
                 ))}
               </Select>
-              <span>条</span>
+              <span>{t('common.rows')}</span>
             </div>
           )}
           <div className="flex items-center gap-1">

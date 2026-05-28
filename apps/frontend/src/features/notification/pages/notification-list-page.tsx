@@ -15,31 +15,38 @@ import { NotificationDetailSheet } from '../components/notification-detail-sheet
 
 type TabValue = 'all' | 'unread' | 'read'
 
-const tabConfig: { value: TabValue; label: string; icon: React.ElementType }[] = [
-  { value: 'all', label: '全部', icon: Inbox },
-  { value: 'unread', label: '未读', icon: Mail },
-  { value: 'read', label: '已读', icon: MailOpen },
-]
-
-function formatRelativeTime(dateStr: string): string {
-  const now = Date.now()
-  const date = new Date(dateStr).getTime()
-  const diffMs = now - date
-  const diffMin = Math.floor(diffMs / 60000)
-  const diffHour = Math.floor(diffMs / 3600000)
-  const diffDay = Math.floor(diffMs / 86400000)
-
-  if (diffMin < 1) return '刚刚'
-  if (diffMin < 60) return `${diffMin}分钟前`
-  if (diffHour < 24) return `${diffHour}小时前`
-  if (diffDay < 7) return `${diffDay}天前`
-  return new Date(dateStr).toLocaleDateString('zh-CN', {
-    month: 'short',
-    day: 'numeric',
-  })
+function useTabConfig() {
+  const { t } = useTranslation()
+  return [
+    { value: 'all' as const, label: t('notification.tabAll'), icon: Inbox },
+    { value: 'unread' as const, label: t('notification.tabUnread'), icon: Mail },
+    { value: 'read' as const, label: t('notification.tabRead'), icon: MailOpen },
+  ]
 }
 
-function NotificationCard({ item, onClick }: { item: NotificationItem; onClick: () => void }) {
+function useFormatRelativeTime() {
+  const { t } = useTranslation()
+  return (dateStr: string): string => {
+    const now = Date.now()
+    const date = new Date(dateStr).getTime()
+    const diffMs = now - date
+    const diffMin = Math.floor(diffMs / 60000)
+    const diffHour = Math.floor(diffMs / 3600000)
+    const diffDay = Math.floor(diffMs / 86400000)
+
+    if (diffMin < 1) return t('notification.justNow')
+    if (diffMin < 60) return t('notification.minutesAgo', { count: diffMin })
+    if (diffHour < 24) return t('notification.hoursAgo', { count: diffHour })
+    if (diffDay < 7) return t('notification.daysAgo', { count: diffDay })
+    return new Date(dateStr).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+}
+
+function NotificationCard({ item, onClick, formatRelativeTime }: { item: NotificationItem; onClick: () => void; formatRelativeTime: (s: string) => string }) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
@@ -97,12 +104,14 @@ function NotificationCard({ item, onClick }: { item: NotificationItem; onClick: 
               <Clock className="h-3 w-3" />
               {formatRelativeTime(item.createdAt)}
             </span>
-            <Badge
-              variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
-              className="h-5 text-[10px] px-1.5 font-normal"
-            >
-              {item.type === 'broadcast' ? '系统广播' : '定向通知'}
-            </Badge>
+            {item.type === 'broadcast' || item.type === 'direct' ? (
+              <Badge
+                variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
+                className="h-5 text-[10px] px-1.5 font-normal"
+              >
+                {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
+              </Badge>
+            ) : null}
           </div>
         </div>
       </div>
@@ -110,7 +119,8 @@ function NotificationCard({ item, onClick }: { item: NotificationItem; onClick: 
   )
 }
 
-function NotificationTabContent({ tab }: { tab: TabValue }) {
+function NotificationTabContent({ tab, formatRelativeTime }: { tab: TabValue; formatRelativeTime: (s: string) => string }) {
+  const { t } = useTranslation()
   const [list, setList] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -203,7 +213,7 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
       {tab !== 'read' && hasUnread && (
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {list.filter((n) => !n.isRead).length} 条未读
+              {t('notification.unreadCount', { count: list.filter((n) => !n.isRead).length })}
           </span>
           <Button
             variant="outline"
@@ -212,7 +222,7 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
             onClick={handleMarkAll}
           >
             <CheckCheck className="h-3.5 w-3.5" />
-            全部已读
+            {t('notification.markAllRead')}
           </Button>
         </div>
       )}
@@ -240,10 +250,10 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
             )}
           </div>
           <p className="text-sm font-medium text-muted-foreground">
-            {tab === 'unread' ? '暂无未读通知' : tab === 'read' ? '暂无已读通知' : '暂无通知'}
+            {tab === 'unread' ? t('notification.emptyUnread') : tab === 'read' ? t('notification.emptyRead') : t('notification.empty')}
           </p>
           <p className="mt-1 text-xs text-muted-foreground/50">
-            {tab === 'unread' ? '新通知到达时会出现在这里' : '通知记录都会展示在这里'}
+            {tab === 'unread' ? t('notification.emptyUnreadDesc') : t('notification.emptyAllDesc')}
           </p>
         </div>
       ) : (
@@ -252,8 +262,7 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
             <NotificationCard
               key={item.id}
               item={item}
-              onClick={() => handleClickItem(item)}
-            />
+              onClick={() => handleClickItem(item)}              formatRelativeTime={formatRelativeTime}            />
           ))}
         </div>
       )}
@@ -286,6 +295,8 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
 export function NotificationListPage({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<TabValue>('all')
+  const tabConfig = useTabConfig()
+  const formatRelativeTime = useFormatRelativeTime()
   return (
     <div className="space-y-5">
       {/* 页面标题 */}
@@ -317,7 +328,7 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
 
         {tabConfig.map(({ value }) => (
           <div key={value} className={activeTab === value ? '' : 'hidden'}>
-            <NotificationTabContent tab={value} />
+            <NotificationTabContent tab={value} formatRelativeTime={formatRelativeTime} />
           </div>
         ))}
       </Tabs>
