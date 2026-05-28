@@ -10,6 +10,7 @@ type ChunkItem = TopicDetail['activeChunks'][number]
 interface ChunkActivationPanelProps {
   chunks: ChunkItem[]
   activatedIds: Set<string>
+  collectedTexts: Set<string>
   expandedId: string | null
   onActivate: (chunkId: string) => void
   onExpand: (chunkId: string) => void
@@ -19,6 +20,7 @@ interface ChunkActivationPanelProps {
 export function ChunkActivationPanel({
   chunks,
   activatedIds,
+  collectedTexts,
   expandedId,
   onActivate,
   onExpand,
@@ -34,19 +36,20 @@ export function ChunkActivationPanel({
           <p className="text-sm font-semibold text-foreground">核心表达块</p>
         </div>
         <Badge variant="secondary" className="rounded-full text-[10px]">
-          {activatedIds.size}/{chunks.length}
+          {collectedTexts.size}/{chunks.length}
         </Badge>
       </div>
       {hasChunks ? (
         <>
           <p className="mb-3 text-xs leading-5 text-muted-foreground">
-            点开表达块确认含义和例句，系统会同步标记为已激活。
+            点开表达块确认含义和例句，已收录的会标出。
           </p>
           <div className="space-y-2">
             {chunks.map((chunk) => (
               <ChunkActivationItem
                 key={chunk.id}
                 chunk={chunk}
+                collected={collectedTexts.has(chunk.text)}
                 expanded={expandedId === chunk.id}
                 onClick={() => {
                   onExpand(chunk.id)
@@ -68,11 +71,13 @@ export function ChunkActivationPanel({
 
 function ChunkActivationItem({
   chunk,
+  collected,
   expanded,
   onClick,
   onInspect,
 }: {
   chunk: ChunkItem
+  collected: boolean
   expanded: boolean
   onClick: () => void
   onInspect: () => void
@@ -94,7 +99,10 @@ function ChunkActivationItem({
             <MessageSquareText className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+            </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
           </div>
           <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />

@@ -15,7 +15,7 @@ import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
-import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
+import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -148,6 +148,7 @@ export function PracticeSessionPage() {
   const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
+  const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
@@ -248,6 +249,17 @@ export function PracticeSessionPage() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
+    // Also load collected expression items
+    Promise.all([
+      expressionApi.list({ type: 'chunk' }).catch(() => []),
+      expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
+    ]).then(([chunkItems, phraseItems]) => {
+      const set = new Set<string>()
+      for (const item of [...(Array.isArray(chunkItems) ? chunkItems : []), ...(Array.isArray(phraseItems) ? phraseItems : [])]) {
+        if (item.chunkText) set.add(item.chunkText)
+      }
+      setCollectedTexts(set)
+    }).catch(() => {})
   }, [topicId])
 
   // ==================== Ink Story Hook ====================
@@ -697,7 +709,10 @@ export function PracticeSessionPage() {
                                 <BookText className="size-4" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-foreground">{v.word}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-semibold text-foreground">{v.word}</p>
+                                  {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{v.meaning}</p>
                               </div>
                               <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
@@ -729,6 +744,7 @@ export function PracticeSessionPage() {
                 <ChunkActivationPanel
                   chunks={detail.activeChunks}
                   activatedIds={activatedChunks}
+                  collectedTexts={collectedTexts}
                   expandedId={expandedChunkId}
                   onActivate={activateChunk}
                   onExpand={setExpandedChunkId}

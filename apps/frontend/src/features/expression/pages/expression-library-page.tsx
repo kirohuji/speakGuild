@@ -132,7 +132,10 @@ export function ExpressionLibraryPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
-      <Tabs value={libraryTab} onValueChange={(value) => setLibraryTab(value as LibraryTab)}>
+      <Tabs value={libraryTab} onValueChange={(value) => {
+        setLibraryTab(value as LibraryTab)
+        if (value === 'words') setReviewState('reviewing')
+      }}>
         <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
           <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
           <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>

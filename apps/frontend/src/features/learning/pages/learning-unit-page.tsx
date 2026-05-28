@@ -522,6 +522,7 @@ function ChunkPrepCard({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
               <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{chunk.difficulty}</Badge>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
