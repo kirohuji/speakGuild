@@ -227,7 +227,7 @@ class DriftBottle extends PIXI.Graphics {
 // ═══════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════
-// 远山 — 纯山体剪影（无灯塔）
+// 远山 — 山体剪影 + 棕榈树
 // ═══════════════════════════════════════════════════════════
 
 class Mountain extends PIXI.Container {
@@ -237,7 +237,9 @@ class Mountain extends PIXI.Container {
     this.position.set(w * (0.02 + Math.random() * 0.06), h * 0.19);
     const s = 0.6 + Math.random() * 0.4;
     const color = isDark ? 0x061a2e : 0x5a7a6a;
+    const treeColor = isDark ? 0x040e1a : 0x3a5a4a;
 
+    // ── 山体 ──
     const land = new PIXI.Graphics();
     land.fill({ color, alpha: 1 });
     land.moveTo(-28 * s, 0);
@@ -255,6 +257,29 @@ class Mountain extends PIXI.Container {
     land.closePath();
     land.fill();
     this.addChild(land);
+
+    // ── 棕榈树 ──
+    const trees = new PIXI.Graphics();
+    trees.fill({ color: treeColor, alpha: 1 });
+    const plantAt = (x: number, y: number, hh: number) => {
+      // 树干
+      trees.rect(x - 0.4 * s, y - hh, 0.8 * s, hh);
+      trees.fill();
+      // 树冠（3~4 片叶子）
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.3;
+        const l = (3 + Math.random() * 3) * s;
+        trees.moveTo(x, y - hh);
+        trees.lineTo(x + Math.cos(angle) * l, y - hh - Math.sin(angle) * l * 0.6);
+      }
+      trees.stroke({ color: treeColor, width: 1.2 * s, alpha: 0.85 });
+    };
+    // 在山脊上种 4 棵树
+    plantAt(-12 * s, -20 * s, 6 * s);
+    plantAt(-4 * s, -18 * s, 5 * s);
+    plantAt(5 * s, -22 * s, 7 * s);
+    plantAt(14 * s, -16 * s, 5 * s);
+    this.addChild(trees);
 
     this.alpha = isDark ? 0.35 : 0.25;
   }
@@ -532,6 +557,71 @@ class MoonShimmer extends PIXI.Graphics {
 }
 
 // ═══════════════════════════════════════════════════════════
+// 帆船 — 小型帆船 · 缓慢漂行
+// ═══════════════════════════════════════════════════════════
+
+class Sailboat extends PIXI.Graphics {
+  vx: number;
+  bobPhase: number;
+  bobSpeed: number;
+  bobAmp: number;
+  baseY: number;
+
+  constructor(w: number, h: number, isDark: boolean) {
+    super();
+    this.vx = 0.15 + Math.random() * 0.2;
+    this.bobPhase = Math.random() * Math.PI * 2;
+    this.bobSpeed = 0.008 + Math.random() * 0.006;
+    this.bobAmp = 1.5 + Math.random() * 2;
+    this.baseY = h * (0.28 + Math.random() * 0.15);
+
+    const hullColor = isDark ? 0x334455 : 0x5a6a7a;
+    const sailColor = isDark ? 0xdddddd : 0xeeeeee;
+    const mastColor = isDark ? 0x445566 : 0x667788;
+    const s = 0.6 + Math.random() * 0.4;
+
+    // 船身
+    this.fill({ color: hullColor, alpha: 0.85 });
+    this.moveTo(-6 * s, 0);
+    this.lineTo(6 * s, 0);
+    this.lineTo(5 * s, 2.5 * s);
+    this.lineTo(-5 * s, 2.5 * s);
+    this.closePath();
+    this.fill();
+
+    // 桅杆
+    this.moveTo(0, 0);
+    this.lineTo(0, -10 * s);
+    this.stroke({ color: mastColor, width: 0.6 * s, alpha: 0.7 });
+
+    // 帆
+    this.fill({ color: sailColor, alpha: 0.50 });
+    this.moveTo(0, -9 * s);
+    this.lineTo(5 * s, -4 * s);
+    this.lineTo(0, -2 * s);
+    this.closePath();
+    this.fill();
+
+    this.alpha = 0.70;
+    this.position.set(
+      Math.random() * (w + 300) - 150,
+      this.baseY,
+    );
+  }
+
+  update(dt: number, w: number) {
+    this.bobPhase += this.bobSpeed * dt;
+    this.position.x += this.vx * dt;
+    this.position.y = this.baseY + Math.sin(this.bobPhase) * this.bobAmp;
+
+    if (this.position.x > w + 100) {
+      this.position.x = -100;
+    }
+    return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 // Theme entry
 // ═══════════════════════════════════════════════════════════
 
@@ -571,14 +661,26 @@ export function setupOcean(
   }
 
   // ── 计时器 ──
-  // ── 远景（测试模式必出）：要么远山，要么灯塔 ──
+  // ── 远景：测试模式出小岛（带树），正常模式随机山或灯塔 ──
   if (testMode) {
-    const view = Math.random() < 0.1
+    // 测试模式只显示小岛（带棕榈树）
+    const view = new Mountain(w, h, isDark);
+    app.stage.addChild(view as any);
+    items.push(view as any);
+  } else if (Math.random() < 0.5) {
+    const view = Math.random() < 0.3
       ? new Mountain(w, h, isDark)
       : new Lighthouse(w, h, isDark);
     app.stage.addChild(view as any);
     items.push(view as any);
   }
+
+  // ── 帆船（测试模式必出） ──
+  // if (testMode) {
+  //   const boat = new Sailboat(w, h, isDark);
+  //   app.stage.addChild(boat as any);
+  //   items.push(boat as any);
+  // }
 
   // ── 漂流瓶（初始 3 个） ──
   for (let i = 0; i < 3; i++) {

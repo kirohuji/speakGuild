@@ -54,7 +54,7 @@ export function PixiAnimatedBackground({ themeId, testMode }: AnimatedBackground
 
       const setup: ThemeSetup =
         themeId?.includes('ocean')  ? setupOcean(app, w, h, isDark, testMode) :
-        themeId?.includes('rain')   ? setupRain(app, w, h, isDark) :
+        themeId?.includes('rain')   ? setupRain(app, w, h, isDark, testMode) :
         themeId?.includes('aurora') ? setupAurora(app, w, h, isDark) :
                                       setupStars(app, w, h, isDark, testMode);
       setupRef.current = setup;

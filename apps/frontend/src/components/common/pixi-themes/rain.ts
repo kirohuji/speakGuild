@@ -94,7 +94,11 @@ class WaterStreak extends PIXI.Graphics {
   }
 }
 
-export function setupRain(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
+// ═══════════════════════════════════════════════════════════
+// 大树 — 纯黑剪影 · 全部用 fill（树干 + 枝）
+// ═══════════════════════════════════════════════════════════
+
+export function setupRain(app: PIXI.Application, w: number, h: number, isDark: boolean, testMode?: boolean): ThemeSetup {
   const items: Updatable[] = [];
   const alphaMul = isDark ? 1 : 1.5;
 
@@ -109,7 +113,7 @@ export function setupRain(app: PIXI.Application, w: number, h: number, isDark: b
 
   let rippleTimer = 0;
   let streakTimer = 0;
-  let lightningTimer = 200 + Math.random() * 400;
+  let lightningTimer = testMode ? 60 : 200 + Math.random() * 300;
   const flash = new PIXI.Graphics();
   flash.fill({ color: 0xffffff, alpha: 0 });
   flash.rect(0, 0, w, h);
@@ -117,7 +121,8 @@ export function setupRain(app: PIXI.Application, w: number, h: number, isDark: b
   app.stage.addChild(flash as any);
   let flashFrames = 0;
 
-  const onTick = (dt: number) => {
+  const onTick = (_dt: number) => {
+    const dt = _dt;
     rippleTimer += dt;
     if (rippleTimer > 8) {
       rippleTimer = 0;
@@ -136,7 +141,7 @@ export function setupRain(app: PIXI.Application, w: number, h: number, isDark: b
     }
     lightningTimer -= dt;
     if (lightningTimer <= 0) {
-      lightningTimer = 250 + Math.random() * 500;
+      lightningTimer = testMode ? 80 + Math.random() * 80 : 250 + Math.random() * 400;
       flash.alpha = 0.08;
       flashFrames = 4;
     }
