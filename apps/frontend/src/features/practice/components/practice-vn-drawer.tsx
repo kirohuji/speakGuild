@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BookOpen, CheckCircle2, Circle, Lightbulb, Target, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,7 @@ export function PracticeVnDrawer({
   plainTrigger = false,
   showTriggerIcon = true,
 }: PracticeVnDrawerProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const completedCount = objectives.filter((objective) => objective.completed).length
   const currentObjective = objectives.find((objective) => !objective.completed) ?? objectives[0]
@@ -71,11 +73,11 @@ export function PracticeVnDrawer({
               ? <Lightbulb className="size-3.5 text-white/82" />
               : <Target className="size-3.5 text-rose-100" />
           )}
-          <span>{compactTrigger ? '提示' : '目标'} {completedCount}/{objectives.length || 1}</span>
+          <span>{compactTrigger ? t('practiceVn.hint') : t('practiceVn.objective')} {completedCount}/{objectives.length || 1}</span>
           {!compactTrigger && (
             <>
               <span className="h-1 w-1 rounded-full bg-white/36" />
-              <span className="text-white/66">练习助手</span>
+              <span className="text-white/66">{t('practiceVn.assistant')}</span>
             </>
           )}
         </button>
@@ -86,9 +88,9 @@ export function PracticeVnDrawer({
           <DrawerHeader className="px-5 pb-2 pt-3 text-left">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <DrawerTitle className="text-base">练习助手</DrawerTitle>
+                <DrawerTitle className="text-base">{t('practiceVn.assistant')}</DrawerTitle>
                 <DrawerDescription className="mt-1 text-xs">
-                  看清这一轮要表达什么，再用自己的英语说出来。
+                  {t('practiceVn.desc')}
                 </DrawerDescription>
               </div>
               <Button
@@ -106,7 +108,7 @@ export function PracticeVnDrawer({
           <div className="px-5 pb-3">
             <Progress value={(completedCount / Math.max(objectives.length, 1)) * 100} className="h-1.5" />
             <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>任务进度</span>
+              <span>{t('practiceVn.taskProgress')}</span>
               <span>{completedCount}/{objectives.length || 1}</span>
             </div>
           </div>
@@ -119,8 +121,8 @@ export function PracticeVnDrawer({
                     <Target className="size-4" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold">当前要说什么</p>
-                    <p className="text-[11px] text-muted-foreground">只给意图，不直接给完整答案</p>
+                    <p className="text-sm font-semibold">{t('practiceVn.whatToSay')}</p>
+                    <p className="text-[11px] text-muted-foreground">{t('practiceVn.intentOnly')}</p>
                   </div>
                 </div>
                 <p className="text-sm leading-6 text-foreground">
@@ -132,7 +134,7 @@ export function PracticeVnDrawer({
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <BookOpen className="size-4 text-amber-300" />
-                    <p className="text-sm font-semibold">可用表达</p>
+                    <p className="text-sm font-semibold">{t('practiceVn.availableExpr')}</p>
                   </div>
                   <Badge variant="outline" className="text-[10px]">
                     {usedChunkTexts.size}/{coreChunks.length || 1}
@@ -164,7 +166,7 @@ export function PracticeVnDrawer({
                     )
                   }) : (
                     <p className="rounded-xl border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground">
-                      暂无推荐表达，先按当前目标自由回答。
+                      {t('practiceVn.noRecommend')}
                     </p>
                   )}
                 </div>
@@ -173,7 +175,7 @@ export function PracticeVnDrawer({
               <section className="rounded-2xl border border-border/70 bg-card/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <CheckCircle2 className="size-4 text-green-400" />
-                  <p className="text-sm font-semibold">任务进度</p>
+                    <p className="text-sm font-semibold">{t('practiceVn.taskProgress')}</p>
                 </div>
                 <div className="space-y-2">
                   {objectives.map((objective, index) => (
@@ -195,7 +197,7 @@ export function PracticeVnDrawer({
                 <section className="rounded-2xl border border-amber-300/24 bg-amber-300/[0.08] p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <Lightbulb className="size-4 text-amber-300" />
-                    <p className="text-sm font-semibold">最近提示</p>
+                    <p className="text-sm font-semibold">{t('practiceVn.recentHint')}</p>
                   </div>
                   <p className="text-sm leading-6 text-foreground">{latestHint.text}</p>
                   {latestHint.meaning && <p className="mt-1 text-xs leading-5 text-muted-foreground">{latestHint.meaning}</p>}

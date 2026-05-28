@@ -374,7 +374,7 @@ function BankDialog({
         <div className="grid gap-3">
           <div>
             <Label>题库名称 *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：全国导游资格考试题库" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：口语练习题库" />
           </div>
           <div>
             <Label>地区 *</Label>
@@ -398,7 +398,7 @@ function BankDialog({
           </div>
           <div>
             <Label>考试类型 *</Label>
-            <Input value={examType} onChange={(e) => setExamType(e.target.value)} placeholder="如：导游资格考试" />
+            <Input value={examType} onChange={(e) => setExamType(e.target.value)} placeholder="如：口语等级考试" />
           </div>
           <div>
             <Label>面试形式</Label>

@@ -26,7 +26,7 @@ type TabMode = 'practice' | 'study'
 
 // ─── 走马灯数据（可后期改为接口下发） ───────────────────────────────────────
 const carouselSlides = [
-  { id: 1, gradient: 'from-blue-500 to-blue-700', title: '导游口试备考', subtitle: '系统练习，高分通过' },
+  { id: 1, gradient: 'from-blue-500 to-blue-700', title: '口语练习', subtitle: '系统练习，逐步提升' },
   { id: 2, gradient: 'from-emerald-500 to-teal-600', title: '景点介绍专项', subtitle: '10大热门景点，逐一攻破' },
   { id: 3, gradient: 'from-orange-500 to-amber-600', title: '模拟考试上线', subtitle: '真实考场环境，精准测评' },
 ]

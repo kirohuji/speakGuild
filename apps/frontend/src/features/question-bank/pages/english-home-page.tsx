@@ -60,7 +60,7 @@ export function EnglishHomePage() {
       <div className="mx-auto flex max-w-2xl flex-col items-center px-4 pb-24 pt-20 text-center">
         <BookOpen className="mb-4 size-16 text-muted-foreground/30" />
         <h1 className="text-2xl font-bold text-foreground">ManYu</h1>
-        <p className="mt-2 text-muted-foreground">多语种导游资格面试练习平台</p>
+        <p className="mt-2 text-muted-foreground">多语种口语练习平台</p>
         <Button className="mt-6" asChild><Link to="/auth/login">登录 / 注册</Link></Button>
       </div>
     )

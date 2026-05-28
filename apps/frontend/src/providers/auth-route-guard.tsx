@@ -22,7 +22,7 @@ export function GuestOnly({ children }: { children: ReactElement }) {
 
   if (isLoading) return <GuardLoading />
   if (isAuthenticated) {
-    return <Navigate to="/profile" replace />
+    return <Navigate to="/" replace />
   }
   return children
 }
@@ -37,7 +37,7 @@ export function AuthRouteGate({ children }: { children: ReactElement }) {
   // This avoids full-page flicker on login failures.
   if (isAuthPage) {
     if (!isLoading && isAuthenticated) {
-      return <Navigate to="/profile" replace />
+      return <Navigate to="/" replace />
     }
     return children
   }

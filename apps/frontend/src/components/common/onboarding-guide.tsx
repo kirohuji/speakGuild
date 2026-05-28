@@ -16,7 +16,7 @@ const STEPS: OnboardingStep[] = [
     icon: BookOpen,
     iconBg: 'bg-blue-500',
     title: '海量题库，精准备考',
-    description: '按省份、语种、考试类型选择题库，涵盖景点介绍、导游规范、应变能力等全部题型。',
+    description: '按语种、难度选择题库，涵盖口语表达、听力理解、情景对话等全部题型。',
   },
   {
     icon: PenLine,

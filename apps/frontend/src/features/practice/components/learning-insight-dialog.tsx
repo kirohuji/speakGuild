@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   BookOpen,
   BookmarkPlus,
@@ -78,6 +79,7 @@ export function LearningInsightDialog({
   onOpenChange,
   onIndexChange,
 }: LearningInsightDialogProps) {
+  const { t } = useTranslation()
   const current = items[index] ?? null
   const hasPrev = index > 0
   const hasNext = index < items.length - 1
@@ -147,20 +149,20 @@ export function LearningInsightDialog({
             {/* Footer - 固定在底部 */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
               <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
-                <ChevronLeft className="size-4" /> 上一个
+                <ChevronLeft className="size-4" /> {t('insight.prev')}
               </Button>
               <span className="text-xs text-muted-foreground">
                 {index + 1} / {items.length}
               </span>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-                  下一个 <ChevronRight className="size-4" />
+                  {t('insight.next')} <ChevronRight className="size-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => setPlaylistOpen(true)}
-                  title="播放列表"
+                  title={t('insight.playlist')}
                 >
                   <ListMusic className="size-4" />
                 </Button>
@@ -174,7 +176,7 @@ export function LearningInsightDialog({
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
         <DrawerContent className="h-[100dvh] rounded-none">
           <div className="flex items-center justify-between px-5 py-3">
-            <DrawerTitle className="text-lg">播放列表</DrawerTitle>
+            <DrawerTitle className="text-lg">{t('insight.playlist')}</DrawerTitle>
             <button
               onClick={() => setPlaylistOpen(false)}
               className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
@@ -210,7 +212,7 @@ export function LearningInsightDialog({
                     </div>
                     {isActive && (
                       <Badge variant="default" className="px-1.5 py-0 text-[10px]">
-                        当前
+                        {t('insight.current')}
                       </Badge>
                     )}
                   </button>
@@ -225,10 +227,11 @@ export function LearningInsightDialog({
 }
 
 function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: () => void }) {
+  const { t } = useTranslation()
   const Icon = item.kind === 'word' ? BookOpen : item.kind === 'chunk' ? Layers : Sparkles
   const title = item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
   const subtitle = item.kind === 'word' ? item.meaning : item.meaning
-  const label = item.kind === 'word' ? '场景词汇' : item.kind === 'chunk' ? '核心 Chunk' : '句型骨架'
+  const label = item.kind === 'word' ? t('insight.vocabulary') : item.kind === 'chunk' ? t('insight.chunk') : t('insight.pattern')
 
   return (
     <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
@@ -254,6 +257,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
 }
 
 function WordInsight({ item }: { item: VocabularyInsight }) {
+  const { t } = useTranslation()
   const [dictData, setDictData] = useState<DictEntry[] | null | 'loading'>('loading')
   const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>('loading')
   const [saving, setSaving] = useState(false)
@@ -294,7 +298,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
   const saveWord = () => {
     setSaving(true)
     addWord(item.word)
-    toast.success(saved ? '已在生词本中' : '已加入生词本')
+    toast.success(saved ? t('insight.alreadyInVocab') : t('insight.addToVocab'))
     setSaving(false)
   }
 
@@ -303,8 +307,8 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
       {/* 固定在 Content 顶部的 Tab 栏 */}
       <div className="shrink-0 px-5 pt-3 md:px-6">
         <TabsList>
-          <TabsTrigger value="meaning">释义</TabsTrigger>
-          <TabsTrigger value="examples">例句</TabsTrigger>
+          <TabsTrigger value="meaning">{t('insight.meaning')}</TabsTrigger>
+          <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
       </div>
 
@@ -323,12 +327,12 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
                 )}
                 {audioUrl && (
                   <Button variant="outline" size="sm" onClick={() => playAudio(audioUrl)} className="gap-1.5">
-                    <Volume2 className="size-4" /> 发音
+                    <Volume2 className="size-4" /> {t('insight.pronunciation')}
                   </Button>
                 )}
                 <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
                   {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
-                  {saved ? '已加入' : '加入生词本'}
+                  {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
                 </Button>
               </div>
 
@@ -341,7 +345,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
               ) : enriched?.memoryTip ? (
                 <div className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                   <Brain className="mt-0.5 size-4 shrink-0" />
-                  <span>{enriched.memoryTip}</span>
+                  <span>{t('insight.memoryTip')}：{enriched.memoryTip}</span>
                 </div>
               ) : null}
 
@@ -371,7 +375,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
                 </div>
               ) : (
                 <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
-                  {item.meaning ?? '暂无词典释义'}
+                  {item.meaning ?? t('insight.noDefinition')}
                 </p>
               )}
             </div>
@@ -400,7 +404,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
                 ))
               ) : (
                 <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
-                  暂无例句。请稍后重试或检查 AI 服务是否可用。
+                  {t('insight.noExamples')}
                 </p>
               )}
             </div>
@@ -412,6 +416,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
 }
 
 function ChunkInsightView({ item }: { item: ChunkInsight }) {
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
 
@@ -427,9 +432,9 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
         sceneName: item.sceneName,
       })
       setSaved(true)
-      toast.success('已保存到表达库')
+      toast.success(t('insight.savedToLibrary'))
     } catch {
-      toast.error('保存失败')
+      toast.error(t('insight.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -445,18 +450,18 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
           className="gap-1.5"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saved ? '已保存到表达库' : '保存到表达库'}
+          {saved ? t('insight.savedToLibrary') : t('insight.saveToLibrary')}
         </Button>
 
         {item.description && (
           <section className="rounded-xl bg-muted p-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground">用法讲解</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">{t('insight.usageGuide')}</h3>
             <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
           </section>
         )}
 
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">例句</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('insight.examples')}</h3>
           {item.examples?.length ? (
             item.examples.map((example, index) => (
               <ExampleBlock
@@ -468,7 +473,7 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
               />
             ))
           ) : (
-            <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">后台还没有配置示例句。</p>
+            <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
           )}
         </section>
       </div>
@@ -477,6 +482,7 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
 }
 
 function PatternInsightView({ item }: { item: PatternInsight }) {
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
   const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
@@ -493,9 +499,9 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
         sceneName: item.sceneName,
       })
       setSaved(true)
-      toast.success('已保存到表达库')
+      toast.success(t('insight.savedToLibrary'))
     } catch {
-      toast.error('保存失败')
+      toast.error(t('insight.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -511,18 +517,18 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
           className="gap-1.5"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saved ? '已保存到表达库' : '保存到表达库'}
+          {saved ? t('insight.savedToLibrary') : t('insight.saveToLibrary')}
         </Button>
 
         <section className="rounded-xl border border-border p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">结构</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('insight.structure')}</h3>
           <p className="font-mono text-sm leading-relaxed text-foreground">{item.pattern}</p>
-          {slotText && <p className="mt-2 text-xs text-muted-foreground">可替换位置：{slotText}</p>}
+          {slotText && <p className="mt-2 text-xs text-muted-foreground">{t('insight.replaceableSlots')}{slotText}</p>}
         </section>
 
         {item.example && (
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">套用示例</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('insight.exampleSentence')}</h3>
             <ExampleBlock en={item.example} zh={item.meaning ?? ''} level={item.difficulty} />
           </section>
         )}

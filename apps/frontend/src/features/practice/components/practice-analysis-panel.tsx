@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   BookmarkPlus,
@@ -59,13 +60,7 @@ interface PracticeAnalysisPanelProps {
   topicTitle?: string
 }
 
-const GRAMMAR_TYPE_LABELS: Record<string, string> = {
-  grammar: '语法',
-  collocation: '搭配',
-  chinglish: '中式英语',
-  unnatural: '不自然',
-  logic: '逻辑',
-}
+
 
 export function PracticeAnalysisPanel({
   analysis,
@@ -76,6 +71,7 @@ export function PracticeAnalysisPanel({
   onSaveExpression,
   topicTitle,
 }: PracticeAnalysisPanelProps) {
+  const { t } = useTranslation()
   const [retellText, setRetellText] = useState('')
   const [savingKey, setSavingKey] = useState<string | null>(null)
 
@@ -88,7 +84,7 @@ export function PracticeAnalysisPanel({
       <Card>
         <CardContent className="flex flex-col items-center gap-4 py-16">
           <Sparkles className="size-10 animate-pulse text-primary" />
-          <p className="text-foreground">AI 正在分析你的对话表现...</p>
+          <p className="text-foreground">{t('practiceVn.analyzing')}</p>
           <Progress value={60} className="h-1.5 w-48" />
         </CardContent>
       </Card>
@@ -109,7 +105,7 @@ export function PracticeAnalysisPanel({
     || usedChunks[0]?.chunk
     || analysis.nextStepSuggestion
     || topicTitle
-    || '围绕这次话题再说 1-2 句。'
+    || ''
 
   const saveExpression = async (
     key: string,
@@ -125,9 +121,9 @@ export function PracticeAnalysisPanel({
     setSavingKey(key)
     try {
       await onSaveExpression(data)
-      toast.success('已保存到表达库')
+      toast.success(t('insight.savedToLibrary'))
     } catch {
-      toast.error('保存失败，请稍后再试')
+      toast.error(t('insight.saveFailed'))
     } finally {
       setSavingKey(null)
     }
@@ -149,7 +145,7 @@ export function PracticeAnalysisPanel({
           >
             {score}
           </div>
-          <p className="text-sm font-medium text-muted-foreground">综合评分</p>
+          <p className="text-sm font-medium text-muted-foreground">{t('practiceVn.overallScore')}</p>
           {analysis.summary && (
             <p className="max-w-md text-center text-sm leading-6 text-foreground">{analysis.summary}</p>
           )}
@@ -159,29 +155,29 @@ export function PracticeAnalysisPanel({
       <Card className="border-emerald-500/20 bg-emerald-500/[0.04]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Mic2 className="size-4 text-emerald-600 dark:text-emerald-400" /> 复述巩固
+            <Mic2 className="size-4 text-emerald-600 dark:text-emerald-400" /> {t('practiceVn.retell')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="rounded-lg bg-background/70 p-3">
-            <p className="text-xs text-muted-foreground">用这次复盘里的表达再说一遍</p>
+            <p className="text-xs text-muted-foreground">{t('practiceVn.retellPrompt')}</p>
             <p className="mt-1 text-sm font-medium leading-6 text-foreground">{retellPrompt}</p>
           </div>
           <Textarea
             value={retellText}
             onChange={(event) => setRetellText(event.target.value)}
-            placeholder="写下你准备复述的一版，也可以开口说完后只记录关键词。"
+            placeholder={t('practiceVn.retellPlaceholder')}
             className="min-h-24 resize-none bg-background/80"
           />
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">{retellWordCount} words</span>
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" onClick={onBack}>
-                回到场景
+                {t('practiceVn.backToScene')}
               </Button>
               {onRestart && (
                 <Button type="button" size="sm" onClick={onRestart}>
-                  <RotateCcw className="mr-1 size-3.5" /> 再练一次
+                  <RotateCcw className="mr-1 size-3.5" /> {t('practiceVn.practiceAgain')}
                 </Button>
               )}
             </div>
@@ -193,7 +189,7 @@ export function PracticeAnalysisPanel({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="size-4" /> 任务目标完成情况
+              <TrendingUp className="size-4" /> {t('practiceVn.objectivesStatus')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -228,7 +224,7 @@ export function PracticeAnalysisPanel({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="size-4" /> 核心表达使用
+              <Sparkles className="size-4" /> {t('practiceVn.coreExprUsage')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -251,7 +247,7 @@ export function PracticeAnalysisPanel({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4" /> 语言纠正 ({grammarIssues.length})
+              <AlertTriangle className="size-4" /> {t('practiceVn.languageCorrection')} ({grammarIssues.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -260,9 +256,9 @@ export function PracticeAnalysisPanel({
                 <div key={`${issue.original}-${index}`} className="rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {GRAMMAR_TYPE_LABELS[issue.type] ?? issue.type}
+                      {t(`practiceVn.${issue.type}`)}
                     </Badge>
-                    {issue.round && <span className="text-xs text-muted-foreground">轮次 {issue.round}</span>}
+                    {issue.round && <span className="text-xs text-muted-foreground">{t('practiceVn.round')} {issue.round}</span>}
                   </div>
                   <div className="mt-2 space-y-1">
                     <p className="text-sm text-destructive line-through">{issue.original}</p>
@@ -283,7 +279,7 @@ export function PracticeAnalysisPanel({
                       })}
                     >
                       <BookmarkPlus className="size-3.5" />
-                      {savingKey === `correction:${index}` ? '保存中...' : '保存这条'}
+                      {savingKey === `correction:${index}` ? t('practiceVn.saving') : t('practiceVn.saveThis')}
                     </Button>
                   )}
                 </div>
@@ -298,7 +294,7 @@ export function PracticeAnalysisPanel({
           {strengths.length > 0 && (
             <Card className="border-green-500/20">
               <CardHeader>
-                <CardTitle className="text-sm text-green-600 dark:text-green-400">做得好的地方</CardTitle>
+                <CardTitle className="text-sm text-green-600 dark:text-green-400">{t('practiceVn.strengths')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-1">
@@ -313,7 +309,7 @@ export function PracticeAnalysisPanel({
           {improvements.length > 0 && (
             <Card className="border-amber-500/20">
               <CardHeader>
-                <CardTitle className="text-sm text-amber-600 dark:text-amber-400">可以改进</CardTitle>
+                <CardTitle className="text-sm text-amber-600 dark:text-amber-400">{t('practiceVn.improvements')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-1">
@@ -330,7 +326,7 @@ export function PracticeAnalysisPanel({
       {analysis.nextStepSuggestion && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">下一步学习建议</CardTitle>
+            <CardTitle className="text-sm">{t('practiceVn.nextStep')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p>
@@ -342,7 +338,7 @@ export function PracticeAnalysisPanel({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
-              <BookmarkPlus className="size-4" /> 保存本次用上的表达
+              <BookmarkPlus className="size-4" /> {t('practiceVn.saveUsedExpr')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -372,10 +368,10 @@ export function PracticeAnalysisPanel({
 
       <div className="grid grid-cols-2 gap-3">
         <Button type="button" variant="outline" onClick={onRestart ?? onBack}>
-          <RotateCcw className="mr-1 size-4" /> 重新练习
+          <RotateCcw className="mr-1 size-4" /> {t('practiceVn.restart')}
         </Button>
         <Button type="button" onClick={onFinish}>
-          <Library className="mr-1 size-4" /> 表达库
+          <Library className="mr-1 size-4" /> {t('practiceVn.exprLibrary')}
         </Button>
       </div>
     </div>

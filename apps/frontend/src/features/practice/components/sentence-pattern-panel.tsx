@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TopicDetail } from '../api/english-practice-api'
 
@@ -7,12 +8,13 @@ interface SentencePatternPanelProps {
 }
 
 export function SentencePatternPanel({ topic, onInspect }: SentencePatternPanelProps) {
+  const { t } = useTranslation()
   if (!topic.sentencePatterns?.length && !topic.sentenceSkeleton) return null
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">句型骨架</CardTitle>
+        <CardTitle className="text-base">{t('practiceSession.sentencePattern')}</CardTitle>
       </CardHeader>
       <CardContent>
         {topic.sentencePatterns?.length ? (
