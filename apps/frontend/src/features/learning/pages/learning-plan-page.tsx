@@ -605,7 +605,7 @@ function ShopView({
         />
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4">
+      <div className="-mx-4 scrollbar-hide overflow-x-auto px-4">
         <div className="flex w-max gap-2 pb-1">
           {categoryTabs.map((category) => (
             <button
