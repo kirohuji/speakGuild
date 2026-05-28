@@ -19,7 +19,7 @@
  * Light 模式:
  *   天空:   linear-gradient(135deg, #e0ecf0 0%, #ecf4f6 50%, #d8e8f0 100%)
  *   光晕:   hsla(180 60% 70% / 0.35) + hsla(220 50% 72% / 0.30)
- *   极光色: 同 dark，alpha 可适当降低 30%
+ *   极光色: 同 dark，alpha 降至 dark 的 45%（更柔和的浅色极光）
  */
 
 import * as PIXI from 'pixi.js';
@@ -76,11 +76,11 @@ class AuroraCurtain extends PIXI.Graphics {
 export function setupAurora(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
   const items: Updatable[] = [];
 
-  // Light 模式下提升 alpha、用更深色星点
-  const alphaMul = isDark ? 1 : 1.5;
+  // Light 模式下降低 alpha、用更浅色星点
+  const alphaMul = isDark ? 1 : 0.45;
   const starColors = isDark
     ? [0xffffff, 0xaaccff, 0xffeedd]
-    : [0x8899bb, 0x7788aa, 0x998877]; // light 模式用灰蓝/灰暖色，在浅背景上可见
+    : [0xbbccdd, 0xaabbdd, 0xccbbaa]; // light 模式用浅灰蓝/暖灰
 
   const curtainDefs = [
     { x: w * -0.01, width: 140, color: 0x00ff88, alpha: 0.13 * alphaMul, speed: 0.35 },
