@@ -147,7 +147,8 @@ export class CreateTrainingTopicDto {
   sentenceSkeleton?: string;
 
   @IsOptional()
-  sentencePatterns?: any;
+  @IsArray()
+  sentencePatterns?: any[];
 
   @IsOptional()
   @IsArray()
@@ -197,7 +198,8 @@ export class UpdateTrainingTopicDto {
   sentenceSkeleton?: string;
 
   @IsOptional()
-  sentencePatterns?: any;
+  @IsArray()
+  sentencePatterns?: any[];
 
   @IsOptional()
   @IsArray()

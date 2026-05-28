@@ -590,17 +590,13 @@ function TrainingTopicDialog({
             <TabsContent value="training" className="mt-0 space-y-5">
               <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
                 <p className="text-sm font-medium">语言支架</p>
-                <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达；保存时会同步生成旧字段 sentenceSkeleton。</p>
+                <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达。</p>
               </div>
               <SentencePatternEditor
                 value={form.sentencePatterns ?? []}
                 onChange={(sentencePatterns) => setForm({
                   ...form,
                   sentencePatterns,
-                  sentenceSkeleton: sentencePatterns
-                    .filter((item: any) => item.pattern?.trim())
-                    .map((item: any) => `- ${item.pattern}${item.meaning ? ` (${item.meaning})` : ''}`)
-                    .join('\n'),
                 })}
               />
               <ChunkMultiSelect

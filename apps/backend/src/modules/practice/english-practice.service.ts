@@ -16,7 +16,6 @@ export class EnglishPracticeService {
     patterns.forEach((pattern) => {
       if (pattern?.pattern) objectives.push(`使用句型: ${pattern.pattern}`);
     });
-    if (topic.sentenceSkeleton) objectives.push(`参考结构: ${topic.sentenceSkeleton}`);
     objectives.push(`围绕话题 "${topic.title}" 展开对话`);
     return objectives;
   }
