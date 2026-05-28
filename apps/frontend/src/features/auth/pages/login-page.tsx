@@ -56,7 +56,7 @@ export function LoginPage() {
   const fromPath = (location.state as { from?: string } | null)?.from
 
   const navigateAfterLogin = () => {
-    navigate(fromPath || '/profile', { replace: true })
+    navigate(fromPath || '/', { replace: true })
   }
 
   const runAction = async (

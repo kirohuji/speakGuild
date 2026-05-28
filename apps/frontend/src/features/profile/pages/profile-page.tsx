@@ -273,6 +273,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   const [showThemeDialog, setShowThemeDialog] = useState(false)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showMemberDrawer, setShowMemberDrawer] = useState(false)
+  const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -351,7 +352,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
       <IosSection>
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => setShowMemberDrawer(true)} />
-        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={() => navigate('/feedback')} />
+        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={() => setShowFeedbackDrawer(true)} />
       </IosSection>
 
       {/* 外观与语言（保留在“我的”首页，点击弹窗切换） */}
@@ -412,6 +413,8 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
           </div>
         </DrawerContent>
       </Drawer>
+
+      <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />
 
     </div>
   )
@@ -1924,22 +1927,20 @@ function AccountTab() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader><Skeleton className="h-5 w-24" /></CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
+          <div key={i} className="rounded-xl bg-muted/30 p-4 space-y-3">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
         ))}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <NicknameEditDialog
         open={nicknameDialogOpen}
         onOpenChange={setNicknameDialogOpen}
@@ -1948,249 +1949,168 @@ function AccountTab() {
       />
 
       {/* 头像 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('profile.avatar')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-5">
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={onAvatarFileChange}
-            />
-            <button
-              type="button"
-              disabled={avatarUploading}
-              onClick={onPickAvatar}
-              className="group relative flex-shrink-0"
-            >
-              <Avatar className="h-20 w-20 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50">
-                <AvatarImage src={avatarUrl || undefined} alt="avatar" />
-                <AvatarFallback className="bg-primary/10">
-                  <User className="h-10 w-10 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {avatarUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Camera className="h-5 w-5" />
-                )}
-              </span>
-            </button>
-            <div>
-              <p className="text-sm font-medium">{t('profile.changeAvatar')}</p>
-              <p className="text-xs text-muted-foreground mt-1">{t('profile.avatarHint')}</p>
-              {avatarUploading && (
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-primary">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  上传中...
-                </p>
+      <div className="rounded-xl bg-muted/30 p-4">
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.avatar')}</p>
+        <div className="flex items-center gap-4">
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={onAvatarFileChange}
+          />
+          <button
+            type="button"
+            disabled={avatarUploading}
+            onClick={onPickAvatar}
+            className="group relative flex-shrink-0"
+          >
+            <Avatar className="size-16 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50">
+              <AvatarImage src={avatarUrl || undefined} alt="avatar" />
+              <AvatarFallback className="bg-primary/10">
+                <User className="size-8 text-primary" />
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+              {avatarUploading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Camera className="size-4" />
               )}
-            </div>
+            </span>
+          </button>
+          <div>
+            <p className="text-sm font-medium">{t('profile.changeAvatar')}</p>
+            <p className="text-xs text-muted-foreground">{t('profile.avatarHint')}</p>
+            {avatarUploading && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-primary">
+                <Loader2 className="size-3 animate-spin" />
+                上传中...
+              </p>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 基本信息 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('profile.basicInfo')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                <PencilLine className="h-4 w-4 text-blue-500" />
+      <div className="overflow-hidden rounded-xl bg-muted/30">
+        <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.basicInfo')}</p>
+        <div className="divide-y divide-border/40">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                <PencilLine className="size-4 text-blue-500" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{t('profile.nickname')}</p>
-                <p className="text-xs text-muted-foreground truncate">{nickname}</p>
+              <div>
+                <p className="text-sm">{t('profile.nickname')}</p>
+                <p className="text-xs text-muted-foreground">{nickname}</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-shrink-0"
-              onClick={() => setNicknameDialogOpen(true)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setNicknameDialogOpen(true)}>
               {t('profile.editNickname')}
             </Button>
           </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                <Phone className="h-4 w-4 text-green-500" />
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                <Phone className="size-4 text-green-500" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{t('profile.phone')}</p>
+              <div>
+                <p className="text-sm">{t('profile.phone')}</p>
                 <p className="text-xs text-muted-foreground">{phoneNumber || t('profile.notBound')}</p>
               </div>
             </div>
             {phoneNumber && (
-              <Badge variant={profile?.phoneNumberVerified ? 'outline' : 'secondary'} className="flex-shrink-0 text-xs">
+              <Badge variant={profile?.phoneNumberVerified ? 'outline' : 'secondary'} className="text-xs">
                 {profile?.phoneNumberVerified ? (
                   <span className="flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    <CheckCircle2 className="size-3 text-green-500" />
                     {t('profile.verified')}
                   </span>
-                ) : (
-                  t('profile.unverified')
-                )}
+                ) : t('profile.unverified')}
               </Badge>
             )}
           </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
-                <Mail className="h-4 w-4 text-purple-500" />
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+                <Mail className="size-4 text-purple-500" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{t('profile.email')}</p>
+              <div>
+                <p className="text-sm">{t('profile.email')}</p>
                 <p className="text-xs text-muted-foreground truncate">{email || t('profile.notBound')}</p>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 账号绑定 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('profile.accountBinding')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 微信 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#07C160]/15">
+      <div className="overflow-hidden rounded-xl bg-muted/30">
+        <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.accountBinding')}</p>
+        <div className="divide-y divide-border/40">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#07C160]/15">
                 <span className="text-sm font-bold text-[#07C160]">微</span>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{t('profile.wechat')}</p>
+              <div>
+                <p className="text-sm">{t('profile.wechat')}</p>
                 <p className="text-xs text-muted-foreground">
                   {wechatBound ? `已绑定${wechatAccount?.name ? `：${wechatAccount.name}` : ''}` : t('profile.wechatBind')}
                 </p>
               </div>
             </div>
             {wechatBound ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-shrink-0 text-destructive hover:text-destructive"
-                disabled={unlinkingId === wechatAccount?.id}
-                onClick={() => wechatAccount && handleUnlink(wechatAccount.id)}
-              >
-                {unlinkingId === wechatAccount?.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  t('profile.unbind')
-                )}
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={unlinkingId === wechatAccount?.id} onClick={() => wechatAccount && handleUnlink(wechatAccount.id)}>
+                {unlinkingId === wechatAccount?.id ? <Loader2 className="size-3.5 animate-spin" /> : t('profile.unbind')}
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-shrink-0 border-[#07C160]/30 text-[#07C160] hover:bg-[#07C160]/10"
-                disabled={linkingProvider === 'wechat'}
-                onClick={() => handleLinkSocial('wechat')}
-              >
-                {linkingProvider === 'wechat' ? (
-                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                ) : (
-                  <ExternalLink className="mr-1.5 h-3 w-3" />
-                )}
+              <Button variant="outline" size="sm" className="border-[#07C160]/30 text-[#07C160] hover:bg-[#07C160]/10" disabled={linkingProvider === 'wechat'} onClick={() => handleLinkSocial('wechat')}>
+                {linkingProvider === 'wechat' ? <Loader2 className="mr-1 size-3 animate-spin" /> : <ExternalLink className="mr-1 size-3" />}
                 {t('profile.bind')}
               </Button>
             )}
           </div>
-
-          <Separator />
-
-          {/* Apple */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-foreground/10">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-foreground/10">
                 <span className="text-sm font-bold text-foreground">A</span>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{t('profile.appleId')}</p>
+              <div>
+                <p className="text-sm">{t('profile.appleId')}</p>
                 <p className="text-xs text-muted-foreground">
                   {appleBound ? `已绑定${appleAccount?.name ? `：${appleAccount.name}` : ''}` : t('profile.appleIdBind')}
                 </p>
               </div>
             </div>
             {appleBound ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-shrink-0 text-destructive hover:text-destructive"
-                disabled={unlinkingId === appleAccount?.id}
-                onClick={() => appleAccount && handleUnlink(appleAccount.id)}
-              >
-                {unlinkingId === appleAccount?.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  t('profile.unbind')
-                )}
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={unlinkingId === appleAccount?.id} onClick={() => appleAccount && handleUnlink(appleAccount.id)}>
+                {unlinkingId === appleAccount?.id ? <Loader2 className="size-3.5 animate-spin" /> : t('profile.unbind')}
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-shrink-0"
-                disabled={linkingProvider === 'apple'}
-                onClick={() => handleLinkSocial('apple')}
-              >
-                {linkingProvider === 'apple' ? (
-                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                ) : (
-                  <ExternalLink className="mr-1.5 h-3 w-3" />
-                )}
+              <Button variant="outline" size="sm" disabled={linkingProvider === 'apple'} onClick={() => handleLinkSocial('apple')}>
+                {linkingProvider === 'apple' ? <Loader2 className="mr-1 size-3 animate-spin" /> : <ExternalLink className="mr-1 size-3" />}
                 {t('profile.bind')}
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* 账号安全 */}
-      <Card className="border-destructive/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-destructive">
-            <ShieldAlert className="h-4 w-4" />
-            {t('profile.dangerZone')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">{t('profile.logout')}</p>
-              <p className="text-xs text-muted-foreground">{t('profile.logoutWarning')}</p>
-            </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                signOut()
-                navigate('/')
-              }}
-            >
-              <LogOut className="mr-1.5 h-4 w-4" />
-              {t('profile.logout')}
-            </Button>
+      {/* 退出登录 */}
+      <div className="rounded-xl bg-muted/30 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-destructive">{t('profile.logout')}</p>
+            <p className="text-xs text-muted-foreground">{t('profile.logoutWarning')}</p>
           </div>
-        </CardContent>
-      </Card>
+          <Button variant="destructive" size="sm" onClick={() => { signOut(); navigate('/'); }}>
+            <LogOut className="mr-1.5 size-4" />
+            {t('profile.logout')}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

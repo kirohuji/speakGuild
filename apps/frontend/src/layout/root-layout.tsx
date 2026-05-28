@@ -75,7 +75,7 @@ export function RootLayout() {
       )}
       {!isAuthPage && showBottomNav && <BottomNav />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background app-surface">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
             <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
@@ -85,9 +85,9 @@ export function RootLayout() {
         </DrawerContent>
       </Drawer>
       <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background app-surface">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="sr-only">{t('notification.title')}</DrawerTitle>
+            <DrawerTitle className="text-base font-semibold">{t('notification.title')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <NotificationListPage compact />

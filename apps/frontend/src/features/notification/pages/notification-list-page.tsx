@@ -4,7 +4,7 @@ import { Bell, Inbox, Mail, MailOpen, CheckCheck, ArrowRight, Clock } from 'luci
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import {
   getUserNotifications, markAsRead, markAllAsRead,
@@ -285,6 +285,7 @@ function NotificationTabContent({ tab }: { tab: TabValue }) {
 
 export function NotificationListPage({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState<TabValue>('all')
   return (
     <div className="space-y-5">
       {/* 页面标题 */}
@@ -297,18 +298,16 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
         </div>
       )}
       {compact && (
-        <div className="pb-1">
-          <h1 className="text-base font-semibold tracking-tight">{t('notification.title')}</h1>
-        </div>
+        <div className="pb-0.5" />
       )}
 
-      <Tabs defaultValue="all" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="space-y-3">
         <TabsList className="h-10 w-full rounded-full bg-muted/60 p-0.5">
           {tabConfig.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
               key={value}
               value={value}
-              className="flex-1 gap-1.5 text-sm data-[state=active]:shadow-sm"
+              className="flex-1 gap-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <Icon className="h-4 w-4" />
               {label}
@@ -317,9 +316,9 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
         </TabsList>
 
         {tabConfig.map(({ value }) => (
-          <TabsContent key={value} value={value} className="mt-0 space-y-4">
+          <div key={value} className={activeTab === value ? '' : 'hidden'}>
             <NotificationTabContent tab={value} />
-          </TabsContent>
+          </div>
         ))}
       </Tabs>
     </div>
