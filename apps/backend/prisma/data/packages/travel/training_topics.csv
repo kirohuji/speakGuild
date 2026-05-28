@@ -1,0 +1,5 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+打车出行,打车去机场,Call a taxi to the airport. Tell the driver the address.,打车去机场，告诉司机地址。,40,L1,,,
+打车出行,和司机聊天,Make small talk with the taxi driver.,和出租车司机闲聊。,45,L2,,,
+打车出行,投诉司机,Call the taxi company to complain about a driver.,打电话给出租车公司投诉司机。,50,L2,,,
+打车出行,约车去聚会,Book a taxi to pick you up for a party.,约车去参加聚会。,35,L1,,,

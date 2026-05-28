@@ -1,0 +1,5 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+预约看病,电话预约,Call the clinic to make an appointment with a doctor.,打电话给诊所预约看医生。,45,L2,,,
+预约看病,描述症状,Describe your symptoms to the doctor.,向医生描述你的症状。,60,L2,,,
+药房买药,询问药品,Ask the pharmacist about medicine for a cold.,向药剂师询问感冒药。,35,L1,,,
+药房买药,阅读说明书,Ask the pharmacist to explain the dosage instructions.,请药剂师解释用药说明。,40,L2,,,

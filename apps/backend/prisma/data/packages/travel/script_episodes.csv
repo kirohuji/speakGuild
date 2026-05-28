@@ -1,0 +1,2 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+chapter_1,初到国外,2,打车去宿舍,打车出行,L1,1,3,20,3,10,"[""告诉司机地址"",""确认费用"",""请求帮忙搬行李""]",3,3,3,Taxi Driver,出租车司机友好热情,false,,"{""xp"":25}"

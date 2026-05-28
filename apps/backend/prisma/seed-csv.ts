@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { resolve } from 'path'
 import { parse } from 'csv-parse/sync'
 
@@ -7,11 +7,19 @@ const DATA_DIR = resolve(__dirname, 'data')
 /**
  * Read a CSV file and return typed rows.
  * Handles UTF-8 BOM, quoted fields, and newlines within quotes.
+ *
+ * @param filename - CSV filename relative to the data directory
+ * @param subDir  - optional subdirectory (e.g. 'init' or 'packages/study-abroad')
  */
 export function readCsv<T extends Record<string, string>>(
   filename: string,
+  subDir?: string,
 ): T[] {
-  const filePath = resolve(DATA_DIR, filename)
+  const baseDir = subDir ? resolve(DATA_DIR, subDir) : DATA_DIR
+  const filePath = resolve(baseDir, filename)
+  if (!existsSync(filePath)) {
+    return []
+  }
   const raw = readFileSync(filePath, 'utf-8')
   // Strip BOM
   const cleaned = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw

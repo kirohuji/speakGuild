@@ -1,0 +1,11 @@
+scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+图书馆借书,图书馆借书,How do I borrow a book?,怎么借书？,L1,,,
+图书馆借书,图书馆借书,How long can I keep this book?,这本书能借多久？,L1,,,
+图书馆借书,图书馆借书,Can I renew this book?,能续借这本书吗？,L1,,,
+图书馆借书,图书馆借书,Is this book available?,这本书可以借吗？,L1,,,
+图书馆借书,图书馆借书,What's the late return fee?,逾期费是多少？,L1,,,
+社团招新,社团招新,What does your club do?,你们社团是做什么的？,L1,,,
+社团招新,社团招新,How often do you meet?,你们多久活动一次？,L1,,,
+社团招新,社团招新,How do I join?,我该怎么加入？,L1,,,
+社团招新,社团招新,Do I need any experience?,需要什么经验吗？,L2,,,
+社团招新,社团招新,Sounds interesting. I'd like to join.,听起来很有意思，我想加入。,L1,,,

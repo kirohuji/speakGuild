@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { auth } from '../src/modules/auth/auth';
-import { seedEnglishOutput } from './seed-english';
+import { seedThemes } from './seed-themes';
+import { seedInit } from './seed-init';
+import { seedLearningPackages } from './seed-learning-packages';
+import { seedDailySentences } from './seed-daily-sentences';
 
 const prisma = new PrismaClient();
 
@@ -159,6 +162,8 @@ async function main() {
   await prisma.userSceneProgress.deleteMany()
   await prisma.scene.deleteMany()
   await prisma.sceneCategory.deleteMany()
+  await prisma.themePreset.deleteMany()
+  await prisma.dailySentence.deleteMany()
   await prisma.expressionItem.deleteMany()
   await prisma.userAchievementV2.deleteMany()
   await prisma.achievementDef.deleteMany()
@@ -198,8 +203,10 @@ async function main() {
   await prisma.systemConfig.deleteMany()
   console.log('  ✓ 已清空所有数据\n')
 
-  // ═══ 种子填充 ═══
-  console.log('🌱 开始填充种子数据...\n')
+  // ══════════════════════════════════════════════════════
+  // 第一阶段：系统基础设施（初始化包）
+  // ══════════════════════════════════════════════════════
+  console.log('🌱 第一阶段：初始化包\n')
   await seedSystemConfigs()
   console.log('  ✓ 系统配置')
   await seedMembershipPlans()
@@ -210,9 +217,22 @@ async function main() {
   console.log('  ✓ 用户')
   await seedExtras(adminUser, normalUser)
   console.log('  ✓ 邀请码 + 反馈')
+  await seedDailySentences()
+  console.log('  ✓ 每日一句')
+  await seedThemes(prisma)
+  console.log('  ✓ 主题预设')
 
-  // 英语输出训练核心数据
-  await seedEnglishOutput(prisma)
+  // ══════════════════════════════════════════════════════
+  // 第二阶段：基础设施数据（场景分类/NPC/地图/成就等）
+  // ══════════════════════════════════════════════════════
+  console.log('\n🌱 第二阶段：基础设施数据')
+  await seedInit(prisma)
+
+  // ══════════════════════════════════════════════════════
+  // 第三阶段：学习包（按场景分类组织的内容数据）
+  // ══════════════════════════════════════════════════════
+  console.log('\n🌱 第三阶段：学习包')
+  await seedLearningPackages(prisma)
 
   console.log('\n🎉 Seed complete!')
 }

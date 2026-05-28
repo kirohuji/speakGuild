@@ -1,0 +1,13 @@
+scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+咖啡店点餐,咖啡店点餐,"I'd like a..., please.",我想要一杯...,L1,,,
+咖啡店点餐,咖啡店点餐,For here or to go?,堂食还是打包？,L1,,,
+咖啡店点餐,咖啡店点餐,"Can I get the bill, please?",能给我账单吗？,L1,,,
+咖啡店点餐,咖啡店点餐,Do you have any dairy-free options?,有非乳制品选项吗？,L2,,,
+咖啡店点餐,咖啡店点餐,How much is it?,多少钱？,L1,,,
+咖啡店点餐,咖啡店点餐,What do you recommend?,你有什么推荐？,L1,,,
+超市购物,超市购物,Where can I find...?,我在哪能找到...？,L1,,,
+超市购物,超市购物,Do you have this in a different size?,这个有其他尺寸吗？,L2,,,
+超市购物,超市购物,I'm looking for...,我在找...,L1,,,
+超市购物,超市购物,Is this on sale?,这个在打折吗？,L1,,,
+超市购物,超市购物,Can I return this?,这个可以退吗？,L2,,,
+超市购物,超市购物,I'll pay by card.,我刷卡支付。,L1,,,

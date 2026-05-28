@@ -1,0 +1,22 @@
+scene_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+咖啡店点餐,latte,拿铁,noun,/ˈlɑːteɪ/,/ˈlæteɪ/,L1,,"[{""en"":""I'll have a latte, please."",""zh"":""我要一杯拿铁。""}]",0
+咖啡店点餐,cappuccino,卡布奇诺,noun,/ˌkæpuˈtʃiːnoʊ/,/ˌkæpuˈtʃiːnəʊ/,L1,,"[{""en"":""A cappuccino with extra foam, please."",""zh"":""一杯卡布奇诺，多加奶泡。""}]",1
+咖啡店点餐,espresso,浓缩咖啡,noun,/eˈspresoʊ/,/eˈspresəʊ/,L1,,"[{""en"":""I'd like a double espresso."",""zh"":""我要一杯双份浓缩咖啡。""}]",2
+咖啡店点餐,take away,外带,phrase,/teɪk əˈweɪ/,/teɪk əˈweɪ/,L1,,"[{""en"":""Is this for here or take away?"",""zh"":""在这喝还是外带？""}]",3
+咖啡店点餐,for here,堂食,phrase,/fɔːr hɪr/,/fɔː hɪə/,L1,,"[{""en"":""For here, please."",""zh"":""在这喝。""}]",4
+咖啡店点餐,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,,"[{""en"":""Can I see the menu?"",""zh"":""我能看看菜单吗？""}]",5
+咖啡店点餐,order,点餐,verb,/ˈɔːrdər/,/ˈɔːdə/,L1,,"[{""en"":""Are you ready to order?"",""zh"":""您准备好点餐了吗？""}]",6
+咖啡店点餐,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,,"[{""en"":""Here's your receipt."",""zh"":""这是你的收据。""}]",7
+咖啡店点餐,tip,小费,noun,/tɪp/,/tɪp/,L2,,"[{""en"":""It's common to leave a tip at cafes."",""zh"":""在咖啡店给小费很常见。""}]",8
+咖啡店点餐,straw,吸管,noun,/strɔː/,/strɔː/,L1,,"[{""en"":""Can I get a straw, please?"",""zh"":""能给我一根吸管吗？""}]",9
+咖啡店点餐,size,尺寸,noun,/saɪz/,/saɪz/,L1,,"[{""en"":""What size would you like?"",""zh"":""您要什么尺寸的？""}]",10
+咖啡店点餐,regular,中杯,noun,/ˈreɡjələr/,/ˈreɡjʊlə/,L1,,"[{""en"":""I'll take a regular size."",""zh"":""我要中杯。""}]",11
+咖啡店点餐,large,大杯,noun,/lɑːrdʒ/,/lɑːdʒ/,L1,,"[{""en"":""A large coffee costs extra."",""zh"":""大杯咖啡要加钱。""}]",12
+咖啡店点餐,extra shot,加一份浓缩,noun,/ˈekstrə ʃɑːt/,/ˈekstrə ʃɒt/,L2,,"[{""en"":""Can I get an extra shot in my latte?"",""zh"":""我的拿铁能加一份浓缩吗？""}]",13
+咖啡店点餐,oat milk,燕麦奶,noun,/oʊt mɪlk/,/əʊt mɪlk/,L2,,"[{""en"":""Do you have oat milk?"",""zh"":""你们有燕麦奶吗？""}]",14
+咖啡店点餐,loyalty card,会员卡,noun,/ˈlɔɪəlti kɑːrd/,/ˈlɔɪəlti kɑːd/,L2,,"[{""en"":""Get a stamp on your loyalty card."",""zh"":""在你的会员卡上盖个章。""}]",15
+咖啡店点餐,barista,咖啡师,noun,/bəˈriːstə/,/bəˈrɪstə/,L2,,"[{""en"":""The barista made a beautiful latte art."",""zh"":""咖啡师做了漂亮的拉花。""}]",16
+咖啡店点餐,refill,续杯,noun,/ˈriːfɪl/,/ˈriːfɪl/,L2,,"[{""en"":""Is the refill free?"",""zh"":""续杯免费吗？""}]",17
+咖啡店点餐,iced coffee,冰咖啡,noun,/aɪst ˈkɔːfi/,/aɪst ˈkɒfi/,L1,,"[{""en"":""I prefer iced coffee in summer."",""zh"":""夏天我更喜欢冰咖啡。""}]",18
+咖啡店点餐,hot chocolate,热巧克力,noun,/hɑːt ˈtʃɑːklət/,/hɒt ˈtʃɒklət/,L1,,"[{""en"":""A hot chocolate with whipped cream, please."",""zh"":""一杯热巧克力加奶油。""}]",19
+咖啡店点餐,cream,奶油,noun,/kriːm/,/kriːm/,L1,,"[{""en"":""Can I add some cream?"",""zh"":""能加一些奶油吗？""}]",20

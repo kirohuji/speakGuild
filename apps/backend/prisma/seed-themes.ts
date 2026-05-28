@@ -1,155 +1,356 @@
+/**
+ * 🌈 沉浸式主题预设（合并版）
+ *
+ * 合并自：
+ *   - seed-themes.ts        → 默认主题「漫语町·默认」(sortOrder: 0)
+ *   - seed-theme-demo.ts    → 「深海梦境」(sortOrder: 1)
+ *   - seed-animation-themes.ts → 4 个动画主题 (sortOrder: 2-5)
+ */
+
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export async function seedThemes(prisma: PrismaClient) {
+  console.log('🎨 创建沉浸式主题预设...');
 
-async function main() {
-  console.log('🌱 开始创建默认沉浸式主题...');
-
-  // 检查是否已存在
-  const existing = await prisma.themePreset.findFirst({
-    where: { isDefault: true },
-  });
-
-  if (existing) {
-    console.log(`✅ 默认主题已存在: "${existing.name}"，跳过创建`);
-    return;
-  }
-
-  const preset = await prisma.themePreset.create({
-    data: {
+  const themes = [
+    // ═══ 1. 默认主题「漫语町·默认」(sortOrder: 0) ═══
+    {
+      id: 'theme-default',
       name: '漫语町 · 默认',
       description: '清新自然的蓝绿渐变，与品牌 GuideReady 配色一致',
       sortOrder: 0,
-      isActive: true,
       isDefault: true,
       bgType: 'gradient',
-
-      // ── Light 模式色板 ──
       lightColors: {
-        background: '156 43% 97%',
-        foreground: '211 32% 18%',
-        card: '0 0% 100%',
-        cardForeground: '211 32% 18%',
-        popover: '0 0% 100%',
-        popoverForeground: '211 32% 18%',
-        primary: '212 100% 18.6%',
-        primaryForeground: '0 0% 100%',
-        secondary: '212 100% 98.5%',
-        secondaryForeground: '211 32% 18%',
-        muted: '212 39% 93.5%',
-        mutedForeground: '212 16% 44%',
-        accent: '7 100% 63.5%',
-        accentForeground: '0 0% 100%',
-        destructive: '358 73% 59%',
-        destructiveForeground: '0 0% 100%',
-        border: '211 37% 90%',
-        input: '211 37% 90%',
+        background: '156 43% 97%', foreground: '211 32% 18%',
+        card: '0 0% 100%', cardForeground: '211 32% 18%',
+        popover: '0 0% 100%', popoverForeground: '211 32% 18%',
+        primary: '212 100% 18.6%', primaryForeground: '0 0% 100%',
+        secondary: '212 100% 98.5%', secondaryForeground: '211 32% 18%',
+        muted: '212 39% 93.5%', mutedForeground: '212 16% 44%',
+        accent: '7 100% 63.5%', accentForeground: '0 0% 100%',
+        destructive: '358 73% 59%', destructiveForeground: '0 0% 100%',
+        border: '211 37% 90%', input: '211 37% 90%',
         ring: '7 100% 63.5%',
-        success: '147 74% 36%',
-        successForeground: '0 0% 100%',
-        warning: '37 91% 55%',
-        warningForeground: '211 32% 18%',
-        sidebarBackground: '156 43% 97%',
-        sidebarForeground: '211 32% 18%',
-        sidebarPrimary: '212 100% 18.6%',
-        sidebarPrimaryForeground: '0 0% 100%',
-        sidebarAccent: '212 100% 98.5%',
-        sidebarAccentForeground: '211 32% 18%',
-        sidebarBorder: '211 37% 90%',
-        sidebarRing: '7 100% 63.5%',
+        success: '147 74% 36%', successForeground: '0 0% 100%',
+        warning: '37 91% 55%', warningForeground: '211 32% 18%',
+        sidebarBackground: '156 43% 97%', sidebarForeground: '211 32% 18%',
+        sidebarPrimary: '212 100% 18.6%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '212 100% 98.5%', sidebarAccentForeground: '211 32% 18%',
+        sidebarBorder: '211 37% 90%', sidebarRing: '7 100% 63.5%',
       },
-
       lightBackground:
         'radial-gradient(circle at 18% 0%, hsl(166 56% 88% / 0.48), transparent 28rem), radial-gradient(circle at 88% 10%, hsl(207 86% 92% / 0.58), transparent 24rem), linear-gradient(180deg, hsl(156 43% 97%) 0%, hsl(204 56% 98%) 52%, hsl(0 0% 100%) 100%)',
-
       lightDecorations: [
-        {
-          type: 'glow',
-          color: 'hsl(166 56% 88% / 0.48)',
-          x: '18%',
-          y: '0%',
-          size: '28rem',
-          blur: '80px',
-          animation: { opacity: [0.2, 0.5, 0.2], x: ['18%', '22%', '18%'], y: ['0%', '4%', '0%'] },
-        },
-        {
-          type: 'glow',
-          color: 'hsl(207 86% 92% / 0.58)',
-          x: '88%',
-          y: '10%',
-          size: '24rem',
-          blur: '80px',
-          animation: { opacity: [0.3, 0.6, 0.3], x: ['88%', '84%', '88%'], y: ['10%', '14%', '10%'] },
-        },
+        { type: 'glow', color: 'hsl(166 56% 88% / 0.48)', x: '18%', y: '0%', size: '28rem', blur: '80px', animation: { opacity: [0.2, 0.5, 0.2], x: ['18%', '22%', '18%'], y: ['0%', '4%', '0%'] } },
+        { type: 'glow', color: 'hsl(207 86% 92% / 0.58)', x: '88%', y: '10%', size: '24rem', blur: '80px', animation: { opacity: [0.3, 0.6, 0.3], x: ['88%', '84%', '88%'], y: ['10%', '14%', '10%'] } },
       ],
-
-      // ── Dark 模式色板 ──
       darkColors: {
-        background: '252 43% 5%',
-        foreground: '0 0% 100%',
-        card: '258 36% 10%',
-        cardForeground: '0 0% 100%',
-        popover: '258 36% 10%',
-        popoverForeground: '0 0% 100%',
-        primary: '0 0% 100%',
-        primaryForeground: '212 100% 18.6%',
-        secondary: '266 31% 14%',
-        secondaryForeground: '0 0% 100%',
-        muted: '266 27% 14%',
-        mutedForeground: '260 18% 78%',
-        accent: '7 100% 63.5%',
-        accentForeground: '0 0% 100%',
-        destructive: '358 73% 59%',
-        destructiveForeground: '0 0% 100%',
-        border: '260 22% 22%',
-        input: '260 22% 22%',
+        background: '252 43% 5%', foreground: '0 0% 100%',
+        card: '258 36% 10%', cardForeground: '0 0% 100%',
+        popover: '258 36% 10%', popoverForeground: '0 0% 100%',
+        primary: '0 0% 100%', primaryForeground: '212 100% 18.6%',
+        secondary: '266 31% 14%', secondaryForeground: '0 0% 100%',
+        muted: '266 27% 14%', mutedForeground: '260 18% 78%',
+        accent: '7 100% 63.5%', accentForeground: '0 0% 100%',
+        destructive: '358 73% 59%', destructiveForeground: '0 0% 100%',
+        border: '260 22% 22%', input: '260 22% 22%',
         ring: '7 100% 63.5%',
-        success: '147 60% 50%',
-        successForeground: '0 0% 100%',
-        warning: '37 91% 55%',
-        warningForeground: '212 100% 18.6%',
-        sidebarBackground: '252 43% 5%',
-        sidebarForeground: '0 0% 100%',
-        sidebarPrimary: '7 100% 63.5%',
-        sidebarPrimaryForeground: '0 0% 100%',
-        sidebarAccent: '266 31% 14%',
-        sidebarAccentForeground: '0 0% 100%',
-        sidebarBorder: '260 22% 22%',
-        sidebarRing: '7 100% 63.5%',
+        success: '147 60% 50%', successForeground: '0 0% 100%',
+        warning: '37 91% 55%', warningForeground: '212 100% 18.6%',
+        sidebarBackground: '252 43% 5%', sidebarForeground: '0 0% 100%',
+        sidebarPrimary: '7 100% 63.5%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '266 31% 14%', sidebarAccentForeground: '0 0% 100%',
+        sidebarBorder: '260 22% 22%', sidebarRing: '7 100% 63.5%',
       },
-
       darkBackground:
         'radial-gradient(circle at 50% 0%, hsl(0 0% 100% / 0.08), transparent 22rem), radial-gradient(circle at 18% 14%, hsl(330 84% 62% / 0.14), transparent 26rem), radial-gradient(circle at 88% 76%, hsl(42 96% 60% / 0.08), transparent 26rem), linear-gradient(155deg, hsl(252 43% 5%) 0%, hsl(258 36% 10%) 50%, hsl(336 36% 11%) 100%)',
-
       darkDecorations: [
-        {
-          type: 'glow',
-          color: 'hsl(330 84% 62% / 0.14)',
-          x: '18%',
-          y: '14%',
-          size: '26rem',
-          blur: '80px',
-          animation: { opacity: [0.3, 0.55, 0.3], x: ['18%', '22%', '18%'], y: ['14%', '18%', '14%'] },
-        },
-        {
-          type: 'glow',
-          color: 'hsl(42 96% 60% / 0.08)',
-          x: '88%',
-          y: '76%',
-          size: '26rem',
-          blur: '80px',
-          animation: { opacity: [0.2, 0.4, 0.2], x: ['88%', '84%', '88%'], y: ['76%', '72%', '76%'] },
-        },
+        { type: 'glow', color: 'hsl(330 84% 62% / 0.14)', x: '18%', y: '14%', size: '26rem', blur: '80px', animation: { opacity: [0.3, 0.55, 0.3], x: ['18%', '22%', '18%'], y: ['14%', '18%', '14%'] } },
+        { type: 'glow', color: 'hsl(42 96% 60% / 0.08)', x: '88%', y: '76%', size: '26rem', blur: '80px', animation: { opacity: [0.2, 0.4, 0.2], x: ['88%', '84%', '88%'], y: ['76%', '72%', '76%'] } },
       ],
     },
-  });
 
-  console.log(`✅ 默认主题已创建: "${preset.name}" (id: ${preset.id})`);
+    // ═══ 2. 深海梦境 (sortOrder: 1) ═══
+    {
+      id: 'theme-deepsea',
+      name: '深海梦境',
+      description: '深邃蓝紫渐变，夜晚沉浸式学习氛围',
+      sortOrder: 1,
+      isDefault: false,
+      bgType: 'gradient',
+      lightColors: {
+        background: '220 30% 96%', foreground: '220 40% 15%',
+        card: '0 0% 100%', cardForeground: '220 40% 15%',
+        popover: '0 0% 100%', popoverForeground: '220 40% 15%',
+        primary: '230 60% 40%', primaryForeground: '0 0% 100%',
+        secondary: '220 20% 94%', secondaryForeground: '220 40% 15%',
+        muted: '220 20% 92%', mutedForeground: '220 15% 45%',
+        accent: '260 70% 55%', accentForeground: '0 0% 100%',
+        destructive: '0 70% 55%', destructiveForeground: '0 0% 100%',
+        border: '220 20% 88%', input: '220 20% 88%',
+        ring: '260 70% 55%',
+        success: '160 60% 40%', successForeground: '0 0% 100%',
+        warning: '40 85% 55%', warningForeground: '220 40% 15%',
+        sidebarBackground: '220 30% 96%', sidebarForeground: '220 40% 15%',
+        sidebarPrimary: '230 60% 40%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '220 20% 94%', sidebarAccentForeground: '220 40% 15%',
+        sidebarBorder: '220 20% 88%', sidebarRing: '260 70% 55%',
+      },
+      lightBackground:
+        'radial-gradient(circle at 30% 20%, hsl(230 70% 85% / 0.4), transparent 30rem), radial-gradient(circle at 70% 80%, hsl(260 60% 88% / 0.35), transparent 28rem), linear-gradient(135deg, hsl(220 30% 96%) 0%, hsl(230 25% 93%) 50%, hsl(260 20% 96%) 100%)',
+      lightDecorations: [],
+      darkColors: {
+        background: '230 50% 4%', foreground: '0 0% 95%',
+        card: '230 40% 8%', cardForeground: '0 0% 95%',
+        popover: '230 40% 8%', popoverForeground: '0 0% 95%',
+        primary: '230 50% 75%', primaryForeground: '230 50% 4%',
+        secondary: '230 30% 12%', secondaryForeground: '0 0% 95%',
+        muted: '230 25% 14%', mutedForeground: '230 15% 65%',
+        accent: '260 60% 65%', accentForeground: '0 0% 100%',
+        destructive: '0 60% 55%', destructiveForeground: '0 0% 100%',
+        border: '230 25% 18%', input: '230 25% 18%',
+        ring: '260 60% 65%',
+        success: '160 50% 45%', successForeground: '0 0% 100%',
+        warning: '40 80% 55%', warningForeground: '230 50% 4%',
+        sidebarBackground: '230 50% 4%', sidebarForeground: '0 0% 95%',
+        sidebarPrimary: '260 60% 65%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '230 30% 12%', sidebarAccentForeground: '0 0% 95%',
+        sidebarBorder: '230 25% 18%', sidebarRing: '260 60% 65%',
+      },
+      darkBackground:
+        'radial-gradient(circle at 20% 15%, hsl(260 70% 50% / 0.12), transparent 24rem), radial-gradient(circle at 80% 70%, hsl(200 80% 55% / 0.10), transparent 26rem), linear-gradient(155deg, hsl(230 50% 4%) 0%, hsl(240 40% 6%) 50%, hsl(260 45% 5%) 100%)',
+      darkDecorations: [
+        { type: 'glow', color: 'hsl(260 70% 50% / 0.12)', x: '20%', y: '15%', size: '24rem', blur: '80px', animation: { opacity: [0.25, 0.5, 0.25], x: ['20%', '24%', '20%'], y: ['15%', '20%', '15%'] } },
+        { type: 'glow', color: 'hsl(200 80% 55% / 0.10)', x: '80%', y: '70%', size: '26rem', blur: '80px', animation: { opacity: [0.2, 0.4, 0.2], x: ['80%', '76%', '80%'], y: ['70%', '66%', '70%'] } },
+      ],
+    },
+
+    // ═══ 3. 潮汐海洋 (sortOrder: 2, animation) ═══
+    {
+      id: 'theme-ocean',
+      name: '潮汐海洋',
+      description: '海浪拍岸，日升月落，感受大海的呼吸',
+      sortOrder: 2, isDefault: false, bgType: 'animation',
+      lightColors: {
+        background: '200 40% 96%', foreground: '200 30% 15%',
+        card: '0 0% 100%', cardForeground: '200 30% 15%',
+        popover: '0 0% 100%', popoverForeground: '200 30% 15%',
+        primary: '200 80% 35%', primaryForeground: '0 0% 100%',
+        secondary: '200 30% 93%', secondaryForeground: '200 30% 15%',
+        muted: '200 25% 90%', mutedForeground: '200 15% 40%',
+        accent: '180 70% 40%', accentForeground: '0 0% 100%',
+        destructive: '0 70% 55%', destructiveForeground: '0 0% 100%',
+        border: '200 20% 85%', input: '200 20% 85%',
+        ring: '180 70% 40%',
+        success: '160 55% 40%', successForeground: '0 0% 100%',
+        warning: '40 85% 55%', warningForeground: '200 30% 15%',
+        sidebarBackground: '200 40% 96%', sidebarForeground: '200 30% 15%',
+        sidebarPrimary: '200 80% 35%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '200 30% 93%', sidebarAccentForeground: '200 30% 15%',
+        sidebarBorder: '200 20% 85%', sidebarRing: '180 70% 40%',
+      },
+      darkColors: {
+        background: '200 50% 4%', foreground: '200 20% 90%',
+        card: '200 40% 7%', cardForeground: '200 20% 90%',
+        popover: '200 40% 7%', popoverForeground: '200 20% 90%',
+        primary: '180 60% 50%', primaryForeground: '200 50% 4%',
+        secondary: '200 30% 11%', secondaryForeground: '200 20% 90%',
+        muted: '200 25% 13%', mutedForeground: '200 15% 60%',
+        accent: '170 65% 45%', accentForeground: '0 0% 100%',
+        destructive: '0 60% 55%', destructiveForeground: '0 0% 100%',
+        border: '200 25% 16%', input: '200 25% 16%',
+        ring: '170 65% 45%',
+        success: '160 45% 45%', successForeground: '0 0% 100%',
+        warning: '40 80% 55%', warningForeground: '200 50% 4%',
+        sidebarBackground: '200 50% 4%', sidebarForeground: '200 20% 90%',
+        sidebarPrimary: '170 65% 45%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '200 30% 11%', sidebarAccentForeground: '200 20% 90%',
+        sidebarBorder: '200 25% 16%', sidebarRing: '170 65% 45%',
+      },
+      lightBackground: 'linear-gradient(180deg, #d4f1f9 0%, #e8f6f9 30%, #b8e4f0 70%, #c9e8f2 100%)',
+      darkBackground: 'linear-gradient(155deg, #0a1628 0%, #0d2847 40%, #061220 100%)',
+      lightDecorations: [
+        { type: 'glow', color: 'hsla(195 80% 70% / 0.35)', x: '20%', y: '10%', size: '30rem', blur: '90px' },
+        { type: 'glow', color: 'hsla(170 70% 75% / 0.3)', x: '75%', y: '60%', size: '26rem', blur: '80px' },
+      ],
+      darkDecorations: [
+        { type: 'glow', color: 'hsla(200 80% 50% / 0.12)', x: '30%', y: '15%', size: '28rem', blur: '80px' },
+        { type: 'glow', color: 'hsla(170 60% 45% / 0.10)', x: '70%', y: '65%', size: '24rem', blur: '70px' },
+      ],
+    },
+
+    // ═══ 4. 星夜宇宙 (sortOrder: 3, animation) ═══
+    {
+      id: 'theme-stars',
+      name: '星夜宇宙',
+      description: '璀璨星河，流星划过，沉浸在无垠宇宙',
+      sortOrder: 3, isDefault: false, bgType: 'animation',
+      lightColors: {
+        background: '240 20% 96%', foreground: '240 15% 20%',
+        card: '0 0% 100%', cardForeground: '240 15% 20%',
+        popover: '0 0% 100%', popoverForeground: '240 15% 20%',
+        primary: '260 50% 45%', primaryForeground: '0 0% 100%',
+        secondary: '240 15% 93%', secondaryForeground: '240 15% 20%',
+        muted: '240 12% 90%', mutedForeground: '240 10% 45%',
+        accent: '280 60% 55%', accentForeground: '0 0% 100%',
+        destructive: '0 70% 55%', destructiveForeground: '0 0% 100%',
+        border: '240 12% 85%', input: '240 12% 85%',
+        ring: '280 60% 55%',
+        success: '160 55% 40%', successForeground: '0 0% 100%',
+        warning: '40 85% 55%', warningForeground: '240 15% 20%',
+        sidebarBackground: '240 20% 96%', sidebarForeground: '240 15% 20%',
+        sidebarPrimary: '260 50% 45%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '240 15% 93%', sidebarAccentForeground: '240 15% 20%',
+        sidebarBorder: '240 12% 85%', sidebarRing: '280 60% 55%',
+      },
+      darkColors: {
+        background: '240 30% 3%', foreground: '240 15% 90%',
+        card: '240 25% 6%', cardForeground: '240 15% 90%',
+        popover: '240 25% 6%', popoverForeground: '240 15% 90%',
+        primary: '260 40% 70%', primaryForeground: '240 30% 3%',
+        secondary: '240 20% 10%', secondaryForeground: '240 15% 90%',
+        muted: '240 18% 13%', mutedForeground: '240 10% 65%',
+        accent: '280 50% 65%', accentForeground: '0 0% 100%',
+        destructive: '0 60% 55%', destructiveForeground: '0 0% 100%',
+        border: '240 20% 15%', input: '240 20% 15%',
+        ring: '280 50% 65%',
+        success: '160 45% 45%', successForeground: '0 0% 100%',
+        warning: '40 80% 55%', warningForeground: '240 30% 3%',
+        sidebarBackground: '240 30% 3%', sidebarForeground: '240 15% 90%',
+        sidebarPrimary: '280 50% 65%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '240 20% 10%', sidebarAccentForeground: '240 15% 90%',
+        sidebarBorder: '240 20% 15%', sidebarRing: '280 50% 65%',
+      },
+      lightBackground: 'linear-gradient(135deg, #e8ecf4 0%, #f0f2f8 50%, #e4e8f2 100%)',
+      darkBackground: 'radial-gradient(ellipse at 40% 20%, rgba(120,100,180,0.25), transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(60,40,120,0.2), transparent 50%), linear-gradient(160deg, #080612 0%, #0c0a1a 40%, #0a0818 100%)',
+      lightDecorations: [
+        { type: 'glow', color: 'hsla(260 50% 70% / 0.3)', x: '30%', y: '15%', size: '22rem', blur: '80px' },
+        { type: 'glow', color: 'hsla(220 40% 75% / 0.25)', x: '65%', y: '70%', size: '20rem', blur: '70px' },
+      ],
+      darkDecorations: [
+        { type: 'glow', color: 'hsla(260 50% 50% / 0.15)', x: '40%', y: '20%', size: '26rem', blur: '80px' },
+        { type: 'glow', color: 'hsla(200 40% 40% / 0.10)', x: '70%', y: '60%', size: '22rem', blur: '70px' },
+      ],
+    },
+
+    // ═══ 5. 夏日雨韵 (sortOrder: 4, animation) ═══
+    {
+      id: 'theme-rain',
+      name: '夏日雨韵',
+      description: '雨打芭蕉，氤氲水汽，夏日午后的一场雨',
+      sortOrder: 4, isDefault: false, bgType: 'animation',
+      lightColors: {
+        background: '140 30% 95%', foreground: '140 15% 18%',
+        card: '0 0% 100%', cardForeground: '140 15% 18%',
+        popover: '0 0% 100%', popoverForeground: '140 15% 18%',
+        primary: '160 40% 32%', primaryForeground: '0 0% 100%',
+        secondary: '140 15% 92%', secondaryForeground: '140 15% 18%',
+        muted: '140 12% 88%', mutedForeground: '140 10% 42%',
+        accent: '150 35% 38%', accentForeground: '0 0% 100%',
+        destructive: '0 70% 55%', destructiveForeground: '0 0% 100%',
+        border: '140 12% 83%', input: '140 12% 83%',
+        ring: '150 35% 38%',
+        success: '160 55% 40%', successForeground: '0 0% 100%',
+        warning: '40 85% 55%', warningForeground: '140 15% 18%',
+        sidebarBackground: '140 30% 95%', sidebarForeground: '140 15% 18%',
+        sidebarPrimary: '160 40% 32%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '140 15% 92%', sidebarAccentForeground: '140 15% 18%',
+        sidebarBorder: '140 12% 83%', sidebarRing: '150 35% 38%',
+      },
+      darkColors: {
+        background: '140 25% 4%', foreground: '140 12% 88%',
+        card: '140 20% 7%', cardForeground: '140 12% 88%',
+        popover: '140 20% 7%', popoverForeground: '140 12% 88%',
+        primary: '150 35% 50%', primaryForeground: '140 25% 4%',
+        secondary: '140 15% 11%', secondaryForeground: '140 12% 88%',
+        muted: '140 15% 14%', mutedForeground: '140 10% 62%',
+        accent: '155 30% 48%', accentForeground: '0 0% 100%',
+        destructive: '0 60% 55%', destructiveForeground: '0 0% 100%',
+        border: '140 18% 17%', input: '140 18% 17%',
+        ring: '155 30% 48%',
+        success: '160 45% 45%', successForeground: '0 0% 100%',
+        warning: '40 80% 55%', warningForeground: '140 25% 4%',
+        sidebarBackground: '140 25% 4%', sidebarForeground: '140 12% 88%',
+        sidebarPrimary: '155 30% 48%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '140 15% 11%', sidebarAccentForeground: '140 12% 88%',
+        sidebarBorder: '140 18% 17%', sidebarRing: '155 30% 48%',
+      },
+      lightBackground: 'linear-gradient(180deg, #d4e8dc 0%, #e2f0e6 40%, #c8ddd2 80%, #dce8e2 100%)',
+      darkBackground: 'linear-gradient(160deg, #0a1510 0%, #0c1812 40%, #08120c 100%)',
+      lightDecorations: [
+        { type: 'glow', color: 'hsla(150 40% 65% / 0.3)', x: '25%', y: '20%', size: '24rem', blur: '85px' },
+        { type: 'glow', color: 'hsla(130 30% 70% / 0.25)', x: '60%', y: '55%', size: '22rem', blur: '75px' },
+      ],
+      darkDecorations: [
+        { type: 'glow', color: 'hsla(150 35% 45% / 0.12)', x: '30%', y: '18%', size: '24rem', blur: '75px' },
+        { type: 'glow', color: 'hsla(130 30% 40% / 0.08)', x: '65%', y: '60%', size: '20rem', blur: '65px' },
+      ],
+    },
+
+    // ═══ 6. 极光幻境 (sortOrder: 5, animation) ═══
+    {
+      id: 'theme-aurora',
+      name: '极光幻境',
+      description: '北极之光，绿紫交织，如梦似幻',
+      sortOrder: 5, isDefault: false, bgType: 'animation',
+      lightColors: {
+        background: '200 25% 94%', foreground: '200 18% 18%',
+        card: '0 0% 100%', cardForeground: '200 18% 18%',
+        popover: '0 0% 100%', popoverForeground: '200 18% 18%',
+        primary: '220 50% 40%', primaryForeground: '0 0% 100%',
+        secondary: '200 15% 91%', secondaryForeground: '200 18% 18%',
+        muted: '200 12% 88%', mutedForeground: '200 10% 43%',
+        accent: '180 55% 42%', accentForeground: '0 0% 100%',
+        destructive: '0 70% 55%', destructiveForeground: '0 0% 100%',
+        border: '200 12% 84%', input: '200 12% 84%',
+        ring: '180 55% 42%',
+        success: '160 55% 40%', successForeground: '0 0% 100%',
+        warning: '40 85% 55%', warningForeground: '200 18% 18%',
+        sidebarBackground: '200 25% 94%', sidebarForeground: '200 18% 18%',
+        sidebarPrimary: '220 50% 40%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '200 15% 91%', sidebarAccentForeground: '200 18% 18%',
+        sidebarBorder: '200 12% 84%', sidebarRing: '180 55% 42%',
+      },
+      darkColors: {
+        background: '220 35% 3%', foreground: '200 15% 88%',
+        card: '220 25% 6%', cardForeground: '200 15% 88%',
+        popover: '220 25% 6%', popoverForeground: '200 15% 88%',
+        primary: '180 50% 55%', primaryForeground: '220 35% 3%',
+        secondary: '220 18% 10%', secondaryForeground: '200 15% 88%',
+        muted: '220 15% 12%', mutedForeground: '200 12% 62%',
+        accent: '160 55% 50%', accentForeground: '0 0% 100%',
+        destructive: '0 60% 55%', destructiveForeground: '0 0% 100%',
+        border: '220 18% 15%', input: '220 18% 15%',
+        ring: '160 55% 50%',
+        success: '160 45% 45%', successForeground: '0 0% 100%',
+        warning: '40 80% 55%', warningForeground: '220 35% 3%',
+        sidebarBackground: '220 35% 3%', sidebarForeground: '200 15% 88%',
+        sidebarPrimary: '160 55% 50%', sidebarPrimaryForeground: '0 0% 100%',
+        sidebarAccent: '220 18% 10%', sidebarAccentForeground: '200 15% 88%',
+        sidebarBorder: '220 18% 15%', sidebarRing: '160 55% 50%',
+      },
+      lightBackground: 'linear-gradient(135deg, #e0ecf0 0%, #ecf4f6 50%, #d8e8f0 100%)',
+      darkBackground: 'radial-gradient(ellipse at 30% 20%, rgba(80,200,180,0.2), transparent 45%), radial-gradient(ellipse at 70% 50%, rgba(100,180,220,0.15), transparent 45%), linear-gradient(155deg, #050a10 0%, #080e18 50%, #060c14 100%)',
+      lightDecorations: [
+        { type: 'glow', color: 'hsla(180 60% 70% / 0.35)', x: '25%', y: '20%', size: '28rem', blur: '85px' },
+        { type: 'glow', color: 'hsla(220 50% 72% / 0.3)', x: '65%', y: '55%', size: '24rem', blur: '75px' },
+      ],
+      darkDecorations: [
+        { type: 'glow', color: 'hsla(160 60% 50% / 0.15)', x: '30%', y: '18%', size: '28rem', blur: '85px' },
+        { type: 'glow', color: 'hsla(200 50% 48% / 0.10)', x: '65%', y: '55%', size: '24rem', blur: '70px' },
+      ],
+    },
+  ];
+
+  for (const t of themes) {
+    const preset = await prisma.themePreset.upsert({
+      where: { id: t.id },
+      create: { ...t, isActive: true },
+      update: {},
+    });
+    console.log(`  ✅ ${preset.name}`);
+  }
+
+  console.log(`\n🎉 ${themes.length} 个主题预设完成！`);
 }
-
-main()
-  .catch((e) => {
-    console.error('❌ 种子失败:', e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
