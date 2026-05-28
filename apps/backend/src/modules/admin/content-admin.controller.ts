@@ -97,6 +97,7 @@ export class ContentAdminController {
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
+            sentencePatterns: { orderBy: { sortOrder: 'asc' } },
             _count: { select: { activeChunks: true } },
           },
         },
