@@ -10,13 +10,15 @@ import { setupAurora } from './pixi-themes/aurora';
 interface AnimatedBackgroundProps {
   themeId?: string;
   className?: string;
+  /** 测试模式：强制显示月亮和银河 */
+  testMode?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════
 // Main Component
 // ═══════════════════════════════════════════════════════════
 
-export function PixiAnimatedBackground({ themeId }: AnimatedBackgroundProps) {
+export function PixiAnimatedBackground({ themeId, testMode }: AnimatedBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const setupRef = useRef<ThemeSetup | null>(null);
@@ -54,7 +56,7 @@ export function PixiAnimatedBackground({ themeId }: AnimatedBackgroundProps) {
         themeId?.includes('ocean')  ? setupOcean(app, w, h, isDark) :
         themeId?.includes('rain')   ? setupRain(app, w, h, isDark) :
         themeId?.includes('aurora') ? setupAurora(app, w, h, isDark) :
-                                      setupStars(app, w, h, isDark);
+                                      setupStars(app, w, h, isDark, testMode);
       setupRef.current = setup;
 
       app.ticker.add((ticker) => {

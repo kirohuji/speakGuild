@@ -174,7 +174,52 @@ class Comet extends PIXI.Graphics {
   }
 }
 
-export function setupStars(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
+// ── 月亮：根据日期显示月相（新月→弦月→满月） ──
+function moonPhase(): number {
+  // 以 2000-01-06 (已知新月) 为基准，周期 29.53 天
+  const refNewMoon = new Date('2000-01-06').getTime();
+  const daysSince = (Date.now() - refNewMoon) / 86400000;
+  return (daysSince % 29.53) / 29.53; // 0=新月, 0.25=上弦, 0.5=满月, 0.75=下弦
+}
+
+class Moon extends PIXI.Graphics {
+  life = 0; maxLife = 0;
+  private phase: number;
+  constructor(w: number, h: number) {
+    super();
+    this.maxLife = 350 + Math.random() * 450;
+    this.life = 0;
+    this.phase = moonPhase();
+    this.position.set(w * (0.04 + Math.random() * 0.10), h * (0.02 + Math.random() * 0.05));
+    this.draw(0);
+  }
+  private draw(fade: number) {
+    this.clear();
+    const r = 7;
+    // 外层柔光（始终满圆）
+    this.fill({ color: 0xffeedd, alpha: fade * 0.08 });
+    this.circle(0, 0, r * 3);
+    this.fill();
+    // 月轮本体
+    this.fill({ color: 0xfffff0, alpha: fade * 0.95 });
+    this.circle(0, 0, r);
+    this.fill();
+    // 阴影圆
+    const shadowOffset = r * 1.8 * Math.cos(this.phase * Math.PI * 2);
+    this.fill({ color: 0x0a0818, alpha: fade * 0.85 });
+    this.circle(shadowOffset, 0, r * 1.05);
+    this.fill();
+  }
+  update(dt: number) {
+    this.life += dt;
+    const t = this.life / this.maxLife;
+    const fade = t < 0.10 ? t / 0.10 : t > 0.90 ? (1 - t) / 0.10 : 1;
+    this.draw(fade);
+    return this.life < this.maxLife;
+  }
+}
+
+export function setupStars(app: PIXI.Application, w: number, h: number, isDark: boolean, testMode?: boolean): ThemeSetup {
   const items: Updatable[] = [];
 
   // Light 模式：星少但更明显，顶部加微暗渐变营造暮光感
@@ -249,7 +294,48 @@ export function setupStars(app: PIXI.Application, w: number, h: number, isDark: 
   }
   app.stage.addChild(cosmos as any);
 
+  // ═══ 测试模式：月亮常驻 + 银河粒子带 ═══
+  if (testMode && isDark) {
+    const moon = new Moon(w, h);
+    moon.life = moon.maxLife * 0.5;
+    // 测试模式下月亮永不销毁
+    const origUpdate = moon.update.bind(moon);
+    (moon as any).update = (dt: number) => { origUpdate(dt); moon.life = moon.maxLife * 0.5; return true; };
+    app.stage.addChild(moon as any);
+    items.push(moon as any); // 月亮不旋转，留在 stage
+
+    // 银河粒子带：极亮、紧密挤在一起的暖金十字星
+    const gStartY = h * 0.02;
+    const gSlope = (h * 0.2 - gStartY) / w;
+    const gHalfWidth = h * 0.02; // 很窄的带，星星挤在一起
+    const galaxyStars: Updatable[] = [];
+    for (let i = 0; i < 800; i++) {
+      const t = Math.random();
+      const gx = t * w;
+      const gy = gStartY + gSlope * gx + (Math.random() + Math.random() + Math.random()) / 3 * gHalfWidth * 2 - gHalfWidth;
+      if (gy < 0 || gy > h * 0.55) continue;
+      const c = [0xffeecc, 0xffeedd, 0xffffdd, 0xffeebb, 0xffffff][Math.floor(Math.random() * 5)];
+      // 亮！大！
+      // 自然大小分布：多数小，少数大
+      const r = Math.random();
+      const size = r < 0.65 ? 0.5 + Math.random() * 1.2 : r < 0.90 ? 1.5 + Math.random() * 1.5 : 2.5 + Math.random() * 2.0;
+      const s = new Star(c, size, 0.14, 0.30 + Math.random() * 0.40, 0.005 + Math.random() * 0.010, 0.10 + Math.random() * 0.22);
+      s.position.set(gx, gy);
+      app.stage.addChild(s as any);
+      items.push(s as any);
+      galaxyStars.push(s as any);
+    }
+    // 银河星也移入 cosmos 参与旋转
+    for (const gs of galaxyStars) {
+      app.stage.removeChild(gs);
+      gs.position.x -= w / 2;
+      gs.position.y -= h / 2;
+      cosmos.addChild(gs);
+    }
+  }
+
   let cometTimer = 80 + Math.random() * 140;
+  let moonTimer = testMode ? 999999 : 600 + Math.random() * 800;
   const onTick = (dt: number) => {
     cosmos.rotation += 0.00006 * dt;
     cometTimer -= dt;
@@ -260,6 +346,13 @@ export function setupStars(app: PIXI.Application, w: number, h: number, isDark: 
       comet.position.y -= h / 2;
       cosmos.addChild(comet as any);
       items.push(comet as any);
+    }
+    moonTimer -= dt;
+    if (moonTimer <= 0) {
+      moonTimer = 600 + Math.random() * 1000;
+      const moon = new Moon(w, h);
+      app.stage.addChild(moon as any);
+      items.push(moon as any);
     }
   };
 

@@ -9,18 +9,14 @@ import { PixiAnimatedBackground } from '@/components/common/pixi-animated-backgr
  * 沉浸式背景组件
  * 从当前激活的主题预设中读取背景和装饰配置，渲染动态背景效果。
  *
- * 用法：
- * ```tsx
- * <div className="relative">
- *   <ImmersiveBackground />
- *   <div className="relative z-10">页面内容</div>
- * </div>
- * ```
+ * URL 参数:
+ *   ?test=1  — 强制显示月亮和银河（仅对星空主题生效）
  */
 export function ImmersiveBackground() {
   const { activePreset } = useThemePreset();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const testMode = location.hash.includes('test=1');
 
   const bg = isDark ? activePreset?.darkBackground : activePreset?.lightBackground;
   const decorations = useMemo<ThemeDecoration[]>(() => {
@@ -40,7 +36,7 @@ export function ImmersiveBackground() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       {/* PixiJS 动画背景 */}
       {isAnimation && (
-        <PixiAnimatedBackground themeId={activePreset?.id} />
+        <PixiAnimatedBackground themeId={activePreset?.id} testMode={testMode} />
       )}
 
       {/* 背景层 — 渐变背景带缓慢位移动画 */}
