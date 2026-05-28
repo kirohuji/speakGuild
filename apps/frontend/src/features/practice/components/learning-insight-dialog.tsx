@@ -133,19 +133,9 @@ export function LearningInsightDialog({
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* 关闭按钮 */}
-          <div className="absolute left-3 top-3 z-50 md:left-4 md:top-4">
-            <button
-              onClick={() => onOpenChange(false)}
-              className="flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-background hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
           <div className="flex h-full flex-col">
-            {/* Header - 固定在顶部 */}
-            <InsightHeader item={current} />
+            {/* Header - 固定在顶部，关闭按钮在右侧 */}
+            <InsightHeader item={current} onClose={() => onOpenChange(false)} />
 
             {/* Content - 中间弹性区域 */}
             <div className="flex-1 min-h-0">
@@ -234,7 +224,7 @@ export function LearningInsightDialog({
   )
 }
 
-function InsightHeader({ item }: { item: LearningInsightItem }) {
+function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: () => void }) {
   const Icon = item.kind === 'word' ? BookOpen : item.kind === 'chunk' ? Layers : Sparkles
   const title = item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
   const subtitle = item.kind === 'word' ? item.meaning : item.meaning
@@ -251,6 +241,13 @@ function InsightHeader({ item }: { item: LearningInsightItem }) {
           <h2 className="break-words text-xl font-bold leading-tight text-foreground">{title}</h2>
           {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
         </div>
+        {/* 关闭按钮放在 Header 右侧 */}
+        <button
+          onClick={onClose}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+        >
+          <X className="size-4" />
+        </button>
       </div>
     </div>
   )
@@ -384,7 +381,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
         {/* 例句 Tab */}
         <TabsContent value="examples" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
-            <div className="space-y-2 py-4">
+            <div className="space-y-3 py-4">
               {enrichData === 'loading' ? (
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
@@ -536,10 +533,10 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
 
 function ExampleBlock({ en, zh, note, level }: { en: string; zh?: string; note?: string; level?: string }) {
   return (
-    <div className="rounded-md bg-muted/60 p-2.5">
-      <p className="text-xs font-medium text-foreground">{en}</p>
-      {zh && <p className="mt-0.5 text-[11px] text-muted-foreground">{zh}</p>}
-      {note && <p className="mt-1 text-[11px] text-muted-foreground">{note}</p>}
+    <div className="rounded-md bg-muted/60 p-3">
+      <p className="text-sm font-medium leading-relaxed text-foreground">{en}</p>
+      {zh && <p className="mt-1 text-xs text-muted-foreground">{zh}</p>}
+      {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
     </div>
   )
 }
