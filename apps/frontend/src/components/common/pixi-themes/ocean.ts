@@ -1,37 +1,42 @@
 /**
- * 🌊 Ocean Theme — 月光潮汐 + 海浪泡沫 + 发光气泡
+ * 🌊 Ocean Theme — 热带海水 · 多频复合浪 · 水面波光
  *
  * ══════════════════ 颜色方案 ══════════════════
  *
- * Dark 模式:
+ * Dark 模式（热带夜海）:
  *   天空:   linear-gradient(155deg, #0a1628 0%, #0d2847 40%, #061220 100%)
- *   海浪层:
- *     远层   #0a3d5c  alpha 0.07  @ 22%屏高  小振幅 慢速
- *     中远   #0d5e8c  alpha 0.10  @ 35%屏高
- *     中近   #1a8cba  alpha 0.14  @ 50%屏高
- *     近层   #2db5d4  alpha 0.18  @ 66%屏高  大振幅 快速
- *   浪尖白线: #ffffff  alpha 0.50  width 1.8
- *   气泡光晕: #aaddff  alpha 0.3-0.7 (外层) + #ffffff (核心)
- *   月光闪烁: #ffffff  alpha 最多 0.06  width 2
+ *   海浪层（6层）:
+ *     远层   #042d45  alpha 0.07  @ 38%  缓波长波
+ *     中远   #084e6e  alpha 0.11  @ 48%
+ *     中层   #0e6e8e  alpha 0.15  @ 58%
+ *     中近   #1a8aba  alpha 0.19  @ 67%
+ *     近层   #2ab0cc  alpha 0.23  @ 76%
+ *     最近   #4acce0  alpha 0.28  @ 86%  高频碎波
+ *   浪尖白线: #ffffff  alpha 0.35  width 1.2  仅波峰段
+ *   水面波光: #ffffff 十字星芒  size 2-4
  *   光晕装饰: hsla(200 80% 50% / 0.12) + hsla(170 60% 45% / 0.10)
  *
- * Light 模式:
+ * Light 模式（热带昼海）:
  *   天空:   linear-gradient(180deg, #d4f1f9 0%, #e8f6f9 30%, #b8e4f0 70%, #c9e8f2 100%)
- *   海浪层:
- *     远层   #0a3d5c  alpha 0.05
- *     中远   #0d5e8c  alpha 0.07
- *     中近   #1a8cba  alpha 0.10
- *     近层   #2db5d4  alpha 0.13
- *   浪尖白线: #ffffff  alpha 0.35
- *   气泡光晕: 同 dark
- *   月光闪烁: 同 dark
+ *   海浪层（6层）:
+ *     远层   #3a6a8a  alpha 0.05
+ *     中远   #4a8aaa  alpha 0.08
+ *     中层   #5aaaba  alpha 0.11
+ *     中近   #7ac4d8  alpha 0.14
+ *     近层   #8ad4e4  alpha 0.17
+ *     最近   #aae4f0  alpha 0.21
+ *   浪尖白线: #ffffff  alpha 0.25
+ *   水面波光: #ffffff 十字星芒
  *   光晕装饰: hsla(195 80% 70% / 0.35) + hsla(170 70% 75% / 0.30)
  */
 
 import * as PIXI from 'pixi.js';
 import type { ThemeSetup, Updatable } from './types';
 
-// ── 海浪层 ──
+// ═══════════════════════════════════════════════════════════
+// 海浪层 — 多频率复合波形 + 锐峰柔谷（动画风格海面）
+// ═══════════════════════════════════════════════════════════
+
 class OceanWaveLayer extends PIXI.Graphics {
   phase = 0;
   constructor(
@@ -44,57 +49,100 @@ class OceanWaveLayer extends PIXI.Graphics {
     private xPoints: number[],
   ) { super(); this.phase = Math.random() * Math.PI * 2; }
 
+  /** 复合波形：主波 + 两个次波，锐峰柔谷整形 */
+  private waveY(x: number): number {
+    const t = x * this.frequency + this.phase;
+    const raw = Math.sin(t);
+    // 锐峰 (raw<0 时放大) + 柔谷 (raw>0 时压缩)
+    const shaped = raw < 0
+      ? raw * this.amplitude * 1.25
+      : raw * this.amplitude * 0.50;
+    // 次波叠加增加自然感
+    const sub1 = Math.sin(t * 2.7 + this.phase * 0.6) * this.amplitude * 0.22;
+    const sub2 = Math.sin(t * 5.3 + this.phase * 1.4) * this.amplitude * 0.08;
+    return this.baseY + shaped + sub1 + sub2;
+  }
+
   draw(w: number) {
     this.clear();
+    const ys = this.xPoints.map(x => this.waveY(x));
+
+    // ── 填充波形 ──
     this.moveTo(0, this.baseY + 400);
-    for (const x of this.xPoints) {
-      this.lineTo(x, this.baseY + Math.sin(x * this.frequency + this.phase) * this.amplitude);
+    for (let i = 0; i < ys.length; i++) {
+      this.lineTo(this.xPoints[i], ys[i]);
     }
     this.lineTo(w, this.baseY + 400);
     this.closePath();
     this.fill({ color: this.color, alpha: this.fillAlpha });
 
-    const firstY = this.baseY + Math.sin(this.xPoints[0] * this.frequency + this.phase) * this.amplitude;
-    this.moveTo(this.xPoints[0], firstY);
-    for (let i = 1; i < this.xPoints.length; i++) {
-      this.lineTo(this.xPoints[i], this.baseY + Math.sin(this.xPoints[i] * this.frequency + this.phase) * this.amplitude);
+    // ── 浪尖白线 — 仅在波峰段绘制 ──
+    // 计算每个点的一阶导数（前后差分）判断上升/下降
+    this.moveTo(this.xPoints[0], ys[0]);
+    for (let i = 1; i < ys.length; i++) {
+      // 仅在波峰附近绘制 (斜率变号处: 从上升变下降 = 波峰)
+      const prevSlope = ys[i] - ys[i - 1];
+      const nextSlope = i < ys.length - 1 ? ys[i + 1] - ys[i] : 0;
+      // 波峰：prevSlope < 0 (上升) 且 nextSlope > 0 (下降)
+      // 注：Y向下增加，所以上升是负斜率
+      if (prevSlope < 0 && nextSlope > 0 && ys[i] < this.baseY) {
+        // 波峰处画一段白线点缀
+        this.stroke({ color: 0xffffff, width: 1.2, alpha: 0.40 });
+        this.moveTo(this.xPoints[i], ys[i]);
+      } else {
+        this.lineTo(this.xPoints[i], ys[i]);
+      }
     }
-    this.stroke({ color: 0xffffff, width: 1.8, alpha: 0.5 });
+    // 补上描边保证连续
+    this.stroke({ color: 0xffffff, width: 0.6, alpha: 0.15 });
   }
 
   update(dt: number, w: number) { this.phase += this.speed * 0.015 * dt; this.draw(w); return true; }
 }
 
-// ── 发光气泡 ──
-class GlowBubble extends PIXI.Graphics {
-  vx = 0; vy = 0; life = 1; maxLife = 1; baseAlpha = 0;
-  constructor(x: number, y: number) {
+// ═══════════════════════════════════════════════════════════
+// 水面波光 — 十字星芒闪烁
+// ═══════════════════════════════════════════════════════════
+
+class SunSparkle extends PIXI.Graphics {
+  life = 0;
+  maxLife: number;
+  private sz: number;
+
+  constructor(w: number, h: number) {
     super();
-    this.vx = (Math.random() - 0.5) * 0.6;
-    this.vy = -0.3 - Math.random() * 0.7;
-    this.maxLife = 60 + Math.random() * 80;
-    this.life = this.maxLife;
-    this.baseAlpha = 0.3 + Math.random() * 0.4;
-    const r = 2 + Math.random() * 4;
-    this.fill({ color: 0xaaddff, alpha: 1 });
-    this.circle(0, 0, r * 2.5);
-    this.fill();
-    this.fill({ color: 0xffffff, alpha: 1 });
-    this.circle(0, 0, r);
-    this.fill();
-    this.position.set(x, y);
-    this.alpha = this.baseAlpha;
+    this.maxLife = 30 + Math.random() * 35;
+    this.sz = 1.5 + Math.random() * 2.5;
+    this.alpha = 0;
+
+    // 十字星
+    this.moveTo(-this.sz, 0);
+    this.lineTo(this.sz, 0);
+    this.moveTo(0, -this.sz);
+    this.lineTo(0, this.sz);
+    this.stroke({ color: 0xffffff, width: 0.8, alpha: 1 });
+
+    this.position.set(
+      Math.random() * w,
+      h * (0.40 + Math.random() * 0.50),
+    );
   }
+
   update(dt: number) {
-    this.life -= dt;
-    this.position.x += this.vx * dt;
-    this.position.y += this.vy * dt;
-    this.alpha = this.baseAlpha * Math.max(0, this.life / this.maxLife);
-    return this.life > 0;
+    this.life += dt;
+    const t = this.life / this.maxLife;
+    // 闪入 → 保持 → 闪出
+    this.alpha = t < 0.15 ? t / 0.15
+      : t > 0.70 ? (1 - t) / 0.30
+      : 1;
+    return this.life < this.maxLife;
   }
 }
 
-// ── 月光闪烁 ──
+// ═══════════════════════════════════════════════════════════
+// 月光闪烁
+// ═══════════════════════════════════════════════════════════
+
 class MoonShimmer extends PIXI.Graphics {
   life = 0; maxLife = 0;
   constructor(w: number, private baseY: number) {
@@ -114,17 +162,37 @@ class MoonShimmer extends PIXI.Graphics {
   }
 }
 
-export function setupOcean(app: PIXI.Application, w: number, h: number, isDark: boolean): ThemeSetup {
+// ═══════════════════════════════════════════════════════════
+// Theme entry
+// ═══════════════════════════════════════════════════════════
+
+export function setupOcean(
+  app: PIXI.Application,
+  w: number,
+  h: number,
+  isDark: boolean,
+  testMode?: boolean,
+): ThemeSetup {
   const items: Updatable[] = [];
   const alphaMul = isDark ? 1 : 1.4;
+  const ptCount = 160;
   const xPoints: number[] = [];
-  for (let i = 0; i <= 100; i++) xPoints.push((i / 100) * w);
+  for (let i = 0; i <= ptCount; i++) xPoints.push((i / ptCount) * w);
 
+  // ── 海浪（6层，更丰富的波形密度） ──
   const waveDefs = [
-    { y: h * 0.22, amp: 10, freq: 0.005, color: 0x0a3d5c, alpha: 0.07 * alphaMul, speed: 0.22 },
-    { y: h * 0.35, amp: 18, freq: 0.007, color: 0x0d5e8c, alpha: 0.10 * alphaMul, speed: 0.40 },
-    { y: h * 0.50, amp: 28, freq: 0.009, color: 0x1a8cba, alpha: 0.14 * alphaMul, speed: 0.60 },
-    { y: h * 0.66, amp: 40, freq: 0.012, color: 0x2db5d4, alpha: 0.18 * alphaMul, speed: 0.85 },
+    // 远层 — 缓波长波
+    { y: h * 0.22, amp: 8,  freq: 0.004, color: isDark ? 0x042d45 : 0x3a6a8a, alpha: (isDark ? 0.07 : 0.05) * alphaMul, speed: 0.18 },
+    // 中远
+    { y: h * 0.34, amp: 14, freq: 0.006, color: isDark ? 0x084e6e : 0x4a8aaa, alpha: (isDark ? 0.11 : 0.08) * alphaMul, speed: 0.32 },
+    // 中层
+    { y: h * 0.46, amp: 22, freq: 0.008, color: isDark ? 0x0e6e8e : 0x5aaaba, alpha: (isDark ? 0.15 : 0.11) * alphaMul, speed: 0.48 },
+    // 中近
+    { y: h * 0.57, amp: 30, freq: 0.010, color: isDark ? 0x1a8aba : 0x7ac4d8, alpha: (isDark ? 0.19 : 0.14) * alphaMul, speed: 0.65 },
+    // 近层
+    { y: h * 0.68, amp: 38, freq: 0.013, color: isDark ? 0x2ab0cc : 0x8ad4e4, alpha: (isDark ? 0.23 : 0.17) * alphaMul, speed: 0.85 },
+    // 最近层 — 高频碎波细节
+    { y: h * 0.80, amp: 48, freq: 0.017, color: isDark ? 0x4acce0 : 0xaae4f0, alpha: (isDark ? 0.28 : 0.21) * alphaMul, speed: 1.10 },
   ];
   for (const def of waveDefs) {
     const wave = new OceanWaveLayer(def.amp, def.freq, def.y, def.color, def.alpha, def.speed, xPoints);
@@ -133,28 +201,28 @@ export function setupOcean(app: PIXI.Application, w: number, h: number, isDark: 
     items.push(wave as any);
   }
 
-  for (let i = 0; i < 12; i++) {
-    const b = new GlowBubble(Math.random() * w, h * (0.4 + Math.random() * 0.5));
-    app.stage.addChild(b as any);
-    items.push(b as any);
-  }
-
-  let bubbleTimer = 0;
+  // ── 计时器 ──
   let shimmer: MoonShimmer | null = null;
   let shimmerCooldown = 200 + Math.random() * 300;
+  let sparkleTimer = 10 + Math.random() * 20;
+  const maxSparkles = 20;
 
-  const onTick = (dt: number) => {
-    bubbleTimer += dt;
-    if (bubbleTimer > 25) {
-      bubbleTimer = 0;
-      const b = new GlowBubble(Math.random() * w, h * (0.35 + Math.random() * 0.55));
-      app.stage.addChild(b as any);
-      items.push(b as any);
-      while (items.filter(i => i instanceof GlowBubble).length > 20) {
-        const idx = items.findIndex(i => i instanceof GlowBubble);
-        if (idx >= 0) { app.stage.removeChild(items[idx]); items[idx].destroy(); items.splice(idx, 1); } else break;
+  const onTick = (_dt: number, _w: number, _h: number) => {
+    const dt = _dt;
+
+    // ── 水面波光 ──
+    sparkleTimer -= dt;
+    if (sparkleTimer <= 0) {
+      const current = items.filter(i => i instanceof SunSparkle).length;
+      if (current < maxSparkles) {
+        const s = new SunSparkle(w, h);
+        app.stage.addChild(s as any);
+        items.push(s as any);
       }
+      sparkleTimer = 6 + Math.random() * 14;
     }
+
+    // ── 月光闪烁 ──
     shimmerCooldown -= dt;
     if (!shimmer && shimmerCooldown <= 0) {
       shimmer = new MoonShimmer(w, h * (0.2 + Math.random() * 0.5));
