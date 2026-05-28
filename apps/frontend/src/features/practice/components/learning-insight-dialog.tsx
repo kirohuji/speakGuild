@@ -39,6 +39,8 @@ type ChunkInsight = {
   description?: string | null
   examples?: TopicDetail['activeChunks'][number]['examples']
   sceneName?: string
+  /** 是否已保存到表达库 */
+  saved?: boolean
 }
 
 type PatternInsight = {
@@ -50,6 +52,8 @@ type PatternInsight = {
   example?: string
   difficulty?: string
   sceneName?: string
+  /** 是否已保存到表达库 */
+  saved?: boolean
 }
 
 export type LearningInsightItem = VocabularyInsight | ChunkInsight | PatternInsight
@@ -107,7 +111,7 @@ export function LearningInsightDialog({
         </div>
         <div className="flex h-full flex-col">
           <InsightHeader item={current} />
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="px-5 py-5 md:px-6">
               {current.kind === 'word' && <WordInsight item={current} />}
               {current.kind === 'chunk' && <ChunkInsightView item={current} />}
@@ -259,8 +263,10 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
 
 function ChunkInsightView({ item }: { item: ChunkInsight }) {
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(item.saved ?? false)
 
   const saveChunk = async () => {
+    if (saved) return
     setSaving(true)
     try {
       await expressionApi.create({
@@ -270,7 +276,10 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
         original: item.meaning,
         sceneName: item.sceneName,
       })
+      setSaved(true)
       toast.success('已保存到表达库')
+    } catch {
+      toast.error('保存失败')
     } finally {
       setSaving(false)
     }
@@ -278,9 +287,9 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
 
   return (
     <div className="space-y-5">
-      <Button onClick={saveChunk} disabled={saving} className="gap-1.5">
+      <Button onClick={saveChunk} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} className="gap-1.5">
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-        保存到表达库
+        {saved ? '已保存到表达库' : '保存到表达库'}
       </Button>
 
       {item.description && (
@@ -306,9 +315,11 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
 
 function PatternInsightView({ item }: { item: PatternInsight }) {
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(item.saved ?? false)
   const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
 
   const savePattern = async () => {
+    if (saved) return
     setSaving(true)
     try {
       await expressionApi.create({
@@ -318,7 +329,10 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
         original: item.meaning,
         sceneName: item.sceneName,
       })
+      setSaved(true)
       toast.success('已保存到表达库')
+    } catch {
+      toast.error('保存失败')
     } finally {
       setSaving(false)
     }
@@ -326,9 +340,9 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
 
   return (
     <div className="space-y-5">
-      <Button onClick={savePattern} disabled={saving} className="gap-1.5">
+      <Button onClick={savePattern} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} className="gap-1.5">
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-        保存到表达库
+        {saved ? '已保存到表达库' : '保存到表达库'}
       </Button>
 
       <section className="rounded-xl border border-border p-4">

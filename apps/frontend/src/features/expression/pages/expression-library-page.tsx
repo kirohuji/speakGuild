@@ -108,6 +108,7 @@ export function ExpressionLibraryPage() {
       text: expr.chunkText ?? expr.corrected ?? '',
       meaning: expr.original ?? '',
       sceneName: expr.sceneName ?? undefined,
+      saved: true, // 已在表达库中
     }
   })
 
