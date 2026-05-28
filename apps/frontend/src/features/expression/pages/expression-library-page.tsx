@@ -55,7 +55,7 @@ export function ExpressionLibraryPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const apiType = libraryTab === 'words' ? 'word' : 'chunk'
+      const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
       const raw: any = await expressionApi.list({
         type: apiType,
         reviewState,

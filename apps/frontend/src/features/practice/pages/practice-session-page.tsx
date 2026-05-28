@@ -4,13 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
-  BookText, Search,
+  BookText, Search, BookmarkPlus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
+import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
@@ -388,6 +389,22 @@ export function PracticeSessionPage() {
     setInsightOpen(true)
   }, [insightItems])
 
+  const handleCollectWord = useCallback(async (word: string, meaning: string) => {
+    try {
+      await expressionApi.create({ type: 'scene_phrase', chunkText: word, original: meaning, sceneName: detail?.scene.title })
+      setCollectedTexts((prev) => new Set([...prev, word]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [detail])
+
+  const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
+    try {
+      await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
+      setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [])
+
   // ==================== Practice: Send Input ====================
   const sendUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return
@@ -654,6 +671,7 @@ export function PracticeSessionPage() {
                                 <div className="flex items-center gap-2">
                                   <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
                                   <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
+                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
                                 </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
                               </div>
@@ -662,14 +680,14 @@ export function PracticeSessionPage() {
                             {isExpanded && (
                               <div className="border-t border-border/50 px-3 pb-3 pt-2">
                                 {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="mt-1 h-7 px-0 text-xs text-primary"
-                                  onClick={() => openInsight(`pattern:${i}`)}
-                                >
-                                  {t('practiceSession.viewFullExplanation')}
-                                </Button>
+                                <div className="flex gap-2 mt-2">
+                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
+                                    <Search className="size-3.5" /> 查看
+                                  </Button>
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })}>
+                                    <BookmarkPlus className="size-3.5" /> {collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </CardContent>
@@ -733,14 +751,14 @@ export function PracticeSessionPage() {
                             {isExpanded && (
                               <div className="border-t border-border/50 px-3 pb-3 pt-2">
                                 <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="mt-1 h-7 px-0 text-xs text-primary"
-                                  onClick={() => openInsight(`word:${v.id}`)}
-                                >
-                                  {t('practiceSession.viewFullExplanation')}
-                                </Button>
+                                <div className="flex gap-2 mt-2">
+                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
+                                    <Search className="size-3.5" /> 查看
+                                  </Button>
+                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(v.word)} onClick={() => handleCollectWord(v.word, v.meaning)}>
+                                    <BookmarkPlus className="size-3.5" /> {collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </CardContent>
