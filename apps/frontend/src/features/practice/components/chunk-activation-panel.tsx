@@ -1,6 +1,7 @@
-import { Check, ChevronDown, Lightbulb } from 'lucide-react'
+import { ChevronRight, Lightbulb, MessageSquareText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
 import type { TopicDetail } from '../api/english-practice-api'
 
@@ -46,7 +47,6 @@ export function ChunkActivationPanel({
               <ChunkActivationItem
                 key={chunk.id}
                 chunk={chunk}
-                active={activatedIds.has(chunk.id)}
                 expanded={expandedId === chunk.id}
                 onClick={() => {
                   onExpand(chunk.id)
@@ -68,56 +68,45 @@ export function ChunkActivationPanel({
 
 function ChunkActivationItem({
   chunk,
-  active,
   expanded,
   onClick,
   onInspect,
 }: {
   chunk: ChunkItem
-  active: boolean
   expanded: boolean
   onClick: () => void
   onInspect: () => void
 }) {
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <Card
       className={cn(
-        'w-full rounded-lg p-3 text-left transition-colors',
-        active ? 'bg-primary/[0.08]' : 'bg-background/55 hover:bg-background/80',
+        'border-0 shadow-none transition-colors',
+        expanded ? 'bg-primary/[0.06]' : 'bg-muted/30',
       )}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onClick()
-        }
-      }}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-foreground">{chunk.text}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <Badge variant={active ? 'default' : 'secondary'} className="text-[10px]">
-              {active ? '已激活' : '待激活'}
-            </Badge>
-            {chunk.masteryStatus !== 'not_learned' && (
-              <span className="text-xs text-muted-foreground">学习状态：{chunk.masteryStatus}</span>
-            )}
+      <CardContent className="p-0">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 p-3 text-left"
+          onClick={onClick}
+        >
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <MessageSquareText className="size-4" />
           </div>
-        </div>
-        {active ? <Check className="size-5 shrink-0 text-primary" /> : <ChevronDown className="size-4 shrink-0 text-muted-foreground" />}
-      </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
+          </div>
+          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
+        </button>
 
-      {expanded && (
-        <div className="mt-3 space-y-2">
-          <p className="text-sm text-foreground">{chunk.meaning}</p>
-          {chunk.description && <p className="text-xs leading-relaxed text-muted-foreground">{chunk.description}</p>}
-          {chunk.examples?.slice(0, 2).map((example, index) => (
-            <div key={`${chunk.id}-${index}`} className="rounded-md bg-muted p-2">
-              <p className="text-xs font-medium text-foreground">{example.en}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{example.zh}</p>
+        {expanded && (
+          <div className="border-t border-border/50 px-3 pb-3 pt-2 space-y-2">
+            {chunk.description && <p className="text-xs leading-relaxed text-muted-foreground">{chunk.description}</p>}
+            {chunk.examples?.slice(0, 2).map((example, index) => (
+              <div key={`${chunk.id}-${index}`} className="rounded-md bg-muted/60 p-2.5">
+                <p className="text-xs font-medium text-foreground">{example.en}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{example.zh}</p>
               {example.note && <p className="mt-1 text-[11px] text-muted-foreground">{example.note}</p>}
             </div>
           ))}
@@ -135,6 +124,7 @@ function ChunkActivationItem({
           </Button>
         </div>
       )}
-    </div>
+        </CardContent>
+      </Card>
   )
 }
