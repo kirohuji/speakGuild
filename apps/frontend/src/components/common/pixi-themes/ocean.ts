@@ -140,6 +140,90 @@ class SunSparkle extends PIXI.Graphics {
 }
 
 // ═══════════════════════════════════════════════════════════
+// 漂流瓶 — 玻璃瓶身 + 软木塞 + 信纸 + 波浪漂浮
+// ═══════════════════════════════════════════════════════════
+
+class DriftBottle extends PIXI.Graphics {
+  vx: number;
+  bobPhase: number;
+  bobSpeed: number;
+  bobAmp: number;
+  baseY: number;
+  tiltPhase: number;
+
+  constructor(w: number, h: number, isDark: boolean) {
+    super();
+    this.vx = -(0.08 + Math.random() * 0.12);
+    this.bobPhase = Math.random() * Math.PI * 2;
+    this.bobSpeed = 0.006 + Math.random() * 0.008;
+    this.bobAmp = 2 + Math.random() * 3;
+    this.baseY = h * (0.24 + Math.random() * 0.46);
+    this.tiltPhase = Math.random() * Math.PI * 2;
+
+    this.drawBottle(isDark);
+    this.alpha = 0.55 + Math.random() * 0.35;
+    // 初始倾斜角度（10~30 度，正负随机），让瓶子斜着漂
+    this.rotation = (Math.random() - 0.5) * 0.6;
+    this.position.set(
+      Math.random() * (w + 200) - 100,
+      this.baseY,
+    );
+  }
+
+  private drawBottle(isDark: boolean) {
+    this.clear();
+    const s = 0.5 + Math.random() * 0.5;
+    const glass = 0x88ddee;
+
+    // ── 玻璃瓶身（主体椭圆） ──
+    this.fill({ color: glass, alpha: 0.30 });
+    this.ellipse(0, 0, 5 * s, 7 * s);
+    this.fill();
+
+    // ── 瓶颈 ──
+    this.fill({ color: glass, alpha: 0.30 });
+    this.ellipse(0, -7 * s, 2.2 * s, 2 * s);
+    this.fill();
+
+    // ── 玻璃高光（反光条） ──
+    this.fill({ color: 0xffffff, alpha: 0.18 });
+    this.ellipse(-2 * s, -1 * s, 1.5 * s, 4 * s);
+    this.fill();
+
+    // ── 软木塞 ──
+    this.fill({ color: isDark ? 0x775533 : 0xaa7744, alpha: 0.85 });
+    this.roundRect(-1.5 * s, -9.5 * s, 3 * s, 2.2 * s, 0.6 * s);
+    this.fill();
+
+    // ── 瓶中信纸 ──
+    this.fill({ color: 0xffeecc, alpha: 0.55 });
+    this.rect(-2.2 * s, -1.8 * s, 4.4 * s, 3.2 * s);
+    this.fill();
+    // 信纸上的字迹（小点）
+    this.fill({ color: 0x886644, alpha: 0.4 });
+    for (let i = 0; i < 3; i++) {
+      this.circle(-1 * s + i * 1.2 * s, -1 * s + 0.5 * s, 0.3 * s);
+    }
+    this.fill();
+  }
+
+  update(dt: number, w: number, _h: number) {
+    this.bobPhase += this.bobSpeed * dt;
+    this.tiltPhase += 0.003 * dt;
+    this.position.x += this.vx * dt;
+    this.position.y = this.baseY + Math.sin(this.bobPhase) * this.bobAmp;
+    // 在初始倾斜角度上轻微晃动，保留斜漂感
+    this.rotation += Math.sin(this.tiltPhase) * 0.0008 * dt;
+
+    if (this.position.x < -80) {
+      this.position.x = w + 80;
+      this.baseY = _h * (0.24 + Math.random() * 0.46);
+    }
+    return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 // 月光闪烁
 // ═══════════════════════════════════════════════════════════
 
@@ -188,11 +272,11 @@ export function setupOcean(
     // 中层
     { y: h * 0.46, amp: 22, freq: 0.008, color: isDark ? 0x0e6e8e : 0x5aaaba, alpha: (isDark ? 0.15 : 0.11) * alphaMul, speed: 0.48 },
     // 中近
-    { y: h * 0.57, amp: 30, freq: 0.010, color: isDark ? 0x1a8aba : 0x7ac4d8, alpha: (isDark ? 0.19 : 0.14) * alphaMul, speed: 0.65 },
+    { y: h * 0.67, amp: 30, freq: 0.010, color: isDark ? 0x1a8aba : 0x7ac4d8, alpha: (isDark ? 0.19 : 0.14) * alphaMul, speed: 0.65 },
     // 近层
-    { y: h * 0.68, amp: 38, freq: 0.013, color: isDark ? 0x2ab0cc : 0x8ad4e4, alpha: (isDark ? 0.23 : 0.17) * alphaMul, speed: 0.85 },
+    { y: h * 0.78, amp: 38, freq: 0.013, color: isDark ? 0x2ab0cc : 0x8ad4e4, alpha: (isDark ? 0.23 : 0.17) * alphaMul, speed: 0.85 },
     // 最近层 — 高频碎波细节
-    { y: h * 0.80, amp: 48, freq: 0.017, color: isDark ? 0x4acce0 : 0xaae4f0, alpha: (isDark ? 0.28 : 0.21) * alphaMul, speed: 1.10 },
+    { y: h * 0.90, amp: 48, freq: 0.017, color: isDark ? 0x4acce0 : 0xaae4f0, alpha: (isDark ? 0.28 : 0.21) * alphaMul, speed: 1.10 },
   ];
   for (const def of waveDefs) {
     const wave = new OceanWaveLayer(def.amp, def.freq, def.y, def.color, def.alpha, def.speed, xPoints);
@@ -202,10 +286,20 @@ export function setupOcean(
   }
 
   // ── 计时器 ──
+  // ── 漂流瓶（初始 3 个） ──
+  for (let i = 0; i < 3; i++) {
+    const b = new DriftBottle(w, h, isDark);
+    b.position.x = (i / 3) * (w + 200) - 100;
+    app.stage.addChild(b as any);
+    items.push(b as any);
+  }
+
   let shimmer: MoonShimmer | null = null;
   let shimmerCooldown = 200 + Math.random() * 300;
   let sparkleTimer = 10 + Math.random() * 20;
+  let bottleTimer = 400 + Math.random() * 300;
   const maxSparkles = 20;
+  const maxBottles = 5;
 
   const onTick = (_dt: number, _w: number, _h: number) => {
     const dt = _dt;
@@ -220,6 +314,18 @@ export function setupOcean(
         items.push(s as any);
       }
       sparkleTimer = 6 + Math.random() * 14;
+    }
+
+    // ── 漂流瓶（偶尔补充） ──
+    bottleTimer -= dt;
+    if (bottleTimer <= 0) {
+      const current = items.filter(i => i instanceof DriftBottle).length;
+      if (current < maxBottles) {
+        const b = new DriftBottle(w, h, isDark);
+        app.stage.addChild(b as any);
+        items.push(b as any);
+      }
+      bottleTimer = 500 + Math.random() * 400;
     }
 
     // ── 月光闪烁 ──
