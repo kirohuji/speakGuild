@@ -303,49 +303,47 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   return (
     <div className="space-y-3">
       {/* 用户信息区 */}
-      <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
-        <div className="flex items-center gap-3">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/8 via-primary/4 to-accent/5 px-4 py-4">
+        {/* 装饰光斑 */}
+        <div className="absolute -right-6 -top-6 size-24 rounded-full bg-primary/10 blur-2xl" />
+        <div className="absolute -bottom-4 -left-4 size-20 rounded-full bg-accent/10 blur-2xl" />
+
+        <div className="relative flex items-center gap-4">
           {/* 头像 */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={onTapAvatar}
-              className="group relative flex size-14 items-center justify-center overflow-hidden rounded-full bg-primary/10 ring-1 ring-primary/15"
-            >
+          <button
+            type="button"
+            onClick={onTapAvatar}
+            className="group relative shrink-0"
+          >
+            <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-primary/15 ring-2 ring-background ring-offset-1 ring-offset-primary/5">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
               ) : (
-                <User className="size-7 text-primary" />
+                <User className="size-8 text-primary/60" />
               )}
-              <span className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 bg-black/50 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera className="h-3 w-3" />
-                更换
-              </span>
-            </button>
-          </div>
-          <div>
-            <p className="text-base font-semibold leading-tight">{nickname}</p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-muted-foreground/20 px-2 py-0.5 text-[11px] text-muted-foreground">
+            </div>
+            <span className="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-foreground/90 text-background shadow-sm">
+              <Camera className="size-2.5" />
+            </span>
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-bold leading-tight">{nickname}</p>
+            <div className="mt-1.5">
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
                 {t('member.freeUser')}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowMemberDrawer(true)}
-                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm"
-              >
-                <Crown className="h-2.5 w-2.5" />{t('profile.upgradeVip')}
-              </button>
+              </Badge>
             </div>
           </div>
+
+          {/* 设置 */}
+          <button
+            onClick={() => onNavigate('settings')}
+            className="flex size-9 shrink-0 items-center justify-center self-center rounded-full bg-background/60 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-background/80 hover:text-foreground active:scale-95"
+          >
+            <Settings className="size-4" />
+          </button>
         </div>
-        {/* 设置入口 */}
-        <button
-          onClick={() => onNavigate('settings')}
-          className="flex size-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-colors active:bg-muted"
-        >
-          <Settings className="size-4" />
-        </button>
       </div>
 
       {/* 主导航 */}
