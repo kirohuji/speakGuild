@@ -131,7 +131,7 @@ export function LearningInsightDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden"
+          className="h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -147,7 +147,7 @@ export function LearningInsightDialog({
             </div>
 
             {/* Footer - 固定在底部 */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3 pb-safe">
               <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
                 <ChevronLeft className="size-4" /> {t('insight.prev')}
               </Button>
@@ -174,7 +174,7 @@ export function LearningInsightDialog({
 
       {/* 播放列表抽屉 */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className="h-[100dvh] rounded-none">
+        <DrawerContent className="h-[100dvh] rounded-none pt-safe">
           <div className="flex items-center justify-between px-5 py-3">
             <DrawerTitle className="text-lg">{t('insight.playlist')}</DrawerTitle>
             <button
