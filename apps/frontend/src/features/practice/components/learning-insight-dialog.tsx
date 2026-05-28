@@ -3,9 +3,11 @@ import {
   BookOpen,
   BookmarkPlus,
   Brain,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Layers,
+  ListMusic,
   Loader2,
   Save,
   Sparkles,
@@ -16,8 +18,11 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/cn'
 import { lookupWord, getBestPhonetic, getFirstAudio, type DictEntry } from '@/lib/dictionary-api'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { useWordsStore } from '@/stores/assets.store'
@@ -76,6 +81,8 @@ export function LearningInsightDialog({
   const current = items[index] ?? null
   const hasPrev = index > 0
   const hasNext = index < items.length - 1
+  const [playlistOpen, setPlaylistOpen] = useState(false)
+  const touchStartX = useRef(0)
 
   const gotoPrev = useCallback(() => {
     if (hasPrev) onIndexChange(index - 1)
@@ -85,6 +92,7 @@ export function LearningInsightDialog({
     if (hasNext) onIndexChange(index + 1)
   }, [hasNext, index, onIndexChange])
 
+  // 键盘导航
   useEffect(() => {
     if (!open) return
     const handler = (event: KeyboardEvent) => {
@@ -95,41 +103,134 @@ export function LearningInsightDialog({
     return () => window.removeEventListener('keydown', handler)
   }, [open, gotoPrev, gotoNext])
 
+  // 触摸滑动切换
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current
+      if (Math.abs(deltaX) < 50) return
+      if (deltaX > 0) gotoPrev()
+      else gotoNext()
+    },
+    [gotoPrev, gotoNext],
+  )
+
+  const selectFromPlaylist = (idx: number) => {
+    onIndexChange(idx)
+    setPlaylistOpen(false)
+  }
+
   if (!current) return null
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden">
-        {/* 关闭按钮（用 div 包裹避免被 [&>button]:hidden 隐藏） */}
-        <div className="absolute left-3 top-3 z-50 md:left-4 md:top-4">
-          <button
-            onClick={() => onOpenChange(false)}
-            className="flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-background hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-        <div className="flex h-full flex-col">
-          <InsightHeader item={current} />
-          <ScrollArea className="flex-1 min-h-0">
-            <div className="px-5 py-5 md:px-6">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className="h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* 关闭按钮 */}
+          <div className="absolute left-3 top-3 z-50 md:left-4 md:top-4">
+            <button
+              onClick={() => onOpenChange(false)}
+              className="flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-background hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          <div className="flex h-full flex-col">
+            {/* Header - 固定在顶部 */}
+            <InsightHeader item={current} />
+
+            {/* Content - 中间弹性区域 */}
+            <div className="flex-1 min-h-0">
               {current.kind === 'word' && <WordInsight item={current} />}
               {current.kind === 'chunk' && <ChunkInsightView item={current} />}
               {current.kind === 'pattern' && <PatternInsightView item={current} />}
             </div>
-          </ScrollArea>
-          <div className="flex items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
-            <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
-              <ChevronLeft className="size-4" /> 上一个
-            </Button>
-            <span className="text-xs text-muted-foreground">{index + 1} / {items.length}</span>
-            <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-              下一个 <ChevronRight className="size-4" />
-            </Button>
+
+            {/* Footer - 固定在底部 */}
+            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
+              <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+                <ChevronLeft className="size-4" /> 上一个
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {index + 1} / {items.length}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+                  下一个 <ChevronRight className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setPlaylistOpen(true)}
+                  title="播放列表"
+                >
+                  <ListMusic className="size-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* 播放列表抽屉 */}
+      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+        <DrawerContent className="h-[100dvh] rounded-none">
+          <div className="flex items-center justify-between px-5 py-3">
+            <DrawerTitle className="text-lg">播放列表</DrawerTitle>
+            <button
+              onClick={() => setPlaylistOpen(false)}
+              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+            >
+              <ChevronDown className="size-5" />
+            </button>
+          </div>
+          <ScrollArea className="flex-1 px-4 pb-8">
+            <div className="space-y-1">
+              {items.map((item, i) => {
+                const Icon = item.kind === 'word' ? BookOpen : item.kind === 'chunk' ? Layers : Sparkles
+                const title =
+                  item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
+                const isActive = i === index
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => selectFromPlaylist(i)}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-foreground hover:bg-muted',
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{title}</p>
+                      {item.meaning && (
+                        <p className="truncate text-xs text-muted-foreground">{item.meaning}</p>
+                      )}
+                    </div>
+                    {isActive && (
+                      <Badge variant="default" className="px-1.5 py-0 text-[10px]">
+                        当前
+                      </Badge>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
+        </DrawerContent>
+      </Drawer>
+    </>
   )
 }
 
@@ -140,15 +241,15 @@ function InsightHeader({ item }: { item: LearningInsightItem }) {
   const label = item.kind === 'word' ? '场景词汇' : item.kind === 'chunk' ? '核心 Chunk' : '句型骨架'
 
   return (
-    <div className="border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-5 pt-12 md:px-6">
+    <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
       <div className="flex items-start gap-3">
-        <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="size-5" />
+        <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Icon className="size-[18px]" />
         </div>
         <div className="min-w-0 flex-1">
-          <Badge variant="secondary" className="mb-2">{label}</Badge>
-          <h2 className="break-words text-2xl font-bold leading-tight text-foreground">{title}</h2>
-          {subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
+          <Badge variant="secondary" className="mb-1.5">{label}</Badge>
+          <h2 className="break-words text-xl font-bold leading-tight text-foreground">{title}</h2>
+          {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -168,9 +269,11 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
     lookupWord(item.word).then((data) => {
       setDictData(data)
       const summary = data
-        ? data.flatMap((entry) => entry.meanings).slice(0, 3)
-          .map((meaning) => `${meaning.partOfSpeech}: ${meaning.definitions[0]?.definition ?? ''}`)
-          .join(' | ')
+        ? data
+            .flatMap((entry) => entry.meanings)
+            .slice(0, 3)
+            .map((meaning) => `${meaning.partOfSpeech}: ${meaning.definitions[0]?.definition ?? ''}`)
+            .join(' | ')
         : item.meaning
       enrichWord(item.word, summary).then(setEnrichData).catch(() => setEnrichData(null))
     })
@@ -199,65 +302,115 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">
-        {phonetic && <span className="rounded-md bg-muted px-2 py-1 font-mono text-sm text-muted-foreground">{phonetic}</span>}
-        {audioUrl && (
-          <Button variant="outline" size="sm" onClick={() => playAudio(audioUrl)} className="gap-1.5">
-            <Volume2 className="size-4" /> 发音
-          </Button>
-        )}
-        <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
-          {saved ? '已加入' : '加入生词本'}
-        </Button>
+    <Tabs defaultValue="meaning" className="flex h-full flex-col">
+      {/* 固定在 Content 顶部的 Tab 栏 */}
+      <div className="shrink-0 px-5 pt-3 md:px-6">
+        <TabsList>
+          <TabsTrigger value="meaning">释义</TabsTrigger>
+          <TabsTrigger value="examples">例句</TabsTrigger>
+        </TabsList>
       </div>
 
-      {enrichData === 'loading' ? (
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-16 w-full" />
-        </div>
-      ) : enriched?.memoryTip ? (
-        <div className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-          <Brain className="mt-0.5 size-4 shrink-0" />
-          <span>{enriched.memoryTip}</span>
-        </div>
-      ) : null}
+      {/* Tab 内容区：relative 容器 + absolute 叠加，避免 flex 布局冲突 */}
+      <div className="flex-1 min-h-0 relative">
+        {/* 释义 Tab */}
+        <TabsContent value="meaning" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-5 py-3">
+              {/* 音标 / 发音 / 生词本 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {phonetic && (
+                  <span className="rounded-md bg-muted px-2 py-1 font-mono text-sm text-muted-foreground">
+                    {phonetic}
+                  </span>
+                )}
+                {audioUrl && (
+                  <Button variant="outline" size="sm" onClick={() => playAudio(audioUrl)} className="gap-1.5">
+                    <Volume2 className="size-4" /> 发音
+                  </Button>
+                )}
+                <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
+                  {saved ? '已加入' : '加入生词本'}
+                </Button>
+              </div>
 
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">释义</h3>
-        {dictData === 'loading' ? (
-          <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
-        ) : meanings.length > 0 ? (
-          <div className="space-y-3">
-            {meanings.slice(0, 5).map((meaning, index) => (
-              <div key={`${meaning.partOfSpeech}-${index}`} className="rounded-xl border border-border p-3">
-                <Badge variant="outline" className="mb-2">{meaning.partOfSpeech}</Badge>
+              {/* 记忆提示 */}
+              {enrichData === 'loading' ? (
                 <div className="space-y-2">
-                  {meaning.definitions.slice(0, 3).map((definition, defIndex) => (
-                    <p key={defIndex} className="text-sm leading-relaxed text-foreground">
-                      {definition.definition}
-                    </p>
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ) : enriched?.memoryTip ? (
+                <div className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                  <Brain className="mt-0.5 size-4 shrink-0" />
+                  <span>{enriched.memoryTip}</span>
+                </div>
+              ) : null}
+
+              {/* 词典释义 */}
+              {dictData === 'loading' ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">{item.meaning ?? '暂无词典释义'}</p>
-        )}
-      </section>
+              ) : meanings.length > 0 ? (
+                <div className="space-y-3">
+                  {meanings.slice(0, 5).map((meaning, index) => (
+                    <div key={`${meaning.partOfSpeech}-${index}`} className="rounded-xl border border-border p-3">
+                      <Badge variant="outline" className="mb-2">
+                        {meaning.partOfSpeech}
+                      </Badge>
+                      <div className="space-y-2">
+                        {meaning.definitions.slice(0, 3).map((definition, defIndex) => (
+                          <p key={defIndex} className="text-sm leading-relaxed text-foreground">
+                            {definition.definition}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
+                  {item.meaning ?? '暂无词典释义'}
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
 
-      {enriched?.examples?.length ? (
-        <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">例句</h3>
-          {enriched.examples.slice(0, 4).map((example, index) => (
-            <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note} level={example.level} />
-          ))}
-        </section>
-      ) : null}
-    </div>
+        {/* 例句 Tab */}
+        <TabsContent value="examples" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-2 py-4">
+              {enrichData === 'loading' ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : enriched?.examples?.length ? (
+                enriched.examples.slice(0, 6).map((example, index) => (
+                  <ExampleBlock
+                    key={index}
+                    en={example.en}
+                    zh={example.zh}
+                    note={example.note}
+                    level={example.level}
+                  />
+                ))
+              ) : (
+                <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
+                  暂无例句。请稍后重试或检查 AI 服务是否可用。
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </div>
+    </Tabs>
   )
 }
 
@@ -286,30 +439,43 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
   }
 
   return (
-    <div className="space-y-5">
-      <Button onClick={saveChunk} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} className="gap-1.5">
-        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-        {saved ? '已保存到表达库' : '保存到表达库'}
-      </Button>
+    <ScrollArea className="h-full">
+      <div className="space-y-5 px-5 py-5 md:px-6">
+        <Button
+          onClick={saveChunk}
+          disabled={saved || saving}
+          variant={saved ? 'secondary' : 'default'}
+          className="gap-1.5"
+        >
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          {saved ? '已保存到表达库' : '保存到表达库'}
+        </Button>
 
-      {item.description && (
-        <section className="rounded-xl bg-muted p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">用法讲解</h3>
-          <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-        </section>
-      )}
-
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">示例句</h3>
-        {item.examples?.length ? (
-          item.examples.map((example, index) => (
-            <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} />
-          ))
-        ) : (
-          <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">后台还没有配置示例句。</p>
+        {item.description && (
+          <section className="rounded-xl bg-muted p-4">
+            <h3 className="mb-2 text-sm font-semibold text-foreground">用法讲解</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+          </section>
         )}
-      </section>
-    </div>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">例句</h3>
+          {item.examples?.length ? (
+            item.examples.map((example, index) => (
+              <ExampleBlock
+                key={index}
+                en={example.en}
+                zh={example.zh}
+                note={example.note ?? undefined}
+                level={example.level}
+              />
+            ))
+          ) : (
+            <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">后台还没有配置示例句。</p>
+          )}
+        </section>
+      </div>
+    </ScrollArea>
   )
 }
 
@@ -339,37 +505,41 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
   }
 
   return (
-    <div className="space-y-5">
-      <Button onClick={savePattern} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} className="gap-1.5">
-        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-        {saved ? '已保存到表达库' : '保存到表达库'}
-      </Button>
+    <ScrollArea className="h-full">
+      <div className="space-y-5 px-5 py-5 md:px-6">
+        <Button
+          onClick={savePattern}
+          disabled={saved || saving}
+          variant={saved ? 'secondary' : 'default'}
+          className="gap-1.5"
+        >
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          {saved ? '已保存到表达库' : '保存到表达库'}
+        </Button>
 
-      <section className="rounded-xl border border-border p-4">
-        <h3 className="mb-2 text-sm font-semibold text-foreground">结构</h3>
-        <p className="font-mono text-sm leading-relaxed text-foreground">{item.pattern}</p>
-        {slotText && <p className="mt-2 text-xs text-muted-foreground">可替换位置：{slotText}</p>}
-      </section>
-
-      {item.example && (
-        <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">套用示例</h3>
-          <ExampleBlock en={item.example} zh={item.meaning ?? ''} level={item.difficulty} />
+        <section className="rounded-xl border border-border p-4">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">结构</h3>
+          <p className="font-mono text-sm leading-relaxed text-foreground">{item.pattern}</p>
+          {slotText && <p className="mt-2 text-xs text-muted-foreground">可替换位置：{slotText}</p>}
         </section>
-      )}
-    </div>
+
+        {item.example && (
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">套用示例</h3>
+            <ExampleBlock en={item.example} zh={item.meaning ?? ''} level={item.difficulty} />
+          </section>
+        )}
+      </div>
+    </ScrollArea>
   )
 }
 
 function ExampleBlock({ en, zh, note, level }: { en: string; zh?: string; note?: string; level?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <Badge variant="outline" className="text-[10px]">{level ?? 'example'}</Badge>
-      </div>
-      <p className="text-sm font-medium leading-relaxed text-foreground">{en}</p>
-      {zh && <p className="mt-2 border-l-2 border-primary/30 pl-3 text-sm leading-relaxed text-muted-foreground">{zh}</p>}
-      {note && <p className="mt-2 text-xs leading-relaxed text-amber-600 dark:text-amber-400">{note}</p>}
+    <div className="rounded-md bg-muted/60 p-2.5">
+      <p className="text-xs font-medium text-foreground">{en}</p>
+      {zh && <p className="mt-0.5 text-[11px] text-muted-foreground">{zh}</p>}
+      {note && <p className="mt-1 text-[11px] text-muted-foreground">{note}</p>}
     </div>
   )
 }
