@@ -47,7 +47,6 @@ export interface TopicDetail {
     promptZh: string
     suggestedDurationSec: number
     difficulty: string
-    sentenceSkeleton: string | null
     sentencePatterns?: Array<{
       pattern: string
       meaning: string

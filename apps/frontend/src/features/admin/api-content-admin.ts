@@ -102,8 +102,7 @@ export interface TrainingTopic {
   promptZh: string
   suggestedDurationSec: number
   difficulty: string
-  sentenceSkeleton: string | null
-  sentencePatterns?: SentencePattern[] | null
+  sentencePatterns: SentencePattern[]
   inkScriptId?: string | null
   sortOrder: number
   scene?: { id: string; title: string }

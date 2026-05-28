@@ -103,7 +103,6 @@ export interface TrainingTopicItem {
   promptZh: string
   difficulty: string
   suggestedDurationSec: number
-  sentenceSkeleton: string | null
   activeChunks: { id: string; text: string; meaning: string }[]
 }
 

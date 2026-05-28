@@ -9,7 +9,6 @@ export class EnglishPracticeService {
   private buildObjectives(topic: {
     title: string;
     sentencePatterns?: any;
-    sentenceSkeleton?: string | null;
   }) {
     const objectives: string[] = [];
     const patterns = Array.isArray(topic.sentencePatterns) ? topic.sentencePatterns : [];
@@ -54,6 +53,7 @@ export class EnglishPracticeService {
             vocabularies: { orderBy: { sortOrder: 'asc' }, take: 10 },
           },
         },
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: {
           include: {
             chunk: {
@@ -135,7 +135,6 @@ export class EnglishPracticeService {
         promptZh: topic.promptZh,
         suggestedDurationSec: topic.suggestedDurationSec,
         difficulty: topic.difficulty,
-        sentenceSkeleton: topic.sentenceSkeleton,
         sentencePatterns: topic.sentencePatterns,
         inkScriptId: topic.inkScriptId,
       },
@@ -186,6 +185,7 @@ export class EnglishPracticeService {
             vocabularies: { orderBy: { sortOrder: 'asc' } },
           },
         },
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: {
           include: {
             chunk: {
@@ -209,7 +209,6 @@ export class EnglishPracticeService {
       promptZh: topic.promptZh,
       difficulty: topic.difficulty,
       suggestedDurationSec: topic.suggestedDurationSec,
-      sentenceSkeleton: topic.sentenceSkeleton,
     };
     const sceneSnapshot = {
       id: topic.scene.id,

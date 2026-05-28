@@ -8,7 +8,7 @@ type CsvSceneCategory = { name: string; icon: string; sort_order: string }
 type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string }
 type CsvVocab = { scene_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
 type CsvChunk = { scene_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string; applicable_scenes_json: string }
-type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; skeleton: string; description: string; knowledge_points: string; ink_script_key: string }
+type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; description: string; knowledge_points: string; ink_script_key: string }
 type CsvEpisode = { chapter_id: string; chapter_title: string; episode_order: string; title: string; scene_title: string; required_output_level: string; required_user_level: string; vocab_required_count: string; vocab_total_count: string; chunk_required_count: string; chunk_total_count: string; objectives_json: string; pass_objective_count: string; pass_chunk_count: string; pass_min_dialogues: string; npc_name: string; npc_role: string; is_preview: string; ink_script_key: string; rewards_json: string }
 type CsvEpChunk = { episode_chapter: string; episode_order: string; chunk_text_match: string; sort_order: string }
 type CsvChar = { name: string; display_name: string; role: string; personality: string; default_position: string; avatar_url: string; sprite_base_url: string }
@@ -157,24 +157,13 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
 
   // ═══ 6. 训练话题 ═══
   const topicRows = readCsv<CsvTopic>('training_topics.csv')
+  const topicTitleSceneToId = new Map<string, string>() // "scene_title|title" → id
   let topicCount = 0
   for (const row of topicRows) {
     const sceneId = sceneMap.get(row.scene_title)
     if (!sceneId) continue
 
-    // Parse skeleton into structured sentencePatterns
-    let sentencePatterns: any[] | undefined
-    if (row.skeleton?.trim()) {
-      sentencePatterns = [{
-        pattern: row.skeleton.trim(),
-        meaning: row.title,
-        slots: [],
-        example: '',
-        difficulty: row.difficulty || 'L2',
-      }]
-    }
-
-    await prisma.trainingTopic.create({
+    const topic = await prisma.trainingTopic.create({
       data: {
         sceneId,
         title: row.title,
@@ -182,17 +171,47 @@ export async function seedEnglishOutput(prisma: PrismaClient) {
         promptZh: row.prompt_zh,
         suggestedDurationSec: parseInt(row.duration_sec) || 60,
         difficulty: row.difficulty || 'L2',
-        sentenceSkeleton: row.skeleton || null,
-        sentencePatterns: sentencePatterns ?? undefined,
         description: row.description || null,
         knowledgePoints: row.knowledge_points || null,
         inkScriptId: inkKeyToId.get(row.ink_script_key) || null,
         sortOrder: 0,
       },
     })
+    topicTitleSceneToId.set(`${row.scene_title}|${row.title}`, topic.id)
     topicCount++
   }
   console.log(`  ✓ ${topicCount} 个训练话题`)
+
+  // ═══ 6b. 句型骨架 ═══
+  type CsvSentencePattern = {
+    scene_title: string
+    topic_title: string
+    pattern: string
+    meaning: string
+    slots: string
+    example: string
+    difficulty: string
+    sort_order: string
+  }
+  const spRows = readCsv<CsvSentencePattern>('sentence_patterns.csv')
+  let spCount = 0
+  for (const row of spRows) {
+    const topicId = topicTitleSceneToId.get(`${row.scene_title}|${row.topic_title}`)
+    if (!topicId) continue
+    await prisma.trainingTopicSentencePattern.create({
+      data: {
+        topicId,
+        pattern: row.pattern,
+        meaning: row.meaning || null,
+        slots: row.slots ? parseJson(row.slots) : undefined,
+        example: row.example || null,
+        difficulty: row.difficulty || 'L1',
+        sortOrder: parseInt(row.sort_order) || 0,
+      },
+    })
+    spCount++
+  }
+  console.log(`  ✓ ${spCount} 个句型骨架`)
 
   // ═══ 7. 话题↔Chunk 关联 ═══
   // 每个话题关联同场景的句块 + 通用句块

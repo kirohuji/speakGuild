@@ -210,9 +210,6 @@ export function PracticeSessionPage() {
     if (detail?.topic.sentencePatterns?.length) {
       detail.topic.sentencePatterns.forEach((p) => objs.push(`${t('practiceSession.usePattern')}: ${p.pattern}`))
     }
-    if (detail?.topic.sentenceSkeleton) {
-      objs.push(`${t('practiceSession.refStructure')}: ${detail.topic.sentenceSkeleton}`)
-    }
     objs.push(`${t('practiceSession.aroundTopic')} "${detail?.topic.title}" ${t('practiceSession.startDialogue')}`)
     if (objs.length === 0) objs.push(t('practiceSession.completionHint'))
     return objs

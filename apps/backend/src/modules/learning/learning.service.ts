@@ -165,6 +165,7 @@ export class LearningService {
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
+            sentencePatterns: { orderBy: { sortOrder: 'asc' } },
             activeChunks: {
               include: { chunk: true },
               orderBy: { sortOrder: 'asc' },
@@ -280,7 +281,6 @@ export class LearningService {
         promptZh: t.promptZh,
         difficulty: t.difficulty,
         suggestedDurationSec: t.suggestedDurationSec,
-        sentenceSkeleton: t.sentenceSkeleton,
         activeChunks: t.activeChunks.map((ac) => ({
           id: ac.chunk.id,
           text: ac.chunk.text,
