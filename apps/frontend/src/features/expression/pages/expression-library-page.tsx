@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import {
   BookMarked, RefreshCw, ExternalLink, Search,
   Trash2, Eye, EyeOff, Check, X, BookOpen,
+  BookText, MessageSquareText, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
@@ -186,41 +188,41 @@ export function ExpressionLibraryPage() {
                   <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
                 </button>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {wordEntries.map((entry, i) => {
                   const isExpanded = expandedItemId === entry.word
                   return (
-                    <div key={entry.word} className={cn(
-                      'rounded-lg border transition-all',
-                      isExpanded ? 'border-blue-500/40 bg-blue-500/5' : 'border-border bg-card',
+                    <Card key={entry.word} className={cn(
+                      'border-0 bg-muted/30 shadow-none transition-colors',
+                      isExpanded && 'bg-primary/[0.06]',
                     )}>
-                      <button onClick={() => setExpandedItemId((prev) => (prev === entry.word ? null : entry.word))}
-                        className="flex w-full items-center justify-between p-3 text-left"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className={cn('text-sm font-bold', isExpanded ? 'text-blue-600 dark:text-blue-400' : 'text-foreground')}>
-                            {entry.word}
-                          </p>
-                          {isExpanded && (
-                            <p className="mt-1 text-xs text-muted-foreground">
+                      <CardContent className="p-0">
+                        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={() => setExpandedItemId((prev) => (prev === entry.word ? null : entry.word))}>
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                            <BookText className="size-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-foreground">{entry.word}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                               收藏于 {new Date(entry.addedAt).toLocaleDateString('zh-CN')}
                             </p>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <span onClick={(e) => { e.stopPropagation(); openDialog(wordDialogItems, i) }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                            title={t('expressionLib.search')}>
-                            <Search className="size-3.5" />
-                          </span>
-                          <span onClick={(e) => { e.stopPropagation(); removeWord(entry.word); toast.success(t('expressionLib.removed')) }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
-                            title={t('expressionLib.remove')}>
-                            <Trash2 className="size-3.5" />
-                          </span>
-                        </div>
-                      </button>
-                    </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <span onClick={(e) => { e.stopPropagation(); openDialog(wordDialogItems, i) }}
+                              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                              title={t('expressionLib.search')}>
+                              <Search className="size-3.5" />
+                            </span>
+                            <span onClick={(e) => { e.stopPropagation(); removeWord(entry.word); toast.success(t('expressionLib.removed')) }}
+                              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
+                              title={t('expressionLib.remove')}>
+                              <Trash2 className="size-3.5" />
+                            </span>
+                            <ChevronRight className={cn('size-4 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
+                          </div>
+                        </button>
+                      </CardContent>
+                    </Card>
                   )
                 })}
               </div>
@@ -250,69 +252,72 @@ export function ExpressionLibraryPage() {
                   <ExternalLink className="size-3" /> 沉浸式
                 </button>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {visibleChunks.map((expr, i) => {
                   const text = expr.chunkText ?? expr.corrected ?? ''
                   const isExpanded = expandedItemId === expr.id
                   return (
-                    <div key={expr.id} className={cn(
-                      'rounded-lg border transition-all',
-                      isExpanded ? 'border-purple-500/40 bg-purple-500/5' : 'border-border bg-card',
+                    <Card key={expr.id} className={cn(
+                      'border-0 bg-muted/30 shadow-none transition-colors',
+                      isExpanded && 'bg-primary/[0.06]',
                     )}>
-                      <button onClick={() => setExpandedItemId((prev) => (prev === expr.id ? null : expr.id))}
-                        className="flex w-full items-center justify-between p-3 text-left"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className={cn('text-sm font-medium truncate', isExpanded ? 'text-purple-600 dark:text-purple-400' : 'text-foreground')}>
-                            {text}
-                          </p>
-                          {expr.sceneName && (
-                            <p className="mt-0.5 text-xs text-muted-foreground">场景：{expr.sceneName}</p>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          {isExpanded && expr.reviewCount > 0 && (
-                            <Badge variant="secondary" className="text-[10px]">已复习{expr.reviewCount}次</Badge>
-                          )}
-                          <span onClick={(e) => { e.stopPropagation(); openDialog(visibleChunkDialogItems, i) }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                            title="查询">
-                            <Search className="size-3.5" />
-                          </span>
-                          <span onClick={async (e) => {
-                            e.stopPropagation()
-                            try {
-                              await expressionApi.remove(expr.id)
-                              toast.success('已移除')
-                              fetchChunks()
-                            } catch { toast.error('移除失败') }
-                          }}
-                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
-                            title="移除">
-                            <Trash2 className="size-3.5" />
-                          </span>
-                        </div>
-                      </button>
-                      {isExpanded && (
-                        <div className="border-t border-purple-500/20 px-3 pb-3 pt-2">
-                          {expr.original && (
-                            <>
-                              <p className="text-xs text-muted-foreground">释义</p>
-                              <p className="text-sm text-foreground">{expr.original}</p>
-                            </>
-                          )}
-                          {expr.lastReviewedAt && (
-                            <p className="mt-2 text-xs text-muted-foreground">
-                              上次复习：{new Date(expr.lastReviewedAt).toLocaleDateString('zh-CN')}
-                            </p>
-                          )}
-                          <button onClick={() => openDialog(visibleChunkDialogItems, i)}
-                            className="mt-2 flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600">
-                            <ExternalLink className="size-3" /> 查看详情
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      <CardContent className="p-0">
+                        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={() => setExpandedItemId((prev) => (prev === expr.id ? null : expr.id))}>
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <MessageSquareText className="size-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <p className="truncate text-sm font-semibold text-foreground">{text}</p>
+                              {expr.reviewCount > 0 && (
+                                <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已复习{expr.reviewCount}次</Badge>
+                              )}
+                            </div>
+                            {expr.sceneName && (
+                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{expr.sceneName}</p>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <span onClick={(e) => { e.stopPropagation(); openDialog(visibleChunkDialogItems, i) }}
+                              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                              title="查询">
+                              <Search className="size-3.5" />
+                            </span>
+                            <span onClick={async (e) => {
+                              e.stopPropagation()
+                              try {
+                                await expressionApi.remove(expr.id)
+                                toast.success('已移除')
+                                fetchChunks()
+                              } catch { toast.error('移除失败') }
+                            }}
+                              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
+                              title="移除">
+                              <Trash2 className="size-3.5" />
+                            </span>
+                            <ChevronRight className={cn('size-4 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="border-t border-border/50 px-3 pb-3 pt-2">
+                            {expr.original && (
+                              <div className="mb-3 rounded-md bg-muted/45 p-2.5">
+                                <p className="text-xs font-medium leading-5 text-foreground">{text}</p>
+                                <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{expr.original}</p>
+                              </div>
+                            )}
+                            {expr.lastReviewedAt && (
+                              <p className="text-xs text-muted-foreground">
+                                上次复习：{new Date(expr.lastReviewedAt).toLocaleDateString('zh-CN')}
+                              </p>
+                            )}
+                            <Button size="sm" variant="outline" className="mt-2 h-8 w-full gap-1.5 text-xs" onClick={() => openDialog(visibleChunkDialogItems, i)}>
+                              <Search className="size-3.5" /> 查看详情
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   )
                 })}
               </div>
