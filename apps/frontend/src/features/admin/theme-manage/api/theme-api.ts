@@ -1,4 +1,4 @@
-import request from '@/lib/request';
+import { get, post, put, del } from '@/lib/request';
 
 // ── 类型定义 ──
 
@@ -59,36 +59,36 @@ export type UpdateThemePresetInput = Partial<CreateThemePresetInput>;
 
 export const themeAdminApi = {
   /** 获取所有主题（含未启用） */
-  list: () => request.get<ThemePreset[]>('/admin/themes'),
+  list: () => get<ThemePreset[]>('/admin/themes'),
 
   /** 获取单个主题 */
-  get: (id: string) => request.get<ThemePreset>(`/admin/themes/${id}`),
+  get: (id: string) => get<ThemePreset>(`/admin/themes/${id}`),
 
   /** 创建主题 */
   create: (data: CreateThemePresetInput) =>
-    request.post<ThemePreset>('/admin/themes', data),
+    post<ThemePreset>('/admin/themes', data),
 
   /** 更新主题 */
   update: (id: string, data: UpdateThemePresetInput) =>
-    request.put<ThemePreset>(`/admin/themes/${id}`, data),
+    put<ThemePreset>(`/admin/themes/${id}`, data),
 
   /** 删除主题 */
-  remove: (id: string) => request.delete(`/admin/themes/${id}`),
+  remove: (id: string) => del(`/admin/themes/${id}`),
 };
 
 // ── 用户端 API ──
 
 export const themeApi = {
   /** 获取所有启用的主题 */
-  listActive: () => request.get<ThemePreset[]>('/themes'),
+  listActive: () => get<ThemePreset[]>('/themes'),
 
   /** 获取当前用户激活的主题 */
-  getActive: () => request.get<ThemePreset>('/themes/active'),
+  getActive: () => get<ThemePreset>('/themes/active'),
 
   /** 获取默认主题（无需登录） */
-  getDefault: () => request.get<ThemePreset>('/themes/default'),
+  getDefault: () => get<ThemePreset>('/themes/default'),
 
   /** 用户切换主题 */
   setActive: (themePresetId: string | null) =>
-    request.put('/themes/active', { themePresetId }),
+    put('/themes/active', { themePresetId }),
 };

@@ -104,7 +104,7 @@ function NotificationCard({ item, onClick, formatRelativeTime }: { item: Notific
               <Clock className="h-3 w-3" />
               {formatRelativeTime(item.createdAt)}
             </span>
-            {item.type === 'broadcast' || item.type === 'direct' ? (
+            {item.type === 'broadcast' || item.type === 'targeted' ? (
               <Badge
                 variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
                 className="h-5 text-[10px] px-1.5 font-normal"

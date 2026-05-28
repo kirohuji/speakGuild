@@ -107,6 +107,9 @@ export function ProfilePage() {
 
   useEffect(() => {
     setBottomNavVisible(mobileView === 'home')
+    return () => {
+      setBottomNavVisible(true)
+    }
   }, [mobileView, setBottomNavVisible])
 
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
