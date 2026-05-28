@@ -1,4 +1,4 @@
-import { ChevronRight, Lightbulb, MessageSquareText } from 'lucide-react'
+import { ChevronRight, Lightbulb, MessageSquareText, BookmarkPlus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,6 +15,7 @@ interface ChunkActivationPanelProps {
   onActivate: (chunkId: string) => void
   onExpand: (chunkId: string) => void
   onInspect: (chunkId: string) => void
+  onCollect: (chunk: ChunkItem) => void
 }
 
 export function ChunkActivationPanel({
@@ -25,6 +26,7 @@ export function ChunkActivationPanel({
   onActivate,
   onExpand,
   onInspect,
+  onCollect,
 }: ChunkActivationPanelProps) {
   const hasChunks = chunks.length > 0
 
@@ -56,6 +58,7 @@ export function ChunkActivationPanel({
                   if (!activatedIds.has(chunk.id)) onActivate(chunk.id)
                 }}
                 onInspect={() => onInspect(chunk.id)}
+                onCollect={() => onCollect(chunk)}
               />
             ))}
           </div>
@@ -75,12 +78,14 @@ function ChunkActivationItem({
   expanded,
   onClick,
   onInspect,
+  onCollect,
 }: {
   chunk: ChunkItem
   collected: boolean
   expanded: boolean
   onClick: () => void
   onInspect: () => void
+  onCollect: () => void
 }) {
   return (
     <Card
@@ -117,21 +122,17 @@ function ChunkActivationItem({
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{example.zh}</p>
               {example.note && <p className="mt-1 text-[11px] text-muted-foreground">{example.note}</p>}
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-1"
-            onClick={(event) => {
-              event.stopPropagation()
-              onInspect()
-            }}
-          >
-            查看完整讲解
-          </Button>
-        </div>
-      )}
+            ))}
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={(e) => { e.stopPropagation(); onInspect() }}>
+                <Search className="size-3.5" /> 查看
+              </Button>
+              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collected} onClick={onCollect}>
+                <BookmarkPlus className="size-3.5" /> {collected ? '已加入' : '加入学习库'}
+              </Button>
+            </div>
+          </div>
+        )}
         </CardContent>
       </Card>
   )

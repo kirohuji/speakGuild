@@ -75,7 +75,7 @@ export function LearningUnitPage() {
     // Also save to local Zustand
     addWord(word)
     try {
-      await expressionApi.create({ type: 'scene_phrase', chunkText: word, original: meaning, sceneName: unit?.title })
+      await expressionApi.create({ type: 'word', chunkText: word, original: meaning, sceneName: unit?.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }

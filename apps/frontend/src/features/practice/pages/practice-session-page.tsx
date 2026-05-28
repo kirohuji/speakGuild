@@ -391,7 +391,7 @@ export function PracticeSessionPage() {
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
     try {
-      await expressionApi.create({ type: 'scene_phrase', chunkText: word, original: meaning, sceneName: detail?.scene.title })
+      await expressionApi.create({ type: 'word', chunkText: word, original: meaning, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -404,6 +404,14 @@ export function PracticeSessionPage() {
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
   }, [])
+
+  const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
+    try {
+      await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
+      setCollectedTexts((prev) => new Set([...prev, chunk.text]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [detail])
 
   // ==================== Practice: Send Input ====================
   const sendUserInput = useCallback(async (text: string) => {
@@ -780,6 +788,7 @@ export function PracticeSessionPage() {
                   onActivate={activateChunk}
                   onExpand={setExpandedChunkId}
                   onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
+                  onCollect={handleCollectChunk}
                 />
               </TabsContent>
             </Tabs>
