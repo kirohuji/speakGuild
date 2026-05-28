@@ -253,12 +253,13 @@ export function PracticeSessionPage() {
       expressionApi.list({ type: 'chunk' }).catch(() => []),
       expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
       expressionApi.list({ type: 'word' }).catch(() => []),
-    ]).then(([chunkItems, phraseItems, wordItems]) => {
+    ]).then(([chunkRes, phraseRes, wordRes]) => {
       const set = new Set<string>()
-      for (const item of [...(Array.isArray(chunkItems) ? chunkItems : []), ...(Array.isArray(phraseItems) ? phraseItems : [])]) {
+      const extractItems = (res: any) => Array.isArray(res) ? res : (res?.items ?? [])
+      for (const item of [...extractItems(chunkRes), ...extractItems(phraseRes)]) {
         if (item.chunkText) set.add(item.chunkText)
       }
-      for (const item of (Array.isArray(wordItems) ? wordItems : [])) {
+      for (const item of extractItems(wordRes)) {
         if (item.original) set.add(item.original)
       }
       setCollectedTexts(set)
