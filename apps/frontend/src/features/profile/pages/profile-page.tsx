@@ -48,6 +48,7 @@ import { getFavorites, type FavoriteItem } from '@/features/assets/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWordsStore, type WordEntry } from '@/stores/assets.store'
+import { AppearanceDrawer } from '@/features/profile/components/appearance-drawer'
 import { useConfigStore } from '@/stores/config.store'
 import { useLayoutStore } from '@/stores/layout.store'
 import {
@@ -368,36 +369,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
         />
       </IosSection>
 
-      <Drawer open={showThemeDialog} onOpenChange={setShowThemeDialog}>
-        <DrawerContent className="rounded-t-3xl">
-          <DrawerHeader>
-            <DrawerTitle className="text-base">选择主题</DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4 pb-6">
-            {[
-              { value: 'light', label: t('profile.themeLight') },
-              { value: 'dark', label: t('profile.themeDark') },
-              { value: 'system', label: t('profile.themeSystem') },
-            ].map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => {
-                  setTheme(item.value)
-                  setShowThemeDialog(false)
-                }}
-                className={cn(
-                  'flex w-full items-center justify-between border-b px-1 py-3 text-left text-sm',
-                  (theme || 'system') === item.value && 'font-medium'
-                )}
-              >
-                <span>{item.label}</span>
-                {(theme || 'system') === item.value && <CheckCircle2 className="h-4 w-4 text-primary" />}
-              </button>
-            ))}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <AppearanceDrawer open={showThemeDialog} onOpenChange={setShowThemeDialog} />
 
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
         <DrawerContent className="rounded-t-3xl">

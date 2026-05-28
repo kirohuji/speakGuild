@@ -9,18 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/auth-provider'
 import { cn } from '@/lib/cn'
+import { ImmersiveBackground } from '@/components/common/immersive-background'
 
 const HOME_SCENE = {
   quote: 'Say one real sentence today.',
   translation: '今天先说出一句真实会用的话。',
   author: 'EngJourney Daily',
 }
-
-const lightHomeBackground =
-  'linear-gradient(135deg, rgba(255,255,255,.66), transparent 34%), linear-gradient(180deg, #d8f5ef 0%, #eefbf5 54%, #ffffff 100%)'
-
-const darkHomeBackground =
-  'radial-gradient(circle at 50% 8%, rgba(255,255,255,.18), transparent 22%), radial-gradient(circle at 18% 16%, rgba(244,114,182,.22), transparent 30%), radial-gradient(circle at 84% 76%, rgba(251,191,36,.13), transparent 30%), linear-gradient(155deg, #090713 0%, #161124 48%, #271226 100%)'
 
 function useClock() {
   const [now, setNow] = useState(new Date())
@@ -75,43 +70,8 @@ export function EnglishHomePage() {
     <div className="mx-auto max-w-2xl overflow-hidden">
       <motion.section
         className="relative flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground"
-        style={{
-          backgroundImage: isDark ? darkHomeBackground : lightHomeBackground,
-          backgroundSize: '160% 160%, 100% 100%',
-        }}
-        animate={{
-          backgroundPosition: [
-            '50% 0%, 0% 0%',
-            '42% 12%, 0% 0%',
-            '58% 4%, 0% 0%',
-            '50% 0%, 0% 0%',
-          ],
-        }}
-        transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
       >
-        {isDark && (
-          <div className="absolute inset-0" aria-hidden>
-            <motion.div
-              className="absolute left-[-24%] top-[-18%] h-[42rem] w-[42rem] rounded-full bg-pink-300/18 blur-3xl"
-              animate={{
-                opacity: [0.42, 0.68, 0.48, 0.42],
-                x: ['0%', '8%', '2%', '0%'],
-                y: ['0%', '5%', '10%', '0%'],
-              }}
-              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <motion.div
-              className="absolute bottom-[-18%] right-[-26%] h-[38rem] w-[38rem] rounded-full bg-amber-200/12 blur-3xl"
-              animate={{
-                opacity: [0.34, 0.56, 0.42, 0.34],
-                x: ['0%', '-7%', '-2%', '0%'],
-                y: ['0%', '-5%', '-10%', '0%'],
-              }}
-              transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_16%,rgba(255,255,255,.16),transparent_24%),linear-gradient(180deg,transparent_0%,rgba(7,5,18,.38)_100%)]" />
-          </div>
-        )}
+        <ImmersiveBackground />
 
         {/* 时钟 */}
         <motion.div

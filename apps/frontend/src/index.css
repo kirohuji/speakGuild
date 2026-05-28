@@ -231,20 +231,22 @@
 
   .app-surface {
     background-color: hsl(var(--background));
-    background-image:
+    background-image: var(--app-bg-image,
       radial-gradient(circle at 18% 0%, hsl(166 56% 88% / 0.48), transparent 28rem),
       radial-gradient(circle at 88% 10%, hsl(207 86% 92% / 0.58), transparent 24rem),
-      linear-gradient(180deg, hsl(156 43% 97%) 0%, hsl(204 56% 98%) 52%, hsl(0 0% 100%) 100%);
+      linear-gradient(180deg, hsl(156 43% 97%) 0%, hsl(204 56% 98%) 52%, hsl(0 0% 100%) 100%)
+    );
     background-attachment: fixed;
   }
 
   .dark .app-surface {
     background-color: hsl(var(--background));
-    background-image:
+    background-image: var(--app-bg-image,
       radial-gradient(circle at 50% 0%, hsl(0 0% 100% / 0.08), transparent 22rem),
       radial-gradient(circle at 18% 14%, hsl(330 84% 62% / 0.14), transparent 26rem),
       radial-gradient(circle at 88% 76%, hsl(42 96% 60% / 0.08), transparent 26rem),
-      linear-gradient(155deg, hsl(252 43% 5%) 0%, hsl(258 36% 10%) 50%, hsl(336 36% 11%) 100%);
+      linear-gradient(155deg, hsl(252 43% 5%) 0%, hsl(258 36% 10%) 50%, hsl(336 36% 11%) 100%)
+    );
   }
 
   /* iOS 底部安全区 */

@@ -297,14 +297,52 @@ model DailyActivity {
 }
 
 model UserPreference {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @unique
-  autoPlay  Boolean  @default(false)
-  language  String   @default("zh-CN")
-  theme     String   @default("system")
-  updatedAt DateTime @updatedAt
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String       @unique
+  autoPlay       Boolean      @default(false)
+  language       String       @default("zh-CN")
+  theme          String       @default("system")
+  themePresetId  String?
+  themePreset    ThemePreset? @relation(fields: [themePresetId], references: [id], onDelete: SetNull)
+  updatedAt      DateTime     @updatedAt
   @@map("user_preference")
+}
+
+// ── 沉浸式主题套装 ──
+model ThemePreset {
+  id          String   @id @default(cuid())
+  name        String                           // 主题名称
+  description String?                          // 描述
+  sortOrder   Int      @default(0)            // 排序
+  isActive    Boolean  @default(true)         // 是否启用
+  isDefault   Boolean  @default(false)        // 是否默认主题
+
+  // 背景类型: gradient | image | video
+  bgType      String   @default("gradient")
+
+  // ── Light 模式色板（JSON: { background, foreground, primary, card, muted, accent, border ... }）──
+  lightColors       Json?
+  // ── Light 模式背景（CSS gradient string 或图片 URL）──
+  lightBackground   String?  @db.Text
+  // ── Light 模式装饰配置（JSON: [{ type, color, position, size, blur, animation }]）──
+  lightDecorations  Json?
+
+  // ── Dark 模式（同上）──
+  darkColors        Json?
+  darkBackground    String?  @db.Text
+  darkDecorations   Json?
+
+  // ── 音效 ──
+  bgmUrl            String?  // 背景音效 URL（COS 上）
+  bgmVolume         Float    @default(0.3)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userPreferences UserPreference[]
+
+  @@map("theme_preset")
 }
 
 model SystemConfig {

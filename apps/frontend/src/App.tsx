@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { NativeBridgeProvider } from '@/lib/native'
 import { AuthProvider } from '@/providers/auth-provider'
+import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
@@ -59,12 +60,14 @@ import { AdminCharactersPage } from '@/features/admin/pages/admin-characters-pag
 import { AdminStoriesPage } from '@/features/admin/pages/admin-stories-page'
 import { AdminMapsPage } from '@/features/admin/pages/admin-maps-page'
 import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
+import { AdminThemesPage } from '@/features/admin/theme-manage/pages/theme-list-page'
 
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <NativeBridgeProvider>
         <AuthProvider>
+          <ThemePresetProvider>
           <HashRouter>
           <AuthRouteGate>
             <Routes>
@@ -86,6 +89,7 @@ export default function App() {
                 <Route path="nqtr" element={<AdminNqtrPage />} />
                 <Route path="script" element={<AdminScriptPage />} />
                 <Route path="achievements" element={<AdminAchievementsPage />} />
+                <Route path="themes" element={<AdminThemesPage />} />
               </Route>
 
               {/* 用户端 — RootLayout */}
@@ -158,6 +162,7 @@ export default function App() {
             </Routes>
           </AuthRouteGate>
         </HashRouter>
+          </ThemePresetProvider>
       </AuthProvider>
       </NativeBridgeProvider>
     </ThemeProvider>

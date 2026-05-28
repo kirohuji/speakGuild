@@ -113,6 +113,12 @@ const menuItems: MenuItem[] = [
     icon: Settings,
     path: '/admin/settings',
   },
+  {
+    key: 'themes',
+    label: '主题管理',
+    icon: Palette,
+    path: '/admin/themes',
+  },
 ]
 
 interface AdminSidebarProps {
