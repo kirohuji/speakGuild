@@ -557,13 +557,33 @@ export class LearningService {
 
   /**
    * 开始学习一个单元——创建进度记录（如果不存在），将其设为当前学习
+   * 限制同时最多学习 MAX_CONCURRENT_UNITS 个单元
    */
+  private readonly MAX_CONCURRENT_UNITS = 3;
+
   async startUnit(userId: string, unitId: string) {
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
       select: { id: true },
     });
     if (!scene) return null;
+
+    // 检查是否已达到最大并行学习数
+    const existingCount = await this.prisma.userSceneProgress.count({
+      where: {
+        userId,
+        mastery: { lt: 100 },
+      },
+    });
+
+    // 检查该单元是否已有进度（已学过的允许继续）
+    const existing = await this.prisma.userSceneProgress.findUnique({
+      where: { userId_sceneId: { userId, sceneId: unitId } },
+    });
+
+    if (!existing && existingCount >= this.MAX_CONCURRENT_UNITS) {
+      throw new Error(`最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`);
+    }
 
     const record = await this.prisma.userSceneProgress.upsert({
       where: { userId_sceneId: { userId, sceneId: unitId } },

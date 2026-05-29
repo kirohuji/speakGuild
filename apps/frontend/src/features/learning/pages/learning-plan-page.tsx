@@ -23,6 +23,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { cn } from '@/lib/cn'
+import { toast } from 'sonner'
 import {
   learningApi,
   type LearningCategory,
@@ -201,27 +202,26 @@ function MyLearningView({
     <div className="space-y-5">
       <LearningWeekTracker todayPlan={todayPlan} />
 
-      {primaryUnit && (
+      {/* 进行中的单元 - 统一卡片，默认全部展开 */}
+      {inProgress.length > 0 && (
         <section>
-          <FeaturedLearningCard unit={primaryUnit} todayPlan={todayPlan} />
-        </section>
-      )}
-
-      <TodayPracticeSection tasks={practiceTasks} />
-
-      {otherUnits.length > 0 && (
-        <section>
-          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.otherLearning')}</h2>
+          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
+            {t('learning.inProgress')}
+          </h2>
           <div className="space-y-2">
-            {otherUnits.map((unit) => (
-              <MyUnitCard key={unit.id} unit={unit} />
+            {inProgress.map((unit) => (
+              <InProgressUnitCard key={unit.id} unit={unit} todayPlan={todayPlan} />
             ))}
           </div>
         </section>
       )}
 
-      {completed.length > 0 && (
-        <section>
+      {/* 学习进度概览 */}
+      {/* {inProgress.length > 0 && (
+        <TodayProgressSummary units={inProgress} />
+      )} */}
+
+      {completed.length > 0 && (<section>
           <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
             {t('learning.completed')}
           </h2>
@@ -236,56 +236,52 @@ function MyLearningView({
   )
 }
 
-function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: TodayPlan | null }) {
+// ── 进行中的单元卡片（可展开/折叠，默认展开）──
+
+function InProgressUnitCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: TodayPlan | null }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const pct = unit.completionPercent
   const Icon = getCategoryIcon(unit.categoryName)
   const nextTopic = unit.topics?.[0]
   const unitTasks = (todayPlan?.tasks ?? []).filter((task) => task.unitId === unit.id)
   const prepTasks = unitTasks.filter((task) => task.type === 'vocab' || task.type === 'chunk')
-  const taskSummary = getTodayTaskSummary(todayPlan)
 
   return (
     <div className="overflow-hidden rounded-lg bg-muted/30">
       <div className="p-3.5">
         <Link to={`/learning/units/${unit.id}`} className="flex gap-3">
-          <div className="relative flex aspect-square size-[92px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
+          <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-            <Icon className="relative size-8" />
+            <Icon className="relative size-7" />
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-muted-foreground">{t('learning.continue')}</p>
-                <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-5 text-foreground">{unit.title}</h3>
+                <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
-              <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pct}%</Badge>
             </div>
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+            <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
               <span>{unit.vocabCount} {t('learning.vocab')}</span>
               <span>{unit.chunkCount} {t('learning.chunks')}</span>
               <span>{unit.topicCount} {t('learning.topics')}</span>
             </div>
+
+            <Progress value={pct} className="mt-2 h-1" />
+
+            {nextTopic && (
+              <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Play className="size-3 text-primary" />
+                <span className="line-clamp-1">{nextTopic.title}</span>
+              </div>
+            )}
           </div>
         </Link>
 
-        <div className="mt-3 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Progress value={pct} className="h-1 flex-1" />
-            <span className="text-[10px] text-muted-foreground">{pct}%</span>
-          </div>
-          {nextTopic && (
-            <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
-              <Play className="size-3.5 text-primary" />
-              <span className="line-clamp-1 flex-1">{nextTopic.title}</span>
-              <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{nextTopic.difficulty}</Badge>
-            </div>
-          )}
-        </div>
-
+        {/* 今日学习暂时隐藏
         <button
           type="button"
           onClick={() => setExpanded((open) => !open)}
@@ -294,7 +290,9 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
           <div>
             <p className="text-xs font-medium text-foreground">{t('learning.todayStudy')}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {taskSummary.total > 0 ? `${taskSummary.done}/${taskSummary.total} ${t('learning.completed')}` : t('learning.noTasks')}
+              {prepTasks.length > 0
+                ? `${prepTasks.filter((t) => (t.done ?? 0) > 0).length}/${prepTasks.length} ${t('learning.completed')}`
+                : t('learning.noTasks')}
             </p>
           </div>
           <span className="flex items-center gap-0.5 text-xs text-primary">
@@ -314,6 +312,8 @@ function FeaturedLearningCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: To
             )}
           </div>
         )}
+        */}
+
       </div>
     </div>
   )
@@ -364,31 +364,41 @@ function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
   )
 }
 
-function TodayPracticeSection({ tasks }: { tasks: TodayTask[] }) {
+function TodayProgressSummary({ units }: { units: MyUnit[] }) {
   const { t } = useTranslation()
-  if (tasks.length === 0) {
-    return (
-      <section className="rounded-lg bg-muted/30 px-4 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground">
-            <ListChecks className="size-5" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">{t('learning.todayPractice')}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.noPracticeHint')}</p>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  const totals = units.reduce(
+    (acc, u) => {
+      const p = u.progress
+      if (!p) return acc
+      return {
+        vocabDone: acc.vocabDone + p.vocabLearned,
+        vocabTotal: acc.vocabTotal + p.vocabTotal,
+        chunkDone: acc.chunkDone + p.chunkMastered,
+        chunkTotal: acc.chunkTotal + p.chunkTotal,
+        practiceDone: acc.practiceDone + p.completedPracticeCount,
+        practiceTotal: acc.practiceTotal + u.topicCount,
+      }
+    },
+    { vocabDone: 0, vocabTotal: 0, chunkDone: 0, chunkTotal: 0, practiceDone: 0, practiceTotal: 0 },
+  )
+  const overallTotal = totals.vocabTotal + totals.chunkTotal + totals.practiceTotal
+  const overallDone = totals.vocabDone + totals.chunkDone + totals.practiceDone
+  const overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0
 
   return (
-    <section>
-      <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.todayPractice')}</h2>
-      <div className="space-y-2">
-        {tasks.map((task) => (
-          <TodayTaskRow key={task.id} task={task} />
-        ))}
+    <section className="rounded-lg bg-muted/30 p-3.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ListChecks className="size-4 text-primary" />
+          <p className="text-xs font-semibold text-foreground">{t('learning.progressOverview')}</p>
+        </div>
+        <span className="text-[11px] font-medium text-muted-foreground">{overallPct}%</span>
+      </div>
+      <Progress value={overallPct} className="mt-2 h-1.5" />
+      <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
+        <span>{t('learning.vocab')} {totals.vocabDone}/{totals.vocabTotal}</span>
+        <span>{t('learning.chunks')} {totals.chunkDone}/{totals.chunkTotal}</span>
+        <span>{t('learning.topics')} {totals.practiceDone}/{totals.practiceTotal}</span>
       </div>
     </section>
   )
@@ -661,9 +671,15 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
     try {
       await learningApi.startUnit(unit.id)
       navigate(`/learning/units/${unit.id}`)
-    } catch {
-      // 即使失败也允许跳转
-      navigate(`/learning/units/${unit.id}`)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || ''
+      if (msg.includes('最多同时')) {
+        toast.error(msg)
+      } else {
+        navigate(`/learning/units/${unit.id}`)
+      }
+    } finally {
+      setAcquiring(false)
     }
   }, [unit.id, unit.isUnlocked, acquiring, navigate])
 
