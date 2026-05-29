@@ -42,7 +42,7 @@ async function bootstrap() {
   expressApp.use(json());
   expressApp.use(urlencoded({ extended: true }));
 
-  app.setGlobalPrefix('api/v1/guide-exam');
+  app.setGlobalPrefix('api/v1/manyu');
 
   app.enableCors({
     origin: allowedOrigins,

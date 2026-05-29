@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BookMarked, Search, Trash2, BookOpen,
-  BookText, MessageSquareText, ChevronRight, ExternalLink, Layers,
+  BookText, MessageSquareText, ExternalLink, Layers,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -37,7 +36,7 @@ const PAGE_SIZE = 30
 export function ExpressionLibraryPage() {
   const { t } = useTranslation()
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
-  const [reviewState, setReviewState] = useState<ReviewState>('reviewing')
+  const [reviewState, setReviewState] = useState<ReviewState>('done')
 
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
@@ -88,7 +87,7 @@ export function ExpressionLibraryPage() {
   // 切换一级 tab 时重置二级 tab
   const handleLibraryTabChange = useCallback((value: string) => {
     setLibraryTab(value as LibraryTab)
-    setReviewState('reviewing')
+    setReviewState('done')
     setExpandedItemId(null)
   }, [])
 
@@ -144,8 +143,8 @@ export function ExpressionLibraryPage() {
   // 这里做一个轻量级的额外请求或者在切换时更新
   // 简化方案：pills 显示当前结果数量
   const filterPills = [
-    { value: 'reviewing' as ReviewState, label: t('expressionLib.reviewing') },
     { value: 'done' as ReviewState, label: t('expressionLib.done') },
+    { value: 'reviewing' as ReviewState, label: t('expressionLib.reviewing') },
     { value: 'mastered' as ReviewState, label: t('expressionLib.mastered') },
   ]
 
@@ -225,29 +224,28 @@ export function ExpressionLibraryPage() {
               >
                 <Trash2 className="size-3.5" />
               </span>
-              <ChevronRight className={cn('size-4 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
             </div>
           </button>
           {isExpanded && (
             <div className="border-t border-border/50 px-3 pb-3 pt-2">
-              {expr.original && !isWord && (
-                <div className="mb-3 rounded-md bg-muted/45 p-2.5">
+              {/* 显示简要意思 */}
+              {isWord ? (
+                <div className="rounded-md bg-muted/45 p-2.5">
+                  <p className="text-xs leading-5 text-muted-foreground">{expr.chunkText || expr.corrected || t('expressionLib.noMeaning')}</p>
+                </div>
+              ) : (
+                <div className="rounded-md bg-muted/45 p-2.5">
                   <p className="text-xs font-medium leading-5 text-foreground">{text}</p>
-                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{expr.original}</p>
+                  {expr.original && (
+                    <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{expr.original}</p>
+                  )}
                 </div>
               )}
               {expr.lastReviewedAt && (
-                <p className="text-xs text-muted-foreground">
+                <p className="mt-2 text-xs text-muted-foreground">
                   {t('expressionLib.lastReview')}{new Date(expr.lastReviewedAt).toLocaleDateString('zh-CN')}
                 </p>
               )}
-              <Button
-                size="sm" variant="outline"
-                className="mt-2 h-8 w-full gap-1.5 text-xs"
-                onClick={() => openDialog(visibleDialogItems, index)}
-              >
-                <Search className="size-3.5" /> {t('expressionLib.viewDetail')}
-              </Button>
             </div>
           )}
         </CardContent>
