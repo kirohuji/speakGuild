@@ -11,7 +11,7 @@ import {
   GraduationCap, CheckCircle2, Lightbulb, Crown, Sun, Moon, Monitor,
   Globe, Database, Zap, TrendingUp, Target, Flame, Camera,
   IdCard, PencilLine, LogOut, ShieldAlert, Phone, Mail,
-  MessageSquare,
+  MessageSquare, Gift,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,6 +66,7 @@ import {
   listLinkedAccounts, linkSocialAccount, unlinkAccount,
   type LinkedAccount,
 } from '@/features/account/api'
+import { pointsApi, type PointsBalance } from '@/features/points/api'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 
@@ -278,14 +279,17 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   const [showMemberDrawer, setShowMemberDrawer] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [pointsBalance, setPointsBalance] = useState(0)
 
   useEffect(() => {
     Promise.allSettled([
       getUserProfile(),
       getCurrentAvatar(),
-    ]).then(([upRes, avRes]) => {
+      pointsApi.getBalance(),
+    ]).then(([upRes, avRes, ptsRes]) => {
       if (upRes.status === 'fulfilled') setUserProfile(upRes.value)
       if (avRes.status === 'fulfilled') setAvatarUrl(avRes.value?.url ?? null)
+      if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
     })
   }, [])
 
@@ -332,9 +336,12 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
 
           <div className="min-w-0 flex-1">
             <p className="text-base font-bold leading-tight">{nickname}</p>
-            <div className="mt-1.5">
+            <div className="mt-1.5 flex items-center gap-1.5">
               <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
                 {t('member.freeUser')}
+              </Badge>
+              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] border-amber-500/30 text-amber-600">
+                <Gift className="size-2.5" />{pointsBalance}
               </Badge>
             </div>
           </div>

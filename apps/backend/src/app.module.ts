@@ -27,6 +27,7 @@ import { ExpressionModule } from './modules/expression/expression.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ExplorationModule } from './modules/exploration/exploration.module';
 import { LearningModule } from './modules/learning/learning.module';
+import { PointsModule } from './modules/points/points.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { LearningModule } from './modules/learning/learning.module';
     OnboardingModule,
     ExplorationModule,
     LearningModule,
+    PointsModule,
   ],
 })
 export class AppModule {}

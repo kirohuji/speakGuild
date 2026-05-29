@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { useTheme } from 'next-themes'
 import {
-  BookOpen,
+  BookOpen, Gift, CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,6 +11,8 @@ import { useAuth } from '@/providers/auth-provider'
 import { cn } from '@/lib/cn'
 import { ImmersiveBackground } from '@/components/common/immersive-background'
 import { get } from '@/lib/request'
+import { pointsApi, type CheckInStatus, type PointsBalance } from '@/features/points/api'
+import { toast } from 'sonner'
 
 interface DailySentence {
   quote: string
@@ -46,6 +48,33 @@ export function EnglishHomePage() {
   const [dailySentence, setDailySentence] = useState<DailySentence>(FALLBACK_SENTENCE)
   const clock = useClock()
   const isDark = resolvedTheme === 'dark' || theme === 'dark'
+
+  // Check-in state
+  const [checkInStatus, setCheckInStatus] = useState<CheckInStatus | null>(null)
+  const [checkInLoading, setCheckInLoading] = useState(false)
+  const [points, setPoints] = useState(0)
+
+  const refreshCheckIn = useCallback(() => {
+    pointsApi.getCheckInStatus().then(setCheckInStatus).catch(() => {})
+    pointsApi.getBalance().then((b) => setPoints(b.points)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    refreshCheckIn()
+  }, [refreshCheckIn])
+
+  const handleCheckIn = async () => {
+    setCheckInLoading(true)
+    try {
+      const result = await pointsApi.checkIn()
+      toast.success(result.message)
+      refreshCheckIn()
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || '签到失败')
+    } finally {
+      setCheckInLoading(false)
+    }
+  }
 
   useEffect(() => {
     // 获取每日句子
@@ -129,10 +158,10 @@ export function EnglishHomePage() {
 
         <motion.div
           className={cn(
-            'relative z-10 w-full max-w-[330px] rounded-[30px] border px-6 py-7 text-center backdrop-blur-2xl',
+            'relative z-10 w-full max-w-[330px] rounded-[30px] border px-6 py-7 text-center backdrop-blur-xl',
             isDark
-              ? 'border-white/18 bg-white/[0.12] shadow-[0_30px_90px_rgba(0,0,0,.4)]'
-              : 'border-white/35 bg-white/30 shadow-[0_24px_80px_rgba(42,105,96,.18)]',
+              ? 'border-white/12 bg-white/[0.06] shadow-[0_30px_90px_rgba(0,0,0,.4)]'
+              : 'border-white/20 bg-white/15 shadow-[0_24px_80px_rgba(42,105,96,.18)]',
           )}
           initial={{ opacity: 0, y: 18, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -148,6 +177,45 @@ export function EnglishHomePage() {
           <p className={cn('mx-auto mt-5 max-w-[220px] text-[11px] font-medium uppercase tracking-[0.14em]', isDark ? 'text-rose-100/58' : 'text-slate-500')}>
             {dailySentence.author}
           </p>
+        </motion.div>
+
+        {/* 签到按钮 */}
+        <motion.div
+          className="relative z-10"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {checkInStatus?.checkedIn ? (
+            <div className={cn(
+              'flex items-center gap-2 rounded-full border px-5 py-2.5 backdrop-blur-2xl',
+              isDark
+                ? 'border-emerald-400/30 bg-emerald-400/[0.10]'
+                : 'border-emerald-500/25 bg-emerald-50/70',
+            )}>
+              <CheckCircle2 className="size-4 text-emerald-500" />
+              <span className={cn('text-sm font-medium', isDark ? 'text-emerald-300' : 'text-emerald-700')}>
+                今日已签到 · 连续{checkInStatus.currentStreak}天
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCheckIn}
+              disabled={checkInLoading}
+              className={cn(
+                'flex items-center gap-2 rounded-full border px-5 py-2.5 backdrop-blur-2xl transition-all active:scale-95',
+                isDark
+                  ? 'border-amber-400/30 bg-amber-400/[0.12] hover:bg-amber-400/[0.20]'
+                  : 'border-amber-500/25 bg-amber-50/70 hover:bg-amber-100/80',
+              )}
+            >
+              <Gift className="size-4 text-amber-500" />
+              <span className={cn('text-sm font-medium', isDark ? 'text-amber-200' : 'text-amber-800')}>
+                {checkInLoading ? '签到中...' : '每日签到'}
+              </span>
+            </button>
+          )}
         </motion.div>
       </motion.section>
     </div>

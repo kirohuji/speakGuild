@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AlipayProvider } from './providers/alipay.provider';
 import { WechatProvider } from './providers/wechat.provider';
 import { RevenueCatService } from './revenuecat/revenuecat.service';
+import { PointsService } from '../points/points.service';
 import type { PaymentProvider, CallbackVerification } from './providers/payment-provider.interface';
 import type { CreateOrderDto, OrderResult } from './dto/create-order.dto';
 
@@ -15,6 +16,7 @@ export class PayService {
     private readonly alipayProvider: AlipayProvider,
     private readonly wechatProvider: WechatProvider,
     private readonly revenueCatService: RevenueCatService,
+    private readonly pointsService: PointsService,
   ) {}
 
   private getProvider(method: string): PaymentProvider {
@@ -33,24 +35,45 @@ export class PayService {
     }
 
     const isYearly = dto.billingCycle === 'yearly';
-    const amount = isYearly && plan.yearlyPrice ? plan.yearlyPrice : plan.price;
+    let amount = isYearly && plan.yearlyPrice ? plan.yearlyPrice : plan.price;
     const durationDays = isYearly ? 365 : plan.durationDays;
+
+    // Points redemption: 100 points = 1 yuan (100 fen)
+    const maxPointsDiscount = Math.min(dto.usePoints ?? 0, amount);
+    const pointsUsed = maxPointsDiscount > 0 ? maxPointsDiscount : 0;
+    const finalAmount = amount - pointsUsed;
 
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     const orderNo = `ECHOON${timestamp}${random}`;
+
+    // Deduct points if used
+    if (pointsUsed > 0) {
+      await this.pointsService.redeemPoints(userId, pointsUsed, orderNo);
+    }
 
     const order = await this.prisma.order.create({
       data: {
         orderNo,
         userId,
         planId: plan.id,
-        amount,
+        amount: finalAmount,
         paymentMethod: dto.paymentMethod,
         billingCycle: dto.billingCycle,
-        status: 'pending',
+        status: finalAmount <= 0 ? 'paid' : 'pending',
       },
     });
+
+    // If fully paid by points, activate membership directly
+    if (finalAmount <= 0) {
+      await this.activateMembership(userId, plan.id, durationDays);
+      return {
+        orderNo: order.orderNo,
+        amount: 0,
+        paymentMethod: dto.paymentMethod,
+        status: 'paid',
+      };
+    }
 
     const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`;
     const notifyUrl = `${baseUrl}/api/pay/callback/${dto.paymentMethod}`;
@@ -59,7 +82,7 @@ export class PayService {
     const provider = this.getProvider(dto.paymentMethod);
     const result = await provider.createPayment({
       orderNo,
-      amount,
+      amount: finalAmount,
       subject: `${plan.name} - ${isYearly ? '年付' : '月付'}`,
           body: `EngJourney 会员 - ${plan.name}`,
       notifyUrl,
@@ -67,6 +90,10 @@ export class PayService {
     });
 
     if (!result.success) {
+      // Refund points if payment creation fails
+      if (pointsUsed > 0) {
+        await this.pointsService.redeemPoints(userId, -pointsUsed, orderNo);
+      }
       await this.prisma.order.update({
         where: { id: order.id },
         data: { status: 'cancelled' },
@@ -76,12 +103,33 @@ export class PayService {
 
     return {
       orderNo: order.orderNo,
-      amount: order.amount,
+      amount: finalAmount,
       paymentMethod: order.paymentMethod,
       payUrl: result.payUrl,
       qrCode: result.qrCode,
       status: order.status,
     };
+  }
+
+  private async activateMembership(userId: string, planId: string, durationDays: number) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+
+    const existing = await this.prisma.userMembership.findUnique({ where: { userId } });
+    if (existing) {
+      const base = existing.expiredAt && existing.expiredAt > now ? existing.expiredAt : now;
+      await this.prisma.userMembership.update({
+        where: { userId },
+        data: {
+          planId,
+          expiredAt: new Date(base.getTime() + durationDays * 24 * 60 * 60 * 1000),
+        },
+      });
+    } else {
+      await this.prisma.userMembership.create({
+        data: { userId, planId, expiredAt: expiresAt },
+      });
+    }
   }
 
   async handleCallback(method: string, params: Record<string, any>) {

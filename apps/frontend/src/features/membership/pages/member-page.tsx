@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor } from 'lucide-react'
+import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,7 @@ import {
   type MemberBenefit,
   type OrderResult,
 } from '@/features/membership/api'
+import { pointsApi } from '@/features/points/api'
 import { cn } from '@/lib/cn'
 
 const planIcons: Record<string, React.ElementType> = {
@@ -53,12 +54,15 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [payResult, setPayResult] = useState<OrderResult | null>(null)
   const [payLoading, setPayLoading] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
+  const [pointsBalance, setPointsBalance] = useState(0)
+  const [usePoints, setUsePoints] = useState(false)
 
   useEffect(() => {
-    Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits()]).then(
-      ([plansRes, curRes, benRes]) => {
+    Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits(), pointsApi.getBalance()]).then(
+      ([plansRes, curRes, benRes, ptsRes]) => {
         if (plansRes.status === 'fulfilled') setPlans(plansRes.value)
         if (curRes.status === 'fulfilled') setCurrent(curRes.value)
+        if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
         if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
           setBenefits(benRes.value)
         } else {
@@ -86,7 +90,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         planId: payPlan.planId,
         paymentMethod: method,
         billingCycle,
-      })
+        usePoints: usePoints ? pointsBalance : 0,
+      } as any)
       setPayResult(result)
 
       // 支付宝 PC 支付：在新窗口打开
@@ -474,6 +479,27 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* 积分抵扣 */}
+            {pointsBalance > 0 && (
+              <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Gift className="size-4 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium">积分抵扣</p>
+                    <p className="text-[11px] text-muted-foreground">{pointsBalance}积分 ≈ ¥{(pointsBalance / 100).toFixed(2)}</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={usePoints ? 'default' : 'outline'}
+                  onClick={() => setUsePoints(!usePoints)}
+                  className="h-7 text-xs"
+                >
+                  {usePoints ? '已使用' : '使用'}
+                </Button>
+              </div>
+            )}
+
             {/* 支付信息 */}
             <div className="rounded-xl border p-4 space-y-2">
               <div className="flex justify-between text-sm">

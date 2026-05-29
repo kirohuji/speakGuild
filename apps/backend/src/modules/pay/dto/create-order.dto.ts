@@ -9,6 +9,9 @@ export class CreateOrderDto {
 
   @IsIn(['monthly', 'yearly'])
   billingCycle: 'monthly' | 'yearly';
+
+  @IsOptional()
+  usePoints?: number;
 }
 
 export class PaymentCallbackDto {
