@@ -5,7 +5,7 @@ import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, ArrowRight,
   ClipboardList, ShoppingBag, Play, Search, Heart, CalendarDays, Mic,
-  BookText, MessageSquareText, ListChecks, type LucideIcon,
+  BookText, MessageSquareText, ListChecks, X, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -127,6 +127,7 @@ export function LearningPlanPage() {
           todayPlan={todayPlan}
           loading={myLoading}
           onGoToShop={() => { setShopOpen(true); refreshShop() }}
+          onRefresh={refreshMyUnits}
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
@@ -168,6 +169,7 @@ function MyLearningView({
   todayPlan,
   loading,
   onGoToShop,
+  onRefresh,
 }: {
   myUnits: MyUnit[]
   inProgress: MyUnit[]
@@ -175,6 +177,7 @@ function MyLearningView({
   todayPlan: TodayPlan | null
   loading: boolean
   onGoToShop: () => void
+  onRefresh?: () => void
 }) {
   const { t } = useTranslation()
   if (loading) {
@@ -210,7 +213,7 @@ function MyLearningView({
           </h2>
           <div className="space-y-2">
             {inProgress.map((unit) => (
-              <InProgressUnitCard key={unit.id} unit={unit} todayPlan={todayPlan} />
+              <InProgressUnitCard key={unit.id} unit={unit} todayPlan={todayPlan} onRefresh={onRefresh} />
             ))}
           </div>
         </section>
@@ -238,14 +241,30 @@ function MyLearningView({
 
 // ── 进行中的单元卡片（可展开/折叠，默认展开）──
 
-function InProgressUnitCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: TodayPlan | null }) {
+function InProgressUnitCard({ unit, todayPlan, onRefresh }: { unit: MyUnit; todayPlan: TodayPlan | null; onRefresh?: () => void }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(true)
+  const [confirmQuit, setConfirmQuit] = useState(false)
+  const [quitting, setQuitting] = useState(false)
   const pct = unit.completionPercent
   const Icon = getCategoryIcon(unit.categoryName)
   const nextTopic = unit.topics?.[0]
   const unitTasks = (todayPlan?.tasks ?? []).filter((task) => task.unitId === unit.id)
   const prepTasks = unitTasks.filter((task) => task.type === 'vocab' || task.type === 'chunk')
+
+  const handleQuit = useCallback(async () => {
+    setQuitting(true)
+    try {
+      await learningApi.quitUnit(unit.id)
+      toast.success(t('learning.quitSuccess'))
+      onRefresh?.()
+    } catch {
+      toast.error(t('learning.quitFailed'))
+    } finally {
+      setQuitting(false)
+      setConfirmQuit(false)
+    }
+  }, [unit.id, t, onRefresh])
 
   return (
     <div className="overflow-hidden rounded-lg bg-muted/30">
@@ -261,7 +280,13 @@ function InProgressUnitCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: Toda
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
-              {/* <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pct}%</Badge> */}
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); setConfirmQuit(true) }}
+                className="shrink-0 rounded-md p-1 text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-400"
+              >
+                <X className="size-4" />
+              </button>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
             <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
@@ -313,6 +338,36 @@ function InProgressUnitCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: Toda
           </div>
         )}
         */}
+        
+        {/* 退出确认弹窗 */}
+        <Dialog open={confirmQuit} onOpenChange={setConfirmQuit}>
+          <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">
+            <DialogHeader className="p-0">
+              <DialogTitle className="text-base">{t('learning.quitConfirmTitle')}</DialogTitle>
+              <DialogDescription className="mt-2 text-sm leading-5">
+                {t('learning.quitConfirmDesc', { title: unit.title })}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-5 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl"
+                disabled={quitting}
+                onClick={() => setConfirmQuit(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1 rounded-xl"
+                disabled={quitting}
+                onClick={handleQuit}
+              >
+                {quitting ? t('common.loading') : t('learning.quitConfirm')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </div>

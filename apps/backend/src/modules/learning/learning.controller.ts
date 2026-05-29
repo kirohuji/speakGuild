@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Req } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Body, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { LearningService } from './learning.service';
 import { requireAuthSession } from '../auth/session.util';
@@ -56,5 +56,12 @@ export class LearningController {
   async startUnit(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);
     return this.learningService.startUnit(session.user.id, id);
+  }
+
+  /** 退出学习一个单元 */
+  @Delete('units/:id')
+  async quitUnit(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.learningService.quitUnit(session.user.id, id);
   }
 }

@@ -604,6 +604,16 @@ export class LearningService {
     return record;
   }
 
+  /**
+   * 退出学习——删除用户在该单元的进度记录
+   */
+  async quitUnit(userId: string, unitId: string) {
+    await this.prisma.userSceneProgress.deleteMany({
+      where: { userId, sceneId: unitId },
+    });
+    return { success: true };
+  }
+
   private async getCurrentVocabLearned(userId: string, sceneId: string): Promise<number> {
     const progress = await this.prisma.userSceneProgress.findUnique({
       where: { userId_sceneId: { userId, sceneId } },

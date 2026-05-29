@@ -227,4 +227,7 @@ export const learningApi = {
 
   /** 开始学习一个单元 */
   startUnit: (unitId: string) => api.post(`/learning/units/${unitId}/start`),
+
+  /** 退出学习一个单元 */
+  quitUnit: (unitId: string) => api.delete(`/learning/units/${unitId}`),
 }
