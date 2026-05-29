@@ -49,18 +49,13 @@ export function SpecialBanner() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -6, scale: 0.97 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 mx-auto mt-2 w-full max-w-[330px] overflow-hidden rounded-2xl active:scale-[0.98] transition-transform"
+          className="relative z-10 mx-auto mt-2 w-full max-w-[330px] overflow-hidden rounded-2xl bg-amber-400/[0.08] backdrop-blur-xl active:scale-[0.98] transition-transform"
         >
-          {/* 发光渐变边框 */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-amber-400/40 via-rose-400/30 to-amber-400/40 p-[1px]">
-            <div className="h-full w-full rounded-2xl bg-[#1a1410]" />
-          </div>
-
           {/* 内容 */}
-          <div className="relative flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-2.5 px-3.5 py-2.5">
             {/* 图标徽章 */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_4px_16px_rgba(245,158,11,.35)]">
-              <Megaphone className="size-[18px] text-white" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_3px_10px_rgba(245,158,11,.3)]">
+              <Megaphone className="size-[15px] text-white" />
             </div>
 
             {/* 文字 */}
@@ -89,9 +84,6 @@ export function SpecialBanner() {
               <ChevronRight className="size-4 text-amber-400/50" />
             </div>
           </div>
-
-          {/* 底部装饰光带 */}
-          <div className="h-[2px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
         </motion.button>
       </AnimatePresence>
 

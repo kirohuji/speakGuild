@@ -159,23 +159,23 @@ export function EnglishHomePage() {
 
         <motion.div
           className={cn(
-            'relative z-10 w-full max-w-[330px] rounded-[30px] border px-6 py-7 text-center backdrop-blur-xl',
+            'relative z-10 w-full max-w-[330px] rounded-[24px] border px-5 py-5 text-center backdrop-blur-xl',
             isDark
-              ? 'border-white/12 bg-white/[0.06] shadow-[0_30px_90px_rgba(0,0,0,.4)]'
-              : 'border-white/20 bg-white/15 shadow-[0_24px_80px_rgba(42,105,96,.18)]',
+              ? 'border-white/12 bg-white/[0.06] shadow-[0_20px_60px_rgba(0,0,0,.35)]'
+              : 'border-white/20 bg-white/15 shadow-[0_16px_48px_rgba(42,105,96,.14)]',
           )}
           initial={{ opacity: 0, y: 18, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className={cn('text-[20px] font-semibold leading-8 tracking-normal', isDark ? 'text-white' : 'text-slate-800')}>
+          <p className={cn('text-[18px] font-semibold leading-7', isDark ? 'text-white' : 'text-slate-800')}>
             “{dailySentence.quote}”
           </p>
-          <p className={cn('mx-auto mt-5 max-w-[250px] text-sm leading-6', isDark ? 'text-white/82' : 'text-slate-600')}>
+          <p className={cn('mx-auto mt-3 max-w-[250px] text-[13px] leading-5', isDark ? 'text-white/82' : 'text-slate-600')}>
             {dailySentence.translation}
           </p>
-          <div className={cn('mx-auto mt-6 h-px w-12', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />
-          <p className={cn('mx-auto mt-5 max-w-[220px] text-[11px] font-medium uppercase tracking-[0.14em]', isDark ? 'text-rose-100/58' : 'text-slate-500')}>
+          <div className={cn('mx-auto mt-4 h-px w-10', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />
+          <p className={cn('mx-auto mt-3 max-w-[220px] text-[10px] font-medium uppercase tracking-[0.14em]', isDark ? 'text-rose-100/58' : 'text-slate-500')}>
             {dailySentence.author}
           </p>
         </motion.div>
@@ -183,26 +183,14 @@ export function EnglishHomePage() {
         {/* 特殊消息横幅 */}
         <SpecialBanner />
 
-        {/* 签到按钮 */}
+        {/* 签到按钮 — 签过则隐藏 */}
+        {!checkInStatus?.checkedIn && (
         <motion.div
           className="relative z-10"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
-          {checkInStatus?.checkedIn ? (
-            <div className={cn(
-              'flex items-center gap-2 rounded-full border px-5 py-2.5 backdrop-blur-2xl',
-              isDark
-                ? 'border-emerald-400/30 bg-emerald-400/[0.10]'
-                : 'border-emerald-500/25 bg-emerald-50/70',
-            )}>
-              <CheckCircle2 className="size-4 text-emerald-500" />
-              <span className={cn('text-sm font-medium', isDark ? 'text-emerald-300' : 'text-emerald-700')}>
-                今日已签到 · 连续{checkInStatus.currentStreak}天
-              </span>
-            </div>
-          ) : (
             <button
               type="button"
               onClick={handleCheckIn}
@@ -219,8 +207,8 @@ export function EnglishHomePage() {
                 {checkInLoading ? '签到中...' : '每日签到'}
               </span>
             </button>
-          )}
         </motion.div>
+        )}
       </motion.section>
     </div>
   )
