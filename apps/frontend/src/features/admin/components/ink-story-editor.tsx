@@ -516,6 +516,7 @@ export function InkStoryEditor({
   }, [saveCurrentStory])
 
   useEffect(() => {
+    return // 自动保存已暂时关闭
     if (!onSave || readOnly || saving || !key.trim() || !title.trim() || !compileResult?.success) return
     const nextSource = sourceWithMeta()
     if (!nextSource.trim() || nextSource === lastAutoSavedSourceRef.current) return

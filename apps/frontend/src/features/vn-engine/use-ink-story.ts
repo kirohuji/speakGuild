@@ -26,6 +26,17 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
 
   // Initialize engine when JSON loads
   useEffect(() => {
+    // Clean up previous engine
+    engineRef.current?.destroy()
+    engineRef.current = null
+
+    // Reset all state for new story
+    setLines([])
+    setChoices([])
+    setIsEnded(false)
+    setIsWaiting(false)
+    setCurrentTags([])
+
     if (!json) return
     try {
       const engine = new InkEngine()
@@ -41,9 +52,6 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     } catch (err) {
       console.warn('[useInkStory] Failed to load Ink JSON, falling back to free dialogue mode:', err)
       engineRef.current = null
-      setIsEnded(false)
-      setLines([])
-      setChoices([])
     }
   }, [json])
 
