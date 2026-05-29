@@ -530,6 +530,14 @@ const zhCN = {
       showUserInput: '显示我的输入',
       seconds: '秒',
     },
+    vnHistory: {
+      title: '历史对话',
+      count: '{{count}} 条记录',
+      empty: '还没有历史对话',
+      close: '关闭',
+      prevLine: '上一句',
+      storyEnded: '故事结束',
+    },
     achievementHall: {
       title: '🏆 成就殿堂',
       unlocked: '已解锁',
@@ -1397,6 +1405,14 @@ const en = {
       showUserInput: 'Show My Input',
       seconds: 'sec',
     },
+    vnHistory: {
+      title: 'History',
+      count: '{{count}} lines',
+      empty: 'No conversation history yet',
+      close: 'Close',
+      prevLine: 'Previous',
+      storyEnded: 'Story Ended',
+    },
     achievementHall: {
       title: '🏆 Achievement Hall',
       unlocked: 'Unlocked',
@@ -2262,6 +2278,14 @@ const ja = {
       bilingual: 'バイリンガル表示',
       showUserInput: '自分の入力を表示',
       seconds: '秒',
+    },
+    vnHistory: {
+      title: '会話履歴',
+      count: '{{count}} 件',
+      empty: 'まだ会話履歴がありません',
+      close: '閉じる',
+      prevLine: '前の行',
+      storyEnded: 'ストーリー終了',
     },
     achievementHall: {
       title: '🏆 実績ホール',

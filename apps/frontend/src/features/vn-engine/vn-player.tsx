@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
-import { History, RotateCcw, Settings, SkipBack } from 'lucide-react'
+import { History, RotateCcw, Settings, SkipBack, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import {
@@ -420,6 +420,7 @@ export function VnPlayer({
   showHistoryButton = true,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
+  const { t } = useTranslation()
   const [historyOpen, setHistoryOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState<VnPlayerSettings>(() => loadVnPlayerSettings())
@@ -579,33 +580,26 @@ export function VnPlayer({
         )}
 
         {historyOpen && (
-          <div className="absolute inset-0 z-40 bg-background/80 p-4" onClick={(event) => event.stopPropagation()}>
+          <div className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm p-4" onClick={(event) => event.stopPropagation()}>
             <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">历史对话</p>
-                  <p className="text-[11px] text-muted-foreground">{history.length} 条记录</p>
+                  <p className="text-sm font-semibold text-foreground">{t('vnHistory.title')}</p>
+                  <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: history.length })}</p>
                 </div>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                <button
+                  type="button"
+                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={() => toggleHistory(false)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      toggleHistory(false)
-                    }
-                  }}
                 >
-                  关闭
-                </span>
+                  <X className="size-4" />
+                </button>
               </div>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
                 {history.length === 0 ? (
-                  <p className="py-10 text-center text-sm text-muted-foreground">还没有历史对话</p>
+                  <p className="py-10 text-center text-sm text-muted-foreground">{t('vnHistory.empty')}</p>
                 ) : history.map((line, index) => (
-                  <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-primary/30 bg-primary/10' : 'border-border bg-muted/50')}>
+                  <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/40')}>
                     {line.speaker && <p className="mb-1 text-xs font-semibold text-muted-foreground">{line.speaker}</p>}
                     <p className="text-sm leading-6 text-foreground">{line.text}</p>
                   </div>
@@ -646,18 +640,18 @@ export function VnPlayer({
           )}
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/58 px-1 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
             <VnIconButton
-              label="上一句"
+              label={t('vnHistory.prevLine')}
               disabled={history.length <= 1 || lineIndex <= 0}
               onClick={goToPreviousLine}
             >
               <SkipBack className="size-3.5" />
             </VnIconButton>
             {showHistoryButton && (
-              <VnIconButton label="历史对话" onClick={() => toggleHistory(!historyOpen)}>
+              <VnIconButton label={t('vnHistory.title')} onClick={() => toggleHistory(!historyOpen)}>
                 <History className="size-3.5" />
               </VnIconButton>
             )}
-            <VnIconButton label="播放设置" onClick={() => setSettingsOpen(true)}>
+            <VnIconButton label={t('vnSettings.title')} onClick={() => setSettingsOpen(true)}>
               <Settings className="size-3.5" />
             </VnIconButton>
           </div>
@@ -686,7 +680,7 @@ export function VnPlayer({
                 </div>
               ) : isEnded ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <p className="text-center text-sm text-white/62">故事结束</p>
+                  <p className="text-center text-sm text-white/62">{t('vnHistory.storyEnded')}</p>
                   {endedActions}
                 </div>
               ) : isWaiting ? (
