@@ -52,6 +52,22 @@ export function MarkdownRenderer({ content, className }: Props) {
               {children}
             </blockquote>
           ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-3">
+              <table className="w-full border-collapse rounded-lg border border-border text-xs">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-muted/50">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="border border-border px-3 py-2 text-left font-medium text-foreground">{children}</th>
+          ),
+          td: ({ children }) => (
+            <td className="border border-border px-3 py-2 text-muted-foreground">{children}</td>
+          ),
         }}
       >
         {content}

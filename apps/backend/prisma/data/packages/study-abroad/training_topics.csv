@@ -1,236 +1,39 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-宿舍入住,办理入住,You've just arrived at the student dormitory. The receptionist asks: 'How can I help you?',你刚到学生宿舍，前台工作人员问你需要什么帮助。,60,L2,你是一名刚到国外的留学生，需要去学校宿舍办理入住。前台工作人员 Sarah 会协助你完成入住流程。,"### 📌 核心句式
-- **说明来意**：`I'm here to check in.`
-- **说明预订**：`My booking is under the name...`
-- **出示证件**：`Here is my student ID.`
-- **请求帮助**：`Could you tell me where my room is?`
-
-### 🗣️ 礼貌用语
-| 中文 | 英文 |
-|------|------|
-| 请 | `please` |
-| 谢谢 | `thank you` |
-| 能...吗？ | `Could you...?` |
-
-### 💡 母语提示
-英美宿舍一般不叫 ""dorm"" 而常叫 **residence hall** 或 **accommodation**。前台叫 **reception desk**。check-in 时间通常是下午 2-3 点后，早到可能要在 **lounge**（休息室）等。
+宿舍入住,办理入住,You've just arrived at the student dormitory. The receptionist asks: 'How can I help you?',你刚到学生宿舍，前台工作人员问你需要什么帮助。,60,L2,你是一名刚到国外的留学生，需要去学校宿舍办理入住。前台工作人员 Sarah 会协助你完成入住流程。,"💡 英美宿舍一般不叫 ""dorm"" 而常叫 **residence hall** 或 **accommodation**。前台叫 **reception desk**。check-in 时间通常是下午 2-3 点后，早到可能要在 **lounge**（休息室）等。
 ",practice_check_in
-宿舍入住,询问设施,"Ask the receptionist about Wi-Fi, laundry, and kitchen facilities.",询问前台关于 Wi-Fi、洗衣房和厨房设施。,45,L2,"你需要了解宿舍的公共设施情况，比如 Wi-Fi 密码、洗衣房位置、厨房是否共用等。","### 📌 核心句式
-- `Is there...?` — 有没有...？
-- `Where is...?` — ...在哪里？
-- `Do you have...?` — 你们有...吗？
-
-### 🗣️ 相关词汇
-| 英文 | 中文 |
-|------|------|
-| Wi-Fi password | Wi-Fi 密码 |
-| laundry room | 洗衣房 |
-| vending machine | 自动售货机 |
-| common room | 公共休息室 |
-
-### 💡 母语提示
-英美宿舍的洗衣房通常用 **laundry room** 或 **launderette**，需要用洗衣卡或手机 app 支付。Wi-Fi 一般需要登录学生账号，不是随便连的。
+宿舍入住,询问设施,"Ask the receptionist about Wi-Fi, laundry, and kitchen facilities.",询问前台关于 Wi-Fi、洗衣房和厨房设施。,45,L2,"你需要了解宿舍的公共设施情况，比如 Wi-Fi 密码、洗衣房位置、厨房是否共用等。","💡 英美宿舍的洗衣房通常用 **laundry room** 或 **launderette**，需要用洗衣卡或手机 app 支付。Wi-Fi 一般需要登录学生账号，不是随便连的。
 ",,
-宿舍入住,描述宿舍问题,Your room has a problem. Call the reception to report it.,你的房间有问题，打电话向前台报修。,45,L2,"你的房间出现了问题，比如灯坏了、马桶堵了、暖气不热等，你需要打电话给前台报修。","### 📌 核心句式
-- `There's a problem with...` — ...有问题
-- `...is not working` — ...坏了
-- `I need to report...` — 我要报修...
-- `Could you send someone to...?` — 能派人来...吗？
-
-### 💡 母语提示
-英美报修一般叫 **maintenance request**，可以在前台填表或打电话。紧急情况（漏水、没暖气）他们会当天处理，非紧急可能要等 1-2 天。维修工叫 **maintenance person** 或 **handyman**。
+宿舍入住,描述宿舍问题,Your room has a problem. Call the reception to report it.,你的房间有问题，打电话向前台报修。,45,L2,"你的房间出现了问题，比如灯坏了、马桶堵了、暖气不热等，你需要打电话给前台报修。","💡 英美报修一般叫 **maintenance request**，可以在前台填表或打电话。紧急情况（漏水、没暖气）他们会当天处理，非紧急可能要等 1-2 天。维修工叫 **maintenance person** 或 **handyman**。
 ",,
-宿舍入住,询问室友生活习惯,Ask your new roommate about their daily habits.,询问新室友的日常生活习惯。,40,L1,"第一次和室友聊天，想了解对方的作息习惯、是否爱干净、有没有客人来访等，避免以后的矛盾。","### 📌 核心句式
-- `Do you mind...?` — 你介意...吗？
-- `What time do you usually...?` — 你通常几点...？
-- `Are you okay with...?` — 你可以接受...吗？
-
-### 🗣️ 相关表达
-| 英文 | 中文 |
-|------|------|
-| go to bed | 睡觉 |
-| get up | 起床 |
-| have visitors | 有客人来访 |
-| keep it clean | 保持干净 |
-
-### 💡 母语提示
-西方人很注重 **personal space**（个人空间），问室友习惯时用 ""Do you mind if..."" 比直接问更礼貌。**Roommate rules** 是常见话题，建议一开始就商量清楚。
+宿舍入住,询问室友生活习惯,Ask your new roommate about their daily habits.,询问新室友的日常生活习惯。,40,L1,"第一次和室友聊天，想了解对方的作息习惯、是否爱干净、有没有客人来访等，避免以后的矛盾。","💡 西方人很注重 **personal space**（个人空间），问室友习惯时用 ""Do you mind if..."" 比直接问更礼貌。**Roommate rules** 是常见话题，建议一开始就商量清楚。
 ",,
-宿舍入住,签收快递,You received a package. Ask the front desk how to pick it up.,你有快递到了，问前台怎么领取。,30,L1,"你收到了快递通知，需要去前台询问如何领取包裹，包括需要什么证件、前台代收的时间等。","### 📌 核心句式
-- `I got a package.` — 我有快递到了。
-- `Can I pick up my package?` — 我可以取包裹吗？
-- `What do I need to pick it up?` — 取件需要什么？
-
-### 🗣️ 相关词汇
-| 英文 | 中文 |
-|------|------|
-| package / parcel | 包裹 |
-| delivery | 快递/送货 |
-| sign for it | 签收 |
-| pickup | 取件 |
-
-### 💡 母语提示
-英美快递一般放在前台（**reception**）或包裹柜（**parcel locker**），前台会让你 **sign for it**（签字）领取。如果是 Amazon 快递可能直接放门口，丢件风险自担。
+宿舍入住,签收快递,You received a package. Ask the front desk how to pick it up.,你有快递到了，问前台怎么领取。,30,L1,"你收到了快递通知，需要去前台询问如何领取包裹，包括需要什么证件、前台代收的时间等。","💡 英美快递一般放在前台（**reception**）或包裹柜（**parcel locker**），前台会让你 **sign for it**（签字）领取。如果是 Amazon 快递可能直接放门口，丢件风险自担。
 ",,
-宿舍入住,申请换房间,You want to change rooms. Explain your reason to the staff.,你想换房间，向工作人员说明原因。,50,L2,"你对现在的房间不满意，想申请换房间。需要向宿舍管理人员说明原因，比如室友不合、噪音问题、房间条件等。","### 📌 核心句式
-- `I'm not really comfortable with...` — 我对...不太满意
-- `I was wondering if...` — 我想知道能不能...
-- `Would it be possible to...?` — 有可能...吗？
-- `Is there any chance I could...?` — 有没有可能我...？
-
-### 💡 母语提示
-换房叫 **room transfer** 或 **room change**，不是所有宿舍都允许，要有正当理由（medical reason / conflict with roommate）。语气要 **polite** 但坚定。如果是因为室友矛盾，建议先和 **RA（宿舍助理）** 聊。
+宿舍入住,申请换房间,You want to change rooms. Explain your reason to the staff.,你想换房间，向工作人员说明原因。,50,L2,"你对现在的房间不满意，想申请换房间。需要向宿舍管理人员说明原因，比如室友不合、噪音问题、房间条件等。","💡 换房叫 **room transfer** 或 **room change**，不是所有宿舍都允许，要有正当理由（medical reason / conflict with roommate）。语气要 **polite** 但坚定。如果是因为室友矛盾，建议先和 **RA（宿舍助理）** 聊。
 ",,
-机场入境,说明来访目的,The immigration officer asks: 'What is the purpose of your visit?',入境官问你来访目的是什么。,60,L2,"你到达国外机场，在入境检查处，入境官会询问你来访目的、停留时间等信息。","### 📌 核心句式
-- `I'm here to study.` — 我是来读书的。
-- `I'm a student at...` — 我是...的学生。
-- `I'll be staying for...` — 我会待...
-
-### 💡 母语提示
-入境时不要紧张，入境官通常很严肃但并不是针对你个人。学生签证一般会问你学校和专业，提前准备好 **I-20（美国）** 或 **CAS（英国）** 等文件。电子旅行许可（**ESTA/ETA**）国家入境更快捷。
+机场入境,说明来访目的,The immigration officer asks: 'What is the purpose of your visit?',入境官问你来访目的是什么。,60,L2,"你到达国外机场，在入境检查处，入境官会询问你来访目的、停留时间等信息。","💡 入境时不要紧张，入境官通常很严肃但并不是针对你个人。学生签证一般会问你学校和专业，提前准备好 **I-20（美国）** 或 **CAS（英国）** 等文件。电子旅行许可（**ESTA/ETA**）国家入境更快捷。
 ",,
-机场入境,行李丢失申报,Your luggage is missing. Report it at the baggage claim office.,你的行李丢了，在行李认领处申报。,50,L2,"你下飞机后发现行李没有出来，需要到行李认领处的服务柜台申报丢失。","### 📌 核心句式
-- `My luggage is missing.` — 我的行李丢了。
-- `I can't find my bag.` — 我找不到我的包。
-- `I'd like to report a lost bag.` — 我要申报行李丢失。
-- `It's a black suitcase with...` — 这是一个黑色行李箱，上面有...
-
-### 💡 母语提示
-行李丢失很常见，不用慌。马上去 **Baggage Claim Office** 或 **Lost & Found** 填表（**Property Irregularity Report** - PIR）。保留好 **baggage tag**（行李牌）和航班信息。航空公司通常会送到你的地址。
+机场入境,行李丢失申报,Your luggage is missing. Report it at the baggage claim office.,你的行李丢了，在行李认领处申报。,50,L2,"你下飞机后发现行李没有出来，需要到行李认领处的服务柜台申报丢失。","💡 行李丢失很常见，不用慌。马上去 **Baggage Claim Office** 或 **Lost & Found** 填表（**Property Irregularity Report** - PIR）。保留好 **baggage tag**（行李牌）和航班信息。航空公司通常会送到你的地址。
 ",,
-机场入境,转机问路,You need to find your connecting flight gate. Ask airport staff.,你需要找转机登机口，向机场工作人员问路。,40,L1,"你有转机航班，但不确定登机口在哪里，需要向机场工作人员问路。","### 📌 核心句式
-- `Where is...?` — ...在哪里？
-- `How do I get to...?` — 怎么去...？
-- `Which gate is...?` — ...是哪个登机口？
-
-### 🗣️ 转机词汇
-| 英文 | 中文 |
-|------|------|
-| connecting flight | 转机航班 |
-| gate | 登机口 |
-| terminal | 航站楼 |
-| layover | 中转停留 |
-
-### 💡 母语提示
-转机时间紧张时直接找穿制服的工作人员，说 ""I'm in a hurry, my connecting flight is at gate..."" 他们会帮你指路甚至用电瓶车带你过去。大机场（如 Heathrow、JFK）不同航站楼之间可能需要坐 **shuttle** 或 **train**。
+机场入境,转机问路,You need to find your connecting flight gate. Ask airport staff.,你需要找转机登机口，向机场工作人员问路。,40,L1,"你有转机航班，但不确定登机口在哪里，需要向机场工作人员问路。","💡 转机时间紧张时直接找穿制服的工作人员，说 ""I'm in a hurry, my connecting flight is at gate..."" 他们会帮你指路甚至用电瓶车带你过去。大机场（如 Heathrow、JFK）不同航站楼之间可能需要坐 **shuttle** 或 **train**。
 ",,
-机场入境,购买交通卡,Ask at the information desk about getting a travel card.,在问讯处询问如何购买交通卡。,35,L1,"你需要在机场购买当地的交通卡（如伦敦的 Oyster Card、纽约的 MetroCard）以便搭乘公共交通。","### 📌 核心句式
-- `Where can I get a travel card?` — 哪里可以买到交通卡？
-- `How do I top up?` — 怎么充值？
-- `How much is a weekly pass?` — 周票多少钱？
-
-### 🗣️ 交通词汇
-| 英文 | 中文 |
-|------|------|
-| travel card | 交通卡 |
-| bus pass | 公交卡 |
-| top up | 充值 |
-| fare | 车费 |
-
-### 💡 母语提示
-伦敦 Heathrow 机场的地铁站有 **Oyster Card** 自动售票机，支持信用卡支付。美国很多城市的交通卡可以在机场便利店（**convenience store**）买到。推荐先买 **weekly pass**（周票）比单次划算。
+机场入境,购买交通卡,Ask at the information desk about getting a travel card.,在问讯处询问如何购买交通卡。,35,L1,"你需要在机场购买当地的交通卡（如伦敦的 Oyster Card、纽约的 MetroCard）以便搭乘公共交通。","💡 伦敦 Heathrow 机场的地铁站有 **Oyster Card** 自动售票机，支持信用卡支付。美国很多城市的交通卡可以在机场便利店（**convenience store**）买到。推荐先买 **weekly pass**（周票）比单次划算。
 ",,
-认识室友,初次见面,You meet your new roommate for the first time. Introduce yourself.,你第一次见到新室友，请自我介绍。,45,L1,"你第一次见到未来的室友，需要简单地自我介绍，让对方对你有初步了解。","### 📌 核心句式
-- `Hi, I'm...` / `My name is...` — 你好，我是...
-- `Nice to meet you!` — 很高兴认识你！
-- **回应**：`Nice to meet you too!`
-
-### 🗣️ 寒暄用语
-- `How are you?` — 你好吗？
-- `Where are you from?` — 你从哪里来？
-
-### 💡 母语提示
-国外初次见面一般握手或 **fist bump**（碰拳），不用鞠躬。如果对方说 ""How's it going?""，回答 ""Good, you?"" 就好，不需要真的描述自己过得怎么样。
+认识室友,初次见面,You meet your new roommate for the first time. Introduce yourself.,你第一次见到新室友，请自我介绍。,45,L1,"你第一次见到未来的室友，需要简单地自我介绍，让对方对你有初步了解。","💡 国外初次见面一般握手或 **fist bump**（碰拳），不用鞠躬。如果对方说 ""How's it going?""，回答 ""Good, you?"" 就好，不需要真的描述自己过得怎么样。
 ",,
-认识室友,聊家乡,Your roommate asks: 'Tell me about your hometown.',室友让你介绍一下你的家乡。,60,L2,"室友对你的家乡很好奇，你需要介绍一下你的家乡，包括在哪里、有什么特色、值得推荐的地方等。","### 📌 核心句式
-- `I'm from...` — 我来自...
-- `My hometown is known for...` — 我的家乡以...闻名
-- `You should visit...` — 你应该去...
-
-### 🗣️ 推荐句式
-- `If you ever go, you should try...` — 如果你去，一定要试试...
-
-### 💡 母语提示
-聊家乡是外国人最爱的话题之一。准备好 **3-5 句**关于你家乡的亮点，比如美食（street food）、景点（tourist attractions）、气候（weather）。外国人可能不知道中国的城市，用 ""**nearby Shanghai**"" 这样的参考系帮助理解。
+认识室友,聊家乡,Your roommate asks: 'Tell me about your hometown.',室友让你介绍一下你的家乡。,60,L2,"室友对你的家乡很好奇，你需要介绍一下你的家乡，包括在哪里、有什么特色、值得推荐的地方等。","💡 聊家乡是外国人最爱的话题之一。准备好 **3-5 句**关于你家乡的亮点，比如美食（street food）、景点（tourist attractions）、气候（weather）。外国人可能不知道中国的城市，用 ""**nearby Shanghai**"" 这样的参考系帮助理解。
 ",,
-认识室友,邀请一起吃饭,Invite your roommate to have dinner together.,邀请室友一起去吃饭。,35,L1,"你想邀请室友一起去吃饭，可以增进感情，也可以顺便多聊聊天。","### 📌 核心句式
-- `Would you like to...?` — 你想...吗？
-- `Do you want to...?` — 你想...吗？
-- `How about...?` — ...怎么样？
-
-### 🗣️ 回应句式
-- `Sure!` / `Sounds great!` — 好啊！
-- `I'd love to!` — 我很乐意！
-
-### 💡 母语提示
-邀请室友吃饭是拉近关系的好方法。国外一般 **AA 制**（split the bill），除非你明确说 ""It's on me""（我请客）。可以提议去学校附近的餐厅或做自己国家的菜给室友尝。
+认识室友,邀请一起吃饭,Invite your roommate to have dinner together.,邀请室友一起去吃饭。,35,L1,"你想邀请室友一起去吃饭，可以增进感情，也可以顺便多聊聊天。","💡 邀请室友吃饭是拉近关系的好方法。国外一般 **AA 制**（split the bill），除非你明确说 ""It's on me""（我请客）。可以提议去学校附近的餐厅或做自己国家的菜给室友尝。
 ",,
-认识室友,商量宿舍规则,Discuss room rules with your roommate about noise and cleaning.,和室友商量宿舍规则（噪音、卫生等）。,50,L2,"你和室友需要一起商量宿舍的基本规则，比如晚上几点后保持安静、轮流打扫卫生、是否可以带朋友来等。","### 📌 核心句式
-- `How do you feel about...?` — 你觉得...怎么样？
-- `What do you think about...?` — 你认为...如何？
-- `Let's agree on...` — 我们商量好...
-
-### 🗣️ 规则相关词汇
-| 英文 | 中文 |
-|------|------|
-| quiet hours | 安静时间 |
-| cleaning schedule | 打扫安排 |
-| guests | 访客 |
-| shared space | 共享空间 |
-
-### 💡 母语提示
-**Roommate agreement** 在国外很常见，不用觉得尴尬。建议用 ""Let's set some ground rules"" 开头，语气轻松一些。**Noise**（噪音）是最常见矛盾，提前说好 ""quiet hours after 11pm"" 可以避免很多不愉快。
+认识室友,商量宿舍规则,Discuss room rules with your roommate about noise and cleaning.,和室友商量宿舍规则（噪音、卫生等）。,50,L2,"你和室友需要一起商量宿舍的基本规则，比如晚上几点后保持安静、轮流打扫卫生、是否可以带朋友来等。","💡 **Roommate agreement** 在国外很常见，不用觉得尴尬。建议用 ""Let's set some ground rules"" 开头，语气轻松一些。**Noise**（噪音）是最常见矛盾，提前说好 ""quiet hours after 11pm"" 可以避免很多不愉快。
 ",,
-认识室友,分享兴趣爱好,Share your hobbies and interests with your roommate.,和室友分享你的兴趣爱好。,50,L2,"你和室友聊到各自的兴趣爱好，你想分享一下你平时喜欢做什么，也了解一下对方的兴趣。","### 📌 核心句式
-- `In my free time, I like to...` — 空闲时间我喜欢...
-- `I'm into...` — 我对...感兴趣
-- `I enjoy...` — 我喜欢...
-
-### 🗣️ 反问句式
-- `What about you?` — 你呢？
-- `Do you like...?` — 你喜欢...吗？
-
-### 💡 母语提示
-**Hobbies** 是很好的破冰话题。外国人可能会提到 **hiking**（徒步）、**gaming**（打游戏）、**cooking**（做饭）、**workout**（健身）等。如果你说喜欢 cooking，对方很可能邀请你一起做饭。""I'm into..."" 比 ""I like..."" 更地道。
+认识室友,分享兴趣爱好,Share your hobbies and interests with your roommate.,和室友分享你的兴趣爱好。,50,L2,"你和室友聊到各自的兴趣爱好，你想分享一下你平时喜欢做什么，也了解一下对方的兴趣。","💡 **Hobbies** 是很好的破冰话题。外国人可能会提到 **hiking**（徒步）、**gaming**（打游戏）、**cooking**（做饭）、**workout**（健身）等。如果你说喜欢 cooking，对方很可能邀请你一起做饭。""I'm into..."" 比 ""I like..."" 更地道。
 ",,
-银行开户,开立账户,Tell the bank clerk you want to open an account.,告诉银行柜员你想开一个账户。,50,L2,"你需要去银行开一个当地账户，告诉柜员你的需求，提交相关证件并填写表格。","### 📌 核心句式
-- `I'd like to open a bank account.` — 我想开一个银行账户。
-- `What do I need to open an account?` — 开户需要什么？
-- **证件表达**：`passport` / `student ID` / `bank letter`
-
-### 💡 母语提示
-英国银行开户推荐 **Barclays**、**HSBC**、**Lloyds**，美国推荐 **Bank of America**、**Chase**。开户前先在学校官网下载 **bank letter**（地址证明）。开户后一周左右会收到 **debit card** 和 **PIN 码**（分开寄送），注意查收。
+银行开户,开立账户,Tell the bank clerk you want to open an account.,告诉银行柜员你想开一个账户。,50,L2,"你需要去银行开一个当地账户，告诉柜员你的需求，提交相关证件并填写表格。","💡 英国银行开户推荐 **Barclays**、**HSBC**、**Lloyds**，美国推荐 **Bank of America**、**Chase**。开户前先在学校官网下载 **bank letter**（地址证明）。开户后一周左右会收到 **debit card** 和 **PIN 码**（分开寄送），注意查收。
 ",,
-银行开户,咨询利率,Ask about the interest rates for savings accounts.,询问储蓄账户的利率。,35,L2,"你想了解储蓄账户的利率情况，看看哪种账户更适合存钱。","### 📌 核心句式
-- `What's the interest rate?` — 利率是多少？
-- `Do you offer a savings account with higher interest?` — 你们有更高利率的储蓄账户吗？
-- `What's the difference between... and...?` — ...和...有什么区别？
-
-### 💡 母语提示
-欧美银行利率普遍很低（0.5%-2%），学生不用太在意 **interest rate**。更值得关注的是是否有 **monthly fee**（月费）和 **minimum balance**（最低余额）要求。很多学生账户（**student account**）免月费。
+银行开户,咨询利率,Ask about the interest rates for savings accounts.,询问储蓄账户的利率。,35,L2,"你想了解储蓄账户的利率情况，看看哪种账户更适合存钱。","💡 欧美银行利率普遍很低（0.5%-2%），学生不用太在意 **interest rate**。更值得关注的是是否有 **monthly fee**（月费）和 **minimum balance**（最低余额）要求。很多学生账户（**student account**）免月费。
 ",,
-买 SIM 卡,选择套餐,Ask the salesperson about available phone plans.,向店员询问可用的手机套餐。,45,L1,"你需要购买一张手机 SIM 卡，向店员咨询有哪些套餐可以选，比较价格和流量。","### 📌 核心句式
-- `What plans do you have?` — 你们有什么套餐？
-- `How much is...?` — ...多少钱？
-- `Does it include...?` — 包含...吗？
-
-### 🗣️ 套餐词汇
-| 英文 | 中文 |
-|------|------|
-| data | 流量 |
-| minutes | 通话分钟 |
-| texts | 短信 |
-| pay as you go | 预付费 |
-
-### 💡 母语提示
-英国的热门选择是 **Giffgaff**（无需合约，网上订购）和 **Vodafone** 学生套餐。美国推荐 **Mint Mobile** 或 **Visible** 等廉价运营商。注意区别 **SIM Only**（只要卡）和 **Pay Monthly**（签合约机）。
+买 SIM 卡,选择套餐,Ask the salesperson about available phone plans.,向店员询问可用的手机套餐。,45,L1,"你需要购买一张手机 SIM 卡，向店员咨询有哪些套餐可以选，比较价格和流量。","💡 英国的热门选择是 **Giffgaff**（无需合约，网上订购）和 **Vodafone** 学生套餐。美国推荐 **Mint Mobile** 或 **Visible** 等廉价运营商。注意区别 **SIM Only**（只要卡）和 **Pay Monthly**（签合约机）。
 ",,
-买 SIM 卡,激活SIM卡,Ask how to activate your new SIM card.,询问如何激活新SIM卡。,35,L1,"你买到了 SIM 卡，但不知道如何激活，需要向店员或客服咨询激活步骤。","### 📌 核心句式
-- `How do I activate it?` — 怎么激活？
-- `How long does it take to activate?` — 激活需要多久？
-- `It's not working.` — 不能用了。
-- `I can't get a signal.` — 没信号。
-
-### 💡 母语提示
-英美大部分 SIM 卡是 **plug and play**——插卡即用。如果不工作，可能需要手动设置 **APN**（接入点名称）。店员的 ""Give it 15 minutes to activate"" 很常见。如果 1 小时后还不能用，再去店里找他们。
+买 SIM 卡,激活SIM卡,Ask how to activate your new SIM card.,询问如何激活新SIM卡。,35,L1,"你买到了 SIM 卡，但不知道如何激活，需要向店员或客服咨询激活步骤。","💡 英美大部分 SIM 卡是 **plug and play**——插卡即用。如果不工作，可能需要手动设置 **APN**（接入点名称）。店员的 ""Give it 15 minutes to activate"" 很常见。如果 1 小时后还不能用，再去店里找他们。
 ",,

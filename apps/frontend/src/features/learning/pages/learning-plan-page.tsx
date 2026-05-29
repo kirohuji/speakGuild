@@ -297,12 +297,12 @@ function InProgressUnitCard({ unit, todayPlan, onRefresh }: { unit: MyUnit; toda
 
             {/* <Progress value={pct} className="mt-2 h-1" /> */}
 
-            {unit.description && (
+            {/* {unit.description && (
               <div className="mt-2 rounded-md bg-muted/40 px-2.5 py-2">
-                {/* <p className="text-xs font-medium text-foreground">{t('learning.preparationTitle')}</p> */}
+                <p className="text-xs font-medium text-foreground">{t('learning.preparationTitle')}</p>
                 <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">{unit.description}</p>
               </div>
-            )}
+            )} */}
           </div>
         </Link>
 
