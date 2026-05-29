@@ -21,6 +21,12 @@ export class NotificationController {
     return { count };
   }
 
+  @Get('special')
+  async getSpecial(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.notificationService.getUnreadSpecialNotifications(session.user.id);
+  }
+
   @Post(':id/read')
   async markRead(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);

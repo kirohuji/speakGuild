@@ -12,4 +12,7 @@ export class UpdateNotificationDto {
   @IsEnum(['broadcast', 'targeted'])
   @IsOptional()
   type?: 'broadcast' | 'targeted';
+
+  @IsOptional()
+  isSpecial?: boolean;
 }

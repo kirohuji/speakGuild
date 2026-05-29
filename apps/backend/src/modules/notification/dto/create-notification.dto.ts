@@ -14,4 +14,7 @@ export class CreateNotificationDto {
   @IsString({ each: true })
   @IsOptional()
   targetUserIds?: string[];
+
+  @IsOptional()
+  isSpecial?: boolean;
 }

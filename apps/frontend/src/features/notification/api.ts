@@ -38,3 +38,14 @@ export async function markAsRead(notificationId: string) {
 export async function markAllAsRead() {
   return post('/notifications/read-all');
 }
+
+export interface SpecialNotification {
+  id: string
+  title: string
+  content: string
+  createdAt: string
+}
+
+export async function getSpecialNotifications() {
+  return get<SpecialNotification[]>('/notifications/special');
+}

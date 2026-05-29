@@ -24,6 +24,7 @@ export class NotificationService {
         title: dto.title,
         content: dto.content,
         type: dto.type,
+        isSpecial: dto.isSpecial ?? false,
         sentById: adminUserId,
       },
     });
@@ -243,8 +244,32 @@ export class NotificationService {
         ...(dto.title !== undefined ? { title: dto.title } : {}),
         ...(dto.content !== undefined ? { content: dto.content } : {}),
         ...(dto.type !== undefined ? { type: dto.type } : {}),
+        ...(dto.isSpecial !== undefined ? { isSpecial: dto.isSpecial } : {}),
       },
     });
+  }
+
+  /** 获取用户未读的特殊通知（首页横幅用） */
+  async getUnreadSpecialNotifications(userId: string) {
+    const notifications = await this.prisma.notification.findMany({
+      where: {
+        isSpecial: true,
+        AND: [
+          {
+            OR: [
+              { type: 'broadcast' },
+              { targets: { some: { userId } } },
+            ],
+          },
+        ],
+        reads: { none: { userId } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+      select: { id: true, title: true, content: true, createdAt: true },
+    });
+
+    return notifications;
   }
 
   /** 管理员：删除通知 */

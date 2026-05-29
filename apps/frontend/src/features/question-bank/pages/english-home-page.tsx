@@ -12,6 +12,7 @@ import { cn } from '@/lib/cn'
 import { ImmersiveBackground } from '@/components/common/immersive-background'
 import { get } from '@/lib/request'
 import { pointsApi, type CheckInStatus, type PointsBalance } from '@/features/points/api'
+import { SpecialBanner } from '@/features/notification/components/special-banner'
 import { toast } from 'sonner'
 
 interface DailySentence {
@@ -178,6 +179,9 @@ export function EnglishHomePage() {
             {dailySentence.author}
           </p>
         </motion.div>
+
+        {/* 特殊消息横幅 */}
+        <SpecialBanner />
 
         {/* 签到按钮 */}
         <motion.div
