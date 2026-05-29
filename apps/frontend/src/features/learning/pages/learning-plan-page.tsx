@@ -766,7 +766,7 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
 
       {/* 详情弹窗 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-h-[88vh] overflow-hidden p-0 sm:max-w-md">
+        <DialogContent className="max-h-[88vh] overflow-hidden rounded-2xl p-0 sm:max-w-md w-[90vw]">
           <DialogHeader className="sr-only">
             <DialogTitle>{unit.title}</DialogTitle>
             <DialogDescription>{unit.location}</DialogDescription>

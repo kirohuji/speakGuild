@@ -761,7 +761,7 @@ function VnSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm rounded-2xl w-[90vw]">
         <DialogHeader>
           <DialogTitle>{t('vnSettings.title')}</DialogTitle>
           <DialogDescription>{t('vnSettings.description')}</DialogDescription>
