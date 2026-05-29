@@ -23,6 +23,8 @@ interface VnStoryPreviewProps {
   inkJson?: Record<string, any>
   /** 角色名 → 表情立绘映射 */
   characterSprites?: Record<string, CharacterSpriteMap>
+  /** 角色名 → 头像 URL */
+  characterAvatars?: Record<string, string>
   /** 角色名 → 立绘位置 */
   characterPositions?: Record<string, 'left' | 'center' | 'right'>
   defaultBackgroundUrl?: string
@@ -54,6 +56,7 @@ export function VnStoryPreview({
   inkSource,
   inkJson,
   characterSprites = {},
+  characterAvatars = {},
   characterPositions = {},
   defaultBackgroundUrl,
   className,
@@ -254,6 +257,7 @@ export function VnStoryPreview({
   const currentSpriteUrl = currentExpression
     ? speakerSprites?.[currentExpression] || speakerSprites?.['default']
     : speakerSprites?.['default']
+  const currentAvatarUrl = currentSpeaker ? characterAvatars[currentSpeaker] : undefined
   const speakerPosition = currentSpeaker
     ? (position as 'left' | 'center' | 'right') || characterPositions[currentSpeaker] || 'center'
     : 'center'
@@ -329,6 +333,8 @@ export function VnStoryPreview({
         currentSpriteUrl={hideSpriteForChoices ? undefined : currentSpriteUrl}
         spriteAlt={currentSpeaker}
         spritePosition={speakerPosition}
+        currentAvatarUrl={currentAvatarUrl}
+        currentAvatarAlt={currentSpeaker}
         isWaiting={isWaiting}
         isEnded={isEnded}
         onAdvance={advanceStory}

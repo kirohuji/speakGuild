@@ -82,9 +82,11 @@ const syntaxHint =
 function buildCharacterSpriteData(characters: GameCharacter[]): {
   sprites: Record<string, CharacterSpriteMap>
   positions: Record<string, 'left' | 'center' | 'right'>
+  avatars: Record<string, string>
 } {
   const sprites: Record<string, CharacterSpriteMap> = {}
   const positions: Record<string, 'left' | 'center' | 'right'> = {}
+  const avatars: Record<string, string> = {}
 
   for (const char of characters) {
     const map: CharacterSpriteMap = {}
@@ -96,6 +98,12 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
       sprites[char.name] = map
       sprites[char.displayName] = map
     }
+    if (char.avatarUrl) {
+      avatars[char.name] = char.avatarUrl
+      if (char.displayName && char.displayName !== char.name) {
+        avatars[char.displayName] = char.avatarUrl
+      }
+    }
     const pos = char.defaultPosition as 'left' | 'center' | 'right' | undefined
     if (pos) {
       positions[char.name] = pos
@@ -103,7 +111,7 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
     }
   }
 
-  return { sprites, positions }
+  return { sprites, positions, avatars }
 }
 
 function cleanChoiceText(text: string) {
@@ -358,7 +366,7 @@ export function InkStoryEditor({
     return Array.from(names)
   }, [defaultCharacter])
 
-  const { sprites: charSprites, positions: charPositions } = useMemo(
+  const { sprites: charSprites, positions: charPositions, avatars: charAvatars } = useMemo(
     () => buildCharacterSpriteData(characters),
     [characters],
   )
@@ -855,6 +863,7 @@ export function InkStoryEditor({
               <VnStoryPreview
                 inkSource={sourceWithMeta()}
                 characterSprites={charSprites}
+                characterAvatars={charAvatars}
                 characterPositions={charPositions}
                 className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
                 onDebugChange={setPreviewDebug}

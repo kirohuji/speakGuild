@@ -73,6 +73,7 @@ export interface TopicDetail {
       id: string
       name: string
       displayName: string
+      avatarUrl?: string | null
       spriteBaseUrl?: string | null
       expressions?: any
       defaultPosition: 'left' | 'center' | 'right'

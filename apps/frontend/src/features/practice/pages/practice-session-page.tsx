@@ -896,6 +896,8 @@ export function PracticeSessionPage() {
               currentSpriteUrl={currentSpriteUrl}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
               spritePosition={spritePosition}
+              currentAvatarUrl={currentCharacter?.avatarUrl || undefined}
+              currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
               isWaiting={inkWaiting}
               isEnded={inkEnded}
               onSubmitInput={sendUserInput}
