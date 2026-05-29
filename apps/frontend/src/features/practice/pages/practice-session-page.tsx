@@ -763,7 +763,7 @@ export function PracticeSessionPage() {
                             </button>
                             {isExpanded && (
                               <div className="border-t border-border/50 px-3 pb-3 pt-2">
-                                <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p>
+                                {/* <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p> */}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
                                     <Search className="size-3.5" /> 查看
