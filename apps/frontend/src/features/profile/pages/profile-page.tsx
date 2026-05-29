@@ -435,8 +435,6 @@ function MobileSettingsView() {
   const [wifiOnlyMedia, setWifiOnlyMedia] = useState(true)
   const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
-  const [personalizedRecommendation, setPersonalizedRecommendation] = useState(true)
-
   // 删除账户状态
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -576,13 +574,6 @@ function MobileSettingsView() {
         />
       </IosSection>
 
-      <IosSection>
-        <IosRow
-          label={t('profile.personalizedRecommendationLabel')}
-          right={<Switch checked={personalizedRecommendation} onCheckedChange={setPersonalizedRecommendation} />}
-        />
-      </IosSection>
-
       {/* 法律与隐私 — 移动端使用 Drawer 全屏查看 */}
       <IosSection header={t('profile.legalPrivacy')}>
         {legalDocList.map((doc, idx) => (
@@ -603,11 +594,6 @@ function MobileSettingsView() {
         <IosRow
           label={t('profile.appPermissions')}
           onTap={() => {}}
-        />
-        <IosRow
-          label={t('profile.switchBank')}
-          subtitle={config?.bankName || t('profile.currentBankNotSet')}
-          onTap={() => setShowBinding(true)}
         />
         <IosRow
           label={t('profile.deleteAccount')}
@@ -2152,8 +2138,6 @@ function SettingsTab() {
   const [wifiOnlyMedia, setWifiOnlyMedia] = useState(true)
   const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
-  const [personalizedRecommendation, setPersonalizedRecommendation] = useState(true)
-
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     i18n.changeLanguage(lang)
@@ -2257,15 +2241,6 @@ function SettingsTab() {
             </Select>
           </div>
 
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>{t('profile.personalizedRecommendation')}</Label>
-              <p className="text-xs text-muted-foreground">{t('profile.personalizedRecommendationDesc')}</p>
-            </div>
-            <Switch checked={personalizedRecommendation} onCheckedChange={setPersonalizedRecommendation} />
-          </div>
         </CardContent>
       </Card>
 
@@ -2301,33 +2276,6 @@ function SettingsTab() {
               <SelectItem value="en">{t('profile.langEn')}</SelectItem>
               <SelectItem value="ja">{t('profile.langJa')}</SelectItem>
             </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 题库设置 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('profile.currentBank')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">
-                {config?.bankName || t('profile.currentBankNotSet')}
-              </p>
-              {config && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="text-xs">{config.province}</Badge>
-                  <Badge variant="secondary" className="text-xs">{config.language}</Badge>
-                  <Badge variant="secondary" className="text-xs">{config.examType}</Badge>
-                  <Badge variant="secondary" className="text-xs">{config.interviewForm}</Badge>
-                </div>
-              )}
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setShowBinding(true)}>
-              {t('profile.adjustBinding')}
-            </Button>
           </div>
         </CardContent>
       </Card>

@@ -12,8 +12,8 @@ from docx.oxml.ns import qn
 
 PROJECT_ROOT = r'C:\Users\z1309\Desktop\work\speakGuild'
 OUTPUT_PATH = r'C:\Users\z1309\Desktop\work\speakGuild\docs\软件著作权\ManYu源代码.docx'
-HEADER_TEXT = '漫语町（ManYu）多语种导游资格面试练习系统 V1.0  源代码'
-SOFTWARE_NAME = '漫语町（ManYu）多语种导游资格面试练习系统 V1.0'
+HEADER_TEXT = '漫语町（ManYu）沉浸式英语输出训练系统 V1.0  源代码'
+SOFTWARE_NAME = '漫语町（ManYu）沉浸式英语输出训练系统 V1.0'
 LINES_PER_PAGE = 55
 TOTAL_PAGES = 60
 
