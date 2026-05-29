@@ -124,6 +124,7 @@ export class LearningService {
         id: scene.id,
         title: scene.title,
         location: scene.location,
+        description: scene.description,
         categoryName: scene.category.name,
         topics: scene.trainingTopics.map((t) => ({
           id: t.id,

@@ -221,11 +221,11 @@ export function LearningUnitPage() {
           ) : (
             <p className="text-sm leading-6 text-muted-foreground">{t('learning.prepFallback')}</p>
           )}
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          {/* <div className="mt-4 grid grid-cols-3 gap-2">
             <UnitMetric label={t('learning.readiness')} value={`${unit.progress?.readiness ?? 0}%`} />
             <UnitMetric label={t('learning.vocab')} value={`${unit.progress?.vocabLearned ?? 0}/${unit.vocabCount}`} />
             <UnitMetric label={t('learning.chunks')} value={`${unit.progress?.chunkMastered ?? 0}/${unit.chunkCount}`} />
-          </div>
+          </div> */}
         </div>
       </section>
 

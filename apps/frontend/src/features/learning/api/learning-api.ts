@@ -182,6 +182,7 @@ export interface MyUnit {
   id: string
   title: string
   location: string
+  description?: string | null
   categoryName: string
   topics: TopicSummary[]
   vocabCount: number

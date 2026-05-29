@@ -261,7 +261,7 @@ function InProgressUnitCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: Toda
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
-              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pct}%</Badge>
+              {/* <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pct}%</Badge> */}
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
             <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
@@ -270,12 +270,12 @@ function InProgressUnitCard({ unit, todayPlan }: { unit: MyUnit; todayPlan: Toda
               <span>{unit.topicCount} {t('learning.topics')}</span>
             </div>
 
-            <Progress value={pct} className="mt-2 h-1" />
+            {/* <Progress value={pct} className="mt-2 h-1" /> */}
 
-            {nextTopic && (
-              <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Play className="size-3 text-primary" />
-                <span className="line-clamp-1">{nextTopic.title}</span>
+            {unit.description && (
+              <div className="mt-2 rounded-md bg-muted/40 px-2.5 py-2">
+                {/* <p className="text-xs font-medium text-foreground">{t('learning.preparationTitle')}</p> */}
+                <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">{unit.description}</p>
               </div>
             )}
           </div>
