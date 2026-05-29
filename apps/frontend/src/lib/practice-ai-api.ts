@@ -1,6 +1,6 @@
 import instance, { post } from './request'
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1/guide-exam'
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1/manyu'
 
 export type TranscribeRecordingResult = {
   audioBase64: string

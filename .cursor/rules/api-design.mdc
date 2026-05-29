@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## 路由规范
 
-- **业务 API 前缀**：`/api/v1/guide-exam`
+- **业务 API 前缀**：`/api/v1/manyu`
 - **认证路由**：`/api/auth/*`（Better Auth 原生路由，不走业务前缀）
 - **请求方式**：RESTful (GET/POST/PATCH/DELETE)
 - **请求体格式**：JSON

@@ -252,7 +252,7 @@ export class PayService {
     });
 
     const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`;
-    const notifyUrl = `${baseUrl}/api/v1/guide-exam/pay/callback/alipay`;
+    const notifyUrl = `${baseUrl}/api/v1/manyu/pay/callback/alipay`;
     const returnUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/#/member`;
 
     const result = await this.alipayProvider.createPayment({

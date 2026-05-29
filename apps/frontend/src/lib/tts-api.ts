@@ -105,7 +105,7 @@ export const synthesizeAsset = (payload: SynthesizeAssetPayload): Promise<Synthe
 
 /** 获取音频文件的流式 URL（直接作为 <audio> src 使用） */
 export const getAudioUrl = (id: string): string => {
-  const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/guide-exam'
+  const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
   return `${base}/tts/audio/${id}`
 }
 

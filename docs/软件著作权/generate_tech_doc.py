@@ -288,7 +288,7 @@ def main():
     # ═══════ 7 API接口设计 ═══════
     np(doc, pg); pg += 1; H(doc, '7  API接口设计')
     H(doc, '7.1  设计规范')
-    P(doc, '接口遵循RESTful设计风格：GET用于查询，POST用于创建，PATCH用于部分更新，DELETE用于删除。业务API统一前缀为/api/v1/guide-exam，认证路由为/api/auth/*。认证采用Bearer Token方案，通过requireAuthSession中间件提取用户身份。URL路径版本化管理，当前版本为v1。')
+    P(doc, '接口遵循RESTful设计风格：GET用于查询，POST用于创建，PATCH用于部分更新，DELETE用于删除。业务API统一前缀为/api/v1/manyu，认证路由为/api/auth/*。认证采用Bearer Token方案，通过requireAuthSession中间件提取用户身份。URL路径版本化管理，当前版本为v1。')
     H(doc, '7.2  请求处理流程')
     diagram(doc, '05-api-flow.png', '图4  API请求处理时序图')
     P(doc, '客户端请求经Nginx路由分发至NestJS应用。AuthGuard校验Token有效性，ValidationPipe校验请求参数完整性，通过后由Service执行业务逻辑并通过Prisma操作数据库。响应经TransformInterceptor统一封装后返回客户端。异常由AllExceptionsFilter全局捕获并格式化输出。')

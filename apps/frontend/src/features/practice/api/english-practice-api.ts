@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getBearerToken } from '@/features/auth/client'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/guide-exam'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
 
 /** 英语输出训练 API 客户端 */
 const api = axios.create({

@@ -1,0 +1,196 @@
+# 部署环境变量参考文档
+
+> 对应 `.github/workflows/deploy.yml` 中所有环境变量的说明。
+> 配置入口：GitHub 仓库 → **Settings → Secrets and variables → Actions**
+
+---
+
+## 🏷️ 三种分类
+
+| 分类 | 含义 | 配置位置 |
+| --- | --- | --- |
+| 🔴 **Required（Secret）** | 必须配置，无默认值 | GitHub Secrets |
+| 🟢 **With defaults** | 有默认值，可用 GitHub Variable 覆盖 | GitHub Variables（可选） |
+| 🟡 **Optional（Secret）** | 可选，空值 = 对应功能不可用 | GitHub Secrets（可选） |
+
+---
+
+## 一、SSH 连接（部署用）
+
+| 变量 | 分类 | 说明 | 示例值 |
+|---|---|---|---|
+| `SSH_HOST` | 🔴 Secret | 服务器 IP 或域名 | `123.45.67.89` |
+| `SSH_USER` | 🔴 Secret | SSH 登录用户名 | `root` / `deploy` |
+| `SSH_PASSWORD` | 🔴 Secret | SSH 登录密码 | `your-password` |
+| `SSH_PORT` | 🟢 默认 `22` | SSH 端口 | `22`（用 Variable 覆盖） |
+| `DEPLOY_DIR` | 🟢 默认 `/home/deploy/manyu` | 服务器部署路径，需提前创建好此目录 | `/home/deploy/manyu` |
+
+---
+
+## 二、应用核心（Backend）
+
+| 变量 | 分类 | 说明 | 示例值 |
+|---|---|---|---|
+| `FRONTEND_URL` | 🔴 Secret | 前端域名，用于 CORS + 支付回调 | `https://your-domain.com` |
+| `BACKEND_URL` | 🔴 Secret | 后端域名，用于支付回调 URL 拼接 | `https://api.your-domain.com` |
+| `SSL_DEPLOY` | 🟢 默认 `./ssl` | SSL 证书目录，映射到 nginx 容器 | `./ssl` |
+
+**代码引用：**
+- `FRONTEND_URL` → CORS 配置、支付 `returnUrl`
+- `BACKEND_URL` → `pay.service.ts:55,254` 支付回调地址
+
+---
+
+## 三、Better Auth（认证）
+
+| 变量 | 分类 | 说明 | 获取方式 |
+|---|---|---|---|
+| `BETTER_AUTH_URL` | 🔴 Secret | 认证服务地址，同 `BACKEND_URL` | — |
+| `BETTER_AUTH_SECRET` | 🔴 Secret | 32 位随机密钥 | `openssl rand -hex 32` |
+| `WECHAT_CLIENT_ID` | 🟡 Secret | 微信开放平台 AppID（扫码登录） | [微信开放平台](https://open.weixin.qq.com/) |
+| `WECHAT_CLIENT_SECRET` | 🟡 Secret | 微信开放平台 AppSecret | 同上 |
+
+---
+
+## 四、TTS（语音合成）
+
+| 变量 | 分类 | 说明 | 获取方式 |
+|---|---|---|---|
+| `MINIMAX_API_KEY` | 🔴 Secret | MiniMax TTS 的 API Key | [MiniMax 平台](https://platform.minimaxi.com/) |
+| `MINIMAX_GROUP_ID` | 🔴 Secret | MiniMax 分组 ID | 同上 |
+| `CARTESIA_API_KEY` | 🟡 Secret | Cartesia TTS（支持词级时间戳） | [Cartesia](https://cartesia.ai/) |
+
+> MiniMax 为核心 TTS，必须配置。Cartesia 为可选增强。
+
+---
+
+## 五、Whisper（语音转文字）
+
+| 变量 | 分类 | 说明 | 默认值 |
+|---|---|---|---|
+| `WHISPER_INFERENCE_URL` | 🟡 Secret | 推理服务地址 | 空（功能禁用） |
+| `WHISPER_LANGUAGE` | 🟢 Variable | 识别语言代码 | `en` |
+| `WHISPER_TIMEOUT_MS` | 🟢 Variable | 请求超时（毫秒） | `300000` |
+
+> 代码引用：`tts.service.ts:154`
+
+---
+
+## 六、AI 评分
+
+| 变量 | 分类 | 说明 | 获取方式 |
+|---|---|---|---|
+| `DEEPSEEK_API_KEY` | 🔴 Secret | DeepSeek API Key | [DeepSeek 平台](https://platform.deepseek.com/) |
+
+---
+
+## 七、腾讯云 COS（对象存储）
+
+| 变量 | 分类 | 说明 | 默认值 |
+|---|---|---|---|
+| `COS_BUCKET` | 🔴 Secret | 存储桶名称 | — |
+| `COS_REGION` | 🟢 Variable | 存储桶地域 | `ap-shanghai` |
+| `COS_SECRET_ID` | 🔴 Secret | 腾讯云 API 密钥 ID | — |
+| `COS_SECRET_KEY` | 🔴 Secret | 腾讯云 API 密钥 Key | — |
+| `COS_PRIVATE_URL_EXPIRES_SECONDS` | 🟢 Variable | 私有链接有效期（秒） | `3600` |
+
+> 密钥获取：[访问管理](https://console.cloud.tencent.com/cam/capi)
+
+---
+
+## 八、支付（可选，未配置时 Mock 模式）
+
+### 支付宝
+
+| 变量 | 分类 | 说明 | 默认值 |
+|---|---|---|---|
+| `ALIPAY_APP_ID` | 🟡 Secret | APPID | — |
+| `ALIPAY_PRIVATE_KEY` | 🟡 Secret | 商户私钥（PEM） | — |
+| `ALIPAY_PUBLIC_KEY` | 🟡 Secret | 支付宝公钥（PEM） | — |
+| `ALIPAY_GATEWAY` | 🟢 Variable | 网关地址 | `https://openapi.alipay.com/gateway.do` |
+| `ALIPAY_SIGN_TYPE` | 🟢 Variable | 签名算法 | `RSA2` |
+| `ALIPAY_KEY_TYPE` | 🟢 Variable | 密钥格式 | `PKCS8` |
+
+### 微信支付
+
+| 变量 | 分类 | 说明 |
+|---|---|---|
+| `WECHAT_PAY_APP_ID` | 🟡 Secret | 微信商户 AppID |
+| `WECHAT_PAY_MCH_ID` | 🟡 Secret | 商户号 ID |
+| `WECHAT_PAY_API_V3_KEY` | 🟡 Secret | API v3 密钥 |
+| `WECHAT_PAY_PRIVATE_KEY` | 🟡 Secret | 证书私钥（PEM） |
+| `WECHAT_PAY_SERIAL_NO` | 🟡 Secret | 证书序列号 |
+| `WECHAT_PAY_PUBLIC_KEY` | 🟡 Secret | 微信支付平台公钥 |
+
+> 申请地址：[微信支付商户平台](https://pay.weixin.qq.com/)
+
+---
+
+## 九、RevenueCat（跨端会员同步，可选）
+
+| 变量 | 分类 | 说明 | 获取方式 |
+|---|---|---|---|
+| `REVENUECAT_API_KEY` | 🟡 Secret | RevenueCat Secret Key | [RevenueCat](https://www.revenuecat.com/) |
+| `REVENUECAT_PROJECT_ID` | 🟡 Secret | 项目 ID | 同上 |
+
+---
+
+## 十、文件清理任务
+
+| 变量 | 分类 | 说明 | 默认值 |
+|---|---|---|---|
+| `FILE_CLEANUP_CRON` | 🟢 Variable | 清理定时 Cron | `0 30 3 * * *`（每天 3:30） |
+| `FILE_CLEANUP_DAYS` | 🟢 Variable | 保留天数 | `7` |
+| `FILE_CLEANUP_DRY_RUN` | 🟢 Variable | 仅日志不删除 | `false` |
+
+---
+
+## 快速配置指南
+
+### 必须配为 Secrets（🔴 共 14 项）
+
+```text
+SSH_HOST
+SSH_USER
+SSH_PASSWORD
+FRONTEND_URL
+BACKEND_URL
+BETTER_AUTH_URL
+BETTER_AUTH_SECRET
+MINIMAX_API_KEY
+MINIMAX_GROUP_ID
+DEEPSEEK_API_KEY
+COS_BUCKET
+COS_SECRET_ID
+COS_SECRET_KEY
+```
+
+### 有默认值（🟢 共 11 项，无需配置）
+
+它们已经写死了默认值，如需覆盖 → 设为 GitHub **Variables**：
+
+```text
+SSH_PORT=22
+WHISPER_LANGUAGE=en
+WHISPER_TIMEOUT_MS=300000
+COS_REGION=ap-shanghai
+COS_PRIVATE_URL_EXPIRES_SECONDS=3600
+FILE_CLEANUP_CRON=0 30 3 * * *
+FILE_CLEANUP_DAYS=7
+FILE_CLEANUP_DRY_RUN=false
+ALIPAY_GATEWAY=https://openapi.alipay.com/gateway.do
+ALIPAY_SIGN_TYPE=RSA2
+ALIPAY_KEY_TYPE=PKCS8
+SSL_DEPLOY=./ssl
+```
+
+### 可选（🟡 共 16 项，用到再配）
+
+```text
+WECHAT_CLIENT_ID / WECHAT_CLIENT_SECRET    # 微信扫码登录
+CARTESIA_API_KEY                            # 增强 TTS
+WHISPER_INFERENCE_URL                       # 语音转写
+ALIPAY_APP_ID / ...                         # 支付宝支付
+WECHAT_PAY_APP_ID / ...                     # 微信支付
+REVENUECAT_API_KEY / ...                    # RevenueCat 同步
+```

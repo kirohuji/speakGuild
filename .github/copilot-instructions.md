@@ -144,7 +144,7 @@ export class XxxController {
 
 ### 路由规范
 
-- **业务 API 前缀**：`/api/v1/guide-exam`
+- **业务 API 前缀**：`/api/v1/manyu`
 - **认证路由**：`/api/auth/*`（Better Auth 原生路由，不走业务前缀）
 - **请求方式**：RESTful (GET/POST/PATCH/DELETE)
 - **认证方式**：`Authorization: Bearer <token>`（通过 `requireAuthSession` 提取）

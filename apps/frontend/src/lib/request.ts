@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 }
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1/guide-exam',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu',
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 })
