@@ -63,7 +63,7 @@ jobs:
       - name: Sync code and env to server
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }}" \
+            -e "ssh -o StrictHostKeyChecking=no -p ${{ vars.SSH_PORT || 22 }}" \
             --exclude 'node_modules' \
             --exclude '.git' \
             --exclude 'dist' \
@@ -71,7 +71,7 @@ jobs:
             ./ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ vars.DEPLOY_DIR || '/home/deploy/manyu' }}/
           sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz \
-            -e "ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }}" \
+            -e "ssh -o StrictHostKeyChecking=no -p ${{ vars.SSH_PORT || 22 }}" \
             /tmp/deploy.env \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ vars.DEPLOY_DIR || '/home/deploy/manyu' }}/.env
 
@@ -106,10 +106,10 @@ jobs:
       - name: Sync and execute on server
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz \
-            -e "ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }}" \
+            -e "ssh -o StrictHostKeyChecking=no -p ${{ vars.SSH_PORT || 22 }}" \
             /tmp/deploy.sh \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ vars.DEPLOY_DIR || '/home/deploy/manyu' }}/deploy.sh
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh \
             -o StrictHostKeyChecking=no \
-            -p ${{ secrets.SSH_PORT || 22 }} \
+            -p ${{ vars.SSH_PORT || 22 }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash ${{ vars.DEPLOY_DIR || '/home/deploy/manyu' }}/deploy.sh"

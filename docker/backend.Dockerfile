@@ -12,8 +12,8 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/backend apps/backend
 
-RUN pnpm --filter @guideready/backend prisma:generate
-RUN pnpm --filter @guideready/backend build
+RUN pnpm --filter @manyu/backend prisma:generate
+RUN pnpm --filter @manyu/backend build
 
 FROM node:22-alpine AS runner
 
@@ -33,7 +33,7 @@ COPY --from=builder /app/apps/backend/dist apps/backend/dist
 COPY --from=builder /app/apps/backend/prisma apps/backend/prisma
 COPY --from=builder /app/apps/backend/src apps/backend/src
 COPY --from=builder /app/apps/backend/tsconfig.json apps/backend/tsconfig.json
-RUN pnpm --filter @guideready/backend prisma:generate
+RUN pnpm --filter @manyu/backend prisma:generate
 
 WORKDIR /app/apps/backend
 
