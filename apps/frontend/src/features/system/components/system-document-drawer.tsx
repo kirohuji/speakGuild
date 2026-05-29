@@ -1,4 +1,4 @@
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MarkdownContent } from './markdown-content'
 
@@ -15,7 +15,7 @@ export function SystemDocumentDrawer({ open, onClose, title, content }: SystemDo
       <DrawerContent className="h-[90dvh] w-full max-w-full rounded-none border-0">
         {/* 顶部标题栏 */}
         <div className="flex items-center justify-center border-b border-border/50 bg-background px-4 py-3">
-          <h1 className="text-base font-semibold">{title}</h1>
+          <DrawerTitle className="text-base font-semibold">{title}</DrawerTitle>
         </div>
 
         {/* 内容区 */}

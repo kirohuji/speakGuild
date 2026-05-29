@@ -1,0 +1,3 @@
+category_name,title,location,required_output_level,required_user_level,description
+酒店出行,酒店入住,酒店前台,L2,1,办理酒店入住，确认房间和设施。
+酒店出行,退房投诉,酒店前台,L2,1,退房结账，处理住宿期间的问题。

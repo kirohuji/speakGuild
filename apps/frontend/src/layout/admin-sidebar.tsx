@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Database, FileText, Settings, BarChart3, Bell,
   ChevronRight, ArrowLeft, CreditCard, Receipt, FolderOpen,
-  Tag, MessageSquare, MapPin, Map, BookOpen, Film, Award, UserCircle, ScrollText, Palette,
+  Tag, MessageSquare, MapPin, Map, BookOpen, Film, Award, UserCircle, ScrollText, Palette, Quote,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -118,6 +118,12 @@ const menuItems: MenuItem[] = [
     label: '主题管理',
     icon: Palette,
     path: '/admin/themes',
+  },
+  {
+    key: 'daily-sentences',
+    label: '每日一句',
+    icon: Quote,
+    path: '/admin/daily-sentences',
   },
 ]
 

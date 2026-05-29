@@ -8,10 +8,11 @@ import { QuestionBankAdminService } from './question-bank-admin.service';
 import { SystemConfigController } from './system-config/system-config.controller';
 import { SystemConfigService } from './system-config/system-config.service';
 import { ThemeManageModule } from './theme-manage/theme-manage.module';
+import { DailySentenceModule } from './daily-sentence/daily-sentence.module';
 import { PayModule } from '../pay/pay.module';
 
 @Module({
-  imports: [PayModule, ThemeManageModule],
+  imports: [PayModule, ThemeManageModule, DailySentenceModule],
   controllers: [AdminController, QuestionBankAdminController, ContentAdminController, SystemConfigController],
   providers: [AdminService, AdminStatsService, QuestionBankAdminService, SystemConfigService],
   exports: [SystemConfigService],

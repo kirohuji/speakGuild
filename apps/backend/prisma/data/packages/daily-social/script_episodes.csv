@@ -1,0 +1,2 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+chapter_0,新手体验,2,咖啡店点一杯咖啡,咖啡店点餐,L1,1,2,20,2,10,"[""和店员打招呼"",""点一杯饮品"",""指定大小和温度"",""确认价格""]",3,2,2,Tom（咖啡师）,校园咖啡店咖啡师友好随和,true,,"{""xp"":20}"

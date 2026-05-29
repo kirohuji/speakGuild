@@ -1,0 +1,12 @@
+scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+酒店入住,酒店入住,I have a reservation under the name...,我有预订，名字是...,L2,,,
+酒店入住,酒店入住,I'd like a room with a view.,我想要一个景观房。,L2,,,
+酒店入住,酒店入住,What time is breakfast served?,早餐几点供应？,L1,,,
+酒店入住,酒店入住,Is there a pool or gym?,有游泳池或健身房吗？,L1,,,
+酒店入住,酒店入住,Can I get a wake-up call?,能给一个叫醒电话吗？,L1,,,
+酒店入住,酒店入住,Is parking included?,停车费包含在内吗？,L2,,,
+退房投诉,退房投诉,"I'd like to check out, please.",我想退房。,L1,,,
+退房投诉,退房投诉,There's a problem with my room.,我房间有问题。,L2,,,
+退房投诉,退房投诉,The air conditioning isn't working.,空调坏了。,L2,,,
+退房投诉,退房投诉,Could I get a late checkout?,能延迟退房吗？,L1,,,
+退房投诉,退房投诉,I'd like to speak to the manager.,我想和经理谈谈。,L2,,,

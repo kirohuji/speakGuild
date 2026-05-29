@@ -1,0 +1,3 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+咖啡店点餐,点咖啡,"I'd like a ___, please.",点饮品,"latte, cappuccino, americano","I'd like a latte, please.",L1,0
+咖啡店点餐,点咖啡,For ___ or to go?,问堂食还是打包,"here, there",For here or to go?,L1,1

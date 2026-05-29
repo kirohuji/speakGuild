@@ -1,0 +1,4 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+面试自我介绍,1分钟自我介绍,Introduce yourself in a job interview in 1 minute.,在面试中做1分钟自我介绍。,60,L3,,,
+面试自我介绍,描述过往经历,Describe your previous work or internship experience.,描述你之前的工作或实习经历。,60,L3,,,
+面试自我介绍,回答优缺点,Answer the classic interview question: what are your strengths and weaknesses?,回答面试经典问题：你的优缺点是什么？,50,L3,,,

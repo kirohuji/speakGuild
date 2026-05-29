@@ -9,14 +9,12 @@ export class EnglishPracticeService {
   private buildObjectives(topic: {
     title: string;
     sentencePatterns?: any;
-    sentenceSkeleton?: string | null;
   }) {
     const objectives: string[] = [];
     const patterns = Array.isArray(topic.sentencePatterns) ? topic.sentencePatterns : [];
     patterns.forEach((pattern) => {
       if (pattern?.pattern) objectives.push(`使用句型: ${pattern.pattern}`);
     });
-    if (topic.sentenceSkeleton) objectives.push(`参考结构: ${topic.sentenceSkeleton}`);
     objectives.push(`围绕话题 "${topic.title}" 展开对话`);
     return objectives;
   }
@@ -55,6 +53,7 @@ export class EnglishPracticeService {
             vocabularies: { orderBy: { sortOrder: 'asc' }, take: 10 },
           },
         },
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: {
           include: {
             chunk: {
@@ -136,7 +135,6 @@ export class EnglishPracticeService {
         promptZh: topic.promptZh,
         suggestedDurationSec: topic.suggestedDurationSec,
         difficulty: topic.difficulty,
-        sentenceSkeleton: topic.sentenceSkeleton,
         sentencePatterns: topic.sentencePatterns,
         inkScriptId: topic.inkScriptId,
       },
@@ -187,6 +185,7 @@ export class EnglishPracticeService {
             vocabularies: { orderBy: { sortOrder: 'asc' } },
           },
         },
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: {
           include: {
             chunk: {
@@ -210,7 +209,6 @@ export class EnglishPracticeService {
       promptZh: topic.promptZh,
       difficulty: topic.difficulty,
       suggestedDurationSec: topic.suggestedDurationSec,
-      sentenceSkeleton: topic.sentenceSkeleton,
     };
     const sceneSnapshot = {
       id: topic.scene.id,

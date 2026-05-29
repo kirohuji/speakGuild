@@ -21,22 +21,22 @@ import {
 } from '@/features/membership/api'
 import { cn } from '@/lib/cn'
 
+const planIcons: Record<string, React.ElementType> = {
+  free: Star,
+  standard: Crown,
+  advanced: Zap,
+}
+
 const FALLBACK_BENEFITS: MemberBenefit[] = [
   { benefitId: '1', name: '场景化训练', freeSupport: '预览', standardSupport: '3 场景/天', advancedSupport: '无限' },
   { benefitId: '2', name: 'AI 口语纠错', freeSupport: false, standardSupport: '30 次/天', advancedSupport: '无限' },
   { benefitId: '3', name: 'Chunk 学习法', freeSupport: '预览', standardSupport: true, advancedSupport: true },
   { benefitId: '4', name: '剧本模式', freeSupport: 'Ch.0 体验', standardSupport: '全部章节', advancedSupport: '全部章节' },
   { benefitId: '5', name: '探索模式', freeSupport: false, standardSupport: '预览', advancedSupport: '全部地点' },
-  { benefitId: '6', name: '表达库', freeSupport: '20 条', standardSupport: '200 条', advancedSupport: '无限' },
+  { benefitId: '6', name: '学习库', freeSupport: '20 条', standardSupport: '200 条', advancedSupport: '无限' },
   { benefitId: '7', name: '输出等级追踪', freeSupport: '基础', standardSupport: '详细分析', advancedSupport: '完整报告' },
   { benefitId: '8', name: '客服支持', freeSupport: false, standardSupport: '工作日', advancedSupport: '全天优先' },
 ]
-
-const planIcons: Record<string, React.ElementType> = {
-  free: Star,
-  standard: Crown,
-  advanced: Zap,
-}
 
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation()
@@ -94,7 +94,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         window.open(result.payUrl, '_blank')
       }
     } catch (err: any) {
-      setPayError(err?.response?.data?.message || '创建订单失败')
+      setPayError(err?.response?.data?.message || t('member.createOrderFailed'))
     } finally {
       setPayLoading(false)
     }
@@ -110,7 +110,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       const cur = await getCurrentMembership()
       setCurrent(cur)
     } catch {
-      setPayError('模拟支付确认失败')
+      setPayError(t('member.mockConfirmFailed'))
     } finally {
       setPayLoading(false)
     }
@@ -149,9 +149,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   ) : compact ? (
     <div className="overflow-hidden rounded-lg border border-border/40">
       <div className="grid grid-cols-3 items-center gap-1 bg-muted/40 px-3 py-1.5">
-        <span className="text-[10px] font-semibold text-muted-foreground">权益</span>
-        <span className="text-center text-[10px] font-semibold text-muted-foreground">标准</span>
-        <span className="text-center text-[10px] font-semibold text-muted-foreground">进阶</span>
+        <span className="text-[10px] font-semibold text-muted-foreground">{t('member.compactBenefit')}</span>
+        <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.compactStandard')}</span>
+        <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.compactAdvanced')}</span>
       </div>
       {benefits.map((item, idx) => (
         <div
@@ -228,13 +228,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold truncate">{current?.planName || t('member.freeUser')}</p>
                 <Badge variant={current?.isActive ? 'default' : 'secondary'} className="h-4.5 px-1.5 text-[10px] leading-none">
-                  {current?.isActive ? '生效中' : '免费'}
+                  {current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
                 {current?.expiredAt
-                  ? `${new Date(current.expiredAt).toLocaleDateString('zh-CN')} 到期`
-                  : '升级解锁完整练习体验'}
+                  ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
+                  : t('member.upgradeExperience')}
               </p>
             </div>
           </div>
@@ -243,8 +243,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         <section className="overflow-hidden rounded-lg bg-gradient-to-br from-amber-100 via-orange-50 to-sky-100 p-4 dark:from-amber-950/40 dark:via-orange-950/20 dark:to-sky-950/40">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-medium text-muted-foreground">会员中心</p>
-              <h2 className="mt-1 text-xl font-semibold tracking-normal text-foreground">解锁更完整的练习体验</h2>
+              <p className="text-xs font-medium text-muted-foreground">{t('member.center')}</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-normal text-foreground">{t('member.unlockExperience')}</h2>
               <p className="mt-2 max-w-[260px] text-xs leading-5 text-muted-foreground">{t('member.subtitle')}</p>
             </div>
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-background/70 text-amber-500">
@@ -277,13 +277,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold">{current?.planName || t('member.freeUser')}</p>
                       <Badge variant={current?.isActive ? 'default' : 'secondary'} className="text-xs">
-                        {current?.isActive ? '生效中' : '免费'}
+                        {current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {current?.expiredAt
-                        ? `${new Date(current.expiredAt).toLocaleDateString('zh-CN')} 到期`
-                        : '升级解锁更多功能'}
+                        ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
+                        : t('member.upgradeMore')}
                     </p>
                   </div>
                 </div>
@@ -299,7 +299,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           <Card className="rounded-lg border-border/70 shadow-sm">
             <CardHeader className="pb-0">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="text-base">选择套餐</CardTitle>
+                <CardTitle className="text-base">{t('member.selectPlan')}</CardTitle>
                 <div className="inline-flex rounded-full bg-muted p-1 self-start">
                   <button
                     type="button"
@@ -336,7 +336,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         {compact && (
           <div className="space-y-2.5">
             <div className="flex items-center justify-between px-0.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">选择套餐</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.selectPlan')}</p>
               <div className="inline-flex rounded-full bg-muted p-0.5">
                 <button
                   type="button"
@@ -404,7 +404,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         )}
         {compact && (
           <div className="space-y-1.5 px-3 py-3">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">权益对比</p>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.benefitCompact')}</p>
             {benefitsContent}
           </div>
         )}
@@ -413,7 +413,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       {/* 服务说明 — compact 模式简化 */}
       {compact ? (
         <div className="rounded-xl bg-muted/30 px-3 py-3">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">服务说明</p>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.serviceCompact')}</p>
           <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-primary/50" />
@@ -467,9 +467,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>确认支付</DialogTitle>
+            <DialogTitle>{t('member.payTitle')}</DialogTitle>
             <DialogDescription>
-              选择支付方式完成购买
+              {t('member.payDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -477,18 +477,18 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             {/* 支付信息 */}
             <div className="rounded-xl border p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">套餐</span>
+                <span className="text-muted-foreground">{t('member.plan')}</span>
                 <span className="font-medium">{payPlan?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">周期</span>
+                <span className="text-muted-foreground">{t('member.cycle')}</span>
                 <span className="font-medium">
-                  {billingCycle === 'yearly' ? '年付 (83折)' : '月付'}
+                  {billingCycle === 'yearly' ? t('member.yearlyDiscount', { discount: 83 }) : t('member.monthly')}
                 </span>
               </div>
               <Separator />
               <div className="flex justify-between">
-                <span className="text-muted-foreground">应付金额</span>
+                <span className="text-muted-foreground">{t('member.totalAmount')}</span>
                 <span className="text-lg font-bold">
                   ¥{((): string => {
                     if (!payPlan) return '0.00'
@@ -506,10 +506,10 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               <div className="rounded-xl border p-6 flex flex-col items-center gap-4">
                 <QrCode className="h-24 w-24 text-muted-foreground" />
                 <p className="text-sm text-center text-muted-foreground">
-                  请使用微信扫描二维码完成支付
+                  {t('member.scanToPay')}
                 </p>
                 <p className="text-xs text-muted-foreground/60">
-                  订单号：{payResult.orderNo}
+                  {t('member.orderNo')}{payResult.orderNo}
                 </p>
                 <Button
                   variant="outline"
@@ -519,7 +519,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   className="w-full"
                 >
                   {payLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  （开发环境）模拟支付成功
+                  {t('member.mockSuccess')}
                 </Button>
               </div>
             )}
@@ -528,9 +528,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             {payResult?.payUrl && (
               <div className="rounded-xl border bg-blue-500/5 p-4 text-center">
                 <Monitor className="mx-auto h-8 w-8 text-blue-500 mb-2" />
-                <p className="text-sm mb-1">已在新窗口打开支付宝支付页面</p>
+                <p className="text-sm mb-1">{t('member.alipayOpened')}</p>
                 <p className="text-xs text-muted-foreground mb-3">
-                  如果未自动打开，请点击下方按钮
+                  {t('member.autoOpenTip')}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -540,7 +540,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     onClick={() => window.open(payResult.payUrl, '_blank')}
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    重新打开
+                    {t('member.reopen')}
                   </Button>
                   <Button
                     variant="outline"
@@ -550,7 +550,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     disabled={payLoading}
                   >
                     {payLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    模拟支付成功
+                    {t('member.mockConfirm')}
                   </Button>
                 </div>
               </div>
@@ -579,8 +579,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                       支
                     </div>
                   )}
-                  <span className="text-sm font-medium">支付宝</span>
-                  <span className="text-xs text-muted-foreground">网页/扫码支付</span>
+                  <span className="text-sm font-medium">{t('member.alipay')}</span>
+                  <span className="text-xs text-muted-foreground">{t('member.webPay')}</span>
                 </button>
 
                 <button
@@ -596,8 +596,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                       微
                     </div>
                   )}
-                  <span className="text-sm font-medium">微信支付</span>
-                  <span className="text-xs text-muted-foreground">扫码支付</span>
+                  <span className="text-sm font-medium">{t('member.wechatPay')}</span>
+                  <span className="text-xs text-muted-foreground">{t('member.scanPay')}</span>
                 </button>
               </div>
             )}
@@ -744,7 +744,7 @@ function CompactPlanCard({
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
 }) {
-  const t = useTranslation()
+  const { t } = useTranslation()
   const Icon = planIcons[plan.level] || Star
   const price = billingCycle === 'yearly' && plan.yearlyPrice ? plan.yearlyPrice : plan.price
   const colorAccent =
@@ -765,7 +765,7 @@ function CompactPlanCard({
     >
       {isCurrent && (
         <Badge variant="default" className="absolute -top-2 h-4.5 px-1.5 text-[10px] leading-none">
-          当前
+          {t('member.currentPlanBadge')}
         </Badge>
       )}
       <div className={cn(
@@ -780,7 +780,7 @@ function CompactPlanCard({
       <p className="text-xs font-semibold">{plan.name}</p>
       <p className="mt-0.5 text-lg font-bold">
         ¥{(price / 100).toFixed(0)}
-        <span className="text-[10px] font-normal text-muted-foreground">/{billingCycle === 'yearly' ? '年' : '月'}</span>
+        <span className="text-[10px] font-normal text-muted-foreground">{billingCycle === 'yearly' ? t('member.perYear') : t('member.perMonth')}</span>
       </p>
       {plan.features && plan.features.length > 0 && (
         <ul className="mt-2 space-y-0.5 w-full text-left">
@@ -791,7 +791,7 @@ function CompactPlanCard({
             </li>
           ))}
           {plan.features.length > 3 && (
-            <li className="text-[10px] text-muted-foreground/60">+{plan.features.length - 3} 项更多</li>
+            <li className="text-[10px] text-muted-foreground/60">{t('member.moreItems', { count: plan.features.length - 3 })}</li>
           )}
         </ul>
       )}

@@ -44,7 +44,7 @@ export interface Scene {
 }
 
 export async function listScenes(categoryId?: string): Promise<Scene[]> {
-  return get('/admin/content/scenes', { params: categoryId ? { categoryId } : undefined })
+  return get('/admin/content/scenes', categoryId ? { categoryId } : undefined)
 }
 
 export async function getScene(id: string): Promise<Scene> {
@@ -76,7 +76,7 @@ export interface SceneVocabulary {
 }
 
 export async function listVocabularies(sceneId?: string): Promise<SceneVocabulary[]> {
-  return get('/admin/content/vocabularies', { params: sceneId ? { sceneId } : undefined })
+  return get('/admin/content/vocabularies', sceneId ? { sceneId } : undefined)
 }
 
 export async function createVocabulary(data: Partial<SceneVocabulary>): Promise<SceneVocabulary> {
@@ -102,8 +102,7 @@ export interface TrainingTopic {
   promptZh: string
   suggestedDurationSec: number
   difficulty: string
-  sentenceSkeleton: string | null
-  sentencePatterns?: SentencePattern[] | null
+  sentencePatterns: SentencePattern[]
   inkScriptId?: string | null
   sortOrder: number
   scene?: { id: string; title: string }
@@ -111,7 +110,7 @@ export interface TrainingTopic {
 }
 
 export async function listTrainingTopics(sceneId?: string): Promise<TrainingTopic[]> {
-  return get('/admin/content/training-topics', { params: sceneId ? { sceneId } : undefined })
+  return get('/admin/content/training-topics', sceneId ? { sceneId } : undefined)
 }
 
 export async function createTrainingTopic(data: any): Promise<TrainingTopic> {
@@ -348,7 +347,7 @@ export async function deleteMap(id: string): Promise<void> {
 }
 
 export async function listLocations(mapId?: string): Promise<GameLocationData[]> {
-  return get('/admin/content/locations', { params: mapId ? { mapId } : undefined })
+  return get('/admin/content/locations', mapId ? { mapId } : undefined)
 }
 
 export async function createLocation(data: Partial<GameLocationData>): Promise<GameLocationData> {

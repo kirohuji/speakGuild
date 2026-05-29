@@ -53,7 +53,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
             {/* ═══ 1. 沉浸式主题套装 ═══ */}
             <section>
                 <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                沉浸式主题
+                {t('profile.immersiveTheme')}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {presets.map((preset) => (
@@ -72,7 +72,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
             {/* ═══ 2. Light / Dark 模式 ═══ */}
             <section>
                 <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                显示模式
+                {t('profile.displayMode')}
               </p>
               <div className="overflow-hidden rounded-xl bg-muted/30">
                 {[
@@ -109,7 +109,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
             {/* ═══ 3. 背景音效 ═══ */}
             <section>
                 <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                背景音效
+                {t('profile.bgm')}
               </p>
               <div className="space-y-3 overflow-hidden rounded-xl bg-muted/30 p-4">
                 <div className="flex items-center justify-between">
@@ -119,7 +119,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
                     ) : (
                       <VolumeX className="size-4 text-muted-foreground" />
                     )}
-                    <span className="text-sm">{bgmEnabled ? '已开启' : '已关闭'}</span>
+                    <span className="text-sm">{bgmEnabled ? t('profile.bgmOn') : t('profile.bgmOff')}</span>
                   </div>
                   <Switch
                     checked={bgmEnabled}

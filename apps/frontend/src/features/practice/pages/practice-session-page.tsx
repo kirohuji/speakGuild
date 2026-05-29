@@ -4,13 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
-  BookText, Search,
+  BookText, Search, BookmarkPlus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
+import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
@@ -146,6 +147,7 @@ export function PracticeSessionPage() {
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
   const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
+  const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
@@ -210,9 +212,6 @@ export function PracticeSessionPage() {
     if (detail?.topic.sentencePatterns?.length) {
       detail.topic.sentencePatterns.forEach((p) => objs.push(`${t('practiceSession.usePattern')}: ${p.pattern}`))
     }
-    if (detail?.topic.sentenceSkeleton) {
-      objs.push(`${t('practiceSession.refStructure')}: ${detail.topic.sentenceSkeleton}`)
-    }
     objs.push(`${t('practiceSession.aroundTopic')} "${detail?.topic.title}" ${t('practiceSession.startDialogue')}`)
     if (objs.length === 0) objs.push(t('practiceSession.completionHint'))
     return objs
@@ -253,10 +252,15 @@ export function PracticeSessionPage() {
     Promise.all([
       expressionApi.list({ type: 'chunk' }).catch(() => []),
       expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
-    ]).then(([chunkItems, phraseItems]) => {
+      expressionApi.list({ type: 'word' }).catch(() => []),
+    ]).then(([chunkRes, phraseRes, wordRes]) => {
       const set = new Set<string>()
-      for (const item of [...(Array.isArray(chunkItems) ? chunkItems : []), ...(Array.isArray(phraseItems) ? phraseItems : [])]) {
+      const extractItems = (res: any) => Array.isArray(res) ? res : (res?.items ?? [])
+      for (const item of [...extractItems(chunkRes), ...extractItems(phraseRes)]) {
         if (item.chunkText) set.add(item.chunkText)
+      }
+      for (const item of extractItems(wordRes)) {
+        if (item.original) set.add(item.original)
       }
       setCollectedTexts(set)
     }).catch(() => {})
@@ -389,6 +393,30 @@ export function PracticeSessionPage() {
     setInsightIndex(idx)
     setInsightOpen(true)
   }, [insightItems])
+
+  const handleCollectWord = useCallback(async (word: string, meaning: string) => {
+    try {
+      await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
+      setCollectedTexts((prev) => new Set([...prev, word]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [detail])
+
+  const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
+    try {
+      await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
+      setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [])
+
+  const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
+    try {
+      await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
+      setCollectedTexts((prev) => new Set([...prev, chunk.text]))
+      toast.success('已加入学习库')
+    } catch { toast.error('加入失败') }
+  }, [detail])
 
   // ==================== Practice: Send Input ====================
   const sendUserInput = useCallback(async (text: string) => {
@@ -639,30 +667,46 @@ export function PracticeSessionPage() {
                 )}
                 {detail.topic.sentencePatterns?.length ? (
                   <div className="space-y-2">
-                    {detail.topic.sentencePatterns.map((p, i) => (
-                      <Card key={i} className="border-0 bg-muted/30 shadow-none transition-colors hover:bg-muted/50">
-                        <CardContent className="p-0">
-                          <button
-                            type="button"
-                            onClick={() => openInsight(`pattern:${i}`)}
-                            className="flex w-full items-center gap-3 p-3 text-left"
-                          >
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                              <Search className="size-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
-                                <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
+                    {detail.topic.sentencePatterns.map((p, i) => {
+                      const isExpanded = expandedPatternIdx === i
+                      return (
+                        <Card key={i} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
+                          <CardContent className="p-0">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedPatternIdx((prev) => (prev === i ? null : i))}
+                              className="flex w-full items-center gap-3 p-3 text-left"
+                            >
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                                <Search className="size-4" />
                               </div>
-                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
-                              {p.example && <p className="mt-1 text-xs text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
-                            </div>
-                            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                          </button>
-                        </CardContent>
-                      </Card>
-                    ))}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
+                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
+                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                </div>
+                                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
+                              </div>
+                              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
+                            </button>
+                            {isExpanded && (
+                              <div className="border-t border-border/50 px-3 pb-3 pt-2">
+                                {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
+                                <div className="flex gap-2 mt-2">
+                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
+                                    <Search className="size-3.5" /> 查看
+                                  </Button>
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })}>
+                                    <BookmarkPlus className="size-3.5" /> {collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
                   </div>
                 ) : null}
               </div>
@@ -720,14 +764,14 @@ export function PracticeSessionPage() {
                             {isExpanded && (
                               <div className="border-t border-border/50 px-3 pb-3 pt-2">
                                 <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="mt-1 h-7 px-0 text-xs text-primary"
-                                  onClick={() => openInsight(`word:${v.id}`)}
-                                >
-                                  {t('practiceSession.viewFullExplanation')}
-                                </Button>
+                                <div className="flex gap-2 mt-2">
+                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
+                                    <Search className="size-3.5" /> 查看
+                                  </Button>
+                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(v.word)} onClick={() => handleCollectWord(v.word, v.meaning)}>
+                                    <BookmarkPlus className="size-3.5" /> {collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </CardContent>
@@ -749,6 +793,7 @@ export function PracticeSessionPage() {
                   onActivate={activateChunk}
                   onExpand={setExpandedChunkId}
                   onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
+                  onCollect={handleCollectChunk}
                 />
               </TabsContent>
             </Tabs>

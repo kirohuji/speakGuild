@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, Clock, CheckCircle2, X, User, Volume2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,11 +20,12 @@ interface Props {
 }
 
 export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Props) {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
 
   if (!item) return null
 
-  const formattedDate = new Date(item.createdAt).toLocaleString('zh-CN', {
+  const formattedDate = new Date(item.createdAt).toLocaleString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -59,7 +61,7 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
                   {item.title}
                 </SheetTitle>
                 <SheetDescription className="sr-only">
-                  通知详情
+                  {t('notification.detailTitle')}
                 </SheetDescription>
               </div>
             </div>
@@ -84,7 +86,7 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
               ) : (
                 <User className="h-3 w-3" />
               )}
-              {item.type === 'broadcast' ? '系统广播' : '定向通知'}
+              {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
             </Badge>
             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60">
               <Clock className="h-3 w-3" />
@@ -93,7 +95,7 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
             {item.isRead && (
               <span className="inline-flex items-center gap-1 text-[11px] text-primary/70">
                 <CheckCircle2 className="h-3 w-3" />
-                已读
+                {t('notification.read')}
               </span>
             )}
           </div>
@@ -111,10 +113,10 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/[0.03] px-3 py-2.5">
               <CheckCircle2 className="h-4 w-4 text-primary/60" />
               <span className="text-xs text-muted-foreground/70">
-                已于 {new Date(item.readAt).toLocaleTimeString('zh-CN', {
+                {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(undefined, {
                   hour: '2-digit',
                   minute: '2-digit',
-                })} 阅读
+                }) })}
               </span>
             </div>
           )}

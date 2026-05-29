@@ -357,6 +357,21 @@ model SystemConfig {
   @@map("system_config")
 }
 
+/// 每日一句：按日期管理的每日句子（首页展示）
+model DailySentence {
+  id          String   @id @default(cuid())
+  date        DateTime @unique         /// 句子所属日期（仅日期部分有效）
+  quote       String                   /// 英文句子
+  translation String                   /// 中文翻译
+  author      String   @default("")    /// 出处/作者
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date, sortOrder])
+  @@map("daily_sentence")
+}
+
 enum MembershipLevel {
   free
   standard
@@ -908,9 +923,9 @@ model TrainingTopic {
   suggestedDurationSec Int               @default(60)
   difficulty           String            @default("L2")
   activeChunks         TrainingTopicChunk[]
+  sentencePatterns     TrainingTopicSentencePattern[]
   practiceSessions     PracticeSession[]
-  sentenceSkeleton     String?           @db.Text
-  sentencePatterns     Json?
+  sentencePatternsDeprecated     Json?    @map("sentence_patterns")
   inkScriptId          String?           @unique
   inkScript            InkScript?        @relation("TopicInkScript", fields: [inkScriptId], references: [id])
   sortOrder            Int               @default(0)
@@ -918,6 +933,23 @@ model TrainingTopic {
 
   @@index([sceneId, difficulty])
   @@map("training_topic")
+}
+
+model TrainingTopicSentencePattern {
+  id         String        @id @default(cuid())
+  topic      TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId    String
+  pattern    String
+  meaning    String?
+  slots      Json?
+  example    String?
+  difficulty String        @default("L1")
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([topicId, sortOrder])
+  @@map("training_topic_sentence_pattern")
 }
 
 model PracticeSession {

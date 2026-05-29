@@ -97,6 +97,7 @@ export class ContentAdminController {
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
+            sentencePatterns: { orderBy: { sortOrder: 'asc' } },
             _count: { select: { activeChunks: true } },
           },
         },
@@ -170,6 +171,7 @@ export class ContentAdminController {
       orderBy: { sortOrder: 'asc' },
       include: {
         scene: { select: { id: true, title: true } },
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: {
           include: { chunk: { select: { id: true, text: true } } },
           orderBy: { sortOrder: 'asc' },
@@ -181,7 +183,7 @@ export class ContentAdminController {
   @Post('training-topics')
   async createTrainingTopic(@Req() req: Request, @Body() dto: CreateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, ...data } = dto;
+    const { chunkIds, sentencePatterns, ...data } = dto;
     const topic = await this.prisma.trainingTopic.create({ data });
     if (chunkIds?.length) {
       await this.prisma.trainingTopicChunk.createMany({
@@ -192,9 +194,23 @@ export class ContentAdminController {
         })),
       });
     }
+    if (sentencePatterns?.length) {
+      await this.prisma.trainingTopicSentencePattern.createMany({
+        data: sentencePatterns.map((sp: any, i: number) => ({
+          topicId: topic.id,
+          pattern: sp.pattern,
+          meaning: sp.meaning || null,
+          slots: sp.slots || undefined,
+          example: sp.example || null,
+          difficulty: sp.difficulty || 'L1',
+          sortOrder: i,
+        })),
+      });
+    }
     return this.prisma.trainingTopic.findUnique({
       where: { id: topic.id },
       include: {
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: { include: { chunk: true } },
       },
     });
@@ -203,7 +219,7 @@ export class ContentAdminController {
   @Patch('training-topics/:id')
   async updateTrainingTopic(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, ...data } = dto;
+    const { chunkIds, sentencePatterns, ...data } = dto;
     const topic = await this.prisma.trainingTopic.update({ where: { id }, data });
     if (chunkIds) {
       await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: id } });
@@ -217,9 +233,26 @@ export class ContentAdminController {
         });
       }
     }
+    if (sentencePatterns) {
+      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
+      if (sentencePatterns.length > 0) {
+        await this.prisma.trainingTopicSentencePattern.createMany({
+          data: sentencePatterns.map((sp: any, i: number) => ({
+            topicId: id,
+            pattern: sp.pattern,
+            meaning: sp.meaning || null,
+            slots: sp.slots || undefined,
+            example: sp.example || null,
+            difficulty: sp.difficulty || 'L1',
+            sortOrder: i,
+          })),
+        });
+      }
+    }
     return this.prisma.trainingTopic.findUnique({
       where: { id },
       include: {
+        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
         activeChunks: { include: { chunk: true } },
       },
     });

@@ -1,0 +1,10 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+咖啡店点餐,点咖啡,You're at a coffee shop. Order your favorite drink.,你在咖啡店，请点你喜欢的饮品。,30,L1,,,
+咖啡店点餐,修改订单,You changed your mind. Ask to modify your order.,你改变主意了，要求修改订单。,30,L1,,,
+咖啡店点餐,询问推荐饮品,Ask the barista what they recommend.,问咖啡师有什么推荐的饮品。,30,L1,,,
+咖啡店点餐,办理会员卡,Ask about the loyalty card program at the coffee shop.,询问咖啡店的会员卡计划。,40,L2,,,
+咖啡店点餐,投诉饮品问题,Your drink was made wrong. Politely tell the barista.,你的饮品做错了，礼貌地告诉咖啡师。,35,L2,,,
+超市购物,询问商品位置,Ask a store employee where to find a specific item.,问店员某个商品在哪。,30,L1,,,
+超市购物,退货,You bought the wrong item. Ask to return it.,你买错了商品，要求退货。,40,L2,,,
+超市购物,询问优惠活动,Ask about current promotions and discounts.,询问当前有什么优惠活动。,30,L1,,,
+超市购物,自助结账遇到问题,The self-checkout machine has an error. Ask for help.,自助结账机出错了，请工作人员帮忙。,35,L1,,,

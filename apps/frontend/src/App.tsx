@@ -61,6 +61,7 @@ import { AdminStoriesPage } from '@/features/admin/pages/admin-stories-page'
 import { AdminMapsPage } from '@/features/admin/pages/admin-maps-page'
 import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
 import { AdminThemesPage } from '@/features/admin/theme-manage/pages/theme-list-page'
+import { AdminDailySentencesPage } from '@/features/admin/pages/admin-daily-sentences-page'
 
 export default function App() {
   return (
@@ -90,6 +91,7 @@ export default function App() {
                 <Route path="script" element={<AdminScriptPage />} />
                 <Route path="achievements" element={<AdminAchievementsPage />} />
                 <Route path="themes" element={<AdminThemesPage />} />
+                <Route path="daily-sentences" element={<AdminDailySentencesPage />} />
               </Route>
 
               {/* 用户端 — RootLayout */}
@@ -116,7 +118,7 @@ export default function App() {
                 <Route path="/explore" element={<ExploreMapPage />} />
                 <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
 
-                {/* 表达库 */}
+                {/* 学习库 */}
                 <Route path="/expressions" element={<ExpressionLibraryPage />} />
 
                 {/* 我的成长 */}

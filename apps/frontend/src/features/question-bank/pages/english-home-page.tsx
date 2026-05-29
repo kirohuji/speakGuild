@@ -10,11 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/auth-provider'
 import { cn } from '@/lib/cn'
 import { ImmersiveBackground } from '@/components/common/immersive-background'
+import { get } from '@/lib/request'
 
-const HOME_SCENE = {
-  quote: 'Say one real sentence today.',
-  translation: '今天先说出一句真实会用的话。',
-  author: 'EngJourney Daily',
+interface DailySentence {
+  quote: string
+  translation: string
+  author: string
 }
 
 function useClock() {
@@ -32,16 +33,35 @@ function useClock() {
   return { hours, minutes, period }
 }
 
+const FALLBACK_SENTENCE: DailySentence = {
+  quote: 'Say one real sentence today.',
+  translation: '今天先说出一句真实会用的话。',
+  author: 'EngJourney Daily',
+}
+
 export function EnglishHomePage() {
   const { session } = useAuth()
   const { resolvedTheme, theme } = useTheme()
   const [loading, setLoading] = useState(true)
+  const [dailySentence, setDailySentence] = useState<DailySentence>(FALLBACK_SENTENCE)
   const clock = useClock()
   const isDark = resolvedTheme === 'dark' || theme === 'dark'
 
   useEffect(() => {
-    setLoading(false)
-  }, [session])
+    // 获取每日句子
+    get<DailySentence>('/daily-sentences/today')
+      .then((data) => {
+        if (data?.quote) {
+          setDailySentence(data)
+        }
+      })
+      .catch(() => {
+        // 使用默认句子作为 fallback
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [])
 
   if (loading) {
     return (
@@ -119,14 +139,14 @@ export function EnglishHomePage() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <p className={cn('text-[20px] font-semibold leading-8 tracking-normal', isDark ? 'text-white' : 'text-slate-800')}>
-            “{HOME_SCENE.quote}”
+            “{dailySentence.quote}”
           </p>
           <p className={cn('mx-auto mt-5 max-w-[250px] text-sm leading-6', isDark ? 'text-white/82' : 'text-slate-600')}>
-            {HOME_SCENE.translation}
+            {dailySentence.translation}
           </p>
           <div className={cn('mx-auto mt-6 h-px w-12', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />
           <p className={cn('mx-auto mt-5 max-w-[220px] text-[11px] font-medium uppercase tracking-[0.14em]', isDark ? 'text-rose-100/58' : 'text-slate-500')}>
-            {HOME_SCENE.author}
+            {dailySentence.author}
           </p>
         </motion.div>
       </motion.section>
