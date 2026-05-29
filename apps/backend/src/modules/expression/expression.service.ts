@@ -25,15 +25,17 @@ export class ExpressionService {
     // reviewState 过滤
     const now = new Date();
     if (reviewState === 'reviewing') {
-      where.OR = [
-        { nextReviewAt: { lte: now } },
-        { nextReviewAt: null },
-      ];
-    } else if (reviewState === 'done') {
+      // 复习中：已至少复习过一次，且已到/超过下次复习时间
       where.AND = [
         { reviewCount: { gt: 0 } },
-        { masteryStatus: { not: 'mastered' } },
-        { nextReviewAt: { gt: now } },
+        { nextReviewAt: { lte: now } },
+      ];
+    } else if (reviewState === 'done') {
+      // 学习中：尚未掌握，包括新加入（未复习过）和已复习但未到下次复习时间的
+      where.masteryStatus = { not: 'mastered' };
+      where.OR = [
+        { reviewCount: 0 },
+        { reviewCount: { gt: 0 }, nextReviewAt: { gt: now } },
       ];
     } else if (reviewState === 'mastered') {
       where.masteryStatus = 'mastered';
@@ -81,10 +83,8 @@ export class ExpressionService {
     return this.prisma.expressionItem.findMany({
       where: {
         userId,
-        OR: [
-          { nextReviewAt: { lte: now } },
-          { nextReviewAt: null },
-        ],
+        reviewCount: { gt: 0 },
+        nextReviewAt: { lte: now },
       },
       orderBy: [
         { nextReviewAt: { sort: 'asc', nulls: 'first' } },
