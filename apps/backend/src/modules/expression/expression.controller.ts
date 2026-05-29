@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
-import { ExpressionService } from './expression.service';
+import { ExpressionService, type MasteryStatus } from './expression.service';
 import { requireAuthSession } from '../auth/session.util';
 
 @Controller('expressions')
@@ -20,7 +20,7 @@ export class ExpressionController {
     return this.expressionService.listExpressions(session.user.id, {
       type: type as any,
       sceneName,
-      reviewState: reviewState as any,
+      reviewState: reviewState as MasteryStatus,
       page: page ? parseInt(page, 10) : undefined,
       pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
     });
@@ -38,15 +38,13 @@ export class ExpressionController {
     return this.expressionService.deleteExpression(session.user.id, id);
   }
 
-  @Get('review')
-  async getReview(@Req() req: Request) {
+  @Patch(':id/status')
+  async updateStatus(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body('status') status: MasteryStatus,
+  ) {
     const session = await requireAuthSession(req);
-    return this.expressionService.getReviewList(session.user.id);
-  }
-
-  @Post(':id/review')
-  async completeReview(@Req() req: Request, @Param('id') id: string) {
-    const session = await requireAuthSession(req);
-    return this.expressionService.completeReview(session.user.id, id);
+    return this.expressionService.updateStatus(session.user.id, id, status);
   }
 }

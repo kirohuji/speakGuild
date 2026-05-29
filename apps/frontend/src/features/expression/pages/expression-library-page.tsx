@@ -3,18 +3,18 @@ import { useTranslation } from 'react-i18next'
 import {
   BookMarked, Search, Trash2, BookOpen,
   BookText, MessageSquareText, ExternalLink, Layers,
+  RotateCcw, CheckCheck, ArrowRightFromLine,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
-import { expressionApi } from '@/features/practice/api/english-practice-api'
+import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { cn } from '@/lib/cn'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
-type ReviewState = 'reviewing' | 'done' | 'mastered'
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
@@ -36,7 +36,7 @@ const PAGE_SIZE = 30
 export function ExpressionLibraryPage() {
   const { t } = useTranslation()
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
-  const [reviewState, setReviewState] = useState<ReviewState>('done')
+  const [reviewState, setReviewState] = useState<MasteryStatus>('learning')
 
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
@@ -87,7 +87,7 @@ export function ExpressionLibraryPage() {
   // 切换一级 tab 时重置二级 tab
   const handleLibraryTabChange = useCallback((value: string) => {
     setLibraryTab(value as LibraryTab)
-    setReviewState('done')
+    setReviewState('learning')
     setExpandedItemId(null)
   }, [])
 
@@ -127,6 +127,17 @@ export function ExpressionLibraryPage() {
     setDialogOpen(true)
   }, [])
 
+  // ---- 状态变更 ----
+  const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
+    try {
+      await expressionApi.updateStatus(id, status)
+      toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
+      fetchData()
+    } catch {
+      toast.error(t('expressionLib.operationFailed'))
+    }
+  }, [fetchData, t])
+
   // ---- 删除操作 ----
   const handleRemove = useCallback(async (id: string) => {
     try {
@@ -138,14 +149,11 @@ export function ExpressionLibraryPage() {
     }
   }, [fetchData, t])
 
-  // ---- counts for filter pills (from backend total) ----
-  // 由于后端只返回当前筛选结果，我们无法直接拿到其他状态的 count
-  // 这里做一个轻量级的额外请求或者在切换时更新
-  // 简化方案：pills 显示当前结果数量
+  // ---- 二级状态过滤 ----
   const filterPills = [
-    { value: 'done' as ReviewState, label: t('expressionLib.done') },
-    { value: 'reviewing' as ReviewState, label: t('expressionLib.reviewing') },
-    { value: 'mastered' as ReviewState, label: t('expressionLib.mastered') },
+    { value: 'learning' as MasteryStatus, label: t('expressionLib.done') },
+    { value: 'reviewing' as MasteryStatus, label: t('expressionLib.reviewing') },
+    { value: 'mastered' as MasteryStatus, label: t('expressionLib.mastered') },
   ]
 
   // ---- empty state ----
@@ -209,23 +217,55 @@ export function ExpressionLibraryPage() {
                 </p>
               )}
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="grid shrink-0 grid-cols-2 gap-0.5">
+              {(expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated') && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'reviewing') }}
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-primary hover:bg-primary/10"
+                >
+                  <ArrowRightFromLine className="size-3.5" />
+                </span>
+              )}
+              {expr.masteryStatus === 'reviewing' && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'learning') }}
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-amber-500 hover:bg-amber-500/10"
+                >
+                  <RotateCcw className="size-3.5" />
+                </span>
+              )}
+              {expr.masteryStatus === 'mastered' && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'reviewing') }}
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <RotateCcw className="size-3.5" />
+                </span>
+              )}
+              {(expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated' || expr.masteryStatus === 'reviewing') && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'mastered') }}
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-emerald-500 hover:bg-emerald-500/10"
+                >
+                  <CheckCheck className="size-3.5" />
+                </span>
+              )}
+              {expr.masteryStatus === 'mastered' && <span />}
               <span
                 onClick={(e) => { e.stopPropagation(); openDialog(visibleDialogItems, index) }}
                 className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                title={t('expressionLib.search')}
               >
                 <Search className="size-3.5" />
               </span>
               <span
                 onClick={(e) => { e.stopPropagation(); handleRemove(expr.id) }}
                 className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-red-500"
-                title={t('expressionLib.remove')}
               >
                 <Trash2 className="size-3.5" />
               </span>
             </div>
           </button>
+
           {isExpanded && (
             <div className="border-t border-border/50 px-3 pb-3 pt-2">
               {/* 显示简要意思 */}
@@ -241,11 +281,13 @@ export function ExpressionLibraryPage() {
                   )}
                 </div>
               )}
-              {expr.lastReviewedAt && (
+
+              {/* 展开后显示复习信息 */}
+              {/* {expr.lastReviewedAt && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t('expressionLib.lastReview')}{new Date(expr.lastReviewedAt).toLocaleDateString('zh-CN')}
                 </p>
-              )}
+              )} */}
             </div>
           )}
         </CardContent>
@@ -255,13 +297,13 @@ export function ExpressionLibraryPage() {
 
   const emptyHintMap: Record<string, { icon: React.ReactNode; title: string; hint?: string }> = {
     'words-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyWords'), hint: t('expressionLib.hintCollectInUnit') },
-    'words-done': { icon: <BookOpen className="size-12" />, title: t('expressionLib.emptyWordsDone') },
+    'words-learning': { icon: <BookOpen className="size-12" />, title: t('expressionLib.emptyWordsDone') },
     'words-mastered': { icon: <BookOpen className="size-12" />, title: t('expressionLib.emptyWordsDone') },
     'chunk-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunks'), hint: t('expressionLib.hintAutoCollect') },
-    'chunk-done': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksDone') },
+    'chunk-learning': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksDone') },
     'chunk-mastered': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksMastered') },
     'pattern-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatterns'), hint: t('expressionLib.hintCollectPatterns') },
-    'pattern-done': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsDone') },
+    'pattern-learning': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsDone') },
     'pattern-mastered': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsMastered') },
   }
 

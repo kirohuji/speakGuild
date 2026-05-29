@@ -1132,14 +1132,14 @@ model ExpressionItem {
   corrected      String?        @db.Text
   chunkText      String?
   sceneName      String?
-  masteryStatus  String         @default("activated")
+  masteryStatus  String         @default("learning")
   reviewCount    Int            @default(0)
   lastReviewedAt DateTime?
   nextReviewAt   DateTime?
   createdAt      DateTime       @default(now())
 
   @@index([userId, type])
-  @@index([userId, nextReviewAt])
+  @@index([userId, masteryStatus])
   @@map("expression_item")
 }
 

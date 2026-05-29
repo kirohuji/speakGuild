@@ -245,11 +245,13 @@ export const practiceAiApi = {
 }
 
 // ---- 学习库 ----
+export type MasteryStatus = 'learning' | 'reviewing' | 'mastered'
+
 export const expressionApi = {
   list: (params?: {
     type?: string
     sceneName?: string
-    reviewState?: 'reviewing' | 'done' | 'mastered'
+    reviewState?: MasteryStatus
     page?: number
     pageSize?: number
   }) => api.get('/expressions', { params }),
@@ -258,9 +260,8 @@ export const expressionApi = {
 
   remove: (id: string) => api.delete(`/expressions/${id}`),
 
-  getReview: () => api.get('/expressions/review'),
-
-  completeReview: (id: string) => api.post(`/expressions/${id}/review`),
+  updateStatus: (id: string, status: MasteryStatus) =>
+    api.patch(`/expressions/${id}/status`, { status }),
 }
 
 // ---- Chunk ----
