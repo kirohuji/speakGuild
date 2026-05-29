@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
 import { History, RotateCcw, Settings, SkipBack } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import {
   Dialog,
@@ -11,6 +12,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
+import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { VnInputPanel } from './vn-input-panel'
 
@@ -760,20 +762,22 @@ function VnSettingsDialog({
   settings: VnPlayerSettings
   onSettingsChange: (settings: VnPlayerSettings) => void
 }) {
+  const { t } = useTranslation()
   const update = (patch: Partial<VnPlayerSettings>) => onSettingsChange({ ...settings, ...patch })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>播放设置</DialogTitle>
-          <DialogDescription>这些设置会同时用于预览和练习对话。</DialogDescription>
+          <DialogTitle>{t('vnSettings.title')}</DialogTitle>
+          <DialogDescription>{t('vnSettings.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
+          {/* Font Size */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>字体大小</Label>
+              <Label className="text-sm font-medium">{t('vnSettings.fontSize')}</Label>
               <span className="text-xs tabular-nums text-muted-foreground">{settings.fontSize}px</span>
             </div>
             <Slider
@@ -785,38 +789,52 @@ function VnSettingsDialog({
             />
           </div>
 
-          <SettingSwitch
-            label="自动下一句"
-            checked={settings.autoAdvance}
-            onCheckedChange={(autoAdvance) => update({ autoAdvance })}
-          />
+          <Separator />
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>自动间隔</Label>
-              <span className="text-xs tabular-nums text-muted-foreground">{settings.autoAdvanceDelay.toFixed(1)} 秒</span>
-            </div>
-            <Slider
-              min={1}
-              max={8}
-              step={0.5}
-              value={[settings.autoAdvanceDelay]}
-              onValueChange={([autoAdvanceDelay]) => update({ autoAdvanceDelay })}
-              disabled={!settings.autoAdvance}
+          {/* Auto Advance */}
+          <div className="space-y-4">
+            <SettingSwitch
+              label={t('vnSettings.autoAdvance')}
+              checked={settings.autoAdvance}
+              onCheckedChange={(autoAdvance) => update({ autoAdvance })}
             />
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className={cn('text-sm', !settings.autoAdvance && 'text-muted-foreground/50')}>
+                  {t('vnSettings.autoAdvanceDelay')}
+                </Label>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {settings.autoAdvanceDelay.toFixed(1)} {t('vnSettings.seconds')}
+                </span>
+              </div>
+              <Slider
+                min={1}
+                max={8}
+                step={0.5}
+                value={[settings.autoAdvanceDelay]}
+                onValueChange={([autoAdvanceDelay]) => update({ autoAdvanceDelay })}
+                disabled={!settings.autoAdvance}
+              />
+            </div>
           </div>
 
-          <SettingSwitch
-            label="双语显示"
-            checked={settings.bilingual}
-            onCheckedChange={(bilingual) => update({ bilingual })}
-          />
+          <Separator />
 
-          <SettingSwitch
-            label="显示我的输入"
-            checked={settings.showUserInputInDialogue}
-            onCheckedChange={(showUserInputInDialogue) => update({ showUserInputInDialogue })}
-          />
+          {/* Display Options */}
+          <div className="space-y-4">
+            <SettingSwitch
+              label={t('vnSettings.bilingual')}
+              checked={settings.bilingual}
+              onCheckedChange={(bilingual) => update({ bilingual })}
+            />
+
+            <SettingSwitch
+              label={t('vnSettings.showUserInput')}
+              checked={settings.showUserInputInDialogue}
+              onCheckedChange={(showUserInputInDialogue) => update({ showUserInputInDialogue })}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -833,8 +851,8 @@ function SettingSwitch({
   onCheckedChange: (checked: boolean) => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <Label>{label}</Label>
+    <div className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2.5 transition-colors hover:bg-muted/60">
+      <Label className="cursor-pointer text-sm font-normal">{label}</Label>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   )
