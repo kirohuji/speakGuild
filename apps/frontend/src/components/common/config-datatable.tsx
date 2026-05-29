@@ -103,7 +103,12 @@ export function ConfigDataTable<T extends Record<string, any>>({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="h-10 px-4 text-left font-medium text-muted-foreground"
+                    className={cn(
+                      'h-11 px-4 font-medium text-muted-foreground',
+                      (header.column.columnDef.meta as any)?.align === 'right' && 'text-right',
+                      (header.column.columnDef.meta as any)?.align === 'center' && 'text-center',
+                      (!(header.column.columnDef.meta as any)?.align || (header.column.columnDef.meta as any)?.align === 'left') && 'text-left',
+                    )}
                     style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
                   >
                     {header.isPlaceholder
@@ -119,7 +124,7 @@ export function ConfigDataTable<T extends Record<string, any>>({
               Array.from({ length: pageSize > 5 ? 5 : pageSize }).map((_, i) => (
                 <tr key={i} className="border-b">
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3">
+                    <td key={col.key} className="px-4 py-3.5">
                       <Skeleton className="h-4 w-full" />
                     </td>
                   ))}
@@ -145,7 +150,11 @@ export function ConfigDataTable<T extends Record<string, any>>({
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3">
+                    <td key={cell.id} className={cn(
+                      'px-4 py-3.5',
+                      (cell.column.columnDef.meta as any)?.align === 'right' && 'text-right',
+                      (cell.column.columnDef.meta as any)?.align === 'center' && 'text-center',
+                    )}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

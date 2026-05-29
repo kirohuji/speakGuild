@@ -113,9 +113,9 @@ export function LearningPlanPage() {
               aria-label={t('member.title')}
             >
               <ShoppingBag className="size-[18px]" />
-              {notStarted.length > 0 && (
+              {/* {notStarted.length > 0 && (
                 <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-primary ring-2 ring-background" />
-              )}
+              )} */}
             </button>
           </div>
         </div>
@@ -903,15 +903,15 @@ function PracticeRecordsContent() {
     {
       key: 'topicName',
       header: t('profile.practiceRecords.columns.topic'),
-      cell: (v) => <span className="text-sm font-medium">{v}</span>,
-    },
-    {
-      key: 'questionText',
-      header: t('profile.practiceRecords.columns.question'),
       cell: (v, row) => (
-        <div className="max-w-[360px]">
-          <span className="line-clamp-1 text-sm text-muted-foreground">{v}</span>
-          {row.summary && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/80">{row.summary}</p>}
+        <div>
+          <span className="text-sm font-medium">{v}</span>
+          {row.questionText && (
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{row.questionText}</p>
+          )}
+          {row.summary && (
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.summary}</p>
+          )}
         </div>
       ),
     },
@@ -919,30 +919,28 @@ function PracticeRecordsContent() {
       key: 'status',
       header: t('profile.practiceRecords.columns.status'),
       cell: (v, row) => (
-        <div className="flex items-center gap-2">
-          <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-xs">
+        <div className="space-y-1">
+          <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-[10px]">
             {v === 'analyzed' ? t('profile.practiceRecords.status.analyzed') : v === 'analyzing' ? t('profile.practiceRecords.status.analyzing') : v === 'completed' ? t('profile.practiceRecords.status.completed') : v === 'failed' ? t('profile.practiceRecords.status.failed') : t('profile.practiceRecords.status.inProgress')}
           </Badge>
-          {typeof row.score === 'number' && <span className="text-xs font-semibold text-primary">{row.score}</span>}
+          <div className="text-[11px] text-muted-foreground">
+            {typeof row.score === 'number' && <span className="font-semibold text-primary tabular-nums">{row.score}分</span>}
+            {typeof row.score === 'number' && <span className="mx-1 text-border">·</span>}
+            <span>{row.practiceCount}次</span>
+          </div>
         </div>
       ),
-      width: 120,
-    },
-    {
-      key: 'practiceCount',
-      header: t('profile.practiceRecords.columns.count'),
-      cell: (v) => <Badge variant="secondary" className="text-xs">{v} {t('common.records')}</Badge>,
-      width: 80,
+      align: 'center',
     },
     {
       key: 'lastPracticeAt',
       header: t('profile.practiceRecords.columns.date'),
       cell: (v) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
           {new Date(v).toLocaleDateString('zh-CN')}
         </span>
       ),
-      width: 100,
+      align: 'center',
     },
   ]
 
