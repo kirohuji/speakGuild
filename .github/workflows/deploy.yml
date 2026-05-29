@@ -29,11 +29,34 @@ jobs:
       COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
       COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
       COS_PRIVATE_URL_EXPIRES_SECONDS: ${{ secrets.COS_PRIVATE_URL_EXPIRES_SECONDS }}
+      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      WHISPER_TIMEOUT_MS: ${{ secrets.WHISPER_TIMEOUT_MS }}
+      ALIPAY_APP_ID: ${{ secrets.ALIPAY_APP_ID }}
+      ALIPAY_PRIVATE_KEY: ${{ secrets.ALIPAY_PRIVATE_KEY }}
+      ALIPAY_PUBLIC_KEY: ${{ secrets.ALIPAY_PUBLIC_KEY }}
+      ALIPAY_GATEWAY: ${{ secrets.ALIPAY_GATEWAY }}
+      ALIPAY_SIGN_TYPE: ${{ secrets.ALIPAY_SIGN_TYPE }}
+      ALIPAY_KEY_TYPE: ${{ secrets.ALIPAY_KEY_TYPE }}
+      WECHAT_PAY_APP_ID: ${{ secrets.WECHAT_PAY_APP_ID }}
+      WECHAT_PAY_MCH_ID: ${{ secrets.WECHAT_PAY_MCH_ID }}
+      WECHAT_PAY_API_V3_KEY: ${{ secrets.WECHAT_PAY_API_V3_KEY }}
+      WECHAT_PAY_PRIVATE_KEY: ${{ secrets.WECHAT_PAY_PRIVATE_KEY }}
+      WECHAT_PAY_SERIAL_NO: ${{ secrets.WECHAT_PAY_SERIAL_NO }}
+      WECHAT_PAY_PUBLIC_KEY: ${{ secrets.WECHAT_PAY_PUBLIC_KEY }}
+      REVENUECAT_API_KEY: ${{ secrets.REVENUECAT_API_KEY }}
+      REVENUECAT_PROJECT_ID: ${{ secrets.REVENUECAT_PROJECT_ID }}
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       SSL_DEPLOY: ${{ secrets.SSL_DEPLOY }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Login to container registry
+        run: |
+          echo "${DOCKER_PASSWORD}" | docker login "${DOCKER_REGISTRY}" -u "${DOCKER_USERNAME}" --password-stdin
 
       - name: Deploy with local self-hosted runner
         run: |
@@ -68,18 +91,6 @@ jobs:
 
             sleep 5
           done
-
-      - name: Reset database and push Prisma schema (test env)
-        run: |
-          set -euo pipefail
-          trap 'echo "Prisma db push failed, print backend logs:"; docker compose logs --tail=200 backend' ERR
-          docker compose exec -T backend pnpm --filter @manyu/backend exec prisma db push --force-reset
-
-      - name: Seed database
-        run: |
-          set -euo pipefail
-          trap 'echo "Seed step failed, print backend logs:"; docker compose logs --tail=200 backend' ERR
-          docker compose exec -T backend pnpm --filter @manyu/backend prisma:seed
 
       - name: Cleanup dangling images
         run: |
