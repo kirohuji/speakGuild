@@ -126,7 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authClient.signOut()
     clearBearerToken()
     setSession(null)
-    useConfigStore.getState().clearConfig()
   }
 
   return (

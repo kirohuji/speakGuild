@@ -7,7 +7,7 @@ export class LearningService {
 
   /**
    * 获取全部「教材」（即 Scene）列表，附带用户进度。
-   * 免费用户仅返回 isFree=true 的场景，会员返回全部。
+   * 免费用户看到全部单元，但非免费单元标记为锁定。
    */
   async getLearningUnits(userId: string) {
     // 检查会员状态
@@ -22,7 +22,7 @@ export class LearningService {
       include: {
         scenes: {
           orderBy: { createdAt: 'asc' },
-          where: isMember ? {} : { isFree: true },  // 免费用户只看免费场景
+          // 返回所有场景，前端根据 isLocked 控制
           include: {
             _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
             trainingTopics: {
