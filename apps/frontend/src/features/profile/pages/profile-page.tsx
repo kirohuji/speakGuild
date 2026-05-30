@@ -31,7 +31,6 @@ import {
 } from '@/components/ui/drawer'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
-import { BindingDialog } from '@/features/question-bank/components/binding-dialog'
 import {
   getProfileOverview,
   getActivityHeatmap,
@@ -518,8 +517,6 @@ function MobileSettingsView() {
 
   return (
     <div className="space-y-5">
-      <BindingDialog open={showBinding} onClose={() => setShowBinding(false)} />
-
       <IosSection>
         <IosRow
           label={t('profile.autoSpeakLabel')}
@@ -2152,8 +2149,6 @@ function SettingsTab() {
 
   return (
     <div className="space-y-6">
-      <BindingDialog open={showBinding} onClose={() => setShowBinding(false)} />
-
       {/* 学习偏好 */}
       <Card>
         <CardHeader>
