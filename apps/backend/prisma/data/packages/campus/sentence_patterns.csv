@@ -1,0 +1,9 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+宿舍入住,办理入住,"Hi, I'm here to ___.",打招呼说明来意,"check in, see my room","Hi, I'm here to check in.",L2,0
+宿舍入住,办理入住,My booking is under the name ___.,说明有预订,"Li, Wang",My booking is under the name Li.,L2,1
+宿舍入住,办理入住,Here is my ___.,出示证件,"student ID, passport",Here is my student ID.,L2,2
+机场入境,说明来访目的,I'm here to ___.,说明来访目的,"study, work, travel",I'm here to study.,L2,0
+机场入境,说明来访目的,I'll be staying for ___.,说明停留时间,"two years, a week, three months",I'll be staying for two years.,L2,1
+认识室友,初次见面,"Hi, I'm ___.",打招呼自我介绍,"Alex, Li Ming","Hi, I'm Alex.",L1,0
+认识室友,初次见面,I'm from ___.,说明来自哪里,"China, the US, Japan",I'm from China.,L1,1
+认识室友,初次见面,My major is ___.,说明专业,"Computer Science, English Literature",My major is Computer Science.,L1,2

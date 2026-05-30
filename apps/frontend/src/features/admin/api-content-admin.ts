@@ -276,6 +276,7 @@ export interface GameCharacter {
   spriteBaseUrl?: string | null
   expressions?: any
   defaultPosition?: string | null
+  ttsVoice?: string | null
   locationNpcs?: { location: { id: string; displayName: string } }[]
 }
 

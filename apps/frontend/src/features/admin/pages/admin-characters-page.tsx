@@ -27,6 +27,7 @@ export function AdminCharactersPage() {
   const [defaultPosition, setDefaultPosition] = useState('left')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [spriteBaseUrl, setSpriteBaseUrl] = useState('')
+  const [ttsVoice, setTtsVoice] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -41,7 +42,7 @@ export function AdminCharactersPage() {
   const openCreate = () => {
     setEditItem(null)
     setName(''); setDisplayName(''); setRole(''); setPersonality('')
-    setDefaultPosition('left'); setAvatarUrl(''); setSpriteBaseUrl('')
+    setDefaultPosition('left'); setAvatarUrl(''); setSpriteBaseUrl(''); setTtsVoice('')
     setDialogOpen(true)
   }
 
@@ -54,6 +55,7 @@ export function AdminCharactersPage() {
     setDefaultPosition(item.defaultPosition ?? 'left')
     setAvatarUrl(item.avatarUrl ?? '')
     setSpriteBaseUrl(item.spriteBaseUrl ?? '')
+    setTtsVoice(item.ttsVoice ?? '')
     setDialogOpen(true)
   }
 
@@ -61,7 +63,7 @@ export function AdminCharactersPage() {
     if (!name || !displayName || !role) { toast.error('名称、显示名和角色描述必填'); return }
     setSaving(true)
     try {
-      const data = { name, displayName, role, personality, defaultPosition, avatarUrl, spriteBaseUrl }
+      const data = { name, displayName, role, personality, defaultPosition, avatarUrl, spriteBaseUrl, ttsVoice }
       if (editItem) {
         await updateCharacter(editItem.id, data)
         toast.success('已更新')
@@ -141,6 +143,11 @@ export function AdminCharactersPage() {
             </div>
             <div><Label>头像 URL</Label><Input value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} /></div>
             <div><Label>立绘 URL</Label><Input value={spriteBaseUrl} onChange={e => setSpriteBaseUrl(e.target.value)} /></div>
+            <div>
+              <Label>TTS 音色 ID</Label>
+              <Input value={ttsVoice} onChange={e => setTtsVoice(e.target.value)} placeholder="MiniMax/Cartesia voice ID" />
+              <p className="mt-1 text-[11px] text-muted-foreground">角色配音使用的 TTS 音色标识，留空则使用默认音色</p>
+            </div>
             <Button className="w-full" onClick={save} disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
           </div>
         </DialogContent>

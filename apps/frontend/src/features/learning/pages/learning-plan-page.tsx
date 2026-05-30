@@ -22,6 +22,7 @@ import {
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
+import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import {
@@ -49,6 +50,7 @@ export function LearningPlanPage() {
   const { t } = useTranslation()
   const [shopOpen, setShopOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
+  const [memberOpen, setMemberOpen] = useState(false)
 
   // ── "当前学习" 数据 ──
   const [myUnits, setMyUnits] = useState<MyUnit[]>([])
@@ -150,7 +152,18 @@ export function LearningPlanPage() {
                 categories={shopCategories}
                 loading={shopLoading}
                 categoriesEmpty={shopCategories.length === 0}
+                onMemberOpen={() => setMemberOpen(true)}
               />
+            </div>
+          </DrawerContent>
+        </Drawer>
+        <Drawer open={memberOpen} onOpenChange={setMemberOpen}>
+          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
+            <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+              <DrawerTitle className="text-base font-semibold">开通会员</DrawerTitle>
+            </DrawerHeader>
+            <div className="min-h-0 overflow-y-auto px-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <MemberPage compact />
             </div>
           </DrawerContent>
         </Drawer>
@@ -591,10 +604,12 @@ function ShopView({
   categories,
   loading,
   categoriesEmpty,
+  onMemberOpen,
 }: {
   categories: LearningCategory[]
   loading: boolean
   categoriesEmpty: boolean
+  onMemberOpen: () => void
 }) {
   const { t } = useTranslation()
   const [activeCategory, setActiveCategory] = useState('all')
@@ -698,7 +713,7 @@ function ShopView({
       ) : (
         <div className="space-y-2 rounded-lg">
           {filteredUnits.map((unit) => (
-            <ShopCard key={unit.id} unit={unit} />
+            <ShopCard key={unit.id} unit={unit} onMemberOpen={onMemberOpen} />
           ))}
         </div>
       )}
@@ -708,7 +723,7 @@ function ShopView({
 
 // ── 商店卡片 ──
 
-function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: string } }) {
+function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { categoryName?: string }; onMemberOpen: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [detailOpen, setDetailOpen] = useState(false)
@@ -742,7 +757,10 @@ function ShopCard({ unit }: { unit: LearningUnitSummary & { categoryName?: strin
     <>
       <button
         type="button"
-        onClick={() => { setTopicPage(1); setDetailOpen(true) }}
+        onClick={() => {
+          if (!unit.isUnlocked) { onMemberOpen(); return }
+          setTopicPage(1); setDetailOpen(true)
+        }}
         className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
       >
         <UnitCover unit={unit} icon={Icon} />

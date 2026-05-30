@@ -1,42 +1,75 @@
-import React, { useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { motion, useInView } from 'motion/react'
+import { motion } from 'motion/react'
 import {
   Mic, BookOpen, Sparkles, TrendingUp,
-  Trophy, Users, Map, Headphones, ArrowRight,
-  CheckCircle, Star, Globe, GraduationCap,
-  ChevronRight, Languages, MessageSquare, Plane, Coffee, Play, Zap,
+  ArrowRight, Star, GraduationCap, ChevronRight,
+  MessageSquare, Play, Globe, CheckCircle, Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { ShimmerButton } from '@/components/ui/shimmer-button'
-import { NumberTicker } from '@/components/ui/number-ticker'
-import { WordRotate } from '@/components/ui/word-rotate'
 import { useAuth } from '@/providers/auth-provider'
+import { useTheme } from 'next-themes'
 
-// ─── 动画工具 ────────────────────────────────────────────────────────────────
+// ─── 数据 ────────────────────────────────────────────────────
 
-function FadeInSection({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: React.ReactNode
-  className?: string
-  delay?: number
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-80px' })
+const features = [
+  { icon: Mic, title: 'AI 口语纠错', desc: 'DeepSeek 实时分析语法、搭配、自然度，精准定位每个可改进之处', color: 'from-violet-400 to-purple-500' },
+  { icon: BookOpen, title: 'Chunk 学习法', desc: '学习可迁移表达块，从"I\'m here to check in"到即学即用', color: 'from-emerald-400 to-teal-500' },
+  { icon: Play, title: '剧本模式', desc: '在剧情任务中实战英语，通过入境、入住、认识室友——用英语推动故事', color: 'from-amber-400 to-orange-500' },
+  { icon: Globe, title: '沉浸探索', desc: '小地图自由选择地点和 NPC，像在国外生活一样进行英语互动', color: 'from-sky-400 to-blue-500' },
+]
 
+const steps = [
+  { num: '01', icon: BookOpen, title: '选场景', desc: '从留学生活、日常社交中选话题' },
+  { num: '02', icon: Sparkles, title: '学 Chunk', desc: '掌握 5~8 个高频表达块' },
+  { num: '03', icon: Mic, title: '开口说', desc: '录音 → AI 实时转写纠错' },
+  { num: '04', icon: TrendingUp, title: '复述升级', desc: '跟读 → 保存 → 剧本实战' },
+]
+
+const audience = [
+  { icon: GraduationCap, title: '准备留学', desc: '雅思/托福备考，提前适应国外生活场景' },
+  { icon: Globe, title: '旅行英语', desc: '摆脱翻译软件，自信应对旅行场景' },
+  { icon: MessageSquare, title: '职场提升', desc: '提升口语表达的自然度和流利度' },
+  { icon: Star, title: '社交突破', desc: '学了多年不敢开口？从这里开始' },
+]
+
+// ─── 装饰 ────────────────────────────────────────────────────
+
+function GlassBg() {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+      <div className="absolute -top-40 -right-40 size-96 bg-primary/15 rounded-full blur-3xl" />
+      <div className="absolute -bottom-20 -left-20 size-80 bg-violet-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 size-64 bg-amber-500/8 rounded-full blur-3xl" />
+      <div className={cn(
+        'absolute inset-0 opacity-[0.02]',
+        isDark && 'opacity-[0.04]',
+      )} style={{
+        backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
+        backgroundSize: '48px 48px',
+      }} />
+    </div>
+  )
+}
+
+const glassCard = (isDark: boolean) => cn(
+  'rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:shadow-lg',
+  isDark
+    ? 'border-white/10 bg-white/[0.04] hover:bg-white/[0.06]'
+    : 'border-white/30 bg-white/20 hover:bg-white/30',
+)
+
+// ─── 组件 ────────────────────────────────────────────────────
+
+function FadeIn({ children, delay = 0, className }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -44,720 +77,196 @@ function FadeInSection({
   )
 }
 
-// ─── 数据 ────────────────────────────────────────────────────────────────────
-
-const stats = [
-  { value: 50, suffix: '+', label: '生活场景', icon: Map },
-  { value: 300, suffix: '+', label: '核心 Chunk', icon: BookOpen },
-  { value: 6, suffix: '', label: '学习等级', icon: TrendingUp },
-  { value: 10000, suffix: '+', label: '开口练习者', icon: Users },
-]
-
-const features = [
-  {
-    icon: Map,
-    title: '场景化训练',
-    description: '从机场入境到宿舍 Check-in，从咖啡店点餐到课堂辩论——50+ 真实留学生活场景，让你在需要用的时候说得出口',
-    gradient: 'from-blue-500 to-cyan-400',
-    bgGradient: 'from-blue-500/10 to-cyan-500/10',
-  },
-  {
-    icon: Mic,
-    title: 'AI 口语纠错',
-    description: '基于 DeepSeek 大模型，实时分析你的口语回答。语法、搭配、中式表达、自然度——精准定位每个可改进的地方',
-    gradient: 'from-violet-500 to-purple-400',
-    bgGradient: 'from-violet-500/10 to-purple-500/10',
-  },
-  {
-    icon: BookOpen,
-    title: 'Chunk 学习法',
-    description: '不是背单词，不是背句子——学习可迁移的表达块（Chunk），从\"I\'m here to check in\"到\"I was wondering if...\"，即学即用',
-    gradient: 'from-emerald-500 to-teal-400',
-    bgGradient: 'from-emerald-500/10 to-teal-500/10',
-  },
-  {
-    icon: Play,
-    title: '剧本模式',
-    description: 'Chapter 0 免费体验！在固定剧情中用英语完成任务——通过入境、办理入住、认识室友——用英语推动故事发展',
-    gradient: 'from-amber-500 to-orange-400',
-    bgGradient: 'from-amber-500/10 to-orange-500/10',
-  },
-  {
-    icon: TrendingUp,
-    title: '成长追踪',
-    description: '输出能力等级 + 场景熟练度 + Chunk 掌握度，三维追踪你的进步。不是\"学了多少\"，而是\"能说多少\"',
-    gradient: 'from-rose-500 to-pink-400',
-    bgGradient: 'from-rose-500/10 to-pink-500/10',
-  },
-  {
-    icon: Globe,
-    title: '沉浸式探索',
-    description: '在小地图中自由选择地点和 NPC，像在国外生活一样进行英语互动。宿舍大厅、校园咖啡店、图书馆等你来探索',
-    gradient: 'from-sky-500 to-blue-400',
-    bgGradient: 'from-sky-500/10 to-blue-500/10',
-  },
-]
-
-const steps = [
-  {
-    number: '01',
-    icon: BookOpen,
-    title: '选择场景话题',
-    description: '从留学生活、日常社交、旅行英语等场景中选择想练的话题',
-  },
-  {
-    number: '02',
-    icon: Sparkles,
-    title: '激活核心 Chunk',
-    description: '学习 5~8 个高频表达块，掌握句型骨架，降低开口难度',
-  },
-  {
-    number: '03',
-    icon: Mic,
-    title: '开口录音回答',
-    description: 'AI 实时转写你的录音，从语法、自然度、逻辑等多维度精准纠错',
-  },
-  {
-    number: '04',
-    icon: TrendingUp,
-    title: '复述 & 升级 & 沉淀',
-    description: '遮挡复述升级表达 → 保存到学习库 → 在剧本任务中实战使用',
-  },
-]
-
-const testimonials = [
-  {
-    text: '以前学英语就是背单词，从来不敢开口说。用了英游记的 Chunk 激活法，现在去咖啡店点餐一点都不慌了，店员还夸我英语好！',
-    name: '小陈',
-    role: '大三学生 · 准备出国留学',
-  },
-  {
-    text: '剧本模式太有意思了！像玩游戏一样练口语，Chapter 0 的宿舍 Check-in 关卡我练了 3 遍，现在真的会说了。',
-    name: 'Ashley',
-    role: '工作 2 年 · 想提升职场英语',
-  },
-  {
-    text: 'AI 纠错特别准，以前从来不知道自己说的英语有那么多中式表达。表达升级功能让我看到了真正的差距和提升方向。',
-    name: 'David',
-    role: '雅思备考中 · 目标口语 7 分',
-  },
-]
-
-// ─── 装饰组件 ────────────────────────────────────────────────────────────────
-
-function FloatingDecorations() {
+function SectionTag({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-      {/* 网格背景 */}
-      <div
-        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
-        style={{
-          backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-
-      {/* 装饰性渐变光斑 */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-      <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl" />
-      <div className="absolute top-1/3 left-1/2 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
-    </div>
-  )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <Badge variant="secondary" className="mb-4 text-xs font-medium tracking-wide uppercase">
+    <span className="inline-block rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
       {children}
-    </Badge>
+    </span>
   )
 }
 
-// ─── 主组件 ──────────────────────────────────────────────────────────────────
+// ─── 首页 ────────────────────────────────────────────────────
 
 export function PortalPage() {
   const navigate = useNavigate()
-  const { t } = useTranslation()
   const { session } = useAuth()
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const isLoggedIn = !!session
 
-  return (
-    <div className="min-h-screen overflow-x-hidden">
-      {/* ═══════════════════════════════════════════════════════════════
-          HERO SECTION
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-20 lg:py-32 overflow-hidden">
-        <FloatingDecorations />
+  const textMain = isDark ? 'text-white' : 'text-slate-800'
+  const textMuted = isDark ? 'text-white/64' : 'text-slate-500'
 
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-          >
-            <Badge
-              variant="outline"
-              className="px-4 py-1.5 text-sm border-primary/30 bg-primary/5 text-primary gap-2"
-            >
-              <Globe className="h-3.5 w-3.5" />
-              场景化沉浸式英语输出训练平台
-            </Badge>
+  return (
+    <div className={cn('min-h-screen overflow-x-hidden', isDark ? 'bg-black' : 'bg-slate-50')}>
+
+      {/* ═══ HERO ═══ */}
+      <section className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
+        <GlassBg />
+
+        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <span className={cn(
+              'inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm backdrop-blur-xl',
+              isDark ? 'border-white/15 bg-white/[0.06] text-white/80' : 'border-primary/20 bg-primary/5 text-primary',
+            )}>
+              <Globe className="size-3.5" />
+              沉浸式英语输出训练
+            </span>
           </motion.div>
 
-          {/* 主标题 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="space-y-4"
-          >
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight text-foreground">
-              英语，
-              <br className="sm:hidden" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-amber-500">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.6 }}>
+            <h1 className={cn('text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight', textMain)}>
+              英语，<br className="sm:hidden" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-400 to-amber-400">
                 真正说出口
               </span>
             </h1>
-
-            <div className="flex items-center justify-center gap-2 text-2xl sm:text-3xl md:text-4xl font-display font-bold text-muted-foreground">
-              <span>在</span>
-              <WordRotate
-                words={['机场入境', '宿舍 Check-in', '咖啡店点餐', '课堂辩论', '真实场景中']}
-                duration={2500}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-orange-400"
-              />
-              <span>练英语</span>
-            </div>
+            <p className={cn('mt-4 text-lg max-w-xl mx-auto', textMuted)}>
+              场景 + Chunk + AI 纠错 + 剧本。不是背英语，是练到能开口。
+            </p>
           </motion.div>
 
-          {/* 副标题 */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed"
-          >
-              漫语町（ManYu）通过场景 + Chunk + AI 纠错 + 剧本任务，
-            帮你把英语从「看得懂」练到「说得出」。
-            不是背英语，而是练到真正能开口。
-          </motion.p>
-
-          {/* 品牌口号 */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="text-sm text-muted-foreground/60 italic"
-          >
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}
+            className={cn('text-sm italic', isDark ? 'text-white/36' : 'text-slate-400')}>
             "看得懂 ≠ 说得出。练到开口，才是你的。"
           </motion.p>
 
-          {/* CTA 按钮 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
-          >
-            <ShimmerButton
-              shimmerColor="rgba(255,255,255,0.3)"
-              background="linear-gradient(135deg, hsl(217,91%,57%), hsl(217,91%,45%))"
-              className="px-8 py-3.5 text-base font-semibold shadow-lg shadow-primary/25"
-              onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
-            >
-              {isLoggedIn ? t('portal.startPractice') : t('portal.startFree')}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </ShimmerButton>
-
-            <Button
-              variant="outline"
-              size="lg"
-              className="px-8 py-3.5 text-base font-semibold rounded-full border-2"
-              onClick={() => navigate(isLoggedIn ? '/script' : '/auth/register')}
-            >
-              <Play className="mr-2 h-5 w-5" />
-              {t('portal.freeTrial')}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.5 }}
+            className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+            <Button size="lg" className="rounded-full px-8 text-base gap-2 shadow-lg shadow-primary/20"
+              onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}>
+              {isLoggedIn ? '开始练习' : '免费体验'}
+              <ArrowRight className="size-5" />
+            </Button>
+            <Button variant="outline" size="lg" className="rounded-full px-8 text-base gap-2"
+              onClick={() => navigate(isLoggedIn ? '/script' : '/auth/register')}>
+              <Play className="size-5" />
+              剧本体验
             </Button>
           </motion.div>
 
-          {/* 底部统计徽章 */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.5 }}
-            className="flex flex-wrap items-center justify-center gap-3 pt-8"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
+            className={cn('flex flex-wrap justify-center gap-3 pt-8', textMuted)}>
             {[
-              { icon: Languages, text: '8 种语言' },
-              { icon: CheckCircle, text: 'AI 精准评分' },
-              { icon: Zap, text: '实时反馈' },
-              { icon: Trophy, text: '全真模拟' },
-            ].map(({ icon: Icon, text }) => (
-              <div
-                key={text}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs text-muted-foreground"
-              >
-                <Icon className="h-3.5 w-3.5 text-primary" />
-                {text}
-              </div>
+              { icon: CheckCircle, t: 'AI 精准评分' },
+              { icon: Zap, t: '实时反馈' },
+              { icon: BookOpen, t: '50+ 场景' },
+            ].map(({ icon: Icon, t }) => (
+              <span key={t} className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs backdrop-blur">
+                <Icon className="size-3 text-primary" />{t}
+              </span>
             ))}
           </motion.div>
         </div>
 
-        {/* 底部渐变过渡 */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          STATS SECTION
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="relative px-4 pb-20 lg:pb-28">
-        <FadeInSection>
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              {stats.map(({ value, suffix, label, icon: Icon }) => (
-                <div
-                  key={label}
-                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 text-center transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative">
-                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 mb-3">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="font-display text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">
-                      <NumberTicker value={value} />
-                      <span className="text-primary">{suffix}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground font-medium">{label}</p>
-                  </div>
+      {/* ═══ FEATURES ═══ */}
+      <section className="relative px-4 pb-24">
+        <FadeIn className="max-w-4xl mx-auto text-center mb-12">
+          <SectionTag>核心功能</SectionTag>
+          <h2 className={cn('mt-4 text-3xl sm:text-4xl font-extrabold', textMain)}>场景化英语，真正说出口</h2>
+        </FadeIn>
+
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+          {features.map((f, i) => (
+            <FadeIn key={f.title} delay={i * 0.1}>
+              <div className={cn(glassCard(isDark), 'p-6 group')}>
+                <div className={cn('inline-flex size-10 items-center justify-center rounded-xl bg-gradient-to-br mb-4', f.color)}>
+                  <f.icon className="size-5 text-white" />
                 </div>
-              ))}
-            </div>
-          </div>
-        </FadeInSection>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          FEATURES SECTION
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="px-4 pb-20 lg:pb-28">
-        <FadeInSection className="max-w-5xl mx-auto text-center mb-12 lg:mb-16">
-          <SectionLabel>核心功能</SectionLabel>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            场景化英语，真正说出口
-          </h2>
-          <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            漫语町（ManYu）覆盖英语输出训练全流程，从 Chunk 激活到剧本实战，帮你练到真正能开口
-          </p>
-        </FadeInSection>
-
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {features.map((feature, index) => (
-            <FadeInSection key={feature.title} delay={index * 0.1}>
-              <div
-                className={cn(
-                  'group relative overflow-hidden rounded-2xl border border-border',
-                  'p-6 lg:p-8 transition-all duration-300',
-                  'hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1',
-                  'bg-card',
-                )}
-              >
-                {/* 渐变背景 */}
-                <div
-                  className={cn(
-                    'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-                    'bg-gradient-to-br',
-                    feature.bgGradient,
-                  )}
-                />
-
-                <div className="relative">
-                  {/* 图标 */}
-                  <div
-                    className={cn(
-                      'inline-flex h-14 w-14 items-center justify-center rounded-2xl mb-5',
-                      'bg-gradient-to-br shadow-lg',
-                      feature.gradient,
-                    )}
-                  >
-                    <feature.icon className="h-7 w-7 text-white" />
-                  </div>
-
-                  {/* 标题 */}
-                  <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                    {feature.title}
-                  </h3>
-
-                  {/* 描述 */}
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-
-                  {/* 装饰性 Learn More */}
-                  <div className="mt-4 flex items-center gap-1.5 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0 group-hover:translate-x-1">
-                    了解更多
-                    <ChevronRight className="h-4 w-4" />
-                  </div>
-                </div>
+                <h3 className={cn('text-lg font-bold mb-2', textMain)}>{f.title}</h3>
+                <p className={cn('text-sm leading-relaxed', textMuted)}>{f.desc}</p>
+                <ChevronRight className="mt-3 size-4 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </div>
-            </FadeInSection>
+            </FadeIn>
           ))}
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          HOW IT WORKS
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="relative px-4 pb-20 lg:pb-28">
-        {/* 背景装饰 */}
-        <div className="absolute inset-0 bg-muted/30" />
+      {/* ═══ HOW IT WORKS ═══ */}
+      <section className="relative px-4 pb-24">
+        <div className="absolute inset-0 bg-muted/20" />
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-background to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
 
-        <FadeInSection className="relative max-w-5xl mx-auto text-center mb-12 lg:mb-16">
-          <SectionLabel>四步上手</SectionLabel>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            从开口到通关
-          </h2>
-          <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            四步从「看得懂」到「说得出」，让英语成为你的本能
-          </p>
-        </FadeInSection>
+        <FadeIn className="relative max-w-4xl mx-auto text-center mb-12">
+          <SectionTag>四步上手</SectionTag>
+          <h2 className={cn('mt-4 text-3xl sm:text-4xl font-extrabold', textMain)}>从开口到通关</h2>
+        </FadeIn>
 
-        <div className="relative max-w-5xl mx-auto">
-          {/* 连接线（桌面端） */}
-          <div className="hidden lg:block absolute top-20 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {steps.map((step, index) => (
-              <FadeInSection key={step.number} delay={index * 0.15}>
-                <div className="relative flex flex-col items-center text-center">
-                  {/* 序号圆圈 */}
-                  <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-card border-2 border-primary/20 shadow-lg shadow-primary/5 mb-5">
-                    <span className="font-display text-xl font-extrabold text-primary">
-                      {step.number}
-                    </span>
+        <div className="relative max-w-4xl mx-auto">
+          <div className="hidden lg:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-primary/30 via-primary to-primary/30" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {steps.map((s, i) => (
+              <FadeIn key={s.num} delay={i * 0.12}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative z-10 flex size-14 items-center justify-center rounded-full border-2 border-primary/20 bg-card shadow-lg mb-4">
+                    <span className="text-lg font-extrabold text-primary">{s.num}</span>
                   </div>
-
-                  {/* 图标 */}
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-3">
-                    <step.icon className="h-6 w-6 text-primary" />
+                  <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/10 mb-3">
+                    <s.icon className="size-5 text-primary" />
                   </div>
-
-                  <h3 className="font-display text-lg font-bold text-foreground mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-[220px]">
-                    {step.description}
-                  </p>
+                  <h3 className={cn('font-bold mb-1', textMain)}>{s.title}</h3>
+                  <p className={cn('text-sm max-w-[160px]', textMuted)}>{s.desc}</p>
                 </div>
-              </FadeInSection>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          TARGET AUDIENCE
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="relative px-4 pb-20 lg:pb-28">
-        <FadeInSection className="max-w-5xl mx-auto text-center mb-12 lg:mb-16">
-          <SectionLabel>适合人群</SectionLabel>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            无论你现在在哪，都能在这里进步
-          </h2>
-        </FadeInSection>
+      {/* ═══ AUDIENCE ═══ */}
+      <section className="px-4 pb-24">
+        <FadeIn className="max-w-4xl mx-auto text-center mb-12">
+          <SectionTag>适合你吗？</SectionTag>
+          <h2 className={cn('mt-4 text-3xl sm:text-4xl font-extrabold', textMain)}>无论你在哪，都能进步</h2>
+        </FadeIn>
 
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {[
-            {
-              icon: GraduationCap,
-              title: '准备出国留学',
-              description: '雅思/托福备考者，想提前适应国外生活场景中的英语交流',
-              iconColor: 'from-blue-500 to-cyan-400',
-              bgColor: 'from-blue-500/10 to-cyan-500/10',
-            },
-            {
-              icon: Plane,
-              title: '旅行英语需求',
-              description: '自由行爱好者，想摆脱翻译软件，用英语自信应对旅行场景',
-              iconColor: 'from-emerald-500 to-teal-400',
-              bgColor: 'from-emerald-500/10 to-teal-500/10',
-            },
-            {
-              icon: Coffee,
-              title: '职场英语提升',
-              description: '工作中需要用英语交流，想提升口语表达的自然度和流利度',
-              iconColor: 'from-violet-500 to-purple-400',
-              bgColor: 'from-violet-500/10 to-purple-500/10',
-            },
-            {
-              icon: MessageSquare,
-              title: '日常社交突破',
-              description: '英语学了多年但不敢开口，想突破心理障碍真正开始说英语',
-              iconColor: 'from-rose-500 to-pink-400',
-              bgColor: 'from-rose-500/10 to-pink-500/10',
-            },
-          ].map((item, index) => (
-            <FadeInSection key={item.title} delay={index * 0.1}>
-              <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                <div
-                  className={cn(
-                    'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-                    'bg-gradient-to-br',
-                    item.bgColor,
-                  )}
-                />
-                <div className="relative">
-                  <div
-                    className={cn(
-                      'inline-flex h-14 w-14 items-center justify-center rounded-2xl mb-4 mx-auto',
-                      'bg-gradient-to-br shadow-lg',
-                      item.iconColor,
-                    )}
-                  >
-                    <item.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <h3 className="font-display text-lg font-bold text-foreground mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {audience.map((a, i) => (
+            <FadeIn key={a.title} delay={i * 0.1}>
+              <div className={cn(glassCard(isDark), 'p-5 text-center')}>
+                <div className="inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 mb-3">
+                  <a.icon className="size-6 text-primary" />
                 </div>
+                <h3 className={cn('font-bold mb-1', textMain)}>{a.title}</h3>
+                <p className={cn('text-xs', textMuted)}>{a.desc}</p>
               </div>
-            </FadeInSection>
+            </FadeIn>
           ))}
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          TESTIMONIALS
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="px-4 pb-20 lg:pb-28">
-        <FadeInSection className="max-w-5xl mx-auto text-center mb-12 lg:mb-16">
-          <SectionLabel>用户评价</SectionLabel>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            超过 10,000 名考生的选择
-          </h2>
-        </FadeInSection>
-
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-          {testimonials.map((t, index) => (
-            <FadeInSection key={index} delay={index * 0.1}>
-              <div className="relative rounded-2xl border border-border bg-card p-6 lg:p-8 transition-all duration-300 hover:shadow-lg">
-                {/* 引号装饰 */}
-                <div className="absolute -top-3 -left-2 text-5xl font-serif text-primary/20 select-none">
-                  "
-                </div>
-
-                <p className="text-sm text-muted-foreground leading-relaxed mb-5 pt-4">
-                  {t.text}
-                </p>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <span className="font-display text-sm font-bold text-primary">
-                      {t.name[0]}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            </FadeInSection>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          FAQ SECTION
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="px-4 pb-20 lg:pb-28">
-        <FadeInSection className="max-w-3xl mx-auto text-center mb-12 lg:mb-16">
-          <SectionLabel>常见问题</SectionLabel>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            你想知道的都在这里
-          </h2>
-        </FadeInSection>
-
-        <div className="max-w-3xl mx-auto space-y-3">
-          {[
-            {
-              q: '适合什么水平的学习者？',
-              a: '从零基础到高级学习者都适合。系统根据你的输出能力等级推荐合适的场景和 Chunk，每个场景都配有核心表达块和参考回答，循序渐进提升口语输出能力。',
-            },
-            {
-              q: '真的能提高口语吗？',
-              a: '我们的核心方法是通过「Chunk 激活 → 开口输出 → AI 纠错 → 复述升级」的闭环训练。不是死记硬背，而是让你在真实场景中反复练习，把英语变成肌肉记忆。',
-            },
-            {
-              q: 'AI 纠错准确吗？',
-              a: '基于 DeepSeek 大模型进行多维度分析：语法错误、词汇搭配、中式表达、自然度评分。经过数万条口语数据的训练和优化，反馈质量持续提升。',
-            },
-            {
-              q: '免费版和会员有什么区别？',
-              a: '免费版可以体验 Chapter 0 剧本和部分场景练习。会员解锁全部场景、无限 AI 纠错、详细分析报告、个性化学习路径等高级功能。',
-            },
-            {
-              q: '需要下载 App 吗？',
-              a: '完全不需要下载！直接在浏览器中打开即可使用，手机、平板、电脑全适配。同时提供 iOS 和 Android App（通过 Capacitor 构建），可在应用商店下载。',
-            },
-          ].map((faq, index) => (
-            <FadeInSection key={index} delay={index * 0.05}>
-              <details className="group rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md">
-                <summary className="flex items-center justify-between p-5 cursor-pointer list-none text-sm font-semibold text-foreground hover:text-primary transition-colors">
-                  {faq.q}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 group-open:rotate-90" />
-                </summary>
-                <div className="px-5 pb-5">
-                  <p className="text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
-                </div>
-              </details>
-            </FadeInSection>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          FINAL CTA
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="relative px-4 py-20 lg:py-32 overflow-hidden">
-        {/* 渐变背景 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary to-blue-700" />
-        <FloatingDecorations />
-
-        <FadeInSection className="relative z-10 max-w-2xl mx-auto text-center space-y-6">
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
-            上场前，先说好。
-          </h2>
-          <p className="text-white/80 text-base sm:text-lg leading-relaxed max-w-lg mx-auto">
-            免费注册即可开始练习。AI 教练 24 小时在线，随时随地提升英语口语能力。
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <ShimmerButton
-              shimmerColor="rgba(255,255,255,0.5)"
-              background="rgba(255,255,255,0.2)"
-              className="px-10 py-4 text-base font-bold backdrop-blur-sm border-white/30"
-              onClick={() => navigate(isLoggedIn ? '/' : '/auth/register')}
-            >
-              {isLoggedIn ? '开始练习' : '立即免费注册'}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </ShimmerButton>
-          </div>
-        </FadeInSection>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          FOOTER
-          ═══════════════════════════════════════════════════════════════ */}
-      <footer className="border-t border-border bg-card">
-        <div className="max-w-5xl mx-auto px-4 py-12 lg:py-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {/* 品牌 */}
-            <div className="col-span-2 md:col-span-1">
-              <h3 className="font-display text-lg font-bold text-foreground mb-3">
-                英游记
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                场景化沉浸式英语输出训练平台，帮你把英语从「看得懂」练到「说得出」。
-              </p>
+      {/* ═══ PRICING + CTA ═══ */}
+      <section className="px-4 pb-24">
+        <FadeIn className="max-w-md mx-auto">
+          <div className={cn(glassCard(isDark), 'p-8 text-center')}>
+            <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-violet-500 shadow-lg mb-5">
+              <Star className="size-7 text-white" />
             </div>
-
-            {/* 产品 */}
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-3">产品</h4>
-              <ul className="space-y-2">
-                {[
-                  { label: '场景练习', to: '/practice' },
-                  { label: '剧本模式', to: '/script' },
-                  { label: '探索模式', to: '/explore' },
-                  { label: '学习库', to: '/expressions' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <button
-                      onClick={() => navigate(link.to)}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* 成长 */}
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-3">成长</h4>
-              <ul className="space-y-2">
-                {[
-                  { label: '我的成长', to: '/growth' },
-                  { label: '成就殿堂', to: '/achievements' },
-                  { label: '排行榜', to: '/leaderboard' },
-                  { label: '邀请好友', to: '/invite' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <button
-                      onClick={() => navigate(link.to)}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* 关于 */}
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-3">关于</h4>
-              <ul className="space-y-2">
-                {[
-                  { label: '服务条款', to: '/system/terms' },
-                  { label: '隐私政策', to: '/system/privacy' },
-                  { label: '意见反馈', to: '/feedback' },
-                  { label: '联系客服', to: '/system/contact' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <button
-                      onClick={() => navigate(link.to)}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <Separator className="my-8" />
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} 英游记（EngJourney）. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4">
-              {[
-                { icon: Languages, text: '8 种语言' },
-                { icon: CheckCircle, text: 'AI 精准评分' },
-                { icon: Zap, text: '实时反馈' },
-              ].map(({ icon: Icon, text }) => (
-                <div
-                  key={text}
-                  className="flex items-center gap-1 text-xs text-muted-foreground"
-                >
-                  <Icon className="h-3 w-3" />
-                  {text}
-                </div>
+            <h2 className={cn('text-2xl font-extrabold mb-1', textMain)}>¥15/月</h2>
+            <p className={cn('mb-2 text-sm', textMuted)}>一杯奶茶钱，无限畅练</p>
+            <div className={cn('space-y-1.5 mb-6 text-xs text-left max-w-[260px] mx-auto', textMuted)}>
+              {['AI 纠错 50次/天', '全部学习单元', '完整剧本模式', '探索模式全地点', '无限表达库'].map(f => (
+                <div key={f} className="flex items-center gap-2"><CheckCircle className="size-3.5 text-green-500 shrink-0" />{f}</div>
               ))}
             </div>
+            <Button className="w-full rounded-full gap-2" onClick={() => navigate(isLoggedIn ? '/member' : '/auth/register')}>
+              立即开通 <ChevronRight className="size-4" />
+            </Button>
           </div>
-        </div>
+        </FadeIn>
+      </section>
+
+      {/* ═══ FOOTER ═══ */}
+      <footer className="border-t border-border/40 px-4 py-8 text-center">
+        <p className={cn('text-xs', isDark ? 'text-white/30' : 'text-slate-400')}>
+          漫语町 ManYu — 沉浸式英语输出训练
+        </p>
       </footer>
     </div>
   )
 }
-
-export default PortalPage
