@@ -47,35 +47,19 @@ async function seedSystemConfigs() {
 async function seedMembershipPlans() {
   await prisma.membershipPlan.create({
     data: {
-      name: '标准会员', level: 'standard', price: 9800, yearlyPrice: 98000, period: 'month', durationDays: 30,
-      features: ['完整练习模式', '每日 30 次 AI 纠错', '表达库', '剧本 Chapter 0', '探索模式预览'],
-      sortOrder: 1, highlighted: false, revenueCatEntitlementId: 'pro_standard',
+      name: '漫语会员', level: 'standard', price: 1500, yearlyPrice: 10800, period: 'month', durationDays: 30,
+      features: [
+        '每日 50 次 AI 纠错',
+        '全部学习单元',
+        '完整剧本模式',
+        '探索模式全部地点',
+        '无限表达库',
+        '完整输出等级报告',
+      ],
+      sortOrder: 1, highlighted: true, revenueCatEntitlementId: 'pro_member',
     },
   })
-  await prisma.membershipPlan.create({
-    data: {
-      name: '进阶会员', level: 'advanced', price: 19800, yearlyPrice: 198000, period: 'month', durationDays: 30,
-      features: ['所有标准功能', '无限 AI 纠错', '完整剧本模式', '探索模式全部地点', '场景准备度分析', '输出式复习', '优先客服'],
-      sortOrder: 2, highlighted: true, revenueCatEntitlementId: 'pro_advanced',
-    },
-  })
-  console.log('    ↳ 2 个会员计划')
-}
-
-// ══════════════════════════════════════════════════════════
-// 优惠券
-// ══════════════════════════════════════════════════════════
-
-async function seedCoupons() {
-  const coupons = [
-    { code: 'NEWUSER20', type: 'percentage' as const, value: 20, minAmount: 9800, maxUses: 100, validFrom: new Date('2026-01-01'), validUntil: new Date('2027-12-31'), isActive: true },
-    { code: 'WELCOME10', type: 'fixed' as const, value: 1000, maxUses: 50, validFrom: new Date(), isActive: true },
-    { code: 'FREETRIAL7', type: 'free_trial' as const, value: 7, maxUses: 200, validUntil: new Date('2027-06-30'), isActive: true },
-  ]
-  for (const c of coupons) {
-    await prisma.coupon.upsert({ where: { code: c.code }, create: c, update: {} })
-  }
-  console.log('    ↳ 3 张优惠券')
+  console.log('    ↳ 1 个会员计划')
 }
 
 // ══════════════════════════════════════════════════════════
@@ -193,7 +177,6 @@ async function main() {
   await prisma.feedback.deleteMany()
   await prisma.referral.deleteMany()
   await prisma.referralCode.deleteMany()
-  await prisma.coupon.deleteMany()
   await prisma.dailyActivity.deleteMany()
   await prisma.session.deleteMany()
   await prisma.account.deleteMany()
@@ -211,8 +194,6 @@ async function main() {
   console.log('  ✓ 系统配置')
   await seedMembershipPlans()
   console.log('  ✓ 会员计划')
-  await seedCoupons()
-  console.log('  ✓ 优惠券')
   const { adminUser, normalUser } = await seedUsers()
   console.log('  ✓ 用户')
   await seedExtras(adminUser, normalUser)

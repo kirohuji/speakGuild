@@ -65,15 +65,44 @@ export class ReferralService {
 
     await this.prisma.referralCode.update({
       where: { id: referrerCode.id },
-      data: { totalInvited: { increment: 1 }, totalReward: { increment: 3 } },
+      data: { totalInvited: { increment: 1 }, totalReward: { increment: 7 } },
     })
 
-    // 给邀请人加3天会员
-    await this.grantTrialDays(referrerCode.userId, 3)
-    // 给被邀请人也加3天
-    await this.grantTrialDays(referredUserId, 3)
+    // 给邀请人加7天会员
+    await this.grantTrialDays(referrerCode.userId, 7)
+    // 给被邀请人也加7天
+    await this.grantTrialDays(referredUserId, 7)
+
+    // 🆕 积分奖励
+    await this.grantPoints(referrerCode.userId, 100, 'invite_reward', '邀请好友注册奖励')
+    await this.grantPoints(referredUserId, 200, 'invited_bonus', '通过邀请码注册新人礼包')
 
     return referral
+  }
+
+  private async grantPoints(userId: string, amount: number, type: string, description: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { points: true },
+    });
+
+    const newBalance = (user?.points ?? 0) + amount;
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { points: { increment: amount } },
+      }),
+      this.prisma.pointTransaction.create({
+        data: {
+          userId,
+          type,
+          amount,
+          balance: newBalance,
+          description,
+        },
+      }),
+    ]);
   }
 
   private async grantTrialDays(userId: string, days: number) {
@@ -88,15 +117,15 @@ export class ReferralService {
         data: { expiredAt: newExpiry },
       })
     } else {
-      // 给一个默认的免费会员延期
-      const freePlan = await this.prisma.membershipPlan.findFirst({
-        where: { level: 'free' },
+      // 给漫语会员（标准会员）
+      const plan = await this.prisma.membershipPlan.findFirst({
+        where: { level: 'standard' },
       })
-      if (freePlan) {
+      if (plan) {
         await this.prisma.userMembership.create({
           data: {
             userId,
-            planId: freePlan.id,
+            planId: plan.id,
             status: 'active',
             expiredAt: new Date(now.getTime() + days * 86400000),
           },

@@ -64,6 +64,7 @@ model User {
   gameSaves            GameSave[]
   checkIns             UserCheckIn[]
   pointTransactions    PointTransaction[]
+  aiUsages             AiUsageDaily[]
 
   @@unique([email])
   @@map("user")
@@ -804,6 +805,7 @@ model Scene {
   description          String?
   requiredOutputLevel  String             @default("L1")
   requiredUserLevel    Int                @default(1)
+  isFree               Boolean            @default(false)  // 免费用户可访问
   prerequisiteScenes   ScenePrerequisite[] @relation("Scene")
   prerequisiteFor      ScenePrerequisite[] @relation("Prerequisite")
   vocabularies         SceneVocabulary[]
@@ -1416,4 +1418,21 @@ model PointTransaction {
 
   @@index([userId])
   @@map("point_transaction")
+}
+
+// ── AI 额度追踪 ──
+
+model AiUsageDaily {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date     DateTime @db.Date
+
+  feedback Int      @default(0)   // 纠错反馈次数
+  dialogue Int      @default(0)   // 对话判定次数
+  summary  Int      @default(0)   // 汇总/分析次数
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("ai_usage_daily")
 }
