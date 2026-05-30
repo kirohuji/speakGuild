@@ -8,25 +8,27 @@ import { seedDailySentences } from './seed-daily-sentences';
 const prisma = new PrismaClient();
 
 // ══════════════════════════════════════════════════════════
-// SystemConfig 默认值
+// SystemConfig — 后台可配置的系统参数
 // ══════════════════════════════════════════════════════════
 
 const defaultConfigs = [
-  { key: 'app_name',            value: '英游记',             group: 'basic', label: '应用名称',       type: 'string',   description: 'App 显示名称' },
-  { key: 'app_logo_url',        value: '',                     group: 'basic', label: 'Logo URL',        type: 'string',   description: 'App Logo 图片链接' },
-  { key: 'contact_email',       value: '',                     group: 'basic', label: '联系邮箱',       type: 'string',   description: '客服/联系邮箱地址' },
-  { key: 'icp_number',          value: '',                     group: 'basic', label: 'ICP 备案号',     type: 'string',   description: 'ICP 备案号' },
+  // ── 功能开关 ──
   { key: 'registration_open',   value: 'true',                 group: 'feature', label: '开放注册',     type: 'boolean',  description: '是否允许新用户注册' },
-  { key: 'maintenance_mode',    value: 'false',                group: 'feature', label: '维护模式',     type: 'boolean',  description: '开启后非管理员用户将看到维护提示' },
-  { key: 'maintenance_message', value: '系统维护中，请稍后再试。', group: 'feature', label: '维护提示文案', type: 'textarea', description: '维护模式下展示的提示信息' },
-  { key: 'feature_ai_practice', value: 'true',                 group: 'feature', label: 'AI 纠错',      type: 'boolean',  description: '启用/禁用 AI 口语纠错功能' },
-  { key: 'feature_script_mode', value: 'true',                 group: 'feature', label: '剧本模式',     type: 'boolean',  description: '启用/禁用剧本模式' },
-  { key: 'feature_explore_mode',value: 'true',                 group: 'feature', label: '探索模式',     type: 'boolean',  description: '启用/禁用探索模式' },
-  { key: 'feature_leaderboard', value: 'true',                 group: 'feature', label: '排行榜',       type: 'boolean',  description: '启用/禁用排行榜功能' },
+  { key: 'feature_leaderboard', value: 'false',                group: 'feature', label: '排行榜',       type: 'boolean',  description: '启用排行榜（用户量足够时开启）' },
+  { key: 'maintenance_mode',    value: 'false',                group: 'feature', label: '维护模式',     type: 'boolean',  description: '开启后非管理员将看到维护提示' },
+  { key: 'maintenance_message', value: '系统维护中，请稍后再试', group: 'feature', label: '维护提示文案', type: 'textarea', description: '维护模式下的提示信息' },
+
+  // ── 邀请与推广 ──
+  { key: 'invite_trial_days',   value: '7',                    group: 'growth',  label: '邀请人奖励天数', type: 'number', description: '邀请成功后邀请人获得的会员天数' },
+  { key: 'promo_trial_days',    value: '0',                    group: 'growth',  label: '新人推广试用天数', type: 'number', description: '推广期新注册用户免费试用天数（0=关闭）' },
+
+  // ── 技术参数 ──
   { key: 'api_rate_limit',      value: '60',                   group: 'technical', label: 'API 限流（次/分钟）', type: 'number', description: '每个 IP 每分钟最大请求数' },
-  { key: 'upload_max_size_mb',  value: '10',                   group: 'technical', label: '文件上传限制（MB）', type: 'number', description: '单文件上传最大大小（MB）' },
+  { key: 'upload_max_size_mb',  value: '10',                   group: 'technical', label: '文件上传限制（MB）', type: 'number', description: '单文件最大上传大小' },
   { key: 'session_timeout_min', value: '4320',                 group: 'technical', label: '会话超时（分钟）', type: 'number', description: '用户会话过期时间（默认 3 天）' },
-  { key: 'free_ai_corrections', value: '10',                   group: 'feature', label: '免费 AI 纠错次数', type: 'number', description: '免费用户每日 AI 纠错次数上限' },
+
+  // ── AI 配额 ──
+  { key: 'free_ai_corrections', value: '5',                    group: 'quota',   label: '免费每日纠错次数', type: 'number', description: '免费用户每日 AI 纠错次数上限' },
 ];
 
 async function seedSystemConfigs() {

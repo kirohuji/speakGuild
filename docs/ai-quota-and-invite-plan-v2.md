@@ -38,12 +38,10 @@
 | AI 对话判定 | 5次/天 | 50次/天 |
 | 额度耗尽后 | 积分兑换（10分/次） | — |
 | 学习计划单元 | 寝室入住等基础 | **全部解锁** |
-| 剧本模式 | Ch.0 体验 | 全部章节 |
-| 探索模式 | ❌ | 全部地点 |
 | 表达库容量 | 20条 | 无限 |
 | 输出等级追踪 | 基础 | 完整报告 |
 | 邀请好友 | +7天+100积分 | +7天+100积分 |
-| 被邀请奖励 | +7天+200积分 | +7天+200积分 |
+| 被邀请奖励 | +50积分 | +50积分 |
 
 ---
 
@@ -141,7 +139,7 @@ apps/backend/src/common/ai-quota/
 | 每日签到 | 10 分 |
 | 连续签到加成 | +1/天（第2天+1, 第3天+2, ..., 封顶+5） |
 | 邀请好友注册 | +100 分 |
-| 被邀请注册 | +200 分 |
+| 被邀请注册 | +50 分 |
 | 成就解锁 | 不定 |
 
 ### 4.3 积分消耗
@@ -166,16 +164,24 @@ apps/backend/src/common/ai-quota/
 | 角色 | 改前 | 改后 |
 |------|------|------|
 | 邀请人 | +3 天会员 | **+7 天会员 + 100 积分** |
-| 被邀请人 | +3 天会员 | **+7 天会员 + 200 积分** |
+| 被邀请人 | +3 天会员 | **+50 积分**（无会员天） |
+
+> 只给邀请人会员天数，被邀请人获得 200 积分用于体验 AI 纠错，形成「试用→上瘾→付费」路径。
+> 奖励天数可通过后台 `invite_trial_days` 动态调整。
 
 仅修改 `referral.service.ts` 中的 `applyReferral()`：
 
 ```typescript
-await this.grantTrialDays(referrerCode.userId, 7);
-await this.grantTrialDays(referredUserId, 7);
+const config = await this.prisma.systemConfig.findUnique({ where: { key: 'invite_trial_days' } });
+const trialDays = parseInt(config?.value || '7', 10);
+await this.grantTrialDays(referrerCode.userId, trialDays);
 await this.grantPoints(referrerCode.userId, 100, 'invite_reward', '邀请好友奖励');
-await this.grantPoints(referredUserId, 200, 'invited_bonus', '通过邀请码注册');
+await this.grantPoints(referredUserId, 50, 'invited_bonus', '通过邀请码注册');
 ```
+
+### 推广期新人试用
+
+通过后台 `promo_trial_days` 控制，默认 0（关闭）。推广时可设为 3，例如「前 100 名注册免费试用 3 天」。注册时自动赠送对应天数。
 
 ---
 
