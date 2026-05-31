@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad_认识室友_分享兴趣爱好",
+  "title": "认识室友 - 分享兴趣爱好",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad_认识室友_分享兴趣爱好\ntitle: 认识室友 - 分享兴趣爱好\n---\nAlex: Share your hobbies and interests with your roommate.\n#objective: Share your hobbies and interests with your roommate.\n#chunks: Nice to meet you|I'm from...|I'm majoring in...\n#user_input\nAlex: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Nice to meet you|I'm from...|I'm majoring in...\n#user_input\nAlex: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

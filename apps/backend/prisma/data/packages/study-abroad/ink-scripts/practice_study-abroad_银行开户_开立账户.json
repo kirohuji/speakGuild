@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad_银行开户_开立账户",
+  "title": "银行开户 - 开立账户",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad_银行开户_开立账户\ntitle: 银行开户 - 开立账户\n---\nStaff: Tell the bank clerk you want to open an account.\n#objective: Tell the bank clerk you want to open an account.\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

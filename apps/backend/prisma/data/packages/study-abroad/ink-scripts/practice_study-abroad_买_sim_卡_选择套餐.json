@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad_买_sim_卡_选择套餐",
+  "title": "买 SIM 卡 - 选择套餐",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad_买_sim_卡_选择套餐\ntitle: 买 SIM 卡 - 选择套餐\n---\nPhone Store Clerk: Ask the salesperson about available phone plans.\n#objective: Ask the salesperson about available phone plans.\n#chunks: I need a SIM card|What plans do you have?|How much data?\n#user_input\nPhone Store Clerk: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I need a SIM card|What plans do you have?|How much data?\n#user_input\nPhone Store Clerk: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

@@ -1,5 +1,6 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-酒店入住,办理入住,Check in at a hotel. Tell them you have a reservation.,在酒店办理入住，告知有预订。,45,L2,,,
-酒店入住,询问设施,Ask about hotel facilities like the gym and pool.,询问酒店设施如健身房和游泳池。,35,L1,,,
-退房投诉,房间问题,Complain about a problem in your room to the front desk.,向前台投诉房间的问题。,45,L2,,,
-退房投诉,延迟退房,Ask for a late check-out on your departure day.,在退房当天要求延迟退房。,35,L1,,,
+酒店入住,办理入住,Check in at a hotel. Tell them you have a reservation.,在酒店办理入住，告知有预订。,45,L2,,,practice_hotel_酒店入住_办理入住
+酒店入住,询问设施,Ask about hotel facilities like the gym and pool.,询问酒店设施如健身房和游泳池。,35,L1,,,practice_hotel_酒店入住_询问设施
+退房投诉,房间问题,Complain about a problem in your room to the front desk.,向前台投诉房间的问题。,45,L2,,,practice_hotel_退房投诉_房间问题
+退房投诉,延迟退房,Ask for a late check-out on your departure day.,在退房当天要求延迟退房。,35,L1,,,practice_hotel_退房投诉_延迟退房
+,,,,,,,,practice_hotel__

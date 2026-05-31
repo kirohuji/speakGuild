@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-social_超市购物_询问商品位置",
+  "title": "超市购物 - 询问商品位置",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-social_超市购物_询问商品位置\ntitle: 超市购物 - 询问商品位置\n---\nStore Clerk: Ask a store employee where to find a specific item.\n#objective: Ask a store employee where to find a specific item.\n#chunks: Where can I find...?|How much is this?|Do you have...?\n#user_input\nStore Clerk: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Where can I find...?|How much is this?|Do you have...?\n#user_input\nStore Clerk: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

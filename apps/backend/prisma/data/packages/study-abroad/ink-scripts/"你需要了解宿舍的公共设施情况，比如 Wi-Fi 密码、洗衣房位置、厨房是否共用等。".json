@@ -1,0 +1,6 @@
+{
+  "key": "\"你需要了解宿舍的公共设施情况，比如 Wi-Fi 密码、洗衣房位置、厨房是否共用等。\"",
+  "title": "宿舍入住 - 询问设施",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: \"你需要了解宿舍的公共设施情况，比如 Wi-Fi 密码、洗衣房位置、厨房是否共用等。\"\ntitle: 宿舍入住 - 询问设施\n---\nSarah: \"Ask the receptionist about Wi-Fi\n#objective: \"Ask the receptionist about Wi-Fi\n#chunks: I'm here to check in|I have a reservation|My name is...\n#user_input\nSarah: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'm here to check in|I have a reservation|My name is...\n#user_input\nSarah: Got it. That was really helpful. Have a great day!\n-> END\n"
+}
