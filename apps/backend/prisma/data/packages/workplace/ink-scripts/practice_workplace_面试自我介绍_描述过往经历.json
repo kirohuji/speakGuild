@@ -2,5 +2,5 @@
   "key": "practice_workplace_面试自我介绍_描述过往经历",
   "title": "面试自我介绍 - 描述过往经历",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_workplace_面试自我介绍_描述过往经历\ntitle: 面试自我介绍 - 描述过往经历\n---\nInterviewer: Describe your previous work or internship experience.\n#objective: Describe your previous work or internship experience.\n#chunks: My name is...|I'm studying...|I have experience in...\n#user_input\nInterviewer: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: My name is...|I'm studying...|I have experience in...\n#user_input\nInterviewer: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_workplace_面试自我介绍_描述过往经历\ntitle: 面试自我介绍 - 描述过往经历\n---\nInterviewer: Describe your previous work or internship experience.\n#objective: Describe your previous work or internship experience.\n#chunks: My name is...,I'm studying...,I have experience in...\n#user_input\nInterviewer: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: My name is...,I'm studying...,I have experience in...\n#user_input\nInterviewer: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

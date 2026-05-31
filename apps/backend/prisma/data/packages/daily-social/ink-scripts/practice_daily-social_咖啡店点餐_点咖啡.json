@@ -2,5 +2,5 @@
   "key": "practice_daily-social_咖啡店点餐_点咖啡",
   "title": "咖啡店点餐 - 点咖啡",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_咖啡店点餐_点咖啡\ntitle: 咖啡店点餐 - 点咖啡\n---\nBarista: You're at a coffee shop. Order your favorite drink.\n#objective: You're at a coffee shop. Order your favorite drink.\n#chunks: I'd like a...|Can I have...?|How much is that?\n#user_input\nBarista: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like a...|Can I have...?|How much is that?\n#user_input\nBarista: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_daily-social_咖啡店点餐_点咖啡\ntitle: 咖啡店点餐 - 点咖啡\n---\nBarista: You're at a coffee shop. Order your favorite drink.\n#objective: You're at a coffee shop. Order your favorite drink.\n#chunks: I'd like a...,Can I have...?,How much is that?\n#user_input\nBarista: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like a...,Can I have...?,How much is that?\n#user_input\nBarista: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

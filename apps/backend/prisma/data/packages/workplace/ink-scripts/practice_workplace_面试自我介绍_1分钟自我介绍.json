@@ -2,5 +2,5 @@
   "key": "practice_workplace_面试自我介绍_1分钟自我介绍",
   "title": "面试自我介绍 - 1分钟自我介绍",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_workplace_面试自我介绍_1分钟自我介绍\ntitle: 面试自我介绍 - 1分钟自我介绍\n---\nInterviewer: Introduce yourself in a job interview in 1 minute.\n#objective: Introduce yourself in a job interview in 1 minute.\n#chunks: My name is...|I'm studying...|I have experience in...\n#user_input\nInterviewer: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: My name is...|I'm studying...|I have experience in...\n#user_input\nInterviewer: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_workplace_面试自我介绍_1分钟自我介绍\ntitle: 面试自我介绍 - 1分钟自我介绍\n---\nInterviewer: Introduce yourself in a job interview in 1 minute.\n#objective: Introduce yourself in a job interview in 1 minute.\n#chunks: My name is...,I'm studying...,I have experience in...\n#user_input\nInterviewer: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: My name is...,I'm studying...,I have experience in...\n#user_input\nInterviewer: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

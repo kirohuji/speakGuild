@@ -56,7 +56,7 @@ function getSceneConfig(sceneTitle: string): {
 function generateInkSource(topic: TopicRow): string {
   const config = getSceneConfig(topic.scene_title)
   const npc = config.npcName
-  const chunks = config.defaultChunks.join('|')
+  const chunks = config.defaultChunks.join(',')
   const objective = topic.prompt_en || `Respond to the ${npc}'s question`
 
   return `---\nkey: ${topic.ink_script_key}\ntitle: ${topic.scene_title} - ${topic.title}\n---\n${npc}: ${topic.prompt_en.replace(/\n/g, ' ')}\n#objective: ${objective}\n#chunks: ${chunks}\n#user_input\n${npc}: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: ${chunks}\n#user_input\n${npc}: Got it. That was really helpful. Have a great day!\n-> END\n`

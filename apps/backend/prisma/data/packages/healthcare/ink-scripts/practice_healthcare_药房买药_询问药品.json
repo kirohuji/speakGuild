@@ -2,5 +2,5 @@
   "key": "practice_healthcare_药房买药_询问药品",
   "title": "药房买药 - 询问药品",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_healthcare_药房买药_询问药品\ntitle: 药房买药 - 询问药品\n---\nStaff: Ask the pharmacist about medicine for a cold.\n#objective: Ask the pharmacist about medicine for a cold.\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_healthcare_药房买药_询问药品\ntitle: 药房买药 - 询问药品\n---\nStaff: Ask the pharmacist about medicine for a cold.\n#objective: Ask the pharmacist about medicine for a cold.\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

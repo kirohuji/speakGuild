@@ -2,5 +2,5 @@
   "key": "practice_study-abroad_认识室友_邀请一起吃饭",
   "title": "认识室友 - 邀请一起吃饭",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_study-abroad_认识室友_邀请一起吃饭\ntitle: 认识室友 - 邀请一起吃饭\n---\nAlex: Invite your roommate to have dinner together.\n#objective: Invite your roommate to have dinner together.\n#chunks: Nice to meet you|I'm from...|I'm majoring in...\n#user_input\nAlex: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Nice to meet you|I'm from...|I'm majoring in...\n#user_input\nAlex: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_study-abroad_认识室友_邀请一起吃饭\ntitle: 认识室友 - 邀请一起吃饭\n---\nAlex: Invite your roommate to have dinner together.\n#objective: Invite your roommate to have dinner together.\n#chunks: Nice to meet you,I'm from...,I'm majoring in...\n#user_input\nAlex: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Nice to meet you,I'm from...,I'm majoring in...\n#user_input\nAlex: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

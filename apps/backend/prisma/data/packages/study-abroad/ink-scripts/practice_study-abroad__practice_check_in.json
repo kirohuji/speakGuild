@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad__practice_check_in",
+  "title": "\" - practice_check_in",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad__practice_check_in\ntitle: \" - practice_check_in\n---\nStaff: \n#objective: Respond to the Staff's question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

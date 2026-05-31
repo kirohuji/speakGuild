@@ -2,5 +2,5 @@
   "key": "practice_daily-social_咖啡店点餐_修改订单",
   "title": "咖啡店点餐 - 修改订单",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_咖啡店点餐_修改订单\ntitle: 咖啡店点餐 - 修改订单\n---\nBarista: You changed your mind. Ask to modify your order.\n#objective: You changed your mind. Ask to modify your order.\n#chunks: I'd like a...|Can I have...?|How much is that?\n#user_input\nBarista: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like a...|Can I have...?|How much is that?\n#user_input\nBarista: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_daily-social_咖啡店点餐_修改订单\ntitle: 咖啡店点餐 - 修改订单\n---\nBarista: You changed your mind. Ask to modify your order.\n#objective: You changed your mind. Ask to modify your order.\n#chunks: I'd like a...,Can I have...?,How much is that?\n#user_input\nBarista: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like a...,Can I have...?,How much is that?\n#user_input\nBarista: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

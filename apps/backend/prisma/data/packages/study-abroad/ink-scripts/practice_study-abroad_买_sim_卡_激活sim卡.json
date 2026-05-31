@@ -2,5 +2,5 @@
   "key": "practice_study-abroad_买_sim_卡_激活sim卡",
   "title": "买 SIM 卡 - 激活SIM卡",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_study-abroad_买_sim_卡_激活sim卡\ntitle: 买 SIM 卡 - 激活SIM卡\n---\nPhone Store Clerk: Ask how to activate your new SIM card.\n#objective: Ask how to activate your new SIM card.\n#chunks: I need a SIM card|What plans do you have?|How much data?\n#user_input\nPhone Store Clerk: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I need a SIM card|What plans do you have?|How much data?\n#user_input\nPhone Store Clerk: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_study-abroad_买_sim_卡_激活sim卡\ntitle: 买 SIM 卡 - 激活SIM卡\n---\nPhone Store Clerk: Ask how to activate your new SIM card.\n#objective: Ask how to activate your new SIM card.\n#chunks: I need a SIM card,What plans do you have?,How much data?\n#user_input\nPhone Store Clerk: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I need a SIM card,What plans do you have?,How much data?\n#user_input\nPhone Store Clerk: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

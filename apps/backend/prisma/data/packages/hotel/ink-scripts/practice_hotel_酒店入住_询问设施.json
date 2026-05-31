@@ -2,5 +2,5 @@
   "key": "practice_hotel_酒店入住_询问设施",
   "title": "酒店入住 - 询问设施",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_hotel_酒店入住_询问设施\ntitle: 酒店入住 - 询问设施\n---\nStaff: Ask about hotel facilities like the gym and pool.\n#objective: Ask about hotel facilities like the gym and pool.\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_hotel_酒店入住_询问设施\ntitle: 酒店入住 - 询问设施\n---\nStaff: Ask about hotel facilities like the gym and pool.\n#objective: Ask about hotel facilities like the gym and pool.\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
 }

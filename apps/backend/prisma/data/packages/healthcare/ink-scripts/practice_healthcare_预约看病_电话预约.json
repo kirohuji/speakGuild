@@ -2,5 +2,5 @@
   "key": "practice_healthcare_预约看病_电话预约",
   "title": "预约看病 - 电话预约",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_healthcare_预约看病_电话预约\ntitle: 预约看病 - 电话预约\n---\nStaff: Call the clinic to make an appointment with a doctor.\n#objective: Call the clinic to make an appointment with a doctor.\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?|I'd like to...|Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_healthcare_预约看病_电话预约\ntitle: 预约看病 - 电话预约\n---\nStaff: Call the clinic to make an appointment with a doctor.\n#objective: Call the clinic to make an appointment with a doctor.\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
 }
