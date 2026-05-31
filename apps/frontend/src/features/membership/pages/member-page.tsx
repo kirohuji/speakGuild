@@ -128,7 +128,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       {t('common.empty')}
     </div>
   ) : (
-    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+    <div className={cn(
+      plans.length === 1
+        ? 'flex justify-center'
+        : 'grid gap-3 grid-cols-1 sm:grid-cols-2'
+    )}>
       {plans.map((plan) => (
         <PricingCard
           key={plan.planId}
@@ -136,6 +140,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           isCurrent={current?.planId === plan.planId}
           billingCycle={billingCycle}
           onUpgrade={() => handleUpgrade(plan)}
+          compact={plans.length === 1}
         />
       ))}
     </div>
@@ -363,7 +368,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={cn(
+              plans.length === 1
+                ? 'flex justify-center'
+                : 'grid grid-cols-2 gap-2'
+            )}>
               {isLoading ? (
                 <>
                   <Skeleton className="h-[120px] rounded-xl" />
@@ -381,6 +390,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     isCurrent={current?.planId === plan.planId}
                     billingCycle={billingCycle}
                     onUpgrade={() => handleUpgrade(plan)}
+                    compact={plans.length === 1}
                   />
                 ))
               )}
@@ -633,11 +643,13 @@ function PricingCard({
   isCurrent,
   billingCycle,
   onUpgrade,
+  compact = false,
 }: {
   plan: MemberPlan
   isCurrent: boolean
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
+  compact?: boolean
 }) {
   const { t } = useTranslation()
   const Icon = planIcons[plan.level] || Star
@@ -651,6 +663,7 @@ function PricingCard({
     <div
       className={cn(
         'relative flex flex-col rounded-xl border bg-card p-5 transition-all',
+        compact && 'w-full max-w-sm',
         plan.highlighted && 'shadow-lg border-primary/30',
         isCurrent && 'shadow-sm',
         !plan.highlighted && !isCurrent && 'border-border hover:shadow-sm'
@@ -758,11 +771,13 @@ function CompactPlanCard({
   isCurrent,
   billingCycle,
   onUpgrade,
+  compact = false,
 }: {
   plan: MemberPlan
   isCurrent: boolean
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
+  compact?: boolean
 }) {
   const { t } = useTranslation()
   const Icon = planIcons[plan.level] || Star
@@ -777,6 +792,7 @@ function CompactPlanCard({
       onClick={isCurrent ? undefined : onUpgrade}
       className={cn(
         'relative flex flex-col items-center rounded-xl border-2 px-3 py-3 text-center transition-all active:scale-[0.97]',
+        compact && 'w-full max-w-[200px]',
         isCurrent
           ? 'border-primary bg-primary/5 cursor-default'
           : colorAccent || 'border-transparent bg-muted/30 hover:border-primary/30',

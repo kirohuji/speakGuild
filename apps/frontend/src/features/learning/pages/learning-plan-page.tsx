@@ -162,7 +162,7 @@ export function LearningPlanPage() {
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
               <DrawerTitle className="text-base font-semibold">开通会员</DrawerTitle>
             </DrawerHeader>
-            <div className="min-h-0 overflow-y-auto px-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
               <MemberPage compact />
             </div>
           </DrawerContent>
@@ -731,12 +731,12 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
   const [favorite, setFavorite] = useState(false)
   const [topicPage, setTopicPage] = useState(1)
   const pageSize = 6
-  const Icon = unit.isUnlocked ? getCategoryIcon(unit.categoryName ?? '') : Lock
+  const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
   const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
 
   const handleAcquire = useCallback(async () => {
-    if (acquiring || !unit.isUnlocked) return
+    if (acquiring || !unit.isUnlocked || unit.isLocked) return
     setAcquiring(true)
     try {
       await learningApi.startUnit(unit.id)
@@ -758,7 +758,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
       <button
         type="button"
         onClick={() => {
-          if (!unit.isUnlocked) { onMemberOpen(); return }
+          if (!unit.isUnlocked || unit.isLocked) { onMemberOpen(); return }
           setTopicPage(1); setDetailOpen(true)
         }}
         className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
@@ -767,7 +767,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-start gap-2">
             <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
-            {!unit.isUnlocked && <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
+            {(!unit.isUnlocked || unit.isLocked) && <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
           </div>
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
@@ -795,7 +795,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
-                  {!unit.isUnlocked && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
+                  {(!unit.isUnlocked || unit.isLocked) && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location}</p>
@@ -816,9 +816,9 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
                 <Heart className={cn('size-4', favorite && 'fill-current')} />
                 {t('learning.favorite')}
               </Button>
-              <Button className="gap-2" disabled={!unit.isUnlocked || acquiring} onClick={handleAcquire}>
+              <Button className="gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
                 {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                {unit.isUnlocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
+                {unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
               </Button>
             </div>
 
@@ -891,7 +891,7 @@ function UnitCover({
     <div
       className={cn(
         'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
-        !unit.isUnlocked && 'grayscale',
+        (!unit.isUnlocked || unit.isLocked) && 'grayscale',
         className,
       )}
     >
