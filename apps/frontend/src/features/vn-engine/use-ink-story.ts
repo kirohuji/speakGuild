@@ -16,23 +16,29 @@ interface UseInkStoryOptions {
   onExternalFunction?: (name: string, args: any[]) => any
 }
 
+const INPUT_TAGS = ['input', 'user_input', 'wait:input', 'wait:user_input']
+
+function hasInputTag(tags: string[]): boolean {
+  return tags.some((tag) => {
+    const n = tag.trim()
+    return INPUT_TAGS.includes(n) || n.startsWith('input:')
+  })
+}
+
 export function useInkStory(json: Record<string, any> | null, options?: UseInkStoryOptions) {
   const engineRef = useRef<InkEngine | null>(null)
-  const deferredRef = useRef<InkLine[]>([])
+  const pendingRef = useRef<InkLine[] | null>(null)
   const [lines, setLines] = useState<InkLine[]>([])
   const [choices, setChoices] = useState<InkChoice[]>([])
   const [isEnded, setIsEnded] = useState(false)
   const [isWaiting, setIsWaiting] = useState(false)
   const [currentTags, setCurrentTags] = useState<string[]>([])
 
-  // Initialize engine when JSON loads
+  // ── Init / Reset ──
   useEffect(() => {
-    // Clean up previous engine
     engineRef.current?.destroy()
     engineRef.current = null
-    deferredRef.current = []
-
-    // Reset all state for new story
+    pendingRef.current = null
     setLines([])
     setChoices([])
     setIsEnded(false)
@@ -44,24 +50,23 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
       const engine = new InkEngine()
       engineRef.current = engine
       engine.load(json)
-
       if (options?.onExternalFunction) {
         engine.onExternal(options.onExternalFunction)
       }
-
-      // Start the story
       advanceStory(engine)
     } catch (err) {
-      console.warn('[useInkStory] Failed to load Ink JSON, falling back to free dialogue mode:', err)
+      console.warn('[useInkStory] Failed to load Ink JSON:', err)
       engineRef.current = null
     }
   }, [json])
 
+  // ── advanceStory ──
   const advanceStory = useCallback((engine: InkEngine) => {
-    // Flush deferred lines first (text that was skipped due to #input)
-    if (deferredRef.current.length > 0) {
-      setLines((prev) => [...prev, ...deferredRef.current])
-      deferredRef.current = []
+    // Flush pending line first (text that was skipped because #input tag was on it)
+    if (Array.isArray(pendingRef.current) && pendingRef.current.length > 0) {
+      const pending = pendingRef.current
+      pendingRef.current = null
+      setLines((prev) => [...prev, ...pending])
       return
     }
 
@@ -74,28 +79,20 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     const tags = engine.getCurrentTags()
     setCurrentTags(tags)
 
-    // Check for tags that mark a user-input pause.
-    const needsInput = tags.some((tag) => {
-      const normalized = tag.trim()
-      return normalized === 'input'
-        || normalized === 'user_input'
-        || normalized === 'wait:input'
-        || normalized === 'wait:user_input'
-        || normalized.startsWith('input:')
-    })
-
-    if (needsInput) {
-      // #input does NOT block Ink Continue() — text after the tag is also returned.
-      // Save it so it can be shown after the user responds.
+    if (hasInputTag(tags)) {
       setIsWaiting(true)
+      // #input tag attaches to the NEXT content line in Ink.
+      // That line belongs after the user's response — save it for later.
       if (result.text) {
-        deferredRef.current = parseInkLine(result.text, tags)
+        pendingRef.current = parseInkLine(result.text, tags)
       }
       return
     }
 
     if (result.hasChoices && result.choices.length > 0) {
       setChoices(result.choices)
+    } else {
+      setChoices([])
     }
 
     if (result.text) {
@@ -104,6 +101,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     }
   }, [])
 
+  // ── handleChoice ──
   const handleChoice = useCallback(
     (choiceIndex: number) => {
       if (!engineRef.current) return
@@ -115,6 +113,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     [advanceStory],
   )
 
+  // ── resumeAfterInput ──
   const resumeAfterInput = useCallback(
     (userInput?: string, variables?: Record<string, any>) => {
       if (!engineRef.current) return
@@ -137,7 +136,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
 
   const setVariable = useCallback((name: string, value: any) => {
     engineRef.current?.setVariable(name, value)
-    engineRef.current?.continue() // Trigger variable observers
+    engineRef.current?.continue()
     advanceStory(engineRef.current!)
   }, [advanceStory])
 
@@ -160,17 +159,15 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
   }
 }
 
-/** Parse Ink output into structured lines (detect Speaker: text format) */
+/** Parse Ink text into structured lines. "Speaker: text" → {speaker, text} */
 function parseInkLine(text: string, tags: string[]): InkLine[] {
   const speakerTag = tags.find((t) => t.startsWith('speaker:'))
   const speaker = speakerTag?.replace('speaker:', '').trim()
 
-  // Split by newlines, each is a separate dialogue line
   return text
     .split('\n')
     .filter(Boolean)
     .map((line) => {
-      // Check inline speaker format: "Name: text"
       const match = line.match(/^([^:：]{1,32})[:：]\s*(.+)/)
       if (match) {
         return { text: match[2], speaker: match[1], tags }

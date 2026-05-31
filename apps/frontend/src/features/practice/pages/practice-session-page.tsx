@@ -339,7 +339,7 @@ export function PracticeSessionPage() {
     const newLines = inkLines.slice(syncedInkLineCountRef.current)
     if (newLines.length === 0) return
     syncedInkLineCountRef.current = inkLines.length
-    const newDialogues = newLines.map((line) => ({
+    const newDialogues = newLines.filter(Boolean).map((line) => ({
       speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
       text: line.text,
       isNpc: true, // All Ink lines are NPC/narration; user lines added by sendUserInput
