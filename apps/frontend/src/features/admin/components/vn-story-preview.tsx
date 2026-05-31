@@ -135,7 +135,15 @@ export function VnStoryPreview({
         || normalized.startsWith('input:')
     })
     setCurrentTags(tags)
-    setIsWaiting(waiting)
+
+    // #input does NOT block inkjs Continue() — text after the tag is also returned.
+    // Defer it so the next line doesn't leak before the user has responded.
+    if (waiting) {
+      setIsWaiting(true)
+      return
+    }
+    setIsWaiting(false)
+
     const { speaker, expression, bg, bgFit, audioUrl } = parseTags(tags)
     if (bg || bgFit) {
       setActiveBackground((prev) => ({
@@ -153,7 +161,7 @@ export function VnStoryPreview({
     if (result.hasChoices) setChoices(result.choices)
     else setChoices([])
 
-    if (!waiting && !engine.canContinue && result.choices.length === 0) {
+    if (!engine.canContinue && result.choices.length === 0) {
       setIsEnded(true)
       setCompletionOpen(true)
     }

@@ -66,15 +66,20 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     setCurrentTags(tags)
 
     // Check for tags that mark a user-input pause.
-    if (tags.some((tag) => {
+    const needsInput = tags.some((tag) => {
       const normalized = tag.trim()
       return normalized === 'input'
         || normalized === 'user_input'
         || normalized === 'wait:input'
         || normalized === 'wait:user_input'
         || normalized.startsWith('input:')
-    })) {
+    })
+
+    if (needsInput) {
+      // #input does NOT block Ink Continue() — text after the tag is also returned.
+      // Defer the text so it isn't shown before the user has responded.
       setIsWaiting(true)
+      return
     }
 
     if (result.hasChoices && result.choices.length > 0) {
@@ -82,9 +87,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     }
 
     if (result.text) {
-      // Parse speaker from Ink tags or text format: "Speaker: text"
       const parsed = parseInkLine(result.text, tags)
-
       setLines((prev) => [...prev, ...parsed])
     }
   }, [])
