@@ -31,7 +31,7 @@ type ComposerItem =
   | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; audioUrl?: string }
   | { type: 'choice'; text: string; target: string; showCharacter: boolean }
   | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
-  | { type: 'wait'; requiresInput: boolean }
+  | { type: 'wait'; requiresInput: boolean; objective?: string; hint?: string; chunks?: string[] }
   | { type: 'divert'; target: string }
   | { type: 'tag'; value: string }
 
@@ -186,6 +186,21 @@ function parseComposer(source: string): ComposerScene[] {
         } else {
           scene.items.push({ type: 'wait', requiresInput: true })
         }
+      } else if (tag.startsWith('objective:')) {
+        const val = tag.replace(/^objective:/, '').trim()
+        const last = scene.items[scene.items.length - 1]
+        if (last?.type === 'wait') { last.objective = val }
+        else { scene.items.push({ type: 'wait', requiresInput: false, objective: val }) }
+      } else if (tag.startsWith('hint:')) {
+        const val = tag.replace(/^hint:/, '').trim()
+        const last = scene.items[scene.items.length - 1]
+        if (last?.type === 'wait') { last.hint = val }
+        else { scene.items.push({ type: 'wait', requiresInput: false, hint: val }) }
+      } else if (tag.startsWith('chunks:')) {
+        const val = tag.replace(/^chunks:/, '').trim().split(/[;,]/).map((s) => s.trim()).filter(Boolean)
+        const last = scene.items[scene.items.length - 1]
+        if (last?.type === 'wait') { last.chunks = val }
+        else { scene.items.push({ type: 'wait', requiresInput: false, chunks: val }) }
       } else {
         scene.items.push({ type: 'tag', value: tag })
       }
@@ -264,6 +279,9 @@ function serializeComposer(
         lines.push(`# bg:${item.url}`)
         lines.push(`# bgFit:${item.fit || 'cover'}`)
       } else if (item.type === 'wait') {
+        if (item.objective) lines.push(`#objective:${item.objective}`)
+        if (item.hint) lines.push(`#hint:${item.hint}`)
+        if (item.chunks?.length) lines.push(`#chunks:${item.chunks.join(', ')}`)
         lines.push(item.requiresInput ? '# wait:input' : '# wait')
       } else if (item.type === 'divert') {
         lines.push(`-> ${item.target || 'END'}`)
@@ -301,7 +319,12 @@ function itemSummary(item: ComposerItem) {
   if (item.type === 'line') return item.text || '空对白'
   if (item.type === 'choice') return `${item.text || '空选项'} -> ${item.target || 'END'} · ${item.showCharacter ? '保留角色' : '隐藏角色'}`
   if (item.type === 'background') return `${item.fit || 'cover'} · ${item.url || '未选择背景'}`
-  if (item.type === 'wait') return item.requiresInput ? '暂停，等待用户输入' : '暂停'
+  if (item.type === 'wait') {
+    const parts = [item.requiresInput ? '等待用户输入' : '暂停']
+    if (item.objective) parts.push(`目标: ${item.objective}`)
+    if (item.chunks?.length) parts.push(`句块: ${item.chunks.join(', ')}`)
+    return parts.join(' · ')
+  }
   if (item.type === 'divert') return `-> ${item.target || 'END'}`
   return `# ${item.value}`
 }
@@ -827,8 +850,56 @@ export function InkStoryEditor({
                       />
                       等待用户输入
                     </label>
+
+                    {selectedItem.requiresInput && (
+                      <>
+                        <div>
+                          <Label className="text-xs">练习目的 (objective)</Label>
+                          <Input
+                            value={selectedItem.objective || ''}
+                            onChange={(event) => updateSelectedItem({ objective: event.target.value })}
+                            disabled={readOnly}
+                            className="mt-1"
+                            placeholder="例如：Greet the receptionist and introduce yourself"
+                          />
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            描述本轮对话期望用户完成的任务，AI 会据此评判回答质量
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs">提示 (hint)</Label>
+                          <Input
+                            value={selectedItem.hint || ''}
+                            onChange={(event) => updateSelectedItem({ hint: event.target.value })}
+                            disabled={readOnly}
+                            className="mt-1"
+                            placeholder="例如：Try using I'm here to check in"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">推荐句块 (chunks)</Label>
+                          <Textarea
+                            value={selectedItem.chunks?.join(', ') || ''}
+                            onChange={(event) => updateSelectedItem({
+                              chunks: event.target.value.split(/[,;，；]/).map((s) => s.trim()).filter(Boolean),
+                            })}
+                            disabled={readOnly}
+                            className="mt-1 min-h-[60px] text-sm"
+                            placeholder="用逗号分隔，例如：I'm here to check in, My name is..."
+                          />
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            用逗号或分号分隔，这些句块会出现在练习助手中提示用户
+                          </p>
+                        </div>
+                      </>
+                    )}
+
                     <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-                      会生成 <code>{selectedItem.requiresInput ? '# wait:input' : '# wait'}</code>。
+                      会生成
+                      {selectedItem.objective && <><br /><code>#objective:{selectedItem.objective}</code></>}
+                      {selectedItem.hint && <><br /><code>#hint:{selectedItem.hint}</code></>}
+                      {selectedItem.chunks?.length ? <><br /><code>#chunks:{selectedItem.chunks.join(', ')}</code></> : null}
+                      <br /><code>{selectedItem.requiresInput ? '# wait:input' : '# wait'}</code>
                     </div>
                   </div>
                 )}

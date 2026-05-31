@@ -652,16 +652,69 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('stories')
-  async listStories(@Req() req: Request) {
+  async listStories(
+    @Req() req: Request,
+    @Query('search') search?: string,
+    @Query('scriptType') scriptType?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
     await this.requireAdmin(req);
-    return this.prisma.inkScript.findMany({
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true, key: true, title: true, scriptType: true,
-        episodeId: true, locationId: true, topicId: true,
-        version: true, createdAt: true, updatedAt: true,
-      },
-    });
+    const where: any = {}
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { key: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    if (scriptType && scriptType !== 'all') where.scriptType = scriptType
+    if (categoryId) {
+      where.trainingTopic = { scene: { categoryId } }
+    }
+
+    const p = Math.max(1, parseInt(page || '1'))
+    const ps = Math.min(50, Math.max(1, parseInt(pageSize || '12')))
+
+    const [items, total] = await Promise.all([
+      this.prisma.inkScript.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' },
+        skip: (p - 1) * ps,
+        take: ps,
+        select: {
+          id: true, key: true, title: true, scriptType: true,
+          episodeId: true, locationId: true, topicId: true,
+          version: true, createdAt: true, updatedAt: true,
+          trainingTopic: { select: { id: true, title: true } },
+        },
+      }),
+      this.prisma.inkScript.count({ where }),
+    ])
+
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) }
+  }
+
+  @Get('stories/filters')
+  async getStoryFilters(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const [scriptTypes, categories] = await Promise.all([
+      this.prisma.inkScript.findMany({
+        select: { scriptType: true },
+        distinct: ['scriptType'],
+      }),
+      this.prisma.sceneCategory.findMany({
+        select: { id: true, name: true },
+        orderBy: { sortOrder: 'asc' },
+        where: {
+          scenes: { some: { trainingTopics: { some: { inkScriptId: { not: null } } } } },
+        },
+      }),
+    ])
+    return {
+      scriptTypes: scriptTypes.map((s) => s.scriptType),
+      categories,
+    }
   }
 
   @Get('stories/:id')
