@@ -342,7 +342,7 @@ export function PracticeSessionPage() {
     const newDialogues = newLines.map((line) => ({
       speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
       text: line.text,
-      isNpc: line.tags?.includes('npc') || !!line.speaker,
+      isNpc: true, // All Ink lines are NPC/narration; user lines added by sendUserInput
       audioUrl: parseVnTags(line.tags).audio,
     }))
     setDialogueRounds((prev) => [...prev, ...newDialogues])
@@ -847,14 +847,14 @@ export function PracticeSessionPage() {
 
     return (
       <div className="relative flex h-dvh flex-col bg-background">
-        {/* Floating minimal top bar — light text on dark bg */}
+        {/* Floating minimal top bar */}
         <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-          <div className="grid h-9 w-full max-w-[342px] grid-cols-[72px_1fr_72px] items-center rounded-full border border-white/10 bg-black/46 px-1.5 text-white shadow-[0_12px_36px_rgba(0,0,0,.24)] backdrop-blur-2xl">
+          <div className="grid h-9 w-full max-w-[342px] grid-cols-[72px_1fr_72px] items-center rounded-full border border-border/20 bg-background/60 px-1.5 text-foreground shadow-lg backdrop-blur-2xl">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setPhase('prepare')}
-            className="h-7 justify-self-start rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white"
+            className="h-7 justify-self-start rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
           </Button>
@@ -867,14 +867,14 @@ export function PracticeSessionPage() {
             hideToggles={isHistoryOpen}
             compactTrigger
             plainTrigger
-            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-white/82 transition-opacity active:opacity-70"
+            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-foreground/80 transition-opacity active:opacity-70"
           />
 
           <Button
             variant="ghost"
             size="sm"
             onClick={canReview ? startAnalysis : restartPractice}
-            className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-white shadow-none hover:bg-white/10 hover:text-white"
+            className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
           >
             {canReview ? <CheckCircle2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
             {canReview ? t('practiceSession.review') : t('practiceSession.retry')}
@@ -882,7 +882,7 @@ export function PracticeSessionPage() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 bg-black">
+        <div className="min-h-0 flex-1 bg-background">
           <VnPlayerBoundary>
             <VnPlayer
               ref={vnPlayerRef}

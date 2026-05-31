@@ -64,27 +64,27 @@ export function PracticeVnDrawer({
           type="button"
           onClick={() => setOpen(true)}
           className={cn(
-            !plainTrigger && 'flex items-center gap-2 rounded-full border border-white/15 bg-black/58 px-3.5 py-2 text-xs font-medium text-white shadow-[0_16px_48px_rgba(0,0,0,.28)] backdrop-blur-2xl transition-transform active:scale-[0.97]',
+            !plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur-2xl transition-transform active:scale-[0.97]',
             triggerClassName,
           )}
         >
           {showTriggerIcon && (
             compactTrigger
-              ? <Lightbulb className="size-3.5 text-white/82" />
-              : <Target className="size-3.5 text-rose-100" />
+              ? <Lightbulb className="size-3.5 text-foreground/70" />
+              : <Target className="size-3.5 text-rose-300" />
           )}
           <span>{compactTrigger ? t('practiceVn.hint') : t('practiceVn.objective')} {completedCount}/{objectives.length || 1}</span>
           {!compactTrigger && (
             <>
-              <span className="h-1 w-1 rounded-full bg-white/36" />
-              <span className="text-white/66">{t('practiceVn.assistant')}</span>
+              <span className="h-1 w-1 rounded-full bg-foreground/30" />
+              <span className="text-muted-foreground">{t('practiceVn.assistant')}</span>
             </>
           )}
         </button>
       )}
 
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
-        <DrawerContent className="max-h-[82vh] rounded-t-[28px] border-white/10 bg-background/96 text-foreground shadow-[0_-24px_80px_rgba(0,0,0,.42)] backdrop-blur-2xl">
+        <DrawerContent className="max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-24px_80px_rgba(0,0,0,.42)] backdrop-blur-2xl">
           <DrawerHeader className="px-5 pb-2 pt-3 text-left">
             <div className="flex items-start justify-between gap-3">
               <div>

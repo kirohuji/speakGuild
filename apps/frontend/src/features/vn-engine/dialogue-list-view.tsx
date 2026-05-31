@@ -121,7 +121,7 @@ export function DialogueListView({
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
 
       {/* ── Top bar ── */}
-      <div className="relative z-10 flex items-center justify-between px-3 py-2">
+      <div className="relative z-40 flex items-center justify-between px-3 py-2">
         <div />
         <div className="flex items-center gap-1 rounded-full border border-border/30 bg-background/60 px-1 shadow-lg backdrop-blur-2xl">
           {onReset && (
@@ -200,6 +200,13 @@ export function DialogueListView({
               <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '0ms' }} />
               <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '150ms' }} />
               <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '300ms' }} />
+            </div>
+          )}
+
+          {/* Tap-to-continue indicator */}
+          {canInteract && visibleLines.length > 0 && (
+            <div className="flex justify-center py-2">
+              <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-foreground/30" />
             </div>
           )}
 
@@ -292,16 +299,16 @@ function ChatBubble({
   fontSize: number
   bilingual: boolean
 }) {
-  // Typewriter effect for the last line only
-  const [displayedText, setDisplayedText] = useState(isLast ? '' : line.text)
+  // Typewriter effect for the last NPC/user line only (skip narration)
+  const hasTypewriter = isLast && !!line.speaker
+  const [displayedText, setDisplayedText] = useState(hasTypewriter ? '' : line.text)
   const timerRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!isLast) {
+    if (!hasTypewriter) {
       setDisplayedText(line.text)
       return
     }
-    // Typewriter for the last line
     setDisplayedText('')
     let index = 0
     const timer = window.setInterval(() => {
@@ -317,16 +324,34 @@ function ChatBubble({
       window.clearInterval(timer)
       if (timerRef.current === timer) timerRef.current = null
     }
-  }, [line.text, isLast])
+  }, [line.text, hasTypewriter])
 
   const isTyping = isLast && displayedText.length < line.text.length
 
-  // ── NPC message card: 左列头像 + 右列内容 ──
+  // ── Narration: centered, transparent, italic ──
+  if (!isUser && !line.speaker) {
+    return (
+      <div className="flex w-full flex-col items-center py-3">
+        <p className="max-w-[72%] text-center leading-relaxed italic text-muted-foreground" style={{ fontSize }}>
+          {displayedText}
+          {isTyping && (
+            <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
+          )}
+        </p>
+        {bilingual && line.translation && (
+          <p className="mt-1 max-w-[72%] text-center text-[11px] leading-relaxed italic text-muted-foreground/50">
+            {line.translation}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // ── NPC message card: 左列头像 + 右列名字/消息 ──
   if (!isUser) {
     return (
       <div className="flex w-full justify-start">
         <div className="flex max-w-[82%] min-w-[140px] gap-3 rounded-2xl rounded-bl-md bg-muted/60 px-3.5 py-3 backdrop-blur-sm">
-          {/* 左列：头像 */}
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -336,8 +361,6 @@ function ChatBubble({
           ) : (
             <div className="size-11 shrink-0 rounded-full bg-muted ring-1 ring-border" />
           )}
-
-          {/* 右列：名字 + 消息 + 译文 */}
           <div className="min-w-0 flex-1">
             {line.speaker && (
               <p className="text-sm font-semibold text-foreground">{line.speaker}</p>
