@@ -63,6 +63,7 @@ export function VnStoryPreview({
   onDebugChange,
 }: VnStoryPreviewProps) {
   const engineRef = useRef<InkEngine | null>(null)
+  const deferredRef = useRef<DialogueLine[]>([])
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null)
   const [history, setHistory] = useState<DialogueLine[]>([])
   const [choices, setChoices] = useState<{ index: number; text: string }[]>([])
@@ -137,9 +138,13 @@ export function VnStoryPreview({
     setCurrentTags(tags)
 
     // #input does NOT block inkjs Continue() — text after the tag is also returned.
-    // Defer it so the next line doesn't leak before the user has responded.
+    // Save it so it can be shown after the user responds.
     if (waiting) {
       setIsWaiting(true)
+      if (result.text) {
+        const { speaker, expression, audioUrl } = parseTags(tags)
+        deferredRef.current = parseTextLines(result.text, speaker, expression, audioUrl)
+      }
       return
     }
     setIsWaiting(false)
@@ -171,6 +176,7 @@ export function VnStoryPreview({
   useEffect(() => {
     engineRef.current?.destroy()
     engineRef.current = null
+    deferredRef.current = []
     setIsReady(false)
     setHistory([])
     setChoices([])
@@ -201,6 +207,13 @@ export function VnStoryPreview({
   const advanceStory = useCallback(() => {
     const engine = engineRef.current
     if (!engine) return
+
+    // Flush deferred lines first (text skipped due to #input)
+    if (deferredRef.current.length > 0) {
+      setHistory((prev) => [...prev, ...deferredRef.current])
+      deferredRef.current = []
+      return
+    }
 
     const result = engine.continue()
     if (!result) { setIsEnded(true); setCompletionOpen(true); return }
@@ -237,6 +250,7 @@ export function VnStoryPreview({
     if (!compileResult?.json) return
     engineRef.current?.destroy()
     engineRef.current = null
+    deferredRef.current = []
     setHistory([])
     setChoices([])
     setIsEnded(false)

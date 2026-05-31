@@ -18,6 +18,7 @@ interface UseInkStoryOptions {
 
 export function useInkStory(json: Record<string, any> | null, options?: UseInkStoryOptions) {
   const engineRef = useRef<InkEngine | null>(null)
+  const deferredRef = useRef<InkLine[]>([])
   const [lines, setLines] = useState<InkLine[]>([])
   const [choices, setChoices] = useState<InkChoice[]>([])
   const [isEnded, setIsEnded] = useState(false)
@@ -29,6 +30,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     // Clean up previous engine
     engineRef.current?.destroy()
     engineRef.current = null
+    deferredRef.current = []
 
     // Reset all state for new story
     setLines([])
@@ -56,6 +58,13 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
   }, [json])
 
   const advanceStory = useCallback((engine: InkEngine) => {
+    // Flush deferred lines first (text that was skipped due to #input)
+    if (deferredRef.current.length > 0) {
+      setLines((prev) => [...prev, ...deferredRef.current])
+      deferredRef.current = []
+      return
+    }
+
     const result = engine.continue()
     if (!result) {
       setIsEnded(true)
@@ -77,8 +86,11 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
 
     if (needsInput) {
       // #input does NOT block Ink Continue() — text after the tag is also returned.
-      // Defer the text so it isn't shown before the user has responded.
+      // Save it so it can be shown after the user responds.
       setIsWaiting(true)
+      if (result.text) {
+        deferredRef.current = parseInkLine(result.text, tags)
+      }
       return
     }
 
