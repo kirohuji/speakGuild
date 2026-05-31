@@ -341,6 +341,23 @@ export function PracticeSessionPage() {
       expression: parsed.expression || prev.expression || 'default',
       position: isSpritePosition(parsed.position) ? parsed.position : prev.position,
     }))
+
+    // Parse #input hint tags for the PracticeVnDrawer
+    const hintText = readTagValue(tags, 'hint:')
+    const objectiveText = readTagValue(tags, 'objective:')
+    const chunkTexts = readListTags(tags, 'chunks:')
+
+    if (hintText || objectiveText || chunkTexts.length > 0) {
+      setAiHints((prev) => {
+        const next = [...prev]
+        if (objectiveText) next.push({ type: 'pattern' as const, text: objectiveText })
+        if (hintText) next.push({ type: 'pattern' as const, text: hintText })
+        for (const c of chunkTexts) {
+          if (!next.some((h) => h.text === c)) next.push({ type: 'chunk' as const, text: c })
+        }
+        return next
+      })
+    }
   }, [currentTags, detail?.scene.backgroundUrl, dialogueRounds])
 
   // Sync Ink lines to dialogue display

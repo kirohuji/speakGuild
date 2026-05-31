@@ -1140,6 +1140,7 @@ model ExpressionItem {
   sceneName      String?
   masteryStatus  String         @default("learning")
   reviewCount    Int            @default(0)
+  easeFactor     Float          @default(2.5)
   lastReviewedAt DateTime?
   nextReviewAt   DateTime?
   createdAt      DateTime       @default(now())
