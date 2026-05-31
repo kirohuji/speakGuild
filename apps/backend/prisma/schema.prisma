@@ -1293,7 +1293,7 @@ model InkScript {
   key               String          @unique
   title             String
   scriptType        String          @default("episode")
-  inkJson           Json
+  inkJson           Json?
   inkSource         String?         @db.Text
   episodeId         String?
   locationId        String?
