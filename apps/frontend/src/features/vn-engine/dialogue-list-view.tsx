@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { History, RotateCcw, Settings, SkipBack, X, Send } from 'lucide-react'
+import { History, RotateCcw, Settings, X, Send } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { VnPlayerLine, VnPlayerChoice, BackgroundFit } from './vn-player'
 
@@ -106,10 +106,10 @@ export function DialogueListView({
   }
 
   return (
-    <div className={cn('relative flex h-full w-full flex-col overflow-hidden bg-[#0f172a]', className)}>
+    <div className={cn('relative flex h-full w-full flex-col overflow-hidden bg-background', className)}>
       {/* ── Background ── */}
       <div
-        className="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]"
+        className="absolute inset-0 bg-gradient-to-br from-background via-background to-background"
         style={{
           backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
           backgroundSize: BgFitStyle[backgroundFit] || 'cover',
@@ -117,13 +117,13 @@ export function DialogueListView({
           backgroundRepeat: backgroundFit === 'repeat' ? 'repeat' : 'no-repeat',
         }}
       />
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-black/50" />
+      {/* Overlay for readability */}
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
 
       {/* ── Top bar ── */}
       <div className="relative z-10 flex items-center justify-between px-3 py-2">
         <div />
-        <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/46 px-1 shadow-[0_6px_22px_rgba(0,0,0,.24)] backdrop-blur-2xl">
+        <div className="flex items-center gap-1 rounded-full border border-border/30 bg-background/60 px-1 shadow-lg backdrop-blur-2xl">
           {onReset && (
             <IconButton label={t('practiceSession.retry')} onClick={onReset}>
               <RotateCcw className="size-3.5" />
@@ -182,7 +182,7 @@ export function DialogueListView({
                 <button
                   key={choice.index}
                   type="button"
-                  className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-left text-sm font-medium text-white shadow-lg backdrop-blur-md transition-colors hover:border-white/35 hover:bg-white/18"
+                  className="rounded-xl border border-border bg-card/80 px-4 py-3 text-left text-sm font-medium text-card-foreground shadow-lg backdrop-blur-md transition-colors hover:border-primary/40 hover:bg-accent"
                   onClick={(event) => {
                     event.stopPropagation()
                     onChoice?.(choice.index)
@@ -197,16 +197,16 @@ export function DialogueListView({
           {/* Waiting indicator */}
           {isWaiting && (
             <div className="flex items-center gap-1.5 py-3">
-              <span className="size-1.5 animate-bounce rounded-full bg-white/60" style={{ animationDelay: '0ms' }} />
-              <span className="size-1.5 animate-bounce rounded-full bg-white/60" style={{ animationDelay: '150ms' }} />
-              <span className="size-1.5 animate-bounce rounded-full bg-white/60" style={{ animationDelay: '300ms' }} />
+              <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '0ms' }} />
+              <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '150ms' }} />
+              <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '300ms' }} />
             </div>
           )}
 
           {/* Ended state */}
           {isEnded && (
             <div className="flex flex-col items-center gap-3 py-6">
-              <p className="text-center text-sm text-white/62">{t('vnHistory.storyEnded')}</p>
+              <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
               {endedActions}
             </div>
           )}
@@ -217,7 +217,7 @@ export function DialogueListView({
 
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
-        <div className="relative z-10 border-t border-white/10 bg-black/40 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] backdrop-blur-xl">
+        <div className="relative z-10 border-t border-border/20 bg-background/60 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] backdrop-blur-xl">
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -226,13 +226,13 @@ export function DialogueListView({
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
               placeholder="输入你的回答..."
               disabled={submitting}
-              className="min-w-0 flex-1 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none transition-colors focus:border-white/30 focus:bg-white/12"
+              className="min-w-0 flex-1 rounded-full border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-ring focus:ring-1 focus:ring-ring"
             />
             <button
               type="button"
               onClick={handleSubmitInput}
               disabled={!inputText.trim() || submitting}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white/80 transition-colors hover:bg-white/25 disabled:opacity-30"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-30"
             >
               <Send className="size-4" />
             </button>
@@ -321,31 +321,47 @@ function ChatBubble({
 
   const isTyping = isLast && displayedText.length < line.text.length
 
-  return (
-    <div className={cn('flex gap-2.5', isUser ? 'justify-end' : 'justify-start')}>
-      {/* Avatar for NPC */}
-      {!isUser && avatarUrl && (
-        <img
-          src={avatarUrl}
-          alt={avatarAlt || ''}
-          className="mt-1 size-9 shrink-0 rounded-full object-cover ring-1 ring-white/15"
-        />
-      )}
-
-      <div className={cn('max-w-[78%]', isUser ? 'items-end' : 'items-start')}>
-        {/* Speaker name */}
-        {!isUser && line.speaker && (
-          <p className="mb-0.5 ml-1 text-[11px] font-medium text-white/60">{line.speaker}</p>
-        )}
-
-        <div
-          className={cn(
-            'rounded-2xl px-3.5 py-2.5',
-            isUser
-              ? 'rounded-br-md bg-primary/70 text-white shadow-sm'
-              : 'rounded-bl-md bg-white/12 text-white/92 backdrop-blur-sm',
+  // ── NPC message card: 左列头像 + 右列内容 ──
+  if (!isUser) {
+    return (
+      <div className="flex w-full justify-start">
+        <div className="flex max-w-[82%] min-w-[140px] gap-3 rounded-2xl rounded-bl-md bg-muted/60 px-3.5 py-3 backdrop-blur-sm">
+          {/* 左列：头像 */}
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={avatarAlt || ''}
+              className="size-11 shrink-0 rounded-full object-cover ring-1 ring-border"
+            />
+          ) : (
+            <div className="size-11 shrink-0 rounded-full bg-muted ring-1 ring-border" />
           )}
-        >
+
+          {/* 右列：名字 + 消息 + 译文 */}
+          <div className="min-w-0 flex-1">
+            {line.speaker && (
+              <p className="text-sm font-semibold text-foreground">{line.speaker}</p>
+            )}
+            <p className="mt-1 leading-relaxed text-foreground" style={{ fontSize }}>
+              {displayedText}
+              {isTyping && (
+                <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
+              )}
+            </p>
+            {bilingual && line.translation && (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground/70">{line.translation}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── User bubble: simple right-aligned message ──
+  return (
+    <div className="flex w-full justify-end">
+      <div className="max-w-[78%]">
+        <div className="rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-primary-foreground shadow-sm">
           <p className="leading-relaxed" style={{ fontSize }}>
             {displayedText}
             {isTyping && (
@@ -353,15 +369,12 @@ function ChatBubble({
             )}
           </p>
         </div>
-
-        {/* Translation */}
         {bilingual && line.translation && (
-          <p className="mt-0.5 ml-1 text-[11px] leading-relaxed text-white/45">{line.translation}</p>
+          <p className="mt-0.5 mr-1 text-right text-[11px] leading-relaxed text-muted-foreground/70">
+            {line.translation}
+          </p>
         )}
       </div>
-
-      {/* Avatar placeholder for user side alignment */}
-      {isUser && <div className="size-9 shrink-0" />}
     </div>
   )
 }
@@ -380,7 +393,7 @@ function IconButton({
       type="button"
       aria-label={label}
       title={label}
-      className="flex size-7 items-center justify-center rounded-full text-white/78 transition-colors hover:bg-white/12 hover:text-white"
+      className="flex size-7 items-center justify-center rounded-full text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
       onClick={(event) => {
         event.stopPropagation()
         onClick()

@@ -92,7 +92,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           description: row.description || null,
           requiredOutputLevel: row.required_output_level,
           requiredUserLevel: parseInt(row.required_user_level) || 1,
-          isFree: ['宿舍入住', '机场入境', '认识室友'].includes(row.title),
+          isFree: ['寝室入住', '机场入境', '认识室友'].includes(row.title),
         },
       })
       sceneMap.set(row.title, scene.id)
