@@ -32,6 +32,7 @@ export interface VnPlayerChoice {
 
 export interface VnPlayerHandle {
   toggleHistory: (open?: boolean) => void
+  toggleSettings: (open?: boolean) => void
 }
 
 interface VnPlayerProps {
@@ -56,6 +57,8 @@ interface VnPlayerProps {
   className?: string
   stageClassName?: string
   showHistoryButton?: boolean
+  /** Hide the top bar in chat-list mode (e.g. when parent provides its own header) */
+  hideChatTopBar?: boolean
 }
 
 interface VnPlayerSettings {
@@ -421,6 +424,7 @@ export function VnPlayer({
   className,
   stageClassName,
   showHistoryButton = true,
+  hideChatTopBar = false,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
@@ -487,7 +491,8 @@ export function VnPlayer({
   }
   useImperativeHandle(ref, () => ({
     toggleHistory: (open?: boolean) => toggleHistory(open ?? !historyOpen),
-  }), [historyOpen])
+    toggleSettings: (open?: boolean) => setSettingsOpen(open ?? !settingsOpen),
+  }), [historyOpen, settingsOpen])
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
   const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && settings.displayMode !== 'chat'
@@ -548,6 +553,9 @@ export function VnPlayer({
           bilingual={settings.bilingual}
           showUserInputInDialogue={settings.showUserInputInDialogue}
           onSettingsOpen={() => setSettingsOpen(true)}
+          hideTopBar={hideChatTopBar}
+          historyOpen={historyOpen}
+          onToggleHistory={toggleHistory}
         />
         <VnSettingsDialog
           open={settingsOpen}

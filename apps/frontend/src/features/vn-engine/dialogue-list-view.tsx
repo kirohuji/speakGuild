@@ -20,12 +20,16 @@ interface DialogueListViewProps {
   onReset?: () => void
   endedActions?: ReactNode
   onHistoryOpenChange?: (open: boolean) => void
+  /** External control for history dialog (e.g. from parent header button) */
+  historyOpen?: boolean
+  onToggleHistory?: (open: boolean) => void
   className?: string
   showHistoryButton?: boolean
   fontSize?: number
   bilingual?: boolean
   showUserInputInDialogue?: boolean
   onSettingsOpen?: () => void
+  hideTopBar?: boolean
 }
 
 const BgFitStyle: Record<string, string> = {
@@ -51,15 +55,27 @@ export function DialogueListView({
   onReset,
   endedActions,
   onHistoryOpenChange,
+  historyOpen: historyOpenProp,
+  onToggleHistory,
   className,
   showHistoryButton = true,
   fontSize = 14,
   bilingual = false,
   showUserInputInDialogue = true,
   onSettingsOpen,
+  hideTopBar = false,
 }: DialogueListViewProps) {
   const { t } = useTranslation()
-  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyOpenInternal, setHistoryOpenInternal] = useState(false)
+  const historyOpen = historyOpenProp !== undefined ? historyOpenProp : historyOpenInternal
+  const setHistoryOpen = (value: boolean) => {
+    if (onToggleHistory) {
+      onToggleHistory(value)
+      return
+    }
+    setHistoryOpenInternal(value)
+    onHistoryOpenChange?.(value)
+  }
   const [inputText, setInputText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -120,27 +136,26 @@ export function DialogueListView({
       {/* Overlay for readability */}
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
 
-      {/* ── Top bar ── */}
-      <div className="relative z-40 flex items-center justify-between px-3 py-2">
-        <div />
-        <div className="flex items-center gap-1 rounded-full border border-border/30 bg-background/60 px-1 shadow-lg backdrop-blur-2xl">
-          {onReset && (
-            <IconButton label={t('practiceSession.retry')} onClick={onReset}>
-              <RotateCcw className="size-3.5" />
-            </IconButton>
-          )}
-          {showHistoryButton && (
-            <IconButton label={t('vnHistory.title')} onClick={() => toggleHistory(!historyOpen)}>
-              <History className="size-3.5" />
-            </IconButton>
-          )}
-          {onSettingsOpen && (
-            <IconButton label={t('vnSettings.title')} onClick={onSettingsOpen}>
-              <Settings className="size-3.5" />
-            </IconButton>
-          )}
-        </div>
+      {/* ── Top bar (hidden when merged into parent header) ── */}
+      {!hideTopBar && (
+      <div className="absolute right-3 z-40 flex items-center gap-1 rounded-full border border-border/30 bg-background/60 px-1 shadow-lg backdrop-blur-2xl" style={{ top: 'calc(3.25rem + env(safe-area-inset-top, 0px))' }}>
+        {onReset && (
+          <IconButton label={t('practiceSession.retry')} onClick={onReset}>
+            <RotateCcw className="size-3.5" />
+          </IconButton>
+        )}
+        {showHistoryButton && (
+          <IconButton label={t('vnHistory.title')} onClick={() => toggleHistory(!historyOpen)}>
+            <History className="size-3.5" />
+          </IconButton>
+        )}
+        {onSettingsOpen && (
+          <IconButton label={t('vnSettings.title')} onClick={onSettingsOpen}>
+            <Settings className="size-3.5" />
+          </IconButton>
+        )}
       </div>
+      )}
 
       {/* ── Chat list ── */}
       <div

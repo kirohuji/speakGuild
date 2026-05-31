@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
-  BookText, Search, BookmarkPlus,
+  BookText, Search, BookmarkPlus, History, Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -174,6 +174,15 @@ export function PracticeSessionPage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const syncedInkLineCountRef = useRef(0)
+
+  // Only show history/settings in header when chat mode is active
+  const isChatMode = (() => {
+    try {
+      const raw = localStorage.getItem('vn-player-settings')
+      if (!raw) return false
+      return (JSON.parse(raw) as any)?.displayMode === 'chat'
+    } catch { return false }
+  })()
   const [vnVisual, setVnVisual] = useState<{
     backgroundUrl?: string
     backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
@@ -849,12 +858,12 @@ export function PracticeSessionPage() {
       <div className="relative flex h-dvh flex-col bg-background">
         {/* Floating minimal top bar */}
         <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-          <div className="grid h-9 w-full max-w-[342px] grid-cols-[72px_1fr_72px] items-center rounded-full border border-border/20 bg-background/60 px-1.5 text-foreground shadow-lg backdrop-blur-2xl">
+          <div className="flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full border border-border/20 bg-background/60 px-1.5 text-foreground shadow-lg backdrop-blur-2xl">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setPhase('prepare')}
-            className="h-7 justify-self-start rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
+            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
           </Button>
@@ -867,18 +876,42 @@ export function PracticeSessionPage() {
             hideToggles={isHistoryOpen}
             compactTrigger
             plainTrigger
-            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-foreground/80 transition-opacity active:opacity-70"
+            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-foreground/80 transition-opacity active:opacity-70"
           />
 
           <Button
             variant="ghost"
             size="sm"
             onClick={canReview ? startAnalysis : restartPractice}
-            className="h-7 justify-self-end rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
+            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
           >
             {canReview ? <CheckCircle2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
             {canReview ? t('practiceSession.review') : t('practiceSession.retry')}
           </Button>
+
+          {/* History & Settings — only in chat mode */}
+          {isChatMode && (
+          <>
+          <button
+            type="button"
+            aria-label={t('vnHistory.title')}
+            title={t('vnHistory.title')}
+            onClick={() => vnPlayerRef.current?.toggleHistory()}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <History className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            aria-label={t('vnSettings.title')}
+            title={t('vnSettings.title')}
+            onClick={() => vnPlayerRef.current?.toggleSettings()}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Settings className="size-3.5" />
+          </button>
+          </>
+          )}
           </div>
         </div>
 
@@ -903,6 +936,7 @@ export function PracticeSessionPage() {
               onSubmitInput={sendUserInput}
               onChoice={handleChoice}
               onAdvance={inkJson ? advanceStory : undefined}
+              hideChatTopBar
               endedActions={(
                 <div className="flex gap-2">
                   <Button type="button" size="sm" className="h-8 rounded-full px-4 text-xs" onClick={startAnalysis}>
