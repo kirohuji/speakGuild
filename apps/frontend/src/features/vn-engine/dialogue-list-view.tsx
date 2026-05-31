@@ -163,7 +163,12 @@ export function DialogueListView({
         role="button"
         tabIndex={canInteract ? 0 : -1}
         aria-label="推进对话"
-        className={cn('relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-2 outline-none', canInteract && 'cursor-pointer')}
+        className={cn(
+          'relative z-10 min-h-0 flex-1 overflow-y-auto px-3 outline-none',
+          hideTopBar && 'pt-[calc(3.25rem+env(safe-area-inset-top,0px))]',
+          !hideTopBar && 'py-2',
+          canInteract && 'cursor-pointer',
+        )}
         onClick={() => { if (canInteract) onAdvance?.() }}
         onKeyDown={(event) => {
           if (canInteract && (event.key === 'Enter' || event.key === ' ')) {
