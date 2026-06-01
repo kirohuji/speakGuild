@@ -38,7 +38,7 @@ export function AdminStoriesPage() {
       const [stories, locs, chars] = await Promise.all([
         listStories(), listLocations().catch(() => []), listCharacters().catch(() => []),
       ])
-      setItems(stories)
+      setItems(stories.items)
       setLocations(locs)
       setCharacters(chars)
     } catch { toast.error('加载失败') }

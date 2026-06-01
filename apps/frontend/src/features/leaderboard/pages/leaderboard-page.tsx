@@ -99,7 +99,7 @@ export function LeaderboardPage() {
               <div className="flex-shrink-0 text-right">
                 <p className="text-sm font-bold text-primary">{item.score.toLocaleString()}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {tab === 'practice' ? '题' : tab === 'mock' ? '分' : '天'}
+                  {tab === 'practice' ? '题' : '天'}
                 </p>
               </div>
             </div>

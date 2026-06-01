@@ -28,13 +28,13 @@ const planIcons: Record<string, React.ElementType> = {
 }
 
 const FALLBACK_BENEFITS: MemberBenefit[] = [
-  { benefitId: '1', name: 'AI 口语纠错', freeSupport: '5 次/天', standardSupport: '50 次/天' },
-  { benefitId: '2', name: 'AI 对话判定', freeSupport: '5 次/天', standardSupport: '50 次/天' },
-  { benefitId: '3', name: '学习计划单元', freeSupport: '寝室入住等基础', standardSupport: '全部解锁' },
-  { benefitId: '4', name: '表达库容量', freeSupport: '20 条', standardSupport: '无限' },
-  { benefitId: '5', name: '输出等级追踪', freeSupport: '基础', standardSupport: '完整报告' },
-  { benefitId: '6', name: '邀请好友', freeSupport: '+7天+100积分', standardSupport: '+7天+100积分' },
-  { benefitId: '7', name: '被邀请奖励', freeSupport: '+50积分', standardSupport: '+50积分' },
+  { benefitId: '1', name: 'AI 口语纠错', freeSupport: '5 次/天', standardSupport: '50 次/天', advancedSupport: '不限' },
+  { benefitId: '2', name: 'AI 对话判定', freeSupport: '5 次/天', standardSupport: '50 次/天', advancedSupport: '不限' },
+  { benefitId: '3', name: '学习计划单元', freeSupport: '寝室入住等基础', standardSupport: '全部解锁', advancedSupport: '全部解锁' },
+  { benefitId: '4', name: '表达库容量', freeSupport: '20 条', standardSupport: '无限', advancedSupport: '无限' },
+  { benefitId: '5', name: '输出等级追踪', freeSupport: '基础', standardSupport: '完整报告', advancedSupport: '完整报告' },
+  { benefitId: '6', name: '邀请好友', freeSupport: '+7天+100积分', standardSupport: '+7天+100积分', advancedSupport: '+7天+100积分' },
+  { benefitId: '7', name: '被邀请奖励', freeSupport: '+50积分', standardSupport: '+50积分', advancedSupport: '+50积分' },
 ]
 
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {

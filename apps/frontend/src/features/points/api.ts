@@ -18,7 +18,7 @@ export interface PointsBalance {
 }
 
 export const pointsApi = {
-  getBalance: () => get<any, PointsBalance>('/points/balance'),
-  getCheckInStatus: () => get<any, CheckInStatus>('/points/check-in/status'),
-  checkIn: () => post<any, CheckInResult>('/points/check-in'),
+  getBalance: () => get<PointsBalance>('/points/balance'),
+  getCheckInStatus: () => get<CheckInStatus>('/points/check-in/status'),
+  checkIn: () => post<CheckInResult>('/points/check-in'),
 }

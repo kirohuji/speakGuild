@@ -993,7 +993,7 @@ function FavoritesTab() {
 
   useEffect(() => {
     getFavorites()
-      .then((res) => setData(res?.list ?? []))
+      .then((res) => setData(res ?? []))
       .catch(() => {})
       .finally(() => setIsLoading(false))
   }, [])

@@ -25,7 +25,7 @@ export async function completeUpload(key: string, sha256: string, size: number):
 }
 
 /** 前端直传 COS + 后端回调确认（一站式） */
-export async function uploadFileToCosAndComplete(file: File): Promise<CompletedAsset> {
+export async function uploadFileToCosAndComplete({ file, group: _group }: { file: File; group?: string }): Promise<CompletedAsset> {
   const policy = await getCosPolicy(file.name, file.type);
 
   const fd = new FormData();

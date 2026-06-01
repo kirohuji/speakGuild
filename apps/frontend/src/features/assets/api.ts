@@ -1,7 +1,8 @@
 export interface FavoriteItem {
   id: string;
   questionId: string;
-  questionTitle: string;
+  topicName: string;
+  questionText: string;
   createdAt: string;
 }
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { authClient, clearBearerToken } from '@/features/auth/client'
+import { useConfigStore } from '@/stores/config.store'
 
 interface SessionUser {
   id: string

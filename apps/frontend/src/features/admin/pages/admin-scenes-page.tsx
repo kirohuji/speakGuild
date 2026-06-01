@@ -447,7 +447,7 @@ function TrainingTopicDialog({
     if (open) {
       setStoriesLoading(true)
       listStories()
-        .then(setStories)
+        .then((res) => setStories(res.items))
         .catch(() => toast.error('Ink 故事加载失败'))
         .finally(() => setStoriesLoading(false))
     }
