@@ -56,6 +56,18 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [payError, setPayError] = useState<string | null>(null)
   const [pointsBalance, setPointsBalance] = useState(0)
   const [usePoints, setUsePoints] = useState(false)
+  const selectedPayPrice = payPlan
+    ? billingCycle === 'yearly' && payPlan.yearlyPrice
+      ? payPlan.yearlyPrice
+      : payPlan.price
+    : 0
+  const appliedPoints = usePoints ? Math.min(pointsBalance, selectedPayPrice) : 0
+  const checkoutAmount = selectedPayPrice - appliedPoints
+  const yearlyOriginalPrice = payPlan ? payPlan.price * 12 : 0
+  const yearlySaving = billingCycle === 'yearly' ? Math.max(0, yearlyOriginalPrice - selectedPayPrice) : 0
+  const yearlyDiscount = yearlyOriginalPrice > 0
+    ? (selectedPayPrice / yearlyOriginalPrice * 10).toFixed(1)
+    : '10.0'
 
   useEffect(() => {
     Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits(), pointsApi.getBalance()]).then(
@@ -562,23 +574,58 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
       {/* 支付弹窗 */}
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('member.payTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('member.payDesc')}
-            </DialogDescription>
+        <DialogContent className="max-h-[88vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl border-border/70 p-5 shadow-xl sm:max-w-md sm:p-6">
+          <DialogHeader className="pr-6 text-left">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Crown className="size-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base">{t('member.payTitle')}</DialogTitle>
+                <DialogDescription className="mt-1 text-xs leading-5">
+                  开通 {payPlan?.name || '会员'}，解锁完整练习体验
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
+            {/* 支付信息 */}
+            <div className="overflow-hidden rounded-lg bg-muted/30">
+              <div className="flex items-start justify-between gap-4 px-4 py-4">
+                <div>
+                  <p className="text-sm font-semibold">{payPlan?.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {billingCycle === 'yearly' ? `年付方案 · ${yearlyDiscount} 折` : '月付方案 · 灵活订阅'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold tracking-tight">¥{(checkoutAmount / 100).toFixed(2)}</p>
+                  {billingCycle === 'yearly' && yearlySaving > 0 && (
+                    <p className="mt-1 text-[11px] font-medium text-primary">
+                      已优惠 ¥{(yearlySaving / 100).toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {appliedPoints > 0 && (
+                <div className="flex items-center justify-between border-t border-border/40 px-4 py-2 text-xs">
+                  <span className="text-muted-foreground">积分抵扣</span>
+                  <span className="font-medium text-amber-600">- ¥{(appliedPoints / 100).toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+
             {/* 积分抵扣 */}
             {pointsBalance > 0 && (
-              <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+              <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Gift className="size-4 text-amber-500" />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10">
+                    <Gift className="size-4 text-amber-500" />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">积分抵扣</p>
-                    <p className="text-[11px] text-muted-foreground">{pointsBalance}积分 ≈ ¥{(pointsBalance / 100).toFixed(2)}</p>
+                    <p className="text-[11px] text-muted-foreground">{pointsBalance} 积分可抵 ¥{(pointsBalance / 100).toFixed(2)}</p>
                   </div>
                 </div>
                 <Button
@@ -592,36 +639,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               </div>
             )}
 
-            {/* 支付信息 */}
-            <div className="rounded-xl border p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('member.plan')}</span>
-                <span className="font-medium">{payPlan?.name}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('member.cycle')}</span>
-                <span className="font-medium">
-                  {billingCycle === 'yearly' ? t('member.yearlyDiscount', { discount: 83 }) : t('member.monthly')}
-                </span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('member.totalAmount')}</span>
-                <span className="text-lg font-bold">
-                  ¥{((): string => {
-                    if (!payPlan) return '0.00'
-                    const price = billingCycle === 'yearly' && payPlan.yearlyPrice
-                      ? payPlan.yearlyPrice
-                      : payPlan.price
-                    return (price / 100).toFixed(2)
-                  })()}
-                </span>
-              </div>
-            </div>
-
             {/* 支付结果 - QR 码 */}
             {payResult?.qrCode && (
-              <div className="rounded-xl border p-6 flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-4 rounded-xl border border-green-500/20 bg-green-500/[0.04] p-5">
                 <QrCode className="h-24 w-24 text-muted-foreground" />
                 <p className="text-sm text-center text-muted-foreground">
                   {t('member.scanToPay')}
@@ -644,7 +664,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
             {/* 支付宝已跳转 */}
             {payResult?.payUrl && (
-              <div className="rounded-xl border bg-blue-500/5 p-4 text-center">
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.05] p-4 text-center">
                 <Monitor className="mx-auto h-8 w-8 text-blue-500 mb-2" />
                 <p className="text-sm mb-1">{t('member.alipayOpened')}</p>
                 <p className="text-xs text-muted-foreground mb-3">
@@ -683,40 +703,50 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
             {/* 支付方式选择 */}
             {!payResult && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">选择支付方式</p>
+                <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => handlePay('alipay')}
                   disabled={payLoading}
-                  className="flex flex-col items-center gap-2 rounded-xl border p-4 transition-colors hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50"
+                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 text-left transition-all hover:border-blue-500/60 hover:bg-blue-500/[0.04] hover:shadow-sm disabled:opacity-50"
                 >
                   {payLoading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="size-8 animate-spin text-muted-foreground" />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500 text-white font-bold text-lg">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-base font-bold text-white">
                       支
                     </div>
                   )}
-                  <span className="text-sm font-medium">{t('member.alipay')}</span>
-                  <span className="text-xs text-muted-foreground">{t('member.webPay')}</span>
+                  <span>
+                    <span className="block text-sm font-medium">{t('member.alipay')}</span>
+                    <span className="block text-[10px] text-muted-foreground">{t('member.webPay')}</span>
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handlePay('wechat')}
                   disabled={payLoading}
-                  className="flex flex-col items-center gap-2 rounded-xl border p-4 transition-colors hover:border-green-500 hover:bg-green-50 disabled:opacity-50"
+                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 text-left transition-all hover:border-green-500/60 hover:bg-green-500/[0.04] hover:shadow-sm disabled:opacity-50"
                 >
                   {payLoading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="size-8 animate-spin text-muted-foreground" />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500 text-white font-bold text-lg">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-green-500 text-base font-bold text-white">
                       微
                     </div>
                   )}
-                  <span className="text-sm font-medium">{t('member.wechatPay')}</span>
-                  <span className="text-xs text-muted-foreground">{t('member.scanPay')}</span>
+                  <span>
+                    <span className="block text-sm font-medium">{t('member.wechatPay')}</span>
+                    <span className="block text-[10px] text-muted-foreground">{t('member.scanPay')}</span>
+                  </span>
                 </button>
+                </div>
+                <p className="pt-1 text-center text-[10px] leading-4 text-muted-foreground">
+                  支付即代表你同意会员服务条款，到账后立即生效
+                </p>
               </div>
             )}
           </div>

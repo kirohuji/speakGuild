@@ -49,7 +49,7 @@ async function seedSystemConfigs() {
 async function seedMembershipPlans() {
   await prisma.membershipPlan.create({
     data: {
-      name: '漫语会员', level: 'standard', price: 1500, yearlyPrice: 10800, period: 'month', durationDays: 30,
+      name: '漫语会员', level: 'standard', price: 1990, yearlyPrice: 19900, period: 'month', durationDays: 30,
       features: [
         '每日 50 次 AI 纠错',
         '全部学习单元',

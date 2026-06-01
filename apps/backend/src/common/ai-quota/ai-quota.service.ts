@@ -88,7 +88,7 @@ export class AiQuotaService {
       return {
         allowed: false,
         remaining: 0,
-        message: `今日${TYPE_LABELS[type]}额度已用完（${quota}次/天）。10 积分可换 1 次，或 ¥15 开通会员无限畅练`,
+        message: `今日${TYPE_LABELS[type]}额度已用完（${quota}次/天）。10 积分可换 1 次，或 ¥19.9 开通会员无限畅练`,
         canExchange: true,
         exchangeCost: EXCHANGE_COST,
       };
