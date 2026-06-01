@@ -139,6 +139,8 @@ export function DialogueListView({
       />
       {/* Overlay for readability */}
       <div className="absolute inset-0 bg-background/68 backdrop-blur-[4px]" />
+      {/* Dark mode: dim bright background images */}
+      <div className="pointer-events-none absolute inset-0 bg-black/35" />
       <div className="pointer-events-none absolute -right-20 top-20 size-64 rounded-full bg-primary/[0.07] blur-3xl" />
       <div className="pointer-events-none absolute -left-24 bottom-24 size-72 rounded-full bg-amber-400/[0.06] blur-3xl" />
 
@@ -251,7 +253,7 @@ export function DialogueListView({
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
-          <div className="rounded-lg bg-background/96 p-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.11)] ring-1 ring-border/60 backdrop-blur-xl">
+          <div className="rounded-lg bg-background/50-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.11)] ring-1 ring-border/60 backdrop-blur-xl">
             {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
             <div className="flex items-center gap-2">
               <input
