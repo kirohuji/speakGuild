@@ -18,7 +18,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
 
@@ -83,10 +82,10 @@ export function PracticeAnalysisPanel({
 
   if (loading) {
     return (
-      <Card className="overflow-hidden rounded-2xl border-primary/15 bg-gradient-to-br from-primary/[0.08] via-background to-amber-500/[0.06] shadow-sm">
-        <CardContent className="flex flex-col items-center gap-4 py-20">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
-            <Sparkles className="size-7 animate-pulse text-primary" />
+      <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+        <CardContent className="flex flex-col items-center gap-4 py-16">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-background/70">
+            <Sparkles className="size-6 animate-pulse text-primary" />
           </div>
           <div className="text-center">
             <p className="font-semibold text-foreground">{t('practiceVn.analyzing')}</p>
@@ -138,23 +137,22 @@ export function PracticeAnalysisPanel({
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="overflow-hidden rounded-2xl border-primary/20 bg-gradient-to-br from-primary/[0.12] via-background to-amber-500/[0.08] shadow-sm">
-        <CardContent className="p-5 sm:p-6">
+    <div className="space-y-3">
+      <Card className="overflow-hidden rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+        <CardContent className="p-3.5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-primary">
                 <Award className="size-4" />
-                <p className="text-xs font-semibold uppercase tracking-[0.18em]">Practice Report</p>
+                <p className="text-xs font-semibold">{t('practiceSession.reviewTitle')}</p>
               </div>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">本次练习复盘</h2>
               {analysis.summary && (
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{analysis.summary}</p>
+                <p className="mt-2 text-sm leading-6 text-foreground">{analysis.summary}</p>
               )}
             </div>
             <div
               className={cn(
-                'flex size-20 shrink-0 flex-col items-center justify-center rounded-2xl border bg-background/70 shadow-sm',
+                'flex size-[68px] shrink-0 flex-col items-center justify-center rounded-lg bg-background/70',
                 score >= 80
                   ? 'border-green-500/30 text-green-600'
                   : score >= 60
@@ -162,12 +160,12 @@ export function PracticeAnalysisPanel({
                     : 'border-destructive/30 text-destructive',
               )}
             >
-              <span className="text-3xl font-bold leading-none">{score}</span>
+              <span className="text-2xl font-bold leading-none">{score}</span>
               <span className="mt-1 text-[10px] font-medium">{t('practiceVn.overallScore')}</span>
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-2">
             <AnalysisMetric label="目标完成" value={`${completedObjectives.length}/${objectives.length}`} />
             <AnalysisMetric label="核心表达" value={`${usedChunks.length}/${chunks.length}`} />
             <AnalysisMetric label="语言提醒" value={`${grammarIssues.length}`} />
@@ -175,14 +173,14 @@ export function PracticeAnalysisPanel({
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border-emerald-500/20 bg-emerald-500/[0.04] shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+        <CardHeader className="p-3.5 pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
             <Mic2 className="size-4 text-emerald-600 dark:text-emerald-400" /> {t('practiceVn.retell')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="rounded-xl border border-emerald-500/10 bg-background/70 p-3">
+        <CardContent className="space-y-3 px-3.5 pb-3.5">
+          <div className="rounded-md bg-background/60 p-3">
             <p className="text-xs text-muted-foreground">{t('practiceVn.retellPrompt')}</p>
             <p className="mt-1 text-sm font-medium leading-6 text-foreground">{retellPrompt}</p>
           </div>
@@ -190,7 +188,7 @@ export function PracticeAnalysisPanel({
             value={retellText}
             onChange={(event) => setRetellText(event.target.value)}
             placeholder={t('practiceVn.retellPlaceholder')}
-            className="min-h-24 resize-none rounded-xl bg-background/80"
+            className="min-h-24 resize-none rounded-lg border-0 bg-background/70"
           />
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">{retellWordCount} words</span>
@@ -209,20 +207,20 @@ export function PracticeAnalysisPanel({
       </Card>
 
       {objectives.length > 0 && (
-        <Card className="rounded-2xl border-border/70 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
               <Target className="size-4 text-primary" /> {t('practiceVn.objectivesStatus')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3.5 pb-3.5">
             <div className="space-y-2">
               {objectives.map((obj, index) => (
                 <div
                   key={`${obj.objective}-${index}`}
                   className={cn(
-                    'flex items-start gap-2 rounded-xl border p-3',
-                    obj.completed ? 'border-green-500/10 bg-green-500/5' : 'border-border/50 bg-muted/40',
+                    'flex items-start gap-2 rounded-md bg-background/60 p-3',
+                    !obj.completed && 'opacity-70',
                   )}
                 >
                   {obj.completed ? (
@@ -244,13 +242,13 @@ export function PracticeAnalysisPanel({
       )}
 
       {chunks.length > 0 && (
-        <Card className="rounded-2xl border-border/70 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
               <Sparkles className="size-4" /> {t('practiceVn.coreExprUsage')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3.5 pb-3.5">
             <div className="flex flex-wrap gap-2">
               {chunks.map((chunk, index) => (
                 <Badge
@@ -267,16 +265,16 @@ export function PracticeAnalysisPanel({
       )}
 
       {grammarIssues.length > 0 && (
-        <Card className="rounded-2xl border-border/70 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
               <AlertTriangle className="size-4" /> {t('practiceVn.languageCorrection')} ({grammarIssues.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3.5 pb-3.5">
             <div className="space-y-3">
               {grammarIssues.map((issue, index) => (
-                <div key={`${issue.original}-${index}`} className="rounded-xl border border-border/70 bg-muted/[0.18] p-3">
+                <div key={`${issue.original}-${index}`} className="rounded-md bg-background/60 p-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       {t(`practiceVn.${issue.type}`)}
@@ -313,13 +311,13 @@ export function PracticeAnalysisPanel({
       )}
 
       {(strengths.length > 0 || improvements.length > 0) && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {strengths.length > 0 && (
-            <Card className="rounded-2xl border-green-500/20 bg-green-500/[0.03] shadow-sm">
-              <CardHeader className="pb-3">
+            <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+              <CardHeader className="p-3.5 pb-2">
                 <CardTitle className="text-sm text-green-600 dark:text-green-400">{t('practiceVn.strengths')}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3.5 pb-3.5">
                 <ul className="space-y-1">
                   {strengths.map((item, index) => (
                     <li key={`${item}-${index}`} className="text-sm leading-6 text-foreground">• {item}</li>
@@ -330,11 +328,11 @@ export function PracticeAnalysisPanel({
           )}
 
           {improvements.length > 0 && (
-            <Card className="rounded-2xl border-amber-500/20 bg-amber-500/[0.03] shadow-sm">
-              <CardHeader className="pb-3">
+            <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+              <CardHeader className="p-3.5 pb-2">
                 <CardTitle className="text-sm text-amber-600 dark:text-amber-400">{t('practiceVn.improvements')}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3.5 pb-3.5">
                 <ul className="space-y-1">
                   {improvements.map((item, index) => (
                     <li key={`${item}-${index}`} className="text-sm leading-6 text-foreground">• {item}</li>
@@ -347,26 +345,26 @@ export function PracticeAnalysisPanel({
       )}
 
       {analysis.nextStepSuggestion && (
-        <Card className="rounded-2xl border-primary/15 bg-primary/[0.04] shadow-sm">
-          <CardHeader className="pb-3">
+        <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+          <CardHeader className="p-3.5 pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
               <TrendingUp className="size-4 text-primary" /> {t('practiceVn.nextStep')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3.5 pb-3.5">
             <p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p>
           </CardContent>
         </Card>
       )}
 
       {onSaveExpression && usedChunks.length > 0 && (
-        <Card className="rounded-2xl border-border/70 shadow-sm">
-          <CardHeader className="pb-3">
+        <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+          <CardHeader className="p-3.5 pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
               <BookmarkPlus className="size-4" /> {t('practiceVn.saveUsedExpr')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3.5 pb-3.5">
             <div className="flex flex-wrap gap-2">
               {usedChunks.map((chunk, index) => (
                 <Button
@@ -405,8 +403,8 @@ export function PracticeAnalysisPanel({
 
 function AnalysisMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/50 bg-background/55 px-3 py-2.5 text-center shadow-sm backdrop-blur-sm">
-      <p className="text-lg font-bold tracking-tight text-foreground">{value}</p>
+    <div className="rounded-md bg-background/60 px-2 py-2 text-center">
+      <p className="text-base font-bold tracking-tight text-foreground">{value}</p>
       <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">{label}</p>
     </div>
   )

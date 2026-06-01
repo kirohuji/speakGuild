@@ -1116,7 +1116,7 @@ export function PracticeSessionPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
+        <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="size-5" />
           </Button>
@@ -1128,7 +1128,7 @@ export function PracticeSessionPage() {
         </div>
 
         {/* Phase indicator */}
-        <div className="mb-6 flex items-center gap-3 rounded-lg bg-green-500/10 px-4 py-3">
+        <div className="mb-3 flex items-center gap-3 rounded-lg bg-green-500/10 px-3.5 py-3">
           <CheckCircle2 className="size-5 text-green-500" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-foreground">{t('practiceSession.reviewTitle')}</p>
