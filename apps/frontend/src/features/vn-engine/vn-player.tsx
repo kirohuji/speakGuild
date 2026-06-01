@@ -548,6 +548,8 @@ export function VnPlayer({
           onAdvance={onAdvance}
           onChoice={onChoice}
           onSubmitInput={onSubmitInput}
+          inputFeedback={inputFeedback}
+          inputDisabled={inputDisabled}
           onReset={onReset}
           endedActions={endedActions}
           onHistoryOpenChange={onHistoryOpenChange}

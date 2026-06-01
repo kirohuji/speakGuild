@@ -345,7 +345,9 @@ ${dialogueLog}
     const chunks = Array.isArray(session.chunksSnapshot) ? session.chunksSnapshot : [];
     const vocabularies = Array.isArray(session.vocabSnapshot) ? session.vocabSnapshot : [];
     const patterns = Array.isArray(session.sentencePatternsSnapshot) ? session.sentencePatternsSnapshot : [];
-    const turns = Array.isArray(session.turns) ? session.turns : [];
+    const turns = Array.isArray(session.turns)
+      ? session.turns.filter((turn: any) => turn.judgement?.passed !== false)
+      : [];
 
     const chunkText = chunks.map((chunk, index) => {
       const examples = Array.isArray(chunk.examples)

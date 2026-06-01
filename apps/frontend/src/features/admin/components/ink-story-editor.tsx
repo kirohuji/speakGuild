@@ -32,7 +32,7 @@ import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
 type ComposerItem =
-  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; audioUrl?: string }
+  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string }
   | { type: 'choice'; text: string; target: string; showCharacter: boolean }
   | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
   | { type: 'wait'; requiresInput: boolean; objective?: string; hint?: string; chunks?: string[] }
@@ -130,6 +130,7 @@ function parseComposer(source: string): ComposerScene[] {
   let pendingSpeaker = ''
   let pendingExpression = 'default'
   let pendingPosition: 'left' | 'center' | 'right' = 'center'
+  let pendingTranslation = ''
   let pendingAudioUrl = ''
   let pendingChoiceShowCharacter = true
 
@@ -152,6 +153,7 @@ function parseComposer(source: string): ComposerScene[] {
       pendingSpeaker = ''
       pendingExpression = 'default'
       pendingPosition = 'center'
+      pendingTranslation = ''
       continue
     }
 
@@ -169,6 +171,8 @@ function parseComposer(source: string): ComposerScene[] {
         pendingPosition = position === 'left' || position === 'right' ? position : 'center'
       } else if (tag.startsWith('audio:')) {
         pendingAudioUrl = decodeURIComponent(tag.replace(/^audio:/, '').trim())
+      } else if (tag.startsWith('translation:')) {
+        pendingTranslation = decodeURIComponent(tag.replace(/^translation:/, '').trim())
       } else if (tag.startsWith('choiceCharacter:')) {
         pendingChoiceShowCharacter = tag.replace(/^choiceCharacter:/, '').trim() !== 'hide'
       } else if (tag.startsWith('bg:')) {
@@ -242,11 +246,13 @@ function parseComposer(source: string): ComposerScene[] {
       expression: pendingExpression || 'default',
       position: pendingPosition,
       text: spoken?.[2]?.trim() ?? line,
+      translation: pendingTranslation,
       audioUrl: pendingAudioUrl,
     })
     pendingSpeaker = ''
     pendingExpression = 'default'
     pendingPosition = 'center'
+    pendingTranslation = ''
     pendingAudioUrl = ''
   }
 
@@ -281,6 +287,7 @@ function serializeComposer(
         if (item.speaker) lines.push(`# speaker:${item.speaker}`)
         if (item.expression) lines.push(`# expression:${item.expression}`)
         if (item.position) lines.push(`# position:${item.position}`)
+        if (item.translation) lines.push(`# translation:${encodeURIComponent(item.translation)}`)
         if (item.audioUrl) lines.push(`# audio:${encodeURIComponent(item.audioUrl)}`)
         lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
       } else if (item.type === 'choice') {
@@ -780,6 +787,16 @@ export function InkStoryEditor({
                         <option value="right">右</option>
                       </select>
                       <Textarea value={selectedItem.text} onChange={(event) => updateSelectedItem({ text: event.target.value })} disabled={readOnly} className="mt-1 min-h-32 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">翻译（双语显示）</Label>
+                      <Textarea
+                        value={selectedItem.translation || ''}
+                        onChange={(event) => updateSelectedItem({ translation: event.target.value })}
+                        disabled={readOnly}
+                        className="mt-1 min-h-[72px] text-sm"
+                        placeholder="输入中文翻译，用户开启双语显示后会展示在英文对白下方"
+                      />
                     </div>
                     <VnLineAudioGenerator
                       text={selectedItem.text}

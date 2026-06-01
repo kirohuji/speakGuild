@@ -48,6 +48,7 @@ interface DialogueLine {
   speaker: string
   text: string
   expression?: string
+  translation?: string
   audioUrl?: string
 }
 
@@ -149,21 +150,22 @@ export function VnStoryPreview({
     const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
     const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
     const choiceCharacter = tags.find((t) => t.startsWith('choiceCharacter:'))?.replace('choiceCharacter:', '').trim()
+    const translation = decodeTagValue(tags.find((t) => t.startsWith('translation:'))?.replace('translation:', '').trim())
     const audioUrl = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
-    return { speaker, expression, bg, bgFit, position, choiceCharacter, audioUrl }
+    return { speaker, expression, bg, bgFit, position, choiceCharacter, translation, audioUrl }
   }, [])
 
   /** 解析文本行，提取 "Speaker: text" 格式 */
-  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string, fallbackAudioUrl?: string): DialogueLine[] => {
+  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string, fallbackTranslation?: string, fallbackAudioUrl?: string): DialogueLine[] => {
     return text
       .split('\n')
       .filter(Boolean)
       .map((line) => {
         const match = line.match(/^([^:：]{1,32})[:：]\s*(.+)/)
         if (match) {
-          return { speaker: match[1], text: match[2], expression: fallbackExpression, audioUrl: fallbackAudioUrl }
+          return { speaker: match[1], text: match[2], expression: fallbackExpression, translation: fallbackTranslation, audioUrl: fallbackAudioUrl }
         }
-        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression, audioUrl: fallbackAudioUrl }
+        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression, translation: fallbackTranslation, audioUrl: fallbackAudioUrl }
       })
   }, [])
 
@@ -180,8 +182,8 @@ export function VnStoryPreview({
     if (waiting) {
       // #input tag is on this line — save it for after user responds
       if (result.text) {
-        const { speaker, expression, audioUrl } = parseTags(tags)
-        pendingRef.current = parseTextLines(result.text, speaker, expression, audioUrl)
+        const { speaker, expression, translation, audioUrl } = parseTags(tags)
+        pendingRef.current = parseTextLines(result.text, speaker, expression, translation, audioUrl)
       }
       return
     }
@@ -192,7 +194,7 @@ export function VnStoryPreview({
       setChoices([])
     }
 
-    const { speaker, expression, bg, bgFit, audioUrl } = parseTags(tags)
+    const { speaker, expression, bg, bgFit, translation, audioUrl } = parseTags(tags)
     if (bg || bgFit) {
       setActiveBackground((prev) => ({
         url: bg || prev.url,
@@ -201,7 +203,7 @@ export function VnStoryPreview({
     }
 
     if (result.text) {
-      const lines = parseTextLines(result.text, speaker, expression, audioUrl)
+      const lines = parseTextLines(result.text, speaker, expression, translation, audioUrl)
       if (audioUrl) console.log('[VnPreview] Line with audio:', result.text.slice(0, 50), 'url:', audioUrl.slice(0, 80))
       setHistory((prev) => [...prev, ...lines])
     }
@@ -286,10 +288,10 @@ export function VnStoryPreview({
     const engine = engineRef.current
     if (!engine) return
 
-    setHistory((prev) => [...prev, { speaker: 'You', text }])
     engine.setVariable('user_last_input', text)
 
     if (!aiEvaluationEnabled) {
+      setHistory((prev) => [...prev, { speaker: 'You', text }])
       setIsWaiting(false)
       return
     }
@@ -314,6 +316,9 @@ export function VnStoryPreview({
       const evaluation: PreviewAiEvaluation = { ...loadingEvaluation, status: 'success', result }
       setActiveEvaluation(evaluation)
       setAiEvaluations((prev) => prev.map((item) => item.id === id ? evaluation : item))
+      if (result.passed) {
+        setHistory((prev) => [...prev, { speaker: 'You', text }])
+      }
       setIsWaiting(!result.passed)
     } catch (error: any) {
       const evaluation: PreviewAiEvaluation = {
@@ -386,6 +391,7 @@ export function VnStoryPreview({
       role: line.speaker === 'You' ? 'user' : 'npc',
       text: line.text,
       expression: line.expression,
+      translation: line.translation,
       audioUrl: line.audioUrl,
     })),
     userInputs: history

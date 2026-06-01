@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
-  BookText, Search, BookmarkPlus, History, Settings,
+  BookText, Search, BookmarkPlus, History, Settings, ChevronDown, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +25,21 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
+
+interface TurnFeedback {
+  status: 'loading' | 'success' | 'error'
+  userText: string
+  objective: string
+  hint?: string
+  targetChunks: string[]
+  result?: {
+    passed: boolean
+    feedback: string
+    chunksUsed: string[]
+    inkVariables: Record<string, string | number | boolean>
+  }
+  error?: string
+}
 
 function compilePracticeInk(inkSource?: string | null, fallbackJson?: Record<string, any> | null) {
   if (inkSource) {
@@ -77,7 +92,8 @@ function parseVnTags(tags: string[]) {
   const bg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
   const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
   const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
-  return { speaker, expression, audio, bg, bgFit, position }
+  const translation = decodeTagValue(tags.find((t) => t.startsWith('translation:'))?.replace('translation:', '').trim())
+  return { speaker, expression, audio, bg, bgFit, position, translation }
 }
 
 function isBackgroundFit(value?: string): value is 'cover' | 'contain' | 'stretch' | 'repeat' {
@@ -130,6 +146,71 @@ class VnPlayerBoundary extends Component<
   }
 }
 
+function PracticeTurnFeedback({
+  feedback,
+  onContinue,
+}: {
+  feedback: TurnFeedback
+  onContinue: () => void
+}) {
+  const isLoading = feedback.status === 'loading'
+  const isError = feedback.status === 'error'
+  const isPassed = Boolean(feedback.result?.passed)
+  const suggestedChunks = feedback.targetChunks.filter((chunk) => !feedback.result?.chunksUsed.includes(chunk))
+  const example = suggestedChunks.length ? suggestedChunks.join(' ') : feedback.targetChunks.join(' ')
+
+  return (
+    <div className="border-t border-white/10 bg-slate-950/92 px-3 py-2 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.22)]">
+      <div className="flex items-start gap-2">
+        <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10">
+          {isLoading
+            ? <Loader2 className="size-3.5 animate-spin text-sky-200" />
+            : isPassed
+              ? <CheckCircle2 className="size-3.5 text-emerald-300" />
+              : <Lightbulb className="size-3.5 text-amber-200" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold">
+              {isLoading ? 'AI 正在评估...' : isPassed ? '回答符合预期' : isError ? '评估暂时不可用' : '再试一次会更好'}
+            </p>
+            {!isLoading && !isPassed && (
+              <button type="button" onClick={onContinue} className="shrink-0 text-[11px] text-white/60 underline underline-offset-2 hover:text-white">
+                仍然继续
+              </button>
+            )}
+          </div>
+          {!isLoading && (
+            <p className="mt-1 text-[11px] leading-4 text-white/72">
+              {isError ? feedback.error : feedback.result?.feedback || '可以继续下一句。'}
+            </p>
+          )}
+          {!isLoading && !isPassed && suggestedChunks.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {suggestedChunks.map((chunk) => (
+                <span key={chunk} className="rounded bg-amber-300/12 px-1.5 py-0.5 text-[10px] text-amber-100">{chunk}</span>
+              ))}
+            </div>
+          )}
+          {!isLoading && !isPassed && (
+            <details className="mt-2 text-[11px] text-white/65">
+              <summary className="flex cursor-pointer list-none items-center gap-1 text-white/72 hover:text-white">
+                <ChevronDown className="size-3" />
+                查看讲解与参考回答
+              </summary>
+              <div className="mt-1.5 space-y-1 rounded bg-white/5 p-2 leading-4">
+                <p><span className="text-white/45">目标：</span>{feedback.objective || '完成当前沟通任务'}</p>
+                {feedback.hint && <p><span className="text-white/45">提示：</span>{feedback.hint}</p>}
+                <p><span className="text-white/45">参考：</span>{example || '尝试更直接地回应 NPC，并补充必要信息。'}</p>
+              </div>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function PracticeSessionPage() {
   const { t } = useTranslation()
   const { topicId } = useParams<{ topicId: string }>()
@@ -154,8 +235,9 @@ export function PracticeSessionPage() {
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
-  const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; audioUrl?: string }[]>([])
+  const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; translation?: string; audioUrl?: string }[]>([])
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(null)
+  const [turnFeedback, setTurnFeedback] = useState<TurnFeedback | null>(null)
 
   // Fallback NPC dialogue (when no Ink script)
   const [fallbackRound, setFallbackRound] = useState(0)
@@ -299,6 +381,7 @@ export function PracticeSessionPage() {
     setCompletedObjectives(new Set())
     setUsedChunks(new Set())
     setAiHints([])
+    setTurnFeedback(null)
     setRestartKey((k) => k + 1)
   }, [])
 
@@ -369,6 +452,7 @@ export function PracticeSessionPage() {
       speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
       text: line.text,
       isNpc: true, // All Ink lines are NPC/narration; user lines added by sendUserInput
+      translation: parseVnTags(line.tags).translation,
       audioUrl: parseVnTags(line.tags).audio,
     }))
     setDialogueRounds((prev) => [...prev, ...newDialogues])
@@ -450,20 +534,15 @@ export function PracticeSessionPage() {
 
     const round = dialogueRounds.length + 1
     const userMsg = text.trim()
-    const npcText = dialogueRounds[dialogueRounds.length - 1]?.text ?? ''
+    const npcText = [...dialogueRounds].reverse().find((line) => line.isNpc)?.text ?? ''
     const taggedChunkTexts = readListTags(currentTags, 'chunks:')
     const targetChunksForRound = taggedChunkTexts.length
       ? taggedChunkTexts
       : coreChunkTexts.map((chunk) => chunk.text)
-
-    setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
-
-    // Track chunk usage
-    targetChunksForRound.forEach((chunkText) => {
-      if (userMsg.toLowerCase().includes(chunkText.toLowerCase())) {
-        setUsedChunks((prev) => new Set([...prev, chunkText]))
-      }
-    })
+    const objectiveForRound = readListTags(currentTags, 'objective:').length
+      ? readListTags(currentTags, 'objective:')
+      : objectives
+    const hintForRound = readTagValue(currentTags, 'hint:')
 
     // If using Ink engine
     if (inkJson) {
@@ -471,6 +550,15 @@ export function PracticeSessionPage() {
       let chunksUsedForRound = [...usedChunks]
       let inkVariables: Record<string, string | number | boolean> | undefined
       let turnJudgement: any
+      let passed = false
+
+      setTurnFeedback({
+        status: 'loading',
+        userText: userMsg,
+        objective: objectiveForRound.join('；'),
+        hint: hintForRound,
+        targetChunks: targetChunksForRound,
+      })
 
       try {
         const judgement = await practiceAiApi.judgeDialogueTurn({
@@ -478,7 +566,7 @@ export function PracticeSessionPage() {
           inputNodeId: readInputNodeId(currentTags),
           npcText,
           userText: userMsg,
-          objectives: readListTags(currentTags, 'objective:').length ? readListTags(currentTags, 'objective:') : objectives,
+          objectives: objectiveForRound,
           targetChunks: targetChunksForRound,
         })
 
@@ -486,15 +574,32 @@ export function PracticeSessionPage() {
         chunksUsedForRound = judgement.chunksUsed ?? chunksUsedForRound
         inkVariables = judgement.inkVariables
         turnJudgement = judgement
+        passed = judgement.passed
+        setTurnFeedback({
+          status: 'success',
+          userText: userMsg,
+          objective: objectiveForRound.join('；'),
+          hint: hintForRound,
+          targetChunks: targetChunksForRound,
+          result: judgement,
+        })
 
-        if (objectiveCompleted.length) {
+        if (passed && objectiveCompleted.length) {
           setCompletedObjectives((prev) => new Set([...prev, ...objectiveCompleted]))
         }
-        if (chunksUsedForRound.length) {
+        if (passed && chunksUsedForRound.length) {
           setUsedChunks((prev) => new Set([...prev, ...chunksUsedForRound]))
         }
-      } catch {
-        // Keep the scripted flow moving even if AI judgement is temporarily unavailable.
+      } catch (error: any) {
+        setTurnFeedback({
+          status: 'error',
+          userText: userMsg,
+          objective: objectiveForRound.join('；'),
+          hint: hintForRound,
+          targetChunks: targetChunksForRound,
+          error: error?.response?.data?.message || error?.message || 'AI 评估暂时不可用',
+        })
+        return
       }
 
       if (practiceSessionId) {
@@ -510,16 +615,26 @@ export function PracticeSessionPage() {
         }).catch(() => {})
       }
 
-      practiceApi.submitDialogue(topicId!, {
-        round,
-        npcText,
-        userText: userMsg,
-        objectivesCompleted: objectiveCompleted,
-        chunksUsed: chunksUsedForRound,
-      }).catch(() => {})
-      resumeAfterInput(userMsg, inkVariables)
+      if (passed) {
+        setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
+        practiceApi.submitDialogue(topicId!, {
+          round,
+          npcText,
+          userText: userMsg,
+          objectivesCompleted: objectiveCompleted,
+          chunksUsed: chunksUsedForRound,
+        }).catch(() => {})
+        resumeAfterInput(userMsg, inkVariables)
+      }
       return
     }
+
+    setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
+    targetChunksForRound.forEach((chunkText) => {
+      if (userMsg.toLowerCase().includes(chunkText.toLowerCase())) {
+        setUsedChunks((prev) => new Set([...prev, chunkText]))
+      }
+    })
 
     // Fallback: simulate NPC response
     const npcResponses = [
@@ -563,6 +678,12 @@ export function PracticeSessionPage() {
       setCompletedObjectives((prev) => new Set([...prev, objectives[idx]]))
     }
   }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags, practiceSessionId])
+
+  const continueDespiteFeedback = useCallback(() => {
+    if (!turnFeedback) return
+    resumeAfterInput(turnFeedback.userText, turnFeedback.result?.inkVariables)
+    setTurnFeedback(null)
+  }, [resumeAfterInput, turnFeedback])
 
   // ==================== Analysis ====================
   const currentSessionDialogues = useMemo(() => {
@@ -944,8 +1065,8 @@ export function PracticeSessionPage() {
               stageClassName="min-h-0"
               backgroundUrl={vnVisual.backgroundUrl || detail.scene.backgroundUrl || undefined}
               backgroundFit={vnVisual.backgroundFit}
-              currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, audioUrl: currentLine.audioUrl } : null}
-              history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, audioUrl: line.audioUrl }))}
+              currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, translation: currentLine.translation, audioUrl: currentLine.audioUrl } : null}
+              history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, translation: line.translation, audioUrl: line.audioUrl }))}
               choices={inkChoices}
               currentSpriteUrl={currentSpriteUrl}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
@@ -955,8 +1076,10 @@ export function PracticeSessionPage() {
               isWaiting={inkWaiting}
               isEnded={inkEnded}
               onSubmitInput={sendUserInput}
-              onChoice={handleChoice}
-              onAdvance={inkJson ? advanceStory : undefined}
+              inputFeedback={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} /> : null}
+              inputDisabled={turnFeedback?.status === 'loading'}
+              onChoice={(choiceIndex) => { setTurnFeedback(null); handleChoice(choiceIndex) }}
+              onAdvance={inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}
               hideChatTopBar
               endedActions={(
                 <div className="flex gap-2">

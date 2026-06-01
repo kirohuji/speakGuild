@@ -17,6 +17,8 @@ interface DialogueListViewProps {
   onAdvance?: () => void
   onChoice?: (index: number) => void
   onSubmitInput?: (text: string) => void | Promise<void>
+  inputFeedback?: ReactNode
+  inputDisabled?: boolean
   onReset?: () => void
   endedActions?: ReactNode
   onHistoryOpenChange?: (open: boolean) => void
@@ -52,6 +54,8 @@ export function DialogueListView({
   onAdvance,
   onChoice,
   onSubmitInput,
+  inputFeedback,
+  inputDisabled,
   onReset,
   endedActions,
   onHistoryOpenChange,
@@ -111,7 +115,7 @@ export function DialogueListView({
 
   const handleSubmitInput = async () => {
     const text = inputText.trim()
-    if (!text || submitting || !onSubmitInput) return
+    if (!text || submitting || inputDisabled || !onSubmitInput) return
     setSubmitting(true)
     try {
       await onSubmitInput(text)
@@ -245,6 +249,7 @@ export function DialogueListView({
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 border-t border-border/20 bg-background/60 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] backdrop-blur-xl">
+          {inputFeedback}
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -252,13 +257,13 @@ export function DialogueListView({
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
               placeholder="输入你的回答..."
-              disabled={submitting}
+              disabled={submitting || inputDisabled}
               className="min-w-0 flex-1 rounded-full border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-ring focus:ring-1 focus:ring-ring"
             />
             <button
               type="button"
               onClick={handleSubmitInput}
-              disabled={!inputText.trim() || submitting}
+              disabled={!inputText.trim() || submitting || inputDisabled}
               className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-30"
             >
               <Send className="size-4" />
