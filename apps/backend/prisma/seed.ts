@@ -153,7 +153,6 @@ async function main() {
   await prisma.expressionItem.deleteMany()
   await prisma.userAchievementV2.deleteMany()
   await prisma.achievementDef.deleteMany()
-  await prisma.onboardingStatus.deleteMany()
 
   // 旧表清理
   await prisma.vocabularyWord.deleteMany()

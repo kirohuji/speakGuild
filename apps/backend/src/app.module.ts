@@ -22,7 +22,6 @@ import { SceneModule } from './modules/scene/scene.module';
 import { ChunkModule } from './modules/chunk/chunk.module';
 import { ScriptModule } from './modules/script/script.module';
 import { ExpressionModule } from './modules/expression/expression.module';
-import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ExplorationModule } from './modules/exploration/exploration.module';
 import { LearningModule } from './modules/learning/learning.module';
 import { PointsModule } from './modules/points/points.module';
@@ -53,7 +52,6 @@ import { AiQuotaModule } from './common/ai-quota/ai-quota.module';
     ChunkModule,
     ScriptModule,
     ExpressionModule,
-    OnboardingModule,
     ExplorationModule,
     LearningModule,
     PointsModule,

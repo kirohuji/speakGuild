@@ -54,7 +54,6 @@ model User {
   scriptDialogues      ScriptDialogue[]
   practiceSessions     PracticeSession[]
   explorationRecords   ExplorationRecord[]
-  onboardingStatus     OnboardingStatus?
   userAchievementsV2   UserAchievementV2[]
   gameSaves            GameSave[]
   checkIns             UserCheckIn[]
@@ -985,22 +984,6 @@ model UserSceneProgress {
 
   @@unique([userId, sceneId])
   @@map("user_scene_progress")
-}
-
-// ──── 新手引导 ────
-
-model OnboardingStatus {
-  id              String   @id @default(cuid())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String   @unique
-  goalsSelected   Boolean  @default(false)
-  abilitySelected Boolean  @default(false)
-  diagnosticDone  Boolean  @default(false)
-  tutorialDone    Boolean  @default(false)
-  diagnosticResult Json?
-  createdAt       DateTime @default(now())
-
-  @@map("onboarding_status")
 }
 
 // ──── 探索模式（视觉小说架构）───
