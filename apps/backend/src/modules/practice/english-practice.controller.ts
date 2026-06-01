@@ -22,6 +22,11 @@ export class EnglishPracticeController {
     return this.practiceService.getTopicDetail(id, session.user.id);
   }
 
+  @Get('topics/:id/teaching')
+  async getTopicTeachingMarkdown(@Param('id') id: string) {
+    return this.practiceService.getTopicTeachingMarkdown(id);
+  }
+
   /** 获取话题关联的 Ink 脚本 */
   @Get('topics/:id/ink')
   async getTopicInk(@Param('id') id: string) {

@@ -42,6 +42,15 @@ export class EnglishPracticeService {
     return { scene, topics };
   }
 
+  async getTopicTeachingMarkdown(topicId: string) {
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      select: { teachingMarkdown: true },
+    });
+    if (!topic) throw new NotFoundException('话题不存在');
+    return { teachingMarkdown: topic.teachingMarkdown };
+  }
+
   /** 话题详情 — 练习准备页 */
   async getTopicDetail(topicId: string, userId: string) {
     const topic = await this.prisma.trainingTopic.findUnique({

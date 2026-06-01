@@ -382,6 +382,16 @@ export function PracticeSessionPage() {
     return undefined
   }, [])
 
+  const refreshTeachingMarkdown = useCallback(async () => {
+    if (!topicId) return
+    try {
+      const result = await practiceApi.getTopicTeachingMarkdown(topicId)
+      setTeachingMarkdown(result.teachingMarkdown || '')
+    } catch {
+      // Keep the initially loaded document available when refreshing fails.
+    }
+  }, [topicId])
+
   // Restart from header — reset state and re-trigger Ink init without leaving practice phase
   const [restartKey, setRestartKey] = useState(0)
   const restartPractice = useCallback(() => {
@@ -1028,6 +1038,7 @@ export function PracticeSessionPage() {
 
           <PracticeVnDrawer
             teachingMarkdown={teachingMarkdown}
+            onOpen={refreshTeachingMarkdown}
             hideToggles={isHistoryOpen}
             plainTrigger
             triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-foreground/80 transition-opacity active:opacity-70"

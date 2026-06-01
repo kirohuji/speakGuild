@@ -125,6 +125,9 @@ export const practiceApi = {
   getTopicDetail: (topicId: string) =>
     api.get<any, TopicDetail>(`/practice/topics/${topicId}`),
 
+  getTopicTeachingMarkdown: (topicId: string) =>
+    api.get<any, { teachingMarkdown?: string | null }>(`/practice/topics/${topicId}/teaching`),
+
   /** 获取话题关联的 Ink 脚本 */
   getTopicInk: (topicId: string) =>
     api.get<any, { id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
