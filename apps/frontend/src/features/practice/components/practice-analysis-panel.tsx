@@ -89,7 +89,7 @@ export function PracticeAnalysisPanel({
           </div>
           <div className="text-center">
             <p className="font-semibold text-foreground">{t('practiceVn.analyzing')}</p>
-            <p className="mt-1 text-xs text-muted-foreground">正在整理本轮目标、表达和语言细节</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('practiceVn.analysisDetail')}</p>
           </div>
           <Progress value={60} className="h-1.5 w-52" />
         </CardContent>
@@ -166,9 +166,9 @@ export function PracticeAnalysisPanel({
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <AnalysisMetric label="目标完成" value={`${completedObjectives.length}/${objectives.length}`} />
-            <AnalysisMetric label="核心表达" value={`${usedChunks.length}/${chunks.length}`} />
-            <AnalysisMetric label="语言提醒" value={`${grammarIssues.length}`} />
+            <AnalysisMetric label={t('practiceVn.metricObjectives')} value={`${completedObjectives.length}/${objectives.length}`} />
+            <AnalysisMetric label={t('practiceVn.metricChunks')} value={`${usedChunks.length}/${chunks.length}`} />
+            <AnalysisMetric label={t('practiceVn.metricLanguage')} value={`${grammarIssues.length}`} />
           </div>
         </CardContent>
       </Card>

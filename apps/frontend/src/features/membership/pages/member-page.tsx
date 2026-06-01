@@ -583,7 +583,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               <div>
                 <DialogTitle className="text-base">{t('member.payTitle')}</DialogTitle>
                 <DialogDescription className="mt-1 text-xs leading-5">
-                  开通 {payPlan?.name || '会员'}，解锁完整练习体验
+                  {t('member.checkoutDesc', { plan: payPlan?.name || t('member.title') })}
                 </DialogDescription>
               </div>
             </div>
@@ -596,21 +596,23 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 <div>
                   <p className="text-sm font-semibold">{payPlan?.name}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {billingCycle === 'yearly' ? `年付方案 · ${yearlyDiscount} 折` : '月付方案 · 灵活订阅'}
+                    {billingCycle === 'yearly'
+                      ? t('member.yearlyPlanSummary', { discount: yearlyDiscount })
+                      : t('member.monthlyPlanSummary')}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold tracking-tight">¥{(checkoutAmount / 100).toFixed(2)}</p>
                   {billingCycle === 'yearly' && yearlySaving > 0 && (
                     <p className="mt-1 text-[11px] font-medium text-primary">
-                      已优惠 ¥{(yearlySaving / 100).toFixed(2)}
+                      {t('member.savedAmount', { amount: (yearlySaving / 100).toFixed(2) })}
                     </p>
                   )}
                 </div>
               </div>
               {appliedPoints > 0 && (
                 <div className="flex items-center justify-between border-t border-border/40 px-4 py-2 text-xs">
-                  <span className="text-muted-foreground">积分抵扣</span>
+                  <span className="text-muted-foreground">{t('member.pointsDeduction')}</span>
                   <span className="font-medium text-amber-600">- ¥{(appliedPoints / 100).toFixed(2)}</span>
                 </div>
               )}
@@ -624,8 +626,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     <Gift className="size-4 text-amber-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">积分抵扣</p>
-                    <p className="text-[11px] text-muted-foreground">{pointsBalance} 积分可抵 ¥{(pointsBalance / 100).toFixed(2)}</p>
+                    <p className="text-sm font-medium">{t('member.pointsDeduction')}</p>
+                    <p className="text-[11px] text-muted-foreground">{t('member.pointsAvailable', { points: pointsBalance, amount: (pointsBalance / 100).toFixed(2) })}</p>
                   </div>
                 </div>
                 <Button
@@ -634,7 +636,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   onClick={() => setUsePoints(!usePoints)}
                   className="h-7 text-xs"
                 >
-                  {usePoints ? '已使用' : '使用'}
+                  {usePoints ? t('member.applied') : t('member.use')}
                 </Button>
               </div>
             )}
@@ -704,7 +706,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             {/* 支付方式选择 */}
             {!payResult && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">选择支付方式</p>
+                <p className="text-xs font-semibold text-muted-foreground">{t('member.selectPaymentMethod')}</p>
                 <div className="overflow-hidden rounded-lg bg-muted/30">
                 <button
                   type="button"
@@ -747,7 +749,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 </button>
                 </div>
                 <p className="pt-1 text-center text-[10px] leading-4 text-muted-foreground">
-                  支付即代表你同意会员服务条款，到账后立即生效
+                  {t('member.paymentAgreement')}
                 </p>
               </div>
             )}
@@ -954,7 +956,7 @@ function CompactPlanCard({
             <span className="ml-1 text-[11px] font-normal text-muted-foreground">{billingCycle === 'yearly' ? t('member.perYear') : t('member.perMonth')}</span>
           </p>
           {billingCycle === 'yearly' && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground">折合 ¥{monthlyEquivalent.toFixed(0)} / 月</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{t('member.monthlyEquivalent', { amount: monthlyEquivalent.toFixed(0) })}</p>
           )}
         </div>
         {!isCurrent && (
