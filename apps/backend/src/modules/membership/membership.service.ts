@@ -25,6 +25,23 @@ export class MembershipService {
   }
 
   async getCurrentMembership(userId: string) {
+    // 管理员拥有全部权限
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user?.role === 'admin') {
+      return {
+        userId,
+        planId: 'admin',
+        planName: '管理员',
+        level: 'admin' as const,
+        isActive: true,
+        expiredAt: null,
+        message: '管理员拥有全部功能权限',
+      };
+    }
+
     const membership = await this.prisma.userMembership.findUnique({
       where: { userId },
       include: { plan: true },

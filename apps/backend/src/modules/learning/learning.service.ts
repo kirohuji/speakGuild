@@ -10,12 +10,19 @@ export class LearningService {
    * 免费用户看到全部单元，但非免费单元标记为锁定。
    */
   async getLearningUnits(userId: string) {
+    // 管理员拥有全部权限
+    const adminCheck = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    const isAdmin = adminCheck?.role === 'admin';
+
     // 检查会员状态
     const membership = await this.prisma.userMembership.findUnique({
       where: { userId },
     });
     const isMember =
-      membership?.status === 'active' && membership.expiredAt > new Date();
+      isAdmin || (membership?.status === 'active' && membership.expiredAt > new Date());
 
     const categories = await this.prisma.sceneCategory.findMany({
       orderBy: { sortOrder: 'asc' },
@@ -382,10 +389,15 @@ export class LearningService {
     // ---- 构建任务列表 ----
     const tasks: any[] = [];
 
-    // ---- 每日限额 ----
-    const DAILY_VOCAB_LIMIT = 5;
-    const DAILY_CHUNK_LIMIT = 3;
-    const DAILY_PRACTICE_LIMIT = 3;
+    // ---- 每日限额 ----（管理员无限制）
+    const adminCheck = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    const isAdmin = adminCheck?.role === 'admin';
+    const DAILY_VOCAB_LIMIT = isAdmin ? 999 : 5;
+    const DAILY_CHUNK_LIMIT = isAdmin ? 999 : 3;
+    const DAILY_PRACTICE_LIMIT = isAdmin ? 999 : 3;
 
     // 任务1: 学习词汇（每日限额 5 个）
     const unlearnedVocabs = sceneDetail.vocabularies.filter(

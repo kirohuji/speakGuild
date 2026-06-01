@@ -46,6 +46,15 @@ export class AiQuotaService {
     userId: string,
     type: 'feedback' | 'dialogue' | 'summary',
   ): Promise<QuotaCheckResult> {
+    // 0. 管理员直接放行（无限配额）
+    const adminCheck = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (adminCheck?.role === 'admin') {
+      return { allowed: true, remaining: -1, canExchange: false, exchangeCost: 0 };
+    }
+
     // 1. 查会员等级
     const membership = await this.prisma.userMembership.findUnique({
       where: { userId },
@@ -152,6 +161,22 @@ export class AiQuotaService {
 
   /** 获取用户当前配额状态 */
   async getStatus(userId: string) {
+    // 管理员直接返回无限配额
+    const adminCheck = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (adminCheck?.role === 'admin') {
+      return {
+        level: 'admin',
+        isMember: true,
+        isAdmin: true,
+        message: '管理员拥有无限 AI 配额',
+        quotas: {},
+        points: 0,
+      };
+    }
+
     const membership = await this.prisma.userMembership.findUnique({
       where: { userId },
       include: { plan: true },

@@ -46,6 +46,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
 
+  const isAdmin = current?.level === 'admin'
+
   // 支付弹窗
   const [payOpen, setPayOpen] = useState(false)
   const [payPlan, setPayPlan] = useState<MemberPlan | null>(null)
@@ -216,13 +218,20 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
       {/* 当前套餐 — compact 模式更紧凑 */}
       {compact ? (
-        <div className="overflow-hidden rounded-xl bg-gradient-to-br from-amber-500/8 via-orange-500/5 to-sky-500/8 px-4 py-3.5">
+        <div className={cn(
+          'overflow-hidden rounded-xl px-4 py-3.5',
+          isAdmin
+            ? 'bg-gradient-to-br from-purple-500/10 via-violet-500/8 to-indigo-500/10'
+            : 'bg-gradient-to-br from-amber-500/8 via-orange-500/5 to-sky-500/8',
+        )}>
           <div className="flex items-center gap-3">
             <div className={cn(
               'flex size-10 shrink-0 items-center justify-center rounded-xl',
-              current?.isActive ? 'bg-amber-500/15' : 'bg-muted',
+              isAdmin ? 'bg-purple-500/15' : current?.isActive ? 'bg-amber-500/15' : 'bg-muted',
             )}>
-              {current?.isActive ? (
+              {isAdmin ? (
+                <Shield className="size-5 text-purple-500" />
+              ) : current?.isActive ? (
                 <Crown className="size-5 text-amber-500" />
               ) : (
                 <Star className="size-5 text-muted-foreground" />
@@ -230,13 +239,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-semibold truncate">{current?.planName || t('member.freeUser')}</p>
-                <Badge variant={current?.isActive ? 'default' : 'secondary'} className="h-4.5 px-1.5 text-[10px] leading-none">
-                  {current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
+                <p className="text-sm font-semibold truncate">{isAdmin ? '管理员' : current?.planName || t('member.freeUser')}</p>
+                <Badge variant={isAdmin ? 'default' : current?.isActive ? 'default' : 'secondary'} className={cn('h-4.5 px-1.5 text-[10px] leading-none', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
+                  {isAdmin ? '全部权限' : current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {current?.expiredAt
+                {isAdmin ? '所有功能已解锁，AI 无限畅用' : current?.expiredAt
                   ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
                   : t('member.upgradeExperience')}
               </p>
@@ -244,15 +253,27 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           </div>
         </div>
       ) : (
-        <section className="overflow-hidden rounded-lg bg-gradient-to-br from-amber-100 via-orange-50 to-sky-100 p-4 dark:from-amber-950/40 dark:via-orange-950/20 dark:to-sky-950/40">
+        <section className={cn(
+          'overflow-hidden rounded-lg p-4',
+          isAdmin
+            ? 'bg-gradient-to-br from-purple-100 via-violet-50 to-indigo-100 dark:from-purple-950/40 dark:via-violet-950/20 dark:to-indigo-950/40'
+            : 'bg-gradient-to-br from-amber-100 via-orange-50 to-sky-100 dark:from-amber-950/40 dark:via-orange-950/20 dark:to-sky-950/40',
+        )}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium text-muted-foreground">{t('member.center')}</p>
-              <h2 className="mt-1 text-xl font-semibold tracking-normal text-foreground">{t('member.unlockExperience')}</h2>
-              <p className="mt-2 max-w-[260px] text-xs leading-5 text-muted-foreground">{t('member.subtitle')}</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-normal text-foreground">
+                {isAdmin ? '管理员模式' : t('member.unlockExperience')}
+              </h2>
+              <p className="mt-2 max-w-[260px] text-xs leading-5 text-muted-foreground">
+                {isAdmin ? '你拥有全部功能的访问权限，无需购买任何套餐。' : t('member.subtitle')}
+              </p>
             </div>
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-background/70 text-amber-500">
-              <Crown className="size-6" />
+            <div className={cn(
+              'flex size-12 shrink-0 items-center justify-center rounded-full',
+              isAdmin ? 'bg-purple-500/15 text-purple-500' : 'bg-background/70 text-amber-500',
+            )}>
+              {isAdmin ? <Shield className="size-6" /> : <Crown className="size-6" />}
             </div>
           </div>
         </section>
@@ -269,9 +290,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     'flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl',
-                    current?.isActive ? 'bg-amber-500/10' : 'bg-muted'
+                    isAdmin ? 'bg-purple-500/10' : current?.isActive ? 'bg-amber-500/10' : 'bg-muted',
                   )}>
-                    {current?.isActive ? (
+                    {isAdmin ? (
+                      <Shield className="h-5 w-5 text-purple-500" />
+                    ) : current?.isActive ? (
                       <Crown className="h-5 w-5 text-amber-500" />
                     ) : (
                       <Shield className="h-5 w-5 text-muted-foreground" />
@@ -279,13 +302,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold">{current?.planName || t('member.freeUser')}</p>
-                      <Badge variant={current?.isActive ? 'default' : 'secondary'} className="text-xs">
-                        {current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
+                      <p className="font-semibold">{isAdmin ? '管理员' : current?.planName || t('member.freeUser')}</p>
+                      <Badge variant={isAdmin ? 'default' : current?.isActive ? 'default' : 'secondary'} className={cn('text-xs', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
+                        {isAdmin ? '全部权限' : current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {current?.expiredAt
+                      {isAdmin ? '所有功能已解锁，AI 无限畅用' : current?.expiredAt
                         ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
                         : t('member.upgradeMore')}
                     </p>
@@ -297,7 +320,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         </Card>
       )}
 
-      {/* 选择套餐 */}
+      {/* 选择套餐 — 管理员不显示 */}
+      {!isAdmin && (
       <div className={compact ? '' : ''}>
         {!compact && (
           <Card className="rounded-lg border-border/70 shadow-sm">
@@ -398,8 +422,74 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           </div>
         )}
       </div>
+      )}
 
-      {/* 权益对比 — compact 模式简化 */}
+      {/* 管理员：全部功能已解锁提示 */}
+      {isAdmin && !compact && (
+        <Card className="rounded-lg border-border/70 border-purple-500/30 bg-purple-500/[0.03] shadow-sm">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-purple-500/10">
+              <Zap className="size-6 text-purple-500" />
+            </div>
+            <div>
+              <p className="font-semibold">全部功能已解锁</p>
+              <p className="text-sm text-muted-foreground">作为管理员，你拥有所有套餐的全部功能权限，包括无限 AI 调用。</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {isAdmin && compact && (
+        <div className="rounded-xl bg-purple-500/[0.06] px-3 py-3 flex items-center gap-2.5">
+          <Zap className="size-4 shrink-0 text-purple-500" />
+          <p className="text-xs text-muted-foreground">管理员 · 全部功能已解锁 · AI 无限畅用</p>
+        </div>
+      )}
+
+      {/* 权益对比 — admin 显示全部已解锁 */}
+      {isAdmin ? (
+        <div className={compact ? 'overflow-hidden rounded-xl bg-muted/30' : ''}>
+          {!compact && (
+            <Card className="rounded-lg border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base">权益说明</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-hidden rounded-lg bg-muted/30">
+                  <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
+                    <span className="text-xs font-semibold text-muted-foreground">权益项</span>
+                    <span className="text-center text-xs font-semibold text-muted-foreground">普通用户</span>
+                    <span className="text-center text-xs font-semibold text-purple-500">管理员</span>
+                  </div>
+                  {benefits.map((item, idx) => (
+                    <div
+                      key={item.benefitId}
+                      className={cn(
+                        'grid grid-cols-3 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30',
+                        idx !== benefits.length - 1 && 'border-b border-border/50'
+                      )}
+                    >
+                      <span className="font-medium">{item.name}</span>
+                      <SupportCell value={item.freeSupport} />
+                      <div className="flex justify-center">
+                        <Check className="size-4 text-purple-500" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {compact && (
+            <div className="rounded-xl bg-muted/30 px-3 py-3">
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">管理权益</p>
+              <div className="flex items-center gap-2 rounded-lg bg-purple-500/[0.06] px-3 py-2.5">
+                <Check className="size-3.5 shrink-0 text-purple-500" />
+                <p className="text-xs text-muted-foreground">全部功能已解锁，所有套餐权益均享有</p>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className={compact ? 'overflow-hidden rounded-xl bg-muted/30' : ''}>
         {!compact && (
           <Card className="rounded-lg border-border/70 shadow-sm">
@@ -418,6 +508,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           </div>
         )}
       </div>
+      )}
 
       {/* 服务说明 — compact 模式简化 */}
       {compact ? (

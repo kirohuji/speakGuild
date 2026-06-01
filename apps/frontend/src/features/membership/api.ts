@@ -17,7 +17,7 @@ export interface CurrentMembership {
   userId: string
   planId: string | null
   planName: string
-  level: 'free' | 'standard' | 'advanced'
+  level: 'free' | 'standard' | 'advanced' | 'admin'
   isActive: boolean
   expiredAt?: string | null
   startedAt?: string | null
