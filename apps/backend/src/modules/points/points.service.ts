@@ -3,6 +3,33 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 
 const CHECK_IN_BASE_POINTS = 10;
 const STREAK_BONUS_CAP = 5; // max bonus per day from streak
+const MAX_CALENDAR_RANGE_DAYS = 62;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseCalendarDate(value: string) {
+  if (!DATE_PATTERN.test(value)) {
+    throw new BadRequestException('日期格式应为 YYYY-MM-DD');
+  }
+
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    throw new BadRequestException('日期无效');
+  }
+
+  return date;
+}
+
+function formatCalendarDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 @Injectable()
 export class PointsService {
@@ -46,17 +73,37 @@ export class PointsService {
   }
 
   /** Get check-in dates for the calendar */
-  async getCheckInCalendar(userId: string) {
-    const checkIns = await this.prisma.userCheckIn.findMany({
-      where: { userId },
-      orderBy: { date: 'asc' },
-      select: { date: true },
-    });
-    const status = await this.getCheckInStatus(userId);
+  async getCheckInCalendar(userId: string, startDate?: string, endDate?: string) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('请提供日历查询范围');
+    }
+
+    const rangeStart = parseCalendarDate(startDate);
+    const rangeEnd = parseCalendarDate(endDate);
+    if (rangeStart > rangeEnd) {
+      throw new BadRequestException('开始日期不能晚于结束日期');
+    }
+    const rangeDays = Math.floor((rangeEnd.getTime() - rangeStart.getTime()) / 86_400_000) + 1;
+    if (rangeDays > MAX_CALENDAR_RANGE_DAYS) {
+      throw new BadRequestException(`日历查询范围不能超过 ${MAX_CALENDAR_RANGE_DAYS} 天`);
+    }
+
+    const [checkIns, totalCheckIns, status] = await Promise.all([
+      this.prisma.userCheckIn.findMany({
+        where: {
+          userId,
+          date: { gte: rangeStart, lte: rangeEnd },
+        },
+        orderBy: { date: 'asc' },
+        select: { date: true },
+      }),
+      this.prisma.userCheckIn.count({ where: { userId } }),
+      this.getCheckInStatus(userId),
+    ]);
 
     return {
-      dates: checkIns.map((item) => item.date.toISOString().slice(0, 10)),
-      totalCheckIns: checkIns.length,
+      dates: checkIns.map((item) => formatCalendarDate(item.date)),
+      totalCheckIns,
       currentStreak: status.currentStreak,
     };
   }

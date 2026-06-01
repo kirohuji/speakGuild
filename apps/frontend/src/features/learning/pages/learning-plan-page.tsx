@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { addMonths, isAfter, parseISO, startOfDay } from 'date-fns'
+import { addMonths, endOfMonth, endOfWeek, format, isAfter, parseISO, startOfDay, startOfMonth, startOfWeek } from 'date-fns'
 import { enUS, ja, zhCN } from 'date-fns/locale'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
@@ -463,6 +463,10 @@ function CheckInCalendarDrawer({
     : i18n.language.startsWith('en')
       ? enUS
       : zhCN
+  const visibleRange = useMemo(() => ({
+    startDate: format(startOfWeek(startOfMonth(month), { locale: calendarLocale }), 'yyyy-MM-dd'),
+    endDate: format(endOfWeek(endOfMonth(month), { locale: calendarLocale }), 'yyyy-MM-dd'),
+  }), [calendarLocale, month])
   const checkedInDates = useMemo<Date[]>(
     () => data?.dates.map((date) => parseISO(date)) ?? [],
     [data],
@@ -471,11 +475,11 @@ function CheckInCalendarDrawer({
   useEffect(() => {
     if (!open) return
     setLoading(true)
-    pointsApi.getCheckInCalendar()
+    pointsApi.getCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
       .then(setData)
       .catch(() => setData({ dates: [], totalCheckIns: 0, currentStreak: 0 }))
       .finally(() => setLoading(false))
-  }, [open])
+  }, [open, visibleRange])
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
     if (touchStartX === null) return

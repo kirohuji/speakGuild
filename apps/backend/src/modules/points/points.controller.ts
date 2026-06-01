@@ -23,9 +23,13 @@ export class PointsController {
 
   /** 获取签到日历 */
   @Get('check-in/calendar')
-  async getCheckInCalendar(@Req() req: Request) {
+  async getCheckInCalendar(
+    @Req() req: Request,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
     const session = await requireAuthSession(req);
-    return this.pointsService.getCheckInCalendar(session.user.id);
+    return this.pointsService.getCheckInCalendar(session.user.id, startDate, endDate);
   }
 
   /** 每日签到 */

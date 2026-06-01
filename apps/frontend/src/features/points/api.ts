@@ -26,6 +26,7 @@ export interface CheckInCalendar {
 export const pointsApi = {
   getBalance: () => get<PointsBalance>('/points/balance'),
   getCheckInStatus: () => get<CheckInStatus>('/points/check-in/status'),
-  getCheckInCalendar: () => get<CheckInCalendar>('/points/check-in/calendar'),
+  getCheckInCalendar: (startDate: string, endDate: string) =>
+    get<CheckInCalendar>('/points/check-in/calendar', { startDate, endDate }),
   checkIn: () => post<CheckInResult>('/points/check-in'),
 }
