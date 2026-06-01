@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { compileInk, type CompileResult } from './ink-compiler'
+import { judgePreviewDialogueTurn, type PreviewDialogueTurnResult } from '../api-content-admin'
 
 /** 角色立绘数据：expression name → sprite URL */
 export type CharacterSpriteMap = Record<string, string>
@@ -28,6 +29,7 @@ interface VnStoryPreviewProps {
   /** 角色名 → 立绘位置 */
   characterPositions?: Record<string, 'left' | 'center' | 'right'>
   defaultBackgroundUrl?: string
+  aiEvaluationEnabled?: boolean
   className?: string
   onDebugChange?: (state: {
     isReady: boolean
@@ -38,6 +40,7 @@ interface VnStoryPreviewProps {
     choices: { index: number; text: string }[]
     activeBackground: { url?: string; fit?: string }
     aiPayload: Record<string, any>
+    aiEvaluations: PreviewAiEvaluation[]
   }) => void
 }
 
@@ -46,6 +49,42 @@ interface DialogueLine {
   text: string
   expression?: string
   audioUrl?: string
+}
+
+export interface PreviewAiEvaluation {
+  id: number
+  userText: string
+  objective: string
+  targetChunks: string[]
+  status: 'loading' | 'success' | 'error'
+  result?: PreviewDialogueTurnResult
+  error?: string
+}
+
+function readPreviewTagValue(tags: string[], prefix: string) {
+  const raw = tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length).trim()
+  if (!raw) return ''
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
+function readPreviewListTags(tags: string[], prefix: string) {
+  return tags
+    .filter((tag) => tag.startsWith(prefix))
+    .flatMap((tag) => readPreviewTagValue([tag], prefix).split(/[|,;，；]/))
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function readPreviewInputNodeId(tags: string[]) {
+  const inputTag = readPreviewTagValue(tags, 'input:') || readPreviewTagValue(tags, 'wait:')
+  if (inputTag) return inputTag.match(/(?:^|[;,]\s*)id=([^;,]+)/)?.[1]?.trim() || inputTag
+  if (tags.includes('input')) return 'input'
+  if (tags.includes('wait')) return 'wait'
+  return undefined
 }
 
 /**
@@ -59,6 +98,7 @@ export function VnStoryPreview({
   characterAvatars = {},
   characterPositions = {},
   defaultBackgroundUrl,
+  aiEvaluationEnabled = false,
   className,
   onDebugChange,
 }: VnStoryPreviewProps) {
@@ -76,6 +116,7 @@ export function VnStoryPreview({
     fit: 'cover',
   })
   const [completionOpen, setCompletionOpen] = useState(false)
+  const [aiEvaluations, setAiEvaluations] = useState<PreviewAiEvaluation[]>([])
 
   // Compile Ink source
   useEffect(() => {
@@ -181,6 +222,7 @@ export function VnStoryPreview({
     setIsEnded(false)
     setIsWaiting(false)
     setCompletionOpen(false)
+    setAiEvaluations([])
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     if (!compileResult?.success || !compileResult.json) return
@@ -243,7 +285,30 @@ export function VnStoryPreview({
     setHistory((prev) => [...prev, { speaker: 'You', text }])
     engine.setVariable('user_last_input', text)
     setIsWaiting(false)
-  }, [])
+
+    if (aiEvaluationEnabled) {
+      const id = Date.now()
+      const objective = readPreviewTagValue(currentTags, 'objective:')
+      const targetChunks = readPreviewListTags(currentTags, 'chunks:')
+      const npcText = [...history].reverse().find((line) => line.speaker !== 'You')?.text ?? ''
+      setAiEvaluations((prev) => [...prev, { id, userText: text, objective, targetChunks, status: 'loading' }])
+
+      judgePreviewDialogueTurn({
+        topicId: 'admin-preview',
+        inputNodeId: readPreviewInputNodeId(currentTags),
+        npcText,
+        userText: text,
+        objectives: objective ? [objective] : undefined,
+        targetChunks,
+      }).then((result) => {
+        setAiEvaluations((prev) => prev.map((item) => item.id === id ? { ...item, status: 'success', result } : item))
+      }).catch((error) => {
+        setAiEvaluations((prev) => prev.map((item) => item.id === id
+          ? { ...item, status: 'error', error: error?.response?.data?.message || error?.message || '评估请求失败' }
+          : item))
+      })
+    }
+  }, [aiEvaluationEnabled, currentTags, history])
 
   const resetPreview = useCallback(() => {
     if (!compileResult?.json) return
@@ -255,6 +320,7 @@ export function VnStoryPreview({
     setIsEnded(false)
     setIsWaiting(false)
     setCompletionOpen(false)
+    setAiEvaluations([])
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     try {
@@ -314,8 +380,9 @@ export function VnStoryPreview({
       choices,
       activeBackground,
       aiPayload,
+      aiEvaluations,
     })
-  }, [activeBackground, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, onDebugChange])
+  }, [activeBackground, aiEvaluations, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, onDebugChange])
 
   // ─── Render ────────────────────────────────────────────────
 

@@ -451,13 +451,17 @@ export function PracticeSessionPage() {
     const round = dialogueRounds.length + 1
     const userMsg = text.trim()
     const npcText = dialogueRounds[dialogueRounds.length - 1]?.text ?? ''
+    const taggedChunkTexts = readListTags(currentTags, 'chunks:')
+    const targetChunksForRound = taggedChunkTexts.length
+      ? taggedChunkTexts
+      : coreChunkTexts.map((chunk) => chunk.text)
 
     setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
 
     // Track chunk usage
-    coreChunkTexts.forEach((c) => {
-      if (userMsg.toLowerCase().includes(c.text.toLowerCase())) {
-        setUsedChunks((prev) => new Set([...prev, c.text]))
+    targetChunksForRound.forEach((chunkText) => {
+      if (userMsg.toLowerCase().includes(chunkText.toLowerCase())) {
+        setUsedChunks((prev) => new Set([...prev, chunkText]))
       }
     })
 
@@ -475,7 +479,7 @@ export function PracticeSessionPage() {
           npcText,
           userText: userMsg,
           objectives: readListTags(currentTags, 'objective:').length ? readListTags(currentTags, 'objective:') : objectives,
-          targetChunks: coreChunkTexts.map((chunk) => chunk.text),
+          targetChunks: targetChunksForRound,
         })
 
         objectiveCompleted = judgement.objectiveCompleted ?? objectiveCompleted

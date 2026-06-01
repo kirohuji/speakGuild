@@ -16,10 +16,15 @@ import {
   CreateAchievementDefDto, UpdateAchievementDefDto,
 } from './dto/content-admin.dto';
 import { requireAuthSession } from '../auth/session.util';
+import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
+import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 
 @Controller('admin/content')
 export class ContentAdminController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly practiceAiService: EnglishPracticeAiService,
+  ) {}
 
   private async requireAdmin(req: Request) {
     const session = await requireAuthSession(req);
@@ -27,6 +32,12 @@ export class ContentAdminController {
       throw new ForbiddenException('需要管理员权限');
     }
     return session;
+  }
+
+  @Post('preview/dialogue-turn')
+  async judgePreviewDialogueTurn(@Req() req: Request, @Body() dto: DialogueTurnJudgeDto) {
+    await this.requireAdmin(req);
+    return this.practiceAiService.judgeDialogueTurn(dto);
   }
 
   // ════════════════════════════════════════════════════════════

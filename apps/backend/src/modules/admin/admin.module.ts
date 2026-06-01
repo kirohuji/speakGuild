@@ -8,9 +8,10 @@ import { SystemConfigService } from './system-config/system-config.service';
 import { ThemeManageModule } from './theme-manage/theme-manage.module';
 import { DailySentenceModule } from './daily-sentence/daily-sentence.module';
 import { PayModule } from '../pay/pay.module';
+import { PracticeAiModule } from '../practice-ai/practice-ai.module';
 
 @Module({
-  imports: [PayModule, ThemeManageModule, DailySentenceModule],
+  imports: [PayModule, PracticeAiModule, ThemeManageModule, DailySentenceModule],
   controllers: [AdminController, ContentAdminController, SystemConfigController],
   providers: [AdminService, AdminStatsService, SystemConfigService],
   exports: [SystemConfigService],

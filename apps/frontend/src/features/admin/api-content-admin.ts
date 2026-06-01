@@ -1,5 +1,27 @@
 import { get, post, patch, del as _delete } from '@/lib/request'
 
+export interface PreviewDialogueTurnResult {
+  intent: string
+  passed: boolean
+  objectiveCompleted: string[]
+  chunksUsed: string[]
+  inkVariables: Record<string, string | number | boolean>
+  feedback: string
+  confidence: number
+  raw?: string
+}
+
+export async function judgePreviewDialogueTurn(data: {
+  topicId: string
+  inputNodeId?: string
+  npcText: string
+  userText: string
+  objectives?: string[]
+  targetChunks?: string[]
+}): Promise<PreviewDialogueTurnResult> {
+  return post('/admin/content/preview/dialogue-turn', data)
+}
+
 // ─── Scene Categories ───────────────────────────────────────
 
 export interface SceneCategory {

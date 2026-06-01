@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
+  Blocks,
   CheckCircle2,
   Clock3,
   Code2,
@@ -11,7 +12,9 @@ import {
   Plus,
   Route,
   Save,
+  Target,
   Trash2,
+  Lightbulb,
   Wand2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -19,11 +22,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
-import { VnStoryPreview, type CharacterSpriteMap } from './vn-story-preview'
+import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
@@ -53,6 +57,7 @@ interface VnPreviewDebugState {
   choices: Array<{ index: number; text: string }>
   activeBackground: { url?: string; fit?: string }
   aiPayload: Record<string, any>
+  aiEvaluations: PreviewAiEvaluation[]
 }
 
 interface InkStoryEditorProps {
@@ -365,6 +370,7 @@ export function InkStoryEditor({
   const [draggedItem, setDraggedItem] = useState<{ sceneIndex: number; itemIndex: number } | null>(null)
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [previewDebug, setPreviewDebug] = useState<VnPreviewDebugState | null>(null)
+  const [previewAiEnabled, setPreviewAiEnabled] = useState(false)
   const lastAutoSavedSourceRef = useRef('')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -943,11 +949,12 @@ export function InkStoryEditor({
                 characterSprites={charSprites}
                 characterAvatars={charAvatars}
                 characterPositions={charPositions}
+                aiEvaluationEnabled={previewAiEnabled}
                 className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
                 onDebugChange={setPreviewDebug}
               />
             </div>
-            <PreviewDebugPanel debug={previewDebug} />
+            <PreviewDebugPanel debug={previewDebug} aiEnabled={previewAiEnabled} onAiEnabledChange={setPreviewAiEnabled} />
           </div>
         </TabsContent>
       </Tabs>
@@ -955,14 +962,34 @@ export function InkStoryEditor({
   )
 }
 
-function PreviewDebugPanel({ debug }: { debug: VnPreviewDebugState | null }) {
+function PreviewDebugPanel({
+  debug,
+  aiEnabled,
+  onAiEnabledChange,
+}: {
+  debug: VnPreviewDebugState | null
+  aiEnabled: boolean
+  onAiEnabledChange: (enabled: boolean) => void
+}) {
   const formattedPayload = JSON.stringify(debug?.aiPayload ?? {}, null, 2)
+  const practiceContext = extractPracticeContext(debug?.currentTags ?? [])
 
   return (
     <div className="min-w-0 rounded-lg border border-border bg-background">
       <div className="border-b border-border px-4 py-3">
-        <p className="text-sm font-semibold">实时状态与评估数据</p>
-        <p className="mt-1 text-xs text-muted-foreground">用于检查 #wait / #input 流程和最终 AI 评估 payload。</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold">实时状态与评估数据</p>
+            <p className="mt-1 text-xs text-muted-foreground">用于检查 #wait / #input 流程和最终 AI 评估 payload。</p>
+          </div>
+          <label className="flex shrink-0 items-center gap-2 text-xs">
+            <span className="text-muted-foreground">AI 实时评估</span>
+            <Switch checked={aiEnabled} onCheckedChange={onAiEnabledChange} />
+          </label>
+        </div>
+        {aiEnabled && (
+          <p className="mt-2 text-[11px] text-amber-600">已开启：每次提交测试文本都会请求 AI，使用管理员预览通道，不扣练习额度。</p>
+        )}
       </div>
 
       <ScrollArea className="h-[78vh] max-h-[760px]">
@@ -972,6 +999,48 @@ function PreviewDebugPanel({ debug }: { debug: VnPreviewDebugState | null }) {
             <DebugMetric label="对话" value={`${debug?.history.length ?? 0} 条`} />
             <DebugMetric label="选项" value={`${debug?.choices.length ?? 0} 个`} />
           </div>
+
+          <section className="space-y-2">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground">本轮练习设计</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">从当前 input 节点 Tags 提取，方便核对 AI 评判依据。</p>
+            </div>
+            <div className="grid gap-2 lg:grid-cols-3">
+              <PracticeContextCard
+                icon={Target}
+                label="Objective"
+                description="任务目标"
+                value={practiceContext.objective}
+              />
+              <PracticeContextCard
+                icon={Lightbulb}
+                label="Hint"
+                description="表达方向"
+                value={practiceContext.hint}
+              />
+              <PracticeContextCard
+                icon={Blocks}
+                label="Chunks"
+                description="推荐积木块"
+                values={practiceContext.chunks}
+              />
+            </div>
+          </section>
+
+          {aiEnabled && (
+            <section className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">逐轮 AI 评估</p>
+              <div className="space-y-2">
+                {debug?.aiEvaluations.length ? [...debug.aiEvaluations].reverse().map((evaluation) => (
+                  <PreviewEvaluationCard key={evaluation.id} evaluation={evaluation} />
+                )) : (
+                  <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                    提交一条测试文本后，这里会显示 AI 对目标和推荐句块的判断。
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
 
           <section className="space-y-2">
             <p className="text-xs font-semibold text-muted-foreground">当前 Tags</p>
@@ -1010,6 +1079,115 @@ function PreviewDebugPanel({ debug }: { debug: VnPreviewDebugState | null }) {
           </section>
         </div>
       </ScrollArea>
+    </div>
+  )
+}
+
+function extractPracticeContext(tags: string[]) {
+  const readValue = (prefix: string) => {
+    const value = tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length).trim()
+    if (!value) return ''
+    try { return decodeURIComponent(value) } catch { return value }
+  }
+
+  const readList = (prefix: string) => {
+    const list: string[] = []
+    for (const tag of tags) {
+      if (!tag.startsWith(prefix)) continue
+      const raw = tag.slice(prefix.length).trim()
+      if (!raw) continue
+      const decoded = (() => { try { return decodeURIComponent(raw) } catch { return raw } })()
+      // One tag may contain comma/semicolon-separated values OR be a single value
+      decoded.split(/[,;，；]/).forEach((item) => {
+        const trimmed = item.trim()
+        if (trimmed) list.push(trimmed)
+      })
+    }
+    return list
+  }
+
+  return {
+    objective: readValue('objective:'),
+    hint: readValue('hint:'),
+    chunks: readList('chunks:'),
+  }
+}
+
+function PreviewEvaluationCard({ evaluation }: { evaluation: PreviewAiEvaluation }) {
+  const result = evaluation.result
+  const isLoading = evaluation.status === 'loading'
+  const isError = evaluation.status === 'error'
+  const isPassed = result?.passed
+
+  return (
+    <div className="rounded-md border border-border bg-card p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold text-muted-foreground">用户输入</p>
+          <p className="mt-1 text-sm leading-5">{evaluation.userText}</p>
+        </div>
+        <Badge variant={isPassed ? 'default' : 'secondary'} className="shrink-0 text-[10px]">
+          {isLoading ? '评估中' : isError ? '请求失败' : isPassed ? '符合预期' : '需要调整'}
+        </Badge>
+      </div>
+      {isError && <p className="mt-3 text-xs text-destructive">{evaluation.error}</p>}
+      {result && (
+        <div className="mt-3 space-y-2 border-t border-border pt-3 text-xs">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+            <span>intent: <code>{result.intent}</code></span>
+            <span>confidence: <code>{result.confidence}</code></span>
+          </div>
+          <p className="leading-5">{result.feedback || 'AI 未返回文字反馈'}</p>
+          <EvaluationList label="完成目标" items={result.objectiveCompleted} />
+          <EvaluationList label="命中 Chunks" items={result.chunksUsed} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EvaluationList({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {items.length
+          ? items.map((item) => <Badge key={item} variant="outline" className="text-[10px]">{item}</Badge>)
+          : <span className="text-[11px] text-muted-foreground">无</span>}
+      </div>
+    </div>
+  )
+}
+
+function PracticeContextCard({
+  icon: Icon,
+  label,
+  description,
+  value,
+  values,
+}: {
+  icon: typeof Target
+  label: string
+  description: string
+  value?: string
+  values?: string[]
+}) {
+  const hasValue = Boolean(value || values?.length)
+
+  return (
+    <div className="rounded-md border border-border bg-card p-3">
+      <div className="flex items-center gap-2">
+        <Icon className="size-3.5 text-primary" />
+        <p className="text-xs font-semibold">{label}</p>
+        <span className="text-[10px] text-muted-foreground">{description}</span>
+      </div>
+      {values?.length ? (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {values.map((item) => <Badge key={item} variant="secondary" className="text-[10px]">{item}</Badge>)}
+        </div>
+      ) : (
+        <p className={cn('mt-2 text-xs leading-5', hasValue ? 'text-foreground' : 'text-muted-foreground')}>{value || '未配置'}</p>
+      )}
     </div>
   )
 }

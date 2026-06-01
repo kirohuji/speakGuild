@@ -8,5 +8,6 @@ import { EnglishPracticeAiService } from './english-practice-ai.service';
   imports: [PrismaModule, PracticeModule],
   controllers: [EnglishPracticeAiController],
   providers: [EnglishPracticeAiService],
+  exports: [EnglishPracticeAiService],
 })
 export class PracticeAiModule {}
