@@ -88,8 +88,10 @@ function Reveal({
 function HeroBg() {
   return (
     <>
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-primary/[0.04] to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-accent/[0.03] to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+      <div className="absolute right-[-8rem] top-[-12rem] size-[36rem] rounded-full bg-primary/[0.08] blur-3xl" />
+      <div className="absolute bottom-[-10rem] left-[-8rem] size-[28rem] rounded-full bg-amber-300/[0.09] blur-3xl" />
+      <div className="absolute left-[38%] top-[18%] size-48 rounded-full bg-sky-300/[0.08] blur-3xl" />
+      <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_center,rgba(148,163,184,.32)_1px,transparent_1px)] [background-size:22px_22px]" />
     </>
   )
 }
@@ -104,7 +106,11 @@ export function PortalPage() {
   const isLoggedIn = !!session
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background">
+    <div className="relative min-h-screen overflow-x-hidden bg-background">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -right-40 top-[32%] size-80 rounded-full bg-primary/[0.04] blur-3xl" />
+        <div className="absolute -left-40 top-[62%] size-80 rounded-full bg-amber-300/[0.05] blur-3xl" />
+      </div>
 
       {/* ═══════════════════════════════════════════════════════
           HERO — minimals 风格：左右双栏
@@ -264,7 +270,7 @@ export function PortalPage() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.1, duration: 0.5 }}
-                      className="flex gap-4 rounded-xl border border-border/60 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
+                      className="flex gap-4 rounded-lg bg-muted/30 p-4 transition-colors duration-200 hover:bg-muted/50"
                     >
                       <div className="shrink-0 flex size-10 items-center justify-center rounded-lg bg-primary/[0.06]">
                         <item.icon className="size-5 text-primary" />
@@ -342,9 +348,9 @@ export function PortalPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
             {features.map((f, i) => (
               <Reveal key={f.title} delay={i * 0.05}>
-                <Card className="group h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
-                  <CardContent className="p-6 lg:p-7">
-                    <div className="flex size-11 items-center justify-center rounded-xl bg-primary/[0.06] mb-5 group-hover:bg-primary/[0.10] transition-colors">
+                <Card className="group h-full rounded-lg bg-muted/30 shadow-none transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
+                  <CardContent className="p-5 lg:p-6">
+                    <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-background/70 transition-colors group-hover:bg-background">
                       <f.icon className="size-5 text-primary" />
                     </div>
                     <h4 className="text-base font-bold text-foreground mb-2">{f.title}</h4>
@@ -379,8 +385,8 @@ export function PortalPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
             {steps.map((s, i) => (
               <Reveal key={s.num} delay={i * 0.08}>
-                <Card className="relative h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-hidden">
-                  <CardContent className="p-6 lg:p-7">
+                <Card className="relative h-full overflow-hidden rounded-lg bg-background/75 shadow-none transition-colors duration-300 hover:bg-background dark:ring-0">
+                  <CardContent className="p-5 lg:p-6">
                     <div className="text-5xl font-extrabold text-primary/[0.12] mb-4 leading-none select-none">
                       {s.num}
                     </div>
@@ -431,7 +437,7 @@ export function PortalPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {audience.map((a, i) => (
                 <Reveal key={a.title} delay={i * 0.08}>
-                  <div className="rounded-xl border border-border/60 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                  <div className="rounded-lg bg-muted/30 p-4 transition-colors duration-200 hover:bg-muted/50">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="flex size-9 items-center justify-center rounded-lg bg-primary/[0.06]">
                         <a.icon className="size-4 text-primary" />

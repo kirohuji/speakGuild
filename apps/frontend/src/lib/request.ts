@@ -57,7 +57,7 @@ export const put = <T = any>(url: string, data?: any): Promise<T> =>
 export const patch = <T = any>(url: string, data?: any): Promise<T> =>
   instance.patch(url, data) as any
 
-export const del = <T = any>(url: string): Promise<T> =>
-  instance.delete(url) as any
+export const del = <T = any>(url: string, data?: any): Promise<T> =>
+  instance.delete(url, { data }) as any
 
 export default instance

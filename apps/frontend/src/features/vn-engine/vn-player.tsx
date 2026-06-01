@@ -52,6 +52,7 @@ interface VnPlayerProps {
   onChoice?: (index: number) => void
   onSubmitInput?: (text: string) => void | Promise<void>
   inputFeedback?: ReactNode
+  inputFeedbackChat?: ReactNode
   inputDisabled?: boolean
   onReset?: () => void
   endedActions?: ReactNode
@@ -421,6 +422,7 @@ export function VnPlayer({
   onChoice,
   onSubmitInput,
   inputFeedback,
+  inputFeedbackChat,
   inputDisabled,
   onReset,
   endedActions,
@@ -552,7 +554,7 @@ export function VnPlayer({
           onAdvance={onAdvance}
           onChoice={onChoice}
           onSubmitInput={onSubmitInput}
-          inputFeedback={inputFeedback}
+          inputFeedback={inputFeedbackChat ?? inputFeedback}
           inputDisabled={inputDisabled}
           onReset={onReset}
           endedActions={endedActions}

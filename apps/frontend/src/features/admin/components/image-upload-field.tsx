@@ -3,6 +3,7 @@ import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import type { FileAssetGroup } from '@/features/file-assets/api'
 
 interface ImageUploadFieldProps {
   /** 当前图片 URL */
@@ -18,6 +19,7 @@ interface ImageUploadFieldProps {
   /** 是否禁用 */
   disabled?: boolean
   className?: string
+  group?: FileAssetGroup
 }
 
 const sizeMap = {
@@ -38,6 +40,7 @@ export function ImageUploadField({
   previewSize = 'md',
   disabled = false,
   className,
+  group = 'library',
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(value || '')
@@ -51,7 +54,7 @@ export function ImageUploadField({
     if (!file.type.startsWith('image/')) return
     setUploading(true)
     try {
-      const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
+      const asset = await uploadFileToCosAndComplete({ file, group })
       const resolved = await getFileAssetLongLivedUrl(asset.id)
       const cosUrl = resolved.url
       setPreviewUrl(cosUrl)

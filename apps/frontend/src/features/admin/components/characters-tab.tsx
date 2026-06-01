@@ -256,6 +256,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                 onChange={setAvatarUrl}
                 placeholder="输入头像 URL 或上传"
                 previewSize="md"
+                group="avatar"
               />
             </div>
 

@@ -138,7 +138,9 @@ export function DialogueListView({
         }}
       />
       {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-background/84 backdrop-blur-sm" />
+      <div className="pointer-events-none absolute -right-20 top-20 size-64 rounded-full bg-primary/[0.07] blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 bottom-24 size-72 rounded-full bg-amber-400/[0.06] blur-3xl" />
 
       {/* ── Top bar (hidden when merged into parent header) ── */}
       {!hideTopBar && (
@@ -168,7 +170,7 @@ export function DialogueListView({
         tabIndex={canInteract ? 0 : -1}
         aria-label="推进对话"
         className={cn(
-          'relative z-10 min-h-0 flex-1 overflow-y-auto px-3 outline-none',
+          'relative z-10 min-h-0 flex-1 overflow-y-auto px-3.5 outline-none',
           hideTopBar && 'pt-[calc(3.25rem+env(safe-area-inset-top,0px))]',
           !hideTopBar && 'py-2',
           canInteract && 'cursor-pointer',
@@ -181,7 +183,7 @@ export function DialogueListView({
           }
         }}
       >
-        <div className="flex flex-col gap-2.5 pb-2">
+        <div className="flex flex-col gap-3 pb-3">
           {visibleLines.map((line, index) => {
             const isLast = index === visibleLines.length - 1
             const isUser = line.isUser
@@ -206,7 +208,7 @@ export function DialogueListView({
                 <button
                   key={choice.index}
                   type="button"
-                  className="rounded-xl border border-border bg-card/80 px-4 py-3 text-left text-sm font-medium text-card-foreground shadow-lg backdrop-blur-md transition-colors hover:border-primary/40 hover:bg-accent"
+                  className="rounded-lg bg-muted/40 px-3.5 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
                   onClick={(event) => {
                     event.stopPropagation()
                     onChoice?.(choice.index)
@@ -248,15 +250,15 @@ export function DialogueListView({
 
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
-        <div className="relative z-10 border-t border-border/20 bg-background/60 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] backdrop-blur-xl">
-          {inputFeedback}
+        <div className="relative z-10 border-t border-border/30 bg-background/80 px-3.5 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] backdrop-blur-xl">
+          {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
-              placeholder="输入你的回答..."
+              placeholder={t('practiceVn.chatInputPlaceholder')}
               disabled={submitting || inputDisabled}
               className="min-w-0 flex-1 rounded-full border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-ring focus:ring-1 focus:ring-ring"
             />
@@ -324,8 +326,8 @@ function ChatBubble({
   fontSize: number
   bilingual: boolean
 }) {
-  // Typewriter effect for the last NPC/user line only (skip narration)
-  const hasTypewriter = isLast && !!line.speaker
+  // User input should appear immediately. Typewriter is reserved for new NPC replies.
+  const hasTypewriter = isLast && !isUser && !!line.speaker
   const [displayedText, setDisplayedText] = useState(hasTypewriter ? '' : line.text)
   const timerRef = useRef<number | null>(null)
 
@@ -343,7 +345,7 @@ function ChatBubble({
         window.clearInterval(timer)
         if (timerRef.current === timer) timerRef.current = null
       }
-    }, 18)
+    }, 28)
     timerRef.current = timer
     return () => {
       window.clearInterval(timer)
@@ -379,15 +381,15 @@ function ChatBubble({
   if (!isUser) {
     return (
       <div className="flex w-full justify-start">
-        <div className="flex max-w-[82%] min-w-[140px] gap-3 rounded-2xl rounded-bl-md bg-muted/60 px-3.5 py-3 backdrop-blur-sm">
+        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/40 px-3.5 py-3 backdrop-blur-sm">
           {avatarUrl ? (
             <img
               src={avatarUrl}
               alt={avatarAlt || ''}
-              className="size-11 shrink-0 rounded-full object-cover ring-1 ring-border"
+              className="size-10 shrink-0 rounded-lg object-cover"
             />
           ) : (
-            <div className="size-11 shrink-0 rounded-full bg-muted ring-1 ring-border" />
+            <div className="size-10 shrink-0 rounded-lg bg-background/70" />
           )}
           <div className="min-w-0 flex-1">
             {line.speaker && (
@@ -412,7 +414,7 @@ function ChatBubble({
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
-        <div className="rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-primary-foreground shadow-sm">
+        <div className="rounded-lg bg-primary/10 px-3.5 py-2.5 text-foreground">
           <p className="leading-relaxed" style={{ fontSize }}>
             {displayedText}
             {isTyping && (

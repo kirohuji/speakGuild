@@ -150,59 +150,67 @@ class VnPlayerBoundary extends Component<
 function PracticeTurnFeedback({
   feedback,
   onContinue,
+  tone = 'vn',
 }: {
   feedback: TurnFeedback
   onContinue: () => void
+  tone?: 'vn' | 'chat'
 }) {
+  const { t } = useTranslation()
   const isLoading = feedback.status === 'loading'
   const isError = feedback.status === 'error'
   const isPassed = Boolean(feedback.result?.passed)
   const suggestedChunks = feedback.targetChunks.filter((chunk) => !feedback.result?.chunksUsed.includes(chunk))
   const example = suggestedChunks.length ? suggestedChunks.join(' ') : feedback.targetChunks.join(' ')
+  const isChat = tone === 'chat'
 
   return (
-    <div className="border-t border-white/10 bg-slate-950/92 px-3 py-2 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.22)]">
+    <div className={cn(
+      isChat
+        ? 'rounded-lg bg-muted/40 px-3 py-2.5 text-foreground'
+        : 'border-t border-white/10 bg-slate-950/92 px-3 py-2 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.22)]',
+    )}>
       <div className="flex items-start gap-2">
-        <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10">
+        <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-white/10')}>
           {isLoading
-            ? <Loader2 className="size-3.5 animate-spin text-sky-200" />
+            ? <Loader2 className={cn('size-3.5 animate-spin', isChat ? 'text-primary' : 'text-sky-200')} />
             : isPassed
-              ? <CheckCircle2 className="size-3.5 text-emerald-300" />
-              : <Lightbulb className="size-3.5 text-amber-200" />}
+              ? <CheckCircle2 className={cn('size-3.5', isChat ? 'text-green-500' : 'text-emerald-300')} />
+              : <Lightbulb className={cn('size-3.5', isChat ? 'text-amber-500' : 'text-amber-200')} />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold">
-              {isLoading ? 'AI 正在评估...' : isPassed ? '回答符合预期' : isError ? '评估暂时不可用' : '再试一次会更好'}
+              {isLoading ? t('practiceVn.feedbackEvaluating') : isPassed ? t('practiceVn.feedbackPassed') : isError ? t('practiceVn.feedbackUnavailable') : t('practiceVn.feedbackRetry')}
             </p>
             {!isLoading && !isPassed && (
-              <button type="button" onClick={onContinue} className="shrink-0 text-[11px] text-white/60 underline underline-offset-2 hover:text-white">
-                仍然继续
+              <button type="button" onClick={onContinue} className={cn('shrink-0 text-[11px] underline underline-offset-2', isChat ? 'text-muted-foreground hover:text-foreground' : 'text-white/60 hover:text-white')}>
+                {t('practiceVn.continueAnyway')}
               </button>
             )}
           </div>
           {!isLoading && (
-            <p className="mt-1 text-[11px] leading-4 text-white/72">
-              {isError ? feedback.error : feedback.result?.feedback || '可以继续下一句。'}
+            <p className={cn('mt-1 text-[11px] leading-4', isChat ? 'text-muted-foreground' : 'text-white/72')}>
+              {isError ? feedback.error : feedback.result?.feedback || t('practiceVn.feedbackContinue')}
             </p>
           )}
           {!isLoading && !isPassed && suggestedChunks.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {suggestedChunks.map((chunk) => (
-                <span key={chunk} className="rounded bg-amber-300/12 px-1.5 py-0.5 text-[10px] text-amber-100">{chunk}</span>
+                <span key={chunk} className={cn('rounded px-1.5 py-0.5 text-[10px]', isChat ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-amber-300/12 text-amber-100')}>{chunk}</span>
               ))}
             </div>
           )}
           {!isLoading && !isPassed && (
-            <details className="mt-2 text-[11px] text-white/65">
-              <summary className="flex cursor-pointer list-none items-center gap-1 text-white/72 hover:text-white">
+            <details className={cn('mt-2 text-[11px]', isChat ? 'text-muted-foreground' : 'text-white/65')}>
+              <summary className={cn('flex cursor-pointer list-none items-center gap-1', isChat ? 'text-muted-foreground hover:text-foreground' : 'text-white/72 hover:text-white')}>
                 <ChevronDown className="size-3" />
-                查看讲解与参考回答
+                {t('practiceVn.viewExplanation')}
               </summary>
-              <div className="mt-1.5 space-y-1 rounded bg-white/5 p-2 leading-4">
-                <p><span className="text-white/45">目标：</span>{feedback.objective || '完成当前沟通任务'}</p>
-                {feedback.hint && <p><span className="text-white/45">提示：</span>{feedback.hint}</p>}
-                <p><span className="text-white/45">参考：</span>{example || '尝试更直接地回应 NPC，并补充必要信息。'}</p>
+              <div className={cn('mt-1.5 space-y-1 rounded p-2 leading-4', isChat ? 'bg-background/70' : 'bg-white/5')}>
+                <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.objective')}：</span>{feedback.objective || t('practiceVn.defaultObjective')}</p>
+                {feedback.hint && <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.hint')}：</span>{feedback.hint}</p>}
+                <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.reference')}：</span>{example || t('practiceVn.defaultReference')}</p>
               </div>
             </details>
           )}
@@ -1079,6 +1087,7 @@ export function PracticeSessionPage() {
               isEnded={inkEnded}
               onSubmitInput={sendUserInput}
               inputFeedback={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} /> : null}
+              inputFeedbackChat={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} tone="chat" /> : null}
               inputDisabled={turnFeedback?.status === 'loading' || Boolean(turnFeedback?.result?.passed)}
               onChoice={(choiceIndex) => { setTurnFeedback(null); handleChoice(choiceIndex) }}
               onAdvance={inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}

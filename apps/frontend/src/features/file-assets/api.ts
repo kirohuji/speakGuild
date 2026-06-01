@@ -1,60 +1,87 @@
-import { get, post } from '@/lib/request';
+import { del, get, post } from '@/lib/request'
+
+export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification'
 
 export interface CosPolicy {
-  url: string;
-  formData: Record<string, string>;
-  key: string;
+  exists: boolean
+  asset?: CompletedAsset
+  key?: string
+  uploadUrl?: string
+  method?: 'PUT'
+  headers?: Record<string, string>
 }
 
 export interface CompletedAsset {
-  id: string;
-  sha256: string;
-  url: string;
-  mimeType: string;
-  size: number;
+  id: string
+  sha256: string
+  mimeType: string
+  size: number
+  filename?: string
+  url?: string
 }
 
-/** 获取 COS 上传签名策略 */
-export async function getCosPolicy(filename: string, mimeType: string): Promise<CosPolicy> {
-  return post('/file-assets/cos-policy', { filename, mimeType });
+interface CompleteUploadResult {
+  asset: CompletedAsset
 }
 
-/** 通知后端上传完成 */
-export async function completeUpload(key: string, sha256: string, size: number): Promise<CompletedAsset> {
-  return post('/file-assets/complete', { key, sha256, size });
+async function sha256(file: File): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 /** 前端直传 COS + 后端回调确认（一站式） */
-export async function uploadFileToCosAndComplete({ file, group: _group }: { file: File; group?: string }): Promise<CompletedAsset> {
-  const policy = await getCosPolicy(file.name, file.type);
+export async function uploadFileToCosAndComplete({
+  file,
+  group = 'library',
+}: {
+  file: File
+  group?: FileAssetGroup
+}): Promise<CompletedAsset> {
+  const fileSha256 = await sha256(file)
+  const policy = await post<CosPolicy>('/file-assets/cos-policy', {
+    group,
+    filename: file.name,
+    mimeType: file.type,
+    sha256: fileSha256,
+  })
 
-  const fd = new FormData();
-  for (const [k, v] of Object.entries(policy.formData)) {
-    fd.append(k, v);
-  }
-  fd.append('file', file);
+  if (policy.exists && policy.asset) return policy.asset
+  if (!policy.key || !policy.uploadUrl) throw new Error('上传签名缺少必要信息')
 
-  await fetch(policy.url, { method: 'POST', body: fd });
+  const uploadResponse = await fetch(policy.uploadUrl, {
+    method: policy.method || 'PUT',
+    headers: policy.headers,
+    body: file,
+  })
+  if (!uploadResponse.ok) throw new Error(`上传失败 (${uploadResponse.status})`)
 
-  return completeUpload(policy.key, '', file.size);
+  const result = await post<CompleteUploadResult>('/file-assets/complete', {
+    group,
+    key: policy.key,
+    sha256: fileSha256,
+    size: file.size,
+    filename: file.name,
+    mimeType: file.type,
+  })
+  return result.asset
 }
 
 /** 获取文件长期访问 URL */
-export async function getFileAssetLongLivedUrl(assetId: string): Promise<{ url: string }> {
-  return { url: '' };
+export function getFileAssetLongLivedUrl(assetId: string): Promise<{ url: string }> {
+  return get(`/file-assets/${assetId}/long-lived-url`)
 }
 
 /** 获取当前头像 */
-export async function getCurrentAvatar(): Promise<{ url: string }> {
-  return get('/file-assets/avatar/current');
+export function getCurrentAvatar(): Promise<{ url: string } | null> {
+  return get('/file-assets/avatar/current')
 }
 
 /** 设置当前头像 */
-export async function setCurrentAvatar(assetId: string): Promise<{ url: string }> {
-  return post('/file-assets/avatar/set', { assetId });
+export function setCurrentAvatar(assetId: string): Promise<{ url: string }> {
+  return post('/file-assets/avatar/current', { assetId })
 }
 
 /** 删除文件引用 */
-export async function deleteFileReference(assetId: string): Promise<void> {
-  return;
+export function deleteFileReference(assetId: string, bizType: string, bizId: string): Promise<void> {
+  return del('/file-assets/references', { assetId, bizType, bizId })
 }
