@@ -1,6 +1,0 @@
-{
-  "key": "you?\"\" 就好，不需要真的描述自己过得怎么样。",
-  "title": "认识室友 - 初次见面",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: you?\"\" 就好，不需要真的描述自己过得怎么样。\ntitle: 认识室友 - 初次见面\n---\nAlex: You meet your new roommate for the first time. Introduce yourself.\n#objective: You meet your new roommate for the first time. Introduce yourself.\n#chunks: Nice to meet you,I'm from...,I'm majoring in...\n#user_input\nAlex: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Nice to meet you,I'm from...,I'm majoring in...\n#user_input\nAlex: Got it. That was really helpful. Have a great day!\n-> END\n"
-}
