@@ -6,14 +6,23 @@ export class LearningService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * 获取全部「教材」（即 Scene）列表，附带用户进度
+   * 获取全部「教材」（即 Scene）列表，附带用户进度。
+   * 免费用户看到全部单元，但非免费单元标记为锁定。
    */
   async getLearningUnits(userId: string) {
+    // 检查会员状态
+    const membership = await this.prisma.userMembership.findUnique({
+      where: { userId },
+    });
+    const isMember =
+      membership?.status === 'active' && membership.expiredAt > new Date();
+
     const categories = await this.prisma.sceneCategory.findMany({
       orderBy: { sortOrder: 'asc' },
       include: {
         scenes: {
           orderBy: { createdAt: 'asc' },
+          // 返回所有场景，前端根据 isLocked 控制
           include: {
             _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
             trainingTopics: {
@@ -66,6 +75,8 @@ export class LearningService {
           })),
           requiredOutputLevel: scene.requiredOutputLevel,
           requiredUserLevel: scene.requiredUserLevel,
+          isFree: scene.isFree,
+          isLocked: !isMember && !scene.isFree,
           isUnlocked,
           vocabCount: scene._count.vocabularies,
           chunkCount: scene._count.chunks,

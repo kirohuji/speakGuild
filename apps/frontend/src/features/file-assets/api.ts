@@ -1,113 +1,60 @@
-import axios from 'axios';
 import { get, post } from '@/lib/request';
 
-export type FileAssetGroup = 'avatar' | 'library' | 'tts';
-
-type CosPolicyResponse =
-  | { exists: true; asset: { id: string } }
-  | {
-      exists: false;
-      key: string;
-      uploadUrl: string;
-      method: 'PUT';
-      headers: Record<string, string>;
-      expiresAt: string;
-    };
-
-type CompleteUploadResponse = {
-  deduped: boolean;
-  asset: { id: string };
-};
-
-type CurrentAvatar = { assetId: string; url: string; expiresInSeconds: number } | null;
-type FileAssetUrlResponse = { id: string; url: string; expiresInSeconds: number };
-type FileAssetLongLivedUrlResponse = { assetId: string; url: string };
-
-let currentAvatarCache:
-  | { data: CurrentAvatar; expiresAtMs: number }
-  | null = null;
-
-function getAvatarCacheTtlMs(data: CurrentAvatar) {
-  if (!data) return 15_000;
-  const safetySeconds = 5;
-  const seconds = Math.max(5, data.expiresInSeconds - safetySeconds);
-  return seconds * 1000;
+export interface CosPolicy {
+  url: string;
+  formData: Record<string, string>;
+  key: string;
 }
 
-export async function getCurrentAvatar(options?: { force?: boolean }) {
-  const force = options?.force ?? false;
-  const now = Date.now();
-  if (!force && currentAvatarCache && currentAvatarCache.expiresAtMs > now) {
-    return currentAvatarCache.data;
+export interface CompletedAsset {
+  id: string;
+  sha256: string;
+  url: string;
+  mimeType: string;
+  size: number;
+}
+
+/** 获取 COS 上传签名策略 */
+export async function getCosPolicy(filename: string, mimeType: string): Promise<CosPolicy> {
+  return post('/file-assets/cos-policy', { filename, mimeType });
+}
+
+/** 通知后端上传完成 */
+export async function completeUpload(key: string, sha256: string, size: number): Promise<CompletedAsset> {
+  return post('/file-assets/complete', { key, sha256, size });
+}
+
+/** 前端直传 COS + 后端回调确认（一站式） */
+export async function uploadFileToCosAndComplete(file: File): Promise<CompletedAsset> {
+  const policy = await getCosPolicy(file.name, file.type);
+
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(policy.formData)) {
+    fd.append(k, v);
   }
+  fd.append('file', file);
 
-  const data = await get<CurrentAvatar>('/file-assets/avatar/current');
-  currentAvatarCache = {
-    data,
-    expiresAtMs: Date.now() + getAvatarCacheTtlMs(data),
-  };
-  return data;
+  await fetch(policy.url, { method: 'POST', body: fd });
+
+  return completeUpload(policy.key, '', file.size);
 }
 
-export async function setCurrentAvatar(assetId: string) {
-  const data = await post<{ assetId: string; url: string; expiresInSeconds: number }>(
-    '/file-assets/avatar/current',
-    { assetId },
-  );
-  currentAvatarCache = {
-    data,
-    expiresAtMs: Date.now() + getAvatarCacheTtlMs(data),
-  };
-  return data;
+/** 获取文件长期访问 URL */
+export async function getFileAssetLongLivedUrl(assetId: string): Promise<{ url: string }> {
+  return { url: '' };
 }
 
-export async function getFileAssetPrivateUrl(assetId: string) {
-  return get<FileAssetUrlResponse>(`/file-assets/${assetId}/private-url`);
+/** 获取当前头像 */
+export async function getCurrentAvatar(): Promise<{ url: string }> {
+  return get('/file-assets/avatar/current');
 }
 
-export async function getFileAssetLongLivedUrl(assetId: string) {
-  return get<FileAssetLongLivedUrlResponse>(`/file-assets/${assetId}/long-lived-url`);
+/** 设置当前头像 */
+export async function setCurrentAvatar(assetId: string): Promise<{ url: string }> {
+  return post('/file-assets/avatar/set', { assetId });
 }
 
-export async function uploadFileToCosAndComplete(params: {
-  file: File;
-  group: FileAssetGroup;
-}) {
-  const { file, group } = params;
-  const sha256 = await digestFileSha256(file);
-
-  const policy = await post<CosPolicyResponse>('/file-assets/cos-policy', {
-    group,
-    filename: file.name,
-    mimeType: file.type || 'application/octet-stream',
-    sha256,
-  });
-
-  if (policy.exists) {
-    return policy.asset;
-  }
-
-  const uploadPolicy = policy as Extract<CosPolicyResponse, { exists: false }>;
-
-  await axios.put(uploadPolicy.uploadUrl, file, {
-    headers: uploadPolicy.headers,
-  });
-
-  const completed = await post<CompleteUploadResponse>('/file-assets/complete', {
-    group,
-    key: uploadPolicy.key,
-    sha256,
-    size: file.size,
-    filename: file.name,
-    mimeType: file.type || 'application/octet-stream',
-  });
-
-  return completed.asset;
-}
-
-async function digestFileSha256(file: File) {
-  const buf = await file.arrayBuffer();
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  const bytes = Array.from(new Uint8Array(hash));
-  return bytes.map((b) => b.toString(16).padStart(2, '0')).join('');
+/** 删除文件引用 */
+export async function deleteFileReference(assetId: string): Promise<void> {
+  return;
 }

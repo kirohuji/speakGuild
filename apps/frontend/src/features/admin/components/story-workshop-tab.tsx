@@ -1,42 +1,66 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Plus, Trash2, Edit3, MapPin, Users, BookOpen, Play,
-  ChevronRight, ScrollText, X,
+  ChevronRight, ScrollText, X, Search, ChevronLeft,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import {
-  listStories, createStory, updateStory, deleteStory, getStory,
+  listStories, createStory, updateStory, deleteStory, getStory, getStoryFilters,
   listLocations, listCharacters,
-  type StoryData, type GameLocationData, type GameCharacter,
+  type StoryData, type StoryFilters, type GameLocationData, type GameCharacter,
 } from '../api-content-admin'
 import { InkStoryEditor } from './ink-story-editor'
 import { cn } from '@/lib/cn'
 
+const PAGE_SIZE = 12
+
 interface StoryWorkshopTabProps {
-  /** 外部传入的地点列表（从 MapsTab 同步） */
   locations: GameLocationData[]
-  /** 外部传入的角色列表（从 CharactersTab 同步） */
   characters: GameCharacter[]
 }
 
 export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProps) {
   const [stories, setStories] = useState<StoryData[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editingStory, setEditingStory] = useState<StoryData | null>(null)
   const [saving, setSaving] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
+  // ── List filters ──
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const [filters, setFilters] = useState<StoryFilters>({ scriptTypes: [], categories: [] })
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await listStories()
-      setStories(data)
+      const params: any = { page, pageSize: PAGE_SIZE }
+      if (search) params.search = search
+      if (typeFilter !== 'all') params.scriptType = typeFilter
+      if (categoryFilter !== 'all') params.categoryId = categoryFilter
+      const data = await listStories(params)
+      setStories(data.items)
+      setTotal(data.total)
+      setTotalPages(data.totalPages)
     } catch { toast.error('加载故事列表失败') }
     finally { setLoading(false) }
+  }, [page, search, typeFilter, categoryFilter])
+
+  useEffect(() => { load() }, [load])
+
+  // Load filter options once
+  useEffect(() => {
+    getStoryFilters().then(setFilters).catch(() => {})
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -123,6 +147,9 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
   const getCharacterName = (id?: string | null) =>
     characters.find((c) => c.id === id)?.displayName ?? null
 
+  // ── Filters & pagination (must be before any early return!) ──
+  useEffect(() => { setPage(1) }, [search, typeFilter, categoryFilter])
+
   // ─── Editor View ─────────────────────────────
 
   if (isCreating || editingStory) {
@@ -170,12 +197,32 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            使用 Ink 脚本语法编写对话，inkjs v2.4.0 Compiler 实时编译。
-            创建后可在场景管理中绑定到训练话题。共 {stories.length} 个故事。
-          </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜索标题、Key 或关联话题..."
+            className="pl-9"
+          />
+        </div>
+        <Select value={typeFilter} onChange={(e) => setTypeFilter((e.target as HTMLSelectElement).value)} className="w-[110px]">
+          <SelectItem value="all">全部类型</SelectItem>
+          {filters.scriptTypes.map((t) => (
+            <SelectItem key={t} value={t}>
+              {t === 'practice' ? '练习' : t === 'episode' ? '关卡' : t}
+            </SelectItem>
+          ))}
+        </Select>
+        <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[140px]">
+          <SelectItem value="all">全部分类</SelectItem>
+          {filters.categories.map((c) => (
+            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+          ))}
+        </Select>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>共 {total} 个</span>
         </div>
         <Button size="sm" onClick={openCreate}>
           <Plus className="mr-1 size-4" />新建故事
@@ -185,83 +232,113 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
       {stories.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <ScrollText className="size-10 text-muted-foreground/30" />
-          <p className="mt-3 text-sm text-muted-foreground">暂无故事</p>
-          <p className="mt-1 text-xs text-muted-foreground/60">
-            点击「新建故事」开始编写第一个对话脚本
+          <p className="mt-3 text-sm text-muted-foreground">
+            {search || typeFilter !== 'all' || categoryFilter !== 'all' ? '没有匹配的故事' : '暂无故事'}
           </p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={openCreate}>
-            <Plus className="mr-1 size-3.5" />
-            新建故事
-          </Button>
+          {!search && typeFilter === 'all' && categoryFilter === 'all' && (
+            <>
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                点击「新建故事」开始编写第一个对话脚本
+              </p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={openCreate}>
+                <Plus className="mr-1 size-3.5" />
+                新建故事
+              </Button>
+            </>
+          )}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {stories.map((story) => (
-            <Card
-              key={story.id}
-              className={cn(
-                'cursor-pointer transition-all hover:border-primary/40 hover:shadow-sm',
-                selectedId === story.id && 'border-primary ring-1 ring-primary/20',
-              )}
-              onClick={() => openEditor(story)}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
-                      <ScrollText className="size-4 text-primary" />
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {stories.map((story) => (
+              <Card
+                key={story.id}
+                className={cn(
+                  'cursor-pointer transition-all hover:border-primary/40 hover:shadow-sm',
+                  selectedId === story.id && 'border-primary ring-1 ring-primary/20',
+                )}
+                onClick={() => openEditor(story)}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+                        <ScrollText className="size-4 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{story.title}</CardTitle>
+                        <p className="text-xs text-muted-foreground font-mono">{story.key}</p>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-base">{story.title}</CardTitle>
-                      <p className="text-xs text-muted-foreground font-mono">{story.key}</p>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(story) }}
+                    >
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(story)
-                    }}
-                  >
-                    <Trash2 className="size-3.5 text-destructive" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge variant="secondary" className="text-[10px]">
-                    {story.scriptType === 'practice' ? '练习' :
-                     story.scriptType === 'episode' ? '关卡' :
-                     story.scriptType === 'side_quest' ? '支线' : '自由'}
-                  </Badge>
-                  {story.locationId && getLocationName(story.locationId) && (
-                    <Badge variant="outline" className="text-[10px]">
-                      <MapPin className="mr-0.5 size-2.5" />
-                      {getLocationName(story.locationId)}
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant="secondary" className="text-[10px]">
+                      {story.scriptType === 'practice' ? '练习' :
+                       story.scriptType === 'episode' ? '关卡' :
+                       story.scriptType === 'side_quest' ? '支线' : '自由'}
                     </Badge>
-                  )}
-                  {story.characterId && getCharacterName(story.characterId) && (
-                    <Badge variant="outline" className="text-[10px]">
-                      <Users className="mr-0.5 size-2.5" />
-                      {getCharacterName(story.characterId)}
-                    </Badge>
-                  )}
-                  {story.trainingTopic && (
-                    <Badge className="text-[10px] bg-green-500/10 text-green-600">
-                      <BookOpen className="mr-0.5 size-2.5" />
-                      {story.trainingTopic.title}
-                    </Badge>
-                  )}
-                </div>
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  版本 {story.version} · {new Date(story.updatedAt).toLocaleDateString('zh-CN')}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    {story.trainingTopic && (
+                      <Badge className="text-[10px] bg-green-500/10 text-green-600">
+                        <BookOpen className="mr-0.5 size-2.5" />
+                        {story.trainingTopic.title}
+                      </Badge>
+                    )}
+                    {story.locationId && getLocationName(story.locationId) && (
+                      <Badge variant="outline" className="text-[10px]">
+                        <MapPin className="mr-0.5 size-2.5" />
+                        {getLocationName(story.locationId)}
+                      </Badge>
+                    )}
+                    {story.characterId && getCharacterName(story.characterId) && (
+                      <Badge variant="outline" className="text-[10px]">
+                        <Users className="mr-0.5 size-2.5" />
+                        {getCharacterName(story.characterId)}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    版本 {story.version} · {new Date(story.updatedAt).toLocaleDateString('zh-CN')}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ChevronLeft className="size-4 rotate-180" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* NQTR Architecture Guide */}

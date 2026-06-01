@@ -276,6 +276,7 @@ export interface GameCharacter {
   spriteBaseUrl?: string | null
   expressions?: any
   defaultPosition?: string | null
+  ttsVoice?: string | null
   locationNpcs?: { location: { id: string; displayName: string } }[]
 }
 
@@ -382,8 +383,31 @@ export interface StoryData {
   _count?: { trainingTopic: number }
 }
 
-export async function listStories(): Promise<StoryData[]> {
-  return get('/admin/content/stories')
+export interface StoryListResponse {
+  items: StoryData[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export interface StoryFilters {
+  scriptTypes: string[]
+  categories: { id: string; name: string }[]
+}
+
+export async function listStories(params?: {
+  search?: string
+  scriptType?: string
+  categoryId?: string
+  page?: number
+  pageSize?: number
+}): Promise<StoryListResponse> {
+  return get('/admin/content/stories', params)
+}
+
+export async function getStoryFilters(): Promise<StoryFilters> {
+  return get('/admin/content/stories/filters')
 }
 
 export async function getStory(id: string): Promise<StoryData> {

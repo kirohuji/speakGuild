@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Settings, Loader2, CheckCircle2, AlertCircle,
-  Globe, ToggleLeft, FileText, Sliders, Info,
+  ToggleLeft, Sliders, TrendingUp, Gauge,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,11 +28,10 @@ interface GroupMeta {
 }
 
 const groups: GroupMeta[] = [
-  { key: 'basic',    label: '基础信息', icon: Globe,       desc: 'App 名称、Logo、联系方式等基础配置' },
-  { key: 'feature',  label: '功能开关', icon: ToggleLeft,   desc: '控制注册、维护模式、各功能模块的启用/禁用' },
-  { key: 'content',  label: '协议与合规', icon: FileText,   desc: '用户协议、隐私政策、SDK 列表等法律文本' },
-  { key: 'technical',label: '系统参数', icon: Sliders,     desc: 'API 限流、文件上传、会话超时等技术参数' },
-  { key: 'about',    label: '关于',     icon: Info,        desc: '关于我们、版本信息' },
+  { key: 'feature',  label: '功能开关', icon: ToggleLeft,  desc: '控制注册、维护模式、排行榜等功能' },
+  { key: 'growth',   label: '增长配置', icon: TrendingUp, desc: '邀请奖励天数、新人推广试用等增长参数' },
+  { key: 'technical',label: '系统参数', icon: Sliders,    desc: 'API 限流、文件上传、会话超时等技术参数' },
+  { key: 'quota',    label: 'AI 配额',  icon: Gauge,      desc: '免费用户 AI 纠错次数等配额控制' },
 ];
 
 // ─── Field renderer ─────────────────────────────────────────
@@ -175,7 +174,7 @@ export function AdminSettingsPage() {
   }
 
   const activeGroups = groups.filter((g) => grouped[g.key]?.length > 0);
-  const defaultTab = activeGroups[0]?.key || 'basic';
+  const defaultTab = activeGroups[0]?.key || 'feature';
 
   return (
     <div className="space-y-6">

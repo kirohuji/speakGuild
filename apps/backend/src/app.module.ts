@@ -15,18 +15,18 @@ import { PayModule } from './modules/pay/pay.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
-import { CouponModule } from './modules/coupon/coupon.module';
 import { ReferralModule } from './modules/referral/referral.module';
 import { AchievementModule } from './modules/achievement/achievement.module';
-// --- English Output Training: 新增模块 ---
+// --- English Output Training ---
 import { SceneModule } from './modules/scene/scene.module';
 import { ChunkModule } from './modules/chunk/chunk.module';
-import { LevelModule } from './modules/level/level.module';
 import { ScriptModule } from './modules/script/script.module';
 import { ExpressionModule } from './modules/expression/expression.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ExplorationModule } from './modules/exploration/exploration.module';
 import { LearningModule } from './modules/learning/learning.module';
+import { PointsModule } from './modules/points/points.module';
+import { AiQuotaModule } from './common/ai-quota/ai-quota.module';
 
 @Module({
   imports: [
@@ -46,18 +46,18 @@ import { LearningModule } from './modules/learning/learning.module';
     NotificationModule,
     FeedbackModule,
     LeaderboardModule,
-    CouponModule,
     ReferralModule,
     AchievementModule,
-    // --- English Output Training: 新增模块注册 ---
+    // --- English Output Training ---
     SceneModule,
     ChunkModule,
-    LevelModule,
     ScriptModule,
     ExpressionModule,
     OnboardingModule,
     ExplorationModule,
     LearningModule,
+    PointsModule,
+    AiQuotaModule,
   ],
 })
 export class AppModule {}

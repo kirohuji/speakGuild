@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad_认识室友_聊家乡",
+  "title": "认识室友 - 聊家乡",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad_认识室友_聊家乡\ntitle: 认识室友 - 聊家乡\n---\nAlex: Your roommate asks: 'Tell me about your hometown.'\n#objective: Your roommate asks: 'Tell me about your hometown.'\n#chunks: Nice to meet you,I'm from...,I'm majoring in...\n#user_input\nAlex: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Nice to meet you,I'm from...,I'm majoring in...\n#user_input\nAlex: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

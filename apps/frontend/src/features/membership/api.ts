@@ -61,6 +61,7 @@ export const createOrder = (params: {
   planId: string
   paymentMethod: 'alipay' | 'wechat'
   billingCycle: 'monthly' | 'yearly'
+  usePoints?: number
 }): Promise<OrderResult> => post('/pay/orders', params)
 
 /** 查询订单状态 */

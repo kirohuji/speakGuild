@@ -6,7 +6,7 @@ import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
-import { EnglishHomePage } from '@/features/question-bank/pages/english-home-page'
+import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
 import { TodayTaskPage } from '@/features/learning/pages/today-task-page'
 import { LearningUnitPage } from '@/features/learning/pages/learning-unit-page'
@@ -17,15 +17,14 @@ import { ScriptPlayPage } from '@/features/script/pages/script-play-page'
 import { ExploreMapPage } from '@/features/explore/pages/explore-map-page'
 import { ExploreLocationPage } from '@/features/explore/pages/explore-location-page'
 import { ExpressionLibraryPage } from '@/features/expression/pages/expression-library-page'
-import { GrowthPage } from '@/features/growth/pages/growth-page'
 import { AchievementHallPage } from '@/features/achievement/pages/achievement-hall-page'
+import { MemberPage } from '@/features/membership/pages/member-page'
+import { AccountPage } from '@/features/account/pages/account-page'
+import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { OnboardingLayout } from '@/features/onboarding/pages/onboarding-layout'
 import { GoalsSelectionPage } from '@/features/onboarding/pages/goals-selection-page'
 import { AbilitySelectionPage } from '@/features/onboarding/pages/ability-selection-page'
 import { DiagnosticPage } from '@/features/onboarding/pages/diagnostic-page'
-import { MemberPage } from '@/features/membership/pages/member-page'
-import { AccountPage } from '@/features/account/pages/account-page'
-import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { AdminUsersPage } from '@/features/admin/pages/admin-users-page'
 import { AdminMembersPage } from '@/features/admin/pages/admin-members-page'
 import { AdminBillingPage } from '@/features/admin/pages/admin-billing-page'
@@ -48,7 +47,6 @@ import { SystemIcpPage } from '@/features/system/pages/system-icp-page'
 import { FeedbackPage } from '@/features/feedback/pages/feedback-page'
 import { LeaderboardPage } from '@/features/leaderboard/pages/leaderboard-page'
 import { InvitePage } from '@/features/referral/pages/invite-page'
-import { AdminCouponsPage } from '@/features/admin/pages/admin-coupons-page'
 import { AdminFeedbacksPage } from '@/features/admin/pages/admin-feedbacks-page'
 import { AdminSettingsPage } from '@/features/admin/pages/admin-settings-page'
 import { AdminAnalyticsPage } from '@/features/admin/pages/admin-analytics-page'
@@ -78,7 +76,6 @@ export default function App() {
                 <Route path="members" element={<AdminMembersPage />} />
                 <Route path="billing" element={<AdminBillingPage />} />
                 <Route path="notifications" element={<AdminNotificationsPage />} />
-                <Route path="coupons" element={<AdminCouponsPage />} />
                 <Route path="feedbacks" element={<AdminFeedbacksPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
@@ -122,7 +119,7 @@ export default function App() {
                 <Route path="/expressions" element={<ExpressionLibraryPage />} />
 
                 {/* 我的成长 */}
-                <Route path="/growth" element={<GrowthPage />} />
+                <Route path="/growth" element={<AchievementHallPage />} />
 
                 {/* 成就殿堂 */}
                 <Route path="/achievements" element={<AchievementHallPage />} />

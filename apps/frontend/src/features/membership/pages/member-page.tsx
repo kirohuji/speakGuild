@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor } from 'lucide-react'
+import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,23 +19,22 @@ import {
   type MemberBenefit,
   type OrderResult,
 } from '@/features/membership/api'
+import { pointsApi } from '@/features/points/api'
 import { cn } from '@/lib/cn'
 
 const planIcons: Record<string, React.ElementType> = {
   free: Star,
   standard: Crown,
-  advanced: Zap,
 }
 
 const FALLBACK_BENEFITS: MemberBenefit[] = [
-  { benefitId: '1', name: '场景化训练', freeSupport: '预览', standardSupport: '3 场景/天', advancedSupport: '无限' },
-  { benefitId: '2', name: 'AI 口语纠错', freeSupport: false, standardSupport: '30 次/天', advancedSupport: '无限' },
-  { benefitId: '3', name: 'Chunk 学习法', freeSupport: '预览', standardSupport: true, advancedSupport: true },
-  { benefitId: '4', name: '剧本模式', freeSupport: 'Ch.0 体验', standardSupport: '全部章节', advancedSupport: '全部章节' },
-  { benefitId: '5', name: '探索模式', freeSupport: false, standardSupport: '预览', advancedSupport: '全部地点' },
-  { benefitId: '6', name: '学习库', freeSupport: '20 条', standardSupport: '200 条', advancedSupport: '无限' },
-  { benefitId: '7', name: '输出等级追踪', freeSupport: '基础', standardSupport: '详细分析', advancedSupport: '完整报告' },
-  { benefitId: '8', name: '客服支持', freeSupport: false, standardSupport: '工作日', advancedSupport: '全天优先' },
+  { benefitId: '1', name: 'AI 口语纠错', freeSupport: '5 次/天', standardSupport: '50 次/天' },
+  { benefitId: '2', name: 'AI 对话判定', freeSupport: '5 次/天', standardSupport: '50 次/天' },
+  { benefitId: '3', name: '学习计划单元', freeSupport: '寝室入住等基础', standardSupport: '全部解锁' },
+  { benefitId: '4', name: '表达库容量', freeSupport: '20 条', standardSupport: '无限' },
+  { benefitId: '5', name: '输出等级追踪', freeSupport: '基础', standardSupport: '完整报告' },
+  { benefitId: '6', name: '邀请好友', freeSupport: '+7天+100积分', standardSupport: '+7天+100积分' },
+  { benefitId: '7', name: '被邀请奖励', freeSupport: '+50积分', standardSupport: '+50积分' },
 ]
 
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
@@ -53,12 +52,15 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [payResult, setPayResult] = useState<OrderResult | null>(null)
   const [payLoading, setPayLoading] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
+  const [pointsBalance, setPointsBalance] = useState(0)
+  const [usePoints, setUsePoints] = useState(false)
 
   useEffect(() => {
-    Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits()]).then(
-      ([plansRes, curRes, benRes]) => {
+    Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits(), pointsApi.getBalance()]).then(
+      ([plansRes, curRes, benRes, ptsRes]) => {
         if (plansRes.status === 'fulfilled') setPlans(plansRes.value)
         if (curRes.status === 'fulfilled') setCurrent(curRes.value)
+        if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
         if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
           setBenefits(benRes.value)
         } else {
@@ -86,7 +88,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         planId: payPlan.planId,
         paymentMethod: method,
         billingCycle,
-      })
+        usePoints: usePoints ? pointsBalance : 0,
+      } as any)
       setPayResult(result)
 
       // 支付宝 PC 支付：在新窗口打开
@@ -125,7 +128,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       {t('common.empty')}
     </div>
   ) : (
-    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+    <div className={cn(
+      plans.length === 1
+        ? 'flex justify-center'
+        : 'grid gap-3 grid-cols-1 sm:grid-cols-2'
+    )}>
       {plans.map((plan) => (
         <PricingCard
           key={plan.planId}
@@ -133,6 +140,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           isCurrent={current?.planId === plan.planId}
           billingCycle={billingCycle}
           onUpgrade={() => handleUpgrade(plan)}
+          compact={plans.length === 1}
         />
       ))}
     </div>
@@ -148,45 +156,41 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     </div>
   ) : compact ? (
     <div className="overflow-hidden rounded-lg border border-border/40">
-      <div className="grid grid-cols-3 items-center gap-1 bg-muted/40 px-3 py-1.5">
+      <div className="grid grid-cols-2 items-center gap-1 bg-muted/40 px-3 py-1.5">
         <span className="text-[10px] font-semibold text-muted-foreground">{t('member.compactBenefit')}</span>
-        <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.compactStandard')}</span>
-        <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.compactAdvanced')}</span>
+        <span className="text-center text-[10px] font-semibold text-muted-foreground">会员</span>
       </div>
       {benefits.map((item, idx) => (
         <div
           key={item.benefitId}
           className={cn(
-            'grid grid-cols-3 items-center gap-1 px-3 py-2 text-xs transition-colors hover:bg-muted/20',
+            'grid grid-cols-2 items-center gap-1 px-3 py-2 text-xs transition-colors hover:bg-muted/20',
             idx !== benefits.length - 1 && 'border-b border-border/30',
           )}
         >
           <span className="font-medium truncate">{item.name}</span>
-          <CompactSupportCell value={item.standardSupport} />
-          <CompactSupportCell value={item.advancedSupport} highlighted />
+          <CompactSupportCell value={item.standardSupport} highlighted />
         </div>
       ))}
     </div>
   ) : (
     <div className="overflow-hidden rounded-lg bg-muted/30">
-      <div className="grid grid-cols-4 items-center gap-2 bg-muted/50 px-4 py-2.5">
+      <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
         <span className="text-xs font-semibold text-muted-foreground">{t('member.columns.benefit')}</span>
         <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.columns.free')}</span>
-        <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.columns.standard')}</span>
-        <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.columns.advanced')}</span>
+        <span className="text-center text-xs font-semibold text-muted-foreground">会员</span>
       </div>
       {benefits.map((item, idx) => (
         <div
           key={item.benefitId}
           className={cn(
-            'grid grid-cols-4 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30',
+            'grid grid-cols-3 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30',
             idx !== benefits.length - 1 && 'border-b border-border/50'
           )}
         >
           <span className="font-medium">{item.name}</span>
           <SupportCell value={item.freeSupport} />
-          <SupportCell value={item.standardSupport} />
-          <SupportCell value={item.advancedSupport} highlighted />
+          <SupportCell value={item.standardSupport} highlighted />
         </div>
       ))}
     </div>
@@ -364,7 +368,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={cn(
+              plans.length === 1
+                ? 'flex justify-center'
+                : 'grid grid-cols-2 gap-2'
+            )}>
               {isLoading ? (
                 <>
                   <Skeleton className="h-[120px] rounded-xl" />
@@ -382,6 +390,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     isCurrent={current?.planId === plan.planId}
                     billingCycle={billingCycle}
                     onUpgrade={() => handleUpgrade(plan)}
+                    compact={plans.length === 1}
                   />
                 ))
               )}
@@ -474,6 +483,27 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* 积分抵扣 */}
+            {pointsBalance > 0 && (
+              <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Gift className="size-4 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium">积分抵扣</p>
+                    <p className="text-[11px] text-muted-foreground">{pointsBalance}积分 ≈ ¥{(pointsBalance / 100).toFixed(2)}</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={usePoints ? 'default' : 'outline'}
+                  onClick={() => setUsePoints(!usePoints)}
+                  className="h-7 text-xs"
+                >
+                  {usePoints ? '已使用' : '使用'}
+                </Button>
+              </div>
+            )}
+
             {/* 支付信息 */}
             <div className="rounded-xl border p-4 space-y-2">
               <div className="flex justify-between text-sm">
@@ -613,11 +643,13 @@ function PricingCard({
   isCurrent,
   billingCycle,
   onUpgrade,
+  compact = false,
 }: {
   plan: MemberPlan
   isCurrent: boolean
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
+  compact?: boolean
 }) {
   const { t } = useTranslation()
   const Icon = planIcons[plan.level] || Star
@@ -631,6 +663,7 @@ function PricingCard({
     <div
       className={cn(
         'relative flex flex-col rounded-xl border bg-card p-5 transition-all',
+        compact && 'w-full max-w-sm',
         plan.highlighted && 'shadow-lg border-primary/30',
         isCurrent && 'shadow-sm',
         !plan.highlighted && !isCurrent && 'border-border hover:shadow-sm'
@@ -738,17 +771,18 @@ function CompactPlanCard({
   isCurrent,
   billingCycle,
   onUpgrade,
+  compact = false,
 }: {
   plan: MemberPlan
   isCurrent: boolean
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
+  compact?: boolean
 }) {
   const { t } = useTranslation()
   const Icon = planIcons[plan.level] || Star
   const price = billingCycle === 'yearly' && plan.yearlyPrice ? plan.yearlyPrice : plan.price
   const colorAccent =
-    plan.level === 'advanced' ? 'border-amber-400 bg-amber-500/5' :
     plan.level === 'standard' ? 'border-primary/40 bg-primary/3' :
     ''
 
@@ -758,6 +792,7 @@ function CompactPlanCard({
       onClick={isCurrent ? undefined : onUpgrade}
       className={cn(
         'relative flex flex-col items-center rounded-xl border-2 px-3 py-3 text-center transition-all active:scale-[0.97]',
+        compact && 'w-full max-w-[200px]',
         isCurrent
           ? 'border-primary bg-primary/5 cursor-default'
           : colorAccent || 'border-transparent bg-muted/30 hover:border-primary/30',
@@ -770,11 +805,11 @@ function CompactPlanCard({
       )}
       <div className={cn(
         'flex size-8 items-center justify-center rounded-lg mb-1.5',
-        plan.level === 'advanced' ? 'bg-amber-500/15' : plan.level === 'standard' ? 'bg-primary/15' : 'bg-muted',
+        plan.level === 'standard' ? 'bg-primary/15' : 'bg-muted',
       )}>
         <Icon className={cn(
           'size-4',
-          plan.level === 'advanced' ? 'text-amber-500' : plan.level === 'standard' ? 'text-primary' : 'text-muted-foreground',
+          plan.level === 'standard' ? 'text-primary' : 'text-muted-foreground',
         )} />
       </div>
       <p className="text-xs font-semibold">{plan.name}</p>

@@ -63,6 +63,7 @@ export function VnStoryPreview({
   onDebugChange,
 }: VnStoryPreviewProps) {
   const engineRef = useRef<InkEngine | null>(null)
+  const pendingRef = useRef<DialogueLine[] | null>(null)
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null)
   const [history, setHistory] = useState<DialogueLine[]>([])
   const [choices, setChoices] = useState<{ index: number; text: string }[]>([])
@@ -126,16 +127,29 @@ export function VnStoryPreview({
 
   const appendResult = useCallback((engine: InkEngine, result: NonNullable<ReturnType<InkEngine['continue']>>) => {
     const tags = engine.getCurrentTags()
-    const waiting = tags.some((tag) => {
-      const normalized = tag.trim()
-      return normalized === 'input'
-        || normalized === 'user_input'
-        || normalized === 'wait:input'
-        || normalized === 'wait:user_input'
-        || normalized.startsWith('input:')
-    })
     setCurrentTags(tags)
+
+    const waiting = tags.some((tag) => {
+      const n = tag.trim()
+      return n === 'input' || n === 'user_input' || n === 'wait:input' || n === 'wait:user_input' || n.startsWith('input:')
+    })
     setIsWaiting(waiting)
+
+    if (waiting) {
+      // #input tag is on this line — save it for after user responds
+      if (result.text) {
+        const { speaker, expression, audioUrl } = parseTags(tags)
+        pendingRef.current = parseTextLines(result.text, speaker, expression, audioUrl)
+      }
+      return
+    }
+
+    if (result.hasChoices && result.choices.length > 0) {
+      setChoices(result.choices)
+    } else {
+      setChoices([])
+    }
+
     const { speaker, expression, bg, bgFit, audioUrl } = parseTags(tags)
     if (bg || bgFit) {
       setActiveBackground((prev) => ({
@@ -150,10 +164,7 @@ export function VnStoryPreview({
       setHistory((prev) => [...prev, ...lines])
     }
 
-    if (result.hasChoices) setChoices(result.choices)
-    else setChoices([])
-
-    if (!waiting && !engine.canContinue && result.choices.length === 0) {
+    if (!engine.canContinue && result.choices.length === 0) {
       setIsEnded(true)
       setCompletionOpen(true)
     }
@@ -163,6 +174,7 @@ export function VnStoryPreview({
   useEffect(() => {
     engineRef.current?.destroy()
     engineRef.current = null
+    pendingRef.current = null
     setIsReady(false)
     setHistory([])
     setChoices([])
@@ -194,6 +206,14 @@ export function VnStoryPreview({
     const engine = engineRef.current
     if (!engine) return
 
+    // Flush pending line first (skipped due to #input tag)
+    if (Array.isArray(pendingRef.current) && pendingRef.current.length > 0) {
+      const pending = pendingRef.current
+      pendingRef.current = null
+      setHistory((prev) => [...prev, ...pending])
+      return
+    }
+
     const result = engine.continue()
     if (!result) { setIsEnded(true); setCompletionOpen(true); return }
 
@@ -221,14 +241,15 @@ export function VnStoryPreview({
     if (!engine) return
 
     setHistory((prev) => [...prev, { speaker: 'You', text }])
-    setIsWaiting(false)
     engine.setVariable('user_last_input', text)
+    setIsWaiting(false)
   }, [])
 
   const resetPreview = useCallback(() => {
     if (!compileResult?.json) return
     engineRef.current?.destroy()
     engineRef.current = null
+    pendingRef.current = null
     setHistory([])
     setChoices([])
     setIsEnded(false)

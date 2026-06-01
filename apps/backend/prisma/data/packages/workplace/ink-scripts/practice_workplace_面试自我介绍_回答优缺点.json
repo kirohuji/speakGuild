@@ -1,0 +1,6 @@
+{
+  "key": "practice_workplace_面试自我介绍_回答优缺点",
+  "title": "面试自我介绍 - 回答优缺点",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_workplace_面试自我介绍_回答优缺点\ntitle: 面试自我介绍 - 回答优缺点\n---\nInterviewer: Answer the classic interview question: what are your strengths and weaknesses?\n#objective: Answer the classic interview question: what are your strengths and weaknesses?\n#chunks: My name is...,I'm studying...,I have experience in...\n#user_input\nInterviewer: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: My name is...,I'm studying...,I have experience in...\n#user_input\nInterviewer: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

@@ -50,6 +50,7 @@ model User {
   outputLevel          String                 @default("L1")
   outputLevelDetail    Json?
   totalXp              Int                    @default(0)
+  points               Int                    @default(0)
   userLevel            Int                    @default(1)
   sceneProgresses      UserSceneProgress[]
   chunkProgresses      UserChunkProgress[]
@@ -61,6 +62,9 @@ model User {
   onboardingStatus     OnboardingStatus?
   userAchievementsV2   UserAchievementV2[]
   gameSaves            GameSave[]
+  checkIns             UserCheckIn[]
+  pointTransactions    PointTransaction[]
+  aiUsages             AiUsageDaily[]
 
   @@unique([email])
   @@map("user")
@@ -593,6 +597,7 @@ model Notification {
   type      NotificationType
   sentBy    User                @relation(fields: [sentById], references: [id])
   sentById  String
+  isSpecial Boolean            @default(false)
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   reads     NotificationRead[]
@@ -800,6 +805,7 @@ model Scene {
   description          String?
   requiredOutputLevel  String             @default("L1")
   requiredUserLevel    Int                @default(1)
+  isFree               Boolean            @default(false)  // 免费用户可访问
   prerequisiteScenes   ScenePrerequisite[] @relation("Scene")
   prerequisiteFor      ScenePrerequisite[] @relation("Prerequisite")
   vocabularies         SceneVocabulary[]
@@ -1134,6 +1140,7 @@ model ExpressionItem {
   sceneName      String?
   masteryStatus  String         @default("learning")
   reviewCount    Int            @default(0)
+  easeFactor     Float          @default(2.5)
   lastReviewedAt DateTime?
   nextReviewAt   DateTime?
   createdAt      DateTime       @default(now())
@@ -1194,6 +1201,7 @@ model GameCharacter {
   spriteBaseUrl   String?
   expressions     Json?
   defaultPosition String?
+  ttsVoice        String?           // TTS 音色 ID（如 MiniMax/Cartesia voice ID）
   locationNpcs    GameLocationNpc[]
   explorationRecords ExplorationRecord[]
   createdAt       DateTime          @default(now())
@@ -1285,7 +1293,7 @@ model InkScript {
   key               String          @unique
   title             String
   scriptType        String          @default("episode")
-  inkJson           Json
+  inkJson           Json?
   inkSource         String?         @db.Text
   episodeId         String?
   locationId        String?
@@ -1381,4 +1389,52 @@ model UserAchievementV2 {
   @@unique([userId, achievementId])
   @@index([userId, status])
   @@map("user_achievement_v2")
+}
+
+// ── 积分系统 ──
+
+model UserCheckIn {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  points    Int      @default(10)
+  streak    Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("user_check_in")
+}
+
+model PointTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  amount      Int
+  balance     Int
+  description String?
+  referenceId String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("point_transaction")
+}
+
+// ── AI 额度追踪 ──
+
+model AiUsageDaily {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date     DateTime @db.Date
+
+  feedback Int      @default(0)   // 纠错反馈次数
+  dialogue Int      @default(0)   // 对话判定次数
+  summary  Int      @default(0)   // 汇总/分析次数
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("ai_usage_daily")
 }

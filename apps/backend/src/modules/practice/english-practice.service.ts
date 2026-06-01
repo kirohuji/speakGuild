@@ -440,10 +440,26 @@ export class EnglishPracticeService {
     chunksUsed?: string[];
     grammarIssues?: any;
   }) {
+    // Find the matching ScriptEpisode via the topic's scene
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      select: { sceneId: true, inkScriptId: true },
+    });
+    if (!topic) return null;
+
+    const episode = await this.prisma.scriptEpisode.findFirst({
+      where: {
+        sceneId: topic.sceneId,
+        ...(topic.inkScriptId ? { inkScriptId: topic.inkScriptId } : {}),
+      },
+      select: { id: true },
+    });
+    if (!episode) return null;
+
     return this.prisma.scriptDialogue.create({
       data: {
         userId,
-        episodeId: topicId,
+        episodeId: episode.id,
         round: dto.round ?? 1,
         npcText: dto.npcText,
         userText: dto.userText ?? '',
@@ -457,8 +473,24 @@ export class EnglishPracticeService {
 
   /** 获取话题的所有对话记录（用于汇总分析） */
   async getTopicDialogues(topicId: string, userId: string) {
+    // Find the matching ScriptEpisode via the topic's scene
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      select: { sceneId: true, inkScriptId: true },
+    });
+    if (!topic) return [];
+
+    const episode = await this.prisma.scriptEpisode.findFirst({
+      where: {
+        sceneId: topic.sceneId,
+        ...(topic.inkScriptId ? { inkScriptId: topic.inkScriptId } : {}),
+      },
+      select: { id: true },
+    });
+    if (!episode) return [];
+
     return this.prisma.scriptDialogue.findMany({
-      where: { episodeId: topicId, userId },
+      where: { episodeId: episode.id, userId },
       orderBy: { round: 'asc' },
       select: {
         round: true,

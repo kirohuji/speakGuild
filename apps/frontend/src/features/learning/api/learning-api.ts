@@ -44,6 +44,8 @@ export interface LearningUnitSummary {
   requiredOutputLevel: string
   requiredUserLevel: number
   isUnlocked: boolean
+  isLocked: boolean       // 会员锁定（非会员 + 非免费场景）
+  isFree: boolean         // 是否免费场景
   vocabCount: number
   chunkCount: number
   topicCount: number

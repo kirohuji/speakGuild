@@ -1,0 +1,6 @@
+{
+  "key": "practice_hotel_退房投诉_房间问题",
+  "title": "退房投诉 - 房间问题",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_hotel_退房投诉_房间问题\ntitle: 退房投诉 - 房间问题\n---\nStaff: Complain about a problem in your room to the front desk.\n#objective: Complain about a problem in your room to the front desk.\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

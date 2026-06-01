@@ -1,0 +1,6 @@
+{
+  "key": "practice_check_in",
+  "title": "宿舍入住 - 办理入住对话",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_check_in\ntitle: 宿舍入住 - 办理入住对话\n---\nSarah: Hello! Welcome to the student dormitory. I'm Sarah, the receptionist. How can I help you today?\n#objective: Greet the receptionist and explain you're here to check in\n#hint: Try using I'm here to check in or I have a reservation\n#chunks: I'm here to check in, I have a reservation, My name is...\n#user_input\nSarah: Great! Let me look up your booking. Could you tell me your full name and show me your student ID?\n#objective: Provide your name and mention you have your student ID ready\n#chunks: My name is..., Here is my student ID, I have my ID with me\n#user_input\nSarah: Thank you! Your room is on the 3rd floor, room 302. Do you have any questions about the dormitory?\n#objective: Ask about dormitory facilities like Wi-Fi, laundry, or kitchen\n#hint: You can ask about Wi-Fi password, laundry room, or shared kitchen\n#chunks: What's the Wi-Fi password?, Where is the laundry room?, Is there a shared kitchen?\n#user_input\nSarah: Great questions! The Wi-Fi password is on the notice board. Laundry is on the 1st floor. Anything else?\nSarah: Alright then. Have a great stay! Welcome to the dormitory!\n-> END\n"
+}

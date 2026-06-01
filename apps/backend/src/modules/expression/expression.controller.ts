@@ -43,8 +43,9 @@ export class ExpressionController {
     @Req() req: Request,
     @Param('id') id: string,
     @Body('status') status: MasteryStatus,
+    @Body('quality') quality?: number,
   ) {
     const session = await requireAuthSession(req);
-    return this.expressionService.updateStatus(session.user.id, id, status);
+    return this.expressionService.updateStatus(session.user.id, id, status, quality);
   }
 }

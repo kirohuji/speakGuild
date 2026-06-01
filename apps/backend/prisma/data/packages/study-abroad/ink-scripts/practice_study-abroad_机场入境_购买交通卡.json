@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad_机场入境_购买交通卡",
+  "title": "机场入境 - 购买交通卡",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad_机场入境_购买交通卡\ntitle: 机场入境 - 购买交通卡\n---\nImmigration Officer: Ask at the information desk about getting a travel card.\n#objective: Ask at the information desk about getting a travel card.\n#chunks: I'm here to study,I'll be staying for...,Here is my passport\n#user_input\nImmigration Officer: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'm here to study,I'll be staying for...,Here is my passport\n#user_input\nImmigration Officer: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

@@ -1,0 +1,6 @@
+{
+  "key": "practice_travel_打车出行_和司机聊天",
+  "title": "打车出行 - 和司机聊天",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_travel_打车出行_和司机聊天\ntitle: 打车出行 - 和司机聊天\n---\nTaxi Driver: Make small talk with the taxi driver.\n#objective: Make small talk with the taxi driver.\n#chunks: Can you take me to...?,How long will it take?,How much is the fare?\n#user_input\nTaxi Driver: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you take me to...?,How long will it take?,How much is the fare?\n#user_input\nTaxi Driver: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

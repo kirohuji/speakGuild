@@ -1,7 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { authClient, clearBearerToken } from '@/features/auth/client'
-import { getBootstrap } from '@/features/question-bank/api'
-import { useConfigStore } from '@/stores/config.store'
 
 interface SessionUser {
   id: string
@@ -65,14 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession)
 
       if (nextSession?.user?.id) {
-        try {
-          const boot = await getBootstrap()
-          useConfigStore.getState().hydrateFromBootstrap(boot)
-        } catch {
-          useConfigStore.getState().clearConfig()
-        }
+        // Bootstrap hydration removed — old question-bank system deleted
       } else {
-        useConfigStore.getState().clearConfig()
+        // no-op
       }
 
       return nextSession
@@ -133,7 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authClient.signOut()
     clearBearerToken()
     setSession(null)
-    useConfigStore.getState().clearConfig()
   }
 
   return (

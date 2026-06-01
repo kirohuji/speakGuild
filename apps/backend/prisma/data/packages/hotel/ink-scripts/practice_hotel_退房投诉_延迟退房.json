@@ -1,0 +1,6 @@
+{
+  "key": "practice_hotel_退房投诉_延迟退房",
+  "title": "退房投诉 - 延迟退房",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_hotel_退房投诉_延迟退房\ntitle: 退房投诉 - 延迟退房\n---\nStaff: Ask for a late check-out on your departure day.\n#objective: Ask for a late check-out on your departure day.\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

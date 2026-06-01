@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { VnInputPanel } from './vn-input-panel'
+import { DialogueListView } from './dialogue-list-view'
 
 export interface VnPlayerLine {
   speaker?: string
@@ -31,6 +32,7 @@ export interface VnPlayerChoice {
 
 export interface VnPlayerHandle {
   toggleHistory: (open?: boolean) => void
+  toggleSettings: (open?: boolean) => void
 }
 
 interface VnPlayerProps {
@@ -55,6 +57,8 @@ interface VnPlayerProps {
   className?: string
   stageClassName?: string
   showHistoryButton?: boolean
+  /** Hide the top bar in chat-list mode (e.g. when parent provides its own header) */
+  hideChatTopBar?: boolean
 }
 
 interface VnPlayerSettings {
@@ -63,6 +67,7 @@ interface VnPlayerSettings {
   autoAdvanceDelay: number
   bilingual: boolean
   showUserInputInDialogue: boolean
+  displayMode: 'vn' | 'chat'
 }
 
 const DEFAULT_SETTINGS: VnPlayerSettings = {
@@ -71,6 +76,7 @@ const DEFAULT_SETTINGS: VnPlayerSettings = {
   autoAdvanceDelay: 2.5,
   bilingual: false,
   showUserInputInDialogue: true,
+  displayMode: 'vn',
 }
 
 const SETTINGS_STORAGE_KEY = 'vn-player-settings'
@@ -418,6 +424,7 @@ export function VnPlayer({
   className,
   stageClassName,
   showHistoryButton = true,
+  hideChatTopBar = false,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
@@ -484,10 +491,11 @@ export function VnPlayer({
   }
   useImperativeHandle(ref, () => ({
     toggleHistory: (open?: boolean) => toggleHistory(open ?? !historyOpen),
-  }), [historyOpen])
+    toggleSettings: (open?: boolean) => setSettingsOpen(open ?? !settingsOpen),
+  }), [historyOpen, settingsOpen])
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
-  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen
+  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && settings.displayMode !== 'chat'
   const canSubmitInput = !!onSubmitInput && isWaiting && !activeLine?.isUser && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
 
   useEffect(() => {
@@ -517,6 +525,46 @@ export function VnPlayer({
   const goToPreviousLine = () => {
     if (history.length <= 1) return
     setReviewLineIndex(Math.max(0, lineIndex - 1))
+  }
+
+  // ── Chat list mode ──
+  if (settings.displayMode === 'chat') {
+    return (
+      <>
+        <DialogueListView
+          backgroundUrl={backgroundUrl}
+          backgroundFit={backgroundFit}
+          currentLine={currentLine}
+          history={history}
+          choices={choices}
+          currentAvatarUrl={currentAvatarUrl}
+          currentAvatarAlt={currentAvatarAlt}
+          isWaiting={isWaiting}
+          isEnded={isEnded}
+          onAdvance={onAdvance}
+          onChoice={onChoice}
+          onSubmitInput={onSubmitInput}
+          onReset={onReset}
+          endedActions={endedActions}
+          onHistoryOpenChange={onHistoryOpenChange}
+          className={className}
+          showHistoryButton={showHistoryButton}
+          fontSize={settings.fontSize}
+          bilingual={settings.bilingual}
+          showUserInputInDialogue={settings.showUserInputInDialogue}
+          onSettingsOpen={() => setSettingsOpen(true)}
+          hideTopBar={hideChatTopBar}
+          historyOpen={historyOpen}
+          onToggleHistory={toggleHistory}
+        />
+        <VnSettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          settings={settings}
+          onSettingsChange={setSettings}
+        />
+      </>
+    )
   }
 
   return (
@@ -761,7 +809,7 @@ function VnSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm rounded-2xl w-[90vw]">
         <DialogHeader>
           <DialogTitle>{t('vnSettings.title')}</DialogTitle>
           <DialogDescription>{t('vnSettings.description')}</DialogDescription>
@@ -810,6 +858,35 @@ function VnSettingsDialog({
                 onValueChange={([autoAdvanceDelay]) => update({ autoAdvanceDelay })}
                 disabled={!settings.autoAdvance}
               />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Display Mode */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">{t('vnSettings.displayMode')}</Label>
+            <div className="flex rounded-lg bg-muted p-0.5">
+              <button
+                type="button"
+                className={cn(
+                  'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+                  settings.displayMode === 'vn' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                )}
+                onClick={() => update({ displayMode: 'vn' })}
+              >
+                {t('vnSettings.displayModeVn')}
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+                  settings.displayMode === 'chat' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                )}
+                onClick={() => update({ displayMode: 'chat' })}
+              >
+                {t('vnSettings.displayModeChat')}
+              </button>
             </div>
           </div>
 

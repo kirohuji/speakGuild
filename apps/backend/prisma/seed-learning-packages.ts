@@ -92,6 +92,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           description: row.description || null,
           requiredOutputLevel: row.required_output_level,
           requiredUserLevel: parseInt(row.required_user_level) || 1,
+          isFree: ['寝室入住', '机场入境', '认识室友'].includes(row.title),
         },
       })
       sceneMap.set(row.title, scene.id)
@@ -157,6 +158,24 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     }
     console.log(`  ✓ ${chunkCount} 个句块`)
     totalChunks += chunkCount
+
+    // ═══ 3.5. Ink 脚本（从包目录加载） ═══
+    try {
+      const inkDir = resolve(__dirname, 'data', pkgPath, 'ink-scripts')
+      if (existsSync(inkDir)) {
+        const inkFiles = readdirSync(inkDir).filter((f: string) => f.endsWith('.json'))
+        for (const file of inkFiles) {
+          const inkData = JSON.parse(require('fs').readFileSync(resolve(inkDir, file), 'utf-8'))
+          const ink = await prisma.inkScript.upsert({
+            where: { key: inkData.key },
+            create: inkData,
+            update: inkData,
+          })
+          inkKeyToId.set(ink.key, ink.id)
+        }
+        if (inkFiles.length > 0) console.log(`  ✓ ${inkFiles.length} 个 Ink 脚本`)
+      }
+    } catch { /* no ink-scripts dir */ }
 
     // ═══ 4. 训练话题 ═══
     const topicRows = readCsv<CsvTopic>('training_topics.csv', pkgPath)

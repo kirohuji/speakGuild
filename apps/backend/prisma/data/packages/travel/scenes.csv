@@ -1,2 +1,4 @@
 category_name,title,location,required_output_level,required_user_level,description
 旅行英语,打车出行,机场出租车站,L1,1,打车前往住处，告诉司机目的地。
+旅行英语,机场入境,机场海关,L2,1,通过海关检查，回答入境问题。
+旅行英语,酒店叫车,酒店门口,L1,1,让礼宾叫出租车前往目的地。

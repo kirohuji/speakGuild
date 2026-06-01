@@ -523,6 +523,9 @@ const zhCN = {
     vnSettings: {
       title: '播放设置',
       description: '这些设置会同时用于预览和练习对话。',
+      displayMode: '显示模式',
+      displayModeVn: 'VN 剧场',
+      displayModeChat: '对话列表',
       fontSize: '字体大小',
       autoAdvance: '自动下一句',
       autoAdvanceDelay: '自动间隔',
@@ -1398,6 +1401,9 @@ const en = {
     vnSettings: {
       title: 'Playback Settings',
       description: 'These settings apply to both preview and practice dialogue.',
+      displayMode: 'Display Mode',
+      displayModeVn: 'VN Theater',
+      displayModeChat: 'Chat List',
       fontSize: 'Font Size',
       autoAdvance: 'Auto Advance',
       autoAdvanceDelay: 'Auto Delay',
@@ -2272,6 +2278,9 @@ const ja = {
     vnSettings: {
       title: '再生設定',
       description: 'これらの設定はプレビューと練習の両方に適用されます。',
+      displayMode: '表示モード',
+      displayModeVn: 'VN シアター',
+      displayModeChat: 'チャットリスト',
       fontSize: 'フォントサイズ',
       autoAdvance: '自動送り',
       autoAdvanceDelay: '自動間隔',

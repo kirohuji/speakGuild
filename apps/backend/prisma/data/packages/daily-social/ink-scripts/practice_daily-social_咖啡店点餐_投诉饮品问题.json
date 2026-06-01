@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-social_咖啡店点餐_投诉饮品问题",
+  "title": "咖啡店点餐 - 投诉饮品问题",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-social_咖啡店点餐_投诉饮品问题\ntitle: 咖啡店点餐 - 投诉饮品问题\n---\nBarista: Your drink was made wrong. Politely tell the barista.\n#objective: Your drink was made wrong. Politely tell the barista.\n#chunks: I'd like a...,Can I have...?,How much is that?\n#user_input\nBarista: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like a...,Can I have...?,How much is that?\n#user_input\nBarista: Got it. That was really helpful. Have a great day!\n-> END\n"
+}

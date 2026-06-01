@@ -1,4 +1,5 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-小组讨论,提出观点,Express your opinion on the group discussion topic.,在小组讨论中表达你的观点。,45,L3,,,
-小组讨论,回应不同意见,Someone disagrees with you. Respond politely.,有人不同意你的观点，礼貌地回应。,45,L3,,,
-小组讨论,总结讨论,Summarize the group discussion and propose next steps.,总结小组讨论并提出下一步计划。,50,L3,,,
+小组讨论,提出观点,Express your opinion on the group discussion topic.,在小组讨论中表达你的观点。,45,L3,,,practice_academic_小组讨论_提出观点
+小组讨论,回应不同意见,Someone disagrees with you. Respond politely.,有人不同意你的观点，礼貌地回应。,45,L3,,,practice_academic_小组讨论_回应不同意见
+小组讨论,总结讨论,Summarize the group discussion and propose next steps.,总结小组讨论并提出下一步计划。,50,L3,,,practice_academic_小组讨论_总结讨论
+,,,,,,,,practice_academic__

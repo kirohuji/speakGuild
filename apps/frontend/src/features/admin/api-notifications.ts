@@ -8,6 +8,7 @@ export interface AdminNotificationItem {
   type: 'broadcast' | 'targeted';
   sentById: string;
   sentBy: { id: string; name: string; email: string };
+  isSpecial: boolean;
   createdAt: string;
   updatedAt: string;
   _count: { reads: number; targets: number };
@@ -41,6 +42,7 @@ export async function createNotification(data: {
   content: string;
   type: 'broadcast' | 'targeted';
   targetUserIds?: string[];
+  isSpecial?: boolean;
 }) {
   return post('/admin/notifications', data);
 }
@@ -94,7 +96,7 @@ export async function getNotificationStats() {
 
 export async function updateNotification(
   id: string,
-  data: { title?: string; content?: string; type?: 'broadcast' | 'targeted' },
+  data: { title?: string; content?: string; type?: 'broadcast' | 'targeted'; isSpecial?: boolean },
 ) {
   return patch(`/admin/notifications/${id}`, data);
 }

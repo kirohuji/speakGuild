@@ -161,17 +161,18 @@ function EditNotificationDialog({
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [type, setType] = useState<'broadcast' | 'targeted'>('broadcast')
+  const [isSpecial, setIsSpecial] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (item) { setTitle(item.title); setContent(item.content); setType(item.type) }
+    if (item) { setTitle(item.title); setContent(item.content); setType(item.type); setIsSpecial(item.isSpecial ?? false) }
   }, [item])
 
   const handleSave = async () => {
     if (!item || !title.trim() || !content.trim()) return
     setSaving(true)
     try {
-      await updateNotification(item.id, { title: title.trim(), content: content.trim(), type })
+      await updateNotification(item.id, { title: title.trim(), content: content.trim(), type, isSpecial })
       onSaved()
       onClose()
     } catch {} finally { setSaving(false) }
@@ -207,6 +208,26 @@ function EditNotificationDialog({
                 </button>
               ))}
             </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+            <Megaphone className="size-4 text-amber-500" />
+            <div className="flex-1">
+              <p className="text-sm font-medium">特殊消息</p>
+              <p className="text-[11px] text-muted-foreground">首页横幅展示，点击查看后消失</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSpecial(!isSpecial)}
+              className={cn(
+                'relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors',
+                isSpecial ? 'bg-amber-500' : 'bg-muted-foreground/25',
+              )}
+            >
+              <span className={cn(
+                'absolute top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform',
+                isSpecial ? 'translate-x-[1.125rem]' : 'translate-x-0.5',
+              )} />
+            </button>
           </div>
         </div>
         <DialogFooter className="flex-shrink-0 px-6 pb-5 pt-2">
@@ -244,6 +265,7 @@ export function AdminNotificationsPage() {
   const [formTitle, setFormTitle] = useState('')
   const [formContent, setFormContent] = useState('')
   const [formType, setFormType] = useState<'broadcast' | 'targeted'>('broadcast')
+  const [formIsSpecial, setFormIsSpecial] = useState(false)
   const [searchKeyword, setSearchKeyword] = useState('')
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([])
   const [selectedUsers, setSelectedUsers] = useState<SearchUserResult[]>([])
@@ -340,13 +362,13 @@ export function AdminNotificationsPage() {
     if (!formTitle.trim() || !formContent.trim()) return
     setSending(true)
     try {
-      await createNotification({ title: formTitle.trim(), content: formContent.trim(), type: formType, targetUserIds: formType === 'targeted' ? selectedUsers.map((u) => u.id) : undefined })
+      await createNotification({ title: formTitle.trim(), content: formContent.trim(), type: formType, targetUserIds: formType === 'targeted' ? selectedUsers.map((u) => u.id) : undefined, isSpecial: formIsSpecial })
       setCreateOpen(false); resetForm(); fetchList(); fetchStats()
     } catch {} finally { setSending(false) }
   }
 
   const resetForm = () => {
-    setFormTitle(''); setFormContent(''); setFormType('broadcast'); setSelectedUsers([]); setSearchKeyword(''); setSearchResults([])
+    setFormTitle(''); setFormContent(''); setFormType('broadcast'); setFormIsSpecial(false); setSelectedUsers([]); setSearchKeyword(''); setSearchResults([])
   }
 
   if (session && session.user.role !== 'admin') {
@@ -584,6 +606,26 @@ export function AdminNotificationsPage() {
                 )}
               </div>
             )}
+            <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+              <Megaphone className="size-4 text-amber-500" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">特殊消息</p>
+                <p className="text-[11px] text-muted-foreground">设为特殊消息后，用户首页会出现横幅提示，点击查看后自动消失</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormIsSpecial(!formIsSpecial)}
+                className={cn(
+                  'relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors',
+                  formIsSpecial ? 'bg-amber-500' : 'bg-muted-foreground/25',
+                )}
+              >
+                <span className={cn(
+                  'absolute top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform',
+                  formIsSpecial ? 'translate-x-[1.125rem]' : 'translate-x-0.5',
+                )} />
+              </button>
+            </div>
           </div>
           <DialogFooter className="flex-shrink-0 px-6 pb-5 pt-2">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
