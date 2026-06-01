@@ -6,7 +6,7 @@ import { enUS, ja, zhCN } from 'date-fns/locale'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, ArrowRight,
-  ClipboardList, ShoppingBag, Play, Search, Heart, CalendarDays, Mic,
+  ClipboardList, ShoppingBag, Play, Search, CalendarDays, Mic,
   BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -839,7 +839,6 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
   const navigate = useNavigate()
   const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
-  const [favorite, setFavorite] = useState(false)
   const [topicPage, setTopicPage] = useState(1)
   const pageSize = 6
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
@@ -918,16 +917,8 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 p-4">
-              <Button
-                variant={favorite ? 'default' : 'outline'}
-                className="gap-2"
-                onClick={() => setFavorite((value) => !value)}
-              >
-                <Heart className={cn('size-4', favorite && 'fill-current')} />
-                {t('learning.favorite')}
-              </Button>
-              <Button className="gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
+            <div className="p-4">
+              <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
                 {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
                 {unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
               </Button>
