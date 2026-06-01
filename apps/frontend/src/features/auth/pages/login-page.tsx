@@ -255,7 +255,7 @@ export function LoginPage() {
         {message && (
           <p className={cn(
             'rounded-xl px-3 py-2 text-center text-xs',
-            message.includes(t('auth.success')) ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+            message.includes(t('auth.success')) ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
           )}>
             {message}
           </p>

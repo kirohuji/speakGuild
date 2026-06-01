@@ -74,8 +74,8 @@ export function ForgotPasswordPage() {
       >
         <div className="space-y-4">
               <div className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10">
+                  <CheckCircle2 className="h-6 w-6 text-success" />
                 </div>
               </div>
 
@@ -128,7 +128,7 @@ export function ForgotPasswordPage() {
               {message && (
                 <p className={cn(
                   'rounded-xl px-4 py-3 text-center text-sm',
-                  message.includes('成功') ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+                  message.includes('成功') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
                 )}>
                   {message}
                 </p>
@@ -177,7 +177,7 @@ export function ForgotPasswordPage() {
             {message && (
               <p className={cn(
                 'rounded-xl px-4 py-3 text-center text-sm',
-                message.includes('发送') || message.includes('成功') ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+                message.includes('发送') || message.includes('成功') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
               )}>
                 {message}
               </p>

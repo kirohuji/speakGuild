@@ -47,9 +47,9 @@ export function RegisterPage() {
   }
 
   const strengthColor = (p: string) => {
-    if (p.length < 8) return 'bg-red-400'
-    if (p.length < 12) return 'bg-yellow-400'
-    return 'bg-green-400'
+    if (p.length < 8) return 'bg-destructive'
+    if (p.length < 12) return 'bg-warning'
+    return 'bg-success'
   }
 
   const strengthLabel = (p: string, t: (key: string) => string) => {
@@ -112,7 +112,7 @@ export function RegisterPage() {
                   <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
                     <div className={cn('h-full rounded-full transition-all duration-300', strengthColor(password))} style={{ width: `${Math.min(100, (password.length / 16) * 100)}%` }} />
                   </div>
-                  <span className={cn('text-xs font-medium', password.length < 8 ? 'text-red-500' : password.length < 12 ? 'text-yellow-500' : 'text-green-600')}>
+                  <span className={cn('text-xs font-medium', password.length < 8 ? 'text-destructive' : password.length < 12 ? 'text-warning' : 'text-success')}>
                     {strengthLabel(password, t)}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export function RegisterPage() {
             {message && (
               <p className={cn(
                 'rounded-xl px-4 py-3 text-center text-sm',
-                message.includes('成功') ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+                message.includes('成功') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
               )}>
                 {message}
               </p>

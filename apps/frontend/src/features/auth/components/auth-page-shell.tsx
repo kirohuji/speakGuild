@@ -17,7 +17,7 @@ export function AuthPageShell({
   footer,
 }: AuthPageShellProps) {
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))] dark:bg-background">
+    <div className="relative min-h-[100dvh] overflow-hidden bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
       <div className="relative mx-auto flex min-h-[calc(100dvh-1.75rem)] w-full max-w-md flex-col justify-center">
         {onBack && backLabel ? (
           <div className="mb-3 flex min-h-9 items-center">
@@ -39,7 +39,7 @@ export function AuthPageShell({
           ) : null}
         </div>
 
-        <div className="rounded-3xl bg-card/92 p-4 shadow-[0_12px_36px_rgba(0,46,95,0.09)] ring-1 ring-white/80 backdrop-blur-xl dark:bg-card/85 dark:ring-white/[0.08] sm:p-5">
+        <div className="rounded-3xl bg-card/92 p-4 shadow-[0_12px_36px_rgba(0,46,95,0.09)] ring-1 ring-border/70 backdrop-blur-xl sm:p-5">
           {children}
         </div>
 
