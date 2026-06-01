@@ -221,7 +221,7 @@ export function DialogueListView({
           )}
 
           {/* Waiting indicator */}
-          {isWaiting && (
+          {isWaiting && !onSubmitInput && (
             <div className="flex items-center gap-1.5 py-3">
               <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '0ms' }} />
               <span className="size-1.5 animate-bounce rounded-full bg-foreground/40" style={{ animationDelay: '150ms' }} />
@@ -250,26 +250,28 @@ export function DialogueListView({
 
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
-        <div className="relative z-10 border-t border-border/30 bg-background/80 px-3.5 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] backdrop-blur-xl">
-          {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
-              placeholder={t('practiceVn.chatInputPlaceholder')}
-              disabled={submitting || inputDisabled}
-              className="min-w-0 flex-1 rounded-full border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-ring focus:ring-1 focus:ring-ring"
-            />
-            <button
-              type="button"
-              onClick={handleSubmitInput}
-              disabled={!inputText.trim() || submitting || inputDisabled}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-30"
-            >
-              <Send className="size-4" />
-            </button>
+        <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
+          <div className="rounded-lg bg-background/92 p-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.08)] ring-1 ring-border/35 backdrop-blur-xl">
+            {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
+                placeholder={t('practiceVn.chatInputPlaceholder')}
+                disabled={submitting || inputDisabled}
+                className="min-w-0 flex-1 rounded-lg border-0 bg-muted/50 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:bg-muted/70 focus:ring-1 focus:ring-ring disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={handleSubmitInput}
+                disabled={!inputText.trim() || submitting || inputDisabled}
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-30"
+              >
+                <Send className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -369,7 +371,7 @@ function ChatBubble({
           )}
         </p>
         {bilingual && line.translation && (
-          <p className="mt-1 max-w-[72%] text-center text-[11px] leading-relaxed italic text-muted-foreground/50">
+          <p className="mt-1 max-w-[72%] text-center text-[12px] leading-relaxed italic text-muted-foreground/50">
             {displayedTranslation}
           </p>
         )}
@@ -381,7 +383,7 @@ function ChatBubble({
   if (!isUser) {
     return (
       <div className="flex w-full justify-start">
-        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/40 px-3.5 py-3 backdrop-blur-sm">
+        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/35 px-3.5 py-3 backdrop-blur-sm">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -402,7 +404,7 @@ function ChatBubble({
               )}
             </p>
             {bilingual && line.translation && (
-              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground/70">{displayedTranslation}</p>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground/70">{displayedTranslation}</p>
             )}
           </div>
         </div>
@@ -414,7 +416,7 @@ function ChatBubble({
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
-        <div className="rounded-lg bg-primary/10 px-3.5 py-2.5 text-foreground">
+        <div className="rounded-lg bg-primary/[0.08] px-3.5 py-2.5 text-foreground">
           <p className="leading-relaxed" style={{ fontSize }}>
             {displayedText}
             {isTyping && (
@@ -423,7 +425,7 @@ function ChatBubble({
           </p>
         </div>
         {bilingual && line.translation && (
-          <p className="mt-0.5 mr-1 text-right text-[11px] leading-relaxed text-muted-foreground/70">
+          <p className="mt-0.5 mr-1 text-right text-[12px] leading-relaxed text-muted-foreground/70">
             {displayedTranslation}
           </p>
         )}

@@ -563,7 +563,7 @@ export function VnPlayer({
           showHistoryButton={showHistoryButton}
           fontSize={settings.fontSize}
           bilingual={settings.bilingual}
-          showUserInputInDialogue={settings.showUserInputInDialogue}
+          showUserInputInDialogue
           onSettingsOpen={() => setSettingsOpen(true)}
           hideTopBar={hideChatTopBar}
           historyOpen={historyOpen}
