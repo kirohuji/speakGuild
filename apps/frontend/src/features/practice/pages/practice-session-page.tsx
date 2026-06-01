@@ -167,7 +167,7 @@ function PracticeTurnFeedback({
   return (
     <div className={cn(
       isChat
-        ? 'rounded-lg bg-muted/40 px-3 py-2.5 text-foreground'
+        ? 'rounded-lg bg-muted/65 px-3 py-2.5 text-foreground ring-1 ring-border/45'
         : 'border-t border-white/10 bg-slate-950/92 px-3 py-2 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.22)]',
     )}>
       <div className="flex items-start gap-2">
@@ -190,7 +190,7 @@ function PracticeTurnFeedback({
             )}
           </div>
           {!isLoading && (
-            <p className={cn('mt-1 text-[11px] leading-4', isChat ? 'text-muted-foreground' : 'text-white/72')}>
+            <p className={cn('mt-1 text-[11px] leading-4', isChat ? 'text-foreground/75' : 'text-white/72')}>
               {isError ? feedback.error : feedback.result?.feedback || t('practiceVn.feedbackContinue')}
             </p>
           )}
@@ -202,12 +202,12 @@ function PracticeTurnFeedback({
             </div>
           )}
           {!isLoading && !isPassed && (
-            <details className={cn('mt-2 text-[11px]', isChat ? 'text-muted-foreground' : 'text-white/65')}>
-              <summary className={cn('flex cursor-pointer list-none items-center gap-1', isChat ? 'text-muted-foreground hover:text-foreground' : 'text-white/72 hover:text-white')}>
+            <details className={cn('mt-2 text-[11px]', isChat ? 'text-foreground/75' : 'text-white/65')}>
+              <summary className={cn('flex cursor-pointer list-none items-center gap-1', isChat ? 'font-medium text-foreground/75 hover:text-foreground' : 'text-white/72 hover:text-white')}>
                 <ChevronDown className="size-3" />
                 {t('practiceVn.viewExplanation')}
               </summary>
-              <div className={cn('mt-1.5 space-y-1 rounded p-2 leading-4', isChat ? 'bg-background/70' : 'bg-white/5')}>
+              <div className={cn('mt-1.5 space-y-1 rounded p-2 leading-4', isChat ? 'bg-background/90 text-foreground/80 ring-1 ring-border/35' : 'bg-white/5')}>
                 <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.objective')}：</span>{feedback.objective || t('practiceVn.defaultObjective')}</p>
                 {feedback.hint && <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.hint')}：</span>{feedback.hint}</p>}
                 <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.reference')}：</span>{example || t('practiceVn.defaultReference')}</p>

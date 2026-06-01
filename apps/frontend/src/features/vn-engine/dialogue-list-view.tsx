@@ -138,7 +138,7 @@ export function DialogueListView({
         }}
       />
       {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-background/84 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-background/68 backdrop-blur-[4px]" />
       <div className="pointer-events-none absolute -right-20 top-20 size-64 rounded-full bg-primary/[0.07] blur-3xl" />
       <div className="pointer-events-none absolute -left-24 bottom-24 size-72 rounded-full bg-amber-400/[0.06] blur-3xl" />
 
@@ -208,7 +208,7 @@ export function DialogueListView({
                 <button
                   key={choice.index}
                   type="button"
-                  className="rounded-lg bg-muted/40 px-3.5 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
+                  className="rounded-lg bg-muted/65 px-3.5 py-3 text-left text-sm font-medium text-foreground ring-1 ring-border/45 transition-colors hover:bg-muted/80"
                   onClick={(event) => {
                     event.stopPropagation()
                     onChoice?.(choice.index)
@@ -251,7 +251,7 @@ export function DialogueListView({
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
-          <div className="rounded-lg bg-background/92 p-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.08)] ring-1 ring-border/35 backdrop-blur-xl">
+          <div className="rounded-lg bg-background/96 p-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.11)] ring-1 ring-border/60 backdrop-blur-xl">
             {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
             <div className="flex items-center gap-2">
               <input
@@ -261,7 +261,7 @@ export function DialogueListView({
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
                 placeholder={t('practiceVn.chatInputPlaceholder')}
                 disabled={submitting || inputDisabled}
-                className="min-w-0 flex-1 rounded-lg border-0 bg-muted/50 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:bg-muted/70 focus:ring-1 focus:ring-ring disabled:opacity-60"
+                className="min-w-0 flex-1 rounded-lg border-0 bg-muted/70 px-3.5 py-2.5 text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:bg-muted/85 focus:ring-1 focus:ring-ring disabled:opacity-60"
               />
               <button
                 type="button"
@@ -383,7 +383,7 @@ function ChatBubble({
   if (!isUser) {
     return (
       <div className="flex w-full justify-start">
-        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/35 px-3.5 py-3 backdrop-blur-sm">
+        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/65 px-3.5 py-3 ring-1 ring-border/45 backdrop-blur-sm">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -395,7 +395,7 @@ function ChatBubble({
           )}
           <div className="min-w-0 flex-1">
             {line.speaker && (
-              <p className="text-sm font-semibold text-foreground">{line.speaker}</p>
+              <p className="text-sm font-semibold text-foreground/90">{line.speaker}</p>
             )}
             <p className="mt-1 leading-relaxed text-foreground" style={{ fontSize }}>
               {displayedText}
@@ -404,7 +404,7 @@ function ChatBubble({
               )}
             </p>
             {bilingual && line.translation && (
-              <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground/70">{displayedTranslation}</p>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">{displayedTranslation}</p>
             )}
           </div>
         </div>
@@ -416,7 +416,7 @@ function ChatBubble({
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
-        <div className="rounded-lg bg-primary/[0.08] px-3.5 py-2.5 text-foreground">
+        <div className="rounded-lg bg-primary/15 px-3.5 py-2.5 text-foreground ring-1 ring-primary/20">
           <p className="leading-relaxed" style={{ fontSize }}>
             {displayedText}
             {isTyping && (
@@ -425,7 +425,7 @@ function ChatBubble({
           </p>
         </div>
         {bilingual && line.translation && (
-          <p className="mt-0.5 mr-1 text-right text-[12px] leading-relaxed text-muted-foreground/70">
+          <p className="mt-1 mr-1 text-right text-[12px] leading-relaxed text-muted-foreground">
             {displayedTranslation}
           </p>
         )}
