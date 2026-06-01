@@ -5,7 +5,7 @@ import {
   Mic, BookOpen, TrendingUp,
   ArrowRight, Star, GraduationCap,
   MessageSquare, Play, Globe, CheckCircle,
-  Smartphone, Monitor, Cloud,
+  Smartphone,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
@@ -19,13 +19,13 @@ import { useAuth } from '@/providers/auth-provider'
    ═══════════════════════════════════════════════════════════════ */
 
 const whatWeHave = [
-  { icon: Mic, title: 'AI 口语纠错', desc: 'DeepSeek 实时分析语法、搭配与自然度，精准到词级反馈' },
+  { icon: Mic, title: 'AI 口语纠错', desc: 'AI 实时分析语法、搭配与自然度，精准到词级反馈' },
   { icon: BookOpen, title: 'Chunk 学习法', desc: '可迁移表达块，从「看得懂」到「说得出」的关键一步' },
   { icon: Play, title: '剧本模式', desc: '在剧情任务中实战，用英语推动故事，而非机械练习' },
 ]
 
 const features = [
-  { icon: Mic, title: 'AI 口语纠错', desc: 'DeepSeek 实时分析语法、搭配、自然度，精准定位每个可改进之处' },
+  { icon: Mic, title: 'AI 口语纠错', desc: 'AI 实时分析语法、搭配、自然度，精准定位每个可改进之处' },
   { icon: BookOpen, title: 'Chunk 学习法', desc: '学习可迁移表达块，从"I\'m here to check in"到即学即用' },
   { icon: Play, title: '剧本模式', desc: '在剧情任务中实战英语，入境、入住、认识室友——用英语推动故事' },
   { icon: Globe, title: '沉浸探索', desc: '小地图自由选择地点和 NPC，像在国外生活一样进行英语互动' },
@@ -49,8 +49,7 @@ const audience = [
 
 const platforms = [
   { icon: Smartphone, label: 'iOS' },
-  { icon: Monitor, label: 'Web' },
-  { icon: Cloud, label: 'PWA' },
+  { icon: Smartphone, label: 'Android' },
 ]
 
 /* ═══════════════════════════════════════════════════════════════
