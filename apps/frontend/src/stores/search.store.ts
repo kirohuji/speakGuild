@@ -27,6 +27,6 @@ export const useSearchStore = create<SearchStore>()(
         })),
       clearHistory: () => set({ history: [] }),
     }),
-    { name: 'guide-exam-search-history' }
+    { name: 'manyu-search-history' }
   )
 )

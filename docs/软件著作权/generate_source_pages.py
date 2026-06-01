@@ -79,7 +79,7 @@ SOURCE_FILES = [
     'apps/frontend/src/features/admin/api.ts',
     'apps/frontend/src/features/scene/pages/scene-list-page.tsx',
     'apps/frontend/src/features/practice/pages/practice-page.tsx',
-    'apps/frontend/src/features/question-bank/pages/home-page.tsx',
+    'apps/frontend/src/features/scene/pages/scene-list-page.tsx',
     'apps/frontend/src/features/profile/pages/profile-page.tsx',
     'apps/frontend/src/features/membership/pages/member-page.tsx',
     'apps/frontend/src/features/mock-exam/pages/mock-page.tsx',

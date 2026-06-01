@@ -63,9 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession)
 
       if (nextSession?.user?.id) {
-        // Bootstrap hydration removed — old question-bank system deleted
+        // Session loaded successfully
       } else {
-        // no-op
+        // no session
       }
 
       return nextSession

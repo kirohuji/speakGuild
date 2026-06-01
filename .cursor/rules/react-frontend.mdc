@@ -31,14 +31,14 @@ alwaysApply: false
 ## HTTP 请求
 
 - 统一使用 `lib/request.ts` 中的 Axios 实例，**不要直接使用 axios**
-- 请求拦截器自动注入 Bearer Token（从 `localStorage('guideready-bearer-token')`）
+- 请求拦截器自动注入 Bearer Token（从 `localStorage('manyu-bearer-token')`）
 - 响应拦截器自动解包 `data.data`，自动处理 401 跳转
 
 ## 认证相关
 
 - `AuthRouteGuard` 组件包裹所有需要登录的路由
 - 未认证用户自动重定向到 `#/auth/login`
-- Token 存储在 localStorage 的 `guideready-bearer-token` 键
+- Token 存储在 localStorage 的 `manyu-bearer-token` 键
 
 ## 路由
 

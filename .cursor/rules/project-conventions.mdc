@@ -21,10 +21,10 @@ alwaysApply: true
 ## 核心目录结构
 
 ```
-guideready/
+manyu/
 ├── apps/backend/src/          # NestJS 后端（按功能域模块化）
 │   ├── common/                # 公共层（filters/interceptors/prisma/response）
-│   └── modules/               # 10 个业务模块（auth/config-guide/question-bank/practice/...）
+│   └── modules/               # 业务模块（auth/scene/chunk/practice/script/...）
 ├── apps/frontend/src/         # React 前端
 │   ├── features/              # 按功能域组织（每域含 api.ts + pages/）
 │   ├── components/ui/         # shadcn/ui 组件

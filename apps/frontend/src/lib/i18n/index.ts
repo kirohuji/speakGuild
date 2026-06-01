@@ -2639,7 +2639,7 @@ i18n.use(initReactI18next).init({
     en: en,
     ja: ja,
   },
-  lng: localStorage.getItem('guide-exam-language') || 'zh-CN',
+  lng: localStorage.getItem('manyu-language') || 'zh-CN',
   fallbackLng: 'zh-CN',
   interpolation: { escapeValue: false },
 })

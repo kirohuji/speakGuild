@@ -45,7 +45,7 @@ export const useAssetsStore = create<AssetsStore>()(
       hasWord: (word) => get().words.includes(word),
     }),
     {
-      name: 'guide-exam-favorites',
+      name: 'manyu-favorites',
       partialize: (state) => ({ favoriteIds: state.favoriteIds }),
     }
   )
@@ -93,7 +93,7 @@ export const useWordsStore = create<WordsStore>()(
       hasWord: (word) => get().entries.some((e) => e.word === word),
     }),
     {
-      name: 'guide-exam-words',
+      name: 'manyu-words',
       // 从旧版 { words: string[] } 迁移到新格式
       migrate: (persisted: any) => {
         if (Array.isArray(persisted?.words) && !persisted.entries) {

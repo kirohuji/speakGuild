@@ -73,7 +73,7 @@ services:
       dockerfile: docker/nginx.Dockerfile
       args:
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
-        VITE_API_BASE_URL: /api/v1/guide-exam
+        VITE_API_BASE_URL: /api/v1/manyu
     container_name: manyu-nginx
     restart: unless-stopped
     depends_on:

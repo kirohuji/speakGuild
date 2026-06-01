@@ -60,13 +60,13 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => {
         set({ language })
-        localStorage.setItem('guide-exam-language', language)
+        localStorage.setItem('manyu-language', language)
       },
       setTts: (tts) =>
         set((state) => ({ tts: { ...state.tts, ...tts } })),
       setTtsBackend: (settings) =>
         set((state) => ({ ttsBackend: { ...state.ttsBackend, ...settings } })),
     }),
-    { name: 'guide-exam-preferences' }
+    { name: 'manyu-preferences' }
   )
 )

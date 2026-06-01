@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Users, Database, FileText, Settings, BarChart3, Bell,
+  Users, FileText, Settings, BarChart3, Bell,
   ChevronRight, ArrowLeft, CreditCard, Receipt, FolderOpen,
   Tag, MessageSquare, MapPin, Map, BookOpen, Film, Award, UserCircle, ScrollText, Palette, Quote,
 } from 'lucide-react'
@@ -58,12 +58,7 @@ const menuItems: MenuItem[] = [
     icon: MessageSquare,
     path: '/admin/feedbacks',
   },
-  // {
-  //   key: 'question-bank',
-  //   label: '题库管理',
-  //   icon: Database,
-  //   path: '/admin/question-bank',
-  // },
+
   {
     key: 'content',
     label: '内容审核',

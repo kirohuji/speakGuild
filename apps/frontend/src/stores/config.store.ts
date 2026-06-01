@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 if (typeof window !== 'undefined') {
   try {
-    localStorage.removeItem('guide-exam-config')
+    localStorage.removeItem('manyu-config')
   } catch {
     /* ignore */
   }

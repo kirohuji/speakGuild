@@ -14,7 +14,7 @@ alwaysApply: false
 
 ## 模型命名规范
 
-- 表名：snake_case（如 `question_bank`、`user_binding_config`）
+- 表名：snake_case（如 `daily_sentence`、`user_scene_progress`）
 - 模型名：PascalCase（如 `QuestionBank`、`UserBindingConfig`）
 - 枚举值：camelCase（如 `monthly`、`active`）
 

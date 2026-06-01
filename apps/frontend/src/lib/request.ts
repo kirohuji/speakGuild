@@ -3,7 +3,7 @@ import { clearBearerToken, getBearerToken } from '@/features/auth/client'
 
 if (typeof window !== 'undefined') {
   try {
-    localStorage.removeItem('guide-exam-device-id')
+    localStorage.removeItem('manyu-device-id')
   } catch {
     /* ignore */
   }

@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/frontend apps/frontend
 
-ARG VITE_API_BASE_URL=/api/v1/guide-exam
+ARG VITE_API_BASE_URL=/api/v1/manyu
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 RUN pnpm --filter @manyu/frontend build
