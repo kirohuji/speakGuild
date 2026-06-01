@@ -705,43 +705,45 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             {!payResult && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">选择支付方式</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="overflow-hidden rounded-lg bg-muted/30">
                 <button
                   type="button"
                   onClick={() => handlePay('alipay')}
                   disabled={payLoading}
-                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 text-left transition-all hover:border-blue-500/60 hover:bg-blue-500/[0.04] hover:shadow-sm disabled:opacity-50"
+                  className="flex w-full items-center gap-3 border-b border-border/40 px-3.5 py-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-50"
                 >
                   {payLoading ? (
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
                   ) : (
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-base font-bold text-white">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-base font-bold text-white">
                       支
                     </div>
                   )}
-                  <span>
+                  <span className="min-w-0 flex-1">
                     <span className="block text-sm font-medium">{t('member.alipay')}</span>
-                    <span className="block text-[10px] text-muted-foreground">{t('member.webPay')}</span>
+                    <span className="mt-0.5 block text-[11px] text-muted-foreground">{t('member.webPay')}</span>
                   </span>
+                  <ChevronLeft className="size-4 rotate-180 text-muted-foreground/50" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handlePay('wechat')}
                   disabled={payLoading}
-                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3 text-left transition-all hover:border-green-500/60 hover:bg-green-500/[0.04] hover:shadow-sm disabled:opacity-50"
+                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-50"
                 >
                   {payLoading ? (
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
                   ) : (
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-green-500 text-base font-bold text-white">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-green-500 text-base font-bold text-white">
                       微
                     </div>
                   )}
-                  <span>
+                  <span className="min-w-0 flex-1">
                     <span className="block text-sm font-medium">{t('member.wechatPay')}</span>
-                    <span className="block text-[10px] text-muted-foreground">{t('member.scanPay')}</span>
+                    <span className="mt-0.5 block text-[11px] text-muted-foreground">{t('member.scanPay')}</span>
                   </span>
+                  <ChevronLeft className="size-4 rotate-180 text-muted-foreground/50" />
                 </button>
                 </div>
                 <p className="pt-1 text-center text-[10px] leading-4 text-muted-foreground">
