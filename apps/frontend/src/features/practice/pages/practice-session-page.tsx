@@ -168,15 +168,15 @@ function PracticeTurnFeedback({
     <div className={cn(
       isChat
         ? 'rounded-lg bg-muted/65 px-3 py-2.5 text-foreground ring-1 ring-border/45'
-        : 'border-t border-white/10 bg-slate-950/92 px-3 py-2 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.22)]',
+        : 'border-t border-border/45 bg-background/72 px-3 py-2 text-foreground backdrop-blur-xl',
     )}>
       <div className="flex items-start gap-2">
-        <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-white/10')}>
+        <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-muted/70')}>
           {isLoading
-            ? <Loader2 className={cn('size-3.5 animate-spin', isChat ? 'text-primary' : 'text-sky-200')} />
+            ? <Loader2 className="size-3.5 animate-spin text-primary" />
             : isPassed
-              ? <CheckCircle2 className={cn('size-3.5', isChat ? 'text-green-500' : 'text-emerald-300')} />
-              : <Lightbulb className={cn('size-3.5', isChat ? 'text-amber-500' : 'text-amber-200')} />}
+              ? <CheckCircle2 className="size-3.5 text-green-500" />
+              : <Lightbulb className="size-3.5 text-amber-500" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
@@ -184,33 +184,33 @@ function PracticeTurnFeedback({
               {isLoading ? t('practiceVn.feedbackEvaluating') : isPassed ? t('practiceVn.feedbackPassed') : isError ? t('practiceVn.feedbackUnavailable') : t('practiceVn.feedbackRetry')}
             </p>
             {!isLoading && !isPassed && (
-              <button type="button" onClick={onContinue} className={cn('shrink-0 text-[11px] underline underline-offset-2', isChat ? 'text-muted-foreground hover:text-foreground' : 'text-white/60 hover:text-white')}>
+              <button type="button" onClick={onContinue} className="shrink-0 text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground">
                 {t('practiceVn.continueAnyway')}
               </button>
             )}
           </div>
           {!isLoading && (
-            <p className={cn('mt-1 text-[11px] leading-4', isChat ? 'text-foreground/75' : 'text-white/72')}>
+            <p className="mt-1 text-[11px] leading-4 text-foreground/75">
               {isError ? feedback.error : feedback.result?.feedback || t('practiceVn.feedbackContinue')}
             </p>
           )}
           {!isLoading && !isPassed && suggestedChunks.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {suggestedChunks.map((chunk) => (
-                <span key={chunk} className={cn('rounded px-1.5 py-0.5 text-[10px]', isChat ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-amber-300/12 text-amber-100')}>{chunk}</span>
+                <span key={chunk} className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">{chunk}</span>
               ))}
             </div>
           )}
           {!isLoading && !isPassed && (
-            <details className={cn('mt-2 text-[11px]', isChat ? 'text-foreground/75' : 'text-white/65')}>
-              <summary className={cn('flex cursor-pointer list-none items-center gap-1', isChat ? 'font-medium text-foreground/75 hover:text-foreground' : 'text-white/72 hover:text-white')}>
+            <details className="mt-2 text-[11px] text-foreground/75">
+              <summary className="flex cursor-pointer list-none items-center gap-1 font-medium text-foreground/75 hover:text-foreground">
                 <ChevronDown className="size-3" />
                 {t('practiceVn.viewExplanation')}
               </summary>
-              <div className={cn('mt-1.5 space-y-1 rounded p-2 leading-4', isChat ? 'bg-background/90 text-foreground/80 ring-1 ring-border/35' : 'bg-white/5')}>
-                <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.objective')}：</span>{feedback.objective || t('practiceVn.defaultObjective')}</p>
-                {feedback.hint && <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.hint')}：</span>{feedback.hint}</p>}
-                <p><span className={cn(isChat ? 'text-muted-foreground' : 'text-white/45')}>{t('practiceVn.reference')}：</span>{example || t('practiceVn.defaultReference')}</p>
+              <div className="mt-1.5 space-y-1 rounded bg-background/90 p-2 leading-4 text-foreground/80 ring-1 ring-border/35">
+                <p><span className="text-muted-foreground">{t('practiceVn.objective')}：</span>{feedback.objective || t('practiceVn.defaultObjective')}</p>
+                {feedback.hint && <p><span className="text-muted-foreground">{t('practiceVn.hint')}：</span>{feedback.hint}</p>}
+                <p><span className="text-muted-foreground">{t('practiceVn.reference')}：</span>{example || t('practiceVn.defaultReference')}</p>
               </div>
             </details>
           )}
@@ -1101,7 +1101,7 @@ export function PracticeSessionPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-full border-white/20 bg-white/8 px-4 text-xs text-white hover:bg-white/12 hover:text-white"
+                    className="h-8 rounded-full border-border/60 bg-background/70 px-4 text-xs text-foreground hover:bg-muted hover:text-foreground"
                     onClick={restartPractice}
                   >
                     {t('practiceSession.retry')}

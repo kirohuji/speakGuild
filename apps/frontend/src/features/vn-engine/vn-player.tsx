@@ -694,11 +694,12 @@ export function VnPlayer({
 
         <div className="absolute inset-x-0 bottom-0 z-20">
           {displayLine?.speaker && (
-            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center rounded-full border border-white/10 bg-black/58 px-3 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
-              <span className="truncate text-xs font-semibold text-white/88">{displayLine.speaker}</span>
+            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center gap-1.5 rounded-full bg-background/82 px-3 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-border/45 backdrop-blur-2xl">
+              <span className="size-1.5 shrink-0 rounded-full bg-primary/65" />
+              <span className="truncate text-xs font-semibold text-foreground/80">{displayLine.speaker}</span>
             </div>
           )}
-          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/58 px-1 shadow-[0_6px_22px_rgba(0,0,0,.2)] backdrop-blur-2xl">
+          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full bg-background/82 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-border/45 backdrop-blur-2xl">
             <VnIconButton
               label={t('vnHistory.prevLine')}
               disabled={history.length <= 1 || lineIndex <= 0}
@@ -716,7 +717,7 @@ export function VnPlayer({
             </VnIconButton>
           </div>
           <div className={cn(
-            'flex min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-white/10 bg-black/58 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl',
+            'flex min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-border/55 bg-background/90 text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-2xl',
             inputFeedback ? 'max-h-[76dvh] sm:max-h-[64dvh]' : 'max-h-[34dvh]',
           )}>
             <div className="min-h-0 flex-1 overflow-y-auto relative">
@@ -726,40 +727,40 @@ export function VnPlayer({
                     <img
                       src={currentAvatarUrl}
                       alt={currentAvatarAlt || displayLine.speaker || ''}
-                      className="mt-3 size-[72px] shrink-0 rounded-2xl object-cover ring-1 ring-white/15"
+                      className="mt-3 size-[72px] shrink-0 rounded-2xl object-cover ring-1 ring-border/70"
                     />
                   )}
                   <div className={cn('min-w-0 space-y-2 pt-2', currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '')}>
-                    <p className="leading-relaxed text-white/92" style={{ fontSize: settings.fontSize }}>
+                    <p className="font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
                       {displayedText}
                       {canAdvance && (
-                        <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-white/70 align-middle drop-shadow-[0_0_8px_rgba(255,255,255,.42)]" />
+                        <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-primary/70 align-middle" />
                       )}
                     </p>
                     {settings.bilingual && displayLine.translation && (
-                      <p className="text-xs leading-relaxed text-white/58">{displayedTranslation}</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">{displayedTranslation}</p>
                     )}
                   </div>
                 </div>
               ) : isEnded ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <p className="text-center text-sm text-white/62">{t('vnHistory.storyEnded')}</p>
+                  <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
                   {endedActions}
                 </div>
               ) : isWaiting ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="inline-flex gap-1">
-                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '0ms' }} />
-                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '150ms' }} />
-                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '300ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-foreground/45" style={{ animationDelay: '0ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-foreground/45" style={{ animationDelay: '150ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-foreground/45" style={{ animationDelay: '300ms' }} />
                   </span>
                 </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="inline-flex gap-1">
-                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '0ms' }} />
-                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '150ms' }} />
-                    <span className="size-1.5 animate-bounce rounded-full bg-white/50" style={{ animationDelay: '300ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-foreground/45" style={{ animationDelay: '0ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-foreground/45" style={{ animationDelay: '150ms' }} />
+                    <span className="size-1.5 animate-bounce rounded-full bg-foreground/45" style={{ animationDelay: '300ms' }} />
                   </span>
                 </div>
               )}
@@ -798,7 +799,7 @@ function VnIconButton({
       aria-label={label}
       title={label}
       disabled={disabled}
-      className="flex size-7 items-center justify-center rounded-full text-white/78 transition-colors hover:bg-white/12 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+      className="flex size-7 items-center justify-center rounded-full text-foreground/55 transition-colors hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
       onClick={(event) => {
         event.stopPropagation()
         onClick()

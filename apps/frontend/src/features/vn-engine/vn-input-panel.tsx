@@ -97,7 +97,7 @@ export function VnInputPanel({
   }
 
   return (
-    <div className="border-t border-white/10 bg-black/12 px-4 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] pt-2.5">
+    <div className="border-t border-border/45 bg-background/55 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl">
       <div className="flex h-10 items-center gap-2">
         <button
           type="button"
@@ -109,16 +109,16 @@ export function VnInputPanel({
             toggleVoice()
           }}
           className={cn(
-            'relative flex size-9 shrink-0 items-center justify-center border border-white/10 text-white/78 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-40',
-            isListening && 'border-rose-300/30 bg-rose-500/18 text-rose-100',
+            'relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40',
+            isListening && 'bg-rose-500/15 text-rose-600 ring-rose-500/30 dark:text-rose-300',
           )}
         >
           {isListening ? <Square className="size-3.5 fill-current" /> : <Mic className="size-4" />}
-          {isListening && <span className="absolute inset-0 animate-ping border border-rose-200/50" />}
+          {isListening && <span className="absolute inset-0 animate-ping rounded-lg ring-1 ring-rose-500/40" />}
         </button>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2 border-x border-white/10 px-3">
-          <Keyboard className="size-4 shrink-0 text-white/40" />
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-muted/70 px-3 ring-1 ring-border/45">
+          <Keyboard className="size-4 shrink-0 text-muted-foreground" />
           <input
             value={text}
             disabled={disabled}
@@ -132,7 +132,7 @@ export function VnInputPanel({
                 void submit()
               }
             }}
-            className="h-7 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/40 disabled:cursor-not-allowed"
+            className="h-9 min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
           />
         </div>
 
@@ -145,7 +145,7 @@ export function VnInputPanel({
             event.stopPropagation()
             void submit()
           }}
-          className="flex size-9 shrink-0 items-center justify-center border border-white/10 text-white/78 transition-colors hover:bg-white/10 hover:text-white disabled:bg-transparent disabled:text-white/28"
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:bg-muted disabled:text-muted-foreground/50"
         >
           <Send className="size-4" />
         </button>
