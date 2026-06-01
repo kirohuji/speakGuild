@@ -25,6 +25,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
+const PASSED_FEEDBACK_LINGER_MS = 1500
 
 interface TurnFeedback {
   status: 'loading' | 'success' | 'error'
@@ -624,6 +625,7 @@ export function PracticeSessionPage() {
           objectivesCompleted: objectiveCompleted,
           chunksUsed: chunksUsedForRound,
         }).catch(() => {})
+        await new Promise((resolve) => setTimeout(resolve, PASSED_FEEDBACK_LINGER_MS))
         resumeAfterInput(userMsg, inkVariables)
       }
       return
@@ -1077,7 +1079,7 @@ export function PracticeSessionPage() {
               isEnded={inkEnded}
               onSubmitInput={sendUserInput}
               inputFeedback={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} /> : null}
-              inputDisabled={turnFeedback?.status === 'loading'}
+              inputDisabled={turnFeedback?.status === 'loading' || Boolean(turnFeedback?.result?.passed)}
               onChoice={(choiceIndex) => { setTurnFeedback(null); handleChoice(choiceIndex) }}
               onAdvance={inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}
               hideChatTopBar

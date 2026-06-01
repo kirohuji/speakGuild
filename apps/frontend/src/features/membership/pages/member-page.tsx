@@ -394,14 +394,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             </div>
             <div className={cn(
               plans.length === 1
-                ? 'flex justify-center'
+                ? 'block'
                 : 'grid grid-cols-2 gap-2'
             )}>
               {isLoading ? (
-                <>
-                  <Skeleton className="h-[120px] rounded-xl" />
-                  <Skeleton className="h-[120px] rounded-xl" />
-                </>
+                <Skeleton className="h-[168px] rounded-2xl" />
               ) : plans.length === 0 ? (
                 <div className="col-span-2 rounded-xl border py-10 text-center text-sm text-muted-foreground">
                   {t('common.empty')}
@@ -873,8 +870,11 @@ function CompactPlanCard({
   const { t } = useTranslation()
   const Icon = planIcons[plan.level] || Star
   const price = billingCycle === 'yearly' && plan.yearlyPrice ? plan.yearlyPrice : plan.price
+  const monthlyEquivalent = billingCycle === 'yearly' && plan.yearlyPrice
+    ? Math.round(plan.yearlyPrice / 12) / 100
+    : plan.price / 100
   const colorAccent =
-    plan.level === 'standard' ? 'border-primary/40 bg-primary/3' :
+    plan.level === 'standard' ? 'border-primary/25 bg-gradient-to-br from-primary/[0.12] via-background to-amber-500/[0.08]' :
     ''
 
   return (
@@ -882,42 +882,66 @@ function CompactPlanCard({
       type="button"
       onClick={isCurrent ? undefined : onUpgrade}
       className={cn(
-        'relative flex flex-col items-center rounded-xl border-2 px-3 py-3 text-center transition-all active:scale-[0.97]',
-        compact && 'w-full max-w-[200px]',
+        'group relative overflow-hidden rounded-2xl border px-4 py-4 text-left shadow-sm transition-all active:scale-[0.99]',
+        compact && 'w-full',
         isCurrent
-          ? 'border-primary bg-primary/5 cursor-default'
-          : colorAccent || 'border-transparent bg-muted/30 hover:border-primary/30',
+          ? 'cursor-default border-primary/40 bg-primary/[0.08]'
+          : colorAccent || 'border-border/60 bg-card hover:border-primary/30 hover:shadow-md',
       )}
     >
+      <div className="absolute -right-8 -top-10 size-28 rounded-full bg-primary/[0.08] blur-2xl transition-transform group-hover:scale-125" />
       {isCurrent && (
-        <Badge variant="default" className="absolute -top-2 h-4.5 px-1.5 text-[10px] leading-none">
+        <Badge variant="default" className="absolute right-3 top-3 h-5 px-2 text-[10px] leading-none">
           {t('member.currentPlanBadge')}
         </Badge>
       )}
-      <div className={cn(
-        'flex size-8 items-center justify-center rounded-lg mb-1.5',
-        plan.level === 'standard' ? 'bg-primary/15' : 'bg-muted',
-      )}>
-        <Icon className={cn(
-          'size-4',
-          plan.level === 'standard' ? 'text-primary' : 'text-muted-foreground',
-        )} />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className={cn(
+            'flex size-10 items-center justify-center rounded-xl',
+            plan.level === 'standard' ? 'bg-primary/15' : 'bg-muted',
+          )}>
+            <Icon className={cn(
+              'size-5',
+              plan.level === 'standard' ? 'text-primary' : 'text-muted-foreground',
+            )} />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+              SpeakGuild Pass
+            </p>
+            <p className="text-sm font-bold">{plan.name}</p>
+          </div>
+        </div>
       </div>
-      <p className="text-xs font-semibold">{plan.name}</p>
-      <p className="mt-0.5 text-lg font-bold">
-        ¥{(price / 100).toFixed(0)}
-        <span className="text-[10px] font-normal text-muted-foreground">{billingCycle === 'yearly' ? t('member.perYear') : t('member.perMonth')}</span>
-      </p>
+
+      <div className="relative mt-4 flex items-end justify-between gap-3 border-b border-primary/10 pb-3">
+        <div>
+          <p className="text-3xl font-bold tracking-tight">
+            ¥{(price / 100).toFixed(0)}
+            <span className="ml-1 text-[11px] font-normal text-muted-foreground">{billingCycle === 'yearly' ? t('member.perYear') : t('member.perMonth')}</span>
+          </p>
+          {billingCycle === 'yearly' && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground">折合 ¥{monthlyEquivalent.toFixed(0)} / 月</p>
+          )}
+        </div>
+        {!isCurrent && (
+          <span className="rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground shadow-sm">
+            {t('member.upgrade')}
+          </span>
+        )}
+      </div>
+
       {plan.features && plan.features.length > 0 && (
-        <ul className="mt-2 space-y-0.5 w-full text-left">
+        <ul className="relative mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
           {plan.features.slice(0, 3).map((f, i) => (
-            <li key={i} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Check className="size-2.5 shrink-0 text-green-500" />
+            <li key={i} className="flex items-center gap-1.5 text-[11px] leading-4 text-muted-foreground">
+              <Check className="size-3 shrink-0 text-primary" />
               {f}
             </li>
           ))}
           {plan.features.length > 3 && (
-            <li className="text-[10px] text-muted-foreground/60">{t('member.moreItems', { count: plan.features.length - 3 })}</li>
+            <li className="text-[11px] leading-4 text-primary/80">{t('member.moreItems', { count: plan.features.length - 3 })}</li>
           )}
         </ul>
       )}
