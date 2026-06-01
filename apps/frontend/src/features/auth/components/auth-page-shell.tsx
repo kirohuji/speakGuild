@@ -39,7 +39,7 @@ export function AuthPageShell({
           ) : null}
         </div>
 
-        <div className="rounded-3xl bg-card/92 p-4 shadow-[0_12px_36px_rgba(0,46,95,0.09)] ring-1 ring-border/70 backdrop-blur-xl sm:p-5">
+        <div className="rounded-3xl bg-card/92 p-4 shadow-[0_12px_36px_rgba(0,46,95,0.09)] ring-1 ring-foreground/20 backdrop-blur-xl sm:p-5">
           {children}
         </div>
 
@@ -50,7 +50,7 @@ export function AuthPageShell({
 }
 
 export const authInputClassName =
-  'h-11 rounded-xl border-border/70 bg-background/75 px-3.5 shadow-sm transition-colors focus-visible:bg-background'
+  'h-11 rounded-xl border-foreground/20 bg-background/75 px-3.5 shadow-sm transition-colors focus-visible:bg-background'
 
 export const authLabelClassName =
   'text-xs font-semibold text-muted-foreground'
