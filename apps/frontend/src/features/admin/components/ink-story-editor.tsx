@@ -178,7 +178,13 @@ function parseComposer(source: string): ComposerScene[] {
         }
       } else if (tag === 'wait' || tag.startsWith('wait:')) {
         const waitMode = tag.replace(/^wait:?/, '').trim()
-        scene.items.push({ type: 'wait', requiresInput: waitMode === 'input' || waitMode === 'user_input' })
+        const requiresInput = waitMode === 'input' || waitMode === 'user_input'
+        const last = scene.items[scene.items.length - 1]
+        if (last?.type === 'wait') {
+          last.requiresInput = requiresInput
+        } else {
+          scene.items.push({ type: 'wait', requiresInput })
+        }
       } else if (tag === 'input' || tag === 'user_input') {
         const last = scene.items[scene.items.length - 1]
         if (last?.type === 'wait') {
