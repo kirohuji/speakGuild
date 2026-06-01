@@ -51,6 +51,8 @@ interface VnPlayerProps {
   onAdvance?: () => void
   onChoice?: (index: number) => void
   onSubmitInput?: (text: string) => void | Promise<void>
+  inputFeedback?: ReactNode
+  inputDisabled?: boolean
   onReset?: () => void
   endedActions?: ReactNode
   onHistoryOpenChange?: (open: boolean) => void
@@ -418,6 +420,8 @@ export function VnPlayer({
   onAdvance,
   onChoice,
   onSubmitInput,
+  inputFeedback,
+  inputDisabled,
   onReset,
   endedActions,
   onHistoryOpenChange,
@@ -749,8 +753,9 @@ export function VnPlayer({
                 </div>
               )}
             </div>
+            {inputFeedback}
             {canSubmitInput && (
-              <VnInputPanel onSubmit={onSubmitInput} />
+              <VnInputPanel onSubmit={onSubmitInput} disabled={inputDisabled} />
             )}
           </div>
         </div>

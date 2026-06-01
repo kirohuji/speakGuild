@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { InkEngine } from '@/features/vn-engine/ink-engine'
 import { VnPlayer } from '@/features/vn-engine/vn-player'
-import { Play, AlertTriangle } from 'lucide-react'
+import { Play, AlertTriangle, CheckCircle2, ChevronDown, Lightbulb, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -117,6 +117,7 @@ export function VnStoryPreview({
   })
   const [completionOpen, setCompletionOpen] = useState(false)
   const [aiEvaluations, setAiEvaluations] = useState<PreviewAiEvaluation[]>([])
+  const [activeEvaluation, setActiveEvaluation] = useState<PreviewAiEvaluation | null>(null)
 
   // Compile Ink source
   useEffect(() => {
@@ -223,6 +224,7 @@ export function VnStoryPreview({
     setIsWaiting(false)
     setCompletionOpen(false)
     setAiEvaluations([])
+    setActiveEvaluation(null)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     if (!compileResult?.success || !compileResult.json) return
@@ -247,6 +249,7 @@ export function VnStoryPreview({
   const advanceStory = useCallback(() => {
     const engine = engineRef.current
     if (!engine) return
+    setActiveEvaluation(null)
 
     // Flush pending line first (skipped due to #input tag)
     if (Array.isArray(pendingRef.current) && pendingRef.current.length > 0) {
@@ -265,6 +268,7 @@ export function VnStoryPreview({
   const handleChoice = useCallback((choiceIndex: number) => {
     const engine = engineRef.current
     if (!engine) return
+    setActiveEvaluation(null)
 
     const selectedChoice = choices.find((choice) => choice.index === choiceIndex)
     setHistory((prev) => [...prev, { speaker: 'You', text: selectedChoice?.text || '(selected)' }])
@@ -278,37 +282,55 @@ export function VnStoryPreview({
     appendResult(engine, result)
   }, [appendResult, choices])
 
-  const handleInput = useCallback((text: string) => {
+  const handleInput = useCallback(async (text: string) => {
     const engine = engineRef.current
     if (!engine) return
 
     setHistory((prev) => [...prev, { speaker: 'You', text }])
     engine.setVariable('user_last_input', text)
-    setIsWaiting(false)
 
-    if (aiEvaluationEnabled) {
-      const id = Date.now()
-      const objective = readPreviewTagValue(currentTags, 'objective:')
-      const targetChunks = readPreviewListTags(currentTags, 'chunks:')
-      const npcText = [...history].reverse().find((line) => line.speaker !== 'You')?.text ?? ''
-      setAiEvaluations((prev) => [...prev, { id, userText: text, objective, targetChunks, status: 'loading' }])
+    if (!aiEvaluationEnabled) {
+      setIsWaiting(false)
+      return
+    }
 
-      judgePreviewDialogueTurn({
+    const id = Date.now()
+    const objective = readPreviewTagValue(currentTags, 'objective:')
+    const targetChunks = readPreviewListTags(currentTags, 'chunks:')
+    const npcText = [...history].reverse().find((line) => line.speaker !== 'You')?.text ?? ''
+    const loadingEvaluation: PreviewAiEvaluation = { id, userText: text, objective, targetChunks, status: 'loading' }
+    setActiveEvaluation(loadingEvaluation)
+    setAiEvaluations((prev) => [...prev, loadingEvaluation])
+
+    try {
+      const result = await judgePreviewDialogueTurn({
         topicId: 'admin-preview',
         inputNodeId: readPreviewInputNodeId(currentTags),
         npcText,
         userText: text,
         objectives: objective ? [objective] : undefined,
         targetChunks,
-      }).then((result) => {
-        setAiEvaluations((prev) => prev.map((item) => item.id === id ? { ...item, status: 'success', result } : item))
-      }).catch((error) => {
-        setAiEvaluations((prev) => prev.map((item) => item.id === id
-          ? { ...item, status: 'error', error: error?.response?.data?.message || error?.message || '评估请求失败' }
-          : item))
       })
+      const evaluation: PreviewAiEvaluation = { ...loadingEvaluation, status: 'success', result }
+      setActiveEvaluation(evaluation)
+      setAiEvaluations((prev) => prev.map((item) => item.id === id ? evaluation : item))
+      setIsWaiting(!result.passed)
+    } catch (error: any) {
+      const evaluation: PreviewAiEvaluation = {
+        ...loadingEvaluation,
+        status: 'error',
+        error: error?.response?.data?.message || error?.message || '评估请求失败',
+      }
+      setActiveEvaluation(evaluation)
+      setAiEvaluations((prev) => prev.map((item) => item.id === id ? evaluation : item))
+      setIsWaiting(true)
     }
   }, [aiEvaluationEnabled, currentTags, history])
+
+  const continueDespiteEvaluation = useCallback(() => {
+    setActiveEvaluation(null)
+    setIsWaiting(false)
+  }, [])
 
   const resetPreview = useCallback(() => {
     if (!compileResult?.json) return
@@ -321,6 +343,7 @@ export function VnStoryPreview({
     setIsWaiting(false)
     setCompletionOpen(false)
     setAiEvaluations([])
+    setActiveEvaluation(null)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
     try {
@@ -428,6 +451,10 @@ export function VnStoryPreview({
         onAdvance={advanceStory}
         onChoice={handleChoice}
         onSubmitInput={handleInput}
+        inputFeedback={aiEvaluationEnabled && activeEvaluation ? (
+          <PreviewInputFeedback evaluation={activeEvaluation} onContinue={continueDespiteEvaluation} />
+        ) : null}
+        inputDisabled={activeEvaluation?.status === 'loading'}
         onReset={resetPreview}
       />
       <Dialog open={completionOpen} onOpenChange={setCompletionOpen}>
@@ -448,5 +475,72 @@ export function VnStoryPreview({
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+function PreviewInputFeedback({
+  evaluation,
+  onContinue,
+}: {
+  evaluation: PreviewAiEvaluation
+  onContinue: () => void
+}) {
+  const isLoading = evaluation.status === 'loading'
+  const isError = evaluation.status === 'error'
+  const result = evaluation.result
+  const isPassed = Boolean(result?.passed)
+  const suggestedChunks = evaluation.targetChunks.filter((chunk) => !result?.chunksUsed.includes(chunk))
+  const example = suggestedChunks.length
+    ? suggestedChunks.join(' ')
+    : evaluation.targetChunks.join(' ')
+
+  return (
+    <div className="border-t border-white/10 bg-slate-950/92 px-3 py-2 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.22)]">
+      <div className="flex items-start gap-2">
+        <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10">
+          {isLoading
+            ? <Loader2 className="size-3.5 animate-spin text-sky-200" />
+            : isPassed
+              ? <CheckCircle2 className="size-3.5 text-emerald-300" />
+              : <Lightbulb className="size-3.5 text-amber-200" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold">
+              {isLoading ? 'AI 正在评估...' : isPassed ? '回答符合预期' : isError ? '评估请求失败' : '再试一次会更好'}
+            </p>
+            {!isLoading && !isPassed && (
+              <button type="button" onClick={onContinue} className="shrink-0 text-[11px] text-white/60 underline underline-offset-2 hover:text-white">
+                仍然继续
+              </button>
+            )}
+          </div>
+          {!isLoading && (
+            <p className="mt-1 text-[11px] leading-4 text-white/72">
+              {isError ? evaluation.error : result?.feedback || '可以继续下一句。'}
+            </p>
+          )}
+          {!isLoading && !isPassed && suggestedChunks.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {suggestedChunks.map((chunk) => (
+                <span key={chunk} className="rounded bg-amber-300/12 px-1.5 py-0.5 text-[10px] text-amber-100">{chunk}</span>
+              ))}
+            </div>
+          )}
+          {!isLoading && !isPassed && (
+            <details className="mt-2 text-[11px] text-white/65">
+              <summary className="flex cursor-pointer list-none items-center gap-1 text-white/72 hover:text-white">
+                <ChevronDown className="size-3" />
+                查看讲解与参考回答
+              </summary>
+              <div className="mt-1.5 space-y-1 rounded bg-white/5 p-2 leading-4">
+                <p><span className="text-white/45">目标：</span>{evaluation.objective || '完成当前沟通任务'}</p>
+                <p><span className="text-white/45">参考：</span>{example || '尝试更直接地回应 NPC，并补充必要信息。'}</p>
+              </div>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
