@@ -17,8 +17,15 @@ export interface PointsBalance {
   points: number
 }
 
+export interface CheckInCalendar {
+  dates: string[]
+  totalCheckIns: number
+  currentStreak: number
+}
+
 export const pointsApi = {
   getBalance: () => get<PointsBalance>('/points/balance'),
   getCheckInStatus: () => get<CheckInStatus>('/points/check-in/status'),
+  getCheckInCalendar: () => get<CheckInCalendar>('/points/check-in/calendar'),
   checkIn: () => post<CheckInResult>('/points/check-in'),
 }

@@ -45,6 +45,22 @@ export class PointsService {
     };
   }
 
+  /** Get check-in dates for the calendar */
+  async getCheckInCalendar(userId: string) {
+    const checkIns = await this.prisma.userCheckIn.findMany({
+      where: { userId },
+      orderBy: { date: 'asc' },
+      select: { date: true },
+    });
+    const status = await this.getCheckInStatus(userId);
+
+    return {
+      dates: checkIns.map((item) => item.date.toISOString().slice(0, 10)),
+      totalCheckIns: checkIns.length,
+      currentStreak: status.currentStreak,
+    };
+  }
+
   /** Perform daily check-in */
   async checkIn(userId: string) {
     const today = new Date();

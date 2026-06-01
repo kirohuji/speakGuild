@@ -21,6 +21,13 @@ export class PointsController {
     return this.pointsService.getCheckInStatus(session.user.id);
   }
 
+  /** 获取签到日历 */
+  @Get('check-in/calendar')
+  async getCheckInCalendar(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.pointsService.getCheckInCalendar(session.user.id);
+  }
+
   /** 每日签到 */
   @Post('check-in')
   async checkIn(@Req() req: Request) {

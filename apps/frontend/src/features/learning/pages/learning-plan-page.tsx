@@ -1,17 +1,20 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { addMonths, isAfter, parseISO, startOfDay } from 'date-fns'
+import { enUS, ja, zhCN } from 'date-fns/locale'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronRight, CheckCircle2, Lock, ArrowRight,
   ClipboardList, ShoppingBag, Play, Search, Heart, CalendarDays, Mic,
-  BookText, MessageSquareText, ListChecks, X, type LucideIcon,
+  BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +26,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { MemberPage } from '@/features/membership/pages/member-page'
+import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import {
@@ -389,46 +393,149 @@ function InProgressUnitCard({ unit, todayPlan, onRefresh }: { unit: MyUnit; toda
 
 function LearningWeekTracker({ todayPlan }: { todayPlan: TodayPlan | null }) {
   const { t } = useTranslation()
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const summary = getTodayTaskSummary(todayPlan)
   const todayIndex = new Date().getDay()
   const mondayIndex = todayIndex === 0 ? 6 : todayIndex - 1
   const weekDays = [t('learning.weekDays.0'), t('learning.weekDays.1'), t('learning.weekDays.2'), t('learning.weekDays.3'), t('learning.weekDays.4'), t('learning.weekDays.5'), t('learning.weekDays.6')]
 
   return (
-    <section className="rounded-lg bg-muted/30 p-3.5">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="size-4 text-primary" />
-          <p className="text-sm font-semibold text-foreground">{t('learning.thisWeek')}</p>
+    <>
+      <button
+        type="button"
+        onClick={() => setCalendarOpen(true)}
+        aria-label={t('learning.checkInCalendar')}
+        className="w-full rounded-lg bg-muted/30 p-3.5 text-left transition-colors hover:bg-muted/50"
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="size-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">{t('learning.thisWeek')}</p>
+          </div>
+          <Badge variant={summary.allDone ? 'default' : 'secondary'} className="h-6 rounded-full px-2 text-[10px]">
+            {summary.total > 0 ? `${summary.done}/${summary.total}` : t('learning.pending')}
+          </Badge>
         </div>
-        <Badge variant={summary.allDone ? 'default' : 'secondary'} className="h-6 rounded-full px-2 text-[10px]">
-          {summary.total > 0 ? `${summary.done}/${summary.total}` : t('learning.pending')}
-        </Badge>
-      </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {weekDays.map((day, index) => {
-          const isToday = index === mondayIndex
-          const isPast = index < mondayIndex
-          const isDone = isToday && summary.allDone
-          return (
-            <div key={day} className="flex flex-col items-center gap-1">
-              <div
-                className={cn(
-                  'flex size-8 items-center justify-center rounded-full text-xs font-medium',
-                  isDone && 'bg-primary text-primary-foreground',
-                  isToday && !isDone && 'bg-background text-foreground',
-                  isPast && 'bg-background/70 text-muted-foreground',
-                  !isToday && !isPast && 'text-muted-foreground/50',
-                )}
-              >
-                {day}
+        <div className="grid grid-cols-7 gap-1.5">
+          {weekDays.map((day, index) => {
+            const isToday = index === mondayIndex
+            const isPast = index < mondayIndex
+            const isDone = isToday && summary.allDone
+            return (
+              <div key={day} className="flex flex-col items-center gap-1">
+                <div
+                  className={cn(
+                    'flex size-8 items-center justify-center rounded-full text-xs font-medium',
+                    isDone && 'bg-primary text-primary-foreground',
+                    isToday && !isDone && 'bg-background text-foreground',
+                    isPast && 'bg-background/70 text-muted-foreground',
+                    !isToday && !isPast && 'text-muted-foreground/50',
+                  )}
+                >
+                  {day}
+                </div>
+                <span className={cn('size-1 rounded-full', isDone ? 'bg-primary' : isToday ? 'bg-muted-foreground/50' : 'bg-transparent')} />
               </div>
-              <span className={cn('size-1 rounded-full', isDone ? 'bg-primary' : isToday ? 'bg-muted-foreground/50' : 'bg-transparent')} />
+            )
+          })}
+        </div>
+      </button>
+      <CheckInCalendarDrawer open={calendarOpen} onOpenChange={setCalendarOpen} />
+    </>
+  )
+}
+
+function CheckInCalendarDrawer({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const [data, setData] = useState<CheckInCalendar | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [month, setMonth] = useState(() => new Date())
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const today = useMemo(() => startOfDay(new Date()), [])
+  const calendarLocale = i18n.language.startsWith('ja')
+    ? ja
+    : i18n.language.startsWith('en')
+      ? enUS
+      : zhCN
+  const checkedInDates = useMemo<Date[]>(
+    () => data?.dates.map((date) => parseISO(date)) ?? [],
+    [data],
+  )
+
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    pointsApi.getCheckInCalendar()
+      .then(setData)
+      .catch(() => setData({ dates: [], totalCheckIns: 0, currentStreak: 0 }))
+      .finally(() => setLoading(false))
+  }, [open])
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartX === null) return
+    const distance = event.changedTouches[0].clientX - touchStartX
+    setTouchStartX(null)
+    if (Math.abs(distance) < 48) return
+    const nextMonth = addMonths(month, distance < 0 ? 1 : -1)
+    if (!isAfter(nextMonth, today)) setMonth(nextMonth)
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+        <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+          <DrawerTitle className="text-base font-semibold">{t('learning.checkInCalendar')}</DrawerTitle>
+        </DrawerHeader>
+        <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-2xl bg-muted/40 px-4 py-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Flame className="size-3.5" />
+                {t('learning.currentStreak')}
+              </div>
+              <p className="mt-1 text-xl font-bold tabular-nums">{data?.currentStreak ?? 0}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></p>
             </div>
-          )
-        })}
-      </div>
-    </section>
+            <div className="rounded-2xl bg-muted/40 px-4 py-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarCheck className="size-3.5" />
+                {t('learning.totalCheckIns')}
+              </div>
+              <p className="mt-1 text-xl font-bold tabular-nums">{data?.totalCheckIns ?? 0}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></p>
+            </div>
+          </div>
+
+          <div
+            className="mt-3 overflow-hidden rounded-2xl bg-card"
+            onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
+            onTouchEnd={handleTouchEnd}
+          >
+            {loading ? (
+              <div className="flex min-h-80 items-center justify-center"><Spinner /></div>
+            ) : (
+              <Calendar
+                month={month}
+                onMonthChange={setMonth}
+                endMonth={today}
+                locale={calendarLocale}
+                disabled={{ after: today }}
+                modifiers={{ checkedIn: checkedInDates }}
+                modifiersClassNames={{
+                  checkedIn: '[&_button]:bg-primary [&_button]:font-semibold [&_button]:text-primary-foreground',
+                }}
+                className="mx-auto w-full [--cell-size:2.5rem]"
+              />
+            )}
+          </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">{t('learning.calendarSwipeHint')}</p>
+        </div>
+      </DrawerContent>
+    </Drawer>
   )
 }
 
