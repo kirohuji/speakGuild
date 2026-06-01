@@ -45,7 +45,7 @@ function Calendar({
         weekdays: cn('flex', defaultClassNames.weekdays),
         weekday: cn('flex-1 select-none text-center text-xs font-normal text-muted-foreground', defaultClassNames.weekday),
         week: cn('mt-1.5 flex w-full', defaultClassNames.week),
-        day: cn('group/day relative aspect-square h-full w-full select-none p-0 text-center', defaultClassNames.day),
+        day: cn('group/day relative flex aspect-square flex-1 items-center justify-center select-none p-0 text-center', defaultClassNames.day),
         today: cn('rounded-xl bg-muted text-foreground', defaultClassNames.today),
         outside: cn('text-muted-foreground/35', defaultClassNames.outside),
         disabled: cn('text-muted-foreground opacity-35', defaultClassNames.disabled),
@@ -87,7 +87,7 @@ function CalendarDayButton({
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString()}
-      className={cn('flex aspect-square h-auto w-full min-w-[--cell-size] items-center justify-center rounded-xl p-0 text-xs font-normal', className)}
+      className={cn('flex size-full min-h-[--cell-size] items-center justify-center rounded-xl p-0 text-xs font-normal leading-normal', className)}
       {...props}
     />
   )
