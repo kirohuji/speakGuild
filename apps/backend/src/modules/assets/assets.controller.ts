@@ -18,24 +18,6 @@ import { requireAuthSession } from '../auth/session.util';
 export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
-  @Get('favorites')
-  async getFavorites(@Req() req: Request, @Query() pagination: PaginationDto) {
-    const session = await requireAuthSession(req);
-    return this.assetsService.getFavorites(session.user.id, pagination);
-  }
-
-  @Post('favorites/:questionId')
-  async addFavorite(@Req() req: Request, @Param('questionId') questionId: string) {
-    const session = await requireAuthSession(req);
-    return this.assetsService.addFavorite(session.user.id, questionId);
-  }
-
-  @Delete('favorites/:questionId')
-  async removeFavorite(@Req() req: Request, @Param('questionId') questionId: string) {
-    const session = await requireAuthSession(req);
-    return this.assetsService.removeFavorite(session.user.id, questionId);
-  }
-
   @Get('words')
   async getWords(@Req() req: Request, @Query() pagination: PaginationDto) {
     const session = await requireAuthSession(req);

@@ -7,16 +7,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
-  getPracticeLeaderboard, getMockExamLeaderboard, getStreakLeaderboard,
+  getPracticeLeaderboard, getStreakLeaderboard,
   type LeaderboardEntry,
 } from '@/features/leaderboard/api'
 import { cn } from '@/lib/cn'
 
-type Tab = 'practice' | 'mock' | 'streak'
+type Tab = 'practice' | 'streak'
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'practice', label: '练习达人', icon: PenLine },
-  { key: 'mock', label: '模考分数', icon: Trophy },
   { key: 'streak', label: '连续打卡', icon: Flame },
 ]
 
@@ -32,7 +31,6 @@ export function LeaderboardPage() {
     try {
       let data: LeaderboardEntry[] = []
       if (tab === 'practice') data = await getPracticeLeaderboard()
-      else if (tab === 'mock') data = await getMockExamLeaderboard()
       else data = await getStreakLeaderboard()
       setItems(data)
     } finally { setLoading(false) }

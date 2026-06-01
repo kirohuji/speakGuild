@@ -26,12 +26,7 @@ model User {
   updatedAt           DateTime  @updatedAt
   sessions            Session[]
   accounts            Account[]
-  bindingConfig       UserBindingConfig?
-  favoriteQuestions   FavoriteQuestion[]
   vocabularyWords     VocabularyWord[]
-  practiceRecords     PracticeRecord[]
-  practiceProgresses  PracticeProgress[]
-  mockExamRecords     MockExamRecord[]
   dailyActivities     DailyActivity[]
   userPreference      UserPreference?
   fileReferences      FileReference[]
@@ -117,175 +112,16 @@ model Verification {
   @@map("verification")
 }
 
-// ---- 题库域 ----
-
-model QuestionBank {
-  id            String   @id @default(cuid())
-  name          String
-  province      String
-  language      String
-  examType      String
-  interviewForm String
-  status        String   @default("active")
-  topics        QuestionTopic[]
-  userBindings  UserBindingConfig[]
-  mockPapers    MockPaper[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  @@map("question_bank")
-}
-
-model QuestionTopic {
-  id        String   @id @default(cuid())
-  bank      QuestionBank @relation(fields: [bankId], references: [id])
-  bankId    String
-  code      String
-  name      String
-  sortOrder Int      @default(0)
-  items     QuestionItem[]
-  @@map("question_topic")
-}
-
-model QuestionItem {
-  id                   String   @id @default(cuid())
-  topic                QuestionTopic @relation(fields: [topicId], references: [id])
-  topicId              String
-  title                String
-  difficulty           Int      @default(3)
-  suggestedDurationSec Int      @default(120)
-  masteryScore         Int      @default(0)
-  keywords             String[]
-  focusWords           String[]
-  content              QuestionContent?
-  favorites            FavoriteQuestion[]
-  practiceRecords      PracticeRecord[]
-  practiceProgresses   PracticeProgress[]
-  mockPaperQuestions   MockPaperQuestion[]
-  vocabularyWords      VocabularyWord[]
-  questionAudios       QuestionAudio[]
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  @@index([topicId, difficulty])
-  @@map("question_item")
-}
-
-model QuestionContent {
-  id         String   @id @default(cuid())
-  question   QuestionItem @relation(fields: [questionId], references: [id])
-  questionId String   @unique
-  promptEn   String   @db.Text
-  promptZh   String   @db.Text
-  answerEn   String   @db.Text
-  answerZh   String   @db.Text
-  summary    String   @db.Text
-  @@map("question_content")
-}
-
-// ---- 学习行为域 ----
-
-model UserBindingConfig {
-  id            String   @id @default(cuid())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String   @unique
-  province      String
-  language      String
-  examType      String
-  interviewForm String
-  bank          QuestionBank? @relation(fields: [bankId], references: [id])
-  bankId        String?
-  updatedAt     DateTime @updatedAt
-  @@map("user_binding_config")
-}
-
-model FavoriteQuestion {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  question   QuestionItem @relation(fields: [questionId], references: [id])
-  questionId String
-  createdAt  DateTime @default(now())
-  @@unique([userId, questionId])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("favorite_question")
-}
-
 model VocabularyWord {
   id               String   @id @default(cuid())
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
   term             String
   definition       String?
-  sourceQuestion   QuestionItem? @relation(fields: [sourceQuestionId], references: [id])
-  sourceQuestionId String?
   createdAt        DateTime @default(now())
   @@unique([userId, term])
   @@index([userId, createdAt(sort: Desc)])
   @@map("vocabulary_word")
-}
-
-model PracticeRecord {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  question   QuestionItem @relation(fields: [questionId], references: [id])
-  questionId String
-  actionType String
-  payload    Json?
-  createdAt  DateTime @default(now())
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("practice_record")
-}
-
-model PracticeProgress {
-  id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  question     QuestionItem @relation(fields: [questionId], references: [id])
-  questionId   String
-  masteryScore Int      @default(0)
-  seenAt       DateTime?
-  updatedAt    DateTime @updatedAt
-  @@unique([userId, questionId])
-  @@map("practice_progress")
-}
-
-// ---- 模考域 ----
-
-model MockPaper {
-  id               String   @id @default(cuid())
-  bank             QuestionBank @relation(fields: [bankId], references: [id])
-  bankId           String
-  title            String
-  paperType        String   @default("standard")
-  suggestedMinutes Int      @default(30)
-  focus            String[]
-  questions        MockPaperQuestion[]
-  examRecords      MockExamRecord[]
-  createdAt        DateTime @default(now())
-  @@map("mock_paper")
-}
-
-model MockPaperQuestion {
-  id         String   @id @default(cuid())
-  paper      MockPaper @relation(fields: [paperId], references: [id])
-  paperId    String
-  question   QuestionItem @relation(fields: [questionId], references: [id])
-  questionId String
-  sortOrder  Int      @default(0)
-  @@map("mock_paper_question")
-}
-
-model MockExamRecord {
-  id       String   @id @default(cuid())
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  paper    MockPaper @relation(fields: [paperId], references: [id])
-  paperId  String
-  score    Int
-  weakness String[]
-  takenAt  DateTime @default(now())
-  @@index([userId, takenAt(sort: Desc)])
-  @@map("mock_exam_record")
 }
 
 // ---- 用户看板域 ----
@@ -496,7 +332,6 @@ model FileAsset {
   lastReferencedAt DateTime?
   createdAt        DateTime        @default(now())
   references       FileReference[]
-  questionAudios   QuestionAudio[]
   resourceNodes    ResourceNode[]
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
@@ -555,32 +390,11 @@ model ResourceNode {
   @@map("resource_node")
 }
 
-// ---- TTS 音频缓存域 ----
+// ---- 消息通知域 ----
 
 enum TtsProvider {
   minimax
   cartesia
-}
-
-/// 题目音频缓存：同一题目 + 相同配置只生成一次，之后直接复用
-model QuestionAudio {
-  id             String      @id @default(cuid())
-  question       QuestionItem @relation(fields: [questionId], references: [id])
-  questionId     String
-  /// provider+model+voiceId+params 的 SHA1 哈希，保证唯一性
-  configHash     String
-  provider       TtsProvider
-  model          String
-  voiceId        String?
-  mimeType       String
-  asset          FileAsset   @relation(fields: [assetId], references: [id])
-  assetId        String
-  wordTimestamps Json?
-  createdAt      DateTime    @default(now())
-  @@unique([questionId, configHash])
-  @@index([questionId])
-  @@index([assetId])
-  @@map("question_audio")
 }
 
 // ---- 消息通知域 ----

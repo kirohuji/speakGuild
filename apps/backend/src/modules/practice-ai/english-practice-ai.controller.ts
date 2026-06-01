@@ -107,4 +107,10 @@ export class EnglishPracticeAiController {
       throw error;
     }
   }
+
+  /** 单词增强：中文释义 + 分级例句 */
+  @Post('word-enrichment')
+  async wordEnrichment(@Body() dto: { word: string; englishDefinitions?: string }) {
+    return this.service.enrichWord(dto.word, dto.englishDefinitions);
+  }
 }

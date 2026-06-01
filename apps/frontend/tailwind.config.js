@@ -52,7 +52,7 @@ export default {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			// GuideReady 品牌语义色
+  			// ManYu 品牌语义色
   			brand: {
   				navy:    'hsl(var(--brand-navy))',
   				'navy-deep': 'hsl(var(--brand-navy-deep))',

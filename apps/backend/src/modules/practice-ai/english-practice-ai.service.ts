@@ -456,4 +456,47 @@ ${dialogueText}
       return { analysis: null, raw: result.text };
     }
   }
+
+  /** 单词增强：中文释义 + 分级例句 */
+  async enrichWord(word: string, englishDefinitions?: string) {
+    const provider = this.getProvider();
+    const defHint = englishDefinitions ? `\n英文释义参考：${englishDefinitions}` : '';
+
+    const prompt = `请为英语单词/短语"${word}"提供学习辅助信息。${defHint}
+
+请严格返回以下 JSON（不要 Markdown 代码块包裹）：
+
+{
+  "chineseTranslation": "中文释义",
+  "meanings": [
+    { "partOfSpeech": "词性", "chineseGloss": "中文义项" }
+  ],
+  "examples": [
+    { "en": "自然英语例句。", "zh": "中文翻译。", "level": "basic" },
+    { "en": "Intermediate example.", "zh": "中文翻译。", "level": "intermediate" },
+    { "en": "Advanced/nuanced example.", "zh": "中文翻译。", "level": "advanced" }
+  ],
+  "memoryTip": "一句话记忆技巧（中文，30字以内）"
+}
+
+Rules:
+- Exactly 5 examples: 2 basic, 1 intermediate, 2 advanced
+- All "zh" must be natural, accurate Chinese translations
+- Use diverse real-world scenarios (daily life, study, work, travel) for examples
+- memoryTip must be practical and memorable for Chinese learners`;
+
+    const { text } = await generateText({
+      model: provider('deepseek-chat'),
+      prompt,
+      temperature: 0.3,
+      maxOutputTokens: 900,
+    });
+
+    try {
+      const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch {
+      return { chineseTranslation: '（数据加载失败）', meanings: [], examples: [], memoryTip: '' };
+    }
+  }
 }

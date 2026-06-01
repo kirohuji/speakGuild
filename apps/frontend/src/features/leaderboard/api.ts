@@ -12,10 +12,6 @@ export function getPracticeLeaderboard(limit = 50) {
   return get<LeaderboardEntry[]>('/leaderboard/practice', { limit })
 }
 
-export function getMockExamLeaderboard(limit = 50) {
-  return get<LeaderboardEntry[]>('/leaderboard/mock', { limit })
-}
-
 export function getStreakLeaderboard(limit = 50) {
   return get<LeaderboardEntry[]>('/leaderboard/streak', { limit })
 }

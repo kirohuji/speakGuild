@@ -108,11 +108,3 @@ export const getAudioUrl = (id: string): string => {
   const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
   return `${base}/tts/audio/${id}`
 }
-
-/** 获取音频 Blob（用于 WaveSurfer 解码） */
-export const getAudioBlob = (id: string): Promise<Blob> =>
-  instance.get(`/tts/audio/${id}`, { responseType: 'blob' }) as any
-
-/** 清除某题目的音频缓存 */
-export const clearQuestionAudioCache = (questionId: string): Promise<{ deleted: number }> =>
-  instance.delete(`/tts/question/${questionId}/cache`) as any

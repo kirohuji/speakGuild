@@ -80,10 +80,9 @@ export class AdminService {
         },
         _count: {
           select: {
-            practiceRecords: true,
-            mockExamRecords: true,
             vocabularyWords: true,
             orders: true,
+            practiceSessions: true,
           },
         },
       },

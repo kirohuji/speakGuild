@@ -7,12 +7,7 @@ export class LeaderboardController {
 
   @Get('practice')
   async practice(@Query('limit') limit?: string) {
-    return this.leaderboardService.getPracticeLeaderboard(undefined, Number(limit) || 50)
-  }
-
-  @Get('mock')
-  async mockExam(@Query('limit') limit?: string) {
-    return this.leaderboardService.getMockExamLeaderboard(undefined, Number(limit) || 50)
+    return this.leaderboardService.getPracticeLeaderboard(Number(limit) || 50)
   }
 
   @Get('streak')

@@ -17,7 +17,7 @@ export async function seedThemes(prisma: PrismaClient) {
     {
       id: 'theme-default',
       name: '漫语町 · 默认',
-      description: '清新自然的蓝绿渐变，与品牌 GuideReady 配色一致',
+      description: '清新自然的蓝绿渐变，与品牌 ManYu 配色一致',
       sortOrder: 0,
       isDefault: true,
       bgType: 'gradient',

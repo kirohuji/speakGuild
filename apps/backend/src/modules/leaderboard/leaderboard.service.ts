@@ -5,11 +5,9 @@ import { PrismaService } from '../../common/prisma/prisma.service'
 export class LeaderboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPracticeLeaderboard(bankId?: string, limit = 50) {
-    const where: any = {}
-    const items = await this.prisma.practiceRecord.groupBy({
+  async getPracticeLeaderboard(limit = 50) {
+    const items = await this.prisma.practiceSession.groupBy({
       by: ['userId'],
-      where,
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
       take: limit,
@@ -26,28 +24,6 @@ export class LeaderboardService {
       userName: userMap.get(item.userId)?.name || '未知用户',
       userImage: userMap.get(item.userId)?.image,
       score: item._count.id,
-    }))
-  }
-
-  async getMockExamLeaderboard(bankId?: string, limit = 50) {
-    const items = await this.prisma.mockExamRecord.groupBy({
-      by: ['userId'],
-      _max: { score: true },
-      orderBy: { _max: { score: 'desc' } },
-      take: limit,
-    })
-    const userIds = items.map((i) => i.userId)
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true, image: true },
-    })
-    const userMap = new Map(users.map((u) => [u.id, u]))
-    return items.map((item, idx) => ({
-      rank: idx + 1,
-      userId: item.userId,
-      userName: userMap.get(item.userId)?.name || '未知用户',
-      userImage: userMap.get(item.userId)?.image,
-      score: item._max.score,
     }))
   }
 

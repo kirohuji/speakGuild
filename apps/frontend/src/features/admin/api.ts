@@ -27,10 +27,9 @@ export interface AdminUserDetail extends AdminUser {
     plan: { id: string; name: string; level: string } | null;
   } | null;
   _count: {
-    practiceRecords: number;
-    mockExamRecords: number;
     vocabularyWords: number;
     orders: number;
+    practiceSessions: number;
   };
 }
 

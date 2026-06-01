@@ -53,20 +53,7 @@ export class ProfileService {
   }
 
   async getOverview(userId: string) {
-    const config = await this.prisma.userBindingConfig.findUnique({
-      where: { userId },
-      include: { bank: true },
-    });
-
-    const totalPracticed = await this.prisma.practiceProgress.count({
-      where: { userId, seenAt: { not: null } },
-    });
-
-    const masteredCount = await this.prisma.practiceProgress.count({
-      where: { userId, masteryScore: { gte: 60 } },
-    });
-
-    const favoritesCount = await this.prisma.favoriteQuestion.count({
+    const sessionCount = await this.prisma.practiceSession.count({
       where: { userId },
     });
 
@@ -74,21 +61,12 @@ export class ProfileService {
       where: { userId },
     });
 
-    const mockExamCount = await this.prisma.mockExamRecord.count({
+    const expressionCount = await this.prisma.expressionItem.count({
       where: { userId },
     });
 
-    const latestExam = await this.prisma.mockExamRecord.findFirst({
-      where: { userId },
-      orderBy: { takenAt: 'desc' },
-      include: {
-        paper: { select: { title: true } },
-      },
-    });
-
-    const avgScoreResult = await this.prisma.mockExamRecord.aggregate({
-      where: { userId },
-      _avg: { score: true },
+    const chunkProgressCount = await this.prisma.userChunkProgress.count({
+      where: { userId, status: { in: ['can_output', 'mastered'] } },
     });
 
     const now = new Date();
@@ -105,25 +83,13 @@ export class ProfileService {
 
     return {
       userId,
-      bank: config?.bank ?? null,
       stats: {
-        totalPracticed,
-        masteredCount,
-        favoritesCount,
+        totalSessions: sessionCount,
         wordsCount,
-        mockExamCount,
-        averageExamScore: avgScoreResult._avg.score
-          ? Math.round(avgScoreResult._avg.score)
-          : null,
+        expressionCount,
+        chunkMastered: chunkProgressCount,
         streakDays,
       },
-      latestExam: latestExam
-        ? {
-            score: latestExam.score,
-            paperTitle: latestExam.paper.title,
-            takenAt: latestExam.takenAt,
-          }
-        : null,
     };
   }
 
@@ -225,48 +191,6 @@ export class ProfileService {
       };
     }
 
-    // Aggregate by question: count practices + last practice date per question
-    const records = await this.prisma.practiceRecord.groupBy({
-      by: ['questionId'],
-      where: { userId },
-      _count: { id: true },
-      _max: { createdAt: true },
-      orderBy: { _max: { createdAt: 'desc' } },
-      skip,
-      take: pageSize,
-    });
-
-    const totalResult = await this.prisma.practiceRecord.groupBy({
-      by: ['questionId'],
-      where: { userId },
-    });
-    const total = totalResult.length;
-
-    // Fetch question details
-    const questionIds = records.map((r) => r.questionId);
-    const questions = await this.prisma.questionItem.findMany({
-      where: { id: { in: questionIds } },
-      select: {
-        id: true,
-        title: true,
-        topic: { select: { id: true, name: true } },
-      },
-    });
-    const questionMap = new Map(questions.map((q) => [q.id, q]));
-
-    const list = records.map((r) => {
-      const q = questionMap.get(r.questionId);
-      return {
-        recordId: r.questionId,
-        topicId: q?.topic?.id || '',
-        topicName: q?.topic?.name || '未知专题',
-        questionId: r.questionId,
-        questionText: q?.title || '未知题目',
-        practiceCount: r._count.id,
-        lastPracticeAt: r._max.createdAt?.toISOString() || '',
-      };
-    });
-
-    return { list, total, page, pageSize };
+    return { list: [], total: sessionTotal, page, pageSize };
   }
 }

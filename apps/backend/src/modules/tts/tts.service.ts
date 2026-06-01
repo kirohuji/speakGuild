@@ -7,7 +7,7 @@ import { FileAssetGroup, TtsProvider } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TtsProviderFactory } from './tts-provider.factory';
 import { TTS_PARAMS_SCHEMA, sanitizeTtsParams } from './tts-params.schema';
-import { SynthesizeAssetDto, SynthesizeQuestionDto, SynthesizeTextDto } from './dto/synthesize.dto';
+import { SynthesizeAssetDto, SynthesizeTextDto } from './dto/synthesize.dto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 
 @Injectable()
@@ -22,82 +22,6 @@ export class TtsService {
 
   getParamsSchema() {
     return TTS_PARAMS_SCHEMA;
-  }
-
-  /** 题目音频：按 (questionId + textType + 配置哈希) 持久化缓存 */
-  async synthesizeQuestion(dto: SynthesizeQuestionDto) {
-    const question = await this.prisma.questionItem.findUnique({
-      where: { id: dto.questionId },
-      include: { content: true },
-    });
-    if (!question) throw new NotFoundException('题目不存在');
-    if (!question.content) throw new BadRequestException('题目暂无内容');
-
-    const textType = dto.textType ?? 'answer';
-    const text = textType === 'question'
-      ? question.content.promptEn?.trim()
-      : question.content.answerEn?.trim() || question.content.promptEn?.trim();
-    if (!text) throw new BadRequestException('题目英文内容为空');
-
-    const configHash = this.buildConfigHash(dto.provider, dto.model, dto.voiceId, dto.params, textType);
-
-    // 检查缓存
-    const existing = await this.prisma.questionAudio.findUnique({
-      where: { questionId_configHash: { questionId: dto.questionId, configHash } },
-    });
-    if (existing) {
-      this.logger.log(`Cache hit: questionId=${dto.questionId} provider=${dto.provider}`);
-      return {
-        id: existing.id,
-        mimeType: existing.mimeType,
-        wordTimestamps: existing.wordTimestamps,
-        cached: true,
-      };
-    }
-
-    // 生成新音频
-    const sanitizedParams = sanitizeTtsParams(dto.provider, dto.model, dto.params);
-    const provider = this.factory.getProvider(dto.provider);
-    const ephemeralId = `q-${dto.questionId}-${randomUUID()}`;
-
-    this.logger.log(`Generating TTS: questionId=${dto.questionId} textType=${textType} provider=${dto.provider} model=${dto.model}`);
-    const result = await provider.generateAudio({
-      id: ephemeralId,
-      text,
-      model: dto.model,
-      voiceId: dto.voiceId,
-      params: sanitizedParams,
-    });
-
-    const fileName = `${ephemeralId}.${result.fileExtension}`;
-    const asset = await this.fileAssetsService.createAssetFromBuffer({
-      buffer: result.audioBuffer,
-      filename: fileName,
-      mimeType: result.mimeType,
-      group: FileAssetGroup.tts,
-    });
-    const ttsBizId = this.getTtsBizId(dto.questionId, configHash);
-    await this.fileAssetsService.createSystemReference(asset.id, 'tts_question', ttsBizId);
-
-    const record = await this.prisma.questionAudio.create({
-      data: {
-        questionId: dto.questionId,
-        configHash,
-        provider: dto.provider as TtsProvider,
-        model: dto.model,
-        voiceId: dto.voiceId ?? null,
-        mimeType: result.mimeType,
-        assetId: asset.id,
-        wordTimestamps: result.wordTimestamps as any ?? undefined,
-      },
-    });
-
-    return {
-      id: record.id,
-      mimeType: record.mimeType,
-      wordTimestamps: record.wordTimestamps,
-      cached: false,
-    };
   }
 
   /** 用户录音 → Whisper 转写，返回文本 + 词时间戳 + 音频 base64 */
@@ -243,34 +167,6 @@ export class TtsService {
     };
   }
 
-  async getAudioUrl(id: string) {
-    const record = await this.prisma.questionAudio.findUnique({
-      where: { id },
-      include: { asset: true },
-    });
-    if (!record) throw new NotFoundException('音频不存在');
-    const signed = await this.fileAssetsService.getPrivateUrlByAssetId(record.assetId);
-    return {
-      url: signed.url,
-      mimeType: record.mimeType,
-      expiresInSeconds: signed.expiresInSeconds,
-    };
-  }
-
-  /** 删除某题目的所有缓存音频（TTS 配置变更时调用） */
-  async clearQuestionAudioCache(questionId: string) {
-    const records = await this.prisma.questionAudio.findMany({ where: { questionId } });
-    await Promise.all(records.map((r) =>
-      this.fileAssetsService.deleteSystemReference(
-        r.assetId,
-        'tts_question',
-        this.getTtsBizId(questionId, r.configHash),
-      ),
-    ));
-    await this.prisma.questionAudio.deleteMany({ where: { questionId } });
-    return { deleted: records.length };
-  }
-
   private buildConfigHash(
     provider: string,
     model: string,
@@ -286,9 +182,5 @@ export class TtsService {
       params: params ? JSON.stringify(Object.keys(params).sort().reduce((acc, k) => ({ ...acc, [k]: params[k] }), {})) : null,
     });
     return createHash('sha1').update(key).digest('hex');
-  }
-
-  private getTtsBizId(questionId: string, configHash: string) {
-    return `${questionId}:${configHash}`;
   }
 }

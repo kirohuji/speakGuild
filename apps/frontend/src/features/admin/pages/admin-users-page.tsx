@@ -479,12 +479,12 @@ function UserRow({
               {/* 统计数据 */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl border border-border/60 p-3 text-center">
-                  <p className="text-2xl font-bold text-blue-500">{detail._count.practiceRecords}</p>
-                  <p className="text-xs text-muted-foreground">练习次数</p>
+                  <p className="text-2xl font-bold text-blue-500">{detail._count.practiceSessions}</p>
+                  <p className="text-xs text-muted-foreground">练习会话</p>
                 </div>
                 <div className="rounded-xl border border-border/60 p-3 text-center">
-                  <p className="text-2xl font-bold text-purple-500">{detail._count.mockExamRecords}</p>
-                  <p className="text-xs text-muted-foreground">模考次数</p>
+                  <p className="text-2xl font-bold text-purple-500">{detail._count.orders}</p>
+                  <p className="text-xs text-muted-foreground">订单数</p>
                 </div>
                 <div className="rounded-xl border border-border/60 p-3 text-center">
                   <p className="text-2xl font-bold text-emerald-500">{detail._count.vocabularyWords}</p>

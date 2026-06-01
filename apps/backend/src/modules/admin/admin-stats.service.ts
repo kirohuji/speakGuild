@@ -10,14 +10,14 @@ export interface DashboardStats {
   totalRevenue: number;
   monthRevenue: number;
   todayRevenue: number;
-  totalPracticeCount: number;
-  todayPracticeCount: number;
-  totalMockCount: number;
-  questionBankCount: number;
-  questionItemCount: number;
+  totalSessionCount: number;
+  todaySessionCount: number;
+  totalScriptCount: number;
+  sceneCount: number;
+  chunkCount: number;
   revenueTrend: { date: string; amount: number }[];
-  practiceTrend: { date: string; count: number }[];
-  topBanks: { id: string; name: string; province: string; practiceCount: number }[];
+  sessionTrend: { date: string; count: number }[];
+  topScenes: { id: string; name: string; sessionCount: number }[];
 }
 
 @Injectable()
@@ -39,14 +39,14 @@ export class AdminStatsService {
       totalRevenueResult,
       monthRevenueResult,
       todayRevenueResult,
-      totalPracticeCount,
-      todayPracticeCount,
-      totalMockCount,
-      questionBankCount,
-      questionItemCount,
+      totalSessionCount,
+      todaySessionCount,
+      totalScriptCount,
+      sceneCount,
+      chunkCount,
       revenueTrendRaw,
-      practiceTrendRaw,
-      topBanksRaw,
+      sessionTrendRaw,
+      topScenesRaw,
     ] = await Promise.all([
       // 总注册用户数
       this.prisma.user.count(),
@@ -82,40 +82,32 @@ export class AdminStatsService {
         where: { status: 'paid', paidAt: { gte: todayStart } },
       }),
 
-      // 总练习记录数
-      this.prisma.practiceRecord.count(),
+      // 总练习会话数
+      this.prisma.practiceSession.count(),
 
-      // 今日练习记录数
-      this.prisma.practiceRecord.count({
-        where: { createdAt: { gte: todayStart } },
+      // 今日练习会话数
+      this.prisma.practiceSession.count({
+        where: { startedAt: { gte: todayStart } },
       }),
 
-      // 总模考次数
-      this.prisma.mockExamRecord.count(),
+      // 总剧本通关数
+      this.prisma.scriptRecord.count({ where: { passed: true } }),
 
-      // 题库总数
-      this.prisma.questionBank.count(),
+      // 场景总数
+      this.prisma.scene.count(),
 
-      // 题目总数
-      this.prisma.questionItem.count(),
+      // Chunk 总数
+      this.prisma.chunk.count(),
 
       // 近 30 天每日收入趋势
       this.revenueTrendQuery(thirtyDaysAgo),
 
-      // 近 30 天每日练习量趋势
-      this.practiceTrendQuery(thirtyDaysAgo),
+      // 近 30 天每日练习会话趋势
+      this.sessionTrendQuery(thirtyDaysAgo),
 
-      // 热门题库 Top 10（按练习记录数）
-      this.topBanksQuery(),
+      // 热门场景 Top 10
+      this.topScenesQuery(),
     ]);
-
-    // Resolve question bank names for topBanks
-    const bankIds = topBanksRaw.map((b) => b.bankId);
-    const banks = await this.prisma.questionBank.findMany({
-      where: { id: { in: bankIds } },
-      select: { id: true, name: true, province: true },
-    });
-    const bankMap = new Map(banks.map((b) => [b.id, b]));
 
     const conversionRate =
       userCount > 0 ? Math.round((paidUserCount / userCount) * 10000) / 100 : 0;
@@ -129,28 +121,24 @@ export class AdminStatsService {
       totalRevenue: totalRevenueResult._sum.amount ?? 0,
       monthRevenue: monthRevenueResult._sum.amount ?? 0,
       todayRevenue: todayRevenueResult._sum.amount ?? 0,
-      totalPracticeCount,
-      todayPracticeCount,
-      totalMockCount,
-      questionBankCount,
-      questionItemCount,
+      totalSessionCount,
+      todaySessionCount,
+      totalScriptCount,
+      sceneCount,
+      chunkCount,
       revenueTrend: revenueTrendRaw.map((r) => ({
         date: r.date,
         amount: Number(r.amount),
       })),
-      practiceTrend: practiceTrendRaw.map((r) => ({
+      sessionTrend: sessionTrendRaw.map((r) => ({
         date: r.date,
         count: Number(r.count),
       })),
-      topBanks: topBanksRaw.map((b) => {
-        const bank = bankMap.get(b.bankId);
-        return {
-          id: b.bankId,
-          name: bank?.name ?? '未知题库',
-          province: bank?.province ?? '',
-          practiceCount: Number(b.count),
-        };
-      }),
+      topScenes: topScenesRaw.map((s) => ({
+        id: s.sceneId,
+        name: s.name ?? '未知场景',
+        sessionCount: Number(s.count),
+      })),
     };
   }
 
@@ -177,29 +165,28 @@ export class AdminStatsService {
     `;
   }
 
-  /** Daily practice count for last 30 days. */
-  private async practiceTrendQuery(since: Date) {
+  /** Daily practice session count for last 30 days. */
+  private async sessionTrendQuery(since: Date) {
     return this.prisma.$queryRaw<
       { date: string; count: bigint }[]
     >`
-      SELECT DATE("createdAt") AS date, COUNT(*)::int AS count
-      FROM "practice_record"
-      WHERE "createdAt" >= ${since}
-      GROUP BY DATE("createdAt")
+      SELECT DATE("startedAt") AS date, COUNT(*)::int AS count
+      FROM "practice_session"
+      WHERE "startedAt" >= ${since}
+      GROUP BY DATE("startedAt")
       ORDER BY date ASC
     `;
   }
 
-  /** Top 10 question banks by practice record count. */
-  private async topBanksQuery() {
+  /** Top 10 scenes by practice session count. */
+  private async topScenesQuery() {
     return this.prisma.$queryRaw<
-      { bankId: string; count: bigint }[]
+      { sceneId: string; name: string; count: bigint }[]
     >`
-      SELECT qt."bankId", COUNT(*)::int AS count
-      FROM "practice_record" pr
-      JOIN "question_item" qi ON qi.id = pr."questionId"
-      JOIN "question_topic" qt ON qt.id = qi."topicId"
-      GROUP BY qt."bankId"
+      SELECT ps."sceneId", s.title AS name, COUNT(*)::int AS count
+      FROM "practice_session" ps
+      JOIN "scene" s ON s.id = ps."sceneId"
+      GROUP BY ps."sceneId", s.title
       ORDER BY count DESC
       LIMIT 10
     `;

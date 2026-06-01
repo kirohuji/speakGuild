@@ -22,11 +22,10 @@ interface TrendPoint {
   count?: number;
 }
 
-interface TopBank {
+interface TopScene {
   id: string;
   name: string;
-  province: string;
-  practiceCount: number;
+  sessionCount: number;
 }
 
 interface DashboardStats {
@@ -38,14 +37,14 @@ interface DashboardStats {
   totalRevenue: number;
   monthRevenue: number;
   todayRevenue: number;
-  totalPracticeCount: number;
-  todayPracticeCount: number;
-  totalMockCount: number;
-  questionBankCount: number;
-  questionItemCount: number;
+  totalSessionCount: number;
+  todaySessionCount: number;
+  totalScriptCount: number;
+  sceneCount: number;
+  chunkCount: number;
   revenueTrend: TrendPoint[];
-  practiceTrend: TrendPoint[];
-  topBanks: TopBank[];
+  sessionTrend: TrendPoint[];
+  topScenes: TopScene[];
 }
 
 async function getDashboardStats(): Promise<DashboardStats> {
@@ -180,7 +179,7 @@ export function AdminAnalyticsPage() {
     revenue: (d.amount || 0) / 100,
   })) || [];
 
-  const practiceData = stats.practiceTrend?.map((d) => ({
+  const sessionData = stats.sessionTrend?.map((d) => ({
     date: d.date?.slice(5),
     count: d.count || 0,
   })) || [];
@@ -206,7 +205,7 @@ export function AdminAnalyticsPage() {
           icon={Activity}
           label="今日活跃"
           value={fmtInt(stats.todayActiveUsers)}
-          sub={`今日练习 ${fmtInt(stats.todayPracticeCount)} 题`}
+          sub={`今日练习 ${fmtInt(stats.todaySessionCount)} 次`}
           accent="emerald"
         />
         <StatCard
@@ -225,9 +224,9 @@ export function AdminAnalyticsPage() {
         />
         <StatCard
           icon={Target}
-          label="模考次数"
-          value={fmtInt(stats.totalMockCount)}
-          sub={`题库 ${fmtInt(stats.questionBankCount)} 个`}
+          label="场景数"
+          value={fmtInt(stats.sceneCount)}
+          sub={`Chunk ${fmtInt(stats.chunkCount)} 个`}
           accent="rose"
         />
       </div>
@@ -241,8 +240,8 @@ export function AdminAnalyticsPage() {
                 <FileText className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{fmtInt(stats.totalPracticeCount)}</p>
-                <p className="text-xs text-muted-foreground">总练习量</p>
+                <p className="text-2xl font-bold">{fmtInt(stats.totalSessionCount)}</p>
+                <p className="text-xs text-muted-foreground">总练习会话</p>
               </div>
             </div>
           </CardContent>
@@ -254,8 +253,8 @@ export function AdminAnalyticsPage() {
                 <BookOpen className="h-5 w-5 text-violet-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{fmtInt(stats.questionItemCount)}</p>
-                <p className="text-xs text-muted-foreground">题目总数</p>
+                <p className="text-2xl font-bold">{fmtInt(stats.totalScriptCount)}</p>
+                <p className="text-xs text-muted-foreground">剧本通关数</p>
               </div>
             </div>
           </CardContent>
@@ -280,8 +279,8 @@ export function AdminAnalyticsPage() {
                 <BookOpen className="h-5 w-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{fmtInt(stats.questionBankCount)}</p>
-                <p className="text-xs text-muted-foreground">题库总数</p>
+                <p className="text-2xl font-bold">{fmtInt(stats.chunkCount)}</p>
+                <p className="text-xs text-muted-foreground">Chunk 总数</p>
               </div>
             </div>
           </CardContent>
@@ -353,25 +352,25 @@ export function AdminAnalyticsPage() {
         </Card>
       </div>
 
-      {/* ─── Top Banks Ranking ────────────────────────────── */}
+      {/* ─── Top Scenes Ranking ────────────────────────────── */}
       <Card className="shadow-none">
         <CardHeader>
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-violet-500" />
-            热门题库排行 Top {stats.topBanks?.length || 0}
+            热门场景排行 Top {stats.topScenes?.length || 0}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {(!stats.topBanks || stats.topBanks.length === 0) ? (
+          {(!stats.topScenes || stats.topScenes.length === 0) ? (
             <p className="py-8 text-center text-sm text-muted-foreground">暂无数据</p>
           ) : (
             <div className="space-y-1">
-              {stats.topBanks.map((bank, idx) => {
-                const maxCount = stats.topBanks[0]?.practiceCount || 1;
-                const barWidth = Math.max((bank.practiceCount / maxCount) * 100, 2);
+              {stats.topScenes.map((scene, idx) => {
+                const maxCount = stats.topScenes[0]?.sessionCount || 1;
+                const barWidth = Math.max((scene.sessionCount / maxCount) * 100, 2);
                 return (
                   <div
-                    key={bank.id}
+                    key={scene.id}
                     className="flex items-center gap-3 py-2"
                   >
                     <span className={cn(
@@ -384,9 +383,9 @@ export function AdminAnalyticsPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-sm font-medium truncate">{bank.name}</span>
+                        <span className="text-sm font-medium truncate">{scene.name}</span>
                         <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                          {fmtInt(bank.practiceCount)} 次练习
+                          {fmtInt(scene.sessionCount)} 次练习
                         </span>
                       </div>
                       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
