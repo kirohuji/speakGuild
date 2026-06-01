@@ -992,93 +992,83 @@ function PreviewDebugPanel({
         )}
       </div>
 
-      <ScrollArea className="h-[78vh] max-h-[760px]">
-        <div className="space-y-4 p-4">
-          <div className="grid grid-cols-3 gap-2">
-            <DebugMetric label="状态" value={debug?.isEnded ? '已完成' : debug?.isWaiting ? '等待输入' : debug?.isReady ? '播放中' : '未开始'} />
-            <DebugMetric label="对话" value={`${debug?.history.length ?? 0} 条`} />
-            <DebugMetric label="选项" value={`${debug?.choices.length ?? 0} 个`} />
-          </div>
+      <div className="grid grid-cols-3 gap-px border-b border-border bg-border">
+        <DebugMetric label="状态" value={debug?.isEnded ? '已完成' : debug?.isWaiting ? '等待输入' : debug?.isReady ? '播放中' : '未开始'} />
+        <DebugMetric label="对话" value={`${debug?.history.length ?? 0} 条`} />
+        <DebugMetric label="选项" value={`${debug?.choices.length ?? 0} 个`} />
+      </div>
 
-          <section className="space-y-2">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground">本轮练习设计</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">从当前 input 节点 Tags 提取，方便核对 AI 评判依据。</p>
-            </div>
-            <div className="grid gap-2 lg:grid-cols-3">
-              <PracticeContextCard
-                icon={Target}
-                label="Objective"
-                description="任务目标"
-                value={practiceContext.objective}
-              />
-              <PracticeContextCard
-                icon={Lightbulb}
-                label="Hint"
-                description="表达方向"
-                value={practiceContext.hint}
-              />
-              <PracticeContextCard
-                icon={Blocks}
-                label="Chunks"
-                description="推荐积木块"
-                values={practiceContext.chunks}
-              />
-            </div>
-          </section>
+      <Tabs defaultValue="practice">
+        <TabsList className="mx-3 mt-3 grid h-8 grid-cols-3 p-0.5">
+          <TabsTrigger value="practice" className="px-2 py-1 text-xs">练习评估</TabsTrigger>
+          <TabsTrigger value="history" className="px-2 py-1 text-xs">对话记录</TabsTrigger>
+          <TabsTrigger value="debug" className="px-2 py-1 text-xs">调试数据</TabsTrigger>
+        </TabsList>
 
-          {aiEnabled && (
+        <ScrollArea className="h-[calc(78vh-116px)] max-h-[644px]">
+          <TabsContent value="practice" className="mt-0 space-y-3 p-3">
             <section className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground">逐轮 AI 评估</p>
-              <div className="space-y-2">
-                {debug?.aiEvaluations.length ? [...debug.aiEvaluations].reverse().map((evaluation) => (
-                  <PreviewEvaluationCard key={evaluation.id} evaluation={evaluation} />
-                )) : (
-                  <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                    提交一条测试文本后，这里会显示 AI 对目标和推荐句块的判断。
-                  </p>
-                )}
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-muted-foreground">本轮练习设计</p>
+                <span className="text-[10px] text-muted-foreground">来自当前 input Tags</span>
+              </div>
+              <div className="grid gap-1.5">
+                <PracticeContextCard icon={Target} label="Objective" description="任务目标" value={practiceContext.objective} />
+                <PracticeContextCard icon={Lightbulb} label="Hint" description="表达方向" value={practiceContext.hint} />
+                <PracticeContextCard icon={Blocks} label="Chunks" description="推荐积木块" values={practiceContext.chunks} />
               </div>
             </section>
-          )}
 
-          <section className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">当前 Tags</p>
-            <div className="flex min-h-8 flex-wrap gap-1.5 rounded-md border border-border bg-muted/20 p-2">
-              {debug?.currentTags.length ? debug.currentTags.map((tag) => (
-                <Badge key={tag} variant={tag === 'input' || tag === 'wait' ? 'default' : 'secondary'} className="text-[10px]">#{tag}</Badge>
-              )) : <span className="text-xs text-muted-foreground">暂无 tags</span>}
-            </div>
-          </section>
-
-          <section className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">背景</p>
-            <div className="rounded-md border border-border bg-muted/20 p-3 text-xs">
-              <p>fit: <span className="font-mono">{debug?.activeBackground.fit ?? '-'}</span></p>
-              <p className="mt-1 truncate">url: <span className="font-mono">{debug?.activeBackground.url ?? '-'}</span></p>
-            </div>
-          </section>
-
-          <section className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">收集到的对话</p>
-            <div className="space-y-2">
-              {debug?.history.length ? debug.history.map((line, index) => (
-                <div key={`${line.speaker}-${index}`} className="rounded-md border border-border bg-card px-3 py-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">{index + 1}. {line.speaker || 'Narrator'}</p>
-                  <p className="mt-1 text-sm leading-6">{line.text}</p>
+            {aiEnabled && (
+              <section className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">逐轮 AI 评估</p>
+                <div className="space-y-2">
+                  {debug?.aiEvaluations.length ? [...debug.aiEvaluations].reverse().map((evaluation) => (
+                    <PreviewEvaluationCard key={evaluation.id} evaluation={evaluation} />
+                  )) : (
+                    <p className="rounded-md border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+                      提交测试文本后显示 AI 判断。
+                    </p>
+                  )}
                 </div>
-              )) : <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">开始预览后这里会显示台词和用户输入。</p>}
-            </div>
-          </section>
+              </section>
+            )}
+          </TabsContent>
 
-          <section className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">AI 评估 Payload</p>
-            <pre className="max-h-[360px] overflow-auto rounded-md border border-border bg-muted/30 p-3 text-[11px] leading-relaxed">
-              {formattedPayload}
-            </pre>
-          </section>
-        </div>
-      </ScrollArea>
+          <TabsContent value="history" className="mt-0 space-y-2 p-3">
+            {debug?.history.length ? debug.history.map((line, index) => (
+              <div key={`${line.speaker}-${index}`} className="rounded-md border border-border bg-card px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">{index + 1}. {line.speaker || 'Narrator'}</p>
+                <p className="mt-0.5 text-sm leading-5">{line.text}</p>
+              </div>
+            )) : <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">开始预览后这里会显示台词和用户输入。</p>}
+          </TabsContent>
+
+          <TabsContent value="debug" className="mt-0 space-y-2 p-3">
+            <details open className="rounded-md border border-border bg-card">
+              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold">当前 Tags</summary>
+              <div className="flex min-h-8 flex-wrap gap-1 border-t border-border p-2">
+                {debug?.currentTags.length ? debug.currentTags.map((tag) => (
+                  <Badge key={tag} variant={tag === 'input' || tag === 'wait' ? 'default' : 'secondary'} className="text-[10px]">#{tag}</Badge>
+                )) : <span className="text-xs text-muted-foreground">暂无 tags</span>}
+              </div>
+            </details>
+            <details className="rounded-md border border-border bg-card">
+              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold">背景</summary>
+              <div className="border-t border-border p-2 text-xs">
+                <p>fit: <span className="font-mono">{debug?.activeBackground.fit ?? '-'}</span></p>
+                <p className="mt-1 break-all">url: <span className="font-mono">{debug?.activeBackground.url ?? '-'}</span></p>
+              </div>
+            </details>
+            <details className="rounded-md border border-border bg-card">
+              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold">AI 评估 Payload</summary>
+              <pre className="max-h-[420px] overflow-auto border-t border-border bg-muted/30 p-2 text-[11px] leading-relaxed">
+                {formattedPayload}
+              </pre>
+            </details>
+          </TabsContent>
+        </ScrollArea>
+      </Tabs>
     </div>
   )
 }
@@ -1120,7 +1110,7 @@ function PreviewEvaluationCard({ evaluation }: { evaluation: PreviewAiEvaluation
   const isPassed = result?.passed
 
   return (
-    <div className="rounded-md border border-border bg-card p-3">
+    <div className="rounded-md border border-border bg-card p-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">用户输入</p>
@@ -1132,7 +1122,7 @@ function PreviewEvaluationCard({ evaluation }: { evaluation: PreviewAiEvaluation
       </div>
       {isError && <p className="mt-3 text-xs text-destructive">{evaluation.error}</p>}
       {result && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3 text-xs">
+        <div className="mt-2 space-y-1.5 border-t border-border pt-2 text-xs">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
             <span>intent: <code>{result.intent}</code></span>
             <span>confidence: <code>{result.confidence}</code></span>
@@ -1175,18 +1165,18 @@ function PracticeContextCard({
   const hasValue = Boolean(value || values?.length)
 
   return (
-    <div className="rounded-md border border-border bg-card p-3">
+    <div className="rounded-md border border-border bg-card p-2">
       <div className="flex items-center gap-2">
         <Icon className="size-3.5 text-primary" />
         <p className="text-xs font-semibold">{label}</p>
         <span className="text-[10px] text-muted-foreground">{description}</span>
       </div>
       {values?.length ? (
-        <div className="mt-2 flex flex-wrap gap-1">
+        <div className="mt-1.5 flex flex-wrap gap-1">
           {values.map((item) => <Badge key={item} variant="secondary" className="text-[10px]">{item}</Badge>)}
         </div>
       ) : (
-        <p className={cn('mt-2 text-xs leading-5', hasValue ? 'text-foreground' : 'text-muted-foreground')}>{value || '未配置'}</p>
+        <p className={cn('mt-1 text-xs leading-5', hasValue ? 'text-foreground' : 'text-muted-foreground')}>{value || '未配置'}</p>
       )}
     </div>
   )
@@ -1194,9 +1184,9 @@ function PracticeContextCard({
 
 function DebugMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-border bg-card p-3">
+    <div className="bg-background px-3 py-2">
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
+      <p className="truncate text-sm font-semibold">{value}</p>
     </div>
   )
 }
