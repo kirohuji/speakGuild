@@ -189,6 +189,7 @@ function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosit
           />
         </div>
       )}
+      <div className="pointer-events-none absolute inset-0 bg-black/40" />
     </div>
   )
 }
@@ -403,7 +404,12 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     return <CssFallbackStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={spriteUrl} spritePosition={spritePosition} />
   }
 
-  return <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
+  return (
+    <>
+      <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
+      <div className="pointer-events-none absolute inset-0 bg-black/40" />
+    </>
+  )
 }
 
 export function VnPlayer({

@@ -31,6 +31,7 @@ export function VnScene({ backgroundUrl, className, children }: VnSceneProps) {
     >
       {/* Dark overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-black/40" />
 
       {/* Content area */}
       <div className="relative z-10 flex flex-1 flex-col justify-end p-4">{children}</div>
