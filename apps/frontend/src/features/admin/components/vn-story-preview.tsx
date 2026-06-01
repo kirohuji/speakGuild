@@ -379,6 +379,10 @@ export function VnStoryPreview({
 
   const lastLine = history[history.length - 1]
   const hideSpriteForChoices = choices.length > 0 && choiceCharacter === 'hide'
+  const inputGuidance = {
+    objective: readPreviewTagValue(currentTags, 'objective:'),
+    hint: readPreviewTagValue(currentTags, 'hint:'),
+  }
   const aiPayload = useMemo(() => ({
     story: {
       ended: isEnded,
@@ -457,6 +461,7 @@ export function VnStoryPreview({
         onAdvance={advanceStory}
         onChoice={handleChoice}
         onSubmitInput={handleInput}
+        inputGuidance={inputGuidance}
         inputFeedback={aiEvaluationEnabled && activeEvaluation ? (
           <PreviewInputFeedback evaluation={activeEvaluation} onContinue={continueDespiteEvaluation} />
         ) : null}

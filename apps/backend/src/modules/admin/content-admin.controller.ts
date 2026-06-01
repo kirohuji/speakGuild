@@ -743,24 +743,41 @@ export class ContentAdminController {
   @Get('stories/:id')
   async getStory(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.prisma.inkScript.findUnique({
+    const story = await this.prisma.inkScript.findUnique({
       where: { id },
       include: {
-        trainingTopic: { select: { id: true, title: true } },
+        trainingTopic: { select: { id: true, title: true, teachingMarkdown: true } },
       },
     });
+    if (!story || story.trainingTopic || !story.topicId) return story;
+    const legacyTopic = await this.prisma.trainingTopic.findUnique({
+      where: { id: story.topicId },
+      select: { id: true, title: true, teachingMarkdown: true },
+    });
+    return { ...story, trainingTopic: legacyTopic };
   }
 
   @Post('stories')
   async createStory(@Req() req: Request, @Body() dto: any) {
     await this.requireAdmin(req);
-    return this.prisma.inkScript.create({ data: dto });
+    return this.prisma.inkScript.create({
+      data: dto,
+      include: {
+        trainingTopic: { select: { id: true, title: true, teachingMarkdown: true } },
+      },
+    });
   }
 
   @Patch('stories/:id')
   async updateStory(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
     await this.requireAdmin(req);
-    return this.prisma.inkScript.update({ where: { id }, data: dto });
+    return this.prisma.inkScript.update({
+      where: { id },
+      data: dto,
+      include: {
+        trainingTopic: { select: { id: true, title: true, teachingMarkdown: true } },
+      },
+    });
   }
 
   @Delete('stories/:id')

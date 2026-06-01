@@ -737,6 +737,7 @@ model TrainingTopic {
   title                String
   description          String?           @db.Text
   knowledgePoints      String?           @db.Text
+  teachingMarkdown     String?           @db.Text
   promptEn             String            @db.Text
   promptZh             String            @db.Text
   suggestedDurationSec Int               @default(60)

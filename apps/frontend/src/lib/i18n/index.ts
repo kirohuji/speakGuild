@@ -495,6 +495,9 @@ const zhCN = {
       current: '当前',
     },
     practiceVn: {
+      teaching: '教学',
+      teachingDesc: '查看这个话题的场景说明和表达策略。',
+      noTeaching: '这个话题暂时还没有配置教学文档。',
       hint: '提示',
       objective: '目标',
       assistant: '练习助手',
@@ -1404,6 +1407,9 @@ const en = {
       current: 'Current',
     },
     practiceVn: {
+      teaching: 'Teaching',
+      teachingDesc: 'Review the scenario notes and speaking strategies for this topic.',
+      noTeaching: 'No teaching document has been configured for this topic yet.',
       hint: 'Hint',
       objective: 'Objective',
       assistant: 'Practice Assistant',
@@ -2312,6 +2318,9 @@ const ja = {
       current: '現在',
     },
     practiceVn: {
+      teaching: '学習ポイント',
+      teachingDesc: 'このトピックの場面説明と表現のコツを確認します。',
+      noTeaching: 'このトピックにはまだ学習ドキュメントが設定されていません。',
       hint: 'ヒント',
       objective: '目標',
       assistant: '練習アシスタント',

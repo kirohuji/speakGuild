@@ -11,7 +11,7 @@ import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import {
   listStories, createStory, updateStory, deleteStory, getStory, getStoryFilters,
-  listLocations, listCharacters,
+  listLocations, listCharacters, updateTrainingTopic,
   type StoryData, type StoryFilters, type GameLocationData, type GameCharacter,
 } from '../api-content-admin'
 import { InkStoryEditor } from './ink-story-editor'
@@ -114,7 +114,10 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
 
       if (editingStory) {
         const saved = await updateStory(editingStory.id, payload)
-        setEditingStory(saved)
+        setEditingStory({
+          ...saved,
+          trainingTopic: saved.trainingTopic ?? editingStory.trainingTopic,
+        })
         if (!options?.silent) toast.success('故事已更新')
       } else {
         const saved = await createStory(payload)
@@ -140,6 +143,21 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
       load()
     } catch { toast.error('删除失败') }
   }, [selectedId, closeEditor, load])
+
+  const handleSaveTeachingMarkdown = useCallback(async (teachingMarkdown: string) => {
+    const topic = editingStory?.trainingTopic
+    if (!topic) throw new Error('当前故事尚未绑定训练话题')
+    try {
+      const updated = await updateTrainingTopic(topic.id, { teachingMarkdown })
+      setEditingStory((current) => current ? {
+        ...current,
+        trainingTopic: { ...topic, teachingMarkdown: updated.teachingMarkdown ?? teachingMarkdown },
+      } : current)
+      toast.success('教学文档已保存')
+    } catch {
+      toast.error('教学文档保存失败')
+    }
+  }, [editingStory?.trainingTopic])
 
   const getLocationName = (id?: string | null) =>
     locations.find((l) => l.id === id)?.displayName ?? null
@@ -178,6 +196,8 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
           initialTitle={editingStory?.title ?? ''}
           locations={locations}
           characters={characters}
+          trainingTopic={editingStory?.trainingTopic}
+          onSaveTeachingMarkdown={handleSaveTeachingMarkdown}
           onSave={handleSave}
           saving={saving}
         />

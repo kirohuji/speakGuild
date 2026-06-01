@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { VnInputPanel } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
+import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
 
 export interface VnPlayerLine {
   speaker?: string
@@ -53,6 +54,7 @@ interface VnPlayerProps {
   onSubmitInput?: (text: string) => void | Promise<void>
   inputFeedback?: ReactNode
   inputFeedbackChat?: ReactNode
+  inputGuidance?: VnTurnGuidance
   inputDisabled?: boolean
   onReset?: () => void
   endedActions?: ReactNode
@@ -429,6 +431,7 @@ export function VnPlayer({
   onSubmitInput,
   inputFeedback,
   inputFeedbackChat,
+  inputGuidance,
   inputDisabled,
   onReset,
   endedActions,
@@ -561,6 +564,7 @@ export function VnPlayer({
           onChoice={onChoice}
           onSubmitInput={onSubmitInput}
           inputFeedback={inputFeedbackChat ?? inputFeedback}
+          inputGuidance={inputGuidance}
           inputDisabled={inputDisabled}
           onReset={onReset}
           endedActions={endedActions}
@@ -624,7 +628,6 @@ export function VnPlayer({
         }}
       >
         <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
-
         {onReset && (
           <div className="absolute right-3 top-3 z-30 flex gap-2">
             <span
@@ -699,6 +702,9 @@ export function VnPlayer({
         )}
 
         <div className="absolute inset-x-0 bottom-0 z-20">
+          {canSubmitInput && (
+            <TurnGuidanceCard guidance={inputGuidance} className="absolute right-4 bottom-full max-w-[min(88%,360px)]" />
+          )}
           {displayLine?.speaker && (
             <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center gap-1.5 rounded-full bg-background/82 px-3 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-border/45 backdrop-blur-2xl">
               <span className="size-1.5 shrink-0 rounded-full bg-primary/65" />

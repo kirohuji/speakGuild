@@ -13,7 +13,7 @@ export function BottomNav() {
   const isLoggedIn = !!session
 
   const navItems = [
-    { label: t('nav.home'), path: '/portal', icon: Home },
+    { label: t('nav.home'), path: '/', icon: Home },
     { label: t('nav.learningPlan'), path: '/learning', icon: BookOpen },
     { label: t('nav.myLibrary'), path: '/expressions', icon: Library },
   ]
@@ -21,7 +21,7 @@ export function BottomNav() {
 
 
   const isActive = (path: string) => {
-    if (path === '/portal') return location.pathname === '/portal'
+    if (path === '/') return location.pathname === '/'
     return location.pathname.startsWith(path)
   }
 

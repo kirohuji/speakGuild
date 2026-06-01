@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { History, RotateCcw, Settings, X, Send } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { VnPlayerLine, VnPlayerChoice, BackgroundFit } from './vn-player'
+import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
 
 interface DialogueListViewProps {
   backgroundUrl?: string
@@ -18,6 +19,7 @@ interface DialogueListViewProps {
   onChoice?: (index: number) => void
   onSubmitInput?: (text: string) => void | Promise<void>
   inputFeedback?: ReactNode
+  inputGuidance?: VnTurnGuidance
   inputDisabled?: boolean
   onReset?: () => void
   endedActions?: ReactNode
@@ -55,6 +57,7 @@ export function DialogueListView({
   onChoice,
   onSubmitInput,
   inputFeedback,
+  inputGuidance,
   inputDisabled,
   onReset,
   endedActions,
@@ -164,7 +167,6 @@ export function DialogueListView({
         )}
       </div>
       )}
-
       {/* ── Chat list ── */}
       <div
         ref={scrollRef}
@@ -253,6 +255,7 @@ export function DialogueListView({
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
+          <TurnGuidanceCard guidance={inputGuidance} className="max-w-[min(92%,360px)]" />
           <div className="rounded-lg bg-background/50-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.11)] ring-1 ring-border/60 backdrop-blur-xl">
             {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
             <div className="flex items-center gap-2">

@@ -437,7 +437,7 @@ function TrainingTopicDialog({
 
   useEffect(() => {
     if (edit) setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [] })
-    else setForm({ sceneId, title: '', description: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [], inkScriptId: '' })
+    else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [], inkScriptId: '' })
     setStorySearch('')
     setStoryType('all')
   }, [edit, open, sceneId])

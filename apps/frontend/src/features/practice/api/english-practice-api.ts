@@ -43,6 +43,7 @@ export interface TopicDetail {
     title: string
     description?: string | null
     knowledgePoints?: string | null
+    teachingMarkdown?: string | null
     promptEn: string
     promptZh: string
     suggestedDurationSec: number

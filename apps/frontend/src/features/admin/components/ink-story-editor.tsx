@@ -25,6 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation } from './vn-story-preview'
@@ -68,6 +69,8 @@ interface InkStoryEditorProps {
   initialCharacterId?: string
   locations?: GameLocationData[]
   characters?: GameCharacter[]
+  trainingTopic?: { id: string; title: string; teachingMarkdown?: string | null } | null
+  onSaveTeachingMarkdown?: (teachingMarkdown: string) => void | Promise<void>
   onSave?: (data: {
     key: string
     title: string
@@ -364,13 +367,15 @@ export function InkStoryEditor({
   initialCharacterId,
   locations = [],
   characters = [],
+  trainingTopic,
+  onSaveTeachingMarkdown,
   onSave,
   saving = false,
   readOnly = false,
   className,
 }: InkStoryEditorProps) {
   const [source, setSource] = useState(initialSource || defaultInkTemplate())
-  const [workspaceTab, setWorkspaceTab] = useState<'compose' | 'preview'>('compose')
+  const [workspaceTab, setWorkspaceTab] = useState<'compose' | 'preview' | 'teaching'>('compose')
   const [rawOpen, setRawOpen] = useState(false)
   const [compileResult, setCompileResult] = useState<ReturnType<typeof compileInk> | null>(null)
   const [selection, setSelection] = useState<Selection>({ type: 'scene', sceneIndex: 0 })
@@ -378,6 +383,8 @@ export function InkStoryEditor({
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [previewDebug, setPreviewDebug] = useState<VnPreviewDebugState | null>(null)
   const [previewAiEnabled, setPreviewAiEnabled] = useState(false)
+  const [teachingMarkdown, setTeachingMarkdown] = useState(trainingTopic?.teachingMarkdown ?? '')
+  const [teachingSaving, setTeachingSaving] = useState(false)
   const lastAutoSavedSourceRef = useRef('')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -447,6 +454,10 @@ export function InkStoryEditor({
     lastAutoSavedSourceRef.current = serializeSourceForSave(nextSource, initialKey, initialTitle)
     setAutoSaveState('idle')
   }, [initialSource, initialKey, initialTitle, initialLocationId, initialCharacterId])
+
+  useEffect(() => {
+    setTeachingMarkdown(trainingTopic?.teachingMarkdown ?? '')
+  }, [trainingTopic?.id, trainingTopic?.teachingMarkdown])
 
   useEffect(() => {
     setCompileResult(compileInk(sourceWithMeta()))
@@ -557,6 +568,16 @@ export function InkStoryEditor({
     void saveCurrentStory()
   }, [saveCurrentStory])
 
+  const handleSaveTeachingMarkdown = useCallback(async () => {
+    if (!onSaveTeachingMarkdown) return
+    setTeachingSaving(true)
+    try {
+      await onSaveTeachingMarkdown(teachingMarkdown)
+    } finally {
+      setTeachingSaving(false)
+    }
+  }, [onSaveTeachingMarkdown, teachingMarkdown])
+
   useEffect(() => {
     return // 自动保存已暂时关闭
     if (!onSave || readOnly || saving || !key.trim() || !title.trim() || !compileResult?.success) return
@@ -590,11 +611,12 @@ export function InkStoryEditor({
         </div>
       </div>
 
-      <Tabs value={workspaceTab} onValueChange={(value) => setWorkspaceTab(value as 'compose' | 'preview')} className="space-y-3">
+      <Tabs value={workspaceTab} onValueChange={(value) => setWorkspaceTab(value as 'compose' | 'preview' | 'teaching')} className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <TabsList>
             <TabsTrigger value="compose">编排</TabsTrigger>
             <TabsTrigger value="preview">预览</TabsTrigger>
+            <TabsTrigger value="teaching">教学文档</TabsTrigger>
           </TabsList>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={compileResult?.success ? 'success' : 'destructive'} className="h-7">
@@ -972,6 +994,38 @@ export function InkStoryEditor({
               />
             </div>
             <PreviewDebugPanel debug={previewDebug} aiEnabled={previewAiEnabled} onAiEnabledChange={setPreviewAiEnabled} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="teaching" className="mt-0">
+          <div className="rounded-lg border border-border bg-card">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold">练习助手教学文档</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {trainingTopic
+                    ? `绑定话题：${trainingTopic.title}。用户点击练习页顶部“教学”按钮后会看到这篇文档。`
+                    : '当前故事尚未绑定训练话题。请先在场景管理中绑定话题，再回来编写教学文档。'}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void handleSaveTeachingMarkdown()}
+                disabled={!trainingTopic || !onSaveTeachingMarkdown || teachingSaving}
+              >
+                <Save className="size-3.5" />{teachingSaving ? '保存中...' : '保存教学文档'}
+              </Button>
+            </div>
+            <div className="p-4">
+              <MarkdownEditor
+                value={teachingMarkdown}
+                onChange={setTeachingMarkdown}
+                height={560}
+                disabled={!trainingTopic || readOnly}
+                placeholder="## 这个场景怎么说&#10;&#10;先说明来意，再补充关键信息。"
+              />
+            </div>
           </div>
         </TabsContent>
       </Tabs>

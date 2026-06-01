@@ -102,6 +102,7 @@ export function AdminNqtrPage() {
             characters={characters}
           />
         </TabsContent>
+
       </Tabs>
     </div>
   )

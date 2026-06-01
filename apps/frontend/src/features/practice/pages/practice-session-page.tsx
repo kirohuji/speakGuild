@@ -256,6 +256,7 @@ export function PracticeSessionPage() {
   const [completedObjectives, setCompletedObjectives] = useState<Set<string>>(new Set())
   const [usedChunks, setUsedChunks] = useState<Set<string>>(new Set())
   const [aiHints, setAiHints] = useState<{ type: 'chunk' | 'pattern'; text: string; meaning?: string; example?: string }[]>([])
+  const [teachingMarkdown, setTeachingMarkdown] = useState('')
 
   // ── Analysis state ──
   const [analysisResult, setAnalysisResult] = useState<any>(null)
@@ -337,6 +338,7 @@ export function PracticeSessionPage() {
 
         // Load Ink script if available
         const compiledInk = compilePracticeInk(data.inkScript?.inkSource, data.inkScript?.inkJson)
+        setTeachingMarkdown(data.topic.teachingMarkdown || '')
         if (compiledInk) {
           setInkJson(compiledInk)
         } else if (data.topic.inkScriptId) {
@@ -1005,6 +1007,10 @@ export function PracticeSessionPage() {
       ? (vnVisual.expression ? expressionMap[vnVisual.expression] : undefined) || expressionMap.default || currentCharacter.spriteBaseUrl || undefined
       : undefined
     const spritePosition = vnVisual.position || currentCharacter?.defaultPosition || 'center'
+    const inputGuidance = {
+      objective: readTagValue(currentTags, 'objective:'),
+      hint: readTagValue(currentTags, 'hint:'),
+    }
 
     return (
       <div className="relative flex h-dvh flex-col bg-background">
@@ -1021,12 +1027,8 @@ export function PracticeSessionPage() {
           </Button>
 
           <PracticeVnDrawer
-            objectives={objectives.map((o) => ({ text: o, completed: completedObjectives.has(o) }))}
-            hints={aiHints}
-            coreChunks={coreChunkTexts}
-            usedChunkTexts={usedChunks}
+            teachingMarkdown={teachingMarkdown}
             hideToggles={isHistoryOpen}
-            compactTrigger
             plainTrigger
             triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-foreground/80 transition-opacity active:opacity-70"
           />
@@ -1088,6 +1090,7 @@ export function PracticeSessionPage() {
               onSubmitInput={sendUserInput}
               inputFeedback={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} /> : null}
               inputFeedbackChat={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} tone="chat" /> : null}
+              inputGuidance={inputGuidance}
               inputDisabled={turnFeedback?.status === 'loading' || Boolean(turnFeedback?.result?.passed)}
               onChoice={(choiceIndex) => { setTurnFeedback(null); handleChoice(choiceIndex) }}
               onAdvance={inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}

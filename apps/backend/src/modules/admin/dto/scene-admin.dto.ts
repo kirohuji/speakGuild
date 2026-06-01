@@ -128,6 +128,10 @@ export class CreateTrainingTopicDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
+  @IsString()
+  teachingMarkdown?: string;
+
   @IsString()
   promptEn: string;
 
@@ -172,6 +176,10 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  teachingMarkdown?: string;
 
   @IsOptional()
   @IsString()

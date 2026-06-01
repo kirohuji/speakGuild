@@ -131,6 +131,7 @@ export interface TrainingTopic {
   sceneId: string
   title: string
   description?: string | null
+  teachingMarkdown?: string | null
   promptEn: string
   promptZh: string
   suggestedDurationSec: number
@@ -412,7 +413,7 @@ export interface StoryData {
   version: number
   createdAt: string
   updatedAt: string
-  trainingTopic?: { id: string; title: string } | null
+  trainingTopic?: { id: string; title: string; teachingMarkdown?: string | null } | null
   _count?: { trainingTopic: number }
 }
 
