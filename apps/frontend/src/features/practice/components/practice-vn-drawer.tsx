@@ -54,13 +54,18 @@ export function PracticeVnDrawer({
 
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
         <DrawerContent className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-24px_80px_rgba(0,0,0,.42)] backdrop-blur-2xl">
-          <DrawerHeader className="px-5 pb-3 pt-3 text-left">
+          <DrawerHeader className="border-b border-border/45 px-5 pb-4 pt-3 text-left">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <DrawerTitle className="text-base">{t('practiceVn.teaching')}</DrawerTitle>
-                <DrawerDescription className="mt-1 text-xs">
-                  {t('practiceVn.teachingDesc')}
-                </DrawerDescription>
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary">
+                  <BookOpen className="size-5" />
+                </div>
+                <div>
+                  <DrawerTitle className="text-base font-semibold tracking-tight">{t('practiceVn.teaching')}</DrawerTitle>
+                  <DrawerDescription className="mt-1 text-xs">
+                    {t('practiceVn.teachingDesc')}
+                  </DrawerDescription>
+                </div>
               </div>
               <Button
                 type="button"
@@ -76,8 +81,8 @@ export function PracticeVnDrawer({
 
           <ScrollArea className="min-h-0 flex-1">
             {teachingMarkdown ? (
-              <section className="px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <MarkdownRenderer content={teachingMarkdown} className="text-xs leading-5" />
+              <section className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
+                <MarkdownRenderer content={teachingMarkdown} variant="teaching" />
               </section>
             ) : (
               <p className="mx-5 mb-5 rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-xs text-muted-foreground">
