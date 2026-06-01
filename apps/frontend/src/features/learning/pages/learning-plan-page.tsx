@@ -526,7 +526,7 @@ function CheckInCalendarDrawer({
                 disabled={{ after: today }}
                 modifiers={{ checkedIn: checkedInDates }}
                 modifiersClassNames={{
-                  checkedIn: '[&_button]:bg-primary [&_button]:font-semibold [&_button]:text-primary-foreground',
+                  checkedIn: 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]',
                 }}
                 className="mx-auto w-full [--cell-size:2.5rem]"
               />
