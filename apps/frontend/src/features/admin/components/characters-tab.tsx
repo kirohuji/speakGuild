@@ -41,9 +41,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const [displayName, setDisplayName] = useState('')
   const [role, setRole] = useState('')
   const [personality, setPersonality] = useState('')
-  const [defaultPosition, setDefaultPosition] = useState('left')
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [spriteBaseUrl, setSpriteBaseUrl] = useState('')
   const [expressions, setExpressions] = useState<ExpressionEntry[]>([])
 
   const load = useCallback(async () => {
@@ -61,7 +59,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const openCreate = () => {
     setEditItem(null)
     setName(''); setDisplayName(''); setRole(''); setPersonality('')
-    setDefaultPosition('left'); setAvatarUrl(''); setSpriteBaseUrl('')
+    setAvatarUrl('')
     setExpressions([{ name: 'default', url: '' }])
     setDialogOpen(true)
   }
@@ -72,9 +70,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setDisplayName(item.displayName)
     setRole(item.role)
     setPersonality(item.personality ?? '')
-    setDefaultPosition(item.defaultPosition ?? 'left')
     setAvatarUrl(item.avatarUrl ?? '')
-    setSpriteBaseUrl(item.spriteBaseUrl ?? '')
     // Parse expressions from JSON
     const exps: ExpressionEntry[] = []
     if (item.expressions && typeof item.expressions === 'object') {
@@ -82,7 +78,9 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
         exps.push({ name: k, url: v as string })
       }
     }
-    if (exps.length === 0) exps.push({ name: 'default', url: item.spriteBaseUrl ?? '' })
+    if (!exps.some((exp) => exp.name === 'default')) {
+      exps.unshift({ name: 'default', url: item.spriteBaseUrl ?? '' })
+    }
     setExpressions(exps)
     setDialogOpen(true)
   }
@@ -115,15 +113,11 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
           expressionsObj[exp.name] = exp.url
         }
       }
-      // If no expressions defined, use default from spriteBaseUrl
-      if (Object.keys(expressionsObj).length === 0 && spriteBaseUrl) {
-        expressionsObj['default'] = spriteBaseUrl
-      }
-
       const data = {
-        name, displayName, role, personality, defaultPosition,
-        avatarUrl, spriteBaseUrl,
-        expressions: Object.keys(expressionsObj).length > 0 ? expressionsObj : undefined,
+        name, displayName, role, personality, avatarUrl,
+        // Keep the legacy field in sync for clients that still use it as a fallback.
+        spriteBaseUrl: expressionsObj.default ?? null,
+        expressions: expressionsObj,
       }
       if (editItem) {
         await updateCharacter(editItem.id, data)
@@ -208,7 +202,6 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                   {item.personality && (
                     <Badge variant="outline" className="text-[10px]">{item.personality}</Badge>
                   )}
-                  <Badge variant="secondary" className="text-[10px]">位置: {item.defaultPosition ?? 'left'}</Badge>
                   {item.expressions && typeof item.expressions === 'object' && (
                     <Badge variant="outline" className="text-[10px]">
                       <SmilePlus className="mr-0.5 size-2.5" />
@@ -253,21 +246,6 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
               <Label>性格 (AI prompt 用)</Label>
               <Input value={personality} onChange={(e) => setPersonality(e.target.value)} placeholder="friendly, curious about your culture" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>立绘位置</Label>
-                <select
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  value={defaultPosition}
-                  onChange={(e) => setDefaultPosition(e.target.value)}
-                >
-                  <option value="left">左</option>
-                  <option value="center">中</option>
-                  <option value="right">右</option>
-                </select>
-              </div>
-            </div>
-
             <Separator />
 
             {/* Avatar upload */}
@@ -280,19 +258,6 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                 previewSize="md"
               />
             </div>
-
-            {/* Default sprite upload */}
-            <div>
-              <Label className="text-xs font-semibold">默认立绘</Label>
-              <ImageUploadField
-                value={spriteBaseUrl}
-                onChange={setSpriteBaseUrl}
-                placeholder="输入立绘 URL 或上传（Ink 中 #expression:default 使用此图）"
-                previewSize="lg"
-              />
-            </div>
-
-            <Separator />
 
             {/* Expression Manager */}
             <div>
@@ -315,7 +280,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
               </p>
 
               {expressions.length === 0 ? (
-                <p className="text-xs text-muted-foreground/60 italic">暂无表情配置，将使用默认立绘</p>
+                <p className="text-xs text-muted-foreground/60 italic">暂无表情配置，请添加 default 表情作为默认立绘</p>
               ) : (
                 <div className="space-y-3">
                   {expressions.map((exp, i) => (
