@@ -20,6 +20,11 @@ export interface AdminUser {
 }
 
 export interface AdminUserDetail extends AdminUser {
+  outputLevel?: string;
+  totalXp?: number;
+  points?: number;
+  userLevel?: number;
+  learningGoals?: string[];
   membership?: {
     status: string;
     startedAt: string | null;
@@ -30,6 +35,10 @@ export interface AdminUserDetail extends AdminUser {
     vocabularyWords: number;
     orders: number;
     practiceSessions: number;
+    scriptRecords: number;
+    expressionItems: number;
+    sceneProgresses: number;
+    chunkProgresses: number;
   };
 }
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   BarChart3, Users, TrendingUp, DollarSign,
-  FileText, Target, BookOpen, Loader2,
-  Calendar, ArrowUpRight, Activity,
+  MessageSquare, Clapperboard, Puzzle, Loader2,
+  Calendar, Activity, Crown,
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -10,9 +10,9 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/cn';
 import { get } from '@/lib/request';
-import { useAuth } from '@/providers/auth-provider';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -64,49 +64,42 @@ const fmtMoney = (cents: number) => {
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 
-// ─── Stat Card ──────────────────────────────────────────────
+// ─── Mini Metric ────────────────────────────────────────────
 
-function StatCard({
+function MiniMetric({
   icon: Icon,
   label,
   value,
-  sub,
   accent,
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
-  sub?: string;
-  accent?: 'emerald' | 'blue' | 'amber' | 'violet' | 'rose';
+  accent: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'cyan';
 }) {
-  const accentMap = {
-    emerald: 'bg-emerald-500/10 text-emerald-500',
+  const colors: Record<string, string> = {
     blue: 'bg-blue-500/10 text-blue-500',
+    emerald: 'bg-emerald-500/10 text-emerald-500',
     amber: 'bg-amber-500/10 text-amber-500',
     violet: 'bg-violet-500/10 text-violet-500',
     rose: 'bg-rose-500/10 text-rose-500',
+    cyan: 'bg-cyan-500/10 text-cyan-500',
   };
 
   return (
-    <Card className="shadow-none">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl', accentMap[accent || 'blue'])}>
-            <Icon className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{value}</p>
-            <p className="text-xs text-muted-foreground">
-              {label}{sub && <span className="ml-1.5">{sub}</span>}
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3">
+      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', colors[accent])}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-2xl font-bold tracking-tight">{value}</p>
+        <p className="text-xs text-muted-foreground truncate">{label}</p>
+      </div>
+    </div>
   );
 }
 
-// ─── Chart tooltip ──────────────────────────────────────────
+// ─── Chart Tooltip ──────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label, prefix }: any) {
   if (!active || !payload?.length) return null;
@@ -125,7 +118,6 @@ function ChartTooltip({ active, payload, label, prefix }: any) {
 // ─── Main Page ──────────────────────────────────────────────
 
 export function AdminAnalyticsPage() {
-  const { session } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,19 +137,20 @@ export function AdminAnalyticsPage() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  // ─── Loading skeleton ───────────────────────────────────
+  // ─── Loading ──────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-[120px]" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[104px]" />
           ))}
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-[280px]" />
-          <Skeleton className="h-[280px]" />
+          <Skeleton className="h-[300px]" />
+          <Skeleton className="h-[300px]" />
         </div>
         <Skeleton className="h-[300px]" />
       </div>
@@ -173,152 +166,162 @@ export function AdminAnalyticsPage() {
     );
   }
 
-  // Prepare trend data for charts
-  const revenueData = stats.revenueTrend?.map((d) => ({
-    date: d.date?.slice(5), // MM-DD
-    revenue: (d.amount || 0) / 100,
-  })) || [];
+  // ─── Chart data ───────────────────────────────────────────
 
-  const sessionData = stats.sessionTrend?.map((d) => ({
+  const revenueData = (stats.revenueTrend || []).map((d) => ({
     date: d.date?.slice(5),
-    count: d.count || 0,
-  })) || [];
+    revenue: (d.amount || 0) / 100,
+  }));
+
+  const sessionData = (stats.sessionTrend || []).map((d) => ({
+    date: d.date?.slice(5),
+    练习会话: d.count || 0,
+  }));
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">数据统计</h1>
-        <p className="text-sm text-muted-foreground">核心运营指标概览</p>
+      {/* ─── Header ──────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">数据统计</h1>
+          <p className="text-sm text-muted-foreground">核心运营指标一览</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" />
+          数据实时更新
+        </div>
       </div>
 
-      {/* ─── Metric Cards Row ─────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard
-          icon={Users}
-          label="总用户数"
-          value={fmtInt(stats.userCount)}
-          sub={`本周新增 ${fmtInt(stats.newUsersThisWeek)}`}
-          accent="blue"
-        />
-        <StatCard
-          icon={Activity}
-          label="今日活跃"
-          value={fmtInt(stats.todayActiveUsers)}
-          sub={`今日练习 ${fmtInt(stats.todaySessionCount)} 次`}
-          accent="emerald"
-        />
-        <StatCard
-          icon={DollarSign}
-          label="总收入"
-          value={fmtMoney(stats.totalRevenue)}
-          sub={`本月 ${fmtMoney(stats.monthRevenue)}`}
-          accent="amber"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="付费转化率"
-          value={pct(stats.conversionRate)}
-          sub={`${fmtInt(stats.paidUserCount)} 人付费`}
-          accent="violet"
-        />
-        <StatCard
-          icon={Target}
-          label="场景数"
-          value={fmtInt(stats.sceneCount)}
-          sub={`Chunk ${fmtInt(stats.chunkCount)} 个`}
-          accent="rose"
-        />
-      </div>
+      <Separator />
 
-      {/* ─── Secondary Stats ──────────────────────────────── */}
+      {/* ─── KPI Row: 用户 & 营收 ────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
-                <FileText className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{fmtInt(stats.totalSessionCount)}</p>
-                <p className="text-xs text-muted-foreground">总练习会话</p>
-              </div>
-            </div>
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={Users}
+              label="总用户"
+              value={fmtInt(stats.userCount)}
+              accent="blue"
+            />
+            <p className="mt-3 text-xs text-muted-foreground">
+              本周新增 <span className="font-medium text-foreground">{fmtInt(stats.newUsersThisWeek)}</span> 人
+              &nbsp;·&nbsp; 今日活跃 <span className="font-medium text-foreground">{fmtInt(stats.todayActiveUsers)}</span> 人
+            </p>
           </CardContent>
         </Card>
+
         <Card className="shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
-                <BookOpen className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{fmtInt(stats.totalScriptCount)}</p>
-                <p className="text-xs text-muted-foreground">剧本通关数</p>
-              </div>
-            </div>
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={Crown}
+              label="付费用户"
+              value={fmtInt(stats.paidUserCount)}
+              accent="amber"
+            />
+            <p className="mt-3 text-xs text-muted-foreground">
+              转化率 <span className="font-medium text-foreground">{pct(stats.conversionRate)}</span>
+              &nbsp;·&nbsp; 今日收入 <span className="font-medium text-foreground">{fmtMoney(stats.todayRevenue)}</span>
+            </p>
           </CardContent>
         </Card>
+
         <Card className="shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
-                <Calendar className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{fmtMoney(stats.todayRevenue)}</p>
-                <p className="text-xs text-muted-foreground">今日收入</p>
-              </div>
-            </div>
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={DollarSign}
+              label="总收入"
+              value={fmtMoney(stats.totalRevenue)}
+              accent="emerald"
+            />
+            <p className="mt-3 text-xs text-muted-foreground">
+              本月 <span className="font-medium text-foreground">{fmtMoney(stats.monthRevenue)}</span>
+            </p>
           </CardContent>
         </Card>
+
         <Card className="shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                <BookOpen className="h-5 w-5 text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{fmtInt(stats.chunkCount)}</p>
-                <p className="text-xs text-muted-foreground">Chunk 总数</p>
-              </div>
-            </div>
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={Activity}
+              label="练习会话"
+              value={fmtInt(stats.totalSessionCount)}
+              accent="violet"
+            />
+            <p className="mt-3 text-xs text-muted-foreground">
+              今日 <span className="font-medium text-foreground">{fmtInt(stats.todaySessionCount)}</span> 次
+              &nbsp;·&nbsp; 剧本通关 <span className="font-medium text-foreground">{fmtInt(stats.totalScriptCount)}</span> 次
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* ─── Trend Charts ─────────────────────────────────── */}
+      {/* ─── Content Stats ───────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="shadow-none">
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={Puzzle}
+              label="场景"
+              value={fmtInt(stats.sceneCount)}
+              accent="rose"
+            />
+          </CardContent>
+        </Card>
+        <Card className="shadow-none">
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={MessageSquare}
+              label="Chunk 表达块"
+              value={fmtInt(stats.chunkCount)}
+              accent="cyan"
+            />
+          </CardContent>
+        </Card>
+        <Card className="shadow-none">
+          <CardContent className="p-5">
+            <MiniMetric
+              icon={Clapperboard}
+              label="剧本通关"
+              value={fmtInt(stats.totalScriptCount)}
+              accent="violet"
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ─── Charts Row ──────────────────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Revenue Trend */}
         <Card className="shadow-none">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-amber-500" />
-              近 30 天收入趋势
+              <TrendingUp className="h-4 w-4 text-amber-500" />
+              近 30 天收入趋势（元）
             </CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             {revenueData.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">暂无数据</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">暂无收入数据</p>
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart data={revenueData}>
                   <defs>
-                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
                       <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip prefix="¥" />} />
                   <Area
                     type="monotone"
                     dataKey="revenue"
                     stroke="#f59e0b"
                     strokeWidth={2}
-                    fill="url(#revenueGradient)"
+                    fill="url(#revGrad)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -326,25 +329,25 @@ export function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Practice Trend */}
+        {/* Session Trend */}
         <Card className="shadow-none">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-500" />
-              近 30 天练习量趋势
+              近 30 天练习会话趋势
             </CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            {practiceData.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">暂无数据</p>
+            {sessionData.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted-foreground">暂无练习数据</p>
             ) : (
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={practiceData}>
+                <BarChart data={sessionData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="练习会话" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -352,12 +355,17 @@ export function AdminAnalyticsPage() {
         </Card>
       </div>
 
-      {/* ─── Top Scenes Ranking ────────────────────────────── */}
+      {/* ─── Top Scenes Ranking ──────────────────────────── */}
       <Card className="shadow-none">
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-violet-500" />
-            热门场景排行 Top {stats.topScenes?.length || 0}
+            <Puzzle className="h-4 w-4 text-violet-500" />
+            热门场景排行
+            {stats.topScenes?.length > 0 && (
+              <span className="text-xs text-muted-foreground font-normal">
+                Top {stats.topScenes.length}
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -367,30 +375,28 @@ export function AdminAnalyticsPage() {
             <div className="space-y-1">
               {stats.topScenes.map((scene, idx) => {
                 const maxCount = stats.topScenes[0]?.sessionCount || 1;
-                const barWidth = Math.max((scene.sessionCount / maxCount) * 100, 2);
+                const barWidth = Math.max((scene.sessionCount / maxCount) * 100, 3);
                 return (
-                  <div
-                    key={scene.id}
-                    className="flex items-center gap-3 py-2"
-                  >
+                  <div key={scene.id} className="flex items-center gap-3 py-2.5">
                     <span className={cn(
-                      'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
-                      idx < 3
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
-                        : 'bg-muted text-muted-foreground',
+                      'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                      idx === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' :
+                      idx === 1 ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400' :
+                      idx === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' :
+                      'bg-muted text-muted-foreground',
                     )}>
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium truncate">{scene.name}</span>
-                        <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                          {fmtInt(scene.sessionCount)} 次练习
+                        <span className="text-xs text-muted-foreground ml-2 shrink-0 tabular-nums">
+                          {fmtInt(scene.sessionCount)} 次
                         </span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-violet-500 transition-all"
+                          className="h-full rounded-full bg-violet-500 transition-all duration-500"
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>

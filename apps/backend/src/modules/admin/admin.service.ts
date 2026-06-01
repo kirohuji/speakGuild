@@ -70,6 +70,11 @@ export class AdminService {
         phoneNumberVerified: true,
         createdAt: true,
         updatedAt: true,
+        outputLevel: true,
+        totalXp: true,
+        points: true,
+        userLevel: true,
+        learningGoals: true,
         membership: {
           select: {
             status: true,
@@ -83,6 +88,10 @@ export class AdminService {
             vocabularyWords: true,
             orders: true,
             practiceSessions: true,
+            scriptRecords: true,
+            expressionItems: true,
+            sceneProgresses: true,
+            chunkProgresses: true,
           },
         },
       },

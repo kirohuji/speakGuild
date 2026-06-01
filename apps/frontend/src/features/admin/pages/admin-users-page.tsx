@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Shield, ShieldAlert, ChevronLeft, ChevronRight,
-  Mail, Phone, Calendar,
-  Loader2, ArrowLeft, CheckCircle2, XCircle,
+  Mail, Phone, Calendar, Loader2, ArrowLeft, CheckCircle2, XCircle,
+  BookOpen, MessageSquare, Puzzle, Clapperboard, Star, Zap, Target,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,46 @@ import {
   type AdminUser, type AdminUserDetail, type AdminUsersResult,
 } from '@/features/admin/api';
 import { useAuth } from '@/providers/auth-provider';
+
+// ─── Helpers ────────────────────────────────────────────────
+
+const fmtShort = (n: number | undefined | null) => {
+  if (n == null) return '—';
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+};
+
+function StatDot({
+  icon: Icon, label, value, accent,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: number;
+  accent: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';
+}) {
+  const colors: Record<string, string> = {
+    blue: 'text-blue-500 bg-blue-500/10',
+    violet: 'text-violet-500 bg-violet-500/10',
+    emerald: 'text-emerald-500 bg-emerald-500/10',
+    amber: 'text-amber-500 bg-amber-500/10',
+    rose: 'text-rose-500 bg-rose-500/10',
+    cyan: 'text-cyan-500 bg-cyan-500/10',
+  };
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg bg-muted/40 px-3 py-2.5">
+      <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', colors[accent])}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-lg font-bold leading-none">{fmtShort(value)}</p>
+        <p className="text-[11px] text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ──────────────────────────────────────────────
 
 export function AdminUsersPage() {
   const navigate = useNavigate();
@@ -395,37 +435,37 @@ function UserRow({
 
       {/* 用户详情弹窗 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>用户详情</DialogTitle>
-            <DialogDescription>查看用户信息和统计数据</DialogDescription>
+            <DialogDescription>查看用户信息和学习数据</DialogDescription>
           </DialogHeader>
 
           {detailLoading ? (
             <div className="space-y-3 py-4">
               <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-24 w-full" />
             </div>
           ) : detail ? (
-            <div className="space-y-4 py-2">
-              {/* 基本信息 */}
+            <div className="space-y-5 py-2 max-h-[70vh] overflow-y-auto">
+              {/* ── 头像 + 身份 ────────────────────────── */}
               <div className="flex items-center gap-4">
                 <div className={cn(
-                  'flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full text-xl font-bold',
+                  'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold',
                   detail.role === 'admin'
                     ? 'bg-amber-500/15 text-amber-600'
                     : 'bg-primary/10 text-primary'
                 )}>
                   {detail.name?.[0]?.toUpperCase() || detail.email[0].toUpperCase()}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-lg font-semibold">{detail.name || '未命名'}</p>
+                    <p className="text-lg font-semibold truncate">{detail.name || '未命名'}</p>
                     <Badge
                       variant={detail.role === 'admin' ? 'default' : 'secondary'}
                       className={cn(
-                        'text-xs',
+                        'text-xs shrink-0',
                         detail.role === 'admin' && 'bg-amber-500/15 text-amber-700 hover:bg-amber-500/15'
                       )}
                     >
@@ -435,97 +475,135 @@ function UserRow({
                   {detail.username && (
                     <p className="text-sm text-muted-foreground">@{detail.username}</p>
                   )}
+                  {/* 会员状态 */}
+                  {detail.membership ? (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'mt-1 text-xs',
+                        detail.membership.status === 'active'
+                          ? 'border-amber-300 text-amber-600'
+                          : 'text-muted-foreground'
+                      )}
+                    >
+                      {detail.membership.plan?.name || '会员'}
+                      &nbsp;·&nbsp;
+                      {detail.membership.status === 'active' ? '生效中' :
+                       detail.membership.status === 'expired' ? '已过期' : '已取消'}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="mt-1 text-xs text-muted-foreground">
+                      免费用户
+                    </Badge>
+                  )}
                 </div>
               </div>
 
-              {/* 联系方式 */}
-              <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-4">
+              {/* ── 联系方式 ────────────────────────────── */}
+              <div className="space-y-2.5 rounded-xl border bg-muted/30 p-4">
                 <div className="flex items-center gap-3 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{detail.email}</span>
+                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground truncate">{detail.email}</span>
                   {detail.emailVerified ? (
-                    <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600">
-                      已验证
-                    </Badge>
+                    <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 shrink-0">已验证</Badge>
                   ) : (
-                    <Badge variant="outline" className="text-xs text-muted-foreground">
-                      未验证
-                    </Badge>
+                    <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">未验证</Badge>
                   )}
                 </div>
                 {detail.phoneNumber && (
                   <div className="flex items-center gap-3 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-muted-foreground">{detail.phoneNumber}</span>
                     {detail.phoneNumberVerified ? (
-                      <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600">
-                        已验证
-                      </Badge>
+                      <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 shrink-0">已验证</Badge>
                     ) : (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">
-                        未验证
-                      </Badge>
+                      <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">未验证</Badge>
                     )}
                   </div>
                 )}
                 <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="text-muted-foreground">
                     {new Date(detail.createdAt).toLocaleString('zh-CN')} 注册
                   </span>
                 </div>
               </div>
 
-              {/* 统计数据 */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl border border-border/60 p-3 text-center">
-                  <p className="text-2xl font-bold text-blue-500">{detail._count.practiceSessions}</p>
-                  <p className="text-xs text-muted-foreground">练习会话</p>
+              {/* ── 学习画像 ────────────────────────────── */}
+              <div className="rounded-xl border p-4 space-y-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  学习画像
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-primary">{detail.outputLevel || 'L1'}</p>
+                    <p className="text-[11px] text-muted-foreground">输出等级</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-violet-500">Lv.{detail.userLevel ?? 1}</p>
+                    <p className="text-[11px] text-muted-foreground">用户等级</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-amber-500">{fmtShort(detail.totalXp ?? 0)}</p>
+                    <p className="text-[11px] text-muted-foreground">总经验</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-emerald-500">{fmtShort(detail.points ?? 0)}</p>
+                    <p className="text-[11px] text-muted-foreground">积分</p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-border/60 p-3 text-center">
-                  <p className="text-2xl font-bold text-purple-500">{detail._count.orders}</p>
-                  <p className="text-xs text-muted-foreground">订单数</p>
-                </div>
-                <div className="rounded-xl border border-border/60 p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-500">{detail._count.vocabularyWords}</p>
-                  <p className="text-xs text-muted-foreground">生词数</p>
+                {detail.learningGoals && detail.learningGoals.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {detail.learningGoals.map((goal) => (
+                      <Badge key={goal} variant="secondary" className="text-[11px]">{goal}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── 学习统计 ────────────────────────────── */}
+              <div className="rounded-xl border p-4 space-y-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-500" />
+                  学习统计
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <StatDot icon={MessageSquare} label="练习会话" value={detail._count.practiceSessions} accent="blue" />
+                  <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.scriptRecords} accent="violet" />
+                  <StatDot icon={BookOpen} label="生词本" value={detail._count.vocabularyWords} accent="emerald" />
+                  <StatDot icon={Zap} label="表达库" value={detail._count.expressionItems} accent="amber" />
+                  <StatDot icon={Puzzle} label="场景进度" value={detail._count.sceneProgresses} accent="rose" />
+                  <StatDot icon={MessageSquare} label="Chunk进度" value={detail._count.chunkProgresses} accent="cyan" />
+                  <StatDot icon={Star} label="订单" value={detail._count.orders} accent="violet" />
+                  <div />
                 </div>
               </div>
 
-              {/* 角色修改 */}
-              <div className="rounded-xl border border-border/60 p-4">
+              {/* ── 角色管理 ────────────────────────────── */}
+              <div className="rounded-xl border p-4">
                 <p className="mb-3 text-sm font-medium">角色管理</p>
                 <div className="flex items-center gap-3">
                   <Button
                     variant={detail.role === 'user' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => {
-                      setNewRole('user');
-                      setRoleConfirmOpen(true);
-                    }}
-                    className="text-xs"
+                    onClick={() => { setNewRole('user'); setRoleConfirmOpen(true); }}
                   >
                     普通用户
                   </Button>
                   <Button
                     variant={detail.role === 'admin' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => {
-                      setNewRole('admin');
-                      setRoleConfirmOpen(true);
-                    }}
-                    className="text-xs"
+                    onClick={() => { setNewRole('admin'); setRoleConfirmOpen(true); }}
                   >
-                    <Shield className="mr-1 h-3.5 w-3.5" />
+                    <Shield className="mr-1.5 h-3.5 w-3.5" />
                     管理员
                   </Button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              加载失败
-            </div>
+            <div className="py-8 text-center text-sm text-muted-foreground">加载失败</div>
           )}
         </DialogContent>
       </Dialog>
