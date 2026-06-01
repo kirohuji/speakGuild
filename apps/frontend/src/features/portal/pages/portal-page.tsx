@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useInView } from 'motion/react'
 import {
-  Mic, BookOpen, Sparkles, TrendingUp,
+  Mic, BookOpen, TrendingUp,
   ArrowRight, Star, GraduationCap,
   MessageSquare, Play, Globe, CheckCircle,
   Smartphone, Monitor, Cloud,
@@ -131,6 +131,13 @@ export function PortalPage() {
                 <Badge variant="secondary" className="mb-6 text-[11px] font-medium tracking-wide uppercase">
                   沉浸式英语输出训练
                 </Badge>
+
+                {/* Logo */}
+                <img
+                  src="/logo.png"
+                  alt="漫语町"
+                  className="mb-5 h-12 w-auto dark:invert"
+                />
 
                 <h1 className="text-[2.5rem] sm:text-5xl lg:text-6xl font-extrabold leading-[1.06] tracking-tight text-foreground">
                   英语，
@@ -462,9 +469,7 @@ export function PortalPage() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Sparkles className="size-4 text-primary-foreground" />
-                </div>
+                <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
                 <span className="font-extrabold text-foreground">漫语町</span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">沉浸式英语输出训练 App</p>
