@@ -29,7 +29,7 @@ import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
-import type { GameCharacter, GameLocationData } from '../api-content-admin'
+import { summarizePreviewDialogue, type GameCharacter, type GameLocationData } from '../api-content-admin'
 
 type ComposerItem =
   | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string }
@@ -990,6 +990,48 @@ function PreviewDebugPanel({
 }) {
   const formattedPayload = JSON.stringify(debug?.aiPayload ?? {}, null, 2)
   const practiceContext = extractPracticeContext(debug?.currentTags ?? [])
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryResult, setSummaryResult] = useState<any>(null)
+  const [summaryError, setSummaryError] = useState('')
+
+  const runSummary = async () => {
+    const history = debug?.history ?? []
+    const dialogues = history.flatMap((line, index) => {
+      if (line.speaker !== 'You') return []
+      const npcLine = [...history.slice(0, index)].reverse().find((item) => item.speaker !== 'You')
+      return [{ round: index + 1, npcText: npcLine?.text ?? '', userText: line.text }]
+    })
+    if (dialogues.length === 0) {
+      setSummaryError('请先在左侧提交至少一条测试回答。')
+      return
+    }
+
+    setSummaryLoading(true)
+    setSummaryError('')
+    try {
+      const objectives = [...new Set([
+        practiceContext.objective,
+        ...(debug?.aiEvaluations ?? []).map((evaluation) => evaluation.objective),
+      ].filter(Boolean))]
+      const coreChunks = [...new Set([
+        ...practiceContext.chunks,
+        ...(debug?.aiEvaluations ?? []).flatMap((evaluation) => evaluation.targetChunks),
+      ])]
+      const result = await summarizePreviewDialogue({
+        topicId: 'admin-preview',
+        topicTitle: '故事工坊预览',
+        promptEn: practiceContext.objective || 'Evaluate the preview dialogue.',
+        objectives,
+        coreChunks,
+        dialogues,
+      })
+      setSummaryResult(result.analysis ?? result.raw)
+    } catch (error: any) {
+      setSummaryError(error?.response?.data?.message || error?.message || '整场复盘请求失败')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
 
   return (
     <div className="min-w-0 rounded-lg border border-border bg-background">
@@ -1050,6 +1092,27 @@ function PreviewDebugPanel({
                 </div>
               </section>
             )}
+
+            <section className="space-y-2 border-t border-border pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">整场 AI 复盘</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">使用当前已收集对话，测试用户端结束后的总结报告。</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={runSummary} disabled={summaryLoading}>
+                  {summaryLoading ? '复盘中...' : '生成复盘'}
+                </Button>
+              </div>
+              {summaryError && <p className="text-xs text-destructive">{summaryError}</p>}
+              {summaryResult && (
+                <details open className="rounded-md border border-border bg-card">
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold">查看复盘结果</summary>
+                  <pre className="max-h-[360px] overflow-auto border-t border-border bg-muted/30 p-2 text-[11px] leading-relaxed">
+                    {JSON.stringify(summaryResult, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </section>
           </TabsContent>
 
           <TabsContent value="history" className="mt-0 space-y-2 p-3">

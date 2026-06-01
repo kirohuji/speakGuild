@@ -352,6 +352,9 @@ function ChatBubble({
   }, [line.text, hasTypewriter])
 
   const isTyping = isLast && displayedText.length < line.text.length
+  const displayedTranslation = line.text
+    ? line.translation?.slice(0, Math.ceil((displayedText.length / line.text.length) * line.translation.length))
+    : line.translation
 
   // ── Narration: centered, transparent, italic ──
   if (!isUser && !line.speaker) {
@@ -365,7 +368,7 @@ function ChatBubble({
         </p>
         {bilingual && line.translation && (
           <p className="mt-1 max-w-[72%] text-center text-[11px] leading-relaxed italic text-muted-foreground/50">
-            {line.translation}
+            {displayedTranslation}
           </p>
         )}
       </div>
@@ -397,7 +400,7 @@ function ChatBubble({
               )}
             </p>
             {bilingual && line.translation && (
-              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground/70">{line.translation}</p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground/70">{displayedTranslation}</p>
             )}
           </div>
         </div>
@@ -419,7 +422,7 @@ function ChatBubble({
         </div>
         {bilingual && line.translation && (
           <p className="mt-0.5 mr-1 text-right text-[11px] leading-relaxed text-muted-foreground/70">
-            {line.translation}
+            {displayedTranslation}
           </p>
         )}
       </div>

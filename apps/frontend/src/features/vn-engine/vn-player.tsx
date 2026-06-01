@@ -444,6 +444,10 @@ export function VnPlayer({
   const activeLine = reviewLine ?? currentLine
   const displayLine = activeLine?.isUser && reviewLineIndex === null && !settings.showUserInputInDialogue ? null : activeLine
   const fullText = displayLine?.text ?? ''
+  const fullTranslation = displayLine?.translation ?? ''
+  const displayedTranslation = fullText
+    ? fullTranslation.slice(0, Math.ceil((displayedText.length / fullText.length) * fullTranslation.length))
+    : fullTranslation
   const audioUrl = displayLine?.audioUrl
 
   useEffect(() => {
@@ -709,7 +713,10 @@ export function VnPlayer({
               <Settings className="size-3.5" />
             </VnIconButton>
           </div>
-          <div className="flex max-h-[34dvh] min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-white/10 bg-black/58 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl">
+          <div className={cn(
+            'flex min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-white/10 bg-black/58 text-white shadow-[0_-18px_56px_rgba(0,0,0,.34)] backdrop-blur-2xl',
+            inputFeedback ? 'max-h-[76dvh] sm:max-h-[64dvh]' : 'max-h-[34dvh]',
+          )}>
             <div className="min-h-0 flex-1 overflow-y-auto relative">
               {displayLine ? (
                 <div className="flex min-h-full items-start py-3 pl-4 pr-4">
@@ -728,7 +735,7 @@ export function VnPlayer({
                       )}
                     </p>
                     {settings.bilingual && displayLine.translation && (
-                      <p className="text-xs leading-relaxed text-white/58">{displayLine.translation}</p>
+                      <p className="text-xs leading-relaxed text-white/58">{displayedTranslation}</p>
                     )}
                   </div>
                 </div>
