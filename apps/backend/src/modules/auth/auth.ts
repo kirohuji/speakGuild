@@ -1,9 +1,28 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { bearer, emailOTP, phoneNumber } from 'better-auth/plugins';
+import { importPKCS8, SignJWT } from 'jose';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 const prisma = new PrismaService();
+
+async function generateAppleClientSecret(
+  clientId: string,
+  teamId: string,
+  keyId: string,
+  privateKey: string,
+) {
+  const key = await importPKCS8(privateKey, 'ES256');
+  const now = Math.floor(Date.now() / 1000);
+  return new SignJWT({})
+    .setProtectedHeader({ alg: 'ES256', kid: keyId })
+    .setIssuer(teamId)
+    .setSubject(clientId)
+    .setAudience('https://appleid.apple.com')
+    .setIssuedAt(now)
+    .setExpirationTime(now + 180 * 24 * 60 * 60) // 6 months
+    .sign(key);
+}
 
 function getTrustedOrigins() {
   const origins = (process.env.FRONTEND_URL || '')
@@ -11,9 +30,12 @@ function getTrustedOrigins() {
     .map((item) => item.trim())
     .filter(Boolean);
 
-  if (origins.length) return origins;
+  // Apple OAuth requires this origin for authentication
+  const trusted = ['https://appleid.apple.com'];
 
-  return ['http://localhost:5173', 'capacitor://localhost', 'ionic://localhost', 'http://localhost'];
+  if (origins.length) return [...trusted, ...origins];
+
+  return [...trusted, 'http://localhost:5173', 'capacitor://localhost', 'ionic://localhost', 'http://localhost'];
 }
 
 export const auth: any = betterAuth({
@@ -34,6 +56,16 @@ export const auth: any = betterAuth({
       clientSecret: process.env.WECHAT_CLIENT_SECRET || '',
       lang: 'cn',
     },
+    apple: async () => ({
+      clientId: process.env.APPLE_CLIENT_ID || '',
+      clientSecret: await generateAppleClientSecret(
+        process.env.APPLE_CLIENT_ID || '',
+        process.env.APPLE_TEAM_ID || '',
+        process.env.APPLE_KEY_ID || '',
+        process.env.APPLE_PRIVATE_KEY || '',
+      ),
+      appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER || '',
+    }),
   },
   plugins: [
     bearer(),

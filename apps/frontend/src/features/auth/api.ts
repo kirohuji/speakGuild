@@ -54,6 +54,13 @@ export async function signInWithWechat() {
   })
 }
 
+export async function signInWithApple() {
+  return authClient.signIn.social({
+    provider: 'apple',
+    callbackURL: window.location.href,
+  })
+}
+
 export async function getAuthSession() {
   return authClient.getSession()
 }
