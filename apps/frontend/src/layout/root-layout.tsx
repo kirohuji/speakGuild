@@ -13,12 +13,14 @@ import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { useLayoutStore } from '@/stores/layout.store'
 import { cn } from '@/lib/cn'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export function RootLayout() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
+  const isMobile = useIsMobile()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isHomePage = pathname === '/'
   const isLearningSubPage =
@@ -34,45 +36,40 @@ export function RootLayout() {
   return (
     <div
       className={cn(
-        'flex h-dvh flex-col overflow-hidden bg-background text-foreground lg:h-auto lg:min-h-screen lg:overflow-visible',
+        'flex flex-col bg-background text-foreground',
+        isMobile ? 'h-dvh overflow-hidden' : 'min-h-screen overflow-visible',
         !isHomePage && !immersiveMode && 'app-surface',
       )}
     >
       {!isAuthPage && (
         <>
           {/* Frosted glass top bar for safe area */}
-          <div className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top,0px)] bg-background/70 backdrop-blur-xl lg:hidden" />
-          <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
-            <Header />
-          </div>
+          {isMobile && <div className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top,0px)] bg-background/70 backdrop-blur-xl" />}
+          {!isMobile && !immersiveMode && <Header />}
         </>
       )}
-      {!isAuthPage && showMobileAvatar && (
+      {!isAuthPage && isMobile && showMobileAvatar && (
         <MobileTopBar
           onNotificationOpen={() => setNotificationDrawerOpen(true)}
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
       )}
-      <main className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pt-0 lg:overflow-visible ${
+      <main className={cn('min-h-0 flex-1 pt-0', isMobile ? 'overflow-y-auto overscroll-contain' : 'overflow-visible', `${
         immersiveMode
           ? 'pb-0'
           : isAuthPage || !isLoggedIn
-            ? 'pb-0 lg:pt-0 lg:pb-0'
+            ? 'pb-0'
             : isHomePage
-              ? 'pt-0 pb-0 lg:pt-14 lg:pb-0'
+              ? isMobile ? 'pt-0 pb-0' : 'pt-14 pb-0'
               : showBottomNav
-                ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pt-14 lg:pb-0'
-                : 'pt-[env(safe-area-inset-top,0px)] pb-0 lg:pt-14 lg:pb-0'
-      }`}>
-        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : 'mx-auto max-w-[1480px] px-0 py-3 lg:px-4 lg:py-6'}>
+                ? isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))]' : 'pt-14 pb-0'
+                : isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-0' : 'pt-14 pb-0'
+      }`)}>
+        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'px-0 py-3' : 'px-4 py-6')}>
           <Outlet />
         </div>
       </main>
-      {!isAuthPage && (
-        <div className={cn('hidden lg:block', immersiveMode && 'hidden')}>
-          <Footer />
-        </div>
-      )}
+      {!isAuthPage && !isMobile && !immersiveMode && <Footer />}
       {!isAuthPage && showBottomNav && <BottomNav />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background app-surface">
@@ -119,7 +116,7 @@ function MobileTopBar({
   }, [fetchUnreadCount])
 
   return (
-    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
+    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
       <button
         type="button"
         onClick={onNotificationOpen}

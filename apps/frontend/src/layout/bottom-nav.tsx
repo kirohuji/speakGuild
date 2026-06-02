@@ -4,12 +4,14 @@ import { BookOpen, Home, Library } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useAuth } from '@/providers/auth-provider'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export function BottomNav() {
   const { t } = useTranslation()
   const location = useLocation()
   const visible = useLayoutStore((s) => s.bottomNavVisible)
   const { session } = useAuth()
+  const isMobile = useIsMobile()
   const isLoggedIn = !!session
 
   const navItems = [
@@ -25,10 +27,10 @@ export function BottomNav() {
     return location.pathname.startsWith(path)
   }
 
-  if (!visible || !isLoggedIn) return null
+  if (!visible || !isLoggedIn || !isMobile) return null
 
   return (
-    <nav className="fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl lg:hidden"
+    <nav className="fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl"
          style={{ bottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px))` }}>
       <div className="flex h-14 items-center justify-around px-1">
         {navItems.map(({ label, path, icon: Icon }) => {
