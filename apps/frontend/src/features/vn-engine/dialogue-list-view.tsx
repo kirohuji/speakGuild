@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { History, RotateCcw, Settings, X, Send } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -73,6 +74,7 @@ export function DialogueListView({
   hideTopBar = false,
 }: DialogueListViewProps) {
   const { t } = useTranslation()
+  const { resolvedTheme } = useTheme()
   const [historyOpenInternal, setHistoryOpenInternal] = useState(false)
   const historyOpen = historyOpenProp !== undefined ? historyOpenProp : historyOpenInternal
   const setHistoryOpen = (value: boolean) => {
@@ -143,7 +145,7 @@ export function DialogueListView({
       {/* Overlay for readability */}
       <div className="absolute inset-0 bg-background/68 backdrop-blur-[4px]" />
       {/* Dark mode: dim bright background images */}
-      <div className="pointer-events-none absolute inset-0 bg-black/35" />
+      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/35" />}
       <div className="pointer-events-none absolute -right-20 top-20 size-64 rounded-full bg-primary/[0.07] blur-3xl" />
       <div className="pointer-events-none absolute -left-24 bottom-24 size-72 rounded-full bg-amber-400/[0.06] blur-3xl" />
 
@@ -266,7 +268,7 @@ export function DialogueListView({
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
                 placeholder={t('practiceVn.chatInputPlaceholder')}
                 disabled={submitting || inputDisabled}
-                className="min-w-0 flex-1 rounded-lg border-0 bg-muted/70 px-3.5 py-2.5 text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:bg-muted/85 focus:ring-1 focus:ring-ring disabled:opacity-60"
+                className="min-w-0 flex-1 rounded-lg border-0 bg-muted/70 px-3.5 py-2.5 text-base font-medium text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:bg-muted/85 focus:ring-1 focus:ring-ring disabled:opacity-60"
               />
               <button
                 type="button"
@@ -285,7 +287,7 @@ export function DialogueListView({
       {historyOpen && (
         <div className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={(event) => event.stopPropagation()}>
           <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
               <div>
                 <p className="text-sm font-semibold text-foreground">{t('vnHistory.title')}</p>
                 <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: history.length })}</p>
@@ -298,7 +300,7 @@ export function DialogueListView({
                 <X className="size-4" />
               </button>
             </div>
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
               {history.length === 0 ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">{t('vnHistory.empty')}</p>
               ) : history.map((line, index) => (

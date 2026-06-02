@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
 import { History, RotateCcw, Settings, SkipBack, X } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import {
@@ -167,6 +168,8 @@ const BgFitStyle: Record<BackgroundFit, string> = {
 
 /** CSS-only fallback when PixiJS fails to initialize */
 function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
+  const { resolvedTheme } = useTheme()
+
   return (
     <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
       <div
@@ -191,12 +194,13 @@ function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosit
           />
         </div>
       )}
-      <div className="pointer-events-none absolute inset-0 bg-black/40" />
+      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
     </div>
   )
 }
 
 function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
+  const { resolvedTheme } = useTheme()
   const hostRef = useRef<HTMLDivElement | null>(null)
   const appRef = useRef<Application | null>(null)
   const rootRef = useRef<Container | null>(null)
@@ -409,7 +413,7 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
   return (
     <>
       <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
-      <div className="pointer-events-none absolute inset-0 bg-black/40" />
+      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
     </>
   )
 }
@@ -651,7 +655,7 @@ export function VnPlayer({
         {historyOpen && (
           <div className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm p-4" onClick={(event) => event.stopPropagation()}>
             <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{t('vnHistory.title')}</p>
                   <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: history.length })}</p>
@@ -664,7 +668,7 @@ export function VnPlayer({
                   <X className="size-4" />
                 </button>
               </div>
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
                 {history.length === 0 ? (
                   <p className="py-10 text-center text-sm text-muted-foreground">{t('vnHistory.empty')}</p>
                 ) : history.map((line, index) => (
@@ -706,12 +710,12 @@ export function VnPlayer({
             <TurnGuidanceCard guidance={inputGuidance} className="absolute right-4 bottom-full max-w-[min(88%,360px)]" />
           )}
           {displayLine?.speaker && (
-            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center gap-1.5 rounded-full bg-background/82 px-3 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-border/45 backdrop-blur-2xl">
+            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center gap-1.5 rounded-full border border-primary/20 bg-background/90 px-3 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
               <span className="size-1.5 shrink-0 rounded-full bg-primary/65" />
               <span className="truncate text-xs font-semibold text-foreground/80">{displayLine.speaker}</span>
             </div>
           )}
-          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full bg-background/82 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-border/45 backdrop-blur-2xl">
+          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full border border-primary/20 bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
             <VnIconButton
               label={t('vnHistory.prevLine')}
               disabled={history.length <= 1 || lineIndex <= 0}
@@ -750,7 +754,7 @@ export function VnPlayer({
                       )}
                     </p>
                     {settings.bilingual && displayLine.translation && (
-                      <p className="text-xs leading-relaxed text-muted-foreground">{displayedTranslation}</p>
+                      <p className="text-xs l sm:rounded-2xltext-muted-foreground">{displayedTranslation}</p>
                     )}
                   </div>
                 </div>

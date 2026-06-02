@@ -972,10 +972,10 @@ export function PracticeSessionPage() {
             </Tabs>
           </section>
 
-          <section className="rounded-lg bg-orange-500/[0.06] p-4">
+          <section className="rounded-lg bg-accent/[0.06] p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <BookOpen className="size-4 text-orange-500" />
+                <BookOpen className="size-4 text-accent" />
                 <p className="text-sm font-semibold text-foreground">{t('practiceSession.practiceTitle')}</p>
               </div>
               <span className="shrink-0 text-[11px] text-muted-foreground">
@@ -984,7 +984,7 @@ export function PracticeSessionPage() {
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
-            <Button className="mt-4 w-full" size="lg" onClick={handleStartPractice}>
+            <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={handleStartPractice}>
               <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
             </Button>
           </section>
@@ -1026,12 +1026,12 @@ export function PracticeSessionPage() {
       <div className="relative flex h-dvh flex-col bg-background">
         {/* Floating minimal top bar */}
         <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-          <div className="flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full border border-border/20 bg-background/60 px-1.5 text-foreground shadow-lg backdrop-blur-2xl">
+          <div className="flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full border border-border/55 bg-background/90 px-1.5 text-foreground shadow-lg ring-1 ring-primary/[0.08] backdrop-blur-2xl">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setPhase('prepare')}
-            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
+            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
           </Button>
@@ -1041,14 +1041,14 @@ export function PracticeSessionPage() {
             onOpen={refreshTeachingMarkdown}
             hideToggles={isHistoryOpen}
             plainTrigger
-            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-none px-3 text-xs font-medium text-foreground/80 transition-opacity active:opacity-70"
+            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-medium text-foreground/80 transition-colors hover:bg-primary/[0.16] active:bg-primary/[0.22]"
           />
 
           <Button
             variant="ghost"
             size="sm"
             onClick={canReview ? startAnalysis : restartPractice}
-            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
+            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
           >
             {canReview ? <CheckCircle2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
             {canReview ? t('practiceSession.review') : t('practiceSession.retry')}
@@ -1062,7 +1062,7 @@ export function PracticeSessionPage() {
             aria-label={t('vnHistory.title')}
             title={t('vnHistory.title')}
             onClick={() => vnPlayerRef.current?.toggleHistory()}
-            className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
           >
             <History className="size-3.5" />
           </button>
@@ -1071,7 +1071,7 @@ export function PracticeSessionPage() {
             aria-label={t('vnSettings.title')}
             title={t('vnSettings.title')}
             onClick={() => vnPlayerRef.current?.toggleSettings()}
-            className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
           >
             <Settings className="size-3.5" />
           </button>

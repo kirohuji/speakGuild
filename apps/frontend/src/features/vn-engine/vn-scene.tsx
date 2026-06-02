@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { useTheme } from 'next-themes'
 import { cn } from '@/lib/cn'
 
 interface VnSceneProps {
@@ -13,6 +14,9 @@ interface VnSceneProps {
  * V1.1: 替换为 PIXI.js 渲染
  */
 export function VnScene({ backgroundUrl, className, children }: VnSceneProps) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
   return (
     <div
       className={cn(
@@ -29,9 +33,12 @@ export function VnScene({ backgroundUrl, className, children }: VnSceneProps) {
           : { background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }
       }
     >
-      {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      <div className="pointer-events-none absolute inset-0 bg-black/40" />
+      {isDark && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-black/40" />
+        </>
+      )}
 
       {/* Content area */}
       <div className="relative z-10 flex flex-1 flex-col justify-end p-4">{children}</div>
