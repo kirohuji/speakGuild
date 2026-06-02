@@ -395,12 +395,12 @@ export function AccountPage() {
     }
   }
 
-  const handleUnlink = async (accountId: string) => {
+  const handleUnlink = async (account: LinkedAccount) => {
     if (unlinkingId) return
-    setUnlinkingId(accountId)
+    setUnlinkingId(account.id)
     try {
-      await unlinkAccount(accountId)
-      setLinkedAccounts((prev) => prev.filter((a) => a.id !== accountId))
+      await unlinkAccount(account)
+      setLinkedAccounts((prev) => prev.filter((a) => a.id !== account.id))
     } catch {
       // ignore
     } finally {
@@ -413,10 +413,10 @@ export function AccountPage() {
   }
 
   // ── 判断绑定状态 ──
-  const wechatBound = linkedAccounts.some((a) => a.provider === 'wechat')
-  const appleBound = linkedAccounts.some((a) => a.provider === 'apple')
-  const wechatAccount = linkedAccounts.find((a) => a.provider === 'wechat')
-  const appleAccount = linkedAccounts.find((a) => a.provider === 'apple')
+  const wechatBound = linkedAccounts.some((a) => a.providerId === 'wechat')
+  const appleBound = linkedAccounts.some((a) => a.providerId === 'apple')
+  const wechatAccount = linkedAccounts.find((a) => a.providerId === 'wechat')
+  const appleAccount = linkedAccounts.find((a) => a.providerId === 'apple')
 
   const nickname = profile?.name || sessionUser?.name || t('common.notSet')
   const phoneNumber = profile?.phoneNumber || sessionUser?.phoneNumber || null
@@ -553,7 +553,7 @@ export function AccountPage() {
             <IosRow
               iconBg="bg-[#07C160]"
               label={t('profile.wechat')}
-              subtitle={wechatBound ? `${t('account.bound')}${wechatAccount?.name ? `：${wechatAccount.name}` : ''}` : t('profile.wechatBind')}
+              subtitle={wechatBound ? t('account.bound') : t('profile.wechatBind')}
               right={
                 wechatBound ? (
                   <button
@@ -561,7 +561,7 @@ export function AccountPage() {
                     disabled={unlinkingId === wechatAccount?.id}
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (wechatAccount) handleUnlink(wechatAccount.id)
+                      if (wechatAccount) handleUnlink(wechatAccount)
                     }}
                     className="text-xs text-destructive active:text-destructive/70"
                   >
@@ -595,7 +595,7 @@ export function AccountPage() {
             <IosRow
               iconBg="bg-black dark:bg-white"
               label="Apple ID"
-              subtitle={appleBound ? `${t('account.bound')}${appleAccount?.name ? `：${appleAccount.name}` : ''}` : t('profile.appleIdBind')}
+              subtitle={appleBound ? t('account.bound') : t('profile.appleIdBind')}
               last
               right={
                 appleBound ? (
@@ -604,7 +604,7 @@ export function AccountPage() {
                     disabled={unlinkingId === appleAccount?.id}
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (appleAccount) handleUnlink(appleAccount.id)
+                      if (appleAccount) handleUnlink(appleAccount)
                     }}
                     className="text-xs text-destructive active:text-destructive/70"
                   >

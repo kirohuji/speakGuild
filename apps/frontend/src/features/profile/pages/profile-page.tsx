@@ -1931,12 +1931,12 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     }
   }
 
-  const handleUnlink = async (accountId: string) => {
+  const handleUnlink = async (account: LinkedAccount) => {
     if (unlinkingId) return
-    setUnlinkingId(accountId)
+    setUnlinkingId(account.id)
     try {
-      await unlinkAccount(accountId)
-      setLinkedAccounts((prev) => prev.filter((a) => a.id !== accountId))
+      await unlinkAccount(account)
+      setLinkedAccounts((prev) => prev.filter((a) => a.id !== account.id))
     } catch {
       // ignore
     } finally {
@@ -1948,10 +1948,10 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     setProfile((prev) => prev ? { ...prev, name } : prev)
   }
 
-  const wechatBound = linkedAccounts.some((a) => a.provider === 'wechat')
-  const appleBound = linkedAccounts.some((a) => a.provider === 'apple')
-  const wechatAccount = linkedAccounts.find((a) => a.provider === 'wechat')
-  const appleAccount = linkedAccounts.find((a) => a.provider === 'apple')
+  const wechatBound = linkedAccounts.some((a) => a.providerId === 'wechat')
+  const appleBound = linkedAccounts.some((a) => a.providerId === 'apple')
+  const wechatAccount = linkedAccounts.find((a) => a.providerId === 'wechat')
+  const appleAccount = linkedAccounts.find((a) => a.providerId === 'apple')
 
   const nickname = profile?.name || sessionUser?.name || t('profile.notBound')
   const phoneNumber = profile?.phoneNumber || sessionUser?.phoneNumber || null
@@ -2164,12 +2164,12 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
               <div>
                 <p className="text-sm">{t('profile.wechat')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {wechatBound ? (wechatAccount?.name ? `${t('profile.boundPrefix')}：${wechatAccount.name}` : t('profile.boundPrefix')) : t('profile.wechatBind')}
+                  {wechatBound ? t('profile.boundPrefix') : t('profile.wechatBind')}
                 </p>
               </div>
             </div>
             {wechatBound ? (
-              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={unlinkingId === wechatAccount?.id} onClick={() => wechatAccount && handleUnlink(wechatAccount.id)}>
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={unlinkingId === wechatAccount?.id} onClick={() => wechatAccount && handleUnlink(wechatAccount)}>
                 {unlinkingId === wechatAccount?.id ? <Loader2 className="size-3.5 animate-spin" /> : t('profile.unbind')}
               </Button>
             ) : (
@@ -2187,12 +2187,12 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
               <div>
                 <p className="text-sm">{t('profile.appleId')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {appleBound ? (appleAccount?.name ? `${t('profile.boundPrefix')}：${appleAccount.name}` : t('profile.boundPrefix')) : t('profile.appleIdBind')}
+                  {appleBound ? t('profile.boundPrefix') : t('profile.appleIdBind')}
                 </p>
               </div>
             </div>
             {appleBound ? (
-              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={unlinkingId === appleAccount?.id} onClick={() => appleAccount && handleUnlink(appleAccount.id)}>
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={unlinkingId === appleAccount?.id} onClick={() => appleAccount && handleUnlink(appleAccount)}>
                 {unlinkingId === appleAccount?.id ? <Loader2 className="size-3.5 animate-spin" /> : t('profile.unbind')}
               </Button>
             ) : (

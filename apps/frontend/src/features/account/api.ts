@@ -2,18 +2,17 @@ import { authClient } from '@/features/auth/client'
 
 export interface LinkedAccount {
   id: string
-  provider: string
-  providerAccountId: string
-  email?: string
-  name?: string
-  image?: string
+  providerId: string
+  accountId: string
+  userId: string
+  scopes: string[]
   createdAt: Date
   updatedAt: Date
 }
 
 export async function listLinkedAccounts(): Promise<LinkedAccount[]> {
   const res = await authClient.listAccounts()
-  return res?.data?.accounts ?? res?.accounts ?? []
+  return res?.data ?? []
 }
 
 export async function linkSocialAccount(provider: 'wechat' | 'apple') {
@@ -23,6 +22,9 @@ export async function linkSocialAccount(provider: 'wechat' | 'apple') {
   })
 }
 
-export async function unlinkAccount(accountId: string) {
-  return authClient.unlinkAccount({ accountId })
+export async function unlinkAccount(account: Pick<LinkedAccount, 'providerId' | 'accountId'>) {
+  return authClient.unlinkAccount({
+    providerId: account.providerId,
+    accountId: account.accountId,
+  })
 }
