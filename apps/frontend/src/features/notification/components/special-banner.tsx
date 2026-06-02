@@ -10,9 +10,11 @@ import {
   getSpecialNotifications, markAsRead,
   type SpecialNotification,
 } from '@/features/notification/api'
+import { useNotificationStore } from '@/features/notification/store'
 
 export function SpecialBanner() {
   const [notifs, setNotifs] = useState<SpecialNotification[]>([])
+  const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [detailOpen, setDetailOpen] = useState(false)
 
@@ -30,6 +32,7 @@ export function SpecialBanner() {
   const handleClose = async () => {
     if (!currentNotification) return
     await markAsRead(currentNotification.id).catch(() => {})
+    void fetchUnreadCount()
     const remaining = notifs.filter((_, i) => i !== currentIndex)
     setNotifs(remaining)
     setDetailOpen(false)

@@ -23,7 +23,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import {
-  listNotifications, createNotification, updateNotification, deleteNotification,
+  listNotifications, createNotification, updateNotification, deleteNotification, getNotification,
   searchUsers, uploadNotificationImage, listNotificationImages, getNotificationStats,
   type AdminNotificationItem, type SearchUserResult, type NotificationImageItem, type NotificationStats,
 } from '@/features/admin/api-notifications'
@@ -86,7 +86,7 @@ function ImageLibraryPopover({
             </div>
           ) : (
             <VirtuosoGrid style={{ height: '100%' }} totalCount={images.length} endReached={loadMore} overscan={200}
-              components={{ List: React.forwardRef((props, ref) => (<div ref={ref} {...props} className="grid grid-cols-3 gap-2 px-4" />)) }}
+              components={{ List: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>((props, ref) => (<div ref={ref} {...props} className="grid grid-cols-3 gap-2 px-4" />)) as any }}
               itemContent={(index) => {
                 const img = images[index]
                 return (
@@ -163,16 +163,49 @@ function EditNotificationDialog({
   const [type, setType] = useState<'broadcast' | 'targeted'>('broadcast')
   const [isSpecial, setIsSpecial] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<SearchUserResult[]>([])
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
-    if (item) { setTitle(item.title); setContent(item.content); setType(item.type); setIsSpecial(item.isSpecial ?? false) }
+    if (!item) return
+    setTitle(item.title)
+    setContent(item.content)
+    setType(item.type)
+    setIsSpecial(item.isSpecial ?? false)
+    setSearchKeyword('')
+    setSearchResults([])
+    setSelectedUsers([])
+    void getNotification(item.id)
+      .then((detail) => setSelectedUsers(detail.targets.map((target) => target.user)))
+      .catch(() => setSelectedUsers([]))
   }, [item])
 
+  const handleSearchUsers = async () => {
+    if (!searchKeyword.trim()) return
+    setSearching(true)
+    try {
+      const results = await searchUsers(searchKeyword.trim())
+      setSearchResults(results.filter((user) => !selectedUsers.some((selected) => selected.id === user.id)))
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearching(false)
+    }
+  }
+
   const handleSave = async () => {
-    if (!item || !title.trim() || !content.trim()) return
+    if (!item || !title.trim() || !content.trim() || (type === 'targeted' && selectedUsers.length === 0)) return
     setSaving(true)
     try {
-      await updateNotification(item.id, { title: title.trim(), content: content.trim(), type, isSpecial })
+      await updateNotification(item.id, {
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        targetUserIds: type === 'targeted' ? selectedUsers.map((user) => user.id) : [],
+        isSpecial,
+      })
       onSaved()
       onClose()
     } catch {} finally { setSaving(false) }
@@ -209,6 +242,27 @@ function EditNotificationDialog({
               ))}
             </div>
           </div>
+          {type === 'targeted' && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder="搜索用户邮箱或姓名..." value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearchUsers()} className={cn('pl-8 h-8 text-xs', noRingInput)} />
+                </div>
+                <Button size="sm" onClick={handleSearchUsers} disabled={searching} className="h-8 text-xs">{searching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : '搜索'}</Button>
+              </div>
+              {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedUsers.map((user) => <Badge key={user.id} variant="secondary" className="gap-1 pr-1 text-xs">{user.name || user.email}<button type="button" onClick={() => setSelectedUsers((prev) => prev.filter((selected) => selected.id !== user.id))}><X className="h-3 w-3" /></button></Badge>)}
+                </div>
+              )}
+              {searchResults.length > 0 && (
+                <div className="rounded-lg border border-border/60 max-h-40 overflow-y-auto">
+                  {searchResults.map((user) => <button key={user.id} type="button" onClick={() => { setSelectedUsers((prev) => [...prev, user]); setSearchResults((prev) => prev.filter((result) => result.id !== user.id)) }} className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors border-b border-border/40 last:border-b-0"><UserPlus className="h-3.5 w-3.5 text-muted-foreground" /><span>{user.name || user.email}</span><span className="text-xs text-muted-foreground">{user.email}</span></button>)}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
             <Megaphone className="size-4 text-amber-500" />
             <div className="flex-1">
@@ -232,7 +286,7 @@ function EditNotificationDialog({
         </div>
         <DialogFooter className="flex-shrink-0 px-6 pb-5 pt-2">
           <Button variant="outline" onClick={onClose}>取消</Button>
-          <Button onClick={handleSave} disabled={saving || !title.trim() || !content.trim()}>
+          <Button onClick={handleSave} disabled={saving || !title.trim() || !content.trim() || (type === 'targeted' && selectedUsers.length === 0)}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}保存修改
           </Button>
         </DialogFooter>
@@ -629,7 +683,7 @@ export function AdminNotificationsPage() {
           </div>
           <DialogFooter className="flex-shrink-0 px-6 pb-5 pt-2">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={handleCreate} disabled={sending || !formTitle.trim() || !formContent.trim()}>{sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}发送通知</Button>
+            <Button onClick={handleCreate} disabled={sending || !formTitle.trim() || !formContent.trim() || (formType === 'targeted' && selectedUsers.length === 0)}>{sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}发送通知</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

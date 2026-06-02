@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
@@ -18,6 +18,11 @@ export class NotificationService {
 
   /** 管理员：创建并发送通知 */
   async createNotification(adminUserId: string, dto: CreateNotificationDto) {
+    const targetUserIds = [...new Set(dto.targetUserIds ?? [])];
+    if (dto.type === 'targeted' && targetUserIds.length === 0) {
+      throw new BadRequestException('Targeted notifications require at least one target user');
+    }
+
     // 创建通知本体
     const notification = await this.prisma.notification.create({
       data: {
@@ -26,21 +31,20 @@ export class NotificationService {
         type: dto.type,
         isSpecial: dto.isSpecial ?? false,
         sentById: adminUserId,
+        ...(dto.type === 'targeted'
+          ? {
+              targets: {
+                createMany: {
+                  data: targetUserIds.map((userId) => ({ userId })),
+                },
+              },
+            }
+          : {}),
       },
     });
 
-    // 指定用户：写入 target 表
-    if (dto.type === 'targeted' && dto.targetUserIds?.length) {
-      await this.prisma.notificationTarget.createMany({
-        data: dto.targetUserIds.map((userId) => ({
-          notificationId: notification.id,
-          userId,
-        })),
-      });
-    }
-
     // WebSocket 实时推送
-    this.gateway.pushNotification(notification.id, dto.type, dto.targetUserIds);
+    this.gateway.pushNotification(notification.id, dto.type, targetUserIds);
 
     return notification;
   }
@@ -107,6 +111,18 @@ export class NotificationService {
 
   /** 用户：标记通知为已读 */
   async markAsRead(userId: string, notificationId: string) {
+    const notification = await this.prisma.notification.findFirst({
+      where: {
+        id: notificationId,
+        OR: [
+          { type: 'broadcast' },
+          { targets: { some: { userId } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!notification) throw new NotFoundException('Notification not found');
+
     await this.prisma.notificationRead.upsert({
       where: {
         notificationId_userId: { notificationId, userId },
@@ -227,6 +243,11 @@ export class NotificationService {
       where: { id },
       include: {
         sentBy: { select: { id: true, name: true, email: true } },
+        targets: {
+          select: {
+            user: { select: { id: true, email: true, name: true, username: true, image: true } },
+          },
+        },
         _count: { select: { reads: true, targets: true } },
       },
     });
@@ -236,8 +257,19 @@ export class NotificationService {
 
   /** 管理员：更新通知 */
   async updateNotification(id: string, dto: UpdateNotificationDto) {
-    const existing = await this.prisma.notification.findUnique({ where: { id } });
+    const existing = await this.prisma.notification.findUnique({
+      where: { id },
+      include: { targets: { select: { userId: true } } },
+    });
     if (!existing) throw new NotFoundException('通知不存在');
+    const type = dto.type ?? existing.type;
+    const targetUserIds = dto.targetUserIds
+      ? [...new Set(dto.targetUserIds)]
+      : existing.targets.map((target) => target.userId);
+    if (type === 'targeted' && targetUserIds.length === 0) {
+      throw new BadRequestException('Targeted notifications require at least one target user');
+    }
+
     return this.prisma.notification.update({
       where: { id },
       data: {
@@ -245,6 +277,16 @@ export class NotificationService {
         ...(dto.content !== undefined ? { content: dto.content } : {}),
         ...(dto.type !== undefined ? { type: dto.type } : {}),
         ...(dto.isSpecial !== undefined ? { isSpecial: dto.isSpecial } : {}),
+        targets: {
+          deleteMany: {},
+          ...(type === 'targeted'
+            ? {
+                createMany: {
+                  data: targetUserIds.map((userId) => ({ userId })),
+                },
+              }
+            : {}),
+        },
       },
     });
   }

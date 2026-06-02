@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsArray, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateNotificationDto {
   @IsString()
@@ -16,5 +16,6 @@ export class CreateNotificationDto {
   targetUserIds?: string[];
 
   @IsOptional()
+  @IsBoolean()
   isSpecial?: boolean;
 }

@@ -5,6 +5,8 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { fromNodeHeaders } from 'better-auth/node';
+import { auth } from '../auth/auth';
 
 @WebSocketGateway({
   namespace: '/notifications',
@@ -16,23 +18,41 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   private clientMap = new Map<string, Set<string>>(); // userId -> Set<socketId>
 
-  handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    if (!userId) {
+  async handleConnection(client: Socket) {
+    try {
+      const token = client.handshake.auth?.token;
+      const authorization =
+        typeof token === 'string' && token
+          ? `Bearer ${token}`
+          : client.handshake.headers.authorization;
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders({
+          ...client.handshake.headers,
+          authorization,
+        }),
+      });
+      const userId = session?.user?.id;
+
+      if (!userId) {
+        client.disconnect();
+        return;
+      }
+
+      client.data.userId = userId;
+      client.join('authenticated');
+      client.join(`user:${userId}`);
+
+      if (!this.clientMap.has(userId)) {
+        this.clientMap.set(userId, new Set());
+      }
+      this.clientMap.get(userId)!.add(client.id);
+    } catch {
       client.disconnect();
-      return;
     }
-
-    client.join(`user:${userId}`);
-
-    if (!this.clientMap.has(userId)) {
-      this.clientMap.set(userId, new Set());
-    }
-    this.clientMap.get(userId)!.add(client.id);
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+    const userId = client.data.userId as string | undefined;
     if (userId && this.clientMap.has(userId)) {
       this.clientMap.get(userId)!.delete(client.id);
       if (this.clientMap.get(userId)!.size === 0) {
@@ -50,7 +70,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     const payload = { type: 'new_notification', notificationId };
 
     if (type === 'broadcast') {
-      this.server.emit('notification', payload);
+      this.server.to('authenticated').emit('notification', payload);
     } else if (targetUserIds?.length) {
       targetUserIds.forEach((userId) => {
         this.server.to(`user:${userId}`).emit('notification', payload);

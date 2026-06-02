@@ -10,6 +10,7 @@ interface NotificationStore {
   unreadCount: number;
   isLoading: boolean;
   initialized: boolean;
+  userId: string | null;
   fetchUnreadCount: () => Promise<void>;
   initSocket: (userId: string) => void;
   disconnect: () => void;
@@ -22,6 +23,7 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
   unreadCount: 0,
   isLoading: false,
   initialized: false,
+  userId: null,
 
   fetchUnreadCount: async () => {
     try {
@@ -34,10 +36,12 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
   },
 
   initSocket: (userId: string) => {
-    if (get().initialized) return;
-    set({ initialized: true });
+    const state = get();
+    if (state.initialized && state.userId === userId) return;
+    if (state.initialized) disconnectNotificationSocket();
+    set({ initialized: true, userId });
 
-    connectNotificationSocket(userId);
+    connectNotificationSocket();
     onNewNotification(() => {
       set((s) => ({ unreadCount: s.unreadCount + 1 }));
     });
@@ -45,7 +49,7 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
 
   disconnect: () => {
     disconnectNotificationSocket();
-    set({ initialized: false });
+    set({ initialized: false, userId: null, unreadCount: 0, isLoading: false });
   },
 
   incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),

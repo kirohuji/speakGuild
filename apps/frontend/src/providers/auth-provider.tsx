@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { authClient, clearBearerToken } from '@/features/auth/client'
 import { useConfigStore } from '@/stores/config.store'
+import { useNotificationStore } from '@/features/notification/store'
 
 interface SessionUser {
   id: string
@@ -90,6 +91,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => window.clearTimeout(timeout)
   }, [])
+
+  useEffect(() => {
+    const notifications = useNotificationStore.getState()
+    if (session?.user?.id) {
+      notifications.initSocket(session.user.id)
+      void notifications.fetchUnreadCount()
+    } else {
+      notifications.disconnect()
+    }
+
+    return () => {
+      useNotificationStore.getState().disconnect()
+    }
+  }, [session?.user?.id])
 
   const refreshSession = async () => {
     setIsLoading(true)

@@ -29,6 +29,10 @@ export interface SearchUserResult {
   image: string | null;
 }
 
+export interface AdminNotificationDetail extends AdminNotificationItem {
+  targets: { user: SearchUserResult }[];
+}
+
 export async function listNotifications(params: {
   page?: number;
   pageSize?: number;
@@ -49,6 +53,10 @@ export async function createNotification(data: {
 
 export async function searchUsers(keyword: string) {
   return get<SearchUserResult[]>('/admin/notifications/search-users', { keyword });
+}
+
+export async function getNotification(id: string) {
+  return get<AdminNotificationDetail>(`/admin/notifications/${id}`);
 }
 
 export async function uploadNotificationImage(file: File): Promise<{ url: string; assetId: string }> {
@@ -96,7 +104,7 @@ export async function getNotificationStats() {
 
 export async function updateNotification(
   id: string,
-  data: { title?: string; content?: string; type?: 'broadcast' | 'targeted'; isSpecial?: boolean },
+  data: { title?: string; content?: string; type?: 'broadcast' | 'targeted'; targetUserIds?: string[]; isSpecial?: boolean },
 ) {
   return patch(`/admin/notifications/${id}`, data);
 }
