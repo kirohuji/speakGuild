@@ -8,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, CheckCircle2, Lock, ArrowRight,
   ClipboardList, ShoppingBag, Play, Search, CalendarDays, Mic,
   BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, Eye,
-  Bot, CircleCheck, CircleDashed, type LucideIcon,
+  CircleCheck, CircleDashed, ChevronDown, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -26,8 +26,9 @@ import {
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
-import { practiceApi, type PracticeSession } from '@/features/practice/api/english-practice-api'
+import { practiceApi, type PracticeSession, type TopicDetail } from '@/features/practice/api/english-practice-api'
 import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
+import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { cn } from '@/lib/cn'
@@ -48,7 +49,6 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   '职场交流': Briefcase,
   '学术挑战': Users,
 }
-
 function getCategoryIcon(name: string) {
   return CATEGORY_ICONS[name] ?? BookOpen
 }
@@ -911,6 +911,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
   const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
   const [topicPage, setTopicPage] = useState(1)
+  const [descExpanded, setDescExpanded] = useState(false)
   const pageSize = 6
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
@@ -941,7 +942,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
         type="button"
         onClick={() => {
           if (!unit.isUnlocked || unit.isLocked) { onMemberOpen(); return }
-          setTopicPage(1); setDetailOpen(true)
+          setTopicPage(1); setDescExpanded(false); setDetailOpen(true)
         }}
         className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
       >
@@ -996,7 +997,24 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
 
             {unit.description && (
               <div className="border-b border-border/50 px-4 py-3">
-                <p className="text-xs leading-5 text-muted-foreground">{unit.description}</p>
+                <p
+                  className={cn(
+                    'text-xs leading-5 text-muted-foreground',
+                    !descExpanded && 'line-clamp-1',
+                  )}
+                >
+                  {unit.description}
+                </p>
+                {unit.description.length > 40 && (
+                  <button
+                    type="button"
+                    onClick={() => setDescExpanded((v) => !v)}
+                    className="mt-1 flex items-center gap-0.5 text-[11px] text-muted-foreground/70 transition-colors hover:text-foreground"
+                  >
+                    {descExpanded ? '收起' : '展开'}
+                    <ChevronDown className={cn('size-3 transition-transform', descExpanded && 'rotate-180')} />
+                  </button>
+                )}
               </div>
             )}
 
@@ -1164,6 +1182,9 @@ function PracticeRecordsContent() {
 
   return (
     <div className="space-y-4">
+      <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
+        中途退出的练习不会计入记录。
+      </p>
       <ConfigDataTable
         data={data?.list || []}
         columns={columns}
@@ -1175,7 +1196,7 @@ function PracticeRecordsContent() {
         emptyMessage={t('profile.practiceRecords.empty')}
         onRowClick={setSelectedRecord}
       />
-      <PracticeRecordReviewDrawer
+      <PracticeRecordReadonlyReviewDrawer
         record={selectedRecord}
         open={Boolean(selectedRecord)}
         onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
@@ -1184,7 +1205,7 @@ function PracticeRecordsContent() {
   )
 }
 
-function PracticeRecordReviewDrawer({
+function PracticeRecordReadonlyReviewDrawer({
   record,
   open,
   onOpenChange,
@@ -1194,141 +1215,148 @@ function PracticeRecordReviewDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const [session, setSession] = useState<PracticeSession | null>(null)
+  const [topicDetail, setTopicDetail] = useState<TopicDetail | null>(null)
   const [loading, setLoading] = useState(false)
+  const [lineIndex, setLineIndex] = useState(0)
+  const [showAnalysis, setShowAnalysis] = useState(false)
 
   useEffect(() => {
     if (!open || !record?.sessionId) return
     setLoading(true)
     setSession(null)
-    practiceApi.getSession(record.sessionId)
-      .then(setSession)
+    setTopicDetail(null)
+    setLineIndex(0)
+    setShowAnalysis(false)
+    Promise.all([
+      practiceApi.getSession(record.sessionId),
+      practiceApi.getTopicDetail(record.topicId).catch(() => null),
+    ])
+      .then(([nextSession, nextTopicDetail]) => {
+        setSession(nextSession)
+        setTopicDetail(nextTopicDetail)
+      })
       .catch(() => setSession(null))
       .finally(() => setLoading(false))
-  }, [open, record?.sessionId])
+  }, [open, record?.sessionId, record?.topicId])
 
+  const replayLines = useMemo(() => (session?.turns ?? []).flatMap((turn) => [
+    { line: { speaker: topicDetail?.scene.title || 'NPC', text: turn.npcText } satisfies VnPlayerLine },
+    { line: { speaker: '我', text: turn.userText, isUser: true } satisfies VnPlayerLine, turn },
+  ]), [session?.turns, topicDetail?.scene.title])
+  const currentReplayLine = replayLines[lineIndex]
+  const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
   const score = Number(session?.analysisResult?.overallScore ?? record?.score ?? 0)
   const passed = score > 70
+  const character = topicDetail?.scene.characters?.[0]
+  const expressions = character?.expressions && typeof character.expressions === 'object'
+    ? character.expressions as Record<string, string>
+    : {}
+  const spriteUrl = expressions.default || character?.spriteBaseUrl || undefined
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background">
-        <DrawerHeader className="border-b border-border/60 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-left">
-          <div className="mx-auto flex w-full max-w-2xl items-start justify-between gap-3">
-            <div className="min-w-0">
-              <DrawerTitle className="text-base font-semibold">练习回顾</DrawerTitle>
-              <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                {record?.topicName} · {record?.questionText}
-              </p>
-            </div>
-            <Badge
-              variant={passed ? 'default' : 'secondary'}
-              className={cn('shrink-0 rounded-full', passed && 'bg-emerald-600 hover:bg-emerald-600')}
-            >
-              {score > 0 ? `${score} 分 · ${passed ? '已掌握' : '继续练习'}` : '等待评估'}
-            </Badge>
-          </div>
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>练习回顾</DrawerTitle>
         </DrawerHeader>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-2xl space-y-5 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
-            {loading ? (
-              <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>
-            ) : !session ? (
-              <div className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">
-                暂时无法加载这次练习回顾
-              </div>
-            ) : (
-              <>
-                <div className="rounded-lg bg-emerald-500/[0.06] p-3.5 ring-1 ring-emerald-500/15">
-                  <div className="flex items-start gap-3">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/[0.12] text-emerald-600 dark:text-emerald-400">
-                      {passed ? <CircleCheck className="size-4" /> : <CircleDashed className="size-4" />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {passed ? '这个话题已经掌握' : '这个话题还需要再练一次'}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        对话模式最终评分超过 70 分后计入学习计划进度。本页为只读回顾，不会修改练习记录。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <section>
-                  <div className="mb-3 flex items-center gap-2 px-1">
-                    <MessageSquareText className="size-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">对话与即时评估</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {(session.turns ?? []).length === 0 ? (
-                      <p className="rounded-lg bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">这次练习没有保存对话轮次</p>
-                    ) : session.turns?.map((turn) => (
-                      <PracticeTurnReview key={turn.id} turn={turn} />
-                    ))}
-                  </div>
-                </section>
-
-                {session.analysisResult && (
-                  <section>
-                    <div className="mb-3 flex items-center gap-2 px-1">
-                      <Bot className="size-4 text-primary" />
-                      <h3 className="text-sm font-semibold text-foreground">最终 AI 评估</h3>
-                    </div>
-                    <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
-                  </section>
-                )}
-              </>
-            )}
+        {loading ? (
+          <div className="flex h-full items-center justify-center"><Spinner /></div>
+        ) : !session ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <p className="text-sm text-muted-foreground">暂时无法加载这次练习回顾</p>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>关闭</Button>
           </div>
-        </div>
+        ) : showAnalysis ? (
+          <div className="h-full overflow-y-auto bg-background">
+            <div className="mx-auto max-w-2xl px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))]">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowAnalysis(false)}>返回对话</Button>
+                <Badge variant={passed ? 'default' : 'secondary'} className={cn('rounded-full', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
+                  {score > 0 ? `${score} 分 · ${passed ? '已掌握' : '继续练习'}` : '等待评估'}
+                </Badge>
+                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>关闭</Button>
+              </div>
+              {session.analysisResult ? (
+                <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
+              ) : (
+                <p className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">这次练习还没有最终 AI 评估</p>
+              )}
+            </div>
+          </div>
+        ) : replayLines.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <p className="text-sm text-muted-foreground">这次练习没有保存可回放的对话</p>
+            {session.analysisResult && <Button size="sm" onClick={() => setShowAnalysis(true)}>查看最终评价</Button>}
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>关闭</Button>
+          </div>
+        ) : (
+          <div className="relative h-full bg-background">
+            <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+              <div className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 text-foreground shadow-lg backdrop-blur-2xl">
+                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={() => onOpenChange(false)}>关闭</Button>
+                <div className="min-w-0 flex-1 text-center">
+                  <p className="truncate text-xs font-semibold">只读回顾 · {record?.questionText}</p>
+                </div>
+                <Badge variant={passed ? 'default' : 'secondary'} className={cn('h-6 rounded-full px-2 text-[10px]', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
+                  {score > 0 ? `${score} 分` : '回顾'}
+                </Badge>
+              </div>
+            </div>
+            <VnPlayer
+              className="h-full max-w-none rounded-none border-none"
+              stageClassName="min-h-0"
+              showUserInputOverride
+              backgroundUrl={topicDetail?.scene.backgroundUrl || undefined}
+              currentLine={isEnded ? null : currentReplayLine?.line ?? null}
+              history={replayLines.slice(0, Math.min(lineIndex, replayLines.length)).map((item) => item.line)}
+              currentSpriteUrl={spriteUrl}
+              spritePosition={character?.defaultPosition || 'center'}
+              currentAvatarUrl={character?.avatarUrl || undefined}
+              currentAvatarAlt={character?.displayName || character?.name}
+              isEnded={isEnded}
+              onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
+              inputFeedback={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} /> : null}
+              inputFeedbackChat={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} compact /> : null}
+              showHistoryButton={false}
+              endedActions={(
+                <Button size="sm" className="h-8 rounded-full px-4 text-xs" onClick={() => setShowAnalysis(true)}>
+                  查看最终评价
+                </Button>
+              )}
+            />
+          </div>
+        )}
       </DrawerContent>
     </Drawer>
   )
 }
 
-function PracticeTurnReview({
+function PracticeReplayFeedback({
   turn,
+  compact = false,
 }: {
   turn: NonNullable<PracticeSession['turns']>[number]
+  compact?: boolean
 }) {
-  const judgement = turn.judgement as {
-    passed?: boolean
-    feedback?: string
-    confidence?: number
-    chunksUsed?: string[]
-  } | null
+  const judgement = turn.judgement as { passed?: boolean; feedback?: string; chunksUsed?: string[] } | null
+  if (!judgement) return null
 
   return (
-    <div className="rounded-lg bg-muted/30 p-3.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Round {turn.round}</p>
-      <div className="mt-2 space-y-2">
-        <div className="max-w-[88%] rounded-lg bg-background/75 px-3 py-2.5 text-sm leading-6 text-foreground ring-1 ring-border/45">
-          {turn.npcText}
-        </div>
-        <div className="ml-auto max-w-[82%] rounded-lg bg-primary/[0.12] px-3 py-2.5 text-sm leading-6 text-foreground ring-1 ring-primary/20">
-          {turn.userText}
-        </div>
+    <div className={cn(
+      'border-t text-foreground backdrop-blur-xl',
+      compact ? 'px-3 py-2.5' : 'px-4 py-3',
+      judgement.passed ? 'border-emerald-500/25 bg-emerald-500/[0.08]' : 'border-amber-500/25 bg-amber-500/[0.08]',
+    )}>
+      <div className="flex items-center gap-2 text-xs font-semibold">
+        {judgement.passed ? <CircleCheck className="size-3.5 text-emerald-500" /> : <CircleDashed className="size-3.5 text-amber-500" />}
+        <span>{judgement.passed ? '本轮表达通过' : '本轮建议调整'}</span>
       </div>
-      {judgement && (
-        <div className={cn(
-          'mt-3 rounded-md px-3 py-2.5 ring-1',
-          judgement.passed
-            ? 'bg-emerald-500/[0.07] ring-emerald-500/20'
-            : 'bg-amber-500/[0.07] ring-amber-500/20',
-        )}>
-          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-            {judgement.passed ? <CircleCheck className="size-3.5 text-emerald-500" /> : <CircleDashed className="size-3.5 text-amber-500" />}
-            <span>{judgement.passed ? '本轮表达通过' : '本轮建议调整'}</span>
-          </div>
-          {judgement.feedback && <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{judgement.feedback}</p>}
-          {(judgement.chunksUsed ?? turn.chunksUsed).length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {(judgement.chunksUsed ?? turn.chunksUsed).map((chunk) => (
-                <Badge key={chunk} variant="outline" className="rounded-full px-2 text-[10px]">{chunk}</Badge>
-              ))}
-            </div>
-          )}
+      {judgement.feedback && <p className="mt-1.5 text-xs leading-5 text-foreground/75">{judgement.feedback}</p>}
+      {(judgement.chunksUsed ?? turn.chunksUsed).length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {(judgement.chunksUsed ?? turn.chunksUsed).map((chunk) => (
+            <Badge key={chunk} variant="outline" className="rounded-full bg-background/60 px-2 text-[10px]">{chunk}</Badge>
+          ))}
         </div>
       )}
     </div>

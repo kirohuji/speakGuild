@@ -242,6 +242,14 @@ export function DialogueListView({
       </div>
 
       {/* ── Input area ── */}
+      {inputFeedback && !(isWaiting && onSubmitInput) && (
+        <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
+          <div className="overflow-hidden rounded-xl border border-border/55 bg-background/75 backdrop-blur-2xl">
+            {inputFeedback}
+          </div>
+        </div>
+      )}
+
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
           <TurnGuidanceCard guidance={inputGuidance} className="mb-2 mr-0 max-w-[min(92%,360px)]" />

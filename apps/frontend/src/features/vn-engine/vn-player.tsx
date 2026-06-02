@@ -66,6 +66,7 @@ interface VnPlayerProps {
   /** Hide the top bar in chat-list mode (e.g. when parent provides its own header) */
   hideChatTopBar?: boolean
   onDisplayModeChange?: (displayMode: VnPlayerSettings['displayMode']) => void
+  showUserInputOverride?: boolean
 }
 
 interface VnPlayerSettings {
@@ -446,12 +447,14 @@ export function VnPlayer({
   showHistoryButton = true,
   hideChatTopBar = false,
   onDisplayModeChange,
+  showUserInputOverride,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
   const [historyOpen, setHistoryOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState<VnPlayerSettings>(() => loadVnPlayerSettings())
+  const showUserInput = showUserInputOverride ?? settings.showUserInputInDialogue
   const [reviewLineIndex, setReviewLineIndex] = useState<number | null>(null)
   const [displayedText, setDisplayedText] = useState(currentLine?.text ?? '')
   const typewriterTimerRef = useRef<number | null>(null)
@@ -459,7 +462,7 @@ export function VnPlayer({
   const lineIndex = reviewLineIndex ?? Math.max(history.length - 1, 0)
   const reviewLine = reviewLineIndex !== null ? history[reviewLineIndex] : null
   const activeLine = reviewLine ?? currentLine
-  const displayLine = activeLine?.isUser && reviewLineIndex === null && !settings.showUserInputInDialogue ? null : activeLine
+  const displayLine = activeLine?.isUser && reviewLineIndex === null && !showUserInput ? null : activeLine
   const fullText = displayLine?.text ?? ''
   const fullTranslation = displayLine?.translation ?? ''
   const displayedTranslation = fullText
@@ -580,7 +583,7 @@ export function VnPlayer({
           showHistoryButton={showHistoryButton}
           fontSize={settings.fontSize}
           bilingual={settings.bilingual}
-          showUserInputInDialogue
+          showUserInputInDialogue={showUserInput}
           onSettingsOpen={() => setSettingsOpen(true)}
           hideTopBar={hideChatTopBar}
           historyOpen={historyOpen}

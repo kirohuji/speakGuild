@@ -972,6 +972,9 @@ function RecordsTab() {
   return (
     <div className="space-y-4">
       <h2 className="text-base font-semibold">{t('profile.records')}</h2>
+      <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
+        完成最终 AI 复盘后才会生成练习记录，中途退出不会计入记录。
+      </p>
       <ConfigDataTable
         data={data?.list || []}
         columns={columns}

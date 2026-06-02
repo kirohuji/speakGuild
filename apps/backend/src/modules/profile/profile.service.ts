@@ -143,10 +143,11 @@ export class ProfileService {
   async getPracticeRecords(userId: string, pagination: PaginationDto) {
     const { page = 1, pageSize = 20 } = pagination;
     const skip = (page - 1) * pageSize;
+    const where = { userId, status: 'analyzed' };
 
     const [sessions, sessionTotal] = await Promise.all([
       this.prisma.practiceSession.findMany({
-        where: { userId },
+        where,
         orderBy: { startedAt: 'desc' },
         skip,
         take: pageSize,
@@ -160,7 +161,7 @@ export class ProfileService {
           },
         },
       }),
-      this.prisma.practiceSession.count({ where: { userId } }),
+      this.prisma.practiceSession.count({ where }),
     ]);
 
     if (sessionTotal > 0) {
