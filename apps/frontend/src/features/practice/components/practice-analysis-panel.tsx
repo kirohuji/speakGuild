@@ -48,8 +48,8 @@ interface DialogueAnalysisResult {
 interface PracticeAnalysisPanelProps {
   analysis: DialogueAnalysisResult | null
   loading: boolean
-  onBack: () => void
-  onFinish: () => void
+  onBack?: () => void
+  onFinish?: () => void
   onRestart?: () => void
   onSaveExpression?: (data: {
     type: string
@@ -59,6 +59,7 @@ interface PracticeAnalysisPanelProps {
     sceneName?: string
   }) => Promise<void>
   topicTitle?: string
+  readOnly?: boolean
 }
 
 
@@ -71,6 +72,7 @@ export function PracticeAnalysisPanel({
   onRestart,
   onSaveExpression,
   topicTitle,
+  readOnly = false,
 }: PracticeAnalysisPanelProps) {
   const { t } = useTranslation()
   const [retellText, setRetellText] = useState('')
@@ -173,7 +175,7 @@ export function PracticeAnalysisPanel({
         </CardContent>
       </Card>
 
-      <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
+      {!readOnly && <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
         <CardHeader className="p-3.5 pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
             <Mic2 className="size-4 text-emerald-600 dark:text-emerald-400" /> {t('practiceVn.retell')}
@@ -204,7 +206,7 @@ export function PracticeAnalysisPanel({
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {objectives.length > 0 && (
         <Card className="rounded-lg border-0 bg-muted/30 shadow-none dark:ring-0">
@@ -389,14 +391,14 @@ export function PracticeAnalysisPanel({
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      {!readOnly && <div className="grid grid-cols-2 gap-3">
         <Button type="button" variant="outline" onClick={onRestart ?? onBack}>
           <RotateCcw className="mr-1 size-4" /> {t('practiceVn.restart')}
         </Button>
         <Button type="button" onClick={onFinish}>
           <Library className="mr-1 size-4" /> {t('practiceVn.exprLibrary')}
         </Button>
-      </div>
+      </div>}
     </div>
   )
 }

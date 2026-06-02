@@ -98,6 +98,8 @@ export interface PracticeSession {
   inkScriptId?: string | null
   status: 'active' | 'completed' | 'analyzing' | 'analyzed' | 'failed' | string
   turnCount: number
+  topicSnapshot?: { title?: string; promptZh?: string; promptEn?: string } | null
+  sceneSnapshot?: { title?: string; location?: string } | null
   analysisResult?: any
   analysisRaw?: string | null
   analysisError?: string | null

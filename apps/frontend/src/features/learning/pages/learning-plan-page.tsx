@@ -7,7 +7,8 @@ import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronLeft, ChevronRight, CheckCircle2, Lock, ArrowRight,
   ClipboardList, ShoppingBag, Play, Search, CalendarDays, Mic,
-  BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, type LucideIcon,
+  BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, Eye,
+  Bot, CircleCheck, CircleDashed, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -25,6 +26,8 @@ import {
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
+import { practiceApi, type PracticeSession } from '@/features/practice/api/english-practice-api'
+import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { cn } from '@/lib/cn'
@@ -322,6 +325,27 @@ function InProgressUnitCard({ unit, todayPlan, onRefresh }: { unit: MyUnit; toda
             )} */}
           </div>
         </Link>
+
+        {/* <div className="mt-3 rounded-lg bg-background/70 p-3 ring-1 ring-border/45">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CircleCheck className="size-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-foreground">话题掌握进度</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">对话练习最终评分超过 70 分即掌握</p>
+              </div>
+            </div>
+            <span className="shrink-0 text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {unit.progress.completedPracticeCount}/{unit.topicCount}
+            </span>
+          </div>
+          <Progress
+            value={unit.topicCount > 0 ? (unit.progress.completedPracticeCount / unit.topicCount) * 100 : 0}
+            className="mt-3 h-1.5"
+          />
+        </div> */}
 
         {/* 今日学习暂时隐藏
         <button
@@ -1079,6 +1103,7 @@ function PracticeRecordsContent() {
   const [data, setData] = useState<PracticeRecordsResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
+  const [selectedRecord, setSelectedRecord] = useState<PracticeRecord | null>(null)
   const pageSize = 15
 
   useEffect(() => {
@@ -1094,14 +1119,17 @@ function PracticeRecordsContent() {
       key: 'topicName',
       header: t('profile.practiceRecords.columns.topic'),
       cell: (v, row) => (
-        <div>
-          <span className="text-sm font-medium">{v}</span>
-          {row.questionText && (
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{row.questionText}</p>
-          )}
-          {row.summary && (
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.summary}</p>
-          )}
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="text-sm font-medium">{v}</span>
+            {row.questionText && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{row.questionText}</p>
+            )}
+            {row.summary && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.summary}</p>
+            )}
+          </div>
+          <Eye className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" />
         </div>
       ),
     },
@@ -1145,7 +1173,164 @@ function PracticeRecordsContent() {
         onPageChange={setPage}
         isLoading={isLoading}
         emptyMessage={t('profile.practiceRecords.empty')}
+        onRowClick={setSelectedRecord}
       />
+      <PracticeRecordReviewDrawer
+        record={selectedRecord}
+        open={Boolean(selectedRecord)}
+        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+      />
+    </div>
+  )
+}
+
+function PracticeRecordReviewDrawer({
+  record,
+  open,
+  onOpenChange,
+}: {
+  record: PracticeRecord | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const [session, setSession] = useState<PracticeSession | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open || !record?.sessionId) return
+    setLoading(true)
+    setSession(null)
+    practiceApi.getSession(record.sessionId)
+      .then(setSession)
+      .catch(() => setSession(null))
+      .finally(() => setLoading(false))
+  }, [open, record?.sessionId])
+
+  const score = Number(session?.analysisResult?.overallScore ?? record?.score ?? 0)
+  const passed = score > 70
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background">
+        <DrawerHeader className="border-b border-border/60 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-left">
+          <div className="mx-auto flex w-full max-w-2xl items-start justify-between gap-3">
+            <div className="min-w-0">
+              <DrawerTitle className="text-base font-semibold">练习回顾</DrawerTitle>
+              <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                {record?.topicName} · {record?.questionText}
+              </p>
+            </div>
+            <Badge
+              variant={passed ? 'default' : 'secondary'}
+              className={cn('shrink-0 rounded-full', passed && 'bg-emerald-600 hover:bg-emerald-600')}
+            >
+              {score > 0 ? `${score} 分 · ${passed ? '已掌握' : '继续练习'}` : '等待评估'}
+            </Badge>
+          </div>
+        </DrawerHeader>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-2xl space-y-5 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
+            {loading ? (
+              <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>
+            ) : !session ? (
+              <div className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">
+                暂时无法加载这次练习回顾
+              </div>
+            ) : (
+              <>
+                <div className="rounded-lg bg-emerald-500/[0.06] p-3.5 ring-1 ring-emerald-500/15">
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/[0.12] text-emerald-600 dark:text-emerald-400">
+                      {passed ? <CircleCheck className="size-4" /> : <CircleDashed className="size-4" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {passed ? '这个话题已经掌握' : '这个话题还需要再练一次'}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        对话模式最终评分超过 70 分后计入学习计划进度。本页为只读回顾，不会修改练习记录。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <section>
+                  <div className="mb-3 flex items-center gap-2 px-1">
+                    <MessageSquareText className="size-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">对话与即时评估</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {(session.turns ?? []).length === 0 ? (
+                      <p className="rounded-lg bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">这次练习没有保存对话轮次</p>
+                    ) : session.turns?.map((turn) => (
+                      <PracticeTurnReview key={turn.id} turn={turn} />
+                    ))}
+                  </div>
+                </section>
+
+                {session.analysisResult && (
+                  <section>
+                    <div className="mb-3 flex items-center gap-2 px-1">
+                      <Bot className="size-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">最终 AI 评估</h3>
+                    </div>
+                    <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
+                  </section>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
+function PracticeTurnReview({
+  turn,
+}: {
+  turn: NonNullable<PracticeSession['turns']>[number]
+}) {
+  const judgement = turn.judgement as {
+    passed?: boolean
+    feedback?: string
+    confidence?: number
+    chunksUsed?: string[]
+  } | null
+
+  return (
+    <div className="rounded-lg bg-muted/30 p-3.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Round {turn.round}</p>
+      <div className="mt-2 space-y-2">
+        <div className="max-w-[88%] rounded-lg bg-background/75 px-3 py-2.5 text-sm leading-6 text-foreground ring-1 ring-border/45">
+          {turn.npcText}
+        </div>
+        <div className="ml-auto max-w-[82%] rounded-lg bg-primary/[0.12] px-3 py-2.5 text-sm leading-6 text-foreground ring-1 ring-primary/20">
+          {turn.userText}
+        </div>
+      </div>
+      {judgement && (
+        <div className={cn(
+          'mt-3 rounded-md px-3 py-2.5 ring-1',
+          judgement.passed
+            ? 'bg-emerald-500/[0.07] ring-emerald-500/20'
+            : 'bg-amber-500/[0.07] ring-amber-500/20',
+        )}>
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+            {judgement.passed ? <CircleCheck className="size-3.5 text-emerald-500" /> : <CircleDashed className="size-3.5 text-amber-500" />}
+            <span>{judgement.passed ? '本轮表达通过' : '本轮建议调整'}</span>
+          </div>
+          {judgement.feedback && <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{judgement.feedback}</p>}
+          {(judgement.chunksUsed ?? turn.chunksUsed).length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {(judgement.chunksUsed ?? turn.chunksUsed).map((chunk) => (
+                <Badge key={chunk} variant="outline" className="rounded-full px-2 text-[10px]">{chunk}</Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

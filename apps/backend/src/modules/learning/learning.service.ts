@@ -5,6 +5,22 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 export class LearningService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async getPassedPracticeTopicIdsByScene(userId: string) {
+    const sessions = await this.prisma.practiceSession.findMany({
+      where: { userId, status: 'analyzed' },
+      select: { sceneId: true, topicId: true, analysisResult: true },
+    });
+    const passedByScene = new Map<string, Set<string>>();
+    for (const session of sessions) {
+      const score = Number((session.analysisResult as any)?.overallScore ?? 0);
+      if (score <= 70) continue;
+      const topicIds = passedByScene.get(session.sceneId) ?? new Set<string>();
+      topicIds.add(session.topicId);
+      passedByScene.set(session.sceneId, topicIds);
+    }
+    return passedByScene;
+  }
+
   /**
    * 获取全部「教材」（即 Scene）列表，附带用户进度。
    * 免费用户看到全部单元，但非免费单元标记为锁定。
@@ -47,6 +63,7 @@ export class LearningService {
       where: { userId, sceneId: { in: allSceneIds } },
     });
     const progressMap = new Map(progresses.map((p) => [p.sceneId, p]));
+    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
 
     // 查询用户等级/输出级别
     const user = await this.prisma.user.findUnique({
@@ -60,12 +77,13 @@ export class LearningService {
       icon: cat.icon,
       units: cat.scenes.map((scene) => {
         const prog = progressMap.get(scene.id);
+        const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
         const totalItems =
           scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
         const completedItems =
           (prog?.vocabLearned ?? 0) +
           (prog?.chunkMastered ?? 0) +
-          (prog?.completedPracticeCount ?? 0);
+          completedPracticeCount;
 
         const isUnlocked =
           (user?.userLevel ?? 1) >= scene.requiredUserLevel;
@@ -98,7 +116,7 @@ export class LearningService {
                 vocabTotal: scene._count.vocabularies,
                 chunkMastered: prog.chunkMastered,
                 chunkTotal: scene._count.chunks,
-                completedPracticeCount: prog.completedPracticeCount,
+                completedPracticeCount,
                 completedScriptCount: prog.completedScriptCount,
               }
             : null,
@@ -115,6 +133,7 @@ export class LearningService {
    * 获取用户正在学习/已完成的单元列表（有进度记录的）
    */
   async getMyLearningUnits(userId: string) {
+    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
     const progresses = await this.prisma.userSceneProgress.findMany({
       where: { userId },
       include: {
@@ -134,9 +153,10 @@ export class LearningService {
 
     return progresses.map((p) => {
       const scene = p.scene;
+      const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
       const totalItems =
         scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
-      const completedItems = p.vocabLearned + p.chunkMastered + p.completedPracticeCount;
+      const completedItems = p.vocabLearned + p.chunkMastered + completedPracticeCount;
       const completionPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
       return {
@@ -162,7 +182,7 @@ export class LearningService {
           vocabTotal: scene._count.vocabularies,
           chunkMastered: p.chunkMastered,
           chunkTotal: scene._count.chunks,
-          completedPracticeCount: p.completedPracticeCount,
+          completedPracticeCount,
           completedScriptCount: p.completedScriptCount,
         },
         completionPercent,
@@ -238,6 +258,8 @@ export class LearningService {
 
     // 场景掌握度
     const progress = scene.userProgresses[0] ?? null;
+    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
+    const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
 
     return {
       id: scene.id,
@@ -260,7 +282,7 @@ export class LearningService {
             vocabTotal: progress.vocabTotal,
             chunkMastered: progress.chunkMastered,
             chunkTotal: progress.chunkTotal,
-            completedPracticeCount: progress.completedPracticeCount,
+            completedPracticeCount,
             completedScriptCount: progress.completedScriptCount,
           }
         : null,
@@ -367,6 +389,7 @@ export class LearningService {
     const progress = await this.prisma.userSceneProgress.findUnique({
       where: { userId_sceneId: { userId, sceneId: currentScene.id } },
     });
+    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
 
     // 获取词汇学习状态（检查 ExpressionItem 中有没有这些词）
     const vocabWords = sceneDetail.vocabularies.map((v) => v.word);
@@ -385,7 +408,7 @@ export class LearningService {
 
     const vocabLearned = progress?.vocabLearned ?? 0;
     const chunkMastered = progress?.chunkMastered ?? 0;
-    const completedPractice = progress?.completedPracticeCount ?? 0;
+    const completedPractice = passedPracticeTopicIdsByScene.get(currentScene.id)?.size ?? 0;
 
     // ---- 构建任务列表 ----
     const tasks: any[] = [];
@@ -460,8 +483,9 @@ export class LearningService {
     }
 
     // 任务3: 开口练习（每日限额 3 个）
+    const passedPracticeTopicIds = passedPracticeTopicIdsByScene.get(currentScene.id) ?? new Set<string>();
     const uncompletedTopics = sceneDetail.trainingTopics.filter(
-      (_, i) => i >= completedPractice,
+      (topic) => !passedPracticeTopicIds.has(topic.id),
     );
     const dailyPractices = uncompletedTopics.slice(0, DAILY_PRACTICE_LIMIT);
     for (const topic of dailyPractices) {

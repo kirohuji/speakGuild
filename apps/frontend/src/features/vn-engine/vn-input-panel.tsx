@@ -24,6 +24,9 @@ interface SpeechWindow extends Window {
   webkitSpeechRecognition?: SpeechRecognitionConstructor
 }
 
+const TEXTAREA_MIN_HEIGHT = 36
+const TEXTAREA_MAX_HEIGHT = 108
+
 interface VnInputPanelProps {
   disabled?: boolean
   placeholder?: string
@@ -41,7 +44,9 @@ export function VnInputPanel({
   const [isListening, setIsListening] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [isMultiline, setIsMultiline] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const isDisabled = disabled || submitting
 
   const SpeechRecognition = useMemo(() => {
@@ -57,6 +62,16 @@ export function VnInputPanel({
       recognitionRef.current = null
     }
   }, [SpeechRecognition])
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = `${TEXTAREA_MIN_HEIGHT}px`
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, TEXTAREA_MIN_HEIGHT), TEXTAREA_MAX_HEIGHT)
+    textarea.style.height = `${nextHeight}px`
+    textarea.style.overflowY = textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
+    setIsMultiline(nextHeight > TEXTAREA_MIN_HEIGHT)
+  }, [text])
 
   const submit = async () => {
     const nextText = text.trim()
@@ -110,7 +125,11 @@ export function VnInputPanel({
       variant === 'default' && 'border-t border-border/45 bg-background/55 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
       variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60 focus-within:ring-1 focus-within:ring-primary/25',
     )}>
-      <div className={cn('flex h-10 items-center', variant === 'default' ? 'gap-2' : 'gap-1')}>
+      <div className={cn(
+        'flex',
+        isMultiline ? 'min-h-10 items-end' : 'h-10 items-center',
+        variant === 'default' ? 'gap-2' : 'gap-1',
+      )}>
         <button
           type="button"
           aria-label={isListening ? '停止语音输入' : '开始语音输入'}
@@ -131,25 +150,28 @@ export function VnInputPanel({
         </button>
 
         <div className={cn(
-          'flex min-w-0 flex-1 items-center rounded-lg',
+          'flex min-w-0 flex-1 items-end rounded-lg',
           variant === 'default' ? 'gap-2 px-3' : 'px-1.5',
           variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
         )}>
-          <Keyboard className={cn('size-4 shrink-0 text-muted-foreground', variant === 'embedded' && 'hidden')} />
-          <input
+          {/* <Keyboard className={cn('size-4 shrink-0 text-muted-foreground', variant === 'embedded' && 'hidden')} /> */}
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            style={{ height: TEXTAREA_MIN_HEIGHT }}
             value={text}
             disabled={isDisabled}
-            placeholder={speechSupported ? placeholder : '当前浏览器不支持语音识别，可以直接输入文字'}
+            placeholder={speechSupported ? placeholder : '当前浏览器不支持语音识别'}
             onChange={(event) => setText(event.target.value)}
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                 event.preventDefault()
                 event.stopPropagation()
                 void submit()
               }
             }}
-            className="h-9 min-w-0 flex-1 bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+            className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
           />
         </div>
 
