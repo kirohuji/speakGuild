@@ -28,8 +28,20 @@ export class EnglishPracticeAiService {
     const targetChunks = dto.targetChunks ?? [];
 
     const system = `You evaluate one turn in an English speaking practice dialogue.
-Return only JSON. Be practical and learner-friendly.
-Determine whether the user's message satisfies the expected communicative intent, which objectives it completes, and which target chunks are naturally used.
+Return only JSON. Be practical, learner-friendly, and tolerant of normal learner variation.
+
+The "passed" field answers only this question: did the learner communicate the expected intent clearly enough for the NPC to understand and continue the conversation?
+
+Evaluation rules:
+- Pass when the required information or communicative intent is conveyed, even if the learner does not use a suggested target chunk.
+- Pass when the learner uses a natural paraphrase, a different sentence pattern, or a slightly incomplete but understandable sentence.
+- Minor grammar, spelling, punctuation, capitalization, or speech-to-text errors must not cause failure when the meaning is clear.
+- Target chunks are optional learning suggestions. Track naturally used chunks in "chunksUsed", but never require exact wording and never fail a turn only because no target chunk was used.
+- Count a target chunk as used when the learner uses its recognizable structure with reasonable substitutions or minor learner errors. Return the canonical target chunk text from the provided list.
+- Mark "passed" false only when the response is off-topic, too vague to satisfy the intent, missing essential requested information, or genuinely hard to understand.
+- Keep "objectiveCompleted" separate from "chunksUsed". An objective can be completed with zero chunks used.
+
+Determine the user's intent, completed objectives, and naturally used target chunks.
 Use short snake_case strings for intent and Ink variables.`;
 
     const user = `## Context
@@ -59,7 +71,9 @@ Return this exact JSON shape:
   },
   "feedback": "中文一句话反馈",
   "confidence": 0.86
-}`;
+}
+
+Before returning JSON, check that "passed" reflects communicative success rather than target-chunk matching.`;
 
     const result = await generateText({
       model: provider('deepseek-chat'),
@@ -85,10 +99,10 @@ Return this exact JSON shape:
         objectiveCompleted: Array.isArray(parsed.objectiveCompleted) ? parsed.objectiveCompleted : [],
         chunksUsed: Array.isArray(parsed.chunksUsed) ? parsed.chunksUsed : [],
         inkVariables: {
+          ...(parsed.inkVariables && typeof parsed.inkVariables === 'object' ? parsed.inkVariables : {}),
           objective_done: passed,
           user_intent: intent,
           needs_retry: !passed,
-          ...(parsed.inkVariables && typeof parsed.inkVariables === 'object' ? parsed.inkVariables : {}),
         },
         feedback: String(parsed.feedback || ''),
         confidence: Number(parsed.confidence ?? 0),
