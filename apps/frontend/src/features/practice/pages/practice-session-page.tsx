@@ -711,52 +711,24 @@ export function PracticeSessionPage() {
   }, [resumeAfterInput, turnFeedback])
 
   // ==================== Analysis ====================
-  const currentSessionDialogues = useMemo(() => {
-    const turns: Array<{
-      round: number
-      npcText: string
-      userText: string
-      objectivesCompleted?: string[]
-      chunksUsed?: string[]
-    }> = []
-
-    dialogueRounds.forEach((line, index) => {
-      if (line.isNpc) return
-      const npcLine = [...dialogueRounds.slice(0, index)].reverse().find((item) => item.isNpc)
-      turns.push({
-        round: turns.length + 1,
-        npcText: npcLine?.text ?? '',
-        userText: line.text,
-        objectivesCompleted: [...completedObjectives],
-        chunksUsed: [...usedChunks],
-      })
-    })
-
-    return turns
-  }, [completedObjectives, dialogueRounds, usedChunks])
-
   const startAnalysis = useCallback(async () => {
     if (!topicId || !detail) return
     setPhase('analysis')
     setAnalysisLoading(true)
     try {
-      const res = practiceSessionId
-        ? await practiceApi.completeSession(practiceSessionId).then(() => practiceAiApi.analyzeSession(practiceSessionId))
-        : await practiceAiApi.dialogueSummary({
-            topicId,
-            topicTitle: detail.topic.title,
-            promptEn: detail.topic.promptEn,
-            objectives,
-            coreChunks: coreChunkTexts.map((c) => c.text),
-            dialogues: currentSessionDialogues,
-          })
+      if (!practiceSessionId) {
+        setAnalysisResult({ summary: '缺少练习会话记录，无法进行分析' })
+        setAnalysisLoading(false)
+        return
+      }
+      const res = await practiceApi.completeSession(practiceSessionId).then(() => practiceAiApi.analyzeSession(practiceSessionId))
       setAnalysisResult(res.analysis ?? res)
     } catch (e: any) {
       setAnalysisResult({ summary: `分析失败: ${e.message}` })
     } finally {
       setAnalysisLoading(false)
     }
-  }, [topicId, detail, objectives, coreChunkTexts, currentSessionDialogues, practiceSessionId])
+  }, [topicId, detail, objectives, coreChunkTexts, practiceSessionId])
 
   const saveAnalysisExpression = useCallback(async (data: {
     type: string

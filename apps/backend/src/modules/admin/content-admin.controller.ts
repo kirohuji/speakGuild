@@ -17,7 +17,7 @@ import {
 } from './dto/content-admin.dto';
 import { requireAuthSession } from '../auth/session.util';
 import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
-import { DialogueSummaryDto, DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
+import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -38,18 +38,6 @@ export class ContentAdminController {
   async judgePreviewDialogueTurn(@Req() req: Request, @Body() dto: DialogueTurnJudgeDto) {
     await this.requireAdmin(req);
     return this.practiceAiService.judgeDialogueTurn(dto);
-  }
-
-  @Post('preview/dialogue-summary')
-  async summarizePreviewDialogue(@Req() req: Request, @Body() dto: DialogueSummaryDto) {
-    await this.requireAdmin(req);
-    return this.practiceAiService.summarizeDialogue({
-      topicTitle: dto.topicTitle,
-      promptEn: dto.promptEn,
-      dialogues: dto.dialogues ?? [],
-      objectives: dto.objectives ?? [],
-      coreChunks: dto.coreChunks ?? [],
-    });
   }
 
   // ════════════════════════════════════════════════════════════

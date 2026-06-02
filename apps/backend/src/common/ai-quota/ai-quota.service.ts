@@ -11,17 +11,14 @@ interface QuotaCheckResult {
 
 const QUOTAS: Record<string, Record<string, number>> = {
   free: {
-    feedback: 5,   // AI 纠错
     dialogue: 5,   // 对话判定
     summary: 1,    // 汇总分析
   },
   standard: {
-    feedback: -1,  // -1 = 会员不受限
-    dialogue: -1,
+    dialogue: -1,  // -1 = 会员不受限
     summary: -1,
   },
   advanced: {
-    feedback: -1,
     dialogue: -1,
     summary: -1,
   },
@@ -30,7 +27,6 @@ const QUOTAS: Record<string, Record<string, number>> = {
 const EXCHANGE_COST = 10; // 10 积分换 1 次
 
 const TYPE_LABELS: Record<string, string> = {
-  feedback: 'AI 纠错',
   dialogue: '对话判定',
   summary: '汇总分析',
 };
@@ -44,7 +40,7 @@ export class AiQuotaService {
   /** 检查并扣减配额 */
   async checkAndDeduct(
     userId: string,
-    type: 'feedback' | 'dialogue' | 'summary',
+    type: 'dialogue' | 'summary',
   ): Promise<QuotaCheckResult> {
     // 0. 管理员直接放行（无限配额）
     const adminCheck = await this.prisma.user.findUnique({

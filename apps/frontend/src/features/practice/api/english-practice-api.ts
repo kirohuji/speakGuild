@@ -190,44 +190,8 @@ export const practiceApi = {
   }) => api.post(`/practice/topics/any/save`, data),
 }
 
-// ---- AI 纠错 ----
+// ---- AI  ----
 export const practiceAiApi = {
-  /** SSE 流式纠错 */
-  streamFeedback: (dto: {
-    userTranscript: string
-    promptEn?: string
-    sceneTitle?: string
-    topicTitle?: string
-    outputLevel?: string
-  }) =>
-    fetch(`${API_BASE}/practice-ai/feedback`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getBearerToken()}` },
-      body: JSON.stringify(dto),
-    }),
-
-  /** 表达升级 */
-  upgrade: (dto: { userTranscript: string; outputLevel?: string }) =>
-    api.post('/practice-ai/upgrade', dto),
-
-  /** 对话汇总分析 */
-  dialogueSummary: (dto: {
-    topicId: string
-    topicTitle: string
-    promptEn: string
-    objectives?: string[]
-    coreChunks?: string[]
-    dialogues?: Array<{
-      round: number
-      npcText: string
-      userText: string
-      isOnTopic?: boolean
-      objectivesCompleted?: string[]
-      chunksUsed?: string[]
-      grammarIssues?: any
-    }>
-  }) => api.post<any, { analysis: any; raw: string }>('/practice-ai/dialogue-summary', dto),
-
   judgeDialogueTurn: (dto: {
     topicId: string
     inputNodeId?: string

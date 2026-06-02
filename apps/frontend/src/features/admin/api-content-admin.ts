@@ -22,17 +22,6 @@ export async function judgePreviewDialogueTurn(data: {
   return post('/admin/content/preview/dialogue-turn', data)
 }
 
-export async function summarizePreviewDialogue(data: {
-  topicId: string
-  topicTitle: string
-  promptEn: string
-  objectives?: string[]
-  coreChunks?: string[]
-  dialogues: Array<{ round: number; npcText: string; userText: string }>
-}): Promise<{ analysis: any; raw: string }> {
-  return post('/admin/content/preview/dialogue-summary', data)
-}
-
 // ─── Scene Categories ───────────────────────────────────────
 
 export interface SceneCategory {
