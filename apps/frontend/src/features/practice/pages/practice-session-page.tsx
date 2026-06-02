@@ -268,13 +268,16 @@ export function PracticeSessionPage() {
   const syncedInkLineCountRef = useRef(0)
 
   // Only show history/settings in header when chat mode is active
-  const isChatMode = (() => {
+  const [isChatMode, setIsChatMode] = useState(() => {
     try {
       const raw = localStorage.getItem('vn-player-settings')
       if (!raw) return false
       return (JSON.parse(raw) as any)?.displayMode === 'chat'
     } catch { return false }
-  })()
+  })
+  const handleVnDisplayModeChange = useCallback((displayMode: 'vn' | 'chat') => {
+    setIsChatMode(displayMode === 'chat')
+  }, [])
   const [vnVisual, setVnVisual] = useState<{
     backgroundUrl?: string
     backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
@@ -1123,6 +1126,7 @@ export function PracticeSessionPage() {
                 </div>
               )}
               onHistoryOpenChange={setIsHistoryOpen}
+              onDisplayModeChange={handleVnDisplayModeChange}
             />
           </VnPlayerBoundary>
         </div>

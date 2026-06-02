@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
-import { History, RotateCcw, Settings, X, Send } from 'lucide-react'
+import { History, RotateCcw, Settings, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { VnPlayerLine, VnPlayerChoice, BackgroundFit } from './vn-player'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
+import { VnInputPanel } from './vn-input-panel'
 
 interface DialogueListViewProps {
   backgroundUrl?: string
@@ -85,8 +86,6 @@ export function DialogueListView({
     setHistoryOpenInternal(value)
     onHistoryOpenChange?.(value)
   }
-  const [inputText, setInputText] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
@@ -116,18 +115,6 @@ export function DialogueListView({
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)
     onHistoryOpenChange?.(value)
-  }
-
-  const handleSubmitInput = async () => {
-    const text = inputText.trim()
-    if (!text || submitting || inputDisabled || !onSubmitInput) return
-    setSubmitting(true)
-    try {
-      await onSubmitInput(text)
-      setInputText('')
-    } finally {
-      setSubmitting(false)
-    }
   }
 
   return (
@@ -257,28 +244,15 @@ export function DialogueListView({
       {/* ── Input area ── */}
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2">
-          <TurnGuidanceCard guidance={inputGuidance} className="max-w-[min(92%,360px)]" />
-          <div className="rounded-lg bg-background/50-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.11)] ring-1 ring-border/60 backdrop-blur-xl">
-            {inputFeedback && <div className="mb-2">{inputFeedback}</div>}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitInput() }}
-                placeholder={t('practiceVn.chatInputPlaceholder')}
-                disabled={submitting || inputDisabled}
-                className="min-w-0 flex-1 rounded-lg border-0 bg-muted/70 px-3.5 py-2.5 text-base font-medium text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:bg-muted/85 focus:ring-1 focus:ring-ring disabled:opacity-60"
-              />
-              <button
-                type="button"
-                onClick={handleSubmitInput}
-                disabled={!inputText.trim() || submitting || inputDisabled}
-                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-30"
-              >
-                <Send className="size-4" />
-              </button>
-            </div>
+          <TurnGuidanceCard guidance={inputGuidance} className="mb-2 mr-0 max-w-[min(92%,360px)]" />
+          <div className="overflow-hidden rounded-xl border border-border/55 bg-background/75 p-1.5 backdrop-blur-2xl">
+            {inputFeedback && <div className="mb-1.5 overflow-hidden rounded-lg bg-muted/30">{inputFeedback}</div>}
+            <VnInputPanel
+              variant="embedded"
+              placeholder={t('practiceVn.chatInputPlaceholder')}
+              disabled={inputDisabled}
+              onSubmit={onSubmitInput}
+            />
           </div>
         </div>
       )}

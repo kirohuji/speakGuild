@@ -65,6 +65,7 @@ interface VnPlayerProps {
   showHistoryButton?: boolean
   /** Hide the top bar in chat-list mode (e.g. when parent provides its own header) */
   hideChatTopBar?: boolean
+  onDisplayModeChange?: (displayMode: VnPlayerSettings['displayMode']) => void
 }
 
 interface VnPlayerSettings {
@@ -444,6 +445,7 @@ export function VnPlayer({
   stageClassName,
   showHistoryButton = true,
   hideChatTopBar = false,
+  onDisplayModeChange,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
@@ -467,7 +469,8 @@ export function VnPlayer({
 
   useEffect(() => {
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
-  }, [settings])
+    onDisplayModeChange?.(settings.displayMode)
+  }, [onDisplayModeChange, settings])
 
   useEffect(() => {
     setReviewLineIndex(null)
