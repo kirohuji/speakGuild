@@ -1261,3 +1261,15 @@ model MobileBundle {
   @@index([assetId])
   @@map("mobile_bundle")
 }
+
+// ──── 单词增强缓存 ────
+
+model WordEnrichment {
+  word      String   @id /// 小写单词/短语，作为主键
+  data      Json     /// WordEnrichmentResult 完整 JSON
+  source    String   /// 'dictionary' | 'ai'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("word_enrichment")
+}

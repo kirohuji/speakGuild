@@ -18,6 +18,8 @@ export interface WordExampleItem {
 
 export interface WordEnrichmentResult {
   chineseTranslation: string
+  phonetic?: string
+  audioUrl?: string
   meanings: Array<{ partOfSpeech: string; chineseGloss: string }>
   examples: WordExampleItem[]
   memoryTip: string

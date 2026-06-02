@@ -2,10 +2,13 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { DialogueTurnJudgeDto } from './dto/english-feedback.dto';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
 export class EnglishPracticeAiService {
   private readonly logger = new Logger(EnglishPracticeAiService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
 
   private getProvider() {
     const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
@@ -220,12 +223,151 @@ ${dialogueText}
     }
   }
 
-  /** 单词增强：中文释义 + 分级例句 */
-  async enrichWord(word: string, englishDefinitions?: string) {
-    const provider = this.getProvider();
-    const defHint = englishDefinitions ? `\n英文释义参考：${englishDefinitions}` : '';
+  // ════════════════════════════════════════════════════════════
+  // 单词增强：DB 缓存 → dictionaryapi.dev → DeepSeek AI
+  // ════════════════════════════════════════════════════════════
 
-    const prompt = `请为英语单词/短语"${word}"提供学习辅助信息。${defHint}
+  /** 单词增强：三级回退链 */
+  async enrichWord(word: string, _englishDefinitions?: string) {
+    const key = word.toLowerCase().trim()
+
+    // ① 数据库缓存
+    const cached = await this.prisma.wordEnrichment.findUnique({ where: { word: key } })
+    if (cached) {
+      this.logger.debug(`Word cache HIT: "${key}" (${cached.source})`)
+      return cached.data as WordEnrichmentData
+    }
+
+    // ② dictionaryapi.dev（免费）
+    const dictResult = await this.enrichFromDictionary(key)
+    if (dictResult) {
+      // 批量翻译：单词 + 例句一起翻
+      const translated = await this.batchTranslate(word, dictResult.examples)
+      const data: WordEnrichmentData = {
+        chineseTranslation: translated.wordZh,
+        phonetic: dictResult.phonetic,
+        audioUrl: dictResult.audioUrl,
+        meanings: dictResult.meanings,
+        examples: dictResult.examples.map((ex, i) => ({
+          ...ex,
+          zh: translated.examplesZh[i] ?? '',
+        })),
+        memoryTip: '',
+      }
+      await this.saveToDb(key, data, 'dictionary')
+      return data
+    }
+
+    // ③ DeepSeek AI 回退
+    const aiResult = await this.enrichFromAI(word)
+    await this.saveToDb(key, aiResult, 'ai')
+    return aiResult
+  }
+
+  /** 批量翻译：单词 + 例句列表 → { wordZh, examplesZh[] } */
+  private async batchTranslate(
+    word: string,
+    examples: Array<{ en: string }>,
+  ): Promise<{ wordZh: string; examplesZh: string[] }> {
+    try {
+      const provider = this.getProvider()
+      const exampleLines = examples.map((ex, i) => `${i + 1}. ${ex.en}`).join('\n')
+      const { text } = await generateText({
+        model: provider('deepseek-chat'),
+        prompt: `Translate the following English word and sentences to Simplified Chinese.
+
+Word: "${word}"
+${examples.length ? `Examples:\n${exampleLines}` : ''}
+
+Return ONLY a JSON object (no markdown):
+{
+  "wordZh": "单词的中文翻译",
+  "examplesZh": ["例句1中文", "例句2中文", ...]
+}`,
+        temperature: 0,
+        maxOutputTokens: 400,
+      })
+      const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+      const parsed = JSON.parse(cleaned)
+      return {
+        wordZh: String(parsed.wordZh ?? ''),
+        examplesZh: Array.isArray(parsed.examplesZh)
+          ? parsed.examplesZh.map((s: any) => String(s ?? ''))
+          : [],
+      }
+    } catch {
+      return { wordZh: '', examplesZh: [] }
+    }
+  }
+
+  /** 存入数据库缓存 */
+  private async saveToDb(word: string, data: WordEnrichmentData, source: string) {
+    try {
+      await this.prisma.wordEnrichment.upsert({
+        where: { word },
+        create: { word, data: data as any, source },
+        update: { data: data as any, source, updatedAt: new Date() },
+      })
+    } catch (err: any) {
+      this.logger.warn(`Failed to cache word "${word}": ${err.message}`)
+    }
+  }
+
+  /** 从 dictionaryapi.dev 获取单词数据 */
+  private async enrichFromDictionary(word: string) {
+    try {
+      const res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+      )
+      if (!res.ok) return null
+
+      const entries: DictApiEntry[] = await res.json()
+      const entry = entries[0]
+      if (!entry) return null
+
+      // 发音
+      const phonetic = entry.phonetic
+        ?? entry.phonetics.find((p) => p.text)?.text
+        ?? undefined
+      const audioUrl = entry.phonetics.find((p) => p.audio)?.audio ?? undefined
+
+      // 义项
+      const meanings = entry.meanings.flatMap((m) =>
+        m.definitions.map((d) => ({
+          partOfSpeech: m.partOfSpeech,
+          chineseGloss: d.definition,
+        })),
+      )
+
+      // 例句（去重，最多 5 条）
+      const seen = new Set<string>()
+      const examples = entry.meanings
+        .flatMap((m) =>
+          m.definitions
+            .filter((d) => d.example && !seen.has(d.example))
+            .map((d) => {
+              seen.add(d.example!)
+              return { en: d.example!, zh: '', level: 'intermediate' as const }
+            }),
+        )
+        .slice(0, 5)
+
+      return {
+        phonetic,
+        audioUrl,
+        meanings: meanings.slice(0, 8),
+        examples,
+      }
+    } catch {
+      return null
+    }
+  }
+
+  /** DeepSeek AI 完整回退（罕见词/短语） */
+  private async enrichFromAI(word: string) {
+    const provider = this.getProvider();
+
+    const prompt = `请为英语单词/短语"${word}"提供学习辅助信息。
 
 请严格返回以下 JSON（不要 Markdown 代码块包裹）：
 
@@ -262,4 +404,32 @@ Rules:
       return { chineseTranslation: '（数据加载失败）', meanings: [], examples: [], memoryTip: '' };
     }
   }
+}
+
+// ─── 类型定义 ────────────────────────────────────────────────
+
+interface WordEnrichmentData {
+  chineseTranslation: string
+  phonetic?: string
+  audioUrl?: string
+  meanings: Array<{ partOfSpeech: string; chineseGloss: string }>
+  examples: Array<{ en: string; zh: string; level: string }>
+  memoryTip: string
+}
+
+interface DictApiEntry {
+  word: string
+  phonetic?: string
+  phonetics: Array<{ text?: string; audio?: string }>
+  meanings: Array<{
+    partOfSpeech: string
+    definitions: Array<{
+      definition: string
+      example?: string
+      synonyms: string[]
+      antonyms: string[]
+    }>
+    synonyms: string[]
+    antonyms: string[]
+  }>
 }
