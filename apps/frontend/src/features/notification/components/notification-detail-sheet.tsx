@@ -1,9 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Bell, Clock, CheckCircle2, X, User, Volume2 } from 'lucide-react'
+import { Bell, CheckCircle2, User, Volume2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
@@ -38,46 +36,31 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
       <SheetContent
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
-          'flex flex-col p-0',
-          isMobile ? 'h-[85vh] rounded-t-2xl' : 'sm:max-w-[480px]'
+          'flex flex-col bg-background p-0 text-foreground [&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:p-2',
+          isMobile
+            ? 'h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 shadow-[0_-24px_80px_rgba(0,0,0,.22)] backdrop-blur-2xl'
+            : 'sm:max-w-[480px]'
         )}
       >
-        {/* 顶部拖动条（移动端） */}
-        {isMobile && (
-          <div className="flex justify-center pt-2 pb-0">
-            <div className="h-1.5 w-10 rounded-full bg-muted-foreground/20" />
-          </div>
-        )}
-
-        {/* Header */}
-        <SheetHeader className="flex-shrink-0 px-5 pt-4 pb-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <SheetHeader className="flex-shrink-0 border-b border-border/45 px-5 pb-4 pt-3 text-left">
+          <div className="flex items-start gap-3 pr-10">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary">
                 <Bell className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0">
-                <SheetTitle className="text-base leading-tight line-clamp-2">
+                <SheetTitle className="line-clamp-2 text-base font-semibold leading-tight tracking-tight">
                   {item.title}
                 </SheetTitle>
-                <SheetDescription className="sr-only">
-                  {t('notification.detailTitle')}
+                <SheetDescription className="mt-1 text-xs">
+                  {formattedDate}
                 </SheetDescription>
               </div>
             </div>
-            {/* <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 flex-shrink-0 -mr-1"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button> */}
           </div>
 
-          {/* 元信息 */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge
+            {/* <Badge
               variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
               className="h-5 gap-1 text-[10px] px-1.5 font-normal"
             >
@@ -88,29 +71,20 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
               )}
               {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
             </Badge>
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60">
-              <Clock className="h-3 w-3" />
-              {formattedDate}
-            </span>
             {item.isRead && (
               <span className="inline-flex items-center gap-1 text-[11px] text-primary/70">
                 <CheckCircle2 className="h-3 w-3" />
                 {t('notification.read')}
               </span>
-            )}
+            )} */}
           </div>
         </SheetHeader>
 
-        <Separator className="mt-4" />
-
-        {/* 内容 */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-            <MarkdownRenderer content={item.content} />
-          </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
+          <MarkdownRenderer content={item.content} variant="teaching" />
 
           {item.readAt && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/[0.03] px-3 py-2.5">
+            <div className="mt-6 flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
               <CheckCircle2 className="h-4 w-4 text-primary/60" />
               <span className="text-xs text-muted-foreground/70">
                 {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(undefined, {

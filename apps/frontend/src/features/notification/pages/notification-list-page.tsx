@@ -45,24 +45,28 @@ function useFormatRelativeTime() {
   }
 }
 
-function NotificationCard({ item, onClick, formatRelativeTime }: { item: NotificationItem; onClick: () => void; formatRelativeTime: (s: string) => string }) {
+function NotificationCard({ item, onClick, formatRelativeTime, compact = false }: { item: NotificationItem; onClick: () => void; formatRelativeTime: (s: string) => string; compact?: boolean }) {
   const { t } = useTranslation()
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative w-full rounded-2xl border border-border/50 p-4 text-left transition-all hover:border-primary/20 hover:shadow-sm active:scale-[0.99]',
+        'group relative w-full text-left transition-all active:scale-[0.99]',
+        compact
+          ? 'rounded-lg px-3 py-3 hover:bg-muted/50'
+          : 'rounded-2xl border border-border/50 p-4 hover:border-primary/20 hover:shadow-sm',
         !item.isRead
-          ? 'bg-primary/[0.02] border-primary/10'
-          : 'bg-card'
+          ? compact ? 'bg-primary/[0.06]' : 'bg-primary/[0.02] border-primary/10'
+          : compact ? 'bg-muted/30' : 'bg-card'
       )}
     >
       <div className="flex items-start gap-3">
         {/* 图标区 */}
         <div
           className={cn(
-            'relative mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl',
+            'relative mt-0.5 flex flex-shrink-0 items-center justify-center',
+            compact ? 'h-9 w-9 rounded-md' : 'h-10 w-10 rounded-xl',
             item.isRead ? 'bg-muted/60' : 'bg-primary/10'
           )}
         >
@@ -91,7 +95,7 @@ function NotificationCard({ item, onClick, formatRelativeTime }: { item: Notific
             >
               {item.title}
             </p>
-            <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/30 transition-transform group-hover:translate-x-0.5" />
+            {!compact && <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/30 transition-transform group-hover:translate-x-0.5" />}
           </div>
 
           <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
@@ -104,14 +108,14 @@ function NotificationCard({ item, onClick, formatRelativeTime }: { item: Notific
               <Clock className="h-3 w-3" />
               {formatRelativeTime(item.createdAt)}
             </span>
-            {item.type === 'broadcast' || item.type === 'targeted' ? (
+            {/* {item.type === 'broadcast' || item.type === 'targeted' ? (
               <Badge
                 variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
-                className="h-5 text-[10px] px-1.5 font-normal"
+                className={cn('h-5 text-[10px] px-1.5 font-normal', compact && 'rounded-full px-2')}
               >
                 {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
               </Badge>
-            ) : null}
+            ) : null} */}
           </div>
         </div>
       </div>
@@ -119,7 +123,7 @@ function NotificationCard({ item, onClick, formatRelativeTime }: { item: Notific
   )
 }
 
-function NotificationTabContent({ tab, formatRelativeTime }: { tab: TabValue; formatRelativeTime: (s: string) => string }) {
+function NotificationTabContent({ tab, formatRelativeTime, compact = false }: { tab: TabValue; formatRelativeTime: (s: string) => string; compact?: boolean }) {
   const { t } = useTranslation()
   const [list, setList] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -211,14 +215,17 @@ function NotificationTabContent({ tab, formatRelativeTime }: { tab: TabValue; fo
   return (
     <>
       {tab !== 'read' && hasUnread && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
+        <div className={cn(
+          'flex items-center justify-between',
+          compact && 'mb-3 rounded-lg bg-muted/30 px-3 py-2'
+        )}>
+          <span className={cn('text-xs text-muted-foreground', compact && 'font-medium')}>
               {t('notification.unreadCount', { count: list.filter((n) => !n.isRead).length })}
           </span>
           <Button
-            variant="outline"
+            variant={compact ? 'ghost' : 'outline'}
             size="sm"
-            className="h-8 gap-1.5 text-xs"
+            className={cn('h-8 gap-1.5 text-xs', compact && '-mr-1 rounded-full px-2.5 text-primary hover:bg-primary/10 hover:text-primary')}
             onClick={handleMarkAll}
           >
             <CheckCheck className="h-3.5 w-3.5" />
@@ -228,10 +235,14 @@ function NotificationTabContent({ tab, formatRelativeTime }: { tab: TabValue; fo
       )}
 
       {loading && list.length === 0 ? (
-        <div className="space-y-3">
+        <div className={cn(
+          compact
+            ? 'space-y-2'
+            : 'space-y-3'
+        )}>
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-start gap-3 rounded-2xl border border-border/50 p-4">
-              <Skeleton className="h-10 w-10 rounded-xl" />
+            <div key={i} className={cn('flex items-start gap-3', compact ? 'rounded-lg bg-muted/30 px-3 py-3' : 'rounded-2xl border border-border/50 p-4')}>
+              <Skeleton className={cn('h-10 w-10', compact ? 'h-9 w-9 rounded-md' : 'rounded-xl')} />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-3/5" />
                 <Skeleton className="h-3 w-full" />
@@ -257,12 +268,19 @@ function NotificationTabContent({ tab, formatRelativeTime }: { tab: TabValue; fo
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className={cn(
+          compact
+            ? 'space-y-2'
+            : 'space-y-3'
+        )}>
           {list.map((item) => (
             <NotificationCard
               key={item.id}
               item={item}
-              onClick={() => handleClickItem(item)}              formatRelativeTime={formatRelativeTime}            />
+              onClick={() => handleClickItem(item)}
+              formatRelativeTime={formatRelativeTime}
+              compact={compact}
+            />
           ))}
         </div>
       )}
@@ -298,7 +316,7 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
   const tabConfig = useTabConfig()
   const formatRelativeTime = useFormatRelativeTime()
   return (
-    <div className="space-y-5">
+    <div className={cn(compact ? 'space-y-3' : 'space-y-5')}>
       {/* 页面标题 */}
       {!compact && (
         <div>
@@ -308,17 +326,13 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
           </p>
         </div>
       )}
-      {compact && (
-        <div className="pb-0.5" />
-      )}
-
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="space-y-3">
-        <TabsList className="h-10 w-full rounded-full bg-muted/60 p-0.5">
+        <TabsList className={cn('h-10 w-full rounded-full bg-muted/60 p-0.5', compact && 'border border-border/35 bg-muted/45')}>
           {tabConfig.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
               key={value}
               value={value}
-              className="flex-1 gap-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              className={cn('flex-1 gap-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm', compact && 'rounded-full text-xs')}
             >
               <Icon className="h-4 w-4" />
               {label}
@@ -328,7 +342,7 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
 
         {tabConfig.map(({ value }) => (
           <div key={value} className={activeTab === value ? '' : 'hidden'}>
-            <NotificationTabContent tab={value} formatRelativeTime={formatRelativeTime} />
+            <NotificationTabContent tab={value} formatRelativeTime={formatRelativeTime} compact={compact} />
           </div>
         ))}
       </Tabs>

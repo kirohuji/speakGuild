@@ -52,7 +52,7 @@ export function SpecialBanner() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -6, scale: 0.97 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 mx-auto mt-2 w-full max-w-[330px] overflow-hidden rounded-2xl bg-amber-400/[0.08] backdrop-blur-xl active:scale-[0.98] transition-transform"
+          className="relative z-10 mx-auto mt-2 w-full max-w-[330px] overflow-hidden rounded-2xl border border-amber-400/20 bg-amber-400/[0.10] backdrop-blur-xl active:scale-[0.98] transition-transform"
         >
           {/* 内容 */}
           <div className="flex items-center gap-2.5 px-3.5 py-2.5">
@@ -63,10 +63,10 @@ export function SpecialBanner() {
 
             {/* 文字 */}
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-[13px] font-semibold text-amber-100">
+              <p className="truncate text-[13px] font-semibold text-foreground">
                 {currentNotification.title}
               </p>
-              <p className="mt-0.5 text-[10px] text-amber-400/50">点击查看详情</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">点击查看详情</p>
             </div>
 
             {/* 右侧指示器 */}
