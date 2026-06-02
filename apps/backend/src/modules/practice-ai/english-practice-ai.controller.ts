@@ -26,7 +26,7 @@ export class EnglishPracticeAiController {
         403,
       );
     }
-    return this.service.judgeDialogueTurn(dto);
+    return this.service.judgeDialogueTurn(dto, session.user.id);
   }
 
   @Post('sessions/:sessionId/analyze')
@@ -43,7 +43,7 @@ export class EnglishPracticeAiController {
 
     try {
       const practiceSession = await this.practiceService.getPracticeSessionForAnalysis(session.user.id, sessionId);
-      const result = await this.service.summarizePracticeSession(practiceSession);
+      const result = await this.service.summarizePracticeSession(practiceSession, session.user.id);
       await this.practiceService.savePracticeSessionAnalysis(
         session.user.id,
         sessionId,

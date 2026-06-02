@@ -97,6 +97,20 @@ export class AdminController {
     return this.adminStatsService.getDashboardStats();
   }
 
+  @Get('stats/ai-usage')
+  async getAiUsageStats(@Req() req: Request) {
+    await this.requireAdmin(req);
+    return this.adminService.getAiUsageStats();
+  }
+
+  // ─── 用户 AI 用量 ──────────────────────────────────────────
+
+  @Get('users/:id/ai-usage')
+  async getUserAiUsage(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.adminService.getUserAiUsage(id);
+  }
+
   // ─── 测试支付 ──────────────────────────────────────────────
 
   /** 测试支付：自动创建 1 元订单并模拟支付成功 */

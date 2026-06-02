@@ -18,7 +18,7 @@ export class AiQuotaController {
   @Post('exchange')
   async exchange(
     @Req() req: Request,
-    @Body() body: { type: 'feedback' | 'dialogue' | 'summary' },
+    @Body() body: { type: 'dialogue' | 'summary' },
     @Res() res: Response,
   ) {
     const session = await requireAuthSession(req);

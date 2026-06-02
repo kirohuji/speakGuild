@@ -48,9 +48,8 @@ class UpdaterService implements UpdaterAPI {
     }
 
     try {
-      const current = await CapacitorUpdater.getCurrent();
-      // getCurrent 返回 { current: string; builtin: string }
-      // 注意 capacitor-updater v8 返回格式可能不同
+      const current = await CapacitorUpdater.current();
+      // current() 返回 { current: string; builtin: string }
       const currentBundle = (current as any).current ?? (current as any).version ?? 'unknown';
       const builtin = (current as any).builtin ?? (current as any).builtinVersion ?? 'unknown';
 

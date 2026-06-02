@@ -3,12 +3,16 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { DialogueTurnJudgeDto } from './dto/english-feedback.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
 
 @Injectable()
 export class EnglishPracticeAiService {
   private readonly logger = new Logger(EnglishPracticeAiService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly quotaService: AiQuotaService,
+  ) {}
 
   private getProvider() {
     const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
@@ -18,7 +22,7 @@ export class EnglishPracticeAiService {
   }
 
   /** 单轮 NPC 对话输入判定：把开放式用户输入转换为 Ink 可消费的变量 */
-  async judgeDialogueTurn(dto: DialogueTurnJudgeDto) {
+  async judgeDialogueTurn(dto: DialogueTurnJudgeDto, userId?: string) {
     const provider = this.getProvider();
     const objectives = dto.objectives?.length ? dto.objectives : ['respond_to_npc'];
     const targetChunks = dto.targetChunks ?? [];
@@ -64,6 +68,11 @@ Return this exact JSON shape:
       temperature: 0.2,
       maxOutputTokens: 900,
     });
+
+    // 记录 token 消耗
+    if (userId && result.usage) {
+      this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0)
+    }
 
     const jsonText = result.text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? result.text;
     try {
@@ -204,7 +213,7 @@ ${dialogueText}
     return { system, user };
   }
 
-  async summarizePracticeSession(session: any) {
+  async summarizePracticeSession(session: any, userId?: string) {
     const provider = this.getProvider();
     const { system, user } = this.buildPracticeSessionAnalysisPrompt(session);
     const result = await generateText({
@@ -214,6 +223,11 @@ ${dialogueText}
       temperature: 0.45,
       maxOutputTokens: 2800,
     });
+
+    // 记录 token 消耗
+    if (userId && result.usage) {
+      this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0)
+    }
 
     const jsonText = result.text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? result.text;
     try {

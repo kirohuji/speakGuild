@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   BarChart3, Users, TrendingUp, DollarSign,
   MessageSquare, Clapperboard, Puzzle, Loader2,
-  Calendar, Activity, Crown,
+  Calendar, Activity, Crown, Brain, Zap,
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/cn';
 import { get } from '@/lib/request';
+import { getAiUsageStats, type AiUsageStats } from '@/features/admin/api';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -119,6 +120,7 @@ function ChartTooltip({ active, payload, label, prefix }: any) {
 
 export function AdminAnalyticsPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,8 +128,12 @@ export function AdminAnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDashboardStats();
+      const [data, aiData] = await Promise.all([
+        getDashboardStats(),
+        getAiUsageStats(),
+      ]);
       setStats(data);
+      setAiStats(aiData);
     } catch {
       setError('加载统计数据失败');
     } finally {
@@ -408,6 +414,137 @@ export function AdminAnalyticsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* ─── AI 用量统计 ──────────────────────────────── */}
+      {aiStats && (
+        <>
+          <Separator />
+          <div>
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
+              <Brain className="h-5 w-5 text-violet-500" />
+              AI Token 消耗统计
+            </h2>
+            <p className="text-sm text-muted-foreground">DeepSeek API 调用量与用户 AI 功能使用情况</p>
+          </div>
+
+          {/* KPI 卡片 */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <Card className="shadow-none">
+              <CardContent className="p-5">
+                <MiniMetric icon={MessageSquare} label="今日对话判定" value={fmtInt(aiStats.overview.todayDialogue)} accent="violet" />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  本周 <span className="font-medium text-foreground">{fmtInt(aiStats.overview.weekDialogue)}</span>
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-5">
+                <MiniMetric icon={BarChart3} label="今日汇总分析" value={fmtInt(aiStats.overview.todaySummary)} accent="blue" />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  本周 <span className="font-medium text-foreground">{fmtInt(aiStats.overview.weekSummary)}</span>
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-5">
+                <MiniMetric icon={Zap} label="今日 Token" value={fmtInt(aiStats.overview.todayTokens)} accent="amber" />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  本周 <span className="font-medium text-foreground">{fmtInt(aiStats.overview.weekTokens)}</span>
+                  &nbsp;·&nbsp; 本月 <span className="font-medium text-foreground">{fmtInt(aiStats.overview.monthTokens)}</span>
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-5">
+                <MiniMetric
+                  icon={Brain}
+                  label="单词缓存"
+                  value={fmtInt(aiStats.overview.totalCachedWords)}
+                  accent="emerald"
+                />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  重复查询零成本
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-5">
+                <MiniMetric
+                  icon={TrendingUp}
+                  label="本月总调用"
+                  value={fmtInt(aiStats.overview.monthDialogue + aiStats.overview.monthSummary)}
+                  accent="cyan"
+                />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  日人均 {aiStats.overview.totalUsers > 0
+                    ? ((aiStats.overview.monthDialogue + aiStats.overview.monthSummary) / 30 / aiStats.overview.totalUsers).toFixed(1)
+                    : '0'} 次
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 趋势图 + Top 用户 */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-violet-500" />
+                  近 30 天 AI 调用趋势
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={aiStats.trend}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip content={<ChartTooltip prefix="" />} />
+                    <Bar dataKey="dialogue" name="对话判定" fill="#8b5cf6" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="summary" name="汇总分析" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4 text-amber-500" />
+                  Top AI 用户（近 30 天）
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-[280px] overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="py-2 text-left font-medium text-muted-foreground">用户</th>
+                        <th className="py-2 text-right font-medium text-muted-foreground">对话判定</th>
+                        <th className="py-2 text-right font-medium text-muted-foreground">汇总分析</th>
+                        <th className="py-2 text-right font-medium text-muted-foreground">Tokens</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {aiStats.topUsers.map((u, i) => (
+                        <tr key={u.userId} className="hover:bg-muted/20">
+                          <td className="py-2">
+                            <span className="text-muted-foreground mr-2">{i + 1}.</span>
+                            {u.name || u.email}
+                          </td>
+                          <td className="py-2 text-right">{u.dialogue}</td>
+                          <td className="py-2 text-right">{u.summary}</td>
+                          <td className="py-2 text-right font-semibold">{fmtInt(u.tokens)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 }

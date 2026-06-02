@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Shield, ShieldAlert, ChevronLeft, ChevronRight,
   Mail, Phone, Calendar, Loader2, ArrowLeft, CheckCircle2, XCircle,
-  BookOpen, MessageSquare, Puzzle, Clapperboard, Star, Zap, Target,
+  BookOpen, MessageSquare, Puzzle, Clapperboard, Star, Zap, Target, BarChart3,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/cn';
 import {
-  listUsers, updateUserRole, getUserDetail,
-  type AdminUser, type AdminUserDetail, type AdminUsersResult,
+  listUsers, updateUserRole, getUserDetail, getUserAiUsage,
+  type AdminUser, type AdminUserDetail, type AdminUsersResult, type UserAiUsage,
 } from '@/features/admin/api';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -334,6 +334,8 @@ function UserRow({
   const [updating, setUpdating] = useState(false);
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [aiUsage, setAiUsage] = useState<UserAiUsage | null>(null);
+  const [aiUsageLoading, setAiUsageLoading] = useState(false);
 
   const openDetail = async () => {
     setDetailOpen(true);
@@ -578,6 +580,86 @@ function UserRow({
                   <StatDot icon={Star} label="订单" value={detail._count.orders} accent="violet" />
                   <div />
                 </div>
+              </div>
+
+              {/* ── AI 用量 ──────────────────────────── */}
+              <div className="rounded-xl border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-violet-500" />
+                    AI 用量统计（近 30 天）
+                  </p>
+                  {aiUsage === null && !aiUsageLoading && (
+                    <Button
+                      variant="outline" size="sm" className="h-7 text-xs"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        setAiUsageLoading(true)
+                        try {
+                          const data = await getUserAiUsage(user.id)
+                          setAiUsage(data)
+                        } catch { setAiUsage(null) }
+                        finally { setAiUsageLoading(false) }
+                      }}
+                    >
+                      加载 AI 用量
+                    </Button>
+                  )}
+                </div>
+                {aiUsageLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                  </div>
+                ) : aiUsage ? (
+                  <>
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="text-center rounded-lg bg-muted/40 py-2">
+                        <p className="text-lg font-bold text-violet-500">{aiUsage.totals.dialogue}</p>
+                        <p className="text-[11px] text-muted-foreground">对话判定</p>
+                      </div>
+                      <div className="text-center rounded-lg bg-muted/40 py-2">
+                        <p className="text-lg font-bold text-blue-500">{aiUsage.totals.summary}</p>
+                        <p className="text-[11px] text-muted-foreground">汇总分析</p>
+                      </div>
+                      <div className="text-center rounded-lg bg-muted/40 py-2">
+                        <p className="text-lg font-bold text-amber-500">{fmtShort(aiUsage.totals.tokens)}</p>
+                        <p className="text-[11px] text-muted-foreground">Tokens</p>
+                      </div>
+                      <div className="text-center rounded-lg bg-muted/40 py-2">
+                        <p className="text-lg font-bold text-emerald-500">{aiUsage.totals.dialogue + aiUsage.totals.summary}</p>
+                        <p className="text-[11px] text-muted-foreground">总次数</p>
+                      </div>
+                    </div>
+                    {aiUsage.dailyUsages.length > 0 && (
+                      <div className="max-h-[160px] overflow-y-auto rounded-lg border">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="bg-muted/40">
+                              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">日期</th>
+                              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">对话判定</th>
+                              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">汇总分析</th>
+                              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Tokens</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {aiUsage.dailyUsages.map((d) => (
+                              <tr key={d.date} className="hover:bg-muted/20">
+                                <td className="px-3 py-1.5 text-muted-foreground">{d.date.slice(5)}</td>
+                                <td className="px-3 py-1.5 text-right">{d.dialogue}</td>
+                                <td className="px-3 py-1.5 text-right">{d.summary}</td>
+                                <td className="px-3 py-1.5 text-right">{fmtShort(d.tokens)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      全局已缓存 <span className="font-medium text-foreground">{aiUsage.cachedWordCount}</span> 个单词增强数据
+                    </p>
+                  </>
+                ) : null}
               </div>
 
               {/* ── 角色管理 ────────────────────────────── */}

@@ -1230,9 +1230,9 @@ model AiUsageDaily {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date     DateTime @db.Date
 
-  feedback Int      @default(0)   // 纠错反馈次数
   dialogue Int      @default(0)   // 对话判定次数
   summary  Int      @default(0)   // 汇总/分析次数
+  tokens   Int      @default(0)   // 总 token 消耗量
 
   @@unique([userId, date])
   @@index([userId])

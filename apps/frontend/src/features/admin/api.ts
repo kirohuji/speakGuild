@@ -151,6 +151,66 @@ export async function getOrderStats() {
   return get<AdminOrderStats>('/admin/orders/stats');
 }
 
+// ─── AI 用量统计 ──────────────────────────────────────────
+
+export interface AiUsageOverview {
+  todayDialogue: number
+  todaySummary: number
+  todayTokens: number
+  weekDialogue: number
+  weekSummary: number
+  weekTokens: number
+  monthDialogue: number
+  monthSummary: number
+  monthTokens: number
+  totalCachedWords: number
+  totalUsers: number
+}
+
+export interface AiUsageTrendPoint {
+  date: string
+  dialogue: number
+  summary: number
+  tokens: number
+}
+
+export interface AiUsageTopUser {
+  userId: string
+  name: string
+  email: string
+  dialogue: number
+  summary: number
+  tokens: number
+}
+
+export interface AiUsageStats {
+  overview: AiUsageOverview
+  trend: AiUsageTrendPoint[]
+  topUsers: AiUsageTopUser[]
+}
+
+export interface UserAiUsageDaily {
+  date: string
+  dialogue: number
+  summary: number
+  tokens: number
+}
+
+export interface UserAiUsage {
+  user: { id: string; name: string; email: string; role: string }
+  totals: { dialogue: number; summary: number; tokens: number }
+  dailyUsages: UserAiUsageDaily[]
+  cachedWordCount: number
+}
+
+export async function getAiUsageStats(): Promise<AiUsageStats> {
+  return get('/admin/stats/ai-usage')
+}
+
+export async function getUserAiUsage(userId: string): Promise<UserAiUsage> {
+  return get(`/admin/users/${userId}/ai-usage`)
+}
+
 // ─── 测试支付 ──────────────────────────────────────────────
 
 export interface TestPaymentResult {

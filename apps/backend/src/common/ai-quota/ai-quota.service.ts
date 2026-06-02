@@ -107,7 +107,7 @@ export class AiQuotaService {
   /** 积分兑换 AI 次数 */
   async exchangeByPoints(
     userId: string,
-    type: 'feedback' | 'dialogue' | 'summary',
+    type: 'dialogue' | 'summary',
   ): Promise<{ success: boolean; message: string }> {
     // 查积分
     const user = await this.prisma.user.findUnique({
@@ -211,11 +211,6 @@ export class AiQuotaService {
       points: user?.points ?? 0,
       exchangeCost: EXCHANGE_COST,
       quotas: {
-        feedback: {
-          used: usage?.feedback ?? 0,
-          limit: QUOTAS.free.feedback,
-          remaining: Math.max(0, QUOTAS.free.feedback - (usage?.feedback ?? 0)),
-        },
         dialogue: {
           used: usage?.dialogue ?? 0,
           limit: QUOTAS.free.dialogue,
@@ -228,5 +223,23 @@ export class AiQuotaService {
         },
       },
     };
+  }
+
+  /** 记录 token 消耗量（追加到今日记录） */
+  async recordTokens(userId: string, tokenCount: number) {
+    if (!tokenCount || tokenCount <= 0) return
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    try {
+      await this.prisma.aiUsageDaily.upsert({
+        where: { userId_date: { userId, date: today } },
+        create: { userId, date: today, tokens: tokenCount },
+        update: { tokens: { increment: tokenCount } },
+      })
+    } catch (err: any) {
+      this.logger.warn(`Failed to record tokens for user ${userId}: ${err.message}`)
+    }
   }
 }
