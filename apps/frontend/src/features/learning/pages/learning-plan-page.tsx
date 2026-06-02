@@ -479,7 +479,7 @@ function CheckInCalendarDrawer({
   const { t, i18n } = useTranslation()
   const [data, setData] = useState<CheckInCalendar | null>(null)
   const [loading, setLoading] = useState(false)
-  const [month, setMonth] = useState(() => new Date())
+  const [month, setMonth] = useState(() => startOfMonth(new Date()))
   const calendarCache = useRef(new Map<string, CheckInCalendar>())
   const today = useMemo(() => startOfDay(new Date()), [])
   const calendarLocale = i18n.language.startsWith('ja')
@@ -530,11 +530,11 @@ function CheckInCalendarDrawer({
   }, [open, visibleRange])
 
   const changeMonth = useCallback((offset: number) => {
-    const nextMonth = addMonths(month, offset)
-    if (!isAfter(nextMonth, today)) setMonth(nextMonth)
+    const nextMonth = startOfMonth(addMonths(month, offset))
+    if (!isAfter(nextMonth, startOfMonth(today))) setMonth(nextMonth)
   }, [month, today])
 
-  const canGoToNextMonth = !isAfter(addMonths(month, 1), today)
+  const canGoToNextMonth = !isAfter(startOfMonth(addMonths(month, 1)), startOfMonth(today))
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

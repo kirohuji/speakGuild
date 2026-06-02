@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.manyu.app',
+  appId: 'lourd.manyu.app',
   appName: '漫语町',
   webDir: 'dist',
 
