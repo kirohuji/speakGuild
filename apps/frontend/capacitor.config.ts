@@ -34,12 +34,16 @@ const config: CapacitorConfig = {
 
     // Preferences — 键值存储 (不另需配置)
     // Filesystem — 文件系统 (不另需配置)
-  },
 
-  // Capgo 热更新配置（若使用 Capgo 服务）
-  // CapacitorUpdater: {
-  //   autoUpdate: true,
-  // },
+    // ── OTA 热更新（Capgo CapacitorUpdater，self-hosted 模式）──
+    CapacitorUpdater: {
+      autoUpdate: 'atBackground',       // 后台下载，切后台后安装，下次启动生效
+      updateUrl: `https://api.manyu.app/mobile-updates/check`,
+      appReadyTimeout: 10000,           // 10 秒内必须调用 notifyAppReady，否则回滚
+      autoDeleteFailed: true,           // 自动清理下载失败的包
+      autoDeletePrevious: true,         // 安装成功后自动清理旧包
+    },
+  },
 };
 
 export default config;

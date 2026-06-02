@@ -6,16 +6,34 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { AdminSidebar } from './admin-sidebar'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/cn'
+
+const COLLAPSED_KEY = 'admin-sidebar-collapsed'
 
 export function AdminLayout() {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(COLLAPSED_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
   useEffect(() => {
     setBottomNavVisible(false)
     return () => setBottomNavVisible(true)
   }, [setBottomNavVisible])
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev
+      try { localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0') } catch { /* ignore */ }
+      return next
+    })
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -47,8 +65,13 @@ export function AdminLayout() {
 
       <div className="flex flex-1 overflow-hidden">
         {!isMobile && (
-          <aside className="w-60 flex-shrink-0 overflow-y-auto border-r border-border/50 bg-card">
-            <AdminSidebar />
+          <aside
+            className={cn(
+              'flex-shrink-0 overflow-y-auto border-r border-border/50 bg-card transition-all duration-300',
+              collapsed ? 'w-14' : 'w-60',
+            )}
+          >
+            <AdminSidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
           </aside>
         )}
         <main className="flex-1 overflow-y-auto">

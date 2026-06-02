@@ -56,6 +56,7 @@ import { AdminMapsPage } from '@/features/admin/pages/admin-maps-page'
 import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
 import { AdminThemesPage } from '@/features/admin/theme-manage/pages/theme-list-page'
 import { AdminDailySentencesPage } from '@/features/admin/pages/admin-daily-sentences-page'
+import { AdminMobileBundlesPage } from '@/features/admin/pages/admin-mobile-bundles-page'
 
 export default function App() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
                 <Route path="achievements" element={<AdminAchievementsPage />} />
                 <Route path="themes" element={<AdminThemesPage />} />
                 <Route path="daily-sentences" element={<AdminDailySentencesPage />} />
+                <Route path="mobile-bundles" element={<AdminMobileBundlesPage />} />
               </Route>
 
               {/* 用户端 — RootLayout */}

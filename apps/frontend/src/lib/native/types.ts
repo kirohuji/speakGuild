@@ -24,12 +24,14 @@ export interface StatusBarAPI {
 
 /** Updater 抽象接口（Capgo OTA 热更新） */
 export interface UpdaterAPI {
+  /** 通知插件当前 bundle 启动成功（必须在 appReadyTimeout 内调用） */
+  notifyAppReady(): Promise<void>;
   /** 获取当前包版本信息 */
   getCurrent(): Promise<{ version: string; downloaded: string; builtinVersion: string }>;
   /** 检查并安装更新 */
   checkUpdate(): Promise<{ newVersion?: string; url?: string }>;
   /** 设置更新可用时的回调 */
-  onUpdateAvailable(callback: () => void): void;
+  onUpdateAvailable(callback: (info: { version: string; url?: string }) => void): void;
 }
 
 /** Preference 抽象接口（键值存储） */

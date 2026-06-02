@@ -3,6 +3,7 @@ import { Upload, X, ImageIcon, Music, FileText, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import type { FileAssetGroup } from '@/features/file-assets/api'
 
 interface FileUploadFieldProps {
   /** 当前文件 URL */
@@ -21,6 +22,8 @@ interface FileUploadFieldProps {
   previewSize?: 'sm' | 'md' | 'lg'
   /** 是否禁用 */
   disabled?: boolean
+  /** COS 文件分组 */
+  group?: FileAssetGroup
   className?: string
 }
 
@@ -44,6 +47,7 @@ export function FileUploadField({
   uploadLabel = '上传文件',
   previewSize = 'md',
   disabled = false,
+  group = 'library',
   className,
 }: FileUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
@@ -78,7 +82,7 @@ export function FileUploadField({
       else if (file.type.startsWith('audio/')) setFileType('audio')
       else setFileType('other')
 
-      const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
+      const asset = await uploadFileToCosAndComplete({ file, group })
       const resolved = await getFileAssetLongLivedUrl(asset.id)
       const cosUrl = resolved.url
       setPreviewUrl(cosUrl)

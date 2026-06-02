@@ -309,6 +309,7 @@ enum FileAssetGroup {
   library
   tts
   notification
+  mobile_bundle
 }
 
 enum FileAssetStatus {
@@ -332,6 +333,7 @@ model FileAsset {
   createdAt        DateTime        @default(now())
   references       FileReference[]
   resourceNodes    ResourceNode[]
+  mobileBundles    MobileBundle[]
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
   @@map("file_asset")
@@ -1235,4 +1237,27 @@ model AiUsageDaily {
   @@unique([userId, date])
   @@index([userId])
   @@map("ai_usage_daily")
+}
+
+// ── OTA 热更新：MobileBundle 安装包管理（zip 存在 COS，关联 FileAsset）──
+
+model MobileBundle {
+  id               String     @id @default(cuid())
+  version          String                          // 语义化版本号，如 "1.2.3"
+  platform         String                          // ios | android
+  channel          String     @default("production") // production | staging
+  assetId          String                          // 关联 FileAsset（COS 上的 zip 文件）
+  asset            FileAsset  @relation(fields: [assetId], references: [id])
+  checksum         String                          // SHA256 校验值
+  minNativeVersion String?                         // 最低原生版本要求
+  rolloutPercent   Int        @default(100)        // 灰度比例 0-100
+  enabled          Boolean    @default(true)       // 是否启用（可快速下架）
+  releaseNotes     String?    @db.Text             // 更新日志
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([version, platform, channel])
+  @@index([platform, channel, enabled])
+  @@index([assetId])
+  @@map("mobile_bundle")
 }

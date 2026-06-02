@@ -1,6 +1,6 @@
 import { del, get, post } from '@/lib/request'
 
-export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification'
+export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle'
 
 export interface CosPolicy {
   exists: boolean

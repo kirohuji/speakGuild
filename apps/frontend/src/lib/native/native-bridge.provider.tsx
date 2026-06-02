@@ -52,11 +52,15 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
     return () => window.cancelAnimationFrame(raf);
   }, [init]);
 
-  // 自动隐藏 SplashScreen + 设置状态栏
+  // 自动隐藏 SplashScreen + 设置状态栏 + 通知 OTA 就绪
   React.useEffect(() => {
     if (ready && isNative()) {
       void capabilities.splashScreen.hide().catch(() => {});
-      void capabilities.statusBar.setStyle({ style: Style.Dark }).catch(() => {}); // 兼容不支持的环境
+      void capabilities.statusBar.setStyle({ style: Style.Dark }).catch(() => {});
+      // 告诉 CapacitorUpdater 当前 bundle 启动成功，防止误回滚
+      void capabilities.updater.notifyAppReady().catch((err) => {
+        console.warn('[NativeBridge] notifyAppReady failed:', err);
+      });
     }
   }, [ready]);
 

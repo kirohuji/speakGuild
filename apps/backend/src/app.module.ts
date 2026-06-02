@@ -26,6 +26,7 @@ import { ExplorationModule } from './modules/exploration/exploration.module';
 import { LearningModule } from './modules/learning/learning.module';
 import { PointsModule } from './modules/points/points.module';
 import { AiQuotaModule } from './common/ai-quota/ai-quota.module';
+import { MobileUpdatesModule } from './modules/mobile-updates/mobile-updates.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AiQuotaModule } from './common/ai-quota/ai-quota.module';
     LearningModule,
     PointsModule,
     AiQuotaModule,
+    MobileUpdatesModule,
   ],
 })
 export class AppModule {}

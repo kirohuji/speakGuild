@@ -6,6 +6,7 @@ import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { auth } from './modules/auth/auth';
+import { MobileUpdatesService } from './modules/mobile-updates/mobile-updates.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
@@ -39,6 +40,25 @@ async function bootstrap() {
     return next();
   });
   expressApp.all('/api/auth/*', toNodeHandler(auth));
+
+  // ── OTA 热更新公开检查接口（不走全局前缀，供 Capacitor Updater 插件调用）──
+  const mobileUpdatesService = app.get(MobileUpdatesService);
+  expressApp.post('/mobile-updates/check', async (req, res) => {
+    try {
+      const result = await mobileUpdatesService.checkUpdate({
+        platform: req.body?.platform || 'ios',
+        deviceId: req.body?.device_id || req.body?.deviceId,
+        nativeVersion: req.body?.native_version || req.body?.nativeVersion,
+        currentBundleVersion: req.body?.current_bundle_version || req.body?.currentBundleVersion,
+        channel: req.body?.channel || 'production',
+      });
+      res.json(result);
+    } catch (err: any) {
+      console.error('[mobile-updates/check] error:', err);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   expressApp.use(json());
   expressApp.use(urlencoded({ extended: true }));
 
