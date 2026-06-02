@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
@@ -10,6 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/cn';
 import { useThemePreset } from '@/providers/theme-preset-provider';
+import { usePreferencesStore } from '@/stores/preferences.store';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
 
 interface AppearanceDrawerProps {
@@ -22,9 +22,8 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
   const { theme, setTheme } = useTheme();
   const { presets, activePreset, setActivePreset, loading: presetsLoading } = useThemePreset();
 
-  // ── BGM state（暂存本地，后续可接入 store）──
-  const [bgmEnabled, setBgmEnabled] = useState(false);
-  const [bgmVolume, setBgmVolume] = useState(0.3);
+  const { bgmEnabled, bgmVolume, setBgmEnabled, setBgmVolume } = usePreferencesStore();
+  const effectiveBgmVolume = bgmVolume ?? activePreset?.bgmVolume ?? 0.3;
 
   const modeLabel: Record<string, string> = {
     light: t('profile.themeLight'),
@@ -124,6 +123,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
                   <Switch
                     checked={bgmEnabled}
                     onCheckedChange={setBgmEnabled}
+                    disabled={!activePreset?.bgmUrl}
                   />
                 </div>
 
@@ -131,7 +131,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
                   <div className="flex items-center gap-3 pt-1">
                     <Volume2 className="size-4 shrink-0 text-muted-foreground" />
                     <Slider
-                      value={[bgmVolume]}
+                      value={[effectiveBgmVolume]}
                       onValueChange={([v]) => setBgmVolume(v)}
                       min={0}
                       max={1}
@@ -139,7 +139,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
                       className="flex-1"
                     />
                     <span className="w-10 text-right text-sm tabular-nums text-muted-foreground">
-                      {Math.round(bgmVolume * 100)}%
+                      {Math.round(effectiveBgmVolume * 100)}%
                     </span>
                   </div>
                 )}

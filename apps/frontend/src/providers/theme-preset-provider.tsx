@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemePresetStore } from '@/stores/theme-preset.store';
+import { usePreferencesStore } from '@/stores/preferences.store';
 import { applyPresetColors, clearPresetColors } from '@/lib/theme-preset-utils';
 
 interface ThemePresetContextValue {
@@ -27,6 +28,8 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const { resolvedTheme } = useTheme();
   const store = useThemePresetStore();
+  const { bgmEnabled, bgmVolume } = usePreferencesStore();
+  const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const isLoggedIn = !!session?.user?.id;
 
@@ -51,6 +54,40 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const audio = bgmAudioRef.current;
+    if (!audio) return;
+    const volume = bgmVolume ?? store.activePreset?.bgmVolume ?? 0.3;
+    audio.volume = Math.min(1, Math.max(0, volume));
+  }, [bgmVolume, store.activePreset?.bgmVolume]);
+
+  useEffect(() => {
+    const audio = bgmAudioRef.current;
+    if (!audio) return;
+
+    if (!bgmEnabled || !store.activePreset?.bgmUrl) {
+      audio.pause();
+      return;
+    }
+
+    const resumePlayback = () => {
+      void audio.play().catch(() => {});
+    };
+    let cancelled = false;
+
+    void audio.play().catch(() => {
+      // Browsers may block restoring persisted BGM until the user interacts.
+      if (!cancelled) {
+        document.addEventListener('pointerdown', resumePlayback, { once: true });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('pointerdown', resumePlayback);
+    };
+  }, [bgmEnabled, store.activePreset?.bgmUrl]);
+
   return (
     <ThemePresetContext.Provider
       value={{
@@ -60,6 +97,12 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
         loading: store.loading,
       }}
     >
+      <audio
+        ref={bgmAudioRef}
+        src={store.activePreset?.bgmUrl ?? undefined}
+        loop
+        preload="none"
+      />
       {children}
     </ThemePresetContext.Provider>
   );

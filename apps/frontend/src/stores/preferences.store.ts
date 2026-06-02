@@ -20,6 +20,8 @@ export interface TtsBackendSettings {
 
 interface Preferences {
   autoPlay: boolean
+  bgmEnabled: boolean
+  bgmVolume: number | null
   theme: string
   language: string
   tts: TtsSettings
@@ -28,6 +30,8 @@ interface Preferences {
 
 interface PreferencesStore extends Preferences {
   setAutoPlay: (autoPlay: boolean) => void
+  setBgmEnabled: (bgmEnabled: boolean) => void
+  setBgmVolume: (bgmVolume: number) => void
   setTheme: (theme: string) => void
   setLanguage: (language: string) => void
   setTts: (tts: Partial<TtsSettings>) => void
@@ -52,11 +56,15 @@ export const usePreferencesStore = create<PreferencesStore>()(
   persist(
     (set) => ({
       autoPlay: false,
+      bgmEnabled: false,
+      bgmVolume: null,
       theme: 'system',
       language: 'zh-CN',
       tts: DEFAULT_TTS,
       ttsBackend: DEFAULT_TTS_BACKEND,
       setAutoPlay: (autoPlay) => set({ autoPlay }),
+      setBgmEnabled: (bgmEnabled) => set({ bgmEnabled }),
+      setBgmVolume: (bgmVolume) => set({ bgmVolume }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => {
         set({ language })

@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { addMonths, endOfMonth, endOfWeek, format, isAfter, parseISO, startOfDay, startOfMonth, startOfWeek } from 'date-fns'
 import { enUS, ja, zhCN } from 'date-fns/locale'
 import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
-  ChevronRight, CheckCircle2, Lock, ArrowRight,
+  ChevronLeft, ChevronRight, CheckCircle2, Lock, ArrowRight,
   ClipboardList, ShoppingBag, Play, Search, CalendarDays, Mic,
   BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, type LucideIcon,
 } from 'lucide-react'
@@ -456,7 +456,7 @@ function CheckInCalendarDrawer({
   const [data, setData] = useState<CheckInCalendar | null>(null)
   const [loading, setLoading] = useState(false)
   const [month, setMonth] = useState(() => new Date())
-  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const calendarCache = useRef(new Map<string, CheckInCalendar>())
   const today = useMemo(() => startOfDay(new Date()), [])
   const calendarLocale = i18n.language.startsWith('ja')
     ? ja
@@ -474,21 +474,43 @@ function CheckInCalendarDrawer({
 
   useEffect(() => {
     if (!open) return
+    const cacheKey = `${visibleRange.startDate}:${visibleRange.endDate}`
+    const cached = calendarCache.current.get(cacheKey)
+    if (cached) {
+      setData(cached)
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
     setLoading(true)
+    setData((current) => current ? { ...current, dates: [] } : null)
     pointsApi.getCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
-      .then(setData)
-      .catch(() => setData({ dates: [], totalCheckIns: 0, currentStreak: 0 }))
-      .finally(() => setLoading(false))
+      .then((nextData) => {
+        if (cancelled) return
+        calendarCache.current.set(cacheKey, nextData)
+        setData(nextData)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setData((current) => current ?? { dates: [], totalCheckIns: 0, currentStreak: 0 })
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [open, visibleRange])
 
-  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (touchStartX === null) return
-    const distance = event.changedTouches[0].clientX - touchStartX
-    setTouchStartX(null)
-    if (Math.abs(distance) < 48) return
-    const nextMonth = addMonths(month, distance < 0 ? 1 : -1)
+  const changeMonth = useCallback((offset: number) => {
+    const nextMonth = addMonths(month, offset)
     if (!isAfter(nextMonth, today)) setMonth(nextMonth)
-  }
+  }, [month, today])
+
+  const canGoToNextMonth = !isAfter(addMonths(month, 1), today)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -514,27 +536,52 @@ function CheckInCalendarDrawer({
             </div>
           </div>
 
-          <div
-            className="mt-3 overflow-hidden rounded-2xl bg-card"
-            onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
-            onTouchEnd={handleTouchEnd}
-          >
-            {loading ? (
-              <div className="flex min-h-80 items-center justify-center"><Spinner /></div>
-            ) : (
+          <div className="mt-3 overflow-hidden rounded-2xl bg-background">
+            <div className="flex items-center justify-between px-3 pt-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="touch-manipulation"
+                onPointerDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={() => changeMonth(-1)}
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                {format(month, 'yyyy MMMM', { locale: calendarLocale })}
+                {loading && <Spinner className="size-3.5 text-muted-foreground" />}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="touch-manipulation"
+                disabled={!canGoToNextMonth}
+                onPointerDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={() => changeMonth(1)}
+                aria-label="Next month"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+            <div className="overflow-hidden">
               <Calendar
                 month={month}
-                onMonthChange={setMonth}
-                endMonth={today}
+                hideNavigation
                 locale={calendarLocale}
                 disabled={{ after: today }}
                 modifiers={{ checkedIn: checkedInDates }}
                 modifiersClassNames={{
                   checkedIn: 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]',
                 }}
+                classNames={{ month_caption: 'hidden' }}
                 className="mx-auto w-full [--cell-size:2.5rem]"
               />
-            )}
+            </div>
           </div>
           <p className="mt-3 text-center text-xs text-muted-foreground">{t('learning.calendarSwipeHint')}</p>
         </div>

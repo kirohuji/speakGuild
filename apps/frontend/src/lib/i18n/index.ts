@@ -839,7 +839,7 @@ const zhCN = {
       currentStreak: '连续打卡',
       totalCheckIns: '累计打卡',
       days: '天',
-      calendarSwipeHint: '左右滑动或点击箭头切换月份',
+      calendarSwipeHint: '点击箭头切换月份',
     },
     leaderboard: {
       title: '排行榜',
@@ -1751,7 +1751,7 @@ const en = {
       currentStreak: 'Current Streak',
       totalCheckIns: 'Total Check-ins',
       days: 'days',
-      calendarSwipeHint: 'Swipe or use the arrows to switch months',
+      calendarSwipeHint: 'Use the arrows to switch months',
     },
     leaderboard: {
       title: 'Leaderboard',
@@ -2662,7 +2662,7 @@ const ja = {
       currentStreak: '連続チェックイン',
       totalCheckIns: '累計チェックイン',
       days: '日',
-      calendarSwipeHint: '左右にスワイプするか矢印で月を切り替えます',
+      calendarSwipeHint: '矢印で月を切り替えます',
     },
     leaderboard: {
       title: 'ランキング',
