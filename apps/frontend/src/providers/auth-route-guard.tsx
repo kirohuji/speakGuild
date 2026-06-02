@@ -3,7 +3,17 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 
 function GuardLoading() {
-  return <div className="p-6 text-center text-sm text-muted-foreground">正在检查登录状态...</div>
+  return (
+    <div
+      className="flex min-h-[100dvh] items-center justify-center bg-white"
+      role="status"
+      aria-live="polite"
+      aria-label="正在检查登录状态"
+    >
+      <img src="/logo.png" alt="" className="size-16 object-contain" />
+      <span className="sr-only">正在检查登录状态...</span>
+    </div>
+  )
 }
 
 export function RequireAuth({ children }: { children: ReactElement }) {

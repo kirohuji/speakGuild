@@ -833,7 +833,7 @@ function ShopView({
 
   return (
     <div className="space-y-3">
-      <div className="relative">
+      <div className="relative mt-1">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={keyword}
