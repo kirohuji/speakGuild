@@ -46,6 +46,8 @@ jobs:
           # ===== 🟡 Optional (empty = feature disabled) =====
           echo "WECHAT_CLIENT_ID=${{ secrets.WECHAT_CLIENT_ID }}" >> /tmp/deploy.env
           echo "WECHAT_CLIENT_SECRET=${{ secrets.WECHAT_CLIENT_SECRET }}" >> /tmp/deploy.env
+          echo "WECHAT_NATIVE_APP_ID=${{ secrets.WECHAT_NATIVE_APP_ID }}" >> /tmp/deploy.env
+          echo "WECHAT_NATIVE_APP_SECRET=${{ secrets.WECHAT_NATIVE_APP_SECRET }}" >> /tmp/deploy.env
           echo "CARTESIA_API_KEY=${{ secrets.CARTESIA_API_KEY }}" >> /tmp/deploy.env
           echo "WHISPER_INFERENCE_URL=${{ secrets.WHISPER_INFERENCE_URL }}" >> /tmp/deploy.env
           echo "ALIPAY_APP_ID=${{ secrets.ALIPAY_APP_ID }}" >> /tmp/deploy.env

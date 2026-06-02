@@ -52,6 +52,8 @@
 | `WECHAT_NATIVE_APP_ID` | 🟡 Secret | 微信开放平台移动应用 AppID（原生 App 登录） | 同上 |
 | `WECHAT_NATIVE_APP_SECRET` | 🟡 Secret | 微信开放平台移动应用 AppSecret | 同上 |
 
+原生 App 构建时，前端还需要在 `apps/frontend/.env` 中配置 `VITE_WECHAT_APP_ID` 和 `VITE_WECHAT_UNIVERSAL_LINK`。PC 网页扫码登录不使用这两个变量。
+
 ---
 
 ## 四、TTS（语音合成）
@@ -190,6 +192,7 @@ SSL_DEPLOY=./ssl
 
 ```text
 WECHAT_CLIENT_ID / WECHAT_CLIENT_SECRET    # 微信扫码登录
+WECHAT_NATIVE_APP_ID / WECHAT_NATIVE_APP_SECRET # 原生 App 微信登录
 CARTESIA_API_KEY                            # 增强 TTS
 WHISPER_INFERENCE_URL                       # 语音转写
 ALIPAY_APP_ID / ...                         # 支付宝支付

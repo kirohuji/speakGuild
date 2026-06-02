@@ -13,8 +13,12 @@ export async function signUpWithEmailPassword(email: string, password: string, n
 export async function sendEmailOtp(email: string) {
   return authClient.emailOtp.sendVerificationOtp({
     email,
-    type: 'sign-in',
+    type: 'email-verification',
   })
+}
+
+export async function verifyEmailOtp(email: string, otp: string) {
+  return authClient.emailOtp.verifyEmail({ email, otp })
 }
 
 export async function signInWithEmailOtp(email: string, otp: string) {
