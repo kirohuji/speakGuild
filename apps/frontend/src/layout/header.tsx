@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Monitor, User, Shield } from 'lucide-react'
+import { Sun, Moon, Monitor, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
-import { NotificationBell } from '@/features/notification/components/notification-bell'
 
 export function Header() {
   const { t } = useTranslation()
@@ -16,7 +15,6 @@ export function Header() {
   const themeMenuRef = useRef<HTMLDivElement>(null)
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'admin'
-  const isLoggedIn = !!session
 
   const navItems = [
     { label: t('nav.home'), path: '/portal' },
@@ -81,14 +79,7 @@ export function Header() {
 
         {/* 右侧操作区 */}
         <div className="flex items-center gap-1.5 lg:gap-2 ml-auto">
-          {/* 通知铃铛 - 仅桌面端，需登录 */}
-          {isLoggedIn && (
-            <div className="hidden lg:block">
-              <NotificationBell />
-            </div>
-          )}
-
-          {/* 桌面端：后台管理 + 主题切换 + 个人中心 */}
+          {/* 桌面端：后台管理 + 主题切换 */}
           <div className="hidden lg:flex items-center gap-2">
             {isAdmin && (
               <Link to="/admin/users">
@@ -132,13 +123,6 @@ export function Header() {
               )}
             </div>
 
-            {isLoggedIn && (
-              <Link to="/profile">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <User className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       </div>
