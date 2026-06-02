@@ -110,7 +110,7 @@ export function VnInputPanel({
       variant === 'default' && 'border-t border-border/45 bg-background/55 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
       variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60 focus-within:ring-1 focus-within:ring-primary/25',
     )}>
-      <div className="flex h-10 items-center gap-2">
+      <div className={cn('flex h-10 items-center', variant === 'default' ? 'gap-2' : 'gap-1')}>
         <button
           type="button"
           aria-label={isListening ? '停止语音输入' : '开始语音输入'}
@@ -131,10 +131,11 @@ export function VnInputPanel({
         </button>
 
         <div className={cn(
-          'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3',
+          'flex min-w-0 flex-1 items-center rounded-lg',
+          variant === 'default' ? 'gap-2 px-3' : 'px-1.5',
           variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
         )}>
-          <Keyboard className="size-4 shrink-0 text-muted-foreground" />
+          <Keyboard className={cn('size-4 shrink-0 text-muted-foreground', variant === 'embedded' && 'hidden')} />
           <input
             value={text}
             disabled={isDisabled}

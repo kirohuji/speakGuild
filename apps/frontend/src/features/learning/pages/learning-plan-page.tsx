@@ -891,6 +891,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
   const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
+  const isJoined = unit.progress !== null
 
   const handleAcquire = useCallback(async () => {
     if (acquiring || !unit.isUnlocked || unit.isLocked) return
@@ -932,6 +933,11 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
           </p>
           <div className="mt-2 flex items-center gap-1.5">
             {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
+            {isJoined && (
+              <Badge variant="outline" className="h-5 rounded-full border-emerald-400/50 px-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                {unit.completionPercent}%
+              </Badge>
+            )}
             <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">
               Lv.{unit.requiredUserLevel}
             </Badge>
@@ -971,10 +977,21 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
             )}
 
             <div className="p-4">
-              <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
-                {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                {unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
-              </Button>
+              {isJoined ? (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}
+                >
+                  <ArrowRight className="size-4" />
+                  {t('learning.continue')}
+                </Button>
+              ) : (
+                <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
+                  {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
+                  {unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
+                </Button>
+              )}
             </div>
 
             <div className="bg-muted/30 px-4 py-2.5">
