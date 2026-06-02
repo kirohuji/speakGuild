@@ -964,6 +964,12 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
               </div>
             </div>
 
+            {unit.description && (
+              <div className="border-b border-border/50 px-4 py-3">
+                <p className="text-xs leading-5 text-muted-foreground">{unit.description}</p>
+              </div>
+            )}
+
             <div className="p-4">
               <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
                 {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}

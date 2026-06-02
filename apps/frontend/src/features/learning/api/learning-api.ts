@@ -40,6 +40,7 @@ export interface LearningUnitSummary {
   id: string
   title: string
   location: string
+  description?: string | null
   topics: TopicSummary[]
   requiredOutputLevel: string
   requiredUserLevel: number
