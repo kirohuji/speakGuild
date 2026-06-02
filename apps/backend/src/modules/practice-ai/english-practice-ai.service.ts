@@ -235,7 +235,7 @@ ${dialogueText}
     const cached = await this.prisma.wordEnrichment.findUnique({ where: { word: key } })
     if (cached) {
       this.logger.debug(`Word cache HIT: "${key}" (${cached.source})`)
-      return cached.data as WordEnrichmentData
+      return cached.data as unknown as WordEnrichmentData
     }
 
     // ② dictionaryapi.dev（免费）
