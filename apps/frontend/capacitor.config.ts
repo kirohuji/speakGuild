@@ -32,6 +32,11 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
 
+    CapacitorWechat: {
+      appId: '',  // 微信开放平台申请的 AppID''
+      universalLink: '',
+    },
+
     // Preferences — 键值存储 (不另需配置)
     // Filesystem — 文件系统 (不另需配置)
 

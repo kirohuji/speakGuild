@@ -33,3 +33,9 @@ export class DeleteAccountDto {
   @IsString()
   password!: string;
 }
+
+export class NativeWechatSignInDto {
+  @IsString()
+  @MinLength(1)
+  code!: string;
+}

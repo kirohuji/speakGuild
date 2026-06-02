@@ -240,7 +240,10 @@ export function LoginPage() {
             runAction(
               async () => {
                 await signInWithWechat()
-                await refreshSession()
+                const nextSession = await refreshSession()
+                if (nextSession?.user?.id) {
+                  navigateAfterLogin()
+                }
               },
               '正在跳转微信登录',
             )

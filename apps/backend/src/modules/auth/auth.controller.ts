@@ -10,13 +10,16 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
   DeleteAccountDto,
+  NativeWechatSignInDto,
 } from './dto/password.dto';
+import { NativeWechatAuthService } from './native-wechat-auth.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly passwordService: PasswordService,
     private readonly prisma: PrismaService,
+    private readonly nativeWechatAuthService: NativeWechatAuthService,
   ) {}
 
   @Get('ok')
@@ -35,6 +38,15 @@ export class AuthController {
     }
 
     return session;
+  }
+
+  @Post('wechat/native')
+  async signInWithNativeWechat(@Req() req: Request, @Body() dto: NativeWechatSignInDto) {
+    return this.nativeWechatAuthService.signIn(
+      dto.code,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   // ─── 忘记密码 ──────────────────────────────────────────────

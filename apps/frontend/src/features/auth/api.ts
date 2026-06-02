@@ -1,5 +1,6 @@
-import { authClient, clearBearerToken } from './client'
+import { authClient, clearBearerToken, setBearerToken } from './client'
 import request, { post } from '@/lib/request'
+import { isNative, requestNativeWechatAuthCode } from '@/lib/native'
 
 export async function signInWithEmailPassword(email: string, password: string) {
   return authClient.signIn.email({ email, password })
@@ -36,6 +37,13 @@ export async function verifyPhoneOtp(phoneNumber: string, code: string) {
 }
 
 export async function signInWithWechat() {
+  if (isNative()) {
+    const code = await requestNativeWechatAuthCode()
+    const result = await post<{ token: string }>('/auth/wechat/native', { code })
+    setBearerToken(result.token)
+    return result
+  }
+
   return authClient.signIn.social({
     provider: 'wechat',
     callbackURL: window.location.href,

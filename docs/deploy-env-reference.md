@@ -49,6 +49,8 @@
 | `BETTER_AUTH_SECRET` | 🔴 Secret | 32 位随机密钥 | `openssl rand -hex 32` |
 | `WECHAT_CLIENT_ID` | 🟡 Secret | 微信开放平台 AppID（扫码登录） | [微信开放平台](https://open.weixin.qq.com/) |
 | `WECHAT_CLIENT_SECRET` | 🟡 Secret | 微信开放平台 AppSecret | 同上 |
+| `WECHAT_NATIVE_APP_ID` | 🟡 Secret | 微信开放平台移动应用 AppID（原生 App 登录） | 同上 |
+| `WECHAT_NATIVE_APP_SECRET` | 🟡 Secret | 微信开放平台移动应用 AppSecret | 同上 |
 
 ---
 
