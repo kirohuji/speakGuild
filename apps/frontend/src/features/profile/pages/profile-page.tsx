@@ -91,7 +91,11 @@ const mobileTitles: Record<Tab, string> = {
   settings: 'profile.settings',
 }
 
-export function ProfilePage() {
+interface ProfilePageProps {
+  onFeedbackOpen?: () => void
+}
+
+export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -120,7 +124,7 @@ export function ProfilePage() {
       {isMobile ? (
         <div>
           {mobileView === 'home' ? (
-            <MobileProfileHome onNavigate={setMobileView} />
+            <MobileProfileHome onNavigate={setMobileView} onFeedbackOpen={onFeedbackOpen} />
           ) : (
             <div className="space-y-4">
               {/* iOS 风格返回栏 */}
@@ -142,7 +146,7 @@ export function ProfilePage() {
               {mobileView === 'favorites' && <FavoritesTab />}
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
-              {mobileView === 'settings' && <MobileSettingsView />}
+              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} />}
             </div>
           )}
         </div>
@@ -268,7 +272,13 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
 }
 
 // ─── 手机端：个人中心首页 ──────────────────────────────────────────────────
-function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => void }) {
+function MobileProfileHome({
+  onNavigate,
+  onFeedbackOpen,
+}: {
+  onNavigate: (view: MobileView) => void
+  onFeedbackOpen?: () => void
+}) {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   const { language, setLanguage } = usePreferencesStore()
@@ -360,7 +370,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
       <IosSection>
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => setShowMemberDrawer(true)} />
-        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={() => setShowFeedbackDrawer(true)} />
+        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
       </IosSection>
 
       {/* 外观与语言（保留在“我的”首页，点击弹窗切换） */}
@@ -422,14 +432,14 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
         </DrawerContent>
       </Drawer>
 
-      <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />
+      {!onFeedbackOpen && <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />}
 
     </div>
   )
 }
 
 // ─── 手机端：设置页 ────────────────────────────────────────────────────────
-function MobileSettingsView() {
+function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { signOut } = useAuth()
