@@ -80,7 +80,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     targetSelector: '[data-spotlight="start-vn-practice"]',
     title: '开始练习！',
     description: '准备好了吗？点击「开始练习」正式开练，AI 会陪你练口语并纠错',
-    clickToAdvance: false,
+    clickToAdvance: true,
   },
 ]
 
