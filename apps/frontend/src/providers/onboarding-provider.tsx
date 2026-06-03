@@ -82,21 +82,18 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const currentStep = storeSteps[storeCurrentIndex]
 
   // ---- 步骤推进 ----
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback((fromClickAdvance?: boolean) => {
     if (storeCurrentIndex >= storeSteps.length - 1) {
       handleFinish()
       return
     }
 
     const nextStep = storeSteps[storeCurrentIndex + 1]
-
-    // clickToAdvance 步骤：点击目标元素时已触发页面导航（如"开始学习"→ /learning/units/:id），
-    // 此时 handleNext 不应再强制导航（否则会跳转到不存在的 /learning/units 造成 404）
-    const isClickToAdvance = currentStep?.clickToAdvance
-
     storeNext()
 
-    if (nextStep && nextStep.route !== currentStep?.route && !isClickToAdvance) {
+    // 仅当「不是 clickToAdvance 触发的」且路由不同时才导航
+    // clickToAdvance 时用户已点击目标元素完成了页面跳转，无需再导航
+    if (nextStep && nextStep.route !== currentStep?.route && !fromClickAdvance) {
       navigate(nextStep.route)
     }
   }, [storeCurrentIndex, storeSteps, storeNext, handleFinish, currentStep, navigate])

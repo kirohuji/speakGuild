@@ -9,14 +9,14 @@ const HOLE_PADDING = 8
 // Tooltip 距离目标的间距
 const TOOLTIP_GAP = 20
 // Tooltip 最大宽度
-const TOOLTIP_MAX_W = 300
+const TOOLTIP_MAX_W = 280
 
 interface SpotlightOverlayProps {
   step: OnboardingStep
   stepIndex: number
   totalSteps: number
   isTestMode?: boolean
-  onNext: () => void
+  onNext: (fromClickAdvance?: boolean) => void
   onPrev: () => void
   onSkip: () => void
 }
@@ -32,25 +32,29 @@ function getTargetRect(selector: string): DOMRect | null {
   }
 }
 
-/** 计算 Tooltip 放置位置：优先放下方，否则放上方 */
+/** 计算 Tooltip 放置位置：优先放下方，否则放上方，始终水平居中，垂直不超出视口 */
 function calcPlacement(
   targetRect: DOMRect,
 ): { placement: 'bottom' | 'top'; style: Record<string, string | number> } {
-  const TOOLTIP_EST_HEIGHT = 200
-  const spaceBelow = window.innerHeight - targetRect.bottom - TOOLTIP_GAP
-  const spaceAbove = targetRect.top - TOOLTIP_GAP
+  const vh = window.innerHeight
+  const gap = TOOLTIP_GAP
+  // 卡片最小所需高度（用于判断是否有足够空间）
+  const minH = vh < 640 ? 220 : 170
+  const spaceBelow = vh - targetRect.bottom - gap
+  const spaceAbove = targetRect.top - gap
 
-  if (spaceBelow >= TOOLTIP_EST_HEIGHT || spaceBelow >= spaceAbove) {
-    // 放在目标下方
+  if (spaceBelow >= minH || spaceBelow >= spaceAbove) {
+    // 放在目标下方，top 定位确保不超出视口底部
+    const top = Math.min(targetRect.bottom + gap, vh - minH - 16)
     return {
       placement: 'bottom',
-      style: { top: targetRect.bottom + TOOLTIP_GAP },
+      style: { top: Math.max(16, top), maxHeight: Math.min(minH + 40, vh - top - 16) },
     }
   }
-  // 放在目标上方（用 bottom 定位）
+  // 放在目标上方：用 bottom 定位，卡片底部固定在 target.top - gap
   return {
     placement: 'top',
-    style: { bottom: window.innerHeight - targetRect.top + TOOLTIP_GAP },
+    style: { bottom: Math.max(16, vh - targetRect.top + gap), maxHeight: Math.min(minH + 40, targetRect.top - gap - 16) },
   }
 }
 
@@ -138,8 +142,8 @@ export function SpotlightOverlay({
       const target = e.target as Element
       const match = target.closest(step.targetSelector)
       if (match) {
-        // 延迟一下，等导航/交互完成
-        setTimeout(() => onNext(), 300)
+        // clickToAdvance: 传 true 告知 provider 跳过路由导航
+        setTimeout(() => onNext(true), 300)
       }
     }
 
@@ -220,15 +224,17 @@ export function SpotlightOverlay({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute left-1/2 z-10 -translate-x-1/2"
+          className="absolute z-10"
           style={{
             maxWidth: TOOLTIP_MAX_W,
             width: `calc(100vw - 48px)`,
+            // 左手动居中：避免 Framer Motion animate 覆盖 transform
+            left: `calc(50% - ${TOOLTIP_MAX_W / 2}px)`,
             pointerEvents: 'auto',
             ...tooltipStyle,
           }}
         >
-          <div className="rounded-2xl border border-white/20 bg-card/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <div className="rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
             {/* 步骤指示器 */}
             <div className="mb-3 flex items-center justify-between">
               <div className="flex gap-1.5">
@@ -281,7 +287,7 @@ export function SpotlightOverlay({
 
               <Button
                 size="sm"
-                onClick={onNext}
+                onClick={() => onNext()}
                 className="h-8 rounded-full px-4 text-xs font-medium"
               >
                 {stepIndex >= totalSteps - 1 ? '开始体验' : '下一步'}
