@@ -45,3 +45,4 @@ export { preferences } from './preferences';
 export { pushNotifications } from './push-notifications';
 export { filesystem } from './filesystem';
 export { requestNativeWechatAuthCode } from './wechat';
+export { requestNativeAppleSignIn } from './apple';

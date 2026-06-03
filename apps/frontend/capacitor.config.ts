@@ -37,6 +37,16 @@ const config: CapacitorConfig = {
       universalLink: '',
     },
 
+    SocialLogin: {
+      providers: {
+        apple: true,
+        google: false,
+        facebook: false,
+        twitter: false,
+      },
+      logLevel: 1,
+    },
+
     // Preferences — 键值存储 (不另需配置)
     // Filesystem — 文件系统 (不另需配置)
 
