@@ -392,7 +392,7 @@ function MobileProfileHome({
       <AppearanceDrawer open={showThemeDialog} onOpenChange={setShowThemeDialog} />
 
       <Drawer open={showAccountDrawer} onOpenChange={setShowAccountDrawer}>
-        <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px] border-border/70 bg-background">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
             <button
               type="button"
@@ -442,7 +442,7 @@ function MobileProfileHome({
       </Drawer>
 
       <Drawer open={showMemberDrawer} onOpenChange={setShowMemberDrawer}>
-        <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px] border-border/70 bg-background">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background">
           <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
             <button
               type="button"
@@ -1841,6 +1841,7 @@ function NicknameEditDialog({
 
   const handleSave = async () => {
     if (!name.trim() || name.trim() === currentName) {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
       onOpenChange(false)
       return
     }
@@ -1848,6 +1849,7 @@ function NicknameEditDialog({
     try {
       await updateUserProfile({ name: name.trim() })
       onSaved(name.trim())
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
       onOpenChange(false)
     } catch {
       // silent
@@ -1857,7 +1859,15 @@ function NicknameEditDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur()
+        }
+        onOpenChange(nextOpen)
+      }}
+    >
       <DialogContent
         className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
         onOpenAutoFocus={(event) => event.preventDefault()}

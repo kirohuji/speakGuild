@@ -41,7 +41,7 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px]">
+      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px]">
         <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
           <button
             type="button"

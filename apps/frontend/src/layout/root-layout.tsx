@@ -72,21 +72,21 @@ export function RootLayout() {
       {!isAuthPage && !isMobile && !immersiveMode && <Footer />}
       {!isAuthPage && showBottomNav && <BottomNav />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background app-surface">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background app-surface">
+          <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
             <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <ProfilePage />
           </div>
         </DrawerContent>
       </Drawer>
       <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background/98 app-surface">
-          <DrawerHeader className="px-5 pb-3 pt-2 text-left">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background/98 app-surface">
+          <DrawerHeader className="shrink-0 px-5 pb-3 pt-2 text-left">
             <DrawerTitle className="text-[17px] font-semibold tracking-tight">{t('notification.title')}</DrawerTitle>
           </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
             <NotificationListPage compact />
           </div>
         </DrawerContent>
