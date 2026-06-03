@@ -168,7 +168,7 @@ function PracticeTurnFeedback({
     <div className={cn(
       isChat
         ? 'rounded-lg bg-muted/65 px-3 py-2.5 text-foreground ring-1 ring-border/45'
-        : 'border-t border-border/45 bg-background/72 px-3 py-2 text-foreground backdrop-blur-xl',
+        : 'border-t border-border/45 bg-background/72 px-3 py-2 pb-safe text-foreground backdrop-blur-xl',
     )}>
       <div className="flex items-start gap-2">
         <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-muted/70')}>
