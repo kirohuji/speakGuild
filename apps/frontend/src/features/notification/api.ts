@@ -5,6 +5,7 @@ export interface NotificationItem {
   title: string;
   content: string;
   type: 'broadcast' | 'targeted';
+  imageUrl?: string;
   sentById: string;
   createdAt: string;
   updatedAt: string;

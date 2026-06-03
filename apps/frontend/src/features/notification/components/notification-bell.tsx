@@ -54,52 +54,54 @@ function NotificationItemRow({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative w-full rounded-xl px-4 py-3.5 text-left transition-all hover:bg-muted/60 active:scale-[0.99]',
+        'group relative w-full rounded-xl text-left transition-all hover:bg-muted/60 active:scale-[0.99]',
         !item.isRead && 'bg-primary/[0.03]'
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="relative mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-muted/80">
-          {!item.isRead ? (
-            <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/40" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
-            </span>
-          ) : null}
-          <Bell className={cn('h-4 w-4', item.isRead ? 'text-muted-foreground/50' : 'text-primary')} />
-        </div>
+      {!item.isRead && (
+        <span className="absolute right-3 top-3 z-10 flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/50" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+        </span>
+      )}
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <p
-              className={cn(
-                'text-sm leading-snug line-clamp-1',
-                !item.isRead ? 'font-semibold text-foreground' : 'text-muted-foreground'
-              )}
-            >
-              {item.title}
-            </p>
-            <span className="flex-shrink-0 text-[10px] text-muted-foreground/50">
-              {formatRelativeTime(item.createdAt)}
-            </span>
+      {/* 图片区 — 有图显示图片，无图显示占位，保证所有项高度一致 */}
+      <div className="relative aspect-[16/6] w-full overflow-hidden rounded-t-xl bg-muted/60">
+        {item.imageUrl ? (
+          <>
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          </>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Bell className="size-7 text-muted-foreground/30" />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
-            {item.content.replace(/[#*`>\[\]()!\-]/g, '').substring(0, 120)}
-          </p>
-          <div className="mt-2 flex items-center gap-2">
-            <Badge
-              variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
-              className="h-5 text-[10px] px-1.5 font-normal"
-            >
-              {item.type === 'broadcast' ? '系统广播' : '定向通知'}
-            </Badge>
-            {!item.isRead && (
-              <span className="text-[10px] font-medium text-primary">未读</span>
+        )}
+      </div>
+
+      {/* 文字内容 */}
+      <div className="px-4 pb-3.5 pt-3">
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className={cn(
+              'text-sm leading-snug line-clamp-1',
+              !item.isRead ? 'font-semibold text-foreground' : 'text-muted-foreground'
             )}
-          </div>
+          >
+            {item.title}
+          </p>
+          <span className="flex-shrink-0 text-[10px] text-muted-foreground/50">
+            {formatRelativeTime(item.createdAt)}
+          </span>
         </div>
-
-        <ArrowRight className="mt-2.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/30 transition-transform group-hover:translate-x-0.5" />
+        <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
+          {item.content.replace(/[#*`>\[\]()!\-]/g, '').substring(0, 120)}
+        </p>
       </div>
     </button>
   )

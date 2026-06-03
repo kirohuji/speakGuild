@@ -99,6 +99,7 @@ export class NotificationService {
         title: n.title,
         content: n.content,
         type: n.type,
+        imageUrl: (n as any).imageUrl ?? undefined,
         sentById: n.sentById,
         createdAt: n.createdAt,
         updatedAt: n.updatedAt,

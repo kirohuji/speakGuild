@@ -52,71 +52,65 @@ function NotificationCard({ item, onClick, formatRelativeTime, compact = false }
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative w-full text-left transition-all active:scale-[0.99]',
+        'group relative w-full overflow-hidden text-left transition-all active:scale-[0.99]',
         compact
-          ? 'rounded-lg px-3 py-3 hover:bg-muted/50'
-          : 'rounded-2xl border border-border/50 p-4 hover:border-primary/20 hover:shadow-sm',
+          ? 'rounded-lg hover:bg-muted/50'
+          : 'rounded-2xl border border-border/50 hover:border-primary/20 hover:shadow-sm',
         !item.isRead
           ? compact ? 'bg-primary/[0.06]' : 'bg-primary/[0.02] border-primary/10'
           : compact ? 'bg-muted/30' : 'bg-card'
       )}
     >
-      <div className="flex items-start gap-3">
-        {/* 图标区 */}
-        <div
-          className={cn(
-            'relative mt-0.5 flex flex-shrink-0 items-center justify-center',
-            compact ? 'h-9 w-9 rounded-md' : 'h-10 w-10 rounded-xl',
-            item.isRead ? 'bg-muted/60' : 'bg-primary/10'
-          )}
-        >
-          {!item.isRead && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/50" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
-            </span>
-          )}
-          <Bell
+      {!item.isRead && (
+        <span className="absolute right-3 top-3 z-10 flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/50" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+        </span>
+      )}
+
+      {/* 图片区 — 有图显示图片，无图显示占位，保证所有项高度一致 */}
+      <div className="relative aspect-[16/5] w-full overflow-hidden bg-muted/60">
+        {item.imageUrl ? (
+          <>
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          </>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Bell className="size-7 text-muted-foreground/30" />
+          </div>
+        )}
+      </div>
+
+      {/* 文字内容 */}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p
             className={cn(
-              'h-5 w-5',
-              item.isRead ? 'text-muted-foreground/40' : 'text-primary'
+              'text-sm leading-snug line-clamp-1',
+              !item.isRead ? 'font-semibold text-foreground' : 'text-muted-foreground'
             )}
-          />
+          >
+            {item.title}
+          </p>
+          {!compact && <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/30 transition-transform group-hover:translate-x-0.5" />}
         </div>
 
-        {/* 内容 */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <p
-              className={cn(
-                'text-sm leading-snug line-clamp-1',
-                !item.isRead ? 'font-semibold text-foreground' : 'text-muted-foreground'
-              )}
-            >
-              {item.title}
-            </p>
-            {!compact && <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/30 transition-transform group-hover:translate-x-0.5" />}
-          </div>
+        <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
+          {item.content.replace(/[#*`>\[\]()!\-]/g, '').substring(0, 120)}
+        </p>
 
-          <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
-            {item.content.replace(/[#*`>\[\]()!\-]/g, '').substring(0, 120)}
-          </p>
-
-          {/* 底部信息 */}
-          <div className="mt-2.5 flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50">
-              <Clock className="h-3 w-3" />
-              {formatRelativeTime(item.createdAt)}
-            </span>
-            {/* {item.type === 'broadcast' || item.type === 'targeted' ? (
-              <Badge
-                variant={item.type === 'broadcast' ? 'outline' : 'secondary'}
-                className={cn('h-5 text-[10px] px-1.5 font-normal', compact && 'rounded-full px-2')}
-              >
-                {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
-              </Badge>
-            ) : null} */}
-          </div>
+        {/* 底部信息 */}
+        <div className="mt-2.5 flex items-center gap-2.5">
+          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50">
+            <Clock className="h-3 w-3" />
+            {formatRelativeTime(item.createdAt)}
+          </span>
         </div>
       </div>
     </button>
