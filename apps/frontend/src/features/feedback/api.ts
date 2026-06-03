@@ -16,6 +16,11 @@ export function submitFeedback(data: { type: string; content: string; contact?: 
   return post<FeedbackResult>('/feedbacks', data)
 }
 
+/** 匿名反馈（无需登录），仅需邮箱 + 内容 */
+export function submitAnonymousFeedback(data: { email: string; content: string }) {
+  return post<{ id: string }>('/feedbacks/anonymous', data)
+}
+
 export function getMyFeedbacks(page = 1, pageSize = 20) {
   return get<{ items: FeedbackResult[]; total: number }>('/feedbacks/mine', { page, pageSize })
 }

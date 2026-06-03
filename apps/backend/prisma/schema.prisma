@@ -537,9 +537,9 @@ enum FeedbackStatus {
 
 model Feedback {
   id        String         @id @default(cuid())
-  userId    String
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String         @default("other")
   content   String         @db.Text
   contact   String?
   status    FeedbackStatus @default(pending)
