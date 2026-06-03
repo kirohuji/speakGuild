@@ -61,14 +61,11 @@ import i18n from '@/lib/i18n'
 import { getCurrentAvatar, uploadFileToCosAndComplete, setCurrentAvatar } from '@/features/file-assets/api'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
-import {
-  listLinkedAccounts, linkSocialAccount, unlinkAccount,
-  type LinkedAccount,
-} from '@/features/account/api'
+import { linkSocialAccount, unlinkAccount } from '@/features/account/api'
 import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/api'
-import { pointsApi, type PointsBalance } from '@/features/points/api'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 
 type Tab = 'overview' | 'records' | 'favorites' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member'
@@ -312,23 +309,16 @@ function MobileProfileHome({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { language, setLanguage } = usePreferencesStore()
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const userProfile = useProfileCacheStore((s) => s.profile)
+  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const pointsBalance = useProfileCacheStore((s) => s.pointsBalance)
+  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [pointsBalance, setPointsBalance] = useState(0)
 
   useEffect(() => {
-    Promise.allSettled([
-      getUserProfile(),
-      getCurrentAvatar(),
-      pointsApi.getBalance(),
-    ]).then(([upRes, avRes, ptsRes]) => {
-      if (upRes.status === 'fulfilled') setUserProfile(upRes.value)
-      if (avRes.status === 'fulfilled') setAvatarUrl(avRes.value?.url ?? null)
-      if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
-    })
-  }, [])
+    loadProfileHome()
+  }, [loadProfileHome])
 
   const themeLabel: Record<string, string> = { light: t('profile.themeLight'), dark: t('profile.themeDark'), system: t('profile.themeSystem') }
   const langLabel: Record<string, string> = { 'zh-CN': t('profile.langZh'), en: t('profile.langEn'), ja: t('profile.langJa') }
@@ -1885,14 +1875,20 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const navigate = useNavigate()
   const { session, refreshSession, signOut } = useAuth()
   const sessionUser = session?.user ?? null
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const profile = useProfileCacheStore((s) => s.profile)
+  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const linkedAccounts = useProfileCacheStore((s) => s.linkedAccounts)
+  const accountLoaded = useProfileCacheStore((s) => s.profileLoaded && s.avatarLoaded && s.linkedAccountsLoaded)
+  const loadAccount = useProfileCacheStore((s) => s.loadAccount)
+  const refreshLinkedAccounts = useProfileCacheStore((s) => s.refreshLinkedAccounts)
+  const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
+  const setCachedAvatarUrl = useProfileCacheStore((s) => s.setAvatarUrl)
+  const setCachedLinkedAccounts = useProfileCacheStore((s) => s.setLinkedAccounts)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false)
-  const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([])
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null)
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!accountLoaded)
   const [sendingVerification, setSendingVerification] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false)
@@ -1907,31 +1903,23 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
 
   const loadData = useCallback(async () => {
-    try {
-      const [p, avatar, accounts] = await Promise.all([
-        getUserProfile(),
-        getCurrentAvatar(),
-        listLinkedAccounts().catch(() => [] as LinkedAccount[]),
-      ])
-      setProfile(p)
-      setAvatarUrl(avatar?.url ?? null)
-      setLinkedAccounts(accounts)
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    if (!accountLoaded) setIsLoading(true)
+    await loadAccount()
+    setIsLoading(false)
+  }, [accountLoaded, loadAccount])
 
   useEffect(() => { loadData() }, [loadData])
+  useEffect(() => {
+    if (accountLoaded) setIsLoading(false)
+  }, [accountLoaded])
 
   useEffect(() => {
     const handleFocus = () => {
-      listLinkedAccounts().then(setLinkedAccounts).catch(() => {})
+      refreshLinkedAccounts()
     }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+  }, [refreshLinkedAccounts])
 
   const onPickAvatar = () => avatarInputRef.current?.click()
 
@@ -1946,7 +1934,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'avatar' })
       const current = await setCurrentAvatar(asset.id)
-      setAvatarUrl(current.url)
+      setCachedAvatarUrl(current.url)
     } catch {
       // ignore
     } finally {
@@ -1968,7 +1956,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     setUnlinkingId(accountId)
     try {
       await unlinkAccount(accountId)
-      setLinkedAccounts((prev) => prev.filter((a) => a.id !== accountId))
+      setCachedLinkedAccounts(linkedAccounts.filter((a) => a.id !== accountId))
     } catch {
       // ignore
     } finally {
@@ -1977,7 +1965,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   }
 
   const handleNicknameSaved = (name: string) => {
-    setProfile((prev) => prev ? { ...prev, name } : prev)
+    patchCachedProfile({ name })
   }
 
   const wechatBound = linkedAccounts.some((a) => a.provider === 'wechat')
@@ -2014,7 +2002,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     try {
       await verifyEmailOtp(email, verificationOtp)
       await refreshSession()
-      setProfile((prev) => prev ? { ...prev, emailVerified: true } : prev)
+      patchCachedProfile({ emailVerified: true })
       setVerificationDialogOpen(false)
     } catch (error: any) {
       setVerificationError(error?.response?.data?.message || error?.message || t('auth.invalidOtp'))
