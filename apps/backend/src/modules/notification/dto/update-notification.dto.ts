@@ -21,4 +21,8 @@ export class UpdateNotificationDto {
   @IsOptional()
   @IsBoolean()
   isSpecial?: boolean;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }

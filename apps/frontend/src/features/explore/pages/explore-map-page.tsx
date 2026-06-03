@@ -111,12 +111,13 @@ export function ExploreMapPage() {
             {/* Location list */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">{t('exploreMap.locations')}</p>
-              {selectedMap.locations.map((loc) => {
+              {selectedMap.locations.map((loc, idx) => {
                 const Icon = LOCATION_ICONS[loc.name] ?? MapPin
                 return (
                   <Link
                     key={loc.id}
                     to={`/explore/${loc.id}`}
+                    {...(idx === 0 ? { 'data-spotlight': 'first-unit' } : {})}
                     className={cn(
                       'flex items-center gap-3 rounded-lg border p-3 transition-colors',
                       loc.isPreview

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useInView } from 'motion/react'
 import {
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/providers/auth-provider'
+import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 
 /* ═══════════════════════════════════════════════════════════════
    数据
@@ -103,6 +104,7 @@ export function PortalPage() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const isLoggedIn = !!session
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">
@@ -482,7 +484,7 @@ export function PortalPage() {
               <button onClick={() => navigate('/system/privacy')} className="hover:text-foreground transition-colors">
                 隐私政策
               </button>
-              <button onClick={() => navigate('/feedback')} className="hover:text-foreground transition-colors">
+              <button onClick={() => setFeedbackOpen(true)} className="hover:text-foreground transition-colors">
                 意见反馈
               </button>
             </div>
@@ -495,6 +497,8 @@ export function PortalPage() {
           </p>
         </div>
       </footer>
+
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   )
 }

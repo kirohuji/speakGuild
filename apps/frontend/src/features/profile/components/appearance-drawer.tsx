@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
-  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX,
+  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft,
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Switch } from '@/components/ui/switch';
@@ -19,8 +19,36 @@ interface AppearanceDrawerProps {
 
 export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) {
   const { t } = useTranslation();
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px]">
+        <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
+          <button
+            type="button"
+            aria-label={t('common.back')}
+            onClick={() => onOpenChange(false)}
+            className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <DrawerTitle className="text-center text-base font-semibold leading-6">{t('profile.theme')}</DrawerTitle>
+        </DrawerHeader>
+
+        <ScrollArea className="flex-1 min-h-0 px-4 pb-8">
+          <AppearanceContent />
+        </ScrollArea>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+// ─── 外观主题内容（可独立用于 inline 页面） ───
+
+export function AppearanceContent() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
-  const { presets, activePreset, setActivePreset, loading: presetsLoading } = useThemePreset();
+  const { presets, activePreset, setActivePreset } = useThemePreset();
 
   const { bgmEnabled, bgmVolume, setBgmEnabled, setBgmVolume } = usePreferencesStore();
   const effectiveBgmVolume = bgmVolume ?? activePreset?.bgmVolume ?? 0.3;
@@ -40,116 +68,106 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px]">
-        <DrawerHeader className="shrink-0 pb-1">
-          <DrawerTitle className="text-base">{t('profile.theme')}</DrawerTitle>
-        </DrawerHeader>
+    <div className="space-y-4">
 
-        <ScrollArea className="flex-1 min-h-0 px-4 pb-8">
-          <div className="space-y-4">
+      {/* ═══ 1. 沉浸式主题套装 ═══ */}
+      <section>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('profile.immersiveTheme')}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {presets.map((preset) => (
+            <ThemePresetCard
+              key={preset.id}
+              name={preset.name}
+              isActive={activePreset?.id === preset.id}
+              onClick={() => handleSelectPreset(preset.id)}
+              lightBg={preset.lightBackground || undefined}
+              darkBg={preset.darkBackground || undefined}
+            />
+          ))}
+        </div>
+      </section>
 
-            {/* ═══ 1. 沉浸式主题套装 ═══ */}
-            <section>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('profile.immersiveTheme')}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {presets.map((preset) => (
-                  <ThemePresetCard
-                    key={preset.id}
-                    name={preset.name}
-                    isActive={activePreset?.id === preset.id}
-                    onClick={() => handleSelectPreset(preset.id)}
-                    lightBg={preset.lightBackground || undefined}
-                    darkBg={preset.darkBackground || undefined}
-                  />
-                ))}
+      {/* ═══ 2. Light / Dark 模式 ═══ */}
+      <section>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('profile.displayMode')}
+        </p>
+        <div className="overflow-hidden rounded-xl bg-muted/30">
+          {[
+            { value: 'light', icon: Sun, label: modeLabel.light },
+            { value: 'dark', icon: Moon, label: modeLabel.dark },
+            { value: 'system', icon: Monitor, label: modeLabel.system },
+          ].map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setTheme(item.value)}
+              className={cn(
+                'flex w-full items-center gap-2.5 border-b border-border/40 px-4 py-2.5 text-left text-sm transition-colors active:bg-muted/50 last:border-b-0',
+                (theme || 'system') === item.value && 'font-semibold text-foreground',
+              )}
+            >
+              <div className={cn(
+                'flex size-7 items-center justify-center rounded-lg',
+                (theme || 'system') === item.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground',
+              )}>
+                <item.icon className="size-3.5" />
               </div>
-            </section>
+              <span className="flex-1">{item.label}</span>
+              {(theme || 'system') === item.value && (
+                <CheckCircle2 className="size-4 text-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
 
-            {/* ═══ 2. Light / Dark 模式 ═══ */}
-            <section>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('profile.displayMode')}
-              </p>
-              <div className="overflow-hidden rounded-xl bg-muted/30">
-                {[
-                  { value: 'light', icon: Sun, label: modeLabel.light },
-                  { value: 'dark', icon: Moon, label: modeLabel.dark },
-                  { value: 'system', icon: Monitor, label: modeLabel.system },
-                ].map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setTheme(item.value)}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 border-b border-border/40 px-4 py-2.5 text-left text-sm transition-colors active:bg-muted/50 last:border-b-0',
-                      (theme || 'system') === item.value && 'font-semibold text-foreground',
-                    )}
-                  >
-                    <div className={cn(
-                      'flex size-7 items-center justify-center rounded-lg',
-                      (theme || 'system') === item.value
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    )}>
-                      <item.icon className="size-3.5" />
-                    </div>
-                    <span className="flex-1">{item.label}</span>
-                    {(theme || 'system') === item.value && (
-                      <CheckCircle2 className="size-4 text-primary" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* ═══ 3. 背景音效 ═══ */}
-            <section>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('profile.bgm')}
-              </p>
-              <div className="space-y-3 overflow-hidden rounded-xl bg-muted/30 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {bgmEnabled ? (
-                      <Volume2 className="size-4 text-foreground" />
-                    ) : (
-                      <VolumeX className="size-4 text-muted-foreground" />
-                    )}
-                    <span className="text-sm">{bgmEnabled ? t('profile.bgmOn') : t('profile.bgmOff')}</span>
-                  </div>
-                  <Switch
-                    checked={bgmEnabled}
-                    onCheckedChange={setBgmEnabled}
-                    disabled={!activePreset?.bgmUrl}
-                  />
-                </div>
-
-                {bgmEnabled && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <Volume2 className="size-4 shrink-0 text-muted-foreground" />
-                    <Slider
-                      value={[effectiveBgmVolume]}
-                      onValueChange={([v]) => setBgmVolume(v)}
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      className="flex-1"
-                    />
-                    <span className="w-10 text-right text-sm tabular-nums text-muted-foreground">
-                      {Math.round(effectiveBgmVolume * 100)}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            </section>
-
+      {/* ═══ 3. 背景音效 ═══ */}
+      <section>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('profile.bgm')}
+        </p>
+        <div className="space-y-3 overflow-hidden rounded-xl bg-muted/30 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {bgmEnabled ? (
+                <Volume2 className="size-4 text-foreground" />
+              ) : (
+                <VolumeX className="size-4 text-muted-foreground" />
+              )}
+              <span className="text-sm">{bgmEnabled ? t('profile.bgmOn') : t('profile.bgmOff')}</span>
+            </div>
+            <Switch
+              checked={bgmEnabled}
+              onCheckedChange={setBgmEnabled}
+              disabled={!activePreset?.bgmUrl}
+            />
           </div>
-        </ScrollArea>
-      </DrawerContent>
-    </Drawer>
+
+          {bgmEnabled && (
+            <div className="flex items-center gap-3 pt-1">
+              <Volume2 className="size-4 shrink-0 text-muted-foreground" />
+              <Slider
+                value={[effectiveBgmVolume]}
+                onValueChange={([v]) => setBgmVolume(v)}
+                min={0}
+                max={1}
+                step={0.05}
+                className="flex-1"
+              />
+              <span className="w-10 text-right text-sm tabular-nums text-muted-foreground">
+                {Math.round(effectiveBgmVolume * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+      </section>
+
+    </div>
   );
 }
 

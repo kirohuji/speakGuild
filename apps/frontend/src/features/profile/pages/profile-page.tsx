@@ -3,6 +3,7 @@ import { ActivityCalendar } from 'react-activity-calendar'
 import 'react-activity-calendar/tooltips.css'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, ClipboardList, Star, BookMarked, Settings, User, Trash2,
@@ -47,7 +48,7 @@ import { getFavorites, type FavoriteItem } from '@/features/assets/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWordsStore, type WordEntry } from '@/stores/assets.store'
-import { AppearanceDrawer } from '@/features/profile/components/appearance-drawer'
+import { AppearanceContent } from '@/features/profile/components/appearance-drawer'
 import { useConfigStore } from '@/stores/config.store'
 import { useLayoutStore } from '@/stores/layout.store'
 import {
@@ -61,17 +62,14 @@ import i18n from '@/lib/i18n'
 import { getCurrentAvatar, uploadFileToCosAndComplete, setCurrentAvatar } from '@/features/file-assets/api'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
-import {
-  listLinkedAccounts, linkSocialAccount, unlinkAccount,
-  type LinkedAccount,
-} from '@/features/account/api'
+import { linkSocialAccount, unlinkAccount, type LinkedAccount } from '@/features/account/api'
 import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/api'
-import { pointsApi, type PointsBalance } from '@/features/points/api'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 
 type Tab = 'overview' | 'records' | 'favorites' | 'words' | 'account' | 'settings'
-type MobileView = Tab | 'home'
+type MobileView = Tab | 'home' | 'appearance' | 'member'
 
 const tabs: { key: Tab; icon: React.ElementType }[] = [
   { key: 'overview', icon: LayoutDashboard },
@@ -82,16 +80,22 @@ const tabs: { key: Tab; icon: React.ElementType }[] = [
   { key: 'settings', icon: Settings },
 ]
 
-const mobileTitles: Record<Tab, string> = {
+const mobileTitles: Record<string, string> = {
   overview: 'profile.overview',
   records: 'profile.records',
   favorites: 'profile.favorites',
   words: 'profile.words',
   account: 'profile.account',
   settings: 'profile.settings',
+  appearance: 'profile.theme',
+  member: 'member.title',
 }
 
-export function ProfilePage() {
+interface ProfilePageProps {
+  onFeedbackOpen?: () => void
+}
+
+export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -116,34 +120,27 @@ export function ProfilePage() {
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
 
   return (
-    <div>
+    <div className={cn(isMobile && 'h-full min-h-0')}>
       {isMobile ? (
-        <div>
+        <div className="h-full min-h-0">
           {mobileView === 'home' ? (
-            <MobileProfileHome onNavigate={setMobileView} />
+            <div>
+              <MobileProfileHome onNavigate={setMobileView} onFeedbackOpen={onFeedbackOpen} />
+            </div>
           ) : (
-            <div className="space-y-4">
-              {/* iOS 风格返回栏 */}
-              <div className="relative flex items-center justify-center">
-                <button
-                  type="button"
-                  aria-label="返回"
-                  onClick={() => setMobileView('home')}
-                  className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <h1 className="text-base font-semibold">
-                  {t(mobileTitles[mobileView as Tab])}
-                </h1>
-              </div>
+            <MobileProfileDetail
+              title={t(mobileTitles[mobileView])}
+              onBack={() => setMobileView('home')}
+            >
               {mobileView === 'overview' && <OverviewTab />}
               {mobileView === 'records' && <RecordsTab />}
               {mobileView === 'favorites' && <FavoritesTab />}
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
-              {mobileView === 'settings' && <MobileSettingsView />}
-            </div>
+              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} />}
+              {mobileView === 'appearance' && <AppearanceContent />}
+              {mobileView === 'member' && <MemberPage compact />}
+            </MobileProfileDetail>
           )}
         </div>
       ) : (
@@ -196,6 +193,41 @@ export function ProfilePage() {
         </div>
       )}
     </div>
+  )
+}
+
+function MobileProfileDetail({
+  title,
+  onBack,
+  children,
+}: {
+  title: string
+  onBack: () => void
+  children: React.ReactNode
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <section className="flex h-full min-h-0 flex-col">
+      <header className="relative flex shrink-0 items-center justify-center pb-2">
+        <button
+          type="button"
+          aria-label={t('common.back')}
+          onClick={onBack}
+          className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h1 className="max-w-[70%] truncate text-base font-semibold">
+          {title}
+        </h1>
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
+        <div className="mx-auto max-w-2xl space-y-4">
+          {children}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -268,30 +300,26 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
 }
 
 // ─── 手机端：个人中心首页 ──────────────────────────────────────────────────
-function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => void }) {
+function MobileProfileHome({
+  onNavigate,
+  onFeedbackOpen,
+}: {
+  onNavigate: (view: MobileView) => void
+  onFeedbackOpen?: () => void
+}) {
   const { t } = useTranslation()
-  const { theme, setTheme } = useTheme()
+  const { theme } = useTheme()
   const { language, setLanguage } = usePreferencesStore()
-  const navigate = useNavigate()
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [showThemeDialog, setShowThemeDialog] = useState(false)
+  const userProfile = useProfileCacheStore((s) => s.profile)
+  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const pointsBalance = useProfileCacheStore((s) => s.pointsBalance)
+  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
-  const [showMemberDrawer, setShowMemberDrawer] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [pointsBalance, setPointsBalance] = useState(0)
 
   useEffect(() => {
-    Promise.allSettled([
-      getUserProfile(),
-      getCurrentAvatar(),
-      pointsApi.getBalance(),
-    ]).then(([upRes, avRes, ptsRes]) => {
-      if (upRes.status === 'fulfilled') setUserProfile(upRes.value)
-      if (avRes.status === 'fulfilled') setAvatarUrl(avRes.value?.url ?? null)
-      if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
-    })
-  }, [])
+    loadProfileHome()
+  }, [loadProfileHome])
 
   const themeLabel: Record<string, string> = { light: t('profile.themeLight'), dark: t('profile.themeDark'), system: t('profile.themeSystem') }
   const langLabel: Record<string, string> = { 'zh-CN': t('profile.langZh'), en: t('profile.langEn'), ja: t('profile.langJa') }
@@ -302,10 +330,6 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
   }
 
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
-
-  const onTapAvatar = () => {
-    onNavigate('account')
-  }
 
   return (
     <div className="space-y-3">
@@ -319,7 +343,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
           {/* 头像 */}
           <button
             type="button"
-            onClick={onTapAvatar}
+            onClick={() => onNavigate('account')}
             className="group relative shrink-0"
           >
             <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-primary/15 ring-2 ring-background ring-offset-1 ring-offset-primary/5">
@@ -359,8 +383,8 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
       {/* 主导航 */}
       <IosSection>
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
-        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => setShowMemberDrawer(true)} />
-        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={() => setShowFeedbackDrawer(true)} />
+        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
+        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
       </IosSection>
 
       {/* 外观与语言（保留在“我的”首页，点击弹窗切换） */}
@@ -368,7 +392,7 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
         <IosRow
           label={t('profile.theme')}
           value={themeLabel[theme || 'system'] ?? t('profile.themeSystem')}
-          onTap={() => setShowThemeDialog(true)}
+          onTap={() => onNavigate('appearance')}
         />
         <IosRow
           label={t('profile.language')}
@@ -377,8 +401,6 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
           onTap={() => setShowLanguageDialog(true)}
         />
       </IosSection>
-
-      <AppearanceDrawer open={showThemeDialog} onOpenChange={setShowThemeDialog} />
 
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
         <DrawerContent className="rounded-t-3xl">
@@ -411,25 +433,14 @@ function MobileProfileHome({ onNavigate }: { onNavigate: (view: MobileView) => v
         </DrawerContent>
       </Drawer>
 
-      <Drawer open={showMemberDrawer} onOpenChange={setShowMemberDrawer}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="sr-only">{t('nav.member')}</DrawerTitle>
-          </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <MemberPage compact />
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />
+      {!onFeedbackOpen && <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />}
 
     </div>
   )
 }
 
 // ─── 手机端：设置页 ────────────────────────────────────────────────────────
-function MobileSettingsView() {
+function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { signOut } = useAuth()
@@ -1803,6 +1814,7 @@ function NicknameEditDialog({
 
   const handleSave = async () => {
     if (!name.trim() || name.trim() === currentName) {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
       onOpenChange(false)
       return
     }
@@ -1810,6 +1822,7 @@ function NicknameEditDialog({
     try {
       await updateUserProfile({ name: name.trim() })
       onSaved(name.trim())
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
       onOpenChange(false)
     } catch {
       // silent
@@ -1819,8 +1832,19 @@ function NicknameEditDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur()
+        }
+        onOpenChange(nextOpen)
+      }}
+    >
+      <DialogContent
+        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t('profile.editNicknameTitle')}</DialogTitle>
           <DialogDescription>{t('profile.nicknameDesc')}</DialogDescription>
@@ -1831,14 +1855,13 @@ function NicknameEditDialog({
             onChange={(e) => setName(e.target.value)}
             placeholder={t('profile.nicknamePlaceholder')}
             maxLength={20}
-            autoFocus
           />
           <p className="text-right text-xs text-muted-foreground">{name.length}/20</p>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving || !name.trim()}>
+            {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t('common.save')}
           </Button>
         </DialogFooter>
@@ -1853,14 +1876,20 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const navigate = useNavigate()
   const { session, refreshSession, signOut } = useAuth()
   const sessionUser = session?.user ?? null
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const profile = useProfileCacheStore((s) => s.profile)
+  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const linkedAccounts = useProfileCacheStore((s) => s.linkedAccounts)
+  const accountLoaded = useProfileCacheStore((s) => s.profileLoaded && s.avatarLoaded && s.linkedAccountsLoaded)
+  const loadAccount = useProfileCacheStore((s) => s.loadAccount)
+  const refreshLinkedAccounts = useProfileCacheStore((s) => s.refreshLinkedAccounts)
+  const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
+  const setCachedAvatarUrl = useProfileCacheStore((s) => s.setAvatarUrl)
+  const setCachedLinkedAccounts = useProfileCacheStore((s) => s.setLinkedAccounts)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false)
-  const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([])
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null)
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!accountLoaded)
   const [sendingVerification, setSendingVerification] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false)
@@ -1875,31 +1904,23 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
 
   const loadData = useCallback(async () => {
-    try {
-      const [p, avatar, accounts] = await Promise.all([
-        getUserProfile(),
-        getCurrentAvatar(),
-        listLinkedAccounts().catch(() => [] as LinkedAccount[]),
-      ])
-      setProfile(p)
-      setAvatarUrl(avatar?.url ?? null)
-      setLinkedAccounts(accounts)
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    if (!accountLoaded) setIsLoading(true)
+    await loadAccount()
+    setIsLoading(false)
+  }, [accountLoaded, loadAccount])
 
   useEffect(() => { loadData() }, [loadData])
+  useEffect(() => {
+    if (accountLoaded) setIsLoading(false)
+  }, [accountLoaded])
 
   useEffect(() => {
     const handleFocus = () => {
-      listLinkedAccounts().then(setLinkedAccounts).catch(() => {})
+      refreshLinkedAccounts()
     }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+  }, [refreshLinkedAccounts])
 
   const onPickAvatar = () => avatarInputRef.current?.click()
 
@@ -1907,16 +1928,25 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     const file = event.target.files?.[0]
     if (!file) return
     event.currentTarget.value = ''
-    if (!file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) return
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('profile.avatarHint'))
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('profile.avatarHint'))
+      return
+    }
 
     setAvatarUploading(true)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'avatar' })
       const current = await setCurrentAvatar(asset.id)
-      setAvatarUrl(current.url)
-    } catch {
-      // ignore
+      if (!current?.url) throw new Error(t('profile.auth.loadFailed'))
+      setCachedAvatarUrl(current.url)
+      await loadAccount(true)
+      toast.success(t('profile.avatarUpdated', { defaultValue: '头像已更新' }))
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || t('profile.auth.loadFailed'))
     } finally {
       setAvatarUploading(false)
     }
@@ -1936,7 +1966,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     setUnlinkingId(account.id)
     try {
       await unlinkAccount(account)
-      setLinkedAccounts((prev) => prev.filter((a) => a.id !== account.id))
+      setCachedLinkedAccounts(linkedAccounts.filter((a) => a.id !== account.id))
     } catch {
       // ignore
     } finally {
@@ -1945,7 +1975,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   }
 
   const handleNicknameSaved = (name: string) => {
-    setProfile((prev) => prev ? { ...prev, name } : prev)
+    patchCachedProfile({ name })
   }
 
   const wechatBound = linkedAccounts.some((a) => a.providerId === 'wechat')
@@ -1982,7 +2012,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     try {
       await verifyEmailOtp(email, verificationOtp)
       await refreshSession()
-      setProfile((prev) => prev ? { ...prev, emailVerified: true } : prev)
+      patchCachedProfile({ emailVerified: true })
       setVerificationDialogOpen(false)
     } catch (error: any) {
       setVerificationError(error?.response?.data?.message || error?.message || t('auth.invalidOtp'))
@@ -2049,18 +2079,35 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
       {/* 头像 */}
       <div className="rounded-xl bg-muted/30 p-4">
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.avatar')}</p>
-        <div className="flex items-center gap-4">
+        <div
+          className={cn(
+            'flex items-center gap-4',
+            avatarUploading ? 'cursor-default opacity-80' : 'cursor-pointer',
+          )}
+          role="button"
+          tabIndex={avatarUploading ? -1 : 0}
+          aria-label={t('profile.changeAvatar')}
+          onClick={avatarUploading ? undefined : onPickAvatar}
+          onKeyDown={(event) => {
+            if (avatarUploading) return
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onPickAvatar()
+            }
+          }}
+        >
           <input
             ref={avatarInputRef}
             type="file"
             accept="image/*"
             className="hidden"
+            disabled={avatarUploading}
             onChange={onAvatarFileChange}
           />
           <button
             type="button"
             disabled={avatarUploading}
-            onClick={onPickAvatar}
+            tabIndex={-1}
             className="group relative flex-shrink-0"
           >
             <Avatar className="size-16 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50">

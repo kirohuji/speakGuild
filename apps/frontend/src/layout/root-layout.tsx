@@ -20,6 +20,7 @@ export function RootLayout() {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
+  const bottomNavVisible = useLayoutStore((s) => s.bottomNavVisible)
   const isMobile = useIsMobile()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isHomePage = pathname === '/'
@@ -28,7 +29,7 @@ export function RootLayout() {
     pathname.startsWith('/practice/session/') ||
     pathname.startsWith('/script/')
   const isLoggedIn = !!session
-  const showBottomNav = !immersiveMode && !isLearningSubPage
+  const showBottomNav = bottomNavVisible && !immersiveMode && !isLearningSubPage
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
@@ -65,28 +66,28 @@ export function RootLayout() {
                 ? isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))]' : 'pt-14 pb-0'
                 : isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-0' : 'pt-14 pb-0'
       }`)}>
-        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'px-0 py-3' : 'px-4 py-6')}>
+        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0 py-3' : 'px-4 py-6')}>
           <Outlet />
         </div>
       </main>
       {!isAuthPage && !isMobile && !immersiveMode && <Footer />}
       {!isAuthPage && showBottomNav && <BottomNav />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background app-surface">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background app-surface">
+          <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
             <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <ProfilePage />
           </div>
         </DrawerContent>
       </Drawer>
       <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background/98 app-surface">
-          <DrawerHeader className="px-5 pb-3 pt-2 text-left">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background/98 app-surface">
+          <DrawerHeader className="shrink-0 px-5 pb-3 pt-2 text-left">
             <DrawerTitle className="text-[17px] font-semibold tracking-tight">{t('notification.title')}</DrawerTitle>
           </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
             <NotificationListPage compact />
           </div>
         </DrawerContent>

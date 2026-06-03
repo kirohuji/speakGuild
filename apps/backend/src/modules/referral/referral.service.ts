@@ -63,16 +63,16 @@ export class ReferralService {
       },
     })
 
-    await this.prisma.referralCode.update({
-      where: { id: referrerCode.id },
-      data: { totalInvited: { increment: 1 }, totalReward: { increment: 7 } },
-    })
-
     // 读取系统配置：邀请人奖励天数
     const config = await this.prisma.systemConfig.findUnique({
       where: { key: 'invite_trial_days' },
     });
-    const trialDays = parseInt(config?.value || '7', 10);
+    const trialDays = parseInt(config?.value || '3', 10);
+
+    await this.prisma.referralCode.update({
+      where: { id: referrerCode.id },
+      data: { totalInvited: { increment: 1 }, totalReward: { increment: trialDays } },
+    });
 
     // 仅邀请人获得会员天数
     await this.grantTrialDays(referrerCode.userId, trialDays)

@@ -1,62 +1,89 @@
-# AI 额度系统 & 邀请码增强 — 设计方案
+# 漫语町 — 会员体系 & AI 额度 & 邀请码 设计方案（终版）
 
-> 日期：2026-05-30  
-> 状态：待实施
-
----
-
-## 一、背景
-
-### 1.1 问题
-
-1. **AI 纠错无额度控制**：`EnglishPracticeAiController` 和 `PracticeAiController` 的所有 AI 端点均未做调用次数限制，任何登录用户可无限调用 DeepSeek API，成本不可控。
-2. **邀请奖励太弱**：当前邀请码双方各得 **3 天**会员，吸引力不足。应提升为 **7 天**标准会员 + 额外积分，作为新用户激活抓手。
-
-### 1.2 AI 调用成本分析
-
-**DeepSeek 定价**（`deepseek-chat` / V3）：输入 ¥1/百万 tokens，输出 ¥2/百万 tokens。
-
-#### 按端点逐项计算
-
-| 端点 | 估算输入 | 估算输出 | 单次成本 | 计算过程 |
-|------|:--:|:--:|:--:|------|
-| `feedback` (纠错) | ~1,200 | ~1,500 (max 2000) | **¥0.0042** | (1200/1M×1)+(1500/1M×2) |
-| `upgrade` (升级) | ~800 | ~1,200 (max 1500) | **¥0.0032** | (800/1M×1)+(1200/1M×2) |
-| `dialogue-turn` (对话判定) | ~600 | ~400 | **¥0.0014** | (600/1M×1)+(400/1M×2) |
-| `dialogue-summary` (汇总) | ~1,500 | ~1,000 | **¥0.0035** | (1500/1M×1)+(1000/1M×2) |
-| `analyze` (会话分析) | ~2,000 | ~2,000 | **¥0.0060** | (2000/1M×1)+(2000/1M×2) |
-
-> **结论：约 0.4 分钱/次纠错。DeepSeek 是目前性价比最高的 LLM，成本极低。**
-
-#### 按配额估算月成本
-
-| 场景 | 免费用户 (5次/天) | 会员 (50次/天) |
-|------|:--:|:--:|
-| 100 人 | ¥6.3/月 | ¥63/月 |
-| 500 人 | ¥31.5/月 | ¥315/月 |
-| 1,000 人 | ¥63/月 | ¥630/月 |
-| 10,000 人 | ¥630/月 | ¥6,300/月 |
-
-> 500 会员 × ¥20/月 = ¥10,000 收入，AI 成本仅 ¥315，**毛利 ¥9,685（97%）**。
-> 即使 1 万日活全付费，月 AI 成本也仅 ¥6,300。
+> 日期：2026-06-03  
+> 状态：已更新  
+> 定价：**¥20/月 | ¥199/年（iOS only，Apple 15% 抽成后到手 ¥17/月）**  
+> 🎯 第一阶段目标：**100 付费用户，MRR ¥1,700/月**
 
 ---
 
-## 二、AI 额度系统设计
-
-### 2.1 核心思路
-
-**每日配额制 + 会员梯度 + 调用前扣减**
+## 一、目标：100 付费用户
 
 ```
-用户请求 → 查会员等级 → 查今日用量 → 配额足够? 
-  ├─ 是 → 扣减1次 → 调用 AI
-  └─ 否 → 返回 403 + 引导升级文案
+当前：0 → 内容上线 + ASO → 6个月 → 100 付费用户
+                                    ↓
+                          MRR ¥1,700/月（到手）
+                          年收入 ~¥20,000
+                          AI成本 ~¥100/月（可忽略）
 ```
 
-### 2.2 数据模型
+| 阶段 | 时间 | 付费用户 | 月到手 |
+|------|:--:|:--:|:--:|
+| 冷启动 | 第 1-2 月 | 5-15 | ¥85-255 |
+| 增长 | 第 3-4 月 | 30-50 | ¥510-850 |
+| 初步验证 | 第 5-6 月 | 60-80 | ¥1,020-1,360 |
+| 🎯 **达标** | **第 6-8 月** | **100** | **¥1,700** |
 
-新增 `AiUsageDaily` 表，按 `(userId, date)` 唯一约束：
+> 100 人不是终点，是验证「产品有人愿意付费」的里程碑。之后靠内容驱动 + 邀请裂变滚雪球。
+
+---
+
+## 二、会员体系一览
+
+### 两档，简单清晰
+
+| | 🆓 免费 | ⭐ 会员 ¥20/月 |
+|---|:--:|:--:|
+| AI 纠错 | 5次/天 | **50次/天** |
+| AI 对话判定 | 5次/天 | 50次/天 |
+| 额度耗尽后 | 积分兑换（10分/次） | — |
+| 学习计划单元 | 寝室入住等基础 | **全部解锁** |
+| 表达库容量 | 20条 | 无限 |
+| 输出等级追踪 | 基础 | 完整报告 |
+| 邀请好友 | +3天+100积分 | +3天+100积分 |
+| 被邀请奖励 | +50积分 | +50积分 |
+| 前100名注册 | **+3天免费试用** | **+3天免费试用** |
+
+---
+
+## 三、收入模型（iOS only，Apple 小企业计划 15% 抽成）
+
+### 单用户到手
+
+| | 月付 | 年付 |
+|---|:--:|:--:|
+| 用户支付 | ¥20 | ¥199 |
+| Apple 抽成 15% | -¥3.00 | -¥29.85 |
+| **到手** | **¥17.00** | **¥169.15** |
+
+### 100 付费用户 = ¥1,700/月
+
+```
+月到手：100 × ¥17 = ¥1,700
+年付占比 30%：30 × ¥169.15 / 12 ≈ ¥423
+实际月到手：70 × ¥17 + ¥423 ≈ ¥1,613
+AI 成本：100 × 50次 × 30天 × ¥0.004 × 20%使用率 = ¥120
+服务器：~¥300
+─────────────
+月净利润：~¥1,200
+```
+
+---
+
+## 四、AI 额度系统
+
+### 4.1 核心流程
+
+```
+用户请求 AI 纠错
+  → 查会员等级
+    → 会员：直接放行（50次/天足够，不做扣减）
+    → 免费：查今日用量
+      → 未满 5 次 → 扣减 → 调用 AI
+      → 已满 5 次 → 返回提示：「今日额度用完，10积分换1次，或 ¥20 开通会员无限畅练」
+```
+
+### 4.2 数据模型
 
 ```prisma
 model AiUsageDaily {
@@ -65,209 +92,179 @@ model AiUsageDaily {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date     DateTime @db.Date
 
-  feedback    Int  @default(0)   // 纠错反馈次数
-  upgrade     Int  @default(0)   // 表达升级次数
-  dialogue    Int  @default(0)   // 对话判定次数
-  summary     Int  @default(0)   // 汇总/分析次数
+  feedback    Int  @default(0)
+  dialogue    Int  @default(0)
+  summary     Int  @default(0)
 
   @@unique([userId, date])
-  @@index([userId])
   @@map("ai_usage_daily")
 }
 ```
 
-### 2.3 配额配置
+### 4.3 配额配置
 
-| 会员等级 | 纠错 feedback | 升级 upgrade | 对话 dialogue | 汇总 summary |
-|----------|:------------:|:------------:|:------------:|:------------:|
-| 🆓 free | **5 次/天** | 3 次/天 | 5 次/天 | 1 次/天 |
-| ⭐ member | **50 次/天** | 20 次/天 | 50 次/天 | 10 次/天 |
+| | 纠错 | 对话判定 | 汇总分析 |
+|---|:--:|:--:|:--:|
+| 免费 | 5/天 | 5/天 | 1/天 |
+| 会员 | ∞ (不检查) | ∞ | ∞ |
 
-- 仅两个等级：免费 vs 会员，简单清晰
-- 免费 5 次/天：完整体验闭环，用完想继续 → 付费或积分兑换
-- 会员 50 次/天：认真练习 1 小时仅消耗 30%，无受限感
-- 每日 00:00 UTC+8 自动重置（按 `date` 字段天然分区）
-
-### 2.4 免费额度耗尽后：积分兑换
-
-免费用户当日额度用完后，可通过**积分兑换**继续使用 AI：
-
-| 兑换项 | 消耗积分 | 获得 |
-|--------|:--:|------|
-| +1 次纠错 | **10 积分** | 当日追加 1 次 feedback |
-| +1 次升级 | 10 积分 | 当日追加 1 次 upgrade |
-
-- 积分来源：每日签到 10 分 + 连续签到额外奖励（第 2 天 +1，第 3 天 +2，封顶 +5）
-- 邀请好友：邀请人 +100 分，被邀请人 +200 分
-- 成就奖励：解锁成就获得积分
-- 兑换接口：`POST /ai-quota/exchange` `{ type: 'feedback' }` → 扣 10 积分 + 追加 1 次
-- 会员不受此限制（50 次/天已远超实际需求）
-
-### 2.5 废弃：优惠券系统
-
-原有 `Coupon` 模块在会员定价 ¥12.9 的低价策略下不再需要：
-- 低价本身已降低决策门槛，优惠券的必要性大大下降
-- 减少系统复杂度（Coupon 表、CRUD、管理后台、订单关联）
-- 种子数据中的 `NEWUSER20`、`WELCOME10`、`FREETRIAL7` 不再维护
-- 用「积分兑换」替代优惠券的促活功能
-
-> 后续清理：`prisma/schema.prisma` 中 `Coupon` 模型及相关关联可标记 `@deprecated`，不急于删除以保证向后兼容。
-
-### 2.6 新增文件
+### 4.4 新增后端文件
 
 ```
 apps/backend/src/common/ai-quota/
-├── ai-quota.module.ts        # 全局模块，exports AiQuotaService
-├── ai-quota.service.ts       # 核心逻辑：checkAndDeduct() + exchangeByPoints()
-└── ai-quota.controller.ts    # GET /ai-quota/status + POST /ai-quota/exchange
+├── ai-quota.module.ts        # 全局模块
+├── ai-quota.service.ts       # checkAndDeduct() + exchangeByPoints()
+└── ai-quota.controller.ts    # GET /ai-quota/status  POST /ai-quota/exchange
 ```
 
-### 2.7 集成方式（最小侵入）
-
-在每个 AI Controller 方法前加一行配额检查：
-
-```typescript
-// 修改前
-@Post('feedback')
-async streamFeedback(@Body() dto: EnglishFeedbackDto, @Res() res: Response) {
-  await this.service.streamFeedback(dto, res);
-}
-
-// 修改后
-@Post('feedback')
-async streamFeedback(
-  @Req() req: Request,
-  @Body() dto: EnglishFeedbackDto,
-  @Res() res: Response,
-) {
-  const session = await requireAuthSession(req);
-  const check = await this.quotaService.checkAndDeduct(session.user.id, 'feedback');
-  if (!check.allowed) {
-    return res.status(403).json({
-      code: 403,
-      message: check.message,  // 例："今日纠错额度已用完（10/10），可用 50 积分兑换 5 次"
-      data: { remaining: 0, canExchange: true, exchangeCost: 50 },
-    });
-  }
-  await this.service.streamFeedback(dto, res);
-}
-```
-
-### 2.8 涉及修改的文件
-
-| 文件 | 修改内容 |
-|------|---------|
-| `prisma/schema.prisma` | 新增 `AiUsageDaily` 模型 |
-| `src/common/ai-quota/ai-quota.module.ts` | 新建全局模块 |
-| `src/common/ai-quota/ai-quota.service.ts` | 配额检查+扣减 + 积分兑换 |
-| `src/common/ai-quota/ai-quota.controller.ts` | GET status + POST exchange |
-| `src/modules/practice-ai/english-practice-ai.controller.ts` | 4 个端点加配额检查 |
-| `src/modules/practice-ai/practice-ai.controller.ts` | 3 个端点加配额检查 |
-| `src/modules/practice-ai/practice-ai.module.ts` | 导入 AiQuotaModule |
+> 仅在免费用户的端点前做检查。会员不写入 `AiUsageDaily`，减少 DB 开销。
 
 ---
 
-## 三、邀请码增强
+## 五、积分系统
 
-### 3.1 改动内容
+### 5.1 定位
 
-**将邀请奖励从 3 天 → 7 天标准会员，并增加积分奖励。**
+积分的本质是**留存工具**，不是折扣工具。
 
-| 角色 | 原奖励 | 新奖励 |
-|------|--------|--------|
-| 邀请人 | +3 天会员 | **+7 天会员 + 100 积分** |
-| 被邀请人 | +3 天会员 | **+7 天会员 + 200 积分** |
-
-### 3.2 修改位置
-
-仅需修改 `apps/backend/src/modules/referral/referral.service.ts` 中的 `applyReferral()` 方法：
-
-```typescript
-// 改动前
-await this.grantTrialDays(referrerCode.userId, 3);
-await this.grantTrialDays(referredUserId, 3);
-
-// 改动后
-await this.grantTrialDays(referrerCode.userId, 7);
-await this.grantTrialDays(referredUserId, 7);
-
-// 🆕 新增加积分奖励
-await this.grantPoints(referrerCode.userId, 100, 'invite_reward', '邀请好友注册奖励');
-await this.grantPoints(referredUserId, 200, 'invited_bonus', '通过邀请码注册新人礼包');
+```
+签到 → 攒积分 → 到期没积分 → 充会员
+                       ↓ 有积分
+                   换一次 AI 纠错 → 上头 → 明天还来签到
+                                          ↓ 养成习惯
+                                        充会员
 ```
 
-### 3.3 涉及修改的文件
+### 5.2 积分来源
 
-| 文件 | 修改内容 |
-|------|---------|
-| `src/modules/referral/referral.service.ts` | 3→7天，新增积分发放 |
+| 行为 | 积分 |
+|------|:--:|
+| 每日签到 | 10 分 |
+| 连续签到加成 | +1/天（第2天+1, 第3天+2, ..., 封顶+5） |
+| 邀请好友注册 | +100 分 |
+| 被邀请注册 | +50 分 |
+| 成就解锁 | 不定 |
+
+### 5.3 积分消耗
+
+| 兑换 | 消耗 |
+|------|:--:|
+| +1 次 AI 纠错 | 10 积分 |
+
+### 5.4 积分设计原则
+
+- ❌ 不兑换会员（¥20 太便宜，积分不可能跟钱等价）
+- ❌ 不兑换优惠券（已废弃整个优惠券系统）
+- ❌ 不上排行榜（用户量不够时没意义，等 500+ 月活再考虑）
+- ✅ 只换 AI 次数（培养使用习惯，促进付费转化）
 
 ---
 
-## 四、学习计划单元 — 免费/会员内容分级
+## 六、邀请码
 
-### 4.1 设计
+### 改动
 
-学习计划（`LearningPlan`）的单元按会员等级解锁：
+| 角色 | 改前 | 改后 |
+|------|------|------|
+| 邀请人 | +7 天会员 + 100 积分 | **+3 天会员 + 100 积分** |
+| 被邀请人 | +50 积分 | **+50 积分**（不变） |
+
+> 只给邀请人会员天数，被邀请人获得 50 积分用于体验 AI 纠错，形成「试用→上瘾→付费」路径。
+> 奖励天数可通过后台 `invite_trial_days` 动态调整（默认 3 天）。
+
+仅修改 `referral.service.ts` 中的 `applyReferral()`：
+
+```typescript
+const config = await this.prisma.systemConfig.findUnique({ where: { key: 'invite_trial_days' } });
+const trialDays = parseInt(config?.value || '3', 10);
+await this.grantTrialDays(referrerCode.userId, trialDays);
+await this.grantPoints(referrerCode.userId, 100, 'invite_reward', '邀请好友奖励');
+await this.grantPoints(referredUserId, 50, 'invited_bonus', '通过邀请码注册');
+```
+
+---
+
+## 七、前 100 名注册免费试用
+
+### 规则
+
+- 前 100 名注册用户自动获得 **3 天免费会员**
+- 通过 `promo_trial_days` 配置控制试用天数（默认 3）
+- 通过 `promo_trial_max_claims` 配置控制名额上限（默认 100）
+- 通过 `promo_trial_claimed_count` 跟踪已领取人数
+- 注册后前端调用 `POST /auth/promo-trial` 领取
+
+### 实现
+
+```typescript
+// auth.controller.ts — claimPromoTrial()
+const maxClaims = parseInt(
+  (await this.prisma.systemConfig.findUnique({ where: { key: 'promo_trial_max_claims' } }))?.value || '100',
+  10
+);
+const claimedCount = parseInt(
+  (await this.prisma.systemConfig.findUnique({ where: { key: 'promo_trial_claimed_count' } }))?.value || '0',
+  10
+);
+
+if (claimedCount >= maxClaims) {
+  return { granted: false, message: '试用名额已满，欢迎直接开通会员' };
+}
+
+// ... grant trial days ...
+
+// 递增已领取计数
+await this.prisma.systemConfig.update({
+  where: { key: 'promo_trial_claimed_count' },
+  data: { value: String(claimedCount + 1) },
+});
+```
+
+---
+
+## 八、学习计划内容分级
 
 | 会员 | 可用单元 |
 |------|---------|
-| 🆓 免费 | **寝室入住** 等基础场景（约 2-3 个单元） |
+| 🆓 免费 | **寝室入住** 等基础场景（2-3 个单元） |
 | ⭐ 会员 | **全部单元** |
 
-- 免费用户体验核心闭环：寝室场景 → 话题训练 → AI 纠错（5次/天）
-- 免费用户点击未解锁单元时，弹出升级引导
-- 实现方式：`LearningService` 查询时按 `userMembership.level` 过滤
-
-### 4.2 涉及修改
-
-| 文件 | 修改内容 |
-|------|---------|
-| `src/modules/learning/learning.service.ts` | 查询单元时加会员过滤逻辑 |
+实现：`LearningService` 查询时加 `userMembership` 过滤。
 
 ---
 
-## 五、实施步骤（按顺序）
+## 九、已废弃
 
-| 步骤 | 内容 | 估时 |
-|:--:|------|:--:|
-| 1 | Prisma Schema 新增 `AiUsageDaily` | 5 min |
-| 2 | 运行 `prisma migrate` + `prisma generate` | 2 min |
-| 3 | 创建 `AiQuotaService` + `AiQuotaModule` + Controller | 25 min |
-| 4 | Controller 集成配额检查（6 个端点） | 20 min |
-| 5 | 修改邀请奖励 3→7天 + 积分发放 | 10 min |
-| 6 | 学习计划单元加会员过滤 | 15 min |
-| 7 | 验证：启动 dev，测试各端点 | 10 min |
-
----
-
-## 六、会员功能定价总结
-
-基于以上设计，整理当前完整的会员差异化体系：
-
-| 功能 | 🆓 免费 | ⭐ 会员 ¥20/月 |
-|------|:--:|:--:|
-| AI 纠错 | 5次/天 | **50次/天** |
-| AI 表达升级 | 3次/天 | 20次/天 |
-| AI 对话判定 | 5次/天 | 50次/天 |
-| 额度耗尽后 | 积分兑换（10分/次） | — |
-| 学习计划单元 | 寝室入住等基础 | **全部解锁** |
-| 剧本模式 | Ch.0 体验 | 全部章节 |
-| 探索模式 | ❌ | 全部地点 |
-| 表达库容量 | 20条 | 无限 |
-| 场景化训练 | 预览 | 无限 |
-| 输出等级追踪 | 基础 | 完整报告 |
-| 客服 | ❌ | 工作日 |
-| 邀请好友 | +7天+100积分 | +7天+100积分 |
-| 被邀请奖励 | +7天+200积分 | +7天+200积分 |
-
-### 定价理由
-
-| 因素 | 说明 |
+| 系统 | 原因 |
 |------|------|
-| AI 成本 | 单用户月均 ~¥1.25（50次×30天×¥0.004×20%实际使用率） |
-| 毛利率 | **~97%**，AI 成本几乎可忽略 |
-| 用户心理 | ¥20 = 两瓶饮料钱，介于「免费」和「正经产品」之间 |
-| 竞品对标 | 百词斩 ¥12-18，流利说 ¥49，我们居中合理 |
-| 500 人收入 | ¥10,000/月，AI 成本仅 ¥315，净利 ~¥9,000+ |
-| 年付优惠 | ¥149/年（¥12.4/月，约 6.2 折），拉升 LTV |
+| 优惠券 (Coupon) | ¥20 定价太低，优惠券无意义；积分兑换替代促活功能 |
+| 进阶会员 (advanced) | 精简为免费+会员两档 |
+| 排行榜 | 用户量不足时无社交效应，等 500+ 月活再上 |
+
+---
+
+## 十、实施步骤
+
+| # | 内容 | 估时 |
+|:--:|------|:--:|
+| 1 | Prisma 新增 `AiUsageDaily` → migrate + generate | ✅ 已完成 |
+| 2 | 创建 `AiQuotaService` + `AiQuotaModule` + Controller | ✅ 已完成 |
+| 3 | `EnglishPracticeAiController` + `PracticeAiController` 加配额检查 | ✅ 已完成 |
+| 4 | 邀请奖励：7→3天 + 积分发放 | ✅ 已完成 |
+| 5 | `LearningService` 加会员过滤 | ✅ 已完成 |
+| 6 | 定价更新：¥15→¥20/月，¥108→¥199/年 | 🔧 本次更新 |
+| 7 | 前 100 名注册免费 3 天试用 | 🔧 本次新增 |
+| 8 | 硬编码价格改为动态读取 | 🔧 本次修复 |
+
+---
+
+## 十一、DeepSeek 成本参考
+
+| 端点 | 单次成本 |
+|------|:--:|
+| 纠错 feedback | ¥0.0042 |
+| 对话判定 | ¥0.0014 |
+| 汇总分析 | ¥0.0060 |
+
+> DeepSeek 定价：输入 ¥1/百万tokens、输出 ¥2/百万tokens。  
+> 比 GPT-4o 便宜 20 倍，比 Claude 便宜 30 倍。

@@ -7,6 +7,12 @@ import { requireAuthSession } from '../auth/session.util'
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
+  /** 匿名反馈（无需登录），仅需邮箱 + 内容 */
+  @Post('anonymous')
+  async submitAnonymous(@Body() body: { email: string; content: string }) {
+    return this.feedbackService.createAnonymous({ email: body.email, content: body.content })
+  }
+
   @Post()
   async submit(@Req() req: Request, @Body() body: { type: string; content: string; contact?: string }) {
     const session = await requireAuthSession(req)

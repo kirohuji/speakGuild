@@ -209,7 +209,7 @@ function MyLearningView({
       <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="mt-4 text-sm text-muted-foreground">{t('learning.notStarted')}</p>
-        <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onGoToShop}>
+        <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onGoToShop} data-spotlight="go-to-shop">
           {t('learning.goToShop')}
         </Button>
       </div>
@@ -894,9 +894,11 @@ function ShopView({
         </div>
       ) : (
         <div className="space-y-2 rounded-lg">
-          {filteredUnits.map((unit) => (
-            <ShopCard key={unit.id} unit={unit} onMemberOpen={onMemberOpen} />
-          ))}
+          {filteredUnits.map((unit, idx) => {
+            const firstUnlockedIdx = filteredUnits.findIndex((u) => u.isUnlocked && !u.isLocked)
+            return (
+            <ShopCard key={unit.id} unit={unit} onMemberOpen={onMemberOpen} {...(idx === firstUnlockedIdx ? { 'data-spotlight': 'first-shop-unit' as any } : {})} />
+          )})}
         </div>
       )}
     </div>
@@ -905,7 +907,7 @@ function ShopView({
 
 // ── 商店卡片 ──
 
-function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { categoryName?: string }; onMemberOpen: () => void }) {
+function ShopCard({ unit, onMemberOpen, ...rest }: { unit: LearningUnitSummary & { categoryName?: string }; onMemberOpen: () => void; [key: `data-${string}`]: string | undefined }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [detailOpen, setDetailOpen] = useState(false)
@@ -945,6 +947,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
           setTopicPage(1); setDescExpanded(false); setDetailOpen(true)
         }}
         className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
+        {...rest}
       >
         <UnitCover unit={unit} icon={Icon} />
         <div className="min-w-0 flex-1 py-0.5">
@@ -1029,7 +1032,7 @@ function ShopCard({ unit, onMemberOpen }: { unit: LearningUnitSummary & { catego
                   {t('learning.continue')}
                 </Button>
               ) : (
-                <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire}>
+                <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">
                   {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
                   {unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
                 </Button>

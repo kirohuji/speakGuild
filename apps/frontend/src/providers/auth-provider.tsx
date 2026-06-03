@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { authClient, clearBearerToken } from '@/features/auth/client'
 import { useConfigStore } from '@/stores/config.store'
 import { useNotificationStore } from '@/features/notification/store'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 
 interface SessionUser {
   id: string
@@ -68,12 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Session loaded successfully
       } else {
         // no session
+        useProfileCacheStore.getState().reset()
       }
 
       return nextSession
     } catch {
       setSession(null)
       useConfigStore.getState().clearConfig()
+      useProfileCacheStore.getState().reset()
       return null
     } finally {
       setIsLoading(false)
@@ -141,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await authClient.signOut()
     clearBearerToken()
+    useProfileCacheStore.getState().reset()
     setSession(null)
   }
 

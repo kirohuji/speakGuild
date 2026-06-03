@@ -87,18 +87,29 @@ export class AuthController {
     return this.passwordService.deleteAccount(session.user.id, dto.password);
   }
 
-  // ─── 推广试用 —— 注册后调用，检查 promo_trial_days 配置 ───
+  // ─── 推广试用 —— 注册后调用，检查 promo_trial_days 配置 + 名额限制 ───
 
   @Post('promo-trial')
   async claimPromoTrial(@Req() req: Request) {
     const session = await requireAuthSession(req);
-    const config = await this.prisma.systemConfig.findUnique({
-      where: { key: 'promo_trial_days' },
-    });
-    const days = parseInt(config?.value || '0', 10);
+
+    // 读取试用配置
+    const [daysConfig, maxClaimsConfig, claimedCountConfig] = await Promise.all([
+      this.prisma.systemConfig.findUnique({ where: { key: 'promo_trial_days' } }),
+      this.prisma.systemConfig.findUnique({ where: { key: 'promo_trial_max_claims' } }),
+      this.prisma.systemConfig.findUnique({ where: { key: 'promo_trial_claimed_count' } }),
+    ]);
+
+    const days = parseInt(daysConfig?.value || '0', 10);
+    const maxClaims = parseInt(maxClaimsConfig?.value || '100', 10);
+    const claimedCount = parseInt(claimedCountConfig?.value || '0', 10);
 
     if (days <= 0) {
       return { granted: false, message: '暂无推广试用活动' };
+    }
+
+    if (claimedCount >= maxClaims) {
+      return { granted: false, message: `试用名额已满（限前 ${maxClaims} 名），欢迎直接开通会员` };
     }
 
     // 检查是否已经领过
@@ -106,10 +117,10 @@ export class AuthController {
       where: { userId: session.user.id },
     });
     if (existing && existing.expiredAt > new Date()) {
-      return { granted: false, message: '您已有有效会员' };
+      return { granted: false, message: '您已有有效会员，无需重复领取' };
     }
 
-    // 授予试用天数
+    // 授予试用天数 + 递增计数（事务保证原子性）
     const now = new Date();
     const plan = await this.prisma.membershipPlan.findFirst({
       where: { level: 'standard' },
@@ -119,25 +130,33 @@ export class AuthController {
       return { granted: false, message: '会员计划不可用' };
     }
 
-    if (existing) {
-      await this.prisma.userMembership.update({
-        where: { userId: session.user.id },
-        data: {
-          status: 'active',
-          planId: plan.id,
-          expiredAt: new Date(now.getTime() + days * 86400000),
-        },
+    await this.prisma.$transaction(async (tx) => {
+      if (existing) {
+        await tx.userMembership.update({
+          where: { userId: session.user.id },
+          data: {
+            status: 'active',
+            planId: plan.id,
+            expiredAt: new Date(now.getTime() + days * 86400000),
+          },
+        });
+      } else {
+        await tx.userMembership.create({
+          data: {
+            userId: session.user.id,
+            planId: plan.id,
+            status: 'active',
+            expiredAt: new Date(now.getTime() + days * 86400000),
+          },
+        });
+      }
+
+      // 递增已领取人数
+      await tx.systemConfig.update({
+        where: { key: 'promo_trial_claimed_count' },
+        data: { value: String(claimedCount + 1) },
       });
-    } else {
-      await this.prisma.userMembership.create({
-        data: {
-          userId: session.user.id,
-          planId: plan.id,
-          status: 'active',
-          expiredAt: new Date(now.getTime() + days * 86400000),
-        },
-      });
-    }
+    });
 
     return { granted: true, days, message: `已赠送 ${days} 天会员试用` };
   }

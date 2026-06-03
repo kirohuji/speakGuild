@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "YOUR_TEAM_ID.lourd.manyu.app"
+        ],
+        "components": [
+          {
+            "/": "/alipay/*",
+            "comment": "Alipay 支付回调 Universal Links - 支付宝会在末尾拼接路径/参数，必须支持通配符"
+          },
+          {
+            "/": "/wechat/*",
+            "comment": "WeChat 登录/支付回调"
+          },
+          {
+            "/": "*",
+            "comment": "全局通配符 - 确保 Alipay/WeChat 等第三方拼接路径后仍能拉起 App"
+          }
+        ]
+      }
+    ]
+  }
+}

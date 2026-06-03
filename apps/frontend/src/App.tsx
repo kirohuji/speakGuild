@@ -1,9 +1,11 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { NativeBridgeProvider } from '@/lib/native'
 import { AuthProvider } from '@/providers/auth-provider'
 import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
+import { OnboardingProvider } from '@/providers/onboarding-provider'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
@@ -28,6 +30,7 @@ import { AdminNotificationsPage } from '@/features/admin/pages/admin-notificatio
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { NotificationDetailPage } from '@/features/notification/pages/notification-detail-page'
 import { PortalPage } from '@/features/portal/pages/portal-page'
+import { CompanyPage } from '@/features/company/pages/company-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { RegisterPage } from '@/features/auth/pages/register-page'
 import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
@@ -66,6 +69,7 @@ export default function App() {
           <ThemePresetProvider>
           <HashRouter>
           <AuthRouteGate>
+            <OnboardingProvider>
             <Routes>
               {/* 管理员后台 — 独立布局 */}
               <Route path="/admin" element={<AdminLayout />}>
@@ -145,13 +149,37 @@ export default function App() {
               {/* 落地页 — 无外层布局 */}
               <Route path="/portal" element={<PortalPage />} />
 
+              {/* 公司介绍页 — 无外层布局，供 Apple Store 组织验证 */}
+              <Route path="/company" element={<CompanyPage />} />
+
               {/* 认证页 — 无外层布局 */}
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
+            </OnboardingProvider>
           </AuthRouteGate>
         </HashRouter>
+          <Toaster
+            position="top-center"
+            theme="system"
+            visibleToasts={1}
+            offset="calc(0.75rem + env(safe-area-inset-top, 0px))"
+            toastOptions={{
+              unstyled: true,
+              classNames: {
+                toast: 'flex w-[calc(100vw-2rem)] max-w-sm items-center gap-2.5 rounded-2xl bg-muted/80 px-4 py-3 text-foreground backdrop-blur-2xl',
+                content: 'min-w-0 flex-1',
+                icon: 'shrink-0 text-current',
+                title: 'text-sm font-medium',
+                description: 'text-xs text-muted-foreground',
+                success: 'bg-primary/[0.12] dark:bg-primary/[0.16]',
+                error: 'bg-destructive/[0.12] dark:bg-destructive/[0.16]',
+                warning: 'bg-amber-500/[0.12] dark:bg-amber-500/[0.16]',
+                info: 'bg-muted/80 dark:bg-muted/70',
+              },
+            }}
+          />
           </ThemePresetProvider>
       </AuthProvider>
       </NativeBridgeProvider>

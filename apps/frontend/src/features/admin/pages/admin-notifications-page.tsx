@@ -27,6 +27,7 @@ import {
   searchUsers, uploadNotificationImage, listNotificationImages, getNotificationStats,
   type AdminNotificationItem, type SearchUserResult, type NotificationImageItem, type NotificationStats,
 } from '@/features/admin/api-notifications'
+import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { useAuth } from '@/providers/auth-provider'
 
@@ -162,11 +163,26 @@ function EditNotificationDialog({
   const [content, setContent] = useState('')
   const [type, setType] = useState<'broadcast' | 'targeted'>('broadcast')
   const [isSpecial, setIsSpecial] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingEditImage, setUploadingEditImage] = useState(false)
+  const editImageInputRef = useRef<HTMLInputElement>(null)
   const [searchKeyword, setSearchKeyword] = useState('')
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([])
   const [selectedUsers, setSelectedUsers] = useState<SearchUserResult[]>([])
   const [searching, setSearching] = useState(false)
+
+  const handleEditImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) return
+    setUploadingEditImage(true)
+    try {
+      const { url } = await uploadNotificationImage(file)
+      setImageUrl(url)
+      toast.success('活动图片上传成功')
+    } catch {
+      toast.error('活动图片上传失败，请重试')
+    } finally { setUploadingEditImage(false) }
+  }
 
   useEffect(() => {
     if (!item) return
@@ -174,6 +190,7 @@ function EditNotificationDialog({
     setContent(item.content)
     setType(item.type)
     setIsSpecial(item.isSpecial ?? false)
+    setImageUrl(item.imageUrl ?? '')
     setSearchKeyword('')
     setSearchResults([])
     setSelectedUsers([])
@@ -205,6 +222,7 @@ function EditNotificationDialog({
         type,
         targetUserIds: type === 'targeted' ? selectedUsers.map((user) => user.id) : [],
         isSpecial,
+        imageUrl: imageUrl || null,
       })
       onSaved()
       onClose()
@@ -230,6 +248,48 @@ function EditNotificationDialog({
               <MDEditor value={content} onChange={(val) => setContent(val || '')} height={300} preview="live" visibleDragbar={false} hideToolbar={false} />
             </div>
           </div>
+          {/* 活动图片 */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">活动图片（可选）</label>
+            {imageUrl ? (
+              <div className="relative overflow-hidden rounded-lg border border-border/60">
+                <img src={imageUrl} alt="活动图片预览" className="max-h-32 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('')}
+                  className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  disabled={uploadingEditImage}
+                  onClick={() => editImageInputRef.current?.click()}
+                >
+                  {uploadingEditImage ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <ImageIcon className="size-3.5" />
+                  )}
+                  {uploadingEditImage ? '上传中...' : '上传图片'}
+                </Button>
+                <input
+                  ref={editImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEditImageUpload(f); e.target.value = '' }}
+                />
+              </>
+            )}
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-xs font-medium">发送范围</label>
             <div className="flex rounded-lg bg-muted p-0.5">
@@ -320,12 +380,15 @@ export function AdminNotificationsPage() {
   const [formContent, setFormContent] = useState('')
   const [formType, setFormType] = useState<'broadcast' | 'targeted'>('broadcast')
   const [formIsSpecial, setFormIsSpecial] = useState(false)
+  const [formImageUrl, setFormImageUrl] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([])
   const [selectedUsers, setSelectedUsers] = useState<SearchUserResult[]>([])
   const [searching, setSearching] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadingActivityImage, setUploadingActivityImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const activityImageInputRef = useRef<HTMLInputElement>(null)
 
   // View / Edit / Delete
   const [viewItem, setViewItem] = useState<AdminNotificationItem | null>(null)
@@ -380,6 +443,18 @@ export function AdminNotificationsPage() {
     } catch {} finally { setUploadingImage(false) }
   }
 
+  const handleActivityImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) return
+    setUploadingActivityImage(true)
+    try {
+      const { url } = await uploadNotificationImage(file)
+      setFormImageUrl(url)
+      toast.success('活动图片上传成功')
+    } catch {
+      toast.error('活动图片上传失败，请重试')
+    } finally { setUploadingActivityImage(false) }
+  }
+
   const handleEditorPaste = useCallback(async (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items
     if (!items) return
@@ -416,13 +491,13 @@ export function AdminNotificationsPage() {
     if (!formTitle.trim() || !formContent.trim()) return
     setSending(true)
     try {
-      await createNotification({ title: formTitle.trim(), content: formContent.trim(), type: formType, targetUserIds: formType === 'targeted' ? selectedUsers.map((u) => u.id) : undefined, isSpecial: formIsSpecial })
+      await createNotification({ title: formTitle.trim(), content: formContent.trim(), type: formType, targetUserIds: formType === 'targeted' ? selectedUsers.map((u) => u.id) : undefined, isSpecial: formIsSpecial, imageUrl: formImageUrl || undefined })
       setCreateOpen(false); resetForm(); fetchList(); fetchStats()
     } catch {} finally { setSending(false) }
   }
 
   const resetForm = () => {
-    setFormTitle(''); setFormContent(''); setFormType('broadcast'); setFormIsSpecial(false); setSelectedUsers([]); setSearchKeyword(''); setSearchResults([])
+    setFormTitle(''); setFormContent(''); setFormType('broadcast'); setFormIsSpecial(false); setFormImageUrl(''); setSelectedUsers([]); setSearchKeyword(''); setSearchResults([])
   }
 
   if (session && session.user.role !== 'admin') {
@@ -629,6 +704,48 @@ export function AdminNotificationsPage() {
                 <MDEditor value={formContent} onChange={(val) => setFormContent(val || '')} height={360} preview="live" visibleDragbar={false} hideToolbar={false} />
               </div>
             </div>
+            {/* 活动图片 */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">活动图片（可选）</label>
+              {formImageUrl ? (
+                <div className="relative overflow-hidden rounded-lg border border-border/60">
+                  <img src={formImageUrl} alt="活动图片预览" className="max-h-32 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormImageUrl('')}
+                    className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    disabled={uploadingActivityImage}
+                    onClick={() => activityImageInputRef.current?.click()}
+                  >
+                    {uploadingActivityImage ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <ImageIcon className="size-3.5" />
+                    )}
+                    {uploadingActivityImage ? '上传中...' : '上传图片'}
+                  </Button>
+                  <input
+                    ref={activityImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleActivityImageUpload(f); e.target.value = '' }}
+                  />
+                </>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-medium">发送范围</label>
               <div className="flex rounded-lg bg-muted p-0.5">

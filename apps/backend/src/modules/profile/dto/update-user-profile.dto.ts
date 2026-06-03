@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, MaxLength } from 'class-validator';
 
 export class UpdateUserProfileDto {
   @IsString()
@@ -10,4 +10,8 @@ export class UpdateUserProfileDto {
   @MaxLength(30)
   @IsOptional()
   username?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  hasCompletedOnboarding?: boolean;
 }

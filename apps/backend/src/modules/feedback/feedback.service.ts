@@ -16,6 +16,17 @@ export class FeedbackService {
     return this.prisma.feedback.create({ data })
   }
 
+  /** 匿名反馈（无需登录），用邮箱作为联系方式 */
+  async createAnonymous(data: { email: string; content: string }) {
+    return this.prisma.feedback.create({
+      data: {
+        type: 'suggestion',
+        content: data.content,
+        contact: data.email,
+      },
+    })
+  }
+
   async findByUser(userId: string, page = 1, pageSize = 20) {
     const skip = (page - 1) * pageSize
     const [items, total] = await Promise.all([
@@ -55,7 +66,7 @@ export class FeedbackService {
     })
   }
 
-  /** 管理员回复反馈，同时发送通知给用户 */
+  /** 管理员回复反馈，同时发送通知给用户（匿名反馈仅更新备注） */
   async reply(adminUserId: string, feedbackId: string, adminNote: string) {
     const feedback = await this.prisma.feedback.findUnique({ where: { id: feedbackId } })
     if (!feedback) throw new Error('反馈不存在')
@@ -65,6 +76,11 @@ export class FeedbackService {
       where: { id: feedbackId },
       data: { adminNote },
     })
+
+    // 匿名反馈无 userId，不发送通知
+    if (!feedback.userId) {
+      return { success: true, notificationId: null }
+    }
 
     // 创建定向通知（Markdown 格式：引用卡片 + 分隔线 + 回复）
     const notification = await this.prisma.notification.create({

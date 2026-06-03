@@ -24,6 +24,7 @@ model User {
   role                UserRole  @default(user)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+  hasCompletedOnboarding Boolean @default(false)
   sessions            Session[]
   accounts            Account[]
   vocabularyWords     VocabularyWord[]
@@ -413,6 +414,7 @@ model Notification {
   sentBy    User                @relation(fields: [sentById], references: [id])
   sentById  String
   isSpecial Boolean            @default(false)
+  imageUrl  String?             /// 特殊通知的活动图片 URL（首页横幅用）
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   reads     NotificationRead[]
@@ -537,9 +539,9 @@ enum FeedbackStatus {
 
 model Feedback {
   id        String         @id @default(cuid())
-  userId    String
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String         @default("other")
   content   String         @db.Text
   contact   String?
   status    FeedbackStatus @default(pending)
