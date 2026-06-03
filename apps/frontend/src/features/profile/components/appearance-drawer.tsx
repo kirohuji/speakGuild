@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
-  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX,
+  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft,
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Switch } from '@/components/ui/switch';
@@ -42,8 +42,16 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px]">
-        <DrawerHeader className="shrink-0 pb-1">
-          <DrawerTitle className="text-base">{t('profile.theme')}</DrawerTitle>
+        <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
+          <button
+            type="button"
+            aria-label={t('common.back')}
+            onClick={() => onOpenChange(false)}
+            className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <DrawerTitle className="text-center text-base font-semibold leading-6">{t('profile.theme')}</DrawerTitle>
         </DrawerHeader>
 
         <ScrollArea className="flex-1 min-h-0 px-4 pb-8">

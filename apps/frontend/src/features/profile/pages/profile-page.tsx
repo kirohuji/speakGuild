@@ -392,8 +392,8 @@ function MobileProfileHome({
       <AppearanceDrawer open={showThemeDialog} onOpenChange={setShowThemeDialog} />
 
       <Drawer open={showAccountDrawer} onOpenChange={setShowAccountDrawer}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
-          <DrawerHeader className="relative px-4 pb-2 pt-2">
+        <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
             <button
               type="button"
               aria-label={t('common.back')}
@@ -402,11 +402,11 @@ function MobileProfileHome({
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <DrawerTitle className="text-center text-base font-semibold">{t('profile.account')}</DrawerTitle>
+            <DrawerTitle className="text-center text-base font-semibold leading-6">{t('profile.account')}</DrawerTitle>
           </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
             <AccountTab />
-          </div>
+          </ScrollArea>
         </DrawerContent>
       </Drawer>
 
@@ -442,13 +442,21 @@ function MobileProfileHome({
       </Drawer>
 
       <Drawer open={showMemberDrawer} onOpenChange={setShowMemberDrawer}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="sr-only">{t('nav.member')}</DrawerTitle>
+        <DrawerContent className="flex h-[88vh] flex-col rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
+            <button
+              type="button"
+              aria-label={t('common.back')}
+              onClick={() => setShowMemberDrawer(false)}
+              className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <DrawerTitle className="text-center text-base font-semibold leading-6">{t('member.title')}</DrawerTitle>
           </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
             <MemberPage compact />
-          </div>
+          </ScrollArea>
         </DrawerContent>
       </Drawer>
 
