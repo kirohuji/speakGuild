@@ -1830,7 +1830,10 @@ function NicknameEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent
+        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t('profile.editNicknameTitle')}</DialogTitle>
           <DialogDescription>{t('profile.nicknameDesc')}</DialogDescription>
@@ -1841,14 +1844,13 @@ function NicknameEditDialog({
             onChange={(e) => setName(e.target.value)}
             placeholder={t('profile.nicknamePlaceholder')}
             maxLength={20}
-            autoFocus
           />
           <p className="text-right text-xs text-muted-foreground">{name.length}/20</p>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving || !name.trim()}>
+            {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t('common.save')}
           </Button>
         </DialogFooter>

@@ -1,7 +1,10 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Bell, CheckCircle2, User, Volume2 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, Bell, CheckCircle2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog, DialogContent, DialogDescription, DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
@@ -31,16 +34,53 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
     minute: '2-digit',
   })
 
+  if (isMobile) {
+    return (
+      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent
+          className="left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 pt-safe text-foreground shadow-none sm:rounded-none [&>button]:hidden"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <DialogTitle className="sr-only">{item.title}</DialogTitle>
+          <DialogDescription className="sr-only">{formattedDate}</DialogDescription>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="shrink-0 border-b border-border/45 bg-background/95 px-4 pb-3 pt-3 backdrop-blur-xl">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 shrink-0 rounded-full"
+                  onClick={onClose}
+                  aria-label={t('common.back')}
+                >
+                  <ArrowLeft className="size-5" />
+                </Button>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-semibold tracking-tight text-foreground">
+                    {t('notification.detailTitle')}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {formattedDate}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <NotificationDetailContent
+              item={item}
+              className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-5"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
-        side={isMobile ? 'bottom' : 'right'}
-        className={cn(
-          'flex flex-col bg-background p-0 text-foreground [&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:p-2',
-          isMobile
-            ? 'h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 shadow-[0_-24px_80px_rgba(0,0,0,.22)] backdrop-blur-2xl'
-            : 'sm:max-w-[480px]'
-        )}
+        side="right"
+        className="flex flex-col bg-background p-0 text-foreground sm:max-w-[480px] [&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:p-2"
       >
         <SheetHeader className="flex-shrink-0 border-b border-border/45 px-5 pb-4 pt-3 text-left">
           <div className="flex items-start gap-3 pr-10">
@@ -80,22 +120,39 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
           </div>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
-          <MarkdownRenderer content={item.content} variant="teaching" />
-
-          {item.readAt && (
-            <div className="mt-6 flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
-              <CheckCircle2 className="h-4 w-4 text-primary/60" />
-              <span className="text-xs text-muted-foreground/70">
-                {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(undefined, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }) })}
-              </span>
-            </div>
-          )}
-        </div>
+        <NotificationDetailContent
+          item={item}
+          className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4"
+        />
       </SheetContent>
     </Sheet>
+  )
+}
+
+function NotificationDetailContent({
+  item,
+  className,
+}: {
+  item: NotificationItem
+  className?: string
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
+      <MarkdownRenderer content={item.content} variant="teaching" />
+
+      {item.readAt && (
+        <div className="mt-6 flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
+          <CheckCircle2 className="h-4 w-4 text-primary/60" />
+          <span className="text-xs text-muted-foreground/70">
+            {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(undefined, {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) })}
+          </span>
+        </div>
+      )}
+    </div>
   )
 }

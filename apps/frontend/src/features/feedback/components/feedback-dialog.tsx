@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Send, Loader2, CheckCircle2, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Input } from '@/components/ui/input'
 import { Select, SelectItem } from '@/components/ui/select'
-import { useIsMobile } from '@/hooks/use-mobile'
+import { Textarea } from '@/components/ui/textarea'
 import { submitFeedback } from '@/features/feedback/api'
 
 interface FeedbackDialogProps {
@@ -15,7 +15,6 @@ interface FeedbackDialogProps {
 
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   const { t } = useTranslation()
-  const isMobile = useIsMobile()
   const [type, setType] = useState('bug')
   const [content, setContent] = useState('')
   const [contact, setContact] = useState('')
@@ -48,7 +47,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   ]
 
   const formContent = (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {submitted ? (
         <div className="flex flex-col items-center py-8 text-center">
           <CheckCircle2 className="h-14 w-14 text-success mb-3" />
@@ -70,8 +69,8 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           </div>
           <div>
             <label className="text-sm font-medium mb-1.5 block">{t('feedback.detail')}</label>
-            <textarea
-              className="w-full min-h-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+            <Textarea
+              className="min-h-[120px] resize-none"
               placeholder={t('feedback.detailPlaceholder')}
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -79,8 +78,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           </div>
           <div>
             <label className="text-sm font-medium mb-1.5 block">{t('feedback.contact')}</label>
-            <input
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            <Input
               placeholder={t('feedback.contactPlaceholder')}
               value={contact}
               onChange={(e) => setContact(e.target.value)}
@@ -95,25 +93,12 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     </div>
   )
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={(v) => !v && handleClose()}>
-        <DrawerContent className="rounded-t-[28px] px-4 pb-6">
-          <DrawerHeader>
-            <DrawerTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              {t('feedback.title')}
-            </DrawerTitle>
-          </DrawerHeader>
-          {formContent}
-        </DrawerContent>
-      </Drawer>
-    )
-  }
-
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent
+        className="max-h-[calc(100dvh-2rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl p-5 sm:p-6"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />

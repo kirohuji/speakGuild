@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useNotificationStore } from '@/features/notification/store'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
-import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { useLayoutStore } from '@/stores/layout.store'
 import { cn } from '@/lib/cn'
@@ -33,7 +32,6 @@ export function RootLayout() {
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
-  const [feedbackDialogOpen, setFeedbackDialogOpen] = React.useState(false)
 
   return (
     <div
@@ -79,11 +77,10 @@ export function RootLayout() {
             <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <ProfilePage onFeedbackOpen={() => setFeedbackDialogOpen(true)} />
+            <ProfilePage />
           </div>
         </DrawerContent>
       </Drawer>
-      <FeedbackDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen} />
       <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background/98 app-surface">
           <DrawerHeader className="px-5 pb-3 pt-2 text-left">
