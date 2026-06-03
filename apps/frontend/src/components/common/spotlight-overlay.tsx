@@ -234,9 +234,9 @@ export function SpotlightOverlay({
             ...tooltipStyle,
           }}
         >
-          <div className="rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
-            {/* 步骤指示器 */}
-            <div className="mb-3 flex items-center justify-between">
+          <div data-spotlight-tooltip className="rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
+            {/* 跳过按钮 */}
+            <div className="mb-3 flex items-center justify-end">
               <div className="flex gap-1.5">
                 {Array.from({ length: totalSteps }).map((_, i) => (
                   <div
@@ -253,7 +253,7 @@ export function SpotlightOverlay({
               </div>
               <button
                 onClick={onSkip}
-                className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="ml-auto flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="size-3.5" />
               </button>
@@ -271,29 +271,6 @@ export function SpotlightOverlay({
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
               {step.description}
             </p>
-
-            {/* 按钮区 */}
-            <div className="mt-4 flex items-center justify-between gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onPrev}
-                disabled={stepIndex === 0}
-                className="h-8 rounded-full px-3 text-xs"
-              >
-                <ChevronLeft className="size-3.5" />
-                上一步
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={() => onNext()}
-                className="h-8 rounded-full px-4 text-xs font-medium"
-              >
-                {stepIndex >= totalSteps - 1 ? '开始体验' : '下一步'}
-                <ChevronRight className="size-3.5" />
-              </Button>
-            </div>
           </div>
         </motion.div>
       </AnimatePresence>
