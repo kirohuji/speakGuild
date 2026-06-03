@@ -413,6 +413,7 @@ model Notification {
   sentBy    User                @relation(fields: [sentById], references: [id])
   sentById  String
   isSpecial Boolean            @default(false)
+  imageUrl  String?             /// 特殊通知的活动图片 URL（首页横幅用）
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   reads     NotificationRead[]

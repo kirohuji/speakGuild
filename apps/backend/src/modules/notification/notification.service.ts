@@ -30,6 +30,7 @@ export class NotificationService {
         content: dto.content,
         type: dto.type,
         isSpecial: dto.isSpecial ?? false,
+        imageUrl: dto.imageUrl ?? null,
         sentById: adminUserId,
         ...(dto.type === 'targeted'
           ? {
@@ -277,6 +278,7 @@ export class NotificationService {
         ...(dto.content !== undefined ? { content: dto.content } : {}),
         ...(dto.type !== undefined ? { type: dto.type } : {}),
         ...(dto.isSpecial !== undefined ? { isSpecial: dto.isSpecial } : {}),
+        ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
         targets: {
           deleteMany: {},
           ...(type === 'targeted'
@@ -308,7 +310,7 @@ export class NotificationService {
       },
       orderBy: { createdAt: 'desc' },
       take: 3,
-      select: { id: true, title: true, content: true, createdAt: true },
+      select: { id: true, title: true, content: true, imageUrl: true, createdAt: true },
     });
 
     return notifications;

@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsArray, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsEnum, IsArray, IsOptional, IsBoolean, IsUrl } from 'class-validator';
 
 export class CreateNotificationDto {
   @IsString()
@@ -18,4 +18,8 @@ export class CreateNotificationDto {
   @IsOptional()
   @IsBoolean()
   isSpecial?: boolean;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }

@@ -9,6 +9,7 @@ export interface AdminNotificationItem {
   sentById: string;
   sentBy: { id: string; name: string; email: string };
   isSpecial: boolean;
+  imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   _count: { reads: number; targets: number };
@@ -47,6 +48,7 @@ export async function createNotification(data: {
   type: 'broadcast' | 'targeted';
   targetUserIds?: string[];
   isSpecial?: boolean;
+  imageUrl?: string;
 }) {
   return post('/admin/notifications', data);
 }
@@ -62,10 +64,9 @@ export async function getNotification(id: string) {
 export async function uploadNotificationImage(file: File): Promise<{ url: string; assetId: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await instance.post('/admin/notifications/upload-image', formData, {
+  return instance.post('/admin/notifications/upload-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return res.data?.data ?? res.data;
 }
 
 export interface NotificationImageItem {
@@ -104,7 +105,7 @@ export async function getNotificationStats() {
 
 export async function updateNotification(
   id: string,
-  data: { title?: string; content?: string; type?: 'broadcast' | 'targeted'; targetUserIds?: string[]; isSpecial?: boolean },
+  data: { title?: string; content?: string; type?: 'broadcast' | 'targeted'; targetUserIds?: string[]; isSpecial?: boolean; imageUrl?: string | null },
 ) {
   return patch(`/admin/notifications/${id}`, data);
 }
