@@ -98,7 +98,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={(v) => !v && handleClose()}>
-        <DrawerContent className="px-4 pb-6">
+        <DrawerContent className="rounded-t-[28px] px-4 pb-6">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
