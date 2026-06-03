@@ -47,7 +47,7 @@ import { getFavorites, type FavoriteItem } from '@/features/assets/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWordsStore, type WordEntry } from '@/stores/assets.store'
-import { AppearanceDrawer } from '@/features/profile/components/appearance-drawer'
+import { AppearanceContent } from '@/features/profile/components/appearance-drawer'
 import { useConfigStore } from '@/stores/config.store'
 import { useLayoutStore } from '@/stores/layout.store'
 import {
@@ -71,7 +71,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 
 type Tab = 'overview' | 'records' | 'favorites' | 'words' | 'account' | 'settings'
-type MobileView = Tab | 'home'
+type MobileView = Tab | 'home' | 'appearance' | 'member'
 
 const tabs: { key: Tab; icon: React.ElementType }[] = [
   { key: 'overview', icon: LayoutDashboard },
@@ -82,13 +82,15 @@ const tabs: { key: Tab; icon: React.ElementType }[] = [
   { key: 'settings', icon: Settings },
 ]
 
-const mobileTitles: Record<Tab, string> = {
+const mobileTitles: Record<string, string> = {
   overview: 'profile.overview',
   records: 'profile.records',
   favorites: 'profile.favorites',
   words: 'profile.words',
   account: 'profile.account',
   settings: 'profile.settings',
+  appearance: 'profile.theme',
+  member: 'member.title',
 }
 
 interface ProfilePageProps {
@@ -138,7 +140,7 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <h1 className="text-base font-semibold">
-                  {t(mobileTitles[mobileView as Tab])}
+                  {t(mobileTitles[mobileView])}
                 </h1>
               </div>
               {mobileView === 'overview' && <OverviewTab />}
@@ -147,6 +149,8 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
               {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} />}
+              {mobileView === 'appearance' && <AppearanceContent />}
+              {mobileView === 'member' && <MemberPage compact />}
             </div>
           )}
         </div>
@@ -280,14 +284,10 @@ function MobileProfileHome({
   onFeedbackOpen?: () => void
 }) {
   const { t } = useTranslation()
-  const { theme, setTheme } = useTheme()
+  const { theme } = useTheme()
   const { language, setLanguage } = usePreferencesStore()
-  const navigate = useNavigate()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [showThemeDialog, setShowThemeDialog] = useState(false)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
-  const [showAccountDrawer, setShowAccountDrawer] = useState(false)
-  const [showMemberDrawer, setShowMemberDrawer] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [pointsBalance, setPointsBalance] = useState(0)
@@ -314,10 +314,6 @@ function MobileProfileHome({
 
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
 
-  const onTapAvatar = () => {
-    setShowAccountDrawer(true)
-  }
-
   return (
     <div className="space-y-3">
       {/* 用户信息区 */}
@@ -330,7 +326,7 @@ function MobileProfileHome({
           {/* 头像 */}
           <button
             type="button"
-            onClick={onTapAvatar}
+            onClick={() => onNavigate('account')}
             className="group relative shrink-0"
           >
             <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-primary/15 ring-2 ring-background ring-offset-1 ring-offset-primary/5">
@@ -369,8 +365,8 @@ function MobileProfileHome({
 
       {/* 主导航 */}
       <IosSection>
-        <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => setShowAccountDrawer(true)} />
-        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => setShowMemberDrawer(true)} />
+        <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
+        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
         <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
       </IosSection>
 
@@ -379,7 +375,7 @@ function MobileProfileHome({
         <IosRow
           label={t('profile.theme')}
           value={themeLabel[theme || 'system'] ?? t('profile.themeSystem')}
-          onTap={() => setShowThemeDialog(true)}
+          onTap={() => onNavigate('appearance')}
         />
         <IosRow
           label={t('profile.language')}
@@ -388,27 +384,6 @@ function MobileProfileHome({
           onTap={() => setShowLanguageDialog(true)}
         />
       </IosSection>
-
-      <AppearanceDrawer open={showThemeDialog} onOpenChange={setShowThemeDialog} />
-
-      <Drawer open={showAccountDrawer} onOpenChange={setShowAccountDrawer}>
-        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background">
-          <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
-            <button
-              type="button"
-              aria-label={t('common.back')}
-              onClick={() => setShowAccountDrawer(false)}
-              className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <DrawerTitle className="text-center text-base font-semibold leading-6">{t('profile.account')}</DrawerTitle>
-          </DrawerHeader>
-          <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
-            <AccountTab />
-          </ScrollArea>
-        </DrawerContent>
-      </Drawer>
 
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
         <DrawerContent className="rounded-t-3xl">
@@ -438,25 +413,6 @@ function MobileProfileHome({
               </button>
             ))}
           </div>
-        </DrawerContent>
-      </Drawer>
-
-      <Drawer open={showMemberDrawer} onOpenChange={setShowMemberDrawer}>
-        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background">
-          <DrawerHeader className="relative flex h-10 shrink-0 items-center justify-center px-4 py-0">
-            <button
-              type="button"
-              aria-label={t('common.back')}
-              onClick={() => setShowMemberDrawer(false)}
-              className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <DrawerTitle className="text-center text-base font-semibold leading-6">{t('member.title')}</DrawerTitle>
-          </DrawerHeader>
-          <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
-            <MemberPage compact />
-          </ScrollArea>
         </DrawerContent>
       </Drawer>
 
