@@ -265,8 +265,8 @@ export class FileAssetsService {
 
   async setCurrentAvatar(userId: string, dto: SetCurrentAvatarDto) {
     const asset = await this.ensureAssetExists(dto.assetId);
-    if (asset.group !== FileAssetGroup.avatar) {
-      throw new BadRequestException('仅支持设置 avatar 分组文件为头像');
+    if (asset.group !== FileAssetGroup.avatar && !asset.mimeType.startsWith('image/')) {
+      throw new BadRequestException('仅支持设置图片文件为头像');
     }
 
     const currentRefs = await this.prisma.fileReference.findMany({

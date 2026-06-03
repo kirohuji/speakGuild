@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { NativeBridgeProvider } from '@/lib/native'
 import { AuthProvider } from '@/providers/auth-provider'
@@ -152,6 +153,7 @@ export default function App() {
             </Routes>
           </AuthRouteGate>
         </HashRouter>
+          <Toaster richColors position="top-center" />
           </ThemePresetProvider>
       </AuthProvider>
       </NativeBridgeProvider>

@@ -69,7 +69,7 @@ export function EnglishHomePage() {
     try {
       const result = await pointsApi.checkIn()
       toast.success(result.message)
-      refreshCheckIn()
+      await refreshCheckIn()
     } catch (e: any) {
       toast.error(e?.response?.data?.message || '签到失败')
     } finally {

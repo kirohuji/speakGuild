@@ -3,6 +3,7 @@ import { ActivityCalendar } from 'react-activity-calendar'
 import 'react-activity-calendar/tooltips.css'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, ClipboardList, Star, BookMarked, Settings, User, Trash2,
@@ -123,7 +124,7 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
       {isMobile ? (
         <div className="h-full min-h-0">
           {mobileView === 'home' ? (
-            <div className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <div>
               <MobileProfileHome onNavigate={setMobileView} onFeedbackOpen={onFeedbackOpen} />
             </div>
           ) : (
@@ -1927,16 +1928,25 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
     const file = event.target.files?.[0]
     if (!file) return
     event.currentTarget.value = ''
-    if (!file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) return
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('profile.avatarHint'))
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('profile.avatarHint'))
+      return
+    }
 
     setAvatarUploading(true)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'avatar' })
       const current = await setCurrentAvatar(asset.id)
+      if (!current?.url) throw new Error(t('profile.auth.loadFailed'))
       setCachedAvatarUrl(current.url)
-    } catch {
-      // ignore
+      await loadAccount(true)
+      toast.success(t('profile.avatarUpdated', { defaultValue: '头像已更新' }))
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || t('profile.auth.loadFailed'))
     } finally {
       setAvatarUploading(false)
     }
@@ -2069,18 +2079,35 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
       {/* 头像 */}
       <div className="rounded-xl bg-muted/30 p-4">
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.avatar')}</p>
-        <div className="flex items-center gap-4">
+        <div
+          className={cn(
+            'flex items-center gap-4',
+            avatarUploading ? 'cursor-default opacity-80' : 'cursor-pointer',
+          )}
+          role="button"
+          tabIndex={avatarUploading ? -1 : 0}
+          aria-label={t('profile.changeAvatar')}
+          onClick={avatarUploading ? undefined : onPickAvatar}
+          onKeyDown={(event) => {
+            if (avatarUploading) return
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onPickAvatar()
+            }
+          }}
+        >
           <input
             ref={avatarInputRef}
             type="file"
             accept="image/*"
             className="hidden"
+            disabled={avatarUploading}
             onChange={onAvatarFileChange}
           />
           <button
             type="button"
             disabled={avatarUploading}
-            onClick={onPickAvatar}
+            tabIndex={-1}
             className="group relative flex-shrink-0"
           >
             <Avatar className="size-16 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50">
