@@ -122,27 +122,18 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
 
   return (
-    <div>
+    <div className={cn(isMobile && 'h-full min-h-0')}>
       {isMobile ? (
-        <div>
+        <div className="h-full min-h-0">
           {mobileView === 'home' ? (
-            <MobileProfileHome onNavigate={setMobileView} onFeedbackOpen={onFeedbackOpen} />
+            <div className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <MobileProfileHome onNavigate={setMobileView} onFeedbackOpen={onFeedbackOpen} />
+            </div>
           ) : (
-            <div className="space-y-4">
-              {/* iOS 风格返回栏 */}
-              <div className="relative flex items-center justify-center">
-                <button
-                  type="button"
-                  aria-label="返回"
-                  onClick={() => setMobileView('home')}
-                  className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <h1 className="text-base font-semibold">
-                  {t(mobileTitles[mobileView])}
-                </h1>
-              </div>
+            <MobileProfileDetail
+              title={t(mobileTitles[mobileView])}
+              onBack={() => setMobileView('home')}
+            >
               {mobileView === 'overview' && <OverviewTab />}
               {mobileView === 'records' && <RecordsTab />}
               {mobileView === 'favorites' && <FavoritesTab />}
@@ -151,7 +142,7 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
               {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} />}
               {mobileView === 'appearance' && <AppearanceContent />}
               {mobileView === 'member' && <MemberPage compact />}
-            </div>
+            </MobileProfileDetail>
           )}
         </div>
       ) : (
@@ -204,6 +195,41 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
         </div>
       )}
     </div>
+  )
+}
+
+function MobileProfileDetail({
+  title,
+  onBack,
+  children,
+}: {
+  title: string
+  onBack: () => void
+  children: React.ReactNode
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <section className="flex h-full min-h-0 flex-col">
+      <header className="relative flex shrink-0 items-center justify-center pb-2">
+        <button
+          type="button"
+          aria-label={t('common.back')}
+          onClick={onBack}
+          className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h1 className="max-w-[70%] truncate text-base font-semibold">
+          {title}
+        </h1>
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
+        <div className="mx-auto max-w-2xl space-y-4">
+          {children}
+        </div>
+      </div>
+    </section>
   )
 }
 

@@ -20,6 +20,7 @@ export function RootLayout() {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
+  const bottomNavVisible = useLayoutStore((s) => s.bottomNavVisible)
   const isMobile = useIsMobile()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isHomePage = pathname === '/'
@@ -28,7 +29,7 @@ export function RootLayout() {
     pathname.startsWith('/practice/session/') ||
     pathname.startsWith('/script/')
   const isLoggedIn = !!session
-  const showBottomNav = !immersiveMode && !isLearningSubPage
+  const showBottomNav = bottomNavVisible && !immersiveMode && !isLearningSubPage
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
@@ -65,7 +66,7 @@ export function RootLayout() {
                 ? isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))]' : 'pt-14 pb-0'
                 : isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-0' : 'pt-14 pb-0'
       }`)}>
-        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'px-0 py-3' : 'px-4 py-6')}>
+        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0 py-3' : 'px-4 py-6')}>
           <Outlet />
         </div>
       </main>
