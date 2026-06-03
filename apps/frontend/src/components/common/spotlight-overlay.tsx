@@ -68,6 +68,11 @@ export function SpotlightOverlay({
   const [tooltipStyle, setTooltipStyle] = useState<Record<string, string | number>>({})
   const rafRef = useRef<number>(0)
 
+  // 步骤切换时重置 targetRect，避免旧步骤的高亮位置残留
+  useEffect(() => {
+    setTargetRect(null)
+  }, [step.id])
+
   // 实时追踪目标元素位置
   const updatePosition = useCallback(() => {
     const rect = getTargetRect(step.targetSelector)
@@ -82,16 +87,32 @@ export function SpotlightOverlay({
   useEffect(() => {
     // 目标元素可能还没渲染，用 rAF 轮询等待
     let attempts = 0
+    let foundEl: Element | null = null
     const tryFind = () => {
-      const rect = getTargetRect(step.targetSelector)
-      if (rect) {
+      const el = document.querySelector(step.targetSelector)
+      if (el) {
+        // 首次找到时，若元素不在可视区域内则滚动到视口中央
+        if (el !== foundEl) {
+          foundEl = el
+          const rect = el.getBoundingClientRect()
+          const centerY = rect.top + rect.height / 2
+          const vh = window.innerHeight
+          if (centerY < 80 || centerY > vh - 80) {
+            el.scrollIntoView({ behavior: 'auto', block: 'center' })
+            // 等滚动完成后再更新位置（嵌套滚动容器需要等 layout）
+            requestAnimationFrame(() => updatePosition())
+            return
+          }
+        }
         updatePosition()
         return
       }
       attempts++
-      if (attempts < 50) {
-        // 最多等 1.5 秒
+      if (attempts < 400) {
+        // 最多等 ~8 秒（含初始 150ms 延迟），覆盖慢速数据加载
         rafRef.current = requestAnimationFrame(tryFind)
+      } else {
+        console.warn('[Spotlight] timed out looking for:', step.targetSelector)
       }
     }
     // 稍微延迟一下等 DOM 渲染
@@ -108,17 +129,23 @@ export function SpotlightOverlay({
     }
   }, [step.targetSelector, updatePosition])
 
-  // 监听目标元素点击（clickToAdvance）
+  // 监听目标元素点击（clickToAdvance）— 使用 document 级事件委托避免
+  // React 重渲染导致 DOM 元素被替换后原生 listener 失效的问题
   useEffect(() => {
     if (!step.clickToAdvance) return
-    const el = document.querySelector(step.targetSelector)
-    if (!el) return
-    const handler = () => {
-      // 延迟一下，等导航/交互完成
-      setTimeout(() => onNext(), 300)
+
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Element
+      const match = target.closest(step.targetSelector)
+      if (match) {
+        // 延迟一下，等导航/交互完成
+        setTimeout(() => onNext(), 300)
+      }
     }
-    el.addEventListener('click', handler)
-    return () => el.removeEventListener('click', handler)
+
+    // 捕获阶段监听，确保在 React 事件系统之前捕获
+    document.addEventListener('click', handler, true)
+    return () => document.removeEventListener('click', handler, true)
   }, [step.targetSelector, step.clickToAdvance, onNext])
 
   // 没有找到目标时不渲染

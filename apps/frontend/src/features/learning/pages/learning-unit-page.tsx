@@ -264,6 +264,7 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(vocab.id)}
                     onOpen={() => openDialog(vocabDialogItems, vocabPageItems.startIndex + index)}
                     onCollect={() => handleCollectWord(vocab.word, vocab.meaning)}
+                    {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
                 ))}
                 <PrepPager
@@ -453,6 +454,7 @@ function VocabPrepCard({
   onToggle,
   onOpen,
   onCollect,
+  ...rest
 }: {
   vocab: VocabItem
   collected: boolean
@@ -460,14 +462,14 @@ function VocabPrepCard({
   onToggle: () => void
   onOpen: () => void
   onCollect: () => void
-}) {
+} & Record<string, any>) {
   const [saving, setSaving] = useState(false)
   const handleClick = () => { setSaving(true); onCollect(); setTimeout(() => setSaving(false), 1000) }
 
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
       <CardContent className="p-0">
-        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
+        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle} {...rest}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
             <BookText className="size-4" />
           </div>

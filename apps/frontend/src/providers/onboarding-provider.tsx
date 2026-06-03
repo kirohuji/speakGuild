@@ -34,15 +34,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   useEffect(() => {
     if (!isAuthenticated || !session?.user?.id) return
 
+    // 只触发一次（避免每次路由变化/重渲染都 reset 到 step 0）
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     // 🧪 test=2 强制触发引导
     if (isTestMode) {
       storeStart()
       return
     }
-
-    // 正常模式：只检查一次
-    if (initializedRef.current) return
-    initializedRef.current = true
 
     getUserProfile()
       .then((profile) => {
@@ -89,9 +89,14 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
 
     const nextStep = storeSteps[storeCurrentIndex + 1]
+
+    // clickToAdvance 步骤：点击目标元素时已触发页面导航（如"开始学习"→ /learning/units/:id），
+    // 此时 handleNext 不应再强制导航（否则会跳转到不存在的 /learning/units 造成 404）
+    const isClickToAdvance = currentStep?.clickToAdvance
+
     storeNext()
 
-    if (nextStep && nextStep.route !== currentStep?.route) {
+    if (nextStep && nextStep.route !== currentStep?.route && !isClickToAdvance) {
       navigate(nextStep.route)
     }
   }, [storeCurrentIndex, storeSteps, storeNext, handleFinish, currentStep, navigate])
@@ -112,6 +117,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
       {storeIsActive && currentStep && (
         <SpotlightOverlay
+          key={currentStep.id}
           step={currentStep}
           stepIndex={storeCurrentIndex}
           totalSteps={storeSteps.length}
