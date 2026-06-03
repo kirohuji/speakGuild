@@ -286,6 +286,7 @@ function MobileProfileHome({
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [showThemeDialog, setShowThemeDialog] = useState(false)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
+  const [showAccountDrawer, setShowAccountDrawer] = useState(false)
   const [showMemberDrawer, setShowMemberDrawer] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -314,7 +315,7 @@ function MobileProfileHome({
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
 
   const onTapAvatar = () => {
-    onNavigate('account')
+    setShowAccountDrawer(true)
   }
 
   return (
@@ -368,7 +369,7 @@ function MobileProfileHome({
 
       {/* 主导航 */}
       <IosSection>
-        <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
+        <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => setShowAccountDrawer(true)} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => setShowMemberDrawer(true)} />
         <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
       </IosSection>
@@ -389,6 +390,25 @@ function MobileProfileHome({
       </IosSection>
 
       <AppearanceDrawer open={showThemeDialog} onOpenChange={setShowThemeDialog} />
+
+      <Drawer open={showAccountDrawer} onOpenChange={setShowAccountDrawer}>
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerHeader className="relative px-4 pb-2 pt-2">
+            <button
+              type="button"
+              aria-label={t('common.back')}
+              onClick={() => setShowAccountDrawer(false)}
+              className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <DrawerTitle className="text-center text-base font-semibold">{t('profile.account')}</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <AccountTab />
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
         <DrawerContent className="rounded-t-3xl">
