@@ -153,7 +153,26 @@ export default function App() {
             </Routes>
           </AuthRouteGate>
         </HashRouter>
-          <Toaster richColors position="top-center" />
+          <Toaster
+            position="top-center"
+            theme="system"
+            visibleToasts={1}
+            offset="calc(0.75rem + env(safe-area-inset-top, 0px))"
+            toastOptions={{
+              unstyled: true,
+              classNames: {
+                toast: 'flex w-[calc(100vw-2rem)] max-w-sm items-center gap-2.5 rounded-2xl bg-muted/80 px-4 py-3 text-foreground backdrop-blur-2xl',
+                content: 'min-w-0 flex-1',
+                icon: 'shrink-0 text-current',
+                title: 'text-sm font-medium',
+                description: 'text-xs text-muted-foreground',
+                success: 'bg-primary/[0.12] dark:bg-primary/[0.16]',
+                error: 'bg-destructive/[0.12] dark:bg-destructive/[0.16]',
+                warning: 'bg-amber-500/[0.12] dark:bg-amber-500/[0.16]',
+                info: 'bg-muted/80 dark:bg-muted/70',
+              },
+            }}
+          />
           </ThemePresetProvider>
       </AuthProvider>
       </NativeBridgeProvider>
