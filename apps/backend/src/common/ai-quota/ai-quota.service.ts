@@ -81,10 +81,17 @@ export class AiQuotaService {
 
     const used = (usage as any)[type] ?? 0;
     if (used >= quota) {
+      // 动态获取会员月价
+      const plan = await this.prisma.membershipPlan.findFirst({
+        where: { level: 'standard' },
+        select: { price: true },
+      });
+      const monthlyPrice = plan ? (plan.price / 100).toFixed(0) : '20';
+
       return {
         allowed: false,
         remaining: 0,
-        message: `今日${TYPE_LABELS[type]}额度已用完（${quota}次/天）。10 积分可换 1 次，或 ¥19.9 开通会员无限畅练`,
+        message: `今日${TYPE_LABELS[type]}额度已用完（${quota}次/天）。10 积分可换 1 次，或 ¥${monthlyPrice} 开通会员无限畅练`,
         canExchange: true,
         exchangeCost: EXCHANGE_COST,
       };
