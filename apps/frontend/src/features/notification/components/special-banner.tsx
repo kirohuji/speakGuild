@@ -100,7 +100,7 @@ export function SpecialBanner() {
       {/* ── 居中弹窗卡片（有图片的特殊通知） ── */}
       <Dialog open={popupOpen} onOpenChange={(v) => { if (!v) dismissAndMarkRead() }}>
         <DialogContent
-          className="flex flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-background p-0 shadow-xl sm:max-w-[340px] w-[88vw] [&>button]:hidden"
+          className="flex flex-col gap-0 overflow-hidden rounded-2xl border-0 p-0 shadow-xl size-[80vw] max-w-[400px] max-h-[400px] [&>button]:hidden"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <DialogTitle className="sr-only">{currentNotification?.title}</DialogTitle>
@@ -109,56 +109,33 @@ export function SpecialBanner() {
           </DialogDescription>
 
           {/* 关闭按钮 */}
-          <button
-            type="button"
-            onClick={dismissAndMarkRead}
-            className="absolute right-3 top-3 z-10 flex size-7 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition-colors hover:bg-black/35"
-            aria-label="关闭"
-          >
-            <X className="size-4" />
-          </button>
+          <div className="absolute right-3 top-3 z-10">
+            <button
+              type="button"
+              onClick={dismissAndMarkRead}
+              className="flex size-7 items-center justify-center rounded-full bg-white text-muted-foreground/60 shadow-sm transition-colors hover:bg-gray-100"
+              aria-label="关闭"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
 
-          {/* 图片 */}
+          {/* 图片 — 点击打开详情 */}
           {currentNotification?.imageUrl && (
-            <div className="w-full overflow-hidden">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={handleViewDetail}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleViewDetail() }}
+              className="block w-full overflow-hidden cursor-pointer focus-visible:outline-none"
+            >
               <img
                 src={currentNotification.imageUrl}
                 alt={currentNotification.title}
-                className="w-full object-cover"
+                className="w-full object-cover pointer-events-none"
               />
             </div>
           )}
-
-          {/* 文字内容 */}
-          <div className="flex flex-col gap-3 px-5 pb-5 pt-4">
-            <h3 className="text-[17px] font-bold leading-snug text-foreground">
-              {currentNotification?.title}
-            </h3>
-
-            {currentNotification && (
-              <div
-                className="prose prose-sm max-w-none text-muted-foreground [&_img]:w-full [&_img]:rounded-xl"
-                dangerouslySetInnerHTML={{ __html: currentNotification.content }}
-              />
-            )}
-
-            {/* 操作按钮 */}
-            <div className="mt-2 flex flex-col items-center gap-3">
-              <Button
-                className="w-full rounded-xl py-2.5 text-[15px] font-semibold"
-                onClick={handleViewDetail}
-              >
-                立即查看
-              </Button>
-              <button
-                type="button"
-                onClick={dismissAndMarkRead}
-                className="text-[13px] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
-              >
-                稍后再说
-              </button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
 
