@@ -149,6 +149,71 @@
 
 ---
 
+## 十一、Universal Links（iOS 第三方服务回调）
+
+用于支付宝支付、微信登录/分享等场景的 Universal Links 配置。
+
+### 服务端配置（已就绪）
+
+| 配置项 | 说明 | 文件位置 |
+|---|---|---|
+| `apple-app-site-association` (AASA) | Apple 验证 Universal Links 的 JSON 文件 | `apps/frontend/public/.well-known/apple-app-site-association` |
+| Nginx 响应 | 以 `application/json` 提供 AASA 文件 | `docker/nginx.conf` |
+| 前端构建 | Vite 自动将 `public/.well-known/` 复制到 `dist/` | `apps/frontend/public/.well-known/` |
+
+**AASA 文件路径：** `https://hope.lourd.top/.well-known/apple-app-site-association`
+
+> ⚠️ **部署前必须修改：** 打开 `apps/frontend/public/.well-known/apple-app-site-association`，将 `YOUR_TEAM_ID` 替换为实际的 Apple Developer Team ID（如 `ABCDEF1234`）。
+
+### ⚡ AASA 端口 443 要求（重要）
+
+Apple 的 CDN 在验证 Universal Links 时，**只会通过标准 HTTPS 端口（443）** 获取 `apple-app-site-association` 文件。已通过以下方式解决：
+
+1. **Nginx** 额外监听 `8443` 端口（`docker/nginx.conf`）
+2. **docker-compose** 新增映射 `"443:8443"` — 宿主机 443 端口指向容器 8443 端口
+3. `8443` 端口与 `443` 端口共享同一套 Nginx 配置（SSL + 路由），均能正常提供 AASA 文件
+
+> **验证方法**：部署后用浏览器或 `curl` 访问 `https://hope.lourd.top/.well-known/apple-app-site-association`，如果返回 JSON 内容则说明配置正确。
+
+### Xcode 配置（手动步骤）
+
+每次 `npx cap sync ios` 后，需在 Xcode 中：
+
+1. 打开 `ios/App/App.xcworkspace`
+2. 选择 **App Target → Signing & Capabilities → + Capability → Associated Domains**
+3. 添加以下条目：
+   - `applinks:hope.lourd.top` （用于支付宝/微信等所有 Universal Links 场景）
+4. 重新打包归档（Archive）并发布
+
+> 也可直接编辑 `ios/App/App.entitlements` 文件（如果已存在）添加：
+> ```xml
+> <key>com.apple.developer.associated-domains</key>
+> <array>
+>     <string>applinks:hope.lourd.top</string>
+> </array>
+> ```
+
+### 支付宝开放平台配置
+
+在 [支付宝开放平台](https://open.alipay.com/) 的应用详情页：
+
+1. **应用平台信息 → iOS** → 填写：
+   - **Bundle ID**：`lourd.manyu.app`
+   - **Universal Links**：`https://hope.lourd.top:3605/`
+2. 保存后，测试链接是否生效：
+   - 在 Safari 中输入 `https://hope.lourd.top:3605/` 下拉查看是否有「在"漫语町"中打开」入口
+
+### 微信开放平台配置
+
+在 [微信开放平台](https://open.weixin.qq.com/) 的移动应用详情页：
+
+1. **开发信息 → iOS 应用** → 填写：
+   - **Universal Links**：`https://hope.lourd.top:3605/wechat/`
+2. 确保 `apps/frontend/capacitor.config.ts` 中 `CapacitorWechat` 插件的 `universalLink` 与上一致
+3. 确保前端 `.env` 中 `VITE_WECHAT_UNIVERSAL_LINK` 与上一致
+
+---
+
 ## 快速配置指南
 
 ### 必须配为 Secrets（🔴 共 14 项）

@@ -8,6 +8,13 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'never',
     scrollEnabled: false,
+    // ⚠️ 必须先配置 Associated Domains 才能使 Universal Links 生效：
+    // 1. 在 Xcode 中打开 ios/App/App.xcworkspace
+    // 2. 选择 App Target → Signing & Capabilities → + Capability → Associated Domains
+    // 3. 添加以下条目（根据实际使用的第三方服务增减）：
+    //    - applinks:hope.lourd.top           (Alipay 支付回调)
+    //    - applinks:hope.lourd.top           (WeChat 登录/分享)
+    // 4. 运行 npx cap sync ios 同步后，cap open ios 在 Xcode 中配置
   },
 
   // ── Capacitor 插件配置 ──
@@ -33,8 +40,8 @@ const config: CapacitorConfig = {
     },
 
     CapacitorWechat: {
-      appId: '',  // 微信开放平台申请的 AppID''
-      universalLink: '',
+      appId: '',  // 微信开放平台申请的 AppID
+      universalLink: 'https://hope.lourd.top:3605/wechat/',  // 需与微信开放平台配置的 Universal Link 一致
     },
 
     // Preferences — 键值存储 (不另需配置)
