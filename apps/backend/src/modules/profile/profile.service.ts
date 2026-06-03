@@ -19,19 +19,23 @@ export class ProfileService {
         phoneNumber: true,
         phoneNumberVerified: true,
         emailVerified: true,
+        hasCompletedOnboarding: true,
       },
     });
     return user;
   }
 
   async updateUserProfile(userId: string, dto: UpdateUserProfileDto) {
-    const data: { name?: string; username?: string } = {};
+    const data: Record<string, unknown> = {};
 
     if (dto.name !== undefined) {
       data.name = dto.name.trim();
     }
     if (dto.username !== undefined) {
       data.username = dto.username.trim();
+    }
+    if (dto.hasCompletedOnboarding !== undefined) {
+      data.hasCompletedOnboarding = dto.hasCompletedOnboarding;
     }
 
     const user = await this.prisma.user.update({
@@ -46,6 +50,7 @@ export class ProfileService {
         phoneNumber: true,
         phoneNumberVerified: true,
         emailVerified: true,
+        hasCompletedOnboarding: true,
       },
     });
 

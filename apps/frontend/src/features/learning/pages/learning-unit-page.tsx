@@ -202,6 +202,7 @@ export function LearningUnitPage() {
                 topic={topic}
                 index={i}
                 onStart={() => navigate(`/practice/session/${topic.id}`)}
+                {...(i === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
               />
             ))}
           </div>
@@ -487,7 +488,7 @@ function VocabPrepCard({
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
                 <Search className="size-3.5" /> 查看
               </Button>
-              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collected || saving} onClick={handleClick}>
+              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collected || saving} onClick={handleClick} data-spotlight="bookmark-btn">
                 <BookmarkPlus className="size-3.5" /> {collected ? '已加入' : saving ? '加入中...' : '加入学习库'}
               </Button>
             </div>
@@ -620,16 +621,19 @@ function PracticeTopicCard({
   topic,
   index,
   onStart,
+  ...rest
 }: {
   topic: TrainingTopicItem
   index: number
   onStart: () => void
+  [key: `data-${string}`]: string | undefined
 }) {
   const { t } = useTranslation()
   return (
     <Card
       className="cursor-pointer border-0 bg-orange-500/[0.06] shadow-none transition-colors hover:bg-orange-500/[0.1]"
       onClick={onStart}
+      {...rest}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-4">

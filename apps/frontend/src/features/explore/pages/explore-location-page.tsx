@@ -200,11 +200,12 @@ export function ExploreLocationPage() {
       {/* Tab: NPCs */}
       {tab === 'npcs' && (
         <div className="space-y-2">
-          {location.npcs?.map((npcRel) => {
+          {location.npcs?.map((npcRel, idx) => {
             const npc = npcRel.character
             return (
               <Card
                 key={npc.id}
+                {...(idx === 0 ? { 'data-spotlight': 'start-vn-practice' } : {})}
                 className={cn(
                   'cursor-pointer transition-colors hover:bg-muted/50',
                   selectedNpc?.id === npc.id && 'border-primary/50 bg-primary/5',

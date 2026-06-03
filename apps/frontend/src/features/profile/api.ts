@@ -51,6 +51,7 @@ export interface UserProfile {
   phoneNumber?: string | null
   phoneNumberVerified: boolean
   emailVerified: boolean
+  hasCompletedOnboarding: boolean
 }
 
 export const getProfileOverview = (): Promise<ProfileOverview> =>
@@ -91,5 +92,5 @@ export const getPracticeRecords = (params: {
 
 export const getUserProfile = (): Promise<UserProfile> => get('/user/profile')
 
-export const updateUserProfile = (payload: { name?: string; username?: string }): Promise<UserProfile> =>
+export const updateUserProfile = (payload: { name?: string; username?: string; hasCompletedOnboarding?: boolean }): Promise<UserProfile> =>
   patch('/user/profile', payload)

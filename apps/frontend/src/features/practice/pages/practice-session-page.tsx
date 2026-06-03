@@ -845,7 +845,7 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
                                     <Search className="size-3.5" /> 查看
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })}>
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
                                     <BookmarkPlus className="size-3.5" /> {collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
                                   </Button>
                                 </div>
@@ -959,7 +959,7 @@ export function PracticeSessionPage() {
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
-            <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={handleStartPractice}>
+            <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={handleStartPractice} data-spotlight="start-vn-practice">
               <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
             </Button>
           </section>

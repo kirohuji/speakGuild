@@ -5,6 +5,7 @@ import { NativeBridgeProvider } from '@/lib/native'
 import { AuthProvider } from '@/providers/auth-provider'
 import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
+import { OnboardingProvider } from '@/providers/onboarding-provider'
 import { RootLayout } from '@/layout/root-layout'
 import { AdminLayout } from '@/layout/admin-layout'
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
@@ -68,6 +69,7 @@ export default function App() {
           <ThemePresetProvider>
           <HashRouter>
           <AuthRouteGate>
+            <OnboardingProvider>
             <Routes>
               {/* 管理员后台 — 独立布局 */}
               <Route path="/admin" element={<AdminLayout />}>
@@ -155,6 +157,7 @@ export default function App() {
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
+            </OnboardingProvider>
           </AuthRouteGate>
         </HashRouter>
           <Toaster
