@@ -164,6 +164,7 @@ export default function App() {
             position="top-center"
             theme="system"
             visibleToasts={1}
+            gap={8}
             offset="calc(0.75rem + env(safe-area-inset-top, 0px))"
             toastOptions={{
               unstyled: true,

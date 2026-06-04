@@ -66,16 +66,16 @@ export const auth: any = betterAuth({
       clientSecret: process.env.WECHAT_CLIENT_SECRET || '',
       lang: 'cn',
     },
-    apple: async () => ({
-      clientId: process.env.APPLE_CLIENT_ID || '',
-      clientSecret: await generateAppleClientSecret(
-        process.env.APPLE_CLIENT_ID || '',
-        process.env.APPLE_TEAM_ID || '',
-        process.env.APPLE_KEY_ID || '',
-        process.env.APPLE_PRIVATE_KEY || '',
-      ),
-      appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER || '',
-    }),
+    // apple: async () => ({
+    //   clientId: process.env.APPLE_CLIENT_ID || '',
+    //   clientSecret: await generateAppleClientSecret(
+    //     process.env.APPLE_CLIENT_ID || '',
+    //     process.env.APPLE_TEAM_ID || '',
+    //     process.env.APPLE_KEY_ID || '',
+    //     process.env.APPLE_PRIVATE_KEY || '',
+    //   ),
+    //   appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER || '',
+    // }),
   },
   plugins: [
     bearer(),

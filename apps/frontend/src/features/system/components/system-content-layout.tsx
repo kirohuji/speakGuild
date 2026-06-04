@@ -26,7 +26,8 @@ export function SystemContentLayout({ title, children, backPath }: SystemContent
     return (
       <div className="min-h-screen bg-background">
         {/* 移动端头部导航 */}
-        <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-border/50 bg-background/95 backdrop-blur-xl px-4 h-12">
+        <div className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border/50 bg-background/95 backdrop-blur-xl px-4 pt-[env(safe-area-inset-top,0px)]"
+             style={{ height: 'calc(3rem + env(safe-area-inset-top, 0px))' }}>
           <button
             type="button"
             onClick={handleBack}
@@ -35,7 +36,7 @@ export function SystemContentLayout({ title, children, backPath }: SystemContent
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className="flex-1 text-center text-base font-semibold truncate pr-8">{title}</h1>
+          <h1 className="flex-1 truncate text-center text-base font-semibold pr-8">{title}</h1>
         </div>
         {/* 移动端内容区 */}
         <div className="px-4 py-5 pb-24">
