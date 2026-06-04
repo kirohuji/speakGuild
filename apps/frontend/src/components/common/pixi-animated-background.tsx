@@ -6,6 +6,7 @@ import { setupOcean } from './pixi-themes/ocean';
 import { setupStars } from './pixi-themes/stars';
 import { setupRain } from './pixi-themes/rain';
 import { setupAurora } from './pixi-themes/aurora';
+import { setupLittlePrince } from './pixi-themes/little-prince';
 
 interface AnimatedBackgroundProps {
   themeId?: string;
@@ -37,6 +38,8 @@ export function PixiAnimatedBackground({ themeId, testMode }: AnimatedBackground
 
     const w = container.clientWidth;
     const h = container.clientHeight;
+    console.log(`[PixiAnimatedBackground] Initializing with size ${w}x${h}, themeId=${themeId}, isDark=${isDark}, testMode=${testMode}`);
+    console.log(`[PixiAnimatedBackground] x: ${container.clientWidth}, y: ${container.clientHeight}`);
     if (w === 0 || h === 0) return;
 
     const app = new PIXI.Application();
@@ -53,10 +56,11 @@ export function PixiAnimatedBackground({ themeId, testMode }: AnimatedBackground
       appRef.current = app;
 
       const setup: ThemeSetup =
-        themeId?.includes('ocean')  ? setupOcean(app, w, h, isDark, testMode) :
-        themeId?.includes('rain')   ? setupRain(app, w, h, isDark, testMode) :
-        themeId?.includes('aurora') ? setupAurora(app, w, h, isDark) :
-                                      setupStars(app, w, h, isDark, testMode);
+        themeId?.includes('ocean')         ? setupOcean(app, w, h, isDark, testMode) :
+        themeId?.includes('rain')          ? setupRain(app, w, h, isDark, testMode) :
+        themeId?.includes('aurora')        ? setupAurora(app, w, h, isDark) :
+        themeId?.includes('little-prince') ? setupLittlePrince(app, w, h, isDark) :
+                                             setupStars(app, w, h, isDark, testMode);
       setupRef.current = setup;
 
       app.ticker.add((ticker) => {

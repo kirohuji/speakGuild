@@ -341,6 +341,64 @@ export async function seedThemes(prisma: PrismaClient) {
         { type: 'glow', color: 'hsla(200 50% 48% / 0.10)', x: '65%', y: '55%', size: '24rem', blur: '70px' },
       ],
     },
+
+    // ═══ 7. 小王子 · 星之旅 (sortOrder: 6, animation) ═══
+    {
+      id: 'theme-little-prince',
+      name: '小王子 · 星之旅',
+      description: '金色麦田、玫瑰芬芳、星空下的漂流瓶——来自 B-612 小行星的问候',
+      sortOrder: 6, isDefault: false, bgType: 'animation',
+      lightColors: {
+        background: '40 30% 95%', foreground: '30 20% 16%',
+        card: '42 35% 98%', cardForeground: '30 20% 16%',
+        popover: '42 35% 98%', popoverForeground: '30 20% 16%',
+        primary: '215 40% 28%', primaryForeground: '42 35% 98%',
+        secondary: '38 40% 90%', secondaryForeground: '30 20% 16%',
+        muted: '38 30% 88%', mutedForeground: '30 14% 42%',
+        accent: '350 55% 50%', accentForeground: '42 35% 98%',
+        destructive: '0 65% 50%', destructiveForeground: '42 35% 98%',
+        border: '38 25% 82%', input: '38 25% 82%',
+        ring: '350 55% 50%',
+        success: '145 40% 38%', successForeground: '42 35% 98%',
+        warning: '42 80% 48%', warningForeground: '30 20% 16%',
+        sidebarBackground: '40 30% 95%', sidebarForeground: '30 20% 16%',
+        sidebarPrimary: '215 40% 28%', sidebarPrimaryForeground: '42 35% 98%',
+        sidebarAccent: '38 40% 90%', sidebarAccentForeground: '30 20% 16%',
+        sidebarBorder: '38 25% 82%', sidebarRing: '350 55% 50%',
+      },
+      lightBackground:
+        'radial-gradient(ellipse at 25% 15%, hsl(42 90% 78% / 0.35), transparent 32rem), radial-gradient(ellipse at 70% 50%, hsl(350 55% 85% / 0.25), transparent 28rem), radial-gradient(ellipse at 45% 80%, hsl(215 40% 82% / 0.2), transparent 26rem), linear-gradient(170deg, hsl(40 35% 96%) 0%, hsl(38 45% 93%) 40%, hsl(42 30% 97%) 100%)',
+      lightDecorations: [
+        { type: 'glow', color: 'hsla(42 90% 78% / 0.35)', x: '25%', y: '15%', size: '32rem', blur: '90px', animation: { opacity: [0.25, 0.45, 0.25], x: ['25%', '28%', '25%'], y: ['15%', '18%', '15%'] } },
+        { type: 'glow', color: 'hsla(350 55% 85% / 0.25)', x: '70%', y: '50%', size: '28rem', blur: '80px', animation: { opacity: [0.2, 0.4, 0.2], x: ['70%', '67%', '70%'], y: ['50%', '53%', '50%'] } },
+        { type: 'glow', color: 'hsla(215 40% 82% / 0.2)', x: '45%', y: '80%', size: '26rem', blur: '75px' },
+      ],
+      darkColors: {
+        background: '235 40% 5%', foreground: '40 25% 88%',
+        card: '238 30% 9%', cardForeground: '40 25% 88%',
+        popover: '238 30% 9%', popoverForeground: '40 25% 88%',
+        primary: '42 85% 65%', primaryForeground: '235 40% 5%',
+        secondary: '238 22% 13%', secondaryForeground: '40 25% 88%',
+        muted: '238 18% 16%', mutedForeground: '40 14% 58%',
+        accent: '350 60% 60%', accentForeground: '235 40% 5%',
+        destructive: '0 55% 52%', destructiveForeground: '40 25% 88%',
+        border: '238 20% 20%', input: '238 20% 20%',
+        ring: '350 60% 60%',
+        success: '145 35% 45%', successForeground: '40 25% 88%',
+        warning: '42 75% 52%', warningForeground: '235 40% 5%',
+        sidebarBackground: '235 40% 5%', sidebarForeground: '40 25% 88%',
+        sidebarPrimary: '42 85% 65%', sidebarPrimaryForeground: '235 40% 5%',
+        sidebarAccent: '238 22% 13%', sidebarAccentForeground: '40 25% 88%',
+        sidebarBorder: '238 20% 20%', sidebarRing: '350 60% 60%',
+      },
+      darkBackground:
+        'radial-gradient(ellipse at 20% 15%, hsl(42 90% 50% / 0.10), transparent 28rem), radial-gradient(ellipse at 75% 40%, hsl(350 50% 45% / 0.08), transparent 24rem), radial-gradient(ellipse at 50% 75%, hsl(215 50% 40% / 0.07), transparent 26rem), linear-gradient(160deg, hsl(235 40% 5%) 0%, hsl(240 35% 7%) 45%, hsl(230 42% 5%) 100%)',
+      darkDecorations: [
+        { type: 'glow', color: 'hsla(42 90% 50% / 0.10)', x: '20%', y: '15%', size: '28rem', blur: '80px', animation: { opacity: [0.15, 0.3, 0.15], x: ['20%', '24%', '20%'], y: ['15%', '18%', '15%'] } },
+        { type: 'glow', color: 'hsla(350 50% 45% / 0.08)', x: '75%', y: '40%', size: '24rem', blur: '70px', animation: { opacity: [0.12, 0.25, 0.12], x: ['75%', '72%', '75%'], y: ['40%', '43%', '40%'] } },
+        { type: 'glow', color: 'hsla(215 50% 40% / 0.07)', x: '50%', y: '75%', size: '26rem', blur: '75px' },
+      ],
+    },
   ];
 
   for (const t of themes) {
