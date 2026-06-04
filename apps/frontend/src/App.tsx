@@ -165,7 +165,7 @@ export default function App() {
             theme="system"
             visibleToasts={1}
             gap={8}
-            offset="calc(0.75rem + env(safe-area-inset-top, 0px))"
+            offset="calc(0.75rem + var(--safe-area-inset-top))"
             toastOptions={{
               unstyled: true,
               classNames: {
