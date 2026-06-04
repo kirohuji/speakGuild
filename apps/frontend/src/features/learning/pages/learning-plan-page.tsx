@@ -7,7 +7,7 @@ import {
   BookOpen, GraduationCap, Plane, Coffee, Briefcase, Users,
   ChevronLeft, ChevronRight, CheckCircle2, Lock, ArrowRight,
   ClipboardList, ShoppingBag, Play, Search, CalendarDays, Mic,
-  BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, Eye,
+  BookText, MessageSquareText, ListChecks, X, Flame, CalendarCheck, Eye, Settings,
   CircleCheck, CircleDashed, ChevronDown, type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-d
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { practiceApi, type PracticeSession, type TopicDetail } from '@/features/practice/api/english-practice-api'
 import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
-import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
+import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { cn } from '@/lib/cn'
@@ -1157,6 +1157,7 @@ function PracticeRecordsContent() {
     {
       key: 'status',
       header: t('profile.practiceRecords.columns.status'),
+      width: 110,
       cell: (v, row) => (
         <div className="space-y-1">
           <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-[10px]">
@@ -1255,10 +1256,11 @@ function PracticeRecordReadonlyReviewDrawer({
     ? character.expressions as Record<string, string>
     : {}
   const spriteUrl = expressions.default || character?.spriteBaseUrl || undefined
+  const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background">
+      <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
         <DrawerHeader className="sr-only">
           <DrawerTitle>练习回顾</DrawerTitle>
         </DrawerHeader>
@@ -1303,12 +1305,22 @@ function PracticeRecordReadonlyReviewDrawer({
                 <Badge variant={passed ? 'default' : 'secondary'} className={cn('h-6 rounded-full px-2 text-[10px]', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
                   {score > 0 ? `${score} 分` : '回顾'}
                 </Badge>
+                <button
+                  type="button"
+                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  onClick={() => vnPlayerRef.current?.toggleSettings()}
+                  aria-label="设置"
+                >
+                  <Settings className="size-3.5" />
+                </button>
               </div>
             </div>
             <VnPlayer
+              ref={vnPlayerRef}
               className="h-full max-w-none rounded-none border-none"
               stageClassName="min-h-0"
               showUserInputOverride
+              hideChatTopBar
               backgroundUrl={topicDetail?.scene.backgroundUrl || undefined}
               currentLine={isEnded ? null : currentReplayLine?.line ?? null}
               history={replayLines.slice(0, Math.min(lineIndex, replayLines.length)).map((item) => item.line)}
@@ -1347,7 +1359,7 @@ function PracticeReplayFeedback({
   return (
     <div className={cn(
       'border-t text-foreground backdrop-blur-xl',
-      compact ? 'px-3 py-2.5' : 'px-4 py-3',
+      compact ? 'px-3 py-2.5' : 'px-4 py-3 pb-safe',
       judgement.passed ? 'border-emerald-500/25 bg-emerald-500/[0.08]' : 'border-amber-500/25 bg-amber-500/[0.08]',
     )}>
       <div className="flex items-center gap-2 text-xs font-semibold">

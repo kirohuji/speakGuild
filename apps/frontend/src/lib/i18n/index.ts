@@ -158,7 +158,7 @@ const zhCN = {
       columns: {
         topic: '题型',
         question: '题目',
-        status: '状态',
+        status: '状 态',
         date: '练习日期',
         count: '练习次数',
       },
