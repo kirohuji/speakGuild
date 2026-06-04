@@ -186,33 +186,10 @@ export function LearningUnitPage() {
         </div>
       </div>
 
-      {/* ===== 题目 ===== */}
-      {unit.trainingTopics.length > 0 && (
-        <section className="mb-5">
-          <SectionHeader
-            eyebrow="1"
-            title={t('learning.practiceTitle')}
-            subtitle={t('learning.practiceSubtitle')}
-            meta={`${unit.trainingTopics.length}${t('learning.questions')}`}
-          />
-          <div className="space-y-2">
-            {unit.trainingTopics.map((topic, i) => (
-              <PracticeTopicCard
-                key={topic.id}
-                topic={topic}
-                index={i}
-                onStart={() => navigate(`/practice/session/${topic.id}`)}
-                {...(i === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ===== 说明 ===== */}
       <section className="mb-5">
         <SectionHeader
-          eyebrow="2"
+          eyebrow="1"
           title={t('learning.preparationTitle')}
           subtitle={t('learning.prepSubtitle')}
         />
@@ -231,9 +208,9 @@ export function LearningUnitPage() {
       </section>
 
       {/* ===== 知识点 ===== */}
-      <section className="mb-6">
+      <section className="mb-5">
         <SectionHeader
-          eyebrow="3"
+          eyebrow="2"
           title={t('learning.knowledgePoints')}
           subtitle={t('learning.knowledgeSubtitle')}
           meta={`${allVocabCount + allChunkCount + patternDialogItems.length}${t('learning.items')}`}
@@ -334,6 +311,29 @@ export function LearningUnitPage() {
           </TabsContent>
         </Tabs>
       </section>
+
+      {/* ===== 题目 ===== */}
+      {unit.trainingTopics.length > 0 && (
+        <section className="mb-5">
+          <SectionHeader
+            eyebrow="3"
+            title={t('learning.practiceTitle')}
+            subtitle={t('learning.practiceSubtitle')}
+            meta={`${unit.trainingTopics.length}${t('learning.questions')}`}
+          />
+          <div className="space-y-2">
+            {unit.trainingTopics.map((topic, i) => (
+              <PracticeTopicCard
+                key={topic.id}
+                topic={topic}
+                index={i}
+                onStart={() => navigate(`/practice/session/${topic.id}`)}
+                {...(i === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Dialog */}
       <LearningInsightDialog
