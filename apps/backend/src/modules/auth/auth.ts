@@ -50,6 +50,16 @@ export const auth: any = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60 * 24 * 7, // 7 天
+    },
+    cookieOptions: {
+      sameSite: "none",
+      secure: true
+    },
+  },
   socialProviders: {
     wechat: {
       clientId: process.env.WECHAT_CLIENT_ID || '',
