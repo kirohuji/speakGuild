@@ -11,22 +11,26 @@ interface ChunkActivationPanelProps {
   chunks: ChunkItem[]
   activatedIds: Set<string>
   collectedTexts: Set<string>
+  savingTexts: Set<string>
   expandedId: string | null
   onActivate: (chunkId: string) => void
   onExpand: (chunkId: string) => void
   onInspect: (chunkId: string) => void
   onCollect: (chunk: ChunkItem) => void
+  onRemove: (chunk: ChunkItem) => void
 }
 
 export function ChunkActivationPanel({
   chunks,
   activatedIds,
   collectedTexts,
+  savingTexts,
   expandedId,
   onActivate,
   onExpand,
   onInspect,
   onCollect,
+  onRemove,
 }: ChunkActivationPanelProps) {
   const hasChunks = chunks.length > 0
 
@@ -52,6 +56,7 @@ export function ChunkActivationPanel({
                 key={chunk.id}
                 chunk={chunk}
                 collected={collectedTexts.has(chunk.text)}
+                saving={savingTexts.has(chunk.text)}
                 expanded={expandedId === chunk.id}
                 onClick={() => {
                   onExpand(chunk.id)
@@ -59,6 +64,7 @@ export function ChunkActivationPanel({
                 }}
                 onInspect={() => onInspect(chunk.id)}
                 onCollect={() => onCollect(chunk)}
+                onRemove={() => onRemove(chunk)}
               />
             ))}
           </div>
@@ -75,17 +81,21 @@ export function ChunkActivationPanel({
 function ChunkActivationItem({
   chunk,
   collected,
+  saving,
   expanded,
   onClick,
   onInspect,
   onCollect,
+  onRemove,
 }: {
   chunk: ChunkItem
   collected: boolean
+  saving: boolean
   expanded: boolean
   onClick: () => void
   onInspect: () => void
   onCollect: () => void
+  onRemove: () => void
 }) {
   return (
     <Card
@@ -127,8 +137,8 @@ function ChunkActivationItem({
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={(e) => { e.stopPropagation(); onInspect() }}>
                 <Search className="size-3.5" /> 查看
               </Button>
-              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collected} onClick={onCollect}>
-                <BookmarkPlus className="size-3.5" /> {collected ? '已加入' : '加入学习库'}
+              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={collected ? onRemove : onCollect}>
+                <BookmarkPlus className="size-3.5" /> {saving ? '处理中...' : collected ? '已加入' : '加入学习库'}
               </Button>
             </div>
           </div>

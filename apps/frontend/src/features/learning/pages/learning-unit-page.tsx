@@ -85,6 +85,21 @@ export function LearningUnitPage() {
     } catch { toast.error('加入失败') }
   }, [addWord, unit?.title])
 
+  const handleRemoveExpression = useCallback(async (text: string) => {
+    try {
+      // 先查询找到对应 expression 的 ID
+      const list = await expressionApi.list()
+      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+      const match = items.find(
+        (item: any) => item.chunkText === text || item.original === text,
+      )
+      if (!match?.id) { toast.error('未找到对应条目'); return }
+      await expressionApi.remove(match.id)
+      setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+      toast.success('已从学习库移除')
+    } catch { toast.error('移除失败') }
+  }, [])
+
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>
     (unit?.vocabularies ?? []).map((v) => ({
       kind: 'word' as const,
@@ -241,6 +256,7 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(vocab.id)}
                     onOpen={() => openDialog(vocabDialogItems, vocabPageItems.startIndex + index)}
                     onCollect={() => handleCollectWord(vocab.word, vocab.meaning)}
+                    onRemove={() => handleRemoveExpression(vocab.word)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
                 ))}
@@ -268,7 +284,7 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(chunk.id)}
                     onOpen={() => openDialog(chunkDialogItems, chunkPageItems.startIndex + index)}
                     onCollect={() => handleCollectChunk(chunk.text, chunk.meaning)}
-                  />
+                    onRemove={() => handleRemoveExpression(chunk.text)}                  />
                 ))}
                 <PrepPager
                   currentPage={prepPage.chunk}
@@ -454,6 +470,7 @@ function VocabPrepCard({
   onToggle,
   onOpen,
   onCollect,
+  onRemove,
   ...rest
 }: {
   vocab: VocabItem
@@ -462,9 +479,14 @@ function VocabPrepCard({
   onToggle: () => void
   onOpen: () => void
   onCollect: () => void
+  onRemove: () => void
 } & Record<string, any>) {
   const [saving, setSaving] = useState(false)
-  const handleClick = () => { setSaving(true); onCollect(); setTimeout(() => setSaving(false), 1000) }
+  const handleClick = () => {
+    setSaving(true)
+    const action = collected ? onRemove() : onCollect()
+    Promise.resolve(action).finally(() => setSaving(false))
+  }
 
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
@@ -490,8 +512,8 @@ function VocabPrepCard({
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
                 <Search className="size-3.5" /> 查看
               </Button>
-              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collected || saving} onClick={handleClick} data-spotlight="bookmark-btn">
-                <BookmarkPlus className="size-3.5" /> {collected ? '已加入' : saving ? '加入中...' : '加入学习库'}
+              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={handleClick} data-spotlight="bookmark-btn">
+                <BookmarkPlus className="size-3.5" /> {saving ? '处理中...' : collected ? '已加入' : '加入学习库'}
               </Button>
             </div>
           </div>
@@ -508,6 +530,7 @@ function ChunkPrepCard({
   onToggle,
   onOpen,
   onCollect,
+  onRemove,
 }: {
   chunk: ChunkItem
   collected: boolean
@@ -515,9 +538,14 @@ function ChunkPrepCard({
   onToggle: () => void
   onOpen: () => void
   onCollect: () => void
+  onRemove: () => void
 }) {
   const [saving, setSaving] = useState(false)
-  const handleClick = () => { setSaving(true); onCollect(); setTimeout(() => setSaving(false), 1000) }
+  const handleClick = () => {
+    setSaving(true)
+    const action = collected ? onRemove() : onCollect()
+    Promise.resolve(action).finally(() => setSaving(false))
+  }
 
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
@@ -554,11 +582,11 @@ function ChunkPrepCard({
                 size="sm"
                 variant={collected ? 'secondary' : 'default'}
                 className="h-8 flex-1 gap-1.5 text-xs"
-                disabled={collected || saving}
+                disabled={saving}
                 onClick={handleClick}
               >
                 <BookmarkPlus className="size-3.5" />
-                {collected ? '已加入' : saving ? '加入中...' : '加入学习库'}
+                {saving ? '处理中...' : collected ? '已加入' : '加入学习库'}
               </Button>
             </div>
           </div>

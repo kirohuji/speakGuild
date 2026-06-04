@@ -241,6 +241,7 @@ export function PracticeSessionPage() {
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
+  const [savingTexts, setSavingTexts] = useState<Set<string>>(new Set())
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
@@ -529,28 +530,50 @@ export function PracticeSessionPage() {
   }, [insightItems])
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
+    setSavingTexts((prev) => new Set([...prev, word]))
     try {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
+    setSavingTexts((prev) => { const s = new Set(prev); s.delete(word); return s })
   }, [detail])
 
   const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
+    setSavingTexts((prev) => new Set([...prev, pattern.pattern]))
     try {
       await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
       setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
+    setSavingTexts((prev) => { const s = new Set(prev); s.delete(pattern.pattern); return s })
   }, [])
 
   const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
+    setSavingTexts((prev) => new Set([...prev, chunk.text]))
     try {
       await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, chunk.text]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
+    setSavingTexts((prev) => { const s = new Set(prev); s.delete(chunk.text); return s })
   }, [detail])
+
+  const handleRemoveExpression = useCallback(async (text: string) => {
+    setSavingTexts((prev) => new Set([...prev, text]))
+    try {
+      const list = await expressionApi.list()
+      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+      const match = items.find(
+        (item: any) => item.chunkText === text || item.original === text,
+      )
+      if (!match?.id) { toast.error('未找到对应条目'); return }
+      await expressionApi.remove(match.id)
+      setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+      toast.success('已从学习库移除')
+    } catch { toast.error('移除失败') }
+    setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+  }, [])
 
   // ==================== Practice: Send Input ====================
   const sendUserInput = useCallback(async (text: string) => {
@@ -845,8 +868,8 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
                                     <Search className="size-3.5" /> 查看
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
-                                    <BookmarkPlus className="size-3.5" /> {collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression(p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? '处理中...' : collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
                                   </Button>
                                 </div>
                               </div>
@@ -916,8 +939,8 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
                                     <Search className="size-3.5" /> 查看
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={collectedTexts.has(v.word)} onClick={() => handleCollectWord(v.word, v.meaning)}>
-                                    <BookmarkPlus className="size-3.5" /> {collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
+                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={collectedTexts.has(v.word) ? () => handleRemoveExpression(v.word) : () => handleCollectWord(v.word, v.meaning)}>
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? '处理中...' : collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
                                   </Button>
                                 </div>
                               </div>
@@ -937,11 +960,13 @@ export function PracticeSessionPage() {
                   chunks={detail.activeChunks}
                   activatedIds={activatedChunks}
                   collectedTexts={collectedTexts}
+                  savingTexts={savingTexts}
                   expandedId={expandedChunkId}
                   onActivate={activateChunk}
                   onExpand={setExpandedChunkId}
                   onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
                   onCollect={handleCollectChunk}
+                  onRemove={(chunk) => handleRemoveExpression(chunk.text)}
                 />
               </TabsContent>
             </Tabs>
