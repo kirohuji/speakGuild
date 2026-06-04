@@ -23,6 +23,7 @@
     "@capacitor/status-bar": "^8.0.2",
     "@capgo/capacitor-social-login": "^8.3.22",
     "@capgo/capacitor-updater": "^8.47.5",
+    "@capgo/capacitor-wechat": "^8.0.32",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
