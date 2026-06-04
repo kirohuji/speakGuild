@@ -1,4 +1,5 @@
 import { ChevronRight, Lightbulb, MessageSquareText, BookmarkPlus, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,6 +33,7 @@ export function ChunkActivationPanel({
   onCollect,
   onRemove,
 }: ChunkActivationPanelProps) {
+  const { t } = useTranslation()
   const hasChunks = chunks.length > 0
 
   return (
@@ -39,7 +41,7 @@ export function ChunkActivationPanel({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Lightbulb className="size-4 text-primary" />
-          <p className="text-sm font-semibold text-foreground">核心表达块</p>
+          <p className="text-sm font-semibold text-foreground">{t('learning.chunks')}</p>
         </div>
         <Badge variant="secondary" className="rounded-full text-[10px]">
           {collectedTexts.size}/{chunks.length}
@@ -48,7 +50,7 @@ export function ChunkActivationPanel({
       {hasChunks ? (
         <>
           <p className="mb-3 text-xs leading-5 text-muted-foreground">
-            点开表达块确认含义和例句，已收录的会标出。
+            {t('practiceSession.chunkHint')}
           </p>
           <div className="space-y-2">
             {chunks.map((chunk) => (
@@ -71,7 +73,7 @@ export function ChunkActivationPanel({
         </>
       ) : (
         <div className="rounded-lg bg-background/55 p-4 text-sm text-muted-foreground">
-          这个话题还没有配置核心 Chunk，可以直接开始练习。
+          {t('practiceSession.noChunkHint')}
         </div>
       )}
     </div>
@@ -97,6 +99,7 @@ function ChunkActivationItem({
   onCollect: () => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <Card
       className={cn(
@@ -116,7 +119,7 @@ function ChunkActivationItem({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
-              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
           </div>
@@ -135,10 +138,10 @@ function ChunkActivationItem({
             ))}
             <div className="flex gap-2 pt-1">
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={(e) => { e.stopPropagation(); onInspect() }}>
-                <Search className="size-3.5" /> 查看
+                <Search className="size-3.5" /> {t('learning.view')}
               </Button>
               <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={collected ? onRemove : onCollect}>
-                <BookmarkPlus className="size-3.5" /> {saving ? '处理中...' : collected ? '已加入' : '加入学习库'}
+                <BookmarkPlus className="size-3.5" /> {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
               </Button>
             </div>
           </div>

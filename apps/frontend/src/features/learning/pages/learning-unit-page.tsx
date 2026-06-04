@@ -71,8 +71,8 @@ export function LearningUnitPage() {
     try {
       await expressionApi.create({ type: 'chunk', chunkText: text, original: meaning, sceneName: unit?.title })
       setCollectedTexts((prev) => new Set([...prev, text]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
   }, [unit?.title])
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
@@ -81,8 +81,8 @@ export function LearningUnitPage() {
     try {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
   }, [addWord, unit?.title])
 
   const handleRemoveExpression = useCallback(async (text: string) => {
@@ -93,11 +93,11 @@ export function LearningUnitPage() {
       const match = items.find(
         (item: any) => item.chunkText === text || item.original === text,
       )
-      if (!match?.id) { toast.error('未找到对应条目'); return }
+      if (!match?.id) { toast.error(t('learning.notFound')); return }
       await expressionApi.remove(match.id)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-      toast.success('已从学习库移除')
-    } catch { toast.error('移除失败') }
+      toast.success(t('learning.removedFromLibrary'))
+    } catch { toast.error(t('learning.removeFailed')) }
   }, [])
 
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>
@@ -481,6 +481,7 @@ function VocabPrepCard({
   onCollect: () => void
   onRemove: () => void
 } & Record<string, any>) {
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const handleClick = () => {
     setSaving(true)
@@ -498,7 +499,7 @@ function VocabPrepCard({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{vocab.word}</p>
-              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{vocab.meaning}</p>
           </div>
@@ -510,10 +511,10 @@ function VocabPrepCard({
             {vocab.description && <p className="mb-3 text-xs leading-5 text-muted-foreground">{vocab.description}</p>}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
-                <Search className="size-3.5" /> 查看
+                <Search className="size-3.5" /> {t('learning.view')}
               </Button>
               <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={handleClick} data-spotlight="bookmark-btn">
-                <BookmarkPlus className="size-3.5" /> {saving ? '处理中...' : collected ? '已加入' : '加入学习库'}
+                <BookmarkPlus className="size-3.5" /> {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
               </Button>
             </div>
           </div>
@@ -540,6 +541,7 @@ function ChunkPrepCard({
   onCollect: () => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const handleClick = () => {
     setSaving(true)
@@ -557,7 +559,7 @@ function ChunkPrepCard({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
-              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
               <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{chunk.difficulty}</Badge>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
@@ -576,7 +578,7 @@ function ChunkPrepCard({
             )}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
-                <Search className="size-3.5" /> 查看表达用法
+                <Search className="size-3.5" /> {t('learning.viewExpression')}
               </Button>
               <Button
                 size="sm"
@@ -586,7 +588,7 @@ function ChunkPrepCard({
                 onClick={handleClick}
               >
                 <BookmarkPlus className="size-3.5" />
-                {saving ? '处理中...' : collected ? '已加入' : '加入学习库'}
+                {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
               </Button>
             </div>
           </div>
@@ -607,6 +609,7 @@ function PatternPrepCard({
   onToggle: () => void
   onOpen: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
       <CardContent className="p-0">
@@ -638,7 +641,7 @@ function PatternPrepCard({
               </div>
             )}
             <Button size="sm" variant="outline" className="h-8 w-full gap-1.5 text-xs" onClick={onOpen}>
-              <Search className="size-3.5" /> 查看句型
+              <Search className="size-3.5" /> {t('learning.viewPattern')}
             </Button>
           </div>
         )}

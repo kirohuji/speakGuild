@@ -534,8 +534,8 @@ export function PracticeSessionPage() {
     try {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(word); return s })
   }, [detail])
 
@@ -544,8 +544,8 @@ export function PracticeSessionPage() {
     try {
       await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
       setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(pattern.pattern); return s })
   }, [])
 
@@ -554,8 +554,8 @@ export function PracticeSessionPage() {
     try {
       await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, chunk.text]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(chunk.text); return s })
   }, [detail])
 
@@ -567,11 +567,11 @@ export function PracticeSessionPage() {
       const match = items.find(
         (item: any) => item.chunkText === text || item.original === text,
       )
-      if (!match?.id) { toast.error('未找到对应条目'); return }
+      if (!match?.id) { toast.error(t('learning.notFound')); return }
       await expressionApi.remove(match.id)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-      toast.success('已从学习库移除')
-    } catch { toast.error('移除失败') }
+      toast.success(t('learning.removedFromLibrary'))
+    } catch { toast.error(t('learning.removeFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
   }, [])
 
@@ -855,7 +855,7 @@ export function PracticeSessionPage() {
                                 <div className="flex items-center gap-2">
                                   <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
                                   <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
-                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
                                 </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
                               </div>
@@ -866,10 +866,10 @@ export function PracticeSessionPage() {
                                 {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
-                                    <Search className="size-3.5" /> 查看
+                                    <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
                                   <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression(p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? '处理中...' : collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? t('learning.processing') : collectedTexts.has(p.pattern) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
                                   </Button>
                                 </div>
                               </div>
@@ -926,7 +926,7 @@ export function PracticeSessionPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p className="truncate text-sm font-semibold text-foreground">{v.word}</p>
-                                  {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                  {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
                                 </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{v.meaning}</p>
                               </div>
@@ -937,10 +937,10 @@ export function PracticeSessionPage() {
                                 {/* <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p> */}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
-                                    <Search className="size-3.5" /> 查看
+                                    <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
                                   <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={collectedTexts.has(v.word) ? () => handleRemoveExpression(v.word) : () => handleCollectWord(v.word, v.meaning)}>
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? '处理中...' : collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? t('learning.processing') : collectedTexts.has(v.word) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
                                   </Button>
                                 </div>
                               </div>
