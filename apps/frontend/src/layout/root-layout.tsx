@@ -66,7 +66,7 @@ export function RootLayout() {
                 ? isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))]' : 'pt-14 pb-0'
                 : isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-0' : 'pt-14 pb-0'
       }`)}>
-        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0 py-3' : 'px-4 py-6')}>
+        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0' : 'px-4 py-6')}>
           <Outlet />
         </div>
       </main>
