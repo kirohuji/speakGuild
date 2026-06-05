@@ -133,7 +133,12 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
             const unit = units[index]
             return (
               <div className="py-1">
-                <ShopCard unit={unit} onMemberOpen={onMemberOpen} onEnroll={onEnrollUnit} />
+                <ShopCard
+                  unit={unit}
+                  onMemberOpen={onMemberOpen}
+                  onEnroll={onEnrollUnit}
+                  {...(index === 0 ? { 'data-spotlight': 'first-shop-unit' } : {})}
+                />
               </div>
             )
           }}

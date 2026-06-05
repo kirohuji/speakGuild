@@ -12,7 +12,8 @@
     "cap:sync": "pnpm build && pnpm exec cap sync",
     "cap:sync:ios": "pnpm build && pnpm exec cap sync ios",
     "cap:open:ios": "pnpm exec cap open ios",
-    "cap:zip": "pnpm build && cd dist && zip -r bundle.zip ."
+    "cap:zip": "pnpm build && cd dist && zip -r bundle.zip .",
+    "shasum": "shasum -a 256 dist/bundle.zip"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
