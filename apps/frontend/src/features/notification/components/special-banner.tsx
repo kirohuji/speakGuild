@@ -9,24 +9,28 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
 import {
-  getSpecialNotifications, markAsRead,
+  markAsRead,
   type SpecialNotification,
 } from '@/features/notification/api'
 import { useNotificationStore } from '@/features/notification/store'
+import { useHomeStore } from '@/stores/home.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 export function SpecialBanner() {
-  const [notifs, setNotifs] = useState<SpecialNotification[]>([])
+  // 数据来源：home.store（首页统一管理）
+  const storeNotifs = useHomeStore((s) => s.specialNotifications)
   const isMobile = useIsMobile()
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
+
+  // 本地 UI 状态
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [currentIndex, setCurrentIndex] = useState(0)
   const [popupOpen, setPopupOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
   const autoPopped = useRef(false)
 
-  useEffect(() => {
-    getSpecialNotifications().then(setNotifs).catch(() => {})
-  }, [])
+  // 过滤已 dismiss 的通知
+  const notifs = storeNotifs.filter((n) => !dismissedIds.has(n.id))
 
   const currentNotification = notifs[currentIndex] ?? null
 
@@ -49,13 +53,12 @@ export function SpecialBanner() {
     if (!currentNotification) return
     await markAsRead(currentNotification.id).catch(() => {})
     void fetchUnreadCount()
-    const remaining = notifs.filter((_, i) => i !== currentIndex)
-    setNotifs(remaining)
+    setDismissedIds((prev) => new Set(prev).add(currentNotification.id))
     setPopupOpen(false)
     setDetailOpen(false)
     setCurrentIndex(0)
     autoPopped.current = false
-  }, [currentNotification, currentIndex, notifs, fetchUnreadCount])
+  }, [currentNotification, fetchUnreadCount])
 
   // ── "立即查看"：关闭弹窗，打开详情 ──
   const handleViewDetail = useCallback(() => {

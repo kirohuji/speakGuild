@@ -1,25 +1,18 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { useTheme } from 'next-themes'
 import {
-  BookOpen, Gift, CheckCircle2,
+  BookOpen, Gift,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/auth-provider'
 import { cn } from '@/lib/cn'
 import { ImmersiveBackground } from '@/components/common/immersive-background'
-import { get } from '@/lib/request'
-import { pointsApi, type CheckInStatus, type PointsBalance } from '@/features/points/api'
 import { SpecialBanner } from '@/features/notification/components/special-banner'
+import { useHomeStore } from '@/stores/home.store'
 import { toast } from 'sonner'
-
-interface DailySentence {
-  quote: string
-  translation: string
-  author: string
-}
 
 function useClock() {
   const [now, setNow] = useState(new Date())
@@ -36,72 +29,36 @@ function useClock() {
   return { hours, minutes, period }
 }
 
-const FALLBACK_SENTENCE: DailySentence = {
-  quote: 'Say one real sentence today.',
-  translation: '今天先说出一句真实会用的话。',
-  author: 'EngJourney Daily',
-}
-
 export function EnglishHomePage() {
   const { session } = useAuth()
   const { resolvedTheme, theme } = useTheme()
-  const [loading, setLoading] = useState(true)
-  const [dailySentence, setDailySentence] = useState<DailySentence>(FALLBACK_SENTENCE)
   const clock = useClock()
   const isDark = resolvedTheme === 'dark' || theme === 'dark'
 
-  // Check-in state
-  const [checkInStatus, setCheckInStatus] = useState<CheckInStatus | null>(null)
-  const [checkInLoading, setCheckInLoading] = useState(false)
-  const [points, setPoints] = useState(0)
+  // 首页 store：每日句子 & 签到状态（同一天缓存，不重复请求）
+  const dailySentence = useHomeStore((s) => s.dailySentence)
+  const sentenceLoading = useHomeStore((s) => s.sentenceLoading)
+  const checkInStatus = useHomeStore((s) => s.checkInStatus)
+  const checkInLoading = useHomeStore((s) => s.checkInLoading)
+  const fetchDailySentence = useHomeStore((s) => s.fetchDailySentence)
+  const fetchCheckInStatus = useHomeStore((s) => s.fetchCheckInStatus)
+  const fetchSpecialNotifications = useHomeStore((s) => s.fetchSpecialNotifications)
+  const storeCheckIn = useHomeStore((s) => s.checkIn)
 
-  const refreshCheckIn = useCallback(() => {
-    pointsApi.getCheckInStatus().then(setCheckInStatus).catch(() => {})
-    pointsApi.getBalance().then((b) => setPoints(b.points)).catch(() => {})
-  }, [])
-
+  // 进页面触发所有首页数据拉取（store 内部按日期/标志位缓存）
   useEffect(() => {
-    refreshCheckIn()
-  }, [refreshCheckIn])
+    fetchDailySentence()
+    fetchCheckInStatus()
+    fetchSpecialNotifications()
+  }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications])
 
   const handleCheckIn = async () => {
-    setCheckInLoading(true)
     try {
-      const result = await pointsApi.checkIn()
-      toast.success(result.message)
-      await refreshCheckIn()
+      const message = await storeCheckIn()
+      toast.success(message)
     } catch (e: any) {
       toast.error(e?.response?.data?.message || '签到失败')
-    } finally {
-      setCheckInLoading(false)
     }
-  }
-
-  useEffect(() => {
-    // 获取每日句子
-    get<DailySentence>('/daily-sentences/today')
-      .then((data) => {
-        if (data?.quote) {
-          setDailySentence(data)
-        }
-      })
-      .catch(() => {
-        // 使用默认句子作为 fallback
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
-        <Skeleton className="mb-4 h-6 w-32 rounded-full" />
-        <Skeleton className="mb-3 h-28 w-full rounded-lg" />
-        <Skeleton className="mb-3 h-20 w-full rounded-lg" />
-        <Skeleton className="mb-3 h-20 w-full rounded-lg" />
-      </div>
-    )
   }
 
   // 未登录
@@ -168,16 +125,27 @@ export function EnglishHomePage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className={cn('text-[18px] font-semibold leading-7', isDark ? 'text-white' : 'text-slate-800')}>
-            “{dailySentence.quote}”
-          </p>
-          <p className={cn('mx-auto mt-3 max-w-[250px] text-[13px] leading-5', isDark ? 'text-white/82' : 'text-slate-600')}>
-            {dailySentence.translation}
-          </p>
-          <div className={cn('mx-auto mt-4 h-px w-10', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />
-          <p className={cn('mx-auto mt-3 max-w-[220px] text-[10px] font-medium uppercase tracking-[0.14em]', isDark ? 'text-rose-100/58' : 'text-slate-500')}>
-            {dailySentence.author}
-          </p>
+          {sentenceLoading ? (
+            <>
+              <Skeleton className="mx-auto h-5 w-3/4 rounded" />
+              <Skeleton className="mx-auto mt-3 h-4 w-1/2 rounded" />
+              <div className={cn('mx-auto mt-4 h-px w-10', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />
+              <Skeleton className="mx-auto mt-3 h-3 w-1/3 rounded" />
+            </>
+          ) : (
+            <>
+              <p className={cn('text-[18px] font-semibold leading-7', isDark ? 'text-white' : 'text-slate-800')}>
+                “{dailySentence.quote}”
+              </p>
+              <p className={cn('mx-auto mt-3 max-w-[250px] text-[13px] leading-5', isDark ? 'text-white/82' : 'text-slate-600')}>
+                {dailySentence.translation}
+              </p>
+              <div className={cn('mx-auto mt-4 h-px w-10', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />
+              <p className={cn('mx-auto mt-3 max-w-[220px] text-[10px] font-medium uppercase tracking-[0.14em]', isDark ? 'text-rose-100/58' : 'text-slate-500')}>
+                {dailySentence.author}
+              </p>
+            </>
+          )}
         </motion.div>
 
         {/* 特殊消息横幅 */}
