@@ -89,6 +89,7 @@ async function bootstrap() {
     }
   };
   expressApp.post('/api/mobile-updates/check', checkHandler);
+  expressApp.post('/api/v1/manyu/mobile-updates/check', checkHandler);
   expressApp.post('/mobile-updates/check', checkHandler);
 
   app.useGlobalPipes(
