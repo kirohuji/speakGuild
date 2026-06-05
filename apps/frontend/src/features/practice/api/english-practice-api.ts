@@ -135,7 +135,7 @@ export const practiceApi = {
     api.get<any, { id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
 
   createSession: (topicId: string) =>
-    api.post<any, PracticeSession>(`/practice/topics/${topicId}/sessions`, { topicId }),
+    api.post<any, { id: string }>(`/practice/topics/${topicId}/sessions`, { topicId }),
 
   getSession: (sessionId: string) =>
     api.get<any, PracticeSession>(`/practice/sessions/${sessionId}`),
@@ -208,7 +208,6 @@ export const practiceAiApi = {
     inkVariables: Record<string, string | number | boolean>
     feedback: string
     confidence: number
-    raw?: string
   }>('/practice-ai/dialogue-turn', dto),
 
   analyzeSession: (sessionId: string) =>

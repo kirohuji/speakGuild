@@ -263,6 +263,7 @@ export class EnglishPracticeService {
         vocabSnapshot,
         sentencePatternsSnapshot: topic.sentencePatterns ?? null,
       },
+      select: { id: true },
     });
   }
 
