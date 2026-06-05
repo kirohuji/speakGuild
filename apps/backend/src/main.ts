@@ -41,7 +41,11 @@ async function bootstrap() {
   });
   expressApp.all('/api/auth/*', toNodeHandler(auth));
 
+  expressApp.use(json());
+  expressApp.use(urlencoded({ extended: true }));
+
   // ── OTA 热更新公开检查接口（不走全局前缀，供 Capacitor Updater 插件调用）──
+  // 必须在 json() 中间件之后注册，否则 req.body 无法解析
   const mobileUpdatesService = app.get(MobileUpdatesService);
   expressApp.post('/mobile-updates/check', async (req, res) => {
     try {
@@ -58,9 +62,6 @@ async function bootstrap() {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
-
-  expressApp.use(json());
-  expressApp.use(urlencoded({ extended: true }));
 
   app.setGlobalPrefix('api/v1/manyu');
 

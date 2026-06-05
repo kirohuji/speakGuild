@@ -104,9 +104,10 @@ class UpdaterService implements UpdaterAPI {
 
     try {
       const current = await CapacitorUpdater.current();
-      // 插件返回 { current, builtin }，首次安装时可能都是空字符串
-      const currentBundle = (current as any).current || (current as any).version || '';
-      const builtin = (current as any).builtin || (current as any).builtinVersion || '';
+      // 插件返回 { bundle: { id, version, ... }, native: "x.x.x" }
+      const bundle = (current as any)?.bundle;
+      const currentBundle = bundle?.version || (current as any)?.current || '';
+      const builtin = (current as any)?.native || (current as any)?.builtin || bundle?.version || '';
 
       return {
         version: currentBundle,

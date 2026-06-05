@@ -84,24 +84,24 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
   }, [ready]);
 
   // ★ 监听 App 从后台恢复：每次回来都检查一次更新
-  // React.useEffect(() => {
-  //   if (!isNative()) return;
+  React.useEffect(() => {
+    if (!isNative()) return;
 
-  //   let handle: { remove?: () => void } | null = null;
+    let handle: { remove?: () => void } | null = null;
 
-  //   App.addListener('resume', () => {
-  //     console.log('[NativeBridge] App resumed — checking update...');
-  //     void capabilities.updater.checkUpdate().catch((err) => {
-  //       console.warn('[NativeBridge] Resume checkUpdate failed:', err);
-  //     });
-  //   }).then((h) => {
-  //     handle = h;
-  //   });
+    App.addListener('resume', () => {
+      console.log('[NativeBridge] App resumed — checking update...');
+      void capabilities.updater.checkUpdate().catch((err) => {
+        console.warn('[NativeBridge] Resume checkUpdate failed:', err);
+      });
+    }).then((h) => {
+      handle = h;
+    });
 
-  //   return () => {
-  //     handle?.remove?.();
-  //   };
-  // }, []);
+    return () => {
+      handle?.remove?.();
+    };
+  }, []);
 
   return (
     <NativeBridgeContext.Provider value={capabilities}>
