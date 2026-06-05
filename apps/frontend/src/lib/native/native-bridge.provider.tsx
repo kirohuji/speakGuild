@@ -22,6 +22,7 @@ import { preferences }    from './preferences';
 import { pushNotifications } from './push-notifications';
 import { filesystem }     from './filesystem';
 import { Style } from '@capacitor/status-bar';
+import { App } from '@capacitor/app';
 
 const capabilities: NativeCapabilities = {
   splashScreen,
@@ -52,17 +53,55 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
     return () => window.cancelAnimationFrame(raf);
   }, [init]);
 
-  // 自动隐藏 SplashScreen + 设置状态栏 + 通知 OTA 就绪
+  // 自动隐藏 SplashScreen + 设置状态栏 + 通知 OTA 就绪 + 检查更新
   React.useEffect(() => {
     if (ready && isNative()) {
       void capabilities.splashScreen.hide().catch(() => {});
       void capabilities.statusBar.setStyle({ style: Style.Dark }).catch(() => {});
+
       // 告诉 CapacitorUpdater 当前 bundle 启动成功，防止误回滚
       void capabilities.updater.notifyAppReady().catch((err) => {
         console.warn('[NativeBridge] notifyAppReady failed:', err);
       });
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+      console.log('.........我是最新版,我是最新')
+
+      // ★ App 启动时检查 OTA 更新
+      void capabilities.updater.checkUpdate().catch((err) => {
+        console.warn('[NativeBridge] Startup checkUpdate failed:', err);
+      });
     }
   }, [ready]);
+
+  // ★ 监听 App 从后台恢复：每次回来都检查一次更新
+  // React.useEffect(() => {
+  //   if (!isNative()) return;
+
+  //   let handle: { remove?: () => void } | null = null;
+
+  //   App.addListener('resume', () => {
+  //     console.log('[NativeBridge] App resumed — checking update...');
+  //     void capabilities.updater.checkUpdate().catch((err) => {
+  //       console.warn('[NativeBridge] Resume checkUpdate failed:', err);
+  //     });
+  //   }).then((h) => {
+  //     handle = h;
+  //   });
+
+  //   return () => {
+  //     handle?.remove?.();
+  //   };
+  // }, []);
 
   return (
     <NativeBridgeContext.Provider value={capabilities}>
