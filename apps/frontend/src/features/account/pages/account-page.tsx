@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -15,14 +15,8 @@ import {
 } from '@/components/ui/drawer'
 import { useAuth } from '@/providers/auth-provider'
 import { useLayoutStore } from '@/stores/layout.store'
-import { getUserProfile, updateUserProfile, type UserProfile } from '@/features/profile/api'
-import {
-  uploadFileToCosAndComplete, getCurrentAvatar, setCurrentAvatar,
-} from '@/features/file-assets/api'
-import {
-  listLinkedAccounts, linkSocialAccount, unlinkAccount,
-  type LinkedAccount,
-} from '@/features/account/api'
+import { useAccountStore } from '@/stores/account.store'
+import type { LinkedAccount } from '@/features/account/api'
 import { changePassword, sendEmailOtp } from '@/features/auth/api'
 
 // ─── iOS 风格组件（与 profile-page 一致）──────────────────────────────────
@@ -107,7 +101,7 @@ function NicknameEditDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
   currentName: string
-  onSaved: (name: string) => void
+  onSaved: (name: string) => void | Promise<void>
 }) {
   const { t } = useTranslation()
   const [name, setName] = useState(currentName)
@@ -124,8 +118,7 @@ function NicknameEditDrawer({
     }
     setSaving(true)
     try {
-      await updateUserProfile({ name: name.trim() })
-      onSaved(name.trim())
+      await onSaved(name.trim())
       onOpenChange(false)
     } catch {
       // 静默失败
@@ -296,14 +289,23 @@ export function AccountPage() {
   const { session } = useAuth()
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [avatarUploading, setAvatarUploading] = useState(false)
+  // 数据：来自 store
+  const profile = useAccountStore((s) => s.profile)
+  const avatarUrl = useAccountStore((s) => s.avatarUrl)
+  const linkedAccounts = useAccountStore((s) => s.linkedAccounts)
+  const isLoading = useAccountStore((s) => s.isLoading)
+  const avatarUploading = useAccountStore((s) => s.avatarUploading)
+  const linkingProvider = useAccountStore((s) => s.linkingProvider)
+  const unlinkingId = useAccountStore((s) => s.unlinkingId)
+  const fetchAll = useAccountStore((s) => s.fetchAll)
+  const storeUpdateProfile = useAccountStore((s) => s.updateProfile)
+  const uploadAvatar = useAccountStore((s) => s.uploadAvatar)
+  const fetchLinkedAccounts = useAccountStore((s) => s.fetchLinkedAccounts)
+  const linkSocial = useAccountStore((s) => s.linkSocial)
+  const unlinkSocial = useAccountStore((s) => s.unlinkSocial)
+
+  // UI-only state
   const [nicknameDrawerOpen, setNicknameDrawerOpen] = useState(false)
-  const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([])
-  const [linkingProvider, setLinkingProvider] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
   const [passwordDrawerOpen, setPasswordDrawerOpen] = useState(false)
   const [sendingVerification, setSendingVerification] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
@@ -325,41 +327,21 @@ export function AccountPage() {
 
   const sessionUser = session?.user ?? null
 
-  const loadData = useCallback(async () => {
-    try {
-      const [p, avatar, accounts] = await Promise.all([
-        getUserProfile(),
-        getCurrentAvatar(),
-        listLinkedAccounts().catch(() => [] as LinkedAccount[]),
-      ])
-      setProfile(p)
-      setAvatarUrl(avatar?.url ?? null)
-      setLinkedAccounts(accounts)
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    fetchAll()
+  }, [fetchAll])
 
   useEffect(() => {
     setBottomNavVisible(false)
     return () => setBottomNavVisible(true)
   }, [setBottomNavVisible])
 
+  // OAuth 回调后通过 window focus 刷新绑定列表
   useEffect(() => {
-    const handleFocus = () => {
-      listLinkedAccounts()
-        .then(setLinkedAccounts)
-        .catch(() => {})
-    }
+    const handleFocus = () => { fetchLinkedAccounts() }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+  }, [fetchLinkedAccounts])
 
   // ── 头像操作 ──
   const onPickAvatar = () => {
@@ -372,44 +354,20 @@ export function AccountPage() {
     event.currentTarget.value = ''
     if (!file.type.startsWith('image/')) return
     if (file.size > 5 * 1024 * 1024) return
-
-    setAvatarUploading(true)
-    try {
-      const asset = await uploadFileToCosAndComplete({ file, group: 'avatar' })
-      const current = await setCurrentAvatar(asset.id)
-      setAvatarUrl(current.url)
-    } catch {
-      // ignore
-    } finally {
-      setAvatarUploading(false)
-    }
+    await uploadAvatar(file)
   }
 
   // ── 绑定操作 ──
-  const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
-    try {
-      setLinkingProvider(provider)
-      await linkSocialAccount(provider)
-    } catch {
-      setLinkingProvider(null)
-    }
+  const handleLinkSocial = (provider: 'wechat' | 'apple') => {
+    linkSocial(provider)
   }
 
-  const handleUnlink = async (account: LinkedAccount) => {
-    if (unlinkingId) return
-    setUnlinkingId(account.id)
-    try {
-      await unlinkAccount(account)
-      setLinkedAccounts((prev) => prev.filter((a) => a.id !== account.id))
-    } catch {
-      // ignore
-    } finally {
-      setUnlinkingId(null)
-    }
+  const handleUnlink = (account: LinkedAccount) => {
+    unlinkSocial(account)
   }
 
   const handleNicknameSaved = (name: string) => {
-    setProfile((prev) => prev ? { ...prev, name } : prev)
+    storeUpdateProfile({ name })
   }
 
   // ── 判断绑定状态 ──
