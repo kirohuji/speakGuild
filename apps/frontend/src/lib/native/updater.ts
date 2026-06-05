@@ -141,13 +141,14 @@ class UpdaterService implements UpdaterAPI {
     try {
       const current = await this.getCurrent();
       const platform = getPlatform();
-      const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'https://hope.lourd.top:3605';
+      // const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'https://hope.lourd.top:3605';
 
-      // 生产环境 nginx 把 /api/ 代理到后端，本地直连不需要 /api 前缀
-      const checkUrl = baseUrl.includes('localhost')
-        ? `${baseUrl}/mobile-updates/check`
-        : `${baseUrl}/api/mobile-updates/check`;
+      // // 生产环境 nginx 把 /api/ 代理到后端，本地直连不需要 /api 前缀
+      // const checkUrl = baseUrl.includes('localhost')
+      //   ? `${baseUrl}/mobile-updates/check`
+      //   : `${baseUrl}/api/mobile-updates/check`;
 
+      const checkUrl = 'https://hope.lourd.top:3605/api/mobile-updates/check';
       console.log(`[Updater] 📡 Checking update: platform=${platform}, current=${current.version}, url=${checkUrl}`);
 
       // 1. 请求后端检查接口
