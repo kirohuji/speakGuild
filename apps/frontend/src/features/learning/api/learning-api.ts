@@ -41,6 +41,9 @@ export interface LearningUnitSummary {
   title: string
   location: string
   description?: string | null
+  categoryId?: string
+  categoryName?: string
+  categoryIcon?: string | null
   topics: TopicSummary[]
   requiredOutputLevel: string
   requiredUserLevel: number
@@ -62,6 +65,13 @@ export interface LearningUnitSummary {
     completedScriptCount: number
   } | null
   completionPercent: number
+}
+
+export interface UnitsListResult {
+  list: LearningUnitSummary[]
+  total: number
+  page: number
+  pageSize: number
 }
 
 export interface LearningCategory {
@@ -205,11 +215,20 @@ export interface MyUnit {
   completionPercent: number
 }
 
+export interface TagInfo {
+  name: string
+  icon: string | null
+}
+
 // ---- API 方法 ----
 
 export const learningApi = {
-  /** 获取全部教材列表 */
-  getUnits: () => api.get<any, LearningCategory[]>('/learning/units'),
+  /** 获取可用分类标签列表 */
+  getTags: () => api.get<any, TagInfo[]>('/learning/tags'),
+
+  /** 获取教材列表（分页），支持按分类标签过滤和模糊搜索 */
+  getUnits: (params?: { tag?: string; search?: string; page?: number; pageSize?: number }) =>
+    api.get<any, UnitsListResult>('/learning/units', { params }),
 
   /** 获取用户正在学习的单元 */
   getMyUnits: () => api.get<any, MyUnit[]>('/learning/my-units'),

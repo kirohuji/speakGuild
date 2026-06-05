@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Body, Req } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Body, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { LearningService } from './learning.service';
 import { requireAuthSession } from '../auth/session.util';
@@ -7,11 +7,25 @@ import { requireAuthSession } from '../auth/session.util';
 export class LearningController {
   constructor(private readonly learningService: LearningService) {}
 
-  /** 获取全部教材（学习单元）列表 */
+  /** 获取全部教材分类标签（供筛选下拉使用） */
+  @Get('tags')
+  async getTags() {
+    return this.learningService.getTags();
+  }
+
+  /** 获取全部教材（学习单元）列表，支持分页、按分类标签过滤和模糊搜索 */
   @Get('units')
-  async getUnits(@Req() req: Request) {
+  async getUnits(
+    @Req() req: Request,
+    @Query('tag') tag?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
     const session = await requireAuthSession(req);
-    return this.learningService.getLearningUnits(session.user.id);
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const size = Math.min(50, Math.max(1, parseInt(pageSize || '20', 10) || 20));
+    return this.learningService.getLearningUnits(session.user.id, tag, search, pageNum, size);
   }
 
   /** 获取用户正在学习的单元（有进度记录的） */

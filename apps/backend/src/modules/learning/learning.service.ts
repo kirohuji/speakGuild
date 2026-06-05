@@ -22,10 +22,23 @@ export class LearningService {
   }
 
   /**
+   * 获取全部教材分类标签列表（供筛选下拉使用）
+   */
+  async getTags() {
+    const categories = await this.prisma.sceneCategory.findMany({
+      orderBy: { sortOrder: 'asc' },
+      select: { name: true, icon: true },
+    });
+    return categories;
+  }
+
+  /**
    * 获取全部「教材」（即 Scene）列表，附带用户进度。
    * 免费用户看到全部单元，但非免费单元标记为锁定。
+   * @param tag    按分类名称过滤（可选）
+   * @param search 按单元标题模糊搜索（可选）
    */
-  async getLearningUnits(userId: string) {
+  async getLearningUnits(userId: string, tag?: string, search?: string, page = 1, pageSize = 20) {
     // 管理员拥有全部权限
     const adminCheck = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -40,27 +53,48 @@ export class LearningService {
     const isMember =
       isAdmin || (membership?.status === 'active' && membership.expiredAt > new Date());
 
-    const categories = await this.prisma.sceneCategory.findMany({
-      orderBy: { sortOrder: 'asc' },
+    // 查询条件
+    const sceneWhere: any = {};
+    if (search) {
+      sceneWhere.title = { contains: search, mode: 'insensitive' };
+    }
+
+    const categoryWhere: any = {};
+    if (tag) {
+      categoryWhere.name = tag;
+    }
+
+    // 先查总数
+    const total = await this.prisma.scene.count({
+      where: {
+        ...sceneWhere,
+        category: categoryWhere,
+      },
+    });
+
+    // 分页查场景
+    const scenes = await this.prisma.scene.findMany({
+      where: {
+        ...sceneWhere,
+        category: categoryWhere,
+      },
+      orderBy: { createdAt: 'asc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       include: {
-        scenes: {
-          orderBy: { createdAt: 'asc' },
-          // 返回所有场景，前端根据 isLocked 控制
-          include: {
-            _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
-            trainingTopics: {
-              select: { id: true, title: true, difficulty: true, suggestedDurationSec: true },
-              orderBy: { sortOrder: 'asc' },
-            },
-          },
+        category: { select: { id: true, name: true, icon: true } },
+        _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
+        trainingTopics: {
+          select: { id: true, title: true, difficulty: true, suggestedDurationSec: true },
+          orderBy: { sortOrder: 'asc' },
         },
       },
     });
 
     // 批量查询用户场景进度
-    const allSceneIds = categories.flatMap((c) => c.scenes.map((s) => s.id));
+    const sceneIds = scenes.map((s) => s.id);
     const progresses = await this.prisma.userSceneProgress.findMany({
-      where: { userId, sceneId: { in: allSceneIds } },
+      where: { userId, sceneId: { in: sceneIds } },
     });
     const progressMap = new Map(progresses.map((p) => [p.sceneId, p]));
     const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
@@ -71,62 +105,67 @@ export class LearningService {
       select: { userLevel: true, outputLevel: true },
     });
 
-    return categories.map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-      icon: cat.icon,
-      units: cat.scenes.map((scene) => {
-        const prog = progressMap.get(scene.id);
-        const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
-        const totalItems =
-          scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
-        const completedItems =
-          (prog?.vocabLearned ?? 0) +
-          (prog?.chunkMastered ?? 0) +
-          completedPracticeCount;
+    const list = scenes.map((scene) => {
+      const prog = progressMap.get(scene.id);
+      const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
+      const totalItems =
+        scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
+      const completedItems =
+        (prog?.vocabLearned ?? 0) +
+        (prog?.chunkMastered ?? 0) +
+        completedPracticeCount;
 
-        const isUnlocked =
-          (user?.userLevel ?? 1) >= scene.requiredUserLevel;
+      const isUnlocked =
+        (user?.userLevel ?? 1) >= scene.requiredUserLevel;
 
-        return {
-          id: scene.id,
-          title: scene.title,
-          location: scene.location,
-          description: scene.description,
-          topics: (scene as any).trainingTopics.map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            difficulty: t.difficulty,
-            suggestedDurationSec: t.suggestedDurationSec,
-          })),
-          requiredOutputLevel: scene.requiredOutputLevel,
-          requiredUserLevel: scene.requiredUserLevel,
-          isFree: scene.isFree,
-          isLocked: !isMember && !scene.isFree,
-          isUnlocked,
-          vocabCount: scene._count.vocabularies,
-          chunkCount: scene._count.chunks,
-          topicCount: scene._count.trainingTopics,
-          scriptCount: scene._count.scriptEpisodes,
-          progress: prog
-            ? {
-                readiness: prog.readiness,
-                mastery: prog.mastery,
-                vocabLearned: prog.vocabLearned,
-                vocabTotal: scene._count.vocabularies,
-                chunkMastered: prog.chunkMastered,
-                chunkTotal: scene._count.chunks,
-                completedPracticeCount,
-                completedScriptCount: prog.completedScriptCount,
-              }
-            : null,
-          completionPercent:
-            totalItems > 0
-              ? Math.round((completedItems / totalItems) * 100)
-              : 0,
-        };
-      }),
-    }));
+      return {
+        id: scene.id,
+        title: scene.title,
+        location: scene.location,
+        description: scene.description,
+        categoryId: scene.category.id,
+        categoryName: scene.category.name,
+        categoryIcon: scene.category.icon,
+        topics: scene.trainingTopics.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          difficulty: t.difficulty,
+          suggestedDurationSec: t.suggestedDurationSec,
+        })),
+        requiredOutputLevel: scene.requiredOutputLevel,
+        requiredUserLevel: scene.requiredUserLevel,
+        isFree: scene.isFree,
+        isLocked: !isMember && !scene.isFree,
+        isUnlocked,
+        vocabCount: scene._count.vocabularies,
+        chunkCount: scene._count.chunks,
+        topicCount: scene._count.trainingTopics,
+        scriptCount: scene._count.scriptEpisodes,
+        progress: prog
+          ? {
+              readiness: prog.readiness,
+              mastery: prog.mastery,
+              vocabLearned: prog.vocabLearned,
+              vocabTotal: scene._count.vocabularies,
+              chunkMastered: prog.chunkMastered,
+              chunkTotal: scene._count.chunks,
+              completedPracticeCount,
+              completedScriptCount: prog.completedScriptCount,
+            }
+          : null,
+        completionPercent:
+          totalItems > 0
+            ? Math.round((completedItems / totalItems) * 100)
+            : 0,
+      };
+    });
+
+    return {
+      list,
+      total,
+      page,
+      pageSize,
+    };
   }
 
   /**
