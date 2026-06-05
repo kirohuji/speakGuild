@@ -71,6 +71,8 @@ interface LearningInsightDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onIndexChange: (index: number) => void
+  /** 在"我的学习库"页面使用时设为 true，隐藏保存按钮 */
+  hideSaveActions?: boolean
 }
 
 export function LearningInsightDialog({
@@ -79,6 +81,7 @@ export function LearningInsightDialog({
   open,
   onOpenChange,
   onIndexChange,
+  hideSaveActions = false,
 }: LearningInsightDialogProps) {
   const { t } = useTranslation()
   const current = items[index] ?? null
@@ -142,9 +145,9 @@ export function LearningInsightDialog({
 
             {/* Content - 中间弹性区域 */}
             <div className="flex-1 min-h-0">
-              {current.kind === 'word' && <WordInsight item={current} />}
-              {current.kind === 'chunk' && <ChunkInsightView item={current} />}
-              {current.kind === 'pattern' && <PatternInsightView item={current} />}
+              {current.kind === 'word' && <WordInsight item={current} hideSave={hideSaveActions} />}
+              {current.kind === 'chunk' && <ChunkInsightView item={current} hideSave={hideSaveActions} />}
+              {current.kind === 'pattern' && <PatternInsightView item={current} hideSave={hideSaveActions} />}
             </div>
 
             {/* Footer - 固定在底部 */}
@@ -257,7 +260,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   )
 }
 
-function WordInsight({ item }: { item: VocabularyInsight }) {
+function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hideSave?: boolean }) {
   const { t } = useTranslation()
   const [dictData, setDictData] = useState<DictEntry[] | null | 'loading'>('loading')
   const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>('loading')
@@ -331,10 +334,12 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
                     <Volume2 className="size-4" /> {t('insight.pronunciation')}
                   </Button>
                 )}
+                {!hideSave && (
                 <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
                   {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
                   {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
                 </Button>
+                )}
               </div>
 
               {/* 记忆提示 */}
@@ -416,7 +421,7 @@ function WordInsight({ item }: { item: VocabularyInsight }) {
   )
 }
 
-function ChunkInsightView({ item }: { item: ChunkInsight }) {
+function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hideSave?: boolean }) {
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
@@ -444,6 +449,7 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
   return (
     <ScrollArea className="h-full">
       <div className="space-y-5 px-5 py-5 md:px-6">
+        {!hideSave && (
         <Button
           onClick={saveChunk}
           disabled={saved || saving}
@@ -453,6 +459,7 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           {saved ? t('insight.savedToLibrary') : t('insight.saveToLibrary')}
         </Button>
+        )}
 
         {item.description && (
           <section className="rounded-xl bg-muted p-4">
@@ -482,7 +489,7 @@ function ChunkInsightView({ item }: { item: ChunkInsight }) {
   )
 }
 
-function PatternInsightView({ item }: { item: PatternInsight }) {
+function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; hideSave?: boolean }) {
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
@@ -511,6 +518,7 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
   return (
     <ScrollArea className="h-full">
       <div className="space-y-5 px-5 py-5 md:px-6">
+        {!hideSave && (
         <Button
           onClick={savePattern}
           disabled={saved || saving}
@@ -520,6 +528,7 @@ function PatternInsightView({ item }: { item: PatternInsight }) {
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           {saved ? t('insight.savedToLibrary') : t('insight.saveToLibrary')}
         </Button>
+        )}
 
         <section className="rounded-xl border border-border p-4">
           <h3 className="mb-2 text-sm font-semibold text-foreground">{t('insight.structure')}</h3>

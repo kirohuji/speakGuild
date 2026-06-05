@@ -424,6 +424,7 @@ export function ExpressionLibraryPage() {
       <LearningInsightDialog
         items={dialogItems} index={dialogIndex} open={dialogOpen}
         onOpenChange={setDialogOpen} onIndexChange={setDialogIndex}
+        hideSaveActions
       />
     </div>
   )
