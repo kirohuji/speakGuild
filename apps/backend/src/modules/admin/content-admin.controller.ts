@@ -15,6 +15,11 @@ import {
   CreateScriptEpisodeDto, UpdateScriptEpisodeDto,
   CreateAchievementDefDto, UpdateAchievementDefDto,
 } from './dto/content-admin.dto';
+import {
+  CreateFullVocabularyDto, UpdateFullVocabularyDto,
+  CreateFullChunkDto, UpdateFullChunkDto,
+  CreateSentencePatternDto, UpdateSentencePatternDto,
+} from './dto/content-library.dto';
 import { requireAuthSession } from '../auth/session.util';
 import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
 import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
@@ -779,5 +784,215 @@ export class ContentAdminController {
   async deleteStory(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.prisma.inkScript.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // CONTENT LIBRARY: Full Vocabulary Management
+  // ════════════════════════════════════════════════════════════
+
+  @Get('library/vocabularies')
+  async listLibraryVocabularies(
+    @Req() req: Request,
+    @Query('search') search?: string,
+    @Query('difficulty') difficulty?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    await this.requireAdmin(req);
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { word: { contains: search, mode: 'insensitive' } },
+        { meaning: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (difficulty) where.difficulty = difficulty;
+
+    const p = Math.max(1, parseInt(page || '1'));
+    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
+
+    const [items, total] = await Promise.all([
+      this.prisma.vocabulary.findMany({
+        where,
+        orderBy: { sortOrder: 'asc' },
+        skip: (p - 1) * ps,
+        take: ps,
+      }),
+      this.prisma.vocabulary.count({ where }),
+    ]);
+
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+  }
+
+  @Post('library/vocabularies')
+  async createLibraryVocabulary(@Req() req: Request, @Body() dto: CreateFullVocabularyDto) {
+    await this.requireAdmin(req);
+    return this.prisma.vocabulary.create({ data: { ...dto, examples: dto.examples as any } });
+  }
+
+  @Patch('library/vocabularies/:id')
+  async updateLibraryVocabulary(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateFullVocabularyDto) {
+    await this.requireAdmin(req);
+    return this.prisma.vocabulary.update({ where: { id }, data: { ...dto, examples: dto.examples as any } });
+  }
+
+  @Delete('library/vocabularies/:id')
+  async deleteLibraryVocabulary(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.vocabulary.delete({ where: { id } });
+  }
+
+  /** 触发单词富化：DB 缓存 → dictionaryapi.dev → AI */
+  @Post('library/vocabularies/:id/enrich')
+  async enrichVocabulary(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    const vocab = await this.prisma.vocabulary.findUnique({ where: { id } });
+    if (!vocab) throw new ForbiddenException('词汇不存在');
+
+    const enriched = await this.practiceAiService.enrichWord(vocab.word);
+    
+    const data: any = { difficulty: vocab.difficulty, sortOrder: vocab.sortOrder };
+    if (enriched.chineseTranslation && !vocab.meaning?.trim()) data.meaning = enriched.chineseTranslation;
+    if (enriched.phonetic) data.phoneticUs = enriched.phonetic;
+    if (enriched.audioUrl) data.audioUsUrl = enriched.audioUrl;
+    if (enriched.meanings?.length) {
+      data.definitionEn = enriched.meanings.map((m: any) => `(${m.partOfSpeech}) ${m.chineseGloss}`).join('; ');
+      data.partOfSpeech = enriched.meanings[0]?.partOfSpeech;
+    }
+    if (enriched.examples?.length) data.examples = enriched.examples;
+
+    return this.prisma.vocabulary.update({ where: { id }, data });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // CONTENT LIBRARY: Full Chunk Management
+  // ════════════════════════════════════════════════════════════
+
+  @Get('library/chunks')
+  async listLibraryChunks(
+    @Req() req: Request,
+    @Query('search') search?: string,
+    @Query('difficulty') difficulty?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    await this.requireAdmin(req);
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { text: { contains: search, mode: 'insensitive' } },
+        { meaning: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (difficulty) where.difficulty = difficulty;
+
+    const p = Math.max(1, parseInt(page || '1'));
+    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
+
+    const [items, total] = await Promise.all([
+      this.prisma.chunk.findMany({
+        where,
+        include: { examples: { orderBy: { sortOrder: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * ps,
+        take: ps,
+      }),
+      this.prisma.chunk.count({ where }),
+    ]);
+
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+  }
+
+  @Post('library/chunks')
+  async createLibraryChunk(@Req() req: Request, @Body() dto: CreateFullChunkDto) {
+    await this.requireAdmin(req);
+    const { examples, ...data } = dto;
+    const payload: any = { ...data, category: data.category || 'general' };
+    if (examples?.length) {
+      payload.examples = { create: examples.map((ex, i) => ({ ...ex, sortOrder: i })) };
+    }
+    return this.prisma.chunk.create({
+      data: payload,
+      include: { examples: { orderBy: { sortOrder: 'asc' } } },
+    });
+  }
+
+  @Patch('library/chunks/:id')
+  async updateLibraryChunk(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateFullChunkDto) {
+    await this.requireAdmin(req);
+    const { examples, ...data } = dto;
+    const payload: any = { ...data };
+    if (examples !== undefined) {
+      await this.prisma.chunkExample.deleteMany({ where: { chunkId: id } });
+      payload.examples = { create: examples.map((ex, i) => ({ ...ex, sortOrder: i })) };
+    }
+    return this.prisma.chunk.update({
+      where: { id },
+      data: payload,
+      include: { examples: { orderBy: { sortOrder: 'asc' } } },
+    });
+  }
+
+  @Delete('library/chunks/:id')
+  async deleteLibraryChunk(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    await this.prisma.chunkExample.deleteMany({ where: { chunkId: id } });
+    return this.prisma.chunk.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // CONTENT LIBRARY: Sentence Pattern Management
+  // ════════════════════════════════════════════════════════════
+
+  @Get('library/patterns')
+  async listLibraryPatterns(
+    @Req() req: Request,
+    @Query('search') search?: string,
+    @Query('difficulty') difficulty?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    await this.requireAdmin(req);
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { pattern: { contains: search, mode: 'insensitive' } },
+        { meaning: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (difficulty) where.difficulty = difficulty;
+
+    const p = Math.max(1, parseInt(page || '1'));
+    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
+
+    const [items, total] = await Promise.all([
+      this.prisma.sentencePattern.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * ps,
+        take: ps,
+      }),
+      this.prisma.sentencePattern.count({ where }),
+    ]);
+
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+  }
+
+  @Post('library/patterns')
+  async createLibraryPattern(@Req() req: Request, @Body() dto: CreateSentencePatternDto) {
+    await this.requireAdmin(req);
+    return this.prisma.sentencePattern.create({ data: dto });
+  }
+
+  @Patch('library/patterns/:id')
+  async updateLibraryPattern(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSentencePatternDto) {
+    await this.requireAdmin(req);
+    return this.prisma.sentencePattern.update({ where: { id }, data: dto });
+  }
+
+  @Delete('library/patterns/:id')
+  async deleteLibraryPattern(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.sentencePattern.delete({ where: { id } });
   }
 }

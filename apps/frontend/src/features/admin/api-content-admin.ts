@@ -443,3 +443,85 @@ export async function updateStory(id: string, data: Partial<StoryData>): Promise
 export async function deleteStory(id: string): Promise<void> {
   return _delete(`/admin/content/stories/${id}`)
 }
+
+// ═══ Content Library: Vocabulary, Chunk, Sentence Pattern ═══
+
+export interface VocabularyFull {
+  id: string; word: string; meaning: string; partOfSpeech?: string | null;
+  phoneticUs?: string | null; phoneticUk?: string | null;
+  audioUsUrl?: string | null; audioUkUrl?: string | null;
+  definitionEn?: string | null; synonyms: string[];
+  examples?: any; description?: string | null;
+  difficulty: string; sortOrder: number;
+}
+
+export interface ChunkFull {
+  id: string; text: string; meaning: string; description?: string | null;
+  category: string; difficulty: string;
+  examples: { id: string; en: string; zh: string; note?: string | null; level: string; sortOrder: number }[];
+  createdAt: string;
+}
+
+export interface SentencePatternFull {
+  id: string; pattern: string; meaning?: string | null;
+  slots?: any; example?: string | null; difficulty: string;
+  createdAt: string; updatedAt: string;
+}
+
+export interface PaginatedResult<T> {
+  items: T[]; total: number; page: number; pageSize: number; totalPages: number;
+}
+
+// ─── Vocabulary ──────────────────────────────────────────────
+
+export function listLibraryVocabularies(params?: {
+  search?: string; difficulty?: string; page?: number; pageSize?: number
+}): Promise<PaginatedResult<VocabularyFull>> {
+  return get('/admin/content/library/vocabularies', params);
+}
+export function createLibraryVocabulary(data: Partial<VocabularyFull>): Promise<VocabularyFull> {
+  return post('/admin/content/library/vocabularies', data);
+}
+export function updateLibraryVocabulary(id: string, data: Partial<VocabularyFull>): Promise<VocabularyFull> {
+  return patch(`/admin/content/library/vocabularies/${id}`, data);
+}
+export function deleteLibraryVocabulary(id: string): Promise<void> {
+  return _delete(`/admin/content/library/vocabularies/${id}`);
+}
+export function enrichVocabulary(id: string): Promise<VocabularyFull> {
+  return post(`/admin/content/library/vocabularies/${id}/enrich`);
+}
+
+// ─── Chunk ───────────────────────────────────────────────────
+
+export function listLibraryChunks(params?: {
+  search?: string; difficulty?: string; page?: number; pageSize?: number
+}): Promise<PaginatedResult<ChunkFull>> {
+  return get('/admin/content/library/chunks', params);
+}
+export function createLibraryChunk(data: Partial<ChunkFull> & { examples?: any[] }): Promise<ChunkFull> {
+  return post('/admin/content/library/chunks', data);
+}
+export function updateLibraryChunk(id: string, data: Partial<ChunkFull> & { examples?: any[] }): Promise<ChunkFull> {
+  return patch(`/admin/content/library/chunks/${id}`, data);
+}
+export function deleteLibraryChunk(id: string): Promise<void> {
+  return _delete(`/admin/content/library/chunks/${id}`);
+}
+
+// ─── Sentence Pattern ────────────────────────────────────────
+
+export function listLibraryPatterns(params?: {
+  search?: string; difficulty?: string; page?: number; pageSize?: number
+}): Promise<PaginatedResult<SentencePatternFull>> {
+  return get('/admin/content/library/patterns', params);
+}
+export function createLibraryPattern(data: Partial<SentencePatternFull>): Promise<SentencePatternFull> {
+  return post('/admin/content/library/patterns', data);
+}
+export function updateLibraryPattern(id: string, data: Partial<SentencePatternFull>): Promise<SentencePatternFull> {
+  return patch(`/admin/content/library/patterns/${id}`, data);
+}
+export function deleteLibraryPattern(id: string): Promise<void> {
+  return _delete(`/admin/content/library/patterns/${id}`);
+}
