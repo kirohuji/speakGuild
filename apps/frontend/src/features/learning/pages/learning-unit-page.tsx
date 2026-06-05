@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
-import { learningApi, type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
+import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
+import { useLearningStore } from '@/stores/learning.store'
 import { useWordsStore } from '@/stores/assets.store'
 import { expressionApi } from '@/features/practice/api/english-practice-api'
 import {
@@ -27,8 +28,12 @@ export function LearningUnitPage() {
   const { t } = useTranslation()
   const { unitId } = useParams<{ unitId: string }>()
   const navigate = useNavigate()
-  const [unit, setUnit] = useState<UnitDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+
+  // 数据：来自 store
+  const unit = useLearningStore((s) => s.unitDetail)
+  const loading = useLearningStore((s) => s.unitDetailLoading)
+  const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
+
   const [activeTab, setActiveTab] = useState('vocab')
   const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
 
@@ -41,31 +46,51 @@ export function LearningUnitPage() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
   const { addWord } = useWordsStore()
 
-  // 已收集到学习库的文本集合 (chunkText / word)
+  // 已收集文本（按需加载，各 tab 独立）
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
+  const loadedTabs = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (!unitId) return
-    setLoading(true)
-    Promise.all([
-      learningApi.getUnitDetail(unitId),
-      expressionApi.list({ type: 'chunk' }).catch(() => []),
-      expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
-      expressionApi.list({ type: 'word' }).catch(() => []),
-    ]).then(([unitData, chunks, phrases, words]) => {
-      setUnit(unitData)
-      const texts = new Set<string>()
-      const extractItems = (res: any) => Array.isArray(res) ? res : (res?.items ?? [])
-      for (const item of [...extractItems(chunks), ...extractItems(phrases)]) {
-        if (item.chunkText) texts.add(item.chunkText)
-      }
-      for (const item of extractItems(words)) {
-        if (item.original) texts.add(item.original)
-      }
-      setCollectedTexts(texts)
-    }).catch(() => setUnit(null))
-      .finally(() => setLoading(false))
-  }, [unitId])
+    fetchUnitDetail(unitId)
+  }, [unitId, fetchUnitDetail])
+
+  // 切 tab 时按需加载已收集状态
+  const loadCollectedForTab = useCallback((tab: string) => {
+    if (loadedTabs.current.has(tab)) return
+    loadedTabs.current.add(tab)
+
+    if (tab === 'vocab') {
+      expressionApi.list({ type: 'word' }).catch(() => ([] as any)).then((res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items ?? [])
+        setCollectedTexts((prev) => {
+          const next = new Set(prev)
+          for (const item of items) { if (item.original) next.add(item.original) }
+          return next
+        })
+      })
+    } else if (tab === 'chunk') {
+      expressionApi.list({ type: 'chunk' }).catch(() => ([] as any)).then((res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items ?? [])
+        setCollectedTexts((prev) => {
+          const next = new Set(prev)
+          for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
+          return next
+        })
+      })
+    } else if (tab === 'pattern') {
+      expressionApi.list({ type: 'scene_phrase' }).catch(() => ([] as any)).then((res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items ?? [])
+        setCollectedTexts((prev) => {
+          const next = new Set(prev)
+          for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
+          return next
+        })
+      })
+    }
+  }, [])
+
+  useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
 
   const handleCollectChunk = useCallback(async (text: string, meaning: string) => {
     try {

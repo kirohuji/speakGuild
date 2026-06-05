@@ -4,6 +4,7 @@ import {
   type LearningUnitSummary,
   type MyUnit,
   type TagInfo,
+  type UnitDetail,
 } from '@/features/learning/api/learning-api'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 
@@ -26,10 +27,15 @@ interface LearningStore {
   // 分类标签
   tags: TagInfo[]
 
+  // 单元详情
+  unitDetail: UnitDetail | null
+  unitDetailLoading: boolean
+
   // Actions
   fetchMyLearning: () => Promise<void>
   refreshMyUnits: () => Promise<void>
   fetchTags: () => Promise<void>
+  fetchUnitDetail: (unitId: string) => Promise<void>
   fetchShop: (params?: { tag?: string; search?: string; page?: number }) => Promise<void>
   refreshShop: (params?: { tag?: string; search?: string; page?: number }) => Promise<void>
   loadMoreShop: (params?: { tag?: string; search?: string }) => Promise<void>
@@ -52,6 +58,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   checkInLoading: false,
 
   tags: [],
+
+  unitDetail: null,
+  unitDetailLoading: false,
 
   /** 首次加载：我的学习 + 商店 */
   async fetchMyLearning() {
@@ -137,6 +146,16 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       set({ tags: data })
     } catch {
       // ignore
+    }
+  },
+
+  async fetchUnitDetail(unitId) {
+    set({ unitDetailLoading: true })
+    try {
+      const data = await learningApi.getUnitDetail(unitId)
+      set({ unitDetail: data, unitDetailLoading: false })
+    } catch {
+      set({ unitDetail: null, unitDetailLoading: false })
     }
   },
 

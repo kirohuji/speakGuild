@@ -22,6 +22,7 @@ import { LearningInsightDialog, type LearningInsightItem } from '../components/l
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
+import { usePracticeStore } from '@/stores/practice.store'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 type Phase = 'prepare' | 'practice' | 'analysis'
@@ -226,7 +227,8 @@ export function PracticeSessionPage() {
   const navigate = useNavigate()
 
   // ── Data ──
-  const [detail, setDetail] = useState<TopicDetail | null>(null)
+  const detail = usePracticeStore((s) => s.topicDetail)
+  const fetchTopicDetail = usePracticeStore((s) => s.fetchTopicDetail)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -330,47 +332,68 @@ export function PracticeSessionPage() {
   useEffect(() => {
     if (!topicId) return
     setLoading(true)
-    practiceApi
-      .getTopicDetail(topicId)
-      .then((data) => {
-        setDetail(data)
-        const learnedChunkIds = data.activeChunks
-          .filter((chunk) => chunk.masteryStatus !== 'not_learned')
-          .map((chunk) => chunk.id)
-        setActivatedChunks(new Set(learnedChunkIds))
-        setExpandedChunkId(data.activeChunks[0]?.id ?? null)
+    fetchTopicDetail(topicId).finally(() => setLoading(false))
+  }, [topicId, fetchTopicDetail])
 
-        // Load Ink script if available
-        const compiledInk = compilePracticeInk(data.inkScript?.inkSource, data.inkScript?.inkJson)
-        setTeachingMarkdown(data.topic.teachingMarkdown || '')
-        if (compiledInk) {
-          setInkJson(compiledInk)
-        } else if (data.topic.inkScriptId) {
-          practiceApi.getTopicInk(topicId).then((ink) => {
-            const compiled = compilePracticeInk(ink?.inkSource, ink?.inkJson)
-            if (compiled) setInkJson(compiled)
-          }).catch(() => {})
-        }
+  // detail 加载完成后做后处理
+  useEffect(() => {
+    if (!detail) return
+    const learnedChunkIds = detail.activeChunks
+      .filter((chunk) => chunk.masteryStatus !== 'not_learned')
+      .map((chunk) => chunk.id)
+    setActivatedChunks(new Set(learnedChunkIds))
+    setExpandedChunkId(detail.activeChunks[0]?.id ?? null)
+
+    const compiledInk = compilePracticeInk(detail.inkScript?.inkSource, detail.inkScript?.inkJson)
+    setTeachingMarkdown(detail.topic.teachingMarkdown || '')
+    if (compiledInk) {
+      setInkJson(compiledInk)
+    } else if (detail.topic.inkScriptId) {
+      practiceApi.getTopicInk(topicId!).then((ink) => {
+        const compiled = compilePracticeInk(ink?.inkSource, ink?.inkJson)
+        if (compiled) setInkJson(compiled)
+      }).catch(() => {})
+    }
+  }, [detail, topicId])
+
+  // 句型表达式始终可见（不在 tab 内），mount 时加载
+  useEffect(() => {
+    expressionApi.list({ type: 'scene_phrase' }).catch(() => ([] as any)).then((res: any) => {
+      const items = Array.isArray(res) ? res : (res?.items ?? [])
+      setCollectedTexts((prev) => {
+        const next = new Set(prev)
+        for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
+        return next
       })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
-    // Also load collected expression items
-    Promise.all([
-      expressionApi.list({ type: 'chunk' }).catch(() => []),
-      expressionApi.list({ type: 'scene_phrase' }).catch(() => []),
-      expressionApi.list({ type: 'word' }).catch(() => []),
-    ]).then(([chunkRes, phraseRes, wordRes]) => {
-      const set = new Set<string>()
-      const extractItems = (res: any) => Array.isArray(res) ? res : (res?.items ?? [])
-      for (const item of [...extractItems(chunkRes), ...extractItems(phraseRes)]) {
-        if (item.chunkText) set.add(item.chunkText)
-      }
-      for (const item of extractItems(wordRes)) {
-        if (item.original) set.add(item.original)
-      }
-      setCollectedTexts(set)
-    }).catch(() => {})
-  }, [topicId])
+    })
+  }, [])
+
+  // 按 tab 懒加载：vocab → word, chunk → chunk
+  const [prepTab, setPrepTab] = useState('vocab')
+  const loadedPrepTabs = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (loadedPrepTabs.current.has(prepTab)) return
+    loadedPrepTabs.current.add(prepTab)
+    if (prepTab === 'vocab') {
+      expressionApi.list({ type: 'word' }).catch(() => ([] as any)).then((res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items ?? [])
+        setCollectedTexts((prev) => {
+          const next = new Set(prev)
+          for (const item of items) { if (item.original) next.add(item.original) }
+          return next
+        })
+      })
+    } else if (prepTab === 'chunk') {
+      expressionApi.list({ type: 'chunk' }).catch(() => ([] as any)).then((res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items ?? [])
+        setCollectedTexts((prev) => {
+          const next = new Set(prev)
+          for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
+          return next
+        })
+      })
+    }
+  }, [prepTab])
 
   // ==================== Ink Story Hook ====================
   const handleExternalFn = useCallback((name: string, args: any[]) => {
@@ -895,7 +918,7 @@ export function PracticeSessionPage() {
               </Badge>
             </div>
 
-            <Tabs defaultValue="vocab" className="w-full">
+            <Tabs value={prepTab} onValueChange={setPrepTab} className="w-full">
               <TabsList className="grid h-10 w-full grid-cols-2 rounded-lg bg-muted/70 p-1">
                 <TabsTrigger value="vocab" className="rounded-md text-xs">{t('practiceSession.sceneVocab')} ({detail.vocabularies.length})</TabsTrigger>
                 <TabsTrigger value="chunk" className="rounded-md text-xs">{t('practiceSession.coreExpressions')} ({detail.activeChunks.length})</TabsTrigger>
