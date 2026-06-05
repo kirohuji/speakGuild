@@ -85,7 +85,7 @@ export class AdminService {
         },
         _count: {
           select: {
-            vocabularyWords: true,
+
             orders: true,
             practiceSessions: true,
             scriptRecords: true,

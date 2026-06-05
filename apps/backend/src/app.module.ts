@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { PracticeModule } from './modules/practice/practice.module';
-import { AssetsModule } from './modules/assets/assets.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { MembershipModule } from './modules/membership/membership.module';
 import { TtsModule } from './modules/tts/tts.module';
@@ -34,7 +33,6 @@ import { MobileUpdatesModule } from './modules/mobile-updates/mobile-updates.mod
     ScheduleModule.forRoot(),
     PrismaModule,
     PracticeModule,
-    AssetsModule,
     ProfileModule,
     MembershipModule,
     TtsModule,

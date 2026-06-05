@@ -62,7 +62,7 @@ export class ProfileService {
       where: { userId },
     });
 
-    const wordsCount = await this.prisma.vocabularyWord.count({
+    const wordsCount = await this.prisma.expressionItem.count({
       where: { userId },
     });
 

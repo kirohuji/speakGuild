@@ -27,7 +27,6 @@ model User {
   hasCompletedOnboarding Boolean @default(false)
   sessions            Session[]
   accounts            Account[]
-  vocabularyWords     VocabularyWord[]
   dailyActivities     DailyActivity[]
   userPreference      UserPreference?
   fileReferences      FileReference[]
@@ -110,18 +109,6 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
-}
-
-model VocabularyWord {
-  id               String   @id @default(cuid())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId           String
-  term             String
-  definition       String?
-  createdAt        DateTime @default(now())
-  @@unique([userId, term])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("vocabulary_word")
 }
 
 // ---- 用户看板域 ----
@@ -333,7 +320,6 @@ model FileAsset {
   lastReferencedAt DateTime?
   createdAt        DateTime        @default(now())
   references       FileReference[]
-  resourceNodes    ResourceNode[]
   mobileBundles    MobileBundle[]
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
@@ -352,44 +338,6 @@ model FileReference {
   @@unique([assetId, bizType, bizId, userId])
   @@index([bizType, bizId, userId])
   @@map("file_reference")
-}
-
-// ---- 资料库域 ----
-
-enum ResourceNodeType {
-  folder
-  video_url
-  video
-  audio
-  pdf
-  image
-  document
-  other
-}
-
-/// 资料库节点（统一管理文件夹和资源项的树形结构）
-model ResourceNode {
-  id        String           @id @default(cuid())
-  parent    ResourceNode?    @relation("ResourceTree", fields: [parentId], references: [id])
-  parentId  String?
-  children  ResourceNode[]   @relation("ResourceTree")
-  name      String
-  type      ResourceNodeType
-  region    String?          /// 地区标识（null = 通用资料，适用于所有地区）
-  asset     FileAsset?       @relation(fields: [assetId], references: [id])
-  assetId   String?          /// 关联 COS 文件（video/audio/pdf/image/document/other 类型）
-  url       String?          /// 外部链接（video_url 类型使用）
-  description String?        @db.Text
-  mimeType  String?          /// 文件 MIME 类型（冗余，方便前端展示图标）
-  fileSize  Int?             /// 文件大小（冗余，方便前端展示）
-  sortOrder Int              @default(0)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-
-  @@index([parentId, sortOrder])
-  @@index([region])
-  @@index([type])
-  @@map("resource_node")
 }
 
 // ---- 消息通知域 ----

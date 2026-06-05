@@ -156,15 +156,11 @@ async function main() {
   await prisma.userAchievementV2.deleteMany()
   await prisma.achievementDef.deleteMany()
 
-  // 旧表清理
-  await prisma.vocabularyWord.deleteMany()
   await prisma.userMembership.deleteMany()
   await prisma.order.deleteMany()
   await prisma.membershipPlan.deleteMany()
   await prisma.userAchievement.deleteMany()
   await prisma.achievement.deleteMany()
-  await prisma.resourceNode.updateMany({ data: { parentId: null } })
-  await prisma.resourceNode.deleteMany()
 
   await prisma.feedback.deleteMany()
   await prisma.referral.deleteMany()

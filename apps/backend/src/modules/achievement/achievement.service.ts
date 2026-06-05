@@ -85,7 +85,7 @@ export class AchievementService {
       this.prisma.userChunkProgress.count({
         where: { userId, status: { in: ['can_output', 'mastered'] } },
       }),
-      this.prisma.vocabularyWord.count({ where: { userId } }),
+      this.prisma.expressionItem.count({ where: { userId } }),
       this.prisma.dailyActivity.findMany({
         where: { userId },
         orderBy: { date: 'desc' },

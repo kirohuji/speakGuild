@@ -32,7 +32,7 @@ export interface AdminUserDetail extends AdminUser {
     plan: { id: string; name: string; level: string } | null;
   } | null;
   _count: {
-    vocabularyWords: number;
+
     orders: number;
     practiceSessions: number;
     scriptRecords: number;

@@ -573,7 +573,7 @@ function UserRow({
                 <div className="grid grid-cols-4 gap-3">
                   <StatDot icon={MessageSquare} label="练习会话" value={detail._count.practiceSessions} accent="blue" />
                   <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.scriptRecords} accent="violet" />
-                  <StatDot icon={BookOpen} label="生词本" value={detail._count.vocabularyWords} accent="emerald" />
+
                   <StatDot icon={Zap} label="表达库" value={detail._count.expressionItems} accent="amber" />
                   <StatDot icon={Puzzle} label="场景进度" value={detail._count.sceneProgresses} accent="rose" />
                   <StatDot icon={MessageSquare} label="Chunk进度" value={detail._count.chunkProgresses} accent="cyan" />
