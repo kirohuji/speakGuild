@@ -44,12 +44,36 @@ async function bootstrap() {
   expressApp.use(json());
   expressApp.use(urlencoded({ extended: true }));
 
+  // ── 全局 CORS（必须在业务路由注册之前）──
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
+
+  app.setGlobalPrefix('api/v1/manyu');
+
   // ── OTA 热更新公开检查接口 ──
   // 必须注册两个路径：
   //   /api/mobile-updates/check  — 经过 nginx 代理（透传 /api 前缀）
   //   /mobile-updates/check      — 本地直连后端（无 nginx）
+  // 同时手动注入 CORS 头，防止因中间件顺序问题导致 capacitor:// 等自定义 scheme 被拦截
   const mobileUpdatesService = app.get(MobileUpdatesService);
   const checkHandler = async (req: any, res: any) => {
+    // ── CORS 头（参照 /api/auth 模式）──
+    const origin = req.headers.origin as string | undefined;
+    const isAllowed = origin && allowedOrigins.includes(origin);
+    if (isAllowed) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Vary', 'Origin');
+    }
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+
     try {
       const result = await mobileUpdatesService.checkUpdate({
         platform: req.body?.platform || 'ios',
@@ -66,13 +90,6 @@ async function bootstrap() {
   };
   expressApp.post('/api/mobile-updates/check', checkHandler);
   expressApp.post('/mobile-updates/check', checkHandler);
-
-  app.setGlobalPrefix('api/v1/manyu');
-
-  app.enableCors({
-    origin: allowedOrigins,
-    credentials: true,
-  });
 
   app.useGlobalPipes(
     new ValidationPipe({

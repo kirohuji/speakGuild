@@ -63,6 +63,9 @@ const config: CapacitorConfig = {
       appReadyTimeout: 10000,           // 10 秒内必须调用 notifyAppReady，否则回滚
       autoDeleteFailed: true,           // 自动清理下载失败的包
       autoDeletePrevious: true,         // 安装成功后自动清理旧包
+      // 自托管模式：指向自己的后端，阻止插件连接 Capgo 云端
+      // updateUrl: 'https://hope.lourd.top:3605/api/mobile-updates',
+      // statsUrl: 'https://hope.lourd.top:3605/api/mobile-updates',
     },
   },
 };
