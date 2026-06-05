@@ -12,7 +12,7 @@ import {
 } from '@/features/auth/components/auth-page-shell'
 import {
   sendPhoneOtp,
-  signInWithWechat,
+  // signInWithWechat, // wechat plugin removed
   signInWithApple,
   verifyPhoneOtp,
 } from '@/features/auth/api'
@@ -232,8 +232,9 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button
+        <div className="flex justify-center">
+          {/* wechat plugin removed */}
+          {/* <Button
             variant="outline"
             size="primary-lg"
             className="h-11 min-w-0 gap-2 rounded-xl bg-background/60 px-3"
@@ -255,7 +256,7 @@ export function LoginPage() {
               <path d="M8.5 11.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 2C6.48 2 2 6.03 2 11c0 2.76 1.36 5.22 3.57 6.87L2 20l3.89-2.14A9.36 9.36 0 0012 22c5.52 0 10-4.03 10-9S17.52 2 12 2z" />
             </svg>
             {t('auth.wechatLogin')}
-          </Button>
+          </Button> */}
 
           <Button
             variant="outline"

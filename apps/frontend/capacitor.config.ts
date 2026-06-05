@@ -39,10 +39,10 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
 
-    CapacitorWechat: {
-      appId: '',  // 微信开放平台申请的 AppID
-      universalLink: 'https://hope.lourd.top:3605/wechat/',  // 需与微信开放平台配置的 Universal Link 一致
-    },
+    // CapacitorWechat: {
+    //   appId: '',  // 微信开放平台申请的 AppID
+    //   universalLink: 'https://hope.lourd.top:3605/wechat/',  // 需与微信开放平台配置的 Universal Link 一致
+    // },
 
     SocialLogin: {
       providers: {
@@ -59,8 +59,7 @@ const config: CapacitorConfig = {
 
     // ── OTA 热更新（Capgo CapacitorUpdater，self-hosted 模式）──
     CapacitorUpdater: {
-      autoUpdate: 'atBackground',       // 后台下载，切后台后安装，下次启动生效
-      updateUrl: `https://api.manyu.app/mobile-updates/check`,
+      autoUpdate: 'off',                // 关闭自动检查，完全由 updater.ts 手动控制
       appReadyTimeout: 10000,           // 10 秒内必须调用 notifyAppReady，否则回滚
       autoDeleteFailed: true,           // 自动清理下载失败的包
       autoDeletePrevious: true,         // 安装成功后自动清理旧包

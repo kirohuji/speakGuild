@@ -41,9 +41,15 @@ async function bootstrap() {
   });
   expressApp.all('/api/auth/*', toNodeHandler(auth));
 
-  // ── OTA 热更新公开检查接口（不走全局前缀，供 Capacitor Updater 插件调用）──
+  expressApp.use(json());
+  expressApp.use(urlencoded({ extended: true }));
+
+  // ── OTA 热更新公开检查接口 ──
+  // 必须注册两个路径：
+  //   /api/mobile-updates/check  — 经过 nginx 代理（透传 /api 前缀）
+  //   /mobile-updates/check      — 本地直连后端（无 nginx）
   const mobileUpdatesService = app.get(MobileUpdatesService);
-  expressApp.post('/mobile-updates/check', async (req, res) => {
+  const checkHandler = async (req: any, res: any) => {
     try {
       const result = await mobileUpdatesService.checkUpdate({
         platform: req.body?.platform || 'ios',
@@ -57,10 +63,9 @@ async function bootstrap() {
       console.error('[mobile-updates/check] error:', err);
       res.status(500).json({ message: 'Internal server error' });
     }
-  });
-
-  expressApp.use(json());
-  expressApp.use(urlencoded({ extended: true }));
+  };
+  expressApp.post('/api/mobile-updates/check', checkHandler);
+  expressApp.post('/mobile-updates/check', checkHandler);
 
   app.setGlobalPrefix('api/v1/manyu');
 

@@ -44,5 +44,5 @@ export { updater } from './updater';
 export { preferences } from './preferences';
 export { pushNotifications } from './push-notifications';
 export { filesystem } from './filesystem';
-export { requestNativeWechatAuthCode } from './wechat';
+// export { requestNativeWechatAuthCode } from './wechat'; // wechat plugin removed
 export { requestNativeAppleSignIn } from './apple';

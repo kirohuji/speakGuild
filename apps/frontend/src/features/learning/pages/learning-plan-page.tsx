@@ -1296,7 +1296,7 @@ function PracticeRecordReadonlyReviewDrawer({
           </div>
         ) : (
           <div className="relative h-full bg-background">
-            <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+            <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2">
               <div className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 text-foreground shadow-lg backdrop-blur-2xl">
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={() => onOpenChange(false)}>关闭</Button>
                 <div className="min-w-0 flex-1 text-center">
