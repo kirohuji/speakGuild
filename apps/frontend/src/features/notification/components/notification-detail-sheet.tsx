@@ -66,6 +66,15 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
                 </div>
               </div>
             </div>
+            {item.imageUrl && (
+              <div className="shrink-0 overflow-hidden">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-full aspect-[10/7] object-cover object-[50%_0%]"
+                />
+              </div>
+            )}
             <NotificationDetailContent
               item={item}
               className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-5"
@@ -120,6 +129,16 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
           </div>
         </SheetHeader>
 
+        {item.imageUrl && (
+          <div className="shrink-0 overflow-hidden">
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="w-full aspect-[7/3] object-cover object-[50%_0%]"
+            />
+          </div>
+        )}
+
         <NotificationDetailContent
           item={item}
           className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4"
@@ -142,7 +161,7 @@ function NotificationDetailContent({
     <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
       <MarkdownRenderer content={item.content} variant="teaching" />
 
-      {item.readAt && (
+      {/* {item.readAt && (
         <div className="mt-6 flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
           <CheckCircle2 className="h-4 w-4 text-primary/60" />
           <span className="text-xs text-muted-foreground/70">
@@ -152,7 +171,7 @@ function NotificationDetailContent({
             }) })}
           </span>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, Inbox, Mail, MailOpen, CheckCheck, ArrowRight, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import {
-  getUserNotifications, markAsRead, markAllAsRead,
+  markAsRead, markAllAsRead,
   type NotificationItem,
 } from '@/features/notification/api'
 import { useNotificationStore } from '@/features/notification/store'
@@ -119,75 +118,50 @@ function NotificationCard({ item, onClick, formatRelativeTime, compact = false }
 
 function NotificationTabContent({ tab, formatRelativeTime, compact = false }: { tab: TabValue; formatRelativeTime: (s: string) => string; compact?: boolean }) {
   const { t } = useTranslation()
-  const [list, setList] = useState<NotificationItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const pageSize = 20
+  const tabLists = useNotificationStore((s) => s.tabLists)
+  const tabLoading = useNotificationStore((s) => s.tabLoading)
+  const fetchTabList = useNotificationStore((s) => s.fetchTabList)
+  const markItemReadInStore = useNotificationStore((s) => s.markItemReadInStore)
+  const markAllReadInStore = useNotificationStore((s) => s.markAllReadInStore)
   const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount)
   const resetUnread = useNotificationStore((s) => s.resetUnread)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [detailItem, setDetailItem] = useState<NotificationItem | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const loadList = useCallback(
-    async (pg: number, replace: boolean) => {
-      setLoading(true)
-      try {
-        const isReadParam = tab === 'all' ? undefined : tab === 'read'
-        const result = await getUserNotifications({
-          page: pg,
-          pageSize,
-          isRead: isReadParam,
-        })
-        if (replace) {
-          setList(result.list)
-        } else {
-          setList((prev) => [...prev, ...result.list])
-        }
-        setHasMore(result.list.length === pageSize)
-      } catch {
-        if (replace) setList([])
-      } finally {
-        setLoading(false)
-      }
-    },
-    [tab]
-  )
+  const cache = tabLists[tab]
+  const list = cache?.list ?? []
+  const loading = tabLoading[tab] ?? false
+  const hasMore = cache?.hasMore ?? true
+  const page = cache?.page ?? 1
 
+  // 首次加载
   useEffect(() => {
-    setPage(1)
-    setList([])
-    loadList(1, true)
-  }, [tab, loadList])
+    if (!cache) fetchTabList(tab, 1, true)
+  }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 无限滚动
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          const nextPage = page + 1
-          setPage(nextPage)
-          loadList(nextPage, false)
+          fetchTabList(tab, page + 1, false)
         }
       },
       { rootMargin: '200px' }
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [hasMore, loading, page, loadList])
+  }, [hasMore, loading, page, tab, fetchTabList])
 
   const handleClickItem = (item: NotificationItem) => {
     setDetailItem(item)
     setDetailOpen(true)
     if (!item.isRead) {
       markAsRead(item.id).then(() => {
-        setList((prev) =>
-          prev.map((n) =>
-            n.id === item.id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
-          )
-        )
+        markItemReadInStore(item.id)
         fetchUnreadCount()
       }).catch(() => {})
     }
@@ -196,9 +170,7 @@ function NotificationTabContent({ tab, formatRelativeTime, compact = false }: { 
   const handleMarkAll = async () => {
     try {
       await markAllAsRead()
-      setList((prev) =>
-        prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
-      )
+      markAllReadInStore()
       resetUnread()
       fetchUnreadCount()
     } catch {}
@@ -334,11 +306,7 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
           ))}
         </TabsList>
 
-        {tabConfig.map(({ value }) => (
-          <div key={value} className={activeTab === value ? '' : 'hidden'}>
-            <NotificationTabContent tab={value} formatRelativeTime={formatRelativeTime} compact={compact} />
-          </div>
-        ))}
+        <NotificationTabContent tab={activeTab} formatRelativeTime={formatRelativeTime} compact={compact} />
       </Tabs>
     </div>
   )
