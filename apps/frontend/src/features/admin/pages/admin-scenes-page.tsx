@@ -35,7 +35,7 @@ import {
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   listAllChunks, listStories,
-  type SceneCategory, type Scene, type SceneVocabulary, type TrainingTopic, type Chunk, type StoryData,
+  type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData,
 } from '../api-content-admin'
 
 // ─── Category Dialog ────────────────────────────────────────
@@ -194,7 +194,7 @@ function VocabularyDialog({
 }: {
   open: boolean
   onClose: () => void
-  edit: SceneVocabulary | null
+  edit: Vocabulary | null
   sceneId: string
   onSaved: () => void
 }) {
@@ -436,7 +436,11 @@ function TrainingTopicDialog({
   const [storyType, setStoryType] = useState('all')
 
   useEffect(() => {
-    if (edit) setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [] })
+    if (edit) {
+      // Map topicPatterns (new API) → sentencePatterns (form field)
+      const patterns = edit.topicPatterns?.map((tp: any) => tp.pattern) ?? edit.sentencePatterns ?? []
+      setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [], sentencePatterns: patterns })
+    }
     else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [], inkScriptId: '' })
     setStorySearch('')
     setStoryType('all')
@@ -602,7 +606,6 @@ function TrainingTopicDialog({
               <ChunkMultiSelect
                 chunks={chunks}
                 value={form.chunkIds ?? []}
-                sceneId={sceneId}
                 onChange={(chunkIds) => setForm({ ...form, chunkIds })}
               />
             </TabsContent>
@@ -750,12 +753,12 @@ function TrainingTopicDialog({
 
 function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack: () => void; chunks: Chunk[] }) {
   const [scene, setScene] = useState<Scene | null>(null)
-  const [vocabs, setVocabs] = useState<SceneVocabulary[]>([])
+  const [vocabs, setVocabs] = useState<Vocabulary[]>([])
   const [topics, setTopics] = useState<TrainingTopic[]>([])
   const [loading, setLoading] = useState(true)
 
   const [vocabDialog, setVocabDialog] = useState(false)
-  const [editVocab, setEditVocab] = useState<SceneVocabulary | null>(null)
+  const [editVocab, setEditVocab] = useState<Vocabulary | null>(null)
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
   const [vocabPage, setVocabPage] = useState(1)
@@ -767,7 +770,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     setLoading(true)
     try {
       const [s, v, t] = await Promise.all([
-        getScene(sceneId), listVocabularies(sceneId), listTrainingTopics(sceneId),
+        getScene(sceneId), listVocabularies(), listTrainingTopics(sceneId),
       ])
       setScene(s); setVocabs(v); setTopics(t)
     } catch {}
@@ -1094,7 +1097,7 @@ export function AdminScenesPage() {
                         </div>
                       </td>
                       <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
-                        词汇 {s._count?.vocabularies ?? 0} · Chunk {s._count?.chunks ?? 0} · 话题 {s._count?.trainingTopics ?? 0}
+                        话题 {s._count?.trainingTopics ?? 0}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">

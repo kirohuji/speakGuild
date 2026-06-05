@@ -573,11 +573,8 @@ model Scene {
   isFree               Boolean            @default(false)  // 免费用户可访问
   prerequisiteScenes   ScenePrerequisite[] @relation("Scene")
   prerequisiteFor      ScenePrerequisite[] @relation("Prerequisite")
-  vocabularies         SceneVocabulary[]
-  chunks               Chunk[]
   trainingTopics       TrainingTopic[]
   scriptEpisodes       ScriptEpisode[]
-  chunkExamples        ChunkExample[]
   userProgresses       UserSceneProgress[]
   gameLocations        GameLocation[]
   createdAt            DateTime           @default(now())
@@ -606,23 +603,17 @@ model Chunk {
   category            String
   difficulty          String              @default("L2")
   examples            ChunkExample[]
-  scene               Scene?              @relation(fields: [sceneId], references: [id])
-  sceneId             String?
-  applicableSceneIds  String[]
   userProgresses      UserChunkProgress[]
   scriptEpisodeChunks ScriptEpisodeChunk[]
   topicChunks         TrainingTopicChunk[]
   createdAt           DateTime            @default(now())
 
-  @@index([sceneId])
   @@index([difficulty])
   @@map("chunk")
 }
 
-model SceneVocabulary {
+model Vocabulary {
   id            String               @id @default(cuid())
-  scene         Scene                @relation(fields: [sceneId], references: [id])
-  sceneId       String
   word          String
   meaning       String               // 中文释义
   partOfSpeech  String?              // 词性：noun/verb/adj/phrase
@@ -637,9 +628,21 @@ model SceneVocabulary {
   difficulty    String               @default("L1")  // L1~L5
   sortOrder     Int                  @default(0)
   episodeVocabs ScriptEpisodeVocab[]
+  topicVocabs   TrainingTopicVocab[]
 
-  @@index([sceneId])
-  @@map("scene_vocabulary")
+  @@map("vocabulary")
+}
+
+model TrainingTopicVocab {
+  id        String        @id @default(cuid())
+  topic     TrainingTopic @relation(fields: [topicId], references: [id])
+  topicId   String
+  vocab     Vocabulary    @relation(fields: [vocabId], references: [id])
+  vocabId   String
+  sortOrder Int           @default(0)
+
+  @@unique([topicId, vocabId])
+  @@map("training_topic_vocab")
 }
 
 model ChunkExample {
@@ -650,13 +653,10 @@ model ChunkExample {
   zh        String   @db.Text
   note      String?  @db.Text
   level     String   @default("basic")
-  scene     Scene?   @relation(fields: [sceneId], references: [id])
-  sceneId   String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
   @@index([chunkId, sortOrder])
-  @@index([sceneId])
   @@map("chunk_example")
 }
 
@@ -695,7 +695,8 @@ model TrainingTopic {
   suggestedDurationSec Int               @default(60)
   difficulty           String            @default("L2")
   activeChunks         TrainingTopicChunk[]
-  sentencePatterns     TrainingTopicSentencePattern[]
+  topicPatterns        TrainingTopicSentencePattern[]
+  topicVocabs          TrainingTopicVocab[]
   practiceSessions     PracticeSession[]
   sentencePatternsDeprecated     Json?    @map("sentence_patterns")
   inkScriptId          String?           @unique
@@ -707,19 +708,32 @@ model TrainingTopic {
   @@map("training_topic")
 }
 
-model TrainingTopicSentencePattern {
-  id         String        @id @default(cuid())
-  topic      TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  topicId    String
+model SentencePattern {
+  id         String   @id @default(cuid())
   pattern    String
   meaning    String?
   slots      Json?
   example    String?
-  difficulty String        @default("L1")
-  sortOrder  Int            @default(0)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  difficulty String   @default("L1")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
+  topicPatterns   TrainingTopicSentencePattern[]
+  episodePatterns ScriptEpisodeSentencePattern[]
+
+  @@unique([pattern])
+  @@map("sentence_pattern")
+}
+
+model TrainingTopicSentencePattern {
+  id        String          @id @default(cuid())
+  topic     TrainingTopic   @relation(fields: [topicId], references: [id])
+  topicId   String
+  pattern   SentencePattern @relation(fields: [patternId], references: [id])
+  patternId String
+  sortOrder Int             @default(0)
+
+  @@unique([topicId, patternId])
   @@index([topicId, sortOrder])
   @@map("training_topic_sentence_pattern")
 }
@@ -816,6 +830,7 @@ model ScriptEpisode {
   inkScriptId          String?
   coreVocabularies     ScriptEpisodeVocab[]
   coreChunks           ScriptEpisodeChunk[]
+  corePatterns         ScriptEpisodeSentencePattern[]
   dialogues            ScriptDialogue[]
   records              ScriptRecord[]
   isPreview            Boolean                @default(false)
@@ -829,7 +844,7 @@ model ScriptEpisodeVocab {
   id        String        @id @default(cuid())
   episode   ScriptEpisode @relation(fields: [episodeId], references: [id])
   episodeId String
-  vocab     SceneVocabulary @relation(fields: [vocabId], references: [id])
+  vocab     Vocabulary    @relation(fields: [vocabId], references: [id])
   vocabId   String
   sortOrder Int           @default(0)
 
@@ -847,6 +862,18 @@ model ScriptEpisodeChunk {
 
   @@unique([episodeId, chunkId])
   @@map("script_episode_chunk")
+}
+
+model ScriptEpisodeSentencePattern {
+  id        String          @id @default(cuid())
+  episode   ScriptEpisode   @relation(fields: [episodeId], references: [id])
+  episodeId String
+  pattern   SentencePattern @relation(fields: [patternId], references: [id])
+  patternId String
+  sortOrder Int             @default(0)
+
+  @@unique([episodeId, patternId])
+  @@map("script_episode_sentence_pattern")
 }
 
 // ──── 剧本对话/通关记录 ────
@@ -909,6 +936,9 @@ model ExpressionItem {
   easeFactor     Float          @default(2.5)
   lastReviewedAt DateTime?
   nextReviewAt   DateTime?
+  sourceType     String?        // Scene|Topic|Script|Manual|QuizFail
+  sourceId       String?
+  sourceSnapshot Json?
   createdAt      DateTime       @default(now())
 
   @@index([userId, type])

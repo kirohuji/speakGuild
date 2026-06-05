@@ -1,4 +1,4 @@
-scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+scene_title,category,text,meaning,difficulty,description,examples_json
 打车出行,打车出行,"Could you take me to..., please?",能带我去...吗？,L1,,,
 打车出行,打车出行,How much will it cost?,大概多少钱？,L1,,,
 打车出行,打车出行,How long does it take to get there?,到那要多久？,L1,,,

@@ -3,4 +3,5 @@ scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowle
 打车出行,和司机聊天,Make small talk with the taxi driver.,和出租车司机闲聊。,45,L2,,,practice_travel_打车出行_和司机聊天
 打车出行,投诉司机,Call the taxi company to complain about a driver.,打电话给出租车公司投诉司机。,50,L2,,,practice_travel_打车出行_投诉司机
 打车出行,约车去聚会,Book a taxi to pick you up for a party.,约车去参加聚会。,35,L1,,,practice_travel_打车出行_约车去聚会
-,,,,,,,,practice_travel__
+机场入境,说明来访目的,Tell the immigration officer why you're entering the country.,告诉入境官员来访目的。,45,L2,,,
+酒店叫车,叫车去目的地,Ask the hotel concierge to call a taxi for you.,让酒店礼宾帮你叫出租车。,30,L1,,,

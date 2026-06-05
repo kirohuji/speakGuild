@@ -1,4 +1,4 @@
-scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+scene_title,category,text,meaning,difficulty,description,examples_json
 咖啡店点餐,咖啡店点餐,"I'd like a..., please.",我想要一杯...,L1,,,
 咖啡店点餐,咖啡店点餐,For here or to go?,堂食还是打包？,L1,,,
 咖啡店点餐,咖啡店点餐,"Can I get the bill, please?",能给我账单吗？,L1,,,

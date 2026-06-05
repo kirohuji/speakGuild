@@ -28,16 +28,23 @@ export class SceneService {
       where: { id: sceneId },
       include: {
         category: true,
-        vocabularies: { orderBy: { sortOrder: 'asc' } },
-        chunks: {
-          orderBy: { createdAt: 'asc' },
-          include: { examples: { orderBy: { sortOrder: 'asc' } } },
-        },
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
+            topicVocabs: {
+              include: { vocab: true },
+              orderBy: { sortOrder: 'asc' },
+            },
             activeChunks: {
-              include: { chunk: true },
+              include: {
+                chunk: {
+                  include: { examples: { orderBy: { sortOrder: 'asc' } } },
+                },
+              },
+              orderBy: { sortOrder: 'asc' },
+            },
+            topicPatterns: {
+              include: { pattern: true },
               orderBy: { sortOrder: 'asc' },
             },
           },
@@ -60,19 +67,30 @@ export class SceneService {
         select: {
           requiredOutputLevel: true,
           requiredUserLevel: true,
-          _count: { select: { vocabularies: true, chunks: true } },
+          trainingTopics: {
+            select: {
+              _count: { select: { topicVocabs: true, activeChunks: true } },
+            },
+          },
         },
       });
 
       if (!scene) return null;
 
+      let vocabTotal = 0;
+      let chunkTotal = 0;
+      for (const t of scene.trainingTopics) {
+        vocabTotal += (t as any)._count?.topicVocabs ?? 0;
+        chunkTotal += (t as any)._count?.activeChunks ?? 0;
+      }
+
       return {
         readiness: 0,
         mastery: 0,
         vocabLearned: 0,
-        vocabTotal: scene._count.vocabularies,
+        vocabTotal,
         chunkMastered: 0,
-        chunkTotal: scene._count.chunks,
+        chunkTotal,
         completedPracticeCount: 0,
         completedScriptCount: 0,
         prerequisiteCompleted: false,

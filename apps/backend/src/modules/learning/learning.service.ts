@@ -72,27 +72,30 @@ export class LearningService {
       },
     });
 
-    // 分页查场景
-    const scenes = await this.prisma.scene.findMany({
+    // 查全部场景（不分页，排序在 JS 中完成）
+    const allScenes = await this.prisma.scene.findMany({
       where: {
         ...sceneWhere,
         category: categoryWhere,
       },
-      orderBy: { createdAt: 'asc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
       include: {
         category: { select: { id: true, name: true, icon: true } },
-        _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
+        _count: { select: { trainingTopics: true, scriptEpisodes: true } },
         trainingTopics: {
-          select: { id: true, title: true, difficulty: true, suggestedDurationSec: true },
+          select: {
+            id: true,
+            title: true,
+            difficulty: true,
+            suggestedDurationSec: true,
+            _count: { select: { activeChunks: true, topicVocabs: true } },
+          },
           orderBy: { sortOrder: 'asc' },
         },
       },
     });
 
     // 批量查询用户场景进度
-    const sceneIds = scenes.map((s) => s.id);
+    const sceneIds = allScenes.map((s) => s.id);
     const progresses = await this.prisma.userSceneProgress.findMany({
       where: { userId, sceneId: { in: sceneIds } },
     });
@@ -105,11 +108,18 @@ export class LearningService {
       select: { userLevel: true, outputLevel: true },
     });
 
-    const list = scenes.map((scene) => {
+    const fullList = allScenes.map((scene) => {
       const prog = progressMap.get(scene.id);
       const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
+      // Compute totals from topics
+      let vocabCount = 0;
+      let chunkCount = 0;
+      for (const t of scene.trainingTopics) {
+        vocabCount += (t as any)._count?.topicVocabs ?? 0;
+        chunkCount += (t as any)._count?.activeChunks ?? 0;
+      }
       const totalItems =
-        scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
+        vocabCount + chunkCount + scene._count.trainingTopics;
       const completedItems =
         (prog?.vocabLearned ?? 0) +
         (prog?.chunkMastered ?? 0) +
@@ -137,8 +147,8 @@ export class LearningService {
         isFree: scene.isFree,
         isLocked: !isMember && !scene.isFree,
         isUnlocked,
-        vocabCount: scene._count.vocabularies,
-        chunkCount: scene._count.chunks,
+        vocabCount,
+        chunkCount,
         topicCount: scene._count.trainingTopics,
         scriptCount: scene._count.scriptEpisodes,
         progress: prog
@@ -146,9 +156,9 @@ export class LearningService {
               readiness: prog.readiness,
               mastery: prog.mastery,
               vocabLearned: prog.vocabLearned,
-              vocabTotal: scene._count.vocabularies,
+              vocabTotal: vocabCount,
               chunkMastered: prog.chunkMastered,
-              chunkTotal: scene._count.chunks,
+              chunkTotal: chunkCount,
               completedPracticeCount,
               completedScriptCount: prog.completedScriptCount,
             }
@@ -159,6 +169,22 @@ export class LearningService {
             : 0,
       };
     });
+
+    // 🔢 Sort: "宿舍入住" pinned first, then unlocked, then locked
+    fullList.sort((a, b) => {
+      // "宿舍入住" always first
+      const aIsDorm = a.title === '宿舍入住' ? 0 : 1
+      const bIsDorm = b.title === '宿舍入住' ? 0 : 1
+      if (aIsDorm !== bIsDorm) return aIsDorm - bIsDorm
+      // Unlocked (not locked) before locked
+      const aLocked = a.isLocked ? 1 : 0
+      const bLocked = b.isLocked ? 1 : 0
+      if (aLocked !== bLocked) return aLocked - bLocked
+      return 0
+    })
+
+    // Paginate
+    const list = fullList.slice((page - 1) * pageSize, page * pageSize)
 
     return {
       list,
@@ -179,9 +205,15 @@ export class LearningService {
         scene: {
           include: {
             category: { select: { name: true } },
-            _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } },
+            _count: { select: { trainingTopics: true, scriptEpisodes: true } },
             trainingTopics: {
-              select: { id: true, title: true, difficulty: true, suggestedDurationSec: true },
+              select: {
+                id: true,
+                title: true,
+                difficulty: true,
+                suggestedDurationSec: true,
+                _count: { select: { activeChunks: true, topicVocabs: true } },
+              },
               orderBy: { sortOrder: 'asc' },
             },
           },
@@ -193,8 +225,15 @@ export class LearningService {
     return progresses.map((p) => {
       const scene = p.scene;
       const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
+      // Compute totals from topics
+      let vocabCount = 0;
+      let chunkCount = 0;
+      for (const t of scene.trainingTopics) {
+        vocabCount += (t as any)._count?.topicVocabs ?? 0;
+        chunkCount += (t as any)._count?.activeChunks ?? 0;
+      }
       const totalItems =
-        scene._count.vocabularies + scene._count.chunks + scene._count.trainingTopics;
+        vocabCount + chunkCount + scene._count.trainingTopics;
       const completedItems = p.vocabLearned + p.chunkMastered + completedPracticeCount;
       const completionPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
@@ -210,17 +249,17 @@ export class LearningService {
           difficulty: t.difficulty,
           suggestedDurationSec: t.suggestedDurationSec,
         })),
-        vocabCount: scene._count.vocabularies,
-        chunkCount: scene._count.chunks,
+        vocabCount,
+        chunkCount,
         topicCount: scene._count.trainingTopics,
         scriptCount: scene._count.scriptEpisodes,
         progress: {
           readiness: p.readiness,
           mastery: p.mastery,
           vocabLearned: p.vocabLearned,
-          vocabTotal: scene._count.vocabularies,
+          vocabTotal: vocabCount,
           chunkMastered: p.chunkMastered,
-          chunkTotal: scene._count.chunks,
+          chunkTotal: chunkCount,
           completedPracticeCount,
           completedScriptCount: p.completedScriptCount,
         },
@@ -236,17 +275,23 @@ export class LearningService {
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
       include: {
-        vocabularies: { orderBy: { sortOrder: 'asc' } },
-        chunks: {
-          orderBy: { createdAt: 'asc' },
-          include: { examples: { orderBy: { sortOrder: 'asc' } } },
-        },
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
-            sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+            topicPatterns: {
+              include: { pattern: true },
+              orderBy: { sortOrder: 'asc' },
+            },
+            topicVocabs: {
+              include: { vocab: true },
+              orderBy: { sortOrder: 'asc' },
+            },
             activeChunks: {
-              include: { chunk: true },
+              include: {
+                chunk: {
+                  include: { examples: { orderBy: { sortOrder: 'asc' } } },
+                },
+              },
               orderBy: { sortOrder: 'asc' },
             },
           },
@@ -276,23 +321,56 @@ export class LearningService {
 
     if (!scene) return null;
 
-    // 提取句型骨架
-    const sentencePatterns = scene.trainingTopics
-      .filter((t) => t.sentencePatterns)
-      .flatMap((t) => {
-        const patterns = t.sentencePatterns as any[];
-        return (patterns ?? []).map((p: any) => ({
-          ...p,
-          topicId: t.id,
-          topicTitle: t.title,
-        }));
-      });
+    // 从 topics 中提取所有词汇（去重）
+    const vocabMap = new Map<string, any>();
+    const chunkMap = new Map<string, any>();
+    const sentencePatterns: any[] = [];
+
+    for (const topic of scene.trainingTopics) {
+      for (const tv of topic.topicVocabs) {
+        const v = tv.vocab;
+        if (!vocabMap.has(v.id)) {
+          vocabMap.set(v.id, {
+            id: v.id,
+            word: v.word,
+            meaning: v.meaning,
+            description: v.description,
+          });
+        }
+      }
+      for (const ac of topic.activeChunks) {
+        const c = ac.chunk;
+        if (!chunkMap.has(c.id)) {
+          chunkMap.set(c.id, {
+            id: c.id,
+            text: c.text,
+            meaning: c.meaning,
+            description: c.description,
+            category: c.category,
+            difficulty: c.difficulty,
+            examples: c.examples,
+          });
+        }
+      }
+      for (const tp of topic.topicPatterns) {
+        sentencePatterns.push({
+          ...tp.pattern,
+          topicId: topic.id,
+          topicTitle: topic.title,
+        });
+      }
+    }
+
+    const vocabularies = [...vocabMap.values()];
+    const chunks = [...chunkMap.values()];
 
     // 用户 chunk 进度
-    const chunkIds = scene.chunks.map((c) => c.id);
-    const chunkProgresses = await this.prisma.userChunkProgress.findMany({
-      where: { userId, chunkId: { in: chunkIds } },
-    });
+    const chunkIds = chunks.map((c) => c.id);
+    const chunkProgresses = chunkIds.length > 0
+      ? await this.prisma.userChunkProgress.findMany({
+          where: { userId, chunkId: { in: chunkIds } },
+        })
+      : [];
     const chunkProgressMap = new Map(chunkProgresses.map((p) => [p.chunkId, p]));
 
     // 场景掌握度
@@ -327,14 +405,14 @@ export class LearningService {
         : null,
 
       // 顺序学习内容
-      vocabularies: scene.vocabularies.map((v) => ({
+      vocabularies: vocabularies.map((v) => ({
         id: v.id,
         word: v.word,
         meaning: v.meaning,
         description: v.description,
       })),
 
-      chunks: scene.chunks.map((c) => {
+      chunks: chunks.map((c) => {
         const cp = chunkProgressMap.get(c.id);
         return {
           id: c.id,
@@ -344,7 +422,7 @@ export class LearningService {
           category: c.category,
           difficulty: c.difficulty,
           masteryStatus: cp?.status ?? 'not_learned',
-          examples: c.examples.map((e) => ({
+          examples: c.examples.map((e: any) => ({
             en: e.en,
             zh: e.zh,
             note: e.note,
@@ -373,8 +451,8 @@ export class LearningService {
       firstEpisode: scene.scriptEpisodes[0] ?? null,
 
       // 元信息
-      vocabCount: scene.vocabularies.length,
-      chunkCount: scene.chunks.length,
+      vocabCount: vocabularies.length,
+      chunkCount: chunks.length,
       topicCount: scene.trainingTopics.length,
       scriptCount: scene.scriptEpisodes.length,
     };
@@ -411,16 +489,8 @@ export class LearningService {
       return { tasks: [], currentUnit: null };
     }
 
-    // 获取场景完整数据
-    const sceneDetail = await this.prisma.scene.findUnique({
-      where: { id: currentScene.id },
-      include: {
-        vocabularies: { orderBy: { sortOrder: 'asc' } },
-        chunks: { orderBy: { createdAt: 'asc' } },
-        trainingTopics: { orderBy: { sortOrder: 'asc' } },
-        scriptEpisodes: { orderBy: { episodeOrder: 'asc' }, take: 1 },
-      },
-    });
+    // 获取场景完整数据（通过 topics 计算）
+    const sceneDetail = await this.getLearningUnitDetail(userId, currentScene.id);
 
     if (!sceneDetail) return { tasks: [], currentUnit: null };
 
@@ -430,8 +500,8 @@ export class LearningService {
     });
     const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
 
-    // 获取词汇学习状态（检查 ExpressionItem 中有没有这些词）
-    const vocabWords = sceneDetail.vocabularies.map((v) => v.word);
+    // 将 sceneDetail 的 vocabularies/chunks 用于后续计算
+    const vocabWords = sceneDetail.vocabularies.map((v: any) => v.word);
     const learnedVocabs = await this.prisma.expressionItem.findMany({
       where: { userId, type: 'chunk', chunkText: { in: vocabWords } },
       select: { chunkText: true },
@@ -439,7 +509,7 @@ export class LearningService {
     const learnedVocabSet = new Set(learnedVocabs.map((v) => v.chunkText));
 
     // Chunk 进度
-    const chunkIds = sceneDetail.chunks.map((c) => c.id);
+    const chunkIds = sceneDetail.chunks.map((c: any) => c.id);
     const chunkProgresses = await this.prisma.userChunkProgress.findMany({
       where: { userId, chunkId: { in: chunkIds } },
     });
@@ -544,10 +614,10 @@ export class LearningService {
 
     // 任务4: 剧本挑战（如果词汇和 chunk 掌握足够）
     if (
-      sceneDetail.scriptEpisodes.length > 0 &&
+      sceneDetail.firstEpisode &&
       vocabLearned >= sceneDetail.vocabularies.length * 0.7
     ) {
-      const ep = sceneDetail.scriptEpisodes[0];
+      const ep = sceneDetail.firstEpisode;
       tasks.push({
         id: `script-${ep.id}`,
         type: 'script',
@@ -595,7 +665,14 @@ export class LearningService {
   ) {
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
-      include: { _count: { select: { vocabularies: true, chunks: true, trainingTopics: true, scriptEpisodes: true } } },
+      include: {
+        _count: { select: { trainingTopics: true, scriptEpisodes: true } },
+        trainingTopics: {
+          select: {
+            _count: { select: { topicVocabs: true, activeChunks: true } },
+          },
+        },
+      },
     });
     if (!scene) return null;
 
@@ -605,9 +682,15 @@ export class LearningService {
     if (data.completedPractice) updateData.completedPracticeCount = { increment: 1 };
     if (data.completedScript) updateData.completedScriptCount = { increment: 1 };
 
-    // 重新计算 readiness 和 mastery
-    const totalVocab = scene._count.vocabularies || 1;
-    const totalChunks = scene._count.chunks || 1;
+    // Compute vocab/chunk totals from topics
+    let totalVocab = 0;
+    let totalChunks = 0;
+    for (const t of scene.trainingTopics) {
+      totalVocab += (t as any)._count?.topicVocabs ?? 0;
+      totalChunks += (t as any)._count?.activeChunks ?? 0;
+    }
+    totalVocab = totalVocab || 1;
+    totalChunks = totalChunks || 1;
     const totalPractices = scene._count.trainingTopics || 1;
     const totalScripts = scene._count.scriptEpisodes || 1;
 

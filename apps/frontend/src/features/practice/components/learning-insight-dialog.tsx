@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
+import { isIOS } from '@/lib/native'
 import { lookupWord, getBestPhonetic, getFirstAudio, type DictEntry } from '@/lib/dictionary-api'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { useWordsStore } from '@/stores/assets.store'
@@ -147,7 +148,7 @@ export function LearningInsightDialog({
             </div>
 
             {/* Footer - 固定在底部 */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3 pb-safe">
+            <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
               <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
                 <ChevronLeft className="size-4" /> {t('insight.prev')}
               </Button>

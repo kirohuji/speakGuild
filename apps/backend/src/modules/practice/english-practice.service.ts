@@ -8,12 +8,12 @@ export class EnglishPracticeService {
 
   private buildObjectives(topic: {
     title: string;
-    sentencePatterns?: any;
+    topicPatterns?: any;
   }) {
     const objectives: string[] = [];
-    const patterns = Array.isArray(topic.sentencePatterns) ? topic.sentencePatterns : [];
-    patterns.forEach((pattern) => {
-      if (pattern?.pattern) objectives.push(`使用句型: ${pattern.pattern}`);
+    const patterns = Array.isArray(topic.topicPatterns) ? topic.topicPatterns : [];
+    patterns.forEach((tp: any) => {
+      if (tp?.pattern?.pattern) objectives.push(`使用句型: ${tp.pattern.pattern}`);
     });
     objectives.push(`围绕话题 "${topic.title}" 展开对话`);
     return objectives;
@@ -59,10 +59,14 @@ export class EnglishPracticeService {
         scene: {
           include: {
             category: true,
-            vocabularies: { orderBy: { sortOrder: 'asc' }, take: 10 },
           },
         },
-        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+        topicVocabs: {
+          include: { vocab: true },
+          orderBy: { sortOrder: 'asc' },
+          take: 10,
+        },
         activeChunks: {
           include: {
             chunk: {
@@ -147,7 +151,7 @@ export class EnglishPracticeService {
         promptZh: topic.promptZh,
         suggestedDurationSec: topic.suggestedDurationSec,
         difficulty: topic.difficulty,
-        sentencePatterns: topic.sentencePatterns,
+        sentencePatterns: topic.topicPatterns.map((tp) => tp.pattern),
         inkScriptId: topic.inkScriptId,
       },
       inkScript: inkScript
@@ -169,10 +173,10 @@ export class EnglishPracticeService {
           defaultPosition: (character.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
         })),
       },
-      vocabularies: topic.scene.vocabularies.map((v) => ({
-        id: v.id,
-        word: v.word,
-        meaning: v.meaning,
+      vocabularies: topic.topicVocabs.map((tv) => ({
+        id: tv.vocab.id,
+        word: tv.vocab.word,
+        meaning: tv.vocab.meaning,
       })),
       activeChunks: topic.activeChunks.map((tc) => {
         const progress = progressMap.get(tc.chunkId);
@@ -195,10 +199,13 @@ export class EnglishPracticeService {
         scene: {
           include: {
             category: true,
-            vocabularies: { orderBy: { sortOrder: 'asc' } },
           },
         },
-        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+        topicVocabs: {
+          include: { vocab: true },
+          orderBy: { sortOrder: 'asc' },
+        },
         activeChunks: {
           include: {
             chunk: {
@@ -239,14 +246,14 @@ export class EnglishPracticeService {
       difficulty: item.chunk.difficulty,
       examples: item.chunk.examples,
     }));
-    const vocabSnapshot = topic.scene.vocabularies.map((item) => ({
-      id: item.id,
-      word: item.word,
-      meaning: item.meaning,
-      partOfSpeech: item.partOfSpeech,
-      difficulty: item.difficulty,
-      examples: item.examples,
-      description: item.description,
+    const vocabSnapshot = topic.topicVocabs.map((tv) => ({
+      id: tv.vocab.id,
+      word: tv.vocab.word,
+      meaning: tv.vocab.meaning,
+      partOfSpeech: tv.vocab.partOfSpeech,
+      difficulty: tv.vocab.difficulty,
+      examples: tv.vocab.examples,
+      description: tv.vocab.description,
     }));
     const objectivesSnapshot = this.buildObjectives(topic);
 
@@ -261,7 +268,7 @@ export class EnglishPracticeService {
         objectivesSnapshot,
         chunksSnapshot,
         vocabSnapshot,
-        sentencePatternsSnapshot: topic.sentencePatterns ?? null,
+        sentencePatternsSnapshot: topic.topicPatterns.map((tp) => tp.pattern) ?? null,
       },
       select: { id: true },
     });

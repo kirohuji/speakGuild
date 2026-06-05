@@ -14,13 +14,10 @@ CREATE TYPE "PaymentMethod" AS ENUM ('alipay', 'wechat');
 CREATE TYPE "MembershipStatus" AS ENUM ('active', 'expired', 'cancelled');
 
 -- CreateEnum
-CREATE TYPE "FileAssetGroup" AS ENUM ('avatar', 'library', 'tts', 'notification');
+CREATE TYPE "FileAssetGroup" AS ENUM ('avatar', 'library', 'tts', 'notification', 'mobile_bundle');
 
 -- CreateEnum
 CREATE TYPE "FileAssetStatus" AS ENUM ('active', 'deleted');
-
--- CreateEnum
-CREATE TYPE "ResourceNodeType" AS ENUM ('folder', 'video_url', 'video', 'audio', 'pdf', 'image', 'document', 'other');
 
 -- CreateEnum
 CREATE TYPE "TtsProvider" AS ENUM ('minimax', 'cartesia');
@@ -38,7 +35,7 @@ CREATE TYPE "FeedbackStatus" AS ENUM ('pending', 'resolved', 'closed');
 CREATE TYPE "ChunkMasteryStatus" AS ENUM ('not_learned', 'activated', 'can_read', 'can_output', 'mastered');
 
 -- CreateEnum
-CREATE TYPE "ExpressionType" AS ENUM ('chunk', 'error_sentence', 'upgraded', 'scene_phrase', 'custom');
+CREATE TYPE "ExpressionType" AS ENUM ('word', 'chunk', 'error_sentence', 'upgraded', 'scene_phrase', 'custom');
 
 -- CreateEnum
 CREATE TYPE "AchievementCategory" AS ENUM ('milestone', 'streak', 'challenge', 'mastery', 'hidden', 'first_time');
@@ -62,10 +59,12 @@ CREATE TABLE "user" (
     "role" "UserRole" NOT NULL DEFAULT 'user',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "hasCompletedOnboarding" BOOLEAN NOT NULL DEFAULT false,
     "learningGoals" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "outputLevel" TEXT NOT NULL DEFAULT 'L1',
     "outputLevelDetail" JSONB,
     "totalXp" INTEGER NOT NULL DEFAULT 0,
+    "points" INTEGER NOT NULL DEFAULT 0,
     "userLevel" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
@@ -117,156 +116,6 @@ CREATE TABLE "verification" (
 );
 
 -- CreateTable
-CREATE TABLE "question_bank" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "province" TEXT NOT NULL,
-    "language" TEXT NOT NULL,
-    "examType" TEXT NOT NULL,
-    "interviewForm" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'active',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "question_bank_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "question_topic" (
-    "id" TEXT NOT NULL,
-    "bankId" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "sortOrder" INTEGER NOT NULL DEFAULT 0,
-
-    CONSTRAINT "question_topic_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "question_item" (
-    "id" TEXT NOT NULL,
-    "topicId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "difficulty" INTEGER NOT NULL DEFAULT 3,
-    "suggestedDurationSec" INTEGER NOT NULL DEFAULT 120,
-    "masteryScore" INTEGER NOT NULL DEFAULT 0,
-    "keywords" TEXT[],
-    "focusWords" TEXT[],
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "question_item_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "question_content" (
-    "id" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "promptEn" TEXT NOT NULL,
-    "promptZh" TEXT NOT NULL,
-    "answerEn" TEXT NOT NULL,
-    "answerZh" TEXT NOT NULL,
-    "summary" TEXT NOT NULL,
-
-    CONSTRAINT "question_content_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "user_binding_config" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "province" TEXT NOT NULL,
-    "language" TEXT NOT NULL,
-    "examType" TEXT NOT NULL,
-    "interviewForm" TEXT NOT NULL,
-    "bankId" TEXT,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "user_binding_config_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "favorite_question" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "favorite_question_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "vocabulary_word" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "term" TEXT NOT NULL,
-    "definition" TEXT,
-    "sourceQuestionId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "vocabulary_word_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "practice_record" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "actionType" TEXT NOT NULL,
-    "payload" JSONB,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "practice_record_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "practice_progress" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "masteryScore" INTEGER NOT NULL DEFAULT 0,
-    "seenAt" TIMESTAMP(3),
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "practice_progress_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "mock_paper" (
-    "id" TEXT NOT NULL,
-    "bankId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "paperType" TEXT NOT NULL DEFAULT 'standard',
-    "suggestedMinutes" INTEGER NOT NULL DEFAULT 30,
-    "focus" TEXT[],
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mock_paper_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "mock_paper_question" (
-    "id" TEXT NOT NULL,
-    "paperId" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "sortOrder" INTEGER NOT NULL DEFAULT 0,
-
-    CONSTRAINT "mock_paper_question_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "mock_exam_record" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "paperId" TEXT NOT NULL,
-    "score" INTEGER NOT NULL,
-    "weakness" TEXT[],
-    "takenAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mock_exam_record_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "daily_activity" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -283,9 +132,33 @@ CREATE TABLE "user_preference" (
     "autoPlay" BOOLEAN NOT NULL DEFAULT false,
     "language" TEXT NOT NULL DEFAULT 'zh-CN',
     "theme" TEXT NOT NULL DEFAULT 'system',
+    "themePresetId" TEXT,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "user_preference_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "theme_preset" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "bgType" TEXT NOT NULL DEFAULT 'gradient',
+    "lightColors" JSONB,
+    "lightBackground" TEXT,
+    "lightDecorations" JSONB,
+    "darkColors" JSONB,
+    "darkBackground" TEXT,
+    "darkDecorations" JSONB,
+    "bgmUrl" TEXT,
+    "bgmVolume" DOUBLE PRECISION NOT NULL DEFAULT 0.3,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "theme_preset_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -300,6 +173,20 @@ CREATE TABLE "system_config" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "system_config_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "daily_sentence" (
+    "id" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "quote" TEXT NOT NULL,
+    "translation" TEXT NOT NULL,
+    "author" TEXT NOT NULL DEFAULT '',
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "daily_sentence_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -391,47 +278,14 @@ CREATE TABLE "file_reference" (
 );
 
 -- CreateTable
-CREATE TABLE "resource_node" (
-    "id" TEXT NOT NULL,
-    "parentId" TEXT,
-    "name" TEXT NOT NULL,
-    "type" "ResourceNodeType" NOT NULL,
-    "region" TEXT,
-    "assetId" TEXT,
-    "url" TEXT,
-    "description" TEXT,
-    "mimeType" TEXT,
-    "fileSize" INTEGER,
-    "sortOrder" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "resource_node_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "question_audio" (
-    "id" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "configHash" TEXT NOT NULL,
-    "provider" "TtsProvider" NOT NULL,
-    "model" TEXT NOT NULL,
-    "voiceId" TEXT,
-    "mimeType" TEXT NOT NULL,
-    "assetId" TEXT NOT NULL,
-    "wordTimestamps" JSONB,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "question_audio_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "notification" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "type" "NotificationType" NOT NULL,
     "sentById" TEXT NOT NULL,
+    "isSpecial" BOOLEAN NOT NULL DEFAULT false,
+    "imageUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -525,8 +379,8 @@ CREATE TABLE "user_achievement" (
 -- CreateTable
 CREATE TABLE "feedback" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
+    "userId" TEXT,
+    "type" TEXT NOT NULL DEFAULT 'other',
     "content" TEXT NOT NULL,
     "contact" TEXT,
     "status" "FeedbackStatus" NOT NULL DEFAULT 'pending',
@@ -557,6 +411,7 @@ CREATE TABLE "scene" (
     "description" TEXT,
     "requiredOutputLevel" TEXT NOT NULL DEFAULT 'L1',
     "requiredUserLevel" INTEGER NOT NULL DEFAULT 1,
+    "isFree" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "scene_pkey" PRIMARY KEY ("id")
@@ -576,25 +431,56 @@ CREATE TABLE "chunk" (
     "id" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "meaning" TEXT NOT NULL,
+    "description" TEXT,
     "category" TEXT NOT NULL,
     "difficulty" TEXT NOT NULL DEFAULT 'L2',
-    "example" TEXT,
-    "sceneId" TEXT,
-    "applicableSceneIds" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "chunk_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "scene_vocabulary" (
+CREATE TABLE "vocabulary" (
     "id" TEXT NOT NULL,
-    "sceneId" TEXT NOT NULL,
     "word" TEXT NOT NULL,
     "meaning" TEXT NOT NULL,
+    "partOfSpeech" TEXT,
+    "phoneticUs" TEXT,
+    "phoneticUk" TEXT,
+    "audioUsUrl" TEXT,
+    "audioUkUrl" TEXT,
+    "definitionEn" TEXT,
+    "synonyms" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "examples" JSONB,
+    "description" TEXT,
+    "difficulty" TEXT NOT NULL DEFAULT 'L1',
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
 
-    CONSTRAINT "scene_vocabulary_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "vocabulary_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "training_topic_vocab" (
+    "id" TEXT NOT NULL,
+    "topicId" TEXT NOT NULL,
+    "vocabId" TEXT NOT NULL,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "training_topic_vocab_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "chunk_example" (
+    "id" TEXT NOT NULL,
+    "chunkId" TEXT NOT NULL,
+    "en" TEXT NOT NULL,
+    "zh" TEXT NOT NULL,
+    "note" TEXT,
+    "level" TEXT NOT NULL DEFAULT 'basic',
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "chunk_example_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -618,15 +504,87 @@ CREATE TABLE "training_topic" (
     "id" TEXT NOT NULL,
     "sceneId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "description" TEXT,
+    "knowledgePoints" TEXT,
+    "teachingMarkdown" TEXT,
     "promptEn" TEXT NOT NULL,
     "promptZh" TEXT NOT NULL,
     "suggestedDurationSec" INTEGER NOT NULL DEFAULT 60,
     "difficulty" TEXT NOT NULL DEFAULT 'L2',
-    "sentenceSkeleton" TEXT,
+    "sentence_patterns" JSONB,
+    "inkScriptId" TEXT,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "training_topic_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "sentence_pattern" (
+    "id" TEXT NOT NULL,
+    "pattern" TEXT NOT NULL,
+    "meaning" TEXT,
+    "slots" JSONB,
+    "example" TEXT,
+    "difficulty" TEXT NOT NULL DEFAULT 'L1',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "sentence_pattern_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "training_topic_sentence_pattern" (
+    "id" TEXT NOT NULL,
+    "topicId" TEXT NOT NULL,
+    "patternId" TEXT NOT NULL,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "training_topic_sentence_pattern_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "practice_session" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "topicId" TEXT NOT NULL,
+    "sceneId" TEXT NOT NULL,
+    "inkScriptId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "topicSnapshot" JSONB NOT NULL,
+    "sceneSnapshot" JSONB NOT NULL,
+    "objectivesSnapshot" JSONB NOT NULL,
+    "chunksSnapshot" JSONB NOT NULL,
+    "vocabSnapshot" JSONB NOT NULL,
+    "sentencePatternsSnapshot" JSONB,
+    "turnCount" INTEGER NOT NULL DEFAULT 0,
+    "analysisResult" JSONB,
+    "analysisRaw" TEXT,
+    "analysisError" TEXT,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "analyzedAt" TIMESTAMP(3),
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "practice_session_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "practice_turn" (
+    "id" TEXT NOT NULL,
+    "sessionId" TEXT NOT NULL,
+    "round" INTEGER NOT NULL,
+    "npcText" TEXT NOT NULL,
+    "userText" TEXT NOT NULL,
+    "userAudioUrl" TEXT,
+    "inputNodeId" TEXT,
+    "tags" JSONB,
+    "judgement" JSONB,
+    "objectivesCompleted" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "chunksUsed" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "practice_turn_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -646,6 +604,7 @@ CREATE TABLE "script_episode" (
     "chapterTitle" TEXT NOT NULL,
     "episodeOrder" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
+    "description" TEXT,
     "sceneId" TEXT NOT NULL,
     "requiredOutputLevel" TEXT NOT NULL DEFAULT 'L2',
     "requiredUserLevel" INTEGER NOT NULL DEFAULT 1,
@@ -688,6 +647,16 @@ CREATE TABLE "script_episode_chunk" (
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "script_episode_chunk_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "script_episode_sentence_pattern" (
+    "id" TEXT NOT NULL,
+    "episodeId" TEXT NOT NULL,
+    "patternId" TEXT NOT NULL,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "script_episode_sentence_pattern_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -736,10 +705,14 @@ CREATE TABLE "expression_item" (
     "corrected" TEXT,
     "chunkText" TEXT,
     "sceneName" TEXT,
-    "masteryStatus" TEXT NOT NULL DEFAULT 'activated',
+    "masteryStatus" TEXT NOT NULL DEFAULT 'learning',
     "reviewCount" INTEGER NOT NULL DEFAULT 0,
+    "easeFactor" DOUBLE PRECISION NOT NULL DEFAULT 2.5,
     "lastReviewedAt" TIMESTAMP(3),
     "nextReviewAt" TIMESTAMP(3),
+    "sourceType" TEXT,
+    "sourceId" TEXT,
+    "sourceSnapshot" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "expression_item_pkey" PRIMARY KEY ("id")
@@ -765,20 +738,6 @@ CREATE TABLE "user_scene_progress" (
 );
 
 -- CreateTable
-CREATE TABLE "onboarding_status" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "goalsSelected" BOOLEAN NOT NULL DEFAULT false,
-    "abilitySelected" BOOLEAN NOT NULL DEFAULT false,
-    "diagnosticDone" BOOLEAN NOT NULL DEFAULT false,
-    "tutorialDone" BOOLEAN NOT NULL DEFAULT false,
-    "diagnosticResult" JSONB,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "onboarding_status_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "game_character" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -789,6 +748,7 @@ CREATE TABLE "game_character" (
     "spriteBaseUrl" TEXT,
     "expressions" JSONB,
     "defaultPosition" TEXT,
+    "ttsVoice" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "game_character_pkey" PRIMARY KEY ("id")
@@ -868,11 +828,12 @@ CREATE TABLE "ink_script" (
     "key" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "scriptType" TEXT NOT NULL DEFAULT 'episode',
-    "inkJson" JSONB NOT NULL,
+    "inkJson" JSONB,
     "inkSource" TEXT,
     "episodeId" TEXT,
     "locationId" TEXT,
     "characterId" TEXT,
+    "topicId" TEXT,
     "declaredVariables" JSONB,
     "version" INTEGER NOT NULL DEFAULT 1,
     "changelog" TEXT,
@@ -951,6 +912,74 @@ CREATE TABLE "user_achievement_v2" (
     CONSTRAINT "user_achievement_v2_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "user_check_in" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "date" DATE NOT NULL,
+    "points" INTEGER NOT NULL DEFAULT 10,
+    "streak" INTEGER NOT NULL DEFAULT 1,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_check_in_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "point_transaction" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "balance" INTEGER NOT NULL,
+    "description" TEXT,
+    "referenceId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "point_transaction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ai_usage_daily" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "date" DATE NOT NULL,
+    "dialogue" INTEGER NOT NULL DEFAULT 0,
+    "summary" INTEGER NOT NULL DEFAULT 0,
+    "tokens" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "ai_usage_daily_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "mobile_bundle" (
+    "id" TEXT NOT NULL,
+    "version" TEXT NOT NULL,
+    "platform" TEXT NOT NULL,
+    "channel" TEXT NOT NULL DEFAULT 'production',
+    "assetId" TEXT NOT NULL,
+    "checksum" TEXT NOT NULL,
+    "minNativeVersion" TEXT,
+    "rolloutPercent" INTEGER NOT NULL DEFAULT 100,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "isMandatory" BOOLEAN NOT NULL DEFAULT false,
+    "releaseNotes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "mobile_bundle_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "word_enrichment" (
+    "word" TEXT NOT NULL,
+    "data" JSONB NOT NULL,
+    "source" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "word_enrichment_pkey" PRIMARY KEY ("word")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "user_username_key" ON "user"("username");
 
@@ -973,36 +1002,6 @@ CREATE INDEX "account_userId_idx" ON "account"("userId");
 CREATE INDEX "verification_identifier_idx" ON "verification"("identifier");
 
 -- CreateIndex
-CREATE INDEX "question_item_topicId_difficulty_idx" ON "question_item"("topicId", "difficulty");
-
--- CreateIndex
-CREATE UNIQUE INDEX "question_content_questionId_key" ON "question_content"("questionId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "user_binding_config_userId_key" ON "user_binding_config"("userId");
-
--- CreateIndex
-CREATE INDEX "favorite_question_userId_createdAt_idx" ON "favorite_question"("userId", "createdAt" DESC);
-
--- CreateIndex
-CREATE UNIQUE INDEX "favorite_question_userId_questionId_key" ON "favorite_question"("userId", "questionId");
-
--- CreateIndex
-CREATE INDEX "vocabulary_word_userId_createdAt_idx" ON "vocabulary_word"("userId", "createdAt" DESC);
-
--- CreateIndex
-CREATE UNIQUE INDEX "vocabulary_word_userId_term_key" ON "vocabulary_word"("userId", "term");
-
--- CreateIndex
-CREATE INDEX "practice_record_userId_createdAt_idx" ON "practice_record"("userId", "createdAt" DESC);
-
--- CreateIndex
-CREATE UNIQUE INDEX "practice_progress_userId_questionId_key" ON "practice_progress"("userId", "questionId");
-
--- CreateIndex
-CREATE INDEX "mock_exam_record_userId_takenAt_idx" ON "mock_exam_record"("userId", "takenAt" DESC);
-
--- CreateIndex
 CREATE UNIQUE INDEX "daily_activity_userId_date_key" ON "daily_activity"("userId", "date");
 
 -- CreateIndex
@@ -1010,6 +1009,12 @@ CREATE UNIQUE INDEX "user_preference_userId_key" ON "user_preference"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "system_config_key_key" ON "system_config"("key");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "daily_sentence_date_key" ON "daily_sentence"("date");
+
+-- CreateIndex
+CREATE INDEX "daily_sentence_date_sortOrder_idx" ON "daily_sentence"("date", "sortOrder");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "order_orderNo_key" ON "order"("orderNo");
@@ -1046,24 +1051,6 @@ CREATE INDEX "file_reference_bizType_bizId_userId_idx" ON "file_reference"("bizT
 
 -- CreateIndex
 CREATE UNIQUE INDEX "file_reference_assetId_bizType_bizId_userId_key" ON "file_reference"("assetId", "bizType", "bizId", "userId");
-
--- CreateIndex
-CREATE INDEX "resource_node_parentId_sortOrder_idx" ON "resource_node"("parentId", "sortOrder");
-
--- CreateIndex
-CREATE INDEX "resource_node_region_idx" ON "resource_node"("region");
-
--- CreateIndex
-CREATE INDEX "resource_node_type_idx" ON "resource_node"("type");
-
--- CreateIndex
-CREATE INDEX "question_audio_questionId_idx" ON "question_audio"("questionId");
-
--- CreateIndex
-CREATE INDEX "question_audio_assetId_idx" ON "question_audio"("assetId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "question_audio_questionId_configHash_key" ON "question_audio"("questionId", "configHash");
 
 -- CreateIndex
 CREATE INDEX "notification_type_createdAt_idx" ON "notification"("type", "createdAt" DESC);
@@ -1111,19 +1098,43 @@ CREATE INDEX "feedback_status_idx" ON "feedback"("status");
 CREATE UNIQUE INDEX "scene_prerequisite_sceneId_prerequisiteId_key" ON "scene_prerequisite"("sceneId", "prerequisiteId");
 
 -- CreateIndex
-CREATE INDEX "chunk_sceneId_idx" ON "chunk"("sceneId");
-
--- CreateIndex
 CREATE INDEX "chunk_difficulty_idx" ON "chunk"("difficulty");
 
 -- CreateIndex
-CREATE INDEX "scene_vocabulary_sceneId_idx" ON "scene_vocabulary"("sceneId");
+CREATE UNIQUE INDEX "training_topic_vocab_topicId_vocabId_key" ON "training_topic_vocab"("topicId", "vocabId");
+
+-- CreateIndex
+CREATE INDEX "chunk_example_chunkId_sortOrder_idx" ON "chunk_example"("chunkId", "sortOrder");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_chunk_progress_userId_chunkId_key" ON "user_chunk_progress"("userId", "chunkId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "training_topic_inkScriptId_key" ON "training_topic"("inkScriptId");
+
+-- CreateIndex
 CREATE INDEX "training_topic_sceneId_difficulty_idx" ON "training_topic"("sceneId", "difficulty");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sentence_pattern_pattern_key" ON "sentence_pattern"("pattern");
+
+-- CreateIndex
+CREATE INDEX "training_topic_sentence_pattern_topicId_sortOrder_idx" ON "training_topic_sentence_pattern"("topicId", "sortOrder");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "training_topic_sentence_pattern_topicId_patternId_key" ON "training_topic_sentence_pattern"("topicId", "patternId");
+
+-- CreateIndex
+CREATE INDEX "practice_session_userId_startedAt_idx" ON "practice_session"("userId", "startedAt" DESC);
+
+-- CreateIndex
+CREATE INDEX "practice_session_topicId_startedAt_idx" ON "practice_session"("topicId", "startedAt" DESC);
+
+-- CreateIndex
+CREATE INDEX "practice_session_status_idx" ON "practice_session"("status");
+
+-- CreateIndex
+CREATE INDEX "practice_turn_sessionId_round_idx" ON "practice_turn"("sessionId", "round");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "training_topic_chunk_topicId_chunkId_key" ON "training_topic_chunk"("topicId", "chunkId");
@@ -1138,6 +1149,9 @@ CREATE UNIQUE INDEX "script_episode_vocab_episodeId_vocabId_key" ON "script_epis
 CREATE UNIQUE INDEX "script_episode_chunk_episodeId_chunkId_key" ON "script_episode_chunk"("episodeId", "chunkId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "script_episode_sentence_pattern_episodeId_patternId_key" ON "script_episode_sentence_pattern"("episodeId", "patternId");
+
+-- CreateIndex
 CREATE INDEX "script_dialogue_episodeId_userId_round_idx" ON "script_dialogue"("episodeId", "userId", "round");
 
 -- CreateIndex
@@ -1150,13 +1164,10 @@ CREATE UNIQUE INDEX "script_record_userId_episodeId_key" ON "script_record"("use
 CREATE INDEX "expression_item_userId_type_idx" ON "expression_item"("userId", "type");
 
 -- CreateIndex
-CREATE INDEX "expression_item_userId_nextReviewAt_idx" ON "expression_item"("userId", "nextReviewAt");
+CREATE INDEX "expression_item_userId_masteryStatus_idx" ON "expression_item"("userId", "masteryStatus");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_scene_progress_userId_sceneId_key" ON "user_scene_progress"("userId", "sceneId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "onboarding_status_userId_key" ON "onboarding_status"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "game_location_exit_fromId_toId_key" ON "game_location_exit"("fromId", "toId");
@@ -1194,6 +1205,30 @@ CREATE INDEX "user_achievement_v2_userId_status_idx" ON "user_achievement_v2"("u
 -- CreateIndex
 CREATE UNIQUE INDEX "user_achievement_v2_userId_achievementId_key" ON "user_achievement_v2"("userId", "achievementId");
 
+-- CreateIndex
+CREATE INDEX "user_check_in_userId_idx" ON "user_check_in"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_check_in_userId_date_key" ON "user_check_in"("userId", "date");
+
+-- CreateIndex
+CREATE INDEX "point_transaction_userId_idx" ON "point_transaction"("userId");
+
+-- CreateIndex
+CREATE INDEX "ai_usage_daily_userId_idx" ON "ai_usage_daily"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ai_usage_daily_userId_date_key" ON "ai_usage_daily"("userId", "date");
+
+-- CreateIndex
+CREATE INDEX "mobile_bundle_platform_channel_enabled_idx" ON "mobile_bundle"("platform", "channel", "enabled");
+
+-- CreateIndex
+CREATE INDEX "mobile_bundle_assetId_idx" ON "mobile_bundle"("assetId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "mobile_bundle_version_platform_channel_key" ON "mobile_bundle"("version", "platform", "channel");
+
 -- AddForeignKey
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -1201,64 +1236,13 @@ ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "question_topic" ADD CONSTRAINT "question_topic_bankId_fkey" FOREIGN KEY ("bankId") REFERENCES "question_bank"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "question_item" ADD CONSTRAINT "question_item_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "question_topic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "question_content" ADD CONSTRAINT "question_content_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "question_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_binding_config" ADD CONSTRAINT "user_binding_config_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_binding_config" ADD CONSTRAINT "user_binding_config_bankId_fkey" FOREIGN KEY ("bankId") REFERENCES "question_bank"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "favorite_question" ADD CONSTRAINT "favorite_question_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "favorite_question" ADD CONSTRAINT "favorite_question_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "question_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "vocabulary_word" ADD CONSTRAINT "vocabulary_word_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "vocabulary_word" ADD CONSTRAINT "vocabulary_word_sourceQuestionId_fkey" FOREIGN KEY ("sourceQuestionId") REFERENCES "question_item"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "practice_record" ADD CONSTRAINT "practice_record_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "practice_record" ADD CONSTRAINT "practice_record_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "question_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "practice_progress" ADD CONSTRAINT "practice_progress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "practice_progress" ADD CONSTRAINT "practice_progress_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "question_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "mock_paper" ADD CONSTRAINT "mock_paper_bankId_fkey" FOREIGN KEY ("bankId") REFERENCES "question_bank"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "mock_paper_question" ADD CONSTRAINT "mock_paper_question_paperId_fkey" FOREIGN KEY ("paperId") REFERENCES "mock_paper"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "mock_paper_question" ADD CONSTRAINT "mock_paper_question_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "question_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "mock_exam_record" ADD CONSTRAINT "mock_exam_record_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "mock_exam_record" ADD CONSTRAINT "mock_exam_record_paperId_fkey" FOREIGN KEY ("paperId") REFERENCES "mock_paper"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "daily_activity" ADD CONSTRAINT "daily_activity_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_preference" ADD CONSTRAINT "user_preference_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_preference" ADD CONSTRAINT "user_preference_themePresetId_fkey" FOREIGN KEY ("themePresetId") REFERENCES "theme_preset"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "order" ADD CONSTRAINT "order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1283,18 +1267,6 @@ ALTER TABLE "file_reference" ADD CONSTRAINT "file_reference_assetId_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "file_reference" ADD CONSTRAINT "file_reference_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "resource_node" ADD CONSTRAINT "resource_node_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "resource_node"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "resource_node" ADD CONSTRAINT "resource_node_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "file_asset"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "question_audio" ADD CONSTRAINT "question_audio_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "question_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "question_audio" ADD CONSTRAINT "question_audio_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "file_asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "notification" ADD CONSTRAINT "notification_sentById_fkey" FOREIGN KEY ("sentById") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1327,7 +1299,7 @@ ALTER TABLE "user_achievement" ADD CONSTRAINT "user_achievement_userId_fkey" FOR
 ALTER TABLE "user_achievement" ADD CONSTRAINT "user_achievement_achievementId_fkey" FOREIGN KEY ("achievementId") REFERENCES "achievement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "feedback" ADD CONSTRAINT "feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "feedback" ADD CONSTRAINT "feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "scene" ADD CONSTRAINT "scene_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "scene_category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1339,10 +1311,13 @@ ALTER TABLE "scene_prerequisite" ADD CONSTRAINT "scene_prerequisite_sceneId_fkey
 ALTER TABLE "scene_prerequisite" ADD CONSTRAINT "scene_prerequisite_prerequisiteId_fkey" FOREIGN KEY ("prerequisiteId") REFERENCES "scene"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chunk" ADD CONSTRAINT "chunk_sceneId_fkey" FOREIGN KEY ("sceneId") REFERENCES "scene"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "training_topic_vocab" ADD CONSTRAINT "training_topic_vocab_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "training_topic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "scene_vocabulary" ADD CONSTRAINT "scene_vocabulary_sceneId_fkey" FOREIGN KEY ("sceneId") REFERENCES "scene"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "training_topic_vocab" ADD CONSTRAINT "training_topic_vocab_vocabId_fkey" FOREIGN KEY ("vocabId") REFERENCES "vocabulary"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "chunk_example" ADD CONSTRAINT "chunk_example_chunkId_fkey" FOREIGN KEY ("chunkId") REFERENCES "chunk"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_chunk_progress" ADD CONSTRAINT "user_chunk_progress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1352,6 +1327,24 @@ ALTER TABLE "user_chunk_progress" ADD CONSTRAINT "user_chunk_progress_chunkId_fk
 
 -- AddForeignKey
 ALTER TABLE "training_topic" ADD CONSTRAINT "training_topic_sceneId_fkey" FOREIGN KEY ("sceneId") REFERENCES "scene"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "training_topic" ADD CONSTRAINT "training_topic_inkScriptId_fkey" FOREIGN KEY ("inkScriptId") REFERENCES "ink_script"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "training_topic_sentence_pattern" ADD CONSTRAINT "training_topic_sentence_pattern_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "training_topic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "training_topic_sentence_pattern" ADD CONSTRAINT "training_topic_sentence_pattern_patternId_fkey" FOREIGN KEY ("patternId") REFERENCES "sentence_pattern"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practice_session" ADD CONSTRAINT "practice_session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practice_session" ADD CONSTRAINT "practice_session_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "training_topic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practice_turn" ADD CONSTRAINT "practice_turn_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "practice_session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "training_topic_chunk" ADD CONSTRAINT "training_topic_chunk_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "training_topic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1366,13 +1359,19 @@ ALTER TABLE "script_episode" ADD CONSTRAINT "script_episode_sceneId_fkey" FOREIG
 ALTER TABLE "script_episode_vocab" ADD CONSTRAINT "script_episode_vocab_episodeId_fkey" FOREIGN KEY ("episodeId") REFERENCES "script_episode"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "script_episode_vocab" ADD CONSTRAINT "script_episode_vocab_vocabId_fkey" FOREIGN KEY ("vocabId") REFERENCES "scene_vocabulary"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "script_episode_vocab" ADD CONSTRAINT "script_episode_vocab_vocabId_fkey" FOREIGN KEY ("vocabId") REFERENCES "vocabulary"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "script_episode_chunk" ADD CONSTRAINT "script_episode_chunk_episodeId_fkey" FOREIGN KEY ("episodeId") REFERENCES "script_episode"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "script_episode_chunk" ADD CONSTRAINT "script_episode_chunk_chunkId_fkey" FOREIGN KEY ("chunkId") REFERENCES "chunk"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "script_episode_sentence_pattern" ADD CONSTRAINT "script_episode_sentence_pattern_episodeId_fkey" FOREIGN KEY ("episodeId") REFERENCES "script_episode"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "script_episode_sentence_pattern" ADD CONSTRAINT "script_episode_sentence_pattern_patternId_fkey" FOREIGN KEY ("patternId") REFERENCES "sentence_pattern"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "script_dialogue" ADD CONSTRAINT "script_dialogue_episodeId_fkey" FOREIGN KEY ("episodeId") REFERENCES "script_episode"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1394,9 +1393,6 @@ ALTER TABLE "user_scene_progress" ADD CONSTRAINT "user_scene_progress_userId_fke
 
 -- AddForeignKey
 ALTER TABLE "user_scene_progress" ADD CONSTRAINT "user_scene_progress_sceneId_fkey" FOREIGN KEY ("sceneId") REFERENCES "scene"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "onboarding_status" ADD CONSTRAINT "onboarding_status_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "game_location" ADD CONSTRAINT "game_location_mapId_fkey" FOREIGN KEY ("mapId") REFERENCES "game_map"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1433,3 +1429,15 @@ ALTER TABLE "user_achievement_v2" ADD CONSTRAINT "user_achievement_v2_userId_fke
 
 -- AddForeignKey
 ALTER TABLE "user_achievement_v2" ADD CONSTRAINT "user_achievement_v2_achievementId_fkey" FOREIGN KEY ("achievementId") REFERENCES "achievement_def"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_check_in" ADD CONSTRAINT "user_check_in_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "point_transaction" ADD CONSTRAINT "point_transaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ai_usage_daily" ADD CONSTRAINT "ai_usage_daily_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "mobile_bundle" ADD CONSTRAINT "mobile_bundle_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "file_asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

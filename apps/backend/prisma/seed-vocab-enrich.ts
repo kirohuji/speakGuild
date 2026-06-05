@@ -78,7 +78,7 @@ export async function enrichVocabulary(
   const log = onLog ?? console.log
   log('  📖 Enriching vocabulary from dictionaryapi.dev...')
 
-  const words = await prisma.sceneVocabulary.findMany({
+  const words = await prisma.vocabulary.findMany({
     where: {
       OR: [
         { phoneticUs: null },
@@ -111,7 +111,7 @@ export async function enrichVocabulary(
       if (!w.audioUkUrl && uk.audio) updates.audioUkUrl = uk.audio
 
       if (Object.keys(updates).length > 0) {
-        await prisma.sceneVocabulary.update({
+        await prisma.vocabulary.update({
           where: { id: w.id },
           data: updates,
         })

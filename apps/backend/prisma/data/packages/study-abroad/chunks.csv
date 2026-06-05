@@ -1,4 +1,4 @@
-scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+scene_title,category,text,meaning,difficulty,description,examples_json
 宿舍入住,宿舍入住,I'm here to check in.,我是来办理入住的。,L2,入住登记标准用语。,"[{""en"":""Hi, I'm here to check in. My booking is under Li."",""zh"":""你好，我来办理入住，预订姓名是李。"",""level"":""basic""}]",
 宿舍入住,宿舍入住,My booking is under the name...,我的预订名字是...,L2,说明预订人姓名，前台核对预订信息时使用。,
 宿舍入住,宿舍入住,Here is my student ID.,这是我的学生证。,L2,出示学生证作为身份证明。可以加上宿舍入住确认函一起。,

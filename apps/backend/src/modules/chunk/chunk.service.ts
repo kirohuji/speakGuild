@@ -7,10 +7,25 @@ export class ChunkService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getChunksByScene(sceneId: string) {
-    return this.prisma.chunk.findMany({
+    // Chunks are now linked via TrainingTopic -> TrainingTopicChunk
+    const topics = await this.prisma.trainingTopic.findMany({
       where: { sceneId },
-      orderBy: { createdAt: 'asc' },
+      select: {
+        activeChunks: {
+          include: { chunk: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
     });
+    const chunkMap = new Map<string, any>();
+    for (const topic of topics) {
+      for (const ac of topic.activeChunks) {
+        if (!chunkMap.has(ac.chunk.id)) {
+          chunkMap.set(ac.chunk.id, ac.chunk);
+        }
+      }
+    }
+    return [...chunkMap.values()];
   }
 
   async getMyChunks(userId: string) {

@@ -2,7 +2,7 @@
  * 🏗️ 初始化包 — 系统基础设施数据
  *
  * 从 data/init/ 读取 CSV，创建所有跨场景共享的基础数据。
- * 包括：场景分类、NPC、地图、地点、成就、通用句块、Ink 脚本。
+ * 包括：场景分类、通用句块（独立 Chunk 表）、NPC、地图、地点、成就、Ink 脚本。
  */
 
 import { PrismaClient, AchievementCategory, AchievementRarity } from '@prisma/client'
@@ -15,7 +15,7 @@ const INK_DIR = path.resolve(__dirname, 'data', INIT_DIR, 'ink-scripts')
 
 // ── CSV 类型 ──
 type CsvSceneCategory = { name: string; icon: string; sort_order: string }
-type CsvChunk = { scene_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string; applicable_scenes_json: string }
+type CsvChunk = { scene_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
 type CsvChar = { name: string; display_name: string; role: string; personality: string; default_position: string; avatar_url: string; sprite_base_url: string }
 type CsvMap = { name: string; display_name: string; required_output_level: string; is_preview: string; sort_order: string }
 type CsvLocation = { map_name: string; name: string; display_name: string; description: string; pos_x: string; pos_y: string; location_type: string; is_preview: string; required_output_level: string; background_url: string }
@@ -49,8 +49,7 @@ export async function seedInit(prisma: PrismaClient) {
         category: row.category,
         difficulty: row.difficulty || 'L2',
         description: row.description || null,
-        sceneId: null,
-        applicableSceneIds: [],
+
         examples: examples?.length
           ? { create: examples.map((ex, i) => ({ en: ex.en, zh: ex.zh, note: ex.note || null, level: ex.level || 'basic', sortOrder: i })) }
           : undefined,

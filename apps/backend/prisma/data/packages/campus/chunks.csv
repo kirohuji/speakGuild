@@ -1,4 +1,4 @@
-scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+scene_title,category,text,meaning,difficulty,description,examples_json
 图书馆借书,图书馆借书,How do I borrow a book?,怎么借书？,L1,,,
 图书馆借书,图书馆借书,How long can I keep this book?,这本书能借多久？,L1,,,
 图书馆借书,图书馆借书,Can I renew this book?,能续借这本书吗？,L1,,,

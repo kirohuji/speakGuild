@@ -21,7 +21,7 @@ import { ChunkMultiSelect, DynamicStringList } from '../components/content-autho
 import {
     listScriptEpisodes, getScriptEpisode, createScriptEpisode, updateScriptEpisode, deleteScriptEpisode,
     listSceneCategories, listScenes, listAllChunks, listVocabularies,
-    type ScriptEpisode, type SceneCategory, type Scene, type Chunk, type SceneVocabulary,
+    type ScriptEpisode, type SceneCategory, type Scene, type Chunk, type Vocabulary,
 } from '../api-content-admin'
 
 export function AdminScriptPage() {
@@ -467,7 +467,6 @@ function EpisodeEditDialog({
                         <ChunkMultiSelect
                             chunks={chunks}
                             value={form.chunkIds ?? []}
-                            sceneId={form.sceneId}
                             onChange={(chunkIds) => setForm({ ...form, chunkIds })}
                         />
 

@@ -91,7 +91,7 @@ export class ContentAdminController {
       orderBy: { createdAt: 'asc' },
       include: {
         category: { select: { id: true, name: true } },
-        _count: { select: { vocabularies: true, chunks: true, trainingTopics: true } },
+        _count: { select: { trainingTopics: true } },
       },
     });
   }
@@ -103,12 +103,11 @@ export class ContentAdminController {
       where: { id },
       include: {
         category: true,
-        vocabularies: { orderBy: { sortOrder: 'asc' } },
-        chunks: { orderBy: { createdAt: 'asc' } },
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
-            sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+            topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+            topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
             _count: { select: { activeChunks: true } },
           },
         },
@@ -139,33 +138,29 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('vocabularies')
-  async listVocabularies(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+  async listVocabularies(@Req() req: Request) {
     await this.requireAdmin(req);
-    const where: any = {};
-    if (sceneId) where.sceneId = sceneId;
-    return this.prisma.sceneVocabulary.findMany({
-      where,
+    return this.prisma.vocabulary.findMany({
       orderBy: { sortOrder: 'asc' },
-      include: { scene: { select: { id: true, title: true } } },
     });
   }
 
   @Post('vocabularies')
   async createVocabulary(@Req() req: Request, @Body() dto: CreateVocabularyDto) {
     await this.requireAdmin(req);
-    return this.prisma.sceneVocabulary.create({ data: dto });
+    return this.prisma.vocabulary.create({ data: dto });
   }
 
   @Patch('vocabularies/:id')
   async updateVocabulary(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateVocabularyDto) {
     await this.requireAdmin(req);
-    return this.prisma.sceneVocabulary.update({ where: { id }, data: dto });
+    return this.prisma.vocabulary.update({ where: { id }, data: dto });
   }
 
   @Delete('vocabularies/:id')
   async deleteVocabulary(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.prisma.sceneVocabulary.delete({ where: { id } });
+    return this.prisma.vocabulary.delete({ where: { id } });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -182,7 +177,8 @@ export class ContentAdminController {
       orderBy: { sortOrder: 'asc' },
       include: {
         scene: { select: { id: true, title: true } },
-        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+        topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
         activeChunks: {
           include: { chunk: { select: { id: true, text: true } } },
           orderBy: { sortOrder: 'asc' },
@@ -206,22 +202,32 @@ export class ContentAdminController {
       });
     }
     if (sentencePatterns?.length) {
-      await this.prisma.trainingTopicSentencePattern.createMany({
-        data: sentencePatterns.map((sp: any, i: number) => ({
-          topicId: topic.id,
-          pattern: sp.pattern,
-          meaning: sp.meaning || null,
-          slots: sp.slots || undefined,
-          example: sp.example || null,
-          difficulty: sp.difficulty || 'L1',
-          sortOrder: i,
-        })),
-      });
+      // Upsert each pattern into SentencePattern, then create join records
+      for (const sp of sentencePatterns) {
+        const patternRecord = await this.prisma.sentencePattern.upsert({
+          where: { pattern: sp.pattern },
+          create: {
+            pattern: sp.pattern,
+            meaning: sp.meaning || null,
+            slots: sp.slots || undefined,
+            example: sp.example || null,
+            difficulty: sp.difficulty || 'L1',
+          },
+          update: {},
+        });
+        await this.prisma.trainingTopicSentencePattern.create({
+          data: {
+            topicId: topic.id,
+            patternId: patternRecord.id,
+            sortOrder: sp.sortOrder ?? 0,
+          },
+        });
+      }
     }
     return this.prisma.trainingTopic.findUnique({
       where: { id: topic.id },
       include: {
-        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
         activeChunks: { include: { chunk: true } },
       },
     });
@@ -247,23 +253,32 @@ export class ContentAdminController {
     if (sentencePatterns) {
       await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
       if (sentencePatterns.length > 0) {
-        await this.prisma.trainingTopicSentencePattern.createMany({
-          data: sentencePatterns.map((sp: any, i: number) => ({
-            topicId: id,
-            pattern: sp.pattern,
-            meaning: sp.meaning || null,
-            slots: sp.slots || undefined,
-            example: sp.example || null,
-            difficulty: sp.difficulty || 'L1',
-            sortOrder: i,
-          })),
-        });
+        for (const sp of sentencePatterns) {
+          const patternRecord = await this.prisma.sentencePattern.upsert({
+            where: { pattern: sp.pattern },
+            create: {
+              pattern: sp.pattern,
+              meaning: sp.meaning || null,
+              slots: sp.slots || undefined,
+              example: sp.example || null,
+              difficulty: sp.difficulty || 'L1',
+            },
+            update: {},
+          });
+          await this.prisma.trainingTopicSentencePattern.create({
+            data: {
+              topicId: id,
+              patternId: patternRecord.id,
+              sortOrder: sp.sortOrder ?? 0,
+            },
+          });
+        }
       }
     }
     return this.prisma.trainingTopic.findUnique({
       where: { id },
       include: {
-        sentencePatterns: { orderBy: { sortOrder: 'asc' } },
+        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
         activeChunks: { include: { chunk: true } },
       },
     });
@@ -285,7 +300,6 @@ export class ContentAdminController {
     return this.prisma.chunk.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        scene: { select: { id: true, title: true } },
         examples: { orderBy: { sortOrder: 'asc' } },
         _count: { select: { userProgresses: true } },
       },
@@ -302,8 +316,6 @@ export class ContentAdminController {
         description: dto.description ?? null,
         category: dto.category ?? '',
         difficulty: dto.difficulty ?? 'L2',
-        sceneId: dto.sceneId ?? null,
-        applicableSceneIds: dto.applicableSceneIds ?? [],
         examples: dto.examples?.length
           ? {
               create: dto.examples.map((example, i) => ({
@@ -311,14 +323,12 @@ export class ContentAdminController {
                 zh: example.zh,
                 note: example.note ?? null,
                 level: example.level ?? 'basic',
-                sceneId: example.sceneId ?? null,
                 sortOrder: i,
               })),
             }
           : undefined,
       },
       include: {
-        scene: { select: { id: true, title: true } },
         examples: { orderBy: { sortOrder: 'asc' } },
         _count: { select: { userProgresses: true } },
       },
@@ -334,8 +344,7 @@ export class ContentAdminController {
     if (dto.description !== undefined) data.description = dto.description;
     if (dto.category !== undefined) data.category = dto.category;
     if (dto.difficulty !== undefined) data.difficulty = dto.difficulty;
-    if (dto.sceneId !== undefined) data.sceneId = dto.sceneId;
-    if (dto.applicableSceneIds !== undefined) data.applicableSceneIds = dto.applicableSceneIds;
+
     return this.prisma.$transaction(async (tx) => {
       const chunk = await tx.chunk.update({ where: { id }, data });
       if (dto.examples !== undefined) {
@@ -348,7 +357,6 @@ export class ContentAdminController {
               zh: example.zh,
               note: example.note ?? null,
               level: example.level ?? 'basic',
-              sceneId: example.sceneId ?? null,
               sortOrder: i,
             })),
           });
@@ -357,7 +365,6 @@ export class ContentAdminController {
       return tx.chunk.findUnique({
         where: { id: chunk.id },
         include: {
-          scene: { select: { id: true, title: true } },
           examples: { orderBy: { sortOrder: 'asc' } },
           _count: { select: { userProgresses: true } },
         },

@@ -180,12 +180,10 @@ export function ChunkMultiSelect({
   chunks,
   value,
   onChange,
-  sceneId,
 }: {
   chunks: Chunk[]
   value: string[]
   onChange: (value: string[]) => void
-  sceneId?: string
 }) {
   const [keyword, setKeyword] = useState('')
   const selected = chunks.filter((chunk) => value.includes(chunk.id))
@@ -193,10 +191,9 @@ export function ChunkMultiSelect({
     const q = keyword.trim().toLowerCase()
     return chunks
       .filter((chunk) => !value.includes(chunk.id))
-      .filter((chunk) => !sceneId || !chunk.sceneId || chunk.sceneId === sceneId)
       .filter((chunk) => !q || chunk.text.toLowerCase().includes(q) || chunk.meaning.includes(keyword) || (chunk.category ?? '').includes(keyword))
       .slice(0, 12)
-  }, [chunks, keyword, sceneId, value])
+  }, [chunks, keyword, value])
 
   return (
     <div className="space-y-2">

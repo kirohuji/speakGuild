@@ -1,4 +1,4 @@
-scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+scene_title,category,text,meaning,difficulty,description,examples_json
 酒店入住,酒店入住,I have a reservation under the name...,我有预订，名字是...,L2,,,
 酒店入住,酒店入住,I'd like a room with a view.,我想要一个景观房。,L2,,,
 酒店入住,酒店入住,What time is breakfast served?,早餐几点供应？,L1,,,

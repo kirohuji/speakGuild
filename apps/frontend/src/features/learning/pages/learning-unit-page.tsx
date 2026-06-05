@@ -658,7 +658,7 @@ function PatternPrepCard({
               <p className="text-xs font-medium leading-5 text-foreground">{pattern.example}</p>
               <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{pattern.topicTitle}</p>
             </div>
-            {pattern.slots.length > 0 && (
+            {(pattern.slots ?? []).length > 0 && (
               <div className="mb-3 flex flex-wrap gap-1.5">
                 {pattern.slots.map((slot) => (
                   <Badge key={slot} variant="secondary" className="rounded-full px-2 text-[10px]">{slot}</Badge>

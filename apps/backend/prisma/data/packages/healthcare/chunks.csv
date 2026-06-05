@@ -1,4 +1,4 @@
-scene_title,category,text,meaning,difficulty,description,examples_json,applicable_scenes_json
+scene_title,category,text,meaning,difficulty,description,examples_json
 预约看病,预约看病,I'd like to make an appointment.,我想预约。,L2,,,
 预约看病,预约看病,I'm not feeling well.,我感觉不舒服。,L1,,,
 预约看病,预约看病,I have a sore throat / fever / cough.,我喉咙痛/发烧/咳嗽。,L2,,,

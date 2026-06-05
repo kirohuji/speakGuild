@@ -14,10 +14,6 @@ export class ChunkExampleDto {
   @IsOptional()
   @IsString()
   level?: string;
-
-  @IsOptional()
-  @IsString()
-  sceneId?: string;
 }
 
 export class CreateChunkDto {
@@ -42,15 +38,6 @@ export class CreateChunkDto {
   @IsOptional()
   @IsArray()
   examples?: ChunkExampleDto[];
-
-  @IsOptional()
-  @IsString()
-  sceneId?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  applicableSceneIds?: string[];
 }
 
 export class UpdateChunkDto {
@@ -77,15 +64,6 @@ export class UpdateChunkDto {
   @IsOptional()
   @IsArray()
   examples?: ChunkExampleDto[];
-
-  @IsOptional()
-  @IsString()
-  sceneId?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  applicableSceneIds?: string[];
 }
 
 export class CreateScriptEpisodeDto {

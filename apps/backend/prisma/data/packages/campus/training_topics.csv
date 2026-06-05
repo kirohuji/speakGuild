@@ -3,4 +3,3 @@ scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowle
 图书馆借书,续借,Call the library to renew your borrowed books.,打电话给图书馆续借书籍。,30,L1,,,practice_campus_图书馆借书_续借
 社团招新,咨询社团信息,Ask a club member about their activities and meetings.,向社团成员询问活动和会议信息。,40,L1,,,practice_campus_社团招新_咨询社团信息
 社团招新,报名加入,Tell the club president you'd like to join.,告诉社长你想加入社团。,35,L1,,,practice_campus_社团招新_报名加入
-,,,,,,,,practice_campus__

@@ -126,7 +126,7 @@ export function AdminChunksPage() {
                         </div>
                       </td>
                       <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
-                        {c.scene?.title ?? '-'}
+                        -
                       </td>
                       <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
                         {c._count ? `${c._count.userProgresses} 位` : '-'}
@@ -181,7 +181,7 @@ function ChunkDialog({
         examples: edit.examples ?? [],
       })
     }
-    else setForm({ text: '', meaning: '', description: '', difficulty: 'L2', category: '', applicableSceneIds: [], examples: [] })
+    else setForm({ text: '', meaning: '', description: '', difficulty: 'L2', category: '', examples: [] })
   }, [edit, open])
 
   const handleSave = async () => {
@@ -232,19 +232,6 @@ function ChunkDialog({
               <Input value={form.category ?? ''} onChange={(e) => setForm({ ...form, category: e.target.value })}
                 placeholder="宿舍入住 / 自我介绍" />
             </div>
-          </div>
-          <div>
-            <Label>关联场景</Label>
-            <Select value={form.sceneId ?? ''} onChange={(e) => setForm({ ...form, sceneId: e.target.value || null })}>
-                <option value="">不关联场景</option>
-                {categories.map((cat) => (
-                  <optgroup key={cat.id} label={cat.name}>
-                    {scenes.filter((s) => s.categoryId === cat.id).map((s) => (
-                      <option key={s.id} value={s.id}>{s.title}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </Select>
           </div>
           <div>
             <MarkdownEditor

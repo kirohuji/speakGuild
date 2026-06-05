@@ -59,9 +59,7 @@ export interface Scene {
   requiredOutputLevel: string
   requiredUserLevel: number
   category?: { id: string; name: string }
-  _count?: { vocabularies: number; chunks: number; trainingTopics: number }
-  vocabularies?: SceneVocabulary[]
-  chunks?: Chunk[]
+  _count?: { trainingTopics: number }
   trainingTopics?: TrainingTopic[]
 }
 
@@ -87,25 +85,23 @@ export async function deleteScene(id: string): Promise<void> {
 
 // ─── Vocabulary ──────────────────────────────────────────────
 
-export interface SceneVocabulary {
+export interface Vocabulary {
   id: string
-  sceneId: string
   word: string
   meaning: string
   description?: string | null
   sortOrder: number
-  scene?: { id: string; title: string }
 }
 
-export async function listVocabularies(sceneId?: string): Promise<SceneVocabulary[]> {
-  return get('/admin/content/vocabularies', sceneId ? { sceneId } : undefined)
+export async function listVocabularies(): Promise<Vocabulary[]> {
+  return get('/admin/content/vocabularies')
 }
 
-export async function createVocabulary(data: Partial<SceneVocabulary>): Promise<SceneVocabulary> {
+export async function createVocabulary(data: Partial<Vocabulary>): Promise<Vocabulary> {
   return post('/admin/content/vocabularies', data)
 }
 
-export async function updateVocabulary(id: string, data: Partial<SceneVocabulary>): Promise<SceneVocabulary> {
+export async function updateVocabulary(id: string, data: Partial<Vocabulary>): Promise<Vocabulary> {
   return patch(`/admin/content/vocabularies/${id}`, data)
 }
 
@@ -125,11 +121,13 @@ export interface TrainingTopic {
   promptZh: string
   suggestedDurationSec: number
   difficulty: string
-  sentencePatterns: SentencePattern[]
+  sentencePatterns: SentencePattern[]  // still sent as sentencePatterns from API for compat
   inkScriptId?: string | null
   sortOrder: number
   scene?: { id: string; title: string }
   activeChunks?: { id: string; chunk: { id: string; text: string } }[]
+  topicPatterns?: { id: string; pattern: SentencePattern; sortOrder: number }[]
+  topicVocabs?: { id: string; vocab: Vocabulary; sortOrder: number }[]
 }
 
 export async function listTrainingTopics(sceneId?: string): Promise<TrainingTopic[]> {
@@ -158,9 +156,6 @@ export interface Chunk {
   category: string | null
   difficulty: string
   examples?: ChunkExample[]
-  sceneId: string | null
-  applicableSceneIds: string[]
-  scene?: { id: string; title: string }
   _count?: { userProgresses: number }
 }
 
@@ -228,7 +223,7 @@ export interface ScriptEpisode {
   isPreview: boolean
   scene?: { id: string; title: string }
   coreChunks?: { id: string; chunkId?: string; chunk?: Chunk }[]
-  coreVocabularies?: { id: string; vocabId?: string; vocab?: SceneVocabulary }[]
+  coreVocabularies?: { id: string; vocabId?: string; vocab?: Vocabulary }[]
   _count?: { records: number; dialogues: number }
 }
 
