@@ -1254,6 +1254,7 @@ model MobileBundle {
   minNativeVersion String?                         // 最低原生版本要求
   rolloutPercent   Int        @default(100)        // 灰度比例 0-100
   enabled          Boolean    @default(true)       // 是否启用（可快速下架）
+  isMandatory      Boolean    @default(false)      // 是否强制更新（忽略灰度，下载后立即提示重启）
   releaseNotes     String?    @db.Text             // 更新日志
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt

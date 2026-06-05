@@ -23,21 +23,23 @@ export class MobileUpdatesService {
   }) {
     const { platform, nativeVersion, currentBundleVersion, channel = 'production' } = params;
 
-    // 1. 查找该平台 + 渠道下启用的最新 bundle
+    // 1. 查找该平台 + 渠道下所有启用的 bundle
     const bundles = await this.prisma.mobileBundle.findMany({
       where: {
         platform,
         channel,
         enabled: true,
       },
-      orderBy: { createdAt: 'desc' },
     });
 
     if (bundles.length === 0) {
       return { message: 'No update available' };
     }
 
-    // 2. 筛选：版本号高于当前版本
+    // 2. 按语义化版本倒序排列（最高版本优先）
+    bundles.sort((a, b) => this.compareVersions(b.version, a.version));
+
+    // 3. 筛选：版本号高于当前版本
     const candidate = bundles.find((b) => {
       // 如果 currentBundleVersion 不存在（首次安装），直接返回最新
       if (!currentBundleVersion) return true;
@@ -61,21 +63,25 @@ export class MobileUpdatesService {
       return { message: 'No update available' };
     }
 
-    // 3. 灰度判断：基于 deviceId 哈希决定是否在灰度范围内
-    if (candidate.rolloutPercent < 100 && params.deviceId) {
-      const hash = this.hashDeviceId(params.deviceId);
-      if (hash % 100 >= candidate.rolloutPercent) {
-        return { message: 'No update available' };
+    // 4. 强制更新跳过灰度判断
+    if (!candidate.isMandatory) {
+      // 灰度判断：基于 deviceId 哈希决定是否在灰度范围内
+      if (candidate.rolloutPercent < 100 && params.deviceId) {
+        const hash = this.hashDeviceId(params.deviceId);
+        if (hash % 100 >= candidate.rolloutPercent) {
+          return { message: 'No update available' };
+        }
       }
     }
 
-    // 4. 通过 FileAssetsService 生成 COS 签名下载链接（1 小时有效）
+    // 5. 通过 FileAssetsService 生成 COS 签名下载链接（1 小时有效）
     const { url } = await this.fileAssets.getPrivateUrlByAssetId(candidate.assetId);
 
     return {
       version: candidate.version,
       url,
       checksum: candidate.checksum,
+      isMandatory: candidate.isMandatory,
     };
   }
 

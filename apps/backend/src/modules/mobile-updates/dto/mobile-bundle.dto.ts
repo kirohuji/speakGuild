@@ -33,6 +33,10 @@ export class CreateMobileBundleDto {
   enabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isMandatory?: boolean;
+
+  @IsOptional()
   @IsString()
   releaseNotes?: string;
 }
@@ -60,6 +64,10 @@ export class UpdateMobileBundleDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isMandatory?: boolean;
 
   @IsOptional()
   @IsString()

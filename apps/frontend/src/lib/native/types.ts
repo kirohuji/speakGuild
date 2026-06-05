@@ -28,10 +28,16 @@ export interface UpdaterAPI {
   notifyAppReady(): Promise<void>;
   /** 获取当前包版本信息 */
   getCurrent(): Promise<{ version: string; downloaded: string; builtinVersion: string }>;
-  /** 检查并安装更新 */
-  checkUpdate(): Promise<{ newVersion?: string; url?: string }>;
-  /** 设置更新可用时的回调 */
-  onUpdateAvailable(callback: (info: { version: string; url?: string }) => void): void;
+  /** 手动检查更新（由插件自动处理的补充入口） */
+  checkUpdate(): Promise<{ newVersion?: string; url?: string; isMandatory?: boolean }>;
+  /** 注册更新可用回调（含强制更新标记） */
+  onUpdateAvailable(callback: (info: { version: string; url?: string; isMandatory?: boolean }) => void): void;
+  /** 注册下载进度回调 */
+  onDownload(callback: (percent: number) => void): void;
+  /** 注册下载完成回调 */
+  onDownloadComplete(callback: (info: { version: string }) => void): void;
+  /** 注册更新失败回调 */
+  onFailed(callback: (error: any) => void): void;
 }
 
 /** Preference 抽象接口（键值存储） */

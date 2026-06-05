@@ -11,7 +11,8 @@
     "cap:copy": "pnpm build && pnpm exec cap copy",
     "cap:sync": "pnpm build && pnpm exec cap sync",
     "cap:sync:ios": "pnpm build && pnpm exec cap sync ios",
-    "cap:open:ios": "pnpm exec cap open ios"
+    "cap:open:ios": "pnpm exec cap open ios",
+    "cap:zip": "pnpm exec cap build && cd dist && zip -r bundle.zip ."
   },
   "dependencies": {
     "@capacitor/core": "^8.3.1",

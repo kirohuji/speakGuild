@@ -33,6 +33,7 @@ interface MobileBundle {
   minNativeVersion: string | null;
   rolloutPercent: number;
   enabled: boolean;
+  isMandatory: boolean;
   releaseNotes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -97,6 +98,7 @@ function BundleFormDialog({
   const [minNativeVersion, setMinNativeVersion] = useState('');
   const [rolloutPercent, setRolloutPercent] = useState(100);
   const [enabled, setEnabled] = useState(true);
+  const [isMandatory, setIsMandatory] = useState(false);
   const [releaseNotes, setReleaseNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -110,6 +112,7 @@ function BundleFormDialog({
       setMinNativeVersion(bundle.minNativeVersion || '');
       setRolloutPercent(bundle.rolloutPercent);
       setEnabled(bundle.enabled);
+      setIsMandatory(bundle.isMandatory ?? false);
       setReleaseNotes(bundle.releaseNotes || '');
     } else {
       setVersion('');
@@ -120,6 +123,7 @@ function BundleFormDialog({
       setMinNativeVersion('');
       setRolloutPercent(100);
       setEnabled(true);
+      setIsMandatory(false);
       setReleaseNotes('');
     }
   }, [bundle, open]);
@@ -135,6 +139,7 @@ function BundleFormDialog({
           minNativeVersion: minNativeVersion || undefined,
           rolloutPercent,
           enabled,
+          isMandatory: isMandatory || undefined,
           releaseNotes: releaseNotes || undefined,
         });
       } else {
@@ -147,6 +152,7 @@ function BundleFormDialog({
           minNativeVersion: minNativeVersion || undefined,
           rolloutPercent,
           enabled,
+          isMandatory: isMandatory || undefined,
           releaseNotes: releaseNotes || undefined,
         });
       }
@@ -280,6 +286,16 @@ function BundleFormDialog({
               <p className="text-xs text-muted-foreground">关闭后客户端将不再收到此版本更新</p>
             </div>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+            <div>
+              <Label className="text-sm text-red-600 dark:text-red-400">强制更新</Label>
+              <p className="text-xs text-muted-foreground">
+                开启后跳过灰度，下载完成后立即提示用户重启 App
+              </p>
+            </div>
+            <Switch checked={isMandatory} onCheckedChange={setIsMandatory} />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -496,15 +512,20 @@ export function AdminMobileBundlesPage() {
                           )}
                         </td>
                         <td className="py-3 pr-3">
-                          {bundle.enabled ? (
-                            <Badge variant="default" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                              <CheckCircle2 className="h-3 w-3" />启用
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="gap-1 text-muted-foreground">
-                              <XCircle className="h-3 w-3" />已下架
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            {bundle.enabled ? (
+                              <Badge variant="default" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                                <CheckCircle2 className="h-3 w-3" />启用
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="gap-1 text-muted-foreground">
+                                <XCircle className="h-3 w-3" />已下架
+                              </Badge>
+                            )}
+                            {bundle.isMandatory && (
+                              <Badge variant="destructive" className="gap-1 text-xs">强制</Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 pr-3 text-xs text-muted-foreground">
                           {fmtDate(bundle.createdAt)}
