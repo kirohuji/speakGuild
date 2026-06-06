@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
-  BookOpen, ChevronRight, X,
+  ChevronRight, X,
   Volume2, Sparkles, ExternalLink, Loader2,
   CheckCircle2, Link2, Clock3, FileText, Settings2,
 } from 'lucide-react'
@@ -27,7 +27,8 @@ import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
 import {
   ChunkMultiSelect,
-  SentencePatternEditor,
+  VocabMultiSelect,
+  SentencePatternMultiSelect,
 } from '../components/content-authoring-fields'
 import {
   listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory,
@@ -35,7 +36,8 @@ import {
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   listAllChunks, listStories,
-  type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData,
+  listLibraryPatterns,
+  type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull,
 } from '../api-content-admin'
 
 // ─── Category Dialog ────────────────────────────────────────
@@ -419,13 +421,15 @@ function VocabularyLookupPreview({
 // ─── Training Topic Dialog ──────────────────────────────────
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, chunks, onSaved,
+  open, onClose, edit, sceneId, chunks, vocabs, patterns, onSaved,
 }: {
   open: boolean
   onClose: () => void
   edit: TrainingTopic | null
   sceneId: string
   chunks: Chunk[]
+  vocabs: Vocabulary[]
+  patterns: SentencePatternFull[]
   onSaved: () => void
 }) {
   const [form, setForm] = useState<any>({})
@@ -437,11 +441,14 @@ function TrainingTopicDialog({
 
   useEffect(() => {
     if (edit) {
-      // Map topicPatterns (new API) → sentencePatterns (form field)
-      const patterns = edit.topicPatterns?.map((tp: any) => tp.pattern) ?? edit.sentencePatterns ?? []
-      setForm({ ...edit, chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [], sentencePatterns: patterns })
+      setForm({
+        ...edit,
+        chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [],
+        vocabIds: edit.topicVocabs?.map((tv: any) => tv.vocab.id) ?? [],
+        patternIds: edit.topicPatterns?.map((tp: any) => tp.pattern.id) ?? [],
+      })
     }
-    else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], sentencePatterns: [], inkScriptId: '' })
+    else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], vocabIds: [], patternIds: [], inkScriptId: '' })
     setStorySearch('')
     setStoryType('all')
   }, [edit, open, sceneId])
@@ -491,10 +498,8 @@ function TrainingTopicDialog({
     if (!form.title?.trim() || !form.promptEn?.trim()) return
     setSaving(true)
     try {
-      const payload = {
-        ...form,
-        sentencePatterns: (form.sentencePatterns ?? []).filter((item: any) => item.pattern?.trim()),
-      }
+      const payload = { ...form }
+      delete payload.sentencePatterns // no longer used; patternIds is the new way
       if (edit) await updateTrainingTopic(edit.id, payload)
       else await createTrainingTopic(payload)
       toast.success('话题已保存')
@@ -594,19 +599,22 @@ function TrainingTopicDialog({
             <TabsContent value="training" className="mt-0 space-y-5">
               <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
                 <p className="text-sm font-medium">语言支架</p>
-                <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达。</p>
+                <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达，词汇夯实基础。</p>
               </div>
-              <SentencePatternEditor
-                value={form.sentencePatterns ?? []}
-                onChange={(sentencePatterns) => setForm({
-                  ...form,
-                  sentencePatterns,
-                })}
+              <SentencePatternMultiSelect
+                patterns={patterns}
+                value={form.patternIds ?? []}
+                onChange={(patternIds) => setForm({ ...form, patternIds })}
               />
               <ChunkMultiSelect
                 chunks={chunks}
                 value={form.chunkIds ?? []}
                 onChange={(chunkIds) => setForm({ ...form, chunkIds })}
+              />
+              <VocabMultiSelect
+                vocabs={vocabs}
+                value={form.vocabIds ?? []}
+                onChange={(vocabIds) => setForm({ ...form, vocabIds })}
               />
             </TabsContent>
 
@@ -754,6 +762,7 @@ function TrainingTopicDialog({
 function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack: () => void; chunks: Chunk[] }) {
   const [scene, setScene] = useState<Scene | null>(null)
   const [vocabs, setVocabs] = useState<Vocabulary[]>([])
+  const [patterns, setPatterns] = useState<SentencePatternFull[]>([])
   const [topics, setTopics] = useState<TrainingTopic[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -761,31 +770,27 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [editVocab, setEditVocab] = useState<Vocabulary | null>(null)
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
-  const [vocabPage, setVocabPage] = useState(1)
-  const [vocabPageSize, setVocabPageSize] = useState(10)
   const [topicPage, setTopicPage] = useState(1)
   const [topicPageSize, setTopicPageSize] = useState(10)
 
   const load = async () => {
     setLoading(true)
     try {
-      const [s, v, t] = await Promise.all([
+      const [s, v, t, p] = await Promise.all([
         getScene(sceneId), listVocabularies(), listTrainingTopics(sceneId),
+        listLibraryPatterns({ pageSize: 999 }).then((r) => r.items),
       ])
-      setScene(s); setVocabs(v); setTopics(t)
+      setScene(s); setVocabs(v); setTopics(t); setPatterns(p)
     } catch {}
     finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, [sceneId])
   useEffect(() => {
-    setVocabPage(1)
     setTopicPage(1)
   }, [sceneId])
 
-  const vocabTotalPages = getTotalPages(vocabs.length, vocabPageSize)
   const topicTotalPages = getTotalPages(topics.length, topicPageSize)
-  const vocabItems = getPageItems(vocabs, Math.min(vocabPage, vocabTotalPages), vocabPageSize)
   const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
 
   if (loading) return (
@@ -804,67 +809,6 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
           <p className="text-sm text-muted-foreground">{scene.location} · {scene.requiredOutputLevel}</p>
         </div>
       </div>
-
-      {/* Vocabulary */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <BookOpen className="size-4" /> 场景词汇 ({vocabs.length})
-          </CardTitle>
-          <Button size="sm" variant="outline" onClick={() => { setEditVocab(null); setVocabDialog(true) }}>
-            <Plus className="size-3.5 mr-1" /> 添加
-          </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          {vocabs.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm font-medium text-muted-foreground">暂无词汇</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">添加后会显示在这里</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">词汇</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">含义</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">排序</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {vocabItems.map((v) => (
-                    <tr key={v.id} className="transition-colors hover:bg-muted/30">
-                      <td className="px-4 py-3 text-sm font-medium">{v.word}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{v.meaning}</td>
-                      <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">{v.sortOrder}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" className="size-8"
-                            onClick={() => { setEditVocab(v); setVocabDialog(true) }}>
-                            <Edit3 className="size-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                            onClick={async () => { await deleteVocabulary(v.id); load() }}>
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <AdminPagination
-            total={vocabs.length}
-            page={Math.min(vocabPage, vocabTotalPages)}
-            pageSize={vocabPageSize}
-            onPageChange={setVocabPage}
-            onPageSizeChange={(size) => { setVocabPageSize(size); setVocabPage(1) }}
-          />
-        </CardContent>
-      </Card>
 
       {/* Training Topics */}
       <Card>
@@ -888,7 +832,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">话题</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">Chunk</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">关联内容</th>
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">配置</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
                   </tr>
@@ -908,11 +852,17 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                       </td>
                       <td className="hidden px-4 py-3 md:table-cell">
                         <div className="flex max-w-xs flex-wrap gap-1">
-                          {(t.activeChunks ?? []).slice(0, 3).map((ac: any) => (
+                          {(t.topicPatterns ?? []).slice(0, 2).map((tp: any) => (
+                            <Badge key={tp.id} variant="outline" className="font-mono text-[10px]">{tp.pattern.pattern}</Badge>
+                          ))}
+                          {(t.activeChunks ?? []).slice(0, 2).map((ac: any) => (
                             <Badge key={ac.id} variant="outline" className="text-[10px]">{ac.chunk.text}</Badge>
                           ))}
-                          {(t.activeChunks?.length ?? 0) > 3 && (
-                            <Badge variant="secondary" className="text-[10px]">+{(t.activeChunks?.length ?? 0) - 3}</Badge>
+                          {(t.topicVocabs ?? []).slice(0, 2).map((tv: any) => (
+                            <Badge key={tv.id} variant="secondary" className="text-[10px]">{tv.vocab.word}</Badge>
+                          ))}
+                          {((t.topicPatterns?.length ?? 0) + (t.activeChunks?.length ?? 0) + (t.topicVocabs?.length ?? 0)) > 6 && (
+                            <Badge variant="secondary" className="text-[10px]">+{(t.topicPatterns?.length ?? 0) + (t.activeChunks?.length ?? 0) + (t.topicVocabs?.length ?? 0) - 6}</Badge>
                           )}
                         </div>
                       </td>
@@ -947,10 +897,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         </CardContent>
       </Card>
 
-      <VocabularyDialog open={vocabDialog} onClose={() => setVocabDialog(false)}
-        edit={editVocab} sceneId={sceneId} onSaved={load} />
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
-        edit={editTopic} sceneId={sceneId} chunks={chunks} onSaved={load} />
+        edit={editTopic} sceneId={sceneId} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={load} />
     </div>
   )
 }

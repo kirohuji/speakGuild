@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Settings, BarChart3, Bell,
   ChevronRight, ChevronDown, CreditCard, Receipt,
-  MessageSquare, MapPin, BookOpen, Film, Award, Palette, Quote,
+  MessageSquare, MapPin, Film, Award, Palette, Quote,
   Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -46,7 +46,6 @@ const menuGroups: MenuGroup[] = [
     icon: FileText,
     items: [
       { key: 'scenes', label: '场景管理', icon: MapPin, path: '/admin/scenes' },
-      { key: 'chunks', label: 'Chunk 管理', icon: BookOpen, path: '/admin/chunks' },
       { key: 'script', label: '剧本管理', icon: Film, path: '/admin/script' },
       { key: 'achievements', label: '成就管理', icon: Award, path: '/admin/achievements' },
       { key: 'daily-sentences', label: '每日一句', icon: Quote, path: '/admin/daily-sentences' },

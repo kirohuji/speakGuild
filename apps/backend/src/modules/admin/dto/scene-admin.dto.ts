@@ -153,7 +153,17 @@ export class CreateTrainingTopicDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  patternIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   chunkIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  vocabIds?: string[];
 
   @IsOptional()
   @IsInt()
@@ -204,7 +214,17 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  patternIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   chunkIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  vocabIds?: string[];
 
   @IsOptional()
   @IsInt()

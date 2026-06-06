@@ -50,7 +50,6 @@ import { AdminFeedbacksPage } from '@/features/admin/pages/admin-feedbacks-page'
 import { AdminSettingsPage } from '@/features/admin/pages/admin-settings-page'
 import { AdminAnalyticsPage } from '@/features/admin/pages/admin-analytics-page'
 import { AdminScenesPage } from '@/features/admin/pages/admin-scenes-page'
-import { AdminChunksPage } from '@/features/admin/pages/admin-chunks-page'
 import { AdminScriptPage } from '@/features/admin/pages/admin-script-page'
 import { AdminAchievementsPage } from '@/features/admin/pages/admin-achievements-page'
 import { AdminCharactersPage } from '@/features/admin/pages/admin-characters-page'
@@ -82,7 +81,6 @@ export default function App() {
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="scenes" element={<AdminScenesPage />} />
-                <Route path="chunks" element={<AdminChunksPage />} />
                 <Route path="characters" element={<AdminCharactersPage />} />
                 <Route path="stories" element={<AdminStoriesPage />} />
                 <Route path="maps" element={<AdminMapsPage />} />

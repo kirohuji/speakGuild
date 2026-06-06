@@ -515,6 +515,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
 
       showDiff('XF 词典', {
         phoneticUs: result.phonetic,
+        phoneticUk: result.phoneticUk,
         definitionEn: result.meanings?.map((m: any) => `${m.partOfSpeech}: ${m.definition}`).join('; '),
         partOfSpeech: result.meanings?.[0]?.partOfSpeech,
         examples: result.examples?.length
@@ -536,7 +537,8 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
 
       showDiff('Wiktionary', {
         partOfSpeech: result.partOfSpeech,
-        audioUsUrl: result.audioUrl,
+        audioUsUrl: result.audioUsUrl,
+        audioUkUrl: result.audioUkUrl,
         definitionEn: result.definitions.map(d =>
           `${result.partOfSpeech || ''}: ${d.definition}${d.examples.length ? ` (e.g. ${d.examples[0]})` : ''}`
         ).join('; '),
@@ -567,23 +569,35 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     finally { setMwLoading(false) }
   }
 
-  // Step 3: AI 生成 (后端 enrichWord: DB 缓存 → dictionaryapi → DeepSeek)
+  // Step 5: AI 生成 (翻译 + 补例句 + 讲解)
   const handleAiEnrich = async () => {
     if (!form.word?.trim()) return
     setEnriching(true)
     try {
       const { enrichWord } = await import('@/lib/practice-ai-api')
       const enriched = await enrichWord(form.word)
-      showDiff('AI 生成', {
+
+      // 只补中文：释义翻译、例句中文翻译、讲解
+      const currentExs: any[] = form.examples ?? []
+      // 翻译已有例句中缺少中文的
+      const aiExamples = enriched.examples ?? []
+      const translatedExs = currentExs.map((ex: any, i: number) => ({
+        ...ex,
+        zh: ex.zh || aiExamples[i]?.zh || '',
+      }))
+      // 如果例句不足 3 条，从 AI 补充
+      const needMore = Math.max(0, 3 - translatedExs.length)
+      const extraExs = aiExamples
+        .filter((e: any) => !currentExs.some((c: any) => c.en === e.en))
+        .slice(0, needMore)
+        .map((e: any) => ({ en: e.en, zh: e.zh, level: e.level || 'intermediate' }))
+
+      showDiff('AI 翻译', {
         meaning: enriched.chineseTranslation,
-        phoneticUs: enriched.phonetic,
-        audioUsUrl: enriched.audioUrl,
-        definitionEn: enriched.meanings?.map((m: any) => `(${m.partOfSpeech}) ${m.chineseGloss}`).join('; '),
-        partOfSpeech: enriched.meanings?.[0]?.partOfSpeech,
         description: enriched.memoryTip,
-        examples: enriched.examples?.length ? enriched.examples : undefined,
+        examples: [...translatedExs, ...extraExs],
       })
-    } catch { toast.error('AI 生成失败') }
+    } catch { toast.error('AI 翻译失败') }
     finally { setEnriching(false) }
   }
 
@@ -656,7 +670,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? `编辑词汇 (${currentIdx + 1}/${items.length})` : '新增词汇'}</DialogTitle>
-          <DialogDescription>三步手动：dictionaryapi.dev → XF 双语 → AI 生成</DialogDescription>
+          <DialogDescription>词典 → XF → Wiki → MW → 翻译（中文）</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {/* Word + Meaning */}
@@ -835,7 +849,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
               <Button variant="outline" size="sm" onClick={handleAiEnrich}
                 disabled={enriching || !form.word?.trim()}>
                 {enriching ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Sparkles className="mr-1 size-3.5" />}
-                AI 生成
+                翻译
               </Button>
             </div>
             {/* Right: cancel + save */}

@@ -130,20 +130,29 @@ export async function lookupXfdWord(
       })),
     ).slice(0, 5)
 
-    // 提取发音
+    // 提取发音 — textual[] 含 (UK)/(US) 标记，audioFiles[] 含 Wikimedia Commons 文件名
     const pronEntries: any[] = data?.pronunciations?.[0]?.entries ?? []
     const pronEntry = pronEntries.find((p: any) =>
       p.entry?.toLowerCase() === targetWord,
     ) ?? pronEntries[0]
 
-    const phonetic = pronEntry?.textual?.[0]?.pronunciation ?? ''
-    // XF 音频文件是相对路径，但 RapidAPI 未暴露音频下载接口，留空由用户手动上传
-    const audioFiles: any[] = pronEntry?.audioFiles ?? []
+    const textuals: any[] = pronEntry?.textual ?? []
+    // 分离美/英音标 — 匹配 (US)/(General American) 和 (UK)/(Received Pronunciation)
+    const isUS = (t: any) => /\(US\)|General American/i.test(t.pronunciation ?? '')
+    const isUK = (t: any) => /\(UK\)|Received Pronunciation/i.test(t.pronunciation ?? '')
+    const usPhonetic = textuals.find(isUS)?.pronunciation
+      ?? textuals[0]?.pronunciation ?? ''
+    const ukPhonetic = textuals.find(isUK)?.pronunciation
+      ?? textuals.find((t: any) => !isUS(t))?.pronunciation ?? ''
+
+    // 音频文件 — 带 XF 内部编号（如 "8991_en-us-home.ogg"），非标准 Commons 文件，无法下载
+    // 注：XF 不提供音频下载接口，音频请从 Wiktionary 或 dictionaryapi.dev 获取
 
     return {
       word: entry.word ?? target,
-      phonetic,
-      audioUsUrl: '',   // XF 音频接口不可用，需手动上传
+      phonetic: usPhonetic,
+      phoneticUk: ukPhonetic,
+      audioUsUrl: '',
       audioUkUrl: '',
       meanings,
       examples: allExamples,

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/cn'
-import type { Chunk, ChunkExample, SentencePattern } from '../api-content-admin'
+import type { Chunk, ChunkExample, SentencePattern, SentencePatternFull, Vocabulary } from '../api-content-admin'
 
 const LEVELS = ['L1', 'L2', 'L3', 'L4', 'L5']
 const EXAMPLE_LEVELS = ['basic', 'intermediate', 'advanced']
@@ -233,6 +233,139 @@ export function ChunkMultiSelect({
             <Badge key={chunk.id} variant="secondary" className={cn('gap-1 pr-1 text-xs')}>
               {chunk.text}
               <button type="button" onClick={() => onChange(value.filter((id) => id !== chunk.id))}>
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function VocabMultiSelect({
+  vocabs,
+  value,
+  onChange,
+}: {
+  vocabs: Vocabulary[]
+  value: string[]
+  onChange: (value: string[]) => void
+}) {
+  const [keyword, setKeyword] = useState('')
+  const selected = vocabs.filter((vocab) => value.includes(vocab.id))
+  const results = useMemo(() => {
+    const q = keyword.trim().toLowerCase()
+    return vocabs
+      .filter((vocab) => !value.includes(vocab.id))
+      .filter((vocab) => !q || vocab.word.toLowerCase().includes(q) || vocab.meaning.includes(keyword))
+      .slice(0, 12)
+  }, [vocabs, keyword, value])
+
+  return (
+    <div className="space-y-2">
+      <Label>关联词汇</Label>
+      <div className="rounded-lg border border-border/70">
+        <div className="relative border-b border-border/70">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border-0 pl-9 shadow-none focus-visible:ring-0"
+            placeholder="搜索英文或中文含义..."
+          />
+        </div>
+        <div className="grid max-h-56 gap-1 overflow-y-auto p-2">
+          {results.length === 0 ? (
+            <p className="px-2 py-6 text-center text-xs text-muted-foreground">没有可选词汇</p>
+          ) : results.map((vocab) => (
+            <button
+              type="button"
+              key={vocab.id}
+              onClick={() => onChange([...value, vocab.id])}
+              className="rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{vocab.word}</span>
+                <span className="text-xs text-muted-foreground">{vocab.meaning}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((vocab) => (
+            <Badge key={vocab.id} variant="secondary" className={cn('gap-1 pr-1 text-xs')}>
+              {vocab.word}
+              <button type="button" onClick={() => onChange(value.filter((id) => id !== vocab.id))}>
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function SentencePatternMultiSelect({
+  patterns,
+  value,
+  onChange,
+}: {
+  patterns: SentencePatternFull[]
+  value: string[]
+  onChange: (value: string[]) => void
+}) {
+  const [keyword, setKeyword] = useState('')
+  const selected = patterns.filter((p) => value.includes(p.id))
+  const results = useMemo(() => {
+    const q = keyword.trim().toLowerCase()
+    return patterns
+      .filter((p) => !value.includes(p.id))
+      .filter((p) => !q || p.pattern.toLowerCase().includes(q) || (p.meaning ?? '').includes(keyword))
+      .slice(0, 12)
+  }, [patterns, keyword, value])
+
+  return (
+    <div className="space-y-2">
+      <Label>关联句型骨架</Label>
+      <div className="rounded-lg border border-border/70">
+        <div className="relative border-b border-border/70">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="border-0 pl-9 shadow-none focus-visible:ring-0"
+            placeholder="搜索句型或含义..."
+          />
+        </div>
+        <div className="grid max-h-56 gap-1 overflow-y-auto p-2">
+          {results.length === 0 ? (
+            <p className="px-2 py-6 text-center text-xs text-muted-foreground">没有可选句型</p>
+          ) : results.map((p) => (
+            <button
+              type="button"
+              key={p.id}
+              onClick={() => onChange([...value, p.id])}
+              className="rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
+            >
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-medium">{p.pattern}</span>
+                <Badge variant="outline" className="text-[10px]">{p.difficulty}</Badge>
+              </div>
+              {p.meaning && <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.meaning}</p>}
+            </button>
+          ))}
+        </div>
+      </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((p) => (
+            <Badge key={p.id} variant="secondary" className={cn('gap-1 pr-1 text-xs')}>
+              <span className="font-mono">{p.pattern}</span>
+              <button type="button" onClick={() => onChange(value.filter((id) => id !== p.id))}>
                 <X className="size-3" />
               </button>
             </Badge>

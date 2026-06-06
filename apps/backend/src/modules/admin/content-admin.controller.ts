@@ -195,7 +195,7 @@ export class ContentAdminController {
   @Post('training-topics')
   async createTrainingTopic(@Req() req: Request, @Body() dto: CreateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, sentencePatterns, ...data } = dto;
+    const { chunkIds, vocabIds, patternIds, sentencePatterns, ...data } = dto;
     const topic = await this.prisma.trainingTopic.create({ data });
     if (chunkIds?.length) {
       await this.prisma.trainingTopicChunk.createMany({
@@ -206,7 +206,25 @@ export class ContentAdminController {
         })),
       });
     }
-    if (sentencePatterns?.length) {
+    if (vocabIds?.length) {
+      await this.prisma.trainingTopicVocab.createMany({
+        data: vocabIds.map((vocabId, i) => ({
+          topicId: topic.id,
+          vocabId,
+          sortOrder: i,
+        })),
+      });
+    }
+    // Prefer patternIds (multi-select); fall back to inline sentencePatterns
+    if (patternIds?.length) {
+      await this.prisma.trainingTopicSentencePattern.createMany({
+        data: patternIds.map((patternId, i) => ({
+          topicId: topic.id,
+          patternId,
+          sortOrder: i,
+        })),
+      });
+    } else if (sentencePatterns?.length) {
       // Upsert each pattern into SentencePattern, then create join records
       for (const sp of sentencePatterns) {
         const patternRecord = await this.prisma.sentencePattern.upsert({
@@ -233,6 +251,7 @@ export class ContentAdminController {
       where: { id: topic.id },
       include: {
         topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+        topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
         activeChunks: { include: { chunk: true } },
       },
     });
@@ -241,7 +260,7 @@ export class ContentAdminController {
   @Patch('training-topics/:id')
   async updateTrainingTopic(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, sentencePatterns, ...data } = dto;
+    const { chunkIds, vocabIds, patternIds, sentencePatterns, ...data } = dto;
     const topic = await this.prisma.trainingTopic.update({ where: { id }, data });
     if (chunkIds) {
       await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: id } });
@@ -255,7 +274,31 @@ export class ContentAdminController {
         });
       }
     }
-    if (sentencePatterns) {
+    if (vocabIds) {
+      await this.prisma.trainingTopicVocab.deleteMany({ where: { topicId: id } });
+      if (vocabIds.length > 0) {
+        await this.prisma.trainingTopicVocab.createMany({
+          data: vocabIds.map((vocabId, i) => ({
+            topicId: id,
+            vocabId,
+            sortOrder: i,
+          })),
+        });
+      }
+    }
+    // Prefer patternIds (multi-select); fall back to inline sentencePatterns
+    if (patternIds) {
+      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
+      if (patternIds.length > 0) {
+        await this.prisma.trainingTopicSentencePattern.createMany({
+          data: patternIds.map((patternId, i) => ({
+            topicId: id,
+            patternId,
+            sortOrder: i,
+          })),
+        });
+      }
+    } else if (sentencePatterns) {
       await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
       if (sentencePatterns.length > 0) {
         for (const sp of sentencePatterns) {
@@ -284,6 +327,7 @@ export class ContentAdminController {
       where: { id },
       include: {
         topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+        topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
         activeChunks: { include: { chunk: true } },
       },
     });
