@@ -137,24 +137,14 @@ export async function lookupXfdWord(
     ) ?? pronEntries[0]
 
     const phonetic = pronEntry?.textual?.[0]?.pronunciation ?? ''
-    // 分离美/英音频：label 包含 "(US)" 或 "(UK)"
+    // XF 音频文件是相对路径，但 RapidAPI 未暴露音频下载接口，留空由用户手动上传
     const audioFiles: any[] = pronEntry?.audioFiles ?? []
-    const usAudioFile = audioFiles.find((a: any) => a.label?.includes('US'))
-    const ukAudioFile = audioFiles.find((a: any) => a.label?.includes('UK'))
-    const audioUsUrl = usAudioFile?.link
-      ? `https://xf-english-dictionary1.p.rapidapi.com/audio/${usAudioFile.link}`
-      : ''
-    const audioUkUrl = ukAudioFile?.link
-      ? `https://xf-english-dictionary1.p.rapidapi.com/audio/${ukAudioFile.link}`
-      : (audioFiles[0]?.link && !usAudioFile
-        ? `https://xf-english-dictionary1.p.rapidapi.com/audio/${audioFiles[0].link}`
-        : '')
 
     return {
       word: entry.word ?? target,
       phonetic,
-      audioUsUrl,
-      audioUkUrl,
+      audioUsUrl: '',   // XF 音频接口不可用，需手动上传
+      audioUkUrl: '',
       meanings,
       examples: allExamples,
     }

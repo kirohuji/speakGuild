@@ -56,9 +56,18 @@ export async function lookupWord(word: string): Promise<DictEntry[] | null> {
   }
 }
 
+/** 规范化音频 URL（处理 // 协议相对路径） */
+function normalizeAudioUrl(url: string): string {
+  if (!url) return ''
+  if (url.startsWith('//')) return `https:${url}`
+  if (url.startsWith('http')) return url
+  return `https://${url}`
+}
+
 /** 获取第一个有效的音频 URL */
 export function getFirstAudio(phonetics: Phonetic[]): string | null {
-  return phonetics.find((p) => p.audio)?.audio ?? null
+  const raw = phonetics.find((p) => p.audio)?.audio
+  return raw ? normalizeAudioUrl(raw) : null
 }
 
 /** 获取最佳音标文本 */

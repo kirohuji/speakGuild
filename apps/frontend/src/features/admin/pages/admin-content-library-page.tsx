@@ -361,9 +361,12 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const [enriching, setEnriching] = useState(false)
   const [dictLoading, setDictLoading] = useState(false)
   const [xfdLoading, setXfdLoading] = useState(false)
+  const [wikiLoading, setWikiLoading] = useState(false)
+  const [mwLoading, setMwLoading] = useState(false)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [usAudioPlaying, setUsAudioPlaying] = useState(false)
   const [ukAudioPlaying, setUkAudioPlaying] = useState(false)
+  const [pendingDiff, setPendingDiff] = useState<any>(null) // { source, fields: { key: { old, new } } }
   const usAudioRef = useRef<HTMLAudioElement | null>(null)
   const ukAudioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -386,7 +389,57 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     const next = (currentIdx + dir + items.length) % items.length
     setCurrentIdx(next)
     setForm(items[next])
+    setPendingDiff(null)
   }
+
+  /** 展示 diff：对比旧值和新值，只保留有变化的字段 */
+  const showDiff = (source: string, newFields: Record<string, any>) => {
+    const fields: Record<string, { old: any; new: any }> = {}
+    for (const [key, newVal] of Object.entries(newFields)) {
+      const oldVal = form[key]
+      // 跳过无变化或空新值
+      if (newVal === oldVal) continue
+      if (newVal === '' || newVal === null || newVal === undefined) continue
+      if (Array.isArray(newVal) && Array.isArray(oldVal) && JSON.stringify(newVal) === JSON.stringify(oldVal)) continue
+      if (Array.isArray(newVal) && newVal.length === 0) continue
+      fields[key] = { old: oldVal, new: newVal }
+    }
+    if (Object.keys(fields).length === 0) {
+      toast.info(`${source}: 无新内容`)
+      return
+    }
+    setPendingDiff({ source, fields })
+  }
+
+  /** 接受 diff 中的某个字段 */
+  const acceptField = (key: string) => {
+    if (!pendingDiff) return
+    const newVal = pendingDiff.fields[key]?.new
+    setForm((prev: any) => ({ ...prev, [key]: newVal }))
+    const remaining = { ...pendingDiff.fields }
+    delete remaining[key]
+    if (Object.keys(remaining).length === 0) {
+      setPendingDiff(null)
+      toast.success(`${pendingDiff.source}: 全部已应用`)
+    } else {
+      setPendingDiff({ ...pendingDiff, fields: remaining })
+    }
+  }
+
+  /** 接受 diff 全部字段 */
+  const acceptAll = () => {
+    if (!pendingDiff) return
+    const updates: Record<string, any> = {}
+    for (const [key, val] of Object.entries(pendingDiff.fields)) {
+      updates[key] = (val as any).new
+    }
+    setForm((prev: any) => ({ ...prev, ...updates }))
+    setPendingDiff(null)
+    toast.success(`${pendingDiff.source}: 已全部应用`)
+  }
+
+  /** 丢弃 diff */
+  const dismissDiff = () => setPendingDiff(null)
 
   const handleSave = async () => {
     if (!form.word?.trim() || !form.meaning?.trim()) return
@@ -412,10 +465,15 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       const entry = entries[0]
       const phonetic = getBestPhonetic(entry) || ''
 
-      // 分离美式/英式发音：phonetics 数组通常第一条美音、第二条英音
+      // 分离美式/英式发音，规范化 URL（处理 // 协议相对路径）
+      const normalizeAudio = (url: string) => {
+        if (!url) return ''
+        if (url.startsWith('//')) return `https:${url}`
+        return url
+      }
       const phoneticsWithAudio = entry.phonetics?.filter((p: any) => p.audio) || []
-      const usAudio = phoneticsWithAudio[0]?.audio || ''
-      const ukAudio = phoneticsWithAudio[1]?.audio || ''
+      const usAudio = normalizeAudio(phoneticsWithAudio[0]?.audio || '')
+      const ukAudio = normalizeAudio(phoneticsWithAudio[1]?.audio || '')
 
       const meanings = entry.meanings?.flatMap(m =>
         m.definitions.map(d => `${m.partOfSpeech}: ${d.definition}`)
@@ -434,18 +492,14 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         })
       )
 
-      setForm((prev: any) => ({
-        ...prev,
-        meaning: prev.meaning || '',
+      showDiff('词典', {
         phoneticUs: phonetic,
-        phoneticUk: '',
-        audioUsUrl: usAudio || prev.audioUsUrl,
-        audioUkUrl: ukAudio || prev.audioUkUrl,
-        definitionEn: meanings || prev.definitionEn,
-        partOfSpeech: pos || prev.partOfSpeech,
-        examples: dictExamples.length ? dictExamples.slice(0, 5) : prev.examples,
-      }))
-      toast.success(`词典查询完成: ${entry.word}`)
+        audioUsUrl: usAudio,
+        audioUkUrl: ukAudio,
+        definitionEn: meanings,
+        partOfSpeech: pos,
+        examples: dictExamples.slice(0, 5),
+      })
     } catch { toast.error('词典查询失败') }
     finally { setDictLoading(false) }
   }
@@ -459,20 +513,58 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       const result = await lookupXfdWord(form.word)
       if (!result) { toast.info('XF 词典未收录或未配置 API Key'); return }
 
-      setForm((prev: any) => ({
-        ...prev,
-        phoneticUs: result.phonetic || prev.phoneticUs,
-        audioUsUrl: result.audioUsUrl || prev.audioUsUrl,
-        audioUkUrl: result.audioUkUrl || prev.audioUkUrl,
-        definitionEn: result.meanings?.map((m: any) => `${m.partOfSpeech}: ${m.definition}`).join('; ') || prev.definitionEn,
-        partOfSpeech: result.meanings?.[0]?.partOfSpeech || prev.partOfSpeech,
+      showDiff('XF 词典', {
+        phoneticUs: result.phonetic,
+        definitionEn: result.meanings?.map((m: any) => `${m.partOfSpeech}: ${m.definition}`).join('; '),
+        partOfSpeech: result.meanings?.[0]?.partOfSpeech,
         examples: result.examples?.length
           ? result.examples.map((e: any) => ({ en: e.en, zh: e.zh || '', level: e.level || 'intermediate' }))
-          : prev.examples,
-      }))
-      toast.success(`XF 词典查询完成: ${result.word}`)
+          : undefined,
+      })
     } catch { toast.error('XF 词典查询失败') }
     finally { setXfdLoading(false) }
+  }
+
+  // Step 3: Wiktionary (免费，无 API Key)
+  const handleWiktionaryLookup = async () => {
+    if (!form.word?.trim()) return
+    setWikiLoading(true)
+    try {
+      const { lookupWiktionary } = await import('@/lib/wiktionary-api')
+      const result = await lookupWiktionary(form.word)
+      if (!result) { toast.info('Wiktionary 未收录该词'); return }
+
+      showDiff('Wiktionary', {
+        partOfSpeech: result.partOfSpeech,
+        audioUsUrl: result.audioUrl,
+        definitionEn: result.definitions.map(d =>
+          `${result.partOfSpeech || ''}: ${d.definition}${d.examples.length ? ` (e.g. ${d.examples[0]})` : ''}`
+        ).join('; '),
+        examples: result.definitions.flatMap(d =>
+          d.examples.map(ex => ({ en: ex, zh: '', level: 'intermediate' as const }))
+        ).slice(0, 5),
+      })
+    } catch { toast.error('Wiktionary 查询失败') }
+    finally { setWikiLoading(false) }
+  }
+
+  // Step 4: Merriam-Webster (需 API Key)
+  const handleMwLookup = async () => {
+    if (!form.word?.trim()) return
+    setMwLoading(true)
+    try {
+      const { lookupMwWord } = await import('@/lib/merriam-webster-api')
+      const result = await lookupMwWord(form.word)
+      if (!result) { toast.info('MW 词典未收录或未配置 API Key'); return }
+
+      showDiff('Merriam-Webster', {
+        partOfSpeech: result.partOfSpeech,
+        phoneticUs: result.phonetic,
+        audioUsUrl: result.audioUrl,
+        definitionEn: result.definitions.map(d => `${result.partOfSpeech || ''}: ${d.definition}`).join('; '),
+      })
+    } catch { toast.error('MW 词典查询失败') }
+    finally { setMwLoading(false) }
   }
 
   // Step 3: AI 生成 (后端 enrichWord: DB 缓存 → dictionaryapi → DeepSeek)
@@ -482,34 +574,61 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     try {
       const { enrichWord } = await import('@/lib/practice-ai-api')
       const enriched = await enrichWord(form.word)
-      setForm((prev: any) => ({
-        ...prev,
-        meaning: enriched.chineseTranslation || prev.meaning,
-        phoneticUs: enriched.phonetic || '',
-        audioUsUrl: enriched.audioUrl || prev.audioUsUrl,
-        definitionEn: enriched.meanings?.map((m: any) => `(${m.partOfSpeech}) ${m.chineseGloss}`).join('; ') || '',
-        partOfSpeech: enriched.meanings?.[0]?.partOfSpeech || '',
-        description: enriched.memoryTip || '',
-        examples: enriched.examples?.length ? enriched.examples : prev.examples,
-      }))
-      toast.success('AI 生成完成')
+      showDiff('AI 生成', {
+        meaning: enriched.chineseTranslation,
+        phoneticUs: enriched.phonetic,
+        audioUsUrl: enriched.audioUrl,
+        definitionEn: enriched.meanings?.map((m: any) => `(${m.partOfSpeech}) ${m.chineseGloss}`).join('; '),
+        partOfSpeech: enriched.meanings?.[0]?.partOfSpeech,
+        description: enriched.memoryTip,
+        examples: enriched.examples?.length ? enriched.examples : undefined,
+      })
     } catch { toast.error('AI 生成失败') }
     finally { setEnriching(false) }
   }
 
-  // Audio playback toggle
-  const toggleAudio = (url: string | undefined, setPlaying: (v: boolean) => void, ref: React.MutableRefObject<HTMLAudioElement | null>) => {
+  // Audio playback — XF 音频需要 RapidAPI 认证，先 fetch 为 blob 再播放
+  const toggleAudio = async (url: string | undefined, setPlaying: (v: boolean) => void, ref: React.MutableRefObject<HTMLAudioElement | null>) => {
     if (!url) return
-    if (!ref.current) {
-      ref.current = new Audio(url)
-      ref.current.onended = () => setPlaying(false)
-      ref.current.onerror = () => setPlaying(false)
-    }
-    if (ref.current.paused) {
-      ref.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false))
-    } else {
-      ref.current.pause()
+    setPlaying(true)
+    try {
+      // 如果已有缓存的 audio 且 URL 没变，直接切换播放/暂停
+      if (ref.current && ref.current.src === url) {
+        if (ref.current.paused) {
+          await ref.current.play()
+        } else {
+          ref.current.pause()
+          setPlaying(false)
+        }
+        return
+      }
+      // 停止旧音频
+      if (ref.current) { ref.current.pause(); ref.current.src = '' }
+
+      // XF (RapidAPI) 音频需要认证头，先下载为 blob
+      const key = (import.meta as any).env?.VITE_XFD_API_KEY || ''
+      const isXfdAudio = url.includes('rapidapi.com')
+      let playableUrl = url
+      if (isXfdAudio && key) {
+        const res = await fetch(url, {
+          headers: {
+            'X-RapidAPI-Key': key,
+            'X-RapidAPI-Host': 'xf-english-dictionary1.p.rapidapi.com',
+          },
+        })
+        if (!res.ok) throw new Error('Failed to fetch audio')
+        const blob = await res.blob()
+        playableUrl = URL.createObjectURL(blob)
+      }
+
+      const audio = new Audio(playableUrl)
+      audio.onended = () => setPlaying(false)
+      audio.onerror = () => { setPlaying(false); toast.error('音频播放失败') }
+      ref.current = audio
+      await audio.play()
+    } catch {
       setPlaying(false)
+      toast.error('音频加载失败')
     }
   }
 
@@ -534,7 +653,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? `编辑词汇 (${currentIdx + 1}/${items.length})` : '新增词汇'}</DialogTitle>
           <DialogDescription>三步手动：dictionaryapi.dev → XF 双语 → AI 生成</DialogDescription>
@@ -647,6 +766,36 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             </div>
           </div>
 
+          {/* Diff Panel — 查询结果对比 */}
+          {pendingDiff && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-amber-600">{pendingDiff.source} 返回了 {Object.keys(pendingDiff.fields).length} 项更新</span>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={acceptAll}>全部应用</Button>
+                  <Button size="sm" variant="ghost" className="text-xs h-7 text-muted-foreground" onClick={dismissDiff}>忽略</Button>
+                </div>
+              </div>
+              {Object.entries(pendingDiff.fields).map(([key, val]: [string, any]) => {
+                const label: Record<string, string> = {
+                  meaning: '中文释义', phoneticUs: '美式音标', audioUsUrl: '美式音频', audioUkUrl: '英式音频',
+                  definitionEn: '英文释义', partOfSpeech: '词性', description: '讲解', examples: '例句',
+                }
+                const oldDisplay = Array.isArray(val.old) ? `${val.old.length} 条` : (val.old || '(空)')
+                const newDisplay = Array.isArray(val.new) ? `${val.new.length} 条` : (val.new || '(空)')
+                return (
+                  <div key={key} className="flex items-center gap-2 text-xs">
+                    <span className="w-20 text-muted-foreground flex-shrink-0">{label[key] || key}</span>
+                    <span className="flex-1 truncate text-muted-foreground/60 line-through">{typeof oldDisplay === 'string' ? oldDisplay.slice(0, 40) : oldDisplay}</span>
+                    <span className="text-amber-600 mx-1">→</span>
+                    <span className="flex-1 truncate font-medium">{typeof newDisplay === 'string' ? newDisplay.slice(0, 40) : newDisplay}</span>
+                    <Button size="sm" variant="outline" className="text-xs h-6 flex-shrink-0" onClick={() => acceptField(key)}>采用</Button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Bottom bar: prev/next + step buttons + save */}
           <div className="flex items-center justify-between pt-2 border-t border-border/40 mt-2">
             {/* Left: prev/next navigation */}
@@ -672,6 +821,16 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 disabled={xfdLoading || !form.word?.trim()}>
                 {xfdLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <BookOpen className="mr-1 size-3.5" />}
                 XF 词典
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleWiktionaryLookup}
+                disabled={wikiLoading || !form.word?.trim()}>
+                {wikiLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
+                Wiki
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleMwLookup}
+                disabled={mwLoading || !form.word?.trim()}>
+                {mwLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <BookOpen className="mr-1 size-3.5" />}
+                MW
               </Button>
               <Button variant="outline" size="sm" onClick={handleAiEnrich}
                 disabled={enriching || !form.word?.trim()}>
@@ -729,7 +888,7 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑句块' : '新增句块'}</DialogTitle>
           <DialogDescription>句块是可迁移的表达单元，如 "I'm here to check in"</DialogDescription>
@@ -820,7 +979,7 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑句式' : '新增句式'}</DialogTitle>
           <DialogDescription>句式如 "__ is the __ I have ever __"，用 __ 表示可替换槽位</DialogDescription>
