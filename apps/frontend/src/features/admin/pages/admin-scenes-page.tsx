@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
-  ChevronRight, X,
+  ChevronRight, X, Code2, Type, BookOpen,
   Volume2, Sparkles, ExternalLink, Loader2,
   CheckCircle2, Link2, Clock3, FileText, Settings2,
 } from 'lucide-react'
@@ -26,9 +26,8 @@ import {
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { AdminPagination, getPageItems, getTotalPages } from '../components/admin-pagination'
 import {
-  ChunkMultiSelect,
-  VocabMultiSelect,
-  SentencePatternMultiSelect,
+  SearchSelectTable,
+  type SearchSelectColumn,
 } from '../components/content-authoring-fields'
 import {
   listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory,
@@ -596,26 +595,89 @@ function TrainingTopicDialog({
               </div>
             </TabsContent>
 
-            <TabsContent value="training" className="mt-0 space-y-5">
+            <TabsContent value="training" className="mt-0">
               <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
                 <p className="text-sm font-medium">语言支架</p>
                 <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达，词汇夯实基础。</p>
               </div>
-              <SentencePatternMultiSelect
-                patterns={patterns}
-                value={form.patternIds ?? []}
-                onChange={(patternIds) => setForm({ ...form, patternIds })}
-              />
-              <ChunkMultiSelect
-                chunks={chunks}
-                value={form.chunkIds ?? []}
-                onChange={(chunkIds) => setForm({ ...form, chunkIds })}
-              />
-              <VocabMultiSelect
-                vocabs={vocabs}
-                value={form.vocabIds ?? []}
-                onChange={(vocabIds) => setForm({ ...form, vocabIds })}
-              />
+              <Tabs defaultValue="patterns" className="mt-4">
+                <TabsList className="mb-4 w-full">
+                  <TabsTrigger value="patterns" className="gap-1.5">
+                    <Code2 className="size-3.5" />句型骨架
+                  </TabsTrigger>
+                  <TabsTrigger value="chunks" className="gap-1.5">
+                    <Type className="size-3.5" />关联 Chunk
+                  </TabsTrigger>
+                  <TabsTrigger value="vocabs" className="gap-1.5">
+                    <BookOpen className="size-3.5" />关联词汇
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="patterns" className="mt-0">
+                  <SearchSelectTable
+                    items={patterns}
+                    selectedIds={form.patternIds ?? []}
+                    onToggle={(id) => {
+                      const ids = form.patternIds ?? []
+                      setForm({ ...form, patternIds: ids.includes(id) ? ids.filter((i: string) => i !== id) : [...ids, id] })
+                    }}
+                    searchPlaceholder="搜索句型或含义..."
+                    searchFn={(item, q) =>
+                      item.pattern.toLowerCase().includes(q) || (item.meaning ?? '').includes(q)
+                    }
+                    emptyText="没有匹配的句型"
+                    getBadgeLabel={(item) => item.pattern}
+                    columns={[
+                      { key: 'pattern', header: '句型', className: 'font-mono text-sm font-medium', render: (p) => p.pattern },
+                      { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (p) => p.meaning || '-' },
+                      { key: 'difficulty', header: '等级', className: 'hidden md:table-cell', render: (p) => <Badge variant="outline" className="text-[10px]">{p.difficulty}</Badge> },
+                    ]}
+                  />
+                </TabsContent>
+
+                <TabsContent value="chunks" className="mt-0">
+                  <SearchSelectTable
+                    items={chunks}
+                    selectedIds={form.chunkIds ?? []}
+                    onToggle={(id) => {
+                      const ids = form.chunkIds ?? []
+                      setForm({ ...form, chunkIds: ids.includes(id) ? ids.filter((i: string) => i !== id) : [...ids, id] })
+                    }}
+                    searchPlaceholder="搜索英文、中文含义或分类..."
+                    searchFn={(item, q) =>
+                      item.text.toLowerCase().includes(q) || item.meaning.includes(q) || (item.category ?? '').includes(q)
+                    }
+                    emptyText="没有匹配的 Chunk"
+                    getBadgeLabel={(item) => item.text}
+                    columns={[
+                      { key: 'text', header: '句块', className: 'text-sm font-medium', render: (c) => c.text },
+                      { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (c) => c.meaning },
+                      { key: 'difficulty', header: '等级', className: 'hidden md:table-cell', render: (c) => <Badge variant="outline" className="text-[10px]">{c.difficulty}</Badge> },
+                    ]}
+                  />
+                </TabsContent>
+
+                <TabsContent value="vocabs" className="mt-0">
+                  <SearchSelectTable
+                    items={vocabs}
+                    selectedIds={form.vocabIds ?? []}
+                    onToggle={(id) => {
+                      const ids = form.vocabIds ?? []
+                      setForm({ ...form, vocabIds: ids.includes(id) ? ids.filter((i: string) => i !== id) : [...ids, id] })
+                    }}
+                    searchPlaceholder="搜索英文或中文含义..."
+                    searchFn={(item, q) =>
+                      item.word.toLowerCase().includes(q) || item.meaning.includes(q)
+                    }
+                    emptyText="没有匹配的词汇"
+                    getBadgeLabel={(item) => item.word}
+                    columns={[
+                      { key: 'word', header: '词汇', className: 'text-sm font-medium', render: (v) => v.word },
+                      { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (v) => v.meaning },
+                    ]}
+                  />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="ink" className="mt-0 space-y-4">
