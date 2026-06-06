@@ -609,6 +609,7 @@ model Chunk {
   createdAt           DateTime            @default(now())
 
   @@index([difficulty])
+  @@unique([text])
   @@map("chunk")
 }
 
@@ -630,6 +631,7 @@ model Vocabulary {
   episodeVocabs ScriptEpisodeVocab[]
   topicVocabs   TrainingTopicVocab[]
 
+  @@unique([word])
   @@map("vocabulary")
 }
 

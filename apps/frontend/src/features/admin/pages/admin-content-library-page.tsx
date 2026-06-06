@@ -360,6 +360,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const [saving, setSaving] = useState(false)
   const [enriching, setEnriching] = useState(false)
   const [dictLoading, setDictLoading] = useState(false)
+  const [xfdLoading, setXfdLoading] = useState(false)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [usAudioPlaying, setUsAudioPlaying] = useState(false)
   const [ukAudioPlaying, setUkAudioPlaying] = useState(false)
@@ -449,7 +450,32 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     finally { setDictLoading(false) }
   }
 
-  // Step 2: AI 生成 (后端 enrichWord: DB 缓存 → dictionaryapi → DeepSeek)
+  // Step 2: XF 词典 (xfd.plus — 英英，含美/英音频分离)
+  const handleXfdLookup = async () => {
+    if (!form.word?.trim()) return
+    setXfdLoading(true)
+    try {
+      const { lookupXfdWord } = await import('@/lib/xfd-dict-api')
+      const result = await lookupXfdWord(form.word)
+      if (!result) { toast.info('XF 词典未收录或未配置 API Key'); return }
+
+      setForm((prev: any) => ({
+        ...prev,
+        phoneticUs: result.phonetic || prev.phoneticUs,
+        audioUsUrl: result.audioUsUrl || prev.audioUsUrl,
+        audioUkUrl: result.audioUkUrl || prev.audioUkUrl,
+        definitionEn: result.meanings?.map((m: any) => `${m.partOfSpeech}: ${m.definition}`).join('; ') || prev.definitionEn,
+        partOfSpeech: result.meanings?.[0]?.partOfSpeech || prev.partOfSpeech,
+        examples: result.examples?.length
+          ? result.examples.map((e: any) => ({ en: e.en, zh: e.zh || '', level: e.level || 'intermediate' }))
+          : prev.examples,
+      }))
+      toast.success(`XF 词典查询完成: ${result.word}`)
+    } catch { toast.error('XF 词典查询失败') }
+    finally { setXfdLoading(false) }
+  }
+
+  // Step 3: AI 生成 (后端 enrichWord: DB 缓存 → dictionaryapi → DeepSeek)
   const handleAiEnrich = async () => {
     if (!form.word?.trim()) return
     setEnriching(true)
@@ -511,7 +537,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? `编辑词汇 (${currentIdx + 1}/${items.length})` : '新增词汇'}</DialogTitle>
-          <DialogDescription>三步富化：本地 DB → dictionaryapi.dev → AI</DialogDescription>
+          <DialogDescription>三步手动：dictionaryapi.dev → XF 双语 → AI 生成</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {/* Word + Meaning */}
@@ -641,6 +667,11 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 disabled={dictLoading || !form.word?.trim()}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
                 查词典
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleXfdLookup}
+                disabled={xfdLoading || !form.word?.trim()}>
+                {xfdLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <BookOpen className="mr-1 size-3.5" />}
+                XF 词典
               </Button>
               <Button variant="outline" size="sm" onClick={handleAiEnrich}
                 disabled={enriching || !form.word?.trim()}>

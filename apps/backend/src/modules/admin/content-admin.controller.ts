@@ -827,7 +827,12 @@ export class ContentAdminController {
   @Post('library/vocabularies')
   async createLibraryVocabulary(@Req() req: Request, @Body() dto: CreateFullVocabularyDto) {
     await this.requireAdmin(req);
-    return this.prisma.vocabulary.create({ data: { ...dto, examples: dto.examples as any } });
+    try {
+      return await this.prisma.vocabulary.create({ data: { ...dto, examples: dto.examples as any } });
+    } catch (err: any) {
+      if (err.code === 'P2002') throw new ForbiddenException(`词汇 "${dto.word}" 已存在，请勿重复添加`);
+      throw err;
+    }
   }
 
   @Patch('library/vocabularies/:id')
@@ -911,10 +916,15 @@ export class ContentAdminController {
     if (examples?.length) {
       payload.examples = { create: examples.map((ex, i) => ({ ...ex, sortOrder: i })) };
     }
-    return this.prisma.chunk.create({
-      data: payload,
-      include: { examples: { orderBy: { sortOrder: 'asc' } } },
-    });
+    try {
+      return await this.prisma.chunk.create({
+        data: payload,
+        include: { examples: { orderBy: { sortOrder: 'asc' } } },
+      });
+    } catch (err: any) {
+      if (err.code === 'P2002') throw new ForbiddenException(`句块 "${dto.text}" 已存在，请勿重复添加`);
+      throw err;
+    }
   }
 
   @Patch('library/chunks/:id')
@@ -981,7 +991,12 @@ export class ContentAdminController {
   @Post('library/patterns')
   async createLibraryPattern(@Req() req: Request, @Body() dto: CreateSentencePatternDto) {
     await this.requireAdmin(req);
-    return this.prisma.sentencePattern.create({ data: dto });
+    try {
+      return await this.prisma.sentencePattern.create({ data: dto });
+    } catch (err: any) {
+      if (err.code === 'P2002') throw new ForbiddenException(`句式 "${dto.pattern}" 已存在，请勿重复添加`);
+      throw err;
+    }
   }
 
   @Patch('library/patterns/:id')
