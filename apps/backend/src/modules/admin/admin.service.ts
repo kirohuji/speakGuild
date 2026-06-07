@@ -296,8 +296,8 @@ export class AdminService {
       { dialogue: 0, summary: 0, tokens: 0 },
     );
 
-    // Word enrichment 缓存命中数（来自 word_enrichment 表）
-    const wordEnrichmentCount = await this.prisma.wordEnrichment.count();
+    // Dictionary 缓存词条数（来自 dictionary_entry 表）
+    const cachedWordCount = await this.prisma.dictionaryEntry.count();
 
     return {
       user,
@@ -308,7 +308,7 @@ export class AdminService {
         summary: d.summary,
         tokens: d.tokens,
       })),
-      cachedWordCount: wordEnrichmentCount,
+      cachedWordCount: cachedWordCount,
     };
   }
 
@@ -321,14 +321,14 @@ export class AdminService {
 
     const [
       dailyUsages30d,
-      wordEnrichmentCount,
+      cachedWordCount,
       totalUsers,
     ] = await Promise.all([
       this.prisma.aiUsageDaily.findMany({
         where: { date: { gte: thirtyDaysAgo } },
         orderBy: { date: 'asc' },
       }),
-      this.prisma.wordEnrichment.count(),
+      this.prisma.dictionaryEntry.count(),
       this.prisma.user.count(),
     ]);
 
@@ -415,7 +415,7 @@ export class AdminService {
         monthDialogue,
         monthSummary,
         monthTokens,
-        totalCachedWords: wordEnrichmentCount,
+        totalCachedWords: cachedWordCount,
         totalUsers,
       },
       trend,

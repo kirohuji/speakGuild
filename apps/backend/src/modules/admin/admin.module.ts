@@ -9,9 +9,10 @@ import { ThemeManageModule } from './theme-manage/theme-manage.module';
 import { DailySentenceModule } from './daily-sentence/daily-sentence.module';
 import { PayModule } from '../pay/pay.module';
 import { PracticeAiModule } from '../practice-ai/practice-ai.module';
+import { DictionaryModule } from '../dictionary/dictionary.module';
 
 @Module({
-  imports: [PayModule, PracticeAiModule, ThemeManageModule, DailySentenceModule],
+  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule],
   controllers: [AdminController, ContentAdminController, SystemConfigController],
   providers: [AdminService, AdminStatsService, SystemConfigService],
   exports: [SystemConfigService],

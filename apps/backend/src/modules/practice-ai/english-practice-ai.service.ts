@@ -251,47 +251,6 @@ ${dialogueText}
     }
   }
 
-  // ════════════════════════════════════════════════════════════
-  // 单词增强：DB 缓存 → dictionaryapi.dev → DeepSeek AI
-  // ════════════════════════════════════════════════════════════
-
-  /** 单词增强：三级回退链 */
-  async enrichWord(word: string, _englishDefinitions?: string) {
-    const key = word.toLowerCase().trim()
-
-    // ① 数据库缓存
-    const cached = await this.prisma.wordEnrichment.findUnique({ where: { word: key } })
-    if (cached) {
-      this.logger.debug(`Word cache HIT: "${key}" (${cached.source})`)
-      return cached.data as unknown as WordEnrichmentData
-    }
-
-    // ② dictionaryapi.dev（免费）
-    const dictResult = await this.enrichFromDictionary(key)
-    if (dictResult) {
-      // 批量翻译：单词 + 例句一起翻
-      const translated = await this.batchTranslate(word, dictResult.examples)
-      const data: WordEnrichmentData = {
-        chineseTranslation: translated.wordZh,
-        phonetic: dictResult.phonetic,
-        audioUrl: dictResult.audioUrl,
-        meanings: dictResult.meanings,
-        examples: dictResult.examples.map((ex, i) => ({
-          ...ex,
-          zh: translated.examplesZh[i] ?? '',
-        })),
-        memoryTip: '',
-      }
-      await this.saveToDb(key, data, 'dictionary')
-      return data
-    }
-
-    // ③ DeepSeek AI 回退
-    const aiResult = await this.enrichFromAI(word)
-    await this.saveToDb(key, aiResult, 'ai')
-    return aiResult
-  }
-
   /** 批量翻译：单词 + 例句列表 → { wordZh, examplesZh[] } */
   private async batchTranslate(
     word: string,
@@ -328,18 +287,7 @@ Return ONLY a JSON object (no markdown):
     }
   }
 
-  /** 存入数据库缓存 */
-  private async saveToDb(word: string, data: WordEnrichmentData, source: string) {
-    try {
-      await this.prisma.wordEnrichment.upsert({
-        where: { word },
-        create: { word, data: data as any, source },
-        update: { data: data as any, source, updatedAt: new Date() },
-      })
-    } catch (err: any) {
-      this.logger.warn(`Failed to cache word "${word}": ${err.message}`)
-    }
-  }
+  /** @deprecated Not used — DictionaryEntry replaces WordEnrichment */
 
   /** 从 dictionaryapi.dev 获取单词数据 */
   private async enrichFromDictionary(word: string) {

@@ -1245,14 +1245,22 @@ model MobileBundle {
   @@map("mobile_bundle")
 }
 
-// ──── 单词增强缓存 ────
+// ──── 词典条目（FreeDictionaryAPI 清洗后数据）────
 
-model WordEnrichment {
-  word      String   @id /// 小写单词/短语，作为主键
-  data      Json     /// WordEnrichmentResult 完整 JSON
-  source    String   /// 'dictionary' | 'ai'
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model DictionaryEntry {
+  word            String   @id /// 小写单词，作为主键
+  language        String   @default("en")
+  sourceUrl       String?  /// Wiktionary 原始页面 URL（CC BY-SA 4.0 署名用）
+  pronunciations  Json     @default("[]") /// CleanedPronunciation[]
+  senseClusters   Json     @default("[]") /// SenseCluster[] — 聚类后的语义分组
+  senses          Json     @default("[]") /// CleanedSense[] — 所有清洗后的义项（引用 clusterId）
+  rawEntry        Json?    /// FreeDictionaryAPI 原始响应（调试/重新处理用）
+  pipelineVersion String   @default("1.0")
+  aiReviewed      Boolean  @default(false)
+  aiReviewMeta    Json?    /// { reviewedAt, issuesFound, fixesApplied, modelUsed }
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  @@map("word_enrichment")
+  @@index([language])
+  @@map("dictionary_entry")
 }

@@ -23,12 +23,14 @@ import {
 import { requireAuthSession } from '../auth/session.util';
 import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
 import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
+import { DictionaryService } from '../dictionary/dictionary.service';
 
 @Controller('admin/content')
 export class ContentAdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly practiceAiService: EnglishPracticeAiService,
+    private readonly dictionaryService: DictionaryService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -891,26 +893,11 @@ export class ContentAdminController {
     return this.prisma.vocabulary.delete({ where: { id } });
   }
 
-  /** 触发单词富化：DB 缓存 → dictionaryapi.dev → AI */
+  /** 触发单词富化：FreeDictionaryAPI pipeline → DB 缓存 → Vocabulary */
   @Post('library/vocabularies/:id/enrich')
   async enrichVocabulary(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    const vocab = await this.prisma.vocabulary.findUnique({ where: { id } });
-    if (!vocab) throw new ForbiddenException('词汇不存在');
-
-    const enriched = await this.practiceAiService.enrichWord(vocab.word);
-    
-    const data: any = { difficulty: vocab.difficulty, sortOrder: vocab.sortOrder };
-    if (enriched.chineseTranslation && !vocab.meaning?.trim()) data.meaning = enriched.chineseTranslation;
-    if (enriched.phonetic) data.phoneticUs = enriched.phonetic;
-    if (enriched.audioUrl) data.audioUsUrl = enriched.audioUrl;
-    if (enriched.meanings?.length) {
-      data.definitionEn = enriched.meanings.map((m: any) => `(${m.partOfSpeech}) ${m.chineseGloss}`).join('; ');
-      data.partOfSpeech = enriched.meanings[0]?.partOfSpeech;
-    }
-    if (enriched.examples?.length) data.examples = enriched.examples;
-
-    return this.prisma.vocabulary.update({ where: { id }, data });
+    return this.dictionaryService.enrichVocabulary(id);
   }
 
   // ════════════════════════════════════════════════════════════
