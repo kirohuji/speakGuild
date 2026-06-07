@@ -544,6 +544,26 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
           </Button>
         )}
       </div>
+      {activeTab === 'meaning' && !showDictionary && (usPhonetic || ukPhonetic || item.partOfSpeech || item.difficulty) && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 px-5 pt-2 md:px-6">
+          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+            {usPhonetic && <PhoneticPill label="美式" value={usPhonetic} audioUrl={usAudio} onPlay={playAudio} />}
+            {ukPhonetic && <PhoneticPill label="英式" value={ukPhonetic} audioUrl={ukAudio} onPlay={playAudio} />}
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            {item.partOfSpeech && (
+              <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">
+                {POS_LABELS_CN[item.partOfSpeech] || posShortLabel(item.partOfSpeech) || item.partOfSpeech}
+              </Badge>
+            )}
+            {item.difficulty && (
+              <Badge variant="outline" className="rounded-md px-1.5 py-0.5 text-xs font-medium">
+                {item.difficulty}
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="relative min-h-0 flex-1">
         <TabsContent value="meaning" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
@@ -570,33 +590,8 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
             <ScrollArea className="h-full">
               <div className="space-y-4 py-4">
                 <section className="overflow-hidden rounded-md border border-border/70 bg-background">
-                  <div className="space-y-3 px-4 py-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                          <h3 className="text-xl font-bold leading-tight text-foreground">{item.word}</h3>
-                          {item.partOfSpeech && (
-                            <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">
-                              {POS_LABELS_CN[item.partOfSpeech] || posShortLabel(item.partOfSpeech) || item.partOfSpeech}
-                            </Badge>
-                          )}
-                          {item.difficulty && <span className="text-[11px] text-muted-foreground/55">{item.difficulty}</span>}
-                        </div>
-                        <p className={cn('mt-2 text-[15px] font-semibold leading-7', meaningText ? 'text-foreground/90' : 'text-muted-foreground')}>
-                          {meaningText || '暂无释义'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {usPhonetic && <PhoneticPill label="美式" value={usPhonetic} audioUrl={usAudio} onPlay={playAudio} />}
-                      {ukPhonetic && <PhoneticPill label="英式" value={ukPhonetic} audioUrl={ukAudio} onPlay={playAudio} />}
-                      {!usPhonetic && !ukPhonetic && <span className="text-sm text-muted-foreground">暂无音标</span>}
-                    </div>
-                  </div>
-
                   {definitionEntries.length > 0 ? (
-                    <div className="divide-y divide-border/60 border-t border-border/60">
+                    <div className="divide-y divide-border/60">
                       {definitionEntries.map((definition, index) => (
                         <div key={`${definition.partOfSpeech}-${index}`} className="px-4 py-3.5">
                           <div className="flex items-start gap-2">
@@ -621,7 +616,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                       ))}
                     </div>
                   ) : enriched?.meanings?.length ? (
-                    <div className="divide-y divide-border/60 border-t border-border/60">
+                    <div className="divide-y divide-border/60">
                       {enriched.meanings.slice(0, 8).map((meaning, index) => (
                         <div key={`${meaning.partOfSpeech}-${index}`} className="px-4 py-3.5">
                           <div className="flex items-start gap-2">
@@ -636,6 +631,10 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                         </div>
                       ))}
                     </div>
+                  ) : meaningText ? (
+                    <p className="px-4 py-4 text-sm font-medium leading-6 text-foreground">
+                      {meaningText}
+                    </p>
                   ) : null}
 
                   <div className="border-t border-border/60 px-4 py-4">
