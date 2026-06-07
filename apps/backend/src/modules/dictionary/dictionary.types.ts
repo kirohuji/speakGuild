@@ -65,6 +65,8 @@ export interface RawSense {
   translations: FreeDictTranslation[];
   /** Source entry index for traceability */
   entryIndex: number;
+  /** Original position within the entry's sense list (Wiktionary order = commonness order) */
+  senseIndex: number;
 }
 
 /** POS-bucketed output from Stage 1 Rule Filter */
@@ -117,6 +119,8 @@ export interface CleanedSense {
   tags: string[];
   subsenses: CleanedSense[];
   embedding?: number[];
+  /** 常用度标记：common = 常用，uncommon = 不常用（默认隐藏） */
+  frequency?: 'common' | 'uncommon';
 }
 
 export interface SenseCluster {
@@ -143,6 +147,8 @@ export interface AiReviewPatch {
   posFixes?: { senseId: string; correctedPOS: NormalizedPOS }[];
   translationFixes?: { senseId: string; field: string; corrected: string }[];
   labelFixes?: { clusterId: string; correctedLabel: string }[];
+  frequencyMarks?: { senseId: string; frequency: 'common' | 'uncommon' }[];
+  senseReorderings?: { clusterId: string; orderedSenseIds: string[] }[];
 }
 
 export interface AiReviewMeta {

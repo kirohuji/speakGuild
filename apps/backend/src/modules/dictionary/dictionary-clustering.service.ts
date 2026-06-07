@@ -247,8 +247,8 @@ export class DictionaryClusteringService {
       }
 
       // DBSCAN with cosine distance on lexical embeddings
-      // eps=0.55: two senses sharing ~45%+ of key terms cluster together
-      const labels = dbscanCosine(embeddings, 0.55, 2);
+      // eps=0.45: tighter threshold = more clusters; prevents cross-POS merging
+      const labels = dbscanCosine(embeddings, 0.45, 2);
 
       // Group by label
       const groups = new Map<number, number[]>();
@@ -375,7 +375,7 @@ export class DictionaryClusteringService {
 
       for (const rc of clusters) {
         // Build CleanedSense[] for this cluster
-        const cleanedSenses: CleanedSense[] = rc.senseIndices
+        const cleanedSenses: (CleanedSense & { _senseIndex: number })[] = rc.senseIndices
           .filter((si) => si >= 0 && si < senses.length && senses[si])
           .map((si, idx) => {
             const raw = senses[si];
@@ -400,22 +400,22 @@ export class DictionaryClusteringService {
               intraClusterRank: idx + 1,
               tags: raw?.tags ?? [],
               subsenses: [],
+              frequency: 'common',
               embedding: emb,
-            } as CleanedSense;
+              _senseIndex: (raw as any)?.senseIndex ?? si,
+            } as CleanedSense & { _senseIndex: number };
           });
 
         // Skip empty clusters (shouldn't happen, but guard)
         if (cleanedSenses.length === 0) continue;
 
-        // Centroid label — use most central sense's definition
-        const idx = rc.centroidIndex >= 0 && rc.centroidIndex < cleanedSenses.length
-          ? rc.centroidIndex
-          : 0;
-        const centroidSense = cleanedSenses[idx];
-        const label = centroidSense && centroidSense.definition
-          ? (centroidSense.definition.length > 60
-            ? centroidSense.definition.substring(0, 57) + '...'
-            : centroidSense.definition)
+        // Cluster label — use first (primary) sense's definition
+        // AI Review will replace with concise Chinese category if needed
+        const labelSense = cleanedSenses[0];
+        const label = labelSense?.definition
+          ? (labelSense.definition.length > 60
+            ? labelSense.definition.substring(0, 57) + '...'
+            : labelSense.definition)
           : '(empty)';
 
         result.push({
@@ -432,13 +432,20 @@ export class DictionaryClusteringService {
     result.sort((a, b) => b.senses.length - a.senses.length);
     result.forEach((c, i) => (c.rank = i + 1));
 
-    // Rank senses within each cluster
+    // Rank senses within each cluster — preserve Wiktionary order (primary first)
+    // Wiktionary already orders senses by commonness; we just push uncommon to bottom
     for (const c of result) {
-      c.senses.sort((a, b) => {
-        const aHasHigh = a.examples.some((e) => e.relevance === 'high') ? 1 : 0;
-        const bHasHigh = b.examples.some((e) => e.relevance === 'high') ? 1 : 0;
-        return bHasHigh - aHasHigh;
+      const senses = c.senses as (CleanedSense & { _senseIndex: number })[];
+      senses.sort((a, b) => {
+        // Uncommon always at bottom
+        if (a.frequency === 'uncommon' && b.frequency !== 'uncommon') return 1;
+        if (b.frequency === 'uncommon' && a.frequency !== 'uncommon') return -1;
+        // Within same frequency, preserve Wiktionary order
+        return (a._senseIndex ?? 0) - (b._senseIndex ?? 0);
       });
+      // Strip _senseIndex before storing
+      senses.forEach((s: any) => delete s._senseIndex);
+      c.senses = senses;
       c.senses.forEach((s, i) => (s.intraClusterRank = i + 1));
     }
 

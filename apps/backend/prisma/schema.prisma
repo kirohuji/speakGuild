@@ -1254,6 +1254,8 @@ model DictionaryEntry {
   pronunciations  Json     @default("[]") /// CleanedPronunciation[]
   senseClusters   Json     @default("[]") /// SenseCluster[] — 聚类后的语义分组
   senses          Json     @default("[]") /// CleanedSense[] — 所有清洗后的义项（引用 clusterId）
+  entrySynonyms   Json     @default("[]") /// string[] — 词条级别同义词（来自 Wiktionary）
+  wordForms       Json     @default("[]") /// { word: string, tags: string[] }[] — 复数/过去式等词形变化
   rawEntry        Json?    /// FreeDictionaryAPI 原始响应（调试/重新处理用）
   pipelineVersion String   @default("1.0")
   aiReviewed      Boolean  @default(false)

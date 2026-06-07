@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Trash2, Eye, Sparkles, Loader2, ChevronLeft, ChevronRight,
-  ExternalLink, ShieldCheck, ShieldX,
+  ExternalLink, ShieldCheck, ShieldX, ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -306,7 +306,46 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
   const usPron = entry.pronunciations?.find((p) => p.type === 'us' && p.isPreferred)
     ?? entry.pronunciations?.find((p) => p.type === 'us');
 
-  // Compute cluster display name: prefer the zh translation of the first sense
+  // Global expand/collapse all English
+  const [allEn, setAllEn] = useState(false);
+  const [senseStates, setSenseStates] = useState<Record<string, boolean>>({});
+  // Global expand/collapse details (examples, syn, ant)
+  const [allDetails, setAllDetails] = useState(false);
+  const [detailStates, setDetailStates] = useState<Record<string, boolean>>({});
+
+  const toggleAllEn = () => {
+    const next = !allEn;
+    setAllEn(next);
+    const states: Record<string, boolean> = {};
+    if (next) allSenses.forEach((s) => { states[s.id] = true; });
+    setSenseStates(states);
+  };
+  const toggleSenseEn = (senseId: string) => {
+    setSenseStates((prev) => {
+      const next = { ...prev, [senseId]: !prev[senseId] };
+      setAllEn(allSenses.every((s) => next[s.id]));
+      return next;
+    });
+  };
+
+  const toggleAllDetails = () => {
+    const next = !allDetails;
+    setAllDetails(next);
+    const states: Record<string, boolean> = {};
+    if (next) allSenses.forEach((s) => { states[s.id] = true; });
+    setDetailStates(states);
+  };
+  const toggleSenseDetails = (senseId: string) => {
+    setDetailStates((prev) => {
+      const next = { ...prev, [senseId]: !prev[senseId] };
+      setAllDetails(allSenses.every((s) => next[s.id]));
+      return next;
+    });
+  };
+
+  // Show/hide uncommon senses
+  const [showUncommon, setShowUncommon] = useState(false);
+
   const clusterName = (c: DictionaryCluster) => {
     const zh = c.senses?.[0]?.translations?.zh;
     if (zh && zh.length <= 12) return zh;
@@ -323,6 +362,42 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
           <span className="text-sm text-muted-foreground font-mono">
             {[ukPron?.ipa, usPron?.ipa].filter(Boolean).join('  ')}
           </span>
+          {/* Global toggles */}
+          <div className="flex items-center gap-1.5 ml-2">
+            <button
+              onClick={toggleAllEn}
+              className={cn(
+                'text-[11px] px-2 py-0.5 rounded border transition-colors',
+                allEn
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'border-border/50 text-muted-foreground/50 hover:text-muted-foreground',
+              )}
+            >
+              {allEn ? '收起英文' : '展开英文'}
+            </button>
+            <button
+              onClick={toggleAllDetails}
+              className={cn(
+                'text-[11px] px-2 py-0.5 rounded border transition-colors',
+                allDetails
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'border-border/50 text-muted-foreground/50 hover:text-muted-foreground',
+              )}
+            >
+              {allDetails ? '收起例句' : '展开例句'}
+            </button>
+            <button
+              onClick={() => setShowUncommon(!showUncommon)}
+              className={cn(
+                'text-[11px] px-2 py-0.5 rounded border transition-colors',
+                showUncommon
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'border-border/50 text-muted-foreground/50 hover:text-muted-foreground',
+              )}
+            >
+              {showUncommon ? '隐藏不常用' : '显示不常用'}
+            </button>
+          </div>
           {entry.aiReviewed && (
             <span className="text-[10px] text-emerald-600 ml-auto" title="AI 已审核">
               <ShieldCheck className="size-3 inline" />
@@ -334,6 +409,36 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
              className="inline-flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground/50 hover:text-muted-foreground">
             <ExternalLink className="size-2.5" /> Wiktionary CC BY-SA 4.0
           </a>
+        )}
+
+        {/* Word forms — each form as a distinct pill */}
+        {entry.wordForms?.length > 0 && (
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-xs font-medium text-muted-foreground/50 shrink-0">变形</span>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              {entry.wordForms.map((f) => (
+                <span key={f.word} className="inline-flex items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-foreground/80">{f.word}</span>
+                  {f.tags?.length > 0 && (
+                    <span className="text-[11px] text-muted-foreground/45">{f.tags.join(', ')}</span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Entry-level synonyms — comma separated with proper line height */}
+        {entry.entrySynonyms?.length > 0 && (
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-xs font-medium text-muted-foreground/50 shrink-0">近义</span>
+            <p className="text-[13px] text-foreground/65 leading-relaxed">
+              {entry.entrySynonyms.slice(0, 20).join(', ')}
+              {entry.entrySynonyms.length > 20 && (
+                <span className="text-muted-foreground/30"> +{entry.entrySynonyms.length - 20}</span>
+              )}
+            </p>
+          </div>
         )}
       </div>
 
@@ -358,10 +463,21 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
               )}
             </div>
 
-            {/* Sense list */}
+            {/* Sense list — filter uncommon by default */}
             <div className="space-y-1">
-              {senses.map((sense, si) => (
-                <SenseItem key={sense.id} sense={sense} index={si + 1} word={entry.word} />
+              {senses
+                .filter((s) => showUncommon || s.frequency !== 'uncommon')
+                .map((sense, si) => (
+                <SenseItem
+                  key={sense.id}
+                  sense={sense}
+                  index={si + 1}
+                  word={entry.word}
+                  showEn={!!senseStates[sense.id]}
+                  onToggleEn={() => toggleSenseEn(sense.id)}
+                  showDetails={!!detailStates[sense.id]}
+                  onToggleDetails={() => toggleSenseDetails(sense.id)}
+                />
               ))}
             </div>
           </div>
@@ -403,22 +519,33 @@ function parseEnQualifiers(en: string): { qualifiers: string[]; text: string } {
   return { qualifiers: [], text: en };
 }
 
-/** Bold the target word in a sentence (case-insensitive) */
+/** Bold the target word in a sentence — whole-word match only */
 function highlightWord(text: string, word: string): React.ReactNode {
   if (!word || !text) return text;
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(${escaped})`, 'gi');
+  // Use word boundaries for Latin-script words; direct match for CJK
+  const isCJK = /^[\u4e00-\u9fff]+$/.test(word);
+  const pattern = isCJK ? escaped : `\\b${escaped}\\b`;
+  const regex = new RegExp(`(${pattern})`, 'gi');
   const parts = text.split(regex);
   return parts.map((part, i) =>
     regex.test(part) ? <strong key={i} className="font-bold text-foreground/90">{part}</strong> : part,
   );
 }
 
-function SenseItem({ sense, index, word }: { sense: DictionarySense; index: number; word: string }) {
-  const [showEn, setShowEn] = useState(false);
+function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onToggleDetails }: {
+  sense: DictionarySense;
+  index: number;
+  word: string;
+  showEn: boolean;
+  onToggleEn: () => void;
+  showDetails: boolean;
+  onToggleDetails: () => void;
+}) {
   const { qualifiers: zhQuals, text: cleanZh } = parseZhQualifiers(sense.translations?.zh ?? '');
   const { qualifiers: enQuals, text: cleanEn } = parseEnQualifiers(sense.definition ?? '');
   const hasEn = !!sense.definition;
+  const hasDetails = sense.examples.length > 0 || sense.synonyms.length > 0 || sense.antonyms.length > 0;
 
   return (
     <div className="group">
@@ -451,10 +578,16 @@ function SenseItem({ sense, index, word }: { sense: DictionarySense; index: numb
               ))}
             </>
           )}
+          {/* Uncommon badge */}
+          {sense.frequency === 'uncommon' && (
+            <span className="inline-block text-[10px] px-1 py-0 rounded bg-muted text-muted-foreground/50 font-normal leading-tight">
+              不常用
+            </span>
+          )}
           {/* Eye toggle — always visible when English exists */}
           {hasEn && (
             <button
-              onClick={(e) => { e.stopPropagation(); setShowEn(!showEn); }}
+              onClick={(e) => { e.stopPropagation(); onToggleEn(); }}
               className={cn(
                 'p-0.5 rounded transition-colors -my-0.5',
                 showEn
@@ -464,6 +597,21 @@ function SenseItem({ sense, index, word }: { sense: DictionarySense; index: numb
               title={showEn ? '看中文' : '看英文'}
             >
               <Eye className="size-3.5" />
+            </button>
+          )}
+          {/* Details toggle */}
+          {hasDetails && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleDetails(); }}
+              className={cn(
+                'p-0.5 rounded transition-colors -my-0.5',
+                showDetails
+                  ? 'text-primary bg-primary/10'
+                  : 'text-muted-foreground/20 hover:text-muted-foreground/50',
+              )}
+              title={showDetails ? '收起详情' : '展开详情'}
+            >
+              <ChevronDown className={cn('size-3.5 transition-transform', showDetails && 'rotate-180')} />
             </button>
           )}
         </span>
@@ -476,45 +624,48 @@ function SenseItem({ sense, index, word }: { sense: DictionarySense; index: numb
         )}
       </div>
 
-      {/* Examples — always visible */}
-      {sense.examples.length > 0 && (
-        <div className="ml-[2.25rem] mb-1.5 pl-4 border-l-2 border-border/30 space-y-2">
-          {sense.examples.map((ex, ei) => (
-            <div key={ei} className="flex gap-2 items-start">
-              <span className="text-[10px] text-muted-foreground/25 tabular-nums min-w-[1rem] text-right pt-0.5 select-none">
-                {ei + 1}
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm text-muted-foreground/70 italic leading-relaxed">
-                  {highlightWord(ex.en, word)}
-                </p>
-                {ex.zh && (
-                  <p className="text-xs text-muted-foreground/60 mt-0.5">
-                    {highlightWord(ex.zh, word)}
-                  </p>
-                )}
-              </div>
+      {/* Examples + syn/ant — collapsible */}
+      {hasDetails && showDetails && (
+        <div className="ml-[2.25rem] mb-1.5 pl-4 border-l-2 border-border/30">
+          {sense.examples.length > 0 && (
+            <div className="space-y-2">
+              {sense.examples.map((ex, ei) => (
+                <div key={ei} className="flex gap-2 items-start">
+                  <span className="text-[10px] text-muted-foreground/25 tabular-nums min-w-[1rem] text-right pt-0.5 select-none">
+                    {ei + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground/70 italic leading-relaxed">
+                      {highlightWord(ex.en, word)}
+                    </p>
+                    {ex.zh && (
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">
+                        {highlightWord(ex.zh, word)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Synonyms / Antonyms — subtle footer */}
-      {(sense.synonyms.length > 0 || sense.antonyms.length > 0) && (
-        <div className="ml-[2.25rem] mb-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground/45">
-          {sense.synonyms.length > 0 && (
-            <span>
-              <span className="font-medium">近</span>{' '}
-              {sense.synonyms.slice(0, 5).join(' · ')}
-              {sense.synonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.synonyms.length - 5}</span>}
-            </span>
           )}
-          {sense.antonyms.length > 0 && (
-            <span>
-              <span className="font-medium">反</span>{' '}
-              {sense.antonyms.slice(0, 5).join(' · ')}
-              {sense.antonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.antonyms.length - 5}</span>}
-            </span>
+
+          {(sense.synonyms.length > 0 || sense.antonyms.length > 0) && (
+            <div className="mt-2 mb-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground/45">
+              {sense.synonyms.length > 0 && (
+                <span>
+                  <span className="font-medium">近</span>{' '}
+                  {sense.synonyms.slice(0, 5).join(' · ')}
+                  {sense.synonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.synonyms.length - 5}</span>}
+                </span>
+              )}
+              {sense.antonyms.length > 0 && (
+                <span>
+                  <span className="font-medium">反</span>{' '}
+                  {sense.antonyms.slice(0, 5).join(' · ')}
+                  {sense.antonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.antonyms.length - 5}</span>}
+                </span>
+              )}
+            </div>
           )}
         </div>
       )}

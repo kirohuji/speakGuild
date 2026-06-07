@@ -28,6 +28,7 @@ export interface DictionarySense {
   intraClusterRank: number;
   tags: string[];
   subsenses: DictionarySense[];
+  frequency?: 'common' | 'uncommon';
 }
 
 export interface DictionaryCluster {
@@ -38,6 +39,11 @@ export interface DictionaryCluster {
   rank: number;
 }
 
+export interface DictionaryWordForm {
+  word: string;
+  tags: string[];
+}
+
 export interface DictionaryEntry {
   word: string;
   language: string;
@@ -45,6 +51,8 @@ export interface DictionaryEntry {
   pronunciations: DictionaryPronunciation[];
   senseClusters: DictionaryCluster[];
   senses: DictionarySense[];
+  entrySynonyms: string[];
+  wordForms: DictionaryWordForm[];
   aiReviewed: boolean;
   aiReviewMeta?: {
     reviewedAt: string;

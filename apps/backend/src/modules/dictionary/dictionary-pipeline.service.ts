@@ -138,6 +138,37 @@ export class DictionaryPipelineService {
   }
 
   // ════════════════════════════════════════════════════════════
+  // Extract entry-level meta: synonyms, word forms
+  // ════════════════════════════════════════════════════════════
+
+  extractEntryMeta(raw: FreeDictApiResponse): {
+    entrySynonyms: string[];
+    wordForms: { word: string; tags: string[] }[];
+  } {
+    const entrySynonyms: string[] = [];
+    const wordForms: { word: string; tags: string[] }[] = [];
+    const seenSyns = new Set<string>();
+    const seenForms = new Set<string>();
+
+    for (const entry of raw.entries) {
+      for (const s of entry.synonyms ?? []) {
+        const key = s.toLowerCase();
+        if (!seenSyns.has(key)) { seenSyns.add(key); entrySynonyms.push(s); }
+      }
+      for (const f of entry.forms ?? []) {
+        const key = f.word.toLowerCase();
+        if (!seenForms.has(key)) { seenForms.add(key); wordForms.push(f); }
+      }
+    }
+
+    // Cap synonyms at 30
+    return {
+      entrySynonyms: entrySynonyms.slice(0, 30),
+      wordForms: wordForms.slice(0, 20),
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
   // Stage 1: Rule Filter (降噪 + POS 预分桶)
   // ════════════════════════════════════════════════════════════
 
@@ -147,7 +178,8 @@ export class DictionaryPipelineService {
     // Flatten all entries → senses + subsenses
     for (let ei = 0; ei < raw.entries.length; ei++) {
       const entry = raw.entries[ei];
-      const flatten = (senses: typeof entry.senses) => {
+      const flatten = (senses: typeof entry.senses, baseIdx: number = 0) => {
+        let idx = baseIdx;
         for (const s of senses) {
           if (!s.definition || s.definition.trim().length === 0) continue;
           rawSenses.push({
@@ -160,9 +192,12 @@ export class DictionaryPipelineService {
             antonyms: s.antonyms ?? [],
             translations: s.translations ?? [],
             entryIndex: ei,
+            senseIndex: idx,
           });
-          if (s.subsenses?.length) flatten(s.subsenses);
+          idx++;
+          if (s.subsenses?.length) idx = flatten(s.subsenses, idx);
         }
+        return idx;
       };
       flatten(entry.senses);
     }
@@ -197,10 +232,8 @@ export class DictionaryPipelineService {
       }
     }
 
-    // Cap at MAX_SENSES (discard lowest quality: fewest examples)
-    const capped = deduped
-      .sort((a, b) => b.examples.length - a.examples.length)
-      .slice(0, MAX_SENSES);
+    // Cap at MAX_SENSES — preserve original Wiktionary order (primary meanings first)
+    const capped = deduped.slice(0, MAX_SENSES);
 
     // POS pre-bucketing
     const buckets: SenseBuckets = { noun: [], verb: [], adj: [], other: [] };
@@ -440,36 +473,13 @@ Return ONLY a JSON object (no markdown):
       }
     }
 
-    // Also translate cluster labels (centroids) — batch all at once
-    const untranslatedClusters = clusters.filter((c) => c.label.length > 0);
-    if (untranslatedClusters.length > 0) {
-      try {
-        const provider = this.getDeepSeekProvider();
-        const labelItems = untranslatedClusters.map((c, i) => `[${i}] ${c.label}`).join('\n');
-        const { text } = await generateText({
-          model: provider('deepseek-chat'),
-          prompt: `Translate these English cluster labels to concise Simplified Chinese (zh-CN). Keep each translation short (2-6 characters).
-
-${labelItems}
-
-Return ONLY a JSON object (no markdown):
-{
-  "labels": { "0": "动物", "1": "动作", "2": "食物" }
-}`,
-          temperature: 0,
-          maxOutputTokens: 500,
-        });
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const parsed = JSON.parse(cleaned);
-        const labels = parsed.labels ?? {};
-        for (const [idx, label] of Object.entries(labels)) {
-          const ci = parseInt(idx, 10);
-          if (untranslatedClusters[ci] && label) {
-            untranslatedClusters[ci].label = String(label);
-          }
-        }
-      } catch (err: any) {
-        this.logger.warn(`Cluster label translation failed: ${err.message}`);
+    // Update cluster labels to use first sense's zh translation
+    for (const c of clusters) {
+      const firstZh = c.senses[0]?.translations?.zh;
+      if (firstZh && firstZh.length <= 12) {
+        c.label = firstZh;
+      } else if (firstZh) {
+        c.label = firstZh.substring(0, 10) + '…';
       }
     }
   }
@@ -500,7 +510,7 @@ Return ONLY a JSON object (no markdown):
       })),
     }));
 
-    const prompt = `Review this English dictionary entry (source: ${sourceUrl}) for quality.
+    const prompt = `Review this English dictionary entry (source: ${sourceUrl}) for quality and classify sense frequency.
 
 ## Current clustered senses:
 ${JSON.stringify(clusterSummary, null, 2)}
@@ -511,7 +521,9 @@ ${JSON.stringify(clusterSummary, null, 2)}
 3. Wrong POS assignment?
 4. Unnatural or archaic example sentences?
 5. Missing or inaccurate zh-CN translations?
-6. Mislabeled clusters (label doesn't represent the group)?
+6. **Cluster label quality**: The cluster label MUST be a short (1-4 Chinese characters) category name that represents the PRIMARY/COMMON meaning of the group. Examples: "动物", "金融", "动作", "食物", "工具", "情感". If the current label is wrong, too long, or represents an obscure meaning, provide a corrected label via labelFixes.
+7. **Frequency classification**: Mark each sense as "common" (everyday usage, learners should know) or "uncommon" (rare, archaic, specialized, dialectal, or extremely niche). Most senses should be "common" — only mark truly obscure ones as "uncommon".
+8. **Sense ordering**: Within each cluster, common, primary meanings should come FIRST. Reorder sense IDs so that the most important/everyday meanings are at the top, and obscure/slang/derogatory senses are pushed down. The "orderedSenseIds" array should list ALL sense IDs in the cluster in the correct order.
 
 Return ONLY a JSON object (no markdown):
 {
@@ -520,6 +532,8 @@ Return ONLY a JSON object (no markdown):
   "posFixes": [{ "senseId": "...", "correctedPOS": "noun" }],
   "translationFixes": [{ "senseId": "...", "field": "definitionZh", "corrected": "修正后的中文" }],
   "labelFixes": [{ "clusterId": "...", "correctedLabel": "BETTER_LABEL" }],
+  "frequencyMarks": [{ "senseId": "...", "frequency": "uncommon" }],
+  "senseReorderings": [{ "clusterId": "...", "orderedSenseIds": ["id1", "id2", ...] }],
   "issuesFound": 0
 }`;
 
@@ -620,12 +634,32 @@ Return ONLY a JSON object (no markdown):
       count++;
     }
 
-    // Re-rank clusters by size after modifications
+    // Frequency marks
+    for (const f of patch.frequencyMarks ?? []) {
+      const entry = allSenses.get(f.senseId);
+      if (!entry) continue;
+      entry.sense.frequency = f.frequency;
+      count++;
+    }
+
+    // Sense reorderings (AI decides the correct order within each cluster)
+    for (const r of patch.senseReorderings ?? []) {
+      const cluster = clusters.find((c) => c.id === r.clusterId);
+      if (!cluster || !r.orderedSenseIds?.length) continue;
+      const orderMap = new Map(r.orderedSenseIds.map((id, i) => [id, i]));
+      cluster.senses.sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999));
+      cluster.senses.forEach((s, i) => (s.intraClusterRank = i + 1));
+      count++;
+    }
+
+    // Re-rank: common senses first, then uncommon; within each group by example quality
     clusters.sort((a, b) => b.senses.length - a.senses.length);
     clusters.forEach((c, i) => (c.rank = i + 1));
-    // Re-rank senses within each cluster
     for (const c of clusters) {
       c.senses.sort((a, b) => {
+        const aCommon = a.frequency !== 'uncommon' ? 0 : 1;
+        const bCommon = b.frequency !== 'uncommon' ? 0 : 1;
+        if (aCommon !== bCommon) return aCommon - bCommon;
         const aHasHigh = a.examples.some((e) => e.relevance === 'high') ? 1 : 0;
         const bHasHigh = b.examples.some((e) => e.relevance === 'high') ? 1 : 0;
         return bHasHigh - aHasHigh;

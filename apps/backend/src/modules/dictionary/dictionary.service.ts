@@ -33,6 +33,8 @@ export class DictionaryService {
         pronunciations: cached.pronunciations,
         senseClusters: cached.senseClusters,
         senses: cached.senses,
+        entrySynonyms: cached.entrySynonyms,
+        wordForms: cached.wordForms,
         aiReviewed: cached.aiReviewed,
       };
     }
@@ -57,6 +59,9 @@ export class DictionaryService {
     }
 
     const sourceUrl = raw.source?.url ?? '';
+
+    // ── Extract entry-level meta ──
+    const { entrySynonyms, wordForms } = this.pipeline.extractEntryMeta(raw);
 
     // ── Stage 1: Rule Filter ──
     const buckets = this.pipeline.ruleFilter(raw);
@@ -99,6 +104,8 @@ export class DictionaryService {
         pronunciations: pronunciations as any,
         senseClusters: clusters as any,
         senses: allSenses as any,
+        entrySynonyms: entrySynonyms as any,
+        wordForms: wordForms as any,
         rawEntry: raw as any,
         pipelineVersion: '1.0',
         aiReviewed: true,
@@ -109,6 +116,8 @@ export class DictionaryService {
         pronunciations: pronunciations as any,
         senseClusters: clusters as any,
         senses: allSenses as any,
+        entrySynonyms: entrySynonyms as any,
+        wordForms: wordForms as any,
         rawEntry: raw as any,
         pipelineVersion: '1.0',
         aiReviewed: true,
@@ -128,6 +137,8 @@ export class DictionaryService {
       pronunciations: entry.pronunciations,
       senseClusters: entry.senseClusters,
       senses: entry.senses,
+      entrySynonyms: entry.entrySynonyms,
+      wordForms: entry.wordForms,
       aiReviewed: entry.aiReviewed,
     };
   }
@@ -147,7 +158,8 @@ export class DictionaryService {
         where,
         select: {
           word: true, language: true, sourceUrl: true, pronunciations: true,
-          senseClusters: true, senses: true, aiReviewed: true, aiReviewMeta: true,
+          senseClusters: true, senses: true, entrySynonyms: true, wordForms: true,
+          aiReviewed: true, aiReviewMeta: true,
           pipelineVersion: true, createdAt: true, updatedAt: true,
         },
         skip: (page - 1) * pageSize,
