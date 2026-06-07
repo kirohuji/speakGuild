@@ -85,7 +85,16 @@ export interface VocabItem {
   id: string
   word: string
   meaning: string
+  partOfSpeech?: string | null
+  phoneticUs?: string | null
+  phoneticUk?: string | null
+  audioUsUrl?: string | null
+  audioUkUrl?: string | null
+  definitionEn?: string | null
+  synonyms?: string[]
+  examples?: Array<{ en: string; zh?: string; note?: string | null; level?: string }>
   description: string | null
+  difficulty?: string
 }
 
 export interface ChunkItem {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BookOpen,
@@ -7,6 +7,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ArrowLeftRight,
+  ExternalLink,
+  FileText,
   Layers,
   ListMusic,
   Loader2,
@@ -25,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
-import { lookupWord, getBestPhonetic, getFirstAudio, type DictEntry } from '@/lib/dictionary-api'
+import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { useWordsStore } from '@/stores/assets.store'
 import { expressionApi, type TopicDetail } from '../api/english-practice-api'
@@ -35,6 +38,16 @@ type VocabularyInsight = {
   id: string
   word: string
   meaning?: string
+  partOfSpeech?: string | null
+  phoneticUs?: string | null
+  phoneticUk?: string | null
+  audioUsUrl?: string | null
+  audioUkUrl?: string | null
+  definitionEn?: string | null
+  synonyms?: string[]
+  examples?: Array<{ en: string; zh?: string; note?: string | null; level?: string }>
+  description?: string | null
+  difficulty?: string
   sceneName?: string
 }
 
@@ -64,6 +77,135 @@ type PatternInsight = {
 }
 
 export type LearningInsightItem = VocabularyInsight | ChunkInsight | PatternInsight
+
+type DictionaryPronunciation = {
+  type: 'uk' | 'us'
+  ipa: string
+  audioUrl?: string
+  isPreferred: boolean
+}
+
+type DictionaryExample = {
+  en: string
+  zh?: string
+  relevance?: string
+}
+
+type DictionarySense = {
+  id: string
+  definition: string
+  partOfSpeech: string
+  examples: DictionaryExample[]
+  synonyms: string[]
+  antonyms: string[]
+  translations?: { zh?: string }
+  frequency?: 'common' | 'uncommon'
+}
+
+type DictionaryCluster = {
+  id: string
+  label: string
+  posBucket: string
+  senses: DictionarySense[]
+  rank: number
+}
+
+type DictionaryEntry = {
+  word: string
+  sourceUrl?: string
+  pronunciations: DictionaryPronunciation[]
+  senseClusters: DictionaryCluster[]
+  entrySynonyms: string[]
+  wordForms: Array<{ word: string; tags: string[] }>
+}
+
+const dictionaryCache = new Map<string, DictionaryEntry | null>()
+
+const POS_LABELS_CN: Record<string, string> = {
+  noun: '名',
+  verb: '动',
+  adj: '形',
+  adv: '副',
+  pronoun: '代',
+  preposition: '介',
+  conjunction: '连',
+  interjection: '叹',
+  determiner: '限',
+  article: '冠',
+  other: '',
+}
+
+const POS_LABELS: Record<string, string> = {
+  noun: 'n.',
+  verb: 'v.',
+  adj: 'adj.',
+  adv: 'adv.',
+  pronoun: 'pron.',
+  preposition: 'prep.',
+  conjunction: 'conj.',
+  interjection: 'interj.',
+  determiner: 'det.',
+  article: 'art.',
+  other: '',
+}
+
+async function lookupManagedDictionary(word: string): Promise<DictionaryEntry | null> {
+  const key = word.toLowerCase().trim()
+  if (!key) return null
+  if (dictionaryCache.has(key)) return dictionaryCache.get(key)!
+  try {
+    const entry = await get<DictionaryEntry>(`/dictionary/${encodeURIComponent(key)}`)
+    dictionaryCache.set(key, entry)
+    return entry
+  } catch {
+    dictionaryCache.set(key, null)
+    return null
+  }
+}
+
+function parseDefinitionLines(definitionEn?: string | null) {
+  if (!definitionEn) return []
+  return definitionEn
+    .split(/;\s*|\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
+
+function parseZhQualifiers(zh: string): { qualifiers: string[]; text: string } {
+  const match = zh.match(/^（([^）]+)）\s*/)
+  if (!match) return { qualifiers: [], text: zh }
+  return {
+    qualifiers: match[1].split(/[，,、]/).map((item) => item.trim()).filter(Boolean),
+    text: zh.slice(match[0].length),
+  }
+}
+
+function parseEnQualifiers(en: string): { qualifiers: string[]; text: string } {
+  const match = en.match(/^\(([^)]+)\)\s*/)
+  if (!match) return { qualifiers: [], text: en }
+  return {
+    qualifiers: match[1].split(/[,，、]/).map((item) => item.trim()).filter(Boolean),
+    text: en.slice(match[0].length),
+  }
+}
+
+function highlightWord(text: string, word: string): ReactNode {
+  if (!word || !text) return text
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const isCJK = /^[\u4e00-\u9fff]+$/.test(word)
+  const pattern = isCJK ? escaped : `\\b${escaped}\\b`
+  const regex = new RegExp(`(${pattern})`, 'gi')
+  return text.split(regex).map((part, index) =>
+    regex.test(part) ? <strong key={index} className="font-semibold text-foreground">{part}</strong> : part,
+  )
+}
+
+function clusterName(cluster: DictionaryCluster) {
+  const zh = cluster.senses?.[0]?.translations?.zh
+  if (zh && zh.length <= 12) return zh
+  if (zh) return `${zh.substring(0, 10)}...`
+  return cluster.label.length > 40 ? `${cluster.label.substring(0, 37)}...` : cluster.label
+}
 
 interface LearningInsightDialogProps {
   items: LearningInsightItem[]
@@ -262,34 +404,45 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
 
 function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hideSave?: boolean }) {
   const { t } = useTranslation()
-  const [dictData, setDictData] = useState<DictEntry[] | null | 'loading'>('loading')
-  const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>('loading')
+  const [dictData, setDictData] = useState<DictionaryEntry | null | 'loading'>(null)
+  const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>(null)
+  const [activeTab, setActiveTab] = useState('meaning')
+  const [showDictionary, setShowDictionary] = useState(false)
+  const [dictionaryRequested, setDictionaryRequested] = useState(false)
   const [saving, setSaving] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { addWord, hasWord } = useWordsStore()
 
   useEffect(() => {
-    setDictData('loading')
-    setEnrichData('loading')
-    lookupWord(item.word).then((data) => {
-      setDictData(data)
-      const summary = data
-        ? data
-            .flatMap((entry) => entry.meanings)
-            .slice(0, 3)
-            .map((meaning) => `${meaning.partOfSpeech}: ${meaning.definitions[0]?.definition ?? ''}`)
-            .join(' | ')
-        : item.meaning
-      enrichWord(item.word, summary).then(setEnrichData).catch(() => setEnrichData(null))
-    })
-  }, [item.word, item.meaning])
+    setDictData(null)
+    setEnrichData(null)
+    setActiveTab('meaning')
+    setShowDictionary(false)
+    setDictionaryRequested(false)
+  }, [item.word])
 
-  const dictEntries = Array.isArray(dictData) ? dictData : []
-  const mainEntry = dictEntries[0]
-  const phonetic = mainEntry ? getBestPhonetic(mainEntry) : null
-  const audioUrl = mainEntry ? getFirstAudio(mainEntry.phonetics) : null
-  const meanings = dictEntries.flatMap((entry) => entry.meanings)
+  useEffect(() => {
+    if (!dictionaryRequested || dictData === 'loading' || dictData) return
+    setDictData('loading')
+    lookupManagedDictionary(item.word).then(setDictData)
+  }, [dictionaryRequested, dictData, item.word])
+
+  useEffect(() => {
+    const needsFallback = !item.examples?.length && !item.description
+    if (!needsFallback || enrichData) return
+    setEnrichData('loading')
+    const summary = [item.meaning, item.definitionEn].filter(Boolean).join(' | ')
+    enrichWord(item.word, summary).then(setEnrichData).catch(() => setEnrichData(null))
+  }, [enrichData, item.definitionEn, item.description, item.examples?.length, item.meaning, item.word])
+
   const enriched = enrichData !== 'loading' ? enrichData : null
+  const localExamples = item.examples?.filter((example) => example.en?.trim()) ?? []
+  const fallbackExamples = !localExamples.length && enriched?.examples?.length ? enriched.examples : []
+  const examples = localExamples.length ? localExamples : fallbackExamples
+  const definitionLines = parseDefinitionLines(item.definitionEn)
+  const usAudio = item.audioUsUrl
+  const ukAudio = item.audioUkUrl
+  const dictEntry = dictData !== 'loading' ? dictData : null
   const saved = hasWord(item.word)
 
   const playAudio = useCallback((url: string) => {
@@ -306,118 +459,312 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     setSaving(false)
   }
 
+  const openDictionary = () => {
+    setDictionaryRequested(true)
+    setShowDictionary(true)
+  }
+
+  const changeTab = (value: string) => {
+    setActiveTab(value)
+    if (value !== 'meaning') setShowDictionary(false)
+  }
+
   return (
-    <Tabs defaultValue="meaning" className="flex h-full flex-col">
-      {/* 固定在 Content 顶部的 Tab 栏 */}
-      <div className="shrink-0 px-5 pt-3 md:px-6">
+    <Tabs value={activeTab} onValueChange={changeTab} className="flex h-full flex-col">
+      <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-3 md:px-6">
         <TabsList>
           <TabsTrigger value="meaning">{t('insight.meaning')}</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
+        {activeTab === 'meaning' && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={showDictionary ? () => setShowDictionary(false) : openDictionary}
+            className="h-9 shrink-0 gap-1.5 rounded-md px-2.5 text-xs"
+          >
+            <ArrowLeftRight className="size-3.5" />
+            {showDictionary ? '返回释义' : '查看词典'}
+          </Button>
+        )}
       </div>
 
-      {/* Tab 内容区：relative 容器 + absolute 叠加，避免 flex 布局冲突 */}
-      <div className="flex-1 min-h-0 relative">
-        {/* 释义 Tab */}
+      <div className="relative min-h-0 flex-1">
         <TabsContent value="meaning" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
-          <ScrollArea className="h-full">
-            <div className="space-y-5 py-3">
-              {/* 音标 / 发音 / 生词本 */}
-              <div className="flex flex-wrap items-center gap-2">
-                {phonetic && (
-                  <span className="rounded-md bg-muted px-2 py-1 font-mono text-sm text-muted-foreground">
-                    {phonetic}
-                  </span>
-                )}
-                {audioUrl && (
-                  <Button variant="outline" size="sm" onClick={() => playAudio(audioUrl)} className="gap-1.5">
-                    <Volume2 className="size-4" /> {t('insight.pronunciation')}
-                  </Button>
-                )}
-                {!hideSave && (
-                <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
-                  {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
-                </Button>
+          {showDictionary ? (
+            <ScrollArea className="h-full">
+              <div className="space-y-4 py-4">
+                {dictData === 'loading' ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
+                  </div>
+                ) : dictEntry ? (
+                  <ManagedDictionaryView entry={dictEntry} onPlay={playAudio} />
+                ) : (
+                  <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">{t('insight.noDictData')}</p>
                 )}
               </div>
+            </ScrollArea>
+          ) : (
+            <ScrollArea className="h-full">
+              <div className="space-y-4 py-4">
+                <section className="space-y-3 rounded-md border border-border/70 bg-background p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.partOfSpeech && <Badge variant="outline">{item.partOfSpeech}</Badge>}
+                    {item.phoneticUs && <PhoneticPill label="US" value={item.phoneticUs} audioUrl={usAudio} onPlay={playAudio} />}
+                    {item.phoneticUk && <PhoneticPill label="UK" value={item.phoneticUk} audioUrl={ukAudio} onPlay={playAudio} />}
+                  </div>
+                  <p className="text-base font-semibold leading-7 text-foreground">{item.meaning ?? t('insight.noDefinition')}</p>
+                  {!hideSave && (
+                    <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
+                      {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
+                      {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
+                    </Button>
+                  )}
+                </section>
 
-              {/* 记忆提示 */}
-              {enrichData === 'loading' ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-32" />
-                  <Skeleton className="h-16 w-full" />
-                </div>
-              ) : enriched?.memoryTip ? (
-                <div className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-                  <Brain className="mt-0.5 size-4 shrink-0" />
-                  <span>{t('insight.memoryTip')}：{enriched.memoryTip}</span>
-                </div>
-              ) : null}
+                {item.description ? (
+                  <section className="rounded-md bg-muted/55 p-4">
+                    <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                      <FileText className="size-4" /> 讲解/描述
+                    </h3>
+                    <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">{item.description}</p>
+                  </section>
+                ) : enriched?.memoryTip ? (
+                  <section className="flex gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                    <Brain className="mt-0.5 size-4 shrink-0" />
+                    <span>{t('insight.memoryTip')}：{enriched.memoryTip}</span>
+                  </section>
+                ) : enrichData === 'loading' ? (
+                  <Skeleton className="h-20 w-full rounded-md" />
+                ) : null}
 
-              {/* 词典释义 */}
-              {dictData === 'loading' ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-14 w-full" />
-                  ))}
-                </div>
-              ) : meanings.length > 0 ? (
-                <div className="space-y-3">
-                  {meanings.slice(0, 5).map((meaning, index) => (
-                    <div key={`${meaning.partOfSpeech}-${index}`} className="rounded-xl border border-border p-3">
-                      <Badge variant="outline" className="mb-2">
-                        {meaning.partOfSpeech}
-                      </Badge>
-                      <div className="space-y-2">
-                        {meaning.definitions.slice(0, 3).map((definition, defIndex) => (
-                          <p key={defIndex} className="text-sm leading-relaxed text-foreground">
-                            {definition.definition}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
-                  {item.meaning ?? t('insight.noDefinition')}
-                </p>
-              )}
-            </div>
-          </ScrollArea>
+                {definitionLines.length > 0 && (
+                  <section className="space-y-2">
+                    <h3 className="text-sm font-semibold text-foreground">英文释义</h3>
+                    {definitionLines.slice(0, 4).map((line, index) => (
+                      <p key={index} className="rounded-md border border-border/60 p-3 text-sm leading-6 text-muted-foreground">{line}</p>
+                    ))}
+                  </section>
+                )}
+              </div>
+            </ScrollArea>
+          )}
         </TabsContent>
 
-        {/* 例句 Tab */}
         <TabsContent value="examples" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
-              {enrichData === 'loading' ? (
+              {enrichData === 'loading' && examples.length === 0 ? (
                 <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                  ))}
+                  {[1, 2].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
                 </div>
-              ) : enriched?.examples?.length ? (
-                enriched.examples.slice(0, 6).map((example, index) => (
-                  <ExampleBlock
-                    key={index}
-                    en={example.en}
-                    zh={example.zh}
-                    note={example.note}
-                    level={example.level}
-                  />
+              ) : examples.length ? (
+                examples.slice(0, 6).map((example, index) => (
+                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} />
                 ))
               ) : (
-                <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
-                  {t('insight.noExamples')}
-                </p>
+                <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">{t('insight.noExamples')}</p>
               )}
             </div>
           </ScrollArea>
         </TabsContent>
       </div>
     </Tabs>
+  )
+}
+
+function PhoneticPill({
+  label,
+  value,
+  audioUrl,
+  onPlay,
+}: {
+  label: 'US' | 'UK'
+  value: string
+  audioUrl?: string | null
+  onPlay: (url: string) => void
+}) {
+  return (
+    <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-muted px-2.5 font-mono text-xs text-muted-foreground">
+      <span className="font-sans text-[10px] font-semibold text-foreground/70">{label}</span>
+      <span>{value}</span>
+      {audioUrl && (
+        <button
+          type="button"
+          onClick={() => onPlay(audioUrl)}
+          className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          aria-label={`${label} pronunciation`}
+        >
+          <Volume2 className="size-3.5" />
+        </button>
+      )}
+    </span>
+  )
+}
+
+function ManagedDictionaryView({
+  entry,
+  onPlay,
+}: {
+  entry: DictionaryEntry
+  onPlay: (url: string) => void
+}) {
+  const ukPron = entry.pronunciations?.find((p) => p.type === 'uk' && p.isPreferred)
+    ?? entry.pronunciations?.find((p) => p.type === 'uk')
+  const usPron = entry.pronunciations?.find((p) => p.type === 'us' && p.isPreferred)
+    ?? entry.pronunciations?.find((p) => p.type === 'us')
+  const clusters = (entry.senseClusters ?? [])
+    .slice()
+    .sort((a, b) => a.rank - b.rank)
+  const allSenseCount = clusters.reduce((sum, cluster) => sum + (cluster.senses?.length ?? 0), 0)
+
+  return (
+    <div className="overflow-hidden rounded-md border border-border/70 bg-background">
+      <section className="space-y-3 px-4 py-4">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <h3 className="text-xl font-bold leading-tight text-foreground">{entry.word}</h3>
+          <span className="font-mono text-xs text-muted-foreground">
+            {[ukPron?.ipa, usPron?.ipa].filter(Boolean).join('  ')}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {usPron?.ipa && <PhoneticPill label="US" value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
+          {ukPron?.ipa && <PhoneticPill label="UK" value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
+          {!usPron?.ipa && !ukPron?.ipa && <span className="text-sm text-muted-foreground">暂无词典音标</span>}
+        </div>
+
+        {entry.sourceUrl && (
+          <a
+            href={entry.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] leading-4 text-muted-foreground/70 transition-colors hover:text-foreground"
+          >
+            <ExternalLink className="size-3" />
+            Wiktionary CC BY-SA 4.0
+          </a>
+        )}
+
+        {entry.wordForms?.length > 0 && (
+          <div className="flex items-baseline gap-2">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground/60">变形</span>
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+              {entry.wordForms.slice(0, 10).map((form) => (
+                <span key={`${form.word}-${form.tags.join('-')}`} className="inline-flex items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-foreground/85">{form.word}</span>
+                  {form.tags?.length > 0 && <span className="text-[11px] text-muted-foreground/55">{form.tags.join(', ')}</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {entry.entrySynonyms?.length > 0 && (
+          <div className="flex items-baseline gap-2">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground/60">近义</span>
+            <p className="text-[13px] leading-5 text-foreground/70">
+              {entry.entrySynonyms.slice(0, 16).join(', ')}
+              {entry.entrySynonyms.length > 16 && <span className="text-muted-foreground/45"> +{entry.entrySynonyms.length - 16}</span>}
+            </p>
+          </div>
+        )}
+      </section>
+
+      {clusters.length > 0 ? (
+        <div className="divide-y divide-border/60">
+          {clusters.slice(0, 5).map((cluster) => (
+            <DictionaryClusterSection key={cluster.id} cluster={cluster} word={entry.word} />
+          ))}
+        </div>
+      ) : (
+        <p className="border-t border-border/60 px-4 py-4 text-sm text-muted-foreground">暂无词典释义</p>
+      )}
+
+      <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground/55">
+        <span>{allSenseCount} 个义项</span>
+        <span>内容来自后台词典</span>
+      </div>
+    </div>
+  )
+}
+
+function DictionaryClusterSection({ cluster, word }: { cluster: DictionaryCluster; word: string }) {
+  const commonSenses = cluster.senses.filter((sense) => sense.frequency !== 'uncommon')
+  const senses = commonSenses.length ? commonSenses : cluster.senses
+  const cnLabel = POS_LABELS_CN[cluster.posBucket] ?? ''
+  const enLabel = POS_LABELS[cluster.posBucket] ?? cluster.posBucket
+
+  return (
+    <section className="px-4 py-4">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">{cnLabel || enLabel}</Badge>
+        <span className="text-[11px] leading-4 text-muted-foreground/70">{clusterName(cluster)}</span>
+        {cluster.senses.length > 1 && <span className="text-[11px] text-muted-foreground/45">{cluster.senses.length} 义</span>}
+      </div>
+      <div className="space-y-3">
+        {senses.slice(0, 4).map((sense, index) => (
+          <DictionarySenseRow key={sense.id} sense={sense} index={index + 1} word={word} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function DictionarySenseRow({ sense, index, word }: { sense: DictionarySense; index: number; word: string }) {
+  const { qualifiers: zhQuals, text: cleanZh } = parseZhQualifiers(sense.translations?.zh ?? '')
+  const { qualifiers: enQuals, text: cleanEn } = parseEnQualifiers(sense.definition ?? '')
+  const examples = sense.examples?.slice(0, 2) ?? []
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 min-w-5 text-right text-xs tabular-nums text-muted-foreground/45">{index}.</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <p className="text-sm font-medium leading-6 text-foreground">{cleanZh || sense.definition.substring(0, 80)}</p>
+            {zhQuals.map((qualifier) => (
+              <span key={qualifier} className="rounded border border-border/60 px-1 py-0 text-[10px] leading-4 text-muted-foreground">
+                {qualifier}
+              </span>
+            ))}
+            {sense.frequency === 'uncommon' && (
+              <span className="rounded bg-muted px-1 py-0 text-[10px] leading-4 text-muted-foreground/65">不常用</span>
+            )}
+          </div>
+          {sense.definition && (
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <p className="text-xs leading-5 text-muted-foreground">{cleanEn}</p>
+              {enQuals.map((qualifier) => (
+                <span key={qualifier} className="rounded border border-border/60 px-1 py-0 text-[10px] leading-4 text-muted-foreground">
+                  {qualifier}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {examples.length > 0 && (
+        <div className="ml-7 space-y-2 border-l border-border/50 pl-3">
+          {examples.map((example, exampleIndex) => (
+            <div key={`${sense.id}-${exampleIndex}`} className="min-w-0">
+              <p className="text-xs italic leading-5 text-muted-foreground/80">{highlightWord(example.en, word)}</p>
+              {example.zh && <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground/70">{highlightWord(example.zh, word)}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(sense.synonyms.length > 0 || sense.antonyms.length > 0) && (
+        <div className="ml-7 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground/60">
+          {sense.synonyms.length > 0 && <span><span className="font-medium">近</span> {sense.synonyms.slice(0, 5).join(' · ')}</span>}
+          {sense.antonyms.length > 0 && <span><span className="font-medium">反</span> {sense.antonyms.slice(0, 5).join(' · ')}</span>}
+        </div>
+      )}
+    </div>
   )
 }
 

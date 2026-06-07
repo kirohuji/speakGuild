@@ -80,7 +80,21 @@ export interface TopicDetail {
       defaultPosition: 'left' | 'center' | 'right'
     }>
   }
-  vocabularies: { id: string; word: string; meaning: string }[]
+  vocabularies: Array<{
+    id: string
+    word: string
+    meaning: string
+    partOfSpeech?: string | null
+    phoneticUs?: string | null
+    phoneticUk?: string | null
+    audioUsUrl?: string | null
+    audioUkUrl?: string | null
+    definitionEn?: string | null
+    synonyms?: string[]
+    examples?: Array<{ en: string; zh?: string; note?: string | null; level?: string }>
+    description?: string | null
+    difficulty?: string
+  }>
   activeChunks: {
     id: string
     text: string

@@ -177,6 +177,16 @@ export class EnglishPracticeService {
         id: tv.vocab.id,
         word: tv.vocab.word,
         meaning: tv.vocab.meaning,
+        partOfSpeech: tv.vocab.partOfSpeech,
+        phoneticUs: tv.vocab.phoneticUs,
+        phoneticUk: tv.vocab.phoneticUk,
+        audioUsUrl: tv.vocab.audioUsUrl,
+        audioUkUrl: tv.vocab.audioUkUrl,
+        definitionEn: tv.vocab.definitionEn,
+        synonyms: tv.vocab.synonyms,
+        examples: tv.vocab.examples,
+        description: tv.vocab.description,
+        difficulty: tv.vocab.difficulty,
       })),
       activeChunks: topic.activeChunks.map((tc) => {
         const progress = progressMap.get(tc.chunkId);

@@ -531,7 +531,21 @@ export function PracticeSessionPage() {
     if (!detail) return []
     const sceneName = detail.scene.title
     const words: LearningInsightItem[] = detail.vocabularies.map((v) => ({
-      kind: 'word', id: `word:${v.id}`, word: v.word, meaning: v.meaning, sceneName,
+      kind: 'word',
+      id: `word:${v.id}`,
+      word: v.word,
+      meaning: v.meaning,
+      partOfSpeech: v.partOfSpeech,
+      phoneticUs: v.phoneticUs,
+      phoneticUk: v.phoneticUk,
+      audioUsUrl: v.audioUsUrl,
+      audioUkUrl: v.audioUkUrl,
+      definitionEn: v.definitionEn,
+      synonyms: v.synonyms,
+      examples: v.examples,
+      description: v.description,
+      difficulty: v.difficulty,
+      sceneName,
     }))
     const chunks: LearningInsightItem[] = detail.activeChunks.map((c) => ({
       kind: 'chunk', id: `chunk:${c.id}`, text: c.text, meaning: c.meaning,

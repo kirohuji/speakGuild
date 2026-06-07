@@ -334,7 +334,16 @@ export class LearningService {
             id: v.id,
             word: v.word,
             meaning: v.meaning,
+            partOfSpeech: v.partOfSpeech,
+            phoneticUs: v.phoneticUs,
+            phoneticUk: v.phoneticUk,
+            audioUsUrl: v.audioUsUrl,
+            audioUkUrl: v.audioUkUrl,
+            definitionEn: v.definitionEn,
+            synonyms: v.synonyms,
+            examples: v.examples,
             description: v.description,
+            difficulty: v.difficulty,
           });
         }
       }
@@ -409,7 +418,16 @@ export class LearningService {
         id: v.id,
         word: v.word,
         meaning: v.meaning,
+        partOfSpeech: v.partOfSpeech,
+        phoneticUs: v.phoneticUs,
+        phoneticUk: v.phoneticUk,
+        audioUsUrl: v.audioUsUrl,
+        audioUkUrl: v.audioUkUrl,
+        definitionEn: v.definitionEn,
+        synonyms: v.synonyms,
+        examples: v.examples,
         description: v.description,
+        difficulty: v.difficulty,
       })),
 
       chunks: chunks.map((c) => {
