@@ -210,29 +210,146 @@ function clusterName(cluster: DictionaryCluster) {
   return cluster.label.length > 40 ? `${cluster.label.substring(0, 37)}...` : cluster.label
 }
 
+/** 解析 description 文本中的 **标题：** 段落结构 */
+function parseDescriptionSections(text: string): { title: string; body: string }[] {
+  if (!text.trim()) return []
+
+  // 按 **xxx：** 或 **xxx:** 分割（注意：冒号在 ** 内部）
+  const parts = text.split(/(\*\*[^*]+\*\*\s*)/g)
+  const sections: { title: string; body: string }[] = []
+
+  for (let i = 0; i < parts.length; i++) {
+    const trimmed = parts[i].trim()
+    if (!trimmed) continue
+
+    // 匹配 **标题：** 或 **标题:**
+    const headerMatch = trimmed.match(/^\*\*([^*]+)\*\*$/)
+    if (headerMatch) {
+      // 去掉标题末尾的 ： 或 :
+      const title = headerMatch[1].trim().replace(/[：:]\s*$/, '')
+      const body = i + 1 < parts.length ? parts[i + 1].trim() : ''
+      sections.push({ title, body })
+      i++ // 跳过已消费的 body
+    } else {
+      // 第一个标题之前的前导文字
+      sections.push({ title: '', body: trimmed })
+    }
+  }
+
+  return sections
+}
+
+/** 将 body 文本拆成条目：按换行或按 "1. 2. 3." / "- " 模式 */
+function splitBodyItems(body: string): { prefix?: string; content: string }[] {
+  // 有换行：仅当行含列表标记时才拆成条目，否则保持为整段文本
+  if (body.includes('\n')) {
+    const lines = body.split(/\n+/).filter(Boolean)
+    const hasListMarker = lines.some((line) => /^(\d+[.、)]\s+|[-•]\s+)/.test(line.trim()))
+    if (hasListMarker) {
+      return lines.map((line) => {
+        const trimmed = line.trim()
+        const numMatch = trimmed.match(/^(\d+)[.、)]\s+/)
+        const bulletMatch = trimmed.match(/^[-•]\s+/)
+        if (numMatch) return { prefix: numMatch[1], content: trimmed.slice(numMatch[0].length) }
+        if (bulletMatch) return { content: trimmed.slice(bulletMatch[0].length) }
+        return { content: trimmed }
+      })
+    }
+    // 无列表标记 → 作为单段文本
+    return [{ content: body.trim() }]
+  }
+
+  // 无换行但含编号列表："1. xxx 2. xxx"
+  const numberedSplit = body.split(/(?=\d+[.、)]\s+)/g).filter(Boolean)
+  if (numberedSplit.length > 1) {
+    return numberedSplit.map((part) => {
+      const trimmed = part.trim()
+      const numMatch = trimmed.match(/^(\d+)[.、)]\s+/)
+      if (numMatch) return { prefix: numMatch[1], content: trimmed.slice(numMatch[0].length) }
+      return { content: trimmed }
+    })
+  }
+
+  // 无换行但含 - 列表："- xxx - yyy"
+  const bulletSplit = body.split(/(?=[-•]\s+)/g).filter(Boolean)
+  if (bulletSplit.length > 1) {
+    return bulletSplit.map((part) => {
+      const trimmed = part.trim()
+      const bulletMatch = trimmed.match(/^[-•]\s+/)
+      if (bulletMatch) return { content: trimmed.slice(bulletMatch[0].length) }
+      return { content: trimmed }
+    })
+  }
+
+  return [{ content: body.trim() }]
+}
+
+/** 渲染 section body：单段文本、有序列表（编号）或无序列表（bullet） */
+function SectionBody({ text }: { text: string }) {
+  const items = splitBodyItems(text)
+
+  if (items.length === 1 && !items[0].prefix) {
+    return <p className="text-sm leading-6 text-muted-foreground">{renderInline(items[0].content)}</p>
+  }
+
+  // 全部有数字前缀 → 有序列表
+  const isOrdered = items.every((item) => item.prefix)
+
+  if (isOrdered) {
+    return (
+      <ol className="space-y-1.5" style={{ listStyleType: 'none', paddingLeft: 0 }}>
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+            <span className="shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/50">{item.prefix}.</span>
+            <span className="min-w-0">{renderInline(item.content)}</span>
+          </li>
+        ))}
+      </ol>
+    )
+  }
+
+  // 无序列表
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+          <span className="mt-[7px] block size-1 shrink-0 rounded-full bg-muted-foreground/25" />
+          <span className="min-w-0">{renderInline(item.content)}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** 行内渲染：处理 `code` 和 **bold** */
+function renderInline(text: string): ReactNode {
+  const parts = text.split(/(\*\*.+?\*\*|`[^`]+`)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold text-foreground/85">{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={i} className="rounded bg-muted px-1 py-0.5 text-[12px] text-foreground/80">{part.slice(1, -1)}</code>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
 function RichText({ text }: { text: string }) {
-  const normalized = text
-    .replace(/\*\*(.+?)\*\*/g, '\n**$1** ')
-    .trim()
+  const sections = parseDescriptionSections(text)
+
+  if (sections.length === 0) return null
 
   return (
-    <div className="space-y-2 text-sm leading-6 text-muted-foreground">
-      {normalized.split(/\n+/).filter(Boolean).map((line, lineIndex) => {
-        const parts = line.split(/(\*\*.+?\*\*|`.+?`)/g).filter(Boolean)
-        return (
-          <p key={`${line}-${lineIndex}`}>
-            {parts.map((part, partIndex) => {
-              if (part.startsWith('**') && part.endsWith('**')) {
-                return <strong key={partIndex} className="font-semibold text-foreground/85">{part.slice(2, -2)}</strong>
-              }
-              if (part.startsWith('`') && part.endsWith('`')) {
-                return <code key={partIndex} className="rounded bg-muted px-1 py-0.5 text-[12px] text-foreground/80">{part.slice(1, -1)}</code>
-              }
-              return <span key={partIndex}>{part}</span>
-            })}
-          </p>
-        )
-      })}
+    <div className="space-y-3">
+      {sections.map((section, i) => (
+        <div key={i} className="rounded-lg border border-border/50 bg-muted/20 px-3.5 py-3">
+          {section.title && (
+            <h4 className="mb-2 text-xs font-semibold tracking-wide text-foreground/80">{section.title}</h4>
+          )}
+          <SectionBody text={section.body} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -622,17 +739,15 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="py-4">
-              <section className="overflow-hidden rounded-md border border-border/70 bg-background px-4 py-4">
-                {descriptionText ? (
-                  <RichText text={descriptionText} />
-                ) : enriched?.memoryTip ? (
-                  <p className="text-sm leading-6 text-muted-foreground">{enriched.memoryTip}</p>
-                ) : enrichData === 'loading' ? (
-                  <Skeleton className="h-16 w-full rounded-md" />
-                ) : (
-                  <p className="text-sm text-muted-foreground">暂无讲解/描述</p>
-                )}
-              </section>
+              {descriptionText ? (
+                <RichText text={descriptionText} />
+              ) : enriched?.memoryTip ? (
+                <p className="text-sm leading-6 text-muted-foreground">{enriched.memoryTip}</p>
+              ) : enrichData === 'loading' ? (
+                <Skeleton className="h-16 w-full rounded-md" />
+              ) : (
+                <p className="text-sm text-muted-foreground">暂无讲解/描述</p>
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
