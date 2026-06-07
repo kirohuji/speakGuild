@@ -341,15 +341,17 @@ function RichText({ text }: { text: string }) {
   if (sections.length === 0) return null
 
   return (
-    <div className="space-y-3">
-      {sections.map((section, i) => (
-        <div key={i} className="rounded-lg border border-border/50 bg-muted/20 px-3.5 py-3">
-          {section.title && (
-            <h4 className="mb-2 text-xs font-semibold tracking-wide text-foreground/80">{section.title}</h4>
-          )}
-          <SectionBody text={section.body} />
-        </div>
-      ))}
+    <div className="overflow-hidden rounded-md border border-border/70 bg-background">
+      <div className="divide-y divide-border/60">
+        {sections.map((section, i) => (
+          <div key={i} className="px-4 py-3.5">
+            {section.title && (
+              <h4 className="mb-2 text-xs font-semibold tracking-wide text-foreground/80">{section.title}</h4>
+            )}
+            <SectionBody text={section.body} />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -857,14 +859,22 @@ function ManagedDictionaryView({
   return (
     <div className="overflow-hidden rounded-md border border-border/70 bg-background">
       <section className="space-y-3 px-4 py-4">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <div className="flex items-center justify-between gap-2">
           <h3 className="text-xl font-bold leading-tight text-foreground">{entry.word}</h3>
+          {uncommonCount > 0 && (
+            <button
+              type="button"
+              onClick={onToggleUncommon}
+              className="shrink-0 rounded border border-border/60 px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              {showUncommon ? '隐藏不常用' : `显示不常用 ${uncommonCount}`}
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {usPron?.ipa && <PhoneticPill label="美" value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
-          {ukPron?.ipa && <PhoneticPill label="英" value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
-          {!usPron?.ipa && !ukPron?.ipa && <span className="text-sm text-muted-foreground">暂无词典音标</span>}
+          {false && usPron?.ipa && <PhoneticPill label="美" value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
+          {false && ukPron?.ipa && <PhoneticPill label="英" value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
         </div>
 
         {entry.wordForms?.length > 0 && (
@@ -917,18 +927,7 @@ function ManagedDictionaryView({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground/55">
-        <div className="flex flex-wrap items-center gap-2">
-          <span>{allSenseCount} 个义项</span>
-          {uncommonCount > 0 && (
-            <button
-              type="button"
-              onClick={onToggleUncommon}
-              className="rounded border border-border/60 px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-            >
-              {showUncommon ? '隐藏不常用' : `显示不常用 ${uncommonCount}`}
-            </button>
-          )}
-        </div>
+        <span>{allSenseCount} 个义项</span>
         {entry.sourceUrl ? (
           <a
             href={entry.sourceUrl}
