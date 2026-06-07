@@ -73,7 +73,7 @@ function deriveMeaning(definitionsEn: string): string {
   if (Object.keys(zhByPos).length === 0) return ''
   return Object.entries(zhByPos)
     .map(([pos, zhs]) => `${pos} ${zhs.join('；')}`)
-    .join('；')
+    .join(' / ')
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -444,7 +444,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       const idx = items.findIndex(v => v.id === edit.id)
       setCurrentIdx(idx >= 0 ? idx : 0)
     } else {
-      setForm({ word: '', meaning: '', difficulty: 'L1', sortOrder: 0, synonyms: [], examples: [] })
+      setForm({ word: '', meaning: '', difficulty: 'L1', synonyms: [], examples: [] })
       setCurrentIdx(0)
     }
   }, [edit, open, items])
@@ -578,7 +578,15 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       ) || []
       const exsForAi = examples.map((e: any) => ({ en: e.en }))
 
-      // 并行调用 AI 翻译
+      // 词典音标先写入表单（即时反馈），AI 随后校核覆盖
+      const dictPhoneticUk = entry.phonetics?.[1]?.text ?? entry.phonetics?.[0]?.text ?? '';
+      setForm((prev: any) => ({
+        ...prev,
+        phoneticUs: phonetic || prev.phoneticUs || '',
+        phoneticUk: dictPhoneticUk || prev.phoneticUk || '',
+      }))
+
+      // 并行调用 AI 翻译 + 音标校核
       let aiResult: any = null
       try {
         const { aiEnrichVocabulary } = await import('../api-content-admin')
@@ -586,8 +594,19 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
           word: form.word.trim(),
           definitions: defs,
           examples: exsForAi,
+          phoneticUs: phonetic || undefined,
+          phoneticUk: (entry.phonetics?.length > 1 ? entry.phonetics[1]?.text : undefined) || undefined,
         })
       } catch { /* AI 翻译失败不影响词典结果 */ }
+
+      // AI 音标覆盖词典音标（AI 校核后更准确的欧路词典 IPA 风格）
+      if (aiResult?.phoneticUs || aiResult?.phoneticUk) {
+        setForm((prev: any) => ({
+          ...prev,
+          phoneticUs: aiResult.phoneticUs || prev.phoneticUs,
+          phoneticUk: aiResult.phoneticUk || prev.phoneticUk,
+        }))
+      }
 
       // 合并词典 + AI 翻译
       const defsWithZh = defs.map((d, i) => {
@@ -595,18 +614,17 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         return zh ? `${d}  [${zh}]` : d
       }).join('; ')
 
-      const translatedExs = examples.map((ex: any, i: number) => ({
-        ...ex,
-        zh: aiResult?.exampleTranslations?.[i] || ex.zh || '',
-      }))
+      // AI 生成的新例句（替换词典例句，不是合并）
+      const generatedExs = aiResult?.generatedExamples?.length
+        ? aiResult.generatedExamples
+        : examples  // AI 失败时兜底用词典例句
 
       const diffFields: Record<string, any> = {
-        phoneticUs: phonetic,
         audioUsUrl: usAudio,
         audioUkUrl: ukAudio,
         definitionEn: defsWithZh,
         partOfSpeech: pos,
-        examples: translatedExs,
+        examples: generatedExs,
       }
       if (aiResult?.description) diffFields.description = aiResult.description
       // 优先 AI 生成的简洁中文释义，兜底推导
@@ -699,7 +717,18 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         word: form.word.trim(),
         definitions: defs,
         examples: exs,
+        phoneticUs: form.phoneticUs || undefined,
+        phoneticUk: form.phoneticUk || undefined,
       })
+
+      // AI 音标直接应用到表单（无需 diff 审核）
+      if (result.phoneticUs || result.phoneticUk) {
+        setForm((prev: any) => ({
+          ...prev,
+          ...(result.phoneticUs ? { phoneticUs: result.phoneticUs } : {}),
+          ...(result.phoneticUk ? { phoneticUk: result.phoneticUk } : {}),
+        }))
+      }
 
       // Merge definition translations back (format: "POS: def  [zh]")
       const defsWithZh = defs.map((d, i) => {
@@ -707,16 +736,15 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         return zh ? `${d}  [${zh}]` : d
       }).join('; ')
 
-      // Merge example translations
-      const translatedExs = (form.examples ?? []).map((ex: any, i: number) => ({
-        ...ex,
-        zh: ex.zh || result.exampleTranslations[i] || '',
-      }))
+      // AI 生成的新例句（替换现有例句）
+      const newExamples = result.generatedExamples?.length
+        ? result.generatedExamples
+        : (form.examples ?? [])
 
       const diffFields: Record<string, any> = {
         definitionEn: defsWithZh,
         description: result.description,
-        examples: translatedExs,
+        examples: newExamples,
         meaning: result.meaning || deriveMeaning(defsWithZh),
       }
 
@@ -865,18 +893,12 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             </div>
           </div>
 
-          {/* Difficulty + SortOrder */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label htmlFor="v-diff">难度</Label>
-              <Select id="v-diff" value={form.difficulty ?? 'L1'} onChange={e => setForm({ ...form, difficulty: e.target.value })}>
-                {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="v-sort">排序</Label>
-              <Input id="v-sort" type="number" value={form.sortOrder ?? 0} onChange={e => setForm({ ...form, sortOrder: Number(e.target.value) })} />
-            </div>
+          {/* Difficulty */}
+          <div>
+            <Label htmlFor="v-diff">难度</Label>
+            <Select id="v-diff" value={form.difficulty ?? 'L1'} onChange={e => setForm({ ...form, difficulty: e.target.value })}>
+              {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
+            </Select>
           </div>
 
           {/* English definition — formatted display + textarea fallback */}
@@ -884,12 +906,6 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             <div className="flex items-center justify-between mb-1">
               <Label htmlFor="v-defen">英文释义</Label>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-[11px] h-6 text-muted-foreground hover:text-foreground"
-                  disabled={enriching || !form.word?.trim() || !form.definitionEn?.trim()}
-                  onClick={handleAiEnrich}>
-                  {enriching ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Sparkles className="mr-1 size-3" />}
-                  AI 翻译补全
-                </Button>
                 {dictEntry && (
                   <button onClick={() => setDictPreview(!dictPreview)}
                     className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
@@ -1057,7 +1073,8 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
               </div>
               {Object.entries(pendingDiff.fields).map(([key, val]: [string, any]) => {
                 const label: Record<string, string> = {
-                  meaning: '中文释义', phoneticUs: '美式音标', audioUsUrl: '美式音频', audioUkUrl: '英式音频',
+                  meaning: '中文释义', phoneticUs: '美式音标', phoneticUk: '英式音标',
+                  audioUsUrl: '美式音频', audioUkUrl: '英式音频',
                   definitionEn: '英文释义', partOfSpeech: '词性', description: '讲解', examples: '例句',
                 }
                 const fmtDefs = (v: any) => {
@@ -1100,6 +1117,12 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 disabled={dictLoading || !form.word?.trim()}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
                 {dictLoading ? '翻译中...' : '查词典+AI'}
+              </Button>
+              <Button variant="outline" size="sm"
+                disabled={enriching || !form.word?.trim() || !form.definitionEn?.trim()}
+                onClick={handleAiEnrich}>
+                {enriching ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Sparkles className="mr-1 size-3.5" />}
+                AI 翻译补全
               </Button>
               <Button variant="outline" size="sm" onClick={handleXfdLookup}
                 disabled={xfdLoading || !form.word?.trim()}>

@@ -895,12 +895,14 @@ export class ContentAdminController {
     return this.prisma.vocabulary.delete({ where: { id } });
   }
 
-  /** AI 增强词汇：DeepSeek 翻译 + 讲解生成 */
+  /** AI 增强词汇：DeepSeek 翻译 + 例句生成 + 音标校核 + 讲解 */
   @Post('library/vocabularies/ai-enrich')
   async aiEnrichVocabulary(@Req() req: Request, @Body() dto: {
     word: string;
     definitions: string[];
     examples: { en: string }[];
+    phoneticUs?: string;
+    phoneticUk?: string;
   }) {
     await this.requireAdmin(req);
     try {
@@ -910,57 +912,133 @@ export class ContentAdminController {
       const model = client.chat('deepseek-chat');
 
       const defLines = dto.definitions.map((d, i) => `${i + 1}. ${d}`).join('\n');
-      const exLines = dto.examples.map((e, i) => `${i + 1}. ${e.en}`).join('\n');
+      const dictExLines = dto.examples.map((e, i) => `${i + 1}. ${e.en}`).join('\n');
+      const phoneticUsInput = dto.phoneticUs || '(未提供)';
+      const phoneticUkInput = dto.phoneticUk || '(未提供)';
+
+      // 查询数据库中与本词相关的句块和例句，作为 AI 生成例句的参考
+      let chunkRefs = '';
+      try {
+        const relatedChunks = await this.prisma.chunk.findMany({
+          where: {
+            text: { contains: dto.word, mode: 'insensitive' },
+          },
+          include: { examples: { take: 2, orderBy: { sortOrder: 'asc' } } },
+          take: 5,
+        });
+        if (relatedChunks.length > 0) {
+          chunkRefs = '\n## Reference chunks from our learning platform (use as inspiration for example style — do NOT copy verbatim):\n';
+          for (const c of relatedChunks) {
+            chunkRefs += `- Chunk: "${c.text}" (${c.meaning})`;
+            if (c.examples.length > 0) {
+              chunkRefs += ` | Examples: ${c.examples.map(e => `"${e.en}"`).join(', ')}`;
+            }
+            chunkRefs += '\n';
+          }
+        }
+      } catch { /* 查询失败不影响主流程 */ }
 
       const { text } = await generateText({
         model,
         prompt: `You are a senior bilingual lexicographer building a Chinese-English learner's dictionary. Your readers are Chinese speakers learning English at intermediate level (B1-B2 CEFR). Your work must be accurate, natural, and pedagogically useful.
 
 ## Task
-Given an English word and its dictionary definitions, produce Chinese translations and learning notes.
+Given an English word and its dictionary definitions, produce Chinese translations, generate NEW original example sentences, clean IPA phonetics, and learning notes.
 
 ## Input
 Word: "${dto.word}"
 
+Current US phonetic: ${phoneticUsInput}
+Current UK phonetic: ${phoneticUkInput}
+
 English definitions (one per line, format "POS: definition"):
 ${defLines || '(none)'}
 
-Example sentences:
-${exLines || '(none)'}
-
+Dictionary example sentences (for reference only — do NOT translate these, generate NEW ones):
+${dictExLines || '(none)'}
+${chunkRefs}
 ## Output Schema
 Return exactly a JSON object with these fields — no markdown, no code fences, just the raw JSON:
 
 {
-  "definitionTranslations": ["数组，长度与 definitions 相同。每条英文释义的自然中文翻译。保留括号说明但需地道。例如 verb: To cause (someone) to be acquainted -> 使（某人）认识（另一个人）；介绍"],
-  "exampleTranslations": ["数组，长度与 examples 相同。自然口语化中文。保留原文语气。例如 She introduced me to her family. -> 她把我介绍给了她的家人。"],
-  "meaning": "按词性分组的简洁中文关键词。格式：POS 关键词1；关键词2 / POS 关键词3。每词2-8字。务必覆盖所有义项不合并。例：v. 介绍；使认识；正式推出；引入；推行 / n. 介绍；引见；入门。反面例（丢失义项）：v. 介绍；引入",
-  "description": "中文学习笔记，轻量 Markdown。结构按需选用：**核心含义：** 一句话概括。**用法提示：** 关键搭配，英文用反引号。**易错点：** 中国学习者常见错误。**常见搭配：** 列表形式（- 开头）。**同义词辨析：** 可选。语气亲切如老师。小节间空行分隔。80-200字。无释义时返回空字符串"
+  "phoneticUs": "标准美式IPA音标，带 / / 斜杠。如无输入则根据单词知识生成。例：/ˌɪntrəˈduːs/",
+  "phoneticUk": "标准英式IPA音标，带 / / 斜杠。如无输入则根据单词知识生成。例：/ˌɪntrəˈdjuːs/",
+  "definitionTranslations": ["数组，长度与 definitions 相同。每条英文释义的自然中文翻译。保留括号说明但需地道。"],
+  "generatedExamples": [
+    { "en": "原创英文例句（不要照抄词典例句或参考句块，要全新创作）", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
+  ],
+  "meaning": "按词性分组的简洁中文关键词。同一词性只写一个POS前缀，所有该词性义项用；连接。不同词性用 / 分隔。例（纯名词）：n. 接收；接待；招待会；前台；反应；待遇。例（多词性）：n. 介绍；引见；入门 / v. 介绍；引入；推行。每词2-8字。务必覆盖所有义项不合并。反面例（POS重复）：n. 接收 / n. 接待 / n. 前台 ← 错误，应该 n. 接收；接待；前台",
+  "description": "中文学习笔记，轻量 Markdown。结构按需：**核心含义：**/**用法提示：**/**易错点：**/**常见搭配：**（- 列表）/**同义词辨析：**。英文用反引号。语气亲切。80-200字。无释义时返回空字符串"
 }
+
+## Example Generation Rules
+- Generate 3-5 original example sentences that demonstrate the word's MAIN senses.
+- Each example must be a NEW sentence you create — do NOT copy or translate the dictionary examples.
+- If reference chunks are provided above, use them as style/level inspiration, but write completely different sentences.
+- Vary difficulty: at least one basic (A2), one intermediate (B1), one advanced (B2).
+- Examples should reflect real-life scenarios relevant to Chinese learners.
+- Each example must have a natural Chinese translation.
+
+## Phonetic Standards (欧路词典风格 — 严格遵守)
+Use CLEAN standard IPA inside /slashes/. Even if the input phonetics look like IPA, you MUST normalize them to the convention below:
+
+### Character-level corrections (MANDATORY):
+- /ɹ/ → /r/ (English R is written as r in 欧路/牛津/朗文 style)
+- Syllabic consonants → vowel+consonant: /n̩/→/ən/, /l̩/→/əl/, /m̩/→/əm/
+- Remove syllable boundary dots: /ˈsɛp.ʃən/ → /ˈsepʃən/
+- /ɝ/ → /ɜːr/ (US), /ɜː/ (UK)
+- /ɚ/ → /ər/ (US), /ə/ (UK)
+- /oʊ/ → /əʊ/ (UK only; US keeps /oʊ/)
+- /ɛ/ → /e/ (欧路/牛津 use /e/ for the DRESS vowel, not /ɛ/)
+
+### Stress marks
+- Primary stress: ˈ BEFORE the stressed syllable (e.g., /rɪˈsepʃən/)
+- Secondary stress: ˌ BEFORE the syllable (e.g., /ˌɪntrəˈdʌkʃən/)
+
+### US vs UK specific rules
+- US: rhotic — /r/ always pronounced after vowels. Write /ər/, /ɜːr/, /ɪr/, etc.
+- UK: non-rhotic — /r/ only before vowels. Write /ə/, /ɜː/, /ɪə/, etc.
+- US: /ɑ/ for the LOT vowel. UK: /ɒ/ for the LOT vowel.
+- US: /æ/ for the BATH vowel. UK: /ɑː/ for the BATH vowel in words like "dance", "glass".
+- US: /u/ after t/d/n. UK: /juː/ after t/d/n (e.g., UK /ˈtjuːn/, US /ˈtun/).
+
+### Examples
+- Input /ɹɪˈsɛp.ʃn̩/ → US /rɪˈsepʃən/, UK /rɪˈsepʃən/
+- Input /ˈɪntɹəˌdus/ → US /ˈɪntrəˌdus/, UK /ˈɪntrəˌdjuːs/
+- Input /hɛˈloʊ/ → US /heˈloʊ/, UK /heˈləʊ/
+- Input /ˈwɔːtɚ/ → US /ˈwɔːtər/, UK /ˈwɔːtə/
+
+### CRITICAL: Always output phonetics even if input is missing or malformed.
+If input is non-IPA (e.g., respelling "in-truh-DOOS"), generate correct IPA from your knowledge.
 
 ## Quality Principles
 1. Translations must sound like natural Chinese, not machine-translated English.
-2. Definition translations may include clarifications in parentheses, but meaning keywords should be bare.
-3. The meaning field must cover EVERY sense — count the definitions and ensure none are dropped.
-4. Description should focus on what's HARD for Chinese learners, not obvious facts.
-5. If the word has only one simple sense, the description can be very short (1-2 lines).`,
-        temperature: 0.3,
-        maxOutputTokens: 2000,
+2. The meaning field must cover EVERY sense — no merging.
+3. Description should focus on what's HARD for Chinese learners.
+4. Generated examples must be DIVERSE — different sentence structures, contexts, and registers.`,
+        temperature: 0.4,
+        maxOutputTokens: 2500,
       });
 
       let cleaned = text
         .replace(/```json\s*/gi, '')
         .replace(/```\s*/g, '')
-        .replace(/\/\/[^\n]*/g, '')   // 去掉 // 注释
-        .replace(/\/\*[\s\S]*?\*\//g, '') // 去掉 /* */ 注释
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
         .trim();
       const result = JSON.parse(cleaned);
       return {
         code: 200,
         message: 'success',
         data: {
+          phoneticUs: result.phoneticUs ?? '',
+          phoneticUk: result.phoneticUk ?? '',
           definitionTranslations: result.definitionTranslations ?? [],
-          exampleTranslations: result.exampleTranslations ?? [],
+          generatedExamples: (result.generatedExamples ?? []).map((e: any) => ({
+            en: e.en || '',
+            zh: e.zh || '',
+            level: e.level || 'intermediate',
+          })),
           meaning: result.meaning ?? '',
           description: result.description ?? '',
         },

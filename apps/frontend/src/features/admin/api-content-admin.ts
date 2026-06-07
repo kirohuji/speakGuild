@@ -493,8 +493,10 @@ export function enrichVocabulary(id: string): Promise<VocabularyFull> {
 }
 
 export interface AiEnrichResult {
+  phoneticUs: string;
+  phoneticUk: string;
   definitionTranslations: string[];
-  exampleTranslations: string[];
+  generatedExamples: { en: string; zh: string; level: string }[];
   meaning: string;
   description: string;
 }
@@ -503,6 +505,8 @@ export function aiEnrichVocabulary(data: {
   word: string;
   definitions: string[];
   examples: { en: string }[];
+  phoneticUs?: string;
+  phoneticUk?: string;
 }): Promise<AiEnrichResult> {
   return post('/admin/content/library/vocabularies/ai-enrich', data);
 }
