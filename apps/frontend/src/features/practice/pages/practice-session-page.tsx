@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
@@ -246,6 +247,7 @@ export function PracticeSessionPage() {
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
   const [savingTexts, setSavingTexts] = useState<Set<string>>(new Set())
+  const [confirmAbandonOpen, setConfirmAbandonOpen] = useState(false)
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
@@ -840,6 +842,8 @@ export function PracticeSessionPage() {
     setCompletedObjectives(new Set())
     setUsedChunks(new Set())
     setAiHints([])
+    setTurnFeedback(null)
+    setRestartKey((k) => k + 1)
     setPhase('prepare')
   }
 
@@ -1096,7 +1100,7 @@ export function PracticeSessionPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setPhase('prepare')}
+            onClick={() => setConfirmAbandonOpen(true)}
             className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
@@ -1206,6 +1210,28 @@ export function PracticeSessionPage() {
         onOpenChange={setInsightOpen}
         onIndexChange={setInsightIndex}
       />
+
+      {/* 中途退出确认 */}
+      <Dialog open={confirmAbandonOpen} onOpenChange={setConfirmAbandonOpen}>
+        <DialogContent className="max-w-sm rounded-2xl w-[90vw]">
+          <DialogHeader>
+            <DialogTitle>放弃本次练习？</DialogTitle>
+            <DialogDescription>中途退出不会计入记录，当前进度将丢失。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="!flex-row justify-center gap-2">
+            <Button variant="outline" onClick={() => setConfirmAbandonOpen(false)}>继续练习</Button>
+            <Button
+              onClick={() => {
+                setConfirmAbandonOpen(false)
+                setTurnFeedback(null)
+                resetPractice()
+              }}
+            >
+              放弃
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
     )
   }

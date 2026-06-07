@@ -167,7 +167,9 @@ function TappableWord({
     if (!el) return
 
     const onTouchStart = (e: TouchEvent) => {
-      e.preventDefault() // 阻止浏览器默认长按菜单
+      // 滚动中无法取消，跳过长按检测
+      if (!e.cancelable) return
+      e.preventDefault()
       movedRef.current = false
       clear()
       longPressRef.current = setTimeout(() => {
@@ -183,7 +185,7 @@ function TappableWord({
     }
 
     const onTouchEnd = (e: TouchEvent) => {
-      e.preventDefault()
+      if (e.cancelable) e.preventDefault()
       clear()
     }
 

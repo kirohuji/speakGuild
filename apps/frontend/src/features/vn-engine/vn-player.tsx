@@ -296,7 +296,7 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
       fallbackRef.current = fallback
       app.stage.addChild(root)
       root.addChild(fallback)
-      app.canvas.className = 'absolute inset-0 h-full w-full'
+      app.canvas.className = 'absolute inset-0 h-full w-full pointer-events-none'
       host.appendChild(app.canvas)
       resizeObserver = new ResizeObserver(layout)
       resizeObserver.observe(host)
@@ -528,7 +528,7 @@ export function VnPlayer({
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
   const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && settings.displayMode !== 'chat'
-  const canSubmitInput = !!onSubmitInput && isWaiting && !activeLine?.isUser && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
+  const canSubmitInput = reviewLineIndex === null && !!onSubmitInput && isWaiting && !activeLine?.isUser && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
 
   useEffect(() => {
     if (autoAdvanceTimerRef.current !== null) window.clearTimeout(autoAdvanceTimerRef.current)
@@ -610,14 +610,15 @@ export function VnPlayer({
         className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', canInteract && 'cursor-pointer', stageClassName)}
         onClick={() => {
           if (!canInteract) return
-          if (reviewLineIndex !== null) {
-            setReviewLineIndex(null)
-            return
-          }
+          // 打字机播放中 → 优先跳过动画，无论是否在回看模式
           if (isTyping) {
             if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
             typewriterTimerRef.current = null
             setDisplayedText(fullText)
+            return
+          }
+          if (reviewLineIndex !== null) {
+            setReviewLineIndex(null)
             return
           }
           onAdvance?.()
@@ -625,14 +626,14 @@ export function VnPlayer({
         onKeyDown={(event) => {
           if (canInteract && (event.key === 'Enter' || event.key === ' ')) {
             event.preventDefault()
-            if (reviewLineIndex !== null) {
-              setReviewLineIndex(null)
-              return
-            }
             if (isTyping) {
               if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
               typewriterTimerRef.current = null
               setDisplayedText(fullText)
+              return
+            }
+            if (reviewLineIndex !== null) {
+              setReviewLineIndex(null)
               return
             }
             onAdvance?.()
