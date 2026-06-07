@@ -492,6 +492,21 @@ export function enrichVocabulary(id: string): Promise<VocabularyFull> {
   return post(`/admin/content/library/vocabularies/${id}/enrich`);
 }
 
+export interface AiEnrichResult {
+  definitionTranslations: string[];
+  exampleTranslations: string[];
+  meaning: string;
+  description: string;
+}
+
+export function aiEnrichVocabulary(data: {
+  word: string;
+  definitions: string[];
+  examples: { en: string }[];
+}): Promise<AiEnrichResult> {
+  return post('/admin/content/library/vocabularies/ai-enrich', data);
+}
+
 // ─── Chunk ───────────────────────────────────────────────────
 
 export function listLibraryChunks(params?: {

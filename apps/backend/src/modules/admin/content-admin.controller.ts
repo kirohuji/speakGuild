@@ -24,6 +24,8 @@ import { requireAuthSession } from '../auth/session.util';
 import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
 import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 import { DictionaryService } from '../dictionary/dictionary.service';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateText } from 'ai';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -891,6 +893,81 @@ export class ContentAdminController {
   async deleteLibraryVocabulary(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.prisma.vocabulary.delete({ where: { id } });
+  }
+
+  /** AI 增强词汇：DeepSeek 翻译 + 讲解生成 */
+  @Post('library/vocabularies/ai-enrich')
+  async aiEnrichVocabulary(@Req() req: Request, @Body() dto: {
+    word: string;
+    definitions: string[];
+    examples: { en: string }[];
+  }) {
+    await this.requireAdmin(req);
+    try {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+
+      const defLines = dto.definitions.map((d, i) => `${i + 1}. ${d}`).join('\n');
+      const exLines = dto.examples.map((e, i) => `${i + 1}. ${e.en}`).join('\n');
+
+      const { text } = await generateText({
+        model,
+        prompt: `You are a senior bilingual lexicographer building a Chinese-English learner's dictionary. Your readers are Chinese speakers learning English at intermediate level (B1-B2 CEFR). Your work must be accurate, natural, and pedagogically useful.
+
+## Task
+Given an English word and its dictionary definitions, produce Chinese translations and learning notes.
+
+## Input
+Word: "${dto.word}"
+
+English definitions (one per line, format "POS: definition"):
+${defLines || '(none)'}
+
+Example sentences:
+${exLines || '(none)'}
+
+## Output Schema
+Return exactly a JSON object with these fields — no markdown, no code fences, just the raw JSON:
+
+{
+  "definitionTranslations": ["数组，长度与 definitions 相同。每条英文释义的自然中文翻译。保留括号说明但需地道。例如 verb: To cause (someone) to be acquainted -> 使（某人）认识（另一个人）；介绍"],
+  "exampleTranslations": ["数组，长度与 examples 相同。自然口语化中文。保留原文语气。例如 She introduced me to her family. -> 她把我介绍给了她的家人。"],
+  "meaning": "按词性分组的简洁中文关键词。格式：POS 关键词1；关键词2 / POS 关键词3。每词2-8字。务必覆盖所有义项不合并。例：v. 介绍；使认识；正式推出；引入；推行 / n. 介绍；引见；入门。反面例（丢失义项）：v. 介绍；引入",
+  "description": "中文学习笔记，轻量 Markdown。结构按需选用：**核心含义：** 一句话概括。**用法提示：** 关键搭配，英文用反引号。**易错点：** 中国学习者常见错误。**常见搭配：** 列表形式（- 开头）。**同义词辨析：** 可选。语气亲切如老师。小节间空行分隔。80-200字。无释义时返回空字符串"
+}
+
+## Quality Principles
+1. Translations must sound like natural Chinese, not machine-translated English.
+2. Definition translations may include clarifications in parentheses, but meaning keywords should be bare.
+3. The meaning field must cover EVERY sense — count the definitions and ensure none are dropped.
+4. Description should focus on what's HARD for Chinese learners, not obvious facts.
+5. If the word has only one simple sense, the description can be very short (1-2 lines).`,
+        temperature: 0.3,
+        maxOutputTokens: 2000,
+      });
+
+      let cleaned = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .replace(/\/\/[^\n]*/g, '')   // 去掉 // 注释
+        .replace(/\/\*[\s\S]*?\*\//g, '') // 去掉 /* */ 注释
+        .trim();
+      const result = JSON.parse(cleaned);
+      return {
+        code: 200,
+        message: 'success',
+        data: {
+          definitionTranslations: result.definitionTranslations ?? [],
+          exampleTranslations: result.exampleTranslations ?? [],
+          meaning: result.meaning ?? '',
+          description: result.description ?? '',
+        },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
   }
 
   /** 触发单词富化：FreeDictionaryAPI pipeline → DB 缓存 → Vocabulary */

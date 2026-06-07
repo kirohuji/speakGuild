@@ -18,12 +18,62 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { AdminPagination } from '../components/admin-pagination'
 import * as api from '../api-content-admin'
+import { DictionaryPreview } from '../components/dictionary-preview'
+import { getDictionaryEntry } from '../api-dictionary'
+import type { DictionaryEntry } from '../api-dictionary'
 
 const DIFFICULTIES = ['L1', 'L2', 'L3', 'L4', 'L5']
 const DIFFICULTY_COLORS: Record<string, string> = {
   L1: 'bg-emerald-100 text-emerald-700', L2: 'bg-blue-100 text-blue-700',
   L3: 'bg-amber-100 text-amber-700', L4: 'bg-orange-100 text-orange-700',
   L5: 'bg-red-100 text-red-700',
+}
+
+/** Simple Markdown → HTML for description field */
+function renderMd(text: string): string {
+  return text
+    // 1. 转义 HTML
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // 2. 行内代码 `word` → 高亮英文术语
+    .replace(/`([^`]+)`/g, '<code class="text-[13px] font-medium text-foreground/75 bg-muted px-1 py-0.5 rounded">$1</code>')
+    // 3. 加粗
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-foreground/80">$1</strong>')
+    // 4. 无序列表
+    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    // 5. 自动识别小节标题（注意：/ 易错点：/ 常见搭配/ 用法：/ 提示：）→ 加粗 + 前置间距
+    .replace(/(?:^|(?<=\。)|(?<=<br\/>))\s*(注意|易错点|常见搭配|用法|提示|同义词|反义词|辨析)([:：])/g,
+      '<br/><strong class="font-semibold text-foreground/75">$1$2</strong> ')
+    // 6. 双换行 → 段落分隔
+    .replace(/\n\n/g, '</p><p class="mb-2">')
+    // 7. 单换行 → 行内换行
+    .replace(/\n/g, '<br/>')
+    // 8. 包裹为段落
+    .replace(/^/, '<p class="mb-2 leading-relaxed">')
+    .replace(/$/, '</p>');
+}
+
+/** 从英文释义中提取按词性分组的中文意思（兜底——去括号注释） */
+function deriveMeaning(definitionsEn: string): string {
+  if (!definitionsEn?.includes('; ')) return ''
+  const zhByPos: Record<string, string[]> = {}
+  definitionsEn.split('; ').forEach(d => {
+    const colonIdx = d.indexOf(': ')
+    const posRaw = colonIdx > 0 ? d.slice(0, colonIdx) : ''
+    const pos = posRaw === 'verb' ? 'v.' : posRaw === 'noun' ? 'n.' : posRaw === 'adj' ? 'adj.' : posRaw === 'adv' ? 'adv.' : posRaw
+    const zhMatch = d.match(/\s\s\[(.+?)\]$/)
+    if (zhMatch && pos) {
+      if (!zhByPos[pos]) zhByPos[pos] = []
+      // 去掉括号注释和首尾标点，保留完整核心词
+      const zhClean = zhMatch[1]
+        .replace(/[（(][^)）]*[)）]/g, '')
+        .replace(/^[。，,、\s]+|[。，,、\s]+$/g, '')
+      if (zhClean && !zhByPos[pos].includes(zhClean)) zhByPos[pos].push(zhClean)
+    }
+  })
+  if (Object.keys(zhByPos).length === 0) return ''
+  return Object.entries(zhByPos)
+    .map(([pos, zhs]) => `${pos} ${zhs.join('；')}`)
+    .join('；')
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -370,6 +420,22 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const usAudioRef = useRef<HTMLAudioElement | null>(null)
   const ukAudioRef = useRef<HTMLAudioElement | null>(null)
 
+  // Dictionary preview
+  const [dictEntry, setDictEntry] = useState<DictionaryEntry | null>(null)
+  const [dictPreview, setDictPreview] = useState(false)
+  const [editExamples, setEditExamples] = useState(false)
+
+  // Fetch dictionary entry when word changes
+  useEffect(() => {
+    if (!form.word?.trim() || !open) { setDictEntry(null); return }
+    let cancelled = false
+    getDictionaryEntry(form.word.trim()).then((e: any) => {
+      if (!cancelled && e && e.word) setDictEntry(e)
+      else if (!cancelled) setDictEntry(null)
+    }).catch(() => { if (!cancelled) setDictEntry(null) })
+    return () => { cancelled = true }
+  }, [form.word, open])
+
   // Sync edit → form + index
   useEffect(() => {
     if (!open) return
@@ -415,7 +481,15 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const acceptField = (key: string) => {
     if (!pendingDiff) return
     const newVal = pendingDiff.fields[key]?.new
-    setForm((prev: any) => ({ ...prev, [key]: newVal }))
+    setForm((prev: any) => {
+      const next = { ...prev, [key]: newVal }
+      // 若采用了英文释义，自动推导中文释义
+      if (key === 'definitionEn' && !next.meaning) {
+        const derived = deriveMeaning(newVal)
+        if (derived) next.meaning = derived
+      }
+      return next
+    })
     const remaining = { ...pendingDiff.fields }
     delete remaining[key]
     if (Object.keys(remaining).length === 0) {
@@ -432,6 +506,11 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     const updates: Record<string, any> = {}
     for (const [key, val] of Object.entries(pendingDiff.fields)) {
       updates[key] = (val as any).new
+    }
+    // 若更新了英文释义，自动推导中文释义
+    if (updates.definitionEn && !updates.meaning) {
+      const derived = deriveMeaning(updates.definitionEn)
+      if (derived) updates.meaning = derived
     }
     setForm((prev: any) => ({ ...prev, ...updates }))
     setPendingDiff(null)
@@ -453,14 +532,14 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     finally { setSaving(false) }
   }
 
-  // Step 1: 查词典 (dictionaryapi.dev — 前端直调，免费即时)
+  // Step 1: 查词典 + AI 翻译（合并执行）
   const handleDictionaryLookup = async () => {
     if (!form.word?.trim()) return
     setDictLoading(true)
     try {
       const { lookupWord, getBestPhonetic } = await import('@/lib/dictionary-api')
       const entries = await lookupWord(form.word)
-      if (!entries?.length) { toast.info('词典未收录该词'); return }
+      if (!entries?.length) { toast.info('词典未收录该词'); setDictLoading(false); return }
 
       const entry = entries[0]
       const phonetic = getBestPhonetic(entry) || ''
@@ -491,15 +570,49 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
           }
         })
       )
+      const examples = dictExamples.slice(0, 5)
 
-      showDiff('词典', {
+      // 提取纯英文释义（不含中文），用于 AI 翻译
+      const defs = entry.meanings?.flatMap(m =>
+        m.definitions.map(d => `${m.partOfSpeech}: ${d.definition}`)
+      ) || []
+      const exsForAi = examples.map((e: any) => ({ en: e.en }))
+
+      // 并行调用 AI 翻译
+      let aiResult: any = null
+      try {
+        const { aiEnrichVocabulary } = await import('../api-content-admin')
+        aiResult = await aiEnrichVocabulary({
+          word: form.word.trim(),
+          definitions: defs,
+          examples: exsForAi,
+        })
+      } catch { /* AI 翻译失败不影响词典结果 */ }
+
+      // 合并词典 + AI 翻译
+      const defsWithZh = defs.map((d, i) => {
+        const zh = aiResult?.definitionTranslations?.[i] ?? ''
+        return zh ? `${d}  [${zh}]` : d
+      }).join('; ')
+
+      const translatedExs = examples.map((ex: any, i: number) => ({
+        ...ex,
+        zh: aiResult?.exampleTranslations?.[i] || ex.zh || '',
+      }))
+
+      const diffFields: Record<string, any> = {
         phoneticUs: phonetic,
         audioUsUrl: usAudio,
         audioUkUrl: ukAudio,
-        definitionEn: meanings,
+        definitionEn: defsWithZh,
         partOfSpeech: pos,
-        examples: dictExamples.slice(0, 5),
-      })
+        examples: translatedExs,
+      }
+      if (aiResult?.description) diffFields.description = aiResult.description
+      // 优先 AI 生成的简洁中文释义，兜底推导
+      diffFields.meaning = aiResult?.meaning || deriveMeaning(defsWithZh)
+
+      showDiff('词典+AI', diffFields)
     } catch { toast.error('词典查询失败') }
     finally { setDictLoading(false) }
   }
@@ -569,34 +682,45 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     finally { setMwLoading(false) }
   }
 
-  // Step 5: AI 生成 (翻译 + 补例句 + 讲解)
+  // Step 5: AI 翻译 + 讲解 (DeepSeek) — 独立补全按钮
   const handleAiEnrich = async () => {
     if (!form.word?.trim()) return
     setEnriching(true)
     try {
-      const { enrichWord } = await import('@/lib/practice-ai-api')
-      const enriched = await enrichWord(form.word)
+      const { aiEnrichVocabulary } = await import('../api-content-admin')
 
-      // 只补中文：释义翻译、例句中文翻译、讲解
-      const currentExs: any[] = form.examples ?? []
-      // 翻译已有例句中缺少中文的
-      const aiExamples = enriched.examples ?? []
-      const translatedExs = currentExs.map((ex: any, i: number) => ({
-        ...ex,
-        zh: ex.zh || aiExamples[i]?.zh || '',
-      }))
-      // 如果例句不足 3 条，从 AI 补充
-      const needMore = Math.max(0, 3 - translatedExs.length)
-      const extraExs = aiExamples
-        .filter((e: any) => !currentExs.some((c: any) => c.en === e.en))
-        .slice(0, needMore)
-        .map((e: any) => ({ en: e.en, zh: e.zh, level: e.level || 'intermediate' }))
+      // Parse current definitions from the semicolon-separated string
+      const defs = (form.definitionEn ?? '').split('; ').filter(Boolean)
+      const exs: { en: string }[] = (form.examples ?? []).map((e: any) => ({ en: e.en }))
 
-      showDiff('AI 翻译', {
-        meaning: enriched.chineseTranslation,
-        description: enriched.memoryTip,
-        examples: [...translatedExs, ...extraExs],
+      if (!defs.length && !exs.length) { toast.info('请先查词典获取英文释义'); return }
+
+      const result = await aiEnrichVocabulary({
+        word: form.word.trim(),
+        definitions: defs,
+        examples: exs,
       })
+
+      // Merge definition translations back (format: "POS: def  [zh]")
+      const defsWithZh = defs.map((d, i) => {
+        const zh = result.definitionTranslations[i] ?? ''
+        return zh ? `${d}  [${zh}]` : d
+      }).join('; ')
+
+      // Merge example translations
+      const translatedExs = (form.examples ?? []).map((ex: any, i: number) => ({
+        ...ex,
+        zh: ex.zh || result.exampleTranslations[i] || '',
+      }))
+
+      const diffFields: Record<string, any> = {
+        definitionEn: defsWithZh,
+        description: result.description,
+        examples: translatedExs,
+        meaning: result.meaning || deriveMeaning(defsWithZh),
+      }
+
+      showDiff('AI 翻译', diffFields)
     } catch { toast.error('AI 翻译失败') }
     finally { setEnriching(false) }
   }
@@ -670,7 +794,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? `编辑词汇 (${currentIdx + 1}/${items.length})` : '新增词汇'}</DialogTitle>
-          <DialogDescription>词典 → XF → Wiki → MW → 翻译（中文）</DialogDescription>
+          <DialogDescription>词典+AI（一键查词+翻译）| XF · Wiki · MW 补充查询</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {/* Word + Meaning */}
@@ -685,9 +809,8 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             </div>
           </div>
 
-          {/* PartOfSpeech + Phonetic US + Phonetic UK */}
-          <div className="grid grid-cols-3 gap-3">
-            <div><Label htmlFor="v-pos">词性</Label><Input id="v-pos" value={form.partOfSpeech ?? ''} onChange={e => setForm({ ...form, partOfSpeech: e.target.value })} placeholder="noun" /></div>
+          {/* Phonetic US + Phonetic UK */}
+          <div className="grid grid-cols-2 gap-3">
             <div><Label htmlFor="v-phus">美式音标</Label><Input id="v-phus" value={form.phoneticUs ?? ''} onChange={e => setForm({ ...form, phoneticUs: e.target.value })} placeholder="/ˈdɔːrməˌtɔri/" /></div>
             <div><Label htmlFor="v-phuk">英式音标</Label><Input id="v-phuk" value={form.phoneticUk ?? ''} onChange={e => setForm({ ...form, phoneticUk: e.target.value })} placeholder="/ˈdɔːmɪtri/" /></div>
           </div>
@@ -756,28 +879,170 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             </div>
           </div>
 
-          {/* Definition + Description */}
-          <div><Label htmlFor="v-defen">英文释义</Label><Textarea id="v-defen" value={form.definitionEn ?? ''} onChange={e => setForm({ ...form, definitionEn: e.target.value })} placeholder="A large bedroom for a number of people..." rows={2} /></div>
-          <div><Label htmlFor="v-desc">讲解 / 描述</Label><Textarea id="v-desc" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="用法、搭配、易错点（Markdown）" rows={2} /></div>
+          {/* English definition — formatted display + textarea fallback */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="v-defen">英文释义</Label>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="text-[11px] h-6 text-muted-foreground hover:text-foreground"
+                  disabled={enriching || !form.word?.trim() || !form.definitionEn?.trim()}
+                  onClick={handleAiEnrich}>
+                  {enriching ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Sparkles className="mr-1 size-3" />}
+                  AI 翻译补全
+                </Button>
+                {dictEntry && (
+                  <button onClick={() => setDictPreview(!dictPreview)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    {dictPreview ? '编辑纯文本' : '查看词典预览'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {dictPreview && dictEntry ? (
+              <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+                <DictionaryPreview entry={dictEntry} />
+              </div>
+            ) : form.definitionEn?.includes('; ') ? (
+              (() => {
+                // 解析每条释义：POS, 英文定义, 内联例句, 中文翻译
+                const defs = form.definitionEn.split('; ').map((d: string) => {
+                  const colonIdx = d.indexOf(': ');
+                  const posRaw = colonIdx > 0 ? d.slice(0, colonIdx) : '';
+                  const pos = posRaw === 'verb' ? 'v.' : posRaw === 'noun' ? 'n.' : posRaw === 'adj' ? 'adj.' : posRaw === 'adv' ? 'adv.' : posRaw;
+                  const defWithZh = colonIdx > 0 ? d.slice(colonIdx + 2) : d;
+                  // 提取末尾中文翻译 [...]
+                  const zhMatch = defWithZh.match(/\s\s\[(.+?)\]$/);
+                  const defBody = zhMatch ? defWithZh.slice(0, defWithZh.lastIndexOf('  [')).trim() : defWithZh;
+                  const zh = zhMatch ? zhMatch[1] : '';
+                  // 提取内联例句 (e.g. ...) 或 (eg. ...)
+                  const egMatch = defBody.match(/\s\(e\.?g\.?,?\s(.+?)\)$/i);
+                  const defClean = egMatch ? defBody.slice(0, defBody.lastIndexOf('(')).trim() : defBody;
+                  const inlineEg = egMatch ? egMatch[1].replace(/\.$/, '') : '';
+                  return { pos, def: defClean, inlineEg, zh };
+                });
+
+                // 按词性分组的中文释义摘要
+                const zhByPos: Record<string, string[]> = {};
+                defs.forEach(d => {
+                  if (d.zh && d.pos) {
+                    if (!zhByPos[d.pos]) zhByPos[d.pos] = [];
+                    if (!zhByPos[d.pos].includes(d.zh)) zhByPos[d.pos].push(d.zh);
+                  }
+                });
+
+                return (
+                  <div className="rounded-md border bg-muted/20 p-3 max-h-[50vh] overflow-y-auto space-y-3">
+                    {defs.map((d, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        {d.pos && (
+                          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded min-w-[3rem] text-center shrink-0 mt-0.5">
+                            {d.pos}
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm leading-relaxed">{d.def}</p>
+                          {d.inlineEg && (
+                            <p className="text-xs text-muted-foreground/50 italic mt-0.5 ml-0">
+                              <span className="text-[10px] text-muted-foreground/30 not-italic mr-1">例</span>
+                              {d.inlineEg}
+                            </p>
+                          )}
+                          {d.zh && <p className="text-sm text-primary font-medium mt-0.5">{d.zh}</p>}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* 中文释义摘要（按词性分组） */}
+                    {Object.keys(zhByPos).length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-border/30">
+                        <p className="text-[10px] text-muted-foreground/40 mb-1.5">中文释义摘要</p>
+                        <div className="space-y-1">
+                          {Object.entries(zhByPos).map(([pos, zhs]) => (
+                            <div key={pos} className="flex gap-2 items-baseline text-xs">
+                              <span className="text-[11px] font-bold uppercase text-muted-foreground/60 min-w-[2rem] shrink-0">{pos}</span>
+                              <span className="text-muted-foreground">{zhs.join('；')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => setForm((f: any) => ({ ...f, definitionEn: '' }))}
+                      className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground"
+                    >
+                      清除并手动编辑
+                    </button>
+                  </div>
+                );
+              })()
+            ) : (
+              <Textarea id="v-defen" value={form.definitionEn ?? ''} onChange={e => setForm({ ...form, definitionEn: e.target.value })} placeholder="A large bedroom for a number of people..." rows={2} />
+            )}
+          </div>
+          <div>
+            <Label htmlFor="v-desc">讲解 / 描述</Label>
+            {form.description ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[30vh] overflow-y-auto">
+                <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderMd(form.description) }} />
+                <button
+                  onClick={() => setForm((f: any) => ({ ...f, description: '' }))}
+                  className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-2"
+                >
+                  清除
+                </button>
+              </div>
+            ) : (
+              <Textarea id="v-desc" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="用法、搭配、易错点（支持 Markdown）" rows={3} />
+            )}
+          </div>
 
           {/* Examples */}
           <div>
-            <Label>例句</Label>
-            <div className="space-y-2 mt-1">
-              {exs.map((ex: any, i: number) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <div className="flex-1 space-y-1">
-                    <Input value={ex.en ?? ''} onChange={e => setEx(i, 'en', e.target.value)} placeholder={`英文例句 ${i + 1}`} className="text-sm" />
-                    <Input value={ex.zh ?? ''} onChange={e => setEx(i, 'zh', e.target.value)} placeholder="中文翻译" className="text-sm" />
-                  </div>
-                  <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
-                    <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
-                  </Select>
-                  <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={addEx}><Plus className="mr-1 size-3" />添加例句</Button>
+            <div className="flex items-center justify-between mb-1">
+              <Label>例句</Label>
+              <div className="flex items-center gap-2">
+                {exs.length > 0 && (
+                  <button onClick={() => setEditExamples(!editExamples)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    {editExamples ? '预览' : '编辑'}
+                  </button>
+                )}
+              </div>
             </div>
+            {exs.length > 0 && !editExamples ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[40vh] overflow-y-auto space-y-2.5">
+                {exs.map((ex: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <span className="text-[10px] text-muted-foreground/30 tabular-nums min-w-[1.25rem] text-right pt-0.5 select-none">{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground/80 italic leading-relaxed">{ex.en || '(空)'}</p>
+                      {ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{ex.zh}</p>}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/50 flex-shrink-0 ml-auto">
+                      {ex.level === 'basic' ? '基础' : ex.level === 'advanced' ? '高级' : '中级'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2 mt-1">
+                {exs.map((ex: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-1">
+                      <Input value={ex.en ?? ''} onChange={e => setEx(i, 'en', e.target.value)} placeholder={`英文例句 ${i + 1}`} className="text-sm" />
+                      <Input value={ex.zh ?? ''} onChange={e => setEx(i, 'zh', e.target.value)} placeholder="中文翻译" className="text-sm" />
+                    </div>
+                    <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
+                      <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={addEx}><Plus className="mr-1 size-3" />添加例句</Button>
+              </div>
+            )}
           </div>
 
           {/* Diff Panel — 查询结果对比 */}
@@ -795,8 +1060,13 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                   meaning: '中文释义', phoneticUs: '美式音标', audioUsUrl: '美式音频', audioUkUrl: '英式音频',
                   definitionEn: '英文释义', partOfSpeech: '词性', description: '讲解', examples: '例句',
                 }
-                const oldDisplay = Array.isArray(val.old) ? `${val.old.length} 条` : (val.old || '(空)')
-                const newDisplay = Array.isArray(val.new) ? `${val.new.length} 条` : (val.new || '(空)')
+                const fmtDefs = (v: any) => {
+                  if (Array.isArray(v)) return `${v.length} 条`
+                  if (typeof v === 'string' && v.includes('; ')) return `${v.split('; ').length} 条释义`
+                  return (v || '(空)')
+                }
+                const oldDisplay = fmtDefs(val.old)
+                const newDisplay = fmtDefs(val.new)
                 return (
                   <div key={key} className="flex items-center gap-2 text-xs">
                     <span className="w-20 text-muted-foreground flex-shrink-0">{label[key] || key}</span>
@@ -829,7 +1099,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
               <Button variant="outline" size="sm" onClick={handleDictionaryLookup}
                 disabled={dictLoading || !form.word?.trim()}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
-                查词典
+                {dictLoading ? '翻译中...' : '查词典+AI'}
               </Button>
               <Button variant="outline" size="sm" onClick={handleXfdLookup}
                 disabled={xfdLoading || !form.word?.trim()}>
