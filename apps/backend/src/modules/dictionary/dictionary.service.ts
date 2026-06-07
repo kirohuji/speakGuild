@@ -133,6 +133,43 @@ export class DictionaryService {
   }
 
   // ════════════════════════════════════════════════════════════
+  // Admin: List dictionary entries with pagination
+  // ════════════════════════════════════════════════════════════
+
+  async list(params?: { search?: string; page?: number; pageSize?: number }) {
+    const { search, page = 1, pageSize = 20 } = params ?? {};
+    const where: any = {};
+    if (search) {
+      where.word = { contains: search.toLowerCase().trim(), mode: 'insensitive' };
+    }
+    const [items, total] = await Promise.all([
+      this.prisma.dictionaryEntry.findMany({
+        where,
+        select: {
+          word: true, language: true, sourceUrl: true, pronunciations: true,
+          senseClusters: true, senses: true, aiReviewed: true, aiReviewMeta: true,
+          pipelineVersion: true, createdAt: true, updatedAt: true,
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { word: 'asc' },
+      }),
+      this.prisma.dictionaryEntry.count({ where }),
+    ]);
+    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // Admin: Delete a dictionary entry
+  // ════════════════════════════════════════════════════════════
+
+  async deleteWord(word: string) {
+    await this.prisma.dictionaryEntry.deleteMany({
+      where: { word: word.toLowerCase().trim() },
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
   // Admin: Batch enrich multiple words
   // ════════════════════════════════════════════════════════════
 

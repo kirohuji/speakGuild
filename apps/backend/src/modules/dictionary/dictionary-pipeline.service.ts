@@ -439,6 +439,39 @@ Return ONLY a JSON object (no markdown):
         this.logger.warn(`Translation batch failed: ${err.message}`);
       }
     }
+
+    // Also translate cluster labels (centroids) — batch all at once
+    const untranslatedClusters = clusters.filter((c) => c.label.length > 0);
+    if (untranslatedClusters.length > 0) {
+      try {
+        const provider = this.getDeepSeekProvider();
+        const labelItems = untranslatedClusters.map((c, i) => `[${i}] ${c.label}`).join('\n');
+        const { text } = await generateText({
+          model: provider('deepseek-chat'),
+          prompt: `Translate these English cluster labels to concise Simplified Chinese (zh-CN). Keep each translation short (2-6 characters).
+
+${labelItems}
+
+Return ONLY a JSON object (no markdown):
+{
+  "labels": { "0": "动物", "1": "动作", "2": "食物" }
+}`,
+          temperature: 0,
+          maxOutputTokens: 500,
+        });
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        const labels = parsed.labels ?? {};
+        for (const [idx, label] of Object.entries(labels)) {
+          const ci = parseInt(idx, 10);
+          if (untranslatedClusters[ci] && label) {
+            untranslatedClusters[ci].label = String(label);
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(`Cluster label translation failed: ${err.message}`);
+      }
+    }
   }
 
   // ════════════════════════════════════════════════════════════

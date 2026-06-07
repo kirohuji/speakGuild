@@ -287,9 +287,57 @@ Return ONLY a JSON object (no markdown):
     }
   }
 
-  /** @deprecated Not used — DictionaryEntry replaces WordEnrichment */
+  /** @deprecated Use DictionaryService.lookupWord() instead. Reads from dictionary_entry cache if available. */
+  async enrichWord(word: string, _englishDefinitions?: string) {
+    const key = word.toLowerCase().trim();
 
-  /** 从 dictionaryapi.dev 获取单词数据 */
+    // Check new dictionary_entry cache
+    const cached = await this.prisma.dictionaryEntry.findUnique({ where: { word: key } });
+    if (cached) {
+      const clusters = cached.senseClusters as any[];
+      const primaryCluster = clusters?.find((c: any) => c.rank === 1);
+      const primarySense = primaryCluster?.senses?.[0];
+      return {
+        chineseTranslation: primarySense?.translations?.zh ?? '',
+        phonetic: (cached.pronunciations as any[])?.find((p: any) => p.isPreferred)?.ipa ?? '',
+        audioUrl: '',
+        meanings: clusters?.flatMap((c: any) =>
+          c.senses?.map((s: any) => ({
+            partOfSpeech: s.partOfSpeech,
+            chineseGloss: s.translations?.zh ?? s.definition,
+          })) ?? []
+        ) ?? [],
+        examples: clusters?.flatMap((c: any) =>
+          c.senses?.flatMap((s: any) =>
+            (s.examples ?? []).map((e: any) => ({ en: e.en, zh: e.zh, level: e.relevance }))
+          ) ?? []
+        ) ?? [],
+        memoryTip: '',
+      };
+    }
+
+    // Fallback: old dictionaryapi.dev
+    const dictResult = await this.enrichFromDictionary(key);
+    if (dictResult) {
+      const translated = await this.batchTranslate(word, dictResult.examples);
+      return {
+        chineseTranslation: translated.wordZh,
+        phonetic: dictResult.phonetic,
+        audioUrl: dictResult.audioUrl,
+        meanings: dictResult.meanings,
+        examples: dictResult.examples.map((ex: any, i: number) => ({
+          ...ex,
+          zh: translated.examplesZh[i] ?? '',
+        })),
+        memoryTip: '',
+      };
+    }
+
+    // Last resort: DeepSeek AI
+    return this.enrichFromAI(word);
+  }
+
+  /** 批量翻译：单词 + 例句列表 → { wordZh, examplesZh[] } */
   private async enrichFromDictionary(word: string) {
     try {
       const res = await fetch(
