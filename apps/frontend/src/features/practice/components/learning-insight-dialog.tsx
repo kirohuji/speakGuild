@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ArrowLeftRight,
   ExternalLink,
   FileText,
   Layers,
@@ -122,35 +121,28 @@ async function lookupManagedDictionary(word: string): Promise<DictionaryEntry | 
   }
 }
 
-function parseDefinitionLines(definitionEn?: string | null) {
-  if (!definitionEn) return []
-  return definitionEn
-    .split(/;\s*|\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-}
-
 function posShortLabel(pos?: string | null) {
   if (!pos) return ''
   return POS_LABELS[pos] ?? (pos === 'adjective' ? 'adj.' : pos)
 }
 
+/** 解析 definitionEn 字段：noun: English def.  [中文释义]; verb: ... */
 function parseVocabularyDefinitions(definitionEn?: string | null) {
-  return parseDefinitionLines(definitionEn).map((line) => {
-    const colonIndex = line.indexOf(': ')
-    const partOfSpeech = colonIndex > 0 ? line.slice(0, colonIndex).trim() : ''
-    const body = colonIndex > 0 ? line.slice(colonIndex + 2).trim() : line
-    const zhMatch = body.match(/\s+\[(.+?)\]$/)
-    const zhStart = zhMatch?.index ?? -1
-    const definition = zhMatch && zhStart >= 0 ? body.slice(0, zhStart).trim() : body
-    const chineseGloss = zhMatch?.[1]?.trim() ?? ''
-    return {
+  if (!definitionEn) return []
+  const results: Array<{ partOfSpeech: string; label: string; definition: string; chineseGloss: string }> = []
+  // 匹配每个词条：词性: 英文释义  [中文释义]
+  const entryRe = /(\w+):\s+(.+?)\s+\[(.+?)\](?:\s*;\s*|$)/g
+  let match: RegExpExecArray | null
+  while ((match = entryRe.exec(definitionEn)) !== null) {
+    const [, partOfSpeech, definition, chineseGloss] = match
+    results.push({
       partOfSpeech,
       label: posShortLabel(partOfSpeech),
-      definition,
-      chineseGloss,
-    }
-  }).filter((item) => item.definition || item.chineseGloss)
+      definition: definition.trim(),
+      chineseGloss: chineseGloss.trim(),
+    })
+  }
+  return results.filter((item) => item.definition || item.chineseGloss)
 }
 
 function textOrEmpty(value: unknown) {
@@ -419,6 +411,12 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const title = item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
   const subtitle = item.kind === 'word' ? item.meaning : item.meaning
   const label = item.kind === 'word' ? t('insight.vocabulary') : item.kind === 'chunk' ? t('insight.chunk') : t('insight.pattern')
+  const isWord = item.kind === 'word'
+
+  const playAudio = useCallback((url: string) => {
+    const audio = new Audio(url.startsWith('//') ? `https:${url}` : url)
+    audio.play().catch(() => {})
+  }, [])
 
   return (
     <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
@@ -430,6 +428,17 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
           <Badge variant="secondary" className="mb-1.5">{label}</Badge>
           <h2 className="break-words text-xl font-bold leading-tight text-foreground">{title}</h2>
           {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
+          {/* 音标：左右排列 */}
+          {isWord && (item.phoneticUs || item.phoneticUk) && (
+            <div className="mt-2 flex items-center gap-2">
+              {item.phoneticUs && (
+                <PhoneticPill label="美" value={item.phoneticUs} audioUrl={item.audioUsUrl} onPlay={playAudio} />
+              )}
+              {item.phoneticUk && (
+                <PhoneticPill label="英" value={item.phoneticUk} audioUrl={item.audioUkUrl} onPlay={playAudio} />
+              )}
+            </div>
+          )}
         </div>
         {/* 关闭按钮放在 Header 右侧 */}
         <button
@@ -448,7 +457,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const [dictData, setDictData] = useState<DictionaryEntry | null | 'loading'>(null)
   const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>(null)
   const [activeTab, setActiveTab] = useState('meaning')
-  const [showDictionary, setShowDictionary] = useState(false)
   const [dictionaryRequested, setDictionaryRequested] = useState(false)
   const [showUncommon, setShowUncommon] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -459,7 +467,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     setDictData(null)
     setEnrichData(null)
     setActiveTab('meaning')
-    setShowDictionary(false)
     setDictionaryRequested(false)
     setShowUncommon(false)
   }, [item.word])
@@ -492,11 +499,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     || textOrEmpty((item as any).zh)
     || textOrEmpty(enriched?.chineseTranslation)
   const descriptionText = textOrEmpty(item.description)
-  const fallbackPhonetic = textOrEmpty(enriched?.phonetic)
-  const usPhonetic = textOrEmpty(item.phoneticUs) || fallbackPhonetic
-  const ukPhonetic = textOrEmpty(item.phoneticUk)
-  const usAudio = item.audioUsUrl || enriched?.audioUrl
-  const ukAudio = item.audioUkUrl
   const dictEntry = dictData !== 'loading' ? dictData : null
   const saved = hasWord(item.word)
 
@@ -514,158 +516,150 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     setSaving(false)
   }
 
-  const openDictionary = () => {
-    setDictionaryRequested(true)
-    setShowDictionary(true)
-  }
-
   const changeTab = (value: string) => {
     setActiveTab(value)
-    if (value !== 'meaning') setShowDictionary(false)
+    if (value === 'dictionary') setDictionaryRequested(true)
   }
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-3 md:px-6">
+      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto px-5 pt-3 md:px-6">
         <TabsList>
           <TabsTrigger value="meaning">{t('insight.meaning')}</TabsTrigger>
+          <TabsTrigger value="description">讲解</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
+          <TabsTrigger value="dictionary">词典</TabsTrigger>
         </TabsList>
-        {activeTab === 'meaning' && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={showDictionary ? () => setShowDictionary(false) : openDictionary}
-            className="h-9 shrink-0 gap-1.5 rounded-md px-2.5 text-xs"
-          >
-            <ArrowLeftRight className="size-3.5" />
-            {showDictionary ? '返回释义' : '查看词典'}
-          </Button>
-        )}
       </div>
-      {activeTab === 'meaning' && !showDictionary && (usPhonetic || ukPhonetic || item.partOfSpeech || item.difficulty) && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 px-5 pt-2 md:px-6">
-          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
-            {usPhonetic && <PhoneticPill label="美式" value={usPhonetic} audioUrl={usAudio} onPlay={playAudio} />}
-            {ukPhonetic && <PhoneticPill label="英式" value={ukPhonetic} audioUrl={ukAudio} onPlay={playAudio} />}
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-            {item.partOfSpeech && (
-              <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">
-                {POS_LABELS_CN[item.partOfSpeech] || posShortLabel(item.partOfSpeech) || item.partOfSpeech}
-              </Badge>
-            )}
-            {item.difficulty && (
-              <Badge variant="outline" className="rounded-md px-1.5 py-0.5 text-xs font-medium">
-                {item.difficulty}
-              </Badge>
-            )}
-          </div>
-        </div>
-      )}
-
       <div className="relative min-h-0 flex-1">
+        {/* 释义 */}
         <TabsContent value="meaning" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
-          {showDictionary ? (
-            <ScrollArea className="h-full">
-              <div className="space-y-4 py-4">
-                {dictData === 'loading' ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
-                  </div>
-                ) : dictEntry ? (
-                  <ManagedDictionaryView
-                    entry={dictEntry}
-                    showUncommon={showUncommon}
-                    onToggleUncommon={() => setShowUncommon((value) => !value)}
-                    onPlay={playAudio}
-                  />
-                ) : (
-                  <p className="rounded-md border border-border/70 bg-background p-4 text-sm text-muted-foreground">暂无释义</p>
-                )}
-              </div>
-            </ScrollArea>
-          ) : (
-            <ScrollArea className="h-full">
-              <div className="space-y-4 py-4">
-                <section className="overflow-hidden rounded-md border border-border/70 bg-background">
-                  {definitionEntries.length > 0 ? (
-                    <div className="divide-y divide-border/60">
-                      {definitionEntries.map((definition, index) => (
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4">
+              <section className="overflow-hidden rounded-md border border-border/70 bg-background">
+                {definitionEntries.length > 0 ? (
+                  <div className="divide-y divide-border/60">
+                    {definitionEntries.map((definition, index) => {
+                      const zhParsed = definition.chineseGloss ? parseZhQualifiers(definition.chineseGloss) : null
+                      const qualifiers = zhParsed?.qualifiers ?? []
+                      const zhText = zhParsed?.text ?? definition.chineseGloss ?? ''
+                      return (
                         <div key={`${definition.partOfSpeech}-${index}`} className="px-4 py-3.5">
                           <div className="flex items-start gap-2">
-                            <span className="mt-0.5 min-w-5 text-right text-xs tabular-nums text-muted-foreground/45">{index + 1}.</span>
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
+                            <div className="min-w-0 flex-1">
+                              {/* 中文释义 + 词性标签同行 */}
+                              <div className="flex items-baseline gap-2">
+                                <span className="min-w-0 flex-1">
+                                  {qualifiers.length > 0 && qualifiers.map((q) => (
+                                    <span key={q} className="mr-1.5 inline-flex items-center rounded border border-border/50 bg-muted/50 px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
+                                  ))}
+                                  <span className="text-sm font-medium leading-6 text-foreground">{zhText || definition.definition}</span>
+                                </span>
                                 {definition.label && (
-                                  <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">
-                                    {definition.label}
-                                  </Badge>
+                                  <span className="shrink-0 text-xs text-muted-foreground/50">{definition.label}</span>
                                 )}
-                                <p className="text-sm font-medium leading-6 text-foreground">
-                                  {definition.chineseGloss || definition.definition}
-                                </p>
                               </div>
                               {definition.definition && definition.chineseGloss && (
-                                <p className="text-xs leading-5 text-muted-foreground">{definition.definition}</p>
+                                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{definition.definition}</p>
                               )}
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : enriched?.meanings?.length ? (
-                    <div className="divide-y divide-border/60">
-                      {enriched.meanings.slice(0, 8).map((meaning, index) => (
+                      )
+                    })}
+                  </div>
+                ) : enriched?.meanings?.length ? (
+                  <div className="divide-y divide-border/60">
+                    {enriched.meanings.slice(0, 8).map((meaning, index) => {
+                      const zhParsed = meaning.chineseGloss ? parseZhQualifiers(meaning.chineseGloss) : null
+                      const qualifiers = zhParsed?.qualifiers ?? []
+                      const zhText = zhParsed?.text ?? meaning.chineseGloss ?? ''
+                      return (
                         <div key={`${meaning.partOfSpeech}-${index}`} className="px-4 py-3.5">
                           <div className="flex items-start gap-2">
-                            <span className="mt-0.5 min-w-5 text-right text-xs tabular-nums text-muted-foreground/45">{index + 1}.</span>
+                            <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
                             <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">{posShortLabel(meaning.partOfSpeech) || meaning.partOfSpeech}</Badge>
-                                <p className="text-sm font-medium leading-6 text-foreground">{meaning.chineseGloss}</p>
+                              <div className="flex items-baseline gap-2">
+                                <span className="min-w-0 flex-1">
+                                  {qualifiers.length > 0 && qualifiers.map((q) => (
+                                    <span key={q} className="mr-1.5 inline-flex items-center rounded border border-border/50 bg-muted/50 px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
+                                  ))}
+                                  <span className="text-sm font-medium leading-6 text-foreground">{zhText}</span>
+                                </span>
+                                {meaning.partOfSpeech && (
+                                  <span className="shrink-0 text-xs text-muted-foreground/50">{posShortLabel(meaning.partOfSpeech) || meaning.partOfSpeech}</span>
+                                )}
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : meaningText ? (
-                    <p className="px-4 py-4 text-sm font-medium leading-6 text-foreground">
-                      {meaningText}
-                    </p>
-                  ) : null}
-
-                  <div className="border-t border-border/60 px-4 py-4">
-                    <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                      <FileText className="size-4" /> 讲解/描述
-                    </h3>
-                    {descriptionText ? (
-                      <RichText text={descriptionText} />
-                    ) : enriched?.memoryTip ? (
-                      <p className="text-sm leading-6 text-muted-foreground">{enriched.memoryTip}</p>
-                    ) : enrichData === 'loading' ? (
-                      <Skeleton className="h-16 w-full rounded-md" />
-                    ) : (
-                      <p className="text-sm text-muted-foreground">暂无讲解/描述</p>
-                    )}
+                      )
+                    })}
                   </div>
+                ) : meaningText ? (
+                  <p className="px-4 py-4 text-sm font-medium leading-6 text-foreground">
+                    {meaningText}
+                  </p>
+                ) : (
+                  <p className="px-4 py-4 text-sm text-muted-foreground">暂无释义</p>
+                )}
 
-                  {!hideSave && (
-                    <div className="border-t border-border/60 px-4 py-3">
-                      <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
-                        {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
-                        {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
-                      </Button>
-                    </div>
-                  )}
-                </section>
-              </div>
-            </ScrollArea>
-          )}
+                {!hideSave && (
+                  <div className="border-t border-border/60 px-4 py-3">
+                    <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
+                      {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
+                      {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
+                    </Button>
+                  </div>
+                )}
+              </section>
+            </div>
+          </ScrollArea>
         </TabsContent>
 
+        {/* 讲解 */}
+        <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="py-4">
+              <section className="overflow-hidden rounded-md border border-border/70 bg-background px-4 py-4">
+                {descriptionText ? (
+                  <RichText text={descriptionText} />
+                ) : enriched?.memoryTip ? (
+                  <p className="text-sm leading-6 text-muted-foreground">{enriched.memoryTip}</p>
+                ) : enrichData === 'loading' ? (
+                  <Skeleton className="h-16 w-full rounded-md" />
+                ) : (
+                  <p className="text-sm text-muted-foreground">暂无讲解/描述</p>
+                )}
+              </section>
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* 词典 */}
+        <TabsContent value="dictionary" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4">
+              {dictData === 'loading' ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
+                </div>
+              ) : dictEntry ? (
+                <ManagedDictionaryView
+                  entry={dictEntry}
+                  showUncommon={showUncommon}
+                  onToggleUncommon={() => setShowUncommon((value) => !value)}
+                  onPlay={playAudio}
+                />
+              ) : (
+                <p className="rounded-md border border-border/70 bg-background p-4 text-sm text-muted-foreground">暂无词典数据</p>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* 例句 */}
         <TabsContent value="examples" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
@@ -694,7 +688,7 @@ function PhoneticPill({
   audioUrl,
   onPlay,
 }: {
-  label: '美式' | '英式'
+  label: '美' | '英'
   value: string
   audioUrl?: string | null
   onPlay: (url: string) => void
@@ -753,8 +747,8 @@ function ManagedDictionaryView({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {usPron?.ipa && <PhoneticPill label="美式" value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
-          {ukPron?.ipa && <PhoneticPill label="英式" value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
+          {usPron?.ipa && <PhoneticPill label="美" value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
+          {ukPron?.ipa && <PhoneticPill label="英" value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
           {!usPron?.ipa && !ukPron?.ipa && <span className="text-sm text-muted-foreground">暂无词典音标</span>}
         </div>
 
