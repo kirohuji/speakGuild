@@ -266,6 +266,8 @@ interface DialogueListViewProps {
   hideTopBar?: boolean
   /** 用户长按单词后点击"查看详情"时回调 */
   onWordInsight?: (word: string) => void
+  /** 打字机效果开关 */
+  typewriter?: boolean
 }
 
 const BgFitStyle: Record<string, string> = {
@@ -304,6 +306,7 @@ export function DialogueListView({
   onSettingsOpen,
   hideTopBar = false,
   onWordInsight,
+  typewriter = false,
 }: DialogueListViewProps) {
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
@@ -421,6 +424,7 @@ export function DialogueListView({
                 avatarAlt={!isUser ? (currentAvatarAlt || line.speaker || '') : undefined}
                 fontSize={fontSize}
                 bilingual={bilingual}
+                typewriter={typewriter}
                 onWordDetail={onWordInsight}
               />
             )
@@ -540,6 +544,7 @@ function ChatBubble({
   avatarAlt,
   fontSize,
   bilingual,
+  typewriter,
   onWordDetail,
 }: {
   line: VnPlayerLine
@@ -549,10 +554,11 @@ function ChatBubble({
   avatarAlt?: string
   fontSize: number
   bilingual: boolean
+  typewriter?: boolean
   onWordDetail?: (word: string) => void
 }) {
   // User input should appear immediately. Typewriter is reserved for new NPC replies.
-  const hasTypewriter = isLast && !isUser && !!line.speaker
+  const hasTypewriter = typewriter !== false && isLast && !isUser && !!line.speaker
   const [displayedText, setDisplayedText] = useState(hasTypewriter ? '' : line.text)
   const timerRef = useRef<number | null>(null)
 

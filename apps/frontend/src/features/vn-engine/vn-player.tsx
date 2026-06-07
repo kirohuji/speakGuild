@@ -78,6 +78,7 @@ interface VnPlayerSettings {
   bilingual: boolean
   showUserInputInDialogue: boolean
   displayMode: 'vn' | 'chat'
+  typewriter: boolean
 }
 
 const DEFAULT_SETTINGS: VnPlayerSettings = {
@@ -87,6 +88,7 @@ const DEFAULT_SETTINGS: VnPlayerSettings = {
   bilingual: false,
   showUserInputInDialogue: true,
   displayMode: 'vn',
+  typewriter: false,
 }
 
 const SETTINGS_STORAGE_KEY = 'vn-player-settings'
@@ -487,6 +489,11 @@ export function VnPlayer({
     setDisplayedText('')
     if (!fullText) return
 
+    if (!settings.typewriter) {
+      setDisplayedText(fullText)
+      return
+    }
+
     let index = 0
     const timer = window.setInterval(() => {
       index += 1
@@ -502,7 +509,7 @@ export function VnPlayer({
       window.clearInterval(timer)
       if (typewriterTimerRef.current === timer) typewriterTimerRef.current = null
     }
-  }, [fullText])
+  }, [fullText, settings.typewriter])
 
   useEffect(() => {
     if (!audioUrl) return
@@ -590,7 +597,10 @@ export function VnPlayer({
           onSettingsOpen={() => setSettingsOpen(true)}
           hideTopBar={hideChatTopBar}
           historyOpen={historyOpen}
-          onToggleHistory={toggleHistory}          onWordInsight={onWordInsight}        />
+          onToggleHistory={toggleHistory}
+          onWordInsight={onWordInsight}
+          typewriter={settings.typewriter}
+        />
         <VnSettingsDialog
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
@@ -936,6 +946,12 @@ function VnSettingsDialog({
 
           {/* Display Options */}
           <div className="space-y-4">
+            <SettingSwitch
+              label="打字机效果"
+              checked={settings.typewriter}
+              onCheckedChange={(typewriter) => update({ typewriter })}
+            />
+
             <SettingSwitch
               label={t('vnSettings.bilingual')}
               checked={settings.bilingual}
