@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { VnInputPanel } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
+import { TappableText } from './dialogue-list-view'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
 
 export interface VnPlayerLine {
@@ -67,6 +68,7 @@ interface VnPlayerProps {
   hideChatTopBar?: boolean
   onDisplayModeChange?: (displayMode: VnPlayerSettings['displayMode']) => void
   showUserInputOverride?: boolean
+  onWordInsight?: (word: string) => void
 }
 
 interface VnPlayerSettings {
@@ -448,6 +450,7 @@ export function VnPlayer({
   hideChatTopBar = false,
   onDisplayModeChange,
   showUserInputOverride,
+  onWordInsight,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
@@ -587,8 +590,7 @@ export function VnPlayer({
           onSettingsOpen={() => setSettingsOpen(true)}
           hideTopBar={hideChatTopBar}
           historyOpen={historyOpen}
-          onToggleHistory={toggleHistory}
-        />
+          onToggleHistory={toggleHistory}          onWordInsight={onWordInsight}        />
         <VnSettingsDialog
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
@@ -754,7 +756,7 @@ export function VnPlayer({
                   )}
                   <div className={cn('min-w-0 space-y-2 pt-2', currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '')}>
                     <p className="font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
-                      {displayedText}
+                      <TappableText text={displayedText} onWordDetail={onWordInsight} />
                       {canAdvance && (
                         <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-primary/70 align-middle" />
                       )}

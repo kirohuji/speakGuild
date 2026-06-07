@@ -1,11 +1,237 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
-import { History, RotateCcw, Settings, X } from 'lucide-react'
+import { ExternalLink, History, Loader2, RotateCcw, Settings, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { get } from '@/lib/request'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { VnPlayerLine, VnPlayerChoice, BackgroundFit } from './vn-player'
+import type { DictionaryEntry } from '@/features/admin/api-dictionary'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
 import { VnInputPanel } from './vn-input-panel'
+
+// ── 单词查询缓存 ──
+const wordCache = new Map<string, DictionaryEntry | null>()
+
+async function lookupWord(word: string): Promise<DictionaryEntry | null> {
+  const key = word.toLowerCase().trim()
+  if (!key) return null
+  if (wordCache.has(key)) return wordCache.get(key)!
+  try {
+    const entry = await get<DictionaryEntry>(`/dictionary/${encodeURIComponent(key)}`)
+    wordCache.set(key, entry)
+    return entry
+  } catch {
+    wordCache.set(key, null)
+    return null
+  }
+}
+
+/** 长按单词弹出释义的 Popover */
+function WordPopover({
+  word,
+  onViewDetail,
+  onDismiss,
+}: {
+  word: string
+  onViewDetail?: (word: string) => void
+  onDismiss?: () => void
+}) {
+  const [entry, setEntry] = useState<DictionaryEntry | null | 'loading'>('loading')
+
+  useEffect(() => {
+    setEntry('loading')
+    lookupWord(word).then(setEntry)
+  }, [word])
+
+  const firstSense = entry !== 'loading' && entry ? entry.senseClusters?.[0]?.senses?.[0] : null
+  const zh = firstSense?.translations?.zh ?? ''
+
+  return (
+    <PopoverContent
+      side="top"
+      align="center"
+      className="w-56 p-3 text-sm"
+      onOpenAutoFocus={(e) => e.preventDefault()}
+      onInteractOutside={(e) => {
+        e.preventDefault() // 阻止点击穿透到 VN 对话推进
+        onDismiss?.()
+      }}
+    >
+      <p className="font-semibold text-foreground">{word}</p>
+      {entry === 'loading' ? (
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" />
+          查询中...
+        </div>
+      ) : zh ? (
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{zh}</p>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">暂无释义</p>
+      )}
+      {onViewDetail && (
+        <button
+          type="button"
+          className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+          onClick={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            onViewDetail(word)
+          }}
+        >
+          <ExternalLink className="size-3" />
+          查看详情
+        </button>
+      )}
+    </PopoverContent>
+  )
+}
+
+/** 将文本拆为单词，每个单词可长按查词 */
+export function TappableText({
+  text,
+  onWordDetail,
+}: {
+  text: string
+  /** 点击"查看详情"：打开完整单词 dialog */
+  onWordDetail?: (word: string) => void
+}) {
+  const [activeWord, setActiveWord] = useState<string | null>(null)
+  // 按空格拆分英文单词，中文按字符
+  const tokens = text.split(/(\s+)/g)
+
+  // 只要传了 onWordDetail 就启用长按查词
+  const enabled = !!onWordDetail
+
+  return (
+    <>
+      {tokens.map((token, i) => {
+        if (/^\s+$/.test(token)) {
+          return <span key={i}>{token}</span>
+        }
+        // 对每个片段，提取纯单词（去掉标点）用于查询
+        const wordMatch = token.match(/^(\w[\w'-]*)/)
+        const word = wordMatch ? wordMatch[1] : ''
+        const isWord = word.length >= 2
+
+        if (!isWord || !enabled) {
+          return <span key={i}>{token}</span>
+        }
+
+        return (
+          <TappableWord
+            key={i}
+            word={word}
+            displayText={token}
+            isActive={activeWord === word}
+            onActivate={(w) => setActiveWord(w)}
+            onDeactivate={() => setActiveWord(null)}
+            onViewDetail={onWordDetail}
+          />
+        )
+      })}
+    </>
+  )
+}
+
+/** 单个可长按单词 */
+function TappableWord({
+  word,
+  displayText,
+  isActive,
+  onActivate,
+  onDeactivate,
+  onViewDetail,
+}: {
+  word: string
+  displayText: string
+  isActive: boolean
+  onActivate: (word: string) => void
+  onDeactivate: () => void
+  onViewDetail?: (word: string) => void
+}) {
+  const spanRef = useRef<HTMLSpanElement | null>(null)
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const movedRef = useRef(false)
+
+  const clear = useCallback(() => {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+  }, [])
+
+  // 用原生事件绕过 React 17+ touchstart 默认 passive 的限制
+  useEffect(() => {
+    const el = spanRef.current
+    if (!el) return
+
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault() // 阻止浏览器默认长按菜单
+      movedRef.current = false
+      clear()
+      longPressRef.current = setTimeout(() => {
+        if (!movedRef.current) {
+          onActivate(word)
+        }
+      }, 500)
+    }
+
+    const onTouchMove = () => {
+      movedRef.current = true
+      clear()
+    }
+
+    const onTouchEnd = (e: TouchEvent) => {
+      e.preventDefault()
+      clear()
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: false })
+    el.addEventListener('touchmove', onTouchMove, { passive: true })
+    el.addEventListener('touchend', onTouchEnd, { passive: false })
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+      clear()
+    }
+  }, [word, onActivate, clear])
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      onActivate(word)
+    },
+    [word, onActivate],
+  )
+
+  return (
+    <Popover open={isActive} onOpenChange={(open) => { if (!open) onDeactivate() }}>
+      <PopoverTrigger asChild>
+        <span
+          ref={spanRef}
+          className={cn(
+            'cursor-pointer select-none rounded px-0.5 transition-colors hover:bg-primary/10 active:bg-primary/15',
+            isActive && 'bg-primary/15 ring-1 ring-primary/30',
+          )}
+          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+          onContextMenu={handleContextMenu}
+        >
+          {displayText}
+        </span>
+      </PopoverTrigger>
+      {isActive && (
+        <WordPopover
+          word={word}
+          onViewDetail={onViewDetail}
+          onDismiss={onDeactivate}
+        />
+      )}
+    </Popover>
+  )
+}
 
 interface DialogueListViewProps {
   backgroundUrl?: string
@@ -36,6 +262,8 @@ interface DialogueListViewProps {
   showUserInputInDialogue?: boolean
   onSettingsOpen?: () => void
   hideTopBar?: boolean
+  /** 用户长按单词后点击"查看详情"时回调 */
+  onWordInsight?: (word: string) => void
 }
 
 const BgFitStyle: Record<string, string> = {
@@ -73,6 +301,7 @@ export function DialogueListView({
   showUserInputInDialogue = true,
   onSettingsOpen,
   hideTopBar = false,
+  onWordInsight,
 }: DialogueListViewProps) {
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
@@ -190,6 +419,7 @@ export function DialogueListView({
                 avatarAlt={!isUser ? (currentAvatarAlt || line.speaker || '') : undefined}
                 fontSize={fontSize}
                 bilingual={bilingual}
+                onWordDetail={onWordInsight}
               />
             )
           })}
@@ -308,6 +538,7 @@ function ChatBubble({
   avatarAlt,
   fontSize,
   bilingual,
+  onWordDetail,
 }: {
   line: VnPlayerLine
   isUser: boolean
@@ -316,6 +547,7 @@ function ChatBubble({
   avatarAlt?: string
   fontSize: number
   bilingual: boolean
+  onWordDetail?: (word: string) => void
 }) {
   // User input should appear immediately. Typewriter is reserved for new NPC replies.
   const hasTypewriter = isLast && !isUser && !!line.speaker
@@ -387,7 +619,7 @@ function ChatBubble({
               <p className="text-sm font-semibold text-foreground/90">{line.speaker}</p>
             )}
             <p className="mt-1 leading-relaxed text-foreground" style={{ fontSize }}>
-              {displayedText}
+              <TappableText text={displayedText} onWordDetail={onWordDetail} />
               {isTyping && (
                 <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
               )}

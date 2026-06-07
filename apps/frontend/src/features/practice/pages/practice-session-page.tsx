@@ -243,6 +243,7 @@ export function PracticeSessionPage() {
   const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
+  const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
   const [savingTexts, setSavingTexts] = useState<Set<string>>(new Set())
 
@@ -560,10 +561,37 @@ export function PracticeSessionPage() {
     return [...words, ...chunks, ...patterns]
   }, [detail])
 
+  const allInsightItems = useMemo(
+    () => fallbackInsightItem ? [...insightItems, fallbackInsightItem] : insightItems,
+    [insightItems, fallbackInsightItem],
+  )
+
   const openInsight = useCallback((id: string) => {
     const idx = insightItems.findIndex((item) => item.id === id)
     if (idx < 0) return
     setInsightIndex(idx)
+    setInsightOpen(true)
+  }, [insightItems])
+
+  /** VN 对话中长按单词 → 打开单词详情 dialog */
+  const handleWordInsight = useCallback((word: string) => {
+    const lower = word.toLowerCase()
+    // 先在已有词汇表中查找
+    const idx = insightItems.findIndex((item) => item.kind === 'word' && item.word.toLowerCase() === lower)
+    if (idx >= 0) {
+      setFallbackInsightItem(null)
+      setInsightIndex(idx)
+      setInsightOpen(true)
+      return
+    }
+    // 未找到则构造临时词条，追加到列表末尾
+    const fallbackItem: LearningInsightItem = {
+      kind: 'word',
+      id: `word:vn:${word}`,
+      word,
+    }
+    setFallbackInsightItem(fallbackItem)
+    setInsightIndex(insightItems.length)
     setInsightOpen(true)
   }, [insightItems])
 
@@ -1029,8 +1057,8 @@ export function PracticeSessionPage() {
         </div>
 
         <LearningInsightDialog
-          items={insightItems}
-          index={Math.min(insightIndex, Math.max(insightItems.length - 1, 0))}
+          items={allInsightItems}
+          index={Math.min(insightIndex, Math.max(allInsightItems.length - 1, 0))}
           open={insightOpen}
           onOpenChange={setInsightOpen}
           onIndexChange={setInsightIndex}
@@ -1060,7 +1088,7 @@ export function PracticeSessionPage() {
       hint: readTagValue(currentTags, 'hint:'),
     }
 
-    return (
+    return (<>
       <div className="relative flex h-dvh flex-col bg-background">
         {/* Floating minimal top bar */}
         <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
@@ -1162,6 +1190,7 @@ export function PracticeSessionPage() {
               )}
               onHistoryOpenChange={setIsHistoryOpen}
               onDisplayModeChange={handleVnDisplayModeChange}
+              onWordInsight={handleWordInsight}
             />
           </VnPlayerBoundary>
         </div>
@@ -1170,12 +1199,20 @@ export function PracticeSessionPage() {
         <div className="hidden" />
 
       </div>
+      <LearningInsightDialog
+        items={allInsightItems}
+        index={Math.min(insightIndex, Math.max(allInsightItems.length - 1, 0))}
+        open={insightOpen}
+        onOpenChange={setInsightOpen}
+        onIndexChange={setInsightIndex}
+      />
+    </>
     )
   }
 
   // ==================== Phase: Analysis ====================
   if (phase === 'analysis') {
-    return (
+    return (<>
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         {/* Header */}
         <div className="mb-4 flex items-center gap-3">
@@ -1208,6 +1245,14 @@ export function PracticeSessionPage() {
           onSaveExpression={saveAnalysisExpression}
         />
       </div>
+      <LearningInsightDialog
+        items={allInsightItems}
+        index={Math.min(insightIndex, Math.max(allInsightItems.length - 1, 0))}
+        open={insightOpen}
+        onOpenChange={setInsightOpen}
+        onIndexChange={setInsightIndex}
+      />
+    </>
     )
   }
 
