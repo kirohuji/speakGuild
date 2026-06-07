@@ -66,15 +66,19 @@ export class UpdateFullChunkDto {
 export class CreateSentencePatternDto {
   @IsString() pattern: string;
   @IsOptional() @IsString() meaning?: string;
+  @IsOptional() @IsString() category?: string;
+  @IsOptional() @IsString() description?: string;
   @IsOptional() slots?: any;
-  @IsOptional() @IsString() example?: string;
+  @IsOptional() examples?: any;
   @IsOptional() @IsString() difficulty?: string;
 }
 
 export class UpdateSentencePatternDto {
   @IsOptional() @IsString() pattern?: string;
   @IsOptional() @IsString() meaning?: string;
+  @IsOptional() @IsString() category?: string;
+  @IsOptional() @IsString() description?: string;
   @IsOptional() slots?: any;
-  @IsOptional() @IsString() example?: string;
+  @IsOptional() examples?: any;
   @IsOptional() @IsString() difficulty?: string;
 }

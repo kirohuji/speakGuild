@@ -711,14 +711,16 @@ model TrainingTopic {
 }
 
 model SentencePattern {
-  id         String   @id @default(cuid())
-  pattern    String
-  meaning    String?
-  slots      Json?
-  example    String?
-  difficulty String   @default("L1")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(cuid())
+  pattern     String
+  meaning     String?
+  category    String?
+  description String?  @db.Text
+  slots       Json?
+  examples    Json?
+  difficulty  String   @default("L1")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   topicPatterns   TrainingTopicSentencePattern[]
   episodePatterns ScriptEpisodeSentencePattern[]

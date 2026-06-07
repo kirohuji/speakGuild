@@ -237,7 +237,7 @@ export class ContentAdminController {
             pattern: sp.pattern,
             meaning: sp.meaning || null,
             slots: sp.slots || undefined,
-            example: sp.example || null,
+            examples: undefined,
             difficulty: sp.difficulty || 'L1',
           },
           update: {},
@@ -312,7 +312,7 @@ export class ContentAdminController {
               pattern: sp.pattern,
               meaning: sp.meaning || null,
               slots: sp.slots || undefined,
-              example: sp.example || null,
+              examples: undefined,
               difficulty: sp.difficulty || 'L1',
             },
             update: {},
@@ -1048,6 +1048,151 @@ If input is non-IPA (e.g., respelling "in-truh-DOOS"), generate correct IPA from
     }
   }
 
+  /** AI 增强句块：DeepSeek 讲解生成 + 例句生成 */
+  @Post('library/chunks/ai-enrich')
+  async aiEnrichChunk(@Req() req: Request, @Body() dto: {
+    text: string;
+    meaning: string;
+  }) {
+    await this.requireAdmin(req);
+    try {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+
+      const { text } = await generateText({
+        model,
+        prompt: `You are a senior English teacher creating learning materials for Chinese speakers at B1-B2 level.
+
+## Task
+Given an English chunk (a reusable expression unit), generate a Chinese explanation and example sentences.
+
+## Input
+Chunk: "${dto.text}"
+Chinese meaning: ${dto.meaning || '(未提供)'}
+
+## Output Schema
+Return exactly a JSON object — no markdown, no code fences:
+
+{
+  "description": "中文学习笔记，轻量 Markdown。结构按需：**核心含义：** 一句话概括这个表达的核心意思。**用法提示：** 什么场景用、语体正式/非正式、常见搭配。**易错点：** 中国学习者容易犯的错误。**类似表达：** 意思相近的其他说法（可选）。英文单词用反引号。小节之间空行分隔。80-150字。语气亲切如老师。",
+  "examples": [
+    { "en": "原创英文例句，展示该句块在不同场景的自然用法", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
+  ]
+}
+
+## Example Generation Rules
+- Generate 3-4 original example sentences that demonstrate the chunk in different contexts.
+- Vary difficulty: at least one basic (A2), one intermediate (B1).
+- Show different sentence positions (beginning, middle, end) and variations (past tense, questions, etc.).
+- Each example must have a natural Chinese translation.
+
+## Quality Principles
+1. Description must be practical — focus on what Chinese learners find confusing.
+2. Examples should sound like real conversations, not textbook drills.
+3. If the chunk has multiple meanings, cover the most common one.`,
+        temperature: 0.4,
+        maxOutputTokens: 1500,
+      });
+
+      let cleaned = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .trim();
+      const result = JSON.parse(cleaned);
+      return {
+        code: 200,
+        message: 'success',
+        data: {
+          description: result.description ?? '',
+          examples: (result.examples ?? []).map((e: any) => ({
+            en: e.en || '',
+            zh: e.zh || '',
+            level: e.level || 'intermediate',
+          })),
+        },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+  }
+
+  /** AI 增强句式：DeepSeek 例句生成 + 讲解 */
+  @Post('library/patterns/ai-enrich')
+  async aiEnrichPattern(@Req() req: Request, @Body() dto: {
+    pattern: string;
+    meaning: string;
+  }) {
+    await this.requireAdmin(req);
+    try {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+
+      const { text } = await generateText({
+        model,
+        prompt: `You are a senior English teacher creating learning materials for Chinese speakers at B1-B2 level.
+
+## Task
+Given an English sentence pattern with blanks (marked as __), generate example sentences and a Chinese explanation.
+
+## Input
+Pattern: "${dto.pattern}"
+Chinese meaning: ${dto.meaning || '(未提供)'}
+
+## Output Schema
+Return exactly a JSON object — no markdown, no code fences:
+
+{
+  "examples": [
+    { "en": "将每个 __ 替换成具体、有趣的单词。句子自然地道，像真人说的话。", "zh": "自然的中文翻译", "level": "basic/intermediate/advanced" }
+  ],
+  "description": "中文讲解，轻量 Markdown 排版。结构：\\n\\n**句式解析：** 这个句型表达什么逻辑关系。\\n\\n**使用场景：** 口语/书面、正式/随意。\\n\\n**易错点：** 中国学习者常见错误。\\n\\n**替换练习：** 2-3个可填入 __ 的单词/短语，用 - 列表。\\n\\n小节间空行分隔。英文单词用反引号。语气亲切。120-200字。"
+}
+
+## Rules for Examples
+- Generate 3-4 examples of varying difficulty (basic → intermediate → advanced).
+- Vary the vocabulary and context across examples — don't use the same words.
+- Use vivid, specific vocabulary. Avoid generic words like "good", "bad", "nice".
+- Each example should sound like something a native speaker would actually say.
+- Examples should get progressively more complex (longer, more sophisticated vocabulary).
+
+## Quality Standards
+1. Examples MUST sound natural, not like textbook drills.
+2. Description should teach something the learner didn't already know.
+3. Include at least one common mistake Chinese learners make.`,
+        temperature: 0.5,
+        maxOutputTokens: 1500,
+      });
+
+      let cleaned = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .trim();
+      const result = JSON.parse(cleaned);
+      return {
+        code: 200,
+        message: 'success',
+        data: {
+          examples: (result.examples ?? []).map((e: any) => ({
+            en: e.en || '',
+            zh: e.zh || '',
+            level: e.level || 'intermediate',
+          })),
+          description: result.description ?? '',
+        },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+  }
+
   /** 触发单词富化：FreeDictionaryAPI pipeline → DB 缓存 → Vocabulary */
   @Post('library/vocabularies/:id/enrich')
   async enrichVocabulary(@Req() req: Request, @Param('id') id: string) {
@@ -1092,6 +1237,18 @@ If input is non-IPA (e.g., respelling "in-truh-DOOS"), generate correct IPA from
     ]);
 
     return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+  }
+
+  /** 获取所有已有的句块分类（去重） */
+  @Get('library/chunks/categories')
+  async listChunkCategories(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const rows = await this.prisma.chunk.findMany({
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' },
+    });
+    return rows.map(r => r.category).filter(Boolean);
   }
 
   @Post('library/chunks')
@@ -1172,6 +1329,18 @@ If input is non-IPA (e.g., respelling "in-truh-DOOS"), generate correct IPA from
     ]);
 
     return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+  }
+
+  /** 获取所有已有的句式分类（去重） */
+  @Get('library/patterns/categories')
+  async listPatternCategories(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const rows = await this.prisma.sentencePattern.findMany({
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' },
+    });
+    return rows.map(r => r.category).filter(Boolean);
   }
 
   @Post('library/patterns')

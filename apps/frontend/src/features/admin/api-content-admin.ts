@@ -464,7 +464,8 @@ export interface ChunkFull {
 
 export interface SentencePatternFull {
   id: string; pattern: string; meaning?: string | null;
-  slots?: any; example?: string | null; difficulty: string;
+  category?: string | null; description?: string | null;
+  slots?: any; examples?: any; difficulty: string;
   createdAt: string; updatedAt: string;
 }
 
@@ -511,6 +512,20 @@ export function aiEnrichVocabulary(data: {
   return post('/admin/content/library/vocabularies/ai-enrich', data);
 }
 
+// ─── Pattern AI Enrich ───────────────────────────────────────
+
+export interface PatternAiEnrichResult {
+  examples: { en: string; zh: string; level: string }[];
+  description: string;
+}
+
+export function aiEnrichPattern(data: {
+  pattern: string;
+  meaning: string;
+}): Promise<PatternAiEnrichResult> {
+  return post('/admin/content/library/patterns/ai-enrich', data);
+}
+
 // ─── Chunk ───────────────────────────────────────────────────
 
 export function listLibraryChunks(params?: {
@@ -528,6 +543,25 @@ export function deleteLibraryChunk(id: string): Promise<void> {
   return _delete(`/admin/content/library/chunks/${id}`);
 }
 
+// ─── Chunk AI Enrich ─────────────────────────────────────────
+
+export interface ChunkAiEnrichResult {
+  description: string;
+  examples: { en: string; zh: string; level: string }[];
+}
+
+export function aiEnrichChunk(data: {
+  text: string;
+  meaning: string;
+}): Promise<ChunkAiEnrichResult> {
+  return post('/admin/content/library/chunks/ai-enrich', data);
+}
+
+/** 获取所有已有的句块分类 */
+export function listChunkCategories(): Promise<string[]> {
+  return get('/admin/content/library/chunks/categories');
+}
+
 // ─── Sentence Pattern ────────────────────────────────────────
 
 export function listLibraryPatterns(params?: {
@@ -543,4 +577,9 @@ export function updateLibraryPattern(id: string, data: Partial<SentencePatternFu
 }
 export function deleteLibraryPattern(id: string): Promise<void> {
   return _delete(`/admin/content/library/patterns/${id}`);
+}
+
+/** 获取所有已有的句式分类 */
+export function listPatternCategories(): Promise<string[]> {
+  return get('/admin/content/library/patterns/categories');
 }

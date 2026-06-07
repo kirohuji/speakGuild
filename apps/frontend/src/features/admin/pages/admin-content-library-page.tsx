@@ -367,7 +367,7 @@ function PatternTab() {
                   <tr key={p.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
                     <td className="py-2.5 px-4 font-mono font-medium text-sm">{p.pattern}</td>
                     <td className="py-2.5 px-4 text-muted-foreground truncate max-w-[200px]">{p.meaning || '-'}</td>
-                    <td className="py-2.5 px-4 hidden lg:table-cell text-muted-foreground truncate max-w-[300px]">{p.example || '-'}</td>
+                    <td className="py-2.5 px-4 hidden lg:table-cell text-muted-foreground truncate max-w-[300px]">{Array.isArray(p.examples) ? `${p.examples.length} 条例句` : '-'}</td>
                     <td className="py-2.5 px-4 hidden md:table-cell">
                       <Badge className={DIFFICULTY_COLORS[p.difficulty] ?? 'bg-muted text-muted-foreground'}>{p.difficulty}</Badge>
                     </td>
@@ -1166,11 +1166,28 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [editDesc, setEditDesc] = useState(false)
+  const [editExamples, setEditExamples] = useState(false)
+  const [enriching, setEnriching] = useState(false)
+  const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
-    if (edit) setForm(edit)
-    else setForm({ text: '', meaning: '', difficulty: 'L2', category: '', examples: [] })
+    if (edit) {
+      setForm(edit)
+      setEditDesc(false)
+      setEditExamples(false)
+    } else {
+      setForm({ text: '', meaning: '', difficulty: 'L2', category: '', examples: [] })
+      setEditDesc(false)
+      setEditExamples(false)
+    }
   }, [edit, open])
+
+  // 加载已有分类列表
+  useEffect(() => {
+    if (!open) return
+    api.listChunkCategories().then(setCategories).catch(() => {})
+  }, [open])
 
   const handleSave = async () => {
     if (!form.text?.trim() || !form.meaning?.trim()) return
@@ -1184,6 +1201,28 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
     finally { setSaving(false) }
   }
 
+  // AI 生成讲解 + 例句
+  const handleAiEnrich = async () => {
+    if (!form.text?.trim()) return
+    setEnriching(true)
+    try {
+      const { aiEnrichChunk } = await import('../api-content-admin')
+      const result = await aiEnrichChunk({
+        text: form.text.trim(),
+        meaning: form.meaning ?? '',
+      })
+      setForm((prev: any) => ({
+        ...prev,
+        description: result.description || prev.description,
+        examples: result.examples?.length ? result.examples : prev.examples,
+      }))
+      setEditDesc(false)
+      setEditExamples(false)
+      toast.success('AI 已生成讲解和例句')
+    } catch { toast.error('AI 生成失败') }
+    finally { setEnriching(false) }
+  }
+
   const exs: any[] = form.examples ?? []
   const setEx = (idx: number, field: string, val: string) => {
     const arr = [...exs]
@@ -1193,6 +1232,13 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
   const addEx = () => setForm({ ...form, examples: [...exs, { en: '', zh: '', level: 'basic' }] })
   const delEx = (idx: number) => setForm({ ...form, examples: exs.filter((_: any, i: number) => i !== idx) })
 
+  // 从句块文本中提取单词（用于关联词汇展示）
+  const chunkWords = (form.text ?? '')
+    .toLowerCase()
+    .split(/[^a-zA-Z'-]+/)
+    .filter((w: string) => w.length > 1)
+    .filter((w: string, i: number, arr: string[]) => arr.indexOf(w) === i)
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1201,6 +1247,7 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
           <DialogDescription>句块是可迁移的表达单元，如 "I'm here to check in"</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Row 1: Text + Meaning */}
           <div className="flex gap-2">
             <div className="flex-1">
               <Label htmlFor="c-text">句块 *</Label>
@@ -1211,10 +1258,18 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
               <Input id="c-meaning" value={form.meaning ?? ''} onChange={e => setForm({ ...form, meaning: e.target.value })} placeholder="我来办理入住" />
             </div>
           </div>
+
+          {/* Row 2: Category + Difficulty */}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="c-cat">分类</Label>
-              <Input id="c-cat" value={form.category ?? ''} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="酒店/旅行" />
+              <Select id="c-cat" value={form.category ?? ''} onChange={e => setForm({ ...form, category: e.target.value })}>
+                <option value="">选择分类...</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {form.category && !categories.includes(form.category) && (
+                  <option value={form.category}>{form.category} (当前)</option>
+                )}
+              </Select>
             </div>
             <div>
               <Label htmlFor="c-diff">难度</Label>
@@ -1223,31 +1278,106 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
               </Select>
             </div>
           </div>
-          <div>
-            <Label htmlFor="c-desc">讲解 / 描述</Label>
-            <Textarea id="c-desc" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} placeholder="用法搭配说明（Markdown）" />
-          </div>
-          <div>
-            <Label>例句</Label>
-            <div className="space-y-2 mt-1">
-              {exs.map((ex: any, i: number) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <div className="flex-1 space-y-1">
-                    <Input value={ex.en ?? ''} onChange={e => setEx(i, 'en', e.target.value)} placeholder={`英文例句 ${i + 1}`} className="text-sm" />
-                    <Input value={ex.zh ?? ''} onChange={e => setEx(i, 'zh', e.target.value)} placeholder="中文翻译" className="text-sm" />
-                  </div>
-                  <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
-                    <option value="basic">基础</option>
-                    <option value="intermediate">中级</option>
-                    <option value="advanced">高级</option>
-                  </Select>
-                  <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={addEx}><Plus className="mr-1 size-3" />添加例句</Button>
+
+          {/* 关联词汇 */}
+          {chunkWords.length > 0 && (
+            <div>
+              <Label>关联词汇</Label>
+              <p className="text-[11px] text-muted-foreground/50 mb-1.5">从句块中提取的词汇（可用于查找和关联词典条目）</p>
+              <div className="flex flex-wrap gap-1">
+                {chunkWords.map((w: string) => (
+                  <Badge key={w} variant="secondary" className="text-[11px] px-1.5 py-0 h-5 font-normal text-muted-foreground/70">
+                    {w}
+                  </Badge>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Description — Markdown 预览 + 编辑切换 */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="c-desc">讲解 / 描述</Label>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="text-[11px] h-6 text-muted-foreground hover:text-foreground"
+                  disabled={enriching || !form.text?.trim()}
+                  onClick={handleAiEnrich}>
+                  {enriching ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Sparkles className="mr-1 size-3" />}
+                  AI 生成
+                </Button>
+                {form.description && (
+                  <button onClick={() => setEditDesc(!editDesc)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    {editDesc ? '预览' : '编辑'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {form.description && !editDesc ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[30vh] overflow-y-auto">
+                <div className="text-sm text-muted-foreground leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderMd(form.description) }} />
+                <button
+                  onClick={() => setForm((f: any) => ({ ...f, description: '' }))}
+                  className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-2"
+                >清除</button>
+              </div>
+            ) : (
+              <Textarea id="c-desc" value={form.description ?? ''}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                rows={3} placeholder="用法搭配说明（支持 **加粗**、`代码`、- 列表）" />
+            )}
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+
+          {/* Examples — 预览 + 编辑切换 */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label>例句</Label>
+              <div className="flex items-center gap-2">
+                {exs.length > 0 && (
+                  <button onClick={() => setEditExamples(!editExamples)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    {editExamples ? '预览' : '编辑'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {exs.length > 0 && !editExamples ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[40vh] overflow-y-auto space-y-2.5">
+                {exs.map((ex: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <span className="text-[10px] text-muted-foreground/30 tabular-nums min-w-[1.25rem] text-right pt-0.5 select-none">{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground/80 italic leading-relaxed">{ex.en || '(空)'}</p>
+                      {ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{ex.zh}</p>}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/50 flex-shrink-0 ml-auto">
+                      {ex.level === 'basic' ? '基础' : ex.level === 'advanced' ? '高级' : '中级'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2 mt-1">
+                {exs.map((ex: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-1">
+                      <Input value={ex.en ?? ''} onChange={e => setEx(i, 'en', e.target.value)} placeholder={`英文例句 ${i + 1}`} className="text-sm" />
+                      <Input value={ex.zh ?? ''} onChange={e => setEx(i, 'zh', e.target.value)} placeholder="中文翻译" className="text-sm" />
+                    </div>
+                    <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
+                      <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={addEx}><Plus className="mr-1 size-3" />添加例句</Button>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom bar */}
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
             <Button variant="outline" onClick={onClose}>取消</Button>
             <Button onClick={handleSave} disabled={saving}>{edit ? '保存' : '创建'}</Button>
           </div>
@@ -1266,11 +1396,28 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [enriching, setEnriching] = useState(false)
+  const [editDesc, setEditDesc] = useState(false)
+  const [editExamples, setEditExamples] = useState(false)
+  const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
-    if (edit) setForm(edit)
-    else setForm({ pattern: '', meaning: '', difficulty: 'L2', example: '' })
+    if (edit) {
+      setForm(edit)
+      setEditDesc(false)
+      setEditExamples(false)
+    } else {
+      setForm({ pattern: '', meaning: '', difficulty: 'L2', category: '', examples: [] })
+      setEditDesc(false)
+      setEditExamples(false)
+    }
   }, [edit, open])
+
+  // 加载已有分类列表
+  useEffect(() => {
+    if (!open) return
+    api.listPatternCategories().then(setCategories).catch(() => {})
+  }, [open])
 
   const handleSave = async () => {
     if (!form.pattern?.trim()) return
@@ -1284,6 +1431,43 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
     finally { setSaving(false) }
   }
 
+  // AI 生成例句 + 讲解
+  const handleAiGenerate = async () => {
+    if (!form.pattern?.trim()) return
+    setEnriching(true)
+    try {
+      const { aiEnrichPattern } = await import('../api-content-admin')
+      const result = await aiEnrichPattern({
+        pattern: form.pattern.trim(),
+        meaning: form.meaning ?? '',
+      })
+      setForm((prev: any) => ({
+        ...prev,
+        examples: result.examples?.length ? result.examples : prev.examples,
+        description: result.description || prev.description,
+      }))
+      setEditDesc(false)
+      setEditExamples(false)
+      toast.success('AI 已生成例句和讲解')
+    } catch { toast.error('AI 生成失败') }
+    finally { setEnriching(false) }
+  }
+
+  const exs: any[] = form.examples ?? []
+  const setEx = (idx: number, field: string, val: string) => {
+    const arr = [...exs]; arr[idx] = { ...arr[idx], [field]: val }; setForm({ ...form, examples: arr })
+  }
+  const addEx = () => setForm({ ...form, examples: [...exs, { en: '', zh: '', level: 'basic' }] })
+  const delEx = (idx: number) => setForm({ ...form, examples: exs.filter((_: any, i: number) => i !== idx) })
+
+  // 从句式中提取关键词（用于关联词汇展示）
+  const patternWords = (form.pattern ?? '')
+    .replace(/__/g, '')
+    .toLowerCase()
+    .split(/[^a-zA-Z'-]+/)
+    .filter((w: string) => w.length > 1)
+    .filter((w: string, i: number, arr: string[]) => arr.indexOf(w) === i)
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1292,6 +1476,7 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
           <DialogDescription>句式如 "__ is the __ I have ever __"，用 __ 表示可替换槽位</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Row 1: Pattern + Meaning */}
           <div className="flex gap-2">
             <div className="flex-1">
               <Label htmlFor="p-pattern">句式 *</Label>
@@ -1302,7 +1487,19 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
               <Input id="p-meaning" value={form.meaning ?? ''} onChange={e => setForm({ ...form, meaning: e.target.value })} placeholder="这是我__过的最__的__" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          {/* Row 2: Category + Difficulty */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="p-cat">分类</Label>
+              <Select id="p-cat" value={form.category ?? ''} onChange={e => setForm({ ...form, category: e.target.value })}>
+                <option value="">选择分类...</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {form.category && !categories.includes(form.category) && (
+                  <option value={form.category}>{form.category} (当前)</option>
+                )}
+              </Select>
+            </div>
             <div>
               <Label htmlFor="p-diff">难度</Label>
               <Select id="p-diff" value={form.difficulty ?? 'L2'} onChange={e => setForm({ ...form, difficulty: e.target.value })}>
@@ -1310,11 +1507,106 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
               </Select>
             </div>
           </div>
+
+          {/* 关联词汇 */}
+          {patternWords.length > 0 && (
+            <div>
+              <Label>关联词汇</Label>
+              <p className="text-[11px] text-muted-foreground/50 mb-1.5">从句式中提取的词汇（去掉 __ 槽位后）</p>
+              <div className="flex flex-wrap gap-1">
+                {patternWords.map((w: string) => (
+                  <Badge key={w} variant="secondary" className="text-[11px] px-1.5 py-0 h-5 font-normal text-muted-foreground/70">
+                    {w}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Description — Markdown 预览 + 编辑切换 */}
           <div>
-            <Label htmlFor="p-example">完整例句</Label>
-            <Textarea id="p-example" value={form.example ?? ''} onChange={e => setForm({ ...form, example: e.target.value })} rows={2} placeholder="This is the best movie I have ever watched." />
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="p-desc">讲解 / 描述</Label>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="text-[11px] h-6 text-muted-foreground hover:text-foreground"
+                  disabled={enriching || !form.pattern?.trim()}
+                  onClick={handleAiGenerate}>
+                  {enriching ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Sparkles className="mr-1 size-3" />}
+                  AI 生成
+                </Button>
+                {form.description && (
+                  <button onClick={() => setEditDesc(!editDesc)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    {editDesc ? '预览' : '编辑'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {form.description && !editDesc ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[30vh] overflow-y-auto">
+                <div className="text-sm text-muted-foreground leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderMd(form.description) }} />
+                <button
+                  onClick={() => setForm((f: any) => ({ ...f, description: '' }))}
+                  className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-2"
+                >清除</button>
+              </div>
+            ) : (
+              <Textarea id="p-desc" value={form.description ?? ''}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                rows={3} placeholder="句式适用场景、语气、易错点（支持 **加粗**、`代码`、- 列表）" />
+            )}
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+
+          {/* Examples — 预览 + 编辑切换 */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label>完整例句</Label>
+              <div className="flex items-center gap-2">
+                {exs.length > 0 && (
+                  <button onClick={() => setEditExamples(!editExamples)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    {editExamples ? '预览' : '编辑'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {exs.length > 0 && !editExamples ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[40vh] overflow-y-auto space-y-2.5">
+                {exs.map((ex: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <span className="text-[10px] text-muted-foreground/30 tabular-nums min-w-[1.25rem] text-right pt-0.5 select-none">{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground/80 italic leading-relaxed">{ex.en || '(空)'}</p>
+                      {ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{ex.zh}</p>}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/50 flex-shrink-0 ml-auto">
+                      {ex.level === 'basic' ? '基础' : ex.level === 'advanced' ? '高级' : '中级'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2 mt-1">
+                {exs.map((ex: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-1">
+                      <Input value={ex.en ?? ''} onChange={e => setEx(i, 'en', e.target.value)} placeholder={`例句 ${i + 1}`} className="text-sm" />
+                      <Input value={ex.zh ?? ''} onChange={e => setEx(i, 'zh', e.target.value)} placeholder="中文翻译" className="text-sm" />
+                    </div>
+                    <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
+                      <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={addEx}><Plus className="mr-1 size-3" />添加例句</Button>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom bar */}
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
             <Button variant="outline" onClick={onClose}>取消</Button>
             <Button onClick={handleSave} disabled={saving}>{edit ? '保存' : '创建'}</Button>
           </div>

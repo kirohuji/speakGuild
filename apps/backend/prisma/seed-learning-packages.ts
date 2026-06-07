@@ -253,7 +253,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           pattern: row.pattern,
           meaning: row.meaning || null,
           slots: row.slots ? parseJson(row.slots) : undefined,
-          example: row.example || null,
+          examples: row.example ? [{ en: row.example, zh: '', level: 'intermediate' }] : undefined,
           difficulty: row.difficulty || 'L1',
         },
         update: {},
