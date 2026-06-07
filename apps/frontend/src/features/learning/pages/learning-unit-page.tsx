@@ -40,7 +40,7 @@ export function LearningUnitPage() {
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogIndex, setDialogIndex] = useState(0)
-  const [dialogItems, setDialogItems] = useState<LearningInsightItem[]>([])
+  const [dialogKind, setDialogKind] = useState<'vocab' | 'chunk' | 'pattern'>('vocab')
 
   // 展开的列表项（点击高亮 + 展开显示详情）
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
@@ -169,12 +169,20 @@ export function LearningUnitPage() {
       sceneName: unit?.title,
     })), [unit])
 
+  const currentDialogItems = useMemo(() => {
+    if (dialogKind === 'chunk') return chunkDialogItems
+    if (dialogKind === 'pattern') return patternDialogItems
+    return vocabDialogItems
+  }, [chunkDialogItems, dialogKind, patternDialogItems, vocabDialogItems])
+
   // 打开 Dialog
-  const openDialog = useCallback((items: LearningInsightItem[], startIndex: number) => {
-    setDialogItems(items)
-    setDialogIndex(Math.min(startIndex, items.length - 1))
+  const openDialog = useCallback((kind: 'vocab' | 'chunk' | 'pattern', startIndex: number) => {
+    const nextItems =
+      kind === 'chunk' ? chunkDialogItems : kind === 'pattern' ? patternDialogItems : vocabDialogItems
+    setDialogKind(kind)
+    setDialogIndex(Math.min(startIndex, nextItems.length - 1))
     setDialogOpen(true)
-  }, [])
+  }, [chunkDialogItems, patternDialogItems, vocabDialogItems])
 
   // 点击列表项展开/收起详情
   const handleItemClick = useCallback((itemId: string) => {
@@ -289,7 +297,7 @@ export function LearningUnitPage() {
                     collected={collectedTexts.has(vocab.word)}
                     expanded={expandedItemId === vocab.id}
                     onToggle={() => handleItemClick(vocab.id)}
-                    onOpen={() => openDialog(vocabDialogItems, vocabPageItems.startIndex + index)}
+                    onOpen={() => openDialog('vocab', vocabPageItems.startIndex + index)}
                     onCollect={() => handleCollectWord(vocab.word, vocab.meaning)}
                     onRemove={() => handleRemoveExpression(vocab.word)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
@@ -317,7 +325,7 @@ export function LearningUnitPage() {
                     collected={collectedTexts.has(chunk.text)}
                     expanded={expandedItemId === chunk.id}
                     onToggle={() => handleItemClick(chunk.id)}
-                    onOpen={() => openDialog(chunkDialogItems, chunkPageItems.startIndex + index)}
+                    onOpen={() => openDialog('chunk', chunkPageItems.startIndex + index)}
                     onCollect={() => handleCollectChunk(chunk.text, chunk.meaning)}
                     onRemove={() => handleRemoveExpression(chunk.text)}                  />
                 ))}
@@ -345,7 +353,7 @@ export function LearningUnitPage() {
                       pattern={pattern}
                       expanded={expandedItemId === key}
                       onToggle={() => handleItemClick(key)}
-                      onOpen={() => openDialog(patternDialogItems, absoluteIndex)}
+                      onOpen={() => openDialog('pattern', absoluteIndex)}
                     />
                   )
                 })}
@@ -388,8 +396,8 @@ export function LearningUnitPage() {
 
       {/* Dialog */}
       <LearningInsightDialog
-        items={dialogItems}
-        index={dialogIndex}
+        items={currentDialogItems}
+        index={Math.min(dialogIndex, Math.max(currentDialogItems.length - 1, 0))}
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         onIndexChange={setDialogIndex}

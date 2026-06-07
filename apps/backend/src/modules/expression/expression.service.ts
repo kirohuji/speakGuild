@@ -42,8 +42,26 @@ export class ExpressionService {
       this.prisma.expressionItem.count({ where }),
     ]);
 
+    const wordItems = type === 'word' ? items.filter((item) => item.original?.trim()) : [];
+    const vocabularies = wordItems.length
+      ? await this.prisma.vocabulary.findMany({
+          where: {
+            OR: wordItems.map((item) => ({
+              word: { equals: item.original!.trim(), mode: 'insensitive' },
+            })),
+          },
+        })
+      : [];
+    const vocabularyByWord = new Map(vocabularies.map((vocab) => [vocab.word.toLowerCase(), vocab]));
+    const mergedItems = wordItems.length
+      ? items.map((item) => ({
+          ...item,
+          vocabulary: item.original ? vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null : null,
+        }))
+      : items;
+
     return {
-      items,
+      items: mergedItems,
       total,
       page,
       pageSize,

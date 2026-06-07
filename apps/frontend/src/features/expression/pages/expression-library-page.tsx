@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import {
   BookMarked, Search, Trash2, BookOpen,
   BookText, MessageSquareText, ExternalLink, Layers,
@@ -21,6 +22,14 @@ interface Expression {
   chunkText: string | null; sceneName: string | null; masteryStatus: string
   reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
   createdAt: string
+  vocabulary?: {
+    id: string; word: string; meaning: string; partOfSpeech?: string | null;
+    phoneticUs?: string | null; phoneticUk?: string | null;
+    audioUsUrl?: string | null; audioUkUrl?: string | null;
+    definitionEn?: string | null; synonyms?: string[];
+    examples?: unknown; description?: string | null;
+    difficulty?: string;
+  } | null
 }
 
 interface PageResult {
@@ -35,12 +44,13 @@ const PAGE_SIZE = 30
 
 export function ExpressionLibraryPage() {
   const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
   const [reviewState, setReviewState] = useState<MasteryStatus>('learning')
 
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -49,6 +59,7 @@ export function ExpressionLibraryPage() {
 
   // 展开的列表项
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
+  const [handledDeepLink, setHandledDeepLink] = useState('')
 
   // ---- 核心数据请求：一级 tab + 二级 tab 都作为查询参数传给后端 ----
   const fetchData = useCallback(async () => {
@@ -79,6 +90,22 @@ export function ExpressionLibraryPage() {
     }
   }, [libraryTab, reviewState])
 
+  const deepLinkKind = searchParams.has('word')
+    ? 'word'
+    : searchParams.has('chunk')
+      ? 'chunk'
+      : searchParams.has('pattern')
+        ? 'pattern'
+        : null
+  const deepLinkValue = deepLinkKind ? searchParams.get(deepLinkKind)?.trim() ?? '' : ''
+
+  useEffect(() => {
+    if (!deepLinkKind || !deepLinkValue) return
+    setLibraryTab(deepLinkKind === 'word' ? 'words' : deepLinkKind)
+    setReviewState('learning')
+    setExpandedItemId(null)
+  }, [deepLinkKind, deepLinkValue])
+
   // 一级 tab 或二级 tab 变化时重新请求
   useEffect(() => {
     fetchData()
@@ -89,16 +116,31 @@ export function ExpressionLibraryPage() {
     setLibraryTab(value as LibraryTab)
     setReviewState('learning')
     setExpandedItemId(null)
-  }, [])
+    setHandledDeepLink('')
+    setSearchParams({})
+  }, [setSearchParams])
 
   // ---- dialog ----
   const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
   const visibleDialogItems: LearningInsightItem[] = result.items.map((expr) => {
     if (apiType === 'word') {
+      const vocab = expr.vocabulary
       return {
         kind: 'word' as const,
         id: `word:${expr.original ?? expr.id}`,
-        word: expr.original ?? '',
+        word: vocab?.word ?? expr.original ?? '',
+        meaning: vocab?.meaning ?? expr.chunkText ?? expr.corrected ?? undefined,
+        partOfSpeech: vocab?.partOfSpeech,
+        phoneticUs: vocab?.phoneticUs,
+        phoneticUk: vocab?.phoneticUk,
+        audioUsUrl: vocab?.audioUsUrl,
+        audioUkUrl: vocab?.audioUkUrl,
+        definitionEn: vocab?.definitionEn,
+        synonyms: vocab?.synonyms,
+        examples: vocab?.examples,
+        description: vocab?.description ?? (expr.corrected && expr.corrected !== expr.chunkText ? expr.corrected : undefined),
+        difficulty: vocab?.difficulty,
+        sceneName: expr.sceneName ?? undefined,
       }
     }
     if (apiType === 'scene_phrase') {
@@ -126,6 +168,32 @@ export function ExpressionLibraryPage() {
     setDialogIndex(Math.min(startIndex, items.length - 1))
     setDialogOpen(true)
   }, [])
+
+  useEffect(() => {
+    if (!deepLinkKind || !deepLinkValue || loading) return
+    const key = `${deepLinkKind}:${deepLinkValue}`
+    if (handledDeepLink === key) return
+
+    const target = deepLinkValue.toLowerCase()
+    const index = visibleDialogItems.findIndex((item) => {
+      if (item.kind === 'word') return item.word.toLowerCase() === target
+      if (item.kind === 'chunk') return item.text.toLowerCase() === target
+      return item.pattern.toLowerCase() === target
+    })
+    const fallbackItem: LearningInsightItem =
+      deepLinkKind === 'word'
+        ? { kind: 'word', id: `word:${deepLinkValue}`, word: deepLinkValue }
+        : deepLinkKind === 'chunk'
+          ? { kind: 'chunk', id: `chunk:${deepLinkValue}`, text: deepLinkValue, meaning: '' }
+          : { kind: 'pattern', id: `pattern:${deepLinkValue}`, pattern: deepLinkValue }
+
+    if (index >= 0) {
+      openDialog(visibleDialogItems, index)
+    } else {
+      openDialog([fallbackItem], 0)
+    }
+    setHandledDeepLink(key)
+  }, [deepLinkKind, deepLinkValue, handledDeepLink, loading, openDialog, visibleDialogItems])
 
   // ---- 状态变更 ----
   const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
