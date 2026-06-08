@@ -233,6 +233,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
       const result = await transcribeRecording(file, file.name)
       const transcribed = result.text?.trim()
       if (transcribed) {
+        setLastAudioUrl(result.audioUrl ?? null)
         setVoiceState({ status: 'done', text: transcribed })
       } else {
         setError('未识别到语音内容')

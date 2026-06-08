@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
-import { History, RotateCcw, Settings, SkipBack, X } from 'lucide-react'
+import { History, RotateCcw, Settings, SkipBack, Volume2, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
@@ -512,8 +512,8 @@ export function VnPlayer({
   }, [fullText, settings.typewriter])
 
   useEffect(() => {
-    if (!audioUrl) return
-    console.log('[VnPlayer] Playing audio:', audioUrl.slice(0, 100))
+    // 用户录音不自动播放（仅 NPC TTS 自动播放）
+    if (!audioUrl || displayLine?.isUser) return
     const audio = new Audio(audioUrl)
     const promise = audio.play()
     if (promise) {
@@ -522,7 +522,7 @@ export function VnPlayer({
     return () => {
       audio.pause()
     }
-  }, [audioUrl])
+  }, [audioUrl, displayLine?.isUser])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)
@@ -785,6 +785,21 @@ export function VnPlayer({
                         <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-primary/70 align-middle" />
                       )}
                     </p>
+                    {/* 用户录音回放按钮 */}
+                    {displayLine.isUser && displayLine.audioUrl && (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary transition-colors hover:bg-primary/20"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const audio = new Audio(displayLine.audioUrl!)
+                          audio.play().catch(() => {})
+                        }}
+                      >
+                        <Volume2 className="size-3" />
+                        回放录音
+                      </button>
+                    )}
                     {settings.bilingual && displayLine.translation && (
                       <p className="text-xs l sm:rounded-2xltext-muted-foreground">{displayedTranslation}</p>
                     )}

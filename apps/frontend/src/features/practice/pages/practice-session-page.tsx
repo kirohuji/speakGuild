@@ -732,7 +732,7 @@ export function PracticeSessionPage() {
       }
 
       if (passed) {
-        setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
+        setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false, audioUrl }])
         practiceApi.submitDialogue(topicId!, {
           round,
           npcText,
@@ -746,7 +746,7 @@ export function PracticeSessionPage() {
       return
     }
 
-    setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false }])
+    setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false, audioUrl }])
     targetChunksForRound.forEach((chunkText) => {
       if (userMsg.toLowerCase().includes(chunkText.toLowerCase())) {
         setUsedChunks((prev) => new Set([...prev, chunkText]))
