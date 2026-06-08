@@ -19,7 +19,7 @@ export class ExpressionService {
   async listExpressions(userId: string, params?: ListExpressionsParams) {
     const { type, sceneName, reviewState, page = 1, pageSize = 30 } = params ?? {};
 
-    const where: Prisma.ExpressionItemWhereInput = { userId };
+    const where: Prisma.ExpressionItemWhereInput = { userId, deletedAt: null };
 
     if (type) where.type = type;
     if (sceneName) where.sceneName = sceneName;
@@ -82,8 +82,11 @@ export class ExpressionService {
   }
 
   async deleteExpression(userId: string, id: string) {
-    return this.prisma.expressionItem.deleteMany({
+    return this.prisma.expressionItem.updateMany({
       where: { id, userId },
+      data: {
+        deletedAt: new Date(),
+      },
     });
   }
 

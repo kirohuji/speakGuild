@@ -101,7 +101,10 @@ export class SyncService {
           select: { id: true },
         });
         if (match) {
-          await this.prisma.expressionItem.delete({ where: { id: match.id } });
+          await this.prisma.expressionItem.update({
+            where: { id: match.id },
+            data: { deletedAt: new Date() },
+          });
         }
         return { handled: true };
       }
@@ -142,7 +145,10 @@ export class SyncService {
           select: { id: true },
         });
         if (match) {
-          await this.prisma.expressionItem.delete({ where: { id: match.id } });
+          await this.prisma.expressionItem.update({
+            where: { id: match.id },
+            data: { deletedAt: new Date() },
+          });
         }
         return { handled: true };
       }
@@ -184,7 +190,10 @@ export class SyncService {
           select: { id: true },
         });
         if (match) {
-          await this.prisma.expressionItem.delete({ where: { id: match.id } });
+          await this.prisma.expressionItem.update({
+            where: { id: match.id },
+            data: { deletedAt: new Date() },
+          });
         }
         return { handled: true };
       }
@@ -334,10 +343,9 @@ export class SyncService {
       chunkProgresses,
       practiceSessions,
     ] = await Promise.all([
-      // ExpressionItem 只有 createdAt
       this.prisma.expressionItem.findMany({
-        where: { userId, createdAt: { gt: since } },
-        orderBy: { createdAt: 'asc' },
+        where: { userId, updatedAt: { gt: since }, deletedAt: null },
+        orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.userSceneProgress.findMany({
@@ -364,13 +372,23 @@ export class SyncService {
       take: SyncService.PULL_PAGE_SIZE,
     });
 
+    const deletedExpressionItems = await this.prisma.expressionItem.findMany({
+      where: { userId, deletedAt: { gt: since } },
+      orderBy: { deletedAt: 'asc' },
+      take: SyncService.PULL_PAGE_SIZE,
+      select: { id: true, deletedAt: true },
+    });
+
     // 计算下一页 cursor：取所有返回记录中最大的时间戳
     const timestamps: number[] = [];
-    for (const e of expressionItems) timestamps.push(e.createdAt.getTime());
+    for (const e of expressionItems) timestamps.push(e.updatedAt.getTime());
     for (const s of sceneProgresses) timestamps.push(s.updatedAt.getTime());
     for (const c of chunkProgresses) timestamps.push(c.updatedAt.getTime());
     for (const s of practiceSessions) timestamps.push(s.updatedAt.getTime());
     for (const t of practiceTurns) timestamps.push(t.createdAt.getTime());
+    for (const e of deletedExpressionItems) {
+      if (e.deletedAt) timestamps.push(e.deletedAt.getTime());
+    }
 
     const nextCursor = timestamps.length > 0
       ? new Date(Math.max(...timestamps)).toISOString()
@@ -379,7 +397,7 @@ export class SyncService {
     // 任意一个结果集达到 pageSize 上限，说明还有更多数据
     const hasMore = [
       expressionItems, sceneProgresses, chunkProgresses,
-      practiceSessions, practiceTurns,
+      practiceSessions, practiceTurns, deletedExpressionItems,
     ].some((arr) => arr.length >= SyncService.PULL_PAGE_SIZE);
 
     return {
@@ -393,7 +411,7 @@ export class SyncService {
         practiceTurns,
       },
       deleted: {
-        expressionItems: [] as string[],
+        expressionItems: deletedExpressionItems.map((item) => item.id),
         sceneProgresses: [] as string[],
         chunkProgresses: [] as string[],
       },

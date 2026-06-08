@@ -34,6 +34,12 @@ function turnRecordId(sessionId: string, round?: number) {
   return `turn:${sessionId}:${round ?? createLocalId('round')}`
 }
 
+async function resolveSessionId(sessionId: string): Promise<string> {
+  if (!sessionId.startsWith('local_session_')) return sessionId
+  const mapped = await localDb.get<{ value: string }>('kv', `session-map:${sessionId}`)
+  return mapped?.value ?? sessionId
+}
+
 async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null> {
   const cached = await localDb.get<{ detail: TopicDetail; unitId?: string }>('downloaded_unit_details', `topic:${topicId}`)
   if (!cached?.detail) return null
@@ -143,7 +149,7 @@ export const practiceRepository = {
       syncStatus: 'pending',
     }
     await localDb.put('practice_records', record)
-    await syncOutbox.enqueue({
+    const outboxItem = await syncOutbox.enqueue({
       entityType: 'practice_turn',
       entityId: record.id,
       operation: 'create',
@@ -151,8 +157,9 @@ export const practiceRepository = {
     })
 
     try {
-      await practiceApi.submitTurn(sessionId, data)
+      await practiceApi.submitTurn(await resolveSessionId(sessionId), data)
       await localDb.put('practice_records', { ...record, syncStatus: 'synced', updatedAt: new Date().toISOString() })
+      await syncOutbox.markSynced(outboxItem.id)
     } catch {
       // The outbox keeps the turn for later replay.
     }
@@ -168,7 +175,7 @@ export const practiceRepository = {
       updatedAt: now,
       syncStatus: 'pending',
     })
-    await syncOutbox.enqueue({
+    const outboxItem = await syncOutbox.enqueue({
       entityType: 'practice_session',
       entityId: sessionId,
       operation: 'update',
@@ -176,7 +183,17 @@ export const practiceRepository = {
     })
 
     try {
-      return await practiceApi.completeSession(sessionId)
+      const result = await practiceApi.completeSession(await resolveSessionId(sessionId))
+      await syncOutbox.markSynced(outboxItem.id)
+      await localDb.put('user_progress', {
+        id: `practice-session:${sessionId}`,
+        sessionId,
+        status: 'completed',
+        completedAt: now,
+        updatedAt: new Date().toISOString(),
+        syncStatus: 'synced',
+      })
+      return result
     } catch {
       return null
     }

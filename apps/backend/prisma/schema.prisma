@@ -947,9 +947,13 @@ model ExpressionItem {
   sourceId       String?
   sourceSnapshot Json?
   createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
 
   @@index([userId, type])
   @@index([userId, masteryStatus])
+  @@index([userId, updatedAt])
+  @@index([userId, deletedAt])
   @@map("expression_item")
 }
 

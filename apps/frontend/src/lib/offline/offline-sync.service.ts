@@ -464,8 +464,9 @@ export const offlineSyncService = {
       exprCtx = { items: Array.isArray(raw) ? raw : (raw as any)?.items ?? [] }
     } catch { /* 预取失败不影响同步，回退到逐条查询 */ }
 
-    // 分离可批量推送的类型和需要单独处理的复杂类型
-    const bulkEntityTypes = new Set(['my_unit', 'word_entry', 'chunk_entry', 'pattern_entry', 'practice_session', 'practice_turn'])
+    // 分离可批量推送的类型和需要单独处理的复杂类型。
+    // practice_session / practice_turn 需要按创建顺序 replay，才能把 local_session 映射到远端 session。
+    const bulkEntityTypes = new Set(['my_unit', 'word_entry', 'chunk_entry', 'pattern_entry'])
     const bulkItems = items.filter((item) => bulkEntityTypes.has(item.entityType))
     const individualItems = items.filter((item) => !bulkItems.includes(item))
 
