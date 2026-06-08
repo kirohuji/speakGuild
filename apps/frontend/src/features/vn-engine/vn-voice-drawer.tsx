@@ -16,12 +16,13 @@ import { transcribeRecording } from '@/lib/practice-ai-api'
 function WaveformBars({ active }: { active: boolean }) {
   const barCount = 24
   return (
-    <div className="flex h-9 items-center justify-center gap-[2px] px-2">
+    <div className="flex h-8 items-center justify-center gap-[2px] px-2">
       {Array.from({ length: barCount }).map((_, i) => (
         <div
           key={i}
           className={cn(
-            'w-[2.5px] rounded-full bg-primary/30 transition-all duration-150',
+            'w-[2.5px] rounded-full transition-all duration-150',
+            active ? 'bg-primary/45' : 'bg-foreground/20',
             active ? 'animate-waveform' : 'h-1',
           )}
           style={{
@@ -269,11 +270,15 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="mx-auto max-h-[46dvh] w-full max-w-[520px] overflow-hidden border-border/45 bg-background/55 px-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-xl">
+      <DrawerContent
+        showHandle={false}
+        className="mx-auto max-h-[42dvh] w-full max-w-[520px] overflow-hidden rounded-t-[10px] border-x-0 border-b-0 border-t border-border/55 !bg-background/90 px-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] ![background-image:none] backdrop-blur-2xl"
+      >
         {/* 隐藏音频元素 */}
         <audio ref={audioRef} src={lastAudioUrlRef.current ?? undefined} preload="auto" />
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-foreground/20" />
 
-        <DrawerHeader className="border-b border-border/45 px-4 pb-2 pt-2 text-left">
+        <DrawerHeader className="px-4 pb-2 pt-2 text-left">
           <div className="flex items-center justify-between gap-3">
             <div>
               <DrawerTitle className="text-sm font-semibold tracking-normal">语音输入</DrawerTitle>
@@ -282,7 +287,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
               </p>
             </div>
             <div className={cn(
-              'inline-flex h-6 items-center gap-1.5 rounded-lg bg-muted/70 px-2 text-[11px] font-medium text-muted-foreground ring-1 ring-border/45',
+              'inline-flex h-6 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-muted-foreground',
               isRecording && 'text-rose-600',
               isProcessing && 'text-primary',
               isDone && 'text-primary',
@@ -296,10 +301,10 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
           </div>
         </DrawerHeader>
 
-        <div className="space-y-2 px-4 pt-3">
+        <div className="space-y-2 px-4">
           <div className={cn(
-            'min-h-[52px] max-h-[86px] overflow-y-auto rounded-lg bg-muted/70 px-3 py-2 ring-1 ring-border/45 transition-colors',
-            isDone && 'ring-primary/25',
+            'min-h-[52px] max-h-[82px] overflow-y-auto rounded-lg bg-muted/70 px-3 py-2 ring-1 ring-border/45 transition-colors',
+            isDone && 'bg-muted/70 ring-primary/25',
           )}>
             {isProcessing ? (
               <div className="flex h-9 items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -332,7 +337,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
             <WaveformBars active={isRecording} />
           </div>
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <div className="flex justify-end">
               {hasRecording && !isRecording && (
                 <button
@@ -342,7 +347,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                   onClick={togglePlayback}
                   className={cn(
                     'flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-foreground active:scale-95',
-                    isPlaying && 'bg-primary/10 text-primary ring-primary/25',
+                    isPlaying && 'text-primary ring-primary/25',
                   )}
                 >
                   {isPlaying ? (
@@ -352,6 +357,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                   )}
                 </button>
               )}
+              {!hasRecording && !isRecording && <div className="size-9" />}
             </div>
 
             <button
@@ -362,18 +368,18 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                 else startRecording()
               }}
               className={cn(
-                'flex size-12 items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-40',
+                'flex size-10 items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-40',
                 isRecording
-                  ? 'bg-rose-500 text-white shadow-sm'
-                  : 'bg-primary text-primary-foreground shadow-sm',
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-primary text-primary-foreground',
               )}
             >
               {isProcessing ? (
-                <Loader2 className="size-5 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : isRecording ? (
-                <Square className="size-5 fill-current" />
+                <Square className="size-4 fill-current" />
               ) : (
-                <Mic className="size-5" />
+                <Mic className="size-4" />
               )}
             </button>
 
@@ -393,12 +399,13 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                     title="上传音频文件测试 STT"
                     disabled={isProcessing}
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex size-9 items-center justify-center rounded-lg border border-dashed border-border/55 bg-muted/70 text-muted-foreground transition-all hover:border-primary/40 hover:bg-muted hover:text-primary active:scale-95 disabled:opacity-30"
+                    className="flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-primary active:scale-95 disabled:opacity-30"
                   >
                     <FileAudio className="size-3.5" />
                   </button>
                 </>
               )}
+              {isRecording && <div className="size-9" />}
             </div>
           </div>
 
