@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
-import { Bell } from 'lucide-react'
+import { Bell, Loader2 } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
@@ -11,7 +11,9 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { useNotificationStore } from '@/features/notification/store'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { useLayoutStore } from '@/stores/layout.store'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -107,9 +109,19 @@ function MobileTopBar({
   const { pathname } = useLocation()
   const { session } = useAuth()
   const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const avatarLoaded = useProfileCacheStore((s) => s.avatarLoaded)
+  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
+  const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
+
+  React.useEffect(() => {
+    if (user?.id && !avatarLoaded) {
+      void loadProfileHome()
+    }
+  }, [avatarLoaded, loadProfileHome, user?.id])
 
   return (
     <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
@@ -129,16 +141,21 @@ function MobileTopBar({
         onClick={onProfileOpen}
         aria-label={t('nav.profile')}
         className={cn(
-          'block rounded-full p-0.5 transition-colors',
+          'relative block rounded-full p-0.5 transition-colors',
           profileActive ? 'bg-background/45' : 'hover:bg-background/45',
         )}
       >
         <Avatar className="size-8">
-          <AvatarImage src={user?.image} alt={user?.name || t('nav.profile')} />
+          <AvatarImage src={avatarUrl || user?.image} alt={user?.name || t('nav.profile')} />
           <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
             {fallback}
           </AvatarFallback>
         </Avatar>
+        {isSyncing && (
+          <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
+            <Loader2 className="size-3 animate-spin text-primary" />
+          </span>
+        )}
       </button>
     </header>
   )

@@ -64,7 +64,7 @@
 | `practiceRepository` | 练习 topic、session、turn、progress |
 | `learningPackService` | 学习包安装、卸载、资源预下载 |
 | `assetCacheService` | Native 资源下载、删除、URL resolve |
-| `offlineSyncService` | outbox push、用户数据 pull、内容更新检查 |
+| `offlineSyncService` | outbox push、用户数据 pull、内容更新和离线学习包刷新 |
 | `offlineStorageService` | 离线数据统计和清理 |
 | `syncApi` | 远端同步接口封装 |
 
@@ -271,7 +271,7 @@ offlineSyncService.sync(userId)
 sync()
   -> flush()
   -> pull(userId)
-  -> checkContentUpdates()
+  -> refreshContentUpdates()
 ```
 
 ### flush
@@ -337,17 +337,19 @@ PracticeTurn
 
 删除数据也会被应用到本地，例如删除远端表达库项后，本地 `expression_entries` 会按 `remoteId` 删除。
 
-### checkContentUpdates
+### refreshContentUpdates
 
-`checkContentUpdates()` 用于检查公共内容 manifest 是否变化。
+`refreshContentUpdates()` 用于检查公共内容 manifest 是否变化。
 
-它不会自动重写所有学习包，只会判断哪些已安装学习包可能过期，并提示用户重新下载。
+它会找出受影响的已安装学习包，并调用 `learningPackService.installUnit(packId)` 自动重新拉取 manifest、内容详情和 Native 资源缓存。Web 端仍然不会缓存二进制资源。
 
 当前版本记录在：
 
 ```txt
 kv['sync:content:since']
 ```
+
+这个 cursor 只会在没有内容变更，或受影响学习包都刷新完成后推进。这样刷新失败时，下次同步还会继续尝试。
 
 ## 数据读写原则
 

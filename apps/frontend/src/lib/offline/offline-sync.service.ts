@@ -6,6 +6,8 @@ import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
 import { syncOutbox, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository } from './learning-content.repository'
+import { learningPackService } from './learning-pack.service'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 
 const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
 
@@ -375,25 +377,55 @@ export const offlineSyncService = {
   async sync(userId?: string | null): Promise<{
     push: { synced: number; failed: number; skipped: number }
     pull: { cursor: string | null; changed: number; deleted: number } | null
-    stalePacks: string[]
+    refreshedPacks: string[]
   }> {
-    const push = await this.flush()
-    if (push.failed > 0) {
-      toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
-      return { push, pull: null, stalePacks: [] }
-    }
-    if (push.synced > 0) {
-      toast.success(`已同步 ${push.synced} 条离线数据`)
-    }
-    const pull = await this.pull(userId)
-
-    // 检查已安装学习包的内容是否有更新
-    const stalePacks = await this.checkContentUpdates()
-    if (stalePacks.length > 0) {
-      toast.info(`${stalePacks.length} 个学习包有内容更新，建议重新下载`)
+    const syncStore = useOfflineSyncStore.getState()
+    if (syncStore.isSyncing) {
+      return {
+        push: { synced: 0, failed: 0, skipped: 0 },
+        pull: null,
+        refreshedPacks: [],
+      }
     }
 
-    return { push, pull, stalePacks }
+    const logId = syncStore.begin('开始同步')
+    try {
+      const push = await this.flush()
+      if (push.failed > 0) {
+        const detail = { push, pull: null, refreshedPacks: [] as string[] }
+        toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
+        useOfflineSyncStore.getState().finish(logId, {
+          status: 'failed',
+          summary: `同步失败：${push.failed} 条未上传`,
+          detail,
+        })
+        return detail
+      }
+      if (push.synced > 0) {
+        toast.success(`已同步 ${push.synced} 条离线数据`)
+      }
+      const pull = await this.pull(userId)
+
+      const refreshedPacks = await this.refreshContentUpdates()
+      if (refreshedPacks.length > 0) {
+        toast.success(`已更新 ${refreshedPacks.length} 个离线学习包`)
+      }
+
+      const result = { push, pull, refreshedPacks }
+      useOfflineSyncStore.getState().finish(logId, {
+        status: 'success',
+        summary: `同步完成：上传 ${push.synced}，拉取 ${pull.changed + pull.deleted}，更新学习包 ${refreshedPacks.length}`,
+        detail: result,
+      })
+      return result
+    } catch (error) {
+      useOfflineSyncStore.getState().finish(logId, {
+        status: 'failed',
+        summary: '同步失败',
+        error,
+      })
+      throw error
+    }
   },
 
   /** 检查公共内容更新，返回需要刷新的学习包 ID 列表 */
@@ -401,15 +433,6 @@ export const offlineSyncService = {
     try {
       const versionRecord = await localDb.get<{ value?: string }>('kv', 'sync:content:since')
       const manifest = await syncApi.contentManifest(versionRecord?.value ?? null)
-
-      // 保存新版本时间戳
-      if (manifest.generatedAt) {
-        await localDb.put('kv', {
-          id: 'sync:content:since',
-          value: manifest.generatedAt,
-          updatedAt: new Date().toISOString(),
-        })
-      }
 
       // 收集所有变更涉及的内容 ID
       const changedIds = new Set<string>([
@@ -443,6 +466,64 @@ export const offlineSyncService = {
       console.warn('[offline-sync] content manifest check failed:', error)
       return []
     }
+  },
+
+  async refreshContentUpdates(): Promise<string[]> {
+    const versionRecord = await localDb.get<{ value?: string }>('kv', 'sync:content:since')
+    const manifest = await syncApi.contentManifest(versionRecord?.value ?? null)
+    const changedIds = new Set<string>([
+      ...(manifest.changed?.scenes?.map((s: any) => s.id) ?? []),
+      ...(manifest.changed?.topics?.map((t: any) => t.id) ?? []),
+      ...(manifest.changed?.vocabularies?.map((v: any) => v.id) ?? []),
+      ...(manifest.changed?.chunks?.map((c: any) => c.id) ?? []),
+      ...(manifest.changed?.sentencePatterns?.map((p: any) => p.id) ?? []),
+      ...(manifest.changed?.scriptEpisodes?.map((e: any) => e.id) ?? []),
+      ...(manifest.changed?.dictionaries?.map((d: any) => d.id) ?? []),
+    ])
+
+    if (changedIds.size === 0) {
+      if (manifest.generatedAt) {
+        await localDb.put('kv', {
+          id: 'sync:content:since',
+          value: manifest.generatedAt,
+          updatedAt: new Date().toISOString(),
+        })
+      }
+      return []
+    }
+
+    const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[] } }>('downloaded_packs')
+    const stalePacks = packs
+      .filter((pack) => {
+        const ids = [
+          ...(pack.manifest?.topics ?? []),
+          ...(pack.manifest?.vocabularies ?? []),
+          ...(pack.manifest?.chunks ?? []),
+          ...(pack.manifest?.sentencePatterns ?? []),
+        ]
+        return ids.some((id) => changedIds.has(id))
+      })
+      .map((pack) => pack.packId)
+
+    const refreshed: string[] = []
+    for (const packId of stalePacks) {
+      try {
+        await learningPackService.installUnit(packId)
+        refreshed.push(packId)
+      } catch (error) {
+        console.warn('[offline-sync] pack refresh failed:', packId, error)
+      }
+    }
+
+    if (manifest.generatedAt && refreshed.length === stalePacks.length) {
+      await localDb.put('kv', {
+        id: 'sync:content:since',
+        value: manifest.generatedAt,
+        updatedAt: new Date().toISOString(),
+      })
+    }
+
+    return refreshed
   },
 
   async flush(): Promise<{ synced: number; failed: number; skipped: number }> {

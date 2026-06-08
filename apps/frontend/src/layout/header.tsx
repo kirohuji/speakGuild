@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Monitor, Shield } from 'lucide-react'
+import { Loader2, Monitor, Moon, Shield, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 
 export function Header() {
   const { t } = useTranslation()
@@ -14,7 +17,14 @@ export function Header() {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const themeMenuRef = useRef<HTMLDivElement>(null)
   const { session } = useAuth()
+  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const avatarLoaded = useProfileCacheStore((s) => s.avatarLoaded)
+  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
+  const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
+  const lastSyncLog = useOfflineSyncStore((s) => s.logs[0])
   const isAdmin = session?.user?.role === 'admin'
+  const user = session?.user
+  const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
 
   const navItems = [
     { label: t('nav.home'), path: '/portal' },
@@ -46,6 +56,12 @@ export function Header() {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [themeMenuOpen])
+
+  useEffect(() => {
+    if (session?.user?.id && !avatarLoaded) {
+      void loadProfileHome()
+    }
+  }, [avatarLoaded, loadProfileHome, session?.user?.id])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50 pt-[env(safe-area-inset-top,0px)]">
@@ -123,6 +139,26 @@ export function Header() {
               )}
             </div>
 
+            {user && (
+              <Link
+                to="/account"
+                aria-label={lastSyncLog ? `Account, ${lastSyncLog.summary}` : 'Account'}
+                title={lastSyncLog?.summary ?? undefined}
+                className="relative block rounded-full p-0.5 transition-colors hover:bg-muted"
+              >
+                <Avatar className="size-8">
+                  <AvatarImage src={avatarUrl || user.image} alt={user.name || 'Account'} />
+                  <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
+                    {fallback}
+                  </AvatarFallback>
+                </Avatar>
+                {isSyncing && (
+                  <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
+                    <Loader2 className="size-3 animate-spin text-primary" />
+                  </span>
+                )}
+              </Link>
+            )}
           </div>
         </div>
       </div>
