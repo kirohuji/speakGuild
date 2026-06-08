@@ -5,9 +5,7 @@ type StoreName =
   | 'downloaded_unit_details'
   | 'ink_scripts'
   | 'dictionary_entries'
-  | 'word_entry'
-  | 'chunk_entry'
-  | 'pattern_entry'
+  | 'expression_entries'
   | 'user_progress'
   | 'practice_records'
   | 'local_assets'
@@ -15,7 +13,7 @@ type StoreName =
   | 'recordings'
 
 const DB_NAME = 'speakguild-offline'
-const DB_VERSION = 6
+const DB_VERSION = 7
 
 const STORE_NAMES: StoreName[] = [
   'kv',
@@ -24,9 +22,7 @@ const STORE_NAMES: StoreName[] = [
   'downloaded_unit_details',
   'ink_scripts',
   'dictionary_entries',
-  'word_entry',
-  'chunk_entry',
-  'pattern_entry',
+  'expression_entries',
   'user_progress',
   'practice_records',
   'local_assets',
@@ -48,8 +44,10 @@ function openDb(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result
+      const transaction = request.transaction
+      const existingStores = new Set(Array.from(db.objectStoreNames))
 
-      // 清理历史版本中已被移除的冗余 store
+      // 清理更早历史版本中已被移除的冗余 store。
       for (const deprecated of ['vocabularies', 'chunks', 'sentence_patterns', 'wordbook']) {
         if (db.objectStoreNames.contains(deprecated)) {
           db.deleteObjectStore(deprecated)
@@ -61,6 +59,72 @@ function openDb(): Promise<IDBDatabase> {
           db.createObjectStore(storeName, { keyPath: 'id' })
         }
       }
+
+      // v7 把三个旧的用户学习库缓存表迁移到统一 expression_entries。
+      const expressionStore = transaction?.objectStore('expression_entries')
+      const migrateExpressions = (storeName: string, mapValue: (value: any) => any | null) => {
+        if (!transaction || !expressionStore || !existingStores.has(storeName)) return
+        const source = transaction.objectStore(storeName)
+        const read = source.getAll()
+        read.onsuccess = () => {
+          for (const value of read.result) {
+            const next = mapValue(value)
+            if (next) expressionStore.put(next)
+          }
+        }
+      }
+      const now = new Date().toISOString()
+      migrateExpressions('word_entry', (item) => item?.word ? ({
+        id: `word:${String(item.word).trim().toLowerCase()}`,
+        kind: 'word',
+        type: 'word',
+        original: String(item.word).trim().toLowerCase(),
+        corrected: item.description ?? null,
+        chunkText: item.meaning ?? null,
+        sceneName: item.sceneName ?? null,
+        masteryStatus: item.masteryStatus ?? 'learning',
+        reviewCount: item.reviewCount ?? 0,
+        lastReviewedAt: item.lastReviewedAt ?? null,
+        nextReviewAt: item.nextReviewAt ?? null,
+        sourceType: item.source ?? null,
+        contentSnapshot: item,
+        createdAt: item.updatedAt ?? now,
+        updatedAt: item.updatedAt ?? now,
+      }) : null)
+      migrateExpressions('chunk_entry', (item) => item?.text ? ({
+        id: `chunk:${String(item.text).trim()}`,
+        kind: 'chunk',
+        type: 'chunk',
+        original: item.meaning ?? null,
+        corrected: item.text,
+        chunkText: item.text,
+        sceneName: item.sceneName ?? null,
+        masteryStatus: item.masteryStatus ?? 'learning',
+        reviewCount: item.reviewCount ?? 0,
+        lastReviewedAt: item.lastReviewedAt ?? null,
+        nextReviewAt: item.nextReviewAt ?? null,
+        sourceType: item.source ?? null,
+        contentSnapshot: item,
+        createdAt: item.updatedAt ?? now,
+        updatedAt: item.updatedAt ?? now,
+      }) : null)
+      migrateExpressions('pattern_entry', (item) => item?.pattern ? ({
+        id: `pattern:${String(item.pattern).trim()}`,
+        kind: 'pattern',
+        type: 'scene_phrase',
+        original: item.meaning ?? null,
+        corrected: item.example ?? item.pattern,
+        chunkText: item.pattern,
+        sceneName: item.sceneName ?? null,
+        masteryStatus: item.masteryStatus ?? 'learning',
+        reviewCount: item.reviewCount ?? 0,
+        lastReviewedAt: item.lastReviewedAt ?? null,
+        nextReviewAt: item.nextReviewAt ?? null,
+        sourceType: item.source ?? null,
+        contentSnapshot: item,
+        createdAt: item.updatedAt ?? now,
+        updatedAt: item.updatedAt ?? now,
+      }) : null)
     }
 
     request.onsuccess = () => resolve(request.result)

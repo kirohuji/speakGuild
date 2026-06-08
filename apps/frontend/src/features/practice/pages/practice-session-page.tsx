@@ -365,10 +365,10 @@ export function PracticeSessionPage() {
 
   // 句型表达式始终可见（不在 tab 内），mount 时加载
   useEffect(() => {
-    learningContentRepository.listPatternEntries().then((items) => {
+    learningContentRepository.listExpressionEntries('pattern').then((items) => {
       setCollectedTexts((prev) => {
         const next = new Set(prev)
-        for (const item of items) next.add(item.pattern)
+        for (const item of items) if (item.chunkText) next.add(item.chunkText)
         return next
       })
     })
@@ -381,18 +381,18 @@ export function PracticeSessionPage() {
     if (loadedPrepTabs.current.has(prepTab)) return
     loadedPrepTabs.current.add(prepTab)
     if (prepTab === 'vocab') {
-      learningContentRepository.listWordEntries().then((items) => {
+      learningContentRepository.listExpressionEntries('word').then((items) => {
         setCollectedTexts((prev) => {
           const next = new Set(prev)
-          for (const item of items) next.add(item.word)
+          for (const item of items) if (item.original) next.add(item.original)
           return next
         })
       })
     } else if (prepTab === 'chunk') {
-      learningContentRepository.listChunkEntries().then((items) => {
+      learningContentRepository.listExpressionEntries('chunk').then((items) => {
         setCollectedTexts((prev) => {
           const next = new Set(prev)
-          for (const item of items) next.add(item.text)
+          for (const item of items) if (item.chunkText) next.add(item.chunkText)
           return next
         })
       })
@@ -601,14 +601,24 @@ export function PracticeSessionPage() {
     setSavingTexts((prev) => new Set([...prev, word]))
     try {
       const vocab = detail?.vocabularies?.find((item) => item.word.toLowerCase() === word.toLowerCase())
-      await learningContentRepository.saveWordEntry({
-        ...(vocab ?? {}),
-        word,
+      await learningContentRepository.saveExpressionEntry({
+        kind: 'word',
+        text: word,
         meaning: vocab?.meaning ?? meaning,
         sceneName: detail?.scene.title,
-        source: 'learning-library',
+        contentSnapshot: vocab ?? { word, meaning },
+        sourceType: 'learning-library',
       })
-      await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
+      const outboxItem = await syncOutbox.enqueue({
+        entityType: 'word_entry',
+        entityId: word,
+        operation: 'create',
+        payload: { word, addedAt: new Date().toISOString() },
+      })
+      try {
+        await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
+        await syncOutbox.markSynced(outboxItem.id)
+      } catch { /* 离线保留 pending */ }
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -618,14 +628,29 @@ export function PracticeSessionPage() {
   const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
     setSavingTexts((prev) => new Set([...prev, pattern.pattern]))
     try {
-      await learningContentRepository.savePatternEntry({
-        pattern: pattern.pattern,
+      await learningContentRepository.saveExpressionEntry({
+        kind: 'pattern',
+        text: pattern.pattern,
         meaning: pattern.meaning,
-        example: pattern.example,
         sceneName: pattern.sceneName,
-        source: 'learning-library',
+        contentSnapshot: pattern,
+        sourceType: 'learning-library',
       })
-      await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
+      const outboxItem = await syncOutbox.enqueue({
+        entityType: 'pattern_entry',
+        entityId: pattern.pattern,
+        operation: 'create',
+        payload: {
+          pattern: pattern.pattern,
+          meaning: pattern.meaning,
+          example: pattern.example,
+          sceneName: pattern.sceneName,
+        },
+      })
+      try {
+        await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
+        await syncOutbox.markSynced(outboxItem.id)
+      } catch { /* 离线保留 pending */ }
       setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -635,15 +660,24 @@ export function PracticeSessionPage() {
   const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
     setSavingTexts((prev) => new Set([...prev, chunk.text]))
     try {
-      await learningContentRepository.saveChunkEntry({
+      await learningContentRepository.saveExpressionEntry({
+        kind: 'chunk',
         text: chunk.text,
         meaning: chunk.meaning,
-        description: chunk.description,
-        examples: chunk.examples,
         sceneName: detail?.scene.title,
-        source: 'learning-library',
+        contentSnapshot: chunk,
+        sourceType: 'learning-library',
       })
-      await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
+      const outboxItem = await syncOutbox.enqueue({
+        entityType: 'chunk_entry',
+        entityId: chunk.text,
+        operation: 'create',
+        payload: { chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title },
+      })
+      try {
+        await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
+        await syncOutbox.markSynced(outboxItem.id)
+      } catch { /* 离线保留 pending */ }
       setCollectedTexts((prev) => new Set([...prev, chunk.text]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -653,9 +687,7 @@ export function PracticeSessionPage() {
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     setSavingTexts((prev) => new Set([...prev, text]))
     try {
-      if (kind === 'word') await learningContentRepository.deleteWordEntry(text)
-      else if (kind === 'chunk') await learningContentRepository.deleteChunkEntry(text)
-      else await learningContentRepository.deletePatternEntry(text)
+      await learningContentRepository.deleteExpressionByText(kind, text)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
       await syncOutbox.enqueue({
         entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',

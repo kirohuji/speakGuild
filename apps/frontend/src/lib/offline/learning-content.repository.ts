@@ -8,120 +8,183 @@ function uniqueById<T extends { id: string }>(items: T[]) {
   return Array.from(new Map(items.map((item) => [item.id, item])).values())
 }
 
-export type WordEntry = {
+export type ExpressionEntryKind = 'word' | 'chunk' | 'pattern'
+export type ExpressionEntryStatus = 'learning' | 'reviewing' | 'mastered'
+
+export type ExpressionEntry = {
   id: string
-  word: string
-  meaning?: string
-  partOfSpeech?: string | null
-  phoneticUs?: string | null
-  phoneticUk?: string | null
-  audioUsUrl?: string | null
-  audioUkUrl?: string | null
-  definitionEn?: string | null
-  synonyms?: string[]
-  examples?: unknown
-  description?: string | null
-  difficulty?: string
-  sceneName?: string
-  source?: string
-  masteryStatus?: 'learning' | 'reviewing' | 'mastered'
-  reviewCount?: number
+  remoteId?: string | null
+  kind: ExpressionEntryKind
+  type: 'word' | 'chunk' | 'scene_phrase'
+  original?: string | null
+  corrected?: string | null
+  chunkText?: string | null
+  sceneName?: string | null
+  masteryStatus: ExpressionEntryStatus
+  reviewCount: number
   lastReviewedAt?: string | null
   nextReviewAt?: string | null
+  sourceType?: string | null
+  sourceId?: string | null
+  sourceSnapshot?: unknown
+  contentSnapshot?: any
+  createdAt: string
   updatedAt: string
 }
 
-export type ChunkEntry = {
-  id: string
+export type WordEntry = ExpressionEntry & { kind: 'word' }
+export type ChunkEntry = ExpressionEntry & { kind: 'chunk' }
+export type PatternEntry = ExpressionEntry & { kind: 'pattern' }
+
+function normalizeKind(kind: ExpressionEntryKind) {
+  return kind
+}
+
+function normalizeText(kind: ExpressionEntryKind, text: string) {
+  const trimmed = text.trim()
+  return kind === 'word' ? trimmed.toLowerCase() : trimmed
+}
+
+function entryId(kind: ExpressionEntryKind, text: string) {
+  return `${normalizeKind(kind)}:${normalizeText(kind, text)}`
+}
+
+function expressionType(kind: ExpressionEntryKind): ExpressionEntry['type'] {
+  if (kind === 'word') return 'word'
+  if (kind === 'pattern') return 'scene_phrase'
+  return 'chunk'
+}
+
+function expressionText(entry: Pick<ExpressionEntry, 'kind' | 'original' | 'chunkText' | 'corrected'>) {
+  if (entry.kind === 'word') return entry.original ?? ''
+  return entry.chunkText ?? entry.corrected ?? ''
+}
+
+function makeEntry(input: {
+  kind: ExpressionEntryKind
   text: string
-  meaning?: string
-  description?: string | null
-  category?: string | null
-  difficulty?: string
-  examples?: unknown
-  sceneName?: string
-  source?: string
-  masteryStatus?: 'learning' | 'reviewing' | 'mastered'
+  meaning?: string | null
+  corrected?: string | null
+  sceneName?: string | null
+  contentSnapshot?: any
+  remoteId?: string | null
+  masteryStatus?: ExpressionEntryStatus
   reviewCount?: number
   lastReviewedAt?: string | null
   nextReviewAt?: string | null
-  updatedAt: string
+  sourceType?: string | null
+  sourceId?: string | null
+  sourceSnapshot?: unknown
+  createdAt?: string | null
+  updatedAt?: string | null
+}): ExpressionEntry {
+  const text = normalizeText(input.kind, input.text)
+  const now = new Date().toISOString()
+  const base = {
+    id: entryId(input.kind, text),
+    remoteId: input.remoteId ?? null,
+    kind: input.kind,
+    type: expressionType(input.kind),
+    sceneName: input.sceneName ?? null,
+    masteryStatus: input.masteryStatus ?? 'learning',
+    reviewCount: input.reviewCount ?? 0,
+    lastReviewedAt: input.lastReviewedAt ?? null,
+    nextReviewAt: input.nextReviewAt ?? null,
+    sourceType: input.sourceType ?? null,
+    sourceId: input.sourceId ?? null,
+    sourceSnapshot: input.sourceSnapshot,
+    contentSnapshot: input.contentSnapshot,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  }
+
+  if (input.kind === 'word') {
+    return {
+      ...base,
+      original: text,
+      corrected: input.corrected ?? null,
+      chunkText: input.meaning ?? null,
+    }
+  }
+
+  if (input.kind === 'pattern') {
+    return {
+      ...base,
+      original: input.meaning ?? null,
+      corrected: input.corrected ?? input.contentSnapshot?.example ?? text,
+      chunkText: text,
+    }
+  }
+
+  return {
+    ...base,
+    original: input.meaning ?? null,
+    corrected: input.corrected ?? text,
+    chunkText: text,
+  }
 }
 
-export type PatternEntry = {
-  id: string
-  pattern: string
-  meaning?: string
-  slots?: string[]
-  example?: string
-  examples?: unknown
-  difficulty?: string
-  sceneName?: string
-  source?: string
-  masteryStatus?: 'learning' | 'reviewing' | 'mastered'
-  reviewCount?: number
-  lastReviewedAt?: string | null
-  nextReviewAt?: string | null
-  updatedAt: string
+function remoteExpressionToEntry(item: any): ExpressionEntry | null {
+  const kind: ExpressionEntryKind =
+    item.type === 'word' || !item.type
+      ? 'word'
+      : item.type === 'scene_phrase'
+        ? 'pattern'
+        : 'chunk'
+  const text = kind === 'word'
+    ? String(item.original ?? item.word ?? '').trim()
+    : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
+  if (!text) return null
+  return makeEntry({
+    kind,
+    text,
+    meaning: kind === 'word' ? item.chunkText : item.original,
+    corrected: item.corrected,
+    sceneName: item.sceneName,
+    remoteId: item.id,
+    masteryStatus: item.masteryStatus ?? 'learning',
+    reviewCount: item.reviewCount ?? 0,
+    lastReviewedAt: item.lastReviewedAt ?? null,
+    nextReviewAt: item.nextReviewAt ?? null,
+    sourceType: item.sourceType ?? null,
+    sourceId: item.sourceId ?? null,
+    sourceSnapshot: item.sourceSnapshot,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt ?? item.createdAt,
+  })
 }
 
 export const learningContentRepository = {
   /** 从已下载的学习包中提取词汇数据 */
   async _getAllVocabularies(): Promise<any[]> {
     const details = await localDb.list<any>('downloaded_unit_details')
-    // 只取完整单元数据（排除 topic:xxx 子条目）
     return details
       .filter((d) => d.vocabularies && !d.id.startsWith('topic:'))
       .flatMap((d) => (d.vocabularies ?? []).map((item: any) => ({ ...item, unitId: d.id })))
   },
 
   async getVocabulary(wordOrId: string): Promise<any | null> {
-    const cached = await localDb.get<WordEntry>('word_entry', wordOrId.toLowerCase())
-    if (cached) return cached
+    const localExpression = await this.getExpressionByText('word', wordOrId)
+    if (localExpression?.contentSnapshot) return localExpression.contentSnapshot
     const all = await this._getAllVocabularies()
     return all.find((item) => item.id === wordOrId || item.word?.toLowerCase() === wordOrId.toLowerCase()) ?? null
   },
 
   async searchVocabulary(query: string): Promise<any[]> {
-    const cached = await localDb.list<WordEntry>('word_entry')
+    const expressions = (await this.listExpressionEntries('word'))
+      .map((entry) => entry.contentSnapshot ?? {
+        id: entry.id,
+        word: entry.original,
+        meaning: entry.chunkText,
+        description: entry.corrected,
+        sceneName: entry.sceneName,
+      })
     const all = await this._getAllVocabularies()
-    return uniqueById([...cached, ...all]).filter((item) =>
+    return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.word, query) ||
       includesText(item.meaning, query) ||
       includesText(item.definitionEn, query),
     )
-  },
-
-  async saveWordEntry(item: Omit<WordEntry, 'id' | 'updatedAt'> & { id?: string; updatedAt?: string }): Promise<void> {
-    const word = item.word.trim().toLowerCase()
-    if (!word) return
-    await localDb.put('word_entry', {
-      ...item,
-      id: word,
-      word,
-      updatedAt: item.updatedAt ?? new Date().toISOString(),
-    })
-  },
-
-  async listWordEntries(): Promise<WordEntry[]> {
-    return localDb.list<WordEntry>('word_entry')
-  },
-
-  async deleteWordEntry(word: string): Promise<void> {
-    await localDb.delete('word_entry', word.trim().toLowerCase())
-  },
-
-  async updateWordEntryStatus(word: string, status: NonNullable<WordEntry['masteryStatus']>): Promise<void> {
-    const id = word.trim().toLowerCase()
-    const entry = await localDb.get<WordEntry>('word_entry', id)
-    if (!entry) return
-    await localDb.put('word_entry', {
-      ...entry,
-      masteryStatus: status,
-      reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
-      lastReviewedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
   },
 
   async getDictionaryEntry(word: string): Promise<any | null> {
@@ -139,12 +202,12 @@ export const learningContentRepository = {
   },
 
   async getChunk(chunkId: string): Promise<any | null> {
-    const cached = await localDb.get<ChunkEntry>('chunk_entry', chunkId)
-    if (cached) return cached
+    const localExpression = await this.getExpressionByText('chunk', chunkId)
+    if (localExpression?.contentSnapshot) return localExpression.contentSnapshot
     const details = await localDb.list<any>('downloaded_unit_details')
     for (const d of details) {
       if (d.chunks) {
-        const found = d.chunks.find((item: any) => item.id === chunkId)
+        const found = d.chunks.find((item: any) => item.id === chunkId || item.text === chunkId)
         if (found) return { ...found, unitId: d.id }
       }
     }
@@ -152,87 +215,99 @@ export const learningContentRepository = {
   },
 
   async searchChunks(query: string): Promise<any[]> {
-    const cached = await localDb.list<ChunkEntry>('chunk_entry')
+    const expressions = (await this.listExpressionEntries('chunk'))
+      .map((entry) => entry.contentSnapshot ?? {
+        id: entry.id,
+        text: entry.chunkText,
+        meaning: entry.original,
+        description: entry.corrected,
+        sceneName: entry.sceneName,
+      })
     const details = await localDb.list<any>('downloaded_unit_details')
     const all = details
       .filter((d) => d.chunks && !d.id.startsWith('topic:'))
       .flatMap((d) => (d.chunks ?? []).map((item: any) => ({ ...item, unitId: d.id })))
-    return uniqueById([...cached, ...all]).filter((item) =>
+    return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.text, query) ||
       includesText(item.meaning, query) ||
       includesText(item.description, query),
     )
   },
 
-  async saveChunkEntry(item: Omit<ChunkEntry, 'id' | 'updatedAt'> & { id?: string; updatedAt?: string }): Promise<void> {
-    const text = item.text.trim()
-    if (!text) return
-    await localDb.put('chunk_entry', {
-      ...item,
-      id: text,
-      text,
-      updatedAt: item.updatedAt ?? new Date().toISOString(),
-    })
-  },
-
-  async listChunkEntries(): Promise<ChunkEntry[]> {
-    return localDb.list<ChunkEntry>('chunk_entry')
-  },
-
-  async deleteChunkEntry(text: string): Promise<void> {
-    await localDb.delete('chunk_entry', text.trim())
-  },
-
-  async updateChunkEntryStatus(text: string, status: NonNullable<ChunkEntry['masteryStatus']>): Promise<void> {
-    const id = text.trim()
-    const entry = await localDb.get<ChunkEntry>('chunk_entry', id)
-    if (!entry) return
-    await localDb.put('chunk_entry', {
-      ...entry,
-      masteryStatus: status,
-      reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
-      lastReviewedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-  },
-
   async searchSentencePatterns(query: string): Promise<any[]> {
-    const cached = await localDb.list<PatternEntry>('pattern_entry')
+    const expressions = (await this.listExpressionEntries('pattern'))
+      .map((entry) => entry.contentSnapshot ?? {
+        id: entry.id,
+        pattern: entry.chunkText,
+        meaning: entry.original,
+        example: entry.corrected,
+        sceneName: entry.sceneName,
+      })
     const details = await localDb.list<any>('downloaded_unit_details')
     const all = details
       .filter((d) => d.sentencePatterns && !d.id.startsWith('topic:'))
-      .flatMap((d) => (d.sentencePatterns ?? []).map((item: any) => ({ ...item, unitId: d.id })))
-    return uniqueById([...cached, ...all.map((item: any) => ({ ...item, id: item.id ?? item.pattern }))]).filter((item) =>
+      .flatMap((d) => (d.sentencePatterns ?? []).map((item: any) => ({ ...item, id: item.id ?? item.pattern, unitId: d.id })))
+    return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.pattern, query) ||
       includesText(item.meaning, query) ||
       includesText(item.example, query),
     )
   },
 
-  async savePatternEntry(item: Omit<PatternEntry, 'id' | 'updatedAt'> & { id?: string; updatedAt?: string }): Promise<void> {
-    const pattern = item.pattern.trim()
-    if (!pattern) return
-    await localDb.put('pattern_entry', {
-      ...item,
-      id: pattern,
-      pattern,
-      updatedAt: item.updatedAt ?? new Date().toISOString(),
-    })
+  async saveExpressionEntry(input: Parameters<typeof makeEntry>[0]): Promise<ExpressionEntry> {
+    const next = makeEntry(input)
+    const existing = await localDb.get<ExpressionEntry>('expression_entries', next.id)
+    const entry: ExpressionEntry = {
+      ...existing,
+      ...next,
+      remoteId: next.remoteId ?? existing?.remoteId ?? null,
+      contentSnapshot: next.contentSnapshot ?? existing?.contentSnapshot,
+      createdAt: existing?.createdAt ?? next.createdAt,
+      updatedAt: new Date().toISOString(),
+    }
+    await localDb.put('expression_entries', entry)
+    return entry
   },
 
-  async listPatternEntries(): Promise<PatternEntry[]> {
-    return localDb.list<PatternEntry>('pattern_entry')
+  async saveRemoteExpressionEntry(item: any): Promise<ExpressionEntry | null> {
+    const next = remoteExpressionToEntry(item)
+    if (!next) return null
+    const existing = await localDb.get<ExpressionEntry>('expression_entries', next.id)
+    const entry = {
+      ...existing,
+      ...next,
+      contentSnapshot: existing?.contentSnapshot ?? next.contentSnapshot,
+      createdAt: existing?.createdAt ?? next.createdAt,
+      updatedAt: next.updatedAt,
+    }
+    await localDb.put('expression_entries', entry)
+    return entry
   },
 
-  async deletePatternEntry(pattern: string): Promise<void> {
-    await localDb.delete('pattern_entry', pattern.trim())
+  async listExpressionEntries(kind?: ExpressionEntryKind): Promise<ExpressionEntry[]> {
+    const entries = await localDb.list<ExpressionEntry>('expression_entries')
+    return kind ? entries.filter((entry) => entry.kind === kind) : entries
   },
 
-  async updatePatternEntryStatus(pattern: string, status: NonNullable<PatternEntry['masteryStatus']>): Promise<void> {
-    const id = pattern.trim()
-    const entry = await localDb.get<PatternEntry>('pattern_entry', id)
+  async getExpressionByText(kind: ExpressionEntryKind, text: string): Promise<ExpressionEntry | null> {
+    return localDb.get<ExpressionEntry>('expression_entries', entryId(kind, text))
+  },
+
+  async deleteExpressionByText(kind: ExpressionEntryKind, text: string): Promise<void> {
+    await localDb.delete('expression_entries', entryId(kind, text))
+  },
+
+  async deleteExpressionByRemoteId(remoteId: string): Promise<void> {
+    const entries = await localDb.list<ExpressionEntry>('expression_entries')
+    const match = entries.find((entry) => entry.remoteId === remoteId)
+    if (match) await localDb.delete('expression_entries', match.id)
+  },
+
+  async updateExpressionStatus(kind: ExpressionEntryKind, text: string, status: ExpressionEntryStatus): Promise<void> {
+    const id = entryId(kind, text)
+    const entry = await localDb.get<ExpressionEntry>('expression_entries', id)
     if (!entry) return
-    await localDb.put('pattern_entry', {
+    await localDb.put('expression_entries', {
       ...entry,
       masteryStatus: status,
       reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
@@ -240,4 +315,6 @@ export const learningContentRepository = {
       updatedAt: new Date().toISOString(),
     })
   },
+
+  expressionText,
 }

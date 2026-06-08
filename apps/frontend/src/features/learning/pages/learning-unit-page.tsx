@@ -62,24 +62,24 @@ export function LearningUnitPage() {
     loadedTabs.current.add(tab)
 
     if (tab === 'vocab') {
-      const cached = await learningContentRepository.listWordEntries()
+      const cached = await learningContentRepository.listExpressionEntries('word')
       setCollectedTexts((prev) => {
         const next = new Set(prev)
-        for (const item of cached) next.add(item.word)
+        for (const item of cached) if (item.original) next.add(item.original)
         return next
       })
     } else if (tab === 'chunk') {
-      const cached = await learningContentRepository.listChunkEntries()
+      const cached = await learningContentRepository.listExpressionEntries('chunk')
       setCollectedTexts((prev) => {
         const next = new Set(prev)
-        for (const item of cached) next.add(item.text)
+        for (const item of cached) if (item.chunkText) next.add(item.chunkText)
         return next
       })
     } else if (tab === 'pattern') {
-      const cached = await learningContentRepository.listPatternEntries()
+      const cached = await learningContentRepository.listExpressionEntries('pattern')
       setCollectedTexts((prev) => {
         const next = new Set(prev)
-        for (const item of cached) next.add(item.pattern)
+        for (const item of cached) if (item.chunkText) next.add(item.chunkText)
         return next
       })
     }
@@ -91,15 +91,13 @@ export function LearningUnitPage() {
     const text = chunk.text
     const meaning = chunk.meaning
     setCollectedTexts((prev) => new Set([...prev, text]))
-    await learningContentRepository.saveChunkEntry({
+    await learningContentRepository.saveExpressionEntry({
+      kind: 'chunk',
       text,
       meaning,
-      description: chunk.description,
-      category: chunk.category,
-      difficulty: chunk.difficulty,
-      examples: chunk.examples,
       sceneName: unit?.title,
-      source: 'learning-library',
+      contentSnapshot: chunk,
+      sourceType: 'learning-library',
     })
     toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
@@ -117,14 +115,13 @@ export function LearningUnitPage() {
   const handleCollectPattern = useCallback(async (pattern: SentencePattern) => {
     const text = pattern.pattern
     setCollectedTexts((prev) => new Set([...prev, text]))
-    await learningContentRepository.savePatternEntry({
-      pattern: text,
+    await learningContentRepository.saveExpressionEntry({
+      kind: 'pattern',
+      text,
       meaning: pattern.meaning,
-      slots: pattern.slots,
-      example: pattern.example,
-      difficulty: pattern.difficulty,
       sceneName: unit?.title,
-      source: 'learning-library',
+      contentSnapshot: pattern,
+      sourceType: 'learning-library',
     })
     toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
@@ -154,12 +151,13 @@ export function LearningUnitPage() {
     const word = vocab.word
     const meaning = vocab.meaning
     setCollectedTexts((prev) => new Set([...prev, word]))
-    await learningContentRepository.saveWordEntry({
-      ...vocab,
-      word,
+    await learningContentRepository.saveExpressionEntry({
+      kind: 'word',
+      text: word,
       meaning,
       sceneName: unit?.title,
-      source: 'learning-library',
+      contentSnapshot: vocab,
+      sourceType: 'learning-library',
     })
     toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
@@ -176,9 +174,7 @@ export function LearningUnitPage() {
 
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     try {
-      if (kind === 'word') await learningContentRepository.deleteWordEntry(text)
-      else if (kind === 'chunk') await learningContentRepository.deleteChunkEntry(text)
-      else await learningContentRepository.deletePatternEntry(text)
+      await learningContentRepository.deleteExpressionByText(kind, text)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
       await syncOutbox.enqueue({
         entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',

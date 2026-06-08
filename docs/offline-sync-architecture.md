@@ -331,7 +331,7 @@ POST /sync/user/ack
 ```ts
 type SyncOutboxItem = {
   id: string
-  entityType: 'my_unit' | 'word_entry' | 'chunk_progress' | 'practice_session'
+  entityType: 'my_unit' | 'word_entry' | 'chunk_entry' | 'pattern_entry' | 'practice_session'
   entityId: string
   operation: 'create' | 'update' | 'delete'
   payload: unknown
@@ -483,12 +483,19 @@ type LearningPackManifest = {
 
 ### 当前状态
 
-前端目前有两种状态管理雏形：
+前端目前已经把移动端前台的离线主路径收敛到 Repository + IndexedDB + outbox：
 
 | 文件 | 当前职责 |
 |---|---|
 | `apps/frontend/src/stores/learning.store.ts` | 远端 API 状态缓存 |
-| `apps/frontend/src/stores/assets.store.ts` | 生词本的轻量本地持久化 |
+| `apps/frontend/src/lib/offline/local-db.ts` | IndexedDB store 定义，包括 `expression_entries`、`outbox`、学习包内容和资源缓存 |
+| `apps/frontend/src/lib/offline/learning-content.repository.ts` | 对齐后端 `ExpressionItem` 的本地 `expression_entries` 读写，并用学习包缓存补充内容详情 |
+| `apps/frontend/src/lib/offline/learning.repository.ts` | 我的学习计划、学习包详情的 cache-first Repository |
+| `apps/frontend/src/lib/offline/practice.repository.ts` | 练习 topic/session/turn/progress 的本地优先读写 |
+| `apps/frontend/src/lib/offline/offline-sync.service.ts` | outbox push 与用户数据 pull |
+| `apps/frontend/src/lib/offline/asset-cache.service.ts` | Native 资源文件下载、校验、解析本地 URI |
+
+`apps/frontend/src/stores/assets.store.ts` 已移除。生词本不再由 Zustand store 做长期持久化，改为写入统一的 `expression_entries` 并通过 outbox 同步。
 
 后端 schema 已有多数组件：
 
@@ -536,10 +543,11 @@ VN 播放器、音频播放、背景图展示优先使用本地 URI
 改造内容：
 
 ```txt
-新增本地 user_* 表
-新增 sync_outbox
+新增本地 `expression_entries` / `user_progress` / `practice_records`
+新增 `outbox`
 enrollUnit / quitUnit / addWord / removeWord 先写本地
-后台同步到服务端
+后台 push 到服务端
+登录后通过 `syncApi.pull()` 拉取 `ExpressionItem`、用户进度、练习记录并写回本地
 ```
 
 收益：
@@ -575,13 +583,15 @@ App 可以离线练习已下载内容
 
 ## 建议优先级
 
-推荐从低风险、高收益的部分开始：
+当前优先级按移动端前台离线诉求收敛为：
 
-1. 资源缓存：立绘、背景、音频、BGM。
-2. 生词本和我的学习库本地持久化。
-3. 用户进度和练习记录 outbox 同步。
-4. 学习包 manifest 和资源预下载。
-5. 字典、句块、句型的完整离线内容库。
+1. 已完成/进行中：生词本、句块、句型和我的学习库统一写入 `expression_entries`，页面 cache-first。
+2. 已完成/进行中：outbox push 与 `syncApi.pull()` 用户数据增量拉取。
+3. 已完成/进行中：Native 资源缓存、学习包 manifest 和资源预下载。
+4. 暂缓：entry/outbox 一致性诊断统计。
+5. 暂缓：公共内容 `contentManifest` 增量更新。
+6. 暂缓：tombstone 删除策略和多端冲突合并。
+7. 暂缓：Web Cache API 资源缓存；当前只要求 Native 方案。
 
 不建议一开始就把所有前端 API 调用全部重写成本地 Repository。先从 VN 资源和用户学习库切入，能最快验证架构价值。
 

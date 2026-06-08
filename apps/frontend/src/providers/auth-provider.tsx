@@ -104,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void notifications.fetchUnreadCount()
       if (flushedUserIdRef.current !== session.user.id) {
         flushedUserIdRef.current = session.user.id
-        void offlineSyncService.flush().catch((error) => {
-          console.warn('[offline-sync] initial flush failed:', error)
+        void offlineSyncService.sync(session.user.id).catch((error) => {
+          console.warn('[offline-sync] initial sync failed:', error)
         })
       }
     } else {

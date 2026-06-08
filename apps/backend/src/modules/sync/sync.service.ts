@@ -105,6 +105,18 @@ export class SyncService {
         }
         return { handled: true };
       }
+      if (operation === 'update') {
+        await this.prisma.expressionItem.updateMany({
+          where: { userId, original: word, type: 'word' },
+          data: {
+            masteryStatus: payload?.masteryStatus,
+            reviewCount: payload?.reviewCount,
+            lastReviewedAt: payload?.lastReviewedAt ? new Date(payload.lastReviewedAt) : undefined,
+            nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
+          },
+        });
+        return { handled: true };
+      }
     }
 
     // ---- 句块 ----
@@ -132,6 +144,18 @@ export class SyncService {
         if (match) {
           await this.prisma.expressionItem.delete({ where: { id: match.id } });
         }
+        return { handled: true };
+      }
+      if (operation === 'update') {
+        await this.prisma.expressionItem.updateMany({
+          where: { userId, chunkText: text, type: 'chunk' },
+          data: {
+            masteryStatus: payload?.masteryStatus,
+            reviewCount: payload?.reviewCount,
+            lastReviewedAt: payload?.lastReviewedAt ? new Date(payload.lastReviewedAt) : undefined,
+            nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
+          },
+        });
         return { handled: true };
       }
     }
@@ -162,6 +186,18 @@ export class SyncService {
         if (match) {
           await this.prisma.expressionItem.delete({ where: { id: match.id } });
         }
+        return { handled: true };
+      }
+      if (operation === 'update') {
+        await this.prisma.expressionItem.updateMany({
+          where: { userId, chunkText: pattern, type: 'scene_phrase' },
+          data: {
+            masteryStatus: payload?.masteryStatus,
+            reviewCount: payload?.reviewCount,
+            lastReviewedAt: payload?.lastReviewedAt ? new Date(payload.lastReviewedAt) : undefined,
+            nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
+          },
+        });
         return { handled: true };
       }
     }

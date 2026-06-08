@@ -17,9 +17,8 @@ import { cn } from '@/lib/cn'
 import {
   learningContentRepository,
   syncOutbox,
-  type ChunkEntry,
-  type PatternEntry,
-  type WordEntry,
+  type ExpressionEntry,
+  type ExpressionEntryKind,
 } from '@/lib/offline'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
@@ -29,8 +28,8 @@ interface Expression {
   chunkText: string | null; sceneName: string | null; masteryStatus: string
   reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
   createdAt: string
-  cacheKind?: 'word' | 'chunk' | 'pattern'
-  cacheEntry?: WordEntry | ChunkEntry | PatternEntry
+  localKind?: ExpressionEntryKind
+  localEntry?: ExpressionEntry
   vocabulary?: {
     id: string; word: string; meaning: string; partOfSpeech?: string | null;
     phoneticUs?: string | null; phoneticUk?: string | null;
@@ -61,72 +60,74 @@ function createLocalResult(items: Expression[]): PageResult {
   }
 }
 
-function wordEntryToExpression(entry: WordEntry): Expression {
-  return {
-    id: entry.id,
-    type: 'word',
-    original: entry.word,
-    corrected: entry.description ?? null,
-    chunkText: entry.meaning ?? null,
-    sceneName: entry.sceneName ?? null,
-    masteryStatus: entry.masteryStatus ?? 'learning',
-    reviewCount: entry.reviewCount ?? 0,
-    lastReviewedAt: entry.lastReviewedAt,
-    nextReviewAt: entry.nextReviewAt,
-    createdAt: entry.updatedAt,
-    cacheKind: 'word',
-    cacheEntry: entry,
-    vocabulary: {
+function expressionEntryToExpression(entry: ExpressionEntry): Expression {
+  const snapshot = entry.contentSnapshot ?? {}
+  if (entry.kind === 'word') {
+    const word = snapshot.word ?? entry.original ?? ''
+    return {
       id: entry.id,
-      word: entry.word,
-      meaning: entry.meaning ?? '',
-      partOfSpeech: entry.partOfSpeech,
-      phoneticUs: entry.phoneticUs,
-      phoneticUk: entry.phoneticUk,
-      audioUsUrl: entry.audioUsUrl,
-      audioUkUrl: entry.audioUkUrl,
-      definitionEn: entry.definitionEn,
-      synonyms: entry.synonyms,
-      examples: entry.examples,
-      description: entry.description,
-      difficulty: entry.difficulty,
-    },
+      type: 'word',
+      original: word,
+      corrected: snapshot.description ?? entry.corrected ?? null,
+      chunkText: snapshot.meaning ?? entry.chunkText ?? null,
+      sceneName: snapshot.sceneName ?? entry.sceneName ?? null,
+      masteryStatus: entry.masteryStatus,
+      reviewCount: entry.reviewCount ?? 0,
+      lastReviewedAt: entry.lastReviewedAt,
+      nextReviewAt: entry.nextReviewAt,
+      createdAt: entry.createdAt,
+      localKind: entry.kind,
+      localEntry: entry,
+      vocabulary: {
+        id: snapshot.id ?? entry.id,
+        word,
+        meaning: snapshot.meaning ?? entry.chunkText ?? '',
+        partOfSpeech: snapshot.partOfSpeech,
+        phoneticUs: snapshot.phoneticUs,
+        phoneticUk: snapshot.phoneticUk,
+        audioUsUrl: snapshot.audioUsUrl,
+        audioUkUrl: snapshot.audioUkUrl,
+        definitionEn: snapshot.definitionEn,
+        synonyms: snapshot.synonyms,
+        examples: snapshot.examples,
+        description: snapshot.description ?? entry.corrected,
+        difficulty: snapshot.difficulty,
+      },
+    }
   }
-}
 
-function chunkEntryToExpression(entry: ChunkEntry): Expression {
+  if (entry.kind === 'pattern') {
+    return {
+      id: entry.id,
+      type: 'scene_phrase',
+      original: snapshot.meaning ?? entry.original ?? null,
+      corrected: snapshot.example ?? entry.corrected ?? entry.chunkText ?? null,
+      chunkText: snapshot.pattern ?? entry.chunkText ?? null,
+      sceneName: snapshot.sceneName ?? entry.sceneName ?? null,
+      masteryStatus: entry.masteryStatus,
+      reviewCount: entry.reviewCount ?? 0,
+      lastReviewedAt: entry.lastReviewedAt,
+      nextReviewAt: entry.nextReviewAt,
+      createdAt: entry.createdAt,
+      localKind: entry.kind,
+      localEntry: entry,
+    }
+  }
+
   return {
     id: entry.id,
     type: 'chunk',
-    original: entry.meaning ?? null,
-    corrected: entry.text,
-    chunkText: entry.text,
-    sceneName: entry.sceneName ?? null,
-    masteryStatus: entry.masteryStatus ?? 'learning',
+    original: snapshot.meaning ?? entry.original ?? null,
+    corrected: snapshot.text ?? entry.corrected ?? entry.chunkText ?? null,
+    chunkText: snapshot.text ?? entry.chunkText ?? null,
+    sceneName: snapshot.sceneName ?? entry.sceneName ?? null,
+    masteryStatus: entry.masteryStatus,
     reviewCount: entry.reviewCount ?? 0,
     lastReviewedAt: entry.lastReviewedAt,
     nextReviewAt: entry.nextReviewAt,
-    createdAt: entry.updatedAt,
-    cacheKind: 'chunk',
-    cacheEntry: entry,
-  }
-}
-
-function patternEntryToExpression(entry: PatternEntry): Expression {
-  return {
-    id: entry.id,
-    type: 'scene_phrase',
-    original: entry.meaning ?? null,
-    corrected: entry.example ?? entry.pattern,
-    chunkText: entry.pattern,
-    sceneName: entry.sceneName ?? null,
-    masteryStatus: entry.masteryStatus ?? 'learning',
-    reviewCount: entry.reviewCount ?? 0,
-    lastReviewedAt: entry.lastReviewedAt,
-    nextReviewAt: entry.nextReviewAt,
-    createdAt: entry.updatedAt,
-    cacheKind: 'pattern',
-    cacheEntry: entry,
+    createdAt: entry.createdAt,
+    localKind: entry.kind,
+    localEntry: entry,
   }
 }
 
@@ -154,11 +155,8 @@ export function ExpressionLibraryPage() {
     setLoading(true)
     try {
       const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
-      const localItems = libraryTab === 'words'
-        ? (await learningContentRepository.listWordEntries()).map(wordEntryToExpression)
-        : libraryTab === 'pattern'
-          ? (await learningContentRepository.listPatternEntries()).map(patternEntryToExpression)
-          : (await learningContentRepository.listChunkEntries()).map(chunkEntryToExpression)
+      const localKind: ExpressionEntryKind = libraryTab === 'words' ? 'word' : libraryTab
+      const localItems = (await learningContentRepository.listExpressionEntries(localKind)).map(expressionEntryToExpression)
 
       if (localItems.length > 0) {
         const filteredLocalItems = localItems.filter((item) => item.masteryStatus === reviewState)
@@ -244,7 +242,7 @@ export function ExpressionLibraryPage() {
       }
     }
     if (apiType === 'scene_phrase') {
-      const cacheEntry = expr.cacheEntry as PatternEntry | undefined
+      const cacheEntry = expr.localEntry?.contentSnapshot
       return {
         kind: 'pattern' as const,
         id: expr.id,
@@ -256,7 +254,7 @@ export function ExpressionLibraryPage() {
         sceneName: expr.sceneName ?? undefined,
       }
     }
-    const cacheEntry = expr.cacheEntry as ChunkEntry | undefined
+    const cacheEntry = expr.localEntry?.contentSnapshot
     return {
       kind: 'chunk' as const,
       id: expr.id,
@@ -305,13 +303,17 @@ export function ExpressionLibraryPage() {
   // ---- 状态变更 ----
   const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
     const target = result.items.find((item) => item.id === id)
-    if (target?.cacheKind) {
-      const text = target.cacheKind === 'word'
+    if (target?.localKind) {
+      const text = target.localKind === 'word'
         ? target.original ?? id
         : target.chunkText ?? target.corrected ?? id
-      if (target.cacheKind === 'word') await learningContentRepository.updateWordEntryStatus(text, status)
-      else if (target.cacheKind === 'chunk') await learningContentRepository.updateChunkEntryStatus(text, status)
-      else await learningContentRepository.updatePatternEntryStatus(text, status)
+      await learningContentRepository.updateExpressionStatus(target.localKind, text, status)
+      await syncOutbox.enqueue({
+        entityType: target.localKind === 'word' ? 'word_entry' : target.localKind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
+        entityId: text,
+        operation: 'update',
+        payload: { masteryStatus: status },
+      })
       toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
       fetchData()
       return
@@ -329,22 +331,20 @@ export function ExpressionLibraryPage() {
   const handleRemove = useCallback(async (id: string) => {
     const target = result.items.find((item) => item.id === id)
     try {
-      if (target?.cacheKind) {
-        const text = target.cacheKind === 'word'
+      if (target?.localKind) {
+        const text = target.localKind === 'word'
           ? target.original ?? id
           : target.chunkText ?? target.corrected ?? id
 
-        if (target.cacheKind === 'word') await learningContentRepository.deleteWordEntry(text)
-        else if (target.cacheKind === 'chunk') await learningContentRepository.deleteChunkEntry(text)
-        else await learningContentRepository.deletePatternEntry(text)
+        await learningContentRepository.deleteExpressionByText(target.localKind, text)
 
         await syncOutbox.enqueue({
-          entityType: target.cacheKind === 'word' ? 'word_entry' : target.cacheKind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
+          entityType: target.localKind === 'word' ? 'word_entry' : target.localKind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
           entityId: text,
           operation: 'delete',
-          payload: target.cacheKind === 'word'
+          payload: target.localKind === 'word'
             ? { word: text, deletedAt: new Date().toISOString() }
-            : target.cacheKind === 'chunk'
+            : target.localKind === 'chunk'
               ? { chunkText: text, deletedAt: new Date().toISOString() }
               : { pattern: text, deletedAt: new Date().toISOString() },
         })

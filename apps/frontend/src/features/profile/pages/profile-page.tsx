@@ -1623,8 +1623,8 @@ function WordsTab() {
   const [selectedWords, setSelectedWords] = useState<string[]>([])
 
   const refreshEntries = useCallback(() => {
-    learningContentRepository.listWordEntries().then((items) => {
-      setEntries(items.map((item) => ({ word: item.word, addedAt: item.updatedAt })))
+    learningContentRepository.listExpressionEntries('word').then((items) => {
+      setEntries(items.map((item) => ({ word: item.original ?? '', addedAt: item.createdAt })).filter((item) => item.word))
     })
   }, [])
 
@@ -1633,7 +1633,7 @@ function WordsTab() {
   }, [refreshEntries])
 
   const removeWord = useCallback(async (word: string) => {
-    await learningContentRepository.deleteWordEntry(word)
+    await learningContentRepository.deleteExpressionByText('word', word)
     await syncOutbox.enqueue({
       entityType: 'word_entry',
       entityId: word.toLowerCase(),

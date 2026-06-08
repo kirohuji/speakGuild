@@ -599,9 +599,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
 
   useEffect(() => {
     if (hideSave) return
-    learningContentRepository.getVocabulary(item.word).then((entry) => {
-      setSaved(Boolean(entry && 'source' in entry && (entry as any).source === 'learning-library'))
-    })
+    learningContentRepository.getExpressionByText('word', item.word).then((entry) => setSaved(Boolean(entry)))
   }, [hideSave, item.word])
 
   useEffect(() => {
@@ -643,21 +641,14 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
 
   const saveWord = async () => {
     setSaving(true)
-    await learningContentRepository.saveWordEntry({
-      word: item.word,
+    await learningContentRepository.saveExpressionEntry({
+      kind: 'word',
+      text: item.word,
       meaning: item.meaning,
-      partOfSpeech: item.partOfSpeech,
-      phoneticUs: item.phoneticUs,
-      phoneticUk: item.phoneticUk,
-      audioUsUrl: item.audioUsUrl,
-      audioUkUrl: item.audioUkUrl,
-      definitionEn: item.definitionEn,
-      synonyms: item.synonyms,
-      examples: item.examples,
-      description: item.description,
-      difficulty: item.difficulty,
       sceneName: item.sceneName,
-      source: 'learning-library',
+      corrected: item.description,
+      contentSnapshot: item,
+      sourceType: 'learning-library',
     })
     await syncOutbox.enqueue({
       entityType: 'word_entry',
@@ -1065,13 +1056,13 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
     if (saved) return
     setSaving(true)
     setSaved(true)
-    await learningContentRepository.saveChunkEntry({
+    await learningContentRepository.saveExpressionEntry({
+      kind: 'chunk',
       text: item.text,
       meaning: item.meaning,
-      description: item.description,
-      examples: item.examples,
       sceneName: item.sceneName,
-      source: 'learning-library',
+      contentSnapshot: item,
+      sourceType: 'learning-library',
     })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
@@ -1150,14 +1141,14 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
     if (saved) return
     setSaving(true)
     setSaved(true)
-    await learningContentRepository.savePatternEntry({
-      pattern: item.pattern,
+    await learningContentRepository.saveExpressionEntry({
+      kind: 'pattern',
+      text: item.pattern,
       meaning: item.meaning,
-      slots: item.slots,
-      example: item.example,
-      difficulty: item.difficulty,
       sceneName: item.sceneName,
-      source: 'learning-library',
+      corrected: item.example,
+      contentSnapshot: item,
+      sourceType: 'learning-library',
     })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)

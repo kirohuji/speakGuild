@@ -4,11 +4,138 @@ import { transcribeRecording } from '@/lib/practice-ai-api'
 import { syncApi } from './sync-api'
 import { localDb } from './local-db'
 import { syncOutbox, type SyncOutboxItem } from './sync-outbox'
+import { learningContentRepository } from './learning-content.repository'
+
+const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
+
+function userSyncCursorKey(userId?: string | null) {
+  return userId ? `sync:user:${userId}:cursor` : USER_SYNC_CURSOR_KEY
+}
 
 async function resolveSessionId(sessionId: string): Promise<string | null> {
   if (!sessionId.startsWith('local_session_')) return sessionId
   const mapped = await localDb.get<{ value: string }>('kv', `session-map:${sessionId}`)
   return mapped?.value ?? null
+}
+
+function toIsoString(value: unknown): string | null {
+  if (!value) return null
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value === 'string') return value
+  return null
+}
+
+async function applyExpressionItem(item: any): Promise<void> {
+  await learningContentRepository.saveRemoteExpressionEntry(item)
+}
+
+async function deleteExpressionItem(remoteId: string): Promise<void> {
+  await learningContentRepository.deleteExpressionByRemoteId(remoteId)
+}
+
+async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
+  for (const item of changed?.expressionItems ?? []) {
+    await applyExpressionItem(item)
+  }
+
+  for (const item of changed?.sceneProgresses ?? []) {
+    if (!item.sceneId) continue
+    await localDb.put('user_progress', {
+      id: `scene:${item.sceneId}`,
+      type: 'scene',
+      remoteId: item.id,
+      sceneId: item.sceneId,
+      readiness: item.readiness ?? 0,
+      mastery: item.mastery ?? 0,
+      vocabLearned: item.vocabLearned ?? 0,
+      vocabTotal: item.vocabTotal ?? 0,
+      chunkMastered: item.chunkMastered ?? 0,
+      chunkTotal: item.chunkTotal ?? 0,
+      completedPracticeCount: item.completedPracticeCount ?? 0,
+      completedScriptCount: item.completedScriptCount ?? 0,
+      prerequisiteCompleted: item.prerequisiteCompleted ?? false,
+      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+      syncStatus: 'synced',
+    })
+  }
+
+  for (const item of changed?.chunkProgresses ?? []) {
+    if (!item.chunkId) continue
+    await localDb.put('user_progress', {
+      id: `chunk:${item.chunkId}`,
+      type: 'chunk',
+      remoteId: item.id,
+      chunkId: item.chunkId,
+      status: item.status ?? 'not_learned',
+      seenCount: item.seenCount ?? 0,
+      spokenCount: item.spokenCount ?? 0,
+      correctUseCount: item.correctUseCount ?? 0,
+      usedSceneIds: item.usedSceneIds ?? [],
+      lastPracticedAt: toIsoString(item.lastPracticedAt),
+      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+      syncStatus: 'synced',
+    })
+  }
+
+  for (const item of changed?.practiceSessions ?? []) {
+    if (!item.id) continue
+    await localDb.put('practice_records', {
+      id: `session:${item.id}`,
+      type: 'session',
+      remoteId: item.id,
+      sessionId: item.id,
+      topicId: item.topicId,
+      sceneId: item.sceneId,
+      inkScriptId: item.inkScriptId,
+      status: item.status,
+      turnCount: item.turnCount ?? 0,
+      analysisResult: item.analysisResult,
+      analysisRaw: item.analysisRaw,
+      analysisError: item.analysisError,
+      startedAt: toIsoString(item.startedAt),
+      completedAt: toIsoString(item.completedAt),
+      analyzedAt: toIsoString(item.analyzedAt),
+      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+      syncStatus: 'synced',
+    })
+  }
+
+  for (const item of changed?.practiceTurns ?? []) {
+    if (!item.id) continue
+    await localDb.put('practice_records', {
+      id: `turn:${item.sessionId}:${item.round ?? item.id}`,
+      type: 'turn',
+      remoteId: item.id,
+      sessionId: item.sessionId,
+      round: item.round,
+      npcText: item.npcText,
+      userText: item.userText,
+      userAudioUrl: item.userAudioUrl,
+      inputNodeId: item.inputNodeId,
+      tags: item.tags,
+      judgement: item.judgement,
+      objectivesCompleted: item.objectivesCompleted ?? [],
+      chunksUsed: item.chunksUsed ?? [],
+      createdAt: toIsoString(item.createdAt),
+      syncStatus: 'synced',
+    })
+  }
+
+  for (const id of deleted?.expressionItems ?? []) {
+    await deleteExpressionItem(id)
+  }
+
+  for (const id of deleted?.sceneProgresses ?? []) {
+    const records = await localDb.list<any>('user_progress')
+    const match = records.find((item) => item.remoteId === id || item.id === id)
+    if (match?.id) await localDb.delete('user_progress', match.id)
+  }
+
+  for (const id of deleted?.chunkProgresses ?? []) {
+    const records = await localDb.list<any>('user_progress')
+    const match = records.find((item) => item.remoteId === id || item.id === id)
+    if (match?.id) await localDb.delete('user_progress', match.id)
+  }
 }
 
 async function replayItem(item: SyncOutboxItem): Promise<boolean> {
@@ -167,6 +294,47 @@ async function replayItem(item: SyncOutboxItem): Promise<boolean> {
 }
 
 export const offlineSyncService = {
+  async pull(userId?: string | null): Promise<{ cursor: string | null; changed: number; deleted: number }> {
+    const cursorRecord = await localDb.get<{ value?: string }>('kv', userSyncCursorKey(userId))
+    const result = await syncApi.pull(cursorRecord?.value ?? null)
+
+    await applyUserPullChanges(result.changed, result.deleted)
+
+    if (result.cursor) {
+      await localDb.put('kv', {
+        id: userSyncCursorKey(userId),
+        value: result.cursor,
+        updatedAt: new Date().toISOString(),
+      })
+    }
+
+    return {
+      cursor: result.cursor ?? null,
+      changed:
+        (result.changed.expressionItems?.length ?? 0) +
+        (result.changed.sceneProgresses?.length ?? 0) +
+        (result.changed.chunkProgresses?.length ?? 0) +
+        (result.changed.practiceSessions?.length ?? 0) +
+        (result.changed.practiceTurns?.length ?? 0),
+      deleted:
+        (result.deleted.expressionItems?.length ?? 0) +
+        (result.deleted.sceneProgresses?.length ?? 0) +
+        (result.deleted.chunkProgresses?.length ?? 0),
+    }
+  },
+
+  async sync(userId?: string | null): Promise<{
+    push: { synced: number; failed: number; skipped: number }
+    pull: { cursor: string | null; changed: number; deleted: number } | null
+  }> {
+    const push = await this.flush()
+    if (push.failed > 0) {
+      return { push, pull: null }
+    }
+    const pull = await this.pull(userId)
+    return { push, pull }
+  },
+
   async flush(): Promise<{ synced: number; failed: number; skipped: number }> {
     let synced = 0
     let failed = 0
