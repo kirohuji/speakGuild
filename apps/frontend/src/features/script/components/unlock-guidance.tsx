@@ -76,11 +76,11 @@ export function UnlockGuidance({ episode, readiness, onClose }: UnlockGuidancePr
                 </Button>
               </Link>
             )}
-            <Link to="/practice" onClick={onClose}>
+            <Link to="/learning" onClick={onClose}>
               <Button variant="outline" className="w-full justify-between">
                 <span className="flex items-center gap-2">
                   <BookOpen className="size-4" />
-                  去练习模式提升能力
+                  去学习计划提升能力
                 </span>
                 <ArrowRight className="size-4" />
               </Button>

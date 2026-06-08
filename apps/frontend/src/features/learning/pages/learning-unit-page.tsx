@@ -386,7 +386,7 @@ export function LearningUnitPage() {
                 key={topic.id}
                 topic={topic}
                 index={i}
-                onStart={() => navigate(`/practice/session/${topic.id}`)}
+                onStart={() => navigate(`/practice/session/${topic.id}?unitId=${unitId}`)}
                 {...(i === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
               />
             ))}

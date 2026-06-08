@@ -282,7 +282,6 @@ features/
 ├── practice/                          — 练习模式
 │   ├── api/english-practice-api.ts     — 练习 API 客户端
 │   ├── pages/
-│   │   ├── practice-hub-page.tsx       — 练习中心（场景选择）
 │   │   └── practice-session-page.tsx    — 练习会话页（准备→VN练习→复盘）
 │   └── components/
 │       ├── chunk-activation-panel.tsx   — Chunk 激活面板

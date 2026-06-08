@@ -12,7 +12,6 @@ import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
 import { TodayTaskPage } from '@/features/learning/pages/today-task-page'
 import { LearningUnitPage } from '@/features/learning/pages/learning-unit-page'
-import { PracticeHubPage } from '@/features/practice/pages/practice-hub-page-v2'
 import { PracticeSessionPage } from '@/features/practice/pages/practice-session-page'
 import { ScriptHubPage } from '@/features/script/pages/script-hub-page'
 import { ScriptPlayPage } from '@/features/script/pages/script-play-page'
@@ -106,9 +105,7 @@ export default function App() {
                 {/* 今日任务 */}
                 <Route path="/today" element={<TodayTaskPage />} />
 
-                {/* 练习模式 */}
-                <Route path="/practice" element={<PracticeHubPage />} />
-                <Route path="/practice/topics" element={<PracticeHubPage />} />
+                {/* 练习会话 */}
                 <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
 
                 {/* 剧本模式 */}

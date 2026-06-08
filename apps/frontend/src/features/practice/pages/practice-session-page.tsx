@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight,
@@ -226,6 +226,8 @@ function PracticeTurnFeedback({
 export function PracticeSessionPage() {
   const { t } = useTranslation()
   const { topicId } = useParams<{ topicId: string }>()
+  const [searchParams] = useSearchParams()
+  const unitId = searchParams.get('unitId')
   const navigate = useNavigate()
 
   // ── Data ──
@@ -805,9 +807,8 @@ export function PracticeSessionPage() {
 
   // ==================== Analysis ====================
   const goBackToScene = useCallback(() => {
-    const sceneId = detail?.scene.id
-    navigate(sceneId ? `/practice/topics?sceneId=${sceneId}` : '/practice/topics', { replace: true })
-  }, [detail?.scene.id, navigate])
+    navigate(unitId ? `/learning/units/${unitId}` : '/learning', { replace: true })
+  }, [navigate, unitId])
 
   const startAnalysis = useCallback(async () => {
     if (!topicId || !detail) return
