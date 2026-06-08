@@ -1,28 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Keyboard, Mic, Send, Square } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Mic, Send } from 'lucide-react'
 import { cn } from '@/lib/cn'
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
-
-interface SpeechRecognitionLike {
-  continuous: boolean
-  interimResults: boolean
-  lang: string
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null
-  onend: (() => void) | null
-  onerror: (() => void) | null
-  start: () => void
-  stop: () => void
-}
-
-interface SpeechRecognitionEventLike {
-  results: ArrayLike<ArrayLike<{ transcript: string }>>
-}
-
-interface SpeechWindow extends Window {
-  SpeechRecognition?: SpeechRecognitionConstructor
-  webkitSpeechRecognition?: SpeechRecognitionConstructor
-}
+import { VnVoiceDrawer } from './vn-voice-drawer'
 
 const TEXTAREA_MIN_HEIGHT = 36
 const TEXTAREA_MAX_HEIGHT = 108
@@ -36,32 +15,16 @@ interface VnInputPanelProps {
 
 export function VnInputPanel({
   disabled,
-  placeholder = '输入或按住语音，说出你的回答',
+  placeholder = '输入文字或点击麦克风录音',
   onSubmit,
   variant = 'default',
 }: VnInputPanelProps) {
   const [text, setText] = useState('')
-  const [isListening, setIsListening] = useState(false)
-  const [speechSupported, setSpeechSupported] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [isMultiline, setIsMultiline] = useState(false)
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const isDisabled = disabled || submitting
-
-  const SpeechRecognition = useMemo(() => {
-    if (typeof window === 'undefined') return undefined
-    const speechWindow = window as SpeechWindow
-    return speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition
-  }, [])
-
-  useEffect(() => {
-    setSpeechSupported(Boolean(SpeechRecognition))
-    return () => {
-      recognitionRef.current?.stop()
-      recognitionRef.current = null
-    }
-  }, [SpeechRecognition])
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -85,110 +48,87 @@ export function VnInputPanel({
     }
   }
 
-  const toggleVoice = () => {
-    if (isDisabled) return
-    if (isListening) {
-      recognitionRef.current?.stop()
-      setIsListening(false)
-      return
-    }
-
-    if (!SpeechRecognition) {
-      setSpeechSupported(false)
-      return
-    }
-
-    const recognition = new SpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = true
-    recognition.lang = 'en-US'
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0]?.transcript ?? '')
-        .join(' ')
-        .trim()
-      if (transcript) setText(transcript)
-    }
-    recognition.onend = () => setIsListening(false)
-    recognition.onerror = () => {
-      setIsListening(false)
-      setSpeechSupported(false)
-    }
-
-    recognitionRef.current = recognition
-    setIsListening(true)
-    recognition.start()
+  // Drawer 确认回调：把识别文字填入输入框
+  const handleVoiceConfirm = (transcribed: string) => {
+    setText((prev) => (prev ? `${prev} ${transcribed}` : transcribed))
   }
 
   return (
-    <div className={cn(
-      variant === 'default' && 'border-t border-border/45 bg-background/55 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
-      variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60 focus-within:ring-1 focus-within:ring-primary/25',
-    )}>
+    <>
       <div className={cn(
-        'flex',
-        isMultiline ? 'min-h-10 items-end' : 'h-10 items-center',
-        variant === 'default' ? 'gap-2' : 'gap-1',
+        variant === 'default' && 'border-t border-border/45 bg-background/55 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
+        variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60 focus-within:ring-1 focus-within:ring-primary/25',
       )}>
-        <button
-          type="button"
-          aria-label={isListening ? '停止语音输入' : '开始语音输入'}
-          title={isListening ? '停止语音输入' : '开始语音输入'}
-          disabled={isDisabled}
-          onClick={(event) => {
-            event.stopPropagation()
-            toggleVoice()
-          }}
-          className={cn(
-            'relative flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40',
-            variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
-            isListening && 'bg-rose-500/15 text-rose-600 ring-rose-500/30 dark:text-rose-300',
-          )}
-        >
-          {isListening ? <Square className="size-3.5 fill-current" /> : <Mic className="size-4" />}
-          {isListening && <span className="absolute inset-0 animate-ping rounded-lg ring-1 ring-rose-500/40" />}
-        </button>
-
         <div className={cn(
-          'flex min-w-0 flex-1 items-end rounded-lg',
-          variant === 'default' ? 'gap-2 px-3' : 'px-1.5',
-          variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
+          'flex',
+          isMultiline ? 'min-h-10 items-end' : 'h-10 items-center',
+          variant === 'default' ? 'gap-2' : 'gap-1',
         )}>
-          {/* <Keyboard className={cn('size-4 shrink-0 text-muted-foreground', variant === 'embedded' && 'hidden')} /> */}
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            style={{ height: TEXTAREA_MIN_HEIGHT }}
-            value={text}
+          {/* 语音按钮：打开 Drawer */}
+          <button
+            type="button"
+            aria-label="语音输入"
+            title="语音输入"
             disabled={isDisabled}
-            placeholder={speechSupported ? placeholder : '当前浏览器不支持语音识别'}
-            onChange={(event) => setText(event.target.value)}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-                event.preventDefault()
-                event.stopPropagation()
-                void submit()
-              }
+            onClick={(event) => {
+              event.stopPropagation()
+              setDrawerOpen(true)
             }}
-            className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
-          />
-        </div>
+            className={cn(
+              'flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40',
+              variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
+            )}
+          >
+            <Mic className="size-4" />
+          </button>
 
-        <button
-          type="button"
-          aria-label="发送"
-          title="发送"
-          disabled={isDisabled || !text.trim()}
-          onClick={(event) => {
-            event.stopPropagation()
-            void submit()
-          }}
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
-        >
-          <Send className="size-4" />
-        </button>
+          <div className={cn(
+            'flex min-w-0 flex-1 items-end rounded-lg',
+            variant === 'default' ? 'gap-2 px-3' : 'px-1.5',
+            variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
+          )}>
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              style={{ height: TEXTAREA_MIN_HEIGHT }}
+              value={text}
+              disabled={isDisabled}
+              placeholder={placeholder}
+              onChange={(event) => setText(event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  void submit()
+                }
+              }}
+              className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+            />
+          </div>
+
+          <button
+            type="button"
+            aria-label="发送"
+            title="发送"
+            disabled={isDisabled || !text.trim()}
+            onClick={(event) => {
+              event.stopPropagation()
+              void submit()
+            }}
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
+          >
+            <Send className="size-4" />
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* 语音输入 Drawer */}
+      <VnVoiceDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onConfirm={handleVoiceConfirm}
+      />
+    </>
   )
 }
