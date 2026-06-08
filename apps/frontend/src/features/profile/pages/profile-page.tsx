@@ -46,7 +46,6 @@ import {
 } from '@/features/profile/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { useWordsStore, type WordEntry } from '@/stores/assets.store'
 import { AppearanceContent } from '@/features/profile/components/appearance-drawer'
 import { useConfigStore } from '@/stores/config.store'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -66,7 +65,7 @@ import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/ap
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
-import { offlineStorageService, type OfflineStorageStats } from '@/lib/offline'
+import { learningContentRepository, offlineStorageService, syncOutbox, type OfflineStorageStats } from '@/lib/offline'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -1071,6 +1070,11 @@ function RecordsTab() {
 
 type GroupMode = 'date' | 'alpha'
 
+type SavedWordEntry = {
+  word: string
+  addedAt: string
+}
+
 function getDateLabel(iso: string, t: (key: string, options?: any) => string): string {
   const d = new Date(iso)
   const diffDays = Math.floor((Date.now() - d.getTime()) / 86400000)
@@ -1080,9 +1084,9 @@ function getDateLabel(iso: string, t: (key: string, options?: any) => string): s
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function groupEntries(entries: WordEntry[], mode: GroupMode, t: (key: string, opts?: any) => string) {
+function groupEntries(entries: SavedWordEntry[], mode: GroupMode, t: (key: string, opts?: any) => string) {
   if (mode === 'alpha') {
-    const map = new Map<string, WordEntry[]>()
+    const map = new Map<string, SavedWordEntry[]>()
     for (const e of [...entries].sort((a, b) => a.word.localeCompare(b.word))) {
       const letter = e.word[0]?.toUpperCase() ?? '#'
       if (!map.has(letter)) map.set(letter, [])
@@ -1090,7 +1094,7 @@ function groupEntries(entries: WordEntry[], mode: GroupMode, t: (key: string, op
     }
     return Array.from(map.entries()).map(([label, items]) => ({ label, items }))
   }
-  const map = new Map<string, WordEntry[]>()
+  const map = new Map<string, SavedWordEntry[]>()
   for (const e of [...entries].sort(
     (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime()
   )) {
@@ -1301,7 +1305,7 @@ function ExampleCard({ ex, idx }: { ex: WordExampleItem; idx: number }) {
 function WordDetailDialog({
   entry, onClose, onPrev, onNext, hasPrev, hasNext,
 }: {
-  entry: WordEntry | null
+  entry: SavedWordEntry | null
   onClose: () => void
   onPrev: () => void
   onNext: () => void
@@ -1551,7 +1555,7 @@ function WordDetailDialog({
 function WordCard({
   entry, isSelected, onClick, multiSelect, checked, onToggleSelect,
 }: {
-  entry: WordEntry
+  entry: SavedWordEntry
   isSelected: boolean
   onClick: () => void
   multiSelect: boolean
@@ -1611,12 +1615,33 @@ function WordCard({
 
 function WordsTab() {
   const { t } = useTranslation()
-  const { entries, removeWord } = useWordsStore()
+  const [entries, setEntries] = useState<SavedWordEntry[]>([])
   const [search, setSearch] = useState('')
   const [groupMode, setGroupMode] = useState<GroupMode>('date')
   const [selectedWord, setSelectedWord] = useState<string | null>(null)
   const [multiSelectMode, setMultiSelectMode] = useState(false)
   const [selectedWords, setSelectedWords] = useState<string[]>([])
+
+  const refreshEntries = useCallback(() => {
+    learningContentRepository.listWordEntries().then((items) => {
+      setEntries(items.map((item) => ({ word: item.word, addedAt: item.updatedAt })))
+    })
+  }, [])
+
+  useEffect(() => {
+    refreshEntries()
+  }, [refreshEntries])
+
+  const removeWord = useCallback(async (word: string) => {
+    await learningContentRepository.deleteWordEntry(word)
+    await syncOutbox.enqueue({
+      entityType: 'word_entry',
+      entityId: word.toLowerCase(),
+      operation: 'delete',
+      payload: { word, deletedAt: new Date().toISOString() },
+    })
+    setEntries((current) => current.filter((entry) => entry.word !== word))
+  }, [])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return entries
@@ -1658,8 +1683,8 @@ function WordsTab() {
     )
   }
 
-  const deleteSelectedWords = () => {
-    selectedWords.forEach((word) => removeWord(word))
+  const deleteSelectedWords = async () => {
+    await Promise.all(selectedWords.map((word) => removeWord(word)))
     setSelectedWords([])
     setMultiSelectMode(false)
   }

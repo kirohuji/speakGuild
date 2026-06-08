@@ -29,7 +29,6 @@ import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { learningContentRepository, syncOutbox } from '@/lib/offline'
-import { useWordsStore } from '@/stores/assets.store'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { expressionApi, type TopicDetail } from '../api/english-practice-api'
 
@@ -587,8 +586,8 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const [dictionaryRequested, setDictionaryRequested] = useState(false)
   const [showUncommon, setShowUncommon] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const { addWord, hasWord } = useWordsStore()
 
   useEffect(() => {
     setDictData(null)
@@ -597,6 +596,13 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     setDictionaryRequested(false)
     setShowUncommon(false)
   }, [item.word])
+
+  useEffect(() => {
+    if (hideSave) return
+    learningContentRepository.getVocabulary(item.word).then((entry) => {
+      setSaved(Boolean(entry && 'source' in entry && (entry as any).source === 'learning-library'))
+    })
+  }, [hideSave, item.word])
 
   useEffect(() => {
     if (!dictionaryRequested || dictData === 'loading' || dictData) return
@@ -627,7 +633,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     || textOrEmpty(enriched?.chineseTranslation)
   const descriptionText = textOrEmpty(item.description)
   const dictEntry = dictData !== 'loading' ? dictData : null
-  const saved = hasWord(item.word)
 
   const playAudio = useCallback((url: string) => {
     audioRef.current?.pause()
@@ -638,7 +643,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
 
   const saveWord = async () => {
     setSaving(true)
-    addWord(item.word)
     await learningContentRepository.saveWordEntry({
       word: item.word,
       meaning: item.meaning,
@@ -655,6 +659,13 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
       sceneName: item.sceneName,
       source: 'learning-library',
     })
+    await syncOutbox.enqueue({
+      entityType: 'word_entry',
+      entityId: item.word.toLowerCase(),
+      operation: 'create',
+      payload: { word: item.word, addedAt: new Date().toISOString() },
+    })
+    setSaved(true)
     toast.success(saved ? t('insight.alreadyInVocab') : t('insight.addToVocab'))
     setSaving(false)
   }

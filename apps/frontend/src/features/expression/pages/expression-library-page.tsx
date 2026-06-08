@@ -69,8 +69,10 @@ function wordEntryToExpression(entry: WordEntry): Expression {
     corrected: entry.description ?? null,
     chunkText: entry.meaning ?? null,
     sceneName: entry.sceneName ?? null,
-    masteryStatus: 'learning',
-    reviewCount: 0,
+    masteryStatus: entry.masteryStatus ?? 'learning',
+    reviewCount: entry.reviewCount ?? 0,
+    lastReviewedAt: entry.lastReviewedAt,
+    nextReviewAt: entry.nextReviewAt,
     createdAt: entry.updatedAt,
     cacheKind: 'word',
     cacheEntry: entry,
@@ -100,8 +102,10 @@ function chunkEntryToExpression(entry: ChunkEntry): Expression {
     corrected: entry.text,
     chunkText: entry.text,
     sceneName: entry.sceneName ?? null,
-    masteryStatus: 'learning',
-    reviewCount: 0,
+    masteryStatus: entry.masteryStatus ?? 'learning',
+    reviewCount: entry.reviewCount ?? 0,
+    lastReviewedAt: entry.lastReviewedAt,
+    nextReviewAt: entry.nextReviewAt,
     createdAt: entry.updatedAt,
     cacheKind: 'chunk',
     cacheEntry: entry,
@@ -116,8 +120,10 @@ function patternEntryToExpression(entry: PatternEntry): Expression {
     corrected: entry.example ?? entry.pattern,
     chunkText: entry.pattern,
     sceneName: entry.sceneName ?? null,
-    masteryStatus: 'learning',
-    reviewCount: 0,
+    masteryStatus: entry.masteryStatus ?? 'learning',
+    reviewCount: entry.reviewCount ?? 0,
+    lastReviewedAt: entry.lastReviewedAt,
+    nextReviewAt: entry.nextReviewAt,
     createdAt: entry.updatedAt,
     cacheKind: 'pattern',
     cacheEntry: entry,
@@ -148,17 +154,16 @@ export function ExpressionLibraryPage() {
     setLoading(true)
     try {
       const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
-      if (reviewState === 'learning') {
-        const localItems = libraryTab === 'words'
-          ? (await learningContentRepository.listWordEntries()).map(wordEntryToExpression)
-          : libraryTab === 'pattern'
-            ? (await learningContentRepository.listPatternEntries()).map(patternEntryToExpression)
-            : (await learningContentRepository.listChunkEntries()).map(chunkEntryToExpression)
+      const localItems = libraryTab === 'words'
+        ? (await learningContentRepository.listWordEntries()).map(wordEntryToExpression)
+        : libraryTab === 'pattern'
+          ? (await learningContentRepository.listPatternEntries()).map(patternEntryToExpression)
+          : (await learningContentRepository.listChunkEntries()).map(chunkEntryToExpression)
 
-        if (localItems.length > 0) {
-          setResult(createLocalResult(localItems))
-          return
-        }
+      if (localItems.length > 0) {
+        const filteredLocalItems = localItems.filter((item) => item.masteryStatus === reviewState)
+        setResult(createLocalResult(filteredLocalItems))
+        return
       }
 
       const raw: any = await expressionApi.list({
@@ -301,7 +306,14 @@ export function ExpressionLibraryPage() {
   const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
     const target = result.items.find((item) => item.id === id)
     if (target?.cacheKind) {
-      toast.error(t('expressionLib.operationFailed'))
+      const text = target.cacheKind === 'word'
+        ? target.original ?? id
+        : target.chunkText ?? target.corrected ?? id
+      if (target.cacheKind === 'word') await learningContentRepository.updateWordEntryStatus(text, status)
+      else if (target.cacheKind === 'chunk') await learningContentRepository.updateChunkEntryStatus(text, status)
+      else await learningContentRepository.updatePatternEntryStatus(text, status)
+      toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
+      fetchData()
       return
     }
     try {
@@ -421,7 +433,7 @@ export function ExpressionLibraryPage() {
               )}
             </div>
             <div className="grid shrink-0 grid-cols-2 gap-0.5">
-              {!expr.cacheKind && (expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated') && (
+              {(expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated') && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'reviewing') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-primary hover:bg-primary/10"
@@ -429,7 +441,7 @@ export function ExpressionLibraryPage() {
                   <ArrowRightFromLine className="size-3.5" />
                 </span>
               )}
-              {!expr.cacheKind && expr.masteryStatus === 'reviewing' && (
+              {expr.masteryStatus === 'reviewing' && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'learning') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-amber-500 hover:bg-amber-500/10"
@@ -437,7 +449,7 @@ export function ExpressionLibraryPage() {
                   <RotateCcw className="size-3.5" />
                 </span>
               )}
-              {!expr.cacheKind && expr.masteryStatus === 'mastered' && (
+              {expr.masteryStatus === 'mastered' && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'reviewing') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -445,7 +457,7 @@ export function ExpressionLibraryPage() {
                   <RotateCcw className="size-3.5" />
                 </span>
               )}
-              {!expr.cacheKind && (expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated' || expr.masteryStatus === 'reviewing') && (
+              {(expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated' || expr.masteryStatus === 'reviewing') && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'mastered') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-emerald-500 hover:bg-emerald-500/10"
@@ -453,7 +465,7 @@ export function ExpressionLibraryPage() {
                   <CheckCheck className="size-3.5" />
                 </span>
               )}
-              {(expr.cacheKind || expr.masteryStatus === 'mastered') && <span />}
+              {expr.masteryStatus === 'mastered' && <span />}
               <span
                 onClick={(e) => { e.stopPropagation(); openDialog(visibleDialogItems, index) }}
                 className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"

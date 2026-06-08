@@ -24,6 +24,10 @@ export type WordEntry = {
   difficulty?: string
   sceneName?: string
   source?: string
+  masteryStatus?: 'learning' | 'reviewing' | 'mastered'
+  reviewCount?: number
+  lastReviewedAt?: string | null
+  nextReviewAt?: string | null
   updatedAt: string
 }
 
@@ -37,6 +41,10 @@ export type ChunkEntry = {
   examples?: unknown
   sceneName?: string
   source?: string
+  masteryStatus?: 'learning' | 'reviewing' | 'mastered'
+  reviewCount?: number
+  lastReviewedAt?: string | null
+  nextReviewAt?: string | null
   updatedAt: string
 }
 
@@ -50,6 +58,10 @@ export type PatternEntry = {
   difficulty?: string
   sceneName?: string
   source?: string
+  masteryStatus?: 'learning' | 'reviewing' | 'mastered'
+  reviewCount?: number
+  lastReviewedAt?: string | null
+  nextReviewAt?: string | null
   updatedAt: string
 }
 
@@ -97,6 +109,19 @@ export const learningContentRepository = {
 
   async deleteWordEntry(word: string): Promise<void> {
     await localDb.delete('word_entry', word.trim().toLowerCase())
+  },
+
+  async updateWordEntryStatus(word: string, status: NonNullable<WordEntry['masteryStatus']>): Promise<void> {
+    const id = word.trim().toLowerCase()
+    const entry = await localDb.get<WordEntry>('word_entry', id)
+    if (!entry) return
+    await localDb.put('word_entry', {
+      ...entry,
+      masteryStatus: status,
+      reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
+      lastReviewedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
   },
 
   async getDictionaryEntry(word: string): Promise<any | null> {
@@ -158,6 +183,19 @@ export const learningContentRepository = {
     await localDb.delete('chunk_entry', text.trim())
   },
 
+  async updateChunkEntryStatus(text: string, status: NonNullable<ChunkEntry['masteryStatus']>): Promise<void> {
+    const id = text.trim()
+    const entry = await localDb.get<ChunkEntry>('chunk_entry', id)
+    if (!entry) return
+    await localDb.put('chunk_entry', {
+      ...entry,
+      masteryStatus: status,
+      reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
+      lastReviewedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+  },
+
   async searchSentencePatterns(query: string): Promise<any[]> {
     const cached = await localDb.list<PatternEntry>('pattern_entry')
     const details = await localDb.list<any>('downloaded_unit_details')
@@ -188,5 +226,18 @@ export const learningContentRepository = {
 
   async deletePatternEntry(pattern: string): Promise<void> {
     await localDb.delete('pattern_entry', pattern.trim())
+  },
+
+  async updatePatternEntryStatus(pattern: string, status: NonNullable<PatternEntry['masteryStatus']>): Promise<void> {
+    const id = pattern.trim()
+    const entry = await localDb.get<PatternEntry>('pattern_entry', id)
+    if (!entry) return
+    await localDb.put('pattern_entry', {
+      ...entry,
+      masteryStatus: status,
+      reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
+      lastReviewedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
   },
 }
