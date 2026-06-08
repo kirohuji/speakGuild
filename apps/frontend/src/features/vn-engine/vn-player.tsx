@@ -92,7 +92,7 @@ const DEFAULT_SETTINGS: VnPlayerSettings = {
   typewriter: false,
 }
 
-const SETTINGS_STORAGE_KEY = 'vn-player-settings'
+const SETTINGS_STORAGE_KEY = 'manyu-vn-player-settings'
 
 function canCacheAssetUrl(url?: string | null) {
   return !!url && !url.startsWith('blob:') && !url.startsWith('data:')

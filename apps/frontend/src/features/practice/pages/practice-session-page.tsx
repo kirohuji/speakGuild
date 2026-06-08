@@ -280,7 +280,7 @@ export function PracticeSessionPage() {
   // Only show history/settings in header when chat mode is active
   const [isChatMode, setIsChatMode] = useState(() => {
     try {
-      const raw = localStorage.getItem('vn-player-settings')
+      const raw = localStorage.getItem('manyu-vn-player-settings')
       if (!raw) return false
       return (JSON.parse(raw) as any)?.displayMode === 'chat'
     } catch { return false }
