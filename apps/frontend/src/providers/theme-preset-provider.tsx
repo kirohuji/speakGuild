@@ -33,11 +33,23 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
 
   const isLoggedIn = !!session?.user?.id;
 
-  // 加载主题数据
+  // 加载用户激活的主题（不加载列表——列表在打开主题选择器时才请求）
   useEffect(() => {
-    store.loadPresets();
     store.loadActivePreset(isLoggedIn);
   }, [isLoggedIn]);
+
+  // 兜底：presets 加载完后，如果 activePreset 仍为空，从列表中取默认主题
+  useEffect(() => {
+    if (!store.activePreset && store.presetsLoaded && store.presets.length > 0) {
+      const defaultPreset =
+        store.presets.find((p) => p.id === 'theme-default') ||
+        store.presets.find((p) => p.isDefault) ||
+        store.presets[0];
+      if (defaultPreset) {
+        useThemePresetStore.setState({ activePreset: defaultPreset });
+      }
+    }
+  }, [store.activePreset, store.presetsLoaded, store.presets]);
 
   // 当主题预设或 light/dark 模式变化时，动态注入 CSS 变量
   useEffect(() => {

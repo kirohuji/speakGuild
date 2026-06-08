@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
+import { useEffect } from 'react';
 import {
   Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft,
 } from 'lucide-react';
@@ -9,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/cn';
 import { useThemePreset } from '@/providers/theme-preset-provider';
+import { useThemePresetStore } from '@/stores/theme-preset.store';
 import { usePreferencesStore } from '@/stores/preferences.store';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
 
@@ -49,8 +51,15 @@ export function AppearanceContent() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { presets, activePreset, setActivePreset } = useThemePreset();
+  const ensurePresets = useThemePresetStore((s) => s.ensurePresets);
 
   const { bgmEnabled, bgmVolume, setBgmEnabled, setBgmVolume } = usePreferencesStore();
+
+  // 打开主题选择器时才加载列表（缓存优先）
+  useEffect(() => {
+    ensurePresets();
+  }, [ensurePresets]);
+
   const effectiveBgmVolume = bgmVolume ?? activePreset?.bgmVolume ?? 0.3;
 
   const modeLabel: Record<string, string> = {
