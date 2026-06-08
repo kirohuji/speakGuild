@@ -5,7 +5,6 @@ import {
   Award,
   BookmarkPlus,
   CheckCircle2,
-  Library,
   Mic2,
   RotateCcw,
   Sparkles,
@@ -49,7 +48,6 @@ interface PracticeAnalysisPanelProps {
   analysis: DialogueAnalysisResult | null
   loading: boolean
   onBack?: () => void
-  onFinish?: () => void
   onRestart?: () => void
   onSaveExpression?: (data: {
     type: string
@@ -68,7 +66,6 @@ export function PracticeAnalysisPanel({
   analysis,
   loading,
   onBack,
-  onFinish,
   onRestart,
   onSaveExpression,
   topicTitle,
@@ -391,14 +388,6 @@ export function PracticeAnalysisPanel({
         </Card>
       )}
 
-      {!readOnly && <div className="grid grid-cols-2 gap-3">
-        <Button type="button" variant="outline" onClick={onRestart ?? onBack}>
-          <RotateCcw className="mr-1 size-4" /> {t('practiceVn.restart')}
-        </Button>
-        <Button type="button" onClick={onFinish}>
-          <Library className="mr-1 size-4" /> {t('practiceVn.exprLibrary')}
-        </Button>
-      </div>}
     </div>
   )
 }

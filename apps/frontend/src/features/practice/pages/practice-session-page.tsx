@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
-  Lightbulb, CheckCircle2, RotateCcw, ChevronRight,
+  Lightbulb, CheckCircle2, ChevronRight,
   BookText, Search, BookmarkPlus, History, Settings, ChevronDown, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -804,8 +804,17 @@ export function PracticeSessionPage() {
   }, [resumeAfterInput, turnFeedback])
 
   // ==================== Analysis ====================
+  const goBackToScene = useCallback(() => {
+    const sceneId = detail?.scene.id
+    navigate(sceneId ? `/practice/topics?sceneId=${sceneId}` : '/practice/topics', { replace: true })
+  }, [detail?.scene.id, navigate])
+
   const startAnalysis = useCallback(async () => {
     if (!topicId || !detail) return
+    if (analysisResult) {
+      setPhase('analysis')
+      return
+    }
     setPhase('analysis')
     setAnalysisLoading(true)
     try {
@@ -821,7 +830,7 @@ export function PracticeSessionPage() {
     } finally {
       setAnalysisLoading(false)
     }
-  }, [topicId, detail, objectives, coreChunkTexts, practiceSessionId])
+  }, [topicId, detail, analysisResult, practiceSessionId])
 
   const saveAnalysisExpression = useCallback(async (data: {
     type: string
@@ -845,6 +854,8 @@ export function PracticeSessionPage() {
     setUsedChunks(new Set())
     setAiHints([])
     setTurnFeedback(null)
+    setAnalysisResult(null)
+    setAnalysisLoading(false)
     setRestartKey((k) => k + 1)
     setPhase('prepare')
   }
@@ -873,7 +884,7 @@ export function PracticeSessionPage() {
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         {/* Header */}
         <div className="mb-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={goBackToScene}>
             <ArrowLeft className="size-5" />
           </Button>
           <div className="flex-1">
@@ -1076,7 +1087,7 @@ export function PracticeSessionPage() {
   // ==================== Phase: Practice (VN) ====================
   if (phase === 'practice') {
     const currentLine = dialogueRounds[dialogueRounds.length - 1]
-    const canReview = inkEnded || dialogueRounds.some((line) => !line.isNpc)
+    const canReview = inkEnded
     const characters = detail.scene.characters ?? []
     const currentCharacter = characters.find((character) => {
       const speaker = vnVisual.speaker || (currentLine?.isNpc ? currentLine.speaker : undefined)
@@ -1102,7 +1113,13 @@ export function PracticeSessionPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setConfirmAbandonOpen(true)}
+            onClick={() => {
+              if (analysisResult) {
+                goBackToScene()
+              } else {
+                setConfirmAbandonOpen(true)
+              }
+            }}
             className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
@@ -1116,15 +1133,17 @@ export function PracticeSessionPage() {
             triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-medium text-foreground/80 transition-colors hover:bg-primary/[0.16] active:bg-primary/[0.22]"
           />
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={canReview ? startAnalysis : restartPractice}
-            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
-          >
-            {canReview ? <CheckCircle2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
-            {canReview ? t('practiceSession.review') : t('practiceSession.retry')}
-          </Button>
+          {canReview && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={startAnalysis}
+              className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
+            >
+              <CheckCircle2 className="size-3.5" />
+              {t('practiceSession.review')}
+            </Button>
+          )}
 
           {/* History & Settings — only in chat mode */}
           {isChatMode && (
@@ -1267,8 +1286,7 @@ export function PracticeSessionPage() {
           analysis={analysisResult}
           loading={analysisLoading}
           topicTitle={detail.topic.title}
-          onBack={() => setPhase('practice')}
-          onFinish={() => navigate('/expressions')}
+          onBack={goBackToScene}
           onRestart={resetPractice}
           onSaveExpression={saveAnalysisExpression}
         />
