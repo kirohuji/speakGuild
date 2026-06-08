@@ -5,6 +5,35 @@ import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
 
+function useAppForegroundSync(userId: string | undefined) {
+  const lastSyncRef = useRef(0)
+
+  useEffect(() => {
+    if (!userId) return
+
+    const doSync = () => {
+      const now = Date.now()
+      // 30 秒内不重复同步
+      if (now - lastSyncRef.current < 30_000) return
+      lastSyncRef.current = now
+
+      void offlineSyncService.sync(userId).catch((error) => {
+        console.warn('[offline-sync] foreground sync failed:', error)
+      })
+    }
+
+    // App 打开时立刻同步一次
+    doSync()
+
+    // 从后台切回前台时也同步
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') doSync()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [userId])
+}
+
 interface SessionUser {
   id: string
   email: string
@@ -59,7 +88,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const flushedUserIdRef = useRef<string | null>(null)
+
+  useAppForegroundSync(session?.user?.id)
 
   const fetchSession = async (): Promise<Session | null> => {
     try {
@@ -102,15 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session?.user?.id) {
       notifications.initSocket(session.user.id)
       void notifications.fetchUnreadCount()
-      if (flushedUserIdRef.current !== session.user.id) {
-        flushedUserIdRef.current = session.user.id
-        void offlineSyncService.sync(session.user.id).catch((error) => {
-          console.warn('[offline-sync] initial sync failed:', error)
-        })
-      }
     } else {
       notifications.disconnect()
-      flushedUserIdRef.current = null
     }
 
     return () => {

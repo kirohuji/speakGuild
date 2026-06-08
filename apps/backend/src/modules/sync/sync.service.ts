@@ -202,8 +202,120 @@ export class SyncService {
       }
     }
 
-    // practice_session / practice_turn / recording 走客户端单个 API，
-    // 批量 push 暂不处理（需要填充 topicSnapshot 等必需字段）
+    // ---- 练习会话 ----
+    if (entityType === 'practice_session') {
+      if (operation === 'create') {
+        const topicId = payload?.topicId ?? entityId;
+        const topic = await this.prisma.trainingTopic.findUnique({
+          where: { id: topicId },
+          include: {
+            scene: true,
+            activeChunks: { include: { chunk: true } },
+            topicVocabs: { include: { vocab: true } },
+            topicPatterns: { include: { pattern: true } },
+          },
+        });
+        if (!topic) return { handled: false };
+
+        const created = await this.prisma.practiceSession.create({
+          data: {
+            userId,
+            topicId: topic.id,
+            sceneId: topic.sceneId,
+            status: 'active',
+            topicSnapshot: {
+              id: topic.id,
+              title: topic.title,
+              description: topic.description,
+              difficulty: topic.difficulty,
+              suggestedDurationSec: topic.suggestedDurationSec,
+            },
+            sceneSnapshot: {
+              id: topic.scene.id,
+              title: topic.scene.title,
+              location: topic.scene.location,
+            },
+            objectivesSnapshot: [],
+            chunksSnapshot: topic.activeChunks.map((tc) => ({
+              id: tc.chunk.id,
+              text: tc.chunk.text,
+              meaning: tc.chunk.meaning,
+            })),
+            vocabSnapshot: topic.topicVocabs.map((tv) => ({
+              id: tv.vocab.id,
+              word: tv.vocab.word,
+              meaning: tv.vocab.meaning,
+            })),
+            sentencePatternsSnapshot: topic.topicPatterns.map((tp) => ({
+              id: tp.pattern.id,
+              pattern: tp.pattern.pattern,
+              meaning: tp.pattern.meaning,
+            })),
+            turnCount: 0,
+          },
+          select: { id: true },
+        });
+        return { handled: true, remoteId: created.id };
+      }
+      if (operation === 'update' && payload?.status === 'completed') {
+        await this.prisma.practiceSession.updateMany({
+          where: { id: entityId, userId },
+          data: {
+            status: 'completed',
+            completedAt: new Date(),
+          },
+        });
+        return { handled: true };
+      }
+    }
+
+    // ---- 练习轮次 ----
+    if (entityType === 'practice_turn') {
+      if (operation === 'create') {
+        const data = (payload?.data ?? payload) as any;
+        const sessionId = data?.sessionId ?? payload?.sessionId;
+        if (!sessionId) return { handled: false };
+
+        // 检查 session 是否存在
+        const session = await this.prisma.practiceSession.findFirst({
+          where: { id: sessionId, userId },
+          select: { id: true },
+        });
+        if (!session) return { handled: false };
+
+        const lastTurn = await this.prisma.practiceTurn.findFirst({
+          where: { sessionId },
+          orderBy: { round: 'desc' },
+          select: { round: true },
+        });
+        const nextRound = (lastTurn?.round ?? 0) + 1;
+
+        const created = await this.prisma.practiceTurn.create({
+          data: {
+            sessionId,
+            round: data?.round ?? nextRound,
+            npcText: data?.npcText ?? '',
+            userText: data?.userText ?? '',
+            userAudioUrl: data?.userAudioUrl,
+            inputNodeId: data?.inputNodeId,
+            tags: data?.tags ?? [],
+            judgement: data?.judgement ?? null,
+            objectivesCompleted: data?.objectivesCompleted ?? [],
+            chunksUsed: data?.chunksUsed ?? [],
+          },
+          select: { id: true },
+        });
+
+        await this.prisma.practiceSession.update({
+          where: { id: sessionId },
+          data: { turnCount: { increment: 1 } },
+        });
+
+        return { handled: true, remoteId: created.id };
+      }
+    }
+
+    // recording 暂不处理（走客户端单个上传 API）
     return { handled: false };
   }
 

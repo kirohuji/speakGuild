@@ -1,6 +1,7 @@
 import { learningApi } from '@/features/learning/api/learning-api'
 import { practiceApi, expressionApi } from '@/features/practice/api/english-practice-api'
 import { transcribeRecording } from '@/lib/practice-ai-api'
+import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './local-db'
 import { syncOutbox, type SyncOutboxItem } from './sync-outbox'
@@ -326,13 +327,74 @@ export const offlineSyncService = {
   async sync(userId?: string | null): Promise<{
     push: { synced: number; failed: number; skipped: number }
     pull: { cursor: string | null; changed: number; deleted: number } | null
+    stalePacks: string[]
   }> {
     const push = await this.flush()
     if (push.failed > 0) {
-      return { push, pull: null }
+      toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
+      return { push, pull: null, stalePacks: [] }
+    }
+    if (push.synced > 0) {
+      toast.success(`已同步 ${push.synced} 条离线数据`)
     }
     const pull = await this.pull(userId)
-    return { push, pull }
+
+    // 检查已安装学习包的内容是否有更新
+    const stalePacks = await this.checkContentUpdates()
+    if (stalePacks.length > 0) {
+      toast.info(`${stalePacks.length} 个学习包有内容更新，建议重新下载`)
+    }
+
+    return { push, pull, stalePacks }
+  },
+
+  /** 检查公共内容更新，返回需要刷新的学习包 ID 列表 */
+  async checkContentUpdates(): Promise<string[]> {
+    try {
+      const versionRecord = await localDb.get<{ value?: string }>('kv', 'sync:content:since')
+      const manifest = await syncApi.contentManifest(versionRecord?.value ?? null)
+
+      // 保存新版本时间戳
+      if (manifest.generatedAt) {
+        await localDb.put('kv', {
+          id: 'sync:content:since',
+          value: manifest.generatedAt,
+          updatedAt: new Date().toISOString(),
+        })
+      }
+
+      // 收集所有变更涉及的内容 ID
+      const changedIds = new Set<string>([
+        ...(manifest.changed?.scenes?.map((s: any) => s.id) ?? []),
+        ...(manifest.changed?.topics?.map((t: any) => t.id) ?? []),
+        ...(manifest.changed?.vocabularies?.map((v: any) => v.id) ?? []),
+        ...(manifest.changed?.chunks?.map((c: any) => c.id) ?? []),
+        ...(manifest.changed?.sentencePatterns?.map((p: any) => p.id) ?? []),
+        ...(manifest.changed?.scriptEpisodes?.map((e: any) => e.id) ?? []),
+        ...(manifest.changed?.dictionaries?.map((d: any) => d.id) ?? []),
+      ])
+
+      if (changedIds.size === 0) return []
+
+      // 找出哪些已安装学习包的内容发生了变更
+      const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[] } }>('downloaded_packs')
+      const stalePacks = packs
+        .filter((pack) => {
+          const ids = [
+            ...(pack.manifest?.topics ?? []),
+            ...(pack.manifest?.vocabularies ?? []),
+            ...(pack.manifest?.chunks ?? []),
+            ...(pack.manifest?.sentencePatterns ?? []),
+          ]
+          return ids.some((id) => changedIds.has(id))
+        })
+        .map((pack) => pack.packId)
+
+      return stalePacks
+    } catch (error) {
+      console.warn('[offline-sync] content manifest check failed:', error)
+      return []
+    }
   },
 
   async flush(): Promise<{ synced: number; failed: number; skipped: number }> {
@@ -343,10 +405,9 @@ export const offlineSyncService = {
     const items = await syncOutbox.listPending()
     if (items.length === 0) return { synced, failed, skipped }
 
-    // 分离可批量推送的简单类型和需要单独处理的复杂类型
-    const bulkItems = items.filter(
-      (item) => item.entityType === 'my_unit' || item.entityType === 'word_entry' || item.entityType === 'chunk_entry' || item.entityType === 'pattern_entry',
-    )
+    // 分离可批量推送的类型和需要单独处理的复杂类型
+    const bulkEntityTypes = new Set(['my_unit', 'word_entry', 'chunk_entry', 'pattern_entry', 'practice_session', 'practice_turn'])
+    const bulkItems = items.filter((item) => bulkEntityTypes.has(item.entityType))
     const individualItems = items.filter(
       (item) => !bulkItems.includes(item),
     )

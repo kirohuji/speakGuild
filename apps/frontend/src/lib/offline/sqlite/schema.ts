@@ -1,0 +1,138 @@
+/**
+ * SQLite schema for Native (Capacitor) offline storage.
+ *
+ * Mirrors the IndexedDB stores defined in local-db.ts.
+ * Each "store" becomes a SQLite table with:
+ *   - id TEXT PRIMARY KEY  (same as IndexedDB keyPath)
+ *   - data TEXT NOT NULL    (JSON-serialized value)
+ *   - updated_at TEXT       (ISO-8601 timestamp)
+ *
+ * Blob data (recordings) stays in Capacitor Filesystem;
+ * only metadata is stored here.
+ */
+export const DB_NAME = 'speakguild_offline'
+
+/** Increment this when schema changes; triggers onUpgrade. */
+export const DB_VERSION = 1
+
+/** All table names in the database. */
+export const TABLE_NAMES = [
+  'kv',
+  'my_learning_units',
+  'downloaded_packs',
+  'downloaded_unit_details',
+  'ink_scripts',
+  'dictionary_entries',
+  'expression_entries',
+  'user_progress',
+  'practice_records',
+  'local_assets',
+  'outbox',
+  'recordings',
+] as const
+
+export type TableName = (typeof TABLE_NAMES)[number]
+
+/** CREATE TABLE statements for each store. */
+export const DDL: Record<TableName, string> = {
+  kv: `
+    CREATE TABLE IF NOT EXISTS kv (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  my_learning_units: `
+    CREATE TABLE IF NOT EXISTS my_learning_units (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  downloaded_packs: `
+    CREATE TABLE IF NOT EXISTS downloaded_packs (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  downloaded_unit_details: `
+    CREATE TABLE IF NOT EXISTS downloaded_unit_details (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  ink_scripts: `
+    CREATE TABLE IF NOT EXISTS ink_scripts (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  dictionary_entries: `
+    CREATE TABLE IF NOT EXISTS dictionary_entries (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  expression_entries: `
+    CREATE TABLE IF NOT EXISTS expression_entries (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  user_progress: `
+    CREATE TABLE IF NOT EXISTS user_progress (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  practice_records: `
+    CREATE TABLE IF NOT EXISTS practice_records (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  local_assets: `
+    CREATE TABLE IF NOT EXISTS local_assets (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  outbox: `
+    CREATE TABLE IF NOT EXISTS outbox (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  recordings: `
+    CREATE TABLE IF NOT EXISTS recordings (
+      id TEXT PRIMARY KEY NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+}
+
+/** All CREATE TABLE statements as a single batch. */
+export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
+
+/** Indexes for commonly queried fields. */
+export const INDEXES = [
+  // expression_entries: filter by kind or remoteId
+  `CREATE INDEX IF NOT EXISTS idx_expression_kind ON expression_entries (json_extract(data, '$.kind'))`,
+  `CREATE INDEX IF NOT EXISTS idx_expression_remoteId ON expression_entries (json_extract(data, '$.remoteId'))`,
+  // outbox: filter by status
+  `CREATE INDEX IF NOT EXISTS idx_outbox_status ON outbox (json_extract(data, '$.status'))`,
+  // practice_records: filter by sessionId
+  `CREATE INDEX IF NOT EXISTS idx_practice_sessionId ON practice_records (json_extract(data, '$.sessionId'))`,
+  // local_assets: filter by status
+  `CREATE INDEX IF NOT EXISTS idx_local_assets_status ON local_assets (json_extract(data, '$.status'))`,
+]
