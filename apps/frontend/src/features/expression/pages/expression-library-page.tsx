@@ -14,6 +14,13 @@ import { toast } from 'sonner'
 import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { cn } from '@/lib/cn'
+import {
+  learningContentRepository,
+  syncOutbox,
+  type ChunkEntry,
+  type PatternEntry,
+  type WordEntry,
+} from '@/lib/offline'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
 
@@ -22,6 +29,8 @@ interface Expression {
   chunkText: string | null; sceneName: string | null; masteryStatus: string
   reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
   createdAt: string
+  cacheKind?: 'word' | 'chunk' | 'pattern'
+  cacheEntry?: WordEntry | ChunkEntry | PatternEntry
   vocabulary?: {
     id: string; word: string; meaning: string; partOfSpeech?: string | null;
     phoneticUs?: string | null; phoneticUk?: string | null;
@@ -41,6 +50,79 @@ interface PageResult {
 }
 
 const PAGE_SIZE = 30
+
+function createLocalResult(items: Expression[]): PageResult {
+  return {
+    items,
+    total: items.length,
+    page: 1,
+    pageSize: PAGE_SIZE,
+    totalPages: items.length > 0 ? 1 : 0,
+  }
+}
+
+function wordEntryToExpression(entry: WordEntry): Expression {
+  return {
+    id: entry.id,
+    type: 'word',
+    original: entry.word,
+    corrected: entry.description ?? null,
+    chunkText: entry.meaning ?? null,
+    sceneName: entry.sceneName ?? null,
+    masteryStatus: 'learning',
+    reviewCount: 0,
+    createdAt: entry.updatedAt,
+    cacheKind: 'word',
+    cacheEntry: entry,
+    vocabulary: {
+      id: entry.id,
+      word: entry.word,
+      meaning: entry.meaning ?? '',
+      partOfSpeech: entry.partOfSpeech,
+      phoneticUs: entry.phoneticUs,
+      phoneticUk: entry.phoneticUk,
+      audioUsUrl: entry.audioUsUrl,
+      audioUkUrl: entry.audioUkUrl,
+      definitionEn: entry.definitionEn,
+      synonyms: entry.synonyms,
+      examples: entry.examples,
+      description: entry.description,
+      difficulty: entry.difficulty,
+    },
+  }
+}
+
+function chunkEntryToExpression(entry: ChunkEntry): Expression {
+  return {
+    id: entry.id,
+    type: 'chunk',
+    original: entry.meaning ?? null,
+    corrected: entry.text,
+    chunkText: entry.text,
+    sceneName: entry.sceneName ?? null,
+    masteryStatus: 'learning',
+    reviewCount: 0,
+    createdAt: entry.updatedAt,
+    cacheKind: 'chunk',
+    cacheEntry: entry,
+  }
+}
+
+function patternEntryToExpression(entry: PatternEntry): Expression {
+  return {
+    id: entry.id,
+    type: 'scene_phrase',
+    original: entry.meaning ?? null,
+    corrected: entry.example ?? entry.pattern,
+    chunkText: entry.pattern,
+    sceneName: entry.sceneName ?? null,
+    masteryStatus: 'learning',
+    reviewCount: 0,
+    createdAt: entry.updatedAt,
+    cacheKind: 'pattern',
+    cacheEntry: entry,
+  }
+}
 
 export function ExpressionLibraryPage() {
   const { t } = useTranslation()
@@ -66,6 +148,19 @@ export function ExpressionLibraryPage() {
     setLoading(true)
     try {
       const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
+      if (reviewState === 'learning') {
+        const localItems = libraryTab === 'words'
+          ? (await learningContentRepository.listWordEntries()).map(wordEntryToExpression)
+          : libraryTab === 'pattern'
+            ? (await learningContentRepository.listPatternEntries()).map(patternEntryToExpression)
+            : (await learningContentRepository.listChunkEntries()).map(chunkEntryToExpression)
+
+        if (localItems.length > 0) {
+          setResult(createLocalResult(localItems))
+          return
+        }
+      }
+
       const raw: any = await expressionApi.list({
         type: apiType,
         reviewState,
@@ -144,19 +239,26 @@ export function ExpressionLibraryPage() {
       }
     }
     if (apiType === 'scene_phrase') {
+      const cacheEntry = expr.cacheEntry as PatternEntry | undefined
       return {
         kind: 'pattern' as const,
         id: expr.id,
         pattern: expr.chunkText ?? expr.corrected ?? '',
         meaning: expr.original ?? '',
+        slots: cacheEntry?.slots,
+        example: cacheEntry?.example,
+        difficulty: cacheEntry?.difficulty,
         sceneName: expr.sceneName ?? undefined,
       }
     }
+    const cacheEntry = expr.cacheEntry as ChunkEntry | undefined
     return {
       kind: 'chunk' as const,
       id: expr.id,
       text: expr.chunkText ?? expr.corrected ?? '',
       meaning: expr.original ?? '',
+      description: cacheEntry?.description,
+      examples: cacheEntry?.examples as any,
       sceneName: expr.sceneName ?? undefined,
       saved: true, // 已在学习库中
     }
@@ -197,6 +299,11 @@ export function ExpressionLibraryPage() {
 
   // ---- 状态变更 ----
   const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
+    const target = result.items.find((item) => item.id === id)
+    if (target?.cacheKind) {
+      toast.error(t('expressionLib.operationFailed'))
+      return
+    }
     try {
       await expressionApi.updateStatus(id, status)
       toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
@@ -204,18 +311,46 @@ export function ExpressionLibraryPage() {
     } catch {
       toast.error(t('expressionLib.operationFailed'))
     }
-  }, [fetchData, t])
+  }, [fetchData, result.items, t])
 
   // ---- 删除操作 ----
   const handleRemove = useCallback(async (id: string) => {
+    const target = result.items.find((item) => item.id === id)
     try {
+      if (target?.cacheKind) {
+        const text = target.cacheKind === 'word'
+          ? target.original ?? id
+          : target.chunkText ?? target.corrected ?? id
+
+        if (target.cacheKind === 'word') await learningContentRepository.deleteWordEntry(text)
+        else if (target.cacheKind === 'chunk') await learningContentRepository.deleteChunkEntry(text)
+        else await learningContentRepository.deletePatternEntry(text)
+
+        await syncOutbox.enqueue({
+          entityType: target.cacheKind === 'word' ? 'word_entry' : target.cacheKind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
+          entityId: text,
+          operation: 'delete',
+          payload: target.cacheKind === 'word'
+            ? { word: text, deletedAt: new Date().toISOString() }
+            : target.cacheKind === 'chunk'
+              ? { chunkText: text, deletedAt: new Date().toISOString() }
+              : { pattern: text, deletedAt: new Date().toISOString() },
+        })
+        setResult((current) => {
+          const nextItems = current.items.filter((item) => item.id !== id)
+          return createLocalResult(nextItems)
+        })
+        toast.success(t('expressionLib.removed'))
+        return
+      }
+
       await expressionApi.remove(id)
       toast.success(t('expressionLib.removed'))
       fetchData()
     } catch {
       toast.error(t('expressionLib.removeFailed'))
     }
-  }, [fetchData, t])
+  }, [fetchData, result.items, t])
 
   // ---- 二级状态过滤 ----
   const filterPills = [
@@ -286,7 +421,7 @@ export function ExpressionLibraryPage() {
               )}
             </div>
             <div className="grid shrink-0 grid-cols-2 gap-0.5">
-              {(expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated') && (
+              {!expr.cacheKind && (expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated') && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'reviewing') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-primary hover:bg-primary/10"
@@ -294,7 +429,7 @@ export function ExpressionLibraryPage() {
                   <ArrowRightFromLine className="size-3.5" />
                 </span>
               )}
-              {expr.masteryStatus === 'reviewing' && (
+              {!expr.cacheKind && expr.masteryStatus === 'reviewing' && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'learning') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-amber-500 hover:bg-amber-500/10"
@@ -302,7 +437,7 @@ export function ExpressionLibraryPage() {
                   <RotateCcw className="size-3.5" />
                 </span>
               )}
-              {expr.masteryStatus === 'mastered' && (
+              {!expr.cacheKind && expr.masteryStatus === 'mastered' && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'reviewing') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -310,7 +445,7 @@ export function ExpressionLibraryPage() {
                   <RotateCcw className="size-3.5" />
                 </span>
               )}
-              {(expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated' || expr.masteryStatus === 'reviewing') && (
+              {!expr.cacheKind && (expr.masteryStatus === 'learning' || expr.masteryStatus === 'activated' || expr.masteryStatus === 'reviewing') && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleUpdateStatus(expr.id, 'mastered') }}
                   className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-emerald-500 hover:bg-emerald-500/10"
@@ -318,7 +453,7 @@ export function ExpressionLibraryPage() {
                   <CheckCheck className="size-3.5" />
                 </span>
               )}
-              {expr.masteryStatus === 'mastered' && <span />}
+              {(expr.cacheKind || expr.masteryStatus === 'mastered') && <span />}
               <span
                 onClick={(e) => { e.stopPropagation(); openDialog(visibleDialogItems, index) }}
                 className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"

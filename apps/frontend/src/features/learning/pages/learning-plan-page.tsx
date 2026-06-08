@@ -29,7 +29,6 @@ export function LearningPlanPage() {
   const myLoading = useLearningStore((s) => s.myLoading)
   const fetchMyLearning = useLearningStore((s) => s.fetchMyLearning)
   const refreshMyUnits = useLearningStore((s) => s.refreshMyUnits)
-  const fetchShop = useLearningStore((s) => s.fetchShop)
   const refreshShop = useLearningStore((s) => s.refreshShop)
   const loadMoreShop = useLearningStore((s) => s.loadMoreShop)
   const fetchTags = useLearningStore((s) => s.fetchTags)
@@ -38,9 +37,7 @@ export function LearningPlanPage() {
 
   useEffect(() => {
     fetchMyLearning()
-    fetchShop()
-    fetchTags()
-  }, [fetchMyLearning, fetchShop, fetchTags])
+  }, [fetchMyLearning])
 
   const inProgress = myUnits.filter((u) => u.completionPercent < 100)
   const completed = myUnits.filter((u) => u.completionPercent >= 100)
@@ -55,7 +52,7 @@ export function LearningPlanPage() {
               aria-label={t('profile.records')}>
               <ClipboardList className="size-[18px]" />
             </button>
-            <button type="button" onClick={() => { setShopOpen(true); refreshShop() }}
+            <button type="button" onClick={() => { setShopOpen(true); refreshShop(); fetchTags() }}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
               aria-label={t('member.title')}>
               <ShoppingBag className="size-[18px]" />
@@ -66,7 +63,7 @@ export function LearningPlanPage() {
         <MyLearningView
           myUnits={myUnits} inProgress={inProgress} completed={completed}
           loading={myLoading}
-          onGoToShop={() => { setShopOpen(true); refreshShop() }}
+          onGoToShop={() => { setShopOpen(true); refreshShop(); fetchTags() }}
           onRefresh={refreshMyUnits}
           onQuitUnit={storeQuitUnit}
         />

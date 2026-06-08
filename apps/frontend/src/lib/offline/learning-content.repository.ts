@@ -91,6 +91,14 @@ export const learningContentRepository = {
     })
   },
 
+  async listWordEntries(): Promise<WordEntry[]> {
+    return localDb.list<WordEntry>('word_entry')
+  },
+
+  async deleteWordEntry(word: string): Promise<void> {
+    await localDb.delete('word_entry', word.trim().toLowerCase())
+  },
+
   async getDictionaryEntry(word: string): Promise<any | null> {
     return localDb.get('dictionary_entries', word.toLowerCase())
   },
@@ -142,6 +150,14 @@ export const learningContentRepository = {
     })
   },
 
+  async listChunkEntries(): Promise<ChunkEntry[]> {
+    return localDb.list<ChunkEntry>('chunk_entry')
+  },
+
+  async deleteChunkEntry(text: string): Promise<void> {
+    await localDb.delete('chunk_entry', text.trim())
+  },
+
   async searchSentencePatterns(query: string): Promise<any[]> {
     const cached = await localDb.list<PatternEntry>('pattern_entry')
     const details = await localDb.list<any>('downloaded_unit_details')
@@ -164,5 +180,13 @@ export const learningContentRepository = {
       pattern,
       updatedAt: item.updatedAt ?? new Date().toISOString(),
     })
+  },
+
+  async listPatternEntries(): Promise<PatternEntry[]> {
+    return localDb.list<PatternEntry>('pattern_entry')
+  },
+
+  async deletePatternEntry(pattern: string): Promise<void> {
+    await localDb.delete('pattern_entry', pattern.trim())
   },
 }

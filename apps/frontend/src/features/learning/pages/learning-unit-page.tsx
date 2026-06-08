@@ -57,36 +57,30 @@ export function LearningUnitPage() {
   }, [unitId, fetchUnitDetail, fetchDownloadedPacks])
 
   // 切 tab 时按需加载已收集状态
-  const loadCollectedForTab = useCallback((tab: string) => {
+  const loadCollectedForTab = useCallback(async (tab: string) => {
     if (loadedTabs.current.has(tab)) return
     loadedTabs.current.add(tab)
 
     if (tab === 'vocab') {
-      expressionApi.list({ type: 'word' }).catch(() => ([] as any)).then((res: any) => {
-        const items = Array.isArray(res) ? res : (res?.items ?? [])
-        setCollectedTexts((prev) => {
-          const next = new Set(prev)
-          for (const item of items) { if (item.original) next.add(item.original) }
-          return next
-        })
+      const cached = await learningContentRepository.listWordEntries()
+      setCollectedTexts((prev) => {
+        const next = new Set(prev)
+        for (const item of cached) next.add(item.word)
+        return next
       })
     } else if (tab === 'chunk') {
-      expressionApi.list({ type: 'chunk' }).catch(() => ([] as any)).then((res: any) => {
-        const items = Array.isArray(res) ? res : (res?.items ?? [])
-        setCollectedTexts((prev) => {
-          const next = new Set(prev)
-          for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
-          return next
-        })
+      const cached = await learningContentRepository.listChunkEntries()
+      setCollectedTexts((prev) => {
+        const next = new Set(prev)
+        for (const item of cached) next.add(item.text)
+        return next
       })
     } else if (tab === 'pattern') {
-      expressionApi.list({ type: 'scene_phrase' }).catch(() => ([] as any)).then((res: any) => {
-        const items = Array.isArray(res) ? res : (res?.items ?? [])
-        setCollectedTexts((prev) => {
-          const next = new Set(prev)
-          for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
-          return next
-        })
+      const cached = await learningContentRepository.listPatternEntries()
+      setCollectedTexts((prev) => {
+        const next = new Set(prev)
+        for (const item of cached) next.add(item.pattern)
+        return next
       })
     }
   }, [])
@@ -120,6 +114,42 @@ export function LearningUnitPage() {
     } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [t, unit?.title])
 
+  const handleCollectPattern = useCallback(async (pattern: SentencePattern) => {
+    const text = pattern.pattern
+    setCollectedTexts((prev) => new Set([...prev, text]))
+    await learningContentRepository.savePatternEntry({
+      pattern: text,
+      meaning: pattern.meaning,
+      slots: pattern.slots,
+      example: pattern.example,
+      difficulty: pattern.difficulty,
+      sceneName: unit?.title,
+      source: 'learning-library',
+    })
+    toast.success(t('learning.addedToLibrary'))
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: 'pattern_entry',
+      entityId: text,
+      operation: 'create',
+      payload: {
+        pattern: text,
+        meaning: pattern.meaning,
+        example: pattern.example,
+        sceneName: unit?.title,
+      },
+    })
+    try {
+      await expressionApi.create({
+        type: 'scene_phrase',
+        chunkText: text,
+        corrected: pattern.example || text,
+        original: pattern.meaning,
+        sceneName: unit?.title,
+      })
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
+  }, [t, unit?.title])
+
   const handleCollectWord = useCallback(async (vocab: VocabItem) => {
     const word = vocab.word
     const meaning = vocab.meaning
@@ -144,20 +174,25 @@ export function LearningUnitPage() {
     } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [t, unit?.title])
 
-  const handleRemoveExpression = useCallback(async (text: string) => {
+  const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     try {
-      // 先查询找到对应 expression 的 ID
-      const list = await expressionApi.list()
-      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
-      const match = items.find(
-        (item: any) => item.chunkText === text || item.original === text,
-      )
-      if (!match?.id) { toast.error(t('learning.notFound')); return }
-      await expressionApi.remove(match.id)
+      if (kind === 'word') await learningContentRepository.deleteWordEntry(text)
+      else if (kind === 'chunk') await learningContentRepository.deleteChunkEntry(text)
+      else await learningContentRepository.deletePatternEntry(text)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+      await syncOutbox.enqueue({
+        entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
+        entityId: text,
+        operation: 'delete',
+        payload: kind === 'word'
+          ? { word: text, deletedAt: new Date().toISOString() }
+          : kind === 'chunk'
+            ? { chunkText: text, deletedAt: new Date().toISOString() }
+            : { pattern: text, deletedAt: new Date().toISOString() },
+      })
       toast.success(t('learning.removedFromLibrary'))
     } catch { toast.error(t('learning.removeFailed')) }
-  }, [])
+  }, [t])
 
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>
     (unit?.vocabularies ?? []).map((v) => ({
@@ -225,7 +260,11 @@ export function LearningUnitPage() {
 
   const handleDialogClose = useCallback((open: boolean) => {
     setDialogOpen(open)
-  }, [])
+    if (!open) {
+      loadedTabs.current.delete(activeTab)
+      void loadCollectedForTab(activeTab)
+    }
+  }, [activeTab, loadCollectedForTab])
 
   const vocabPageItems = useMemo(
     () => paginateItems(unit?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
@@ -333,7 +372,7 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(vocab.id)}
                     onOpen={() => openDialog('vocab', vocabPageItems.startIndex + index)}
                     onCollect={() => handleCollectWord(vocab)}
-                    onRemove={() => handleRemoveExpression(vocab.word)}
+                    onRemove={() => handleRemoveExpression('word', vocab.word)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
                 ))}
@@ -361,7 +400,8 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(chunk.id)}
                     onOpen={() => openDialog('chunk', chunkPageItems.startIndex + index)}
                     onCollect={() => handleCollectChunk(chunk)}
-                    onRemove={() => handleRemoveExpression(chunk.text)}                  />
+                    onRemove={() => handleRemoveExpression('chunk', chunk.text)}
+                  />
                 ))}
                 <PrepPager
                   currentPage={prepPage.chunk}
@@ -385,9 +425,12 @@ export function LearningUnitPage() {
                     <PatternPrepCard
                       key={key}
                       pattern={pattern}
+                      collected={collectedTexts.has(pattern.pattern)}
                       expanded={expandedItemId === key}
                       onToggle={() => handleItemClick(key)}
                       onOpen={() => openDialog('pattern', absoluteIndex)}
+                      onCollect={() => handleCollectPattern(pattern)}
+                      onRemove={() => handleRemoveExpression('pattern', pattern.pattern)}
                     />
                   )
                 })}
@@ -677,16 +720,29 @@ function ChunkPrepCard({
 
 function PatternPrepCard({
   pattern,
+  collected,
   expanded,
   onToggle,
   onOpen,
+  onCollect,
+  onRemove,
 }: {
   pattern: SentencePattern
+  collected: boolean
   expanded: boolean
   onToggle: () => void
   onOpen: () => void
+  onCollect: () => void
+  onRemove: () => void
 }) {
   const { t } = useTranslation()
+  const [saving, setSaving] = useState(false)
+  const handleClick = () => {
+    setSaving(true)
+    const action = collected ? onRemove() : onCollect()
+    Promise.resolve(action).finally(() => setSaving(false))
+  }
+
   return (
     <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
       <CardContent className="p-0">
@@ -697,6 +753,7 @@ function PatternPrepCard({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{pattern.pattern}</p>
+              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
               <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pattern.difficulty}</Badge>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{pattern.meaning}</p>
@@ -717,9 +774,21 @@ function PatternPrepCard({
                 ))}
               </div>
             )}
-            <Button size="sm" variant="outline" className="h-8 w-full gap-1.5 text-xs" onClick={onOpen}>
-              <Search className="size-3.5" /> {t('learning.viewPattern')}
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
+                <Search className="size-3.5" /> {t('learning.viewPattern')}
+              </Button>
+              <Button
+                size="sm"
+                variant={collected ? 'secondary' : 'default'}
+                className="h-8 flex-1 gap-1.5 text-xs"
+                disabled={saving}
+                onClick={handleClick}
+              >
+                <BookmarkPlus className="size-3.5" />
+                {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

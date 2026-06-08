@@ -19,7 +19,7 @@ import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
-import { learningContentRepository, practiceRepository } from '@/lib/offline'
+import { learningContentRepository, practiceRepository, syncOutbox } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -365,11 +365,10 @@ export function PracticeSessionPage() {
 
   // 句型表达式始终可见（不在 tab 内），mount 时加载
   useEffect(() => {
-    expressionApi.list({ type: 'scene_phrase' }).catch(() => ([] as any)).then((res: any) => {
-      const items = Array.isArray(res) ? res : (res?.items ?? [])
+    learningContentRepository.listPatternEntries().then((items) => {
       setCollectedTexts((prev) => {
         const next = new Set(prev)
-        for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
+        for (const item of items) next.add(item.pattern)
         return next
       })
     })
@@ -382,20 +381,18 @@ export function PracticeSessionPage() {
     if (loadedPrepTabs.current.has(prepTab)) return
     loadedPrepTabs.current.add(prepTab)
     if (prepTab === 'vocab') {
-      expressionApi.list({ type: 'word' }).catch(() => ([] as any)).then((res: any) => {
-        const items = Array.isArray(res) ? res : (res?.items ?? [])
+      learningContentRepository.listWordEntries().then((items) => {
         setCollectedTexts((prev) => {
           const next = new Set(prev)
-          for (const item of items) { if (item.original) next.add(item.original) }
+          for (const item of items) next.add(item.word)
           return next
         })
       })
     } else if (prepTab === 'chunk') {
-      expressionApi.list({ type: 'chunk' }).catch(() => ([] as any)).then((res: any) => {
-        const items = Array.isArray(res) ? res : (res?.items ?? [])
+      learningContentRepository.listChunkEntries().then((items) => {
         setCollectedTexts((prev) => {
           const next = new Set(prev)
-          for (const item of items) { if (item.chunkText) next.add(item.chunkText) }
+          for (const item of items) next.add(item.text)
           return next
         })
       })
@@ -653,17 +650,23 @@ export function PracticeSessionPage() {
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(chunk.text); return s })
   }, [detail])
 
-  const handleRemoveExpression = useCallback(async (text: string) => {
+  const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     setSavingTexts((prev) => new Set([...prev, text]))
     try {
-      const list = await expressionApi.list()
-      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
-      const match = items.find(
-        (item: any) => item.chunkText === text || item.original === text,
-      )
-      if (!match?.id) { toast.error('未找到对应条目'); return }
-      await expressionApi.remove(match.id)
+      if (kind === 'word') await learningContentRepository.deleteWordEntry(text)
+      else if (kind === 'chunk') await learningContentRepository.deleteChunkEntry(text)
+      else await learningContentRepository.deletePatternEntry(text)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+      await syncOutbox.enqueue({
+        entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
+        entityId: text,
+        operation: 'delete',
+        payload: kind === 'word'
+          ? { word: text, deletedAt: new Date().toISOString() }
+          : kind === 'chunk'
+            ? { chunkText: text, deletedAt: new Date().toISOString() }
+            : { pattern: text, deletedAt: new Date().toISOString() },
+      })
       toast.success('已从学习库移除')
     } catch { toast.error('移除失败') }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
@@ -976,7 +979,7 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
                                     <Search className="size-3.5" /> 查看
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression(p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression('pattern', p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
                                     <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? '处理中...' : collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
                                   </Button>
                                 </div>
@@ -1047,7 +1050,7 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
                                     <Search className="size-3.5" /> 查看
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={collectedTexts.has(v.word) ? () => handleRemoveExpression(v.word) : () => handleCollectWord(v.word, v.meaning)}>
+                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={collectedTexts.has(v.word) ? () => handleRemoveExpression('word', v.word) : () => handleCollectWord(v.word, v.meaning)}>
                                     <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? '处理中...' : collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
                                   </Button>
                                 </div>
@@ -1074,7 +1077,7 @@ export function PracticeSessionPage() {
                   onExpand={setExpandedChunkId}
                   onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
                   onCollect={handleCollectChunk}
-                  onRemove={(chunk) => handleRemoveExpression(chunk.text)}
+                  onRemove={(chunk) => handleRemoveExpression('chunk', chunk.text)}
                 />
               </TabsContent>
             </Tabs>

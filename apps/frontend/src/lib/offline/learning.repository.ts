@@ -47,6 +47,9 @@ function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
 
 export const learningRepository = {
   async getMyUnits(): Promise<MyUnit[]> {
+    const cached = await localDb.list<MyUnit>('my_learning_units')
+    if (cached.length > 0) return cached
+
     try {
       const remote = await learningApi.getMyUnits()
       await localDb.putMany('my_learning_units', remote)
