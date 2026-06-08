@@ -76,6 +76,28 @@ export class ExpressionService {
     chunkText?: string;
     sceneName?: string;
   }) {
+    const uniqueText = data.type === 'word' ? data.original : data.chunkText;
+    if (uniqueText) {
+      const existing = await this.prisma.expressionItem.findFirst({
+        where: {
+          userId,
+          type: data.type,
+          ...(data.type === 'word' ? { original: uniqueText } : { chunkText: uniqueText }),
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        return this.prisma.expressionItem.update({
+          where: { id: existing.id },
+          data: {
+            ...data,
+            deletedAt: null,
+            masteryStatus: 'learning',
+          },
+        });
+      }
+    }
+
     return this.prisma.expressionItem.create({
       data: { userId, ...data, masteryStatus: 'learning' },
     });

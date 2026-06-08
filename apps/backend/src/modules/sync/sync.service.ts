@@ -84,15 +84,20 @@ export class SyncService {
       const word = payload?.word ?? entityId;
 
       if (operation === 'create') {
-        const created = await this.prisma.expressionItem.create({
-          data: {
-            userId,
-            type: 'word',
-            original: word,
-            chunkText: '',
-          },
+        const existing = await this.prisma.expressionItem.findFirst({
+          where: { userId, type: 'word', original: word },
           select: { id: true },
         });
+        const created = existing
+          ? await this.prisma.expressionItem.update({
+              where: { id: existing.id },
+              data: { deletedAt: null },
+              select: { id: true },
+            })
+          : await this.prisma.expressionItem.create({
+              data: { userId, type: 'word', original: word, chunkText: '' },
+              select: { id: true },
+            });
         return { handled: true, remoteId: created.id };
       }
       if (operation === 'delete') {
@@ -127,16 +132,30 @@ export class SyncService {
       const text = payload?.chunkText ?? payload?.original ?? entityId;
 
       if (operation === 'create') {
-        const created = await this.prisma.expressionItem.create({
-          data: {
-            userId,
-            type: 'chunk',
-            original: payload?.original ?? '',
-            chunkText: text,
-            sceneName: payload?.sceneName,
-          },
+        const existing = await this.prisma.expressionItem.findFirst({
+          where: { userId, type: 'chunk', chunkText: text },
           select: { id: true },
         });
+        const created = existing
+          ? await this.prisma.expressionItem.update({
+              where: { id: existing.id },
+              data: {
+                deletedAt: null,
+                original: payload?.original ?? '',
+                sceneName: payload?.sceneName,
+              },
+              select: { id: true },
+            })
+          : await this.prisma.expressionItem.create({
+              data: {
+                userId,
+                type: 'chunk',
+                original: payload?.original ?? '',
+                chunkText: text,
+                sceneName: payload?.sceneName,
+              },
+              select: { id: true },
+            });
         return { handled: true, remoteId: created.id };
       }
       if (operation === 'delete') {
@@ -171,17 +190,32 @@ export class SyncService {
       const pattern = payload?.pattern ?? entityId;
 
       if (operation === 'create') {
-        const created = await this.prisma.expressionItem.create({
-          data: {
-            userId,
-            type: 'scene_phrase',
-            original: payload?.meaning ?? '',
-            chunkText: pattern,
-            corrected: payload?.example ?? pattern,
-            sceneName: payload?.sceneName,
-          },
+        const existing = await this.prisma.expressionItem.findFirst({
+          where: { userId, type: 'scene_phrase', chunkText: pattern },
           select: { id: true },
         });
+        const created = existing
+          ? await this.prisma.expressionItem.update({
+              where: { id: existing.id },
+              data: {
+                deletedAt: null,
+                original: payload?.meaning ?? '',
+                corrected: payload?.example ?? pattern,
+                sceneName: payload?.sceneName,
+              },
+              select: { id: true },
+            })
+          : await this.prisma.expressionItem.create({
+              data: {
+                userId,
+                type: 'scene_phrase',
+                original: payload?.meaning ?? '',
+                chunkText: pattern,
+                corrected: payload?.example ?? pattern,
+                sceneName: payload?.sceneName,
+              },
+              select: { id: true },
+            });
         return { handled: true, remoteId: created.id };
       }
       if (operation === 'delete') {
