@@ -529,7 +529,7 @@ function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void })
 
   return (
     <div className="space-y-5">
-      <IosSection>
+      {/* <IosSection>
         <IosRow
           label={t('profile.autoSpeakLabel')}
           right={<Switch checked={autoPlay} onCheckedChange={setAutoPlay} />}
@@ -556,9 +556,9 @@ function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void })
           last
           right={<Switch checked={wifiOnlyMedia} onCheckedChange={setWifiOnlyMedia} />}
         />
-      </IosSection>
+      </IosSection> */}
 
-      <IosSection>
+      {/* <IosSection>
         <IosRow
           label={t('profile.dailyGoalLabel')}
           right={
@@ -588,7 +588,7 @@ function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void })
             </select>
           }
         />
-      </IosSection>
+      </IosSection> */}
 
       {/* 法律与隐私 — 移动端使用 Drawer 全屏查看 */}
       <IosSection header={t('profile.legalPrivacy')}>

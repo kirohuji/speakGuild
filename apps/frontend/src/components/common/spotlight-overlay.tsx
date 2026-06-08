@@ -2,6 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, ChevronLeft, X, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import type { OnboardingStep } from '@/stores/onboarding.store'
 
 // ---- 洞口外扩像素 ----
@@ -71,6 +79,7 @@ export function SpotlightOverlay({
   const [placement, setPlacement] = useState<'bottom' | 'top'>('bottom')
   const [tooltipStyle, setTooltipStyle] = useState<Record<string, string | number>>({})
   const rafRef = useRef<number>(0)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   // 步骤切换时重置 targetRect，避免旧步骤的高亮位置残留
   useEffect(() => {
@@ -252,7 +261,7 @@ export function SpotlightOverlay({
                 ))}
               </div>
               <button
-                onClick={onSkip}
+                onClick={() => setShowExitConfirm(true)}
                 className="ml-auto flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="size-3.5" />
@@ -274,6 +283,23 @@ export function SpotlightOverlay({
           </div>
         </motion.div>
       </AnimatePresence>
+
+      {/* 退出引导确认弹窗 */}
+      <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <DialogContent
+          className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
+          overlayClassName="!z-[10000]"
+        >
+          <DialogHeader>
+            <DialogTitle>退出新手引导？</DialogTitle>
+            <DialogDescription>你可以之后在设置中重新开启引导。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="!flex-row justify-center gap-2">
+            <Button variant="outline" onClick={() => setShowExitConfirm(false)}>继续引导</Button>
+            <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>退出</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -120,8 +120,9 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     for (const row of vocabRows) {
       const sceneId = sceneMap.get(row.scene_title)
       if (!sceneId) continue
-      const vocab = await prisma.vocabulary.create({
-        data: {
+      const vocab = await prisma.vocabulary.upsert({
+        where: { word: row.word },
+        create: {
           word: row.word,
           meaning: row.meaning,
           partOfSpeech: row.part_of_speech || null,
@@ -133,6 +134,17 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           synonyms: [],
           examples: parseJson(row.examples_json),
           description: row.description || null,
+          difficulty: row.difficulty || 'L1',
+          sortOrder: parseInt(row.sort_order) || 0,
+        },
+        update: {
+          // 如果单词已存在，只更新可能为空或更完整的字段
+          meaning: row.meaning,
+          partOfSpeech: row.part_of_speech || undefined,
+          phoneticUs: row.phonetic_us || undefined,
+          phoneticUk: row.phonetic_uk || undefined,
+          examples: parseJson(row.examples_json) ?? undefined,
+          description: row.description || undefined,
           difficulty: row.difficulty || 'L1',
           sortOrder: parseInt(row.sort_order) || 0,
         },
