@@ -12,7 +12,7 @@ import {
   GraduationCap, CheckCircle2, Lightbulb, Crown, Sun, Moon, Monitor,
   Globe, Database, Zap, TrendingUp, Target, Flame, Camera,
   IdCard, PencilLine, LogOut, ShieldAlert, Phone, Mail,
-  MessageSquare, Gift, KeyRound,
+  MessageSquare, Gift, KeyRound, HardDrive, RefreshCw,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,9 +66,10 @@ import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/ap
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { offlineStorageService, type OfflineStorageStats } from '@/lib/offline'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
-type MobileView = Tab | 'home' | 'appearance' | 'member'
+type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
 
 const tabs: { key: Tab; icon: React.ElementType }[] = [
   { key: 'overview', icon: LayoutDashboard },
@@ -86,6 +87,7 @@ const mobileTitles: Record<string, string> = {
   settings: 'profile.settings',
   appearance: 'profile.theme',
   member: 'member.title',
+  storage: '存储管理',
 }
 
 interface ProfilePageProps {
@@ -133,9 +135,10 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
               {mobileView === 'records' && <RecordsTab />}
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
-              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} />}
+              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} onNavigate={setMobileView} />}
               {mobileView === 'appearance' && <AppearanceContent />}
               {mobileView === 'member' && <MemberPage compact />}
+              {mobileView === 'storage' && <MobileStorageView />}
             </MobileProfileDetail>
           )}
         </div>
@@ -295,6 +298,73 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
 }
 
 // ─── 手机端：个人中心首页 ──────────────────────────────────────────────────
+function formatBytes(bytes?: number) {
+  const value = Number(bytes ?? 0)
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
+  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`
+  return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`
+}
+
+function MobileStorageView() {
+  const [stats, setStats] = useState<OfflineStorageStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [clearing, setClearing] = useState(false)
+
+  const refresh = useCallback(() => {
+    setLoading(true)
+    offlineStorageService.getStats()
+      .then(setStats)
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  const handleClear = useCallback(async () => {
+    setClearing(true)
+    try {
+      await offlineStorageService.clearCache()
+      toast.success('缓存已清理')
+      await offlineStorageService.getStats().then(setStats)
+    } catch (error: any) {
+      toast.error(error?.message || '清理失败')
+    } finally {
+      setClearing(false)
+    }
+  }, [])
+
+  return (
+    <div className="space-y-5">
+      <IosSection header="本地学习数据">
+        <IosRow icon={HardDrive} iconBg="bg-blue-500" label="已下载学习包" value={loading ? '...' : String(stats?.downloadedPackCount ?? 0)} />
+        <IosRow icon={Database} iconBg="bg-violet-500" label="本地资源文件" subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} 个文件`} value={loading ? '...' : formatBytes(stats?.localAssetBytes)} />
+        <IosRow label="离线词典缓存" value={loading ? '...' : String(stats?.dictionaryEntryCount ?? 0)} />
+        <IosRow label="生词本" value={loading ? '...' : String(stats?.wordbookCount ?? 0)} />
+        <IosRow label="待同步操作" value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)} last />
+      </IosSection>
+
+      <IosSection header="浏览器/应用存储">
+        <IosRow label="已用空间估算" value={loading ? '...' : formatBytes(stats?.storageEstimate?.usage)} />
+        <IosRow label="可用配额估算" value={loading ? '...' : formatBytes(stats?.storageEstimate?.quota)} last />
+      </IosSection>
+
+      <IosSection>
+        <IosRow icon={RefreshCw} iconBg="bg-slate-500" label="刷新统计" onTap={refresh} />
+        <IosRow
+          icon={Trash2}
+          iconBg="bg-red-500"
+          label={clearing ? '清理中...' : '清除离线缓存'}
+          subtitle="保留生词本、练习进度和待同步队列"
+          last
+          onTap={clearing ? undefined : handleClear}
+        />
+      </IosSection>
+    </div>
+  )
+}
+
 function MobileProfileHome({
   onNavigate,
   onFeedbackOpen,
@@ -435,7 +505,7 @@ function MobileProfileHome({
 }
 
 // ─── 手机端：设置页 ────────────────────────────────────────────────────────
-function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void }) {
+function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { signOut } = useAuth()
@@ -600,7 +670,7 @@ function MobileSettingsView({ onFeedbackOpen }: { onFeedbackOpen?: () => void })
       <IosSection>
         <IosRow
           label={t('profile.clearCache')}
-          onTap={() => {}}
+          onTap={() => onNavigate?.('storage')}
         />
         <IosRow
           label={t('profile.appPermissions')}

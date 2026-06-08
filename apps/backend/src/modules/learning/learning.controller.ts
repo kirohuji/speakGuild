@@ -42,6 +42,13 @@ export class LearningController {
     return this.learningService.getLearningUnitDetail(session.user.id, id);
   }
 
+  /** 获取学习包离线 manifest：内容、Ink 与资源引用 */
+  @Get('units/:id/offline-manifest')
+  async getOfflineManifest(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.learningService.getOfflineManifest(session.user.id, id);
+  }
+
   /** 获取今日任务 */
   @Get('today')
   async getTodayTasks(@Req() req: Request) {

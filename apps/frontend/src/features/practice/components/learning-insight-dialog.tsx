@@ -28,6 +28,7 @@ import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
+import { learningContentRepository, syncOutbox } from '@/lib/offline'
 import { useWordsStore } from '@/stores/assets.store'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { expressionApi, type TopicDetail } from '../api/english-practice-api'
@@ -111,8 +112,15 @@ async function lookupManagedDictionary(word: string): Promise<DictionaryEntry | 
   const key = word.toLowerCase().trim()
   if (!key) return null
   if (dictionaryCache.has(key)) return dictionaryCache.get(key)!
+  const localEntry = await learningContentRepository.getDictionaryEntry(key)
+  const localData = localEntry?.data ?? localEntry
+  if (localData?.word || localData?.senseClusters || localData?.senses) {
+    dictionaryCache.set(key, localData as DictionaryEntry)
+    return localData as DictionaryEntry
+  }
   try {
     const entry = await get<DictionaryEntry>(`/dictionary/${encodeURIComponent(key)}`)
+    await learningContentRepository.saveDictionaryEntry(key, entry)
     dictionaryCache.set(key, entry)
     return entry
   } catch {
@@ -1098,6 +1106,17 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const savePattern = async () => {
     if (saved) return
     setSaving(true)
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: 'pattern_entry',
+      entityId: item.pattern,
+      operation: 'create',
+      payload: {
+        pattern: item.pattern,
+        meaning: item.meaning,
+        example: item.example,
+        sceneName: item.sceneName,
+      },
+    })
     try {
       await expressionApi.create({
         type: 'scene_phrase',
@@ -1106,10 +1125,14 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         original: item.meaning,
         sceneName: item.sceneName,
       })
+      await syncOutbox.markSynced(outboxItem.id)
       setSaved(true)
       toast.success(t('insight.savedToLibrary'))
     } catch {
-      toast.error(t('insight.saveFailed'))
+      await syncOutbox.markFailed(outboxItem.id, new Error('API unavailable'))
+      // 离线时也标记为已保存（flush 时会同步）
+      setSaved(true)
+      toast.success(t('insight.savedToLibrary'))
     } finally {
       setSaving(false)
     }

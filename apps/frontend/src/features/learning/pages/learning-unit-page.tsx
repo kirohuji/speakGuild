@@ -16,6 +16,7 @@ import { cn } from '@/lib/cn'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
 import { expressionApi } from '@/features/practice/api/english-practice-api'
+import { syncOutbox } from '@/lib/offline'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -32,6 +33,7 @@ export function LearningUnitPage() {
   const unit = useLearningStore((s) => s.unitDetail)
   const loading = useLearningStore((s) => s.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
+  const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
 
   const [activeTab, setActiveTab] = useState('vocab')
   const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
@@ -51,7 +53,8 @@ export function LearningUnitPage() {
   useEffect(() => {
     if (!unitId) return
     fetchUnitDetail(unitId)
-  }, [unitId, fetchUnitDetail])
+    fetchDownloadedPacks()
+  }, [unitId, fetchUnitDetail, fetchDownloadedPacks])
 
   // 切 tab 时按需加载已收集状态
   const loadCollectedForTab = useCallback((tab: string) => {
@@ -91,19 +94,43 @@ export function LearningUnitPage() {
   useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
 
   const handleCollectChunk = useCallback(async (text: string, meaning: string) => {
+    // 先写 outbox 离线缓存
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: 'chunk_entry',
+      entityId: text,
+      operation: 'create',
+      payload: { chunkText: text, original: meaning, sceneName: unit?.title },
+    })
     try {
       await expressionApi.create({ type: 'chunk', chunkText: text, original: meaning, sceneName: unit?.title })
+      await syncOutbox.markSynced(outboxItem.id)
       setCollectedTexts((prev) => new Set([...prev, text]))
       toast.success(t('learning.addedToLibrary'))
-    } catch { toast.error(t('learning.addFailed')) }
+    } catch {
+      await syncOutbox.markFailed(outboxItem.id, new Error('API unavailable'))
+      toast.error(t('learning.addFailed'))
+    }
   }, [unit?.title])
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
+    // 先写 outbox 离线缓存
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: 'word_entry',
+      entityId: word,
+      operation: 'create',
+      payload: { word, addedAt: new Date().toISOString() },
+    })
     try {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
+      await syncOutbox.markSynced(outboxItem.id)
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success(t('learning.addedToLibrary'))
-    } catch { toast.error(t('learning.addFailed')) }
+    } catch {
+      await syncOutbox.markFailed(outboxItem.id, new Error('API unavailable'))
+      // 离线时仍标记为已收集（下次 flush 会同步到服务端）
+      setCollectedTexts((prev) => new Set([...prev, word]))
+      toast.success(t('learning.addedToLibrary'))
+    }
   }, [unit?.title])
 
   const handleRemoveExpression = useCallback(async (text: string) => {

@@ -7,6 +7,7 @@ import {
   type UnitDetail,
 } from '@/features/learning/api/learning-api'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
+import { learningPackService, learningRepository, type InstalledLearningPack } from '@/lib/offline'
 
 interface LearningStore {
   // 我的学习
@@ -30,6 +31,8 @@ interface LearningStore {
   // 单元详情
   unitDetail: UnitDetail | null
   unitDetailLoading: boolean
+  downloadedPacks: InstalledLearningPack[]
+  packInstallingIds: string[]
 
   // Actions
   fetchMyLearning: () => Promise<void>
@@ -42,6 +45,9 @@ interface LearningStore {
   fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<void>
   enrollUnit: (unitId: string) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
+  fetchDownloadedPacks: () => Promise<void>
+  downloadUnitPack: (unitId: string) => Promise<void>
+  uninstallUnitPack: (unitId: string) => Promise<void>
 }
 
 export const useLearningStore = create<LearningStore>()((set, getState) => ({
@@ -61,12 +67,14 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
   unitDetail: null,
   unitDetailLoading: false,
+  downloadedPacks: [],
+  packInstallingIds: [],
 
   /** 首次加载：我的学习 + 商店 */
   async fetchMyLearning() {
     set({ myLoading: true })
     try {
-      const units = await learningApi.getMyUnits().catch(() => [] as MyUnit[])
+      const units = await learningRepository.getMyUnits().catch(() => [] as MyUnit[])
       set({ myUnits: units, myLoading: false })
     } catch {
       set({ myLoading: false })
@@ -75,7 +83,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
   async refreshMyUnits() {
     try {
-      const units = await learningApi.getMyUnits()
+      const units = await learningRepository.refreshMyUnits()
       set({ myUnits: units })
     } catch {
       // ignore
@@ -152,7 +160,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   async fetchUnitDetail(unitId) {
     set({ unitDetailLoading: true })
     try {
-      const data = await learningApi.getUnitDetail(unitId)
+      const data = await learningRepository.getUnitDetail(unitId)
       set({ unitDetail: data, unitDetailLoading: false })
     } catch {
       set({ unitDetail: null, unitDetailLoading: false })
@@ -173,16 +181,58 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async enrollUnit(unitId) {
-    await learningApi.startUnit(unitId)
-    await getState().refreshMyUnits()
+    const state = getState()
+    const sourceUnit = state.unitDetail?.id === unitId
+      ? state.unitDetail
+      : state.shopUnits.find((unit) => unit.id === unitId) ?? null
+    if (!state.packInstallingIds.includes(unitId)) {
+      set({ packInstallingIds: [...state.packInstallingIds, unitId] })
+    }
+    try {
+      await learningRepository.enrollUnit(unitId, sourceUnit)
+      await learningPackService.installUnit(unitId)
+      const downloadedPacks = await learningPackService.listInstalled()
+      set({ downloadedPacks })
+      await state.refreshMyUnits()
+    } finally {
+      set((current) => ({
+        packInstallingIds: current.packInstallingIds.filter((id) => id !== unitId),
+      }))
+    }
   },
 
   async quitUnit(unitId) {
     try {
-      await learningApi.quitUnit(unitId)
+      await learningRepository.quitUnit(unitId)
       await getState().refreshMyUnits()
     } catch {
       // ignore
     }
+  },
+
+  async fetchDownloadedPacks() {
+    const downloadedPacks = await learningPackService.listInstalled()
+    set({ downloadedPacks })
+  },
+
+  async downloadUnitPack(unitId) {
+    const { packInstallingIds } = getState()
+    if (packInstallingIds.includes(unitId)) return
+    set({ packInstallingIds: [...packInstallingIds, unitId] })
+    try {
+      await learningPackService.installUnit(unitId)
+      const downloadedPacks = await learningPackService.listInstalled()
+      set({ downloadedPacks })
+    } finally {
+      set((state) => ({
+        packInstallingIds: state.packInstallingIds.filter((id) => id !== unitId),
+      }))
+    }
+  },
+
+  async uninstallUnitPack(unitId) {
+    await learningPackService.uninstall(unitId)
+    const downloadedPacks = await learningPackService.listInstalled()
+    set({ downloadedPacks })
   },
 }))

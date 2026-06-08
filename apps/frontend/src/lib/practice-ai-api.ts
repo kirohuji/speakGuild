@@ -1,4 +1,5 @@
 import instance, { post } from './request'
+import { localDb } from '@/lib/offline'
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1/manyu'
 
@@ -44,10 +45,28 @@ export async function enrichWord(
 ): Promise<WordEnrichmentResult> {
   const key = word.toLowerCase()
   if (_wordCache.has(key)) return _wordCache.get(key)!
-  const data = await post<WordEnrichmentResult>('/practice-ai/word-enrichment', {
-    word: key,
-    englishDefinitions,
-  })
-  _wordCache.set(key, data)
-  return data
+  const cached = await localDb.get<{ id: string; data: WordEnrichmentResult }>('dictionary_entries', key)
+  if (cached?.data) {
+    _wordCache.set(key, cached.data)
+    return cached.data
+  }
+
+  try {
+    const data = await post<WordEnrichmentResult>('/practice-ai/word-enrichment', {
+      word: key,
+      englishDefinitions,
+    })
+    _wordCache.set(key, data)
+    await localDb.put('dictionary_entries', {
+      id: key,
+      word: key,
+      type: 'word-enrichment',
+      data,
+      updatedAt: new Date().toISOString(),
+    })
+    return data
+  } catch (error) {
+    if (cached?.data) return cached.data
+    throw error
+  }
 }

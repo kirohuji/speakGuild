@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { authClient, clearBearerToken } from '@/features/auth/client'
 import { useConfigStore } from '@/stores/config.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { offlineSyncService } from '@/lib/offline'
 
 interface SessionUser {
   id: string
@@ -58,6 +59,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const flushedUserIdRef = useRef<string | null>(null)
 
   const fetchSession = async (): Promise<Session | null> => {
     try {
@@ -100,8 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session?.user?.id) {
       notifications.initSocket(session.user.id)
       void notifications.fetchUnreadCount()
+      if (flushedUserIdRef.current !== session.user.id) {
+        flushedUserIdRef.current = session.user.id
+        void offlineSyncService.flush().catch((error) => {
+          console.warn('[offline-sync] initial flush failed:', error)
+        })
+      }
     } else {
       notifications.disconnect()
+      flushedUserIdRef.current = null
     }
 
     return () => {

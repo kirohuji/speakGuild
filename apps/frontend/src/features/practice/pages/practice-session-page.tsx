@@ -19,6 +19,7 @@ import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
+import { practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -312,7 +313,7 @@ export function PracticeSessionPage() {
     setPhase('practice')
     if (!topicId) return
     try {
-      const session = await practiceApi.createSession(topicId)
+      const session = await practiceRepository.createSession(topicId)
       setPracticeSessionId(session.id)
     } catch {
       // Keep local practice usable even if session persistence is temporarily unavailable.
@@ -355,7 +356,7 @@ export function PracticeSessionPage() {
     if (compiledInk) {
       setInkJson(compiledInk)
     } else if (detail.topic.inkScriptId) {
-      practiceApi.getTopicInk(topicId!).then((ink) => {
+      practiceRepository.getTopicInk(topicId!).then((ink) => {
         const compiled = compilePracticeInk(ink?.inkSource, ink?.inkJson)
         if (compiled) setInkJson(compiled)
       }).catch(() => {})
@@ -720,7 +721,7 @@ export function PracticeSessionPage() {
       }
 
       if (practiceSessionId) {
-        practiceApi.submitTurn(practiceSessionId, {
+        practiceRepository.submitTurn(practiceSessionId, {
           round,
           npcText,
           userText: userMsg,
@@ -765,7 +766,7 @@ export function PracticeSessionPage() {
     const fallbackNpcText = npcResponses[fallbackRound % npcResponses.length]
 
     if (practiceSessionId) {
-      practiceApi.submitTurn(practiceSessionId, {
+      practiceRepository.submitTurn(practiceSessionId, {
         round,
         npcText,
         userText: userMsg,
@@ -824,7 +825,7 @@ export function PracticeSessionPage() {
         setAnalysisLoading(false)
         return
       }
-      const res = await practiceApi.completeSession(practiceSessionId).then(() => practiceAiApi.analyzeSession(practiceSessionId))
+      const res = await practiceRepository.completeSession(practiceSessionId).then(() => practiceRepository.analyzeSession(practiceSessionId))
       setAnalysisResult(res.analysis ?? res)
     } catch (e: any) {
       setAnalysisResult({ summary: `分析失败: ${e.message}` })

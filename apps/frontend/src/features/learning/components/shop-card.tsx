@@ -138,7 +138,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               ) : (
                 <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">
                   {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                  {unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
+                  {acquiring ? '下载中' : unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
                 </Button>
               )}
             </div>

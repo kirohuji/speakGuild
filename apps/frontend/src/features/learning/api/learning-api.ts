@@ -229,6 +229,25 @@ export interface TagInfo {
   icon: string | null
 }
 
+export interface OfflineManifestResult {
+  manifest: {
+    packId: string
+    version: number
+    title: string
+    updatedAt: string
+    units: string[]
+    topics: string[]
+    vocabularies: string[]
+    chunks: string[]
+    sentencePatterns: string[]
+    scriptEpisodes: string[]
+    inkScripts: string[]
+    assets: Array<{ assetId?: string; url: string; sha256?: string | null; mimeType?: string | null; size?: number | null; role?: string }>
+  }
+  unitDetail: UnitDetail
+  topicDetails: any[]
+}
+
 // ---- API 方法 ----
 
 export const learningApi = {
@@ -244,6 +263,9 @@ export const learningApi = {
 
   /** 获取学习单元详情 */
   getUnitDetail: (unitId: string) => api.get<any, UnitDetail>(`/learning/units/${unitId}`),
+
+  getOfflineManifest: (unitId: string) =>
+    api.get<any, OfflineManifestResult>(`/learning/units/${unitId}/offline-manifest`),
 
   /** 获取今日任务 */
   getTodayTasks: () => api.get<any, TodayPlan>('/learning/today'),

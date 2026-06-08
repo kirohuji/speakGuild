@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { localDb, syncOutbox } from '@/lib/offline'
 
 // ---------- 带日期的生词条目 ----------
 export interface WordEntry {
@@ -24,7 +25,8 @@ export const useWordsStore = create<WordsStore>()(
         return get().entries.map((e) => e.word)
       },
 
-      addWord: (word) =>
+      addWord: (word) => {
+        const existed = get().entries.some((e) => e.word === word)
         set((state) => {
           if (state.entries.some((e) => e.word === word)) return state
           return {
@@ -33,12 +35,42 @@ export const useWordsStore = create<WordsStore>()(
               { word, addedAt: new Date().toISOString() },
             ],
           }
-        }),
+        })
+        if (!existed) {
+          void localDb.put('wordbook', {
+            id: word.toLowerCase(),
+            word,
+            addedAt: new Date().toISOString(),
+            deletedAt: null,
+          })
+          void syncOutbox.enqueue({
+            entityType: 'word_entry',
+            entityId: word.toLowerCase(),
+            operation: 'create',
+            payload: { word, addedAt: new Date().toISOString() },
+          })
+        }
+      },
 
-      removeWord: (word) =>
+      removeWord: (word) => {
+        const existed = get().entries.some((e) => e.word === word)
         set((state) => ({
           entries: state.entries.filter((e) => e.word !== word),
-        })),
+        }))
+        if (existed) {
+          void localDb.put('wordbook', {
+            id: word.toLowerCase(),
+            word,
+            deletedAt: new Date().toISOString(),
+          })
+          void syncOutbox.enqueue({
+            entityType: 'word_entry',
+            entityId: word.toLowerCase(),
+            operation: 'delete',
+            payload: { word, deletedAt: new Date().toISOString() },
+          })
+        }
+      },
 
       hasWord: (word) => get().entries.some((e) => e.word === word),
     }),

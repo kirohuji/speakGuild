@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { practiceApi, type TopicDetail } from '@/features/practice/api/english-practice-api'
+import type { TopicDetail } from '@/features/practice/api/english-practice-api'
+import { practiceRepository } from '@/lib/offline'
 
 interface PracticeStore {
   topicDetail: TopicDetail | null
@@ -15,7 +16,7 @@ export const usePracticeStore = create<PracticeStore>()((set) => ({
   async fetchTopicDetail(topicId) {
     set({ topicDetailLoading: true })
     try {
-      const data = await practiceApi.getTopicDetail(topicId)
+      const data = await practiceRepository.getTopicDetail(topicId)
       set({ topicDetail: data, topicDetailLoading: false })
     } catch {
       set({ topicDetail: null, topicDetailLoading: false })

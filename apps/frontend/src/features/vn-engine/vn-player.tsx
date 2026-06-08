@@ -15,6 +15,7 @@ import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
+import { assetCacheService } from '@/lib/offline'
 import { VnInputPanel } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
 import { TappableText } from './dialogue-list-view'
@@ -92,6 +93,32 @@ const DEFAULT_SETTINGS: VnPlayerSettings = {
 }
 
 const SETTINGS_STORAGE_KEY = 'vn-player-settings'
+
+function canCacheAssetUrl(url?: string | null) {
+  return !!url && !url.startsWith('blob:') && !url.startsWith('data:')
+}
+
+function useCachedAssetUrl(url?: string, role?: string) {
+  const [cachedUrl, setCachedUrl] = useState(url)
+
+  useEffect(() => {
+    let cancelled = false
+    setCachedUrl(url)
+    if (!canCacheAssetUrl(url)) return
+
+    assetCacheService.resolve({ url, role }).then((resolved) => {
+      if (!cancelled) setCachedUrl(resolved)
+    }).catch(() => {
+      if (!cancelled) setCachedUrl(url)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [role, url])
+
+  return cachedUrl
+}
 
 function loadVnPlayerSettings(): VnPlayerSettings {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS
@@ -474,6 +501,9 @@ export function VnPlayer({
     ? fullTranslation.slice(0, Math.ceil((displayedText.length / fullText.length) * fullTranslation.length))
     : fullTranslation
   const audioUrl = displayLine?.audioUrl
+  const cachedBackgroundUrl = useCachedAssetUrl(backgroundUrl, 'background')
+  const cachedSpriteUrl = useCachedAssetUrl(currentSpriteUrl, 'sprite')
+  const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice')
 
   useEffect(() => {
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
@@ -513,8 +543,8 @@ export function VnPlayer({
 
   useEffect(() => {
     // Auto-play any current dialogue audio, including user recordings.
-    if (!audioUrl) return
-    const audio = new Audio(audioUrl)
+    if (!cachedAudioUrl) return
+    const audio = new Audio(cachedAudioUrl)
     const promise = audio.play()
     if (promise) {
       promise.catch((err) => console.warn('[VnPlayer] Audio play failed:', err.message))
@@ -522,7 +552,7 @@ export function VnPlayer({
     return () => {
       audio.pause()
     }
-  }, [audioUrl])
+  }, [cachedAudioUrl])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)
@@ -571,7 +601,7 @@ export function VnPlayer({
     return (
       <>
         <DialogueListView
-          backgroundUrl={backgroundUrl}
+          backgroundUrl={cachedBackgroundUrl}
           backgroundFit={backgroundFit}
           currentLine={currentLine}
           history={history}
@@ -663,7 +693,7 @@ export function VnPlayer({
           }
         }}
       >
-        <PixiVnStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={currentSpriteUrl} spritePosition={spritePosition} />
+        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} />
         {onReset && (
           <div className="absolute right-3 top-3 z-30 flex gap-2">
             <span
@@ -748,11 +778,11 @@ export function VnPlayer({
             </div>
           )}
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full border border-primary/20 bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
-            {displayLine?.isUser && displayLine.audioUrl && (
+            {displayLine?.isUser && cachedAudioUrl && (
               <VnIconButton
                 label="回放录音"
                 onClick={() => {
-                  const audio = new Audio(displayLine.audioUrl!)
+                  const audio = new Audio(cachedAudioUrl)
                   audio.play().catch(() => {})
                 }}
               >

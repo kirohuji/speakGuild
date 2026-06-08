@@ -5,6 +5,12 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 export class LearningService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private pushAsset(assets: any[], url?: string | null, role?: string) {
+    if (!url || url.startsWith('blob:') || url.startsWith('data:')) return;
+    if (assets.some((asset) => asset.url === url)) return;
+    assets.push({ url, role });
+  }
+
   private async getPassedPracticeTopicIdsByScene(userId: string) {
     const sessions = await this.prisma.practiceSession.findMany({
       where: { userId, status: 'analyzed' },
@@ -473,6 +479,154 @@ export class LearningService {
       chunkCount: chunks.length,
       topicCount: scene.trainingTopics.length,
       scriptCount: scene.scriptEpisodes.length,
+    };
+  }
+
+  async getOfflineManifest(userId: string, unitId: string) {
+    const unitDetail = await this.getLearningUnitDetail(userId, unitId);
+    if (!unitDetail) return null;
+
+    const topics = await this.prisma.trainingTopic.findMany({
+      where: { sceneId: unitId },
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        inkScript: {
+          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, version: true, updatedAt: true },
+        },
+        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+        topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
+        activeChunks: {
+          include: {
+            chunk: { include: { examples: { orderBy: { sortOrder: 'asc' } } } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+
+    const gameLocation = await this.prisma.gameLocation.findFirst({
+      where: { sceneId: unitId },
+      select: {
+        backgroundUrl: true,
+        bgmUrl: true,
+        ambientUrl: true,
+        npcs: {
+          include: {
+            character: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+                avatarUrl: true,
+                spriteBaseUrl: true,
+                expressions: true,
+                defaultPosition: true,
+              },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+
+    const assets: any[] = [];
+    this.pushAsset(assets, gameLocation?.backgroundUrl, 'background');
+    this.pushAsset(assets, gameLocation?.bgmUrl, 'bgm');
+    this.pushAsset(assets, gameLocation?.ambientUrl, 'sfx');
+
+    for (const npc of gameLocation?.npcs ?? []) {
+      const character = npc.character;
+      this.pushAsset(assets, character.avatarUrl, 'thumbnail');
+      this.pushAsset(assets, character.spriteBaseUrl, 'sprite');
+      const expressions = character.expressions && typeof character.expressions === 'object'
+        ? Object.values(character.expressions as Record<string, unknown>)
+        : [];
+      for (const expression of expressions) {
+        if (typeof expression === 'string') this.pushAsset(assets, expression, 'sprite');
+      }
+    }
+
+    for (const vocab of unitDetail.vocabularies ?? []) {
+      this.pushAsset(assets, vocab.audioUsUrl, 'voice');
+      this.pushAsset(assets, vocab.audioUkUrl, 'voice');
+    }
+
+    const topicDetails = topics.map((topic) => ({
+      topic: {
+        id: topic.id,
+        title: topic.title,
+        description: topic.description,
+        knowledgePoints: topic.knowledgePoints,
+        teachingMarkdown: topic.teachingMarkdown,
+        promptEn: topic.promptEn,
+        promptZh: topic.promptZh,
+        suggestedDurationSec: topic.suggestedDurationSec,
+        difficulty: topic.difficulty,
+        sentencePatterns: topic.topicPatterns.map((tp) => tp.pattern),
+        inkScriptId: topic.inkScriptId,
+      },
+      inkScript: topic.inkScript
+        ? {
+            id: topic.inkScript.id,
+            key: topic.inkScript.key,
+            title: topic.inkScript.title,
+            inkJson: topic.inkScript.inkJson,
+            inkSource: topic.inkScript.inkSource,
+            version: topic.inkScript.version,
+          }
+        : null,
+      scene: {
+        id: unitDetail.id,
+        title: unitDetail.title,
+        location: unitDetail.location,
+        category: unitDetail.category,
+        backgroundUrl: gameLocation?.backgroundUrl ?? null,
+        characters: (gameLocation?.npcs ?? []).map((npc) => ({
+          id: npc.character.id,
+          name: npc.character.name,
+          displayName: npc.character.displayName,
+          avatarUrl: npc.character.avatarUrl,
+          spriteBaseUrl: npc.character.spriteBaseUrl,
+          expressions: npc.character.expressions,
+          defaultPosition: npc.character.defaultPosition ?? 'center',
+        })),
+      },
+      vocabularies: topic.topicVocabs.map((tv) => tv.vocab),
+      activeChunks: topic.activeChunks.map((tc) => ({
+        id: tc.chunk.id,
+        text: tc.chunk.text,
+        meaning: tc.chunk.meaning,
+        description: tc.chunk.description,
+        examples: tc.chunk.examples,
+        masteryStatus: 'not_learned',
+      })),
+    }));
+
+    const versions = [
+      ...topics.map((topic) => topic.inkScript?.version ?? 1),
+      unitDetail.vocabularies?.length ?? 0,
+      unitDetail.chunks?.length ?? 0,
+      unitDetail.sentencePatterns?.length ?? 0,
+    ];
+    const version = versions.reduce((sum, value) => sum + Number(value || 0), 1);
+
+    return {
+      manifest: {
+        packId: unitDetail.id,
+        version,
+        title: unitDetail.title,
+        updatedAt: new Date().toISOString(),
+        units: [unitDetail.id],
+        topics: topics.map((topic) => topic.id),
+        vocabularies: unitDetail.vocabularies.map((item) => item.id),
+        chunks: unitDetail.chunks.map((item) => item.id),
+        sentencePatterns: unitDetail.sentencePatterns.map((item) => item.pattern),
+        scriptEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
+        inkScripts: topics.map((topic) => topic.inkScript?.id).filter(Boolean),
+        assets,
+      },
+      unitDetail,
+      topicDetails,
     };
   }
 
