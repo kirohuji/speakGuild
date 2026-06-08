@@ -1,11 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { FileAssetGroup, TtsProvider } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TtsProviderFactory } from './tts-provider.factory';
+import { SttProviderFactory } from './stt/stt-provider.factory';
 import { TTS_PARAMS_SCHEMA, sanitizeTtsParams } from './tts-params.schema';
 import { SynthesizeAssetDto, SynthesizeTextDto } from './dto/synthesize.dto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
@@ -17,6 +17,7 @@ export class TtsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly factory: TtsProviderFactory,
+    private readonly sttFactory: SttProviderFactory,
     private readonly fileAssetsService: FileAssetsService,
   ) {}
 
@@ -24,7 +25,7 @@ export class TtsService {
     return TTS_PARAMS_SCHEMA;
   }
 
-  /** 用户录音 → Whisper 转写，返回文本 + 词时间戳 + 音频 base64 */
+  /** 用户录音 → STT 转写，返回文本 + 词时间戳 + 音频 base64 */
   async transcribeRecording(audioBuffer: Buffer, originalname: string): Promise<{
     audioBase64: string;
     mimeType: string;
@@ -39,74 +40,17 @@ export class TtsService {
     const mimeType = mimeMap[ext] ?? 'audio/webm';
     const audioBase64 = audioBuffer.toString('base64');
 
-    const whisperUrl = process.env.WHISPER_INFERENCE_URL?.trim();
-    if (!whisperUrl) {
-      return { audioBase64, mimeType, text: null, wordTimestamps: null };
-    }
+    // 通过工厂获取 STT 供应商（由 STT_PROVIDER 环境变量控制，默认 whisper）
+    const sttName = process.env.STT_PROVIDER?.trim() || 'whisper';
+    const sttProvider = this.sttFactory.getProvider(sttName);
 
-    // 保存临时文件供 Whisper 读取
-    const tempDir = path.join(process.cwd(), 'uploads', 'tmp', 'recordings');
-    await fs.mkdir(tempDir, { recursive: true });
-    const tempFile = path.join(tempDir, `${randomUUID()}.${ext}`);
-    await fs.writeFile(tempFile, audioBuffer);
+    const result = await sttProvider.transcribe({
+      audioBuffer,
+      mimeType,
+      fileName: originalname,
+    });
 
-    try {
-      const result = await this.callWhisper(whisperUrl, tempFile, originalname);
-      return { audioBase64, mimeType, text: result.text, wordTimestamps: result.wordTimestamps };
-    } finally {
-      await fs.unlink(tempFile).catch(() => undefined);
-    }
-  }
-
-  private async callWhisper(
-    url: string,
-    audioPath: string,
-    fileName: string,
-  ): Promise<{ text: string | null; wordTimestamps: Array<{ text: string; start_time: number; end_time?: number }> | null }> {
-    const NS = 1_000_000_000;
-    try {
-      const buf = await fs.readFile(audioPath);
-      const form = new FormData();
-      form.append('file', new Blob([new Uint8Array(buf)]), fileName);
-      form.append('response_format', 'verbose_json');
-      form.append('temperature', '0.2');
-      const language = process.env.WHISPER_LANGUAGE?.trim();
-      if (language) form.append('language', language);
-
-      const { default: axios } = await import('axios');
-      const { data } = await axios.post<any>(url, form, {
-        timeout: Number(process.env.WHISPER_TIMEOUT_MS ?? 300_000),
-        validateStatus: (s) => s >= 200 && s < 300,
-      });
-
-      if (data?.error) return { text: null, wordTimestamps: null };
-
-      // 展平段落 → 词时间戳
-      const wordTimestamps: Array<{ text: string; start_time: number; end_time?: number }> = [];
-      const segments: any[] = Array.isArray(data?.segments) ? data.segments : [];
-      let fullText = '';
-      for (const seg of segments) {
-        if (seg.text) fullText += seg.text;
-        for (const w of (seg.words ?? [])) {
-          const t = (w.word ?? '').trim();
-          if (!t || typeof w.start !== 'number') continue;
-          wordTimestamps.push({
-            text: t,
-            start_time: Math.floor(w.start * NS),
-            end_time: typeof w.end === 'number' ? Math.floor(w.end * NS) : undefined,
-          });
-        }
-      }
-
-      wordTimestamps.sort((a, b) => a.start_time - b.start_time);
-      return {
-        text: (data?.text || fullText).trim() || null,
-        wordTimestamps: wordTimestamps.length ? wordTimestamps : null,
-      };
-    } catch (e) {
-      this.logger.warn(`Whisper call failed: ${e instanceof Error ? e.message : String(e)}`);
-      return { text: null, wordTimestamps: null };
-    }
+    return { audioBase64, mimeType, ...result };
   }
   async synthesizeText(dto: SynthesizeTextDto) {
     const sanitizedParams = sanitizeTtsParams(dto.provider, dto.model, dto.params);
