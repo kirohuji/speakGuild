@@ -640,7 +640,9 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   }, [])
 
   const saveWord = async () => {
+    if (saved) return
     setSaving(true)
+    setSaved(true)
     await learningContentRepository.saveExpressionEntry({
       kind: 'word',
       text: item.word,
@@ -650,15 +652,23 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
       contentSnapshot: item,
       sourceType: 'learning-library',
     })
-    await syncOutbox.enqueue({
+    toast.success(t('insight.addToVocab'))
+    setSaving(false)
+    const outboxItem = await syncOutbox.enqueue({
       entityType: 'word_entry',
       entityId: item.word.toLowerCase(),
       operation: 'create',
       payload: { word: item.word, addedAt: new Date().toISOString() },
     })
-    setSaved(true)
-    toast.success(saved ? t('insight.alreadyInVocab') : t('insight.addToVocab'))
-    setSaving(false)
+    try {
+      await expressionApi.create({
+        type: 'word',
+        chunkText: item.meaning || '',
+        original: item.word,
+        sceneName: item.sceneName,
+      })
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch { /* 离线保留 pending */ }
   }
 
   const changeTab = (value: string) => {

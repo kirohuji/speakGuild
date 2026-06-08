@@ -629,6 +629,8 @@ model Vocabulary {
   description   String?              @db.Text  // 用法讲解/搭配说明
   difficulty    String               @default("L1")  // L1~L5
   sortOrder     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
   episodeVocabs ScriptEpisodeVocab[]
   topicVocabs   TrainingTopicVocab[]
 

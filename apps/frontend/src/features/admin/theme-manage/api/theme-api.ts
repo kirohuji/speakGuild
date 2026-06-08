@@ -82,8 +82,8 @@ export const themeApi = {
   /** 获取所有启用的主题 */
   listActive: () => get<ThemePreset[]>('/themes'),
 
-  /** 获取当前用户激活的主题 */
-  getActive: () => get<ThemePreset>('/themes/active'),
+  /** 获取当前用户激活的主题 ID（轻量，仅返回 id） */
+  getActive: () => get<{ id: string }>('/themes/active'),
 
   /** 获取默认主题（无需登录） */
   getDefault: () => get<ThemePreset>('/themes/default'),

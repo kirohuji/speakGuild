@@ -173,21 +173,37 @@ export function LearningUnitPage() {
   }, [t, unit?.title])
 
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
+    // 1. 乐观更新 + 本地删除（立即生效）
+    await learningContentRepository.deleteExpressionByText(kind, text)
+    setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+
+    // 2. outbox 排队
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
+      entityId: text,
+      operation: 'delete',
+      payload: kind === 'word'
+        ? { word: text, deletedAt: new Date().toISOString() }
+        : kind === 'chunk'
+          ? { chunkText: text, deletedAt: new Date().toISOString() }
+          : { pattern: text, deletedAt: new Date().toISOString() },
+    })
+
+    // 3. API 实时同步（失败则等下次 flush）
     try {
-      await learningContentRepository.deleteExpressionByText(kind, text)
-      setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-      await syncOutbox.enqueue({
-        entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
-        entityId: text,
-        operation: 'delete',
-        payload: kind === 'word'
-          ? { word: text, deletedAt: new Date().toISOString() }
-          : kind === 'chunk'
-            ? { chunkText: text, deletedAt: new Date().toISOString() }
-            : { pattern: text, deletedAt: new Date().toISOString() },
-      })
-      toast.success(t('learning.removedFromLibrary'))
-    } catch { toast.error(t('learning.removeFailed')) }
+      const list = await expressionApi.list()
+      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+      const type = kind === 'word' ? 'word' : kind === 'chunk' ? 'chunk' : 'scene_phrase'
+      const match = items.find((expr: any) =>
+        expr.type === type && (expr.original === text || expr.chunkText === text),
+      )
+      if (match?.id) {
+        await expressionApi.remove(match.id)
+      }
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
+
+    toast.success(t('learning.removedFromLibrary'))
   }, [t])
 
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>

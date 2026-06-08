@@ -11,6 +11,7 @@ export interface PushResult {
 
 export interface PullResult {
   cursor: string
+  hasMore?: boolean
   changed: {
     expressionItems: any[]
     sceneProgresses: any[]

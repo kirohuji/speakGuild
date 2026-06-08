@@ -320,12 +320,13 @@ export class SyncService {
   }
 
   // ══════════════════════════════════════════════════
-  // PULL: 增量拉取用户数据
+  // PULL: 增量拉取用户数据（分页，每页最多 500 条）
   // ══════════════════════════════════════════════════
+
+  private static readonly PULL_PAGE_SIZE = 500;
 
   async pull(userId: string, cursor: string | null) {
     const since = cursor ? new Date(cursor) : new Date(0);
-    const newCursor = new Date().toISOString();
 
     const [
       expressionItems,
@@ -337,18 +338,22 @@ export class SyncService {
       this.prisma.expressionItem.findMany({
         where: { userId, createdAt: { gt: since } },
         orderBy: { createdAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.userSceneProgress.findMany({
         where: { userId, updatedAt: { gt: since } },
         orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.userChunkProgress.findMany({
         where: { userId, updatedAt: { gt: since } },
         orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.practiceSession.findMany({
         where: { userId, updatedAt: { gt: since } },
         orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
       }),
     ]);
 
@@ -356,10 +361,30 @@ export class SyncService {
     const practiceTurns = await this.prisma.practiceTurn.findMany({
       where: { session: { userId }, createdAt: { gt: since } },
       orderBy: { createdAt: 'asc' },
+      take: SyncService.PULL_PAGE_SIZE,
     });
 
+    // 计算下一页 cursor：取所有返回记录中最大的时间戳
+    const timestamps: number[] = [];
+    for (const e of expressionItems) timestamps.push(e.createdAt.getTime());
+    for (const s of sceneProgresses) timestamps.push(s.updatedAt.getTime());
+    for (const c of chunkProgresses) timestamps.push(c.updatedAt.getTime());
+    for (const s of practiceSessions) timestamps.push(s.updatedAt.getTime());
+    for (const t of practiceTurns) timestamps.push(t.createdAt.getTime());
+
+    const nextCursor = timestamps.length > 0
+      ? new Date(Math.max(...timestamps)).toISOString()
+      : new Date().toISOString();
+
+    // 任意一个结果集达到 pageSize 上限，说明还有更多数据
+    const hasMore = [
+      expressionItems, sceneProgresses, chunkProgresses,
+      practiceSessions, practiceTurns,
+    ].some((arr) => arr.length >= SyncService.PULL_PAGE_SIZE);
+
     return {
-      cursor: newCursor,
+      cursor: nextCursor,
+      hasMore,
       changed: {
         expressionItems,
         sceneProgresses,
@@ -384,9 +409,8 @@ export class SyncService {
     const version = Date.now();
 
     // 各模型时间戳情况不同：
-    // - DictionaryEntry/SentencePattern 有 updatedAt → 用 updatedAt
+    // - DictionaryEntry/SentencePattern/Vocabulary 有 updatedAt → 用 updatedAt
     // - Scene/Chunk/TrainingTopic/ScriptEpisode 只有 createdAt → 用 createdAt
-    // - Vocabulary 无时间戳 → 返回全量 ID（内容量可控）
     const [
       dictionaries,
       vocabularies,
@@ -401,9 +425,11 @@ export class SyncService {
         select: { word: true, updatedAt: true },
         orderBy: { updatedAt: 'asc' },
       }),
-      // Vocabulary 无时间戳，返回全量
+      // Vocabulary 有 updatedAt，按时间戳增量
       this.prisma.vocabulary.findMany({
-        select: { id: true },
+        where: { updatedAt: { gt: sinceDate } },
+        select: { id: true, updatedAt: true },
+        orderBy: { updatedAt: 'asc' },
       }),
       this.prisma.chunk.findMany({
         where: { createdAt: { gt: sinceDate } },
@@ -438,7 +464,7 @@ export class SyncService {
       generatedAt: new Date().toISOString(),
       changed: {
         dictionaries: dictionaries.map((d) => ({ id: d.word, updatedAt: d.updatedAt.toISOString() })),
-        vocabularies: vocabularies.map((v) => ({ id: v.id })),
+        vocabularies: vocabularies.map((v) => ({ id: v.id, updatedAt: v.updatedAt.toISOString() })),
         chunks: chunks.map((c) => ({ id: c.id, updatedAt: c.createdAt.toISOString() })),
         sentencePatterns: sentencePatterns.map((s) => ({ id: s.id, updatedAt: s.updatedAt.toISOString() })),
         scenes: scenes.map((s) => ({ id: s.id, updatedAt: s.createdAt.toISOString() })),

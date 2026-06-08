@@ -121,10 +121,16 @@ export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
 
     // ── 第二步：后台异步刷新远端数据 ──
     try {
-      const remote = await themeApi.getActive();
-      // 远端数据优先，同步更新本地缓存
-      writeCache(ACTIVE_PRESET_CACHE_KEY, { preset: remote });
-      set({ activePreset: remote, loading: false });
+      const { id } = await themeApi.getActive();
+      // 确保 presets 列表已加载，从本地列表匹配完整主题（避免传输全量数据）
+      await get().ensurePresets();
+      const matched = get().presets.find((p) => p.id === id) ?? findDefault(get().presets);
+      if (matched) {
+        writeCache(ACTIVE_PRESET_CACHE_KEY, { preset: matched });
+        set({ activePreset: matched, loading: false });
+      } else {
+        set({ loading: false });
+      }
     } catch {
       // API 失败：本地缓存已生效，无需额外处理
       if (!localActive) {

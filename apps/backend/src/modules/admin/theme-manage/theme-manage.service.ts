@@ -111,17 +111,28 @@ export class ThemeManageService {
     return this.prisma.themePreset.delete({ where: { id } });
   }
 
-  /** 获取当前用户激活的主题 */
-  async getUserTheme(userId: string) {
+  /** 获取当前用户激活的主题 ID（轻量，仅返回 ID，前端从本地 presets 列表匹配完整数据） */
+  async getUserThemeId(userId: string): Promise<{ id: string }> {
     const pref = await this.prisma.userPreference.findUnique({ where: { userId } });
     if (pref?.themePresetId) {
       const preset = await this.prisma.themePreset.findUnique({
         where: { id: pref.themePresetId },
+        select: { id: true, isActive: true },
       });
-      if (preset?.isActive) return preset;
+      if (preset?.isActive) return { id: preset.id };
     }
-    // 回退到默认主题
-    return this.findDefault();
+    // 回退到默认主题 ID
+    const def = await this.prisma.themePreset.findFirst({
+      where: { isDefault: true, isActive: true },
+      select: { id: true },
+    });
+    if (def) return { id: def.id };
+    const first = await this.prisma.themePreset.findFirst({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true },
+    });
+    return { id: first?.id ?? '' };
   }
 
   /** 用户切换主题 */

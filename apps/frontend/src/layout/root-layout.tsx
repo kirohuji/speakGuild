@@ -107,14 +107,9 @@ function MobileTopBar({
   const { pathname } = useLocation()
   const { session } = useAuth()
   const unreadCount = useNotificationStore((s) => s.unreadCount)
-  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount)
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
-
-  React.useEffect(() => {
-    fetchUnreadCount()
-  }, [fetchUnreadCount])
 
   return (
     <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">

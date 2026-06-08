@@ -126,20 +126,26 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
     await deleteExpressionItem(id)
   }
 
-  for (const id of deleted?.sceneProgresses ?? []) {
+  // 批量删除 user_progress：一次 scan 替代逐条 list()
+  const deletedSceneIds = new Set(deleted?.sceneProgresses ?? [])
+  const deletedChunkIds = new Set(deleted?.chunkProgresses ?? [])
+  if (deletedSceneIds.size > 0 || deletedChunkIds.size > 0) {
     const records = await localDb.list<any>('user_progress')
-    const match = records.find((item) => item.remoteId === id || item.id === id)
-    if (match?.id) await localDb.delete('user_progress', match.id)
-  }
-
-  for (const id of deleted?.chunkProgresses ?? []) {
-    const records = await localDb.list<any>('user_progress')
-    const match = records.find((item) => item.remoteId === id || item.id === id)
-    if (match?.id) await localDb.delete('user_progress', match.id)
+    for (const item of records) {
+      if (
+        deletedSceneIds.has(item.remoteId) || deletedSceneIds.has(item.id) ||
+        deletedChunkIds.has(item.remoteId) || deletedChunkIds.has(item.id)
+      ) {
+        await localDb.delete('user_progress', item.id)
+      }
+    }
   }
 }
 
-async function replayItem(item: SyncOutboxItem): Promise<boolean> {
+async function replayItem(
+  item: SyncOutboxItem,
+  expressionCache?: { items: any[] },
+): Promise<boolean> {
   if (item.entityType === 'my_unit') {
     if (item.operation === 'create') {
       await learningApi.startUnit(item.entityId)
@@ -194,8 +200,7 @@ async function replayItem(item: SyncOutboxItem): Promise<boolean> {
     }
 
     if (item.operation === 'delete') {
-      const list = await expressionApi.list()
-      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+      const items = expressionCache?.items ?? []
       const match = items.find(
         (expr: any) => (expr.type === 'word' || !expr.type) && expr.original === word,
       )
@@ -224,8 +229,7 @@ async function replayItem(item: SyncOutboxItem): Promise<boolean> {
     }
 
     if (item.operation === 'delete') {
-      const list = await expressionApi.list()
-      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+      const items = expressionCache?.items ?? []
       const match = items.find(
         (expr: any) => expr.type === 'chunk' && (expr.chunkText === text || expr.original === text),
       )
@@ -254,8 +258,7 @@ async function replayItem(item: SyncOutboxItem): Promise<boolean> {
     }
 
     if (item.operation === 'delete') {
-      const list = await expressionApi.list()
-      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+      const items = expressionCache?.items ?? []
       const match = items.find(
         (expr: any) => expr.type === 'scene_phrase' && expr.chunkText === pattern,
       )
@@ -296,32 +299,44 @@ async function replayItem(item: SyncOutboxItem): Promise<boolean> {
 
 export const offlineSyncService = {
   async pull(userId?: string | null): Promise<{ cursor: string | null; changed: number; deleted: number }> {
-    const cursorRecord = await localDb.get<{ value?: string }>('kv', userSyncCursorKey(userId))
-    const result = await syncApi.pull(cursorRecord?.value ?? null)
+    const cursorKey = userSyncCursorKey(userId)
+    const cursorRecord = await localDb.get<{ value?: string }>('kv', cursorKey)
+    let cursor: string | null = cursorRecord?.value ?? null
+    let totalChanged = 0
+    let totalDeleted = 0
+    let finalCursor: string | null = null
 
-    await applyUserPullChanges(result.changed, result.deleted)
+    // 循环分页拉取，直到服务端返回 hasMore: false
+    while (true) {
+      const result = await syncApi.pull(cursor)
+      await applyUserPullChanges(result.changed, result.deleted)
 
-    if (result.cursor) {
-      await localDb.put('kv', {
-        id: userSyncCursorKey(userId),
-        value: result.cursor,
-        updatedAt: new Date().toISOString(),
-      })
-    }
-
-    return {
-      cursor: result.cursor ?? null,
-      changed:
+      totalChanged +=
         (result.changed.expressionItems?.length ?? 0) +
         (result.changed.sceneProgresses?.length ?? 0) +
         (result.changed.chunkProgresses?.length ?? 0) +
         (result.changed.practiceSessions?.length ?? 0) +
-        (result.changed.practiceTurns?.length ?? 0),
-      deleted:
+        (result.changed.practiceTurns?.length ?? 0)
+      totalDeleted +=
         (result.deleted.expressionItems?.length ?? 0) +
         (result.deleted.sceneProgresses?.length ?? 0) +
-        (result.deleted.chunkProgresses?.length ?? 0),
+        (result.deleted.chunkProgresses?.length ?? 0)
+
+      finalCursor = result.cursor
+
+      if (!result.hasMore) break
+      cursor = result.cursor
     }
+
+    if (finalCursor) {
+      await localDb.put('kv', {
+        id: cursorKey,
+        value: finalCursor,
+        updatedAt: new Date().toISOString(),
+      })
+    }
+
+    return { cursor: finalCursor, changed: totalChanged, deleted: totalDeleted }
   },
 
   async sync(userId?: string | null): Promise<{
@@ -403,20 +418,31 @@ export const offlineSyncService = {
     let skipped = 0
 
     const items = await syncOutbox.listPending()
-    if (items.length === 0) return { synced, failed, skipped }
+    if (items.length === 0) {
+      // 清理历史上残留的 synced 记录
+      await syncOutbox.cleanup()
+      return { synced, failed, skipped }
+    }
+
+    // 预取 expression 全量列表，供 replayItem 中 delete 操作复用（避免逐条 list()）
+    let exprCtx: { items: any[] } | undefined
+    try {
+      const raw = await expressionApi.list()
+      exprCtx = { items: Array.isArray(raw) ? raw : (raw as any)?.items ?? [] }
+    } catch { /* 预取失败不影响同步，回退到逐条查询 */ }
 
     // 分离可批量推送的类型和需要单独处理的复杂类型
     const bulkEntityTypes = new Set(['my_unit', 'word_entry', 'chunk_entry', 'pattern_entry', 'practice_session', 'practice_turn'])
     const bulkItems = items.filter((item) => bulkEntityTypes.has(item.entityType))
-    const individualItems = items.filter(
-      (item) => !bulkItems.includes(item),
-    )
+    const individualItems = items.filter((item) => !bulkItems.includes(item))
 
-    // 批量推送简单类型
-    if (bulkItems.length > 0) {
+    // 批量推送（每批最多 100 条，防止单次请求体过大）
+    const BATCH_SIZE = 100
+    for (let offset = 0; offset < bulkItems.length; offset += BATCH_SIZE) {
+      const batch = bulkItems.slice(offset, offset + BATCH_SIZE)
       try {
         const { results } = await syncApi.push(
-          bulkItems.map((item) => ({
+          batch.map((item) => ({
             entityType: item.entityType,
             entityId: item.entityId,
             operation: item.operation,
@@ -425,23 +451,23 @@ export const offlineSyncService = {
           })),
         )
 
-        for (let i = 0; i < bulkItems.length; i++) {
+        for (let i = 0; i < batch.length; i++) {
           const result = results[i]
           if (result?.status === 'synced') {
-            await syncOutbox.markSynced(bulkItems[i].id)
+            await syncOutbox.markSynced(batch[i].id)
             synced += 1
           } else if (result?.status === 'skipped') {
             skipped += 1
           } else {
-            await syncOutbox.markFailed(bulkItems[i].id, result?.error)
+            await syncOutbox.markFailed(batch[i].id, result?.error)
             failed += 1
           }
         }
       } catch {
         // 批量失败，回退到逐条 replay
-        for (const item of bulkItems) {
+        for (const item of batch) {
           try {
-            const handled = await replayItem(item)
+            const handled = await replayItem(item, exprCtx)
             if (handled) {
               await syncOutbox.markSynced(item.id)
               synced += 1
@@ -456,18 +482,18 @@ export const offlineSyncService = {
       }
     }
 
-    // 逐条处理复杂类型（practice_session / practice_turn / recording）
+    // 逐条处理复杂类型（recording 等非批量类型）
     let madeProgress = true
     while (madeProgress) {
       madeProgress = false
       const pending = await syncOutbox.listPending()
 
       for (const item of pending) {
-        if (item.entityType === 'my_unit' || item.entityType === 'word_entry' || item.entityType === 'chunk_entry' || item.entityType === 'pattern_entry') {
+        if (bulkEntityTypes.has(item.entityType)) {
           continue // 已批量处理，跳过
         }
         try {
-          const handled = await replayItem(item)
+          const handled = await replayItem(item, exprCtx)
           if (!handled) {
             skipped += 1
             continue
@@ -481,6 +507,9 @@ export const offlineSyncService = {
         }
       }
     }
+
+    // 清理 outbox 中已同步的旧记录
+    await syncOutbox.cleanup()
 
     return { synced, failed, skipped }
   },

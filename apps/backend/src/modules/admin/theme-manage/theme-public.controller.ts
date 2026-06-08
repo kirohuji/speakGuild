@@ -16,11 +16,11 @@ export class ThemePublicController {
     return this.themeManageService.findActive();
   }
 
-  /** 获取当前用户激活的主题 */
+  /** 获取当前用户激活的主题 ID（轻量，仅返回 id） */
   @Get('active')
   async getActive(@Req() req: Request) {
     const session = await requireAuthSession(req);
-    return this.themeManageService.getUserTheme(session.user.id);
+    return this.themeManageService.getUserThemeId(session.user.id);
   }
 
   /** 获取默认主题（未登录时用） */
