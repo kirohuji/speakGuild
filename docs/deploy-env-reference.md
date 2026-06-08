@@ -102,7 +102,19 @@
 
 ---
 
-## 八、支付（可选，未配置时 Mock 模式）
+## 八、腾讯云语音识别（STT）
+
+| 变量 | 分类 | 说明 | 默认值 |
+|---|---|---|---|
+| `TENCENT_SECRET_ID` | 🟡 Secret | 腾讯云 API 密钥 ID（与 COS 可共用） | — |
+| `TENCENT_SECRET_KEY` | 🟡 Secret | 腾讯云 API 密钥 Key | — |
+| `TENCENT_REGION` | 🟢 Variable | 语音识别服务地域 | `ap-guangzhou` |
+
+> 代码引用：`tencent-stt.provider.ts`。未配置时 Tencent STT 不可用，不影响 Whisper。
+
+---
+
+## 九、支付（可选，未配置时 Mock 模式）
 
 ### 支付宝
 
@@ -130,7 +142,7 @@
 
 ---
 
-## 九、RevenueCat（跨端会员同步，可选）
+## 十、RevenueCat（跨端会员同步，可选）
 
 | 变量 | 分类 | 说明 | 获取方式 |
 |---|---|---|---|
@@ -139,7 +151,7 @@
 
 ---
 
-## 十、文件清理任务
+## 十一、文件清理任务
 
 | 变量 | 分类 | 说明 | 默认值 |
 |---|---|---|---|

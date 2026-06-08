@@ -61,6 +61,9 @@ jobs:
           echo "WECHAT_PAY_PUBLIC_KEY=${{ secrets.WECHAT_PAY_PUBLIC_KEY }}" >> /tmp/deploy.env
           echo "REVENUECAT_API_KEY=${{ secrets.REVENUECAT_API_KEY }}" >> /tmp/deploy.env
           echo "REVENUECAT_PROJECT_ID=${{ secrets.REVENUECAT_PROJECT_ID }}" >> /tmp/deploy.env
+          echo "TENCENT_SECRET_ID=${{ secrets.TENCENT_SECRET_ID }}" >> /tmp/deploy.env
+          echo "TENCENT_SECRET_KEY=${{ secrets.TENCENT_SECRET_KEY }}" >> /tmp/deploy.env
+          echo "TENCENT_REGION=${{ vars.TENCENT_REGION || 'ap-guangzhou' }}" >> /tmp/deploy.env
 
       - name: Sync code and env to server
         run: |

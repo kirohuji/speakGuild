@@ -71,6 +71,9 @@ services:
       WECHAT_PAY_PUBLIC_KEY: ${WECHAT_PAY_PUBLIC_KEY:-}
       REVENUECAT_API_KEY: ${REVENUECAT_API_KEY:-}
       REVENUECAT_PROJECT_ID: ${REVENUECAT_PROJECT_ID:-}
+      TENCENT_SECRET_ID: ${TENCENT_SECRET_ID:-}
+      TENCENT_SECRET_KEY: ${TENCENT_SECRET_KEY:-}
+      TENCENT_REGION: ${TENCENT_REGION:-ap-guangzhou}
     depends_on:
       db:
         condition: service_healthy
