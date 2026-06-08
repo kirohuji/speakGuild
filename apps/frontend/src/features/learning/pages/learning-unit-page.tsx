@@ -15,8 +15,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
-import { expressionApi } from '@/features/practice/api/english-practice-api'
-import { learningContentRepository, syncOutbox } from '@/lib/offline'
+import { learningContentRepository } from '@/lib/offline'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -61,28 +60,11 @@ export function LearningUnitPage() {
     if (loadedTabs.current.has(tab)) return
     loadedTabs.current.add(tab)
 
-    if (tab === 'vocab') {
-      const cached = await learningContentRepository.listExpressionEntries('word')
-      setCollectedTexts((prev) => {
-        const next = new Set(prev)
-        for (const item of cached) if (item.original) next.add(item.original)
-        return next
-      })
-    } else if (tab === 'chunk') {
-      const cached = await learningContentRepository.listExpressionEntries('chunk')
-      setCollectedTexts((prev) => {
-        const next = new Set(prev)
-        for (const item of cached) if (item.chunkText) next.add(item.chunkText)
-        return next
-      })
-    } else if (tab === 'pattern') {
-      const cached = await learningContentRepository.listExpressionEntries('pattern')
-      setCollectedTexts((prev) => {
-        const next = new Set(prev)
-        for (const item of cached) if (item.chunkText) next.add(item.chunkText)
-        return next
-      })
-    }
+    const kind = tab === 'vocab' ? 'word' : tab === 'chunk' ? 'chunk' : tab === 'pattern' ? 'pattern' : null
+    if (!kind) return
+
+    const texts = await learningContentRepository.listExpressionTexts(kind)
+    setCollectedTexts((prev) => new Set([...prev, ...texts]))
   }, [])
 
   useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
@@ -91,7 +73,7 @@ export function LearningUnitPage() {
     const text = chunk.text
     const meaning = chunk.meaning
     setCollectedTexts((prev) => new Set([...prev, text]))
-    await learningContentRepository.saveExpressionEntry({
+    await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'chunk',
       text,
       meaning,
@@ -100,22 +82,12 @@ export function LearningUnitPage() {
       sourceType: 'learning-library',
     })
     toast.success(t('learning.addedToLibrary'))
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'chunk_entry',
-      entityId: text,
-      operation: 'create',
-      payload: { chunkText: text, original: meaning, sceneName: unit?.title },
-    })
-    try {
-      await expressionApi.create({ type: 'chunk', chunkText: text, original: meaning, sceneName: unit?.title })
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [t, unit?.title])
 
   const handleCollectPattern = useCallback(async (pattern: SentencePattern) => {
     const text = pattern.pattern
     setCollectedTexts((prev) => new Set([...prev, text]))
-    await learningContentRepository.saveExpressionEntry({
+    await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'pattern',
       text,
       meaning: pattern.meaning,
@@ -124,34 +96,13 @@ export function LearningUnitPage() {
       sourceType: 'learning-library',
     })
     toast.success(t('learning.addedToLibrary'))
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'pattern_entry',
-      entityId: text,
-      operation: 'create',
-      payload: {
-        pattern: text,
-        meaning: pattern.meaning,
-        example: pattern.example,
-        sceneName: unit?.title,
-      },
-    })
-    try {
-      await expressionApi.create({
-        type: 'scene_phrase',
-        chunkText: text,
-        corrected: pattern.example || text,
-        original: pattern.meaning,
-        sceneName: unit?.title,
-      })
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [t, unit?.title])
 
   const handleCollectWord = useCallback(async (vocab: VocabItem) => {
     const word = vocab.word
     const meaning = vocab.meaning
     setCollectedTexts((prev) => new Set([...prev, word]))
-    await learningContentRepository.saveExpressionEntry({
+    await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'word',
       text: word,
       meaning,
@@ -160,49 +111,11 @@ export function LearningUnitPage() {
       sourceType: 'learning-library',
     })
     toast.success(t('learning.addedToLibrary'))
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'word_entry',
-      entityId: word,
-      operation: 'create',
-      payload: { word, addedAt: new Date().toISOString() },
-    })
-    try {
-      await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [t, unit?.title])
 
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
-    // 1. 乐观更新 + 本地删除（立即生效）
-    await learningContentRepository.deleteExpressionByText(kind, text)
+    await learningContentRepository.deleteExpressionByTextAndSync(kind, text)
     setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-
-    // 2. outbox 排队
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
-      entityId: text,
-      operation: 'delete',
-      payload: kind === 'word'
-        ? { word: text, deletedAt: new Date().toISOString() }
-        : kind === 'chunk'
-          ? { chunkText: text, deletedAt: new Date().toISOString() }
-          : { pattern: text, deletedAt: new Date().toISOString() },
-    })
-
-    // 3. API 实时同步（失败则等下次 flush）
-    try {
-      const list = await expressionApi.list()
-      const items = Array.isArray(list) ? list : (list as any)?.items ?? []
-      const type = kind === 'word' ? 'word' : kind === 'chunk' ? 'chunk' : 'scene_phrase'
-      const match = items.find((expr: any) =>
-        expr.type === type && (expr.original === text || expr.chunkText === text),
-      )
-      if (match?.id) {
-        await expressionApi.remove(match.id)
-      }
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
-
     toast.success(t('learning.removedFromLibrary'))
   }, [t])
 

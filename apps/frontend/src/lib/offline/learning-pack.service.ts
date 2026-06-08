@@ -1,7 +1,7 @@
 import { assetCacheService, type AssetRef } from './asset-cache.service'
 import { learningApi } from '@/features/learning/api/learning-api'
 import { learningRepository } from './learning.repository'
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 import { practiceRepository } from './practice.repository'
 import { syncOutbox } from './sync-outbox'
 

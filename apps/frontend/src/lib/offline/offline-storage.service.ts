@@ -1,6 +1,6 @@
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { isNative } from '@/lib/native'
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 import type { InstalledLearningPack } from './learning-pack.service'
 import type { LocalAsset } from './asset-cache.service'
 

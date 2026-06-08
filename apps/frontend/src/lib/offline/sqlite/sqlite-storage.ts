@@ -1,29 +1,19 @@
 /**
- * SQLite-based storage adapter for Native (Capacitor).
+ * Native SQLite storage adapter (Capacitor iOS/Android).
  *
- * Provides the same API surface as IndexedDB local-db,
- * so repositories can work identically on both platforms.
+ * Provides the same API surface as web-sqlite-storage.ts,
+ * so repositories work identically on both platforms.
  *
- * Usage:
- *   import { sqliteStorage as localDb } from './sqlite-storage'
- *   // then use localDb.get / put / list / delete / clear just like before
+ * This module requires @capacitor-community/sqlite and is loaded only
+ * when unified-storage selects the native backend.
  */
-import { Capacitor } from '@capacitor/core'
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
-import { DB_NAME, DB_VERSION, TABLE_NAMES, ALL_DDL, INDEXES, type TableName } from './schema'
-
-// Re-export TableName for consumers
-export type { TableName }
-
-type JsonPrimitive = string | number | boolean | null
-type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
+import { Capacitor } from '@capacitor/core'
+import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES } from './schema'
+import { createSqliteJsonStore } from './sqlite-json-store'
 
 let dbPromise: Promise<SQLiteDBConnection> | null = null
 let sqliteConnection: SQLiteConnection | null = null
-
-function isNative(): boolean {
-  return Capacitor.isNativePlatform()
-}
 
 function getSqliteConnection(): SQLiteConnection {
   if (!sqliteConnection) {
@@ -34,20 +24,13 @@ function getSqliteConnection(): SQLiteConnection {
 
 async function openDb(): Promise<SQLiteDBConnection> {
   if (dbPromise) return dbPromise
-  if (!isNative()) {
-    // Fall back to IndexedDB on web — caller should import local-db.ts instead
-    dbPromise = Promise.reject(new Error('[sqlite-storage] Not available on web — use local-db instead'))
-    return dbPromise
-  }
 
   dbPromise = (async () => {
     const conn = getSqliteConnection()
 
-    // Check if database already exists
     const existsResult = await conn.isDatabase(DB_NAME)
     const exists = existsResult.result
 
-    // Create or open the connection
     const db = await conn.createConnection(
       DB_NAME,
       false,    // encrypted
@@ -57,7 +40,6 @@ async function openDb(): Promise<SQLiteDBConnection> {
     )
     await db.open()
 
-    // Run migrations if the database is newly created or version upgraded
     const currentVersion = exists ? (await db.getVersion()).version : 0
     if (currentVersion < DB_VERSION) {
       await migrate(db, currentVersion)
@@ -70,22 +52,14 @@ async function openDb(): Promise<SQLiteDBConnection> {
 }
 
 async function migrate(db: SQLiteDBConnection, _fromVersion: number): Promise<void> {
-  // Create all tables (IF NOT EXISTS handles existing ones)
   await db.execute(ALL_DDL)
-
-  // Create indexes
   for (const idx of INDEXES) {
     try { await db.execute(idx) } catch { /* index may already exist */ }
   }
-
-  // Future: version-specific migrations go here
 }
 
 /** Ensure the database is open and ready. */
 async function ensureDb(): Promise<SQLiteDBConnection> {
-  if (!isNative()) {
-    throw new Error('[sqlite-storage] SQLite is only available on Native platform. Use IndexedDB on Web.')
-  }
   return openDb()
 }
 
@@ -93,160 +67,119 @@ async function ensureDb(): Promise<SQLiteDBConnection> {
  * Execute a raw SQL query and return rows as an array of objects.
  * For parameterized queries, use ? placeholders and pass values array.
  */
-async function queryRows<T = JsonValue>(
+async function queryRows<T>(
   sql: string,
   values: any[] = [],
 ): Promise<T[]> {
   const db = await ensureDb()
   const result = await db.query(sql, values)
-  if (!result.values || result.values.length === 0) return []
-
-  // result.values[0] = column names, result.values[1..n] = data rows
-  const cols = result.values[0] as string[]
-  return result.values.slice(1).map((row: any[]) => {
-    const obj: any = {}
-    cols.forEach((col, i) => {
-      obj[col] = row[i]
-    })
-    return obj as T
-  })
+  return (result.values ?? []) as T[]
 }
 
 /** Execute a write statement (INSERT/UPDATE/DELETE). */
-async function execute(sql: string, values: any[] = []): Promise<void> {
+async function run(sql: string, values: any[] = [], transaction = true): Promise<void> {
   const db = await ensureDb()
-  await db.run(sql, values)
+  await db.run(sql, values, transaction)
 }
 
-// ══════════════════════════════════════════════════
-// Public API — mirrors local-db.ts interface
-// ══════════════════════════════════════════════════
+async function execute(sql: string, transaction = true): Promise<void> {
+  const db = await ensureDb()
+  await db.execute(sql, transaction)
+}
+
+const jsonStore = createSqliteJsonStore({
+  label: 'sqlite-storage',
+  queryRows,
+  run,
+  execute,
+})
 
 export const sqliteStorage = {
-  /** Get a single record by ID. Returns null if not found. */
-  async get<T extends { id: string }>(storeName: TableName, id: string): Promise<T | null> {
-    try {
-      const rows = await queryRows<{ data: string }>(
-        `SELECT data FROM "${storeName}" WHERE id = ?`,
-        [id],
-      )
-      if (rows.length === 0) return null
-      return JSON.parse(rows[0].data) as T
-    } catch (error) {
-      console.warn(`[sqlite-storage] get failed for ${storeName}:${id}`, error)
-      return null
-    }
-  },
-
-  /** Insert or update a record (upsert by id). */
-  async put<T extends { id: string }>(storeName: TableName, value: T): Promise<void> {
-    try {
-      const json = JSON.stringify(value)
-      await execute(
-        `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
-        [value.id, json, new Date().toISOString()],
-      )
-    } catch (error) {
-      console.warn(`[sqlite-storage] put failed for ${storeName}:${value.id}`, error)
-      throw error
-    }
-  },
-
-  /** Insert multiple records in a transaction. */
-  async putMany<T extends { id: string }>(storeName: TableName, values: T[]): Promise<void> {
-    if (values.length === 0) return
-    try {
-      const db = await ensureDb()
-      // Build a batch of INSERT ... ON CONFLICT statements
-      const statements = values.map((value) => {
-        const json = JSON.stringify(value).replace(/'/g, "''")
-        const now = new Date().toISOString()
-        return `INSERT INTO "${storeName}" (id, data, updated_at) VALUES ('${value.id}', '${json}', '${now}') ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`
-      })
-      await db.execute(statements.join(';\n'))
-    } catch (error) {
-      console.warn(`[sqlite-storage] putMany failed for ${storeName}`, error)
-      throw error
-    }
-  },
-
-  /** Delete a record by ID. */
-  async delete(storeName: TableName, id: string): Promise<void> {
-    try {
-      await execute(`DELETE FROM "${storeName}" WHERE id = ?`, [id])
-    } catch (error) {
-      console.warn(`[sqlite-storage] delete failed for ${storeName}:${id}`, error)
-    }
-  },
-
-  /** List all records in a store. */
-  async list<T extends { id: string }>(storeName: TableName): Promise<T[]> {
-    try {
-      const rows = await queryRows<{ data: string }>(
-        `SELECT data FROM "${storeName}" ORDER BY updated_at DESC`,
-      )
-      return rows.map((row) => JSON.parse(row.data) as T)
-    } catch (error) {
-      console.warn(`[sqlite-storage] list failed for ${storeName}`, error)
-      return []
-    }
-  },
-
-  /** Count records in a store. */
-  async count(storeName: TableName): Promise<number> {
-    try {
-      const rows = await queryRows<{ cnt: number }>(
-        `SELECT COUNT(*) as cnt FROM "${storeName}"`,
-      )
-      return rows[0]?.cnt ?? 0
-    } catch {
-      return 0
-    }
-  },
-
-  /** Delete all records in a store. */
-  async clear(storeName: TableName): Promise<void> {
-    try {
-      await execute(`DELETE FROM "${storeName}"`)
-    } catch (error) {
-      console.warn(`[sqlite-storage] clear failed for ${storeName}`, error)
-    }
-  },
-
-  /**
-   * Save a recording blob.
-   * On Native, blob data is stored in Capacitor Filesystem;
-   * SQLite only holds metadata (mimeType, sessionId, round, localPath).
-   */
+  ...jsonStore,
   async saveBlob(
     blob: Blob,
     meta?: { mimeType?: string; sessionId?: string; round?: number },
   ): Promise<string> {
-    // Delegate to the existing asset-cache / filesystem approach.
-    // For now, throw a descriptive error so callers know to use asset-cache.service.
-    throw new Error(
-      '[sqlite-storage] saveBlob not implemented — use asset-cache.service for file storage on Native',
-    )
+    const { Directory, Filesystem } = await import('@capacitor/filesystem')
+    const id = Capacitor.isNativePlatform()
+      ? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      : (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+
+    const ext = meta?.mimeType?.includes('ogg') ? 'ogg'
+      : meta?.mimeType?.includes('mp4') ? 'mp4'
+      : 'webm'
+    const path = `recordings/${id}.${ext}`
+    const arrayBuffer = await blob.arrayBuffer()
+    const base64 = arrayBufferToBase64(arrayBuffer)
+
+    await Filesystem.writeFile({
+      path,
+      data: base64,
+      directory: Directory.Data,
+      recursive: true,
+    })
+
+    // Store metadata in SQLite
+    await jsonStore.put('recordings', {
+      id,
+      localPath: path,
+      mimeType: meta?.mimeType ?? blob.type,
+      sessionId: meta?.sessionId ?? null,
+      round: meta?.round ?? null,
+      createdAt: new Date().toISOString(),
+    } as any)
+
+    return id
   },
 
-  /** Get recording metadata (not the blob itself). */
   async getBlob(
-    _id: string,
+    id: string,
   ): Promise<{ blob: Blob; mimeType?: string; sessionId?: string; round?: number } | null> {
-    throw new Error(
-      '[sqlite-storage] getBlob not implemented — use asset-cache.service for file storage on Native',
-    )
+    const { Directory, Filesystem } = await import('@capacitor/filesystem')
+
+    const meta = await jsonStore.get<any>('recordings', id)
+    if (!meta?.localPath) return null
+
+    try {
+      const result = await Filesystem.readFile({
+        path: meta.localPath,
+        directory: Directory.Data,
+      })
+      // result.data is a base64 string on Capacitor
+      const base64 = typeof result.data === 'string' ? result.data : ''
+      if (!base64) return null
+      const binaryStr = atob(base64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i)
+      }
+      return {
+        blob: new Blob([bytes], { type: meta.mimeType ?? 'audio/webm' }),
+        mimeType: meta.mimeType,
+        sessionId: meta.sessionId,
+        round: meta.round,
+      }
+    } catch {
+      return null
+    }
   },
 
-  /** Delete a recording. */
   async deleteBlob(id: string): Promise<void> {
-    // Delete metadata from SQLite + file from Filesystem
-    await sqliteStorage.delete('recordings', id)
-    // File cleanup would be handled by asset-cache.service
+    const { Directory, Filesystem } = await import('@capacitor/filesystem')
+
+    const meta = await jsonStore.get<any>('recordings', id)
+    if (meta?.localPath) {
+      try {
+        await Filesystem.deleteFile({ path: meta.localPath, directory: Directory.Data })
+      } catch { /* file may already be gone */ }
+    }
+    await jsonStore.delete('recordings', id)
   },
 
-  /** Close the database connection. Call on app suspend. */
+  // ── Lifecycle ──────────────────────────────────────────
+
   async close(): Promise<void> {
     if (dbPromise) {
       try {
@@ -262,8 +195,18 @@ export const sqliteStorage = {
     }
   },
 
-  /** Check if SQLite is available on this platform. */
   isAvailable(): boolean {
-    return isNative()
+    return Capacitor.isNativePlatform()
   },
+}
+
+/** Convert ArrayBuffer to base64 string. */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  return btoa(binary)
 }

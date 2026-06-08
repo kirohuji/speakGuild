@@ -1,14 +1,13 @@
 /**
- * SQLite schema for Native (Capacitor) offline storage.
+ * SQLite schema for Capacitor offline storage.
  *
- * Mirrors the IndexedDB stores defined in local-db.ts.
  * Each "store" becomes a SQLite table with:
- *   - id TEXT PRIMARY KEY  (same as IndexedDB keyPath)
+ *   - id TEXT PRIMARY KEY
  *   - data TEXT NOT NULL    (JSON-serialized value)
  *   - updated_at TEXT       (ISO-8601 timestamp)
  *
- * Blob data (recordings) stays in Capacitor Filesystem;
- * only metadata is stored here.
+ * Native recording bytes stay in Capacitor Filesystem. Web does not cache
+ * binary resource data.
  */
 export const DB_NAME = 'speakguild_offline'
 

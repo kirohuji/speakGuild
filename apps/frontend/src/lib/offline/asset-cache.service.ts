@@ -1,6 +1,6 @@
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { isNative } from '@/lib/native'
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 
 export interface AssetRef {
   assetId?: string

@@ -4,7 +4,7 @@ import {
   type PracticeSession,
   type TopicDetail,
 } from '@/features/practice/api/english-practice-api'
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 
 export type PracticeTurnPayload = {

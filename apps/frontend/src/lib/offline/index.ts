@@ -1,5 +1,3 @@
-export { localDb } from './local-db'
-export { syncOutbox } from './sync-outbox'
 export { syncApi } from './sync-api'
 export type { PushResult, PullResult, ContentManifest } from './sync-api'
 export { assetCacheService } from './asset-cache.service'
@@ -12,8 +10,4 @@ export { offlineStorageService } from './offline-storage.service'
 export type { AssetRef, LocalAsset } from './asset-cache.service'
 export type { LearningPackManifest, InstalledLearningPack } from './learning-pack.service'
 export type { ExpressionEntry, ExpressionEntryKind, ExpressionEntryStatus, WordEntry, ChunkEntry, PatternEntry } from './learning-content.repository'
-export type { SyncOutboxItem, SyncEntityType, SyncOperation } from './sync-outbox'
 export type { OfflineStorageStats } from './offline-storage.service'
-
-// SQLite storage — lazy-loaded to avoid pulling capacitor-sqlite into Web bundles
-export { getSqliteStorage } from './sqlite/lazy-sqlite'

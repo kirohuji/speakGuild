@@ -3,7 +3,7 @@ import { practiceApi, expressionApi } from '@/features/practice/api/english-prac
 import { transcribeRecording } from '@/lib/practice-ai-api'
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 import { syncOutbox, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository } from './learning-content.repository'
 
@@ -211,6 +211,17 @@ async function replayItem(
       // 服务端没有这条记录，视为已删除
       return true
     }
+
+    if (item.operation === 'update') {
+      const items = expressionCache?.items ?? []
+      const match = items.find(
+        (expr: any) => (expr.type === 'word' || !expr.type) && expr.original === word,
+      )
+      if (match?.id && payload.masteryStatus) {
+        await expressionApi.updateStatus(match.id, payload.masteryStatus)
+      }
+      return true
+    }
   }
 
   // 句块同步
@@ -236,6 +247,17 @@ async function replayItem(
       if (match?.id) {
         await expressionApi.remove(match.id)
         return true
+      }
+      return true
+    }
+
+    if (item.operation === 'update') {
+      const items = expressionCache?.items ?? []
+      const match = items.find(
+        (expr: any) => expr.type === 'chunk' && (expr.chunkText === text || expr.original === text),
+      )
+      if (match?.id && payload.masteryStatus) {
+        await expressionApi.updateStatus(match.id, payload.masteryStatus)
       }
       return true
     }
@@ -265,6 +287,17 @@ async function replayItem(
       if (match?.id) {
         await expressionApi.remove(match.id)
         return true
+      }
+      return true
+    }
+
+    if (item.operation === 'update') {
+      const items = expressionCache?.items ?? []
+      const match = items.find(
+        (expr: any) => expr.type === 'scene_phrase' && expr.chunkText === pattern,
+      )
+      if (match?.id && payload.masteryStatus) {
+        await expressionApi.updateStatus(match.id, payload.masteryStatus)
       }
       return true
     }

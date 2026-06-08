@@ -1,4 +1,4 @@
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 
 export type SyncEntityType =
   | 'my_unit'

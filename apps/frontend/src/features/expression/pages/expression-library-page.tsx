@@ -16,7 +16,6 @@ import { LearningInsightDialog, type LearningInsightItem } from '@/features/prac
 import { cn } from '@/lib/cn'
 import {
   learningContentRepository,
-  syncOutbox,
   type ExpressionEntry,
   type ExpressionEntryKind,
 } from '@/lib/offline'
@@ -307,13 +306,7 @@ export function ExpressionLibraryPage() {
       const text = target.localKind === 'word'
         ? target.original ?? id
         : target.chunkText ?? target.corrected ?? id
-      await learningContentRepository.updateExpressionStatus(target.localKind, text, status)
-      await syncOutbox.enqueue({
-        entityType: target.localKind === 'word' ? 'word_entry' : target.localKind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
-        entityId: text,
-        operation: 'update',
-        payload: { masteryStatus: status },
-      })
+      await learningContentRepository.updateExpressionStatusAndSync(target.localKind, text, status)
       toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
       fetchData()
       return
@@ -336,18 +329,7 @@ export function ExpressionLibraryPage() {
           ? target.original ?? id
           : target.chunkText ?? target.corrected ?? id
 
-        await learningContentRepository.deleteExpressionByText(target.localKind, text)
-
-        await syncOutbox.enqueue({
-          entityType: target.localKind === 'word' ? 'word_entry' : target.localKind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
-          entityId: text,
-          operation: 'delete',
-          payload: target.localKind === 'word'
-            ? { word: text, deletedAt: new Date().toISOString() }
-            : target.localKind === 'chunk'
-              ? { chunkText: text, deletedAt: new Date().toISOString() }
-              : { pattern: text, deletedAt: new Date().toISOString() },
-        })
+        await learningContentRepository.deleteExpressionByTextAndSync(target.localKind, text)
         setResult((current) => {
           const nextItems = current.items.filter((item) => item.id !== id)
           return createLocalResult(nextItems)

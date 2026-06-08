@@ -18,8 +18,8 @@ import { isIOS } from '@/lib/native'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
-import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
-import { learningContentRepository, practiceRepository, syncOutbox } from '@/lib/offline'
+import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
+import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -365,12 +365,8 @@ export function PracticeSessionPage() {
 
   // 句型表达式始终可见（不在 tab 内），mount 时加载
   useEffect(() => {
-    learningContentRepository.listExpressionEntries('pattern').then((items) => {
-      setCollectedTexts((prev) => {
-        const next = new Set(prev)
-        for (const item of items) if (item.chunkText) next.add(item.chunkText)
-        return next
-      })
+    learningContentRepository.listExpressionTexts('pattern').then((texts) => {
+      setCollectedTexts((prev) => new Set([...prev, ...texts]))
     })
   }, [])
 
@@ -381,20 +377,12 @@ export function PracticeSessionPage() {
     if (loadedPrepTabs.current.has(prepTab)) return
     loadedPrepTabs.current.add(prepTab)
     if (prepTab === 'vocab') {
-      learningContentRepository.listExpressionEntries('word').then((items) => {
-        setCollectedTexts((prev) => {
-          const next = new Set(prev)
-          for (const item of items) if (item.original) next.add(item.original)
-          return next
-        })
+      learningContentRepository.listExpressionTexts('word').then((texts) => {
+        setCollectedTexts((prev) => new Set([...prev, ...texts]))
       })
     } else if (prepTab === 'chunk') {
-      learningContentRepository.listExpressionEntries('chunk').then((items) => {
-        setCollectedTexts((prev) => {
-          const next = new Set(prev)
-          for (const item of items) if (item.chunkText) next.add(item.chunkText)
-          return next
-        })
+      learningContentRepository.listExpressionTexts('chunk').then((texts) => {
+        setCollectedTexts((prev) => new Set([...prev, ...texts]))
       })
     }
   }, [prepTab])
@@ -601,7 +589,7 @@ export function PracticeSessionPage() {
     setSavingTexts((prev) => new Set([...prev, word]))
     try {
       const vocab = detail?.vocabularies?.find((item) => item.word.toLowerCase() === word.toLowerCase())
-      await learningContentRepository.saveExpressionEntry({
+      await learningContentRepository.saveExpressionEntryAndSync({
         kind: 'word',
         text: word,
         meaning: vocab?.meaning ?? meaning,
@@ -609,16 +597,6 @@ export function PracticeSessionPage() {
         contentSnapshot: vocab ?? { word, meaning },
         sourceType: 'learning-library',
       })
-      const outboxItem = await syncOutbox.enqueue({
-        entityType: 'word_entry',
-        entityId: word,
-        operation: 'create',
-        payload: { word, addedAt: new Date().toISOString() },
-      })
-      try {
-        await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
-        await syncOutbox.markSynced(outboxItem.id)
-      } catch { /* 离线保留 pending */ }
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -628,7 +606,7 @@ export function PracticeSessionPage() {
   const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
     setSavingTexts((prev) => new Set([...prev, pattern.pattern]))
     try {
-      await learningContentRepository.saveExpressionEntry({
+      await learningContentRepository.saveExpressionEntryAndSync({
         kind: 'pattern',
         text: pattern.pattern,
         meaning: pattern.meaning,
@@ -636,21 +614,6 @@ export function PracticeSessionPage() {
         contentSnapshot: pattern,
         sourceType: 'learning-library',
       })
-      const outboxItem = await syncOutbox.enqueue({
-        entityType: 'pattern_entry',
-        entityId: pattern.pattern,
-        operation: 'create',
-        payload: {
-          pattern: pattern.pattern,
-          meaning: pattern.meaning,
-          example: pattern.example,
-          sceneName: pattern.sceneName,
-        },
-      })
-      try {
-        await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
-        await syncOutbox.markSynced(outboxItem.id)
-      } catch { /* 离线保留 pending */ }
       setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -660,7 +623,7 @@ export function PracticeSessionPage() {
   const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
     setSavingTexts((prev) => new Set([...prev, chunk.text]))
     try {
-      await learningContentRepository.saveExpressionEntry({
+      await learningContentRepository.saveExpressionEntryAndSync({
         kind: 'chunk',
         text: chunk.text,
         meaning: chunk.meaning,
@@ -668,16 +631,6 @@ export function PracticeSessionPage() {
         contentSnapshot: chunk,
         sourceType: 'learning-library',
       })
-      const outboxItem = await syncOutbox.enqueue({
-        entityType: 'chunk_entry',
-        entityId: chunk.text,
-        operation: 'create',
-        payload: { chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title },
-      })
-      try {
-        await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
-        await syncOutbox.markSynced(outboxItem.id)
-      } catch { /* 离线保留 pending */ }
       setCollectedTexts((prev) => new Set([...prev, chunk.text]))
       toast.success('已加入学习库')
     } catch { toast.error('加入失败') }
@@ -687,18 +640,8 @@ export function PracticeSessionPage() {
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     setSavingTexts((prev) => new Set([...prev, text]))
     try {
-      await learningContentRepository.deleteExpressionByText(kind, text)
+      await learningContentRepository.deleteExpressionByTextAndSync(kind, text)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-      await syncOutbox.enqueue({
-        entityType: kind === 'word' ? 'word_entry' : kind === 'chunk' ? 'chunk_entry' : 'pattern_entry',
-        entityId: text,
-        operation: 'delete',
-        payload: kind === 'word'
-          ? { word: text, deletedAt: new Date().toISOString() }
-          : kind === 'chunk'
-            ? { chunkText: text, deletedAt: new Date().toISOString() }
-            : { pattern: text, deletedAt: new Date().toISOString() },
-      })
       toast.success('已从学习库移除')
     } catch { toast.error('移除失败') }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })

@@ -1,4 +1,6 @@
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
+import { expressionApi } from '@/features/practice/api/english-practice-api'
+import { syncOutbox, type SyncEntityType } from './sync-outbox'
 
 function includesText(value: unknown, query: string) {
   return typeof value === 'string' && value.toLowerCase().includes(query.toLowerCase())
@@ -58,6 +60,12 @@ function expressionType(kind: ExpressionEntryKind): ExpressionEntry['type'] {
 function expressionText(entry: Pick<ExpressionEntry, 'kind' | 'original' | 'chunkText' | 'corrected'>) {
   if (entry.kind === 'word') return entry.original ?? ''
   return entry.chunkText ?? entry.corrected ?? ''
+}
+
+function expressionEntityType(kind: ExpressionEntryKind): SyncEntityType {
+  if (kind === 'word') return 'word_entry'
+  if (kind === 'pattern') return 'pattern_entry'
+  return 'chunk_entry'
 }
 
 function makeEntry(input: {
@@ -152,6 +160,62 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     createdAt: item.createdAt,
     updatedAt: item.updatedAt ?? item.createdAt,
   })
+}
+
+function createPayload(entry: ExpressionEntry) {
+  if (entry.kind === 'word') {
+    return { word: entry.original ?? '', addedAt: new Date().toISOString() }
+  }
+  if (entry.kind === 'pattern') {
+    return {
+      pattern: entry.chunkText ?? '',
+      meaning: entry.original,
+      example: entry.corrected,
+      sceneName: entry.sceneName,
+    }
+  }
+  return {
+    chunkText: entry.chunkText ?? '',
+    original: entry.original,
+    sceneName: entry.sceneName,
+  }
+}
+
+function createRequest(entry: ExpressionEntry) {
+  if (entry.kind === 'word') {
+    return {
+      type: 'word' as const,
+      chunkText: entry.chunkText ?? '',
+      original: entry.original ?? '',
+      sceneName: entry.sceneName ?? undefined,
+    }
+  }
+  if (entry.kind === 'pattern') {
+    return {
+      type: 'scene_phrase' as const,
+      chunkText: entry.chunkText ?? '',
+      corrected: entry.corrected ?? entry.chunkText ?? '',
+      original: entry.original ?? '',
+      sceneName: entry.sceneName ?? undefined,
+    }
+  }
+  return {
+    type: 'chunk' as const,
+    chunkText: entry.chunkText ?? '',
+    corrected: entry.corrected ?? entry.chunkText ?? '',
+    original: entry.original ?? '',
+    sceneName: entry.sceneName ?? undefined,
+  }
+}
+
+async function findRemoteExpressionId(kind: ExpressionEntryKind, text: string): Promise<string | null> {
+  const list = await expressionApi.list()
+  const items = Array.isArray(list) ? list : (list as any)?.items ?? []
+  const type = expressionType(kind)
+  const match = items.find((expr: any) =>
+    expr.type === type && (expr.original === text || expr.chunkText === text),
+  )
+  return match?.id ?? null
 }
 
 export const learningContentRepository = {
@@ -269,6 +333,24 @@ export const learningContentRepository = {
     return entry
   },
 
+  async saveExpressionEntryAndSync(input: Parameters<typeof makeEntry>[0]): Promise<ExpressionEntry> {
+    const entry = await this.saveExpressionEntry(input)
+    const text = expressionText(entry)
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: expressionEntityType(entry.kind),
+      entityId: text,
+      operation: 'create',
+      payload: createPayload(entry),
+    })
+    try {
+      await expressionApi.create(createRequest(entry))
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch (error) {
+      await syncOutbox.markFailed(outboxItem.id, error)
+    }
+    return entry
+  },
+
   async saveRemoteExpressionEntry(item: any): Promise<ExpressionEntry | null> {
     const next = remoteExpressionToEntry(item)
     if (!next) return null
@@ -289,12 +371,38 @@ export const learningContentRepository = {
     return kind ? entries.filter((entry) => entry.kind === kind) : entries
   },
 
+  async listExpressionTexts(kind: ExpressionEntryKind): Promise<string[]> {
+    const entries = await this.listExpressionEntries(kind)
+    return entries.map(expressionText).filter(Boolean)
+  },
+
   async getExpressionByText(kind: ExpressionEntryKind, text: string): Promise<ExpressionEntry | null> {
     return localDb.get<ExpressionEntry>('expression_entries', entryId(kind, text))
   },
 
   async deleteExpressionByText(kind: ExpressionEntryKind, text: string): Promise<void> {
     await localDb.delete('expression_entries', entryId(kind, text))
+  },
+
+  async deleteExpressionByTextAndSync(kind: ExpressionEntryKind, text: string): Promise<void> {
+    await this.deleteExpressionByText(kind, text)
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: expressionEntityType(kind),
+      entityId: text,
+      operation: 'delete',
+      payload: kind === 'word'
+        ? { word: text, deletedAt: new Date().toISOString() }
+        : kind === 'chunk'
+          ? { chunkText: text, deletedAt: new Date().toISOString() }
+          : { pattern: text, deletedAt: new Date().toISOString() },
+    })
+    try {
+      const remoteId = await findRemoteExpressionId(kind, text)
+      if (remoteId) await expressionApi.remove(remoteId)
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch (error) {
+      await syncOutbox.markFailed(outboxItem.id, error)
+    }
   },
 
   async deleteExpressionByRemoteId(remoteId: string): Promise<void> {
@@ -314,6 +422,23 @@ export const learningContentRepository = {
       lastReviewedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
+  },
+
+  async updateExpressionStatusAndSync(kind: ExpressionEntryKind, text: string, status: ExpressionEntryStatus): Promise<void> {
+    await this.updateExpressionStatus(kind, text, status)
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: expressionEntityType(kind),
+      entityId: text,
+      operation: 'update',
+      payload: { masteryStatus: status },
+    })
+    try {
+      const remoteId = await findRemoteExpressionId(kind, text)
+      if (remoteId) await expressionApi.updateStatus(remoteId, status)
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch (error) {
+      await syncOutbox.markFailed(outboxItem.id, error)
+    }
   },
 
   expressionText,

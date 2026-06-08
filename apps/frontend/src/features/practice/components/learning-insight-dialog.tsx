@@ -28,9 +28,9 @@ import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
-import { learningContentRepository, syncOutbox } from '@/lib/offline'
+import { learningContentRepository } from '@/lib/offline'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
-import { expressionApi, type TopicDetail } from '../api/english-practice-api'
+import { type TopicDetail } from '../api/english-practice-api'
 
 type VocabularyInsight = {
   kind: 'word'
@@ -643,7 +643,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     if (saved) return
     setSaving(true)
     setSaved(true)
-    await learningContentRepository.saveExpressionEntry({
+    await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'word',
       text: item.word,
       meaning: item.meaning,
@@ -654,21 +654,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     })
     toast.success(t('insight.addToVocab'))
     setSaving(false)
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'word_entry',
-      entityId: item.word.toLowerCase(),
-      operation: 'create',
-      payload: { word: item.word, addedAt: new Date().toISOString() },
-    })
-    try {
-      await expressionApi.create({
-        type: 'word',
-        chunkText: item.meaning || '',
-        original: item.word,
-        sceneName: item.sceneName,
-      })
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线保留 pending */ }
   }
 
   const changeTab = (value: string) => {
@@ -1066,7 +1051,7 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
     if (saved) return
     setSaving(true)
     setSaved(true)
-    await learningContentRepository.saveExpressionEntry({
+    await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'chunk',
       text: item.text,
       meaning: item.meaning,
@@ -1076,26 +1061,6 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
     })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'chunk_entry',
-      entityId: item.text,
-      operation: 'create',
-      payload: {
-        chunkText: item.text,
-        original: item.meaning || '',
-        sceneName: item.sceneName,
-      },
-    })
-    try {
-      await expressionApi.create({
-        type: 'chunk',
-        chunkText: item.text,
-        corrected: item.text,
-        original: item.meaning || '',
-        sceneName: item.sceneName,
-      })
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线保留 pending */ }
   }
 
   return (
@@ -1151,7 +1116,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
     if (saved) return
     setSaving(true)
     setSaved(true)
-    await learningContentRepository.saveExpressionEntry({
+    await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'pattern',
       text: item.pattern,
       meaning: item.meaning,
@@ -1162,27 +1127,6 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
     })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'pattern_entry',
-      entityId: item.pattern,
-      operation: 'create',
-      payload: {
-        pattern: item.pattern,
-        meaning: item.meaning,
-        example: item.example,
-        sceneName: item.sceneName,
-      },
-    })
-    try {
-      await expressionApi.create({
-        type: 'scene_phrase',
-        chunkText: item.pattern,
-        corrected: item.example || item.pattern,
-        original: item.meaning,
-        sceneName: item.sceneName,
-      })
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch { /* 离线保留 pending */ }
   }
 
   return (

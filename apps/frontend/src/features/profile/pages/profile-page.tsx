@@ -65,7 +65,7 @@ import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/ap
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
-import { learningContentRepository, offlineStorageService, syncOutbox, type OfflineStorageStats } from '@/lib/offline'
+import { learningContentRepository, offlineStorageService, type OfflineStorageStats } from '@/lib/offline'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -1633,13 +1633,7 @@ function WordsTab() {
   }, [refreshEntries])
 
   const removeWord = useCallback(async (word: string) => {
-    await learningContentRepository.deleteExpressionByText('word', word)
-    await syncOutbox.enqueue({
-      entityType: 'word_entry',
-      entityId: word.toLowerCase(),
-      operation: 'delete',
-      payload: { word, deletedAt: new Date().toISOString() },
-    })
+    await learningContentRepository.deleteExpressionByTextAndSync('word', word)
     setEntries((current) => current.filter((entry) => entry.word !== word))
   }, [])
 

@@ -1,5 +1,5 @@
 import instance, { post } from './request'
-import { localDb } from '@/lib/offline'
+import { learningContentRepository } from '@/lib/offline'
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1/manyu'
 
@@ -45,7 +45,7 @@ export async function enrichWord(
 ): Promise<WordEnrichmentResult> {
   const key = word.toLowerCase()
   if (_wordCache.has(key)) return _wordCache.get(key)!
-  const cached = await localDb.get<{ id: string; data: WordEnrichmentResult }>('dictionary_entries', key)
+  const cached = await learningContentRepository.getDictionaryEntry(key) as { data?: WordEnrichmentResult } | null
   if (cached?.data) {
     _wordCache.set(key, cached.data)
     return cached.data
@@ -57,13 +57,7 @@ export async function enrichWord(
       englishDefinitions,
     })
     _wordCache.set(key, data)
-    await localDb.put('dictionary_entries', {
-      id: key,
-      word: key,
-      type: 'word-enrichment',
-      data,
-      updatedAt: new Date().toISOString(),
-    })
+    await learningContentRepository.saveDictionaryEntry(key, data)
     return data
   } catch (error) {
     if (cached?.data) return cached.data

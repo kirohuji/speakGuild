@@ -4,7 +4,7 @@ import {
   type MyUnit,
   type UnitDetail,
 } from '@/features/learning/api/learning-api'
-import { localDb } from './local-db'
+import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 
 async function isPackInstalled(unitId: string) {
