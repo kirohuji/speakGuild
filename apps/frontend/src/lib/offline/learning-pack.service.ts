@@ -64,13 +64,6 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
     ...unitDetail,
     downloadedAt: new Date().toISOString(),
   })
-  await localDb.putMany('vocabularies', (unitDetail.vocabularies ?? []).map((item: any) => ({ ...item, unitId: unitDetail.id })))
-  await localDb.putMany('chunks', (unitDetail.chunks ?? []).map((item: any) => ({ ...item, unitId: unitDetail.id })))
-  await localDb.putMany('sentence_patterns', (unitDetail.sentencePatterns ?? []).map((item: any, index: number) => ({
-    ...item,
-    id: `${unitDetail.id}:${item.topicId ?? 'unit'}:${item.pattern}:${index}`,
-    unitId: unitDetail.id,
-  })))
 
   for (const detail of topicDetails) {
     if (detail?.inkScript) {
@@ -207,9 +200,6 @@ export const learningPackService = {
     await localDb.delete('downloaded_unit_details', packId)
     await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
     await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
-    await localDb.deleteWhere<any>('vocabularies', (item) => item.unitId === packId)
-    await localDb.deleteWhere<any>('chunks', (item) => item.unitId === packId)
-    await localDb.deleteWhere<any>('sentence_patterns', (item) => item.unitId === packId)
     await syncOutbox.enqueue({
       entityType: 'learning_pack',
       entityId: packId,

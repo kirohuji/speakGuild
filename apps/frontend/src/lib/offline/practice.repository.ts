@@ -63,13 +63,6 @@ export const practiceRepository = {
           updatedAt: new Date().toISOString(),
         })
       }
-      await localDb.putMany('vocabularies', detail.vocabularies.map((item) => ({ ...item, id: item.id, topicId })))
-      await localDb.putMany('chunks', detail.activeChunks.map((item) => ({ ...item, id: item.id, topicId })))
-      await localDb.putMany('sentence_patterns', (detail.topic.sentencePatterns ?? []).map((item, index) => ({
-        ...item,
-        id: `${topicId}:${item.pattern}:${index}`,
-        topicId,
-      })))
       return detail
     } catch {
       return getCachedTopicDetail(topicId)

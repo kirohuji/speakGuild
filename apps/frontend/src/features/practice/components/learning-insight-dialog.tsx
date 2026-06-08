@@ -1037,21 +1037,29 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   const saveChunk = async () => {
     if (saved) return
     setSaving(true)
+    setSaved(true)
+    toast.success(t('insight.savedToLibrary'))
+    setSaving(false)
+    const outboxItem = await syncOutbox.enqueue({
+      entityType: 'chunk_entry',
+      entityId: item.text,
+      operation: 'create',
+      payload: {
+        chunkText: item.text,
+        original: item.meaning || '',
+        sceneName: item.sceneName,
+      },
+    })
     try {
       await expressionApi.create({
         type: 'chunk',
         chunkText: item.text,
         corrected: item.text,
-        original: item.meaning,
+        original: item.meaning || '',
         sceneName: item.sceneName,
       })
-      setSaved(true)
-      toast.success(t('insight.savedToLibrary'))
-    } catch {
-      toast.error(t('insight.saveFailed'))
-    } finally {
-      setSaving(false)
-    }
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch { /* 离线保留 pending */ }
   }
 
   return (
@@ -1106,6 +1114,9 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const savePattern = async () => {
     if (saved) return
     setSaving(true)
+    setSaved(true)
+    toast.success(t('insight.savedToLibrary'))
+    setSaving(false)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'pattern_entry',
       entityId: item.pattern,
@@ -1126,16 +1137,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         sceneName: item.sceneName,
       })
       await syncOutbox.markSynced(outboxItem.id)
-      setSaved(true)
-      toast.success(t('insight.savedToLibrary'))
-    } catch {
-      await syncOutbox.markFailed(outboxItem.id, new Error('API unavailable'))
-      // 离线时也标记为已保存（flush 时会同步）
-      setSaved(true)
-      toast.success(t('insight.savedToLibrary'))
-    } finally {
-      setSaving(false)
-    }
+    } catch { /* 离线保留 pending */ }
   }
 
   return (

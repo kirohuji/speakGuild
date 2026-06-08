@@ -4,11 +4,7 @@ type StoreName =
   | 'downloaded_packs'
   | 'downloaded_unit_details'
   | 'ink_scripts'
-  | 'vocabularies'
-  | 'chunks'
-  | 'sentence_patterns'
   | 'dictionary_entries'
-  | 'wordbook'
   | 'user_progress'
   | 'practice_records'
   | 'local_assets'
@@ -16,7 +12,7 @@ type StoreName =
   | 'recordings'
 
 const DB_NAME = 'speakguild-offline'
-const DB_VERSION = 2
+const DB_VERSION = 5
 
 const STORE_NAMES: StoreName[] = [
   'kv',
@@ -24,11 +20,7 @@ const STORE_NAMES: StoreName[] = [
   'downloaded_packs',
   'downloaded_unit_details',
   'ink_scripts',
-  'vocabularies',
-  'chunks',
-  'sentence_patterns',
   'dictionary_entries',
-  'wordbook',
   'user_progress',
   'practice_records',
   'local_assets',
@@ -50,6 +42,14 @@ function openDb(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result
+
+      // 清理历史版本中已被移除的冗余 store
+      for (const deprecated of ['vocabularies', 'chunks', 'sentence_patterns', 'wordbook']) {
+        if (db.objectStoreNames.contains(deprecated)) {
+          db.deleteObjectStore(deprecated)
+        }
+      }
+
       for (const storeName of STORE_NAMES) {
         if (!db.objectStoreNames.contains(storeName)) {
           db.createObjectStore(storeName, { keyPath: 'id' })

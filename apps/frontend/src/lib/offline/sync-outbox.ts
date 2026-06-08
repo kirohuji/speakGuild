@@ -5,7 +5,6 @@ export type SyncEntityType =
   | 'word_entry'
   | 'chunk_entry'
   | 'pattern_entry'
-  | 'chunk_progress'
   | 'practice_session'
   | 'practice_turn'
   | 'learning_pack'

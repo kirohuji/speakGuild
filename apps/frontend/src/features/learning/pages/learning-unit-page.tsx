@@ -94,7 +94,8 @@ export function LearningUnitPage() {
   useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
 
   const handleCollectChunk = useCallback(async (text: string, meaning: string) => {
-    // 先写 outbox 离线缓存
+    setCollectedTexts((prev) => new Set([...prev, text]))
+    toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'chunk_entry',
       entityId: text,
@@ -104,16 +105,12 @@ export function LearningUnitPage() {
     try {
       await expressionApi.create({ type: 'chunk', chunkText: text, original: meaning, sceneName: unit?.title })
       await syncOutbox.markSynced(outboxItem.id)
-      setCollectedTexts((prev) => new Set([...prev, text]))
-      toast.success(t('learning.addedToLibrary'))
-    } catch {
-      await syncOutbox.markFailed(outboxItem.id, new Error('API unavailable'))
-      toast.error(t('learning.addFailed'))
-    }
+    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [unit?.title])
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
-    // 先写 outbox 离线缓存
+    setCollectedTexts((prev) => new Set([...prev, word]))
+    toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'word_entry',
       entityId: word,
@@ -123,14 +120,7 @@ export function LearningUnitPage() {
     try {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
       await syncOutbox.markSynced(outboxItem.id)
-      setCollectedTexts((prev) => new Set([...prev, word]))
-      toast.success(t('learning.addedToLibrary'))
-    } catch {
-      await syncOutbox.markFailed(outboxItem.id, new Error('API unavailable'))
-      // 离线时仍标记为已收集（下次 flush 会同步到服务端）
-      setCollectedTexts((prev) => new Set([...prev, word]))
-      toast.success(t('learning.addedToLibrary'))
-    }
+    } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
   }, [unit?.title])
 
   const handleRemoveExpression = useCallback(async (text: string) => {

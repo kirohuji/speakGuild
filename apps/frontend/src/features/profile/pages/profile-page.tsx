@@ -341,7 +341,6 @@ function MobileStorageView() {
         <IosRow icon={HardDrive} iconBg="bg-blue-500" label="已下载学习包" value={loading ? '...' : String(stats?.downloadedPackCount ?? 0)} />
         <IosRow icon={Database} iconBg="bg-violet-500" label="本地资源文件" subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} 个文件`} value={loading ? '...' : formatBytes(stats?.localAssetBytes)} />
         <IosRow label="离线词典缓存" value={loading ? '...' : String(stats?.dictionaryEntryCount ?? 0)} />
-        <IosRow label="生词本" value={loading ? '...' : String(stats?.wordbookCount ?? 0)} />
         <IosRow label="待同步操作" value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)} last />
       </IosSection>
 
