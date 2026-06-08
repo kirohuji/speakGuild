@@ -636,9 +636,25 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     audio.play().catch(() => {})
   }, [])
 
-  const saveWord = () => {
+  const saveWord = async () => {
     setSaving(true)
     addWord(item.word)
+    await learningContentRepository.saveWordEntry({
+      word: item.word,
+      meaning: item.meaning,
+      partOfSpeech: item.partOfSpeech,
+      phoneticUs: item.phoneticUs,
+      phoneticUk: item.phoneticUk,
+      audioUsUrl: item.audioUsUrl,
+      audioUkUrl: item.audioUkUrl,
+      definitionEn: item.definitionEn,
+      synonyms: item.synonyms,
+      examples: item.examples,
+      description: item.description,
+      difficulty: item.difficulty,
+      sceneName: item.sceneName,
+      source: 'learning-library',
+    })
     toast.success(saved ? t('insight.alreadyInVocab') : t('insight.addToVocab'))
     setSaving(false)
   }
@@ -1038,6 +1054,14 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
     if (saved) return
     setSaving(true)
     setSaved(true)
+    await learningContentRepository.saveChunkEntry({
+      text: item.text,
+      meaning: item.meaning,
+      description: item.description,
+      examples: item.examples,
+      sceneName: item.sceneName,
+      source: 'learning-library',
+    })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
     const outboxItem = await syncOutbox.enqueue({
@@ -1115,6 +1139,15 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
     if (saved) return
     setSaving(true)
     setSaved(true)
+    await learningContentRepository.savePatternEntry({
+      pattern: item.pattern,
+      meaning: item.meaning,
+      slots: item.slots,
+      example: item.example,
+      difficulty: item.difficulty,
+      sceneName: item.sceneName,
+      source: 'learning-library',
+    })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
     const outboxItem = await syncOutbox.enqueue({

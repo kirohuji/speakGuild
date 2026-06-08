@@ -5,6 +5,9 @@ type StoreName =
   | 'downloaded_unit_details'
   | 'ink_scripts'
   | 'dictionary_entries'
+  | 'word_entry'
+  | 'chunk_entry'
+  | 'pattern_entry'
   | 'user_progress'
   | 'practice_records'
   | 'local_assets'
@@ -12,7 +15,7 @@ type StoreName =
   | 'recordings'
 
 const DB_NAME = 'speakguild-offline'
-const DB_VERSION = 5
+const DB_VERSION = 6
 
 const STORE_NAMES: StoreName[] = [
   'kv',
@@ -21,6 +24,9 @@ const STORE_NAMES: StoreName[] = [
   'downloaded_unit_details',
   'ink_scripts',
   'dictionary_entries',
+  'word_entry',
+  'chunk_entry',
+  'pattern_entry',
   'user_progress',
   'practice_records',
   'local_assets',

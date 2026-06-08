@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
 import { expressionApi } from '@/features/practice/api/english-practice-api'
-import { syncOutbox } from '@/lib/offline'
+import { learningContentRepository, syncOutbox } from '@/lib/offline'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -93,8 +93,20 @@ export function LearningUnitPage() {
 
   useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
 
-  const handleCollectChunk = useCallback(async (text: string, meaning: string) => {
+  const handleCollectChunk = useCallback(async (chunk: ChunkItem) => {
+    const text = chunk.text
+    const meaning = chunk.meaning
     setCollectedTexts((prev) => new Set([...prev, text]))
+    await learningContentRepository.saveChunkEntry({
+      text,
+      meaning,
+      description: chunk.description,
+      category: chunk.category,
+      difficulty: chunk.difficulty,
+      examples: chunk.examples,
+      sceneName: unit?.title,
+      source: 'learning-library',
+    })
     toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'chunk_entry',
@@ -106,10 +118,19 @@ export function LearningUnitPage() {
       await expressionApi.create({ type: 'chunk', chunkText: text, original: meaning, sceneName: unit?.title })
       await syncOutbox.markSynced(outboxItem.id)
     } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
-  }, [unit?.title])
+  }, [t, unit?.title])
 
-  const handleCollectWord = useCallback(async (word: string, meaning: string) => {
+  const handleCollectWord = useCallback(async (vocab: VocabItem) => {
+    const word = vocab.word
+    const meaning = vocab.meaning
     setCollectedTexts((prev) => new Set([...prev, word]))
+    await learningContentRepository.saveWordEntry({
+      ...vocab,
+      word,
+      meaning,
+      sceneName: unit?.title,
+      source: 'learning-library',
+    })
     toast.success(t('learning.addedToLibrary'))
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'word_entry',
@@ -121,7 +142,7 @@ export function LearningUnitPage() {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
       await syncOutbox.markSynced(outboxItem.id)
     } catch { /* 离线失败，outbox 保留 pending 等下次 flush */ }
-  }, [unit?.title])
+  }, [t, unit?.title])
 
   const handleRemoveExpression = useCallback(async (text: string) => {
     try {
@@ -311,7 +332,7 @@ export function LearningUnitPage() {
                     expanded={expandedItemId === vocab.id}
                     onToggle={() => handleItemClick(vocab.id)}
                     onOpen={() => openDialog('vocab', vocabPageItems.startIndex + index)}
-                    onCollect={() => handleCollectWord(vocab.word, vocab.meaning)}
+                    onCollect={() => handleCollectWord(vocab)}
                     onRemove={() => handleRemoveExpression(vocab.word)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
@@ -339,7 +360,7 @@ export function LearningUnitPage() {
                     expanded={expandedItemId === chunk.id}
                     onToggle={() => handleItemClick(chunk.id)}
                     onOpen={() => openDialog('chunk', chunkPageItems.startIndex + index)}
-                    onCollect={() => handleCollectChunk(chunk.text, chunk.meaning)}
+                    onCollect={() => handleCollectChunk(chunk)}
                     onRemove={() => handleRemoveExpression(chunk.text)}                  />
                 ))}
                 <PrepPager

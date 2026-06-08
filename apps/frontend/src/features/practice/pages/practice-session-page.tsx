@@ -19,7 +19,7 @@ import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
-import { practiceRepository } from '@/lib/offline'
+import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -603,6 +603,14 @@ export function PracticeSessionPage() {
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
     setSavingTexts((prev) => new Set([...prev, word]))
     try {
+      const vocab = detail?.vocabularies?.find((item) => item.word.toLowerCase() === word.toLowerCase())
+      await learningContentRepository.saveWordEntry({
+        ...(vocab ?? {}),
+        word,
+        meaning: vocab?.meaning ?? meaning,
+        sceneName: detail?.scene.title,
+        source: 'learning-library',
+      })
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success('已加入学习库')
@@ -613,6 +621,13 @@ export function PracticeSessionPage() {
   const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
     setSavingTexts((prev) => new Set([...prev, pattern.pattern]))
     try {
+      await learningContentRepository.savePatternEntry({
+        pattern: pattern.pattern,
+        meaning: pattern.meaning,
+        example: pattern.example,
+        sceneName: pattern.sceneName,
+        source: 'learning-library',
+      })
       await expressionApi.create({ type: 'scene_phrase', chunkText: pattern.pattern, corrected: pattern.example || pattern.pattern, original: pattern.meaning, sceneName: pattern.sceneName })
       setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
       toast.success('已加入学习库')
@@ -623,6 +638,14 @@ export function PracticeSessionPage() {
   const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
     setSavingTexts((prev) => new Set([...prev, chunk.text]))
     try {
+      await learningContentRepository.saveChunkEntry({
+        text: chunk.text,
+        meaning: chunk.meaning,
+        description: chunk.description,
+        examples: chunk.examples,
+        sceneName: detail?.scene.title,
+        source: 'learning-library',
+      })
       await expressionApi.create({ type: 'chunk', chunkText: chunk.text, original: chunk.meaning, sceneName: detail?.scene.title })
       setCollectedTexts((prev) => new Set([...prev, chunk.text]))
       toast.success('已加入学习库')

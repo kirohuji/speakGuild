@@ -9,6 +9,9 @@ export interface OfflineStorageStats {
   localAssetCount: number
   localAssetBytes: number
   dictionaryEntryCount: number
+  wordEntryCount: number
+  chunkEntryCount: number
+  patternEntryCount: number
   pendingOutboxCount: number
   storageEstimate?: {
     usage?: number
@@ -18,10 +21,13 @@ export interface OfflineStorageStats {
 
 export const offlineStorageService = {
   async getStats(): Promise<OfflineStorageStats> {
-    const [packs, assets, dictionaries, outbox] = await Promise.all([
+    const [packs, assets, dictionaries, wordEntries, chunkEntries, patternEntries, outbox] = await Promise.all([
       localDb.list<InstalledLearningPack>('downloaded_packs'),
       localDb.list<LocalAsset>('local_assets'),
       localDb.list<any>('dictionary_entries'),
+      localDb.list<any>('word_entry'),
+      localDb.list<any>('chunk_entry'),
+      localDb.list<any>('pattern_entry'),
       localDb.list<any>('outbox'),
     ])
 
@@ -34,6 +40,9 @@ export const offlineStorageService = {
       localAssetCount: assets.filter((asset) => asset.status === 'ready').length,
       localAssetBytes: assets.reduce((sum, asset) => sum + Number(asset.size ?? 0), 0),
       dictionaryEntryCount: dictionaries.length,
+      wordEntryCount: wordEntries.length,
+      chunkEntryCount: chunkEntries.length,
+      patternEntryCount: patternEntries.length,
       pendingOutboxCount: outbox.filter((item) => item.status === 'pending' || item.status === 'failed').length,
       storageEstimate,
     }
@@ -45,6 +54,9 @@ export const offlineStorageService = {
       localDb.clear('downloaded_unit_details'),
       localDb.clear('ink_scripts'),
       localDb.clear('dictionary_entries'),
+      localDb.clear('word_entry'),
+      localDb.clear('chunk_entry'),
+      localDb.clear('pattern_entry'),
       localDb.clear('local_assets'),
     ])
 
