@@ -51,7 +51,7 @@ function pickMimeType() {
 interface VnVoiceDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onConfirm: (text: string) => void
+  onConfirm: (text: string, audioUrl?: string) => void
 }
 
 type VoiceState =
@@ -65,6 +65,7 @@ type VoiceState =
 // ---------------------------------------------------------------------------
 export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>({ status: 'idle' })
+  const [lastAudioUrl, setLastAudioUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -96,6 +97,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
     if (!open) {
       cleanup()
       setVoiceState({ status: 'idle' })
+      setLastAudioUrl(null)
       setError(null)
       setElapsed(0)
       setIsPlaying(false)
@@ -175,6 +177,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
           const result = await transcribeRecording(blob, `recording.${ext}`)
           const transcribed = result.text?.trim()
           if (transcribed) {
+            setLastAudioUrl(result.audioUrl ?? null)
             setVoiceState({ status: 'done', text: transcribed })
           } else {
             setError('未识别到语音内容，请重试')
@@ -247,7 +250,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
   // ---- 确认使用 ----
   const confirmText = () => {
     if (voiceState.status === 'done' && voiceState.text) {
-      onConfirm(voiceState.text)
+      onConfirm(voiceState.text, lastAudioUrl ?? undefined)
       onOpenChange(false)
     }
   }

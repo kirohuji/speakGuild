@@ -53,7 +53,7 @@ interface VnPlayerProps {
   isEnded?: boolean
   onAdvance?: () => void
   onChoice?: (index: number) => void
-  onSubmitInput?: (text: string) => void | Promise<void>
+  onSubmitInput?: (text: string, audioUrl?: string) => void | Promise<void>
   inputFeedback?: ReactNode
   inputFeedbackChat?: ReactNode
   inputGuidance?: VnTurnGuidance
@@ -615,35 +615,48 @@ export function VnPlayer({
     <div className={cn('relative mx-auto flex h-full w-full max-w-[520px] flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border', className)}>
       <div
         role="button"
-        tabIndex={canInteract ? 0 : -1}
+        tabIndex={canInteract || reviewLineIndex !== null ? 0 : -1}
         aria-label="推进对话"
-        className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', canInteract && 'cursor-pointer', stageClassName)}
+        className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', (canInteract || reviewLineIndex !== null) && 'cursor-pointer', stageClassName)}
         onClick={() => {
+          // 回顾模式：每点一次前进一行，走到最新行才退出回顾
+          if (reviewLineIndex !== null) {
+            const next = reviewLineIndex + 1
+            if (next >= history.length) {
+              setReviewLineIndex(null)
+            } else {
+              setReviewLineIndex(next)
+            }
+            return
+          }
           if (!canInteract) return
-          // 打字机播放中 → 优先跳过动画，无论是否在回看模式
+          // 打字机播放中 → 优先跳过动画
           if (isTyping) {
             if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
             typewriterTimerRef.current = null
             setDisplayedText(fullText)
             return
           }
-          if (reviewLineIndex !== null) {
-            setReviewLineIndex(null)
-            return
-          }
           onAdvance?.()
         }}
         onKeyDown={(event) => {
-          if (canInteract && (event.key === 'Enter' || event.key === ' ')) {
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
+            // 回顾模式：每按一次前进一行，走到最新行才退出回顾
+            if (reviewLineIndex !== null) {
+              const next = reviewLineIndex + 1
+              if (next >= history.length) {
+                setReviewLineIndex(null)
+              } else {
+                setReviewLineIndex(next)
+              }
+              return
+            }
+            if (!canInteract) return
             if (isTyping) {
               if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
               typewriterTimerRef.current = null
               setDisplayedText(fullText)
-              return
-            }
-            if (reviewLineIndex !== null) {
-              setReviewLineIndex(null)
               return
             }
             onAdvance?.()

@@ -25,12 +25,13 @@ export class TtsService {
     return TTS_PARAMS_SCHEMA;
   }
 
-  /** 用户录音 → STT 转写，返回文本 + 词时间戳 + 音频 base64 */
+  /** 用户录音 → STT 转写，返回文本 + 词时间戳 + 音频 COS URL */
   async transcribeRecording(audioBuffer: Buffer, originalname: string): Promise<{
     audioBase64: string;
     mimeType: string;
     text: string | null;
     wordTimestamps: Array<{ text: string; start_time: number; end_time?: number }> | null;
+    audioUrl: string | null;
   }> {
     const ext = path.extname(originalname).replace('.', '') || 'webm';
     const mimeMap: Record<string, string> = {
@@ -50,7 +51,25 @@ export class TtsService {
       fileName: originalname,
     });
 
-    return { audioBase64, mimeType, ...result };
+    // 转写成功后，将用户录音保存到 COS，方便后续回放
+    let audioUrl: string | null = null;
+    if (result.text) {
+      try {
+        const asset = await this.fileAssetsService.createAssetFromBuffer({
+          buffer: audioBuffer,
+          filename: originalname,
+          mimeType,
+          group: 'user_recording' as FileAssetGroup,
+        });
+        const signed = await this.fileAssetsService.getPrivateUrlByAssetId(asset.id);
+        audioUrl = (signed as any).url ?? null;
+        this.logger.log(`User recording saved to COS: ${asset.id}`);
+      } catch (e) {
+        this.logger.warn(`Failed to save user recording to COS: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+
+    return { audioBase64, mimeType, audioUrl, ...result };
   }
   async synthesizeText(dto: SynthesizeTextDto) {
     const sanitizedParams = sanitizeTtsParams(dto.provider, dto.model, dto.params);

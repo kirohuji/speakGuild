@@ -9,7 +9,7 @@ const TEXTAREA_MAX_HEIGHT = 108
 interface VnInputPanelProps {
   disabled?: boolean
   placeholder?: string
-  onSubmit: (text: string) => void | Promise<void>
+  onSubmit: (text: string, audioUrl?: string) => void | Promise<void>
   variant?: 'default' | 'embedded'
 }
 
@@ -24,6 +24,7 @@ export function VnInputPanel({
   const [isMultiline, setIsMultiline] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const pendingAudioUrlRef = useRef<string | null>(null)
   const isDisabled = disabled || submitting
 
   useEffect(() => {
@@ -40,17 +41,20 @@ export function VnInputPanel({
     const nextText = text.trim()
     if (!nextText || isDisabled) return
     setSubmitting(true)
+    const audioUrl = pendingAudioUrlRef.current ?? undefined
+    pendingAudioUrlRef.current = null
     try {
-      await onSubmit(nextText)
+      await onSubmit(nextText, audioUrl)
       setText('')
     } finally {
       setSubmitting(false)
     }
   }
 
-  // Drawer 确认回调：把识别文字填入输入框
-  const handleVoiceConfirm = (transcribed: string) => {
+  // Drawer 确认回调：把识别文字填入输入框，记录 audioUrl
+  const handleVoiceConfirm = (transcribed: string, audioUrl?: string) => {
     setText((prev) => (prev ? `${prev} ${transcribed}` : transcribed))
+    if (audioUrl) pendingAudioUrlRef.current = audioUrl
   }
 
   return (
@@ -97,9 +101,9 @@ export function VnInputPanel({
               onChange={(event) => setText(event.target.value)}
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => {
+                event.stopPropagation()
                 if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                   event.preventDefault()
-                  event.stopPropagation()
                   void submit()
                 }
               }}

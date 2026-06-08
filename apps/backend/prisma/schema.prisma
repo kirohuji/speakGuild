@@ -298,6 +298,7 @@ enum FileAssetGroup {
   tts
   notification
   mobile_bundle
+  user_recording
 }
 
 enum FileAssetStatus {

@@ -644,7 +644,7 @@ export function PracticeSessionPage() {
   }, [])
 
   // ==================== Practice: Send Input ====================
-  const sendUserInput = useCallback(async (text: string) => {
+  const sendUserInput = useCallback(async (text: string, audioUrl?: string) => {
     if (!text.trim()) return
 
     const round = dialogueRounds.length + 1
@@ -722,6 +722,7 @@ export function PracticeSessionPage() {
           round,
           npcText,
           userText: userMsg,
+          userAudioUrl: audioUrl,
           inputNodeId: readInputNodeId(currentTags),
           tags: currentTags,
           judgement: turnJudgement,
@@ -766,6 +767,7 @@ export function PracticeSessionPage() {
         round,
         npcText,
         userText: userMsg,
+        userAudioUrl: audioUrl,
         objectivesCompleted: [...completedObjectives],
         chunksUsed: [...usedChunks],
       }).catch(() => {})

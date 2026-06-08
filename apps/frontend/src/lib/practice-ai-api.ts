@@ -6,6 +6,7 @@ export type TranscribeRecordingResult = {
   audioBase64: string
   mimeType: string
   text: string | null
+  audioUrl: string | null
   wordTimestamps: Array<{ text: string; start_time: number; end_time?: number }> | null
 }
 

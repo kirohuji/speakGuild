@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
-import { ExternalLink, History, Loader2, RotateCcw, Settings, X } from 'lucide-react'
+import { ExternalLink, History, Loader2, RotateCcw, Settings, Volume2, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { get } from '@/lib/request'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -642,6 +642,27 @@ function ChatBubble({
   }
 
   // ── User bubble: simple right-aligned message ──
+  const [audioPlaying, setAudioPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const handlePlayAudio = () => {
+    if (!line.audioUrl) return
+    if (audioPlaying && audioRef.current) {
+      audioRef.current.pause()
+      return
+    }
+    const audio = new Audio(line.audioUrl)
+    audioRef.current = audio
+    audio.onplay = () => setAudioPlaying(true)
+    audio.onpause = () => setAudioPlaying(false)
+    audio.onended = () => { setAudioPlaying(false); audioRef.current = null }
+    audio.play().catch(() => setAudioPlaying(false))
+  }
+
+  useEffect(() => () => {
+    audioRef.current?.pause()
+  }, [])
+
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
@@ -653,6 +674,22 @@ function ChatBubble({
             )}
           </p>
         </div>
+        {/* 录音回放按钮 */}
+        {line.audioUrl && (
+          <button
+            type="button"
+            onClick={handlePlayAudio}
+            className={cn(
+              'mt-1 ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors',
+              audioPlaying
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Volume2 className={cn('size-3', audioPlaying && 'animate-pulse')} />
+            {audioPlaying ? '播放中…' : '回放'}
+          </button>
+        )}
         {bilingual && line.translation && (
           <p className="mt-1 mr-1 text-right text-[12px] leading-relaxed text-muted-foreground">
             {displayedTranslation}
