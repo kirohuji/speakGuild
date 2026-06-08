@@ -81,6 +81,10 @@ services:
       args:
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
         VITE_API_BASE_URL: /api/v1/manyu
+        VITE_AUTH_BASE_URL: /api/auth
+        VITE_APPLE_CLIENT_ID: ${VITE_APPLE_CLIENT_ID:-}
+        VITE_XFD_API_KEY: ${VITE_XFD_API_KEY:-}
+        VITE_MW_API_KEY: ${VITE_MW_API_KEY:-}
     container_name: manyu-nginx
     restart: unless-stopped
     depends_on:
