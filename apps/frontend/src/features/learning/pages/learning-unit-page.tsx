@@ -15,7 +15,6 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
-import { useWordsStore } from '@/stores/assets.store'
 import { expressionApi } from '@/features/practice/api/english-practice-api'
 import {
   LearningInsightDialog,
@@ -44,7 +43,6 @@ export function LearningUnitPage() {
 
   // 展开的列表项（点击高亮 + 展开显示详情）
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
-  const { addWord } = useWordsStore()
 
   // 已收集文本（按需加载，各 tab 独立）
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
@@ -101,14 +99,12 @@ export function LearningUnitPage() {
   }, [unit?.title])
 
   const handleCollectWord = useCallback(async (word: string, meaning: string) => {
-    // Also save to local Zustand
-    addWord(word)
     try {
       await expressionApi.create({ type: 'word', chunkText: meaning, original: word, sceneName: unit?.title })
       setCollectedTexts((prev) => new Set([...prev, word]))
       toast.success(t('learning.addedToLibrary'))
     } catch { toast.error(t('learning.addFailed')) }
-  }, [addWord, unit?.title])
+  }, [unit?.title])
 
   const handleRemoveExpression = useCallback(async (text: string) => {
     try {

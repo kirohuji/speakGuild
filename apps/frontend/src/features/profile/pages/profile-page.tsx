@@ -44,7 +44,6 @@ import {
   type PracticeRecordsResult,
   type UserProfile,
 } from '@/features/profile/api'
-import { getFavorites, type FavoriteItem } from '@/features/assets/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWordsStore, type WordEntry } from '@/stores/assets.store'
@@ -68,13 +67,12 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 
-type Tab = 'overview' | 'records' | 'favorites' | 'words' | 'account' | 'settings'
+type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member'
 
 const tabs: { key: Tab; icon: React.ElementType }[] = [
   { key: 'overview', icon: LayoutDashboard },
   { key: 'records', icon: ClipboardList },
-  { key: 'favorites', icon: Star },
   { key: 'words', icon: BookMarked },
   { key: 'account', icon: IdCard },
   { key: 'settings', icon: Settings },
@@ -83,7 +81,6 @@ const tabs: { key: Tab; icon: React.ElementType }[] = [
 const mobileTitles: Record<string, string> = {
   overview: 'profile.overview',
   records: 'profile.records',
-  favorites: 'profile.favorites',
   words: 'profile.words',
   account: 'profile.account',
   settings: 'profile.settings',
@@ -134,7 +131,6 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
             >
               {mobileView === 'overview' && <OverviewTab />}
               {mobileView === 'records' && <RecordsTab />}
-              {mobileView === 'favorites' && <FavoritesTab />}
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
               {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} />}
@@ -185,7 +181,6 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
           <div className="md:col-span-3">
             {activeTab === 'overview' && <OverviewTab />}
             {activeTab === 'records' && <RecordsTab />}
-            {activeTab === 'favorites' && <FavoritesTab />}
             {activeTab === 'words' && <WordsTab />}
             {activeTab === 'account' && <AccountTab desktop />}
             {activeTab === 'settings' && <SettingsTab />}
@@ -997,57 +992,6 @@ function RecordsTab() {
         isLoading={isLoading}
         emptyMessage={t('common.empty')}
       />
-    </div>
-  )
-}
-
-function FavoritesTab() {
-  const { t } = useTranslation()
-  const [data, setData] = useState<FavoriteItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    getFavorites()
-      .then((res) => setData(res ?? []))
-      .catch(() => {})
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
-      </div>
-    )
-  }
-
-  if ((data ?? []).length === 0) {
-    return (
-      <div className="rounded-2xl bg-muted/40 py-20 text-center text-muted-foreground">
-        <Star className="mx-auto mb-3 h-10 w-10 opacity-30" />
-        {t('profile.noFavorites')}
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      <h2 className="text-base font-semibold">{t('profile.favorites')}</h2>
-      {data.map((item, idx) => (
-        <Card key={`${item.questionId}-${idx}`}>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Badge variant="outline" className="mb-1 text-xs">{item.topicName}</Badge>
-                <p className="text-sm">{item.questionText}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t('profile.favoritedAt', { date: new Date(item.createdAt).toLocaleDateString() })}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   )
 }

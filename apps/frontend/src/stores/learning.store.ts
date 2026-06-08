@@ -173,12 +173,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async enrollUnit(unitId) {
-    try {
-      await learningApi.startUnit(unitId)
-      await getState().refreshMyUnits()
-    } catch {
-      // ignore
-    }
+    await learningApi.startUnit(unitId)
+    await getState().refreshMyUnits()
   },
 
   async quitUnit(unitId) {
