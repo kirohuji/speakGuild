@@ -109,8 +109,9 @@
 | `TENCENT_SECRET_ID` | 🟡 Secret | 腾讯云 API 密钥 ID（与 COS 可共用） | — |
 | `TENCENT_SECRET_KEY` | 🟡 Secret | 腾讯云 API 密钥 Key | — |
 | `TENCENT_REGION` | 🟢 Variable | 语音识别服务地域 | `ap-guangzhou` |
+| `STT_PROVIDER` | 🟢 Variable | STT 供应商选择 | `whisper`（可选 `tencent`） |
 
-> 代码引用：`tencent-stt.provider.ts`。未配置时 Tencent STT 不可用，不影响 Whisper。
+> 代码引用：`tts.service.ts:45`、`tencent-stt.provider.ts`。未配置 Tencent 密钥时自动回退 Whisper。
 
 ---
 

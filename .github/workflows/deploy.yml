@@ -64,6 +64,7 @@ jobs:
           echo "TENCENT_SECRET_ID=${{ secrets.TENCENT_SECRET_ID }}" >> /tmp/deploy.env
           echo "TENCENT_SECRET_KEY=${{ secrets.TENCENT_SECRET_KEY }}" >> /tmp/deploy.env
           echo "TENCENT_REGION=${{ vars.TENCENT_REGION || 'ap-guangzhou' }}" >> /tmp/deploy.env
+          echo "STT_PROVIDER=${{ vars.STT_PROVIDER || 'whisper' }}" >> /tmp/deploy.env
 
       - name: Sync code and env to server
         run: |
