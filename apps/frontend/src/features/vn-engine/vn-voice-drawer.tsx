@@ -14,14 +14,14 @@ import { transcribeRecording } from '@/lib/practice-ai-api'
 // 音波可视化条（纯 CSS 动画，录音时激活）
 // ---------------------------------------------------------------------------
 function WaveformBars({ active }: { active: boolean }) {
-  const barCount = 32
+  const barCount = 24
   return (
-    <div className="flex items-center justify-center gap-[2px] h-16 px-4">
+    <div className="flex h-9 items-center justify-center gap-[2px] px-2">
       {Array.from({ length: barCount }).map((_, i) => (
         <div
           key={i}
           className={cn(
-            'w-[3px] rounded-full bg-primary/30 transition-all duration-150',
+            'w-[2.5px] rounded-full bg-primary/30 transition-all duration-150',
             active ? 'animate-waveform' : 'h-1',
           )}
           style={{
@@ -269,141 +269,152 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[70vh] px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+      <DrawerContent className="mx-auto max-h-[46dvh] w-full max-w-[520px] overflow-hidden border-border/45 bg-background/55 px-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-xl">
         {/* 隐藏音频元素 */}
         <audio ref={audioRef} src={lastAudioUrlRef.current ?? undefined} preload="auto" />
 
-        <DrawerHeader className="pb-2">
-          <DrawerTitle className="text-base">语音输入</DrawerTitle>
+        <DrawerHeader className="border-b border-border/45 px-4 pb-2 pt-2 text-left">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <DrawerTitle className="text-sm font-semibold tracking-normal">语音输入</DrawerTitle>
+              <p className="sr-only">
+                {isRecording ? '正在收音，讲完后点停止' : isDone ? '检查识别内容后发送' : '录音后自动转写成文字'}
+              </p>
+            </div>
+            <div className={cn(
+              'inline-flex h-6 items-center gap-1.5 rounded-lg bg-muted/70 px-2 text-[11px] font-medium text-muted-foreground ring-1 ring-border/45',
+              isRecording && 'text-rose-600',
+              isProcessing && 'text-primary',
+              isDone && 'text-primary',
+            )}>
+              <span className={cn(
+                'size-1.5 rounded-full',
+                isRecording ? 'animate-pulse bg-rose-500' : isProcessing ? 'bg-primary' : isDone ? 'bg-emerald-500' : 'bg-muted-foreground/50',
+              )} />
+              {isRecording ? fmt(elapsed) : isProcessing ? '识别中' : isDone ? '已识别' : '待录音'}
+            </div>
+          </div>
         </DrawerHeader>
 
-        {/* ---- 转写文字展示区 ---- */}
-        <div className="min-h-[60px] rounded-xl bg-muted/50 px-4 py-3 mb-4">
-          {isProcessing ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              正在识别语音…
-            </div>
-          ) : isDone ? (
-            <p className="text-base leading-relaxed text-foreground">
-              {(voiceState as any).text}
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {isRecording ? '正在聆听…' : '点击下方按钮开始录音'}
-            </p>
-          )}
-        </div>
-
-        {/* ---- 错误提示 ---- */}
-        {error && (
-          <div className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {error}
-          </div>
-        )}
-
-        {/* ---- 音波图 ---- */}
-        <div className="mb-2">
-          <WaveformBars active={isRecording} />
-        </div>
-
-        {/* ---- 计时 ---- */}
-        {isRecording && (
-          <div className="mb-3 flex items-center justify-center gap-2">
-            <span className="size-2 animate-pulse rounded-full bg-rose-500" />
-            <span className="tabular-nums text-sm text-muted-foreground">{fmt(elapsed)}</span>
-          </div>
-        )}
-        {!isRecording && (
-          <div className="mb-3 h-5" /> /* 占位保持布局 */
-        )}
-
-        {/* ---- 操作按钮行 ---- */}
-        <div className="flex items-center justify-center gap-4 mb-4">
-          {/* 左侧占位，保持中间按钮居中 */}
-          <div className="w-12" />
-
-          {/* 中间：录音/停止按钮 */}
-          <button
-            type="button"
-            disabled={isProcessing}
-            onClick={() => {
-              if (isRecording) stopRecording()
-              else startRecording()
-            }}
-            className={cn(
-              'flex size-16 items-center justify-center rounded-full transition-all duration-200 active:scale-95 disabled:opacity-40',
-              isRecording
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
-                : 'bg-primary text-primary-foreground shadow-lg shadow-primary/30',
-            )}
-          >
+        <div className="space-y-2 px-4 pt-3">
+          <div className={cn(
+            'min-h-[52px] max-h-[86px] overflow-y-auto rounded-lg bg-muted/70 px-3 py-2 ring-1 ring-border/45 transition-colors',
+            isDone && 'ring-primary/25',
+          )}>
             {isProcessing ? (
-              <Loader2 className="size-6 animate-spin" />
-            ) : isRecording ? (
-              <Square className="size-6 fill-current" />
+              <div className="flex h-9 items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin text-primary" />
+                正在识别语音…
+              </div>
+            ) : isDone ? (
+              <p className="text-sm font-medium leading-6 text-foreground">
+                {(voiceState as any).text}
+              </p>
             ) : (
-              <Mic className="size-6" />
+              <div className="flex h-9 flex-col items-center justify-center text-center">
+                <p className="text-sm font-medium text-foreground">
+                  {isRecording ? '正在聆听…' : '准备好后开始录音'}
+                </p>
+                <p className="sr-only">
+                  {isRecording ? '声音会被保留用于回放' : '支持直接录音，也可以上传音频测试识别'}
+                </p>
+              </div>
             )}
-          </button>
+          </div>
 
-          {/* 右侧按钮组 */}
-          <div className="flex flex-col items-center gap-2 w-12">
-            {/* 回放按钮（仅在有录音时显示） */}
-            {hasRecording && !isRecording && (
-              <button
-                type="button"
-                aria-label={isPlaying ? '暂停回放' : '回放录音'}
-                onClick={togglePlayback}
-                className={cn(
-                  'flex size-12 items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all hover:bg-muted active:scale-95',
-                  isPlaying && 'border-primary text-primary bg-primary/10',
-                )}
-              >
-                {isPlaying ? (
-                  <Pause className="size-5 fill-current" />
-                ) : (
-                  <Play className="size-5 fill-current ml-0.5" />
-                )}
-              </button>
-            )}
+          {error && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </div>
+          )}
 
-            {/* 测试：上传音频文件 */}
-            {!isRecording && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="audio/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
+          <div className="rounded-lg bg-muted/70 px-2 py-1 ring-1 ring-border/45">
+            <WaveformBars active={isRecording} />
+          </div>
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div className="flex justify-end">
+              {hasRecording && !isRecording && (
                 <button
                   type="button"
-                  aria-label="上传音频测试"
-                  title="上传音频文件测试 STT"
-                  disabled={isProcessing}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex size-8 items-center justify-center rounded-full border border-dashed border-border/60 text-muted-foreground/50 transition-all hover:border-primary/40 hover:text-primary/60 active:scale-95 disabled:opacity-30"
+                  aria-label={isPlaying ? '暂停回放' : '回放录音'}
+                  title={isPlaying ? '暂停回放' : '回放录音'}
+                  onClick={togglePlayback}
+                  className={cn(
+                    'flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-foreground active:scale-95',
+                    isPlaying && 'bg-primary/10 text-primary ring-primary/25',
+                  )}
                 >
-                  <FileAudio className="size-3.5" />
+                  {isPlaying ? (
+                    <Pause className="size-3.5 fill-current" />
+                  ) : (
+                    <Play className="ml-0.5 size-3.5 fill-current" />
+                  )}
                 </button>
-              </>
+              )}
+            </div>
+
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={() => {
+                if (isRecording) stopRecording()
+                else startRecording()
+              }}
+              className={cn(
+                'flex size-12 items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-40',
+                isRecording
+                  ? 'bg-rose-500 text-white shadow-sm'
+                  : 'bg-primary text-primary-foreground shadow-sm',
+              )}
+            >
+              {isProcessing ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : isRecording ? (
+                <Square className="size-5 fill-current" />
+              ) : (
+                <Mic className="size-5" />
+              )}
+            </button>
+
+            <div className="flex justify-start">
+              {!isRecording && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <button
+                    type="button"
+                    aria-label="上传音频测试"
+                    title="上传音频文件测试 STT"
+                    disabled={isProcessing}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex size-9 items-center justify-center rounded-lg border border-dashed border-border/55 bg-muted/70 text-muted-foreground transition-all hover:border-primary/40 hover:bg-muted hover:text-primary active:scale-95 disabled:opacity-30"
+                  >
+                    <FileAudio className="size-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(!isDone && 'hidden')}>
+            {isDone && (
+              <Button
+                onClick={confirmText}
+                className="h-10 w-full gap-2 rounded-lg font-semibold"
+                size="lg"
+              >
+                <Send className="size-4" />
+                使用这段文字
+              </Button>
             )}
           </div>
         </div>
-
-        {/* ---- 确认按钮 ---- */}
-        {isDone && (
-          <Button
-            onClick={confirmText}
-            className="w-full gap-2"
-            size="lg"
-          >
-            <Send className="size-4" />
-            使用这段文字
-          </Button>
-        )}
       </DrawerContent>
     </Drawer>
   )

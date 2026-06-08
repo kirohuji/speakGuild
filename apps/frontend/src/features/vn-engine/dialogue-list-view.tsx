@@ -666,7 +666,27 @@ function ChatBubble({
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
-        <div className="rounded-lg bg-primary/15 px-3.5 py-2.5 text-foreground ring-1 ring-primary/20">
+        <div className={cn(
+          'relative rounded-lg bg-primary/15 px-3.5 py-2.5 text-foreground ring-1 ring-primary/20',
+          line.audioUrl && 'pr-11',
+        )}>
+          {line.audioUrl && (
+            <button
+              type="button"
+              aria-label="回放录音"
+              title="回放录音"
+              onClick={(event) => {
+                event.stopPropagation()
+                handlePlayAudio()
+              }}
+              className={cn(
+                'absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/75 text-primary shadow-sm ring-1 ring-primary/20 backdrop-blur transition-colors hover:bg-primary/10 active:scale-95',
+                audioPlaying && 'bg-primary/10',
+              )}
+            >
+              <Volume2 className={cn('size-3.5', audioPlaying && 'animate-pulse')} />
+            </button>
+          )}
           <p className="leading-relaxed" style={{ fontSize }}>
             {displayedText}
             {isTyping && (
@@ -674,22 +694,6 @@ function ChatBubble({
             )}
           </p>
         </div>
-        {/* 录音回放按钮 */}
-        {line.audioUrl && (
-          <button
-            type="button"
-            onClick={handlePlayAudio}
-            className={cn(
-              'mt-1 ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors',
-              audioPlaying
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            <Volume2 className={cn('size-3', audioPlaying && 'animate-pulse')} />
-            {audioPlaying ? '播放中…' : '回放'}
-          </button>
-        )}
         {bilingual && line.translation && (
           <p className="mt-1 mr-1 text-right text-[12px] leading-relaxed text-muted-foreground">
             {displayedTranslation}

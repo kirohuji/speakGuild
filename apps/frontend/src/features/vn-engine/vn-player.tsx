@@ -512,8 +512,8 @@ export function VnPlayer({
   }, [fullText, settings.typewriter])
 
   useEffect(() => {
-    // 用户录音不自动播放（仅 NPC TTS 自动播放）
-    if (!audioUrl || displayLine?.isUser) return
+    // Auto-play any current dialogue audio, including user recordings.
+    if (!audioUrl) return
     const audio = new Audio(audioUrl)
     const promise = audio.play()
     if (promise) {
@@ -522,7 +522,7 @@ export function VnPlayer({
     return () => {
       audio.pause()
     }
-  }, [audioUrl, displayLine?.isUser])
+  }, [audioUrl])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)
@@ -748,6 +748,17 @@ export function VnPlayer({
             </div>
           )}
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full border border-primary/20 bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
+            {displayLine?.isUser && displayLine.audioUrl && (
+              <VnIconButton
+                label="回放录音"
+                onClick={() => {
+                  const audio = new Audio(displayLine.audioUrl!)
+                  audio.play().catch(() => {})
+                }}
+              >
+                <Volume2 className="size-3.5" />
+              </VnIconButton>
+            )}
             <VnIconButton
               label={t('vnHistory.prevLine')}
               disabled={history.length <= 1 || lineIndex <= 0}
@@ -778,28 +789,16 @@ export function VnPlayer({
                       className="mt-3 size-[72px] shrink-0 rounded-2xl object-cover ring-1 ring-border/70"
                     />
                   )}
-                  <div className={cn('min-w-0 space-y-2 pt-2', currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '')}>
+                  <div className={cn(
+                    'min-w-0 space-y-2 pt-2',
+                    currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '',
+                  )}>
                     <p className="font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
                       <TappableText text={displayedText} onWordDetail={onWordInsight} />
                       {canAdvance && (
                         <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-primary/70 align-middle" />
                       )}
                     </p>
-                    {/* 用户录音回放按钮 */}
-                    {displayLine.isUser && displayLine.audioUrl && (
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary transition-colors hover:bg-primary/20"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const audio = new Audio(displayLine.audioUrl!)
-                          audio.play().catch(() => {})
-                        }}
-                      >
-                        <Volume2 className="size-3" />
-                        回放录音
-                      </button>
-                    )}
                     {settings.bilingual && displayLine.translation && (
                       <p className="text-xs l sm:rounded-2xltext-muted-foreground">{displayedTranslation}</p>
                     )}
