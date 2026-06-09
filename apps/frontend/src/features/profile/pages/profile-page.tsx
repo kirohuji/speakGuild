@@ -12,7 +12,7 @@ import {
   GraduationCap, CheckCircle2, Lightbulb, Crown, Sun, Moon, Monitor,
   Globe, Database, Zap, TrendingUp, Target, Flame, Camera,
   IdCard, PencilLine, LogOut, ShieldAlert, Phone, Mail,
-  MessageSquare, Gift, KeyRound, HardDrive, RefreshCw,
+  MessageSquare, Gift, KeyRound, HardDrive,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -65,7 +65,7 @@ import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/ap
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
-import { learningContentRepository, offlineStorageService, type OfflineStorageStats } from '@/lib/offline'
+import { learningContentRepository, offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -83,7 +83,7 @@ const mobileTitles: Record<string, string> = {
   records: 'profile.records',
   words: 'profile.words',
   account: 'profile.account',
-  settings: 'profile.settings',
+  settings: '系统设置',
   appearance: 'profile.theme',
   member: 'member.title',
   storage: '存储管理',
@@ -308,7 +308,7 @@ function formatBytes(bytes?: number) {
 function MobileStorageView() {
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [clearing, setClearing] = useState(false)
+  const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
 
   const refresh = useCallback(() => {
     setLoading(true)
@@ -321,42 +321,121 @@ function MobileStorageView() {
     refresh()
   }, [refresh])
 
-  const handleClear = useCallback(async () => {
-    setClearing(true)
+  const handleClear = useCallback(async (category: OfflineCacheCategory) => {
+    setClearing(category)
     try {
-      await offlineStorageService.clearCache()
-      toast.success('缓存已清理')
+      await offlineStorageService.clearCategory(category)
+      toast.success(category === 'all' ? '缓存已全部清除' : '缓存已清除')
       await offlineStorageService.getStats().then(setStats)
     } catch (error: any) {
       toast.error(error?.message || '清理失败')
     } finally {
-      setClearing(false)
+      setClearing(null)
     }
   }, [])
 
+  const totalBytes = stats?.totalCacheBytes ?? 0
+  const segments = [
+    { key: 'packs' as const, label: '学习包内容', value: stats?.downloadedPackBytes ?? 0, color: 'bg-blue-500' },
+    { key: 'assets' as const, label: '资源文件', value: stats?.localAssetBytes ?? 0, color: 'bg-emerald-500' },
+    { key: 'dictionary' as const, label: '词典缓存', value: stats?.dictionaryBytes ?? 0, color: 'bg-violet-500' },
+    { key: 'expressions' as const, label: '学习库缓存', value: stats?.expressionBytes ?? 0, color: 'bg-amber-500' },
+  ]
+  const activeSegments = segments.filter((segment) => segment.value > 0)
+
+  const ClearButton = ({ category }: { category: OfflineCacheCategory }) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      disabled={loading || clearing !== null}
+      onClick={(event) => {
+        event.stopPropagation()
+        void handleClear(category)
+      }}
+      className="h-8 px-2 text-xs text-red-500 hover:text-red-600"
+    >
+      {clearing === category ? '清除中' : '清除'}
+    </Button>
+  )
+
   return (
     <div className="space-y-5">
+      <IosSection header="缓存分布">
+        <div className="space-y-4 px-4 py-4">
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-medium">本地缓存总量</span>
+              <span className="text-sm text-muted-foreground">{loading ? '...' : formatBytes(totalBytes)}</span>
+            </div>
+            <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+              {activeSegments.length === 0 || totalBytes <= 0 ? (
+                <div className="h-full w-full bg-muted-foreground/20" />
+              ) : (
+                activeSegments.map((segment) => (
+                  <div
+                    key={segment.key}
+                    className={segment.color}
+                    style={{ width: `${Math.max((segment.value / totalBytes) * 100, 5)}%` }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {segments.map((segment) => (
+              <div key={segment.key} className="flex items-center justify-between gap-2 text-xs">
+                <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                  <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', segment.color)} />
+                  <span className="truncate">{segment.label}</span>
+                </span>
+                <span className="flex-shrink-0 font-medium">{loading ? '...' : formatBytes(segment.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </IosSection>
+
       <IosSection header="本地学习数据">
-        <IosRow icon={HardDrive} iconBg="bg-blue-500" label="已下载学习包" value={loading ? '...' : String(stats?.downloadedPackCount ?? 0)} />
-        <IosRow icon={Database} iconBg="bg-violet-500" label="本地资源文件" subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} 个文件`} value={loading ? '...' : formatBytes(stats?.localAssetBytes)} />
-        <IosRow label="离线词典缓存" value={loading ? '...' : String(stats?.dictionaryEntryCount ?? 0)} />
+        <IosRow
+          icon={HardDrive}
+          iconBg="bg-blue-500"
+          label="已下载学习包"
+          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} 个学习包`}
+          right={<ClearButton category="packs" />}
+        />
+        <IosRow
+          icon={Database}
+          iconBg="bg-emerald-500"
+          label="本地资源文件"
+          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} 个文件 · ${formatBytes(stats?.localAssetBytes)}`}
+          right={<ClearButton category="assets" />}
+        />
+        <IosRow
+          label="离线词典缓存"
+          subtitle={loading ? undefined : `${stats?.dictionaryEntryCount ?? 0} 条记录 · ${formatBytes(stats?.dictionaryBytes)}`}
+          right={<ClearButton category="dictionary" />}
+        />
+        <IosRow
+          label="学习库缓存"
+          subtitle={loading ? undefined : `${stats?.expressionEntryCount ?? 0} 条记录 · ${formatBytes(stats?.expressionBytes)}`}
+          right={<ClearButton category="expressions" />}
+          last
+        />
+      </IosSection>
+
+      <IosSection header="同步状态">
         <IosRow label="待同步操作" value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)} last />
       </IosSection>
 
-      <IosSection header="浏览器/应用存储">
-        <IosRow label="已用空间估算" value={loading ? '...' : formatBytes(stats?.storageEstimate?.usage)} />
-        <IosRow label="可用配额估算" value={loading ? '...' : formatBytes(stats?.storageEstimate?.quota)} last />
-      </IosSection>
-
       <IosSection>
-        <IosRow icon={RefreshCw} iconBg="bg-slate-500" label="刷新统计" onTap={refresh} />
         <IosRow
           icon={Trash2}
           iconBg="bg-red-500"
-          label={clearing ? '清理中...' : '清除离线缓存'}
-          subtitle="保留生词本、练习进度和待同步队列"
+          label={clearing === 'all' ? '清除中...' : '全部清除'}
+          subtitle="清除学习包、资源文件、词典缓存和学习库缓存"
           last
-          onTap={clearing ? undefined : handleClear}
+          onTap={clearing ? undefined : () => handleClear('all')}
         />
       </IosSection>
     </div>
@@ -667,7 +746,8 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
 
       <IosSection>
         <IosRow
-          label={t('profile.clearCache')}
+          label="存储管理"
+          subtitle="查看缓存分布并清理本地学习数据"
           onTap={() => onNavigate?.('storage')}
         />
         <IosRow
