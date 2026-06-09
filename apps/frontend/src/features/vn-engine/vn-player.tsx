@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { assetCacheService } from '@/lib/offline'
+import { isNative } from '@/lib/native'
 import { VnInputPanel } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
 import { TappableText } from './dialogue-list-view'
@@ -542,15 +543,27 @@ export function VnPlayer({
   }, [fullText, settings.typewriter])
 
   useEffect(() => {
-    // Auto-play any current dialogue audio, including user recordings.
+    // Auto-play NPC dialogue / user recording audio.
+    // On iOS WKWebView .play() may throw AbortError if the source isn't
+    // buffered yet — just wait for canplay and retry once.
     if (!cachedAudioUrl) return
     const audio = new Audio(cachedAudioUrl)
+    audio.preload = 'auto'
+
     const promise = audio.play()
     if (promise) {
-      promise.catch((err) => console.warn('[VnPlayer] Audio play failed:', err.message))
+      promise.catch((err) => {
+        if (isNative() && err.name === 'AbortError') {
+          audio.addEventListener('canplay', () => audio.play().catch(() => {}), { once: true })
+        } else {
+          console.warn('[VnPlayer] Audio play failed:', err.message)
+        }
+      })
     }
+
     return () => {
       audio.pause()
+      audio.removeAttribute('src')
     }
   }, [cachedAudioUrl])
 
