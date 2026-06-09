@@ -1,10 +1,13 @@
 /**
  * SQLite schema for Capacitor offline storage.
  *
- * Each "store" becomes a SQLite table with:
+ * Most "stores" become a SQLite table with:
  *   - id TEXT PRIMARY KEY
  *   - data TEXT NOT NULL    (JSON-serialized value)
  *   - updated_at TEXT       (ISO-8601 timestamp)
+ *
+ * Tables that need fast lookup can additionally expose selected JSON fields as
+ * real columns while keeping the full object in data.
  *
  * Native recording bytes stay in Capacitor Filesystem. Web does not cache
  * binary resource data.
@@ -12,7 +15,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 1
+export const DB_VERSION = 2
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -51,6 +54,11 @@ export const DDL: Record<TableName, string> = {
   downloaded_packs: `
     CREATE TABLE IF NOT EXISTS downloaded_packs (
       id TEXT PRIMARY KEY NOT NULL,
+      pack_id TEXT,
+      status TEXT,
+      version INTEGER,
+      title TEXT,
+      installed_at TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -123,8 +131,27 @@ export const DDL: Record<TableName, string> = {
 /** All CREATE TABLE statements as a single batch. */
 export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
 
+/** Safe best-effort schema upgrades for existing databases. */
+export const MIGRATIONS = [
+  `ALTER TABLE downloaded_packs ADD COLUMN pack_id TEXT`,
+  `ALTER TABLE downloaded_packs ADD COLUMN status TEXT`,
+  `ALTER TABLE downloaded_packs ADD COLUMN version INTEGER`,
+  `ALTER TABLE downloaded_packs ADD COLUMN title TEXT`,
+  `ALTER TABLE downloaded_packs ADD COLUMN installed_at TEXT`,
+  `UPDATE downloaded_packs
+   SET
+     pack_id = COALESCE(pack_id, json_extract(data, '$.packId')),
+     status = COALESCE(status, json_extract(data, '$.status')),
+     version = COALESCE(version, json_extract(data, '$.version')),
+     title = COALESCE(title, json_extract(data, '$.title')),
+     installed_at = COALESCE(installed_at, json_extract(data, '$.installedAt'))`,
+]
+
 /** Indexes for commonly queried fields. */
 export const INDEXES = [
+  // downloaded_packs: fast installed/missing checks and maintenance.
+  `CREATE INDEX IF NOT EXISTS idx_downloaded_packs_pack_id ON downloaded_packs (pack_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_downloaded_packs_status ON downloaded_packs (status)`,
   // expression_entries: filter by kind or remoteId
   `CREATE INDEX IF NOT EXISTS idx_expression_kind ON expression_entries (json_extract(data, '$.kind'))`,
   `CREATE INDEX IF NOT EXISTS idx_expression_remoteId ON expression_entries (json_extract(data, '$.remoteId'))`,

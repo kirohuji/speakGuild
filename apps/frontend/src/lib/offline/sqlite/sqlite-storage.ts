@@ -9,7 +9,7 @@
  */
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
 import { Capacitor } from '@capacitor/core'
-import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES } from './schema'
+import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES, MIGRATIONS } from './schema'
 import { createSqliteJsonStore } from './sqlite-json-store'
 
 let dbPromise: Promise<SQLiteDBConnection> | null = null
@@ -53,6 +53,9 @@ async function openDb(): Promise<SQLiteDBConnection> {
 
 async function migrate(db: SQLiteDBConnection, _fromVersion: number): Promise<void> {
   await db.execute(ALL_DDL)
+  for (const migration of MIGRATIONS) {
+    try { await db.execute(migration) } catch { /* migration may already be applied */ }
+  }
   for (const idx of INDEXES) {
     try { await db.execute(idx) } catch { /* index may already exist */ }
   }

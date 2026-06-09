@@ -8,6 +8,16 @@ export interface SqliteJsonExecutor {
   afterWrite?(): Promise<void>
 }
 
+function downloadedPackColumns(value: any) {
+  return [
+    value?.packId ?? value?.id ?? null,
+    value?.status ?? null,
+    typeof value?.version === 'number' ? value.version : null,
+    value?.title ?? null,
+    value?.installedAt ?? null,
+  ]
+}
+
 export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
   let writeQueue = Promise.resolve()
 
@@ -44,6 +54,23 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
 
     async put<T>(storeName: TableName, value: T & { id: string }): Promise<void> {
       try {
+        if (storeName === 'downloaded_packs') {
+          await write(
+            `INSERT INTO downloaded_packs (id, pack_id, status, version, title, installed_at, data, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               pack_id = excluded.pack_id,
+               status = excluded.status,
+               version = excluded.version,
+               title = excluded.title,
+               installed_at = excluded.installed_at,
+               data = excluded.data,
+               updated_at = excluded.updated_at`,
+            [value.id, ...downloadedPackColumns(value), JSON.stringify(value), new Date().toISOString()],
+          )
+          return
+        }
+
         await write(
           `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
@@ -60,6 +87,23 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       try {
         await enqueueWrite(async () => {
           for (const value of values) {
+            if (storeName === 'downloaded_packs') {
+              await executor.run(
+                `INSERT INTO downloaded_packs (id, pack_id, status, version, title, installed_at, data, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET
+                   pack_id = excluded.pack_id,
+                   status = excluded.status,
+                   version = excluded.version,
+                   title = excluded.title,
+                   installed_at = excluded.installed_at,
+                   data = excluded.data,
+                   updated_at = excluded.updated_at`,
+                [value.id, ...downloadedPackColumns(value), JSON.stringify(value), new Date().toISOString()],
+              )
+              continue
+            }
+
             await executor.run(
               `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
                ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,

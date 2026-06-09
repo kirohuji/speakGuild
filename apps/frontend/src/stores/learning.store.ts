@@ -204,6 +204,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   async quitUnit(unitId) {
     try {
       await learningRepository.quitUnit(unitId)
+      await learningPackService.uninstall(unitId)
+      const downloadedPacks = await learningPackService.listInstalled()
+      set({ downloadedPacks })
       await getState().refreshMyUnits()
     } catch {
       // ignore
