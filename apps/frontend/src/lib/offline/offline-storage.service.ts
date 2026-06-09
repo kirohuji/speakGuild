@@ -4,6 +4,7 @@ import { localDb } from './unified-storage'
 import type { InstalledLearningPack } from './learning-pack.service'
 import type { LocalAsset } from './asset-cache.service'
 import type { TableName } from './sqlite/schema'
+import { learningContentRepository } from './learning-content.repository'
 
 export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'all'
 
@@ -116,6 +117,7 @@ export const offlineStorageService = {
 
     if (category === 'expressions') {
       await localDb.clear('expression_entries')
+      await learningContentRepository.clearExpressionCacheMarkers()
     }
   },
 

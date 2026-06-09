@@ -15,7 +15,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -66,6 +66,8 @@ export const DDL: Record<TableName, string> = {
   downloaded_unit_details: `
     CREATE TABLE IF NOT EXISTS downloaded_unit_details (
       id TEXT PRIMARY KEY NOT NULL,
+      unit_id TEXT,
+      topic_id TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -73,6 +75,8 @@ export const DDL: Record<TableName, string> = {
   ink_scripts: `
     CREATE TABLE IF NOT EXISTS ink_scripts (
       id TEXT PRIMARY KEY NOT NULL,
+      unit_id TEXT,
+      topic_id TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -87,6 +91,11 @@ export const DDL: Record<TableName, string> = {
   expression_entries: `
     CREATE TABLE IF NOT EXISTS expression_entries (
       id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      kind TEXT,
+      expression_type TEXT,
+      mastery_status TEXT,
+      sync_status TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -94,6 +103,12 @@ export const DDL: Record<TableName, string> = {
   user_progress: `
     CREATE TABLE IF NOT EXISTS user_progress (
       id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      progress_type TEXT,
+      scene_id TEXT,
+      chunk_id TEXT,
+      session_id TEXT,
+      sync_status TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -101,6 +116,14 @@ export const DDL: Record<TableName, string> = {
   practice_records: `
     CREATE TABLE IF NOT EXISTS practice_records (
       id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      record_type TEXT,
+      session_id TEXT,
+      local_session_id TEXT,
+      topic_id TEXT,
+      scene_id TEXT,
+      status TEXT,
+      sync_status TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -108,6 +131,10 @@ export const DDL: Record<TableName, string> = {
   local_assets: `
     CREATE TABLE IF NOT EXISTS local_assets (
       id TEXT PRIMARY KEY NOT NULL,
+      asset_id TEXT,
+      remote_url TEXT,
+      status TEXT,
+      mime_type TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -115,6 +142,13 @@ export const DDL: Record<TableName, string> = {
   outbox: `
     CREATE TABLE IF NOT EXISTS outbox (
       id TEXT PRIMARY KEY NOT NULL,
+      entity_type TEXT,
+      entity_id TEXT,
+      operation TEXT,
+      status TEXT,
+      client_mutation_id TEXT,
+      retry_count INTEGER,
+      created_at TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -122,6 +156,9 @@ export const DDL: Record<TableName, string> = {
   recordings: `
     CREATE TABLE IF NOT EXISTS recordings (
       id TEXT PRIMARY KEY NOT NULL,
+      session_id TEXT,
+      round INTEGER,
+      local_path TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -131,34 +168,37 @@ export const DDL: Record<TableName, string> = {
 /** All CREATE TABLE statements as a single batch. */
 export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
 
-/** Safe best-effort schema upgrades for existing databases. */
-export const MIGRATIONS = [
-  `ALTER TABLE downloaded_packs ADD COLUMN pack_id TEXT`,
-  `ALTER TABLE downloaded_packs ADD COLUMN status TEXT`,
-  `ALTER TABLE downloaded_packs ADD COLUMN version INTEGER`,
-  `ALTER TABLE downloaded_packs ADD COLUMN title TEXT`,
-  `ALTER TABLE downloaded_packs ADD COLUMN installed_at TEXT`,
-  `UPDATE downloaded_packs
-   SET
-     pack_id = COALESCE(pack_id, json_extract(data, '$.packId')),
-     status = COALESCE(status, json_extract(data, '$.status')),
-     version = COALESCE(version, json_extract(data, '$.version')),
-     title = COALESCE(title, json_extract(data, '$.title')),
-     installed_at = COALESCE(installed_at, json_extract(data, '$.installedAt'))`,
-]
-
 /** Indexes for commonly queried fields. */
 export const INDEXES = [
   // downloaded_packs: fast installed/missing checks and maintenance.
   `CREATE INDEX IF NOT EXISTS idx_downloaded_packs_pack_id ON downloaded_packs (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_downloaded_packs_status ON downloaded_packs (status)`,
-  // expression_entries: filter by kind or remoteId
-  `CREATE INDEX IF NOT EXISTS idx_expression_kind ON expression_entries (json_extract(data, '$.kind'))`,
-  `CREATE INDEX IF NOT EXISTS idx_expression_remoteId ON expression_entries (json_extract(data, '$.remoteId'))`,
+  `CREATE INDEX IF NOT EXISTS idx_downloaded_unit_details_unit_id ON downloaded_unit_details (unit_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_downloaded_unit_details_topic_id ON downloaded_unit_details (topic_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_ink_scripts_unit_id ON ink_scripts (unit_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_ink_scripts_topic_id ON ink_scripts (topic_id)`,
+  // expression_entries: filter by kind or remote id.
+  `CREATE INDEX IF NOT EXISTS idx_expression_kind ON expression_entries (kind)`,
+  `CREATE INDEX IF NOT EXISTS idx_expression_remote_id ON expression_entries (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_expression_type ON expression_entries (expression_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_expression_mastery_status ON expression_entries (mastery_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_progress_remote_id ON user_progress (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_progress_type ON user_progress (progress_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_progress_scene_id ON user_progress (scene_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_progress_chunk_id ON user_progress (chunk_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_progress_session_id ON user_progress (session_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_practice_records_remote_id ON practice_records (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_practice_records_type ON practice_records (record_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_practice_records_status ON practice_records (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_practice_records_sync_status ON practice_records (sync_status)`,
   // outbox: filter by status
-  `CREATE INDEX IF NOT EXISTS idx_outbox_status ON outbox (json_extract(data, '$.status'))`,
+  `CREATE INDEX IF NOT EXISTS idx_outbox_status ON outbox (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_outbox_entity ON outbox (entity_type, entity_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_outbox_client_mutation_id ON outbox (client_mutation_id)`,
   // practice_records: filter by sessionId
-  `CREATE INDEX IF NOT EXISTS idx_practice_sessionId ON practice_records (json_extract(data, '$.sessionId'))`,
+  `CREATE INDEX IF NOT EXISTS idx_practice_sessionId ON practice_records (session_id)`,
   // local_assets: filter by status
-  `CREATE INDEX IF NOT EXISTS idx_local_assets_status ON local_assets (json_extract(data, '$.status'))`,
+  `CREATE INDEX IF NOT EXISTS idx_local_assets_status ON local_assets (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_local_assets_remote_url ON local_assets (remote_url)`,
+  `CREATE INDEX IF NOT EXISTS idx_recordings_session_id ON recordings (session_id)`,
 ]

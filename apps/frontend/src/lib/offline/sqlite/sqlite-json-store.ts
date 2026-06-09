@@ -8,14 +8,115 @@ export interface SqliteJsonExecutor {
   afterWrite?(): Promise<void>
 }
 
-function downloadedPackColumns(value: any) {
-  return [
-    value?.packId ?? value?.id ?? null,
-    value?.status ?? null,
-    typeof value?.version === 'number' ? value.version : null,
-    value?.title ?? null,
-    value?.installedAt ?? null,
-  ]
+type ColumnExtractor = [columnName: string, jsonKey: string, extract: (value: any) => any]
+
+const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
+  downloaded_packs: [
+    ['pack_id', 'packId', (value) => value?.packId ?? value?.id ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['version', 'version', (value) => typeof value?.version === 'number' ? value.version : null],
+    ['title', 'title', (value) => value?.title ?? null],
+    ['installed_at', 'installedAt', (value) => value?.installedAt ?? null],
+  ],
+  downloaded_unit_details: [
+    ['unit_id', 'unitId', (value) => value?.unitId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+  ],
+  ink_scripts: [
+    ['unit_id', 'unitId', (value) => value?.unitId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+  ],
+  expression_entries: [
+    ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
+    ['kind', 'kind', (value) => value?.kind ?? null],
+    ['expression_type', 'type', (value) => value?.type ?? null],
+    ['mastery_status', 'masteryStatus', (value) => value?.masteryStatus ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+  ],
+  user_progress: [
+    ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
+    ['progress_type', 'type', (value) => value?.type ?? null],
+    ['scene_id', 'sceneId', (value) => value?.sceneId ?? null],
+    ['chunk_id', 'chunkId', (value) => value?.chunkId ?? null],
+    ['session_id', 'sessionId', (value) => value?.sessionId ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+  ],
+  practice_records: [
+    ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
+    ['record_type', 'type', (value) => value?.type ?? null],
+    ['session_id', 'sessionId', (value) => value?.sessionId ?? null],
+    ['local_session_id', 'localSessionId', (value) => value?.localSessionId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['scene_id', 'sceneId', (value) => value?.sceneId ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+  ],
+  local_assets: [
+    ['asset_id', 'assetId', (value) => value?.assetId ?? value?.id ?? null],
+    ['remote_url', 'remoteUrl', (value) => value?.remoteUrl ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['mime_type', 'mimeType', (value) => value?.mimeType ?? null],
+  ],
+  outbox: [
+    ['entity_type', 'entityType', (value) => value?.entityType ?? null],
+    ['entity_id', 'entityId', (value) => value?.entityId ?? null],
+    ['operation', 'operation', (value) => value?.operation ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['client_mutation_id', 'clientMutationId', (value) => value?.clientMutationId ?? null],
+    ['retry_count', 'retryCount', (value) => typeof value?.retryCount === 'number' ? value.retryCount : null],
+    ['created_at', 'createdAt', (value) => value?.createdAt ?? null],
+  ],
+  recordings: [
+    ['session_id', 'sessionId', (value) => value?.sessionId ?? null],
+    ['round', 'round', (value) => typeof value?.round === 'number' ? value.round : null],
+    ['local_path', 'localPath', (value) => value?.localPath ?? null],
+  ],
+}
+
+function metadataFor(storeName: TableName, value: any) {
+  const extractors = COLUMN_EXTRACTORS[storeName] ?? []
+  return {
+    columns: extractors.map(([column]) => column),
+    values: extractors.map(([, , extract]) => extract(value)),
+    jsonKeys: extractors.map(([, jsonKey]) => jsonKey),
+  }
+}
+
+function jsonDataFor(storeName: TableName, value: any) {
+  const metadata = metadataFor(storeName, value)
+  const data = { ...value }
+  for (const key of metadata.jsonKeys) {
+    delete data[key]
+  }
+  return data
+}
+
+function hydrateRow<T>(storeName: TableName, row: Record<string, any>): T {
+  const value = JSON.parse(row.data) as Record<string, any>
+  for (const [columnName, jsonKey] of COLUMN_EXTRACTORS[storeName] ?? []) {
+    if (row[columnName] !== null && row[columnName] !== undefined) {
+      value[jsonKey] = row[columnName]
+    }
+  }
+  return value as T
+}
+
+function upsertSql(storeName: TableName, metadataColumns: string[]) {
+  const columns = ['id', ...metadataColumns, 'data', 'updated_at']
+  const placeholders = columns.map(() => '?').join(', ')
+  const updates = columns
+    .filter((column) => column !== 'id')
+    .map((column) => `${column} = excluded.${column}`)
+    .join(', ')
+
+  return `INSERT INTO "${storeName}" (${columns.join(', ')}) VALUES (${placeholders})
+          ON CONFLICT(id) DO UPDATE SET ${updates}`
+}
+
+function assertColumnName(columnName: string) {
+  if (!/^[a-z_][a-z0-9_]*$/i.test(columnName)) {
+    throw new Error(`Unsafe SQLite column name: ${columnName}`)
+  }
 }
 
 export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
@@ -41,11 +142,11 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
     async get<T>(storeName: TableName, id: string): Promise<T | null> {
       try {
         const rows = await executor.queryRows<{ data: string }>(
-          `SELECT data FROM "${storeName}" WHERE id = ?`,
+          `SELECT * FROM "${storeName}" WHERE id = ?`,
           [id],
         )
         if (rows.length === 0) return null
-        return JSON.parse(rows[0].data) as T
+        return hydrateRow<T>(storeName, rows[0] as any)
       } catch (error) {
         console.warn(`[${executor.label}] get failed for ${storeName}:${id}`, error)
         return null
@@ -54,27 +155,11 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
 
     async put<T>(storeName: TableName, value: T & { id: string }): Promise<void> {
       try {
-        if (storeName === 'downloaded_packs') {
-          await write(
-            `INSERT INTO downloaded_packs (id, pack_id, status, version, title, installed_at, data, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-             ON CONFLICT(id) DO UPDATE SET
-               pack_id = excluded.pack_id,
-               status = excluded.status,
-               version = excluded.version,
-               title = excluded.title,
-               installed_at = excluded.installed_at,
-               data = excluded.data,
-               updated_at = excluded.updated_at`,
-            [value.id, ...downloadedPackColumns(value), JSON.stringify(value), new Date().toISOString()],
-          )
-          return
-        }
-
+        const metadata = metadataFor(storeName, value)
+        const data = jsonDataFor(storeName, value)
         await write(
-          `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
-          [value.id, JSON.stringify(value), new Date().toISOString()],
+          upsertSql(storeName, metadata.columns),
+          [value.id, ...metadata.values, JSON.stringify(data), new Date().toISOString()],
         )
       } catch (error) {
         console.warn(`[${executor.label}] put failed for ${storeName}:${value.id}`, error)
@@ -87,27 +172,11 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       try {
         await enqueueWrite(async () => {
           for (const value of values) {
-            if (storeName === 'downloaded_packs') {
-              await executor.run(
-                `INSERT INTO downloaded_packs (id, pack_id, status, version, title, installed_at, data, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                 ON CONFLICT(id) DO UPDATE SET
-                   pack_id = excluded.pack_id,
-                   status = excluded.status,
-                   version = excluded.version,
-                   title = excluded.title,
-                   installed_at = excluded.installed_at,
-                   data = excluded.data,
-                   updated_at = excluded.updated_at`,
-                [value.id, ...downloadedPackColumns(value), JSON.stringify(value), new Date().toISOString()],
-              )
-              continue
-            }
-
+            const metadata = metadataFor(storeName, value)
+            const data = jsonDataFor(storeName, value)
             await executor.run(
-              `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
-               ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
-              [value.id, JSON.stringify(value), new Date().toISOString()],
+              upsertSql(storeName, metadata.columns),
+              [value.id, ...metadata.values, JSON.stringify(data), new Date().toISOString()],
             )
           }
           await executor.afterWrite?.()
@@ -128,12 +197,30 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
 
     async list<T>(storeName: TableName): Promise<T[]> {
       try {
-        const rows = await executor.queryRows<{ data: string }>(
-          `SELECT data FROM "${storeName}" ORDER BY updated_at DESC`,
+        const rows = await executor.queryRows<Record<string, any>>(
+          `SELECT * FROM "${storeName}" ORDER BY updated_at DESC`,
         )
-        return rows.map((row) => JSON.parse(row.data) as T)
+        return rows.map((row) => hydrateRow<T>(storeName, row))
       } catch (error) {
         console.warn(`[${executor.label}] list failed for ${storeName}`, error)
+        return []
+      }
+    },
+
+    async findByIndex<T>(
+      storeName: TableName,
+      columnName: string,
+      value: string | number | null,
+    ): Promise<T[]> {
+      try {
+        assertColumnName(columnName)
+        const rows = await executor.queryRows<Record<string, any>>(
+          `SELECT * FROM "${storeName}" WHERE ${columnName} ${value === null ? 'IS NULL' : '= ?'} ORDER BY updated_at DESC`,
+          value === null ? [] : [value],
+        )
+        return rows.map((row) => hydrateRow<T>(storeName, row))
+      } catch (error) {
+        console.warn(`[${executor.label}] findByIndex failed for ${storeName}.${columnName}`, error)
         return []
       }
     },
@@ -162,11 +249,11 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       predicate: (value: T & { id: string }) => boolean,
     ): Promise<void> {
       try {
-        const rows = await executor.queryRows<{ data: string }>(
-          `SELECT data FROM "${storeName}" ORDER BY updated_at DESC`,
+        const rows = await executor.queryRows<Record<string, any>>(
+          `SELECT * FROM "${storeName}" ORDER BY updated_at DESC`,
         )
         const ids = rows
-          .map((row) => JSON.parse(row.data) as T & { id: string })
+          .map((row) => hydrateRow<T & { id: string }>(storeName, row))
           .filter(predicate)
           .map((value) => value.id)
 

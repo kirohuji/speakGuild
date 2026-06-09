@@ -24,6 +24,7 @@ export class SyncService {
       status: 'synced' | 'failed' | 'skipped';
       error?: string;
       remoteId?: string;
+      remoteItem?: any;
     }[] = [];
 
     for (const item of items) {
@@ -33,6 +34,7 @@ export class SyncService {
           clientMutationId: item.clientMutationId,
           status: result.handled ? 'synced' : 'skipped',
           remoteId: result.remoteId,
+          remoteItem: result.remoteItem,
         });
       } catch (error: any) {
         results.push({
@@ -49,7 +51,7 @@ export class SyncService {
   private async pushItem(
     userId: string,
     item: OutboxItem,
-  ): Promise<{ handled: boolean; remoteId?: string }> {
+  ): Promise<{ handled: boolean; remoteId?: string; remoteItem?: any }> {
     const { entityType, entityId, operation, payload } = item;
 
     // ---- 学习单元 ----
@@ -92,13 +94,11 @@ export class SyncService {
           ? await this.prisma.expressionItem.update({
               where: { id: existing.id },
               data: { deletedAt: null },
-              select: { id: true },
             })
           : await this.prisma.expressionItem.create({
               data: { userId, type: 'word', original: word, chunkText: '' },
-              select: { id: true },
             });
-        return { handled: true, remoteId: created.id };
+        return { handled: true, remoteId: created.id, remoteItem: created };
       }
       if (operation === 'delete') {
         const match = await this.prisma.expressionItem.findFirst({
@@ -114,8 +114,13 @@ export class SyncService {
         return { handled: true };
       }
       if (operation === 'update') {
-        await this.prisma.expressionItem.updateMany({
+        const updated = await this.prisma.expressionItem.findFirst({
           where: { userId, original: word, type: 'word' },
+          select: { id: true },
+        });
+        if (!updated) return { handled: true };
+        const remoteItem = await this.prisma.expressionItem.update({
+          where: { id: updated.id },
           data: {
             masteryStatus: payload?.masteryStatus,
             reviewCount: payload?.reviewCount,
@@ -123,7 +128,7 @@ export class SyncService {
             nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
           },
         });
-        return { handled: true };
+        return { handled: true, remoteId: remoteItem.id, remoteItem };
       }
     }
 
@@ -144,7 +149,6 @@ export class SyncService {
                 original: payload?.original ?? '',
                 sceneName: payload?.sceneName,
               },
-              select: { id: true },
             })
           : await this.prisma.expressionItem.create({
               data: {
@@ -154,9 +158,8 @@ export class SyncService {
                 chunkText: text,
                 sceneName: payload?.sceneName,
               },
-              select: { id: true },
             });
-        return { handled: true, remoteId: created.id };
+        return { handled: true, remoteId: created.id, remoteItem: created };
       }
       if (operation === 'delete') {
         const match = await this.prisma.expressionItem.findFirst({
@@ -172,8 +175,13 @@ export class SyncService {
         return { handled: true };
       }
       if (operation === 'update') {
-        await this.prisma.expressionItem.updateMany({
+        const updated = await this.prisma.expressionItem.findFirst({
           where: { userId, chunkText: text, type: 'chunk' },
+          select: { id: true },
+        });
+        if (!updated) return { handled: true };
+        const remoteItem = await this.prisma.expressionItem.update({
+          where: { id: updated.id },
           data: {
             masteryStatus: payload?.masteryStatus,
             reviewCount: payload?.reviewCount,
@@ -181,7 +189,7 @@ export class SyncService {
             nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
           },
         });
-        return { handled: true };
+        return { handled: true, remoteId: remoteItem.id, remoteItem };
       }
     }
 
@@ -203,7 +211,6 @@ export class SyncService {
                 corrected: payload?.example ?? pattern,
                 sceneName: payload?.sceneName,
               },
-              select: { id: true },
             })
           : await this.prisma.expressionItem.create({
               data: {
@@ -214,9 +221,8 @@ export class SyncService {
                 corrected: payload?.example ?? pattern,
                 sceneName: payload?.sceneName,
               },
-              select: { id: true },
             });
-        return { handled: true, remoteId: created.id };
+        return { handled: true, remoteId: created.id, remoteItem: created };
       }
       if (operation === 'delete') {
         const match = await this.prisma.expressionItem.findFirst({
@@ -232,8 +238,13 @@ export class SyncService {
         return { handled: true };
       }
       if (operation === 'update') {
-        await this.prisma.expressionItem.updateMany({
+        const updated = await this.prisma.expressionItem.findFirst({
           where: { userId, chunkText: pattern, type: 'scene_phrase' },
+          select: { id: true },
+        });
+        if (!updated) return { handled: true };
+        const remoteItem = await this.prisma.expressionItem.update({
+          where: { id: updated.id },
           data: {
             masteryStatus: payload?.masteryStatus,
             reviewCount: payload?.reviewCount,
@@ -241,7 +252,7 @@ export class SyncService {
             nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
           },
         });
-        return { handled: true };
+        return { handled: true, remoteId: remoteItem.id, remoteItem };
       }
     }
 
@@ -393,18 +404,33 @@ export class SyncService {
         take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.practiceSession.findMany({
-        where: { userId, updatedAt: { gt: since } },
+        where: { userId, updatedAt: { gt: since }, status: 'analyzed' },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
+        select: {
+          id: true,
+          topicId: true,
+          sceneId: true,
+          inkScriptId: true,
+          status: true,
+          turnCount: true,
+          analysisResult: true,
+          analysisRaw: true,
+          analysisError: true,
+          startedAt: true,
+          completedAt: true,
+          analyzedAt: true,
+          updatedAt: true,
+        },
       }),
     ]);
 
     // PracticeTurn 没有直接 userId，通过 session 关联
-    const practiceTurns = await this.prisma.practiceTurn.findMany({
-      where: { session: { userId }, createdAt: { gt: since } },
-      orderBy: { createdAt: 'asc' },
-      take: SyncService.PULL_PAGE_SIZE,
-    });
+    // const practiceTurns = await this.prisma.practiceTurn.findMany({
+    //   where: { session: { userId }, createdAt: { gt: since } },
+    //   orderBy: { createdAt: 'asc' },
+    //   take: SyncService.PULL_PAGE_SIZE,
+    // });
 
     const deletedExpressionItems = await this.prisma.expressionItem.findMany({
       where: { userId, deletedAt: { gt: since } },
@@ -419,7 +445,7 @@ export class SyncService {
     for (const s of sceneProgresses) timestamps.push(s.updatedAt.getTime());
     for (const c of chunkProgresses) timestamps.push(c.updatedAt.getTime());
     for (const s of practiceSessions) timestamps.push(s.updatedAt.getTime());
-    for (const t of practiceTurns) timestamps.push(t.createdAt.getTime());
+    // for (const t of practiceTurns) timestamps.push(t.createdAt.getTime());
     for (const e of deletedExpressionItems) {
       if (e.deletedAt) timestamps.push(e.deletedAt.getTime());
     }
@@ -431,7 +457,7 @@ export class SyncService {
     // 任意一个结果集达到 pageSize 上限，说明还有更多数据
     const hasMore = [
       expressionItems, sceneProgresses, chunkProgresses,
-      practiceSessions, practiceTurns, deletedExpressionItems,
+      practiceSessions, deletedExpressionItems,
     ].some((arr) => arr.length >= SyncService.PULL_PAGE_SIZE);
 
     return {
@@ -442,7 +468,7 @@ export class SyncService {
         sceneProgresses,
         chunkProgresses,
         practiceSessions,
-        practiceTurns,
+        // practiceTurns,
       },
       deleted: {
         expressionItems: deletedExpressionItems.map((item) => item.id),

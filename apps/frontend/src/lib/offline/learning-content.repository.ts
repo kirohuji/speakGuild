@@ -16,6 +16,7 @@ export type ExpressionEntryStatus = 'learning' | 'reviewing' | 'mastered'
 export type ExpressionEntry = {
   id: string
   remoteId?: string | null
+  syncStatus?: 'pending' | 'synced' | 'failed'
   kind: ExpressionEntryKind
   type: 'word' | 'chunk' | 'scene_phrase'
   original?: string | null
@@ -89,12 +90,14 @@ function makeEntry(input: {
   sourceSnapshot?: unknown
   createdAt?: string | null
   updatedAt?: string | null
+  syncStatus?: ExpressionEntry['syncStatus']
 }): ExpressionEntry {
   const text = normalizeText(input.kind, input.text)
   const now = new Date().toISOString()
   const base = {
     id: entryId(input.kind, text),
     remoteId: input.remoteId ?? null,
+    syncStatus: input.syncStatus ?? (input.remoteId ? 'synced' : 'pending'),
     kind: input.kind,
     type: expressionType(input.kind),
     sceneName: input.sceneName ?? null,
@@ -163,6 +166,7 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     sourceSnapshot: item.sourceSnapshot,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt ?? item.createdAt,
+    syncStatus: 'synced',
   })
 }
 
@@ -329,6 +333,7 @@ export const learningContentRepository = {
       ...existing,
       ...next,
       remoteId: next.remoteId ?? existing?.remoteId ?? null,
+      syncStatus: next.syncStatus ?? existing?.syncStatus ?? 'pending',
       contentSnapshot: next.contentSnapshot ?? existing?.contentSnapshot,
       createdAt: existing?.createdAt ?? next.createdAt,
       updatedAt: new Date().toISOString(),
@@ -347,10 +352,12 @@ export const learningContentRepository = {
       payload: createPayload(entry),
     })
     try {
-      await expressionApi.create(createRequest(entry))
+      const created = await expressionApi.create(createRequest(entry))
+      await this.saveRemoteExpressionEntry(created)
       await syncOutbox.markSynced(outboxItem.id)
     } catch (error) {
       await syncOutbox.markFailed(outboxItem.id, error)
+      await this.markExpressionSyncStatus(entry.kind, text, 'failed')
     }
     return entry
   },
@@ -359,12 +366,13 @@ export const learningContentRepository = {
     const next = remoteExpressionToEntry(item)
     if (!next) return null
     const existing = await localDb.get<ExpressionEntry>('expression_entries', next.id)
-    const entry = {
+    const entry: ExpressionEntry = {
       ...existing,
       ...next,
       contentSnapshot: existing?.contentSnapshot ?? next.contentSnapshot,
       createdAt: existing?.createdAt ?? next.createdAt,
       updatedAt: next.updatedAt,
+      syncStatus: 'synced',
     }
     await localDb.put('expression_entries', entry)
     return entry
@@ -382,6 +390,12 @@ export const learningContentRepository = {
     })
   },
 
+  async clearExpressionCacheMarkers(): Promise<void> {
+    await localDb.deleteWhere<any>('kv', (item) =>
+      typeof item.id === 'string' && item.id.startsWith('expression-cache:'),
+    )
+  },
+
   async listExpressionEntries(kind?: ExpressionEntryKind): Promise<ExpressionEntry[]> {
     const entries = await localDb.list<ExpressionEntry>('expression_entries')
     return kind ? entries.filter((entry) => entry.kind === kind) : entries
@@ -396,11 +410,26 @@ export const learningContentRepository = {
     return localDb.get<ExpressionEntry>('expression_entries', entryId(kind, text))
   },
 
+  async markExpressionSyncStatus(
+    kind: ExpressionEntryKind,
+    text: string,
+    syncStatus: NonNullable<ExpressionEntry['syncStatus']>,
+  ): Promise<void> {
+    const entry = await this.getExpressionByText(kind, text)
+    if (!entry) return
+    await localDb.put('expression_entries', {
+      ...entry,
+      syncStatus,
+      updatedAt: new Date().toISOString(),
+    })
+  },
+
   async deleteExpressionByText(kind: ExpressionEntryKind, text: string): Promise<void> {
     await localDb.delete('expression_entries', entryId(kind, text))
   },
 
   async deleteExpressionByTextAndSync(kind: ExpressionEntryKind, text: string): Promise<void> {
+    const existing = await this.getExpressionByText(kind, text)
     await this.deleteExpressionByText(kind, text)
     const outboxItem = await syncOutbox.enqueue({
       entityType: expressionEntityType(kind),
@@ -413,17 +442,24 @@ export const learningContentRepository = {
           : { pattern: text, deletedAt: new Date().toISOString() },
     })
     try {
-      const remoteId = await findRemoteExpressionId(kind, text)
+      const remoteId = existing?.remoteId ?? await findRemoteExpressionId(kind, text)
       if (remoteId) await expressionApi.remove(remoteId)
       await syncOutbox.markSynced(outboxItem.id)
     } catch (error) {
       await syncOutbox.markFailed(outboxItem.id, error)
+      if (existing) {
+        await localDb.put('expression_entries', {
+          ...existing,
+          syncStatus: 'failed',
+          updatedAt: new Date().toISOString(),
+        })
+      }
     }
   },
 
   async deleteExpressionByRemoteId(remoteId: string): Promise<void> {
-    const entries = await localDb.list<ExpressionEntry>('expression_entries')
-    const match = entries.find((entry) => entry.remoteId === remoteId)
+    const matches = await localDb.findByIndex<ExpressionEntry>('expression_entries', 'remote_id', remoteId)
+    const match = matches[0]
     if (match) await localDb.delete('expression_entries', match.id)
   },
 
@@ -434,6 +470,7 @@ export const learningContentRepository = {
     await localDb.put('expression_entries', {
       ...entry,
       masteryStatus: status,
+      syncStatus: 'pending',
       reviewCount: status === 'reviewing' ? (entry.reviewCount ?? 0) + 1 : entry.reviewCount ?? 0,
       lastReviewedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -441,6 +478,7 @@ export const learningContentRepository = {
   },
 
   async updateExpressionStatusAndSync(kind: ExpressionEntryKind, text: string, status: ExpressionEntryStatus): Promise<void> {
+    const existing = await this.getExpressionByText(kind, text)
     await this.updateExpressionStatus(kind, text, status)
     const outboxItem = await syncOutbox.enqueue({
       entityType: expressionEntityType(kind),
@@ -449,11 +487,15 @@ export const learningContentRepository = {
       payload: { masteryStatus: status },
     })
     try {
-      const remoteId = await findRemoteExpressionId(kind, text)
-      if (remoteId) await expressionApi.updateStatus(remoteId, status)
+      const remoteId = existing?.remoteId ?? await findRemoteExpressionId(kind, text)
+      if (remoteId) {
+        const updated = await expressionApi.updateStatus(remoteId, status)
+        await this.saveRemoteExpressionEntry(updated)
+      }
       await syncOutbox.markSynced(outboxItem.id)
     } catch (error) {
       await syncOutbox.markFailed(outboxItem.id, error)
+      await this.markExpressionSyncStatus(kind, text, 'failed')
     }
   },
 

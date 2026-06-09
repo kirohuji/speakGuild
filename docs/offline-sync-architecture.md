@@ -128,7 +128,7 @@ updated_at TEXT NOT NULL
 | `dictionary_entries` | 用户查过的字典结果 |
 | `expression_entries` | 统一表达库，包含 word / chunk / pattern |
 | `user_progress` | 用户学习进度 |
-| `practice_records` | 练习 session / turn 本地记录 |
+| `practice_records` | 练习 session 本地记录 |
 | `local_assets` | 本地资源元信息 |
 | `outbox` | 等待上传的本地变更 |
 | `recordings` | Native 录音文件元信息 |

@@ -7,6 +7,7 @@ export interface PushResult {
   status: 'synced' | 'failed' | 'skipped'
   error?: string
   remoteId?: string
+  remoteItem?: any
 }
 
 export interface PullResult {

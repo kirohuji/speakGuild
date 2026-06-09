@@ -34,6 +34,13 @@ function turnRecordId(sessionId: string, round?: number) {
   return `turn:${sessionId}:${round ?? createLocalId('round')}`
 }
 
+function toIsoString(value: unknown): string | null {
+  if (!value) return null
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value === 'string') return value
+  return null
+}
+
 async function resolveSessionId(sessionId: string): Promise<string> {
   if (!sessionId.startsWith('local_session_')) return sessionId
   const mapped = await localDb.get<{ value: string }>('kv', `session-map:${sessionId}`)
@@ -76,8 +83,8 @@ export const practiceRepository = {
   },
 
   async getTopicInk(topicId: string) {
-    const localScripts = await localDb.list<any>('ink_scripts')
-    const localScript = localScripts.find((script) => script.topicId === topicId)
+    const localScripts = await localDb.findByIndex<any>('ink_scripts', 'topic_id', topicId)
+    const localScript = localScripts[0]
     if (localScript) {
       const pack = localScript.unitId ? await localDb.get<{ status?: string }>('downloaded_packs', localScript.unitId) : null
       if (!localScript.unitId || pack?.status === 'installed') return localScript
@@ -102,28 +109,24 @@ export const practiceRepository = {
   async createSession(topicId: string): Promise<{ id: string }> {
     const localSessionId = createLocalId('local_session')
     const now = new Date().toISOString()
-    await localDb.put('practice_records', {
-      id: sessionRecordId(localSessionId),
-      sessionId: localSessionId,
-      topicId,
-      status: 'active',
-      turns: [],
-      startedAt: now,
-      updatedAt: now,
-      syncStatus: 'pending',
-    })
-
     try {
       const remote = await practiceApi.createSession(topicId)
       await localDb.put('kv', { id: `session-map:${localSessionId}`, value: remote.id, updatedAt: new Date().toISOString() })
       await localDb.put('practice_records', {
         id: sessionRecordId(remote.id),
+        type: 'session',
+        remoteId: remote.id,
         sessionId: remote.id,
         localSessionId,
-        topicId,
-        status: 'active',
+        topicId: remote.topicId ?? topicId,
+        sceneId: remote.sceneId,
+        inkScriptId: remote.inkScriptId,
+        status: remote.status ?? 'active',
+        turnCount: remote.turnCount ?? 0,
         turns: [],
-        startedAt: now,
+        startedAt: toIsoString(remote.startedAt) ?? now,
+        completedAt: toIsoString(remote.completedAt),
+        analyzedAt: toIsoString(remote.analyzedAt),
         updatedAt: new Date().toISOString(),
         syncStatus: 'synced',
       })
@@ -135,31 +138,44 @@ export const practiceRepository = {
         operation: 'create',
         payload: { topicId, localSessionId },
       })
+      await localDb.put('practice_records', {
+        id: sessionRecordId(localSessionId),
+        sessionId: localSessionId,
+        localSessionId,
+        topicId,
+        status: 'active',
+        turns: [],
+        startedAt: now,
+        updatedAt: now,
+        syncStatus: 'pending',
+      })
       return { id: localSessionId }
     }
   },
 
   async submitTurn(sessionId: string, data: PracticeTurnPayload): Promise<void> {
-    const now = new Date().toISOString()
-    const record = {
-      id: turnRecordId(sessionId, data.round),
-      sessionId,
-      ...data,
-      createdAt: now,
-      syncStatus: 'pending',
-    }
-    await localDb.put('practice_records', record)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'practice_turn',
-      entityId: record.id,
+      entityId: turnRecordId(sessionId, data.round),
       operation: 'create',
       payload: { sessionId, data },
     })
 
     try {
-      await practiceApi.submitTurn(await resolveSessionId(sessionId), data)
-      await localDb.put('practice_records', { ...record, syncStatus: 'synced', updatedAt: new Date().toISOString() })
+      const remoteSessionId = await resolveSessionId(sessionId)
+      await practiceApi.submitTurn(remoteSessionId, data)
       await syncOutbox.markSynced(outboxItem.id)
+
+      const recordId = sessionRecordId(remoteSessionId)
+      const existing = await localDb.get<any>('practice_records', recordId)
+      if (existing) {
+        await localDb.put('practice_records', {
+          ...existing,
+          turnCount: (existing.turnCount ?? 0) + 1,
+          updatedAt: new Date().toISOString(),
+          syncStatus: 'synced',
+        })
+      }
     } catch {
       // The outbox keeps the turn for later replay.
     }
@@ -185,6 +201,25 @@ export const practiceRepository = {
     try {
       const result = await practiceApi.completeSession(await resolveSessionId(sessionId))
       await syncOutbox.markSynced(outboxItem.id)
+      await localDb.put('practice_records', {
+        id: sessionRecordId(result.id),
+        type: 'session',
+        remoteId: result.id,
+        sessionId: result.id,
+        topicId: result.topicId,
+        sceneId: result.sceneId,
+        inkScriptId: result.inkScriptId,
+        status: result.status,
+        turnCount: result.turnCount ?? 0,
+        analysisResult: result.analysisResult,
+        analysisRaw: result.analysisRaw,
+        analysisError: result.analysisError,
+        startedAt: toIsoString(result.startedAt),
+        completedAt: toIsoString(result.completedAt) ?? now,
+        analyzedAt: toIsoString(result.analyzedAt),
+        updatedAt: new Date().toISOString(),
+        syncStatus: 'synced',
+      })
       await localDb.put('user_progress', {
         id: `practice-session:${sessionId}`,
         sessionId,

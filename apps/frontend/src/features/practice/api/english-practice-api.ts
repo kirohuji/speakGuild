@@ -121,7 +121,7 @@ export const practiceApi = {
     get<{ id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
 
   createSession: (topicId: string) =>
-    post<{ id: string }>(`/practice/topics/${topicId}/sessions`, { topicId }),
+    post<PracticeSession>(`/practice/topics/${topicId}/sessions`, { topicId }),
 
   getSession: (sessionId: string) =>
     get<PracticeSession>(`/practice/sessions/${sessionId}`),

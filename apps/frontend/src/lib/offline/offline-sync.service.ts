@@ -32,8 +32,50 @@ async function applyExpressionItem(item: any): Promise<void> {
   await learningContentRepository.saveRemoteExpressionEntry(item)
 }
 
+async function cacheExpressionItem(
+  expressionCache: { items: any[] } | undefined,
+  item: any,
+): Promise<void> {
+  if (!item) return
+  await applyExpressionItem(item)
+  if (!expressionCache?.items) return
+  const index = expressionCache.items.findIndex((expr: any) => expr.id === item.id)
+  if (index >= 0) {
+    expressionCache.items[index] = item
+  } else {
+    expressionCache.items.push(item)
+  }
+}
+
 async function deleteExpressionItem(remoteId: string): Promise<void> {
   await learningContentRepository.deleteExpressionByRemoteId(remoteId)
+}
+
+async function applyPracticeSessionItem(item: any, localSessionId?: string | null): Promise<void> {
+  if (!item?.id) return
+  if (localSessionId && localSessionId !== item.id) {
+    await localDb.delete('practice_records', `session:${localSessionId}`)
+  }
+  await localDb.put('practice_records', {
+    id: `session:${item.id}`,
+    type: 'session',
+    remoteId: item.id,
+    sessionId: item.id,
+    localSessionId: localSessionId ?? undefined,
+    topicId: item.topicId,
+    sceneId: item.sceneId,
+    inkScriptId: item.inkScriptId,
+    status: item.status,
+    turnCount: item.turnCount ?? 0,
+    analysisResult: item.analysisResult,
+    analysisRaw: item.analysisRaw,
+    analysisError: item.analysisError,
+    startedAt: toIsoString(item.startedAt),
+    completedAt: toIsoString(item.completedAt),
+    analyzedAt: toIsoString(item.analyzedAt),
+    updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+    syncStatus: 'synced',
+  })
 }
 
 async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
@@ -81,47 +123,7 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
   }
 
   for (const item of changed?.practiceSessions ?? []) {
-    if (!item.id) continue
-    await localDb.put('practice_records', {
-      id: `session:${item.id}`,
-      type: 'session',
-      remoteId: item.id,
-      sessionId: item.id,
-      topicId: item.topicId,
-      sceneId: item.sceneId,
-      inkScriptId: item.inkScriptId,
-      status: item.status,
-      turnCount: item.turnCount ?? 0,
-      analysisResult: item.analysisResult,
-      analysisRaw: item.analysisRaw,
-      analysisError: item.analysisError,
-      startedAt: toIsoString(item.startedAt),
-      completedAt: toIsoString(item.completedAt),
-      analyzedAt: toIsoString(item.analyzedAt),
-      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
-      syncStatus: 'synced',
-    })
-  }
-
-  for (const item of changed?.practiceTurns ?? []) {
-    if (!item.id) continue
-    await localDb.put('practice_records', {
-      id: `turn:${item.sessionId}:${item.round ?? item.id}`,
-      type: 'turn',
-      remoteId: item.id,
-      sessionId: item.sessionId,
-      round: item.round,
-      npcText: item.npcText,
-      userText: item.userText,
-      userAudioUrl: item.userAudioUrl,
-      inputNodeId: item.inputNodeId,
-      tags: item.tags,
-      judgement: item.judgement,
-      objectivesCompleted: item.objectivesCompleted ?? [],
-      chunksUsed: item.chunksUsed ?? [],
-      createdAt: toIsoString(item.createdAt),
-      syncStatus: 'synced',
-    })
+    await applyPracticeSessionItem(item)
   }
 
   for (const id of deleted?.expressionItems ?? []) {
@@ -129,15 +131,20 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
   }
 
   // 批量删除 user_progress：一次 scan 替代逐条 list()
-  const deletedSceneIds = new Set(deleted?.sceneProgresses ?? [])
-  const deletedChunkIds = new Set(deleted?.chunkProgresses ?? [])
+  const deletedSceneIds = new Set<string>((deleted?.sceneProgresses ?? []).map(String))
+  const deletedChunkIds = new Set<string>((deleted?.chunkProgresses ?? []).map(String))
   if (deletedSceneIds.size > 0 || deletedChunkIds.size > 0) {
-    const records = await localDb.list<any>('user_progress')
-    for (const item of records) {
-      if (
-        deletedSceneIds.has(item.remoteId) || deletedSceneIds.has(item.id) ||
-        deletedChunkIds.has(item.remoteId) || deletedChunkIds.has(item.id)
-      ) {
+    for (const id of deletedSceneIds) {
+      const matches = await localDb.findByIndex<any>('user_progress', 'remote_id', id)
+      const fallback = await localDb.get<any>('user_progress', id)
+      for (const item of fallback ? [...matches, fallback] : matches) {
+        await localDb.delete('user_progress', item.id)
+      }
+    }
+    for (const id of deletedChunkIds) {
+      const matches = await localDb.findByIndex<any>('user_progress', 'remote_id', id)
+      const fallback = await localDb.get<any>('user_progress', id)
+      for (const item of fallback ? [...matches, fallback] : matches) {
         await localDb.delete('user_progress', item.id)
       }
     }
@@ -168,12 +175,14 @@ async function replayItem(
         value: remote.id,
         updatedAt: new Date().toISOString(),
       })
+      await applyPracticeSessionItem(remote, payload.localSessionId ?? item.entityId)
       return true
     }
     if (item.operation === 'update' && payload.status === 'completed') {
       const remoteSessionId = await resolveSessionId(payload.sessionId ?? item.entityId)
       if (!remoteSessionId) return false
-      await practiceApi.completeSession(remoteSessionId)
+      const updated = await practiceApi.completeSession(remoteSessionId)
+      await applyPracticeSessionItem(updated, payload.sessionId ?? item.entityId)
       return true
     }
   }
@@ -183,6 +192,15 @@ async function replayItem(
     const remoteSessionId = await resolveSessionId(payload.sessionId)
     if (!remoteSessionId) return false
     await practiceApi.submitTurn(remoteSessionId, payload.data)
+    const record = await localDb.get<any>('practice_records', `session:${remoteSessionId}`)
+    if (record) {
+      await localDb.put('practice_records', {
+        ...record,
+        turnCount: (record.turnCount ?? 0) + 1,
+        updatedAt: new Date().toISOString(),
+        syncStatus: 'synced',
+      })
+    }
     return true
   }
 
@@ -197,7 +215,8 @@ async function replayItem(
     const word = payload.word ?? item.entityId
 
     if (item.operation === 'create') {
-      await expressionApi.create({ type: 'word', original: word, chunkText: '' })
+      const created = await expressionApi.create({ type: 'word', original: word, chunkText: '' })
+      await cacheExpressionItem(expressionCache, created)
       return true
     }
 
@@ -220,7 +239,8 @@ async function replayItem(
         (expr: any) => (expr.type === 'word' || !expr.type) && expr.original === word,
       )
       if (match?.id && payload.masteryStatus) {
-        await expressionApi.updateStatus(match.id, payload.masteryStatus)
+        const updated = await expressionApi.updateStatus(match.id, payload.masteryStatus)
+        await cacheExpressionItem(expressionCache, updated)
       }
       return true
     }
@@ -232,12 +252,13 @@ async function replayItem(
     const text = payload.chunkText ?? payload.original ?? item.entityId
 
     if (item.operation === 'create') {
-      await expressionApi.create({
+      const created = await expressionApi.create({
         type: 'chunk',
         chunkText: text,
         original: payload.original ?? '',
         sceneName: payload.sceneName,
       })
+      await cacheExpressionItem(expressionCache, created)
       return true
     }
 
@@ -259,7 +280,8 @@ async function replayItem(
         (expr: any) => expr.type === 'chunk' && (expr.chunkText === text || expr.original === text),
       )
       if (match?.id && payload.masteryStatus) {
-        await expressionApi.updateStatus(match.id, payload.masteryStatus)
+        const updated = await expressionApi.updateStatus(match.id, payload.masteryStatus)
+        await cacheExpressionItem(expressionCache, updated)
       }
       return true
     }
@@ -271,13 +293,14 @@ async function replayItem(
     const pattern = payload.pattern ?? item.entityId
 
     if (item.operation === 'create') {
-      await expressionApi.create({
+      const created = await expressionApi.create({
         type: 'scene_phrase',
         chunkText: pattern,
         corrected: payload.example ?? pattern,
         original: payload.meaning ?? '',
         sceneName: payload.sceneName,
       })
+      await cacheExpressionItem(expressionCache, created)
       return true
     }
 
@@ -299,7 +322,8 @@ async function replayItem(
         (expr: any) => expr.type === 'scene_phrase' && expr.chunkText === pattern,
       )
       if (match?.id && payload.masteryStatus) {
-        await expressionApi.updateStatus(match.id, payload.masteryStatus)
+        const updated = await expressionApi.updateStatus(match.id, payload.masteryStatus)
+        await cacheExpressionItem(expressionCache, updated)
       }
       return true
     }
@@ -569,6 +593,9 @@ export const offlineSyncService = {
         for (let i = 0; i < batch.length; i++) {
           const result = results[i]
           if (result?.status === 'synced') {
+            if (result.remoteItem) {
+              await cacheExpressionItem(exprCtx, result.remoteItem)
+            }
             await syncOutbox.markSynced(batch[i].id)
             synced += 1
           } else if (result?.status === 'skipped') {

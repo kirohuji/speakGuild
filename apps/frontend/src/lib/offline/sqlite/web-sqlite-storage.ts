@@ -6,7 +6,7 @@
  */
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
 import { defineCustomElements } from 'jeep-sqlite/loader'
-import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES, MIGRATIONS } from './schema'
+import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES } from './schema'
 import { createSqliteJsonStore } from './sqlite-json-store'
 
 const JEEP_SQLITE_TAG = 'jeep-sqlite'
@@ -66,7 +66,9 @@ async function openDb(): Promise<SQLiteDBConnection> {
 
     const existingConnection = await conn.isConnection(DB_NAME, false)
     if (existingConnection.result) {
-      return conn.retrieveConnection(DB_NAME, false)
+      const db = await conn.retrieveConnection(DB_NAME, false)
+      await initializeSchema(db)
+      return db
     }
 
     const db = await conn.createConnection(
@@ -77,7 +79,7 @@ async function openDb(): Promise<SQLiteDBConnection> {
       false,
     )
     await db.open()
-    await migrate(db)
+    await initializeSchema(db)
     return db
   })().catch((error) => {
     dbPromise = null
@@ -87,11 +89,8 @@ async function openDb(): Promise<SQLiteDBConnection> {
   return dbPromise
 }
 
-async function migrate(db: SQLiteDBConnection): Promise<void> {
+async function initializeSchema(db: SQLiteDBConnection): Promise<void> {
   await db.execute(ALL_DDL)
-  for (const migration of MIGRATIONS) {
-    try { await db.execute(migration) } catch { /* migration may already be applied */ }
-  }
   for (const idx of INDEXES) {
     try { await db.execute(idx) } catch { /* index may already exist */ }
   }

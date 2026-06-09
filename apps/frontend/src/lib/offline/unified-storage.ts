@@ -24,6 +24,7 @@ export interface ILocalDb {
   putMany<T>(storeName: TableName, values: (T & { id: string })[]): Promise<void>
   delete(storeName: TableName, id: string): Promise<void>
   list<T>(storeName: TableName): Promise<T[]>
+  findByIndex<T>(storeName: TableName, columnName: string, value: string | number | null): Promise<T[]>
   count(storeName: TableName): Promise<number>
   clear(storeName: TableName): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
@@ -98,6 +99,14 @@ export const localDb: ILocalDb = {
 
   async list<T>(storeName: TableName): Promise<T[]> {
     return (await getBackend()).list<T>(storeName)
+  },
+
+  async findByIndex<T>(
+    storeName: TableName,
+    columnName: string,
+    value: string | number | null,
+  ): Promise<T[]> {
+    return (await getBackend()).findByIndex<T>(storeName, columnName, value)
   },
 
   async count(storeName: TableName): Promise<number> {

@@ -280,7 +280,6 @@ export class EnglishPracticeService {
         vocabSnapshot,
         sentencePatternsSnapshot: topic.topicPatterns.map((tp) => tp.pattern) ?? null,
       },
-      select: { id: true },
     });
   }
 
