@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { BookOpen, CheckCircle2, ChevronRight, X } from 'lucide-react'
+import { BookOpen, CheckCircle2, ChevronRight, Download, Loader2, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -23,10 +23,26 @@ interface Props {
   onGoToShop: () => void
   onRefresh?: () => void
   onQuitUnit?: (id: string) => Promise<void>
+  downloadedPackIds?: string[]
+  installingPackIds?: string[]
+  onDownloadUnitPack?: (id: string) => Promise<void>
 }
 
-export function MyLearningView({ myUnits, inProgress, completed, loading, onGoToShop, onRefresh, onQuitUnit }: Props) {
+export function MyLearningView({
+  myUnits,
+  inProgress,
+  completed,
+  loading,
+  onGoToShop,
+  onRefresh,
+  onQuitUnit,
+  downloadedPackIds = [],
+  installingPackIds = [],
+  onDownloadUnitPack,
+}: Props) {
   const { t } = useTranslation()
+  const downloadedPackIdSet = useMemo(() => new Set(downloadedPackIds), [downloadedPackIds])
+  const installingPackIdSet = useMemo(() => new Set(installingPackIds), [installingPackIds])
 
   if (loading) {
     return <MobilePageLoading rows={3} minHeightClassName="min-h-[40vh]" />
@@ -53,7 +69,14 @@ export function MyLearningView({ myUnits, inProgress, completed, loading, onGoTo
           <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.inProgress')}</h2>
           <div className="space-y-2">
             {inProgress.map((unit) => (
-              <InProgressUnitCard key={unit.id} unit={unit} onQuit={() => onQuitUnit?.(unit.id)} />
+              <InProgressUnitCard
+                key={unit.id}
+                unit={unit}
+                isPackDownloaded={downloadedPackIdSet.has(unit.id)}
+                isPackInstalling={installingPackIdSet.has(unit.id)}
+                onDownloadPack={() => onDownloadUnitPack?.(unit.id)}
+                onQuit={() => onQuitUnit?.(unit.id)}
+              />
             ))}
           </div>
         </section>
@@ -73,11 +96,24 @@ export function MyLearningView({ myUnits, inProgress, completed, loading, onGoTo
   )
 }
 
-function InProgressUnitCard({ unit, onQuit }: { unit: MyUnit; onQuit?: () => Promise<void> }) {
+function InProgressUnitCard({
+  unit,
+  isPackDownloaded,
+  isPackInstalling,
+  onDownloadPack,
+  onQuit,
+}: {
+  unit: MyUnit
+  isPackDownloaded: boolean
+  isPackInstalling: boolean
+  onDownloadPack?: () => Promise<void>
+  onQuit?: () => Promise<void>
+}) {
   const { t } = useTranslation()
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [quitting, setQuitting] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
+  const needsDownload = !isPackDownloaded
 
   const handleQuit = useCallback(async () => {
     setQuitting(true)
@@ -92,10 +128,30 @@ function InProgressUnitCard({ unit, onQuit }: { unit: MyUnit; onQuit?: () => Pro
     }
   }, [t, onQuit])
 
+  const handleDownloadPack = useCallback(async () => {
+    if (!onDownloadPack || isPackInstalling) return
+    try {
+      await onDownloadPack()
+      toast.success(t('learning.packDownloadSuccess'))
+    } catch {
+      toast.error(t('learning.packDownloadFailed'))
+    }
+  }, [isPackInstalling, onDownloadPack, t])
+
   return (
     <div className="overflow-hidden rounded-lg bg-muted/30">
       <div className="p-3.5">
-        <Link to={`/learning/units/${unit.id}`} className="flex gap-3">
+        <Link
+          to={`/learning/units/${unit.id}`}
+          aria-disabled={needsDownload}
+          onClick={(event) => {
+            if (needsDownload) event.preventDefault()
+          }}
+          className={cn(
+            'flex gap-3',
+            needsDownload && 'cursor-default opacity-80',
+          )}
+        >
           <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
             <Icon className="relative size-7" />
@@ -119,6 +175,26 @@ function InProgressUnitCard({ unit, onQuit }: { unit: MyUnit; onQuit?: () => Pro
             </div>
           </div>
         </Link>
+
+        {needsDownload && (
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2">
+            <p className="min-w-0 flex-1 truncate text-xs text-amber-700 dark:text-amber-300">
+              {t('learning.packNeedsDownload')}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={isPackInstalling || !onDownloadPack}
+              onClick={handleDownloadPack}
+              className="size-8 shrink-0 rounded-full text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+              aria-label={isPackInstalling ? t('learning.packDownloading') : t('learning.downloadPack')}
+              title={isPackInstalling ? t('learning.packDownloading') : t('learning.downloadPack')}
+            >
+              {isPackInstalling ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            </Button>
+          </div>
+        )}
 
         <Dialog open={confirmQuit} onOpenChange={setConfirmQuit}>
           <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">

@@ -34,10 +34,15 @@ export function LearningPlanPage() {
   const fetchTags = useLearningStore((s) => s.fetchTags)
   const storeQuitUnit = useLearningStore((s) => s.quitUnit)
   const storeEnrollUnit = useLearningStore((s) => s.enrollUnit)
+  const downloadedPacks = useLearningStore((s) => s.downloadedPacks)
+  const packInstallingIds = useLearningStore((s) => s.packInstallingIds)
+  const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
+  const downloadUnitPack = useLearningStore((s) => s.downloadUnitPack)
 
   useEffect(() => {
     fetchMyLearning()
-  }, [fetchMyLearning])
+    fetchDownloadedPacks()
+  }, [fetchMyLearning, fetchDownloadedPacks])
 
   const inProgress = myUnits.filter((u) => u.completionPercent < 100)
   const completed = myUnits.filter((u) => u.completionPercent >= 100)
@@ -66,6 +71,9 @@ export function LearningPlanPage() {
           onGoToShop={() => { setShopOpen(true); refreshShop(); fetchTags() }}
           onRefresh={refreshMyUnits}
           onQuitUnit={storeQuitUnit}
+          downloadedPackIds={downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)}
+          installingPackIds={packInstallingIds}
+          onDownloadUnitPack={downloadUnitPack}
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
