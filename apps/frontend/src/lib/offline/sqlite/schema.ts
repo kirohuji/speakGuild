@@ -3,11 +3,17 @@
  *
  * Most "stores" become a SQLite table with:
  *   - id TEXT PRIMARY KEY
- *   - data TEXT NOT NULL    (JSON-serialized value)
- *   - updated_at TEXT       (ISO-8601 timestamp)
+ *   - data TEXT NOT NULL    (JSON-serialized payload fields)
+ *   - updated_at TEXT       (local write timestamp)
  *
- * Tables that need fast lookup can additionally expose selected JSON fields as
- * real columns while keeping the full object in data.
+ * Tables that need sync or fast lookup expose those stable fields as columns.
+ * sqlite-json-store hydrates those columns back into objects when reading, so
+ * repository code still works with one object shape while SQLite keeps indexes
+ * over real columns instead of json_extract(data, ...).
+ *
+ * We intentionally do not carry schema migrations here. Offline data is cache
+ * or replayable sync state, and local database resets are the supported way to
+ * move between incompatible cache schemas during development.
  *
  * Native recording bytes stay in Capacitor Filesystem. Web does not cache
  * binary resource data.

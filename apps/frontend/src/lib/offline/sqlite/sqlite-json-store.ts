@@ -73,6 +73,9 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
   ],
 }
 
+// Indexed columns are the source of truth for stable sync/cache keys. They are
+// stripped from data on write and hydrated back on read to keep repository
+// objects unchanged without duplicating core fields inside JSON payloads.
 function metadataFor(storeName: TableName, value: any) {
   const extractors = COLUMN_EXTRACTORS[storeName] ?? []
   return {
@@ -85,6 +88,7 @@ function metadataFor(storeName: TableName, value: any) {
 function jsonDataFor(storeName: TableName, value: any) {
   const metadata = metadataFor(storeName, value)
   const data = { ...value }
+  delete data.id
   for (const key of metadata.jsonKeys) {
     delete data[key]
   }
@@ -93,6 +97,7 @@ function jsonDataFor(storeName: TableName, value: any) {
 
 function hydrateRow<T>(storeName: TableName, row: Record<string, any>): T {
   const value = JSON.parse(row.data) as Record<string, any>
+  value.id = row.id
   for (const [columnName, jsonKey] of COLUMN_EXTRACTORS[storeName] ?? []) {
     if (row[columnName] !== null && row[columnName] !== undefined) {
       value[jsonKey] = row[columnName]
@@ -113,9 +118,13 @@ function upsertSql(storeName: TableName, metadataColumns: string[]) {
           ON CONFLICT(id) DO UPDATE SET ${updates}`
 }
 
-function assertColumnName(columnName: string) {
+function assertIndexedColumn(storeName: TableName, columnName: string) {
   if (!/^[a-z_][a-z0-9_]*$/i.test(columnName)) {
     throw new Error(`Unsafe SQLite column name: ${columnName}`)
+  }
+  const allowed = new Set(['id', 'updated_at', ...(COLUMN_EXTRACTORS[storeName] ?? []).map(([column]) => column)])
+  if (!allowed.has(columnName)) {
+    throw new Error(`Column ${columnName} is not declared for indexed lookup on ${storeName}`)
   }
 }
 
@@ -213,7 +222,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       value: string | number | null,
     ): Promise<T[]> {
       try {
-        assertColumnName(columnName)
+        assertIndexedColumn(storeName, columnName)
         const rows = await executor.queryRows<Record<string, any>>(
           `SELECT * FROM "${storeName}" WHERE ${columnName} ${value === null ? 'IS NULL' : '= ?'} ORDER BY updated_at DESC`,
           value === null ? [] : [value],
