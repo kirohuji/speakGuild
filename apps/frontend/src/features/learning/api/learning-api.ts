@@ -1,31 +1,4 @@
-import axios from 'axios'
-import { getBearerToken } from '@/features/auth/client'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
-
-const api = axios.create({
-  baseURL: API_BASE,
-  timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
-})
-
-api.interceptors.request.use((config) => {
-  const token = getBearerToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-api.interceptors.response.use(
-  (res) => {
-    const data = res.data
-    return data && typeof data === 'object' && 'data' in data ? data.data : data
-  },
-  (error) => {
-    const msg = error.response?.data?.message || error.message || '请求失败'
-    console.error('[Learning API Error]', msg)
-    return Promise.reject(error)
-  },
-)
+import { del, get, post } from '@/lib/request'
 
 // ---- 类型定义 ----
 
@@ -252,23 +225,23 @@ export interface OfflineManifestResult {
 
 export const learningApi = {
   /** 获取可用分类标签列表 */
-  getTags: () => api.get<any, TagInfo[]>('/learning/tags'),
+  getTags: () => get<TagInfo[]>('/learning/tags'),
 
   /** 获取教材列表（分页），支持按分类标签过滤和模糊搜索 */
   getUnits: (params?: { tag?: string; search?: string; page?: number; pageSize?: number }) =>
-    api.get<any, UnitsListResult>('/learning/units', { params }),
+    get<UnitsListResult>('/learning/units', params),
 
   /** 获取用户正在学习的单元 */
-  getMyUnits: () => api.get<any, MyUnit[]>('/learning/my-units'),
+  getMyUnits: () => get<MyUnit[]>('/learning/my-units'),
 
   /** 获取学习单元详情 */
-  getUnitDetail: (unitId: string) => api.get<any, UnitDetail>(`/learning/units/${unitId}`),
+  getUnitDetail: (unitId: string) => get<UnitDetail>(`/learning/units/${unitId}`),
 
   getOfflineManifest: (unitId: string) =>
-    api.get<any, OfflineManifestResult>(`/learning/units/${unitId}/offline-manifest`),
+    get<OfflineManifestResult>(`/learning/units/${unitId}/offline-manifest`),
 
   /** 获取今日任务 */
-  getTodayTasks: () => api.get<any, TodayPlan>('/learning/today'),
+  getTodayTasks: () => get<TodayPlan>('/learning/today'),
 
   /** 更新学习单元进度 */
   updateProgress: (unitId: string, data: {
@@ -276,11 +249,11 @@ export const learningApi = {
     chunkMastered?: number
     completedPractice?: boolean
     completedScript?: boolean
-  }) => api.post(`/learning/units/${unitId}/progress`, data),
+  }) => post(`/learning/units/${unitId}/progress`, data),
 
   /** 开始学习一个单元 */
-  startUnit: (unitId: string) => api.post(`/learning/units/${unitId}/start`),
+  startUnit: (unitId: string) => post(`/learning/units/${unitId}/start`),
 
   /** 退出学习一个单元 */
-  quitUnit: (unitId: string) => api.delete(`/learning/units/${unitId}`),
+  quitUnit: (unitId: string) => del(`/learning/units/${unitId}`),
 }

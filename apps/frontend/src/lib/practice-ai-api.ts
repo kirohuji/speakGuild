@@ -55,6 +55,9 @@ export async function enrichWord(
     const data = await post<WordEnrichmentResult>('/practice-ai/word-enrichment', {
       word: key,
       englishDefinitions,
+    }, {
+      dedupe: true,
+      failureCooldownMs: 60_000,
     })
     _wordCache.set(key, data)
     await learningContentRepository.saveDictionaryEntry(key, data)

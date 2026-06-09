@@ -29,6 +29,7 @@ import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { learningContentRepository } from '@/lib/offline'
+import { useAttemptedRequest } from '@/hooks/use-attempted-request'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { type TopicDetail } from '../api/english-practice-api'
 
@@ -588,14 +589,16 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const { hasAttempted, resetAttempted, runOnce } = useAttemptedRequest()
 
   useEffect(() => {
     setDictData(null)
     setEnrichData(null)
     setActiveTab('meaning')
     setDictionaryRequested(false)
+    resetAttempted()
     setShowUncommon(false)
-  }, [item.word])
+  }, [item.word, resetAttempted])
 
   useEffect(() => {
     if (hideSave) return
@@ -603,21 +606,31 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   }, [hideSave, item.word])
 
   useEffect(() => {
-    if (!dictionaryRequested || dictData === 'loading' || dictData) return
+    const attemptKey = `dictionary:${item.word}`
+    if (!dictionaryRequested || hasAttempted(attemptKey) || dictData === 'loading' || dictData) return
     setDictData('loading')
-    lookupManagedDictionary(item.word).then(setDictData)
-  }, [dictionaryRequested, dictData, item.word])
+    runOnce(attemptKey, () => lookupManagedDictionary(item.word))
+      .then((result) => {
+        if (result !== undefined) setDictData(result)
+      })
+      .catch(() => setDictData(null))
+  }, [dictionaryRequested, dictData, hasAttempted, item.word, runOnce])
 
   useEffect(() => {
     const needsFallback = !textOrEmpty(item.meaning)
       || !textOrEmpty(item.description)
       || (!textOrEmpty(item.phoneticUs) && !textOrEmpty(item.phoneticUk))
       || normalizeVocabExamples(item.examples).length === 0
-    if (!needsFallback || enrichData) return
+    const attemptKey = `enrich:${item.word}`
+    if (!needsFallback || hasAttempted(attemptKey) || enrichData) return
     setEnrichData('loading')
     const summary = [item.meaning, item.definitionEn].filter(Boolean).join(' | ')
-    enrichWord(item.word, summary).then(setEnrichData).catch(() => setEnrichData(null))
-  }, [enrichData, item.definitionEn, item.description, item.examples, item.meaning, item.word])
+    runOnce(attemptKey, () => enrichWord(item.word, summary))
+      .then((result) => {
+        if (result !== undefined) setEnrichData(result)
+      })
+      .catch(() => setEnrichData(null))
+  }, [enrichData, hasAttempted, item.definitionEn, item.description, item.examples, item.meaning, item.word, runOnce])
 
   const enriched = enrichData !== 'loading' ? enrichData : null
   const localExamples = normalizeVocabExamples(item.examples)

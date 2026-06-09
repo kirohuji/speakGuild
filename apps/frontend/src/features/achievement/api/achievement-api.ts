@@ -1,13 +1,4 @@
-import axios from 'axios'
-import { getBearerToken } from '@/features/auth/client'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
-const api = axios.create({ baseURL: API_BASE, timeout: 15000, headers: { 'Content-Type': 'application/json' } })
-api.interceptors.request.use((c) => { const t = getBearerToken(); if (t) c.headers.Authorization = `Bearer ${t}`; return c })
-api.interceptors.response.use(
-  (r) => (r.data && typeof r.data === 'object' && 'data' in r.data ? r.data.data : r.data),
-  (e) => Promise.reject(e),
-)
+import { get, post } from '@/lib/request'
 
 export interface AchievementItem {
   id: string; key: string; title: string; description: string
@@ -21,9 +12,9 @@ export interface AchievementItem {
 }
 
 export const achievementApi = {
-  getAll: () => api.get<any, AchievementItem[]>('/achievements'),
-  getUnlocked: () => api.get<any, AchievementItem[]>('/achievements/unlocked'),
-  markSeen: (id: string) => api.post(`/achievements/${id}/seen`),
+  getAll: () => get<AchievementItem[]>('/achievements'),
+  getUnlocked: () => get<AchievementItem[]>('/achievements/unlocked'),
+  markSeen: (id: string) => post(`/achievements/${id}/seen`),
 }
 
-export default api
+export default achievementApi

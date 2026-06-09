@@ -1,13 +1,4 @@
-import axios from 'axios'
-import { getBearerToken } from '@/features/auth/client'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
-const api = axios.create({ baseURL: API_BASE, timeout: 15000, headers: { 'Content-Type': 'application/json' } })
-api.interceptors.request.use((c) => { const t = getBearerToken(); if (t) c.headers.Authorization = `Bearer ${t}`; return c })
-api.interceptors.response.use(
-  (r) => (r.data && typeof r.data === 'object' && 'data' in r.data ? r.data.data : r.data),
-  (e) => Promise.reject(e),
-)
+import { get, post } from '@/lib/request'
 
 export interface GameMap {
   id: string; name: string; displayName: string
@@ -40,18 +31,18 @@ export interface GameSave {
 }
 
 export const exploreApi = {
-  getMaps: () => api.get<any, GameMap[]>('/explore/maps'),
-  getMap: (id: string) => api.get<any, GameMap>(`/explore/maps/${id}`),
-  getLocation: (id: string) => api.get<any, LocationDetail>(`/explore/locations/${id}`),
-  getCharacters: () => api.get<any, GameCharacter[]>('/explore/characters'),
-  getInk: (key: string) => api.get<any, { inkJson: any }>(`/explore/ink/${key}`),
+  getMaps: () => get<GameMap[]>('/explore/maps'),
+  getMap: (id: string) => get<GameMap>(`/explore/maps/${id}`),
+  getLocation: (id: string) => get<LocationDetail>(`/explore/locations/${id}`),
+  getCharacters: () => get<GameCharacter[]>('/explore/characters'),
+  getInk: (key: string) => get<{ inkJson: any }>(`/explore/ink/${key}`),
 }
 
 export const gameSaveApi = {
-  list: () => api.get<any, GameSave[]>('/explore/saves'),
-  get: (slot: number) => api.get<any, any>(`/explore/saves/${slot}`),
-  save: (slot: number, data: any) => api.post(`/explore/saves/${slot}`, data),
-  delete: (slot: number) => api.post(`/explore/saves/${slot}/delete`),
+  list: () => get<GameSave[]>('/explore/saves'),
+  get: (slot: number) => get<any>(`/explore/saves/${slot}`),
+  save: (slot: number, data: any) => post(`/explore/saves/${slot}`, data),
+  delete: (slot: number) => post(`/explore/saves/${slot}/delete`),
 }
 
-export default api
+export default exploreApi

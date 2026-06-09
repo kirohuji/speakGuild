@@ -1,32 +1,4 @@
-import axios from 'axios'
-import { getBearerToken } from '@/features/auth/client'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
-
-/** 英语输出训练 API 客户端 */
-const api = axios.create({
-  baseURL: API_BASE,
-  timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
-})
-
-api.interceptors.request.use((config) => {
-  const token = getBearerToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-api.interceptors.response.use(
-  (res) => {
-    const data = res.data
-    return data && typeof data === 'object' && 'data' in data ? data.data : data
-  },
-  (error) => {
-    const msg = error.response?.data?.message || error.message || '请求失败'
-    console.error('[English API Error]', msg)
-    return Promise.reject(error)
-  },
-)
+import { del, get, patch, post } from '@/lib/request'
 
 // ---- 练习模式 ----
 export interface TrainingTopic {
@@ -136,23 +108,23 @@ export interface PracticeSession {
 
 export const practiceApi = {
   getTopics: (sceneId: string) =>
-    api.get<any, { scene: any; topics: TrainingTopic[] }>(`/practice/topics`, { params: { sceneId } }),
+    get<{ scene: any; topics: TrainingTopic[] }>('/practice/topics', { sceneId }),
 
   getTopicDetail: (topicId: string) =>
-    api.get<any, TopicDetail>(`/practice/topics/${topicId}`),
+    get<TopicDetail>(`/practice/topics/${topicId}`),
 
   getTopicTeachingMarkdown: (topicId: string) =>
-    api.get<any, { teachingMarkdown?: string | null }>(`/practice/topics/${topicId}/teaching`),
+    get<{ teachingMarkdown?: string | null }>(`/practice/topics/${topicId}/teaching`),
 
   /** 获取话题关联的 Ink 脚本 */
   getTopicInk: (topicId: string) =>
-    api.get<any, { id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
+    get<{ id: string; inkJson: any; inkSource?: string | null; key: string; title: string } | null>(`/practice/topics/${topicId}/ink`),
 
   createSession: (topicId: string) =>
-    api.post<any, { id: string }>(`/practice/topics/${topicId}/sessions`, { topicId }),
+    post<{ id: string }>(`/practice/topics/${topicId}/sessions`, { topicId }),
 
   getSession: (sessionId: string) =>
-    api.get<any, PracticeSession>(`/practice/sessions/${sessionId}`),
+    get<PracticeSession>(`/practice/sessions/${sessionId}`),
 
   submitTurn: (sessionId: string, data: {
     round?: number
@@ -164,13 +136,13 @@ export const practiceApi = {
     judgement?: any
     objectivesCompleted?: string[]
     chunksUsed?: string[]
-  }) => api.post(`/practice/sessions/${sessionId}/turns`, data),
+  }) => post(`/practice/sessions/${sessionId}/turns`, data),
 
   completeSession: (sessionId: string) =>
-    api.post<any, PracticeSession>(`/practice/sessions/${sessionId}/complete`, {}),
+    post<PracticeSession>(`/practice/sessions/${sessionId}/complete`, {}),
 
   submitRecording: (topicId: string, userTranscript: string, audioUrl?: string) =>
-    api.post(`/practice/topics/${topicId}/record`, { userTranscript, audioUrl, topicId }),
+    post(`/practice/topics/${topicId}/record`, { userTranscript, audioUrl, topicId }),
 
   /** 提交练习对话记录 */
   submitDialogue: (topicId: string, data: {
@@ -181,11 +153,11 @@ export const practiceApi = {
     objectivesCompleted?: string[]
     chunksUsed?: string[]
     grammarIssues?: any
-  }) => api.post(`/practice/topics/${topicId}/dialogue`, data),
+  }) => post(`/practice/topics/${topicId}/dialogue`, data),
 
   /** 获取话题的所有对话记录 */
   getTopicDialogues: (topicId: string) =>
-    api.get<any, Array<{
+    get<Array<{
       round: number
       npcText: string
       userText: string
@@ -201,7 +173,7 @@ export const practiceApi = {
     corrected?: string
     chunkText?: string
     sceneName?: string
-  }) => api.post(`/practice/topics/any/save`, data),
+  }) => post('/practice/topics/any/save', data),
 }
 
 // ---- AI  ----
@@ -214,7 +186,7 @@ export const practiceAiApi = {
     expectedIntent?: string
     objectives?: string[]
     targetChunks?: string[]
-  }) => api.post<any, {
+  }) => post<{
     intent: string
     passed: boolean
     objectiveCompleted: string[]
@@ -225,7 +197,7 @@ export const practiceAiApi = {
   }>('/practice-ai/dialogue-turn', dto),
 
   analyzeSession: (sessionId: string) =>
-    api.post<any, { analysis: any; raw: string }>(`/practice-ai/sessions/${sessionId}/analyze`, {}),
+    post<{ analysis: any; raw: string }>(`/practice-ai/sessions/${sessionId}/analyze`, {}),
 }
 
 // ---- 学习库 ----
@@ -238,28 +210,28 @@ export const expressionApi = {
     reviewState?: MasteryStatus
     page?: number
     pageSize?: number
-  }) => api.get('/expressions', { params }),
+  }) => get('/expressions', params),
 
-  create: (data: any) => api.post('/expressions', data),
+  create: (data: any) => post('/expressions', data),
 
-  remove: (id: string) => api.delete(`/expressions/${id}`),
+  remove: (id: string) => del(`/expressions/${id}`),
 
   updateStatus: (id: string, status: MasteryStatus) =>
-    api.patch(`/expressions/${id}/status`, { status }),
+    patch(`/expressions/${id}/status`, { status }),
 }
 
 // ---- Chunk ----
 export const chunkApi = {
-  activate: (chunkId: string) => api.post(`/chunks/${chunkId}/activate`),
-  markRead: (chunkId: string) => api.post(`/chunks/${chunkId}/read`),
+  activate: (chunkId: string) => post(`/chunks/${chunkId}/activate`),
+  markRead: (chunkId: string) => post(`/chunks/${chunkId}/read`),
 }
 
 // ---- 等级 ----
 export const levelApi = {
-  getOverview: () => api.get('/level/overview'),
-  getWeeklyStats: () => api.get('/level/weekly-stats'),
-  getCommonErrors: () => api.get('/level/common-errors'),
-  getRecommendedPath: () => api.get('/level/recommended-path'),
+  getOverview: () => get('/level/overview'),
+  getWeeklyStats: () => get('/level/weekly-stats'),
+  getCommonErrors: () => get('/level/common-errors'),
+  getRecommendedPath: () => get('/level/recommended-path'),
 }
 
-export default api
+export default practiceApi
