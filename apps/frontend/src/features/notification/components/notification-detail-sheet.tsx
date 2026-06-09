@@ -71,7 +71,8 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
                 <img
                   src={item.imageUrl}
                   alt={item.title}
-                  className="w-full aspect-[10/7] object-cover object-[50%_0%]"
+                  // className="w-full aspect-[10/7] object-cover object-[50%_0%]"
+                  className="w-full aspect-[10/7] object-cover"
                 />
               </div>
             )}
