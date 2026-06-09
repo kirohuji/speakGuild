@@ -215,7 +215,7 @@ function TappableWord({
         <span
           ref={spanRef}
           className={cn(
-            'cursor-pointer select-none rounded px-0.5 transition-colors hover:bg-primary/10 active:bg-primary/15',
+            'cursor-pointer select-none rounded transition-colors hover:bg-primary/10 active:bg-primary/15',
             isActive && 'bg-primary/15 ring-1 ring-primary/30',
           )}
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
