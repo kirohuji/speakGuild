@@ -60,14 +60,24 @@ export const offlineStorageService = {
       localDb.list<any>('outbox'),
     ])
 
-    const downloadedPackBytes = sumJsonBytes([...packs, ...unitDetails, ...inkScripts])
+    const installedPacks = packs.filter((pack) => pack.status === 'installed')
+    const installedPackIds = new Set(installedPacks.map((pack) => pack.packId))
+    const downloadedUnitDetails = unitDetails.filter((item) => {
+      const id = String(item?.id ?? '')
+      const unitId = String(item?.unitId ?? '')
+      return installedPackIds.has(id) || installedPackIds.has(unitId)
+    })
+    const downloadedInkScripts = inkScripts.filter((item) => installedPackIds.has(String(item?.unitId ?? '')))
+    const readyAssets = assets.filter((asset) => asset.status === 'ready')
+
+    const downloadedPackBytes = sumJsonBytes([...installedPacks, ...downloadedUnitDetails, ...downloadedInkScripts])
     const dictionaryBytes = sumJsonBytes(dictionaries)
     const expressionBytes = sumJsonBytes(expressions)
-    const localAssetBytes = assets.reduce((sum, asset) => sum + Number(asset.size ?? 0), 0)
+    const localAssetBytes = readyAssets.reduce((sum, asset) => sum + Number(asset.size ?? 0), 0)
 
     return {
-      downloadedPackCount: packs.filter((pack) => pack.status === 'installed').length,
-      localAssetCount: assets.filter((asset) => asset.status === 'ready').length,
+      downloadedPackCount: installedPacks.length,
+      localAssetCount: readyAssets.length,
       localAssetBytes,
       downloadedPackBytes,
       dictionaryEntryCount: dictionaries.length,
