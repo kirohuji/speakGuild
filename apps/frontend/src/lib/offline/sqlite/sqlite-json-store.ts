@@ -9,9 +9,22 @@ export interface SqliteJsonExecutor {
 }
 
 export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
+  let writeQueue = Promise.resolve()
+
+  async function enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
+    const run = writeQueue.then(operation, operation)
+    writeQueue = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
+  }
+
   async function write(sql: string, values: any[] = []): Promise<void> {
-    await executor.run(sql, values)
-    await executor.afterWrite?.()
+    await enqueueWrite(async () => {
+      await executor.run(sql, values)
+      await executor.afterWrite?.()
+    })
   }
 
   return {
@@ -45,19 +58,17 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
     async putMany<T>(storeName: TableName, values: (T & { id: string })[]): Promise<void> {
       if (values.length === 0) return
       try {
-        await executor.execute('BEGIN TRANSACTION', false)
-        for (const value of values) {
-          await executor.run(
-            `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
-             ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
-            [value.id, JSON.stringify(value), new Date().toISOString()],
-            false,
-          )
-        }
-        await executor.execute('COMMIT', false)
-        await executor.afterWrite?.()
+        await enqueueWrite(async () => {
+          for (const value of values) {
+            await executor.run(
+              `INSERT INTO "${storeName}" (id, data, updated_at) VALUES (?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
+              [value.id, JSON.stringify(value), new Date().toISOString()],
+            )
+          }
+          await executor.afterWrite?.()
+        })
       } catch (error) {
-        try { await executor.execute('ROLLBACK', false) } catch { /* ignore */ }
         console.warn(`[${executor.label}] putMany failed for ${storeName}`, error)
         throw error
       }
@@ -117,14 +128,13 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
 
         if (ids.length === 0) return
 
-        await executor.execute('BEGIN TRANSACTION', false)
-        for (const id of ids) {
-          await executor.run(`DELETE FROM "${storeName}" WHERE id = ?`, [id], false)
-        }
-        await executor.execute('COMMIT', false)
-        await executor.afterWrite?.()
+        await enqueueWrite(async () => {
+          for (const id of ids) {
+            await executor.run(`DELETE FROM "${storeName}" WHERE id = ?`, [id])
+          }
+          await executor.afterWrite?.()
+        })
       } catch (error) {
-        try { await executor.execute('ROLLBACK', false) } catch { /* ignore */ }
         console.warn(`[${executor.label}] deleteWhere failed for ${storeName}`, error)
       }
     },

@@ -33,7 +33,9 @@ function sumJsonBytes(values: unknown[]): number {
 }
 
 async function clearTables(tableNames: TableName[]): Promise<void> {
-  await Promise.all(tableNames.map((tableName) => localDb.clear(tableName)))
+  for (const tableName of tableNames) {
+    await localDb.clear(tableName)
+  }
 }
 
 async function clearAssetFiles(): Promise<void> {
@@ -79,12 +81,10 @@ export const offlineStorageService = {
 
   async clearCategory(category: OfflineCacheCategory): Promise<void> {
     if (category === 'all') {
-      await Promise.all([
-        this.clearCategory('packs'),
-        this.clearCategory('assets'),
-        this.clearCategory('dictionary'),
-        this.clearCategory('expressions'),
-      ])
+      await this.clearCategory('packs')
+      await this.clearCategory('assets')
+      await this.clearCategory('dictionary')
+      await this.clearCategory('expressions')
       return
     }
 
