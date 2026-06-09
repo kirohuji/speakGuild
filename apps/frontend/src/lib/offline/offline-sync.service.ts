@@ -1,6 +1,5 @@
 import { learningApi } from '@/features/learning/api/learning-api'
 import { practiceApi, expressionApi } from '@/features/practice/api/english-practice-api'
-import { transcribeRecording } from '@/lib/practice-ai-api'
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
@@ -56,24 +55,56 @@ async function applyPracticeSessionItem(item: any, localSessionId?: string | nul
   if (localSessionId && localSessionId !== item.id) {
     await localDb.delete('practice_records', `session:${localSessionId}`)
   }
+  if (item.status !== 'analyzed' || !item.analysisResult) return
+
+  const fullSession = await practiceApi.getSession(item.id).catch(() => null)
+  if (!fullSession?.analysisResult || fullSession.status !== 'analyzed') return
+
+  const analysis = fullSession.analysisResult as any
+  const topicSnapshot = fullSession.topicSnapshot as any
+  const sceneSnapshot = fullSession.sceneSnapshot as any
   await localDb.put('practice_records', {
-    id: `session:${item.id}`,
-    type: 'session',
-    remoteId: item.id,
-    sessionId: item.id,
+    id: `session:${fullSession.id}`,
+    type: 'history',
+    remoteId: fullSession.id,
+    sessionId: fullSession.id,
     localSessionId: localSessionId ?? undefined,
-    topicId: item.topicId,
-    sceneId: item.sceneId,
-    inkScriptId: item.inkScriptId,
-    status: item.status,
-    turnCount: item.turnCount ?? 0,
-    analysisResult: item.analysisResult,
-    analysisRaw: item.analysisRaw,
-    analysisError: item.analysisError,
-    startedAt: toIsoString(item.startedAt),
-    completedAt: toIsoString(item.completedAt),
-    analyzedAt: toIsoString(item.analyzedAt),
-    updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+    topicId: fullSession.topicId,
+    sceneId: fullSession.sceneId,
+    status: fullSession.status,
+    record: {
+      recordId: fullSession.id,
+      sessionId: fullSession.id,
+      topicId: fullSession.topicId,
+      topicName: sceneSnapshot?.title || '英语输出训练',
+      questionId: fullSession.topicId,
+      questionText: topicSnapshot?.title || '练习题目',
+      practiceCount: fullSession.turnCount ?? fullSession.turns?.length ?? 0,
+      lastPracticeAt: toIsoString(fullSession.startedAt) ?? new Date().toISOString(),
+      status: fullSession.status,
+      score: typeof analysis?.overallScore === 'number' ? analysis.overallScore : null,
+      summary: typeof analysis?.summary === 'string' ? analysis.summary : null,
+      completedAt: toIsoString(fullSession.completedAt),
+      analyzedAt: toIsoString(fullSession.analyzedAt),
+    },
+    session: {
+      id: fullSession.id,
+      topicId: fullSession.topicId,
+      sceneId: fullSession.sceneId,
+      inkScriptId: fullSession.inkScriptId,
+      status: fullSession.status,
+      turnCount: fullSession.turnCount ?? 0,
+      topicSnapshot: fullSession.topicSnapshot,
+      sceneSnapshot: fullSession.sceneSnapshot,
+      analysisResult: fullSession.analysisResult,
+      analysisRaw: fullSession.analysisRaw,
+      analysisError: fullSession.analysisError,
+      startedAt: toIsoString(fullSession.startedAt),
+      completedAt: toIsoString(fullSession.completedAt),
+      analyzedAt: toIsoString(fullSession.analyzedAt),
+      turns: fullSession.turns ?? [],
+    },
+    updatedAt: new Date().toISOString(),
     syncStatus: 'synced',
   })
 }
@@ -192,15 +223,6 @@ async function replayItem(
     const remoteSessionId = await resolveSessionId(payload.sessionId)
     if (!remoteSessionId) return false
     await practiceApi.submitTurn(remoteSessionId, payload.data)
-    const record = await localDb.get<any>('practice_records', `session:${remoteSessionId}`)
-    if (record) {
-      await localDb.put('practice_records', {
-        ...record,
-        turnCount: (record.turnCount ?? 0) + 1,
-        updatedAt: new Date().toISOString(),
-        syncStatus: 'synced',
-      })
-    }
     return true
   }
 
@@ -327,30 +349,6 @@ async function replayItem(
       }
       return true
     }
-  }
-
-  // 录音离线上传：取 blob → 上传 → 存 audioUrl 到 kv
-  if (item.entityType === 'recording' && item.operation === 'create') {
-    const payload = item.payload as any
-    const blobId = payload.blobId ?? item.entityId
-    const recording = await localDb.getBlob(blobId)
-    if (!recording) return true // blob 已被清理，视为已完成
-
-    const ext = recording.mimeType?.includes('ogg') ? 'ogg'
-      : recording.mimeType?.includes('mp4') ? 'mp4'
-      : 'webm'
-    const result = await transcribeRecording(recording.blob, `recording.${ext}`)
-
-    // 存下 audioUrl，供后续 turn 查找
-    if (result.audioUrl) {
-      await localDb.put('kv', {
-        id: `recording-result:${blobId}`,
-        value: { audioUrl: result.audioUrl, text: result.text },
-        updatedAt: new Date().toISOString(),
-      })
-    }
-    await localDb.deleteBlob(blobId)
-    return true
   }
 
   return false
@@ -624,7 +622,7 @@ export const offlineSyncService = {
       }
     }
 
-    // 逐条处理复杂类型（recording 等非批量类型）
+    // 逐条处理需要顺序 replay 的类型。
     let madeProgress = true
     while (madeProgress) {
       madeProgress = false

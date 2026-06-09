@@ -4,6 +4,7 @@ import {
   type PracticeSession,
   type TopicDetail,
 } from '@/features/practice/api/english-practice-api'
+import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 
@@ -30,6 +31,8 @@ function sessionRecordId(sessionId: string) {
   return `session:${sessionId}`
 }
 
+const PRACTICE_RECORDS_CACHE_KEY = 'practice-records-cache:loaded'
+
 function turnRecordId(sessionId: string, round?: number) {
   return `turn:${sessionId}:${round ?? createLocalId('round')}`
 }
@@ -53,6 +56,109 @@ async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null
   if (!cached.unitId) return cached.detail
   const pack = await localDb.get<{ status?: string }>('downloaded_packs', cached.unitId)
   return pack?.status === 'installed' ? cached.detail : null
+}
+
+function hasFinalAnalysis(session: Partial<PracticeSession> | null | undefined): boolean {
+  return session?.status === 'analyzed' && Boolean(session.analysisResult)
+}
+
+function practiceRecordFromSession(session: PracticeSession): PracticeRecord {
+  const analysis = session.analysisResult ?? {}
+  return {
+    recordId: session.id,
+    sessionId: session.id,
+    topicId: session.topicId,
+    topicName: session.sceneSnapshot?.title || '英语输出训练',
+    questionId: session.topicId,
+    questionText: session.topicSnapshot?.title || '练习题目',
+    practiceCount: session.turnCount ?? session.turns?.length ?? 0,
+    lastPracticeAt: toIsoString(session.startedAt) ?? new Date().toISOString(),
+    status: session.status,
+    score: typeof analysis.overallScore === 'number' ? analysis.overallScore : null,
+    summary: typeof analysis.summary === 'string' ? analysis.summary : null,
+    completedAt: toIsoString(session.completedAt),
+    analyzedAt: toIsoString(session.analyzedAt),
+  }
+}
+
+function normalizePracticeRecord(record: PracticeRecord): PracticeRecord {
+  return {
+    ...record,
+    recordId: record.recordId || record.sessionId || record.topicId,
+    questionId: record.questionId || record.topicId,
+    practiceCount: record.practiceCount ?? 0,
+    lastPracticeAt: record.lastPracticeAt || record.analyzedAt || record.completedAt || new Date().toISOString(),
+    status: record.status ?? 'analyzed',
+  }
+}
+
+async function putPracticeHistoryRecord(input: {
+  record: PracticeRecord
+  session?: PracticeSession | null
+  syncStatus?: 'pending' | 'synced'
+}): Promise<void> {
+  const record = normalizePracticeRecord(input.record)
+  const session = input.session ?? null
+  await localDb.put('practice_records', {
+    id: sessionRecordId(record.sessionId ?? record.recordId),
+    type: 'history',
+    remoteId: record.sessionId ?? record.recordId,
+    sessionId: record.sessionId ?? record.recordId,
+    topicId: record.topicId,
+    sceneId: session?.sceneId,
+    status: record.status ?? session?.status ?? 'analyzed',
+    record,
+    session: session ? {
+      id: session.id,
+      topicId: session.topicId,
+      sceneId: session.sceneId,
+      inkScriptId: session.inkScriptId,
+      status: session.status,
+      turnCount: session.turnCount,
+      topicSnapshot: session.topicSnapshot,
+      sceneSnapshot: session.sceneSnapshot,
+      analysisResult: session.analysisResult,
+      analysisRaw: session.analysisRaw,
+      analysisError: session.analysisError,
+      startedAt: toIsoString(session.startedAt),
+      completedAt: toIsoString(session.completedAt),
+      analyzedAt: toIsoString(session.analyzedAt),
+      turns: session.turns ?? [],
+    } : undefined,
+    updatedAt: new Date().toISOString(),
+    syncStatus: input.syncStatus ?? 'synced',
+  })
+}
+
+async function markPracticeRecordsCacheLoaded(): Promise<void> {
+  await localDb.put('kv', {
+    id: PRACTICE_RECORDS_CACHE_KEY,
+    value: true,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+async function isPracticeRecordsCacheLoaded(): Promise<boolean> {
+  const marker = await localDb.get<{ value?: boolean }>('kv', PRACTICE_RECORDS_CACHE_KEY)
+  return marker?.value === true
+}
+
+async function listCachedPracticeHistory(): Promise<PracticeRecord[]> {
+  const entries = await localDb.list<any>('practice_records')
+  return entries
+    .filter((item) => item?.type === 'history' && item?.record?.status === 'analyzed')
+    .map((item) => normalizePracticeRecord(item.record))
+    .sort((a, b) => String(b.analyzedAt ?? b.lastPracticeAt).localeCompare(String(a.analyzedAt ?? a.lastPracticeAt)))
+}
+
+function paginatePracticeRecords(items: PracticeRecord[], page: number, pageSize: number): PracticeRecordsResult {
+  const start = (page - 1) * pageSize
+  return {
+    list: items.slice(start, start + pageSize),
+    total: items.length,
+    page,
+    pageSize,
+  }
 }
 
 export const practiceRepository = {
@@ -108,28 +214,9 @@ export const practiceRepository = {
 
   async createSession(topicId: string): Promise<{ id: string }> {
     const localSessionId = createLocalId('local_session')
-    const now = new Date().toISOString()
     try {
       const remote = await practiceApi.createSession(topicId)
       await localDb.put('kv', { id: `session-map:${localSessionId}`, value: remote.id, updatedAt: new Date().toISOString() })
-      await localDb.put('practice_records', {
-        id: sessionRecordId(remote.id),
-        type: 'session',
-        remoteId: remote.id,
-        sessionId: remote.id,
-        localSessionId,
-        topicId: remote.topicId ?? topicId,
-        sceneId: remote.sceneId,
-        inkScriptId: remote.inkScriptId,
-        status: remote.status ?? 'active',
-        turnCount: remote.turnCount ?? 0,
-        turns: [],
-        startedAt: toIsoString(remote.startedAt) ?? now,
-        completedAt: toIsoString(remote.completedAt),
-        analyzedAt: toIsoString(remote.analyzedAt),
-        updatedAt: new Date().toISOString(),
-        syncStatus: 'synced',
-      })
       return remote
     } catch {
       await syncOutbox.enqueue({
@@ -137,17 +224,6 @@ export const practiceRepository = {
         entityId: localSessionId,
         operation: 'create',
         payload: { topicId, localSessionId },
-      })
-      await localDb.put('practice_records', {
-        id: sessionRecordId(localSessionId),
-        sessionId: localSessionId,
-        localSessionId,
-        topicId,
-        status: 'active',
-        turns: [],
-        startedAt: now,
-        updatedAt: now,
-        syncStatus: 'pending',
       })
       return { id: localSessionId }
     }
@@ -165,17 +241,6 @@ export const practiceRepository = {
       const remoteSessionId = await resolveSessionId(sessionId)
       await practiceApi.submitTurn(remoteSessionId, data)
       await syncOutbox.markSynced(outboxItem.id)
-
-      const recordId = sessionRecordId(remoteSessionId)
-      const existing = await localDb.get<any>('practice_records', recordId)
-      if (existing) {
-        await localDb.put('practice_records', {
-          ...existing,
-          turnCount: (existing.turnCount ?? 0) + 1,
-          updatedAt: new Date().toISOString(),
-          syncStatus: 'synced',
-        })
-      }
     } catch {
       // The outbox keeps the turn for later replay.
     }
@@ -201,25 +266,6 @@ export const practiceRepository = {
     try {
       const result = await practiceApi.completeSession(await resolveSessionId(sessionId))
       await syncOutbox.markSynced(outboxItem.id)
-      await localDb.put('practice_records', {
-        id: sessionRecordId(result.id),
-        type: 'session',
-        remoteId: result.id,
-        sessionId: result.id,
-        topicId: result.topicId,
-        sceneId: result.sceneId,
-        inkScriptId: result.inkScriptId,
-        status: result.status,
-        turnCount: result.turnCount ?? 0,
-        analysisResult: result.analysisResult,
-        analysisRaw: result.analysisRaw,
-        analysisError: result.analysisError,
-        startedAt: toIsoString(result.startedAt),
-        completedAt: toIsoString(result.completedAt) ?? now,
-        analyzedAt: toIsoString(result.analyzedAt),
-        updatedAt: new Date().toISOString(),
-        syncStatus: 'synced',
-      })
       await localDb.put('user_progress', {
         id: `practice-session:${sessionId}`,
         sessionId,
@@ -235,6 +281,74 @@ export const practiceRepository = {
   },
 
   async analyzeSession(sessionId: string) {
-    return practiceAiApi.analyzeSession(sessionId)
+    const remoteSessionId = await resolveSessionId(sessionId)
+    const result = await practiceAiApi.analyzeSession(remoteSessionId)
+    try {
+      const session = await practiceApi.getSession(remoteSessionId)
+      if (hasFinalAnalysis(session)) {
+        await putPracticeHistoryRecord({
+          record: practiceRecordFromSession(session),
+          session,
+          syncStatus: 'synced',
+        })
+        await markPracticeRecordsCacheLoaded()
+      }
+    } catch {
+      // Analysis still succeeded; history cache can be refreshed later.
+    }
+    return result
+  },
+
+  async listPracticeRecords(params: { page?: number; pageSize?: number } = {}): Promise<PracticeRecordsResult> {
+    const page = params.page ?? 1
+    const pageSize = params.pageSize ?? 20
+    const cached = await listCachedPracticeHistory()
+    const cacheLoaded = await isPracticeRecordsCacheLoaded()
+    if (cached.length > 0 || cacheLoaded) {
+      return paginatePracticeRecords(cached, page, pageSize)
+    }
+    return this.refreshPracticeRecords({ page, pageSize })
+  },
+
+  async refreshPracticeRecords(params: { page?: number; pageSize?: number } = {}): Promise<PracticeRecordsResult> {
+    const page = params.page ?? 1
+    const pageSize = params.pageSize ?? 20
+    const remote = await getPracticeRecords({ page, pageSize })
+    await Promise.all(
+      remote.list
+        .filter((record) => record.status === 'analyzed')
+        .map((record) => putPracticeHistoryRecord({ record, syncStatus: 'synced' })),
+    )
+    await markPracticeRecordsCacheLoaded()
+    return remote
+  },
+
+  async getCachedPracticeSession(sessionId: string): Promise<PracticeSession | null> {
+    const record = await localDb.get<any>('practice_records', sessionRecordId(sessionId))
+    return record?.type === 'history' && record.session?.analysisResult ? record.session as PracticeSession : null
+  },
+
+  async getPracticeSessionForReview(sessionId: string): Promise<PracticeSession | null> {
+    const cached = await this.getCachedPracticeSession(sessionId)
+    if (cached) return cached
+
+    try {
+      const session = await practiceApi.getSession(sessionId)
+      if (hasFinalAnalysis(session)) {
+        await putPracticeHistoryRecord({
+          record: practiceRecordFromSession(session),
+          session,
+          syncStatus: 'synced',
+        })
+      }
+      return session
+    } catch {
+      return null
+    }
+  },
+
+  async clearPracticeRecordsCache(): Promise<void> {
+    await localDb.clear('practice_records')
+    await localDb.delete('kv', PRACTICE_RECORDS_CACHE_KEY)
   },
 }

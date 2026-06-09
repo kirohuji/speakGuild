@@ -9,12 +9,13 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
-import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
-import { practiceApi, type PracticeSession, type TopicDetail } from '@/features/practice/api/english-practice-api'
+import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
+import { type PracticeSession, type TopicDetail } from '@/features/practice/api/english-practice-api'
 import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
 import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
+import { practiceRepository } from '@/lib/offline'
 import { useLearningStore } from '@/stores/learning.store'
 import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
@@ -128,11 +129,20 @@ function PracticeRecordsContent() {
   const pageSize = 15
 
   useEffect(() => {
+    let cancelled = false
     setIsLoading(true)
-    getPracticeRecords({ page, pageSize })
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setIsLoading(false))
+    practiceRepository.listPracticeRecords({ page, pageSize })
+      .then((next) => {
+        if (!cancelled) setData(next)
+      })
+      .catch(() => {
+        if (!cancelled) setData({ list: [], total: 0, page, pageSize })
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => { cancelled = true }
   }, [page])
 
   const columns: ColumnConfig<PracticeRecord>[] = [
@@ -232,8 +242,8 @@ function PracticeRecordReadonlyReviewDrawer({
     setLineIndex(0)
     setShowAnalysis(false)
     Promise.all([
-      practiceApi.getSession(record.sessionId),
-      practiceApi.getTopicDetail(record.topicId).catch(() => null),
+      practiceRepository.getPracticeSessionForReview(record.sessionId),
+      practiceRepository.getTopicDetail(record.topicId).catch(() => null),
     ])
       .then(([nextSession, nextTopicDetail]) => {
         setSession(nextSession)

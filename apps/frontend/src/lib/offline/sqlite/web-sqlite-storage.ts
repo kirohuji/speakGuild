@@ -134,20 +134,6 @@ const jsonStore = createSqliteJsonStore({
 
 export const webSqliteStorage = {
   ...jsonStore,
-  async saveBlob(): Promise<string> {
-    throw new Error('[web-sqlite] Binary recording cache is only available on native platforms')
-  },
-
-  async getBlob(
-    _id: string,
-  ): Promise<{ blob: Blob; mimeType?: string; sessionId?: string; round?: number } | null> {
-    return null
-  },
-
-  async deleteBlob(_id: string): Promise<void> {
-    // Web does not cache binary recording data.
-  },
-
   async close(): Promise<void> {
     if (!dbPromise) return
 

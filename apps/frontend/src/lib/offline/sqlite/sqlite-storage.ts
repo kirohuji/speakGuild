@@ -91,88 +91,6 @@ const jsonStore = createSqliteJsonStore({
 
 export const sqliteStorage = {
   ...jsonStore,
-  async saveBlob(
-    blob: Blob,
-    meta?: { mimeType?: string; sessionId?: string; round?: number },
-  ): Promise<string> {
-    const { Directory, Filesystem } = await import('@capacitor/filesystem')
-    const id = Capacitor.isNativePlatform()
-      ? `${Date.now()}-${Math.random().toString(36).slice(2)}`
-      : (typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
-
-    const ext = meta?.mimeType?.includes('ogg') ? 'ogg'
-      : meta?.mimeType?.includes('mp4') ? 'mp4'
-      : 'webm'
-    const path = `recordings/${id}.${ext}`
-    const arrayBuffer = await blob.arrayBuffer()
-    const base64 = arrayBufferToBase64(arrayBuffer)
-
-    await Filesystem.writeFile({
-      path,
-      data: base64,
-      directory: Directory.Data,
-      recursive: true,
-    })
-
-    // Store metadata in SQLite
-    await jsonStore.put('recordings', {
-      id,
-      localPath: path,
-      mimeType: meta?.mimeType ?? blob.type,
-      sessionId: meta?.sessionId ?? null,
-      round: meta?.round ?? null,
-      createdAt: new Date().toISOString(),
-    } as any)
-
-    return id
-  },
-
-  async getBlob(
-    id: string,
-  ): Promise<{ blob: Blob; mimeType?: string; sessionId?: string; round?: number } | null> {
-    const { Directory, Filesystem } = await import('@capacitor/filesystem')
-
-    const meta = await jsonStore.get<any>('recordings', id)
-    if (!meta?.localPath) return null
-
-    try {
-      const result = await Filesystem.readFile({
-        path: meta.localPath,
-        directory: Directory.Data,
-      })
-      // result.data is a base64 string on Capacitor
-      const base64 = typeof result.data === 'string' ? result.data : ''
-      if (!base64) return null
-      const binaryStr = atob(base64)
-      const bytes = new Uint8Array(binaryStr.length)
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i)
-      }
-      return {
-        blob: new Blob([bytes], { type: meta.mimeType ?? 'audio/webm' }),
-        mimeType: meta.mimeType,
-        sessionId: meta.sessionId,
-        round: meta.round,
-      }
-    } catch {
-      return null
-    }
-  },
-
-  async deleteBlob(id: string): Promise<void> {
-    const { Directory, Filesystem } = await import('@capacitor/filesystem')
-
-    const meta = await jsonStore.get<any>('recordings', id)
-    if (meta?.localPath) {
-      try {
-        await Filesystem.deleteFile({ path: meta.localPath, directory: Directory.Data })
-      } catch { /* file may already be gone */ }
-    }
-    await jsonStore.delete('recordings', id)
-  },
-
   // ── Lifecycle ──────────────────────────────────────────
 
   async close(): Promise<void> {
@@ -193,15 +111,4 @@ export const sqliteStorage = {
   isAvailable(): boolean {
     return Capacitor.isNativePlatform()
   },
-}
-
-/** Convert ArrayBuffer to base64 string. */
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  const chunkSize = 0x8000
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-  }
-  return btoa(binary)
 }

@@ -15,13 +15,12 @@
  * or replayable sync state, and local database resets are the supported way to
  * move between incompatible cache schemas during development.
  *
- * Native recording bytes stay in Capacitor Filesystem. Web does not cache
- * binary resource data.
+ * Binary resource data is not stored in SQLite.
  */
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 3
+export const DB_VERSION = 4
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -36,7 +35,6 @@ export const TABLE_NAMES = [
   'practice_records',
   'local_assets',
   'outbox',
-  'recordings',
 ] as const
 
 export type TableName = (typeof TABLE_NAMES)[number]
@@ -159,16 +157,6 @@ export const DDL: Record<TableName, string> = {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `,
-  recordings: `
-    CREATE TABLE IF NOT EXISTS recordings (
-      id TEXT PRIMARY KEY NOT NULL,
-      session_id TEXT,
-      round INTEGER,
-      local_path TEXT,
-      data TEXT NOT NULL DEFAULT '{}',
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )
-  `,
 }
 
 /** All CREATE TABLE statements as a single batch. */
@@ -206,5 +194,4 @@ export const INDEXES = [
   // local_assets: filter by status
   `CREATE INDEX IF NOT EXISTS idx_local_assets_status ON local_assets (status)`,
   `CREATE INDEX IF NOT EXISTS idx_local_assets_remote_url ON local_assets (remote_url)`,
-  `CREATE INDEX IF NOT EXISTS idx_recordings_session_id ON recordings (session_id)`,
 ]

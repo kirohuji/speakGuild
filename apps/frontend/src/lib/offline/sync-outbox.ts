@@ -8,7 +8,6 @@ export type SyncEntityType =
   | 'practice_session'
   | 'practice_turn'
   | 'learning_pack'
-  | 'recording'
 
 export type SyncOperation = 'create' | 'update' | 'delete'
 

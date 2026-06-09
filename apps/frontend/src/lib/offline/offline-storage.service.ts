@@ -5,6 +5,7 @@ import type { InstalledLearningPack } from './learning-pack.service'
 import type { LocalAsset } from './asset-cache.service'
 import type { TableName } from './sqlite/schema'
 import { learningContentRepository } from './learning-content.repository'
+import { practiceRepository } from './practice.repository'
 
 export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'all'
 
@@ -96,6 +97,7 @@ export const offlineStorageService = {
       await this.clearCategory('assets')
       await this.clearCategory('dictionary')
       await this.clearCategory('expressions')
+      await practiceRepository.clearPracticeRecordsCache()
       return
     }
 

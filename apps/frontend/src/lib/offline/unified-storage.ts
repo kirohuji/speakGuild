@@ -28,9 +28,6 @@ export interface ILocalDb {
   count(storeName: TableName): Promise<number>
   clear(storeName: TableName): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
-  saveBlob(blob: Blob, meta?: { mimeType?: string; sessionId?: string; round?: number }): Promise<string>
-  getBlob(id: string): Promise<{ blob: Blob; mimeType?: string; sessionId?: string; round?: number } | null>
-  deleteBlob(id: string): Promise<void>
   close(): Promise<void>
   isAvailable(): boolean
 }
@@ -122,23 +119,6 @@ export const localDb: ILocalDb = {
     predicate: (value: T & { id: string }) => boolean,
   ): Promise<void> {
     return (await getBackend()).deleteWhere(storeName, predicate)
-  },
-
-  async saveBlob(
-    blob: Blob,
-    meta?: { mimeType?: string; sessionId?: string; round?: number },
-  ): Promise<string> {
-    return (await getBackend()).saveBlob(blob, meta)
-  },
-
-  async getBlob(
-    id: string,
-  ): Promise<{ blob: Blob; mimeType?: string; sessionId?: string; round?: number } | null> {
-    return (await getBackend()).getBlob(id)
-  },
-
-  async deleteBlob(id: string): Promise<void> {
-    return (await getBackend()).deleteBlob(id)
   },
 
   async close(): Promise<void> {
