@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -9,11 +9,12 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { cn } from '@/lib/cn'
+import { isNative } from '@/lib/native'
 import {
   learningContentRepository,
   type ExpressionEntry,
@@ -21,6 +22,8 @@ import {
 } from '@/lib/offline'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
+const LIBRARY_TABS: LibraryTab[] = ['words', 'chunk', 'pattern']
+const TAB_SWIPE_DISTANCE = 70
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
@@ -148,6 +151,7 @@ export function ExpressionLibraryPage() {
   // 展开的列表项
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
   const [handledDeepLink, setHandledDeepLink] = useState('')
+  const tabSwipeRef = useRef({ x: 0, y: 0, blocked: false })
 
   // ---- 核心数据请求：一级 tab + 二级 tab 都作为查询参数传给后端 ----
   const fetchData = useCallback(async () => {
@@ -216,6 +220,55 @@ export function ExpressionLibraryPage() {
     setHandledDeepLink('')
     setSearchParams({})
   }, [setSearchParams])
+
+  useEffect(() => {
+    document.body.dataset.mobileExpressionTab = libraryTab
+    return () => {
+      delete document.body.dataset.mobileExpressionTab
+    }
+  }, [libraryTab])
+
+  useEffect(() => {
+    if (!isNative()) return
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0]
+      if (!touch) return
+      tabSwipeRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        blocked: Boolean(
+          event.target instanceof HTMLElement
+            && event.target.closest('button,a,input,textarea,select,[role="button"],[role="dialog"],[data-mobile-gesture-block]'),
+        ),
+      }
+    }
+
+    const onTouchEnd = (event: TouchEvent) => {
+      const start = tabSwipeRef.current
+      if (start.blocked) return
+      const touch = event.changedTouches[0]
+      if (!touch) return
+
+      const dx = touch.clientX - start.x
+      const dy = touch.clientY - start.y
+      if (Math.abs(dx) < TAB_SWIPE_DISTANCE || Math.abs(dx) < Math.abs(dy) * 1.4) return
+
+      const currentIndex = LIBRARY_TABS.indexOf(libraryTab)
+      const nextIndex = dx > 0 ? currentIndex + 1 : currentIndex - 1
+      const nextTab = LIBRARY_TABS[nextIndex]
+      if (!nextTab) return
+
+      handleLibraryTabChange(nextTab)
+    }
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [handleLibraryTabChange, libraryTab])
 
   // ---- dialog ----
   const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
@@ -541,7 +594,7 @@ export function ExpressionLibraryPage() {
         {/* 两个 TabsContent 共享同一套渲染逻辑 */}
         <TabsContent value="words" forceMount className="data-[state=inactive]:hidden">
           {loading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
+            <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
             emptyState(empty.icon, empty.title, empty.hint)
           ) : (
@@ -567,7 +620,7 @@ export function ExpressionLibraryPage() {
 
         <TabsContent value="chunk" forceMount className="data-[state=inactive]:hidden">
           {loading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
+            <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
             emptyState(empty.icon, empty.title, empty.hint)
           ) : (
@@ -593,7 +646,7 @@ export function ExpressionLibraryPage() {
 
         <TabsContent value="pattern" forceMount className="data-[state=inactive]:hidden">
           {loading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
+            <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
             emptyState(empty.icon, empty.title, empty.hint)
           ) : (

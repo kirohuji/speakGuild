@@ -8,7 +8,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import {
@@ -58,7 +58,7 @@ export function TodayTaskPage() {
   const doneTasks = completedTasks.size
   const allDone = totalTasks > 0 && doneTasks === totalTasks
 
-  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={4} />
 
   if (!plan || allTasks.length === 0) {
     return (

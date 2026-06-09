@@ -4,7 +4,7 @@ import { ArrowLeft, MessageCircle, MapPin, Users, Mic, Send, Menu } from 'lucide
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { VnScene } from '@/features/vn-engine/vn-scene'
 import { DialogueBox } from '@/features/vn-engine/dialogue-box'
 import { SaveLoadPanel } from '../components/save-load-panel'
@@ -102,7 +102,7 @@ export function ExploreLocationPage() {
     } catch {}
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={5} minHeightClassName="min-h-screen" />
   if (!location) return <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8"><p className="text-destructive">地点不存在</p><Button variant="outline" onClick={() => navigate(-1)}>返回</Button></div>
 
   return (

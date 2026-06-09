@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
@@ -214,7 +214,7 @@ export function LearningUnitPage() {
     setExpandedItemId(null)
   }, [])
 
-  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={5} />
   if (!unit) return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
       <Target className="size-12 text-muted-foreground/40" />

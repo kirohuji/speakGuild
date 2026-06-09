@@ -5,7 +5,7 @@ import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
@@ -257,7 +257,7 @@ function PracticeRecordReadonlyReviewDrawer({
           <DrawerTitle>练习回顾</DrawerTitle>
         </DrawerHeader>
         {loading ? (
-          <div className="flex h-full items-center justify-center"><Spinner /></div>
+          <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
         ) : !session ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-sm text-muted-foreground">暂时无法加载这次练习回顾</p>

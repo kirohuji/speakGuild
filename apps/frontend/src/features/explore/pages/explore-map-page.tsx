@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { MapPin, Lock, ChevronRight, Home, Coffee, Building, GraduationCap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { exploreApi, type GameMap, type LocationPin } from '../api/explore-api'
 import { cn } from '@/lib/cn'
 
@@ -29,7 +29,7 @@ export function ExploreMapPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={4} />
 
   if (maps.length === 0) {
     return (

@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { achievementApi, type AchievementItem } from '../api/achievement-api'
 import { cn } from '@/lib/cn'
 
@@ -41,7 +41,7 @@ export function AchievementHallPage() {
   const filtered = tab === 'all' ? achievements : achievements.filter((a) => a.category === tab)
   const categories = [...new Set(achievements.map((a) => a.category))]
 
-  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={5} />
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">

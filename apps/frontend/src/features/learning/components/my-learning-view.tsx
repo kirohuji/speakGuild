@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { BookOpen, CheckCircle2, ChevronRight, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -29,7 +29,7 @@ export function MyLearningView({ myUnits, inProgress, completed, loading, onGoTo
   const { t } = useTranslation()
 
   if (loading) {
-    return <div className="flex min-h-[40vh] items-center justify-center"><Spinner /></div>
+    return <MobilePageLoading rows={3} minHeightClassName="min-h-[40vh]" />
   }
 
   if (myUnits.length === 0) {

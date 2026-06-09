@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Separator } from '@/components/ui/separator'
 import { VnScene } from '@/features/vn-engine/vn-scene'
 import { DialogueBox } from '@/features/vn-engine/dialogue-box'
@@ -123,7 +123,7 @@ export function ScriptPlayPage() {
     } catch {}
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={5} minHeightClassName="min-h-screen" />
   if (!episode) return <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8"><p className="text-destructive">关卡不存在</p><Button variant="outline" onClick={() => navigate(-1)}>返回</Button></div>
 
   return (

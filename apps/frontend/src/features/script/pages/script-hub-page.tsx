@@ -5,7 +5,7 @@ import { Play, Lock, CheckCircle2, ChevronRight, Star, BookOpen } from 'lucide-r
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { scriptApi, type ScriptChapter, type ScriptEpisodeCard, type EpisodeReadiness } from '../api/script-api'
 import { cn } from '@/lib/cn'
 
@@ -35,7 +35,7 @@ export function ScriptHubPage() {
     try { const r = await scriptApi.getReadiness(episodeId); setReadinessMap((p) => ({ ...p, [episodeId]: r })) } catch {}
   }
 
-  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>
+  if (loading) return <MobilePageLoading rows={4} />
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">

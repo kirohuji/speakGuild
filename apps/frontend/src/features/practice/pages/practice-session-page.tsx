@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
@@ -865,11 +865,7 @@ export function PracticeSessionPage() {
 
   // ==================== Loading / Error ====================
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner />
-      </div>
-    )
+    return <MobilePageLoading rows={5} minHeightClassName="min-h-screen" />
   }
 
   if (error || !detail) {

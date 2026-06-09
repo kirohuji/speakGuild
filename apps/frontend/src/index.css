@@ -12,6 +12,18 @@
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
 }
 
+@keyframes mobile-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  55% {
+    transform: translateX(80%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
 @layer base {
   /* ═══════════════════════════════════════════════════════
      漫语町 · ManYu 品牌配色系统

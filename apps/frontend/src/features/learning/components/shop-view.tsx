@@ -4,6 +4,7 @@ import { Virtuoso } from 'react-virtuoso'
 import { BookOpen, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
 import { ShopCard } from './shop-card'
@@ -105,7 +106,7 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
     return (
       <>
         {headerEl}
-        <div className="flex min-h-[40vh] items-center justify-center"><Spinner /></div>
+        <MobilePageLoading rows={4} minHeightClassName="min-h-[40vh]" />
       </>
     )
   }
