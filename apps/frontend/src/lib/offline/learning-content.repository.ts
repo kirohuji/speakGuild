@@ -51,6 +51,10 @@ function entryId(kind: ExpressionEntryKind, text: string) {
   return `${normalizeKind(kind)}:${normalizeText(kind, text)}`
 }
 
+function expressionCacheKey(kind: ExpressionEntryKind, status?: ExpressionEntryStatus) {
+  return `expression-cache:${kind}:${status ?? 'all'}`
+}
+
 function expressionType(kind: ExpressionEntryKind): ExpressionEntry['type'] {
   if (kind === 'word') return 'word'
   if (kind === 'pattern') return 'scene_phrase'
@@ -364,6 +368,18 @@ export const learningContentRepository = {
     }
     await localDb.put('expression_entries', entry)
     return entry
+  },
+
+  async isExpressionCacheLoaded(kind: ExpressionEntryKind, status?: ExpressionEntryStatus): Promise<boolean> {
+    const entry = await localDb.get<{ loadedAt?: string }>('kv', expressionCacheKey(kind, status))
+    return Boolean(entry?.loadedAt)
+  },
+
+  async markExpressionCacheLoaded(kind: ExpressionEntryKind, status?: ExpressionEntryStatus): Promise<void> {
+    await localDb.put('kv', {
+      id: expressionCacheKey(kind, status),
+      loadedAt: new Date().toISOString(),
+    })
   },
 
   async listExpressionEntries(kind?: ExpressionEntryKind): Promise<ExpressionEntry[]> {

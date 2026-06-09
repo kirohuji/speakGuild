@@ -62,6 +62,19 @@ function createLocalResult(items: Expression[]): PageResult {
   }
 }
 
+function normalizePageResult(raw: any): PageResult {
+  if (raw && Array.isArray(raw.items)) {
+    return raw as PageResult
+  }
+  if (Array.isArray(raw)) {
+    return { items: raw, total: raw.length, page: 1, pageSize: PAGE_SIZE, totalPages: raw.length > 0 ? 1 : 0 }
+  }
+  if (raw?.data && Array.isArray(raw.data.items)) {
+    return raw.data as PageResult
+  }
+  return { items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 }
+}
+
 function expressionEntryToExpression(entry: ExpressionEntry): Expression {
   const snapshot = entry.contentSnapshot ?? {}
   if (entry.kind === 'word') {
@@ -160,9 +173,10 @@ export function ExpressionLibraryPage() {
       const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
       const localKind: ExpressionEntryKind = libraryTab === 'words' ? 'word' : libraryTab
       const localItems = (await learningContentRepository.listExpressionEntries(localKind)).map(expressionEntryToExpression)
+      const filteredLocalItems = localItems.filter((item) => item.masteryStatus === reviewState)
+      const cacheLoaded = await learningContentRepository.isExpressionCacheLoaded(localKind, reviewState)
 
-      if (localItems.length > 0) {
-        const filteredLocalItems = localItems.filter((item) => item.masteryStatus === reviewState)
+      if (filteredLocalItems.length > 0 || cacheLoaded) {
         setResult(createLocalResult(filteredLocalItems))
         return
       }
@@ -173,17 +187,18 @@ export function ExpressionLibraryPage() {
         page: 1,
         pageSize: PAGE_SIZE,
       })
-      // 响应拦截器已解包 data.data，直接拿结果
-      if (raw && Array.isArray(raw.items)) {
-        setResult(raw as PageResult)
-      } else if (Array.isArray(raw)) {
-        // 兼容旧版返回纯数组
-        setResult({ items: raw, total: raw.length, page: 1, pageSize: PAGE_SIZE, totalPages: 1 })
-      } else if (raw?.data && Array.isArray(raw.data.items)) {
-        setResult(raw.data as PageResult)
-      } else {
-        setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
-      }
+      const remoteResult = normalizePageResult(raw)
+      const cachedItems = (await Promise.all(
+        remoteResult.items.map((item) => learningContentRepository.saveRemoteExpressionEntry(item)),
+      ))
+        .filter((entry): entry is ExpressionEntry => Boolean(entry))
+        .map(expressionEntryToExpression)
+      await learningContentRepository.markExpressionCacheLoaded(localKind, reviewState)
+
+      setResult({
+        ...remoteResult,
+        items: cachedItems.length > 0 ? cachedItems : remoteResult.items,
+      })
     } catch {
       setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
     } finally {
