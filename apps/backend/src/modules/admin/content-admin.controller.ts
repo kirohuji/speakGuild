@@ -1392,6 +1392,160 @@ ${dialogueTexts}
     }
   }
 
+  /**
+   * AI 生成教学文档（Markdown）
+   * 根据绑定话题的教学目标、句块、词汇，以及已生成的故事剧本，
+   * 用 DeepSeek 生成一份面向学员的练习助手教学文档。
+   */
+  @Post('stories/:id/generate-teaching')
+  async generateTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+
+    try {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+      // 获取故事及话题完整信息
+      const story = await this.prisma.inkScript.findUnique({
+        where: { id },
+        include: {
+          trainingTopic: {
+            include: {
+              activeChunks: { include: { chunk: { include: { examples: { take: 2, orderBy: { sortOrder: 'asc' } } } } } },
+              topicVocabs: { include: { vocab: true } },
+              topicPatterns: { include: { pattern: true } },
+              scene: true,
+            },
+          },
+        },
+      });
+
+      if (!story) throw new Error('故事不存在');
+      const topic = story.trainingTopic;
+      if (!topic) throw new Error('故事未绑定训练话题');
+
+      // 构建上下文
+      const parts: string[] = [];
+
+      parts.push(`## 话题信息`);
+      parts.push(`- 标题: ${topic.title}`);
+      if (topic.description) parts.push(`- 描述: ${topic.description}`);
+      if (topic.promptZh) parts.push(`- 训练目标: ${topic.promptZh}`);
+      if (topic.promptEn) parts.push(`- 训练目标（英文）: ${topic.promptEn}`);
+      if (topic.knowledgePoints) parts.push(`- 知识点: ${topic.knowledgePoints}`);
+      parts.push(`- 难度: ${topic.difficulty}`);
+
+      if (topic.activeChunks?.length > 0) {
+        parts.push(`\n## 句块（实用表达）`);
+        for (const tc of topic.activeChunks) {
+          parts.push(`- **${tc.chunk.text}** — ${tc.chunk.meaning}`);
+          if (tc.chunk.examples?.length) {
+            for (const ex of tc.chunk.examples) {
+              parts.push(`  - 例: ${ex.en} → ${ex.zh || ''}`);
+            }
+          }
+        }
+      }
+
+      if (topic.topicVocabs?.length > 0) {
+        parts.push(`\n## 核心词汇`);
+        for (const tv of topic.topicVocabs) {
+          parts.push(`- **${tv.vocab.word}** — ${tv.vocab.meaning || ''}`);
+        }
+      }
+
+      if (topic.topicPatterns?.length > 0) {
+        parts.push(`\n## 句式`);
+        for (const tp of topic.topicPatterns) {
+          parts.push(`- \`${tp.pattern.pattern}\` — ${tp.pattern.meaning || ''}`);
+        }
+      }
+
+      // 从故事中提取对白示例（取前几条有 speaker 的行）
+      const dialogueExcerpts: string[] = [];
+      if (story.inkSource) {
+        const lines = story.inkSource.split('\n');
+        let inDialogue = false;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (/^===/.test(trimmed)) {
+            dialogueExcerpts.push(`\n**${trimmed}**`);
+            inDialogue = true;
+          } else if (trimmed.match(/^[A-Za-z]+[^:：]{0,20}[:：]/) && !trimmed.startsWith('//') && !trimmed.startsWith('#')) {
+            dialogueExcerpts.push(`> ${trimmed}`);
+          }
+        }
+      }
+      if (dialogueExcerpts.length > 0) {
+        parts.push(`\n## 故事对话节选`);
+        parts.push(dialogueExcerpts.join('\n'));
+      }
+
+      const contextBlock = parts.join('\n');
+
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+
+      const { text } = await generateText({
+        model,
+        prompt: `你是一名英语学习教学设计专家。请根据以下话题信息和故事对话，生成一份面向中国英语学习者的**练习助手教学文档**（Markdown 格式）。
+
+这份文档会在用户正式开始练习前展示在练习页顶部，帮助学习者快速把握要点。
+
+## 写作要求
+
+1. 语言：**全部用中文写**（仅英文例句保留英文）
+2. 语气：亲切、鼓励，像老师在课前做 briefing
+3. 长度：300-600 字
+4. 排版：规范的 Markdown，用 ## 分节，用 - 列表，英文用反引号或加粗
+
+## 文档结构（请严格按此顺序）
+
+### 📖 场景简介
+用 2-3 句话概括这个对话的设定（谁、在哪、什么场景），以及学员要达成什么目标。
+
+### 🎯 核心词汇
+列出 3-6 个最重要的词汇，每个格式：\`word\` — 中文释义（简短的记忆提示）
+
+### 💬 实用表达
+列出 3-5 个最常用的句块/表达，每个格式：**表达** — 中文释义 — 使用场景说明
+
+### 📝 对话示例
+从上面提供的故事对话中选取 1-2 个最具代表性的片段，展示英文和中文翻译。
+
+### ✨ 学习提示
+2-3 条实用建议，帮助用户更好地完成练习。比如：关于发音的注意点、常见的文化差异、容易犯的语法错误等。
+
+---
+
+## 输入信息
+
+${contextBlock}
+
+## 输出
+
+直接输出 Markdown 文档，不要任何额外说明。`,
+        temperature: 0.5,
+        maxOutputTokens: 3000,
+      });
+
+      // 清洗输出
+      let md = text
+        .replace(/```markdown\s*/gi, '')
+        .replace(/```md\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      return {
+        code: 200,
+        message: 'success',
+        data: { markdown: md },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+  }
+
   // ════════════════════════════════════════════════════════════
   // CONTENT LIBRARY: Full Vocabulary Management
   // ════════════════════════════════════════════════════════════

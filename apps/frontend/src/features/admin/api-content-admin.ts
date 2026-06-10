@@ -488,6 +488,14 @@ export async function generateStoryAudio(id: string): Promise<GenerateStoryAudio
   return post(`/admin/content/stories/${id}/generate-audio`)
 }
 
+export interface GenerateTeachingMarkdownResult {
+  markdown: string
+}
+
+export async function generateTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {
+  return post(`/admin/content/stories/${id}/generate-teaching`)
+}
+
 // ═══ Content Library: Vocabulary, Chunk, Sentence Pattern ═══
 
 export interface VocabularyFull {

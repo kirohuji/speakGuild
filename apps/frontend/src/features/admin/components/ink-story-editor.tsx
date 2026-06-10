@@ -37,7 +37,7 @@ import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { toast } from 'sonner'
 import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
-import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio } from '../api-content-admin'
+import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown } from '../api-content-admin'
 
 type ComposerItem =
   | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string }
@@ -593,6 +593,25 @@ export function InkStoryEditor({
       setTeachingSaving(false)
     }
   }, [onSaveTeachingMarkdown, teachingMarkdown])
+
+  const [teachingAiGenerating, setTeachingAiGenerating] = useState(false)
+
+  const handleAiGenerateTeaching = useCallback(async () => {
+    if (!storyId) {
+      toast.error('请先保存故事后再生成教学文档')
+      return
+    }
+    setTeachingAiGenerating(true)
+    try {
+      const result = await generateTeachingMarkdown(storyId)
+      setTeachingMarkdown(result.markdown)
+      toast.success('教学文档已生成')
+    } catch (err: any) {
+      toast.error(err?.message || '生成失败')
+    } finally {
+      setTeachingAiGenerating(false)
+    }
+  }, [storyId])
 
   // ─── AI 工具处理函数 ───
 
@@ -1262,6 +1281,17 @@ export function InkStoryEditor({
                     : '当前故事尚未绑定训练话题。请先在场景管理中绑定话题，再回来编写教学文档。'}
                 </p>
               </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleAiGenerateTeaching}
+                disabled={!storyId || teachingAiGenerating}
+                className="h-8 gap-1.5"
+              >
+                {teachingAiGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                AI 生成
+              </Button>
               <Button
                 type="button"
                 size="sm"
