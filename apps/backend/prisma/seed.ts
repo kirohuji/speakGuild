@@ -30,7 +30,8 @@ const defaultConfigs = [
   { key: 'session_timeout_min', value: '4320',                 group: 'technical', label: '会话超时（分钟）', type: 'number', description: '用户会话过期时间（默认 3 天）' },
 
   // ── AI 配额 ──
-  { key: 'free_ai_corrections', value: '5',                    group: 'quota',   label: '免费每日纠错次数', type: 'number', description: '免费用户每日 AI 纠错次数上限' },
+  { key: 'free_ai_corrections', value: '5',                    group: 'quota',   label: '免费每日纠错次数', type: 'number', description: '免费用户每日对话判定次数上限' },
+  { key: 'free_ai_summaries',   value: '1',                    group: 'quota',   label: '免费每日汇总次数', type: 'number', description: '免费用户每日汇总分析次数上限' },
 ];
 
 async function seedSystemConfigs() {

@@ -9,11 +9,8 @@ interface QuotaCheckResult {
   exchangeCost: number;
 }
 
+// 会员等级配额（free 由 system_config.free_ai_corrections 动态控制）
 const QUOTAS: Record<string, Record<string, number>> = {
-  free: {
-    dialogue: 5,   // 对话判定
-    summary: 1,    // 汇总分析
-  },
   standard: {
     dialogue: -1,  // -1 = 会员不受限
     summary: -1,
@@ -22,6 +19,12 @@ const QUOTAS: Record<string, Record<string, number>> = {
     dialogue: -1,
     summary: -1,
   },
+};
+
+/** free 层级默认值（system_config 缺失时回退） */
+const FREE_DEFAULTS: Record<string, number> = {
+  dialogue: 5,
+  summary: 1,
 };
 
 const EXCHANGE_COST = 10; // 10 积分换 1 次
@@ -62,14 +65,15 @@ export class AiQuotaService {
       membership?.status === 'active' && membership.expiredAt > new Date();
     const effectiveLevel = isActive ? level : 'free';
 
-    const quota = QUOTAS[effectiveLevel]?.[type] ?? 0;
-
     // 2. 会员直接放行（-1 = 无限）
-    if (quota === -1) {
+    if (effectiveLevel !== 'free') {
       return { allowed: true, remaining: -1, canExchange: false, exchangeCost: 0 };
     }
 
-    // 3. 查今日用量
+    // 3. free 层级：从 system_config 读取配额
+    const quota = await this.getFreeQuota(type);
+
+    // 4. 查今日用量
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -97,7 +101,7 @@ export class AiQuotaService {
       };
     }
 
-    // 4. 扣减
+    // 5. 扣减
     await this.prisma.aiUsageDaily.update({
       where: { userId_date: { userId, date: today } },
       data: { [type]: { increment: 1 } },
@@ -212,6 +216,10 @@ export class AiQuotaService {
       };
     }
 
+    // free 层级：从 system_config 读取配额
+    const dialogueLimit = await this.getFreeQuota('dialogue');
+    const summaryLimit = await this.getFreeQuota('summary');
+
     return {
       level: 'free',
       isMember: false,
@@ -220,13 +228,13 @@ export class AiQuotaService {
       quotas: {
         dialogue: {
           used: usage?.dialogue ?? 0,
-          limit: QUOTAS.free.dialogue,
-          remaining: Math.max(0, QUOTAS.free.dialogue - (usage?.dialogue ?? 0)),
+          limit: dialogueLimit,
+          remaining: Math.max(0, dialogueLimit - (usage?.dialogue ?? 0)),
         },
         summary: {
           used: usage?.summary ?? 0,
-          limit: QUOTAS.free.summary,
-          remaining: Math.max(0, QUOTAS.free.summary - (usage?.summary ?? 0)),
+          limit: summaryLimit,
+          remaining: Math.max(0, summaryLimit - (usage?.summary ?? 0)),
         },
       },
     };
@@ -247,6 +255,23 @@ export class AiQuotaService {
       })
     } catch (err: any) {
       this.logger.warn(`Failed to record tokens for user ${userId}: ${err.message}`)
+    }
+  }
+
+  /** 从 system_config 读取 free 层级配额，缺失时回退默认值 */
+  private async getFreeQuota(type: 'dialogue' | 'summary'): Promise<number> {
+    const configKey = type === 'dialogue' ? 'free_ai_corrections' : 'free_ai_summaries';
+    const fallback = FREE_DEFAULTS[type] ?? 1;
+
+    try {
+      const row = await this.prisma.systemConfig.findUnique({
+        where: { key: configKey },
+        select: { value: true },
+      });
+      const val = parseInt(row?.value ?? '', 10);
+      return Number.isFinite(val) && val >= 0 ? val : fallback;
+    } catch {
+      return fallback;
     }
   }
 }
