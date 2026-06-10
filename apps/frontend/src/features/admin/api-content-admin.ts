@@ -462,6 +462,7 @@ export async function aiGenerateStory(data: {
   characterRole?: string
   characterDisplayName?: string
   locationName?: string
+  locationBackgroundUrl?: string
 }): Promise<AiGenerateStoryResult> {
   return post('/admin/content/stories/ai-generate', data)
 }

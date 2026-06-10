@@ -214,6 +214,33 @@ export function VnStoryPreview({
     }
   }, [parseTags, parseTextLines])
 
+  /**
+   * 持续推进引擎直到获得文本内容或选项（跳过纯标签行）。
+   * 修复场景跳转后首行为标签时"看起来没跳"的问题。
+   */
+  const continueUntilContent = useCallback((engine: InkEngine): NonNullable<ReturnType<InkEngine['continue']>> | null => {
+    let result = engine.continue()
+    if (!result) return null
+
+    // 循环跳过只有标签没有文本的行（如进入新场景后遇到的 # speaker: 等标签）
+    let safety = 0
+    while (!result.text && !result.hasChoices && engine.canContinue && safety < 50) {
+      const tags = engine.getCurrentTags()
+      // 仍然处理背景切换标签
+      const { bg, bgFit } = parseTags(tags)
+      if (bg || bgFit) {
+        setActiveBackground((prev) => ({
+          url: bg || prev.url,
+          fit: bgFit || prev.fit || 'cover',
+        }))
+      }
+      result = engine.continue()
+      if (!result) return null
+      safety++
+    }
+    return result
+  }, [parseTags])
+
   // Initialize engine with compiled JSON
   useEffect(() => {
     engineRef.current?.destroy()
@@ -236,7 +263,7 @@ export function VnStoryPreview({
       engine.load(compileResult.json)
       engineRef.current = engine
 
-      const result = engine.continue()
+      const result = continueUntilContent(engine)
       if (result) {
         appendResult(engine, result)
       } else {
@@ -246,7 +273,7 @@ export function VnStoryPreview({
     } catch (err) {
       console.warn('[VnPreview] Init failed:', err)
     }
-  }, [appendResult, compileResult, defaultBackgroundUrl])
+  }, [appendResult, compileResult, continueUntilContent, defaultBackgroundUrl])
 
   const advanceStory = useCallback(() => {
     const engine = engineRef.current
@@ -261,11 +288,11 @@ export function VnStoryPreview({
       return
     }
 
-    const result = engine.continue()
+    const result = continueUntilContent(engine)
     if (!result) { setIsEnded(true); setCompletionOpen(true); return }
 
     appendResult(engine, result)
-  }, [appendResult])
+  }, [appendResult, continueUntilContent])
 
   const handleChoice = useCallback((choiceIndex: number) => {
     const engine = engineRef.current
@@ -278,11 +305,11 @@ export function VnStoryPreview({
     setChoices([])
     setIsWaiting(false)
 
-    const result = engine.continue()
+    const result = continueUntilContent(engine)
     if (!result) { setIsEnded(true); setCompletionOpen(true); return }
 
     appendResult(engine, result)
-  }, [appendResult, choices])
+  }, [appendResult, continueUntilContent, choices])
 
   const handleInput = useCallback(async (text: string) => {
     const engine = engineRef.current
@@ -355,13 +382,13 @@ export function VnStoryPreview({
       const engine = new InkEngine()
       engine.load(compileResult.json)
       engineRef.current = engine
-      const result = engine.continue()
+      const result = continueUntilContent(engine)
       if (result) {
         appendResult(engine, result)
       }
       setIsReady(true)
     } catch { /* ignore */ }
-  }, [appendResult, compileResult, defaultBackgroundUrl])
+  }, [appendResult, compileResult, continueUntilContent, defaultBackgroundUrl])
 
   // ─── Derive display state ──────────────────────────────────
 

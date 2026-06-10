@@ -866,6 +866,8 @@ export class ContentAdminController {
       characterDisplayName?: string;
       /** 故事发生的地点/场景名称 */
       locationName?: string;
+      /** 场景的背景图片 URL（用于 # bg: 标签） */
+      locationBackgroundUrl?: string;
     },
   ) {
     await this.requireAdmin(req);
@@ -941,6 +943,11 @@ export class ContentAdminController {
         roleBlockParts.push(`\n## 场景信息`);
         roleBlockParts.push(`- 故事发生地点: ${dto.locationName}`);
         roleBlockParts.push(`- 请围绕这个地点设计合理的对话场景`);
+        if (dto.locationBackgroundUrl) {
+          roleBlockParts.push(`- 该地点的背景图片 URL: ${dto.locationBackgroundUrl}`);
+          roleBlockParts.push(`- **重要**: 故事第一个场景开头必须使用 \`# bg:${dto.locationBackgroundUrl}\` 标签设置背景`);
+          roleBlockParts.push(`- 如果故事更换了场景地点，也可以用 \`# bg:新的URL\` 切换背景`);
+        }
       }
 
       if (dto.goalPrompt) {
@@ -977,12 +984,12 @@ ${roleBlock}
 ### 剧情设计原则
 1. **教学目标驱动**: 对话内容必须紧扣话题的训练目标和知识点，确保学习者在对话中能自然接触到目标句块和词汇
 2. **角色驱动**: 如果指定了主角，对话要体现该角色的性格特点和身份特征。NPC 对白要符合角色的性格
-3. **场景合理**: 对话内容要符合所设定的地点场景，有真实的情境感
+3. **场景合理**: 对话内容要符合所设定的地点场景，有真实的情境感。如果提供了背景图片 URL，故事开头必须使用 \`# bg:\` 标签设置背景
 4. **难度匹配**: 英文对话难度要与话题等级（${topic.difficulty}）匹配，不宜过难或过易
 5. **自然流畅**: 像真实场景中的自然交流，不要像课本对话
 6. **融入知识点**: 自然地融入句块和词汇，不要生硬堆砌，每个句块至少出现一次
-7. **互动设计**: 在关键节点设置 2-3 个选项，给学习者参与感
-8. **口语练习**: 在合适节点设置 # wait:input，让学习者做语音输入练习
+7. **多用口语练习**: ⭐ **重要** — 尽量多地使用 \`# wait:input\` 标签（至少 2-3 处），在 NPC 提问或引导后让学习者做语音输入练习。比如在 NPC 提问 "What do you think?"、"Can you tell me about...?"、"How would you respond?" 之后加上 \`# wait:input\`。**每个 \`# wait:input\` 必须配套 \`# objective:\`（中文练习目标）、\`# hint:\`（中文提示）、\`# chunks:\`（推荐句块，从话题提供的句块中选 1-3 个）**。这些节点是口语训练的核心！
+8. **选项辅助**: 在非口语练习的决策节点设置 2-3 个选项，给学习者参与感
 9. **长度适中**: 3-6 个场景，总对白 10-25 行
 
 ### Ink 脚本语法规则（严格遵守）
@@ -996,10 +1003,16 @@ title: ${dto.title}
 -> start
 
 === start ===
+# bg: 背景图片URL（如果提供了场景背景）
 # speaker: Alex
 # expression: default
 # translation: 此行对白的中文翻译
 Alex: 英文对白内容
+
+# wait:input
+# objective: 练习目标（中文，告诉学员这个节点要练什么）
+# hint: 练习提示（中文，给学员一点方向性提示）
+# chunks: 推荐句块1, 推荐句块2
 
 *   [英文选项文本] -> 目标场景名
 
@@ -1011,12 +1024,11 @@ Alex: 更多英文对白
 
 # wait
 
-# wait:input
-
 -> END
 \`\`\`
 
 ### 标签说明
+- \`# bg:背景图片URL\` — 设置当前场景的背景图片（如果有，放在场景的第一行）
 - \`# speaker:角色名\` — 设置当前说话者（英文名）
 - \`# expression:表情名\` — 立绘表情（default/happy/sad/angry/surprised/thinking）
 - \`# position:位置\` — 立绘位置（left/center/right）
@@ -1024,11 +1036,17 @@ Alex: 更多英文对白
 - \`*   [选项文本] -> 目标场景\` — 分支选项（3个空格缩进）
 - \`# wait\` — 暂停，等待用户点击继续
 - \`# wait:input\` — 等待用户语音输入（口语练习节点）
+  - **必须配套** \`# objective:\`、\`# hint:\`、\`# chunks:\` 三个标签
+  - \`# objective:中文练习目标\` — 告诉学员这个口语练习要达成什么目标（如"用英语点一杯咖啡并说明口味偏好"）
+  - \`# hint:中文提示\` — 给学员一点方向性提示（如"可以先问候，然后说想要什么，最后说明口味"）
+  - \`# chunks:句块1, 句块2\` — 推荐学员使用的英语句块，用逗号分隔，从话题提供的句块中选取 1-3 个最相关的
 - \`-> END\` — 结束故事
 - 场景定义：\`=== 场景名 ===\`
 
 ### 重要规则
 - **每条 NPC 对白行都必须有对应的 \`# translation:\` 标签**，内容是地道的中文翻译
+- **每个 \`# wait:input\` 节点必须跟随 \`# objective:\`、\`# hint:\`、\`# chunks:\` 三个标签**
+- \`# objective:\` 和 \`# hint:\` 用中文写，\`# chunks:\` 用英文句块原文，逗号分隔
 - 角色名用英文（如 Alex, Emma, Teacher）
 - 所有对白和选项都用英文
 - 如果指定了主角，该角色应作为主要 NPC 出现

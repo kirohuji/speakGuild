@@ -622,6 +622,7 @@ export function InkStoryEditor({
         characterRole: selectedChar?.role || undefined,
         characterDisplayName: selectedChar?.displayName || undefined,
         locationName: selectedLoc?.displayName || locations.find((l) => l.id === locationId)?.displayName,
+        locationBackgroundUrl: selectedLoc?.backgroundUrl || locations.find((l) => l.id === locationId)?.backgroundUrl,
       })
       setSource(result.inkSource)
       // 更新 key 和 title
