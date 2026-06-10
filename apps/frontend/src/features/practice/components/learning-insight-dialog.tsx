@@ -480,7 +480,7 @@ export function LearningInsightDialog({
 
       {/* 播放列表抽屉 */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className="h-[100dvh] rounded-none pt-safe">
+        <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
           <div className="flex items-center justify-between px-5 py-3">
             <DrawerTitle className="text-lg">{t('insight.playlist')}</DrawerTitle>
             <button
