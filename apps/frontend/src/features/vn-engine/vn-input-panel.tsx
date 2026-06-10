@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FileAudio, Keyboard, Loader2, Mic, Pause, Play, Send } from 'lucide-react'
+import { FileAudio, Keyboard, Loader2, Mic, Pause, Play, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeRecording } from '@/lib/practice-ai-api'
 
@@ -62,7 +62,6 @@ export function VnInputPanel({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const localAudioUrlRef = useRef<string | null>(null)
-  const pressStartRef = useRef<number>(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const isDisabled = disabled || submitting
@@ -232,35 +231,20 @@ export function VnInputPanel({
     setIsMultiline(nextHeight > TEXTAREA_MIN_HEIGHT)
   }, [text])
 
-  // ── 按下：开始录音 ──
-  const handlePressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault()
+  // ── 点击开始录音 ──
+  const handleStartRecording = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (isDisabled || voiceStatus !== 'idle') return
-    pressStartRef.current = Date.now()
     startRecording()
   }, [isDisabled, voiceStatus, startRecording])
 
-  // ── 松开：停止录音（触发转写） ──
-  const handlePressEnd = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault()
+  // ── 点击停止录音 ──
+  const handleStopRecording = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (voiceStatus === 'recording') {
       stopRecording()
     }
   }, [voiceStatus, stopRecording])
-
-  // ── 取消（手指滑出 / 鼠标离开） ──
-  const handlePressCancel = useCallback(() => {
-    if (voiceStatus === 'recording') {
-      stopRecording()
-      // 录音太短（< 500ms）则视为误触，直接重置
-      if (Date.now() - pressStartRef.current < 500) {
-        // 等 recorder onstop 触发后再重置
-        setTimeout(() => resetVoice(), 100)
-      }
-    }
-  }, [voiceStatus, stopRecording, resetVoice])
 
   // ── 上传音频文件测试 STT（临时，回头删） ──
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,7 +319,7 @@ export function VnInputPanel({
         {/* ═══════ 语音模式 ═══════ */}
         {!showTextMode && (
           <>
-            {/* 空闲：长按录音按钮 */}
+            {/* 空闲：点击录音按钮 */}
             {voiceStatus === 'idle' && (
               <>
                 <button
@@ -370,9 +354,7 @@ export function VnInputPanel({
                 <button
                   type="button"
                   disabled={isDisabled}
-                  onMouseDown={handlePressStart}
-                  onTouchStart={handlePressStart}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={handleStartRecording}
                   className={cn(
                     'flex flex-1 h-full items-center justify-center gap-2 rounded-lg select-none transition-all active:scale-[0.97]',
                     voiceError
@@ -380,11 +362,10 @@ export function VnInputPanel({
                       : 'bg-muted/70 ring-1 ring-border/45 text-muted-foreground hover:bg-muted hover:text-foreground',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
                   )}
-                  style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
                 >
                   <Mic className="size-4" />
                   <span className="text-sm font-medium">
-                    {voiceError || '按住说话'}
+                    {voiceError || '点击录音'}
                   </span>
                 </button>
               </>
@@ -402,20 +383,24 @@ export function VnInputPanel({
                 </button>
                 <div
                   className={cn(
-                    'flex flex-1 h-full items-center justify-center gap-2 rounded-lg select-none',
+                    'flex flex-1 h-full items-center justify-between gap-2 rounded-lg px-3 select-none',
                     'bg-rose-50 dark:bg-rose-950/25 ring-1 ring-rose-200 dark:ring-rose-800/40',
                   )}
-                  style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
-                  onMouseUp={handlePressEnd}
-                  onMouseLeave={handlePressCancel}
-                  onTouchEnd={handlePressEnd}
-                  onTouchCancel={handlePressCancel}
                 >
-                  <span className="size-2 rounded-full bg-rose-500 animate-pulse" />
-                  <span className="text-sm font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
-                    {formatElapsed(elapsed)}
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="text-sm font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
+                      {formatElapsed(elapsed)}
+                    </span>
                   </span>
-                  <span className="text-xs text-rose-500/70">松开发送</span>
+                  <button
+                    type="button"
+                    onClick={handleStopRecording}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white transition-transform active:scale-90"
+                    aria-label="停止录音"
+                  >
+                    <Square className="size-3.5 fill-current" />
+                  </button>
                 </div>
               </>
             )}
@@ -437,7 +422,7 @@ export function VnInputPanel({
               </>
             )}
 
-            {/* 识别完成：复用 textarea 支持多行 + 回放 + 发送 */}
+            {/* 识别完成：复用 textarea 支持多行 + 重录 + 发送 */}
             {voiceDone && (
               <>
                 <button
@@ -448,6 +433,16 @@ export function VnInputPanel({
                   aria-label="切换到文字输入"
                 >
                   <Keyboard className="size-4" />
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={(e) => { e.stopPropagation(); startRecording() }}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  aria-label="重新录音"
+                >
+                  <Mic className="size-4" />
                 </button>
 
                 <div className={cn(
