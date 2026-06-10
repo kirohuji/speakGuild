@@ -16,6 +16,12 @@ import {
   Trash2,
   Lightbulb,
   Wand2,
+  Sparkles,
+  Languages,
+  Volume2,
+  Loader2,
+  X,
+  UserCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,9 +34,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
+import { toast } from 'sonner'
 import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
-import { type GameCharacter, type GameLocationData } from '../api-content-admin'
+import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio } from '../api-content-admin'
 
 type ComposerItem =
   | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string }
@@ -62,6 +69,7 @@ interface VnPreviewDebugState {
 }
 
 interface InkStoryEditorProps {
+  storyId?: string
   initialSource?: string
   initialKey?: string
   initialTitle?: string
@@ -360,6 +368,7 @@ function itemIcon(item: ComposerItem) {
 }
 
 export function InkStoryEditor({
+  storyId,
   initialSource,
   initialKey = '',
   initialTitle = '',
@@ -385,6 +394,13 @@ export function InkStoryEditor({
   const [previewAiEnabled, setPreviewAiEnabled] = useState(false)
   const [teachingMarkdown, setTeachingMarkdown] = useState(trainingTopic?.teachingMarkdown ?? '')
   const [teachingSaving, setTeachingSaving] = useState(false)
+  const [aiGenerating, setAiGenerating] = useState(false)
+  const [aiTranslating, setAiTranslating] = useState(false)
+  const [aiAudioGenerating, setAiAudioGenerating] = useState(false)
+  const [aiGoalPrompt, setAiGoalPrompt] = useState('')
+  const [aiSelectedCharacterId, setAiSelectedCharacterId] = useState('')
+  const [aiSelectedLocationId, setAiSelectedLocationId] = useState('')
+  const [showAiGoalDialog, setShowAiGoalDialog] = useState(false)
   const lastAutoSavedSourceRef = useRef('')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -578,6 +594,94 @@ export function InkStoryEditor({
     }
   }, [onSaveTeachingMarkdown, teachingMarkdown])
 
+  // ─── AI 工具处理函数 ───
+
+  const handleAiGenerate = useCallback(async () => {
+    if (!trainingTopic?.id) {
+      toast.error('当前故事未绑定训练话题，无法使用 AI 生成')
+      return
+    }
+    setAiGenerating(true)
+    try {
+      // 获取选中的角色和场景详细信息
+      const selectedChar = characters.find((c) => c.id === aiSelectedCharacterId)
+      const selectedLoc = locations.find((l) => l.id === aiSelectedLocationId)
+
+      // 构建角色列表（优先使用选中的角色，否则传全部角色名）
+      const characterNames = selectedChar
+        ? [selectedChar.name || selectedChar.displayName]
+        : characters.map((c) => c.name || c.displayName).filter(Boolean)
+
+      const result = await aiGenerateStory({
+        topicId: trainingTopic.id,
+        storyKey: key || 'ai_generated',
+        title: title || 'AI 生成故事',
+        goalPrompt: aiGoalPrompt || undefined,
+        characterNames: characterNames.length > 0 ? characterNames : undefined,
+        characterPersonality: selectedChar?.personality || undefined,
+        characterRole: selectedChar?.role || undefined,
+        characterDisplayName: selectedChar?.displayName || undefined,
+        locationName: selectedLoc?.displayName || locations.find((l) => l.id === locationId)?.displayName,
+      })
+      setSource(result.inkSource)
+      // 更新 key 和 title
+      const meta = extractInkMeta(result.inkSource)
+      if (meta.key) setKey(meta.key)
+      if (meta.title) setTitle(meta.title)
+      toast.success('AI 剧情已生成，请检查并调整后保存')
+    } catch (err: any) {
+      toast.error(err?.message || 'AI 生成失败')
+    } finally {
+      setAiGenerating(false)
+      setShowAiGoalDialog(false)
+    }
+  }, [trainingTopic, characters, locations, locationId, key, title, aiGoalPrompt, aiSelectedCharacterId, aiSelectedLocationId])
+
+  const handleAiTranslate = useCallback(async () => {
+    if (!storyId) {
+      toast.error('请先保存故事后再使用翻译功能')
+      return
+    }
+    setAiTranslating(true)
+    try {
+      // 翻译前先自动保存
+      await saveCurrentStory({ silent: true })
+      const result = await translateStory(storyId)
+      setSource(result.inkSource)
+      toast.success(`已生成 ${result.translatedCount} 条中文翻译`)
+    } catch (err: any) {
+      toast.error(err?.message || '翻译失败')
+    } finally {
+      setAiTranslating(false)
+    }
+  }, [storyId, saveCurrentStory])
+
+  const handleAiAudioGenerate = useCallback(async () => {
+    if (!storyId) {
+      toast.error('请先保存故事后再使用音频生成')
+      return
+    }
+    setAiAudioGenerating(true)
+    try {
+      // 音频生成前先自动保存
+      await saveCurrentStory({ silent: true })
+      const result = await generateStoryAudio(storyId)
+      setSource(result.inkSource)
+      const msgs: string[] = [`已生成 ${result.generatedCount} 条音频`]
+      if (result.skippedSpeakers?.length) {
+        msgs.push(`以下角色未配置音色已跳过: ${result.skippedSpeakers.join(', ')}`)
+      }
+      if (result.errorCount > 0) {
+        msgs.push(`${result.errorCount} 条生成失败`)
+      }
+      toast.success(msgs.join('，'))
+    } catch (err: any) {
+      toast.error(err?.message || '音频生成失败')
+    } finally {
+      setAiAudioGenerating(false)
+    }
+  }, [storyId, saveCurrentStory])
+
   useEffect(() => {
     return // 自动保存已暂时关闭
     if (!onSave || readOnly || saving || !key.trim() || !title.trim() || !compileResult?.success) return
@@ -640,6 +744,155 @@ export function InkStoryEditor({
             )}
           </div>
         </div>
+
+        {/* ── AI 工具条 ── */}
+        {!readOnly && (
+          <div className="space-y-2 rounded-lg border border-violet-200 bg-violet-50/50 px-3 py-2 dark:border-violet-800 dark:bg-violet-950/30">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-medium text-violet-700 dark:text-violet-300">
+                <Sparkles className="inline size-3 -translate-y-px" /> AI 工具
+              </span>
+              <span className="mx-0.5 h-4 w-px bg-violet-300 dark:bg-violet-700" />
+              {trainingTopic?.id ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAiGoalDialog((v) => !v)}
+                  disabled={aiGenerating}
+                  className="h-7 gap-1 border-violet-300 bg-background text-xs hover:bg-violet-100 dark:border-violet-700 dark:hover:bg-violet-900/50"
+                >
+                  {aiGenerating ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+                  AI 生成剧情
+                </Button>
+              ) : (
+                <span className="text-[11px] text-muted-foreground">需先绑定训练话题</span>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAiTranslate}
+                disabled={aiTranslating || !storyId}
+                className="h-7 gap-1 border-violet-300 bg-background text-xs hover:bg-violet-100 dark:border-violet-700 dark:hover:bg-violet-900/50"
+              >
+                {aiTranslating ? <Loader2 className="size-3 animate-spin" /> : <Languages className="size-3" />}
+                双语翻译
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAiAudioGenerate}
+                disabled={aiAudioGenerating || !storyId}
+                className="h-7 gap-1 border-violet-300 bg-background text-xs hover:bg-violet-100 dark:border-violet-700 dark:hover:bg-violet-900/50"
+              >
+                {aiAudioGenerating ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                批量生成音频
+              </Button>
+            </div>
+
+            {/* AI 生成配置面板 */}
+            {showAiGoalDialog && trainingTopic?.id && (
+              <div className="space-y-3 rounded-md border border-violet-200 bg-background p-3 dark:border-violet-800">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-foreground">
+                      AI 剧情生成配置
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      AI 会先分析话题 <strong>{trainingTopic.title}</strong> 的教学目标与知识点，
+                      再结合你选择的角色和场景来生成剧情。所有设置均非必选。
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setShowAiGoalDialog(false)}
+                  >
+                    <X className="size-3.5" />
+                  </Button>
+                </div>
+
+                {/* 角色选择 */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      <UserCircle className="inline size-3 -translate-y-px" /> 选择主角
+                    </Label>
+                    <select
+                      className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
+                      value={aiSelectedCharacterId}
+                      onChange={(e) => setAiSelectedCharacterId(e.target.value)}
+                      disabled={aiGenerating}
+                    >
+                      <option value="">不限（AI 自行决定）</option>
+                      {characters.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.displayName} ({c.role || 'NPC'})
+                          {c.personality ? ` — ${c.personality}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 场景/地点选择 */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      <MapPin className="inline size-3 -translate-y-px" /> 选择场景
+                    </Label>
+                    <select
+                      className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
+                      value={aiSelectedLocationId}
+                      onChange={(e) => setAiSelectedLocationId(e.target.value)}
+                      disabled={aiGenerating}
+                    >
+                      <option value="">不限（AI 自行决定）</option>
+                      {locations.map((l) => (
+                        <option key={l.id} value={l.id}>{l.displayName}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 额外说明 */}
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">额外说明（用中文描述你的想法）</Label>
+                  <Textarea
+                    value={aiGoalPrompt}
+                    onChange={(e) => setAiGoalPrompt(e.target.value)}
+                    placeholder="例如：希望覆盖点餐、询问口味、付款等场景。对话难度适中，每句不要太长。可以让学员在付款环节做语音输入练习。"
+                    className="min-h-[72px] text-xs"
+                    disabled={aiGenerating}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setShowAiGoalDialog(false); setAiGoalPrompt(''); }}
+                    disabled={aiGenerating}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAiGenerate}
+                    disabled={aiGenerating}
+                    className="gap-1.5"
+                  >
+                    {aiGenerating ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+                    开始生成
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <TabsContent value="compose" className="mt-0 space-y-3">
           {rawOpen && (

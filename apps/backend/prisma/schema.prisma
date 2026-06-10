@@ -993,6 +993,8 @@ model GameCharacter {
   expressions     Json?
   defaultPosition String?
   ttsVoice        String?           // TTS 音色 ID（如 MiniMax/Cartesia voice ID）
+  ttsModel        String?           // TTS 模型（如 speech-2.8-hd）
+  ttsParams       Json?             // TTS 参数（如 { speed, pitch, vol }）
   locationNpcs    GameLocationNpc[]
   explorationRecords ExplorationRecord[]
   createdAt       DateTime          @default(now())

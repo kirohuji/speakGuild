@@ -191,6 +191,7 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
         </div>
 
         <InkStoryEditor
+          storyId={editingStory?.id}
           initialSource={editingStory?.inkSource ?? undefined}
           initialKey={editingStory?.key ?? ''}
           initialTitle={editingStory?.title ?? ''}

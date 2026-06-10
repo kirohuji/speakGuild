@@ -295,6 +295,8 @@ export interface GameCharacter {
   expressions?: any
   defaultPosition?: string | null
   ttsVoice?: string | null
+  ttsModel?: string | null
+  ttsParams?: Record<string, number> | null
   locationNpcs?: { location: { id: string; displayName: string } }[]
 }
 
@@ -442,6 +444,47 @@ export async function updateStory(id: string, data: Partial<StoryData>): Promise
 
 export async function deleteStory(id: string): Promise<void> {
   return _delete(`/admin/content/stories/${id}`)
+}
+
+// ─── Story AI Tools ──────────────────────────────────────────
+
+export interface AiGenerateStoryResult {
+  inkSource: string
+}
+
+export async function aiGenerateStory(data: {
+  topicId: string
+  storyKey: string
+  title: string
+  goalPrompt?: string
+  characterNames?: string[]
+  characterPersonality?: string
+  characterRole?: string
+  characterDisplayName?: string
+  locationName?: string
+}): Promise<AiGenerateStoryResult> {
+  return post('/admin/content/stories/ai-generate', data)
+}
+
+export interface TranslateStoryResult {
+  inkSource: string
+  translatedCount: number
+}
+
+export async function translateStory(id: string): Promise<TranslateStoryResult> {
+  return post(`/admin/content/stories/${id}/translate`)
+}
+
+export interface GenerateStoryAudioResult {
+  inkSource: string
+  generatedCount: number
+  errorCount: number
+  errors?: string[]
+  skippedSpeakers?: string[]
+}
+
+export async function generateStoryAudio(id: string): Promise<GenerateStoryAudioResult> {
+  return post(`/admin/content/stories/${id}/generate-audio`)
 }
 
 // ═══ Content Library: Vocabulary, Chunk, Sentence Pattern ═══

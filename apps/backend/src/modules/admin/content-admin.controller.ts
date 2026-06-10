@@ -26,6 +26,8 @@ import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
+import { TtsService } from '../tts/tts.service';
+import { TtsProvider } from '@prisma/client';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -33,6 +35,7 @@ export class ContentAdminController {
     private readonly prisma: PrismaService,
     private readonly practiceAiService: EnglishPracticeAiService,
     private readonly dictionaryService: DictionaryService,
+    private readonly ttsService: TtsService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -832,6 +835,540 @@ export class ContentAdminController {
   async deleteStory(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.prisma.inkScript.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // STORY AI TOOLS: 生成 / 翻译 / 音频
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * AI 生成 Ink 剧情脚本
+   *
+   * 工作流程：
+   * 1. 先获取绑定的训练话题完整信息（目标、知识点、句块、词汇）
+   * 2. 结合用户选定的角色（性格、身份）和场景地点
+   * 3. 用 DeepSeek 分析话题教学目标 → 设计对话场景 → 生成完整 Ink 脚本
+   */
+  @Post('stories/ai-generate')
+  async aiGenerateStory(
+    @Req() req: Request,
+    @Body() dto: {
+      topicId: string;
+      storyKey: string;
+      title: string;
+      goalPrompt?: string;
+      characterNames?: string[];
+      /** 选定角色的性格描述 */
+      characterPersonality?: string;
+      /** 选定角色的身份/角色类型 */
+      characterRole?: string;
+      /** 选定角色的显示名称 */
+      characterDisplayName?: string;
+      /** 故事发生的地点/场景名称 */
+      locationName?: string;
+    },
+  ) {
+    await this.requireAdmin(req);
+
+    try {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+      // ── 1. 获取话题完整信息 ──
+      const topic = await this.prisma.trainingTopic.findUnique({
+        where: { id: dto.topicId },
+        include: {
+          activeChunks: { include: { chunk: { include: { examples: { take: 2, orderBy: { sortOrder: 'asc' } } } } } },
+          topicVocabs: { include: { vocab: true } },
+          scene: { select: { title: true, location: true } },
+        },
+      });
+
+      if (!topic) throw new Error('话题不存在');
+
+      // ── 2. 构建话题分析信息 ──
+      const topicInfoParts: string[] = [];
+
+      topicInfoParts.push(`**话题标题**: ${topic.title}`);
+      if (topic.description) topicInfoParts.push(`**话题描述**: ${topic.description}`);
+      if (topic.promptZh) topicInfoParts.push(`**训练目标（中文）**: ${topic.promptZh}`);
+      if (topic.promptEn) topicInfoParts.push(`**训练目标（英文）**: ${topic.promptEn}`);
+      if (topic.knowledgePoints) topicInfoParts.push(`**知识点**: ${topic.knowledgePoints}`);
+      topicInfoParts.push(`**难度等级**: ${topic.difficulty}`);
+
+      if (topic.activeChunks.length > 0) {
+        topicInfoParts.push(`\n**需融入的英语句块**:`);
+        for (const tc of topic.activeChunks) {
+          const c = tc.chunk;
+          topicInfoParts.push(`  - "${c.text}" → ${c.meaning}`);
+          if (c.examples?.length) {
+            for (const ex of c.examples.slice(0, 2)) {
+              topicInfoParts.push(`    例: ${ex.en}`);
+            }
+          }
+        }
+      }
+
+      if (topic.topicVocabs.length > 0) {
+        topicInfoParts.push(`\n**需融入的词汇**:`);
+        for (const tv of topic.topicVocabs) {
+          topicInfoParts.push(`  - ${tv.vocab.word}: ${tv.vocab.meaning || ''}`);
+        }
+      }
+
+      const topicInfoBlock = topicInfoParts.join('\n');
+
+      // ── 3. 构建角色和场景信息 ──
+      const roleBlockParts: string[] = [];
+
+      if (dto.characterDisplayName || dto.characterNames?.length) {
+        roleBlockParts.push(`\n## 角色信息`);
+        if (dto.characterDisplayName) {
+          roleBlockParts.push(`- 主角名称: ${dto.characterDisplayName}`);
+        }
+        if (dto.characterRole) {
+          roleBlockParts.push(`- 主角身份: ${dto.characterRole}`);
+        }
+        if (dto.characterPersonality) {
+          roleBlockParts.push(`- 主角性格: ${dto.characterPersonality}`);
+        }
+        if (dto.characterNames?.length && !dto.characterDisplayName) {
+          roleBlockParts.push(`- 可用角色: ${dto.characterNames.join(', ')}`);
+        }
+      }
+
+      if (dto.locationName) {
+        roleBlockParts.push(`\n## 场景信息`);
+        roleBlockParts.push(`- 故事发生地点: ${dto.locationName}`);
+        roleBlockParts.push(`- 请围绕这个地点设计合理的对话场景`);
+      }
+
+      if (dto.goalPrompt) {
+        roleBlockParts.push(`\n## 用户的额外创作要求（中文）`);
+        roleBlockParts.push(dto.goalPrompt);
+      }
+
+      const roleBlock = roleBlockParts.join('\n');
+
+      // ── 4. 调用 DeepSeek 生成 ──
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+
+      const { text } = await generateText({
+        model,
+        prompt: `你是一位资深的英语教学剧情设计师。你的任务是为中国英语学习者（B1-B2 CEFR 水平）创作沉浸式英语对话剧本。
+
+---
+
+## 第一步：分析教学话题
+
+请先仔细阅读以下话题信息，理解**这个对话要教什么**：
+
+${topicInfoBlock}
+
+${roleBlock}
+
+---
+
+## 第二步：设计对话剧本（Ink 脚本格式）
+
+基于你对话题教学目标的分析，创作一个完整的 Ink 对话脚本。
+
+### 剧情设计原则
+1. **教学目标驱动**: 对话内容必须紧扣话题的训练目标和知识点，确保学习者在对话中能自然接触到目标句块和词汇
+2. **角色驱动**: 如果指定了主角，对话要体现该角色的性格特点和身份特征。NPC 对白要符合角色的性格
+3. **场景合理**: 对话内容要符合所设定的地点场景，有真实的情境感
+4. **难度匹配**: 英文对话难度要与话题等级（${topic.difficulty}）匹配，不宜过难或过易
+5. **自然流畅**: 像真实场景中的自然交流，不要像课本对话
+6. **融入知识点**: 自然地融入句块和词汇，不要生硬堆砌，每个句块至少出现一次
+7. **互动设计**: 在关键节点设置 2-3 个选项，给学习者参与感
+8. **口语练习**: 在合适节点设置 # wait:input，让学习者做语音输入练习
+9. **长度适中**: 3-6 个场景，总对白 10-25 行
+
+### Ink 脚本语法规则（严格遵守）
+
+\`\`\`
+---
+key: ${dto.storyKey}
+title: ${dto.title}
+---
+
+-> start
+
+=== start ===
+# speaker: Alex
+# expression: default
+# translation: 此行对白的中文翻译
+Alex: 英文对白内容
+
+*   [英文选项文本] -> 目标场景名
+
+=== scene_2 ===
+# speaker: Alex
+# expression: happy
+# translation: 中文翻译
+Alex: 更多英文对白
+
+# wait
+
+# wait:input
+
+-> END
+\`\`\`
+
+### 标签说明
+- \`# speaker:角色名\` — 设置当前说话者（英文名）
+- \`# expression:表情名\` — 立绘表情（default/happy/sad/angry/surprised/thinking）
+- \`# position:位置\` — 立绘位置（left/center/right）
+- \`# translation:中文翻译\` — 每条 NPC 对白的**中文翻译**（直接写中文，系统会自动编码）
+- \`*   [选项文本] -> 目标场景\` — 分支选项（3个空格缩进）
+- \`# wait\` — 暂停，等待用户点击继续
+- \`# wait:input\` — 等待用户语音输入（口语练习节点）
+- \`-> END\` — 结束故事
+- 场景定义：\`=== 场景名 ===\`
+
+### 重要规则
+- **每条 NPC 对白行都必须有对应的 \`# translation:\` 标签**，内容是地道的中文翻译
+- 角色名用英文（如 Alex, Emma, Teacher）
+- 所有对白和选项都用英文
+- 如果指定了主角，该角色应作为主要 NPC 出现
+- 场景名使用英文 snake_case（如 coffee_shop, payment_counter）
+
+---
+
+## 输出要求
+
+直接输出完整的 Ink 脚本（从 \`---\` 开始），不要任何解释或 Markdown 代码块标记。确保格式完全正确，可以被 Ink 编译器直接编译。`,
+        temperature: 0.7,
+        maxOutputTokens: 4000,
+      });
+
+      // ── 5. 清洗和修正输出 ──
+      let inkSource = text
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/```ink\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      if (!inkSource.startsWith('---')) {
+        const yamlStart = inkSource.indexOf('---');
+        if (yamlStart > 0) {
+          inkSource = inkSource.slice(yamlStart);
+        }
+      }
+
+      // 自动 URL-encode 翻译标签中未编码的中文内容
+      inkSource = inkSource.replace(
+        /^# translation:(.+)$/gm,
+        (_match, value) => {
+          const trimmed = value.trim();
+          if (/[\u4e00-\u9fff]/.test(trimmed)) {
+            return `# translation:${encodeURIComponent(trimmed)}`;
+          }
+          return `# translation:${trimmed}`;
+        },
+      );
+
+      return {
+        code: 200,
+        message: 'success',
+        data: { inkSource },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+  }
+
+  /**
+   * 双语翻译生成：为故事中所有 NPC 对白行自动生成中文翻译。
+   * 解析 Ink 源文件，找到每条对白，用 DeepSeek 生成中文翻译，
+   * 然后在对应行前插入 # translation: 标签。
+   */
+  @Post('stories/:id/translate')
+  async translateStory(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+
+    try {
+      const story = await this.prisma.inkScript.findUnique({ where: { id } });
+      if (!story) throw new Error('故事不存在');
+
+      const source = story.inkSource;
+      if (!source) throw new Error('故事没有 Ink 源文件');
+
+      // 解析出所有对白行（speaker: text 格式）
+      const lines = source.split('\n');
+      const dialogueLines: { index: number; speaker: string; text: string; hasTranslation: boolean }[] = [];
+
+      let currentSpeaker = '';
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // 跳过空行和注释
+        if (!line || line.startsWith('//') || line.startsWith('#')) continue;
+
+        // 检查是否是 speaker 标签
+        if (line.startsWith('#') && line.includes('speaker:')) {
+          continue; // speaker 标签不影响当前收集
+        }
+
+        // 检查是否是对白行
+        const spoken = line.match(/^([^:：]{1,32})[:：]\s*(.+)$/);
+        if (spoken && !line.startsWith('*') && !line.startsWith('->') && !line.startsWith('===')) {
+          const speakerName = spoken[1].trim();
+          const dialogueText = spoken[2].trim();
+
+          // 跳过元数据行和特殊标记
+          if (['key', 'title', 'locationId', 'characterId'].includes(speakerName)) continue;
+
+          // 检查此行上面是否已有 translation 标签
+          let hasTranslation = false;
+          for (let j = i - 1; j >= 0 && j >= i - 5; j--) {
+            if (lines[j].trim().startsWith('# translation:')) {
+              hasTranslation = true;
+              break;
+            }
+            if (lines[j].trim() && !lines[j].trim().startsWith('#')) break;
+          }
+
+          dialogueLines.push({ index: i, speaker: speakerName, text: dialogueText, hasTranslation });
+        }
+      }
+
+      if (dialogueLines.length === 0) {
+        return { code: 200, message: '没有找到需要翻译的对白行', data: { inkSource: source } };
+      }
+
+      // 过滤出没有翻译的行
+      const untranslated = dialogueLines.filter((d) => !d.hasTranslation);
+
+      if (untranslated.length === 0) {
+        return { code: 200, message: '所有对白已有翻译', data: { inkSource: source } };
+      }
+
+      // 构建批量翻译请求
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+
+      const dialogueTexts = untranslated.map((d, i) =>
+        `[${i}] ${d.speaker}: ${d.text}`,
+      ).join('\n');
+
+      const { text: translationResult } = await generateText({
+        model,
+        prompt: `你是一个专业的中英翻译。请将以下英语教学对话翻译成自然流畅的中文。
+
+## 要求
+- 翻译要口语化、自然，符合中文表达习惯
+- 保留说话者的语气和情感色彩
+- 每条翻译独立、准确
+- 返回 JSON 数组格式
+
+## 对话内容
+${dialogueTexts}
+
+## 输出格式
+只返回一个 JSON 数组，每个元素对应一条翻译的中文文本。不要加任何解释。
+格式示例：["中文翻译1", "中文翻译2", ...]
+
+共 ${untranslated.length} 条对话需要翻译。`,
+        temperature: 0.3,
+        maxOutputTokens: 2000,
+      });
+
+      // 解析翻译结果
+      let cleaned = translationResult
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      let translations: string[] = [];
+      try {
+        translations = JSON.parse(cleaned);
+      } catch {
+        // 尝试逐行解析
+        translations = cleaned
+          .replace(/^\[|\]$/g, '')
+          .split(/\"\s*,\s*\"/)
+          .map((s) => s.replace(/^\"|\"$/g, '').trim());
+      }
+
+      if (!Array.isArray(translations) || translations.length === 0) {
+        throw new Error('AI 翻译结果解析失败');
+      }
+
+      // 将翻译插入到源文件中
+      const resultLines = [...lines];
+      // 从后往前插入，避免索引偏移
+      for (let t = untranslated.length - 1; t >= 0; t--) {
+        const dialogue = untranslated[t];
+        const translation = translations[t] || translations[0] || '';
+        if (translation) {
+          // 在对白行前面插入 translation 标签
+          const encodedTranslation = encodeURIComponent(translation);
+          resultLines.splice(dialogue.index, 0, `# translation:${encodedTranslation}`);
+        }
+      }
+
+      const updatedSource = resultLines.join('\n');
+
+      return {
+        code: 200,
+        message: `成功翻译 ${translations.length} 条对白`,
+        data: { inkSource: updatedSource, translatedCount: translations.length },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+  }
+
+  /**
+   * 批量音频生成：为故事中所有 NPC 对白行自动生成 TTS 音频。
+   * 根据每条对白的说话者，查找对应角色的 TTS 音色配置，
+   * 调用 TTS 服务批量生成音频，并将音频 URL 写入 # audio: 标签。
+   */
+  @Post('stories/:id/generate-audio')
+  async generateStoryAudio(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+
+    try {
+      const story = await this.prisma.inkScript.findUnique({
+        where: { id },
+        include: {
+          trainingTopic: { select: { id: true, title: true } },
+        },
+      });
+      if (!story) throw new Error('故事不存在');
+
+      const source = story.inkSource;
+      if (!source) throw new Error('故事没有 Ink 源文件');
+
+      // 获取所有角色及其 TTS 配置
+      const characters = await this.prisma.gameCharacter.findMany({
+        where: { ttsVoice: { not: null } },
+      });
+
+      // 构建角色名 -> TTS 配置的映射
+      // 同时根据 voice ID 格式自动检测 TTS provider
+      const charTtsMap = new Map<string, { voice: string; model: string | null; params: any; provider: TtsProvider }>();
+      for (const char of characters) {
+        const c = char as any;
+        const key = c.name.toLowerCase();
+        const displayKey = c.displayName.toLowerCase();
+        // 根据 voice ID 判断 provider: UUID 格式 → cartesia, 其他 → minimax
+        const isCartesiaVoice = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.ttsVoice || '');
+        const provider = isCartesiaVoice ? TtsProvider.cartesia : TtsProvider.minimax;
+        const model = c.ttsModel || (isCartesiaVoice ? 'sonic-english' : 'speech-2.8-hd');
+        const config = {
+          voice: c.ttsVoice!,
+          model,
+          params: c.ttsParams || {},
+          provider,
+        };
+        charTtsMap.set(key, config);
+        if (displayKey !== key) {
+          charTtsMap.set(displayKey, config);
+        }
+      }
+
+      // 解析对白行
+      const lines = source.split('\n');
+      const dialogueLines: { index: number; speaker: string; text: string; hasAudio: boolean }[] = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || line.startsWith('//') || line.startsWith('#')) continue;
+
+        const spoken = line.match(/^([^:：]{1,32})[:：]\s*(.+)$/);
+        if (spoken && !line.startsWith('*') && !line.startsWith('->') && !line.startsWith('===')) {
+          const speakerName = spoken[1].trim();
+          const dialogueText = spoken[2].trim();
+
+          if (['key', 'title', 'locationId', 'characterId'].includes(speakerName)) continue;
+
+          // 检查是否已有 audio 标签
+          let hasAudio = false;
+          for (let j = i - 1; j >= 0 && j >= i - 5; j--) {
+            if (lines[j].trim().startsWith('# audio:')) {
+              hasAudio = true;
+              break;
+            }
+            if (lines[j].trim() && !lines[j].trim().startsWith('#')) break;
+          }
+
+          dialogueLines.push({ index: i, speaker: speakerName, text: dialogueText, hasAudio });
+        }
+      }
+
+      // 过滤出需要生成音频的行
+      const toGenerate = dialogueLines.filter(
+        (d) => !d.hasAudio && charTtsMap.has(d.speaker.toLowerCase()),
+      );
+
+      if (toGenerate.length === 0) {
+        const missingVoices = dialogueLines.filter(
+          (d) => !d.hasAudio && !charTtsMap.has(d.speaker.toLowerCase()),
+        );
+        const noVoiceNames = [...new Set(missingVoices.map((d) => d.speaker))];
+        return {
+          code: 200,
+          message: noVoiceNames.length > 0
+            ? `以下角色未配置 TTS 音色，已跳过: ${noVoiceNames.join(', ')}`
+            : '所有对白已有音频或无需生成',
+          data: { inkSource: source, generatedCount: 0, skippedSpeakers: noVoiceNames },
+        };
+      }
+
+      // 批量生成音频
+      const resultLines = [...lines];
+      let generatedCount = 0;
+      const errors: string[] = [];
+
+      // 从后往前处理，避免索引偏移
+      for (let d = toGenerate.length - 1; d >= 0; d--) {
+        const dialogue = toGenerate[d];
+        const ttsConfig = charTtsMap.get(dialogue.speaker.toLowerCase());
+        if (!ttsConfig) continue;
+
+        try {
+          const result = await this.ttsService.synthesizeAsset({
+            text: dialogue.text,
+            provider: ttsConfig.provider,
+            model: ttsConfig.model || 'speech-2.8-hd',
+            voiceId: ttsConfig.voice,
+            params: ttsConfig.params || {},
+            bizType: 'tts_story_line',
+            bizId: [story.key || story.id, dialogue.index.toString(), dialogue.text].join(':'),
+          });
+
+          const audioUrl = result.url;
+          if (audioUrl) {
+            resultLines.splice(dialogue.index, 0, `# audio:${encodeURIComponent(audioUrl)}`);
+            generatedCount++;
+          }
+        } catch (err: any) {
+          errors.push(`${dialogue.speaker}: ${err.message}`);
+          console.warn(`音频生成失败 [${dialogue.speaker}]: ${err.message}`);
+        }
+      }
+
+      const updatedSource = resultLines.join('\n');
+
+      return {
+        code: 200,
+        message: `成功生成 ${generatedCount} 条音频` + (errors.length > 0 ? `，${errors.length} 条失败` : ''),
+        data: {
+          inkSource: updatedSource,
+          generatedCount,
+          errorCount: errors.length,
+          errors: errors.slice(0, 5),
+        },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
   }
 
   // ════════════════════════════════════════════════════════════
