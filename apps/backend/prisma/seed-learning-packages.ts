@@ -177,8 +177,9 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     for (const row of chunkRows) {
       const examples = parseJson<{ en: string; zh: string; note?: string; level?: string }[]>(row.examples_json)
 
-      const chunk = await prisma.chunk.create({
-        data: {
+      const chunk = await prisma.chunk.upsert({
+        where: { text: row.text },
+        create: {
           text: row.text,
           meaning: row.meaning,
           category: row.category,
@@ -186,6 +187,18 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           description: row.description || null,
           examples: examples?.length
             ? { create: examples.map((ex, i) => ({ en: ex.en, zh: ex.zh, note: ex.note || null, level: ex.level || 'basic', sortOrder: i })) }
+            : undefined,
+        },
+        update: {
+          meaning: row.meaning,
+          category: row.category,
+          difficulty: row.difficulty || 'L2',
+          description: row.description || null,
+          examples: examples?.length
+            ? {
+                deleteMany: {},
+                create: examples.map((ex, i) => ({ en: ex.en, zh: ex.zh, note: ex.note || null, level: ex.level || 'basic', sortOrder: i })),
+              }
             : undefined,
         },
       })
