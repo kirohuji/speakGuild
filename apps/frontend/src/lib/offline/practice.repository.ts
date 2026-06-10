@@ -50,12 +50,41 @@ async function resolveSessionId(sessionId: string): Promise<string> {
   return mapped?.value ?? sessionId
 }
 
+/**
+ * Get cached topic detail. If the cached data is from the old format (no scene/vocabs),
+ * merges shared data from the unit-level record for backward compatibility.
+ */
 async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null> {
-  const cached = await localDb.get<{ detail: TopicDetail; unitId?: string }>('downloaded_unit_details', `topic:${topicId}`)
+  const cached = await localDb.get<{ detail: any; unitId?: string }>('downloaded_unit_details', `topic:${topicId}`)
+  console.log('[practiceRepo] 🗄️ getCachedTopicDetail | topicId=', topicId, '| found=', !!cached?.detail)
   if (!cached?.detail) return null
-  if (!cached.unitId) return cached.detail
-  const pack = await localDb.get<{ status?: string }>('downloaded_packs', cached.unitId)
-  return pack?.status === 'installed' ? cached.detail : null
+
+  // Check pack installed status
+  if (cached.unitId) {
+    const pack = await localDb.get<{ status?: string }>('downloaded_packs', cached.unitId)
+    if (pack?.status !== 'installed') return null
+  }
+
+  let detail = cached.detail
+
+  // Backward compat: if old-format cache (missing scene), merge from unit record
+  const needsMerge = !detail.scene?.characters?.length
+  if (needsMerge && cached.unitId) {
+    console.log('[practiceRepo] ⚠️ 旧格式缓存，从unit记录合并scene')
+    const unitRecord = await localDb.get<any>('downloaded_unit_details', cached.unitId)
+    if (unitRecord?.scene) {
+      detail = { ...detail, scene: unitRecord.scene }
+    }
+  }
+
+  if (detail.scene) {
+    console.log('[practiceRepo]   scene.title=', detail.scene.title, '| characters.length=', detail.scene.characters?.length ?? 0)
+    detail.scene.characters?.forEach((c: any, i: number) => {
+      console.log(`[practiceRepo]   Char[${i}]: name=${c.name} avatarUrl=${c.avatarUrl || '(none)'} spriteBaseUrl=${c.spriteBaseUrl || '(none)'}`)
+    })
+  }
+
+  return detail as TopicDetail
 }
 
 function hasFinalAnalysis(session: Partial<PracticeSession> | null | undefined): boolean {

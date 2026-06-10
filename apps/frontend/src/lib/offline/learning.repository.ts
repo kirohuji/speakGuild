@@ -12,6 +12,69 @@ async function isPackInstalled(unitId: string) {
   return pack?.status === 'installed'
 }
 
+/** Aggregate vocabs/chunks/patterns/trainingTopics from stored topic details into a unitDetail */
+async function aggregateUnitContent(unitDetail: any): Promise<any> {
+  if (unitDetail.vocabularies?.length && unitDetail.chunks?.length && unitDetail.trainingTopics?.length) {
+    return unitDetail // already has aggregated data
+  }
+
+  // Get topic IDs from the pack manifest (or fall back to trainingTopics if still present)
+  let topicIds: string[] = (unitDetail.trainingTopics ?? []).map((t: any) => t.id)
+  if (topicIds.length === 0) {
+    const pack = await localDb.get<{ manifest?: { topics?: string[] } }>('downloaded_packs', unitDetail.id)
+    topicIds = pack?.manifest?.topics ?? []
+  }
+
+  const vocabMap = new Map<string, any>()
+  const chunkMap = new Map<string, any>()
+  const patternMap = new Map<string, any>()
+  const trainingTopics: any[] = []
+
+  for (const topicId of topicIds) {
+    try {
+      const cached = await localDb.get<{ detail: any }>('downloaded_unit_details', `topic:${topicId}`)
+      const detail = cached?.detail
+      if (!detail) continue
+
+      // Extract trainingTopic card from topicDetail
+      trainingTopics.push({
+        id: detail.topic?.id ?? topicId,
+        title: detail.topic?.title,
+        promptEn: detail.topic?.promptEn,
+        promptZh: detail.topic?.promptZh,
+        difficulty: detail.topic?.difficulty,
+        suggestedDurationSec: detail.topic?.suggestedDurationSec,
+        activeChunks: (detail.activeChunks ?? []).slice(0, 3).map((c: any) => ({
+          id: c.id,
+          text: c.text,
+          meaning: c.meaning,
+        })),
+      })
+
+      for (const v of detail.vocabularies ?? []) {
+        if (!vocabMap.has(v.id)) vocabMap.set(v.id, v)
+      }
+      for (const c of detail.activeChunks ?? []) {
+        if (!chunkMap.has(c.id)) chunkMap.set(c.id, c)
+      }
+      for (const p of detail.sentencePatterns ?? []) {
+        const key = p.pattern ?? p.id ?? JSON.stringify(p)
+        if (!patternMap.has(key)) {
+          patternMap.set(key, { ...p, topicId, topicTitle: detail.topic?.title })
+        }
+      }
+    } catch { /* topic not cached yet, skip */ }
+  }
+
+  return {
+    ...unitDetail,
+    vocabularies: [...vocabMap.values()],
+    chunks: [...chunkMap.values()],
+    sentencePatterns: [...patternMap.values()],
+    trainingTopics,
+  }
+}
+
 function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
   const progress = unit.progress ?? {
     readiness: 0,
@@ -68,8 +131,8 @@ export const learningRepository = {
 
   async getUnitDetail(unitId: string): Promise<UnitDetail | null> {
     if (await isPackInstalled(unitId)) {
-      const cached = await localDb.get<UnitDetail>('downloaded_unit_details', unitId)
-      if (cached) return cached
+      const cached = await localDb.get<any>('downloaded_unit_details', unitId)
+      if (cached) return aggregateUnitContent(cached)
     }
 
     try {
@@ -77,7 +140,8 @@ export const learningRepository = {
       await localDb.put('downloaded_unit_details', { ...remote, id: unitId })
       return remote
     } catch {
-      return localDb.get<UnitDetail>('downloaded_unit_details', unitId)
+      const cached = await localDb.get<any>('downloaded_unit_details', unitId)
+      return cached ? aggregateUnitContent(cached) : null
     }
   },
 

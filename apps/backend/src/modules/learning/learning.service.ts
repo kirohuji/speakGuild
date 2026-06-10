@@ -504,6 +504,7 @@ export class LearningService {
       },
     });
 
+    // ── Scene visual assets (shared across all topics, store once at unit level) ──
     const gameLocation = await this.prisma.gameLocation.findFirst({
       where: { sceneId: unitId },
       select: {
@@ -514,13 +515,9 @@ export class LearningService {
           include: {
             character: {
               select: {
-                id: true,
-                name: true,
-                displayName: true,
-                avatarUrl: true,
-                spriteBaseUrl: true,
-                expressions: true,
-                defaultPosition: true,
+                id: true, name: true, displayName: true,
+                avatarUrl: true, spriteBaseUrl: true,
+                expressions: true, defaultPosition: true,
               },
             },
           },
@@ -529,18 +526,13 @@ export class LearningService {
       },
     });
 
-    // Fallback: 如果 GameLocation 没有绑定 NPC，直接从 GameCharacter 表取全部角色
     const fallbackCharacters = gameLocation?.npcs.length
       ? []
       : await this.prisma.gameCharacter.findMany({
           select: {
-            id: true,
-            name: true,
-            displayName: true,
-            avatarUrl: true,
-            spriteBaseUrl: true,
-            expressions: true,
-            defaultPosition: true,
+            id: true, name: true, displayName: true,
+            avatarUrl: true, spriteBaseUrl: true,
+            expressions: true, defaultPosition: true,
           },
           orderBy: { name: 'asc' },
         });
@@ -548,85 +540,102 @@ export class LearningService {
       ? gameLocation.npcs.map((npc) => npc.character)
       : fallbackCharacters;
 
+    // Attach scene to unitDetail (one copy, not repeated per topic)
+    (unitDetail as any).scene = {
+      id: unitDetail.id,
+      title: unitDetail.title,
+      location: unitDetail.location,
+      category: unitDetail.category,
+      backgroundUrl: gameLocation?.backgroundUrl ?? null,
+      characters: sceneCharacters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        displayName: c.displayName,
+        avatarUrl: c.avatarUrl,
+        spriteBaseUrl: c.spriteBaseUrl,
+        expressions: c.expressions,
+        defaultPosition: (c.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+      })),
+    };
+
+    // ── Collect asset URLs from per-topic data (vocabs audio) + unit-level (scene/characters) ──
     const assets: any[] = [];
     this.pushAsset(assets, gameLocation?.backgroundUrl, 'background');
     this.pushAsset(assets, gameLocation?.bgmUrl, 'bgm');
     this.pushAsset(assets, gameLocation?.ambientUrl, 'sfx');
-
     for (const character of sceneCharacters) {
       this.pushAsset(assets, character.avatarUrl, 'thumbnail');
       this.pushAsset(assets, character.spriteBaseUrl, 'sprite');
-      const expressions = character.expressions && typeof character.expressions === 'object'
+      const exps = character.expressions && typeof character.expressions === 'object'
         ? Object.values(character.expressions as Record<string, unknown>)
         : [];
-      for (const expression of expressions) {
-        if (typeof expression === 'string') this.pushAsset(assets, expression, 'sprite');
+      for (const expr of exps) {
+        if (typeof expr === 'string') this.pushAsset(assets, expr, 'sprite');
       }
     }
 
-    for (const vocab of unitDetail.vocabularies ?? []) {
-      this.pushAsset(assets, vocab.audioUsUrl, 'voice');
-      this.pushAsset(assets, vocab.audioUkUrl, 'voice');
-    }
-
-    const topicDetails = topics.map((topic) => ({
-      topic: {
-        id: topic.id,
-        title: topic.title,
-        description: topic.description,
-        knowledgePoints: topic.knowledgePoints,
-        teachingMarkdown: topic.teachingMarkdown,
-        promptEn: topic.promptEn,
-        promptZh: topic.promptZh,
-        suggestedDurationSec: topic.suggestedDurationSec,
-        difficulty: topic.difficulty,
+    // ── topicDetails: per-topic data (each topic has its own vocabs & activeChunks) ──
+    const topicDetails = topics.map((topic) => {
+      for (const tv of topic.topicVocabs) {
+        this.pushAsset(assets, tv.vocab.audioUsUrl, 'voice');
+        this.pushAsset(assets, tv.vocab.audioUkUrl, 'voice');
+      }
+      return {
+        topic: {
+          id: topic.id,
+          title: topic.title,
+          promptEn: topic.promptEn,
+          promptZh: topic.promptZh,
+          difficulty: topic.difficulty,
+          suggestedDurationSec: topic.suggestedDurationSec,
+          description: topic.description,
+          knowledgePoints: topic.knowledgePoints,
+          teachingMarkdown: topic.teachingMarkdown,
+          inkScriptId: topic.inkScriptId,
+        },
+        inkScript: topic.inkScript
+          ? {
+              id: topic.inkScript.id,
+              key: topic.inkScript.key,
+              title: topic.inkScript.title,
+              inkJson: topic.inkScript.inkJson,
+              inkSource: topic.inkScript.inkSource,
+              version: topic.inkScript.version,
+            }
+          : null,
         sentencePatterns: topic.topicPatterns.map((tp) => tp.pattern),
-        inkScriptId: topic.inkScriptId,
-      },
-      inkScript: topic.inkScript
-        ? {
-            id: topic.inkScript.id,
-            key: topic.inkScript.key,
-            title: topic.inkScript.title,
-            inkJson: topic.inkScript.inkJson,
-            inkSource: topic.inkScript.inkSource,
-            version: topic.inkScript.version,
-          }
-        : null,
-      scene: {
-        id: unitDetail.id,
-        title: unitDetail.title,
-        location: unitDetail.location,
-        category: unitDetail.category,
-        backgroundUrl: gameLocation?.backgroundUrl ?? null,
-        characters: sceneCharacters.map((character) => ({
-          id: character.id,
-          name: character.name,
-          displayName: character.displayName,
-          avatarUrl: character.avatarUrl,
-          spriteBaseUrl: character.spriteBaseUrl,
-          expressions: character.expressions,
-          defaultPosition: (character.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+        vocabularies: topic.topicVocabs.map((tv) => tv.vocab),
+        activeChunks: topic.activeChunks.map((tc) => ({
+          id: tc.chunk.id,
+          text: tc.chunk.text,
+          meaning: tc.chunk.meaning,
+          description: tc.chunk.description,
+          examples: tc.chunk.examples,
+          masteryStatus: 'not_learned' as const,
         })),
-      },
-      vocabularies: topic.topicVocabs.map((tv) => tv.vocab),
-      activeChunks: topic.activeChunks.map((tc) => ({
-        id: tc.chunk.id,
-        text: tc.chunk.text,
-        meaning: tc.chunk.meaning,
-        description: tc.chunk.description,
-        examples: tc.chunk.examples,
-        masteryStatus: 'not_learned',
-      })),
-    }));
+      };
+    });
 
+    // Strip derived data from unitDetail — frontend collects from topicDetails
+    const { vocabularies: _v, chunks: _c, sentencePatterns: _sp, trainingTopics: _tt, ...leanUnitDetail } = unitDetail as any;
+
+    const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0);
+    const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0);
     const versions = [
-      ...topics.map((topic) => topic.inkScript?.version ?? 1),
-      unitDetail.vocabularies?.length ?? 0,
-      unitDetail.chunks?.length ?? 0,
+      ...topics.map((t) => t.inkScript?.version ?? 1),
+      totalVocabs,
+      totalChunks,
       unitDetail.sentencePatterns?.length ?? 0,
     ];
-    const version = versions.reduce((sum, value) => sum + Number(value || 0), 1);
+    const version = versions.reduce((sum, v) => sum + Number(v || 0), 1);
+
+    // manifest IDs from per-topic data
+    const allVocabIds = new Set<string>();
+    const allChunkIds = new Set<string>();
+    for (const td of topicDetails) {
+      for (const v of td.vocabularies ?? []) allVocabIds.add(v.id);
+      for (const c of td.activeChunks ?? []) allChunkIds.add(c.id);
+    }
 
     return {
       manifest: {
@@ -635,15 +644,15 @@ export class LearningService {
         title: unitDetail.title,
         updatedAt: new Date().toISOString(),
         units: [unitDetail.id],
-        topics: topics.map((topic) => topic.id),
-        vocabularies: unitDetail.vocabularies.map((item) => item.id),
-        chunks: unitDetail.chunks.map((item) => item.id),
-        sentencePatterns: unitDetail.sentencePatterns.map((item) => item.pattern),
+        topics: topics.map((t) => t.id),
+        vocabularies: [...allVocabIds],
+        chunks: [...allChunkIds],
+        sentencePatterns: unitDetail.sentencePatterns.map((item: any) => item.pattern),
         scriptEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
-        inkScripts: topics.map((topic) => topic.inkScript?.id).filter(Boolean),
+        inkScripts: topics.map((t) => t.inkScript?.id).filter(Boolean),
         assets,
       },
-      unitDetail,
+      unitDetail: leanUnitDetail,
       topicDetails,
     };
   }

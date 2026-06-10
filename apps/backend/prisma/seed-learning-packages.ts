@@ -29,8 +29,8 @@ const PKG_ABS = resolve(__dirname, 'data', PKG_DIR)
 
 // ── CSV 类型 ──
 type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string }
-type CsvVocab = { scene_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
-type CsvChunk = { scene_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
+type CsvVocab = { scene_title: string; topic_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
+type CsvChunk = { scene_title: string; topic_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
 type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; description: string; knowledge_points: string; ink_script_key: string }
 type CsvPattern = { scene_title: string; topic_title: string; pattern: string; meaning: string; slots: string; example: string; difficulty: string; sort_order: string }
 type CsvEpisode = { chapter_id: string; chapter_title: string; episode_order: string; title: string; scene_title: string; required_output_level: string; required_user_level: string; vocab_required_count: string; vocab_total_count: string; chunk_required_count: string; chunk_total_count: string; objectives_json: string; pass_objective_count: string; pass_chunk_count: string; pass_min_dialogues: string; npc_name: string; npc_role: string; is_preview: string; ink_script_key: string; rewards_json: string }
@@ -86,7 +86,11 @@ export async function seedLearningPackages(prisma: PrismaClient) {
   let totalEpChunks = 0
   let totalEpVocabs = 0
 
-  for (const dirName of packageDirs) {
+  // TODO: 正式环境移除 .filter，处理全部包
+  const targetDirs = packageDirs.filter(d => d === 'study-abroad')
+  console.log(`  处理 ${targetDirs.length} 个包: ${targetDirs.join(', ')}\n`)
+
+  for (const dirName of targetDirs) {
     const pkgPath = `${PKG_DIR}/${dirName}`
     console.log(`📁 packages/${dirName}/`)
 
@@ -116,7 +120,8 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     // ═══ 2. 词汇（独立表 Vocabulary，后续通过 TrainingTopicVocab join） ═══
     const vocabRows = readCsv<CsvVocab>('scene_vocabulary.csv', pkgPath)
     let vocabCount = 0
-    const sceneVocabIds = new Map<string, string[]>() // sceneTitle → vocabId[]
+    const sceneVocabIds = new Map<string, string[]>() // sceneTitle → vocabId[] (scene-level shared)
+    const topicVocabIds = new Map<string, string[]>() // sceneTitle|topicTitle → vocabId[] (per-topic)
     for (const row of vocabRows) {
       const sceneId = sceneMap.get(row.scene_title)
       if (!sceneId) continue
@@ -138,7 +143,6 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           sortOrder: parseInt(row.sort_order) || 0,
         },
         update: {
-          // 如果单词已存在，只更新可能为空或更完整的字段
           meaning: row.meaning,
           partOfSpeech: row.part_of_speech || undefined,
           phoneticUs: row.phonetic_us || undefined,
@@ -149,10 +153,17 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           sortOrder: parseInt(row.sort_order) || 0,
         },
       })
-      // Track vocab by scene for later topic/episode linking
-      const ids = sceneVocabIds.get(row.scene_title) ?? []
-      ids.push(vocab.id)
-      sceneVocabIds.set(row.scene_title, ids)
+      // Track by topic if specified, otherwise scene-level (shared across all topics)
+      if (row.topic_title) {
+        const key = `${row.scene_title}|${row.topic_title}`
+        const ids = topicVocabIds.get(key) ?? []
+        ids.push(vocab.id)
+        topicVocabIds.set(key, ids)
+      } else {
+        const ids = sceneVocabIds.get(row.scene_title) ?? []
+        ids.push(vocab.id)
+        sceneVocabIds.set(row.scene_title, ids)
+      }
       vocabCount++
     }
     console.log(`  ✓ ${vocabCount} 个词汇`)
@@ -161,7 +172,8 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     // ═══ 3. 句块（独立表 Chunk，后续通过 TrainingTopicChunk join） ═══
     const chunkRows = readCsv<CsvChunk>('chunks.csv', pkgPath)
     let chunkCount = 0
-    const pkgChunkIds: string[] = []
+    const sceneChunkIds = new Map<string, string[]>() // sceneTitle → chunkId[] (scene-level shared)
+    const topicChunkIds = new Map<string, string[]>() // sceneTitle|topicTitle → chunkId[] (per-topic)
     for (const row of chunkRows) {
       const examples = parseJson<{ en: string; zh: string; note?: string; level?: string }[]>(row.examples_json)
 
@@ -178,7 +190,17 @@ export async function seedLearningPackages(prisma: PrismaClient) {
         },
       })
       chunkTextToId.set(row.text.slice(0, 20), chunk.id)
-      pkgChunkIds.push(chunk.id)
+      // Track by topic if specified, otherwise scene-level
+      if (row.topic_title) {
+        const key = `${row.scene_title}|${row.topic_title}`
+        const ids = topicChunkIds.get(key) ?? []
+        ids.push(chunk.id)
+        topicChunkIds.set(key, ids)
+      } else {
+        const ids = sceneChunkIds.get(row.scene_title) ?? []
+        ids.push(chunk.id)
+        sceneChunkIds.set(row.scene_title, ids)
+      }
       chunkCount++
     }
     console.log(`  ✓ ${chunkCount} 个句块`)
@@ -239,16 +261,22 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     totalTopics += topicCount
 
     // ═══ 4.5. 话题↔词汇 关联 ═══
+    // Scene-level vocab (topic_title empty) → shared to all topics in the scene
+    // Topic-level vocab (topic_title specified) → only to that specific topic
     let tvcCount = 0
     for (const row of topicRows) {
       const topicId = topicTitleSceneToId.get(`${row.scene_title}|${row.title}`)
-      const vocabIds = sceneVocabIds.get(row.scene_title) ?? []
-      if (topicId && vocabIds.length > 0) {
+      if (!topicId) continue
+      const sceneVocabs = sceneVocabIds.get(row.scene_title) ?? []
+      const topicKey = `${row.scene_title}|${row.title}`
+      const topicVocabs = topicVocabIds.get(topicKey) ?? []
+      const allVocabIds = [...new Set([...sceneVocabs, ...topicVocabs])]
+      if (allVocabIds.length > 0) {
         await prisma.trainingTopicVocab.createMany({
-          data: vocabIds.map((vocabId, i) => ({ topicId, vocabId, sortOrder: i })),
+          data: allVocabIds.map((vocabId, i) => ({ topicId, vocabId, sortOrder: i })),
           skipDuplicates: true,
         })
-        tvcCount += vocabIds.length
+        tvcCount += allVocabIds.length
       }
     }
     console.log(`  ✓ ${tvcCount} 个话题↔词汇关联`)
@@ -281,17 +309,22 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     totalPatterns += patternCount
 
     // ═══ 6. 话题↔句块 关联（TrainingTopicChunk join 表） ═══
-    // Link all chunks from this package to all topics from this package
+    // Scene-level chunks (topic_title empty) → shared to all topics in the scene
+    // Topic-level chunks (topic_title specified) → only to that specific topic
     let tccCount = 0
-    if (pkgChunkIds.length > 0) {
-      const allTopicIds = Array.from(topicTitleSceneToId.values())
-      const pkgTopicIds = allTopicIds.slice(-topicCount)
-      for (const topicId of pkgTopicIds) {
+    for (const row of topicRows) {
+      const topicId = topicTitleSceneToId.get(`${row.scene_title}|${row.title}`)
+      if (!topicId) continue
+      const sceneChunks = sceneChunkIds.get(row.scene_title) ?? []
+      const topicKey = `${row.scene_title}|${row.title}`
+      const topicChunks = topicChunkIds.get(topicKey) ?? []
+      const allChunkIds = [...sceneChunks, ...topicChunks]
+      if (allChunkIds.length > 0) {
         await prisma.trainingTopicChunk.createMany({
-          data: pkgChunkIds.map((chunkId, i) => ({ topicId, chunkId, sortOrder: i })),
+          data: allChunkIds.map((chunkId, i) => ({ topicId, chunkId, sortOrder: i })),
           skipDuplicates: true,
         })
-        tccCount += pkgChunkIds.length
+        tccCount += allChunkIds.length
       }
     }
     console.log(`  ✓ ${tccCount} 个话题↔句块关联`)

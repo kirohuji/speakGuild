@@ -325,8 +325,8 @@ export function PracticeSessionPage() {
   // ── Objectives & chunks from detail ──
   const objectives = useMemo(() => {
     const objs: string[] = []
-    if (detail?.topic.sentencePatterns?.length) {
-      detail.topic.sentencePatterns.forEach((p) => objs.push(`${t('practiceSession.usePattern')}: ${p.pattern}`))
+    if (detail?.sentencePatterns?.length) {
+      detail.sentencePatterns.forEach((p) => objs.push(`${t('practiceSession.usePattern')}: ${p.pattern}`))
     }
     objs.push(`${t('practiceSession.aroundTopic')} "${detail?.topic.title}" ${t('practiceSession.startDialogue')}`)
     if (objs.length === 0) objs.push(t('practiceSession.completionHint'))
@@ -544,8 +544,8 @@ export function PracticeSessionPage() {
       kind: 'chunk', id: `chunk:${c.id}`, text: c.text, meaning: c.meaning,
       description: c.description, examples: c.examples, sceneName,
     }))
-    const patterns: LearningInsightItem[] = detail.topic.sentencePatterns?.length
-      ? detail.topic.sentencePatterns.map((p, i) => ({
+    const patterns: LearningInsightItem[] = detail.sentencePatterns?.length
+      ? detail.sentencePatterns.map((p, i) => ({
           kind: 'pattern', id: `pattern:${i}`, pattern: p.pattern,
           meaning: p.meaning, example: p.example, difficulty: p.difficulty, sceneName,
         }))
@@ -909,7 +909,7 @@ export function PracticeSessionPage() {
         </div>
 
         <div className="space-y-5">
-          {(detail.topic.description || detail.topic.knowledgePoints || detail.topic.sentencePatterns?.length) && (
+          {(detail.topic.description || detail.topic.knowledgePoints || detail.sentencePatterns?.length) && (
             <section className="rounded-lg bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Info className="size-4 text-primary" />
@@ -933,9 +933,9 @@ export function PracticeSessionPage() {
                     />
                   </div>
                 )}
-                {detail.topic.sentencePatterns?.length ? (
+                {detail.sentencePatterns?.length ? (
                   <div className="space-y-2">
-                    {detail.topic.sentencePatterns.map((p, i) => {
+                    {detail.sentencePatterns.map((p, i) => {
                       const isExpanded = expandedPatternIdx === i
                       return (
                         <Card key={i} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>

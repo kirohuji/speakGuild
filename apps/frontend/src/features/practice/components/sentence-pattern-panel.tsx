@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TopicDetail } from '../api/english-practice-api'
 
 interface SentencePatternPanelProps {
-  topic: TopicDetail['topic']
+  sentencePatterns: NonNullable<TopicDetail['sentencePatterns']>
   onInspect?: (index: number) => void
 }
 
-export function SentencePatternPanel({ topic, onInspect }: SentencePatternPanelProps) {
+export function SentencePatternPanel({ sentencePatterns, onInspect }: SentencePatternPanelProps) {
   const { t } = useTranslation()
-  if (!topic.sentencePatterns?.length) return null
+  if (!sentencePatterns.length) return null
 
   return (
     <Card>
@@ -18,7 +18,7 @@ export function SentencePatternPanel({ topic, onInspect }: SentencePatternPanelP
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {topic.sentencePatterns.map((item, index) => (
+          {sentencePatterns.map((item, index) => (
             <button
               key={index}
               type="button"

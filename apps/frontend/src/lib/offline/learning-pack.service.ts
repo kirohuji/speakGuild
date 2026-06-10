@@ -38,10 +38,12 @@ function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['
   assets.push({ url, role })
 }
 
-function collectTopicAssets(detail: any): AssetRef[] {
+function collectUnitAssets(unitDetail: any): AssetRef[] {
   const assets: AssetRef[] = []
-  pushUrlAsset(assets, detail?.scene?.backgroundUrl, 'background')
-  for (const character of detail?.scene?.characters ?? []) {
+  // Scene background
+  pushUrlAsset(assets, unitDetail?.scene?.backgroundUrl, 'background')
+  // Characters (sprites + avatars)
+  for (const character of unitDetail?.scene?.characters ?? []) {
     pushUrlAsset(assets, character.avatarUrl, 'thumbnail')
     pushUrlAsset(assets, character.spriteBaseUrl, 'sprite')
     const expressions = character.expressions && typeof character.expressions === 'object'
@@ -51,11 +53,23 @@ function collectTopicAssets(detail: any): AssetRef[] {
       if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
     }
   }
-  for (const vocab of detail?.vocabularies ?? []) {
+  // Vocabulary audio
+  for (const vocab of unitDetail?.vocabularies ?? []) {
     pushUrlAsset(assets, vocab.audioUsUrl, 'voice')
     pushUrlAsset(assets, vocab.audioUkUrl, 'voice')
   }
   return assets
+}
+
+/** Merge unit-level shared data (scene) into each topic detail */
+function mergeTopicDetail(topicDetail: any, unitDetail: any) {
+  if (!topicDetail || !unitDetail) return topicDetail
+  return {
+    ...topicDetail,
+    // scene is shared at unit level
+    scene: unitDetail.scene ?? topicDetail.scene,
+    // topic metadata, vocabularies, activeChunks are already per-topic — no merge needed
+  }
 }
 
 async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
@@ -65,21 +79,23 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
     downloadedAt: new Date().toISOString(),
   })
 
-  for (const detail of topicDetails) {
-    if (detail?.inkScript) {
+  for (const topicDetail of topicDetails) {
+    if (topicDetail?.inkScript) {
       await localDb.put('ink_scripts', {
-        id: detail.inkScript.id,
-        topicId: detail.topic.id,
+        id: topicDetail.inkScript.id,
+        topicId: topicDetail.topic.id,
         unitId: unitDetail.id,
-        ...detail.inkScript,
+        ...topicDetail.inkScript,
         updatedAt: new Date().toISOString(),
       })
     }
+    // Merge unit-level shared data into the stored topic detail
+    const merged = mergeTopicDetail(topicDetail, unitDetail)
     await localDb.put('downloaded_unit_details', {
-      id: `topic:${detail.topic.id}`,
+      id: `topic:${topicDetail.topic.id}`,
       unitId: unitDetail.id,
-      topicId: detail.topic.id,
-      detail,
+      topicId: topicDetail.topic.id,
+      detail: merged,
       updatedAt: new Date().toISOString(),
     })
   }
@@ -102,13 +118,30 @@ export const learningPackService = {
       if (detail) topicDetails.push(detail)
     }
 
+    // Collect assets from unit-level where available, fall back to first topicDetail
     const assets: AssetRef[] = []
-    for (const vocab of unitDetail.vocabularies ?? []) {
-      pushUrlAsset(assets, vocab.audioUsUrl, 'voice')
-      pushUrlAsset(assets, vocab.audioUkUrl, 'voice')
-    }
-    for (const detail of topicDetails) {
-      for (const asset of collectTopicAssets(detail)) pushUrlAsset(assets, asset.url, asset.role)
+    if (unitDetail.scene) {
+      for (const asset of collectUnitAssets(unitDetail)) {
+        pushUrlAsset(assets, asset.url, asset.role)
+      }
+    } else if (topicDetails.length > 0) {
+      // Old fallback: scene data is in each topicDetail, collect from first one only
+      const first = topicDetails[0]
+      pushUrlAsset(assets, first?.scene?.backgroundUrl, 'background')
+      for (const character of first?.scene?.characters ?? []) {
+        pushUrlAsset(assets, character.avatarUrl, 'thumbnail')
+        pushUrlAsset(assets, character.spriteBaseUrl, 'sprite')
+        const expressions = character.expressions && typeof character.expressions === 'object'
+          ? Object.values(character.expressions) : []
+        for (const value of expressions) {
+          if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
+        }
+      }
+      // Vocab audio from unitDetail (deduplicated)
+      for (const vocab of unitDetail.vocabularies ?? []) {
+        pushUrlAsset(assets, vocab.audioUsUrl, 'voice')
+        pushUrlAsset(assets, vocab.audioUkUrl, 'voice')
+      }
     }
 
     return {

@@ -20,13 +20,6 @@ export interface TopicDetail {
     promptZh: string
     suggestedDurationSec: number
     difficulty: string
-    sentencePatterns?: Array<{
-      pattern: string
-      meaning: string
-      slots: string[]
-      example: string
-      difficulty: string
-    }> | null
     inkScriptId?: string | null
   }
   inkScript?: {
@@ -75,6 +68,13 @@ export interface TopicDetail {
     examples?: Array<{ en: string; zh: string; note?: string | null; level?: string }>
     masteryStatus: string
   }[]
+  sentencePatterns?: Array<{
+    pattern: string
+    meaning: string
+    slots: string[]
+    example: string
+    difficulty: string
+  }> | null
 }
 
 export interface PracticeSession {
