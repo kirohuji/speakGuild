@@ -529,13 +529,31 @@ export class LearningService {
       },
     });
 
+    // Fallback: 如果 GameLocation 没有绑定 NPC，直接从 GameCharacter 表取全部角色
+    const fallbackCharacters = gameLocation?.npcs.length
+      ? []
+      : await this.prisma.gameCharacter.findMany({
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+            avatarUrl: true,
+            spriteBaseUrl: true,
+            expressions: true,
+            defaultPosition: true,
+          },
+          orderBy: { name: 'asc' },
+        });
+    const sceneCharacters = gameLocation?.npcs.length
+      ? gameLocation.npcs.map((npc) => npc.character)
+      : fallbackCharacters;
+
     const assets: any[] = [];
     this.pushAsset(assets, gameLocation?.backgroundUrl, 'background');
     this.pushAsset(assets, gameLocation?.bgmUrl, 'bgm');
     this.pushAsset(assets, gameLocation?.ambientUrl, 'sfx');
 
-    for (const npc of gameLocation?.npcs ?? []) {
-      const character = npc.character;
+    for (const character of sceneCharacters) {
       this.pushAsset(assets, character.avatarUrl, 'thumbnail');
       this.pushAsset(assets, character.spriteBaseUrl, 'sprite');
       const expressions = character.expressions && typeof character.expressions === 'object'
@@ -581,14 +599,14 @@ export class LearningService {
         location: unitDetail.location,
         category: unitDetail.category,
         backgroundUrl: gameLocation?.backgroundUrl ?? null,
-        characters: (gameLocation?.npcs ?? []).map((npc) => ({
-          id: npc.character.id,
-          name: npc.character.name,
-          displayName: npc.character.displayName,
-          avatarUrl: npc.character.avatarUrl,
-          spriteBaseUrl: npc.character.spriteBaseUrl,
-          expressions: npc.character.expressions,
-          defaultPosition: npc.character.defaultPosition ?? 'center',
+        characters: sceneCharacters.map((character) => ({
+          id: character.id,
+          name: character.name,
+          displayName: character.displayName,
+          avatarUrl: character.avatarUrl,
+          spriteBaseUrl: character.spriteBaseUrl,
+          expressions: character.expressions,
+          defaultPosition: (character.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
         })),
       },
       vocabularies: topic.topicVocabs.map((tv) => tv.vocab),
