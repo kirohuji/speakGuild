@@ -447,7 +447,7 @@ function TrainingTopicDialog({
         patternIds: edit.topicPatterns?.map((tp: any) => tp.pattern.id) ?? [],
       })
     }
-    else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, chunkIds: [], vocabIds: [], patternIds: [], inkScriptId: '' })
+    else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, sortOrder: 0, chunkIds: [], vocabIds: [], patternIds: [], inkScriptId: '' })
     setStorySearch('')
     setStoryType('all')
   }, [edit, open, sceneId])
@@ -548,7 +548,12 @@ function TrainingTopicDialog({
                   <Label>标题</Label>
                   <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>排序</Label>
+                    <Input type="number" value={form.sortOrder ?? 0}
+                      onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} />
+                  </div>
                   <div className="space-y-1.5">
                     <Label>难度</Label>
                     <Select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>

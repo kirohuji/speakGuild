@@ -251,7 +251,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           description: row.description || null,
           knowledgePoints: row.knowledge_points || null,
           inkScriptId: inkId,
-          sortOrder: 0,
+          sortOrder: topicCount,
         },
       })
       topicTitleSceneToId.set(`${row.scene_title}|${row.title}`, topic.id)
