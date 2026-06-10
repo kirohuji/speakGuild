@@ -32,6 +32,14 @@ export class SystemConfigController {
     return { key, value };
   }
 
+  /** Bulk update configs. */
+  @Put('bulk')
+  async bulkSet(@Req() req: Request, @Body() body: Record<string, string>) {
+    await this.requireAdmin(req);
+    const count = await this.systemConfigService.bulkSet(body);
+    return { updated: count };
+  }
+
   /** Update a single config. */
   @Put(':key')
   async setConfig(
@@ -41,13 +49,5 @@ export class SystemConfigController {
   ) {
     await this.requireAdmin(req);
     return this.systemConfigService.setConfig(key, value);
-  }
-
-  /** Bulk update configs. */
-  @Put('bulk')
-  async bulkSet(@Req() req: Request, @Body() body: Record<string, string>) {
-    await this.requireAdmin(req);
-    const count = await this.systemConfigService.bulkSet(body);
-    return { updated: count };
   }
 }
