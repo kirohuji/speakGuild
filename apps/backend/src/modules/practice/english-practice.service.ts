@@ -205,25 +205,46 @@ export class EnglishPracticeService {
   }
 
   async createPracticeSession(userId: string, topicId: string) {
+    // 只查创建 session 所需的最少字段，不拉取冗余的 examples/description
     const topic = await this.prisma.trainingTopic.findUnique({
       where: { id: topicId },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        knowledgePoints: true,
+        teachingMarkdown: true,
+        promptEn: true,
+        promptZh: true,
+        difficulty: true,
+        suggestedDurationSec: true,
+        sceneId: true,
+        inkScriptId: true,
         scene: {
-          include: {
-            category: true,
+          select: {
+            id: true,
+            title: true,
+            location: true,
+            description: true,
+            category: { select: { name: true } },
           },
         },
-        topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
-        topicVocabs: {
-          include: { vocab: true },
+        topicPatterns: {
+          select: { pattern: { select: { pattern: true } } },
           orderBy: { sortOrder: 'asc' },
         },
         activeChunks: {
-          include: {
+          select: {
             chunk: {
-              include: {
-                examples: { orderBy: { sortOrder: 'asc' }, take: 3 },
-              },
+              select: { id: true, text: true, meaning: true, difficulty: true },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        topicVocabs: {
+          select: {
+            vocab: {
+              select: { id: true, word: true, meaning: true, partOfSpeech: true, difficulty: true },
             },
           },
           orderBy: { sortOrder: 'asc' },
@@ -232,6 +253,7 @@ export class EnglishPracticeService {
     });
     if (!topic) throw new NotFoundException('练习话题不存在');
 
+    // 快照仅保留核心标识字段，用于历史回顾/分析时追溯
     const topicSnapshot = {
       id: topic.id,
       title: topic.title,
@@ -254,9 +276,7 @@ export class EnglishPracticeService {
       id: item.chunk.id,
       text: item.chunk.text,
       meaning: item.chunk.meaning,
-      description: item.chunk.description,
       difficulty: item.chunk.difficulty,
-      examples: item.chunk.examples,
     }));
     const vocabSnapshot = topic.topicVocabs.map((tv) => ({
       id: tv.vocab.id,
@@ -264,11 +284,10 @@ export class EnglishPracticeService {
       meaning: tv.vocab.meaning,
       partOfSpeech: tv.vocab.partOfSpeech,
       difficulty: tv.vocab.difficulty,
-      examples: tv.vocab.examples,
-      description: tv.vocab.description,
     }));
     const objectivesSnapshot = this.buildObjectives(topic);
 
+    // select 只返回前端实际需要的字段（前端只用 id）
     return this.prisma.practiceSession.create({
       data: {
         userId,
@@ -281,6 +300,18 @@ export class EnglishPracticeService {
         chunksSnapshot,
         vocabSnapshot,
         sentencePatternsSnapshot: topic.topicPatterns.map((tp) => tp.pattern) ?? null,
+      },
+      select: {
+        id: true,
+        userId: true,
+        topicId: true,
+        sceneId: true,
+        inkScriptId: true,
+        status: true,
+        turnCount: true,
+        startedAt: true,
+        completedAt: true,
+        analyzedAt: true,
       },
     });
   }
