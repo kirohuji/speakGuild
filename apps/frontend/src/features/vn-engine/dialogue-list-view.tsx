@@ -87,7 +87,9 @@ function WordPopover({
   )
 }
 
-/** 将文本拆为单词，每个单词可长按查词 */
+/** 将文本拆为单词，每个单词可长按查词。
+ *  长按检测通过父容器事件委托实现（touchstart → 500ms → 激活），
+ *  不阻断 click 冒泡，保证短按单词时父级的 onClick（推进对话）正常触发。 */
 export function TappableText({
   text,
   onWordDetail,
@@ -96,15 +98,105 @@ export function TappableText({
   /** 点击"查看详情"：打开完整单词 dialog */
   onWordDetail?: (word: string) => void
 }) {
-  const [activeWord, setActiveWord] = useState<string | null>(null)
+  // 用 "word-index" 唯一标识每个单词实例，避免重复单词全部弹窗
+  const [activeKey, setActiveKey] = useState<string | null>(null)
+  const activeWordRef = useRef<string | null>(null)
+  const containerRef = useRef<HTMLSpanElement | null>(null)
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingKeyRef = useRef<string | null>(null)
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
   // 按空格拆分英文单词，中文按字符
   const tokens = text.split(/(\s+)/g)
 
   // 只要传了 onWordDetail 就启用长按查词
   const enabled = !!onWordDetail
 
+  const clearLongPress = useCallback(() => {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+    pendingKeyRef.current = null
+    touchStartPosRef.current = null
+  }, [])
+
+  // ── 容器级长按检测（事件委托，不阻断 click 冒泡） ──
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || !enabled) return
+
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0]
+      touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+
+      // 通过 data-word-key 属性判断触摸目标是否为单词实例
+      const target = e.target as HTMLElement
+      const wordEl = target.closest('[data-word-key]') as HTMLElement | null
+      pendingKeyRef.current = wordEl?.getAttribute('data-word-key') ?? null
+      if (!pendingKeyRef.current) return
+
+      clearLongPress()
+      longPressRef.current = setTimeout(() => {
+        if (pendingKeyRef.current) {
+          setActiveKey(pendingKeyRef.current)
+          activeWordRef.current = wordEl?.getAttribute('data-word') ?? null
+          pendingKeyRef.current = null
+          touchStartPosRef.current = null
+        }
+      }, 500)
+    }
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchStartPosRef.current) return
+      const touch = e.touches[0]
+      const dx = touch.clientX - touchStartPosRef.current.x
+      const dy = touch.clientY - touchStartPosRef.current.y
+      // 移动超过阈值 → 取消长按（判定为滚动）
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        clearLongPress()
+      }
+    }
+
+    const onTouchEnd = () => {
+      clearLongPress()
+    }
+
+    const onTouchCancel = () => {
+      clearLongPress()
+    }
+
+    // 桌面端右键 → 查词
+    const onContextMenu = (e: Event) => {
+      const target = (e.target as HTMLElement).closest('[data-word-key]') as HTMLElement | null
+      if (target) {
+        e.preventDefault()
+        const key = target.getAttribute('data-word-key')
+        if (key) {
+          setActiveKey(key)
+          activeWordRef.current = target.getAttribute('data-word')
+        }
+      }
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: true })
+    el.addEventListener('touchend', onTouchEnd)
+    el.addEventListener('touchcancel', onTouchCancel)
+    el.addEventListener('contextmenu', onContextMenu)
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+      el.removeEventListener('touchcancel', onTouchCancel)
+      el.removeEventListener('contextmenu', onContextMenu)
+      clearLongPress()
+    }
+  }, [enabled, clearLongPress])
+
   return (
-    <>
+    <span ref={containerRef}>
       {tokens.map((token, i) => {
         if (/^\s+$/.test(token)) {
           return <span key={i}>{token}</span>
@@ -118,108 +210,55 @@ export function TappableText({
           return <span key={i}>{token}</span>
         }
 
+        // 唯一实例 key：避免重复单词全部弹窗
+        const wordKey = `${word}-${i}`
+
         return (
           <TappableWord
             key={i}
             word={word}
+            wordKey={wordKey}
             displayText={token}
-            isActive={activeWord === word}
-            onActivate={(w) => setActiveWord(w)}
-            onDeactivate={() => setActiveWord(null)}
+            isActive={activeKey === wordKey}
+            onDeactivate={() => { setActiveKey(null); activeWordRef.current = null }}
             onViewDetail={onWordDetail}
           />
         )
       })}
-    </>
+    </span>
   )
 }
 
-/** 单个可长按单词 */
+/** 单个可长按单词。
+ *  长按检测由父级 TappableText 通过事件委托处理，
+ *  此处仅渲染带 data-word / data-word-key 属性的 span + Popover。 */
 function TappableWord({
   word,
+  wordKey,
   displayText,
   isActive,
-  onActivate,
   onDeactivate,
   onViewDetail,
 }: {
   word: string
+  /** 唯一实例标识（word-index），用于区分重复单词 */
+  wordKey: string
   displayText: string
   isActive: boolean
-  onActivate: (word: string) => void
   onDeactivate: () => void
   onViewDetail?: (word: string) => void
 }) {
-  const spanRef = useRef<HTMLSpanElement | null>(null)
-  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const movedRef = useRef(false)
-
-  const clear = useCallback(() => {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current)
-      longPressRef.current = null
-    }
-  }, [])
-
-  // 用原生事件绕过 React 17+ touchstart 默认 passive 的限制
-  useEffect(() => {
-    const el = spanRef.current
-    if (!el) return
-
-    const onTouchStart = (e: TouchEvent) => {
-      // 滚动中无法取消，跳过长按检测
-      if (!e.cancelable) return
-      e.preventDefault()
-      movedRef.current = false
-      clear()
-      longPressRef.current = setTimeout(() => {
-        if (!movedRef.current) {
-          onActivate(word)
-        }
-      }, 500)
-    }
-
-    const onTouchMove = () => {
-      movedRef.current = true
-      clear()
-    }
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (e.cancelable) e.preventDefault()
-      clear()
-    }
-
-    el.addEventListener('touchstart', onTouchStart, { passive: false })
-    el.addEventListener('touchmove', onTouchMove, { passive: true })
-    el.addEventListener('touchend', onTouchEnd, { passive: false })
-
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', onTouchEnd)
-      clear()
-    }
-  }, [word, onActivate, clear])
-
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      onActivate(word)
-    },
-    [word, onActivate],
-  )
-
   return (
     <Popover open={isActive} onOpenChange={(open) => { if (!open) onDeactivate() }}>
       <PopoverTrigger asChild>
         <span
-          ref={spanRef}
+          data-word={word}
+          data-word-key={wordKey}
           className={cn(
             'cursor-pointer select-none rounded transition-colors hover:bg-primary/10 active:bg-primary/15',
             isActive && 'bg-primary/15 ring-1 ring-primary/30',
           )}
-          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
-          onContextMenu={handleContextMenu}
+          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'manipulation' }}
         >
           {displayText}
         </span>
