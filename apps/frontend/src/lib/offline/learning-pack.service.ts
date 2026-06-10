@@ -120,7 +120,7 @@ export const learningPackService = {
 
     // Collect assets from unit-level where available, fall back to first topicDetail
     const assets: AssetRef[] = []
-    if (unitDetail.scene) {
+    if ((unitDetail as any).scene) {
       for (const asset of collectUnitAssets(unitDetail)) {
         pushUrlAsset(assets, asset.url, asset.role)
       }
