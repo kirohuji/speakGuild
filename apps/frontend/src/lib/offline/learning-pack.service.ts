@@ -195,12 +195,13 @@ export const learningPackService = {
         updatedAt: new Date().toISOString(),
       }
       await localDb.put('downloaded_packs', installed)
-      await syncOutbox.enqueue({
+      const outboxItem = await syncOutbox.enqueue({
         entityType: 'learning_pack',
         entityId: manifest.packId,
         operation: 'create',
         payload: { packId: manifest.packId, version: manifest.version },
       })
+      await syncOutbox.markSynced(outboxItem.id)
       return installed
     } catch (error) {
       const failed = {
@@ -233,12 +234,13 @@ export const learningPackService = {
     await localDb.delete('downloaded_unit_details', packId)
     await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
     await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
-    await syncOutbox.enqueue({
+    const outboxItem = await syncOutbox.enqueue({
       entityType: 'learning_pack',
       entityId: packId,
       operation: 'delete',
       payload: { packId },
     })
+    await syncOutbox.markSynced(outboxItem.id)
   },
 
   listInstalled(): Promise<InstalledLearningPack[]> {
