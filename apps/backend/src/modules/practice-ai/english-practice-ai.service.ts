@@ -163,7 +163,11 @@ Before returning JSON, check that "passed" reflects communicative success rather
       return `轮次 ${turn.round}:\n  NPC: ${turn.npcText}\n  用户: ${turn.userText}\n  inputNodeId: ${turn.inputNodeId ?? 'N/A'}\n  已完成目标: ${(turn.objectivesCompleted ?? []).join(', ') || '无'}\n  已用 Chunk: ${(turn.chunksUsed ?? []).join(', ') || '无'}${judgement}`;
     }).join('\n\n') || '无对话';
 
-    const system = `你是一位专业的英语口语教练。你只评估用户输出，不评价 NPC 台词。你需要结合练习话题、场景、目标 chunk、词汇、句型和对话上下文做复盘。请用中文回答，语气鼓励但具体。只返回 JSON。`;
+    const system = `你是一位专业的英语口语教练。你只评估用户输出，不评价 NPC 台词。你需要结合练习话题、场景、目标 chunk、词汇、句型和对话上下文做复盘。
+
+重要：你必须逐轮分析用户的每一句话，不能只看最后一轮。整体评价要覆盖用户在整个对话过程中的表现和进步。
+
+请用中文回答，语气鼓励但具体。只返回 JSON。`;
 
     const user = `## 场景上下文
 场景: ${scene.title ?? ''}
@@ -191,7 +195,7 @@ ${vocabText}
 ## 句型
 ${patternText}
 
-## 本次用户对话
+## 本次用户对话（共 ${turns.length} 轮，请逐轮分析）
 ${dialogueText}
 
 请严格返回以下 JSON：
@@ -200,9 +204,9 @@ ${dialogueText}
 {
   "overallScore": 75,
   "status": "completed|needs_retry|incomplete",
-  "summary": "2-3 句总结，只评价用户本次输出",
+  "summary": "2-3 句总结，评价用户在整段对话中的整体表现和进步",
   "objectiveAnalysis": [
-    { "objective": "目标文本", "completed": true, "comment": "结合用户具体输出解释" }
+    { "objective": "目标文本", "completed": true, "comment": "结合用户具体输出解释，标注在哪一轮完成的" }
   ],
   "chunkUsageAnalysis": [
     { "chunk": "目标 chunk", "used": true, "context": "用户在哪句话里自然使用；没用则说明可如何使用" }
@@ -213,6 +217,9 @@ ${dialogueText}
   "grammarHighlights": [
     { "type": "grammar|collocation|chinglish|unnatural|logic", "original": "用户原文片段", "correction": "更自然表达", "round": 1 }
   ],
+  "roundByRound": [
+    { "round": 1, "comment": "一句话点评这一轮的表现" }
+  ],
   "upgradedAnswer": {
     "clear": "清晰基础版",
     "natural": "自然口语版",
@@ -222,14 +229,31 @@ ${dialogueText}
   "improvements": ["改进1", "改进2"],
   "nextStepSuggestion": "下一步建议，最好指向具体 chunk/词汇/句型"
 }
-\`\`\``;
+\`\`\`
+
+注意：
+- roundByRound 必须包含每一轮（共 ${turns.length} 轮），不可遗漏
+- grammarHighlights 中每个问题必须标注 round 字段，指出是哪一轮出现的
+- summary 要综合所有轮次，不能只评价最后一轮
+- objectiveAnalysis 中如果某个目标在某一轮完成了，comment 要引用该轮用户的实际表达`;
 
     return { system, user };
   }
 
   async summarizePracticeSession(session: any, userId?: string) {
+    const turns = Array.isArray(session.turns) ? session.turns : [];
+    this.logger.log(`[summarize] 收到 ${turns.length} 轮对话，准备发送 AI 复盘`);
+    turns.forEach((t: any) => {
+      this.logger.log(`  → round=${t.round} | userText="${t.userText?.slice(0, 50)}..."`);
+    });
+
     const provider = this.getProvider();
     const { system, user } = this.buildPracticeSessionAnalysisPrompt(session);
+
+    // 打印发送给 AI 的对话片段（截取关键部分）
+    const dialoguePreview = turns.map((t: any) => `[round=${t.round}] NPC:${t.npcText?.slice(0, 30)}... → 用户:${t.userText?.slice(0, 30)}...`).join(' | ');
+    this.logger.log(`[summarize] 对话预览: ${dialoguePreview || '无对话'}`);
+
     const result = await generateText({
       model: provider('deepseek-chat'),
       system,

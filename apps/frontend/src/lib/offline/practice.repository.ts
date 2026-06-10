@@ -230,6 +230,7 @@ export const practiceRepository = {
   },
 
   async submitTurn(sessionId: string, data: PracticeTurnPayload): Promise<void> {
+    console.log(`[repo.submitTurn] 入队 | sessionId=${sessionId} | round=${data.round} | userText="${data.userText?.slice(0, 40)}..."`)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'practice_turn',
       entityId: turnRecordId(sessionId, data.round),
@@ -239,9 +240,12 @@ export const practiceRepository = {
 
     try {
       const remoteSessionId = await resolveSessionId(sessionId)
+      console.log(`[repo.submitTurn] HTTP发起 | remoteSessionId=${remoteSessionId} | round=${data.round}`)
       await practiceApi.submitTurn(remoteSessionId, data)
+      console.log(`[repo.submitTurn] ✅ HTTP成功 | round=${data.round}`)
       await syncOutbox.markSynced(outboxItem.id)
-    } catch {
+    } catch (err) {
+      console.error(`[repo.submitTurn] ❌ HTTP失败 | round=${data.round}:`, err)
       // The outbox keeps the turn for later replay.
     }
   },
@@ -282,9 +286,12 @@ export const practiceRepository = {
 
   async analyzeSession(sessionId: string) {
     const remoteSessionId = await resolveSessionId(sessionId)
+    console.log(`[repo.analyzeSession] 请求后端分析 | sessionId=${sessionId} | remoteId=${remoteSessionId}`)
     const result = await practiceAiApi.analyzeSession(remoteSessionId)
+    console.log(`[repo.analyzeSession] 后端分析返回 | hasAnalysis=${!!result?.analysis}`)
     try {
       const session = await practiceApi.getSession(remoteSessionId)
+      console.log(`[repo.analyzeSession] 获取session详情 | turnCount=${session?.turnCount} | turns数组长度=${session?.turns?.length} | status=${session?.status}`)
       if (hasFinalAnalysis(session)) {
         await putPracticeHistoryRecord({
           record: practiceRecordFromSession(session),
@@ -293,7 +300,8 @@ export const practiceRepository = {
         })
         await markPracticeRecordsCacheLoaded()
       }
-    } catch {
+    } catch (err) {
+      console.error(`[repo.analyzeSession] ⚠️ 缓存session失败:`, err)
       // Analysis still succeeded; history cache can be refreshed later.
     }
     return result

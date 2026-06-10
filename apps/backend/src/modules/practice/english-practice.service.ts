@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SaveExpressionDto, SubmitPracticeTurnDto, SubmitRecordingDto } from './dto/english-practice.dto';
 
 @Injectable()
 export class EnglishPracticeService {
+  private readonly logger = new Logger(EnglishPracticeService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   private buildObjectives(topic: {
@@ -284,11 +286,15 @@ export class EnglishPracticeService {
   }
 
   async submitPracticeTurn(userId: string, sessionId: string, dto: SubmitPracticeTurnDto) {
+    this.logger.log(`[submitTurn] 收到 | sessionId=${sessionId} | round=${dto.round} | userText="${dto.userText?.slice(0, 40)}..."`);
     const session = await this.prisma.practiceSession.findFirst({
       where: { id: sessionId, userId },
       select: { id: true, turnCount: true },
     });
-    if (!session) throw new NotFoundException('练习会话不存在');
+    if (!session) {
+      this.logger.warn(`[submitTurn] ❌ 会话不存在 | sessionId=${sessionId} | userId=${userId}`);
+      throw new NotFoundException('练习会话不存在');
+    }
 
     const round = dto.round ?? session.turnCount + 1;
     const turn = await this.prisma.practiceTurn.create({
@@ -305,6 +311,8 @@ export class EnglishPracticeService {
         chunksUsed: dto.chunksUsed ?? [],
       },
     });
+
+    this.logger.log(`[submitTurn] ✅ 已存储 | turn.id=${turn.id} | round=${round} | 原turnCount=${session.turnCount}`);
 
     await this.prisma.practiceSession.update({
       where: { id: sessionId },
@@ -355,6 +363,10 @@ export class EnglishPracticeService {
       include: { turns: { orderBy: { round: 'asc' } } },
     });
     if (!session) throw new NotFoundException('练习会话不存在');
+    this.logger.log(`[getPracticeSession] sessionId=${sessionId} | turnCount=${session.turnCount} | turns数组长度=${session.turns.length}`);
+    session.turns.forEach((t) => {
+      this.logger.log(`  → round=${t.round} | userText="${t.userText?.slice(0, 40)}..." | createdAt=${t.createdAt}`);
+    });
     return session;
   }
 
