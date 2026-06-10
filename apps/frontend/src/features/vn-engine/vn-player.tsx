@@ -108,8 +108,11 @@ function useCachedAssetUrl(url?: string, role?: string) {
     if (!canCacheAssetUrl(url)) return
 
     assetCacheService.resolve({ url, role }).then((resolved) => {
-      if (!cancelled) setCachedUrl(resolved)
-    }).catch(() => {
+      if (!cancelled) {
+        setCachedUrl(resolved)
+      }
+    }).catch((err) => {
+      if (role === 'background' || role === 'sprite') console.warn('[vn-player] ❌ resolve 失败:', role, url, err)
       if (!cancelled) setCachedUrl(url)
     })
 
@@ -203,6 +206,8 @@ const BgFitStyle: Record<BackgroundFit, string> = {
 /** CSS-only fallback when PixiJS fails to initialize */
 function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
   const { resolvedTheme } = useTheme()
+
+  console.log('[vn-player] 🎨 CSS Fallback - 背景:', backgroundUrl, '立绘:', spriteUrl)
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
@@ -364,27 +369,34 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     async function loadBackground() {
       const root = rootRef.current
       if (!root) return
-
-      if (bgRef.current) {
-        root.removeChild(bgRef.current)
-        bgRef.current.destroy()
-        bgRef.current = null
-      }
       if (!backgroundUrl) {
+        if (bgRef.current) {
+          root.removeChild(bgRef.current)
+          bgRef.current.destroy()
+          bgRef.current = null
+        }
         layout()
         return
       }
 
       try {
+        console.log('[vn-player] 🖼️ PixiJS 加载背景:', backgroundUrl)
+        // 先加载新纹理，再替换旧精灵，避免闪烁
         const texture = await Assets.load<Texture>(backgroundUrl)
         if (cancelled || !rootRef.current) return
-        const sprite = backgroundFit === 'repeat'
+        const newSprite = backgroundFit === 'repeat'
           ? new TilingSprite({ texture, width: 1, height: 1 })
           : new Sprite(texture)
-        bgRef.current = sprite
-        rootRef.current.addChildAt(sprite, 1)
+        // 新纹理就绪后再移除旧精灵
+        if (bgRef.current) {
+          root.removeChild(bgRef.current)
+          bgRef.current.destroy()
+        }
+        bgRef.current = newSprite
+        rootRef.current.addChildAt(newSprite, 1)
         layout()
-      } catch {
+      } catch (err) {
+        console.warn('[vn-player] ❌ 背景加载失败:', backgroundUrl, err)
         layout()
       }
     }
@@ -402,29 +414,36 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     async function loadSprite() {
       const root = rootRef.current
       if (!root) return
-
-      if (spriteRef.current) {
-        root.removeChild(spriteRef.current)
-        spriteRef.current.destroy()
-        spriteRef.current = null
-      }
       if (!spriteUrl) {
+        if (spriteRef.current) {
+          root.removeChild(spriteRef.current)
+          spriteRef.current.destroy()
+          spriteRef.current = null
+        }
         layout()
         return
       }
 
       try {
+        console.log('[vn-player] 🎭 PixiJS 加载立绘:', spriteUrl)
+        // 先加载新纹理，再替换旧精灵，避免闪烁
         const texture = await Assets.load<Texture>(spriteUrl)
         if (cancelled || !rootRef.current) return
-        const sprite = new Sprite(texture)
-        sprite.alpha = 0
-        spriteRef.current = sprite
-        rootRef.current.addChild(sprite)
+        const newSprite = new Sprite(texture)
+        newSprite.alpha = 0
+        // 新纹理就绪后再移除旧精灵
+        if (spriteRef.current) {
+          root.removeChild(spriteRef.current)
+          spriteRef.current.destroy()
+        }
+        spriteRef.current = newSprite
+        rootRef.current.addChild(newSprite)
         layout()
         appRef.current?.ticker.addOnce(() => {
-          if (spriteRef.current === sprite) sprite.alpha = 1
+          if (spriteRef.current === newSprite) newSprite.alpha = 1
         })
-      } catch {
+      } catch (err) {
+        console.warn('[vn-player] ❌ 立绘加载失败:', spriteUrl, err)
         layout()
       }
     }
@@ -504,6 +523,8 @@ export function VnPlayer({
   const audioUrl = displayLine?.audioUrl
   const cachedBackgroundUrl = useCachedAssetUrl(backgroundUrl, 'background')
   const cachedSpriteUrl = useCachedAssetUrl(currentSpriteUrl, 'sprite')
+  // 注意：音频不使用 useCachedAssetUrl，而是直接在 effect 内 resolve，
+  // 避免 cached URL 切换触发 effect 重跑导致重复播放/中断。
   const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice')
 
   useEffect(() => {
@@ -542,30 +563,45 @@ export function VnPlayer({
     }
   }, [fullText, settings.typewriter])
 
-  useEffect(() => {
-    // Auto-play NPC dialogue / user recording audio.
-    // On iOS WKWebView .play() may throw AbortError if the source isn't
-    // buffered yet — just wait for canplay and retry once.
-    if (!cachedAudioUrl) return
-    const audio = new Audio(cachedAudioUrl)
-    audio.preload = 'auto'
+  // ── 音频自动播放（只依赖 audioUrl，内部 resolve cached URL）──
+  const playingAudioRef = useRef<HTMLAudioElement | null>(null)
 
-    const promise = audio.play()
-    if (promise) {
-      promise.catch((err) => {
+  useEffect(() => {
+    if (!audioUrl) return
+
+    // 停止前一段音频
+    if (playingAudioRef.current) {
+      playingAudioRef.current.pause()
+      playingAudioRef.current.removeAttribute('src')
+      playingAudioRef.current = null
+    }
+
+    let cancelled = false
+
+    assetCacheService.resolve({ url: audioUrl, role: 'voice' }).then((resolvedUrl) => {
+      if (cancelled || !resolvedUrl) return
+      const audio = new Audio(resolvedUrl)
+      audio.preload = 'auto'
+      playingAudioRef.current = audio
+
+      audio.play().catch((err) => {
         if (isNative() && err.name === 'AbortError') {
           audio.addEventListener('canplay', () => audio.play().catch(() => {}), { once: true })
         } else {
           console.warn('[VnPlayer] Audio play failed:', err.message)
         }
       })
-    }
+    })
 
     return () => {
-      audio.pause()
-      audio.removeAttribute('src')
+      cancelled = true
+      if (playingAudioRef.current) {
+        playingAudioRef.current.pause()
+        playingAudioRef.current.removeAttribute('src')
+        playingAudioRef.current = null
+      }
     }
-  }, [cachedAudioUrl])
+  }, [audioUrl])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)

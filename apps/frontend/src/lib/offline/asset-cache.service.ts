@@ -1,4 +1,5 @@
 import { Directory, Filesystem } from '@capacitor/filesystem'
+import { Capacitor } from '@capacitor/core'
 import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
 
@@ -68,6 +69,24 @@ async function assetKey(ref: AssetRef) {
   return ref.assetId || ref.sha256 || await digest(normalizeUrl(ref.url))
 }
 
+/**
+ * 将 file:// URI 转为 WebView 可加载的 URL。
+ *
+ * iOS WKWebView 安全沙箱禁止直接加载 file:// 资源，
+ * Capacitor 内置的 convertFileSrc 将其转换为 capacitor://localhost scheme，
+ * 由 Capacitor 注册的本地 scheme handler 提供服务。
+ *
+ * @see https://capacitorjs.com/docs/apis/filesystem
+ */
+function toLoadableUrl(fileUri: string): string {
+  if (!fileUri) return fileUri
+  try {
+    return Capacitor.convertFileSrc(fileUri)
+  } catch {
+    return fileUri
+  }
+}
+
 export const assetCacheService = {
   async resolve(ref: AssetRef): Promise<string> {
     const url = normalizeUrl(ref.url)
@@ -75,9 +94,9 @@ export const assetCacheService = {
 
     const key = await assetKey({ ...ref, url })
     const cached = await localDb.get<LocalAsset>('local_assets', key)
-    if (cached?.status === 'ready' && cached.localPath && cached.localUri) {
+    if (cached?.status === 'ready' && cached.localUri) {
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
-      return cached.localUri
+      return toLoadableUrl(cached.localUri)
     }
 
     return this.download({ ...ref, url })
@@ -140,7 +159,7 @@ export const assetCacheService = {
         lastAccessedAt: new Date().toISOString(),
       })
 
-      return uri.uri
+      return toLoadableUrl(uri.uri)
     } catch (error) {
       await localDb.put<LocalAsset>('local_assets', {
         id: key,
