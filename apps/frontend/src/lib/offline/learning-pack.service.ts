@@ -119,6 +119,17 @@ function normalizeZipPath(path: string) {
   return path.replace(/\\/g, '/').replace(/^\/+/, '')
 }
 
+/** 从文件路径或 URL 提取扩展名 */
+function extensionFrom(urlOrPath: string, mimeType?: string | null) {
+  const match = urlOrPath.match(/\.([a-z0-9]{2,5})$/i)
+  if (match) return match[1].toLowerCase()
+  if (mimeType?.includes('png')) return 'png'
+  if (mimeType?.includes('jpeg') || mimeType?.includes('jpg')) return 'jpg'
+  if (mimeType?.includes('webp')) return 'webp'
+  if (mimeType?.includes('mpeg')) return 'mp3'
+  return 'bin'
+}
+
 async function readEntryText(entry: Entry) {
   const readable = entry as Entry & { getData?: (writer: TextWriter) => Promise<string> }
   if (!readable.getData) throw new Error(`Zip entry is not readable: ${entry.filename}`)
@@ -316,6 +327,7 @@ export const learningPackService = {
       let assetOk = 0
       let assetSkip = 0
       let assetFail = 0
+      let assetDeduped = 0  // SHA256 已存在，跳过移动
       for (const asset of manifest.assets ?? []) {
         if (!asset.path) { assetSkip++; continue }
         const entry = entries.get(normalizeZipPath(asset.path))
@@ -323,14 +335,38 @@ export const learningPackService = {
         try {
           const buffer = await readEntryBuffer(entry)
           await verifyEntry(normalizeZipPath(asset.path), buffer, checksums)
-          await assetCacheService.saveFromBuffer(asset, buffer)
+          const actualSha256 = await digest(buffer)
+
+          // 检查全局资产池是否已有此 SHA256
+          const allRefs = await localDb.list<any>('asset_refs')
+          const existingRefs = allRefs.filter((r) => r.sha256 === actualSha256)
+          const alreadyInPool = existingRefs.length > 0
+
+          if (!alreadyInPool) {
+            await assetCacheService.saveFromBuffer({ ...asset, sha256: actualSha256 }, buffer)
+          } else {
+            assetDeduped++
+          }
+
+          // 写入引用记录（无论文件是否已存在都要记）
+          const ext = existingRefs[0]?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
+          const nowIso = new Date().toISOString()
+          await localDb.put('asset_refs', {
+            id: `${manifest.packId}:${actualSha256}`,
+            sha256: actualSha256,
+            packId: manifest.packId,
+            logicalPath: asset.path ?? asset.url ?? '',
+            ext,
+            updatedAt: nowIso,
+            data: JSON.stringify({ role: asset.role }),
+          })
           assetOk++
         } catch (e) {
           assetFail++
           console.warn(`[learning-pack] ⚠️ 资源失败: ${asset.path}`, e)
         }
       }
-      console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功, ${assetSkip} 跳过, ${assetFail} 失败`)
+      console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
 
       const result = await persistInstalledRecord(manifest)
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
@@ -395,23 +431,33 @@ export const learningPackService = {
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
     if (!pack) return
 
-    const otherPacks = (await localDb.list<InstalledLearningPack>('downloaded_packs'))
-      .filter((item) => item.packId !== packId && item.status === 'installed')
-    const stillUsed = new Set(
-      otherPacks.flatMap((item) => item.manifest.assets.map((asset) => asset.assetId || asset.sha256 || asset.url)),
-    )
-
-    for (const asset of pack.manifest.assets) {
-      const key = asset.assetId || asset.sha256 || asset.url
-      if (!stillUsed.has(key)) await assetCacheService.removeRef(asset)
+    // 清理 asset_refs（引用计数保护）
+    const allRefs = await localDb.list<any>('asset_refs')
+    const myRefs = allRefs.filter((r) => r.packId === packId)
+    let deletedFiles = 0
+    let keptFiles = 0
+    for (const ref of myRefs) {
+      await localDb.delete('asset_refs', ref.id)
+      // 检查是否还有其他包引用此 SHA256（排除刚删除的）
+      const remainingRefs = allRefs.filter(
+        (r) => r.sha256 === ref.sha256 && r.packId !== packId,
+      )
+      if (remainingRefs.length === 0) {
+        // 无其他引用 → 清理 local_assets 记录 + 提示清理文件
+        await localDb.delete('local_assets', ref.sha256).catch(() => {})
+        deletedFiles++
+      } else {
+        keptFiles++
+      }
     }
+    console.log(`[learning-pack] 🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
 
     await localDb.delete('downloaded_packs', packId)
     await localDb.delete('downloaded_unit_details', packId)
     await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
     await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
     await learningContentRepository.removePackContentIndex(packId)
-    console.log(`[learning-pack] 🗑️ 已卸载: ${packId}`)
+    console.log(`[learning-pack] 🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'learning_pack',
       entityId: packId,
@@ -436,6 +482,7 @@ export const learningPackService = {
     const unitDetails = await localDb.list<any>('downloaded_unit_details')
     const inkScripts = await localDb.list<any>('ink_scripts')
     const localAssets = await localDb.list<any>('local_assets')
+    const assetRefs = await localDb.list<any>('asset_refs')
     const vocabCount = await localDb.count('offline_vocabularies')
     const chunkCount = await localDb.count('offline_chunks')
     const patternCount = await localDb.count('offline_patterns')
@@ -446,6 +493,14 @@ export const learningPackService = {
     console.log('downloaded_unit_details:', unitDetails.length)
     console.log('ink_scripts:', inkScripts.length)
     console.log('local_assets:', localAssets.length, localAssets.filter((a: any) => a.status === 'ready').length, 'ready')
+    console.log('asset_refs:', assetRefs.length)
+    // 按 sha256 分组统计引用计数
+    const sha256Counts = new Map<string, number>()
+    for (const ref of assetRefs) {
+      sha256Counts.set(ref.sha256, (sha256Counts.get(ref.sha256) ?? 0) + 1)
+    }
+    const sharedFiles = [...sha256Counts.values()].filter(c => c > 1).length
+    if (sharedFiles > 0) console.log(`  └─ 其中 ${sharedFiles} 个文件被多个包共享 (总去重节省: 计算中...)`)
     console.log('offline_vocabularies:', vocabCount)
     console.log('offline_chunks:', chunkCount)
     console.log('offline_patterns:', patternCount)

@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import type { LearningUnitSummary } from '../api/learning-api'
 import { getCategoryIcon } from './category-icons'
 import { UnitCover } from './unit-cover'
+import { useLearningStore } from '@/stores/learning.store'
 
 interface Props {
   unit: LearningUnitSummary & { categoryName?: string }
@@ -33,6 +34,13 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
   const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
   const isJoined = unit.progress !== null
+
+  // 下载进度
+  const downloadTask = useLearningStore((s) =>
+    s.downloadTasks.find((t) => t.packId === unit.id),
+  )
+  const isDownloading = downloadTask?.status === 'downloading' || downloadTask?.status === 'extracting'
+  const downloadProgress = downloadTask?.progress ?? 0
 
   const handleAcquire = useCallback(async () => {
     if (acquiring || !unit.isUnlocked || unit.isLocked) return
@@ -84,6 +92,17 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               Lv.{unit.requiredUserLevel}
             </Badge>
           </div>
+          {isDownloading && (
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${downloadProgress}%` }}
+              />
+            </div>
+          )}
+          {downloadTask?.status === 'queued' && (
+            <p className="mt-1 text-[10px] text-muted-foreground">⏳ 排队中...</p>
+          )}
         </div>
       </button>
 
@@ -134,6 +153,25 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
                   <ArrowRight className="size-4" />
                   {t('learning.continue')}
+                </Button>
+              ) : isDownloading ? (
+                <div className="flex items-center gap-3">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-300"
+                      style={{ width: `${downloadProgress}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground tabular-nums">{downloadProgress}%</span>
+                </div>
+              ) : downloadTask?.status === 'queued' ? (
+                <Button className="w-full gap-2" disabled>
+                  <Spinner data-icon="inline-start" />
+                  等待下载...
+                </Button>
+              ) : downloadTask?.status === 'error' ? (
+                <Button className="w-full gap-2" variant="destructive" onClick={handleAcquire}>
+                  下载失败，点击重试
                 </Button>
               ) : (
                 <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">

@@ -4,6 +4,7 @@ import { useConfigStore } from '@/stores/config.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
+import { startupPackSync } from '@/stores/learning.store'
 
 function useAppForegroundSync(userId: string | undefined) {
   const lastSyncRef = useRef(0)
@@ -20,6 +21,9 @@ function useAppForegroundSync(userId: string | undefined) {
       void offlineSyncService.sync(userId).catch((error) => {
         console.warn('[offline-sync] foreground sync failed:', error)
       })
+
+      // 同步检查学习包更新
+      void startupPackSync()
     }
 
     // App 打开时立刻同步一次

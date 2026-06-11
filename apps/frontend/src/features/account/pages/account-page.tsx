@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, Camera, User, Loader2,
   Phone, ExternalLink, KeyRound, CheckCircle2, Mail,
+  Trash2, HardDrive,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
@@ -16,8 +17,10 @@ import {
 import { useAuth } from '@/providers/auth-provider'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useAccountStore } from '@/stores/account.store'
+import { useLearningStore } from '@/stores/learning.store'
 import type { LinkedAccount } from '@/features/account/api'
 import { changePassword, sendEmailOtp } from '@/features/auth/api'
+import { toast } from 'sonner'
 
 // ─── iOS 风格组件（与 profile-page 一致）──────────────────────────────────
 
@@ -594,6 +597,22 @@ export function AccountPage() {
             />
           </>
         )}
+      </IosSection>
+
+      {/* 区域：离线数据 */}
+      <IosSection header="离线数据">
+        <IosRow
+          icon={HardDrive}
+          iconBg="bg-blue-500"
+          label="清除离线数据"
+          subtitle="删除已下载的学习包和资源文件"
+          onTap={() => {
+            if (confirm('确定要清除所有离线数据吗？已下载的学习包将被删除。')) {
+              useLearningStore.getState().clearAllOfflineData()
+            }
+          }}
+          last
+        />
       </IosSection>
 
       {/* 区域四：安全设置 */}

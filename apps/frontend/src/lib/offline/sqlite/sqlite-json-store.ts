@@ -85,6 +85,12 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['retry_count', 'retryCount', (value) => typeof value?.retryCount === 'number' ? value.retryCount : null],
     ['created_at', 'createdAt', (value) => value?.createdAt ?? null],
   ],
+  asset_refs: [
+    ['sha256', 'sha256', (value) => value?.sha256 ?? null],
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['logical_path', 'logicalPath', (value) => value?.logicalPath ?? null],
+    ['ext', 'ext', (value) => value?.ext ?? null],
+  ],
 }
 
 // Indexed columns are the source of truth for stable sync/cache keys. They are

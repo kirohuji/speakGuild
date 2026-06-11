@@ -15,6 +15,18 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { toast } from 'sonner'
 import i18n from '@/lib/i18n'
 
+/** 下载任务状态 */
+export interface DownloadTask {
+  packId: string
+  title: string
+  progress: number        // 0-100
+  status: 'queued' | 'downloading' | 'extracting' | 'done' | 'error'
+  error?: string
+}
+
+/** 最大并发下载数 */
+const MAX_CONCURRENT_DOWNLOADS = 2
+
 interface LearningStore {
   // 我的学习
   myUnits: MyUnit[]
@@ -41,6 +53,9 @@ interface LearningStore {
   packInstallingIds: string[]
   availablePackUpdates: PackUpdateInfo[]
 
+  // 下载队列
+  downloadTasks: DownloadTask[]
+
   // Actions
   fetchMyLearning: () => Promise<void>
   refreshMyUnits: () => Promise<void>
@@ -50,12 +65,14 @@ interface LearningStore {
   refreshShop: (params?: { tag?: string; search?: string; page?: number }) => Promise<void>
   loadMoreShop: (params?: { tag?: string; search?: string }) => Promise<void>
   fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<void>
-  enrollUnit: (unitId: string) => Promise<void>
+  enrollUnit: (unitId: string, title?: string) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
   fetchDownloadedPacks: () => Promise<void>
   checkPackUpdates: (silent?: boolean) => Promise<void>
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
+  /** 清除所有离线数据 */
+  clearAllOfflineData: () => Promise<void>
 }
 
 /**
@@ -127,6 +144,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   downloadedPacks: [],
   packInstallingIds: [],
   availablePackUpdates: [],
+  downloadTasks: [],
 
   /** 首次加载：我的学习 + 商店 */
   async fetchMyLearning() {
@@ -238,33 +256,107 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
   },
 
-  async enrollUnit(unitId) {
+  async enrollUnit(unitId, title) {
     const state = getState()
     const sourceUnit = state.unitDetail?.id === unitId
       ? state.unitDetail
       : state.shopUnits.find((unit) => unit.id === unitId) ?? null
-    if (!state.packInstallingIds.includes(unitId)) {
-      set({ packInstallingIds: [...state.packInstallingIds, unitId] })
-    }
+    const packTitle = title ?? sourceUnit?.title ?? unitId
+
     try {
       await learningRepository.enrollUnit(unitId, sourceUnit)
-      // ⭐ 网络检查：蜂窝网络需要用户确认
+    } catch {
+      // enroll 可能已经做过了，忽略错误继续
+    }
+
+    // 加入下载队列
+    const task: DownloadTask = {
+      packId: unitId,
+      title: packTitle,
+      progress: 0,
+      status: 'queued',
+    }
+    set((s) => ({
+      downloadTasks: [...s.downloadTasks.filter((t) => t.packId !== unitId), task],
+    }))
+    console.log(`[learning-store] 📥 加入下载队列: ${packTitle} (${unitId}), 队列长度: ${getState().downloadTasks.length}`)
+
+    // 触发队列处理（异步，不 await）
+    processDownloadQueue()
+  },
+
+  /** 处理下载队列：最多 2 个并发 */
+  async _processDownloadQueue() {
+    const state = getState()
+    const running = state.downloadTasks.filter((t) => t.status === 'downloading' || t.status === 'extracting').length
+    if (running >= MAX_CONCURRENT_DOWNLOADS) {
+      console.log(`[learning-store] ⏸️ 下载队列已满 (${running}/${MAX_CONCURRENT_DOWNLOADS})，等待中...`)
+      return
+    }
+
+    const next = state.downloadTasks.find((t) => t.status === 'queued')
+    if (!next) return
+
+    // 标记为下载中
+    set((s) => ({
+      downloadTasks: s.downloadTasks.map((t) =>
+        t.packId === next.packId ? { ...t, status: 'downloading' as const, progress: 0 } : t,
+      ),
+    }))
+
+    try {
+      // 网络检查
       if (!await checkNetworkBeforeDownload()) {
-        // 用户取消 → 标记包为 installed（实际上是 enroll 成功但未下载资产）
-        // 用户稍后可手动触发 downloadUnitPack
+        set((s) => ({
+          downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
+        }))
+        processDownloadQueue() // 处理下一个
         return
       }
-      await learningPackService.installUnit(unitId)
+
+      console.log(`[learning-store] ⏳ 开始下载: ${next.title} (${next.packId})`)
+
+      // 模拟进度：zip 下载占 60%，解压索引占 40%
+      const updateProgress = (progress: number, status: DownloadTask['status']) => {
+        set((s) => ({
+          downloadTasks: s.downloadTasks.map((t) =>
+            t.packId === next.packId ? { ...t, progress: Math.min(99, progress), status } : t,
+          ),
+        }))
+      }
+      updateProgress(5, 'downloading')
+
+      await learningPackService.installUnit(next.packId)
+
+      updateProgress(100, 'done')
+      console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
+
       const downloadedPacks = await learningPackService.listInstalled()
       set((current) => ({
         downloadedPacks,
-        availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
+        availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== next.packId),
       }))
-      await state.refreshMyUnits()
+      await getState().refreshMyUnits()
+
+      // 3 秒后从队列移除已完成的
+      setTimeout(() => {
+        set((s) => ({
+          downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId || t.status !== 'done'),
+        }))
+      }, 3000)
+
+    } catch (error: any) {
+      console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((t) =>
+          t.packId === next.packId
+            ? { ...t, status: 'error' as const, error: error?.message ?? '下载失败' }
+            : t,
+        ),
+      }))
     } finally {
-      set((current) => ({
-        packInstallingIds: current.packInstallingIds.filter((id) => id !== unitId),
-      }))
+      // 继续处理队列中的下一个
+      processDownloadQueue()
     }
   },
 
@@ -289,10 +381,12 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async checkPackUpdates(silent = true) {
+    console.log('[learning-store] 🔍 检查学习包更新...', silent ? '(静默)' : '(用户触发)')
     const downloadedPacks = await learningPackService.listInstalled()
     const installed = downloadedPacks
       .filter((pack) => pack.status === 'installed')
       .map((pack) => ({ packId: pack.packId, version: pack.version }))
+    console.log(`[learning-store]   已安装: ${installed.length} 个包`)
     if (installed.length === 0) {
       set({ downloadedPacks, availablePackUpdates: [] })
       return
@@ -301,11 +395,13 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     try {
       const result = await learningApi.checkPacks(installed)
       set({ downloadedPacks, availablePackUpdates: result.updates })
+      console.log(`[learning-store]   → ${result.updates.length} 个包有更新`)
       if (!silent && result.updates.length > 0) {
         toast.info(i18n.t('learning.packUpdatesAvailable', { defaultValue: '有学习包可更新' }))
       }
     } catch (error) {
       set({ downloadedPacks })
+      console.warn('[learning-store]   → 检查失败', error)
       if (!silent) {
         toast.error(i18n.t('learning.packUpdateCheckFailed', { defaultValue: '学习包更新检查失败' }))
       }
@@ -340,4 +436,110 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
     }))
   },
+
+  async clearAllOfflineData() {
+    console.log('[learning-store] 🧹 清除所有离线数据...')
+    const packs = await learningPackService.listInstalled()
+    for (const pack of packs) {
+      await learningPackService.uninstall(pack.packId)
+    }
+    set({
+      downloadedPacks: [],
+      availablePackUpdates: [],
+      downloadTasks: [],
+      packInstallingIds: [],
+    })
+    console.log('[learning-store] ✅ 离线数据已清除')
+    toast.success('离线数据已清除')
+  },
 }))
+
+// ─── 下载队列调度器（模块级函数，避免 store action 循环引用） ───
+
+async function processDownloadQueue() {
+  const state = useLearningStore.getState()
+  const running = state.downloadTasks.filter(
+    (t) => t.status === 'downloading' || t.status === 'extracting',
+  ).length
+  if (running >= MAX_CONCURRENT_DOWNLOADS) return
+
+  const next = state.downloadTasks.find((t) => t.status === 'queued')
+  if (!next) {
+    console.log('[learning-store] 📭 下载队列已清空')
+    return
+  }
+
+  useLearningStore.setState((s) => ({
+    downloadTasks: s.downloadTasks.map((t) =>
+      t.packId === next.packId ? { ...t, status: 'downloading' as const, progress: 0 } : t,
+    ),
+  }))
+
+  try {
+    if (!await checkNetworkBeforeDownload()) {
+      useLearningStore.setState((s) => ({
+        downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
+      }))
+      processDownloadQueue()
+      return
+    }
+
+    console.log(`[learning-store] ⏳ 开始下载: ${next.title}`)
+
+    const progressTimer = setInterval(() => {
+      useLearningStore.setState((s) => ({
+        downloadTasks: s.downloadTasks.map((t) =>
+          t.packId === next.packId && t.status === 'downloading'
+            ? { ...t, progress: Math.min(80, t.progress + 5) }
+            : t,
+        ),
+      }))
+    }, 500)
+
+    await learningPackService.installUnit(next.packId)
+    clearInterval(progressTimer)
+
+    useLearningStore.setState((s) => ({
+      downloadTasks: s.downloadTasks.map((t) =>
+        t.packId === next.packId ? { ...t, status: 'done' as const, progress: 100 } : t,
+      ),
+    }))
+    console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
+
+    const downloadedPacks = await learningPackService.listInstalled()
+    const updates = useLearningStore.getState().availablePackUpdates
+    useLearningStore.setState({
+      downloadedPacks,
+      availablePackUpdates: updates.filter((u) => u.packId !== next.packId),
+    })
+    await useLearningStore.getState().refreshMyUnits()
+
+    setTimeout(() => {
+      useLearningStore.setState((s) => ({
+        downloadTasks: s.downloadTasks.filter(
+          (t) => !(t.packId === next.packId && t.status === 'done'),
+        ),
+      }))
+    }, 3000)
+  } catch (error: any) {
+    console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
+    useLearningStore.setState((s) => ({
+      downloadTasks: s.downloadTasks.map((t) =>
+        t.packId === next.packId
+          ? { ...t, status: 'error' as const, error: error?.message ?? '下载失败' }
+          : t,
+      ),
+    }))
+  } finally {
+    processDownloadQueue()
+  }
+}
+
+/** App 启动/恢复时调用：检查已安装包更新 + 加载本地状态 */
+export async function startupPackSync() {
+  console.log('[learning-store] 🚀 启动学习包同步...')
+  const store = useLearningStore.getState()
+  await store.fetchDownloadedPacks()
+  await store.checkPackUpdates(true)
+  console.log('[learning-store] ✅ 启动同步完成')
+}

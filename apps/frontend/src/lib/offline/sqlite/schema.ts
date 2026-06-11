@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 5
+export const DB_VERSION = 6
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -38,6 +38,7 @@ export const TABLE_NAMES = [
   'user_progress',
   'practice_records',
   'local_assets',
+  'asset_refs',
   'outbox',
 ] as const
 
@@ -186,6 +187,17 @@ export const DDL: Record<TableName, string> = {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `,
+  asset_refs: `
+    CREATE TABLE IF NOT EXISTS asset_refs (
+      id TEXT PRIMARY KEY NOT NULL,
+      sha256 TEXT NOT NULL,
+      pack_id TEXT NOT NULL,
+      logical_path TEXT NOT NULL,
+      ext TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
   outbox: `
     CREATE TABLE IF NOT EXISTS outbox (
       id TEXT PRIMARY KEY NOT NULL,
@@ -225,6 +237,8 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_kind_id ON offline_content_refs (content_kind, content_id)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_pack ON offline_content_refs (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_topic ON offline_content_refs (topic_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_asset_refs_sha256 ON asset_refs (sha256)`,
+  `CREATE INDEX IF NOT EXISTS idx_asset_refs_pack_id ON asset_refs (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_remote_id ON user_progress (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_type ON user_progress (progress_type)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_scene_id ON user_progress (scene_id)`,
