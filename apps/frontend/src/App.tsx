@@ -107,7 +107,6 @@ export default function App() {
                 <Route path="/system/privacy-concise" element={<SystemPrivacyConcisePage />} />
                 <Route path="/system/icp" element={<SystemIcpPage />} />
                 <Route path="/system/contact" element={<SystemContactPage />} />
-                <Route path="/system/support" element={<SupportPage />} />
                 <Route path="/system/marketing" element={<MarketingPage />} />
               </Route>
 
@@ -115,7 +114,7 @@ export default function App() {
               {!isNative() && <Route path="/portal" element={<PortalPage />} />}
               {!isNative() && <Route path="/company" element={<CompanyPage />} />}
               {!isNative() && <Route path="/marketing" element={<MarketingPage />} />}
-              {!isNative() && <Route path="/support" element={<SupportPage />} />}
+              <Route path="/support" element={<SupportPage />} />
 
               {/* 认证页 — 静态（登录是高频入口） */}
               <Route path="/auth/login" element={<LoginPage />} />
