@@ -73,13 +73,24 @@ export class LearningController {
     };
   }
 
-  /** 下载学习包 zip。V1 动态生成，后续可替换为 COS 302。 */
+  /** 下载学习包 zip。有已发布包时代理 COS 下载（避免 CORS），否则实时生成。 */
   @Get('units/:id/download-pack')
   async downloadPack(@Req() req: Request, @Param('id') id: string, @Res() res: Response) {
     const session = await requireAuthSession(req);
     const published = await this.learningService.getPublishedLearningPackageDownload(id);
     if (published) {
-      res.redirect(302, published.url);
+      // 后端代理下载：从 COS 拉取，pipe 给客户端，避免 COS 跨域 CORS 问题
+      const cosResponse = await fetch(published.url);
+      if (!cosResponse.ok) {
+        res.status(502).json({ code: 502, message: 'COS 下载失败', data: null });
+        return;
+      }
+      const buffer = Buffer.from(await cosResponse.arrayBuffer());
+      const fileName = `${published.pack.sceneId}-${published.pack.version}.zip`;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', String(buffer.byteLength));
+      res.send(buffer);
       return;
     }
     const pack = await this.learningService.buildLearningPackZip(session.user.id, id);
