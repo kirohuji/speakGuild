@@ -61,8 +61,9 @@ import { getCurrentAvatar, uploadFileToCosAndComplete, setCurrentAvatar } from '
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 import { linkSocialAccount, unlinkAccount, type LinkedAccount } from '@/features/account/api'
-import { changePassword, sendEmailOtp, verifyEmailOtp } from '@/features/auth/api'
+import { changePassword, sendEmailOtp, verifyEmailOtp, sendBindPhoneOtp, bindPhoneNumber } from '@/features/auth/api'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useCountdown } from '@/hooks/use-countdown'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { learningContentRepository, offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
@@ -2007,6 +2008,14 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false)
   const [verificationOtp, setVerificationOtp] = useState('')
   const [verificationError, setVerificationError] = useState('')
+  // 手机号绑定
+  const [phoneBindOpen, setPhoneBindOpen] = useState(false)
+  const [bindPhone, setBindPhone] = useState('')
+  const [bindOtp, setBindOtp] = useState('')
+  const [bindLoading, setBindLoading] = useState(false)
+  const [bindError, setBindError] = useState('')
+  const [bindOtpSent, setBindOtpSent] = useState(false)
+  const [bindCountdown, startBindCountdown, resetBindCountdown] = useCountdown(60)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -2277,7 +2286,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
                 <p className="text-xs text-muted-foreground">{phoneNumber || t('profile.notBound')}</p>
               </div>
             </div>
-            {phoneNumber && (
+            {phoneNumber ? (
               <Badge variant={profile?.phoneNumberVerified ? 'outline' : 'secondary'} className="text-xs">
                 {profile?.phoneNumberVerified ? (
                   <span className="flex items-center gap-1">
@@ -2286,6 +2295,10 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
                   </span>
                 ) : t('profile.unverified')}
               </Badge>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setPhoneBindOpen(true)}>
+                {t('profile.bind')}
+              </Button>
             )}
           </div>
           <div className="flex items-center justify-between px-4 py-3">
@@ -2418,6 +2431,84 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
             </Button>
             <Button onClick={handleVerifyEmail} disabled={sendingVerification || verificationOtp.length !== 6}>
               {sendingVerification && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>}
+
+      {/* 手机号绑定弹窗 */}
+      {desktop && <Dialog open={phoneBindOpen} onOpenChange={(v) => { setPhoneBindOpen(v); if (!v) { setBindPhone(''); setBindOtp(''); setBindError(''); setBindOtpSent(false); resetBindCountdown() } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('profile.bindPhone')}</DialogTitle>
+            <DialogDescription>{t('profile.bindPhoneDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={bindPhone}
+                onChange={(e) => { setBindPhone(e.target.value); setBindOtpSent(false); resetBindCountdown() }}
+                placeholder="+8613800000000"
+                className="flex-1"
+                autoComplete="tel"
+              />
+              <Button
+                variant="outline"
+                className="h-11 shrink-0"
+                disabled={bindLoading || bindCountdown > 0 || !bindPhone.trim()}
+                onClick={async () => {
+                  if (!bindPhone.trim()) return
+                  setBindLoading(true)
+                  setBindError('')
+                  try {
+                    await sendBindPhoneOtp(bindPhone.trim())
+                    setBindOtpSent(true)
+                    startBindCountdown()
+                  } catch (e: any) {
+                    setBindError(e?.message || t('auth.loginFailed'))
+                  } finally {
+                    setBindLoading(false)
+                  }
+                }}
+              >
+                {bindCountdown > 0 ? `${bindCountdown}s` : bindOtpSent ? t('common.sent') : t('auth.getOtp')}
+              </Button>
+            </div>
+            <Input
+              value={bindOtp}
+              onChange={(e) => setBindOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              placeholder={t('auth.otpPlaceholder')}
+              autoComplete="one-time-code"
+              maxLength={6}
+            />
+            {bindError && <p className="text-sm text-destructive">{bindError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPhoneBindOpen(false)} disabled={bindLoading}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!bindPhone.trim() || bindOtp.length !== 6) return
+                setBindLoading(true)
+                setBindError('')
+                try {
+                  await bindPhoneNumber(bindPhone.trim(), bindOtp)
+                  await refreshSession()
+                  await loadAccount(true)
+                  setPhoneBindOpen(false)
+                  toast.success(t('profile.bindPhoneSuccess'))
+                } catch (e: any) {
+                  setBindError(e?.message || t('auth.invalidOtp'))
+                } finally {
+                  setBindLoading(false)
+                }
+              }}
+              disabled={bindLoading || !bindOtpSent || bindOtp.length !== 6}
+            >
+              {bindLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {t('common.confirm')}
             </Button>
           </DialogFooter>

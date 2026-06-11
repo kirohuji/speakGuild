@@ -106,8 +106,8 @@
 
 | 变量 | 分类 | 说明 | 默认值 |
 |---|---|---|---|
-| `TENCENT_SECRET_ID` | 🟡 Secret | 腾讯云 API 密钥 ID（与 COS 可共用） | — |
-| `TENCENT_SECRET_KEY` | 🟡 Secret | 腾讯云 API 密钥 Key | — |
+| `TENCENT_SECRET_ID` | 🟡 Secret | 腾讯云 API 密钥 ID（与 COS/SMS 共用） | — |
+| `TENCENT_SECRET_KEY` | 🟡 Secret | 腾讯云 API 密钥 Key（与 COS/SMS 共用） | — |
 | `TENCENT_REGION` | 🟢 Variable | 语音识别服务地域 | `ap-guangzhou` |
 | `STT_PROVIDER` | 🟢 Variable | STT 供应商选择 | `whisper`（可选 `tencent`） |
 
@@ -115,7 +115,27 @@
 
 ---
 
-## 九、支付（可选，未配置时 Mock 模式）
+## 九、腾讯云短信（SMS）
+
+用于手机验证码登录、手机号绑定等场景。基于 Better Auth `phoneNumber` 插件 + 腾讯云 SMS API v2021-01-11。
+
+| 变量 | 分类 | 说明 | 获取方式 |
+|---|---|---|---|
+| `TENCENT_SECRET_ID` | 🟡 Secret | 腾讯云 API 密钥 ID（复用 COS/STT 的即可） | [访问管理](https://console.cloud.tencent.com/cam/capi) |
+| `TENCENT_SECRET_KEY` | 🟡 Secret | 腾讯云 API 密钥 Key（复用 COS/STT 的即可） | 同上 |
+| `TENCENT_REGION` | 🟢 Variable | 短信服务地域 | `ap-guangzhou` |
+| `TENCENT_SMS_APP_ID` | 🟡 Secret | 短信应用 SdkAppId | [短信控制台](https://console.cloud.tencent.com/smsv2) → 应用管理 |
+| `TENCENT_SMS_SIGN_NAME` | 🟡 Secret | 短信签名内容（已审核通过） | 短信控制台 → 签名管理 |
+| `TENCENT_SMS_TEMPLATE_ID` | 🟡 Secret | 短信正文模板 ID（已审核通过） | 短信控制台 → 正文模板管理 |
+
+> **注意**：
+> - `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 与 COS、STT 共用同一对密钥
+> - 未配置 `TENCENT_SMS_*` 时，验证码会自动降级为控制台打印（不影响本地开发）
+> - 代码引用：`tencent-sms.service.ts`、`auth.ts:phoneNumber.sendOTP`
+
+---
+
+## 十、支付（可选，未配置时 Mock 模式）
 
 ### 支付宝
 
@@ -143,7 +163,7 @@
 
 ---
 
-## 十、RevenueCat（跨端会员同步，可选）
+## 十一、RevenueCat（跨端会员同步，可选）
 
 | 变量 | 分类 | 说明 | 获取方式 |
 |---|---|---|---|
@@ -152,7 +172,7 @@
 
 ---
 
-## 十一、文件清理任务
+## 十二、文件清理任务
 
 | 变量 | 分类 | 说明 | 默认值 |
 |---|---|---|---|
@@ -162,7 +182,7 @@
 
 ---
 
-## 十一、Universal Links（iOS 第三方服务回调）
+## 十三、Universal Links（iOS 第三方服务回调）
 
 用于支付宝支付、微信登录/分享等场景的 Universal Links 配置。
 

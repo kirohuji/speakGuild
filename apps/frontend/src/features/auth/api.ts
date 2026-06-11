@@ -41,6 +41,25 @@ export async function verifyPhoneOtp(phoneNumber: string, code: string) {
   })
 }
 
+/**
+ * 已登录用户绑定手机号：发送验证码到新手机号
+ */
+export async function sendBindPhoneOtp(phoneNumber: string) {
+  return authClient.phoneNumber.sendOtp({ phoneNumber })
+}
+
+/**
+ * 已登录用户绑定手机号：验证 OTP 并更新用户 phoneNumber 字段
+ * 传入 updatePhoneNumber: true 表示将手机号写入当前用户记录
+ */
+export async function bindPhoneNumber(phoneNumber: string, code: string) {
+  return authClient.phoneNumber.verify({
+    phoneNumber,
+    code,
+    updatePhoneNumber: true,  // ← 关键：更新用户 phoneNumber 字段
+  })
+}
+
 // wechat plugin removed — signInWithWechat() is unavailable
 // export async function signInWithWechat() {
 //   if (isNative()) {

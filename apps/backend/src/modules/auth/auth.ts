@@ -3,8 +3,10 @@ import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { bearer, emailOTP, phoneNumber } from 'better-auth/plugins';
 import { importPKCS8, SignJWT } from 'jose';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { TencentSmsService } from './sms/tencent-sms.service';
 
 const prisma = new PrismaService();
+const smsService = new TencentSmsService();
 
 async function generateAppleClientSecret(
   clientId: string,
@@ -85,8 +87,13 @@ export const auth: any = betterAuth({
       },
     }),
     phoneNumber({
-      sendOTP({ phoneNumber: phone, code }) {
-        console.log(`[DEV-MOCK][Phone OTP] phone=${phone} otp=${code}`);
+      async sendOTP({ phoneNumber: phone, code }) {
+        // 通过腾讯云短信服务发送验证码
+        const result = await smsService.sendVerificationCode(phone, code);
+        // 发送失败时打印日志，方便本地开发调试
+        if (!result.sent) {
+          console.log(`[SMS-FALLBACK][Phone OTP] phone=${phone} otp=${code}`);
+        }
       },
       signUpOnVerification: {
         getTempEmail: (phone) => `${phone}@temp.local`,

@@ -18,6 +18,7 @@ import {
 } from '@/features/auth/api'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
+import { useCountdown } from '@/hooks/use-countdown'
 
 type LoginMode = 'password' | 'phone-otp'
 
@@ -52,7 +53,8 @@ export function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [phoneOtp, setPhoneOtp] = useState('')
   const [loading, setLoading] = useState(false)
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false)
+  const [countdown, startCountdown, resetCountdown] = useCountdown(60)
+  const [otpSent, setOtpSent] = useState(false)
   const [message, setMessage] = useState('')
   const fromPath = (location.state as { from?: string } | null)?.from
 
@@ -83,7 +85,7 @@ export function LoginPage() {
     await runAction(
       () => sendPhoneOtp(phoneNumber),
       t('auth.otpSent'),
-      () => setPhoneOtpSent(true),
+      () => { startCountdown(); setOtpSent(true) },
     )
   }
 
@@ -157,7 +159,7 @@ export function LoginPage() {
               <Label className={authLabelClassName}>{t('auth.phoneNumber')}</Label>
               <Input
                 value={phoneNumber}
-                onChange={(e) => { setPhoneNumber(e.target.value); setPhoneOtpSent(false) }}
+                onChange={(e) => { setPhoneNumber(e.target.value); resetCountdown(); setOtpSent(false) }}
                 placeholder="+8613800000000"
                 className={authInputClassName}
                 autoComplete="tel"
@@ -177,17 +179,17 @@ export function LoginPage() {
                   size="sm"
                   variant="outline"
                   className="h-11 shrink-0 rounded-xl px-3"
-                  disabled={loading || phoneOtpSent}
+                  disabled={loading || countdown > 0}
                   onClick={handleSendPhoneOtp}
                 >
-                  {phoneOtpSent ? t('auth.sent') : t('auth.getOtp')}
+                  {countdown > 0 ? `${countdown}s` : t('auth.getOtp')}
                 </Button>
               </div>
             </div>
             <Button
               size="primary-lg"
               className="btn-cta w-full"
-              disabled={loading || !phoneOtpSent || !phoneOtp}
+              disabled={loading || !otpSent || !phoneOtp}
               onClick={() =>
                 runAction(
                   async () => {
