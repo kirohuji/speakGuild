@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { requireAdmin } from '../auth/admin.util';
 import { LearningPackAdminService } from './learning-pack-admin.service';
 
@@ -37,6 +37,26 @@ export class LearningPackAdminController {
   ) {
     const session = await requireAdmin(req);
     return this.service.generate(session.user.id, body.sceneId, body);
+  }
+
+  @Post('upload')
+  async upload(
+    @Req() req: Request,
+    @Body() body: { sceneId: string; assetId: string; version?: number; title?: string; publish?: boolean },
+  ) {
+    await requireAdmin(req);
+    return this.service.createFromUploadedZip(body);
+  }
+
+  @Get(':id/download')
+  async download(@Req() req: Request, @Param('id') id: string, @Res() res: Response) {
+    await requireAdmin(req);
+    const pack = await this.service.download(id);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${pack.filename}"`);
+    res.setHeader('Content-Length', String(pack.buffer.byteLength));
+    if (pack.checksum) res.setHeader('X-Learning-Pack-Checksum', pack.checksum);
+    res.send(pack.buffer);
   }
 
   @Post(':id/publish')

@@ -270,15 +270,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
 
     // 加入下载队列
-    const task: DownloadTask = {
-      packId: unitId,
-      title: packTitle,
-      progress: 0,
-      status: 'queued',
-    }
-    set((s) => ({
-      downloadTasks: [...s.downloadTasks.filter((t) => t.packId !== unitId), task],
-    }))
+    enqueueDownloadTask(unitId, packTitle)
     console.log(`[learning-store] 📥 加入下载队列: ${packTitle} (${unitId}), 队列长度: ${getState().downloadTasks.length}`)
 
     // 触发队列处理（异步，不 await）
@@ -416,30 +408,18 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async downloadUnitPack(unitId) {
-    const { packInstallingIds } = getState()
-    if (packInstallingIds.includes(unitId)) return
-    // ⭐ 网络检查：蜂窝网络需要用户确认
-    if (!await checkNetworkBeforeDownload()) return
-    set({ packInstallingIds: [...packInstallingIds, unitId] })
-    try {
-      // V2: 检查是否有 delta 更新可用
-      const update = getState().availablePackUpdates.find((u) => u.packId === unitId)
-      if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
-        console.log(`[learning-store] 🔄 delta 更新: v${update.fromVersion} → v${update.toVersion}`)
-        await learningPackService.installDelta(unitId, update.fromVersion, update.toVersion)
-      } else {
-        await learningPackService.installUnit(unitId)
-      }
-      const downloadedPacks = await learningPackService.listInstalled()
-      set((state) => ({
-        downloadedPacks,
-        availablePackUpdates: state.availablePackUpdates.filter((u) => u.packId !== unitId),
-      }))
-    } finally {
-      set((state) => ({
-        packInstallingIds: state.packInstallingIds.filter((id) => id !== unitId),
-      }))
-    }
+    const state = getState()
+    if (state.packInstallingIds.includes(unitId)) return
+    if (state.downloadTasks.some((task) => task.packId === unitId && task.status !== 'error')) return
+
+    const unitTitle =
+      state.myUnits.find((unit) => unit.id === unitId)?.title ??
+      state.shopUnits.find((unit) => unit.id === unitId)?.title ??
+      state.downloadedPacks.find((pack) => pack.packId === unitId)?.title ??
+      unitId
+
+    enqueueDownloadTask(unitId, unitTitle)
+    processDownloadQueue()
   },
 
   async uninstallUnitPack(unitId) {
@@ -470,6 +450,18 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
 // ─── 下载队列调度器（模块级函数，避免 store action 循环引用） ───
 
+function enqueueDownloadTask(packId: string, title: string) {
+  useLearningStore.setState((s) => ({
+    downloadTasks: [
+      ...s.downloadTasks.filter((task) => task.packId !== packId),
+      { packId, title, progress: 0, status: 'queued' as const },
+    ],
+    packInstallingIds: s.packInstallingIds.includes(packId)
+      ? s.packInstallingIds
+      : [...s.packInstallingIds, packId],
+  }))
+}
+
 async function processDownloadQueue() {
   const state = useLearningStore.getState()
   const running = state.downloadTasks.filter(
@@ -489,10 +481,12 @@ async function processDownloadQueue() {
     ),
   }))
 
+  let progressTimer: ReturnType<typeof setInterval> | null = null
   try {
     if (!await checkNetworkBeforeDownload()) {
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
+        packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
       }))
       processDownloadQueue()
       return
@@ -500,7 +494,7 @@ async function processDownloadQueue() {
 
     console.log(`[learning-store] ⏳ 开始下载: ${next.title}`)
 
-    const progressTimer = setInterval(() => {
+    progressTimer = setInterval(() => {
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
           t.packId === next.packId && t.status === 'downloading'
@@ -510,13 +504,20 @@ async function processDownloadQueue() {
       }))
     }, 500)
 
-    await learningPackService.installUnit(next.packId)
-    clearInterval(progressTimer)
+    const update = useLearningStore.getState().availablePackUpdates.find((u) => u.packId === next.packId)
+    if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
+      console.log(`[learning-store] 🔄 delta 更新: v${update.fromVersion} → v${update.toVersion}`)
+      await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion)
+    } else {
+      await learningPackService.installUnit(next.packId)
+    }
+    if (progressTimer) clearInterval(progressTimer)
 
     useLearningStore.setState((s) => ({
       downloadTasks: s.downloadTasks.map((t) =>
         t.packId === next.packId ? { ...t, status: 'done' as const, progress: 100 } : t,
       ),
+      packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
     console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
 
@@ -536,6 +537,7 @@ async function processDownloadQueue() {
       }))
     }, 3000)
   } catch (error: any) {
+    if (progressTimer) clearInterval(progressTimer)
     console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
     useLearningStore.setState((s) => ({
       downloadTasks: s.downloadTasks.map((t) =>
@@ -543,6 +545,7 @@ async function processDownloadQueue() {
           ? { ...t, status: 'error' as const, error: error?.message ?? '下载失败' }
           : t,
       ),
+      packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
   } finally {
     processDownloadQueue()

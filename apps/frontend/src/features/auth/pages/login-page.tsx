@@ -160,7 +160,7 @@ export function LoginPage() {
               <Input
                 value={phoneNumber}
                 onChange={(e) => { setPhoneNumber(e.target.value); resetCountdown(); setOtpSent(false) }}
-                placeholder="+8613800000000"
+                placeholder={t('auth.phonePlaceholder')}
                 className={authInputClassName}
                 autoComplete="tel"
               />

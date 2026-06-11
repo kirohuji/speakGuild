@@ -44,6 +44,14 @@ export const learningPackAdminApi = {
   scenes: () => get<LearningPackSceneOption[]>('/admin/learning-packs/scenes'),
   generate: (data: { sceneId: string; version?: number; title?: string; publish?: boolean }) =>
     post<LearningPackItem>('/admin/learning-packs/generate', data),
+  upload: (data: { sceneId: string; assetId: string; version?: number; title?: string; publish?: boolean }) =>
+    post<LearningPackItem>('/admin/learning-packs/upload', data),
+  download: (id: string) =>
+    get<ArrayBuffer>(`/admin/learning-packs/${id}/download`, undefined, {
+      dedupe: false,
+      responseType: 'arraybuffer',
+      timeout: 120_000,
+    }),
   publish: (id: string) => post<LearningPackItem>(`/admin/learning-packs/${id}/publish`),
   remove: (id: string) => del<{ success: boolean }>(`/admin/learning-packs/${id}`),
 };

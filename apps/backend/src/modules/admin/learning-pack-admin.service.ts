@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FileAssetGroup } from '@prisma/client';
+import AdmZip = require('adm-zip');
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { LearningService } from '../learning/learning.service';
@@ -114,12 +115,109 @@ export class LearningPackAdminService {
       await (this.prisma as any).learningPackage.update({
         where: { id: record.id },
         data: {
-        status: PACKAGE_STATUS.failed,
+          status: PACKAGE_STATUS.failed,
           buildLog: error instanceof Error ? error.message : String(error),
         },
       });
       throw error;
     }
+  }
+
+  async createFromUploadedZip(input: {
+    sceneId: string;
+    assetId: string;
+    version?: number;
+    title?: string;
+    publish?: boolean;
+  }) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: input.sceneId },
+      select: { id: true, title: true },
+    });
+    if (!scene) throw new NotFoundException('学习单元不存在');
+
+    const asset = await this.prisma.fileAsset.findUnique({ where: { id: input.assetId } });
+    if (!asset || asset.status !== 'active') throw new NotFoundException('上传文件不存在');
+    if (asset.group !== ('learning_pack' as FileAssetGroup)) {
+      throw new BadRequestException('请先把 zip 上传到 learning_pack 分组');
+    }
+    if (!asset.filename.toLowerCase().endsWith('.zip') && asset.mimeType !== 'application/zip') {
+      throw new BadRequestException('仅支持上传 zip 学习包');
+    }
+
+    const latest = await (this.prisma as any).learningPackage.findFirst({
+      where: { sceneId: input.sceneId },
+      orderBy: { version: 'desc' },
+      select: { version: true },
+    });
+    const version = input.version ?? Number(latest?.version ?? 0) + 1;
+    if (version <= 0) throw new BadRequestException('版本号必须大于 0');
+
+    const { buffer, filename } = await this.readAssetBuffer(input.assetId);
+    const manifestSnapshot = this.readManifestFromZip(buffer);
+    if (manifestSnapshot?.packId && manifestSnapshot.packId !== input.sceneId) {
+      throw new BadRequestException('zip 内 manifest.packId 与所选学习单元不一致');
+    }
+
+    const title = input.title?.trim() || manifestSnapshot?.title || `${scene.title} v${version}`;
+    const existing = await (this.prisma as any).learningPackage.findUnique({
+      where: { sceneId_version: { sceneId: input.sceneId, version } },
+      select: { id: true, fileAssetId: true },
+    });
+
+    const record = await (this.prisma as any).learningPackage.upsert({
+      where: { sceneId_version: { sceneId: input.sceneId, version } },
+      create: {
+        sceneId: input.sceneId,
+        version,
+        title,
+        status: input.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
+        fileAssetId: asset.id,
+        zipChecksum: asset.sha256,
+        zipSize: asset.size,
+        manifestSnapshot,
+        publishedAt: input.publish === false ? null : new Date(),
+        buildLog: `Uploaded ${filename}`,
+      },
+      update: {
+        title,
+        status: input.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
+        fileAssetId: asset.id,
+        zipChecksum: asset.sha256,
+        zipSize: asset.size,
+        manifestSnapshot,
+        publishedAt: input.publish === false ? null : new Date(),
+        buildLog: `Uploaded ${filename}`,
+      },
+    });
+
+    if (existing?.fileAssetId && existing.fileAssetId !== asset.id) {
+      await this.fileAssets.deleteSystemReference(existing.fileAssetId, 'learning_pack', record.id);
+    }
+    await this.fileAssets.createSystemReference(asset.id, 'learning_pack', record.id);
+
+    return (this.prisma as any).learningPackage.findUnique({
+      where: { id: record.id },
+      include: {
+        scene: { select: { id: true, title: true, location: true } },
+        fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
+      },
+    });
+  }
+
+  async download(id: string) {
+    const pack = await (this.prisma as any).learningPackage.findUnique({
+      where: { id },
+      include: { fileAsset: true },
+    });
+    if (!pack) throw new NotFoundException('学习包不存在');
+    if (!pack.fileAssetId) throw new BadRequestException('学习包尚未绑定 zip 文件');
+    const { buffer, filename } = await this.readAssetBuffer(pack.fileAssetId);
+    return {
+      buffer,
+      filename: pack.fileAsset?.filename ?? filename,
+      checksum: pack.zipChecksum ?? pack.fileAsset?.sha256 ?? null,
+    };
   }
 
   async publish(id: string) {
@@ -268,6 +366,29 @@ export class LearningPackAdminService {
   private sha256Buffer(buffer: Buffer): string {
     const crypto = require('crypto');
     return crypto.createHash('sha256').update(buffer).digest('hex');
+  }
+
+  private async readAssetBuffer(assetId: string) {
+    const signed = await this.fileAssets.getPrivateUrlByAssetId(assetId);
+    const response = await fetch(signed.url);
+    if (!response.ok) {
+      throw new BadRequestException(`COS 下载失败: ${response.status}`);
+    }
+    return {
+      buffer: Buffer.from(await response.arrayBuffer()),
+      filename: signed.filename,
+    };
+  }
+
+  private readManifestFromZip(buffer: Buffer) {
+    const zip = new AdmZip(buffer);
+    const entry = zip.getEntry('pack-manifest.json');
+    if (!entry) throw new BadRequestException('zip 缺少 pack-manifest.json');
+    try {
+      return JSON.parse(entry.getData().toString('utf8'));
+    } catch {
+      throw new BadRequestException('pack-manifest.json 不是有效 JSON');
+    }
   }
 
   async remove(id: string) {
