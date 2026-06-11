@@ -289,6 +289,8 @@ export const learningContentRepository = {
       if (id) patternById.set(id, { ...pattern, id })
     }
 
+    console.log(`[content-index] 📊 索引统计: ${vocabById.size} 词汇, ${chunkById.size} 语块, ${patternById.size} 句型, ${refs.length} 引用记录`)
+
     await localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => ({
       id: item.id,
       word: item.word ?? item.text ?? '',
@@ -296,6 +298,8 @@ export const learningContentRepository = {
       data: item,
       updatedAt: now,
     })))
+    console.log(`[content-index] ✅ offline_vocabularies: ${vocabById.size} 条`)
+
     await localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => ({
       id: item.id,
       text: item.text ?? '',
@@ -303,6 +307,8 @@ export const learningContentRepository = {
       data: item,
       updatedAt: now,
     })))
+    console.log(`[content-index] ✅ offline_chunks: ${chunkById.size} 条`)
+
     await localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => ({
       id: item.id,
       pattern: item.pattern ?? item.text ?? '',
@@ -310,7 +316,10 @@ export const learningContentRepository = {
       data: item,
       updatedAt: now,
     })))
+    console.log(`[content-index] ✅ offline_patterns: ${patternById.size} 条`)
+
     await localDb.putMany('offline_content_refs', refs)
+    console.log(`[content-index] ✅ offline_content_refs: ${refs.length} 条`)
   },
 
   async removePackContentIndex(packId: string): Promise<void> {

@@ -216,6 +216,8 @@ export const assetCacheService = {
         downloadedAt: now,
         lastAccessedAt: now,
       })
+      const kb = (buffer.byteLength / 1024).toFixed(1)
+      console.log(`[asset-cache] 💾 WEB 模式存储: ${ref.path ?? ref.url?.slice(-40)} (${kb}KB) → local_assets/${key}`)
       return dataUrl
     }
 

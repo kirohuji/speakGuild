@@ -83,7 +83,9 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
     ...unitDetail,
     downloadedAt: new Date().toISOString(),
   })
+  console.log(`[learning-pack]   SQLite: downloaded_unit_details/${unitDetail.id} (unit)`)
 
+  let inkCount = 0
   for (const topicDetail of topicDetails) {
     if (topicDetail?.inkScript) {
       await localDb.put('ink_scripts', {
@@ -93,6 +95,7 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
         ...topicDetail.inkScript,
         updatedAt: new Date().toISOString(),
       })
+      inkCount++
     }
     // Merge unit-level shared data into the stored topic detail
     const merged = mergeTopicDetail(topicDetail, unitDetail)
@@ -104,6 +107,7 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
       updatedAt: new Date().toISOString(),
     })
   }
+  console.log(`[learning-pack]   SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script`)
 }
 
 async function digest(buffer: ArrayBuffer, algorithm = 'SHA-256'): Promise<string> {
@@ -231,9 +235,10 @@ export const learningPackService = {
 
   async installUnit(unitId: string): Promise<InstalledLearningPack> {
     try {
+      console.log('[learning-pack] 📦 开始安装学习包 (zip 模式)...', { unitId })
       return await this.installUnitFromZip(unitId)
     } catch (error) {
-      console.warn('[learning-pack] zip install failed, falling back to manifest install:', error)
+      console.warn('[learning-pack] ⚠️ zip 安装失败，回退到 manifest 模式:', error)
     }
 
     const { manifest, unitDetail, topicDetails } = await this.buildManifestFromUnit(unitId)
@@ -243,24 +248,40 @@ export const learningPackService = {
   },
 
   async installUnitFromZip(unitId: string): Promise<InstalledLearningPack> {
+    const startTime = performance.now()
+    console.log('[learning-pack] ⏳ ① 下载 zip...')
     const zipBuffer = await learningApi.downloadPack(unitId)
+    const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
+    console.log(`[learning-pack] ✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
+
+    console.log('[learning-pack] ⏳ ② 解析 zip 条目...')
     const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
     try {
       const entryList = await reader.getEntries()
       const entries = new Map<string, Entry>()
+      let fileCount = 0
+      let dirCount = 0
       for (const entry of entryList) {
-        if (!entry.directory) entries.set(normalizeZipPath(entry.filename), entry)
+        if (entry.directory) { dirCount++; continue }
+        fileCount++
+        entries.set(normalizeZipPath(entry.filename), entry)
       }
+      console.log(`[learning-pack] ✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
 
+      console.log('[learning-pack] ⏳ ③ 读取 manifest + checksums...')
       const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
       const checksums = await readJsonEntry<Record<string, string>>(entries, 'checksums.json').catch(() => manifest.files ?? {})
+      console.log(`[learning-pack] ✅ ③ manifest: v${manifest.version}, ${manifest.assets?.length ?? 0} 个资源, checksums: ${Object.keys(checksums).length} 项`)
 
+      console.log('[learning-pack] ⏳ ④ 读取场景数据...')
       const sceneEntry = entries.get('content/scene.json')
       if (!sceneEntry) throw new Error('Pack is missing content/scene.json')
       const sceneText = await readEntryText(sceneEntry)
       await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
       const unitDetail = JSON.parse(sceneText)
+      console.log(`[learning-pack] ✅ ④ scene.json: ${sceneText.length} 字符, SHA256 校验通过`)
 
+      console.log('[learning-pack] ⏳ ⑤ 读取话题数据...')
       const topicDetails: any[] = []
       for (const [path, entry] of entries) {
         if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
@@ -268,8 +289,10 @@ export const learningPackService = {
         await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
         topicDetails.push(JSON.parse(text))
       }
+      console.log(`[learning-pack] ✅ ⑤ 话题: ${topicDetails.length} 个`)
 
       const now = new Date().toISOString()
+      console.log('[learning-pack] ⏳ ⑥ 写入 downloaded_packs 记录...')
       await localDb.put<InstalledLearningPack>('downloaded_packs', {
         id: manifest.packId,
         packId: manifest.packId,
@@ -281,19 +304,43 @@ export const learningPackService = {
         updatedAt: now,
       })
 
+      console.log('[learning-pack] ⏳ ⑦ 持久化单元内容到 SQLite...')
       await persistUnitContent(unitDetail, topicDetails)
+      console.log('[learning-pack] ✅ ⑦ 单元内容写入完成')
+
+      console.log('[learning-pack] ⏳ ⑧ 写入内容索引表...')
       await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails)
+      console.log('[learning-pack] ✅ ⑧ 索引表写入完成')
 
+      console.log(`[learning-pack] ⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
+      let assetOk = 0
+      let assetSkip = 0
+      let assetFail = 0
       for (const asset of manifest.assets ?? []) {
-        if (!asset.path) continue
+        if (!asset.path) { assetSkip++; continue }
         const entry = entries.get(normalizeZipPath(asset.path))
-        if (!entry) continue
-        const buffer = await readEntryBuffer(entry)
-        await verifyEntry(normalizeZipPath(asset.path), buffer, checksums)
-        await assetCacheService.saveFromBuffer(asset, buffer)
+        if (!entry) { assetSkip++; continue }
+        try {
+          const buffer = await readEntryBuffer(entry)
+          await verifyEntry(normalizeZipPath(asset.path), buffer, checksums)
+          await assetCacheService.saveFromBuffer(asset, buffer)
+          assetOk++
+        } catch (e) {
+          assetFail++
+          console.warn(`[learning-pack] ⚠️ 资源失败: ${asset.path}`, e)
+        }
       }
+      console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功, ${assetSkip} 跳过, ${assetFail} 失败`)
 
-      return persistInstalledRecord(manifest)
+      const result = await persistInstalledRecord(manifest)
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
+      console.log(`[learning-pack] 🎉 安装完成! 耗时 ${elapsed}s`, {
+        packId: manifest.packId,
+        version: manifest.version,
+        topics: topicDetails.length,
+        assets: assetOk,
+      })
+      return result
     } finally {
       await reader.close()
     }
@@ -364,6 +411,7 @@ export const learningPackService = {
     await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
     await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
     await learningContentRepository.removePackContentIndex(packId)
+    console.log(`[learning-pack] 🗑️ 已卸载: ${packId}`)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'learning_pack',
       entityId: packId,
@@ -380,5 +428,28 @@ export const learningPackService = {
   async isInstalled(packId: string): Promise<boolean> {
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
     return pack?.status === 'installed'
+  },
+
+  /** 🔍 调试用：打印所有离线存储状态 */
+  async dumpStatus(): Promise<void> {
+    const packs = await localDb.list<InstalledLearningPack>('downloaded_packs')
+    const unitDetails = await localDb.list<any>('downloaded_unit_details')
+    const inkScripts = await localDb.list<any>('ink_scripts')
+    const localAssets = await localDb.list<any>('local_assets')
+    const vocabCount = await localDb.count('offline_vocabularies')
+    const chunkCount = await localDb.count('offline_chunks')
+    const patternCount = await localDb.count('offline_patterns')
+    const refCount = await localDb.count('offline_content_refs')
+
+    console.group('📦 [learning-pack] 离线存储状态总览')
+    console.log('downloaded_packs:', packs.length, packs.map(p => `${p.title} v${p.version} [${p.status}]`))
+    console.log('downloaded_unit_details:', unitDetails.length)
+    console.log('ink_scripts:', inkScripts.length)
+    console.log('local_assets:', localAssets.length, localAssets.filter((a: any) => a.status === 'ready').length, 'ready')
+    console.log('offline_vocabularies:', vocabCount)
+    console.log('offline_chunks:', chunkCount)
+    console.log('offline_patterns:', patternCount)
+    console.log('offline_content_refs:', refCount)
+    console.groupEnd()
   },
 }
