@@ -4,6 +4,8 @@ import { learningRepository } from './learning.repository'
 import { localDb } from './unified-storage'
 import { practiceRepository } from './practice.repository'
 import { syncOutbox } from './sync-outbox'
+import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
+import { learningContentRepository } from './learning-content.repository'
 
 export interface LearningPackManifest {
   packId: string
@@ -18,6 +20,9 @@ export interface LearningPackManifest {
   scriptEpisodes: string[]
   inkScripts: string[]
   assets: AssetRef[]
+  files?: Record<string, string>
+  formatVersion?: number
+  failedAssets?: Array<{ url: string; reason: string }>
 }
 
 export interface InstalledLearningPack {
@@ -101,6 +106,66 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
   }
 }
 
+async function digest(buffer: ArrayBuffer, algorithm = 'SHA-256'): Promise<string> {
+  const hash = await crypto.subtle.digest(algorithm, buffer)
+  return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function normalizeZipPath(path: string) {
+  return path.replace(/\\/g, '/').replace(/^\/+/, '')
+}
+
+async function readEntryText(entry: Entry) {
+  const readable = entry as Entry & { getData?: (writer: TextWriter) => Promise<string> }
+  if (!readable.getData) throw new Error(`Zip entry is not readable: ${entry.filename}`)
+  return readable.getData(new TextWriter())
+}
+
+async function readEntryBuffer(entry: Entry) {
+  const readable = entry as Entry & { getData?: (writer: BlobWriter) => Promise<Blob> }
+  if (!readable.getData) throw new Error(`Zip entry is not readable: ${entry.filename}`)
+  const blob = await readable.getData(new BlobWriter())
+  return blob.arrayBuffer()
+}
+
+async function readJsonEntry<T = any>(entries: Map<string, Entry>, path: string): Promise<T> {
+  const entry = entries.get(path)
+  if (!entry) throw new Error(`Pack is missing ${path}`)
+  return JSON.parse(await readEntryText(entry)) as T
+}
+
+async function verifyEntry(path: string, buffer: ArrayBuffer, checksums?: Record<string, string>) {
+  const expected = checksums?.[path]
+  if (!expected) return
+  const actual = await digest(buffer)
+  if (actual.toLowerCase() !== expected.toLowerCase()) {
+    throw new Error(`Pack file checksum mismatch: ${path}`)
+  }
+}
+
+async function persistInstalledRecord(manifest: LearningPackManifest): Promise<InstalledLearningPack> {
+  const now = new Date().toISOString()
+  const installed: InstalledLearningPack = {
+    id: manifest.packId,
+    packId: manifest.packId,
+    version: manifest.version,
+    title: manifest.title,
+    manifest,
+    status: 'installed',
+    installedAt: now,
+    updatedAt: now,
+  }
+  await localDb.put('downloaded_packs', installed)
+  const outboxItem = await syncOutbox.enqueue({
+    entityType: 'learning_pack',
+    entityId: manifest.packId,
+    operation: 'create',
+    payload: { packId: manifest.packId, version: manifest.version },
+  })
+  await syncOutbox.markSynced(outboxItem.id)
+  return installed
+}
+
 export const learningPackService = {
   async buildManifestFromUnit(unitId: string): Promise<{ manifest: LearningPackManifest; unitDetail: any; topicDetails: any[] }> {
     try {
@@ -165,9 +230,73 @@ export const learningPackService = {
   },
 
   async installUnit(unitId: string): Promise<InstalledLearningPack> {
+    try {
+      return await this.installUnitFromZip(unitId)
+    } catch (error) {
+      console.warn('[learning-pack] zip install failed, falling back to manifest install:', error)
+    }
+
     const { manifest, unitDetail, topicDetails } = await this.buildManifestFromUnit(unitId)
     await persistUnitContent(unitDetail, topicDetails)
+    await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? manifest.packId, unitDetail, topicDetails)
     return this.install(manifest)
+  },
+
+  async installUnitFromZip(unitId: string): Promise<InstalledLearningPack> {
+    const zipBuffer = await learningApi.downloadPack(unitId)
+    const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
+    try {
+      const entryList = await reader.getEntries()
+      const entries = new Map<string, Entry>()
+      for (const entry of entryList) {
+        if (!entry.directory) entries.set(normalizeZipPath(entry.filename), entry)
+      }
+
+      const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
+      const checksums = await readJsonEntry<Record<string, string>>(entries, 'checksums.json').catch(() => manifest.files ?? {})
+
+      const sceneEntry = entries.get('content/scene.json')
+      if (!sceneEntry) throw new Error('Pack is missing content/scene.json')
+      const sceneText = await readEntryText(sceneEntry)
+      await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
+      const unitDetail = JSON.parse(sceneText)
+
+      const topicDetails: any[] = []
+      for (const [path, entry] of entries) {
+        if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
+        const text = await readEntryText(entry)
+        await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
+        topicDetails.push(JSON.parse(text))
+      }
+
+      const now = new Date().toISOString()
+      await localDb.put<InstalledLearningPack>('downloaded_packs', {
+        id: manifest.packId,
+        packId: manifest.packId,
+        version: manifest.version,
+        title: manifest.title,
+        manifest,
+        status: 'installing',
+        installedAt: null,
+        updatedAt: now,
+      })
+
+      await persistUnitContent(unitDetail, topicDetails)
+      await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails)
+
+      for (const asset of manifest.assets ?? []) {
+        if (!asset.path) continue
+        const entry = entries.get(normalizeZipPath(asset.path))
+        if (!entry) continue
+        const buffer = await readEntryBuffer(entry)
+        await verifyEntry(normalizeZipPath(asset.path), buffer, checksums)
+        await assetCacheService.saveFromBuffer(asset, buffer)
+      }
+
+      return persistInstalledRecord(manifest)
+    } finally {
+      await reader.close()
+    }
   },
 
   async install(manifest: LearningPackManifest): Promise<InstalledLearningPack> {
@@ -234,6 +363,7 @@ export const learningPackService = {
     await localDb.delete('downloaded_unit_details', packId)
     await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
     await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
+    await learningContentRepository.removePackContentIndex(packId)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'learning_pack',
       entityId: packId,

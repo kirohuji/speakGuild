@@ -4,12 +4,13 @@ import {
   learningApi,
   type LearningUnitSummary,
   type MyUnit,
+  type PackUpdateInfo,
   type TagInfo,
   type UnitDetail,
 } from '@/features/learning/api/learning-api'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { learningPackService, learningRepository, type InstalledLearningPack } from '@/lib/offline'
-import { isNative } from '@/lib/native'
+import { isNative } from '@/lib/native/platform'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { toast } from 'sonner'
 import i18n from '@/lib/i18n'
@@ -38,6 +39,7 @@ interface LearningStore {
   unitDetailLoading: boolean
   downloadedPacks: InstalledLearningPack[]
   packInstallingIds: string[]
+  availablePackUpdates: PackUpdateInfo[]
 
   // Actions
   fetchMyLearning: () => Promise<void>
@@ -51,6 +53,7 @@ interface LearningStore {
   enrollUnit: (unitId: string) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
   fetchDownloadedPacks: () => Promise<void>
+  checkPackUpdates: (silent?: boolean) => Promise<void>
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
 }
@@ -123,6 +126,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   unitDetailLoading: false,
   downloadedPacks: [],
   packInstallingIds: [],
+  availablePackUpdates: [],
 
   /** 首次加载：我的学习 + 商店 */
   async fetchMyLearning() {
@@ -252,7 +256,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       }
       await learningPackService.installUnit(unitId)
       const downloadedPacks = await learningPackService.listInstalled()
-      set({ downloadedPacks })
+      set((current) => ({
+        downloadedPacks,
+        availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
+      }))
       await state.refreshMyUnits()
     } finally {
       set((current) => ({
@@ -266,7 +273,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       await learningRepository.quitUnit(unitId)
       await learningPackService.uninstall(unitId)
       const downloadedPacks = await learningPackService.listInstalled()
-      set({ downloadedPacks })
+      set((current) => ({
+        downloadedPacks,
+        availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
+      }))
       await getState().refreshMyUnits()
     } catch {
       // ignore
@@ -278,6 +288,30 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     set({ downloadedPacks })
   },
 
+  async checkPackUpdates(silent = true) {
+    const downloadedPacks = await learningPackService.listInstalled()
+    const installed = downloadedPacks
+      .filter((pack) => pack.status === 'installed')
+      .map((pack) => ({ packId: pack.packId, version: pack.version }))
+    if (installed.length === 0) {
+      set({ downloadedPacks, availablePackUpdates: [] })
+      return
+    }
+
+    try {
+      const result = await learningApi.checkPacks(installed)
+      set({ downloadedPacks, availablePackUpdates: result.updates })
+      if (!silent && result.updates.length > 0) {
+        toast.info(i18n.t('learning.packUpdatesAvailable', { defaultValue: '有学习包可更新' }))
+      }
+    } catch (error) {
+      set({ downloadedPacks })
+      if (!silent) {
+        toast.error(i18n.t('learning.packUpdateCheckFailed', { defaultValue: '学习包更新检查失败' }))
+      }
+    }
+  },
+
   async downloadUnitPack(unitId) {
     const { packInstallingIds } = getState()
     if (packInstallingIds.includes(unitId)) return
@@ -287,7 +321,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     try {
       await learningPackService.installUnit(unitId)
       const downloadedPacks = await learningPackService.listInstalled()
-      set({ downloadedPacks })
+      set((state) => ({
+        downloadedPacks,
+        availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
+      }))
     } finally {
       set((state) => ({
         packInstallingIds: state.packInstallingIds.filter((id) => id !== unitId),
@@ -298,6 +335,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   async uninstallUnitPack(unitId) {
     await learningPackService.uninstall(unitId)
     const downloadedPacks = await learningPackService.listInstalled()
-    set({ downloadedPacks })
+    set((state) => ({
+      downloadedPacks,
+      availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
+    }))
   },
 }))

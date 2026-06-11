@@ -1,5 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import AdmZip = require('adm-zip');
+import { createHash } from 'crypto';
+
+function sha256Buffer(buffer: Buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
+}
+
+function jsonBuffer(value: unknown) {
+  return Buffer.from(JSON.stringify(value, null, 2), 'utf8');
+}
+
+function safeFilePart(value: string) {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '') || 'file';
+}
+
+function extensionFromUrl(url: string) {
+  try {
+    const pathname = new URL(url).pathname;
+    const match = pathname.match(/\.([a-zA-Z0-9]{1,8})$/);
+    return match?.[1]?.toLowerCase() ?? null;
+  } catch {
+    const match = url.match(/\.([a-zA-Z0-9]{1,8})(?:\?|#|$)/);
+    return match?.[1]?.toLowerCase() ?? null;
+  }
+}
+
+function extensionFromMime(mime?: string | null) {
+  if (!mime) return null;
+  if (mime.includes('mpeg')) return 'mp3';
+  if (mime.includes('wav')) return 'wav';
+  if (mime.includes('ogg')) return 'ogg';
+  if (mime.includes('webp')) return 'webp';
+  if (mime.includes('png')) return 'png';
+  if (mime.includes('jpeg')) return 'jpg';
+  if (mime.includes('json')) return 'json';
+  return null;
+}
 
 @Injectable()
 export class LearningService {
@@ -655,6 +692,136 @@ export class LearningService {
       unitDetail: leanUnitDetail,
       topicDetails,
     };
+  }
+
+  async buildLearningPackZip(userId: string, unitId: string) {
+    const source = await this.getOfflineManifest(userId, unitId);
+    const zip = new AdmZip();
+    const checksums: Record<string, string> = {};
+
+    const addJson = (path: string, value: unknown) => {
+      const buffer = jsonBuffer(value);
+      zip.addFile(path, buffer);
+      checksums[path] = sha256Buffer(buffer);
+    };
+
+    addJson('content/scene.json', source.unitDetail);
+
+    const vocabIndex = new Map<string, any>();
+    const chunkIndex = new Map<string, any>();
+    const patternIndex = new Map<string, any>();
+
+    for (const topicDetail of source.topicDetails ?? []) {
+      const topicId = topicDetail?.topic?.id;
+      if (!topicId) continue;
+      addJson(`content/topics/${safeFilePart(topicId)}.json`, topicDetail);
+
+      if (topicDetail.inkScript) {
+        const key = topicDetail.inkScript.key || topicDetail.inkScript.id;
+        addJson(`content/inks/${safeFilePart(key)}.json`, topicDetail.inkScript);
+      }
+
+      for (const vocab of topicDetail.vocabularies ?? []) {
+        if (vocab?.id && !vocabIndex.has(vocab.id)) vocabIndex.set(vocab.id, vocab);
+      }
+      for (const chunk of (topicDetail as any).activeChunks ?? (topicDetail as any).chunks ?? []) {
+        if (chunk?.id && !chunkIndex.has(chunk.id)) chunkIndex.set(chunk.id, chunk);
+      }
+      for (const pattern of topicDetail.sentencePatterns ?? []) {
+        const key = pattern?.id ?? pattern?.pattern;
+        if (key && !patternIndex.has(key)) patternIndex.set(key, pattern);
+      }
+    }
+
+    addJson('content/indexes/vocab.json', [...vocabIndex.values()]);
+    addJson('content/indexes/chunks.json', [...chunkIndex.values()]);
+    addJson('content/indexes/patterns.json', [...patternIndex.values()]);
+
+    const packagedAssets: any[] = [];
+    const failedAssets: Array<{ url: string; reason: string }> = [];
+    const assetPathBySha = new Map<string, string>();
+
+    for (const asset of source.manifest.assets ?? []) {
+      if (!asset?.url) continue;
+      try {
+        const response = await fetch(asset.url);
+        if (!response.ok) {
+          failedAssets.push({ url: asset.url, reason: `HTTP ${response.status}` });
+          continue;
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const sha256 = sha256Buffer(buffer);
+        const mimeType = response.headers.get('content-type')?.split(';')[0] ?? asset.mimeType ?? null;
+        const ext = extensionFromUrl(asset.url) ?? extensionFromMime(mimeType) ?? 'bin';
+        const role = safeFilePart(asset.role ?? 'misc');
+        const path = assetPathBySha.get(sha256) ?? `assets/${role}/${sha256}.${ext}`;
+
+        if (!assetPathBySha.has(sha256)) {
+          zip.addFile(path, buffer);
+          checksums[path] = sha256;
+          assetPathBySha.set(sha256, path);
+        }
+
+        packagedAssets.push({
+          ...asset,
+          path,
+          sha256,
+          mimeType,
+          size: buffer.byteLength,
+        });
+      } catch (error) {
+        failedAssets.push({
+          url: asset.url,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const manifest = {
+      ...source.manifest,
+      formatVersion: 1,
+      contentRoot: 'content',
+      generatedAt: new Date().toISOString(),
+      assets: packagedAssets,
+      failedAssets,
+      files: checksums,
+    };
+    addJson('pack-manifest.json', manifest);
+    addJson('checksums.json', checksums);
+
+    const zipBuffer = zip.toBuffer();
+    return {
+      fileName: `${safeFilePart(source.manifest.packId)}-${source.manifest.version}.zip`,
+      checksum: sha256Buffer(zipBuffer),
+      manifest,
+      buffer: zipBuffer,
+    };
+  }
+
+  async checkLearningPacks(userId: string, installed: Array<{ packId: string; version?: number }>) {
+    const updates: any[] = [];
+    for (const pack of installed ?? []) {
+      if (!pack?.packId) continue;
+      try {
+        const latest = await this.getOfflineManifest(userId, pack.packId);
+        const latestVersion = Number(latest.manifest.version ?? 0);
+        const currentVersion = Number(pack.version ?? 0);
+        if (latestVersion > currentVersion) {
+          updates.push({
+            packId: pack.packId,
+            fromVersion: currentVersion,
+            toVersion: latestVersion,
+            updateType: 'full',
+            title: latest.manifest.title,
+            updatedAt: latest.manifest.updatedAt,
+          });
+        }
+      } catch {
+        // Ignore packs the user can no longer access or that no longer exist.
+      }
+    }
+    return { updates };
   }
 
   /**

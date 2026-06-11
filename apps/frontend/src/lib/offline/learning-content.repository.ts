@@ -10,6 +10,18 @@ function uniqueById<T extends { id: string }>(items: T[]) {
   return Array.from(new Map(items.map((item) => [item.id, item])).values())
 }
 
+function normalizeIndexText(value: unknown) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function patternId(item: any) {
+  return String(item?.id ?? item?.pattern ?? item?.text ?? '').trim()
+}
+
+function topicPayload(value: any) {
+  return value?.detail ?? value
+}
+
 export type ExpressionEntryKind = 'word' | 'chunk' | 'pattern'
 export type ExpressionEntryStatus = 'learning' | 'reviewing' | 'mastered'
 
@@ -227,8 +239,98 @@ async function findRemoteExpressionId(kind: ExpressionEntryKind, text: string): 
 }
 
 export const learningContentRepository = {
+  async savePackContentIndex(packId: string, unitId: string, unitDetail: any, topicDetails: any[]): Promise<void> {
+    const vocabById = new Map<string, any>()
+    const chunkById = new Map<string, any>()
+    const patternById = new Map<string, any>()
+    const refs: Array<{
+      id: string
+      kind: 'vocab' | 'chunk' | 'pattern'
+      contentId: string
+      packId: string
+      unitId: string
+      topicId: string | null
+      createdAt: string
+    }> = []
+    const now = new Date().toISOString()
+
+    for (const raw of topicDetails ?? []) {
+      const detail = topicPayload(raw)
+      const topicId = detail?.topic?.id ?? raw?.topicId ?? null
+
+      for (const vocab of detail?.vocabularies ?? []) {
+        if (!vocab?.id) continue
+        vocabById.set(vocab.id, vocab)
+        refs.push({ id: `vocab:${vocab.id}:${packId}:${topicId ?? 'unit'}`, kind: 'vocab', contentId: vocab.id, packId, unitId, topicId, createdAt: now })
+      }
+
+      for (const chunk of detail?.activeChunks ?? detail?.chunks ?? []) {
+        if (!chunk?.id) continue
+        chunkById.set(chunk.id, chunk)
+        refs.push({ id: `chunk:${chunk.id}:${packId}:${topicId ?? 'unit'}`, kind: 'chunk', contentId: chunk.id, packId, unitId, topicId, createdAt: now })
+      }
+
+      for (const pattern of detail?.sentencePatterns ?? []) {
+        const id = patternId(pattern)
+        if (!id) continue
+        patternById.set(id, { ...pattern, id })
+        refs.push({ id: `pattern:${id}:${packId}:${topicId ?? 'unit'}`, kind: 'pattern', contentId: id, packId, unitId, topicId, createdAt: now })
+      }
+    }
+
+    for (const vocab of unitDetail?.vocabularies ?? []) {
+      if (vocab?.id) vocabById.set(vocab.id, vocab)
+    }
+    for (const chunk of unitDetail?.chunks ?? []) {
+      if (chunk?.id) chunkById.set(chunk.id, chunk)
+    }
+    for (const pattern of unitDetail?.sentencePatterns ?? []) {
+      const id = patternId(pattern)
+      if (id) patternById.set(id, { ...pattern, id })
+    }
+
+    await localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => ({
+      id: item.id,
+      word: item.word ?? item.text ?? '',
+      normalizedText: normalizeIndexText(item.word ?? item.text ?? item.id),
+      data: item,
+      updatedAt: now,
+    })))
+    await localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => ({
+      id: item.id,
+      text: item.text ?? '',
+      normalizedText: normalizeIndexText(item.text ?? item.id),
+      data: item,
+      updatedAt: now,
+    })))
+    await localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => ({
+      id: item.id,
+      pattern: item.pattern ?? item.text ?? '',
+      normalizedText: normalizeIndexText(item.pattern ?? item.text ?? item.id),
+      data: item,
+      updatedAt: now,
+    })))
+    await localDb.putMany('offline_content_refs', refs)
+  },
+
+  async removePackContentIndex(packId: string): Promise<void> {
+    const refs = await localDb.findByIndex<{ id: string; kind: 'vocab' | 'chunk' | 'pattern'; contentId: string }>('offline_content_refs', 'pack_id', packId)
+    await localDb.deleteWhere<any>('offline_content_refs', (ref) => ref.packId === packId)
+
+    for (const ref of refs) {
+      const remaining = await localDb.findByIndex<any>('offline_content_refs', 'content_id', ref.contentId)
+      if (remaining.some((item) => item.kind === ref.kind)) continue
+      if (ref.kind === 'vocab') await localDb.delete('offline_vocabularies', ref.contentId)
+      if (ref.kind === 'chunk') await localDb.delete('offline_chunks', ref.contentId)
+      if (ref.kind === 'pattern') await localDb.delete('offline_patterns', ref.contentId)
+    }
+  },
+
   /** 从已下载的学习包中提取词汇数据 */
   async _getAllVocabularies(): Promise<any[]> {
+    const indexed = await localDb.list<any>('offline_vocabularies')
+    if (indexed.length > 0) return indexed.map((item) => ({ ...item.data, id: item.id }))
+
     const details = await localDb.list<any>('downloaded_unit_details')
     return details
       .filter((d) => d.vocabularies && !d.id.startsWith('topic:'))
@@ -295,10 +397,12 @@ export const learningContentRepository = {
         description: entry.corrected,
         sceneName: entry.sceneName,
       })
-    const details = await localDb.list<any>('downloaded_unit_details')
-    const all = details
-      .filter((d) => d.chunks && !d.id.startsWith('topic:'))
-      .flatMap((d) => (d.chunks ?? []).map((item: any) => ({ ...item, unitId: d.id })))
+    const indexed = await localDb.list<any>('offline_chunks')
+    const all = indexed.length > 0
+      ? indexed.map((item) => ({ ...item.data, id: item.id }))
+      : (await localDb.list<any>('downloaded_unit_details'))
+        .filter((d) => d.chunks && !d.id.startsWith('topic:'))
+        .flatMap((d) => (d.chunks ?? []).map((item: any) => ({ ...item, unitId: d.id })))
     return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.text, query) ||
       includesText(item.meaning, query) ||
@@ -315,10 +419,12 @@ export const learningContentRepository = {
         example: entry.corrected,
         sceneName: entry.sceneName,
       })
-    const details = await localDb.list<any>('downloaded_unit_details')
-    const all = details
-      .filter((d) => d.sentencePatterns && !d.id.startsWith('topic:'))
-      .flatMap((d) => (d.sentencePatterns ?? []).map((item: any) => ({ ...item, id: item.id ?? item.pattern, unitId: d.id })))
+    const indexed = await localDb.list<any>('offline_patterns')
+    const all = indexed.length > 0
+      ? indexed.map((item) => ({ ...item.data, id: item.id }))
+      : (await localDb.list<any>('downloaded_unit_details'))
+        .filter((d) => d.sentencePatterns && !d.id.startsWith('topic:'))
+        .flatMap((d) => (d.sentencePatterns ?? []).map((item: any) => ({ ...item, id: item.id ?? item.pattern, unitId: d.id })))
     return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.pattern, query) ||
       includesText(item.meaning, query) ||

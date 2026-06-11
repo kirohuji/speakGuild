@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -31,6 +31,10 @@ export const TABLE_NAMES = [
   'ink_scripts',
   'dictionary_entries',
   'expression_entries',
+  'offline_vocabularies',
+  'offline_chunks',
+  'offline_patterns',
+  'offline_content_refs',
   'user_progress',
   'practice_records',
   'local_assets',
@@ -100,6 +104,45 @@ export const DDL: Record<TableName, string> = {
       expression_type TEXT,
       mastery_status TEXT,
       sync_status TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  offline_vocabularies: `
+    CREATE TABLE IF NOT EXISTS offline_vocabularies (
+      id TEXT PRIMARY KEY NOT NULL,
+      word TEXT,
+      normalized_text TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  offline_chunks: `
+    CREATE TABLE IF NOT EXISTS offline_chunks (
+      id TEXT PRIMARY KEY NOT NULL,
+      text TEXT,
+      normalized_text TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  offline_patterns: `
+    CREATE TABLE IF NOT EXISTS offline_patterns (
+      id TEXT PRIMARY KEY NOT NULL,
+      pattern TEXT,
+      normalized_text TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  offline_content_refs: `
+    CREATE TABLE IF NOT EXISTS offline_content_refs (
+      id TEXT PRIMARY KEY NOT NULL,
+      content_kind TEXT,
+      content_id TEXT,
+      pack_id TEXT,
+      unit_id TEXT,
+      topic_id TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -176,6 +219,12 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_expression_remote_id ON expression_entries (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_expression_type ON expression_entries (expression_type)`,
   `CREATE INDEX IF NOT EXISTS idx_expression_mastery_status ON expression_entries (mastery_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_vocab_normalized ON offline_vocabularies (normalized_text)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_chunk_normalized ON offline_chunks (normalized_text)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_pattern_normalized ON offline_patterns (normalized_text)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_kind_id ON offline_content_refs (content_kind, content_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_pack ON offline_content_refs (pack_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_topic ON offline_content_refs (topic_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_remote_id ON user_progress (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_type ON user_progress (progress_type)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_scene_id ON user_progress (scene_id)`,

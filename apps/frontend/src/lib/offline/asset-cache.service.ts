@@ -6,6 +6,7 @@ import { localDb } from './unified-storage'
 export interface AssetRef {
   assetId?: string
   url: string
+  path?: string
   sha256?: string | null
   mimeType?: string | null
   size?: number | null
@@ -65,6 +66,10 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
   return btoa(binary)
 }
 
+function arrayBufferToDataUrl(buffer: ArrayBuffer, mimeType?: string | null) {
+  return `data:${mimeType || 'application/octet-stream'};base64,${arrayBufferToBase64(buffer)}`
+}
+
 async function assetKey(ref: AssetRef) {
   return ref.assetId || ref.sha256 || await digest(normalizeUrl(ref.url))
 }
@@ -90,15 +95,16 @@ function toLoadableUrl(fileUri: string): string {
 export const assetCacheService = {
   async resolve(ref: AssetRef): Promise<string> {
     const url = normalizeUrl(ref.url)
-    if (!url || !isNative()) return url
+    if (!url) return url
 
     const key = await assetKey({ ...ref, url })
     const cached = await localDb.get<LocalAsset>('local_assets', key)
     if (cached?.status === 'ready' && cached.localUri) {
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
-      return toLoadableUrl(cached.localUri)
+      return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
+    if (!isNative()) return url
     return this.download({ ...ref, url })
   },
 
@@ -177,6 +183,66 @@ export const assetCacheService = {
       })
       return url
     }
+  },
+
+  async saveFromBuffer(ref: AssetRef, buffer: ArrayBuffer): Promise<string> {
+    const url = normalizeUrl(ref.url)
+    const key = await assetKey({ ...ref, url })
+    const ext = extensionFrom(ref.path ?? url, ref.mimeType)
+    const path = `offline-assets/${key}.${ext}`
+
+    if (ref.sha256) {
+      const actual = await digest(buffer)
+      if (actual.toLowerCase() !== ref.sha256.toLowerCase()) {
+        throw new Error('Pack asset hash mismatch')
+      }
+    }
+
+    if (!isNative()) {
+      if (!import.meta.env.DEV) return url
+
+      const dataUrl = arrayBufferToDataUrl(buffer, ref.mimeType)
+      const now = new Date().toISOString()
+      await localDb.put<LocalAsset>('local_assets', {
+        id: key,
+        assetId: key,
+        remoteUrl: url,
+        sha256: ref.sha256,
+        mimeType: ref.mimeType,
+        size: ref.size ?? buffer.byteLength,
+        localPath: path,
+        localUri: dataUrl,
+        status: 'ready',
+        downloadedAt: now,
+        lastAccessedAt: now,
+      })
+      return dataUrl
+    }
+
+    await Filesystem.writeFile({
+      path,
+      data: arrayBufferToBase64(buffer),
+      directory: Directory.Data,
+      recursive: true,
+    })
+    const uri = await Filesystem.getUri({ path, directory: Directory.Data })
+    const now = new Date().toISOString()
+
+    await localDb.put<LocalAsset>('local_assets', {
+      id: key,
+      assetId: key,
+      remoteUrl: url,
+      sha256: ref.sha256,
+      mimeType: ref.mimeType,
+      size: ref.size ?? buffer.byteLength,
+      localPath: path,
+      localUri: uri.uri,
+      status: 'ready',
+      downloadedAt: now,
+      lastAccessedAt: now,
+    })
+
+    return toLoadableUrl(uri.uri)
   },
 
   async remove(assetId: string): Promise<void> {

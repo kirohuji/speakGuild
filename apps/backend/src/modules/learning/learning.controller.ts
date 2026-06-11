@@ -1,5 +1,5 @@
-import { Controller, Delete, Get, Param, Post, Body, Query, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Controller, Delete, Get, Param, Post, Body, Query, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { LearningService } from './learning.service';
 import { requireAuthSession } from '../auth/session.util';
 
@@ -47,6 +47,41 @@ export class LearningController {
   async getOfflineManifest(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);
     return this.learningService.getOfflineManifest(session.user.id, id);
+  }
+
+  /** 获取学习包 manifest（zip 内同名文件的预览版本） */
+  @Get('units/:id/pack-manifest')
+  async getPackManifest(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    const preview = await this.learningService.getOfflineManifest(session.user.id, id);
+    return {
+      manifest: preview.manifest,
+      zipChecksum: null,
+      fileName: `${preview.manifest.packId}-${preview.manifest.version}.zip`,
+      size: null,
+    };
+  }
+
+  /** 下载学习包 zip。V1 动态生成，后续可替换为 COS 302。 */
+  @Get('units/:id/download-pack')
+  async downloadPack(@Req() req: Request, @Param('id') id: string, @Res() res: Response) {
+    const session = await requireAuthSession(req);
+    const pack = await this.learningService.buildLearningPackZip(session.user.id, id);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${pack.fileName}"`);
+    res.setHeader('Content-Length', String(pack.buffer.byteLength));
+    res.setHeader('X-Learning-Pack-Checksum', pack.checksum);
+    res.send(pack.buffer);
+  }
+
+  /** 检查已安装学习包是否有新版本。V1 仅返回 full 更新。 */
+  @Post('packs/check')
+  async checkPacks(
+    @Req() req: Request,
+    @Body() body: { installed?: Array<{ packId: string; version?: number }> },
+  ) {
+    const session = await requireAuthSession(req);
+    return this.learningService.checkLearningPacks(session.user.id, body.installed ?? []);
   }
 
   /** 获取今日任务 */

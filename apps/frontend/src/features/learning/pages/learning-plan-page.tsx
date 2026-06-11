@@ -36,6 +36,7 @@ export function LearningPlanPage() {
   const storeQuitUnit = useLearningStore((s) => s.quitUnit)
   const storeEnrollUnit = useLearningStore((s) => s.enrollUnit)
   const downloadedPacks = useLearningStore((s) => s.downloadedPacks)
+  const availablePackUpdates = useLearningStore((s) => s.availablePackUpdates)
   const packInstallingIds = useLearningStore((s) => s.packInstallingIds)
   const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
   const downloadUnitPack = useLearningStore((s) => s.downloadUnitPack)
@@ -73,6 +74,7 @@ export function LearningPlanPage() {
           onRefresh={refreshMyUnits}
           onQuitUnit={storeQuitUnit}
           downloadedPackIds={downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)}
+          updatePackIds={availablePackUpdates.map((update) => update.packId)}
           installingPackIds={packInstallingIds}
           onDownloadUnitPack={downloadUnitPack}
         />

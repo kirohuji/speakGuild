@@ -33,6 +33,25 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['mastery_status', 'masteryStatus', (value) => value?.masteryStatus ?? null],
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
   ],
+  offline_vocabularies: [
+    ['word', 'word', (value) => value?.word ?? null],
+    ['normalized_text', 'normalizedText', (value) => value?.normalizedText ?? null],
+  ],
+  offline_chunks: [
+    ['text', 'text', (value) => value?.text ?? null],
+    ['normalized_text', 'normalizedText', (value) => value?.normalizedText ?? null],
+  ],
+  offline_patterns: [
+    ['pattern', 'pattern', (value) => value?.pattern ?? null],
+    ['normalized_text', 'normalizedText', (value) => value?.normalizedText ?? null],
+  ],
+  offline_content_refs: [
+    ['content_kind', 'kind', (value) => value?.kind ?? null],
+    ['content_id', 'contentId', (value) => value?.contentId ?? null],
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['unit_id', 'unitId', (value) => value?.unitId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+  ],
   user_progress: [
     ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
     ['progress_type', 'type', (value) => value?.type ?? null],

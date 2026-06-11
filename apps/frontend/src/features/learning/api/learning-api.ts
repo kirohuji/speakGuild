@@ -221,6 +221,28 @@ export interface OfflineManifestResult {
   topicDetails: any[]
 }
 
+export interface PackManifestPreview {
+  manifest: OfflineManifestResult['manifest'] & {
+    formatVersion?: number
+    contentRoot?: string
+    generatedAt?: string
+    files?: Record<string, string>
+    failedAssets?: Array<{ url: string; reason: string }>
+  }
+  zipChecksum: string | null
+  fileName: string
+  size: number | null
+}
+
+export interface PackUpdateInfo {
+  packId: string
+  fromVersion: number
+  toVersion: number
+  updateType: 'full'
+  title?: string
+  updatedAt?: string
+}
+
 // ---- API 方法 ----
 
 export const learningApi = {
@@ -239,6 +261,19 @@ export const learningApi = {
 
   getOfflineManifest: (unitId: string) =>
     get<OfflineManifestResult>(`/learning/units/${unitId}/offline-manifest`),
+
+  getPackManifest: (unitId: string) =>
+    get<PackManifestPreview>(`/learning/units/${unitId}/pack-manifest`, undefined, { dedupe: false }),
+
+  downloadPack: (unitId: string) =>
+    get<ArrayBuffer>(`/learning/units/${unitId}/download-pack`, undefined, {
+      dedupe: false,
+      responseType: 'arraybuffer',
+      timeout: 120_000,
+    }),
+
+  checkPacks: (installed: Array<{ packId: string; version?: number }>) =>
+    post<{ updates: PackUpdateInfo[] }>('/learning/packs/check', { installed }),
 
   /** 获取今日任务 */
   getTodayTasks: () => get<TodayPlan>('/learning/today'),

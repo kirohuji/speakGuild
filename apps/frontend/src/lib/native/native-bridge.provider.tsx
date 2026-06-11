@@ -23,6 +23,7 @@ import { pushNotifications } from './push-notifications';
 import { filesystem }     from './filesystem';
 import { Style } from '@capacitor/status-bar';
 import { App } from '@capacitor/app';
+import { useLearningStore } from '@/stores/learning.store';
 
 const capabilities: NativeCapabilities = {
   splashScreen,
@@ -80,6 +81,9 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
       void capabilities.updater.checkUpdate().catch((err) => {
         console.warn('[NativeBridge] Startup checkUpdate failed:', err);
       });
+      void useLearningStore.getState().checkPackUpdates(true).catch((err) => {
+        console.warn('[NativeBridge] Startup learning pack check failed:', err);
+      });
     }
   }, [ready]);
 
@@ -93,6 +97,9 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
       console.log('[NativeBridge] App resumed — checking update...');
       void capabilities.updater.checkUpdate().catch((err) => {
         console.warn('[NativeBridge] Resume checkUpdate failed:', err);
+      });
+      void useLearningStore.getState().checkPackUpdates(true).catch((err) => {
+        console.warn('[NativeBridge] Resume learning pack check failed:', err);
       });
     }).then((h) => {
       handle = h;

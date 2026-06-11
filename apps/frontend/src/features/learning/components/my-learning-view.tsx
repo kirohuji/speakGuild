@@ -24,6 +24,7 @@ interface Props {
   onRefresh?: () => void
   onQuitUnit?: (id: string) => Promise<void>
   downloadedPackIds?: string[]
+  updatePackIds?: string[]
   installingPackIds?: string[]
   onDownloadUnitPack?: (id: string) => Promise<void>
 }
@@ -37,11 +38,13 @@ export function MyLearningView({
   onRefresh,
   onQuitUnit,
   downloadedPackIds = [],
+  updatePackIds = [],
   installingPackIds = [],
   onDownloadUnitPack,
 }: Props) {
   const { t } = useTranslation()
   const downloadedPackIdSet = useMemo(() => new Set(downloadedPackIds), [downloadedPackIds])
+  const updatePackIdSet = useMemo(() => new Set(updatePackIds), [updatePackIds])
   const installingPackIdSet = useMemo(() => new Set(installingPackIds), [installingPackIds])
 
   if (loading) {
@@ -73,6 +76,7 @@ export function MyLearningView({
                 key={unit.id}
                 unit={unit}
                 isPackDownloaded={downloadedPackIdSet.has(unit.id)}
+                hasPackUpdate={updatePackIdSet.has(unit.id)}
                 isPackInstalling={installingPackIdSet.has(unit.id)}
                 onDownloadPack={() => onDownloadUnitPack?.(unit.id)}
                 onQuit={() => onQuitUnit?.(unit.id)}
@@ -99,12 +103,14 @@ export function MyLearningView({
 function InProgressUnitCard({
   unit,
   isPackDownloaded,
+  hasPackUpdate,
   isPackInstalling,
   onDownloadPack,
   onQuit,
 }: {
   unit: MyUnit
   isPackDownloaded: boolean
+  hasPackUpdate: boolean
   isPackInstalling: boolean
   onDownloadPack?: () => Promise<void>
   onQuit?: () => Promise<void>
@@ -114,6 +120,7 @@ function InProgressUnitCard({
   const [quitting, setQuitting] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
   const needsDownload = !isPackDownloaded
+  const showPackAction = needsDownload || hasPackUpdate
 
   const handleQuit = useCallback(async () => {
     setQuitting(true)
@@ -176,10 +183,12 @@ function InProgressUnitCard({
           </div>
         </Link>
 
-        {needsDownload && (
+        {showPackAction && (
           <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2">
             <p className="min-w-0 flex-1 truncate text-xs text-amber-700 dark:text-amber-300">
-              {t('learning.packNeedsDownload')}
+              {needsDownload
+                ? t('learning.packNeedsDownload')
+                : t('learning.packUpdateAvailable', { defaultValue: '学习包有版本更新' })}
             </p>
             <Button
               type="button"

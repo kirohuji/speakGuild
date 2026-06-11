@@ -103,6 +103,7 @@ export const offlineStorageService = {
 
     if (category === 'packs') {
       await clearTables(['downloaded_packs', 'downloaded_unit_details', 'ink_scripts'])
+      await clearTables(['offline_vocabularies', 'offline_chunks', 'offline_patterns', 'offline_content_refs'])
       return
     }
 
