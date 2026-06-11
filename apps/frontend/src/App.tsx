@@ -39,6 +39,8 @@ const LeaderboardPage = lazy(() => import('@/features/leaderboard/pages/leaderbo
 const InvitePage = lazy(() => import('@/features/referral/pages/invite-page').then(m => ({ default: m.InvitePage })))
 const PortalPage = lazy(() => import('@/features/portal/pages/portal-page').then(m => ({ default: m.PortalPage })))
 const CompanyPage = lazy(() => import('@/features/company/pages/company-page').then(m => ({ default: m.CompanyPage })))
+const MarketingPage = lazy(() => import('@/features/system/pages/marketing-page').then(m => ({ default: m.MarketingPage })))
+const SupportPage = lazy(() => import('@/features/system/pages/support-page').then(m => ({ default: m.SupportPage })))
 const SystemTermsPage = lazy(() => import('@/features/system/pages/system-terms-page').then(m => ({ default: m.SystemTermsPage })))
 const SystemPrivacyPage = lazy(() => import('@/features/system/pages/system-privacy-page').then(m => ({ default: m.SystemPrivacyPage })))
 const SystemChildrenPrivacyPage = lazy(() => import('@/features/system/pages/system-children-page').then(m => ({ default: m.SystemChildrenPrivacyPage })))
@@ -105,11 +107,15 @@ export default function App() {
                 <Route path="/system/privacy-concise" element={<SystemPrivacyConcisePage />} />
                 <Route path="/system/icp" element={<SystemIcpPage />} />
                 <Route path="/system/contact" element={<SystemContactPage />} />
+                <Route path="/system/support" element={<SupportPage />} />
+                <Route path="/system/marketing" element={<MarketingPage />} />
               </Route>
 
               {/* ── Web 独有：PC/官网页 — Capacitor 端不注册 ── */}
               {!isNative() && <Route path="/portal" element={<PortalPage />} />}
               {!isNative() && <Route path="/company" element={<CompanyPage />} />}
+              {!isNative() && <Route path="/marketing" element={<MarketingPage />} />}
+              {!isNative() && <Route path="/support" element={<SupportPage />} />}
 
               {/* 认证页 — 静态（登录是高频入口） */}
               <Route path="/auth/login" element={<LoginPage />} />

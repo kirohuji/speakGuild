@@ -1,4 +1,5 @@
 ALTER TYPE "FileAssetGroup" ADD VALUE IF NOT EXISTS 'learning_pack';
+ALTER TYPE "FileAssetGroup" ADD VALUE IF NOT EXISTS 'learning_pack_delta';
 
 DO $$
 BEGIN
@@ -35,3 +36,30 @@ ALTER TABLE "learning_package"
 ALTER TABLE "learning_package"
   ADD CONSTRAINT "learning_package_fileAssetId_fkey"
   FOREIGN KEY ("fileAssetId") REFERENCES "file_asset"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "delta_package" (
+  "id" TEXT NOT NULL,
+  "packId" TEXT NOT NULL,
+  "fromVersion" INTEGER NOT NULL,
+  "toVersion" INTEGER NOT NULL,
+  "fileAssetId" TEXT NOT NULL,
+  "deltaChecksum" TEXT NOT NULL,
+  "deltaSize" INTEGER NOT NULL,
+  "addedCount" INTEGER NOT NULL DEFAULT 0,
+  "modifiedCount" INTEGER NOT NULL DEFAULT 0,
+  "removedCount" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT "delta_package_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "delta_package_packId_fromVersion_toVersion_key" ON "delta_package"("packId", "fromVersion", "toVersion");
+CREATE INDEX IF NOT EXISTS "delta_package_packId_idx" ON "delta_package"("packId");
+
+ALTER TABLE "delta_package"
+  ADD CONSTRAINT "delta_package_packId_fkey"
+  FOREIGN KEY ("packId") REFERENCES "learning_package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "delta_package"
+  ADD CONSTRAINT "delta_package_fileAssetId_fkey"
+  FOREIGN KEY ("fileAssetId") REFERENCES "file_asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

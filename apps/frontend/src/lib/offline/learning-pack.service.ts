@@ -119,6 +119,14 @@ function normalizeZipPath(path: string) {
   return path.replace(/\\/g, '/').replace(/^\/+/, '')
 }
 
+function safeFilePart(value: string) {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '') || 'file'
+}
+
+function isAssetPath(path: string) {
+  return normalizeZipPath(path).startsWith('assets/')
+}
+
 /** 从文件路径或 URL 提取扩展名 */
 function extensionFrom(urlOrPath: string, mimeType?: string | null) {
   const match = urlOrPath.match(/\.([a-z0-9]{2,5})$/i)
@@ -156,6 +164,42 @@ async function verifyEntry(path: string, buffer: ArrayBuffer, checksums?: Record
   if (actual.toLowerCase() !== expected.toLowerCase()) {
     throw new Error(`Pack file checksum mismatch: ${path}`)
   }
+}
+
+async function readPackContentFromEntries(
+  entries: Map<string, Entry>,
+  manifest: LearningPackManifest,
+  checksums?: Record<string, string>,
+) {
+  const sceneEntry = entries.get('content/scene.json')
+  let unitDetail: any
+  if (sceneEntry) {
+    const sceneText = await readEntryText(sceneEntry)
+    await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
+    unitDetail = JSON.parse(sceneText)
+  } else {
+    unitDetail = await localDb.get<any>('downloaded_unit_details', manifest.packId)
+  }
+  if (!unitDetail) throw new Error('Delta pack cannot reconstruct content/scene.json')
+
+  const topicDetails: any[] = []
+  for (const topicId of manifest.topics ?? []) {
+    const path = `content/topics/${safeFilePart(topicId)}.json`
+    const topicEntry = entries.get(path)
+    if (topicEntry) {
+      const text = await readEntryText(topicEntry)
+      await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
+      topicDetails.push(JSON.parse(text))
+      continue
+    }
+
+    const cached = await localDb.get<any>('downloaded_unit_details', `topic:${topicId}`)
+    const cachedDetail = cached?.detail ?? cached
+    if (!cachedDetail) throw new Error(`Delta pack cannot reconstruct topic content: ${topicId}`)
+    topicDetails.push(cachedDetail)
+  }
+
+  return { unitDetail, topicDetails }
 }
 
 async function persistInstalledRecord(manifest: LearningPackManifest): Promise<InstalledLearningPack> {
@@ -401,16 +445,49 @@ export const learningPackService = {
 
       const deltaManifest = await readJsonEntry<any>(entries, 'delta-manifest.json')
       if (!deltaManifest) throw new Error('Delta pack is missing delta-manifest.json')
+      if (deltaManifest.packId && deltaManifest.packId !== packId) {
+        throw new Error(`Delta packId mismatch: ${deltaManifest.packId} !== ${packId}`)
+      }
+      if (Number(deltaManifest.fromVersion) !== fromVersion || Number(deltaManifest.toVersion) !== toVersion) {
+        throw new Error(`Delta version mismatch: ${deltaManifest.fromVersion}→${deltaManifest.toVersion}`)
+      }
       console.log(`[learning-pack] delta manifest: +${deltaManifest.added?.length ?? 0} / ~${deltaManifest.modified?.length ?? 0} / -${deltaManifest.removed?.length ?? 0}`)
 
-      // 1. 应用 added 文件
-      const allAssetRefs = await localDb.list<any>('asset_refs')
+      const targetManifest = entries.has('pack-manifest.json')
+        ? await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
+        : deltaManifest.targetManifest as LearningPackManifest | undefined
+      if (!targetManifest) throw new Error('Delta pack is missing target pack manifest')
+      if (targetManifest.packId !== packId) {
+        throw new Error(`Target manifest packId mismatch: ${targetManifest.packId} !== ${packId}`)
+      }
+      const checksums = entries.has('checksums.json')
+        ? await readJsonEntry<Record<string, string>>(entries, 'checksums.json')
+        : (deltaManifest.targetFiles ?? targetManifest.files ?? {})
+
+      // 1. 应用 content 文件，重建本地详情和索引
+      const hasContentChanges = [...(deltaManifest.added ?? []), ...(deltaManifest.modified ?? []), ...(deltaManifest.removed ?? [])]
+        .some((path) => normalizeZipPath(path).startsWith('content/'))
+      if (hasContentChanges) {
+        const { unitDetail, topicDetails } = await readPackContentFromEntries(entries, targetManifest, checksums)
+        const topicIds = new Set(targetManifest.topics ?? [])
+        await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId && item.topicId && !topicIds.has(item.topicId))
+        await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
+        await learningContentRepository.removePackContentIndex(packId)
+        await persistUnitContent(unitDetail, topicDetails)
+        await learningContentRepository.savePackContentIndex(packId, unitDetail.id ?? packId, unitDetail, topicDetails)
+        console.log(`[learning-pack]   content: ${topicDetails.length} topics re-indexed`)
+      }
+
+      // 2. 应用 added asset 文件
       for (const path of deltaManifest.added ?? []) {
+        if (!isAssetPath(path)) continue
         const entry = entries.get(normalizeZipPath(path))
         if (!entry) continue
         const buffer = await readEntryBuffer(entry)
+        await verifyEntry(normalizeZipPath(path), buffer, checksums)
         const sha256 = await digest(buffer)
 
+        const allAssetRefs = await localDb.list<any>('asset_refs')
         const existingRefs = allAssetRefs.filter((r: any) => r.sha256 === sha256)
         if (existingRefs.length === 0) {
           const assetRef = {
@@ -435,19 +512,22 @@ export const learningPackService = {
       }
       console.log(`[learning-pack]   added: ${deltaManifest.added?.length ?? 0}`)
 
-      // 2. 应用 modified 文件（替换旧 SHA256 → 新 SHA256）
+      // 3. 应用 modified asset 文件（替换旧 SHA256 → 新 SHA256）
       for (const path of deltaManifest.modified ?? []) {
+        if (!isAssetPath(path)) continue
         const entry = entries.get(normalizeZipPath(path))
         if (!entry) continue
         const buffer = await readEntryBuffer(entry)
+        await verifyEntry(normalizeZipPath(path), buffer, checksums)
         const newSha256 = await digest(buffer)
 
         // 删除旧引用（同一 packId + logicalPath 的旧记录）
+        const allAssetRefs = await localDb.list<any>('asset_refs')
         const oldRefs = allAssetRefs.filter((r: any) => r.packId === packId && r.logicalPath === path)
         for (const oldRef of oldRefs) {
           await localDb.delete('asset_refs', oldRef.id)
           // 检查是否还有其他包引用旧 SHA256
-          const remaining = allAssetRefs.filter((r: any) => r.sha256 === oldRef.sha256 && r.id !== oldRef.id)
+          const remaining = (await localDb.list<any>('asset_refs')).filter((r: any) => r.sha256 === oldRef.sha256)
           if (remaining.length === 0) {
             await assetCacheService.remove(oldRef.sha256)
           }
@@ -470,12 +550,14 @@ export const learningPackService = {
       }
       console.log(`[learning-pack]   modified: ${deltaManifest.modified?.length ?? 0}`)
 
-      // 3. 应用 removed 文件
+      // 4. 应用 removed asset 文件
       for (const path of deltaManifest.removed ?? []) {
+        if (!isAssetPath(path)) continue
+        const allAssetRefs = await localDb.list<any>('asset_refs')
         const oldRefs = allAssetRefs.filter((r: any) => r.packId === packId && r.logicalPath === path)
         for (const oldRef of oldRefs) {
           await localDb.delete('asset_refs', oldRef.id)
-          const remaining = allAssetRefs.filter((r: any) => r.sha256 === oldRef.sha256 && r.id !== oldRef.id)
+          const remaining = (await localDb.list<any>('asset_refs')).filter((r: any) => r.sha256 === oldRef.sha256)
           if (remaining.length === 0) {
             await assetCacheService.remove(oldRef.sha256)
           }
@@ -483,12 +565,15 @@ export const learningPackService = {
       }
       console.log(`[learning-pack]   removed: ${deltaManifest.removed?.length ?? 0}`)
 
-      // 4. 更新 pack 记录
+      // 5. 更新 pack 记录
       const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
       if (pack) {
         await localDb.put('downloaded_packs', {
           ...pack,
           version: toVersion,
+          title: targetManifest.title,
+          manifest: targetManifest,
+          status: 'installed',
           installedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })

@@ -28,6 +28,8 @@ export function Footer() {
             <Link to="/system/sdk-list" className="hover:text-foreground transition-colors">SDK目录</Link>
             <Link to="/system/collect-info" className="hover:text-foreground transition-colors">信息收集清单</Link>
             <Link to="/system/icp" className="hover:text-foreground transition-colors">ICP备案</Link>
+            <Link to="/marketing" className="hover:text-foreground transition-colors">产品介绍</Link>
+            <Link to="/support" className="hover:text-foreground transition-colors">支持中心</Link>
             <Link to="/system/contact" className="hover:text-foreground transition-colors">联系我们</Link>
           </div>
         </div>

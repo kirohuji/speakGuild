@@ -56,7 +56,7 @@ function getPrimaryNavigation(pathname: string, direction: SwipeDirection) {
   const index = PRIMARY_ROUTES.indexOf(current as (typeof PRIMARY_ROUTES)[number])
   if (index < 0) return null
 
-  const nextIndex = direction === 'left' ? index - 1 : index + 1
+  const nextIndex = direction === 'left' ? index + 1 : index - 1
   return PRIMARY_ROUTES[nextIndex] ?? null
 }
 
@@ -117,7 +117,7 @@ export function MobileGestureProvider({ children }: { children: ReactNode }) {
       const elapsed = Date.now() - startTime
       if (elapsed > 850 && absX < 120) return
 
-      if (direction === 'left' && shouldBackInsteadOfPrimary(location.pathname)) {
+      if (direction === 'right' && shouldBackInsteadOfPrimary(location.pathname)) {
         navigate(-1)
         return
       }

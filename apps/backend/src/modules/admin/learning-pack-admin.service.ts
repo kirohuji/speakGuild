@@ -95,7 +95,7 @@ export class LearningPackAdminService {
       });
       await this.fileAssets.createSystemReference(asset.id, 'learning_pack', record.id);
 
-      return (this.prisma as any).learningPackage.update({
+      const updated = await (this.prisma as any).learningPackage.update({
         where: { id: record.id },
         data: {
           status: input?.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
@@ -111,6 +111,12 @@ export class LearningPackAdminService {
           fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
         },
       });
+      if (updated.status === PACKAGE_STATUS.published) {
+        await this.generateDeltaIfPossible(updated).catch((err) => {
+          console.warn('[learning-pack] delta generation failed, continuing generate:', err.message);
+        });
+      }
+      return updated;
     } catch (error) {
       await (this.prisma as any).learningPackage.update({
         where: { id: record.id },
@@ -196,13 +202,19 @@ export class LearningPackAdminService {
     }
     await this.fileAssets.createSystemReference(asset.id, 'learning_pack', record.id);
 
-    return (this.prisma as any).learningPackage.findUnique({
+    const result = await (this.prisma as any).learningPackage.findUnique({
       where: { id: record.id },
       include: {
         scene: { select: { id: true, title: true, location: true } },
         fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
       },
     });
+    if (result?.status === PACKAGE_STATUS.published) {
+      await this.generateDeltaIfPossible(result).catch((err) => {
+        console.warn('[learning-pack] delta generation failed, continuing upload:', err.message);
+      });
+    }
+    return result;
   }
 
   async download(id: string) {
@@ -303,7 +315,8 @@ export class LearningPackAdminService {
 
     // 生成 delta-manifest.json
     const deltaManifest = {
-      packId: pack.id,
+      packId: pack.sceneId,
+      packageRecordId: pack.id,
       fromVersion: prev.version,
       toVersion: pack.version,
       generatedAt: new Date().toISOString(),
@@ -321,9 +334,13 @@ export class LearningPackAdminService {
         unchangedCount: unchanged.length,
         changePercent: Math.round(changeRatio * 100),
       },
+      targetManifest: pack.manifestSnapshot,
+      targetFiles: currFiles,
     };
 
     deltaZip.addFile('delta-manifest.json', Buffer.from(JSON.stringify(deltaManifest, null, 2)));
+    deltaZip.addFile('pack-manifest.json', Buffer.from(JSON.stringify(pack.manifestSnapshot, null, 2)));
+    deltaZip.addFile('checksums.json', Buffer.from(JSON.stringify(currFiles, null, 2)));
 
     // 添加变更文件
     for (const path of [...added, ...modified]) {
@@ -346,8 +363,13 @@ export class LearningPackAdminService {
     await this.fileAssets.createSystemReference(asset.id, 'learning_pack_delta', `${pack.id}:${prev.version}:${pack.version}`);
 
     // 写入 DeltaPackage 记录
-    await (this.prisma as any).deltaPackage.create({
-      data: {
+    const existingDelta = await (this.prisma as any).deltaPackage.findUnique({
+      where: { packId_fromVersion_toVersion: { packId: pack.id, fromVersion: prev.version, toVersion: pack.version } },
+      select: { fileAssetId: true },
+    });
+    await (this.prisma as any).deltaPackage.upsert({
+      where: { packId_fromVersion_toVersion: { packId: pack.id, fromVersion: prev.version, toVersion: pack.version } },
+      create: {
         packId: pack.id,
         fromVersion: prev.version,
         toVersion: pack.version,
@@ -358,7 +380,18 @@ export class LearningPackAdminService {
         modifiedCount: modified.length,
         removedCount: removed.length,
       },
+      update: {
+        fileAssetId: asset.id,
+        deltaChecksum,
+        deltaSize: deltaBuffer.byteLength,
+        addedCount: added.length,
+        modifiedCount: modified.length,
+        removedCount: removed.length,
+      },
     });
+    if (existingDelta?.fileAssetId && existingDelta.fileAssetId !== asset.id) {
+      await this.fileAssets.deleteSystemReference(existingDelta.fileAssetId, 'learning_pack_delta', `${pack.id}:${prev.version}:${pack.version}`);
+    }
 
     console.log(`[learning-pack] ✅ delta generated: ${added.length}+${modified.length} files, ${(deltaBuffer.byteLength / 1024).toFixed(0)}KB (saved ${((1 - changeRatio) * 100).toFixed(0)}%)`);
   }

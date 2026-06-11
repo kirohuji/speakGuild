@@ -76,17 +76,17 @@ export default {
   				'Inter',
   				'-apple-system',
   				'BlinkMacSystemFont',
-  				'Noto Sans SC"',
+  				'Noto Sans SC',
   				'sans-serif'
   			],
   			display: [
-  				'Plus Jakarta Sans"',
+  				'Plus Jakarta Sans',
   				'Inter',
   				'-apple-system',
   				'sans-serif'
   			],
   			mono: [
-  				'JetBrains Mono"',
+  				'JetBrains Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'monospace'
