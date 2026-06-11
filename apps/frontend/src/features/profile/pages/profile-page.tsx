@@ -2438,7 +2438,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
       </Dialog>}
 
       {/* 手机号绑定弹窗 */}
-      {desktop && <Dialog open={phoneBindOpen} onOpenChange={(v) => { setPhoneBindOpen(v); if (!v) { setBindPhone(''); setBindOtp(''); setBindError(''); setBindOtpSent(false); resetBindCountdown() } }}>
+      <Dialog open={phoneBindOpen} onOpenChange={(v) => { setPhoneBindOpen(v); if (!v) { setBindPhone(''); setBindOtp(''); setBindError(''); setBindOtpSent(false); resetBindCountdown() } }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('profile.bindPhone')}</DialogTitle>
@@ -2513,7 +2513,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>}
+      </Dialog>
 
       {desktop && <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <DialogContent className="sm:max-w-sm">
