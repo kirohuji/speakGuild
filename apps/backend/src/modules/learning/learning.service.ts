@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import AdmZip = require('adm-zip');
 import { createHash } from 'crypto';
+import { FileAssetsService } from '../file-assets/file-assets.service';
 
 function sha256Buffer(buffer: Buffer) {
   return createHash('sha256').update(buffer).digest('hex');
@@ -40,7 +41,10 @@ function extensionFromMime(mime?: string | null) {
 
 @Injectable()
 export class LearningService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fileAssets: FileAssetsService,
+  ) {}
 
   private pushAsset(assets: any[], url?: string | null, role?: string) {
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return;
@@ -694,8 +698,13 @@ export class LearningService {
     };
   }
 
-  async buildLearningPackZip(userId: string, unitId: string) {
+  async buildLearningPackZip(userId: string, unitId: string, overrides?: { version?: number; title?: string }) {
     const source = await this.getOfflineManifest(userId, unitId);
+    const baseManifest = {
+      ...source.manifest,
+      version: overrides?.version ?? source.manifest.version,
+      title: overrides?.title ?? source.manifest.title,
+    };
     const zip = new AdmZip();
     const checksums: Record<string, string> = {};
 
@@ -779,7 +788,7 @@ export class LearningService {
     }
 
     const manifest = {
-      ...source.manifest,
+      ...baseManifest,
       formatVersion: 1,
       contentRoot: 'content',
       generatedAt: new Date().toISOString(),
@@ -792,10 +801,35 @@ export class LearningService {
 
     const zipBuffer = zip.toBuffer();
     return {
-      fileName: `${safeFilePart(source.manifest.packId)}-${source.manifest.version}.zip`,
+      fileName: `${safeFilePart(baseManifest.packId)}-${baseManifest.version}.zip`,
       checksum: sha256Buffer(zipBuffer),
       manifest,
       buffer: zipBuffer,
+    };
+  }
+
+  async getPublishedLearningPackage(unitId: string) {
+    return (this.prisma as any).learningPackage.findFirst({
+      where: {
+        sceneId: unitId,
+        status: 'published',
+        fileAssetId: { not: null },
+      },
+      include: {
+        fileAsset: true,
+      },
+      orderBy: { version: 'desc' },
+    });
+  }
+
+  async getPublishedLearningPackageDownload(unitId: string) {
+    const pack = await this.getPublishedLearningPackage(unitId);
+    if (!pack?.fileAssetId) return null;
+    const signed = await this.fileAssets.getPrivateUrlByAssetId(pack.fileAssetId);
+    return {
+      pack,
+      url: signed.url,
+      expiresInSeconds: signed.expiresInSeconds,
     };
   }
 
@@ -804,8 +838,11 @@ export class LearningService {
     for (const pack of installed ?? []) {
       if (!pack?.packId) continue;
       try {
-        const latest = await this.getOfflineManifest(userId, pack.packId);
-        const latestVersion = Number(latest.manifest.version ?? 0);
+        const published = await this.getPublishedLearningPackage(pack.packId);
+        const latest = published?.manifestSnapshot
+          ? { manifest: published.manifestSnapshot as any }
+          : await this.getOfflineManifest(userId, pack.packId);
+        const latestVersion = Number((latest.manifest as any).version ?? published?.version ?? 0);
         const currentVersion = Number(pack.version ?? 0);
         if (latestVersion > currentVersion) {
           updates.push({
@@ -813,8 +850,8 @@ export class LearningService {
             fromVersion: currentVersion,
             toVersion: latestVersion,
             updateType: 'full',
-            title: latest.manifest.title,
-            updatedAt: latest.manifest.updatedAt,
+            title: (latest.manifest as any).title,
+            updatedAt: (latest.manifest as any).updatedAt,
           });
         }
       } catch {

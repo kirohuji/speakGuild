@@ -59,6 +59,7 @@ import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
 import { AdminThemesPage } from '@/features/admin/theme-manage/pages/theme-list-page'
 import { AdminDailySentencesPage } from '@/features/admin/pages/admin-daily-sentences-page'
 import { AdminMobileBundlesPage } from '@/features/admin/pages/admin-mobile-bundles-page'
+import { AdminLearningPacksPage } from '@/features/admin/pages/admin-learning-packs-page'
 import { AdminContentLibraryPage } from '@/features/admin/pages/admin-content-library-page'
 import { AdminDictionaryPage } from '@/features/admin/pages/admin-dictionary-page'
 
@@ -92,6 +93,7 @@ export default function App() {
                 <Route path="themes" element={<AdminThemesPage />} />
                 <Route path="daily-sentences" element={<AdminDailySentencesPage />} />
                 <Route path="mobile-bundles" element={<AdminMobileBundlesPage />} />
+                <Route path="learning-packs" element={<AdminLearningPacksPage />} />
                 <Route path="content-library" element={<AdminContentLibraryPage />} />
                 <Route path="dictionary" element={<AdminDictionaryPage />} />
               </Route>

@@ -4,7 +4,7 @@ import {
   Users, Settings, BarChart3, Bell,
   ChevronRight, ChevronDown, CreditCard, Receipt,
   MessageSquare, MapPin, Film, Award, Palette, Quote,
-  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen,
+  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -51,6 +51,7 @@ const menuGroups: MenuGroup[] = [
       { key: 'daily-sentences', label: '每日一句', icon: Quote, path: '/admin/daily-sentences' },
       { key: 'content-library', label: '内容语料库', icon: Library, path: '/admin/content-library' },
       { key: 'dictionary', label: '词典管理', icon: BookOpen, path: '/admin/dictionary' },
+      { key: 'learning-packs', label: '学习包管理', icon: Archive, path: '/admin/learning-packs' },
       { key: 'nqtr', label: 'NQTR 内容工坊', icon: Palette, path: '/admin/nqtr' },
     ],
   },

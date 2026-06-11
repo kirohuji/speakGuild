@@ -53,12 +53,23 @@ export class LearningController {
   @Get('units/:id/pack-manifest')
   async getPackManifest(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);
+    const published = await this.learningService.getPublishedLearningPackage(id);
+    if (published?.manifestSnapshot) {
+      return {
+        manifest: published.manifestSnapshot,
+        zipChecksum: published.zipChecksum,
+        fileName: published.fileAsset?.filename ?? `${published.sceneId}-${published.version}.zip`,
+        size: published.zipSize,
+        source: 'published',
+      };
+    }
     const preview = await this.learningService.getOfflineManifest(session.user.id, id);
     return {
       manifest: preview.manifest,
       zipChecksum: null,
       fileName: `${preview.manifest.packId}-${preview.manifest.version}.zip`,
       size: null,
+      source: 'dynamic',
     };
   }
 
@@ -66,6 +77,11 @@ export class LearningController {
   @Get('units/:id/download-pack')
   async downloadPack(@Req() req: Request, @Param('id') id: string, @Res() res: Response) {
     const session = await requireAuthSession(req);
+    const published = await this.learningService.getPublishedLearningPackageDownload(id);
+    if (published) {
+      res.redirect(302, published.url);
+      return;
+    }
     const pack = await this.learningService.buildLearningPackZip(session.user.id, id);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${pack.fileName}"`);

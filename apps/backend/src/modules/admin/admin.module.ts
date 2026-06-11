@@ -3,6 +3,8 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AdminStatsService } from './admin-stats.service';
 import { ContentAdminController } from './content-admin.controller';
+import { LearningPackAdminController } from './learning-pack-admin.controller';
+import { LearningPackAdminService } from './learning-pack-admin.service';
 import { SystemConfigController } from './system-config/system-config.controller';
 import { SystemConfigService } from './system-config/system-config.service';
 import { ThemeManageModule } from './theme-manage/theme-manage.module';
@@ -11,11 +13,13 @@ import { PayModule } from '../pay/pay.module';
 import { PracticeAiModule } from '../practice-ai/practice-ai.module';
 import { DictionaryModule } from '../dictionary/dictionary.module';
 import { TtsModule } from '../tts/tts.module';
+import { FileAssetsModule } from '../file-assets/file-assets.module';
+import { LearningModule } from '../learning/learning.module';
 
 @Module({
-  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule],
-  controllers: [AdminController, ContentAdminController, SystemConfigController],
-  providers: [AdminService, AdminStatsService, SystemConfigService],
+  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule],
+  controllers: [AdminController, ContentAdminController, SystemConfigController, LearningPackAdminController],
+  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService],
   exports: [SystemConfigService],
 })
 export class AdminModule {}

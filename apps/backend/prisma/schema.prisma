@@ -298,6 +298,7 @@ enum FileAssetGroup {
   tts
   notification
   mobile_bundle
+  learning_pack
   user_recording
 }
 
@@ -322,6 +323,7 @@ model FileAsset {
   createdAt        DateTime        @default(now())
   references       FileReference[]
   mobileBundles    MobileBundle[]
+  learningPackages LearningPackage[]
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
   @@map("file_asset")
@@ -578,9 +580,39 @@ model Scene {
   scriptEpisodes       ScriptEpisode[]
   userProgresses       UserSceneProgress[]
   gameLocations        GameLocation[]
+  learningPackages     LearningPackage[]
   createdAt            DateTime           @default(now())
 
   @@map("scene")
+}
+
+enum LearningPackageStatus {
+  draft
+  building
+  published
+  failed
+}
+
+model LearningPackage {
+  id               String                @id @default(cuid())
+  scene            Scene                 @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId          String
+  version          Int
+  title            String
+  status           LearningPackageStatus @default(draft)
+  fileAsset        FileAsset?            @relation(fields: [fileAssetId], references: [id])
+  fileAssetId      String?
+  zipChecksum      String?
+  zipSize          Int?
+  manifestSnapshot Json?
+  buildLog         String?
+  publishedAt      DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@unique([sceneId, version])
+  @@index([sceneId, status, version])
+  @@map("learning_package")
 }
 
 model ScenePrerequisite {
