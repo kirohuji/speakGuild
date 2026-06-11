@@ -18,29 +18,35 @@ function useNativeKeyboard() {
   useEffect(() => {
     if (!isNative()) return;
 
-    let listeners: { remove?: () => void }[] = [];
+    let disposed = false;
+    let listeners: { remove: () => Promise<void> | void }[] = [];
 
     import('@capacitor/keyboard')
-      .then(({ Keyboard }) => {
-        const onShow = Keyboard.addListener('keyboardWillShow', (info) => {
+      .then(async ({ Keyboard }) => {
+        const onShow = await Keyboard.addListener('keyboardWillShow', (info) => {
           const height = info.keyboardHeight ?? 0;
           document.documentElement.style.setProperty('--keyboard-height', `${height}px`);
           document.body.dataset.keyboardOpen = 'true';
         });
 
-        const onHide = Keyboard.addListener('keyboardWillHide', () => {
+        const onHide = await Keyboard.addListener('keyboardWillHide', () => {
           document.documentElement.style.setProperty('--keyboard-height', '0px');
           delete document.body.dataset.keyboardOpen;
         });
 
         listeners = [onShow, onHide];
+        if (disposed) {
+          listeners.forEach((listener) => void listener.remove());
+          listeners = [];
+        }
       })
       .catch((err) => {
         console.warn('[KeyboardProvider] Failed to load @capacitor/keyboard:', err);
       });
 
     return () => {
-      listeners.forEach((l) => l?.remove?.());
+      disposed = true;
+      listeners.forEach((listener) => void listener.remove());
       document.documentElement.style.setProperty('--keyboard-height', '0px');
       delete document.body.dataset.keyboardOpen;
     };

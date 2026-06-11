@@ -1987,7 +1987,7 @@ function NicknameEditDialog({
 function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { session, refreshSession, signOut } = useAuth()
+  const { session, refreshSession } = useAuth()
   const sessionUser = session?.user ?? null
   const profile = useProfileCacheStore((s) => s.profile)
   const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
@@ -2278,31 +2278,6 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
           </div>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                <Phone className="size-4 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm">{t('profile.phone')}</p>
-                <p className="text-xs text-muted-foreground">{phoneNumber || t('profile.notBound')}</p>
-              </div>
-            </div>
-            {phoneNumber ? (
-              <Badge variant={profile?.phoneNumberVerified ? 'outline' : 'secondary'} className="text-xs">
-                {profile?.phoneNumberVerified ? (
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="size-3 text-green-500" />
-                    {t('profile.verified')}
-                  </span>
-                ) : t('profile.unverified')}
-              </Badge>
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => setPhoneBindOpen(true)}>
-                {t('profile.bind')}
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
                 <Mail className="size-4 text-purple-500" />
               </div>
@@ -2328,6 +2303,28 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
       <div className="overflow-hidden rounded-xl bg-muted/30">
         <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.accountBinding')}</p>
         <div className="divide-y divide-border/40">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                <Phone className="size-4 text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm">{t('profile.phone')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {phoneNumber || t('profile.notBound')}
+                </p>
+              </div>
+            </div>
+            {phoneNumber ? (
+              <Badge variant="outline" className="text-xs">
+                {t('profile.boundPrefix')}
+              </Badge>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setPhoneBindOpen(true)}>
+                {t('profile.bind')}
+              </Button>
+            )}
+          </div>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#07C160]/15">
@@ -2377,7 +2374,7 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
         </div>
       </div>
 
-      {/* 退出登录 */}
+      {/* 账号安全 */}
       {desktop && <div className="overflow-hidden rounded-xl bg-muted/30">
         <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.dangerZone')}</p>
         <div className="flex items-center justify-between px-4 py-3">
@@ -2395,19 +2392,6 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
           </Button>
         </div>
       </div>}
-
-      <div className="rounded-xl bg-muted/30 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-destructive">{t('profile.logout')}</p>
-            <p className="text-xs text-muted-foreground">{t('profile.logoutWarning')}</p>
-          </div>
-          <Button variant="destructive" size="sm" onClick={() => { signOut(); navigate('/'); }}>
-            <LogOut className="mr-1.5 size-4" />
-            {t('profile.logout')}
-          </Button>
-        </div>
-      </div>
 
       {desktop && <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
         <DialogContent className="sm:max-w-sm">
