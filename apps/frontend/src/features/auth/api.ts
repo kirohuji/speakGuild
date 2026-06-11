@@ -45,7 +45,11 @@ export async function verifyPhoneOtp(phoneNumber: string, code: string) {
  * 已登录用户绑定手机号：发送验证码到新手机号
  */
 export async function sendBindPhoneOtp(phoneNumber: string) {
-  return authClient.phoneNumber.sendOtp({ phoneNumber })
+  const result = await authClient.phoneNumber.sendOtp({ phoneNumber })
+  if (result?.error) {
+    throw new Error(result.error.message || '验证码发送失败')
+  }
+  return result
 }
 
 /**
@@ -53,11 +57,15 @@ export async function sendBindPhoneOtp(phoneNumber: string) {
  * 传入 updatePhoneNumber: true 表示将手机号写入当前用户记录
  */
 export async function bindPhoneNumber(phoneNumber: string, code: string) {
-  return authClient.phoneNumber.verify({
+  const result = await authClient.phoneNumber.verify({
     phoneNumber,
     code,
     updatePhoneNumber: true,  // ← 关键：更新用户 phoneNumber 字段
   })
+  if (result?.error) {
+    throw new Error(result.error.message || '手机号绑定失败')
+  }
+  return result?.data ?? result
 }
 
 // wechat plugin removed — signInWithWechat() is unavailable

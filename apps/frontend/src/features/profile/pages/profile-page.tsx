@@ -2479,8 +2479,13 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
                 setBindLoading(true)
                 setBindError('')
                 try {
-                  await bindPhoneNumber(bindPhone.trim(), bindOtp)
+                  const result = await bindPhoneNumber(bindPhone.trim(), bindOtp)
+                  const boundPhoneNumber = result?.user?.phoneNumber || bindPhone.trim()
                   await refreshSession()
+                  patchCachedProfile({
+                    phoneNumber: boundPhoneNumber,
+                    phoneNumberVerified: true,
+                  })
                   await loadAccount(true)
                   setPhoneBindOpen(false)
                   toast.success(t('profile.bindPhoneSuccess'))

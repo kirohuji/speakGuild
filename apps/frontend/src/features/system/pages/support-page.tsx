@@ -1,13 +1,17 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import {
   ArrowRight,
   Clock,
   HelpCircle,
   Mail,
   MessageSquareText,
+  Send,
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 
 const supportItems = [
   {
@@ -42,42 +46,53 @@ const faqs = [
   },
 ]
 
-export function SupportPage() {
+function SupportHeader() {
   return (
-    <div className="min-h-screen bg-[#f7f4ef] text-[#17211d]">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <Link to="/marketing" className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-2xl bg-white shadow-sm">
-            <img src="/logo.png" alt="漫语町" className="size-7 object-contain" />
-          </span>
-          <span className="text-sm font-semibold tracking-wide">漫语町 ManYu</span>
+    <header className="sticky top-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link to="/marketing" className="flex items-center gap-2">
+          <img src="/logo.png" alt="漫语町" className="h-7 w-auto dark:invert" />
+          <span className="hidden text-sm font-extrabold tracking-tight text-foreground sm:inline">漫语町</span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm text-[#5d6a64]">
-          <Link to="/system/privacy" className="transition-colors hover:text-[#17211d]">隐私政策</Link>
-          <Link to="/system/terms" className="transition-colors hover:text-[#17211d]">服务条款</Link>
+        <nav className="flex items-center gap-5 text-xs text-muted-foreground sm:text-sm">
+          <Link to="/marketing" className="transition-colors hover:text-foreground">产品介绍</Link>
+          <Link to="/system/privacy" className="transition-colors hover:text-foreground">隐私政策</Link>
+          <Link to="/system/terms" className="transition-colors hover:text-foreground">服务条款</Link>
         </nav>
-      </header>
+      </div>
+    </header>
+  )
+}
+
+export function SupportPage() {
+  const { pathname } = useLocation()
+  const showStandaloneHeader = pathname === '/support'
+
+  return (
+    <div className={`relative min-h-screen overflow-x-hidden text-foreground ${showStandaloneHeader ? 'app-surface' : 'bg-transparent'}`}>
+      {showStandaloneHeader && <SupportHeader />}
 
       <main>
-        <section className="relative overflow-hidden px-5 pb-16 pt-10 sm:pb-20 sm:pt-16">
-          <div className="pointer-events-none absolute inset-x-0 top-12 mx-auto h-64 max-w-4xl rounded-full bg-[#ff8d70]/20 blur-3xl" />
-          <div className="relative mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_0.86fr] lg:items-end">
+        <section className="px-0 pb-12 pt-6 sm:pb-16 sm:pt-10 lg:pb-20">
+          <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.86fr] lg:items-end">
             <div>
-              <p className="mb-5 text-xs font-bold uppercase tracking-[0.24em] text-[#d65f4b]">Support URL</p>
-              <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
+              <Badge variant="secondary" className="mb-6 text-[11px] font-medium uppercase tracking-wide">
+                Support URL
+              </Badge>
+              <h1 className="max-w-3xl text-[2.5rem] font-extrabold leading-[1.06] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
                 漫语町支持中心
               </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-[#5d6a64] sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                 遇到账号、学习、会员、下载或隐私相关问题时，可以在这里找到帮助入口。我们会认真阅读每一条反馈，并在工作时间内尽快回复。
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button asChild className="h-12 rounded-full bg-[#17211d] px-6 text-white hover:bg-[#26352f]">
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="primary-lg" className="shadow-[0_4px_24px_rgba(0,46,95,0.16)]">
                   <a href="mailto:z1309014381@gmail.com">
                     <Mail className="size-4" />
                     邮件联系支持
                   </a>
                 </Button>
-                <Button asChild variant="outline" className="h-12 rounded-full border-[#17211d]/20 bg-white/70 px-6">
+                <Button asChild variant="outline" size="lg">
                   <Link to="/feedback">
                     App 内反馈
                     <ArrowRight className="size-4" />
@@ -86,60 +101,124 @@ export function SupportPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[#17211d]/10 bg-white p-6 shadow-[0_24px_80px_rgba(23,33,29,0.12)]">
-              <div className="flex items-center gap-4 border-b border-[#17211d]/10 pb-5">
-                <div className="grid size-12 place-items-center rounded-2xl bg-[#e9f5ef]">
-                  <HelpCircle className="size-6 text-[#2d7f5e]" />
+            <Card className="overflow-hidden rounded-2xl border-border/60 bg-card/88">
+              <CardContent className="p-0">
+                <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-primary/[0.10] via-background/80 to-accent/[0.08] p-6 lg:p-7">
+                  <div className="absolute -right-12 -top-14 size-40 rounded-full bg-primary/[0.08]" />
+                  <div className="absolute -bottom-16 left-8 size-36 rounded-full bg-accent/[0.10]" />
+                  <div className="relative flex items-start justify-between gap-5">
+                    <div>
+                      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur">
+                        <span className="size-1.5 rounded-full bg-success" />
+                        工作日处理中
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">官方支持邮箱</p>
+                      <a
+                        href="mailto:z1309014381@gmail.com"
+                        className="mt-2 block break-all text-xl font-extrabold tracking-tight text-foreground transition-colors hover:text-primary sm:text-2xl"
+                      >
+                        z1309014381@gmail.com
+                      </a>
+                    </div>
+                    <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-background/80 shadow-sm ring-1 ring-border/70">
+                      <Mail className="size-6 text-primary" />
+                    </div>
+                  </div>
+                  <Button asChild variant="outline-primary" size="sm" className="relative mt-6 bg-background/70">
+                    <a href="mailto:z1309014381@gmail.com">
+                      <Send className="size-3.5" />
+                      发送邮件
+                    </a>
+                  </Button>
                 </div>
-                <div>
-                  <p className="text-sm font-bold">官方支持邮箱</p>
-                  <a href="mailto:z1309014381@gmail.com" className="text-sm text-[#d65f4b]">
-                    z1309014381@gmail.com
-                  </a>
-                </div>
-              </div>
-              <dl className="mt-5 space-y-4 text-sm">
-                <div className="flex justify-between gap-5">
-                  <dt className="text-[#6f7b75]">工作时间</dt>
-                  <dd className="text-right font-medium">周一至周五 9:00 - 21:00</dd>
-                </div>
-                <div className="flex justify-between gap-5">
-                  <dt className="text-[#6f7b75]">预计回复</dt>
-                  <dd className="text-right font-medium">3 个工作日内</dd>
-                </div>
-                <div className="flex justify-between gap-5">
-                  <dt className="text-[#6f7b75]">公司名称</dt>
-                  <dd className="text-right font-medium">上海影与达科技有限公司</dd>
-                </div>
-              </dl>
-            </div>
+                <dl className="grid gap-3 p-4 text-sm sm:grid-cols-3 lg:grid-cols-1 lg:p-5 xl:grid-cols-3">
+                  <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <Clock className="size-3.5" />
+                      工作时间
+                    </dt>
+                    <dd className="mt-2 font-semibold leading-snug text-foreground">周一至周五<br />9:00 - 21:00</dd>
+                  </div>
+                  <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <HelpCircle className="size-3.5" />
+                      预计回复
+                    </dt>
+                    <dd className="mt-2 font-semibold leading-snug text-foreground">3 个工作日内</dd>
+                  </div>
+                  <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <ShieldCheck className="size-3.5" />
+                      服务主体
+                    </dt>
+                    <dd className="mt-2 font-semibold leading-snug text-foreground">上海影与达科技有限公司</dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-6xl gap-4 px-5 pb-16 md:grid-cols-3">
+        <section className="mx-auto grid max-w-6xl gap-4 pb-12 md:grid-cols-3 lg:pb-16">
           {supportItems.map(({ icon: Icon, title, body }) => (
-            <article key={title} className="rounded-[1.5rem] border border-[#17211d]/10 bg-white/80 p-6">
-              <Icon className="mb-5 size-6 text-[#d65f4b]" />
-              <h2 className="text-lg font-bold">{title}</h2>
-              <p className="mt-3 text-sm leading-7 text-[#5d6a64]">{body}</p>
-            </article>
+            <Card key={title} className="h-full rounded-lg bg-muted/30 shadow-none transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
+              <CardContent className="p-5 lg:p-6">
+                <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-background/70">
+                  <Icon className="size-5 text-primary" />
+                </div>
+                <h2 className="text-base font-bold text-foreground">{title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+              </CardContent>
+            </Card>
           ))}
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 pb-20">
-          <div className="rounded-[2rem] bg-[#17211d] p-6 text-white sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#ffb199]">FAQ</p>
-            <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">常见问题</h2>
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
+        <section className="pb-16 sm:pb-20">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-10 text-center">
+              <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">FAQ</p>
+              <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+                常见
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> 问题</span>
+              </h2>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
               {faqs.map((item) => (
-                <article key={item.q} className="rounded-2xl bg-white/8 p-5">
-                  <h3 className="text-base font-bold">{item.q}</h3>
-                  <p className="mt-3 text-sm leading-7 text-white/72">{item.a}</p>
-                </article>
+                <Card key={item.q} className="h-full rounded-lg bg-background/75 shadow-none transition-colors duration-300 hover:bg-background dark:ring-0">
+                  <CardContent className="p-5 lg:p-6">
+                    <h3 className="text-base font-bold text-foreground">{item.q}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
         </section>
+
+        {showStandaloneHeader && (
+          <footer className="border-t border-border/50">
+            <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+              <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
+                    <span className="font-extrabold text-foreground">漫语町</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">沉浸式英语输出训练 App</p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground">
+                  <Link to="/system/terms" className="transition-colors hover:text-foreground">服务条款</Link>
+                  <Link to="/system/privacy" className="transition-colors hover:text-foreground">隐私政策</Link>
+                  <Link to="/marketing" className="transition-colors hover:text-foreground">产品介绍</Link>
+                </div>
+              </div>
+              <Separator className="my-6" />
+              <p className="text-center text-[11px] text-muted-foreground/50">
+                &copy; {new Date().getFullYear()} 漫语町 ManYu. All rights reserved.
+              </p>
+            </div>
+          </footer>
+        )}
       </main>
     </div>
   )
