@@ -238,9 +238,21 @@ export interface PackUpdateInfo {
   packId: string
   fromVersion: number
   toVersion: number
-  updateType: 'full'
+  updateType: 'full' | 'delta'
   title?: string
   updatedAt?: string
+  // full update
+  fullDownloadUrl?: string
+  fullSize?: number
+  fullSizeHuman?: string
+  zipChecksum?: string
+  fallbackReason?: string
+  // delta update
+  deltaSize?: number
+  deltaSizeHuman?: string
+  deltaDownloadUrl?: string
+  deltaChecksum?: string
+  savingPercent?: number
 }
 
 // ---- API 方法 ----
@@ -274,6 +286,14 @@ export const learningApi = {
 
   checkPacks: (installed: Array<{ packId: string; version?: number }>) =>
     post<{ updates: PackUpdateInfo[] }>('/learning/packs/check', { installed }),
+
+  /** V2: 下载 delta 增量包 */
+  downloadDelta: (unitId: string, fromVersion: number, toVersion: number) =>
+    get<ArrayBuffer>(`/learning/units/${unitId}/download-delta?from=${fromVersion}&to=${toVersion}`, undefined, {
+      dedupe: false,
+      responseType: 'arraybuffer',
+      timeout: 120_000,
+    }),
 
   /** 获取今日任务 */
   getTodayTasks: () => get<TodayPlan>('/learning/today'),

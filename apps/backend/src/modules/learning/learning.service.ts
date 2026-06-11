@@ -839,26 +839,89 @@ export class LearningService {
       if (!pack?.packId) continue;
       try {
         const published = await this.getPublishedLearningPackage(pack.packId);
-        const latest = published?.manifestSnapshot
-          ? { manifest: published.manifestSnapshot as any }
-          : await this.getOfflineManifest(userId, pack.packId);
-        const latestVersion = Number((latest.manifest as any).version ?? published?.version ?? 0);
+        if (!published) continue;
+
+        const latestVersion = published.version;
         const currentVersion = Number(pack.version ?? 0);
-        if (latestVersion > currentVersion) {
-          updates.push({
-            packId: pack.packId,
-            fromVersion: currentVersion,
-            toVersion: latestVersion,
-            updateType: 'full',
-            title: (latest.manifest as any).title,
-            updatedAt: (latest.manifest as any).updatedAt,
-          });
+        if (latestVersion <= currentVersion) continue;
+
+        const versionSpan = latestVersion - currentVersion;
+
+        // V2: 检查是否有直接 delta（当前版本 → 最新版本）
+        const delta = versionSpan === 1
+          ? await (this.prisma as any).deltaPackage.findUnique({
+              where: { packId_fromVersion_toVersion: { packId: published.id, fromVersion: currentVersion, toVersion: latestVersion } },
+              include: { fileAsset: { select: { id: true, size: true } } },
+            })
+          : null;
+
+        // 降级判断
+        const manifestSnapshot = published.manifestSnapshot as any;
+        const totalFiles = Object.keys(manifestSnapshot?.files ?? {}).length;
+
+        // 如果跨度 <= 3 且有 delta，走增量
+        const canDelta = delta && versionSpan <= 3;
+
+        const update: any = {
+          packId: pack.packId,
+          fromVersion: currentVersion,
+          toVersion: latestVersion,
+          updateType: canDelta ? 'delta' : 'full',
+          title: published.title,
+          updatedAt: published.updatedAt?.toISOString(),
+        };
+
+        if (canDelta) {
+          const signedUrl = await this.fileAssets.getPrivateUrlByAssetId(delta.fileAsset.id);
+          update.deltaSize = delta.fileAsset.size;
+          update.deltaSizeHuman = `${(delta.fileAsset.size / 1024 / 1024).toFixed(1)} MB`;
+          update.deltaDownloadUrl = signedUrl.url;
+          update.deltaChecksum = delta.deltaChecksum;
+          update.savingPercent = totalFiles > 0
+            ? Math.round((1 - (delta.addedCount + delta.modifiedCount) / totalFiles) * 100)
+            : 0;
+        } else {
+          const signedUrl = await this.fileAssets.getPrivateUrlByAssetId(published.fileAssetId!);
+          update.fullDownloadUrl = signedUrl.url;
+          update.fullSize = published.zipSize;
+          update.fullSizeHuman = published.zipSize
+            ? `${(published.zipSize / 1024 / 1024).toFixed(1)} MB`
+            : null;
+          update.zipChecksum = published.zipChecksum;
+          if (versionSpan > 3) update.fallbackReason = 'version_gap_too_large';
         }
+
+        updates.push(update);
       } catch {
         // Ignore packs the user can no longer access or that no longer exist.
       }
     }
     return { updates };
+  }
+
+  /** V2: 获取 delta 包下载信息 */
+  async getDeltaPackage(unitId: string, fromVersion: number, toVersion: number) {
+    const published = await this.getPublishedLearningPackage(unitId);
+    if (!published) return null;
+
+    const delta = await (this.prisma as any).deltaPackage.findUnique({
+      where: {
+        packId_fromVersion_toVersion: {
+          packId: published.id,
+          fromVersion,
+          toVersion,
+        },
+      },
+      include: { fileAsset: { select: { id: true, size: true } } },
+    });
+    if (!delta) return null;
+
+    const signedUrl = await this.fileAssets.getPrivateUrlByAssetId(delta.fileAsset.id);
+    return {
+      url: signedUrl.url,
+      checksum: delta.deltaChecksum,
+      size: delta.fileAsset.size,
+    };
   }
 
   /**

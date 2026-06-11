@@ -415,11 +415,18 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     if (!await checkNetworkBeforeDownload()) return
     set({ packInstallingIds: [...packInstallingIds, unitId] })
     try {
-      await learningPackService.installUnit(unitId)
+      // V2: 检查是否有 delta 更新可用
+      const update = getState().availablePackUpdates.find((u) => u.packId === unitId)
+      if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
+        console.log(`[learning-store] 🔄 delta 更新: v${update.fromVersion} → v${update.toVersion}`)
+        await learningPackService.installDelta(unitId, update.fromVersion, update.toVersion)
+      } else {
+        await learningPackService.installUnit(unitId)
+      }
       const downloadedPacks = await learningPackService.listInstalled()
       set((state) => ({
         downloadedPacks,
-        availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
+        availablePackUpdates: state.availablePackUpdates.filter((u) => u.packId !== unitId),
       }))
     } finally {
       set((state) => ({

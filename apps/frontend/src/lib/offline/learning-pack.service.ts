@@ -382,6 +382,126 @@ export const learningPackService = {
     }
   },
 
+  /** V2: 安装 delta 增量包 */
+  async installDelta(packId: string, fromVersion: number, toVersion: number): Promise<InstalledLearningPack> {
+    const startTime = performance.now()
+    console.log(`[learning-pack] 📦 开始安装增量包 v${fromVersion} → v${toVersion}`, { packId })
+
+    const deltaBuffer = await learningApi.downloadDelta(packId, fromVersion, toVersion)
+    const deltaSizeMB = (deltaBuffer.byteLength / 1024 / 1024).toFixed(1)
+    console.log(`[learning-pack] ✅ delta 下载完成: ${deltaSizeMB} MB`)
+
+    const reader = new ZipReader(new BlobReader(new Blob([deltaBuffer], { type: 'application/zip' })))
+    try {
+      const entryList = await reader.getEntries()
+      const entries = new Map<string, Entry>()
+      for (const entry of entryList) {
+        if (!entry.directory) entries.set(normalizeZipPath(entry.filename), entry)
+      }
+
+      const deltaManifest = await readJsonEntry<any>(entries, 'delta-manifest.json')
+      if (!deltaManifest) throw new Error('Delta pack is missing delta-manifest.json')
+      console.log(`[learning-pack] delta manifest: +${deltaManifest.added?.length ?? 0} / ~${deltaManifest.modified?.length ?? 0} / -${deltaManifest.removed?.length ?? 0}`)
+
+      // 1. 应用 added 文件
+      const allAssetRefs = await localDb.list<any>('asset_refs')
+      for (const path of deltaManifest.added ?? []) {
+        const entry = entries.get(normalizeZipPath(path))
+        if (!entry) continue
+        const buffer = await readEntryBuffer(entry)
+        const sha256 = await digest(buffer)
+
+        const existingRefs = allAssetRefs.filter((r: any) => r.sha256 === sha256)
+        if (existingRefs.length === 0) {
+          const assetRef = {
+            url: `cos://${sha256}`,
+            path,
+            sha256,
+            mimeType: null,
+            role: 'asset' as any,
+          }
+          await assetCacheService.saveFromBuffer(assetRef, buffer)
+        }
+        const ext = existingRefs[0]?.ext ?? extensionFrom(path, null)
+        await localDb.put('asset_refs', {
+          id: `${packId}:${sha256}`,
+          sha256,
+          packId,
+          logicalPath: path,
+          ext,
+          updatedAt: new Date().toISOString(),
+          data: '{}',
+        })
+      }
+      console.log(`[learning-pack]   added: ${deltaManifest.added?.length ?? 0}`)
+
+      // 2. 应用 modified 文件（替换旧 SHA256 → 新 SHA256）
+      for (const path of deltaManifest.modified ?? []) {
+        const entry = entries.get(normalizeZipPath(path))
+        if (!entry) continue
+        const buffer = await readEntryBuffer(entry)
+        const newSha256 = await digest(buffer)
+
+        // 删除旧引用（同一 packId + logicalPath 的旧记录）
+        const oldRefs = allAssetRefs.filter((r: any) => r.packId === packId && r.logicalPath === path)
+        for (const oldRef of oldRefs) {
+          await localDb.delete('asset_refs', oldRef.id)
+          // 检查是否还有其他包引用旧 SHA256
+          const remaining = allAssetRefs.filter((r: any) => r.sha256 === oldRef.sha256 && r.id !== oldRef.id)
+          if (remaining.length === 0) {
+            await localDb.delete('local_assets', oldRef.sha256).catch(() => {})
+          }
+        }
+
+        const existingRefs = allAssetRefs.filter((r: any) => r.sha256 === newSha256)
+        if (existingRefs.length === 0) {
+          await assetCacheService.saveFromBuffer({ url: `cos://${newSha256}`, path, sha256: newSha256, mimeType: null }, buffer)
+        }
+        const ext = extensionFrom(path, null)
+        await localDb.put('asset_refs', {
+          id: `${packId}:${newSha256}`,
+          sha256: newSha256,
+          packId,
+          logicalPath: path,
+          ext,
+          updatedAt: new Date().toISOString(),
+          data: '{}',
+        })
+      }
+      console.log(`[learning-pack]   modified: ${deltaManifest.modified?.length ?? 0}`)
+
+      // 3. 应用 removed 文件
+      for (const path of deltaManifest.removed ?? []) {
+        const oldRefs = allAssetRefs.filter((r: any) => r.packId === packId && r.logicalPath === path)
+        for (const oldRef of oldRefs) {
+          await localDb.delete('asset_refs', oldRef.id)
+          const remaining = allAssetRefs.filter((r: any) => r.sha256 === oldRef.sha256 && r.id !== oldRef.id)
+          if (remaining.length === 0) {
+            await localDb.delete('local_assets', oldRef.sha256).catch(() => {})
+          }
+        }
+      }
+      console.log(`[learning-pack]   removed: ${deltaManifest.removed?.length ?? 0}`)
+
+      // 4. 更新 pack 记录
+      const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
+      if (pack) {
+        await localDb.put('downloaded_packs', {
+          ...pack,
+          version: toVersion,
+          installedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+      }
+
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
+      console.log(`[learning-pack] 🎉 增量安装完成! 耗时 ${elapsed}s`)
+      return (await localDb.get<InstalledLearningPack>('downloaded_packs', packId))!
+    } finally {
+      await reader.close()
+    }
+  },
+
   async install(manifest: LearningPackManifest): Promise<InstalledLearningPack> {
     const now = new Date().toISOString()
     const record: InstalledLearningPack = {

@@ -101,7 +101,7 @@ export class LearningController {
     res.send(pack.buffer);
   }
 
-  /** 检查已安装学习包是否有新版本。V1 仅返回 full 更新。 */
+  /** 检查已安装学习包是否有新版本。V2 支持全量+增量。 */
   @Post('packs/check')
   async checkPacks(
     @Req() req: Request,
@@ -109,6 +109,33 @@ export class LearningController {
   ) {
     const session = await requireAuthSession(req);
     return this.learningService.checkLearningPacks(session.user.id, body.installed ?? []);
+  }
+
+  /** V2: 下载 delta 增量包 */
+  @Get('units/:id/download-delta')
+  async downloadDelta(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Query('from') fromVersion: string,
+    @Query('to') toVersion: string,
+    @Res() res: Response,
+  ) {
+    const session = await requireAuthSession(req);
+    const delta = await (this.learningService as any).getDeltaPackage(id, Number(fromVersion), Number(toVersion));
+    if (!delta) {
+      res.status(404).json({ code: 404, message: 'Delta not found', data: null });
+      return;
+    }
+    const response = await fetch(delta.url);
+    if (!response.ok) {
+      res.status(502).json({ code: 502, message: 'COS download failed', data: null });
+      return;
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="delta-v${fromVersion}-v${toVersion}.zip"`);
+    res.setHeader('Content-Length', String(buffer.byteLength));
+    res.send(buffer);
   }
 
   /** 获取今日任务 */

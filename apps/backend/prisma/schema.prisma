@@ -299,6 +299,7 @@ enum FileAssetGroup {
   notification
   mobile_bundle
   learning_pack
+  learning_pack_delta
   user_recording
 }
 
@@ -324,6 +325,7 @@ model FileAsset {
   references       FileReference[]
   mobileBundles    MobileBundle[]
   learningPackages LearningPackage[]
+  deltaPackages    DeltaPackage[]
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
   @@map("file_asset")
@@ -609,10 +611,31 @@ model LearningPackage {
   publishedAt      DateTime?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  deltaPackages    DeltaPackage[]
 
   @@unique([sceneId, version])
   @@index([sceneId, status, version])
   @@map("learning_package")
+}
+
+model DeltaPackage {
+  id            String          @id @default(cuid())
+  pack          LearningPackage @relation(fields: [packId], references: [id], onDelete: Cascade)
+  packId        String
+  fromVersion   Int
+  toVersion     Int
+  fileAsset     FileAsset       @relation(fields: [fileAssetId], references: [id])
+  fileAssetId   String
+  deltaChecksum String
+  deltaSize     Int
+  addedCount    Int             @default(0)
+  modifiedCount Int             @default(0)
+  removedCount  Int             @default(0)
+  createdAt     DateTime        @default(now())
+
+  @@unique([packId, fromVersion, toVersion])
+  @@index([packId])
+  @@map("delta_package")
 }
 
 model ScenePrerequisite {
