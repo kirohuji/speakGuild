@@ -13,7 +13,7 @@
     "cap:sync:ios": "pnpm build && pnpm exec cap sync ios",
     "cap:open:ios": "pnpm exec cap open ios",
     "cap:zip": "pnpm build && cd dist && zip -r bundle.zip .",
-    "shasum": "shasum -a 256 dist/bundle.zip"
+    "shasum": "certutil -hashfile dist\\bundle.zip SHA256"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^8.1.0",
@@ -21,6 +21,7 @@
     "@capacitor/core": "^8.3.1",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/ios": "^8.3.1",
+    "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/splash-screen": "^8.0.1",

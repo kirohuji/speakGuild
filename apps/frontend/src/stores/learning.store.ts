@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { Network } from '@capacitor/network'
 import {
   learningApi,
   type LearningUnitSummary,
@@ -8,6 +9,10 @@ import {
 } from '@/features/learning/api/learning-api'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { learningPackService, learningRepository, type InstalledLearningPack } from '@/lib/offline'
+import { isNative } from '@/lib/native'
+import { usePreferencesStore } from '@/stores/preferences.store'
+import { toast } from 'sonner'
+import i18n from '@/lib/i18n'
 
 interface LearningStore {
   // 我的学习
@@ -48,6 +53,55 @@ interface LearningStore {
   fetchDownloadedPacks: () => Promise<void>
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
+}
+
+/**
+ * 检查网络环境，决定是否允许下载资产文件。
+ *
+ * 逻辑：
+ * - Web 端：始终放行（无 WiFi/蜂窝概念）
+ * - 原生端 + wifiOnlyMedia=ON：仅 WiFi 可下载，蜂窝弹 Toast 阻止
+ * - 原生端 + wifiOnlyMedia=OFF：WiFi 放行，蜂窝弹确认对话框
+ *
+ * @returns true = 允许继续下载，false = 用户取消或阻止
+ */
+async function checkNetworkBeforeDownload(): Promise<boolean> {
+  if (!isNative()) return true
+
+  const wifiOnlyMedia = usePreferencesStore.getState().wifiOnlyMedia
+
+  try {
+    const status = await Network.getStatus()
+    if (status.connectionType !== 'cellular') return true
+
+    // 当前是蜂窝网络
+    if (wifiOnlyMedia) {
+      // 仅 WiFi 模式 → 阻止，弹提示
+      toast.error(i18n.t('profile.wifiOnlyBlocked', { defaultValue: '当前为移动网络，请在 WiFi 环境下下载' }), {
+        duration: 4000,
+      })
+      return false
+    }
+
+    // 允许移动网络 → 弹确认对话框
+    return await new Promise<boolean>((resolve) => {
+      toast(i18n.t('profile.cellularDownloadConfirm', { defaultValue: '当前使用蜂窝网络，下载可能消耗流量' }), {
+        duration: 10000,
+        position: 'top-center',
+        action: {
+          label: i18n.t('common.confirm', { defaultValue: '继续下载' }),
+          onClick: () => resolve(true),
+        },
+        cancel: {
+          label: i18n.t('common.cancel', { defaultValue: '取消' }),
+          onClick: () => resolve(false),
+        },
+      })
+    })
+  } catch {
+    // 无法获取网络状态时放行
+    return true
+  }
 }
 
 export const useLearningStore = create<LearningStore>()((set, getState) => ({
@@ -190,6 +244,12 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
     try {
       await learningRepository.enrollUnit(unitId, sourceUnit)
+      // ⭐ 网络检查：蜂窝网络需要用户确认
+      if (!await checkNetworkBeforeDownload()) {
+        // 用户取消 → 标记包为 installed（实际上是 enroll 成功但未下载资产）
+        // 用户稍后可手动触发 downloadUnitPack
+        return
+      }
       await learningPackService.installUnit(unitId)
       const downloadedPacks = await learningPackService.listInstalled()
       set({ downloadedPacks })
@@ -221,6 +281,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   async downloadUnitPack(unitId) {
     const { packInstallingIds } = getState()
     if (packInstallingIds.includes(unitId)) return
+    // ⭐ 网络检查：蜂窝网络需要用户确认
+    if (!await checkNetworkBeforeDownload()) return
     set({ packInstallingIds: [...packInstallingIds, unitId] })
     try {
       await learningPackService.installUnit(unitId)

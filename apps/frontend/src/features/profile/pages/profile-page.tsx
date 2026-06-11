@@ -586,13 +586,12 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { signOut } = useAuth()
-  const { autoPlay, setAutoPlay } = usePreferencesStore()
+  const { autoPlay, setAutoPlay, wifiOnlyMedia, setWifiOnlyMedia } = usePreferencesStore()
   const { config } = useConfigStore()
   const [showBinding, setShowBinding] = useState(false)
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
   const [pronunciationType, setPronunciationType] = useState<'us' | 'uk'>('us')
   const [autoCopyWord, setAutoCopyWord] = useState(false)
-  const [wifiOnlyMedia, setWifiOnlyMedia] = useState(true)
   const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
   // 删除账户状态
@@ -671,8 +670,8 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
 
   return (
     <div className="space-y-5">
-      {/* <IosSection>
-        <IosRow
+      <IosSection>
+        {/* <IosRow
           label={t('profile.autoSpeakLabel')}
           right={<Switch checked={autoPlay} onCheckedChange={setAutoPlay} />}
         />
@@ -692,13 +691,13 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
         <IosRow
           label={t('profile.autoCopyLabel')}
           right={<Switch checked={autoCopyWord} onCheckedChange={setAutoCopyWord} />}
-        />
+        /> */}
         <IosRow
           label={t('profile.wifiOnlyLabel')}
           last
           right={<Switch checked={wifiOnlyMedia} onCheckedChange={setWifiOnlyMedia} />}
         />
-      </IosSection> */}
+      </IosSection>
 
       {/* <IosSection>
         <IosRow
@@ -2479,13 +2478,12 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
 function SettingsTab() {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
-  const { autoPlay, setAutoPlay, language, setLanguage } = usePreferencesStore()
+  const { autoPlay, setAutoPlay, wifiOnlyMedia, setWifiOnlyMedia, language, setLanguage } = usePreferencesStore()
   const { config } = useConfigStore()
   const [showBinding, setShowBinding] = useState(false)
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
   const [pronunciationType, setPronunciationType] = useState<'us' | 'uk'>('us')
   const [autoCopyWord, setAutoCopyWord] = useState(false)
-  const [wifiOnlyMedia, setWifiOnlyMedia] = useState(true)
   const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
   const handleLanguageChange = (lang: string) => {
