@@ -4,10 +4,19 @@ import { useConfigStore } from '@/stores/config.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
-import { startupPackSync } from '@/stores/learning.store'
 
+/**
+ * App 前台同步 Hook
+ *
+ * 性能策略（针对 Capacitor 端卡顿）：
+ *   - 首次同步延迟 8 秒，让首屏完全渲染后再执行
+ *   - 使用 requestIdleCallback 确保不阻塞用户交互
+ *   - visibility 切回前台时至少间隔 30 秒才再次同步
+ *   - 学习包更新检查由 NativeBridgeProvider 统一管理，此处不再重复触发
+ */
 function useAppForegroundSync(userId: string | undefined) {
   const lastSyncRef = useRef(0)
+  const initialSyncDoneRef = useRef(false)
 
   useEffect(() => {
     if (!userId) return
@@ -21,15 +30,26 @@ function useAppForegroundSync(userId: string | undefined) {
       void offlineSyncService.sync(userId).catch((error) => {
         console.warn('[offline-sync] foreground sync failed:', error)
       })
-
-      // 同步检查学习包更新
-      void startupPackSync()
     }
 
-    // App 打开时立刻同步一次
-    doSync()
+    // ★ 首次同步延迟 8 秒，使用 requestIdleCallback 降级
+    if (!initialSyncDoneRef.current) {
+      initialSyncDoneRef.current = true
+      const scheduleInitialSync = () => {
+        doSync()
+      }
+      if (typeof requestIdleCallback !== 'undefined') {
+        const timeoutId = setTimeout(scheduleInitialSync, 13_000) // fallback 保底
+        requestIdleCallback(() => {
+          clearTimeout(timeoutId)
+          scheduleInitialSync()
+        }, { timeout: 8000 })
+      } else {
+        setTimeout(scheduleInitialSync, 8000)
+      }
+    }
 
-    // 从后台切回前台时也同步
+    // 从后台切回前台时也同步（已有 30s 节流）
     const onVisible = () => {
       if (document.visibilityState === 'visible') doSync()
     }

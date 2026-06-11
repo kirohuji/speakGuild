@@ -364,7 +364,12 @@ export const offlineSyncService = {
     let finalCursor: string | null = null
 
     // 循环分页拉取，直到服务端返回 hasMore: false
+    // ★ 设置最大 5 页上限，防止启动时一次性拉取过多数据导致主线程长时间阻塞
+    const MAX_PULL_PAGES = 5
+    let pages = 0
+
     while (true) {
+      pages++
       const result = await syncApi.pull(cursor)
       await applyUserPullChanges(result.changed, result.deleted)
 
@@ -382,6 +387,10 @@ export const offlineSyncService = {
       finalCursor = result.cursor
 
       if (!result.hasMore) break
+      if (pages >= MAX_PULL_PAGES) {
+        console.warn(`[offline-sync] pull reached max pages (${MAX_PULL_PAGES}), remaining data will be pulled on next sync`)
+        break
+      }
       cursor = result.cursor
     }
 

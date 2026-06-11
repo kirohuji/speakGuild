@@ -45,6 +45,14 @@ const config: CapacitorConfig = {
       androidIsEncryption: false,
     },
 
+    // Keyboard — 键盘行为控制（减少键盘弹出时的卡顿和布局抖动）
+    Keyboard: {
+      resize: 'body',               // 仅调整 body 高度，不触发 WebView 整体 resize
+      resizeOnFullScreen: true,
+      // iOS 隐藏键盘辅助栏，减少输入区高度抖动
+      // style: 'dark',             // 可选：键盘样式
+    },
+
     // CapacitorWechat: {
     //   appId: '',  // 微信开放平台申请的 AppID
     //   universalLink: 'https://hope.lourd.top:3605/wechat/',  // 需与微信开放平台配置的 Universal Link 一致

@@ -249,6 +249,7 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
   const spritePositionRef = useRef(spritePosition)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
+  const layoutRafRef = useRef<number | null>(null)
 
   const layout = () => {
     const app = appRef.current
@@ -262,6 +263,15 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     }
     if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
     if (spriteRef.current) layoutSprite(spriteRef.current, width, height, spritePositionRef.current)
+  }
+
+  // ★ Debounced layout: batch rapid ResizeObserver callbacks into one rAF
+  const scheduleLayout = () => {
+    if (layoutRafRef.current !== null) return
+    layoutRafRef.current = window.requestAnimationFrame(() => {
+      layoutRafRef.current = null
+      layout()
+    })
   }
 
   useEffect(() => {
@@ -280,6 +290,10 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
         if (cancelled) return
       }
 
+      // ★ Native mobile: use resolution 1 to reduce GPU load
+      const native = isNative()
+      const pixiResolution = native ? 1 : Math.min(window.devicePixelRatio || 1, 2)
+
       let app: Application
       let initOk = false
 
@@ -289,9 +303,9 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
         await app.init({
           resizeTo: host,
           backgroundAlpha: 0,
-          antialias: true,
+          antialias: !native, // ★ Native: disable antialias for perf
           autoDensity: true,
-          resolution: Math.min(window.devicePixelRatio || 1, 2),
+          resolution: pixiResolution,
         })
         initOk = true
       } catch {
@@ -307,7 +321,7 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
             backgroundAlpha: 0,
             antialias: true,
             autoDensity: true,
-            resolution: Math.min(window.devicePixelRatio || 1, 2),
+            resolution: pixiResolution,
             preference: 'canvas',
           })
           initOk = true
@@ -333,7 +347,7 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
       root.addChild(fallback)
       app.canvas.className = 'absolute inset-0 h-full w-full pointer-events-none'
       host.appendChild(app.canvas)
-      resizeObserver = new ResizeObserver(layout)
+      resizeObserver = new ResizeObserver(() => scheduleLayout()) // ★ Debounced
       resizeObserver.observe(host)
       layout()
       setReady(true)
@@ -344,6 +358,10 @@ function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }
     return () => {
       cancelled = true
       resizeObserver?.disconnect()
+      if (layoutRafRef.current !== null) {
+        window.cancelAnimationFrame(layoutRafRef.current)
+        layoutRafRef.current = null
+      }
       const app = appRef.current
       if (app) {
         try {
@@ -510,6 +528,14 @@ export function VnPlayer({
   const [reviewLineIndex, setReviewLineIndex] = useState<number | null>(null)
   const [displayedText, setDisplayedText] = useState(currentLine?.text ?? '')
   const typewriterTimerRef = useRef<number | null>(null)
+
+  // ★ Signal that VN player is active — PixiAnimatedBackground pauses when this is set
+  useEffect(() => {
+    document.body.dataset.vnActive = 'true'
+    return () => {
+      delete document.body.dataset.vnActive
+    }
+  }, [])
   const autoAdvanceTimerRef = useRef<number | null>(null)
   const lineIndex = reviewLineIndex ?? Math.max(history.length - 1, 0)
   const reviewLine = reviewLineIndex !== null ? history[reviewLineIndex] : null

@@ -220,15 +220,26 @@ export function VnInputPanel({
     }
   }, [isPlaying])
 
-  // ── 文字区域自适应高度 ──
+  // ── 文字区域自适应高度（rAF 节流，避免每次按键都触发同步布局计算）──
+  const heightRafRef = useRef<number | null>(null)
   useEffect(() => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-    textarea.style.height = `${TEXTAREA_MIN_HEIGHT}px`
-    const nextHeight = Math.min(Math.max(textarea.scrollHeight, TEXTAREA_MIN_HEIGHT), TEXTAREA_MAX_HEIGHT)
-    textarea.style.height = `${nextHeight}px`
-    textarea.style.overflowY = textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
-    setIsMultiline(nextHeight > TEXTAREA_MIN_HEIGHT)
+    if (heightRafRef.current !== null) return // 已有待处理的 rAF
+    heightRafRef.current = window.requestAnimationFrame(() => {
+      heightRafRef.current = null
+      const textarea = textareaRef.current
+      if (!textarea) return
+      textarea.style.height = `${TEXTAREA_MIN_HEIGHT}px`
+      const nextHeight = Math.min(Math.max(textarea.scrollHeight, TEXTAREA_MIN_HEIGHT), TEXTAREA_MAX_HEIGHT)
+      textarea.style.height = `${nextHeight}px`
+      textarea.style.overflowY = textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
+      setIsMultiline(nextHeight > TEXTAREA_MIN_HEIGHT)
+    })
+    return () => {
+      if (heightRafRef.current !== null) {
+        window.cancelAnimationFrame(heightRafRef.current)
+        heightRafRef.current = null
+      }
+    }
   }, [text])
 
   // ── 点击开始录音 ──

@@ -1,143 +1,101 @@
+import { lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { NativeBridgeProvider } from '@/lib/native'
+import { isNative } from '@/lib/native/platform'
+import { KeyboardProvider } from '@/providers/keyboard-provider'
 import { AuthProvider } from '@/providers/auth-provider'
 import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { OnboardingProvider } from '@/providers/onboarding-provider'
 import { MobileGestureProvider } from '@/providers/mobile-gesture-provider'
 import { RootLayout } from '@/layout/root-layout'
-import { AdminLayout } from '@/layout/admin-layout'
+// ── 首屏必需：静态导入 ──
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
 import { TodayTaskPage } from '@/features/learning/pages/today-task-page'
 import { LearningUnitPage } from '@/features/learning/pages/learning-unit-page'
-import { PracticeSessionPage } from '@/features/practice/pages/practice-session-page'
-import { ScriptHubPage } from '@/features/script/pages/script-hub-page'
-import { ScriptPlayPage } from '@/features/script/pages/script-play-page'
-import { ExploreMapPage } from '@/features/explore/pages/explore-map-page'
-import { ExploreLocationPage } from '@/features/explore/pages/explore-location-page'
-import { ExpressionLibraryPage } from '@/features/expression/pages/expression-library-page'
-import { AchievementHallPage } from '@/features/achievement/pages/achievement-hall-page'
-import { MemberPage } from '@/features/membership/pages/member-page'
-import { AccountPage } from '@/features/account/pages/account-page'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
-import { AdminUsersPage } from '@/features/admin/pages/admin-users-page'
-import { AdminMembersPage } from '@/features/admin/pages/admin-members-page'
-import { AdminBillingPage } from '@/features/admin/pages/admin-billing-page'
-import { AdminNotificationsPage } from '@/features/admin/pages/admin-notifications-page'
+import { AccountPage } from '@/features/account/pages/account-page'
+import { MemberPage } from '@/features/membership/pages/member-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { NotificationDetailPage } from '@/features/notification/pages/notification-detail-page'
-import { PortalPage } from '@/features/portal/pages/portal-page'
-import { CompanyPage } from '@/features/company/pages/company-page'
+import { FeedbackPage } from '@/features/feedback/pages/feedback-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { RegisterPage } from '@/features/auth/pages/register-page'
 import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
-import { SystemTermsPage } from '@/features/system/pages/system-terms-page'
-import { SystemPrivacyPage } from '@/features/system/pages/system-privacy-page'
-import { SystemChildrenPrivacyPage } from '@/features/system/pages/system-children-page'
-import { SystemPermissionsPage } from '@/features/system/pages/system-permissions-page'
-import { SystemSdkListPage } from '@/features/system/pages/system-sdk-list-page'
-import { SystemCollectInfoPage } from '@/features/system/pages/system-collect-info-page'
-import { SystemContactPage } from '@/features/system/pages/system-contact-page'
-import { SystemPrivacyConcisePage } from '@/features/system/pages/system-privacy-concise-page'
-import { SystemIcpPage } from '@/features/system/pages/system-icp-page'
-import { FeedbackPage } from '@/features/feedback/pages/feedback-page'
-import { LeaderboardPage } from '@/features/leaderboard/pages/leaderboard-page'
-import { InvitePage } from '@/features/referral/pages/invite-page'
-import { AdminFeedbacksPage } from '@/features/admin/pages/admin-feedbacks-page'
-import { AdminSettingsPage } from '@/features/admin/pages/admin-settings-page'
-import { AdminAnalyticsPage } from '@/features/admin/pages/admin-analytics-page'
-import { AdminScenesPage } from '@/features/admin/pages/admin-scenes-page'
-import { AdminScriptPage } from '@/features/admin/pages/admin-script-page'
-import { AdminAchievementsPage } from '@/features/admin/pages/admin-achievements-page'
-import { AdminCharactersPage } from '@/features/admin/pages/admin-characters-page'
-import { AdminStoriesPage } from '@/features/admin/pages/admin-stories-page'
-import { AdminMapsPage } from '@/features/admin/pages/admin-maps-page'
-import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
-import { AdminThemesPage } from '@/features/admin/theme-manage/pages/theme-list-page'
-import { AdminDailySentencesPage } from '@/features/admin/pages/admin-daily-sentences-page'
-import { AdminMobileBundlesPage } from '@/features/admin/pages/admin-mobile-bundles-page'
-import { AdminLearningPacksPage } from '@/features/admin/pages/admin-learning-packs-page'
-import { AdminContentLibraryPage } from '@/features/admin/pages/admin-content-library-page'
-import { AdminDictionaryPage } from '@/features/admin/pages/admin-dictionary-page'
+
+// ── 非首屏页面：懒加载 ──
+const AdminRoutes = lazy(() => import('@/routes/admin-routes'))
+const PracticeSessionPage = lazy(() => import('@/features/practice/pages/practice-session-page').then(m => ({ default: m.PracticeSessionPage })))
+const ScriptHubPage = lazy(() => import('@/features/script/pages/script-hub-page').then(m => ({ default: m.ScriptHubPage })))
+const ScriptPlayPage = lazy(() => import('@/features/script/pages/script-play-page').then(m => ({ default: m.ScriptPlayPage })))
+const ExploreMapPage = lazy(() => import('@/features/explore/pages/explore-map-page').then(m => ({ default: m.ExploreMapPage })))
+const ExploreLocationPage = lazy(() => import('@/features/explore/pages/explore-location-page').then(m => ({ default: m.ExploreLocationPage })))
+const ExpressionLibraryPage = lazy(() => import('@/features/expression/pages/expression-library-page').then(m => ({ default: m.ExpressionLibraryPage })))
+const AchievementHallPage = lazy(() => import('@/features/achievement/pages/achievement-hall-page').then(m => ({ default: m.AchievementHallPage })))
+const LeaderboardPage = lazy(() => import('@/features/leaderboard/pages/leaderboard-page').then(m => ({ default: m.LeaderboardPage })))
+const InvitePage = lazy(() => import('@/features/referral/pages/invite-page').then(m => ({ default: m.InvitePage })))
+const PortalPage = lazy(() => import('@/features/portal/pages/portal-page').then(m => ({ default: m.PortalPage })))
+const CompanyPage = lazy(() => import('@/features/company/pages/company-page').then(m => ({ default: m.CompanyPage })))
+const SystemTermsPage = lazy(() => import('@/features/system/pages/system-terms-page').then(m => ({ default: m.SystemTermsPage })))
+const SystemPrivacyPage = lazy(() => import('@/features/system/pages/system-privacy-page').then(m => ({ default: m.SystemPrivacyPage })))
+const SystemChildrenPrivacyPage = lazy(() => import('@/features/system/pages/system-children-page').then(m => ({ default: m.SystemChildrenPrivacyPage })))
+const SystemPermissionsPage = lazy(() => import('@/features/system/pages/system-permissions-page').then(m => ({ default: m.SystemPermissionsPage })))
+const SystemSdkListPage = lazy(() => import('@/features/system/pages/system-sdk-list-page').then(m => ({ default: m.SystemSdkListPage })))
+const SystemCollectInfoPage = lazy(() => import('@/features/system/pages/system-collect-info-page').then(m => ({ default: m.SystemCollectInfoPage })))
+const SystemContactPage = lazy(() => import('@/features/system/pages/system-contact-page').then(m => ({ default: m.SystemContactPage })))
+const SystemPrivacyConcisePage = lazy(() => import('@/features/system/pages/system-privacy-concise-page').then(m => ({ default: m.SystemPrivacyConcisePage })))
+const SystemIcpPage = lazy(() => import('@/features/system/pages/system-icp-page').then(m => ({ default: m.SystemIcpPage })))
+
+function PageLoader() {
+  return <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">Loading...</div>
+}
 
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <NativeBridgeProvider>
+        <KeyboardProvider>
         <AuthProvider>
           <ThemePresetProvider>
           <HashRouter>
           <AuthRouteGate>
             <MobileGestureProvider>
             <OnboardingProvider>
+            <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* 管理员后台 — 独立布局 */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route path="users" element={<AdminUsersPage />} />
-                <Route path="members" element={<AdminMembersPage />} />
-                <Route path="billing" element={<AdminBillingPage />} />
-                <Route path="notifications" element={<AdminNotificationsPage />} />
-                <Route path="feedbacks" element={<AdminFeedbacksPage />} />
-                <Route path="settings" element={<AdminSettingsPage />} />
-                <Route path="analytics" element={<AdminAnalyticsPage />} />
-                <Route path="scenes" element={<AdminScenesPage />} />
-                <Route path="characters" element={<AdminCharactersPage />} />
-                <Route path="stories" element={<AdminStoriesPage />} />
-                <Route path="maps" element={<AdminMapsPage />} />
-                <Route path="nqtr" element={<AdminNqtrPage />} />
-                <Route path="script" element={<AdminScriptPage />} />
-                <Route path="achievements" element={<AdminAchievementsPage />} />
-                <Route path="themes" element={<AdminThemesPage />} />
-                <Route path="daily-sentences" element={<AdminDailySentencesPage />} />
-                <Route path="mobile-bundles" element={<AdminMobileBundlesPage />} />
-                <Route path="learning-packs" element={<AdminLearningPacksPage />} />
-                <Route path="content-library" element={<AdminContentLibraryPage />} />
-                <Route path="dictionary" element={<AdminDictionaryPage />} />
-              </Route>
+              {/* ── Web 独有：后台管理 — Capacitor 端不注册 ── */}
+              {!isNative() && <Route path="/admin/*" element={<AdminRoutes />} />}
 
               {/* 用户端 — RootLayout */}
               <Route element={<RootLayout />}>
+                {/* 首屏静态 */}
                 <Route path="/" element={<EnglishHomePage />} />
-
-                {/* 学习计划 — 教材驱动路径 */}
                 <Route path="/learning" element={<LearningPlanPage />} />
                 <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
-
-                {/* 今日任务 */}
                 <Route path="/today" element={<TodayTaskPage />} />
-
-                {/* 练习会话 */}
-                <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
-
-                {/* 剧本模式 */}
-                <Route path="/script" element={<ScriptHubPage />} />
-                <Route path="/script/:episodeId" element={<ScriptPlayPage />} />
-
-                {/* 探索模式 */}
-                <Route path="/explore" element={<ExploreMapPage />} />
-                <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
-
-                {/* 学习库 */}
-                <Route path="/expressions" element={<ExpressionLibraryPage />} />
-
-                {/* 我的成长 */}
-                <Route path="/growth" element={<AchievementHallPage />} />
-
-                {/* 成就殿堂 */}
-                <Route path="/achievements" element={<AchievementHallPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/member" element={<MemberPage />} />
                 <Route path="/notifications" element={<NotificationListPage />} />
                 <Route path="/notifications/:id" element={<NotificationDetailPage />} />
                 <Route path="/feedback" element={<FeedbackPage />} />
+
+                {/* 重页面懒加载 */}
+                <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
+                <Route path="/script" element={<ScriptHubPage />} />
+                <Route path="/script/:episodeId" element={<ScriptPlayPage />} />
+                <Route path="/explore" element={<ExploreMapPage />} />
+                <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
+                <Route path="/expressions" element={<ExpressionLibraryPage />} />
+                <Route path="/growth" element={<AchievementHallPage />} />
+                <Route path="/achievements" element={<AchievementHallPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/invite" element={<InvitePage />} />
 
-                {/* 系统文档 — 法律与隐私相关 */}
+                {/* 系统文档 — 懒加载 */}
                 <Route path="/system/terms" element={<SystemTermsPage />} />
                 <Route path="/system/privacy" element={<SystemPrivacyPage />} />
                 <Route path="/system/privacy-children" element={<SystemChildrenPrivacyPage />} />
@@ -149,17 +107,16 @@ export default function App() {
                 <Route path="/system/contact" element={<SystemContactPage />} />
               </Route>
 
-              {/* 落地页 — 无外层布局 */}
-              <Route path="/portal" element={<PortalPage />} />
+              {/* ── Web 独有：PC/官网页 — Capacitor 端不注册 ── */}
+              {!isNative() && <Route path="/portal" element={<PortalPage />} />}
+              {!isNative() && <Route path="/company" element={<CompanyPage />} />}
 
-              {/* 公司介绍页 — 无外层布局，供 Apple Store 组织验证 */}
-              <Route path="/company" element={<CompanyPage />} />
-
-              {/* 认证页 — 无外层布局 */}
+              {/* 认证页 — 静态（登录是高频入口） */}
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
+            </Suspense>
             </OnboardingProvider>
             </MobileGestureProvider>
           </AuthRouteGate>
@@ -187,6 +144,7 @@ export default function App() {
           />
           </ThemePresetProvider>
       </AuthProvider>
+      </KeyboardProvider>
       </NativeBridgeProvider>
     </ThemeProvider>
   )
