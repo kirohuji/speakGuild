@@ -457,7 +457,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       packInstallingIds: [],
     })
     console.log('[learning-store] ✅ 离线数据已清除')
-    toast.success('离线数据已清除')
+    toast.success(i18n.t('profile.offlineDataCleared', { defaultValue: '离线数据已清除' }))
   },
 }))
 

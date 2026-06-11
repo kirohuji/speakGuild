@@ -449,7 +449,7 @@ export const learningPackService = {
           // 检查是否还有其他包引用旧 SHA256
           const remaining = allAssetRefs.filter((r: any) => r.sha256 === oldRef.sha256 && r.id !== oldRef.id)
           if (remaining.length === 0) {
-            await localDb.delete('local_assets', oldRef.sha256).catch(() => {})
+            await assetCacheService.remove(oldRef.sha256)
           }
         }
 
@@ -477,7 +477,7 @@ export const learningPackService = {
           await localDb.delete('asset_refs', oldRef.id)
           const remaining = allAssetRefs.filter((r: any) => r.sha256 === oldRef.sha256 && r.id !== oldRef.id)
           if (remaining.length === 0) {
-            await localDb.delete('local_assets', oldRef.sha256).catch(() => {})
+            await assetCacheService.remove(oldRef.sha256)
           }
         }
       }
@@ -563,8 +563,7 @@ export const learningPackService = {
         (r) => r.sha256 === ref.sha256 && r.packId !== packId,
       )
       if (remainingRefs.length === 0) {
-        // 无其他引用 → 清理 local_assets 记录 + 提示清理文件
-        await localDb.delete('local_assets', ref.sha256).catch(() => {})
+        await assetCacheService.remove(ref.sha256)
         deletedFiles++
       } else {
         keptFiles++

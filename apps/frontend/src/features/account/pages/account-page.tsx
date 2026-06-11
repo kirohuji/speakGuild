@@ -600,14 +600,14 @@ export function AccountPage() {
       </IosSection>
 
       {/* 区域：离线数据 */}
-      <IosSection header="离线数据">
+      <IosSection header={t('profile.offlineData', { defaultValue: '离线数据' })}>
         <IosRow
           icon={HardDrive}
           iconBg="bg-blue-500"
-          label="清除离线数据"
-          subtitle="删除已下载的学习包和资源文件"
+          label={t('profile.clearOfflineData', { defaultValue: '清除离线数据' })}
+          subtitle={t('profile.clearOfflineDataHint', { defaultValue: '删除已下载的学习包和资源文件' })}
           onTap={() => {
-            if (confirm('确定要清除所有离线数据吗？已下载的学习包将被删除。')) {
+            if (confirm(t('profile.clearOfflineDataConfirm', { defaultValue: '确定要清除所有离线数据吗？已下载的学习包将被删除。' }))) {
               useLearningStore.getState().clearAllOfflineData()
             }
           }}
