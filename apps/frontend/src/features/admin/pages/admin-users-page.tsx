@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Shield, ShieldAlert, ChevronLeft, ChevronRight,
   Mail, Phone, Calendar, Loader2, ArrowLeft, CheckCircle2, XCircle,
-  BookOpen, MessageSquare, Puzzle, Clapperboard, Star, Zap, Target, BarChart3,
+  MessageSquare, Clapperboard, Star, Target, BarChart3, MonitorSmartphone, Link2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,37 @@ const fmtShort = (n: number | undefined | null) => {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
+};
+
+const fmtDateTime = (value: string | Date | undefined | null) => {
+  if (!value) return '—';
+  return new Date(value).toLocaleString('zh-CN');
+};
+
+const summarizeUserAgent = (userAgent: string | null | undefined) => {
+  if (!userAgent) return '未知设备';
+  const os = /iPhone|iPad|iOS/i.test(userAgent)
+    ? 'iOS'
+    : /Android/i.test(userAgent)
+      ? 'Android'
+      : /Windows/i.test(userAgent)
+        ? 'Windows'
+        : /Mac OS|Macintosh/i.test(userAgent)
+          ? 'macOS'
+          : /Linux/i.test(userAgent)
+            ? 'Linux'
+            : '未知系统';
+  const browser = /Edg\//i.test(userAgent)
+    ? 'Edge'
+    : /Chrome\//i.test(userAgent)
+      ? 'Chrome'
+      : /Safari\//i.test(userAgent)
+        ? 'Safari'
+        : /Firefox\//i.test(userAgent)
+          ? 'Firefox'
+          : '未知浏览器';
+
+  return `${os} · ${browser}`;
 };
 
 function StatDot({
@@ -253,6 +284,9 @@ export function AdminUsersPage() {
                       验证状态
                     </th>
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:table-cell">
+                      登录设备
+                    </th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:table-cell">
                       注册时间
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -391,6 +425,12 @@ function UserRow({
                 )}
               </p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              {user.online && (
+                <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  在线
+                </span>
+              )}
             </div>
           </div>
         </td>
@@ -417,6 +457,17 @@ function UserRow({
             </span>
           </div>
         </td>
+        <td className="hidden px-4 py-3 lg:table-cell">
+          <div className="max-w-[180px]">
+            <p className="truncate text-sm text-foreground">
+              {summarizeUserAgent(user.recentSession?.userAgent)}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {user.activeSessionCount ? `${user.activeSessionCount} 个会话` : '暂无会话'}
+              {user.recentSession?.ipAddress ? ` · ${user.recentSession.ipAddress}` : ''}
+            </p>
+          </div>
+        </td>
         <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
           {new Date(user.createdAt).toLocaleDateString('zh-CN')}
         </td>
@@ -440,7 +491,7 @@ function UserRow({
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>用户详情</DialogTitle>
-            <DialogDescription>查看用户信息和学习数据</DialogDescription>
+            <DialogDescription>查看账号状态、登录会话和核心学习数据</DialogDescription>
           </DialogHeader>
 
           {detailLoading ? (
@@ -477,6 +528,19 @@ function UserRow({
                   {detail.username && (
                     <p className="text-sm text-muted-foreground">@{detail.username}</p>
                   )}
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'mt-1 text-xs',
+                      detail.presence?.online
+                        ? 'border-emerald-300 text-emerald-600'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {detail.presence?.online
+                      ? `当前在线 · ${detail.presence.socketCount} 个连接`
+                      : '当前离线'}
+                  </Badge>
                   {/* 会员状态 */}
                   {detail.membership ? (
                     <Badge
@@ -499,6 +563,65 @@ function UserRow({
                     </Badge>
                   )}
                 </div>
+              </div>
+
+              {/* ── 登录会话 ────────────────────────────── */}
+              <div className="rounded-xl border p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <MonitorSmartphone className="h-4 w-4 text-emerald-500" />
+                    登录会话
+                  </p>
+                  <Badge variant="outline" className="text-xs">
+                    {detail.sessions?.length ?? 0} 个有效会话
+                  </Badge>
+                </div>
+                {detail.sessions?.length ? (
+                  <div className="space-y-2">
+                    {detail.sessions.map((session) => (
+                      <div key={session.id} className="rounded-lg bg-muted/40 px-3 py-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="truncate text-sm font-medium">
+                            {summarizeUserAgent(session.userAgent)}
+                          </p>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {fmtDateTime(session.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1 truncate text-xs text-muted-foreground">
+                          IP: {session.ipAddress || '未知'} · 过期: {fmtDateTime(session.expiresAt)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">暂无有效登录会话</p>
+                )}
+              </div>
+
+              {/* ── 绑定账号 ────────────────────────────── */}
+              <div className="rounded-xl border p-4 space-y-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-blue-500" />
+                  绑定账号
+                </p>
+                {detail.accounts?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {detail.accounts.map((account) => (
+                      <Badge key={account.id} variant="secondary" className="text-xs">
+                        {account.providerId === 'credential'
+                          ? '邮箱密码'
+                          : account.providerId === 'wechat'
+                            ? '微信'
+                            : account.providerId === 'apple'
+                              ? 'Apple'
+                              : account.providerId}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">暂无绑定账号</p>
+                )}
               </div>
 
               {/* ── 联系方式 ────────────────────────────── */}
@@ -570,15 +693,9 @@ function UserRow({
                   <Target className="h-4 w-4 text-blue-500" />
                   学习统计
                 </p>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <StatDot icon={MessageSquare} label="练习会话" value={detail._count.practiceSessions} accent="blue" />
                   <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.scriptRecords} accent="violet" />
-
-                  <StatDot icon={Zap} label="表达库" value={detail._count.expressionItems} accent="amber" />
-                  <StatDot icon={Puzzle} label="场景进度" value={detail._count.sceneProgresses} accent="rose" />
-                  <StatDot icon={MessageSquare} label="Chunk进度" value={detail._count.chunkProgresses} accent="cyan" />
-                  <StatDot icon={Star} label="订单" value={detail._count.orders} accent="violet" />
-                  <div />
                 </div>
               </div>
 

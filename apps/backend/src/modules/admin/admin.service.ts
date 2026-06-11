@@ -2,10 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { NotificationGateway } from '../notification/notification.gateway';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationGateway: NotificationGateway,
+  ) {}
 
   // ─── 用户管理 ──────────────────────────────────────────────
 
@@ -44,6 +48,20 @@ export class AdminService {
               plan: { select: { name: true, level: true } },
             },
           },
+          sessions: {
+            select: {
+              updatedAt: true,
+              ipAddress: true,
+              userAgent: true,
+            },
+            orderBy: { updatedAt: 'desc' },
+            take: 1,
+          },
+          _count: {
+            select: {
+              sessions: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -52,7 +70,20 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
-    return toPageResult(list, total, pagination);
+    const onlineUserIds = new Set(this.notificationGateway.getOnlineUserIds());
+
+    return toPageResult(
+      list.map((user) => ({
+        ...user,
+        online: onlineUserIds.has(user.id),
+        activeSessionCount: user._count.sessions,
+        recentSession: user.sessions[0] ?? null,
+        sessions: undefined,
+        _count: undefined,
+      })),
+      total,
+      pagination,
+    );
   }
 
   async getUserDetail(userId: string) {
@@ -83,15 +114,32 @@ export class AdminService {
             plan: { select: { id: true, name: true, level: true } },
           },
         },
+        sessions: {
+          select: {
+            id: true,
+            expiresAt: true,
+            createdAt: true,
+            updatedAt: true,
+            ipAddress: true,
+            userAgent: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+          take: 10,
+        },
+        accounts: {
+          select: {
+            id: true,
+            providerId: true,
+            accountId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        },
         _count: {
           select: {
-
-            orders: true,
             practiceSessions: true,
             scriptRecords: true,
-            expressionItems: true,
-            sceneProgresses: true,
-            chunkProgresses: true,
           },
         },
       },
@@ -101,7 +149,10 @@ export class AdminService {
       throw new NotFoundException('用户不存在');
     }
 
-    return user;
+    return {
+      ...user,
+      presence: this.notificationGateway.getUserPresence(user.id),
+    };
   }
 
   async updateUserRole(userId: string, dto: UpdateUserRoleDto, currentUserId: string) {

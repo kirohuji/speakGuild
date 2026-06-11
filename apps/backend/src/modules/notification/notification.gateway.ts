@@ -18,6 +18,18 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   private clientMap = new Map<string, Set<string>>(); // userId -> Set<socketId>
 
+  getOnlineUserIds() {
+    return Array.from(this.clientMap.keys());
+  }
+
+  getUserPresence(userId: string) {
+    const sockets = this.clientMap.get(userId);
+    return {
+      online: Boolean(sockets?.size),
+      socketCount: sockets?.size ?? 0,
+    };
+  }
+
   async handleConnection(client: Socket) {
     try {
       const token = client.handshake.auth?.token;

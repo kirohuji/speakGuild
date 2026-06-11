@@ -12,6 +12,13 @@ export interface AdminUser {
   phoneNumberVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  online?: boolean;
+  activeSessionCount?: number;
+  recentSession?: {
+    updatedAt: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+  } | null;
   membership?: {
     status: string;
     expiredAt: string | null;
@@ -25,6 +32,25 @@ export interface AdminUserDetail extends AdminUser {
   points?: number;
   userLevel?: number;
   learningGoals?: string[];
+  presence?: {
+    online: boolean;
+    socketCount: number;
+  };
+  sessions?: Array<{
+    id: string;
+    expiresAt: string;
+    createdAt: string;
+    updatedAt: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+  }>;
+  accounts?: Array<{
+    id: string;
+    providerId: string;
+    accountId: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
   membership?: {
     status: string;
     startedAt: string | null;
@@ -32,13 +58,8 @@ export interface AdminUserDetail extends AdminUser {
     plan: { id: string; name: string; level: string } | null;
   } | null;
   _count: {
-
-    orders: number;
     practiceSessions: number;
     scriptRecords: number;
-    expressionItems: number;
-    sceneProgresses: number;
-    chunkProgresses: number;
   };
 }
 

@@ -15,9 +15,10 @@ import { DictionaryModule } from '../dictionary/dictionary.module';
 import { TtsModule } from '../tts/tts.module';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { LearningModule } from '../learning/learning.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule],
+  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule],
   controllers: [AdminController, ContentAdminController, SystemConfigController, LearningPackAdminController],
   providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService],
   exports: [SystemConfigService],
