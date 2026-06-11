@@ -66,6 +66,9 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'settings', label: t('admin.settings', { defaultValue: '系统设置' }), icon: Settings, path: '/admin/settings' },
     ]},
   ]
+
+  // 根据当前路由自动展开所属分组
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     const active = new Set<string>()
     for (const group of menuGroups) {
       if (group.items.some((item) => currentPath === item.path || currentPath.startsWith(item.path + '/'))) {

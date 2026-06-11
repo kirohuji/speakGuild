@@ -834,16 +834,23 @@ export class LearningService {
   }
 
   async checkLearningPacks(userId: string, installed: Array<{ packId: string; version?: number }>) {
+    console.log(`[learning-pack/check] checking ${installed.length} installed packs for user ${userId}`)
     const updates: any[] = [];
     for (const pack of installed ?? []) {
       if (!pack?.packId) continue;
       try {
         const published = await this.getPublishedLearningPackage(pack.packId);
-        if (!published) continue;
+        if (!published) {
+          console.log(`[learning-pack/check]   ${pack.packId.slice(-8)}: no published version, skip`)
+          continue;
+        }
 
         const latestVersion = published.version;
         const currentVersion = Number(pack.version ?? 0);
-        if (latestVersion <= currentVersion) continue;
+        if (latestVersion <= currentVersion) {
+          console.log(`[learning-pack/check]   ${pack.packId.slice(-8)}: up to date (v${currentVersion})`)
+          continue;
+        }
 
         const versionSpan = latestVersion - currentVersion;
 
@@ -880,6 +887,7 @@ export class LearningService {
           update.savingPercent = totalFiles > 0
             ? Math.round((1 - (delta.addedCount + delta.modifiedCount) / totalFiles) * 100)
             : 0;
+          console.log(`[learning-pack/check]   ${pack.packId.slice(-8)}: DELTA available v${currentVersion}→v${latestVersion}, ${update.deltaSizeHuman}, save ${update.savingPercent}%`)
         } else {
           const signedUrl = await this.fileAssets.getPrivateUrlByAssetId(published.fileAssetId!);
           update.fullDownloadUrl = signedUrl.url;
@@ -889,6 +897,7 @@ export class LearningService {
             : null;
           update.zipChecksum = published.zipChecksum;
           if (versionSpan > 3) update.fallbackReason = 'version_gap_too_large';
+          console.log(`[learning-pack/check]   ${pack.packId.slice(-8)}: FULL update v${currentVersion}→v${latestVersion}, span=${versionSpan}${versionSpan > 3 ? ' (fallback: too far)' : ''}`)
         }
 
         updates.push(update);
@@ -896,6 +905,7 @@ export class LearningService {
         // Ignore packs the user can no longer access or that no longer exist.
       }
     }
+    console.log(`[learning-pack/check] result: ${updates.length} updates (${updates.filter(u => u.updateType === 'delta').length} delta)`)
     return { updates };
   }
 

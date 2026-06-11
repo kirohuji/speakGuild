@@ -396,6 +396,13 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       const result = await learningApi.checkPacks(installed)
       set({ downloadedPacks, availablePackUpdates: result.updates })
       console.log(`[learning-store]   → ${result.updates.length} 个包有更新`)
+      for (const u of result.updates) {
+        if (u.updateType === 'delta') {
+          console.log(`[learning-store]     📦 ${u.packId?.slice(-8)}: DELTA v${u.fromVersion}→v${u.toVersion}, ${u.deltaSizeHuman}, 节省 ${u.savingPercent}%`)
+        } else {
+          console.log(`[learning-store]     📦 ${u.packId?.slice(-8)}: FULL v${u.fromVersion}→v${u.toVersion}, ${u.fullSizeHuman}${u.fallbackReason ? ' (' + u.fallbackReason + ')' : ''}`)
+        }
+      }
       if (!silent && result.updates.length > 0) {
         toast.info(i18n.t('learning.packUpdatesAvailable', { defaultValue: '有学习包可更新' }))
       }
