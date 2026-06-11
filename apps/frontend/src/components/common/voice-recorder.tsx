@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Mic, Square, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AudioPlayer } from '@/components/common/audio-player'
@@ -24,6 +25,7 @@ function fmt(ms: number) {
 }
 
 export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) {
+  const { t } = useTranslation()
   const [state, setState] = useState<RecorderState>({ status: 'idle' })
   const [elapsed, setElapsed] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -74,7 +76,7 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
           setState({ status: 'done', result, audioUrl: url })
           if (result.text) onTranscribed?.(result.text)
         } catch (e: any) {
-          setState({ status: 'error', message: e?.message || '上传失败' })
+          setState({ status: 'error', message: e?.message || t('voice.uploadFailed', { defaultValue: '上传失败' }) })
         }
       }
 
@@ -88,7 +90,7 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
         setElapsed(Date.now() - startedAt)
       }, 200)
     } catch (e: any) {
-      setState({ status: 'error', message: '无法访问麦克风：' + (e?.message || '权限被拒绝') })
+      setState({ status: 'error', message: t('voice.micError', { defaultValue: '无法访问麦克风' }) + '：' + (e?.message || t('voice.permissionDenied', { defaultValue: '权限被拒绝' })) })
     }
   }, [onTranscribed])
 
@@ -110,7 +112,7 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
         {state.status === 'idle' && (
           <Button onClick={startRecording} className="gap-2">
             <Mic className="size-4" />
-            开始录音
+            {t('voice.startRecording', { defaultValue: '开始录音' })}
           </Button>
         )}
 
@@ -118,7 +120,7 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
           <>
             <Button variant="destructive" onClick={stopRecording} className="gap-2">
               <Square className="size-4" />
-              停止录音
+              {t('voice.stopRecording', { defaultValue: '停止录音' })}
             </Button>
             <div className="flex items-center gap-2">
               <span className="size-2 animate-pulse rounded-full bg-red-500" />
@@ -130,14 +132,14 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
         {state.status === 'processing' && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            正在转写录音…
+            {t('voice.transcribing', { defaultValue: '正在转写录音…' })}
           </div>
         )}
 
         {(state.status === 'done' || state.status === 'error') && (
           <Button variant="outline" size="sm" onClick={reset} className="gap-1.5">
             <Mic className="size-3.5" />
-            重新录音
+            {t('voice.recordAgain', { defaultValue: '重新录音' })}
           </Button>
         )}
       </div>
@@ -155,13 +157,13 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
           {state.result.text ? (
             <div className="rounded-xl bg-muted/40 p-4">
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                转写文本
+                {t('voice.transcriptText', { defaultValue: '转写文本' })}
               </p>
               <p className="text-sm leading-relaxed">{state.result.text}</p>
             </div>
           ) : (
             <div className="rounded-xl bg-muted/30 p-3 text-xs text-muted-foreground">
-              未配置 Whisper 转写服务，仅提供录音回放。
+              {t('voice.noWhisper', { defaultValue: '未配置 Whisper 转写服务，仅提供录音回放。' })}
             </div>
           )}
 

@@ -12,15 +12,15 @@ import { cn } from '@/lib/cn'
 import { useTranslation } from 'react-i18next'
 
 const TYPE_OPTIONS = [
-  { value: 'bug', label: '问题反馈' },
-  { value: 'suggestion', label: '功能建议' },
-  { value: 'other', label: '其他' },
+  { value: 'bug', label: '问题反馈', labelKey: 'feedback.typeBug' },
+  { value: 'suggestion', label: '功能建议', labelKey: 'feedback.typeSuggestion' },
+  { value: 'other', label: '其他', labelKey: 'feedback.typeOther' },
 ]
 
-const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondary' | 'default' }> = {
-  pending: { label: '处理中', variant: 'secondary' },
-  resolved: { label: '已解决', variant: 'default' },
-  closed: { label: '已关闭', variant: 'outline' },
+const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondary' | 'default'; labelKey: string }> = {
+  pending: { label: '处理中', variant: 'secondary', labelKey: 'feedback.statusPending' },
+  resolved: { label: '已解决', variant: 'default', labelKey: 'feedback.statusResolved' },
+  closed: { label: '已关闭', variant: 'outline', labelKey: 'feedback.statusClosed' },
 }
 
 export function FeedbackPage() {
@@ -91,7 +91,7 @@ export function FeedbackPage() {
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.type')}</label>
                 <Select value={type} onChange={(e) => setType(e.target.value)} className="w-full">
                   {TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey, { defaultValue: opt.label })}</SelectItem>
                   ))}
                 </Select>
               </div>
@@ -125,7 +125,7 @@ export function FeedbackPage() {
       {/* my feedbacks */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">我的反馈记录</CardTitle>
+          <CardTitle className="text-base">{t('feedback.myRecords', { defaultValue: '我的反馈记录' })}</CardTitle>
         </CardHeader>
         <CardContent>
           {loadingFeedbacks ? (
@@ -134,23 +134,23 @@ export function FeedbackPage() {
               <Skeleton className="h-16 w-full" />
             </div>
           ) : myFeedbacks.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">暂无反馈记录</p>
+            <p className="text-sm text-muted-foreground text-center py-6">{t('feedback.noRecords', { defaultValue: '暂无反馈记录' })}</p>
           ) : (
             <div className="space-y-3">
               {myFeedbacks.map((fb) => (
                 <div key={fb.id} className="rounded-lg border border-border/60 p-3 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-[10px]">
-                      {TYPE_OPTIONS.find((t) => t.value === fb.type)?.label || fb.type}
+                      {t(TYPE_OPTIONS.find((opt) => opt.value === fb.type)?.labelKey || 'feedback.typeOther', { defaultValue: fb.type })}
                     </Badge>
                     <Badge variant={STATUS_MAP[fb.status]?.variant || 'outline'} className="text-[10px]">
-                      {STATUS_MAP[fb.status]?.label || fb.status}
+                      {t(STATUS_MAP[fb.status]?.labelKey || 'feedback.statusPending', { defaultValue: fb.status })}
                     </Badge>
                   </div>
                   <p className="text-sm line-clamp-2">{fb.content}</p>
                   {fb.adminNote && (
                     <p className="text-xs text-muted-foreground bg-muted/30 rounded px-2 py-1">
-                      客服回复：{fb.adminNote}
+                      {t('feedback.adminReply', { defaultValue: '客服回复' })}：{fb.adminNote}
                     </p>
                   )}
                   <p className="text-[10px] text-muted-foreground/60">

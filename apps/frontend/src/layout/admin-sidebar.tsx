@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Settings, BarChart3, Bell,
@@ -25,48 +26,7 @@ interface MenuGroup {
   items: MenuItem[]
 }
 
-// ─── Menu Data ──────────────────────────────────────────────
-
-const menuGroups: MenuGroup[] = [
-  {
-    key: 'users',
-    label: '用户与运营',
-    icon: Users,
-    items: [
-      { key: 'users', label: '用户管理', icon: Users, path: '/admin/users' },
-      { key: 'members', label: '会员管理', icon: CreditCard, path: '/admin/members' },
-      { key: 'billing', label: '账单管理', icon: Receipt, path: '/admin/billing' },
-      { key: 'feedbacks', label: '反馈管理', icon: MessageSquare, path: '/admin/feedbacks' },
-      { key: 'notifications', label: '消息推送', icon: Bell, path: '/admin/notifications' },
-    ],
-  },
-  {
-    key: 'content',
-    label: '内容管理',
-    icon: FileText,
-    items: [
-      { key: 'scenes', label: '场景管理', icon: MapPin, path: '/admin/scenes' },
-      { key: 'script', label: '剧本管理', icon: Film, path: '/admin/script' },
-      { key: 'achievements', label: '成就管理', icon: Award, path: '/admin/achievements' },
-      { key: 'daily-sentences', label: '每日一句', icon: Quote, path: '/admin/daily-sentences' },
-      { key: 'content-library', label: '内容语料库', icon: Library, path: '/admin/content-library' },
-      { key: 'dictionary', label: '词典管理', icon: BookOpen, path: '/admin/dictionary' },
-      { key: 'learning-packs', label: '学习包管理', icon: Archive, path: '/admin/learning-packs' },
-      { key: 'nqtr', label: 'NQTR 内容工坊', icon: Palette, path: '/admin/nqtr' },
-    ],
-  },
-  {
-    key: 'system',
-    label: '系统设置',
-    icon: Wrench,
-    items: [
-      { key: 'themes', label: '主题管理', icon: Palette, path: '/admin/themes' },
-      { key: 'analytics', label: '数据统计', icon: BarChart3, path: '/admin/analytics' },
-      { key: 'mobile-bundles', label: 'OTA 安装包', icon: Smartphone, path: '/admin/mobile-bundles' },
-      { key: 'settings', label: '系统设置', icon: Settings, path: '/admin/settings' },
-    ],
-  },
-]
+// ─── Menu Data (defined inside component for i18n) ──────────
 
 // ─── Component ──────────────────────────────────────────────
 
@@ -77,11 +37,35 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: AdminSidebarProps) {
+  const { t } = useTranslation()
   const location = useLocation()
   const currentPath = location.pathname
 
-  // 根据当前路由自动展开所属分组
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+  const menuGroups: MenuGroup[] = [
+    { key: 'users', label: t('admin.usersAndOps', { defaultValue: '用户与运营' }), icon: Users, items: [
+      { key: 'users', label: t('admin.userManagement', { defaultValue: '用户管理' }), icon: Users, path: '/admin/users' },
+      { key: 'members', label: t('admin.memberManagement', { defaultValue: '会员管理' }), icon: CreditCard, path: '/admin/members' },
+      { key: 'billing', label: t('admin.billingManagement', { defaultValue: '账单管理' }), icon: Receipt, path: '/admin/billing' },
+      { key: 'feedbacks', label: t('admin.feedbackManagement', { defaultValue: '反馈管理' }), icon: MessageSquare, path: '/admin/feedbacks' },
+      { key: 'notifications', label: t('admin.notificationPush', { defaultValue: '消息推送' }), icon: Bell, path: '/admin/notifications' },
+    ]},
+    { key: 'content', label: t('admin.contentManagement', { defaultValue: '内容管理' }), icon: FileText, items: [
+      { key: 'scenes', label: t('admin.sceneManagement', { defaultValue: '场景管理' }), icon: MapPin, path: '/admin/scenes' },
+      { key: 'script', label: t('admin.scriptManagement', { defaultValue: '剧本管理' }), icon: Film, path: '/admin/script' },
+      { key: 'achievements', label: t('admin.achievementManagement', { defaultValue: '成就管理' }), icon: Award, path: '/admin/achievements' },
+      { key: 'daily-sentences', label: t('admin.dailySentences', { defaultValue: '每日一句' }), icon: Quote, path: '/admin/daily-sentences' },
+      { key: 'content-library', label: t('admin.contentLibrary', { defaultValue: '内容语料库' }), icon: Library, path: '/admin/content-library' },
+      { key: 'dictionary', label: t('admin.dictionaryManagement', { defaultValue: '词典管理' }), icon: BookOpen, path: '/admin/dictionary' },
+      { key: 'learning-packs', label: t('admin.learningPackManagement', { defaultValue: '学习包管理' }), icon: Archive, path: '/admin/learning-packs' },
+      { key: 'nqtr', label: t('admin.nqtrWorkshop', { defaultValue: 'NQTR 内容工坊' }), icon: Palette, path: '/admin/nqtr' },
+    ]},
+    { key: 'system', label: t('admin.systemSettings', { defaultValue: '系统设置' }), icon: Wrench, items: [
+      { key: 'themes', label: t('admin.themeManagement', { defaultValue: '主题管理' }), icon: Palette, path: '/admin/themes' },
+      { key: 'analytics', label: t('admin.analytics', { defaultValue: '数据统计' }), icon: BarChart3, path: '/admin/analytics' },
+      { key: 'mobile-bundles', label: t('admin.otaBundles', { defaultValue: 'OTA 安装包' }), icon: Smartphone, path: '/admin/mobile-bundles' },
+      { key: 'settings', label: t('admin.settings', { defaultValue: '系统设置' }), icon: Settings, path: '/admin/settings' },
+    ]},
+  ]
     const active = new Set<string>()
     for (const group of menuGroups) {
       if (group.items.some((item) => currentPath === item.path || currentPath.startsWith(item.path + '/'))) {

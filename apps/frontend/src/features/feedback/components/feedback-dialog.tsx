@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Send, Loader2, CheckCircle2, MessageSquare, Mail, Bug, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -9,9 +10,9 @@ import { submitAnonymousFeedback, submitFeedback } from '@/features/feedback/api
 import { useAuth } from '@/providers/auth-provider'
 
 const TYPE_OPTIONS = [
-  { value: 'bug', label: '问题反馈', icon: Bug },
-  { value: 'suggestion', label: '功能建议', icon: Lightbulb },
-  { value: 'other', label: '其他', icon: MessageSquare },
+  { value: 'bug', label: '问题反馈', labelKey: 'feedback.typeBug' },
+  { value: 'suggestion', label: '功能建议', labelKey: 'feedback.typeSuggestion' },
+  { value: 'other', label: '其他', labelKey: 'feedback.typeOther' },
 ]
 
 interface FeedbackDialogProps {
@@ -20,6 +21,7 @@ interface FeedbackDialogProps {
 }
 
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const isLoggedIn = !!session?.user?.id
   const [email, setEmail] = useState('')
@@ -65,12 +67,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
       {submitted ? (
         <div className="flex flex-col items-center py-8 text-center">
           <CheckCircle2 className="h-14 w-14 text-success mb-3" />
-          <p className="text-lg font-medium">感谢您的反馈</p>
+          <p className="text-lg font-medium">{t('feedback.thanks', { defaultValue: '感谢您的反馈' })}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoggedIn ? '我们会认真查看您的反馈' : '我们会在 3 个工作日内通过邮件回复您'}
+            {isLoggedIn
+              ? t('feedback.thanksLoggedIn', { defaultValue: '我们会认真查看您的反馈' })
+              : t('feedback.thanksAnonymous', { defaultValue: '我们会在 3 个工作日内通过邮件回复您' })}
           </p>
           <Button variant="outline" size="sm" className="mt-5" onClick={handleClose}>
-            关闭
+            {t('common.close', { defaultValue: '关闭' })}
           </Button>
         </div>
       ) : (
@@ -78,28 +82,28 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           {isLoggedIn ? (
             <>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">反馈类型</label>
+                <label className="text-sm font-medium mb-1.5 block">{t('feedback.type', { defaultValue: '反馈类型' })}</label>
                 <Select value={type} onChange={(e) => setType(e.target.value)} className="w-full">
                   {TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey, { defaultValue: opt.label })}</SelectItem>
                   ))}
                 </Select>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">
-                  反馈内容 <span className="text-destructive">*</span>
+                  {t('feedback.content', { defaultValue: '反馈内容' })} <span className="text-destructive">*</span>
                 </label>
                 <Textarea
                   className="min-h-[120px] resize-none"
-                  placeholder="请描述您的意见或遇到的问题..."
+                  placeholder={t('feedback.contentPlaceholder', { defaultValue: '请描述您的意见或遇到的问题...' })}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">联系方式（选填）</label>
+                <label className="text-sm font-medium mb-1.5 block">{t('feedback.contactOptional', { defaultValue: '联系方式（选填）' })}</label>
                 <Input
-                  placeholder="邮箱或手机号，方便我们联系您"
+                  placeholder={t('feedback.contactPlaceholder', { defaultValue: '邮箱或手机号，方便我们联系您' })}
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
                 />
@@ -109,14 +113,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             <>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">
-                  邮箱地址 <span className="text-destructive">*</span>
+                  {t('feedback.email', { defaultValue: '邮箱地址' })} <span className="text-destructive">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     className="pl-10"
                     type="email"
-                    placeholder="请输入您的邮箱地址，以便我们回复您"
+                    placeholder={t('feedback.emailPlaceholder', { defaultValue: '请输入您的邮箱地址，以便我们回复您' })}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -124,11 +128,11 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">
-                  反馈内容 <span className="text-destructive">*</span>
+                  {t('feedback.content', { defaultValue: '反馈内容' })} <span className="text-destructive">*</span>
                 </label>
                 <Textarea
                   className="min-h-[120px] resize-none"
-                  placeholder="请描述您的意见或遇到的问题..."
+                  placeholder={t('feedback.contentPlaceholder', { defaultValue: '请描述您的意见或遇到的问题...' })}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                 />
@@ -137,7 +141,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           )}
           <Button onClick={handleSubmit} disabled={!canSubmit} className="w-full gap-2">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {submitting ? '提交中...' : '提交反馈'}
+            {submitting ? t('common.submitting', { defaultValue: '提交中...' }) : t('feedback.submit', { defaultValue: '提交反馈' })}
           </Button>
         </>
       )}
@@ -153,10 +157,12 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            意见与反馈
+            {t('feedback.title', { defaultValue: '意见与反馈' })}
           </DialogTitle>
           <DialogDescription>
-            {isLoggedIn ? '请选择反馈类型并描述您的问题或建议' : '请留下您的邮箱和反馈内容，我们会尽快回复'}
+            {isLoggedIn
+              ? t('feedback.description', { defaultValue: '请选择反馈类型并描述您的问题或建议' })
+              : t('feedback.descriptionAnonymous', { defaultValue: '请留下您的邮箱和反馈内容，我们会尽快回复' })}
           </DialogDescription>
         </DialogHeader>
         {formContent}

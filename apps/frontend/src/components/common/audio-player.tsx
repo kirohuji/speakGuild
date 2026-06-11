@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FastForward, Rewind, RepeatIcon,
@@ -123,6 +124,8 @@ export function AudioPlayer({
   const [loopOn, setLoopOn] = useState(false)
   const [loopSeg, setLoopSeg] = useState(0)
   const [sentencesOpen, setSentencesOpen] = useState(!compact)
+
+  const { t } = useTranslation()
 
   useEffect(() => { loopOnRef.current  = loopOn  }, [loopOn])
   useEffect(() => { loopSegRef.current = loopSeg }, [loopSeg])
@@ -300,8 +303,8 @@ export function AudioPlayer({
           ) : (
             <div className="py-3 text-center text-xs text-muted-foreground">
               {audioProvider === 'minimax'
-                ? 'MiniMax 暂不支持词级时间戳'
-                : '该音频暂无词级时间戳'}
+                ? t('audio.noTimestampsMiniMax', { defaultValue: 'MiniMax 暂不支持词级时间戳' })
+                : t('audio.noTimestamps', { defaultValue: '该音频暂无词级时间戳' })}
             </div>
           )}
         </div>
@@ -317,13 +320,13 @@ export function AudioPlayer({
               onClick={() => setSentencesOpen((v) => !v)}
             >
               <RepeatIcon className="size-3" />
-              {sentencesOpen ? '收起歌词' : '展开歌词'}
+              {sentencesOpen ? t('audio.collapseLyrics', { defaultValue: '收起歌词' }) : t('audio.expandLyrics', { defaultValue: '展开歌词' })}
             </button>
           )}
           <label className="flex cursor-pointer items-center gap-1.5">
             <input type="checkbox" className="accent-primary" checked={showWords}
               onChange={(e) => setShowWords(e.target.checked)} />
-            逐词高亮
+            {t('audio.wordHighlight', { defaultValue: '逐词高亮' })}
           </label>
           <label className="flex cursor-pointer items-center gap-1.5">
             <input type="checkbox" className="accent-primary" checked={loopOn}
@@ -334,7 +337,7 @@ export function AudioPlayer({
                   setLoopSeg(Math.max(0, Math.min(activeSent, sentences.length - 1)))
               }} />
             <RepeatIcon className="size-3" />
-            单句循环
+            {t('audio.sentenceLoop', { defaultValue: '单句循环' })}
           </label>
         </div>
       )}

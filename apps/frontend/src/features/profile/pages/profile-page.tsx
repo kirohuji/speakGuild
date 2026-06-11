@@ -306,6 +306,7 @@ function formatBytes(bytes?: number) {
 }
 
 function MobileStorageView() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
@@ -325,10 +326,10 @@ function MobileStorageView() {
     setClearing(category)
     try {
       await offlineStorageService.clearCategory(category)
-      toast.success(category === 'all' ? '缓存已全部清除' : '缓存已清除')
+      toast.success(category === 'all' ? t('profile.cacheAllCleared', { defaultValue: '缓存已全部清除' }) : t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
       await offlineStorageService.getStats().then(setStats)
     } catch (error: any) {
-      toast.error(error?.message || '清理失败')
+      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setClearing(null)
     }
@@ -336,10 +337,10 @@ function MobileStorageView() {
 
   const totalBytes = stats?.totalCacheBytes ?? 0
   const segments = [
-    { key: 'packs' as const, label: '学习包内容', value: stats?.downloadedPackBytes ?? 0, color: 'bg-blue-500' },
-    { key: 'assets' as const, label: '资源文件', value: stats?.localAssetBytes ?? 0, color: 'bg-emerald-500' },
-    { key: 'dictionary' as const, label: '词典缓存', value: stats?.dictionaryBytes ?? 0, color: 'bg-violet-500' },
-    { key: 'expressions' as const, label: '学习库缓存', value: stats?.expressionBytes ?? 0, color: 'bg-amber-500' },
+    { key: 'packs' as const, label: t('profile.cachePacks', { defaultValue: '学习包内容' }), value: stats?.downloadedPackBytes ?? 0, color: 'bg-blue-500' },
+    { key: 'assets' as const, label: t('profile.cacheAssets', { defaultValue: '资源文件' }), value: stats?.localAssetBytes ?? 0, color: 'bg-emerald-500' },
+    { key: 'dictionary' as const, label: t('profile.cacheDictionary', { defaultValue: '词典缓存' }), value: stats?.dictionaryBytes ?? 0, color: 'bg-violet-500' },
+    { key: 'expressions' as const, label: t('profile.cacheExpressions', { defaultValue: '学习库缓存' }), value: stats?.expressionBytes ?? 0, color: 'bg-amber-500' },
   ]
   const activeSegments = segments.filter((segment) => segment.value > 0)
 
@@ -355,17 +356,17 @@ function MobileStorageView() {
       }}
       className="h-8 px-2 text-xs text-red-500 hover:text-red-600"
     >
-      {clearing === category ? '清除中' : '清除'}
+      {clearing === category ? t('common.clearing', { defaultValue: '清除中' }) : t('common.clear', { defaultValue: '清除' })}
     </Button>
   )
 
   return (
     <div className="space-y-5">
-      <IosSection header="缓存分布">
+      <IosSection header={t('profile.cacheDistribution', { defaultValue: '缓存分布' })}>
         <div className="space-y-4 px-4 py-4">
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium">本地缓存总量</span>
+              <span className="text-sm font-medium">{t('profile.totalCache', { defaultValue: '本地缓存总量' })}</span>
               <span className="text-sm text-muted-foreground">{loading ? '...' : formatBytes(totalBytes)}</span>
             </div>
             <div className="flex h-2 overflow-hidden rounded-full bg-muted">
@@ -396,44 +397,44 @@ function MobileStorageView() {
         </div>
       </IosSection>
 
-      <IosSection header="本地学习数据">
+      <IosSection header={t('profile.localLearningData', { defaultValue: '本地学习数据' })}>
         <IosRow
           icon={HardDrive}
           iconBg="bg-blue-500"
-          label="已下载学习包"
-          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} 个学习包`}
+          label={t('profile.downloadedPacks', { defaultValue: '已下载学习包' })}
+          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })}`}
           right={<ClearButton category="packs" />}
         />
         <IosRow
           icon={Database}
           iconBg="bg-emerald-500"
-          label="本地资源文件"
-          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} 个文件 · ${formatBytes(stats?.localAssetBytes)}`}
+          label={t('profile.localAssets', { defaultValue: '本地资源文件' })}
+          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)}`}
           right={<ClearButton category="assets" />}
         />
         <IosRow
-          label="离线词典缓存"
-          subtitle={loading ? undefined : `${stats?.dictionaryEntryCount ?? 0} 条记录 · ${formatBytes(stats?.dictionaryBytes)}`}
+          label={t('profile.offlineDictionary', { defaultValue: '离线词典缓存' })}
+          subtitle={loading ? undefined : `${stats?.dictionaryEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.dictionaryBytes)}`}
           right={<ClearButton category="dictionary" />}
         />
         <IosRow
-          label="学习库缓存"
-          subtitle={loading ? undefined : `${stats?.expressionEntryCount ?? 0} 条记录 · ${formatBytes(stats?.expressionBytes)}`}
+          label={t('profile.expressionCache', { defaultValue: '学习库缓存' })}
+          subtitle={loading ? undefined : `${stats?.expressionEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.expressionBytes)}`}
           right={<ClearButton category="expressions" />}
           last
         />
       </IosSection>
 
-      <IosSection header="同步状态">
-        <IosRow label="待同步操作" value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)} last />
+      <IosSection header={t('profile.syncStatus', { defaultValue: '同步状态' })}>
+        <IosRow label={t('profile.pendingSync', { defaultValue: '待同步操作' })} value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)} last />
       </IosSection>
 
       <IosSection>
         <IosRow
           icon={Trash2}
           iconBg="bg-red-500"
-          label={clearing === 'all' ? '清除中...' : '全部清除'}
-          subtitle="清除学习包、资源文件、词典缓存和学习库缓存"
+          label={clearing === 'all' ? t('common.clearing', { defaultValue: '清除中...' }) : t('profile.clearAll', { defaultValue: '全部清除' })}
+          subtitle={t('profile.clearAllHint', { defaultValue: '清除学习包、资源文件、词典缓存和学习库缓存' })}
           last
           onTap={clearing ? undefined : () => handleClear('all')}
         />

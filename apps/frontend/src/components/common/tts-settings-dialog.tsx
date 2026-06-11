@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal, Volume2, Loader2, CheckCircle2, AlertCircle, Play } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,7 @@ interface TtsSettingsDialogProps {
 }
 
 export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps) {
+  const { t } = useTranslation()
   const { ttsBackend, setTtsBackend } = usePreferencesStore()
 
   const [schemas, setSchemas] = useState<TtsSchema[]>([])
@@ -129,13 +131,13 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
       }
       audio.onerror = () => {
         URL.revokeObjectURL(url)
-        setPreviewError('播放失败')
+        setPreviewError(t('tts.playFailed', { defaultValue: '播放失败' }))
         setPreviewing(false)
       }
       setPreviewAudio(audio)
       await audio.play()
     } catch (e: any) {
-      setPreviewError(e?.message || '合成失败，请检查 API Key 配置')
+      setPreviewError(e?.message || t('tts.synthesisFailed', { defaultValue: '合成失败，请检查 API Key 配置' }))
       setPreviewing(false)
     }
   }
@@ -158,21 +160,21 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <SlidersHorizontal className="size-4 text-primary" />
-            语音合成设置
+            {t('tts.title', { defaultValue: '语音合成设置' })}
           </DialogTitle>
         </DialogHeader>
 
         {loadingSchema && (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="mr-2 size-4 animate-spin" />
-            加载配置中…
+            {t('common.loading', { defaultValue: '加载配置中…' })}
           </div>
         )}
 
         {!loadingSchema && (
           <div className="space-y-5 py-2">
             {/* Provider */}
-            <Section label="合成引擎">
+            <Section label={t('tts.provider', { defaultValue: '合成引擎' })}>
               <div className="flex gap-2">
                 {(['minimax', 'cartesia'] as TtsProviderKey[]).map((p) => (
                   <button
@@ -189,7 +191,7 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
                     {p === 'minimax' ? 'MiniMax' : 'Cartesia'}
                     {p === 'cartesia' && (
                       <span className="ml-1 rounded bg-primary/10 px-1 py-0.5 text-[10px] text-primary">
-                        词时间戳
+                        {t('tts.wordTimestamps', { defaultValue: '词时间戳' })}
                       </span>
                     )}
                   </button>
@@ -197,14 +199,14 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
                 {provider === 'cartesia'
-                  ? 'Cartesia 支持词级时间戳，可实现逐词高亮与句子导航。'
-                  : 'MiniMax 中英文质量好，但不支持词级时间戳。'}
+                  ? t('tts.cartesiaDesc', { defaultValue: 'Cartesia 支持词级时间戳，可实现逐词高亮与句子导航。' })
+                  : t('tts.minimaxDesc', { defaultValue: 'MiniMax 中英文质量好，但不支持词级时间戳。' })}
               </p>
             </Section>
 
             {/* Model */}
             {currentSchema && (
-              <Section label="模型">
+              <Section label={t('tts.model', { defaultValue: '模型' })}>
                 <div className="grid grid-cols-2 gap-2">
                   {currentSchema.models.map((m) => (
                     <button
@@ -226,7 +228,7 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
             )}
 
             {/* Voice */}
-            <Section label="声音">
+            <Section label={t('tts.voice', { defaultValue: '声音' })}>
               <div className="grid grid-cols-2 gap-2">
                 {voiceOptions.map((v) => (
                   <button
@@ -245,13 +247,13 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
                 ))}
               </div>
               {currentModelSchema?.requiresVoiceId && !voiceId && (
-                <p className="mt-1 text-xs text-destructive">该模型需要选择声音</p>
+                <p className="mt-1 text-xs text-destructive">{t('tts.voiceRequired', { defaultValue: '该模型需要选择声音' })}</p>
               )}
             </Section>
 
             {/* Dynamic params */}
             {currentModelSchema && currentModelSchema.fields.length > 0 && (
-              <Section label="高级参数">
+              <Section label={t('tts.advancedParams', { defaultValue: '高级参数' })}>
                 <div className="space-y-4">
                   {currentModelSchema.fields.map((f) => (
                     <ParamField
