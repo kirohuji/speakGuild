@@ -27,6 +27,7 @@ interface Preferences {
   tts: TtsSettings
   ttsBackend: TtsBackendSettings
   wifiOnlyMedia: boolean
+  nativeSpeechRecognitionEnabled: boolean
 }
 
 interface PreferencesStore extends Preferences {
@@ -38,6 +39,7 @@ interface PreferencesStore extends Preferences {
   setTts: (tts: Partial<TtsSettings>) => void
   setTtsBackend: (settings: Partial<TtsBackendSettings>) => void
   setWifiOnlyMedia: (value: boolean) => void
+  setNativeSpeechRecognitionEnabled: (value: boolean) => void
 }
 
 export const DEFAULT_TTS: TtsSettings = {
@@ -65,6 +67,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       tts: DEFAULT_TTS,
       ttsBackend: DEFAULT_TTS_BACKEND,
       wifiOnlyMedia: true,
+      nativeSpeechRecognitionEnabled: false,
       setAutoPlay: (autoPlay) => set({ autoPlay }),
       setBgmEnabled: (bgmEnabled) => set({ bgmEnabled }),
       setBgmVolume: (bgmVolume) => set({ bgmVolume }),
@@ -78,6 +81,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setTtsBackend: (settings) =>
         set((state) => ({ ttsBackend: { ...state.ttsBackend, ...settings } })),
       setWifiOnlyMedia: (value) => set({ wifiOnlyMedia: value }),
+      setNativeSpeechRecognitionEnabled: (value) => set({ nativeSpeechRecognitionEnabled: value }),
     }),
     { name: 'manyu-preferences' }
   )

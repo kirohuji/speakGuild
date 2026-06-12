@@ -42,7 +42,29 @@ async function removeHandles(handles: Array<PluginListenerHandle | null>) {
 }
 
 function getBestPartialText(event: { accumulatedText?: string; accumulated?: string; matches?: string[] }) {
-  return (event.accumulatedText || event.accumulated || event.matches?.[0] || '').trim();
+  return normalizeTranscriptText(event.accumulatedText || event.accumulated || event.matches?.[0] || '');
+}
+
+function normalizeTranscriptText(text: string | undefined | null) {
+  return (text || '')
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+/g, ' ').trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+export async function isNativeSpeechRecognitionAvailable(language = DEFAULT_LANGUAGE) {
+  if (!isNative()) return false;
+
+  const availability = await SpeechRecognition.available().catch(() => ({ available: false }));
+  if (!availability.available) return false;
+
+  // Keep this probe best-effort: some devices support the legacy native recognizer
+  // even when the newer on-device path is unavailable for this language.
+  await SpeechRecognition.isOnDeviceRecognitionAvailable({ language }).catch(() => undefined);
+  return true;
 }
 
 export async function startNativeSpeechInput(options: {
@@ -97,7 +119,7 @@ export async function startNativeSpeechInput(options: {
       await SpeechRecognition.forceStop({ timeout: 1200 }).catch(() => SpeechRecognition.stop());
       const last = await SpeechRecognition.getLastPartialResult().catch(() => null);
       await removeHandles([partialHandle, errorHandle]);
-      return { text: (last?.text || latestText).trim() };
+      return { text: normalizeTranscriptText(last?.text || latestText) };
     },
     async cancel() {
       await SpeechRecognition.forceStop({ timeout: 800 }).catch(() => SpeechRecognition.stop().catch(() => undefined));
@@ -175,9 +197,12 @@ export async function startNativeAudioRecorder(): Promise<NativeVoiceInputSessio
 export async function startBestNativeVoiceInput(options: {
   language?: string;
   onPartial?: (text: string) => void;
+  useNativeSpeechRecognition?: boolean;
 } = {}) {
-  const speechSession = await startNativeSpeechInput(options);
-  if (speechSession) return speechSession;
+  if (options.useNativeSpeechRecognition) {
+    const speechSession = await startNativeSpeechInput(options);
+    if (speechSession) return speechSession;
+  }
 
   return startNativeAudioRecorder();
 }

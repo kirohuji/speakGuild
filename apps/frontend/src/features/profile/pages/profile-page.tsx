@@ -68,6 +68,7 @@ import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { learningContentRepository, offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
 import { isNative, requestInAppReview, revenueCat } from '@/lib/native'
+import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -589,7 +590,14 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { signOut } = useAuth()
-  const { autoPlay, setAutoPlay, wifiOnlyMedia, setWifiOnlyMedia } = usePreferencesStore()
+  const {
+    autoPlay,
+    setAutoPlay,
+    wifiOnlyMedia,
+    setWifiOnlyMedia,
+    nativeSpeechRecognitionEnabled,
+    setNativeSpeechRecognitionEnabled,
+  } = usePreferencesStore()
   const { config } = useConfigStore()
   const [showBinding, setShowBinding] = useState(false)
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
@@ -597,6 +605,7 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
   const [autoCopyWord, setAutoCopyWord] = useState(false)
   const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
+  const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
   // 删除账户状态
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -629,6 +638,20 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
 
   // 延迟导入 MD 内容（避免重复加载）
   const [mdContents, setMdContents] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    isNativeSpeechRecognitionAvailable('en-US')
+      .then((available) => {
+        if (!cancelled) setNativeSpeechRecognitionAvailable(available)
+      })
+      .catch(() => {
+        if (!cancelled) setNativeSpeechRecognitionAvailable(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const openCustomerCenter = async () => {
     try {
@@ -714,6 +737,18 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
           label={t('profile.autoCopyLabel')}
           right={<Switch checked={autoCopyWord} onCheckedChange={setAutoCopyWord} />}
         /> */}
+        {nativeSpeechRecognitionAvailable && (
+          <IosRow
+            label="原生语音识别"
+            subtitle="录音时优先使用系统 STT"
+            right={
+              <Switch
+                checked={nativeSpeechRecognitionEnabled}
+                onCheckedChange={setNativeSpeechRecognitionEnabled}
+              />
+            }
+          />
+        )}
         <IosRow
           label={t('profile.wifiOnlyLabel')}
           last
@@ -2593,7 +2628,16 @@ function AccountTab({ desktop = false }: { desktop?: boolean }) {
 function SettingsTab() {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
-  const { autoPlay, setAutoPlay, wifiOnlyMedia, setWifiOnlyMedia, language, setLanguage } = usePreferencesStore()
+  const {
+    autoPlay,
+    setAutoPlay,
+    wifiOnlyMedia,
+    setWifiOnlyMedia,
+    language,
+    setLanguage,
+    nativeSpeechRecognitionEnabled,
+    setNativeSpeechRecognitionEnabled,
+  } = usePreferencesStore()
   const { config } = useConfigStore()
   const [showBinding, setShowBinding] = useState(false)
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
@@ -2601,10 +2645,25 @@ function SettingsTab() {
   const [autoCopyWord, setAutoCopyWord] = useState(false)
   const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
+  const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     i18n.changeLanguage(lang)
   }
+
+  useEffect(() => {
+    let cancelled = false
+    isNativeSpeechRecognitionAvailable('en-US')
+      .then((available) => {
+        if (!cancelled) setNativeSpeechRecognitionAvailable(available)
+      })
+      .catch(() => {
+        if (!cancelled) setNativeSpeechRecognitionAvailable(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -2657,6 +2716,23 @@ function SettingsTab() {
           </div>
 
           <Separator />
+
+          {nativeSpeechRecognitionAvailable && (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label>原生语音识别</Label>
+                  <p className="text-xs text-muted-foreground">录音时优先使用系统 STT，关闭后使用录音上传转写</p>
+                </div>
+                <Switch
+                  checked={nativeSpeechRecognitionEnabled}
+                  onCheckedChange={setNativeSpeechRecognitionEnabled}
+                />
+              </div>
+
+              <Separator />
+            </>
+          )}
 
           <div className="flex items-center justify-between">
             <div>

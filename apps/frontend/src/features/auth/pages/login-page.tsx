@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
@@ -57,6 +57,7 @@ export function LoginPage() {
   const [countdown, startCountdown, resetCountdown] = useCountdown(60)
   const [otpSent, setOtpSent] = useState(false)
   const [message, setMessage] = useState('')
+  const actionRunningRef = useRef(false)
   const fromPath = (location.state as { from?: string } | null)?.from
 
   const navigateAfterLogin = () => {
@@ -82,6 +83,8 @@ export function LoginPage() {
     successMessage: string,
     onSuccess?: () => void,
   ) => {
+    if (actionRunningRef.current) return
+    actionRunningRef.current = true
     try {
       setLoading(true)
       setMessage('')
@@ -91,6 +94,7 @@ export function LoginPage() {
     } catch (error: any) {
       setMessage(getLoginErrorMessage(error, t))
     } finally {
+      actionRunningRef.current = false
       setLoading(false)
     }
   }

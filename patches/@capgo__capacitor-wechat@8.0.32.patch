@@ -1,0 +1,40 @@
+diff --git a/ios/Sources/CapacitorWechatPlugin/CapacitorWechatPlugin.swift b/ios/Sources/CapacitorWechatPlugin/CapacitorWechatPlugin.swift
+index 2f6bc6d..e5b180b 100644
+--- a/ios/Sources/CapacitorWechatPlugin/CapacitorWechatPlugin.swift
++++ b/ios/Sources/CapacitorWechatPlugin/CapacitorWechatPlugin.swift
+@@ -24,6 +24,12 @@ public class CapacitorWechatPlugin: CAPPlugin, CAPBridgedPlugin {
+         NotificationCenter.default.addObserver(
+             self,
+             selector: #selector(handleContinueUserActivity(_:)),
++            name: .capacitorOpenUniversalLink,
++            object: nil
++        )
++        NotificationCenter.default.addObserver(
++            self,
++            selector: #selector(handleContinueUserActivity(_:)),
+             name: Notification.Name("capacitorContinueUserActivity"),
+             object: nil
+         )
+@@ -221,10 +227,23 @@ public class CapacitorWechatPlugin: CAPPlugin, CAPBridgedPlugin {
+ 
+     @objc private func handleContinueUserActivity(_ notification: Notification) {
+         guard let object = notification.object as? [String: Any],
+-              let activity = object["userActivity"] as? NSUserActivity else {
++              let activity = Self.userActivity(from: object) else {
+             return
+         }
+         _ = implementation.handleUniversalLink(activity)
+     }
++
++    private static func userActivity(from object: [String: Any]) -> NSUserActivity? {
++        if let activity = object["userActivity"] as? NSUserActivity {
++            return activity
++        }
++        guard let url = object["url"] as? URL else {
++            return nil
++        }
++        let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
++        activity.webpageURL = url
++        return activity
++    }
+ }

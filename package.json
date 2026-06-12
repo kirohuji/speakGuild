@@ -19,6 +19,9 @@
   "pnpm": {
     "overrides": {
       "sql.js": "1.11.0"
+    },
+    "patchedDependencies": {
+      "@capgo/capacitor-wechat@8.0.32": "patches/@capgo__capacitor-wechat@8.0.32.patch"
     }
   }
 }

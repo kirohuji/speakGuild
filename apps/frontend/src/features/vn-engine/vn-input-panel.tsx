@@ -3,6 +3,7 @@ import { FileAudio, Keyboard, Loader2, Mic, Pause, Play, Send, Square } from 'lu
 import { cn } from '@/lib/cn'
 import { transcribeRecording } from '@/lib/practice-ai-api'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
+import { usePreferencesStore } from '@/stores/preferences.store'
 
 const TEXTAREA_MIN_HEIGHT = 36
 const TEXTAREA_MAX_HEIGHT = 108
@@ -20,6 +21,10 @@ function formatElapsed(ms: number) {
   const s = Math.floor(ms / 1000)
   const m = Math.floor(s / 60)
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
+
+function normalizeInputText(value: string) {
+  return value.replace(/\r\n?/g, '\n').trim()
 }
 
 // ── 类型 ──
@@ -55,6 +60,7 @@ export function VnInputPanel({
   const [elapsed, setElapsed] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
+  const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
 
   // ── 录音 Refs ──
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -86,7 +92,7 @@ export function VnInputPanel({
     setVoiceStatus('processing')
     try {
       const result = await transcribeRecording(blob, filename)
-      const transcribed = result.text?.trim()
+      const transcribed = normalizeInputText(result.text ?? '')
       if (transcribed) {
         setTranscribedText(transcribed)
         setText(transcribed)
@@ -147,6 +153,7 @@ export function VnInputPanel({
     try {
       const nativeSession = await startBestNativeVoiceInput({
         language: 'en-US',
+        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled,
         onPartial: (partialText) => {
           setTranscribedText(partialText)
           setText(partialText)
@@ -189,7 +196,7 @@ export function VnInputPanel({
     } catch {
       setVoiceError('无法访问麦克风，请检查权限设置')
     }
-  }, [cleanupRecording, processAudioBlob])
+  }, [cleanupRecording, nativeSpeechRecognitionEnabled, processAudioBlob])
 
   // ── 停止录音 ──
   const stopRecording = useCallback(async () => {
@@ -200,7 +207,7 @@ export function VnInputPanel({
       try {
         if (nativeSession.kind === 'speech') {
           const result = await nativeSession.stop()
-          const transcribed = result.text.trim()
+          const transcribed = normalizeInputText(result.text)
           if (transcribed) {
             setTranscribedText(transcribed)
             setText(transcribed)
@@ -245,7 +252,7 @@ export function VnInputPanel({
 
   // ── 提交 ──
   const submit = useCallback(async (submitText?: string) => {
-    const finalText = (submitText ?? text).trim()
+    const finalText = normalizeInputText(submitText ?? text)
     if (!finalText || isDisabled) return
     setSubmitting(true)
     try {
@@ -327,7 +334,7 @@ export function VnInputPanel({
     setVoiceStatus('processing')
     try {
       const result = await transcribeRecording(file, file.name)
-      const transcribed = result.text?.trim()
+      const transcribed = normalizeInputText(result.text ?? '')
       if (transcribed) {
         setTranscribedText(transcribed)
         setText(transcribed)

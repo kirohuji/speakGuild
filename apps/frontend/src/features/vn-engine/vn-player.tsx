@@ -811,7 +811,7 @@ export function VnPlayer({
                 ) : history.map((line, index) => (
                   <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/40')}>
                     {line.speaker && <p className="mb-1 text-xs font-semibold text-muted-foreground">{line.speaker}</p>}
-                    <p className="text-sm leading-6 text-foreground">{line.text}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{line.text}</p>
                   </div>
                 ))}
               </div>
@@ -898,7 +898,7 @@ export function VnPlayer({
                     'min-w-0 space-y-2 pt-2',
                     currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '',
                   )}>
-                    <p className="font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
+                    <p className="whitespace-pre-wrap font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
                       <TappableText text={displayedText} onWordDetail={onWordInsight} />
                       {canAdvance && (
                         <span className="ml-1 inline-block h-0 w-0 animate-bounce border-x-[4px] border-t-[6px] border-x-transparent border-t-primary/70 align-middle" />
