@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { useCountdown } from '@/hooks/use-countdown'
+import { promptSavePassword, readSavedPassword } from '@/lib/native/save-password'
 
 type LoginMode = 'password' | 'phone-otp'
 
@@ -61,6 +62,20 @@ export function LoginPage() {
   const navigateAfterLogin = () => {
     navigate(fromPath || '/', { replace: true })
   }
+
+  useEffect(() => {
+    let cancelled = false
+
+    readSavedPassword().then((credentials) => {
+      if (cancelled || !credentials) return
+      setEmail((current) => current || credentials.username)
+      setPassword((current) => current || credentials.password)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const runAction = async (
     task: () => Promise<any>,
@@ -134,7 +149,9 @@ export function LoginPage() {
                   async () => {
                     if (!email.trim()) throw new Error(t('auth.enterEmail'))
                     if (!password) throw new Error(t('auth.enterPassword'))
-                    await signIn(email, password)
+                    const username = email.trim()
+                    await signIn(username, password)
+                    await promptSavePassword(username, password)
                   },
                   t('auth.loginSuccess'),
                   navigateAfterLogin,
