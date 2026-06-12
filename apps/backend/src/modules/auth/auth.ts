@@ -64,8 +64,8 @@ export const auth: any = betterAuth({
   },
   socialProviders: {
     wechat: {
-      clientId: process.env.WECHAT_CLIENT_ID || '',
-      clientSecret: process.env.WECHAT_CLIENT_SECRET || '',
+      clientId: process.env.WECHAT_CLIENT_ID || process.env.WECHAT_NATIVE_APP_ID || '',
+      clientSecret: process.env.WECHAT_CLIENT_SECRET || process.env.WECHAT_NATIVE_APP_SECRET || '',
       lang: 'cn',
     },
     // apple: async () => ({

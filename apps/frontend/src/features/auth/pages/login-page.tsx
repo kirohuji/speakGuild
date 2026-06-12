@@ -12,7 +12,7 @@ import {
 } from '@/features/auth/components/auth-page-shell'
 import {
   sendPhoneOtp,
-  // signInWithWechat, // wechat plugin removed
+  signInWithWechat,
   signInWithApple,
   verifyPhoneOtp,
 } from '@/features/auth/api'
@@ -251,12 +251,11 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="flex justify-center">
-          {/* wechat plugin removed */}
-          {/* <Button
+        <div className="flex justify-center gap-2">
+          <Button
             variant="outline"
             size="primary-lg"
-            className="h-11 min-w-0 gap-2 rounded-xl bg-background/60 px-3"
+            className="h-11 min-w-0 gap-2 rounded-xl bg-background/60 px-3 text-[#07C160]"
             disabled={loading}
             onClick={() =>
               runAction(
@@ -267,15 +266,15 @@ export function LoginPage() {
                     navigateAfterLogin()
                   }
                 },
-                '正在跳转微信登录',
+                t('auth.wechatRedirecting'),
               )
             }
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor">
-              <path d="M8.5 11.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 2C6.48 2 2 6.03 2 11c0 2.76 1.36 5.22 3.57 6.87L2 20l3.89-2.14A9.36 9.36 0 0012 22c5.52 0 10-4.03 10-9S17.52 2 12 2z" />
+              <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.883-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.11.24-.245 0-.06-.023-.12-.038-.178l-.327-1.233a.49.49 0 01.177-.554C23.025 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zM14.033 13.5c.534 0 .967.44.967.982a.974.974 0 01-.967.983.974.974 0 01-.967-.983c0-.542.433-.982.967-.982zm4.835 0c.534 0 .967.44.967.982a.974.974 0 01-.967.983.974.974 0 01-.967-.983c0-.542.433-.982.967-.982z" />
             </svg>
             {t('auth.wechatLogin')}
-          </Button> */}
+          </Button>
 
           <Button
             variant="outline"

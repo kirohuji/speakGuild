@@ -52,5 +52,5 @@ export {
 } from './revenuecat';
 export { requestInAppReview, getInAppReviewPluginVersion } from './in-app-review';
 export { promptSavePassword, readSavedPassword } from './save-password';
-// export { requestNativeWechatAuthCode } from './wechat'; // wechat plugin removed
+export { requestNativeWechatAuthCode } from './wechat';
 export { requestNativeAppleSignIn } from './apple';

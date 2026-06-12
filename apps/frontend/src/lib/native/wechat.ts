@@ -1,36 +1,43 @@
-// import { CapacitorWechat } from '@capgo/capacitor-wechat'
-// import { isNative } from './platform'
+import { CapacitorWechat } from '@capgo/capacitor-wechat'
+import { isNative } from './platform'
 
-// function createState() {
-//   return crypto.randomUUID()
-// }
+let initialized = false
 
-// export async function requestNativeWechatAuthCode() {
-//   if (!isNative()) {
-//     throw new Error('Native WeChat login is only available inside the mobile app')
-//   }
+function createState() {
+  return crypto.randomUUID()
+}
 
-//   const appId = import.meta.env.VITE_WECHAT_APP_ID
-//   const universalLink = import.meta.env.VITE_WECHAT_UNIVERSAL_LINK
+export async function requestNativeWechatAuthCode() {
+  if (!isNative()) {
+    throw new Error('Native WeChat login is only available inside the mobile app')
+  }
 
-//   if (appId) {
-//     await CapacitorWechat.initialize({ appId, universalLink })
-//   }
+  const appId = import.meta.env.VITE_WECHAT_APP_ID
+  const universalLink = import.meta.env.VITE_WECHAT_UNIVERSAL_LINK
 
-//   const { installed } = await CapacitorWechat.isInstalled()
-//   if (!installed) {
-//     throw new Error('WeChat is not installed on this device')
-//   }
+  if (!appId) {
+    throw new Error('WeChat App ID is not configured')
+  }
 
-//   const state = createState()
-//   const response = await CapacitorWechat.auth({
-//     scope: 'snsapi_userinfo',
-//     state,
-//   })
+  if (!initialized) {
+    await CapacitorWechat.initialize({ appId, universalLink })
+    initialized = true
+  }
 
-//   if (!response.code || response.state !== state) {
-//     throw new Error('Invalid WeChat authorization response')
-//   }
+  const { installed } = await CapacitorWechat.isInstalled()
+  if (!installed) {
+    throw new Error('WeChat is not installed on this device')
+  }
 
-//   return response.code
-// }
+  const state = createState()
+  const response = await CapacitorWechat.auth({
+    scope: 'snsapi_userinfo',
+    state,
+  })
+
+  if (!response.code || response.state !== state) {
+    throw new Error('Invalid WeChat authorization response')
+  }
+
+  return response.code
+}

@@ -198,6 +198,9 @@ importers:
       '@capgo/capacitor-updater':
         specifier: ^8.47.5
         version: 8.47.5(@capacitor/core@8.3.1)
+      '@capgo/capacitor-wechat':
+        specifier: ^8.0.32
+        version: 8.0.32(@capacitor/core@8.3.1)
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.73.1(react@19.2.5))
@@ -229,11 +232,11 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@revenuecat/purchases-capacitor':
-        specifier: ^13.1.7
-        version: 13.1.7(@capacitor/core@8.3.1)
+        specifier: 13.1.5
+        version: 13.1.5(@capacitor/core@8.3.1)
       '@revenuecat/purchases-capacitor-ui':
-        specifier: ^13.1.7
-        version: 13.1.7(@capacitor/core@8.3.1)
+        specifier: 13.1.5
+        version: 13.1.5(@capacitor/core@8.3.1)
       '@tanstack/react-table':
         specifier: ^8.21.0
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -712,6 +715,11 @@ packages:
     resolution: {integrity: sha512-EPhikDtnVRCiYZdluqykuNWOhKnOKS1qf7h2JLY8NxokMIOUU5qiNSslINRlwrhqeURuex/aVojCR5h13WOXew==}
     peerDependencies:
       '@capacitor/core': ^8.0.0
+
+  '@capgo/capacitor-wechat@8.0.32':
+    resolution: {integrity: sha512-yVui67zIWfGSYZAoTmm9R/mUOfKseGP02YL3j6M90sP7Ick0AimSsGToP8e1orUn4yrzqd5t7TcOzFVLFZn+eg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -1568,8 +1576,8 @@ packages:
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
 
-  '@revenuecat/purchases-capacitor-ui@13.1.7':
-    resolution: {integrity: sha512-KIjRX4H4tTac1hK4N+BC7vpKi5vQQ5iw3DUualnkg8dyZZt/wPH3a0UknHK9PvIGk1UFoxgkgrzFoKHs2uW/Dw==}
+  '@revenuecat/purchases-capacitor-ui@13.1.5':
+    resolution: {integrity: sha512-ASZhdwuO3mRqHokjFP/+bwnUkiiD+vtHD0f8aPzl8tatsLgynjzSJFstl9hZQOC5C5cNwvO+tgJsqVV5tcMe6Q==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -1578,16 +1586,16 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
-  '@revenuecat/purchases-capacitor@13.1.7':
-    resolution: {integrity: sha512-qKrJeuNgdgaNXtVBs9PA5O/G2U4s6t6RkQ7jrahewOpkD/ij20wGQsre1kd/mXDFoJdA0w9YKKMpvb8LzgqYyA==}
+  '@revenuecat/purchases-capacitor@13.1.5':
+    resolution: {integrity: sha512-klI2VL31woeY0spbZpOYh/b8L2Azv+pbP+ueU3E3NaG8D7Rv1hWM7X+t18rSynY6/L5U1XoA6El27i5UG6jrAw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
   '@revenuecat/purchases-typescript-internal-esm@14.3.0':
     resolution: {integrity: sha512-7mkuBupATfPvBw+skTE/chY6UEux9ZidTbKBOcZ/MgALKJdcww7LgSbChdyoGdQlSJXBFf1zRPzHH+RB7y+LQA==}
 
-  '@revenuecat/purchases-typescript-internal-esm@18.14.1':
-    resolution: {integrity: sha512-Gw1MIPNQvcnGUGwtN94fmlcClgElC4cJURJ7Z3haeZCWAyxFvwKBxB5WtoarMyP3DMN0bKZOV0vMLu4PUE+Ggw==}
+  '@revenuecat/purchases-typescript-internal-esm@18.10.0':
+    resolution: {integrity: sha512-vW9adMqUuudMKt7pYhbRrihcA/xbhooHW616n3weVGzJKfaXRUiSzTwmtISS8KyYBpzQsf2i2oGkk9swLI3Tpw==}
 
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
@@ -5622,6 +5630,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.1
 
+  '@capgo/capacitor-wechat@8.0.32(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
   '@colors/colors@1.5.0':
     optional: true
 
@@ -6453,25 +6465,25 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@revenuecat/purchases-capacitor-ui@13.1.7(@capacitor/core@8.3.1)':
+  '@revenuecat/purchases-capacitor-ui@13.1.5(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
       '@revenuecat/purchases-capacitor': 10.4.0(@capacitor/core@8.3.1)
-      '@revenuecat/purchases-typescript-internal-esm': 18.14.1
+      '@revenuecat/purchases-typescript-internal-esm': 18.10.0
 
   '@revenuecat/purchases-capacitor@10.4.0(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
       '@revenuecat/purchases-typescript-internal-esm': 14.3.0
 
-  '@revenuecat/purchases-capacitor@13.1.7(@capacitor/core@8.3.1)':
+  '@revenuecat/purchases-capacitor@13.1.5(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
-      '@revenuecat/purchases-typescript-internal-esm': 18.14.1
+      '@revenuecat/purchases-typescript-internal-esm': 18.10.0
 
   '@revenuecat/purchases-typescript-internal-esm@14.3.0': {}
 
-  '@revenuecat/purchases-typescript-internal-esm@18.14.1': {}
+  '@revenuecat/purchases-typescript-internal-esm@18.10.0': {}
 
   '@rolldown/pluginutils@1.0.0-beta.27': {}
 

@@ -58,6 +58,11 @@ const config: CapacitorConfig = {
     //   universalLink: 'https://hope.lourd.top:3605/wechat/',  // 需与微信开放平台配置的 Universal Link 一致
     // },
 
+    CapacitorWechat: {
+      appId: 'wxe24299591d2a12ec',
+      universalLink: 'https://hope.lourd.top/.well-known/apple-app-site-association',
+    },
+
     SocialLogin: {
       providers: {
         apple: true,

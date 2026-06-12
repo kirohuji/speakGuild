@@ -1,7 +1,6 @@
 import { authClient, clearBearerToken, setBearerToken } from './client'
 import request, { post } from '@/lib/request'
-import { isIOS, isNative, requestNativeAppleSignIn } from '@/lib/native'
-// import { requestNativeWechatAuthCode } from '@/lib/native' // wechat plugin removed
+import { isIOS, isNative, requestNativeAppleSignIn, requestNativeWechatAuthCode } from '@/lib/native'
 
 export async function signInWithEmailPassword(email: string, password: string) {
   return authClient.signIn.email({ email, password })
@@ -82,6 +81,20 @@ export async function bindPhoneNumber(phoneNumber: string, code: string) {
 //     callbackURL: window.location.href,
 //   })
 // }
+
+export async function signInWithWechat() {
+  if (isNative()) {
+    const code = await requestNativeWechatAuthCode()
+    const result = await post<{ token: string }>('/auth/wechat/native', { code })
+    setBearerToken(result.token)
+    return result
+  }
+
+  return authClient.signIn.social({
+    provider: 'wechat',
+    callbackURL: window.location.href,
+  })
+}
 
 export async function signInWithApple() {
   if (isNative() && isIOS()) {
