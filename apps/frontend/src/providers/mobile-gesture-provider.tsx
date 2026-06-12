@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { setDirection, setNavigation } from '@capgo/capacitor-transitions/react'
 import { isNative } from '@/lib/native'
 
 type SwipeDirection = 'left' | 'right'
@@ -8,6 +9,7 @@ const PRIMARY_ROUTES = ['/', '/learning', '/expressions'] as const
 const MIN_SWIPE_DISTANCE = 70
 const MAX_VERTICAL_DRIFT = 90
 const EDGE_GUARD = 12
+const IOS_SWIPE_BACK_EDGE_GUARD = 50
 
 function normalizePath(pathname: string) {
   if (pathname !== '/' && pathname.endsWith('/')) return pathname.slice(0, -1)
@@ -95,7 +97,7 @@ export function MobileGestureProvider({ children }: { children: ReactNode }) {
       startTime = Date.now()
       blocked = isGestureBlockedTarget(event.target) || hasOpenOverlay()
 
-      if (startX < EDGE_GUARD || startX > window.innerWidth - EDGE_GUARD) {
+      if (startX < IOS_SWIPE_BACK_EDGE_GUARD || startX > window.innerWidth - EDGE_GUARD) {
         blocked = true
       }
     }
@@ -118,6 +120,7 @@ export function MobileGestureProvider({ children }: { children: ReactNode }) {
       if (elapsed > 850 && absX < 120) return
 
       if (direction === 'right' && shouldBackInsteadOfPrimary(location.pathname)) {
+        setDirection('back')
         navigate(-1)
         return
       }
@@ -128,6 +131,7 @@ export function MobileGestureProvider({ children }: { children: ReactNode }) {
 
       const nextPath = getPrimaryNavigation(location.pathname, direction)
       if (nextPath) {
+        setNavigation('root', direction === 'left' ? 'forward' : 'back')
         navigate(nextPath)
       }
     }

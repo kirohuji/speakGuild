@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { BookOpen, Home, Library } from 'lucide-react'
+import { setNavigation } from '@capgo/capacitor-transitions/react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useAuth } from '@/providers/auth-provider'
@@ -35,10 +36,17 @@ export function BottomNav() {
       <div className="flex h-14 items-center justify-around px-1">
         {navItems.map(({ label, path, icon: Icon }) => {
           const active = isActive(path)
+          const currentIndex = navItems.findIndex((item) => isActive(item.path))
+          const targetIndex = navItems.findIndex((item) => item.path === path)
           return (
             <Link
               key={path}
               to={path}
+              onClick={() => {
+                if (targetIndex !== currentIndex) {
+                  setNavigation('root', targetIndex > currentIndex ? 'forward' : 'back')
+                }
+              }}
               className={cn(
                 'relative flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 transition-colors',
                 active ? 'bg-background/54 text-foreground shadow-sm' : 'text-muted-foreground'
