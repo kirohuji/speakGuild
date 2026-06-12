@@ -10,7 +10,6 @@ import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { OnboardingProvider } from '@/providers/onboarding-provider'
 import { MobileGestureProvider } from '@/providers/mobile-gesture-provider'
-import { MobileTransitionOutlet } from '@/providers/mobile-transition-outlet'
 import { RootLayout } from '@/layout/root-layout'
 // ── 首屏必需：静态导入 ──
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
@@ -67,7 +66,6 @@ export default function App() {
           <AuthRouteGate>
             <MobileGestureProvider>
             <OnboardingProvider>
-            <MobileTransitionOutlet>
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* ── Web 独有：后台管理 — Capacitor 端不注册 ── */}
@@ -124,7 +122,6 @@ export default function App() {
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
             </Suspense>
-            </MobileTransitionOutlet>
             </OnboardingProvider>
             </MobileGestureProvider>
           </AuthRouteGate>
