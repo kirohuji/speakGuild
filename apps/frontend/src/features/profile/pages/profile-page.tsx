@@ -12,7 +12,8 @@ import {
   GraduationCap, CheckCircle2, Lightbulb, Crown, Sun, Moon, Monitor,
   Globe, Database, Zap, TrendingUp, Target, Flame, Camera,
   IdCard, PencilLine, LogOut, ShieldAlert, Phone, Mail,
-  MessageSquare, Gift, KeyRound, HardDrive,
+  MessageSquare, Gift, KeyRound, HardDrive, MapPin, Home, Users,
+  BriefcaseBusiness, Shield, Compass, Mic, Square,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,12 +24,13 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Select, SelectItem } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from '@/components/ui/drawer'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
@@ -38,11 +40,13 @@ import {
   getPracticeRecords,
   getUserProfile,
   updateUserProfile,
+  runPlacementAssessment,
   type ProfileOverview,
   type ActivityDay,
   type PracticeRecord,
   type PracticeRecordsResult,
   type UserProfile,
+  type PlacementAssessmentResult,
 } from '@/features/profile/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
@@ -68,7 +72,8 @@ import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { learningContentRepository, offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
 import { isNative, requestInAppReview, revenueCat } from '@/lib/native'
-import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
+import { isNativeSpeechRecognitionAvailable, startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
+import { transcribeRecording } from '@/lib/practice-ai-api'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -92,24 +97,47 @@ const mobileTitles: Record<string, string> = {
   storage: '存储管理',
 }
 
-const OUTPUT_LEVEL_OPTIONS = [
-  { value: 'L1', title: 'L1 起步表达', desc: '能用短句完成打招呼、点餐、问路等简单需求' },
-  { value: 'L2', title: 'L2 基础办事', desc: '能完成入住、购物、预约、说明简单问题' },
-  { value: 'L3', title: 'L3 清楚说明', desc: '能解释原因、表达偏好、处理轻微冲突' },
-  { value: 'L4', title: 'L4 协商表达', desc: '能协商、说服、表达较复杂观点' },
-  { value: 'L5', title: 'L5 自然交流', desc: '能参与开放讨论、复杂角色扮演和分支剧情' },
-] as const
-
 const LEARNING_GOAL_OPTIONS = [
-  { value: 'arrival_roots', label: '落地生根', desc: '机场、宿舍、租房、银行、报到' },
-  { value: 'daily_hustle', label: '日常生活', desc: '吃饭、购物、交通、家务' },
-  { value: 'people', label: '社交关系', desc: '破冰、朋友、聚会、感谢道歉' },
-  { value: 'work_study', label: '学业职场', desc: '课堂、面试、会议、邮件' },
-  { value: 'crisis_mode', label: '应急处理', desc: '看病、投诉、求助、紧急情况' },
-  { value: 'out_about', label: '旅行玩乐', desc: '酒店、景点、餐厅、活动' },
+  { value: 'arrival_roots', label: '落地生根', desc: '机场、宿舍、租房、银行、报到', icon: MapPin, tint: 'text-sky-600 bg-sky-500/10' },
+  { value: 'daily_hustle', label: '日常生活', desc: '吃饭、购物、交通、家务', icon: Home, tint: 'text-emerald-600 bg-emerald-500/10' },
+  { value: 'people', label: '社交关系', desc: '破冰、朋友、聚会、感谢道歉', icon: Users, tint: 'text-violet-600 bg-violet-500/10' },
+  { value: 'work_study', label: '学业职场', desc: '课堂、面试、会议、邮件', icon: BriefcaseBusiness, tint: 'text-blue-600 bg-blue-500/10' },
+  { value: 'crisis_mode', label: '应急处理', desc: '看病、投诉、求助、紧急情况', icon: Shield, tint: 'text-rose-600 bg-rose-500/10' },
+  { value: 'out_about', label: '旅行玩乐', desc: '酒店、景点、餐厅、活动', icon: Compass, tint: 'text-amber-600 bg-amber-500/10' },
 ] as const
 
 const goalLabelMap: Record<string, string> = Object.fromEntries(LEARNING_GOAL_OPTIONS.map((goal) => [goal.value, goal.label]))
+const learningGoalValueSet = new Set(LEARNING_GOAL_OPTIONS.map((goal) => goal.value))
+
+function normalizeLearningGoals(goals?: string[] | null) {
+  return (goals ?? [])
+    .filter((goal) => learningGoalValueSet.has(goal as typeof LEARNING_GOAL_OPTIONS[number]['value']))
+    .slice(0, 3)
+}
+
+const PLACEMENT_PROMPTS = [
+  {
+    id: 'daily_request',
+    title: '处理一个真实请求',
+    prompt: 'You just moved into a dorm and the air conditioner is not working. Write what you would say to the front desk.',
+    promptZh: '你刚搬进宿舍，空调坏了。请用英语对前台说明情况并提出请求。',
+    helper: '说明问题、提出请求、补充你希望怎么解决。',
+  },
+  {
+    id: 'explain_preference',
+    title: '解释你的选择',
+    prompt: 'A classmate asks why you want to improve your English speaking. Explain your reason and what situations you want to handle better.',
+    promptZh: '同学问你为什么想提升英语口语。请用英语解释原因，以及你最想应对哪些场景。',
+    helper: '尽量说明原因、目标和你现在的困难。',
+  },
+  {
+    id: 'soft_conflict',
+    title: '委婉处理冲突',
+    prompt: 'Your roommate keeps making noise late at night. Write a polite but clear message to talk about it.',
+    promptZh: '室友经常深夜制造噪音。请用英语写一段礼貌但清楚的沟通。',
+    helper: '注意语气：礼貌、清楚、有解决方案。',
+  },
+] as const
 
 interface ProfilePageProps {
   onFeedbackOpen?: () => void
@@ -318,7 +346,212 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
   )
 }
 
-function LearningAssessmentDrawer({
+function pickAssessmentMimeType() {
+  if (typeof MediaRecorder === 'undefined') return ''
+  return (
+    ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find(
+      (mimeType) => MediaRecorder.isTypeSupported(mimeType),
+    ) ?? ''
+  )
+}
+
+function formatAssessmentElapsed(ms: number) {
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+function normalizeAssessmentTranscript(value: string) {
+  return value.replace(/\r\n?/g, '\n').trim()
+}
+
+function AssessmentAnswerInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string
+  onChange: (value: string) => void
+  disabled?: boolean
+}) {
+  const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
+  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
+  const [voiceError, setVoiceError] = useState('')
+  const [elapsed, setElapsed] = useState(0)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const nativeVoiceSessionRef = useRef<NativeVoiceInputSession | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const streamRef = useRef<MediaStream | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const cleanupRecording = useCallback(() => {
+    nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
+    nativeVoiceSessionRef.current = null
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    streamRef.current = null
+    mediaRecorderRef.current = null
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => () => cleanupRecording(), [cleanupRecording])
+
+  useEffect(() => {
+    if (voiceStatus !== 'recording') return
+    const startedAt = Date.now()
+    timerRef.current = setInterval(() => {
+      setElapsed(Date.now() - startedAt)
+    }, 200)
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }, [voiceStatus])
+
+  const processAudioBlob = useCallback(async (blob: Blob, filename: string) => {
+    setVoiceStatus('processing')
+    try {
+      const result = await transcribeRecording(blob, filename)
+      const text = normalizeAssessmentTranscript(result.text ?? '')
+      if (!text) {
+        setVoiceError('未识别到语音内容，请重试')
+        setVoiceStatus('idle')
+        return
+      }
+      onChange(text)
+      setVoiceError('')
+      setVoiceStatus('idle')
+    } catch {
+      setVoiceError('语音识别失败，请重试')
+      setVoiceStatus('idle')
+    }
+  }, [onChange])
+
+  const startRecording = useCallback(async () => {
+    if (disabled || voiceStatus !== 'idle') return
+    setVoiceError('')
+    setElapsed(0)
+    cleanupRecording()
+
+    try {
+      const nativeSession = await startBestNativeVoiceInput({
+        language: 'en-US',
+        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled,
+        onPartial: (partialText) => {
+          const text = normalizeAssessmentTranscript(partialText)
+          if (text) onChange(text)
+        },
+      })
+
+      if (nativeSession) {
+        nativeVoiceSessionRef.current = nativeSession
+        setVoiceStatus('recording')
+        return
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
+      const mimeType = pickAssessmentMimeType()
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      chunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data)
+      }
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+        const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm'
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || mimeType || 'audio/webm' })
+        await processAudioBlob(blob, `assessment.${ext}`)
+      }
+
+      mediaRecorderRef.current = mediaRecorder
+      mediaRecorder.start(200)
+      setVoiceStatus('recording')
+    } catch {
+      setVoiceError('无法访问麦克风，请检查权限设置')
+      setVoiceStatus('idle')
+    }
+  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
+
+  const stopRecording = useCallback(async () => {
+    const nativeSession = nativeVoiceSessionRef.current
+    if (nativeSession) {
+      nativeVoiceSessionRef.current = null
+      setVoiceStatus('processing')
+      try {
+        if (nativeSession.kind === 'speech') {
+          const result = await nativeSession.stop()
+          const text = normalizeAssessmentTranscript(result.text)
+          if (text) {
+            onChange(text)
+            setVoiceError('')
+          } else {
+            setVoiceError('未识别到语音内容，请重试')
+          }
+          setVoiceStatus('idle')
+          return
+        }
+        const result = await nativeSession.stop()
+        await processAudioBlob(result.blob, result.filename)
+      } catch {
+        setVoiceError('语音识别失败，请重试')
+        setVoiceStatus('idle')
+      }
+      return
+    }
+
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+      mediaRecorderRef.current = null
+    }
+  }, [onChange, processAudioBlob])
+
+  const isRecording = voiceStatus === 'recording'
+  const isProcessing = voiceStatus === 'processing'
+
+  return (
+    <div className="rounded-lg bg-muted/30 p-2">
+      <Textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Type your answer in English, or use voice input..."
+        disabled={disabled || isProcessing}
+        className="min-h-[150px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
+      />
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className={cn('min-w-0 flex-1 truncate text-xs text-muted-foreground', voiceError && 'text-destructive')}>
+          {voiceError || (isRecording ? `Recording ${formatAssessmentElapsed(elapsed)}` : isProcessing ? 'Transcribing...' : 'Tap the mic to answer by voice')}
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant={isRecording ? 'destructive' : 'outline'}
+          disabled={disabled || isProcessing}
+          onClick={isRecording ? stopRecording : startRecording}
+          className="h-9 shrink-0 rounded-full px-3"
+        >
+          {isProcessing ? (
+            <Loader2 className="mr-1.5 size-4 animate-spin" />
+          ) : isRecording ? (
+            <Square className="mr-1.5 size-3.5 fill-current" />
+          ) : (
+            <Mic className="mr-1.5 size-4" />
+          )}
+          {isRecording ? '停止' : isProcessing ? '识别中' : '语音'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function LearningAssessmentDialog({
   open,
   onOpenChange,
   profile,
@@ -328,98 +561,155 @@ function LearningAssessmentDrawer({
   profile: UserProfile | null
 }) {
   const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
-  const [selectedLevel, setSelectedLevel] = useState(profile?.outputLevel || 'L1')
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(profile?.learningGoals ?? [])
+  const [step, setStep] = useState(0)
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [result, setResult] = useState<PlacementAssessmentResult | null>(null)
   const [saving, setSaving] = useState(false)
+  const selectedGoalLabels = selectedGoals.map((goal) => goalLabelMap[goal] ?? goal)
+  const answeredCount = PLACEMENT_PROMPTS.filter((item) => (answers[item.id] ?? '').trim().length >= 12).length
+  const canSubmit = selectedGoals.length > 0 && answeredCount >= PLACEMENT_PROMPTS.length
+  const totalSteps = 1 + PLACEMENT_PROMPTS.length + 1
+  const currentPrompt = step > 0 && step <= PLACEMENT_PROMPTS.length ? PLACEMENT_PROMPTS[step - 1] : null
+  const currentAnswer = currentPrompt ? answers[currentPrompt.id] ?? '' : ''
+  const canGoNext = step === 0
+    ? selectedGoals.length > 0
+    : currentPrompt
+      ? currentAnswer.trim().length >= 12
+      : true
 
   useEffect(() => {
     if (!open) return
-    setSelectedLevel(profile?.outputLevel || 'L1')
-    setSelectedGoals(profile?.learningGoals ?? [])
+    setStep(0)
+    setSelectedGoals(normalizeLearningGoals(profile?.learningGoals))
+    setAnswers({})
+    setResult(null)
   }, [open, profile?.outputLevel, profile?.learningGoals])
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals((current) => {
-      if (current.includes(goal)) return current.filter((item) => item !== goal)
-      if (current.length >= 3) {
+      const normalized = normalizeLearningGoals(current)
+      if (normalized.includes(goal)) return normalized.filter((item) => item !== goal)
+      if (normalized.length >= 3) {
         toast.message('最多选择 3 个学习目标')
-        return current
+        return normalized
       }
-      return [...current, goal]
+      return [...normalized, goal]
     })
   }
 
-  const handleSave = async () => {
+  const handleSubmit = async () => {
     if (selectedGoals.length === 0) {
       toast.message('请选择至少 1 个学习目标')
       return
     }
+    if (!canSubmit) {
+      toast.message('请完成 3 道测评题，每题至少写一句完整回答')
+      return
+    }
     setSaving(true)
     try {
-      const nextProfile = await updateUserProfile({
-        outputLevel: selectedLevel,
+      const assessment = await runPlacementAssessment({
         learningGoals: selectedGoals,
+        answers: PLACEMENT_PROMPTS.map((item) => ({
+          promptId: item.id,
+          prompt: item.prompt,
+          answer: answers[item.id].trim(),
+        })),
       })
-      patchCachedProfile(nextProfile)
-      toast.success('学习画像已更新')
-      onOpenChange(false)
+      setResult(assessment)
+      patchCachedProfile({
+        outputLevel: assessment.outputLevel,
+        learningGoals: assessment.learningGoals,
+        outputLevelDetail: assessment.outputLevelDetail,
+      })
+      toast.success('AI 评测完成')
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || '保存失败')
+      toast.error(error?.response?.data?.message || error?.message || '评测失败')
     } finally {
       setSaving(false)
     }
   }
 
+  const handlePrimary = () => {
+    if (saving) return
+    if (step < PLACEMENT_PROMPTS.length) {
+      if (!canGoNext) {
+        toast.message(step === 0 ? '请选择至少 1 个学习目标' : '请先写一句完整回答')
+        return
+      }
+      setStep((current) => current + 1)
+      return
+    }
+    if (!result) {
+      void handleSubmit()
+      return
+    }
+    onOpenChange(false)
+  }
+
+  const handleBack = () => {
+    if (saving) return
+    if (step > 0) setStep((current) => current - 1)
+  }
+
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[88vh] rounded-t-3xl">
-        <DrawerHeader className="text-left">
-          <DrawerTitle className="text-base">英语评测</DrawerTitle>
-          <DrawerDescription>
-            先记录一个轻量画像，后续练习复盘会继续校准。
-          </DrawerDescription>
-        </DrawerHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex h-[min(640px,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-lg border border-border/70 bg-background p-0 shadow-lg">
+        <DialogHeader className="sr-only">
+          <DialogTitle>AI 输出能力评测</DialogTitle>
+          <DialogDescription>完成分步测评，获得 AI 等级分析和学习包推荐。</DialogDescription>
+        </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
-          <div className="space-y-5">
-            <section>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">当前输出等级</p>
-              <div className="space-y-2">
-                {OUTPUT_LEVEL_OPTIONS.map((level) => {
-                  const active = selectedLevel === level.value
-                  return (
-                    <button
-                      key={level.value}
-                      type="button"
-                      onClick={() => setSelectedLevel(level.value)}
-                      className={cn(
-                        'flex w-full items-start gap-3 rounded-lg border bg-background px-3 py-3 text-left transition-colors',
-                        active ? 'border-primary bg-primary/5' : 'border-border/60 active:bg-muted/60',
-                      )}
-                    >
-                      <span className={cn(
-                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px]',
-                        active ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30',
-                      )}>
-                        {active ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium">{level.title}</span>
-                        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{level.desc}</span>
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
+        <div className="shrink-0 border-b border-border/50 px-4 pb-3 pt-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={step === 0 || saving}
+              className={cn(
+                'flex size-8 items-center justify-center rounded-full transition-colors',
+                step === 0 ? 'text-muted-foreground/30' : 'bg-muted/60 text-foreground active:bg-muted',
+              )}
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <div className="min-w-0 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Placement Test</p>
+              <p className="truncate text-sm font-semibold">AI 输出能力评测</p>
+            </div>
+            <div className="size-8" aria-hidden="true" />
+          </div>
+          <div className="flex gap-1">
+            {Array.from({ length: totalSteps }).map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'h-1.5 flex-1 rounded-full transition-colors',
+                  index <= step ? 'bg-primary' : 'bg-muted',
+                )}
+              />
+            ))}
+          </div>
+        </div>
 
-            <section>
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground">学习目标</p>
-                <p className="text-xs text-muted-foreground">{selectedGoals.length}/3</p>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          {step === 0 && (
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Target className="size-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold tracking-tight">你想先练什么？</h2>
+                  <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                    选 1 到 3 个目标，AI 会据此推荐学习包。
+                  </p>
+                </div>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {LEARNING_GOAL_OPTIONS.map((goal) => {
+                  const Icon = goal.icon
                   const active = selectedGoals.includes(goal.value)
                   return (
                     <button
@@ -427,34 +717,146 @@ function LearningAssessmentDrawer({
                       type="button"
                       onClick={() => toggleGoal(goal.value)}
                       className={cn(
-                        'rounded-lg border px-3 py-2.5 text-left transition-colors',
-                        active ? 'border-primary bg-primary/5' : 'border-border/60 bg-background active:bg-muted/60',
+                        'relative min-h-[86px] rounded-lg border border-transparent bg-muted/30 p-2.5 text-left transition-colors active:bg-muted/60',
+                        active && 'border-primary/30 bg-primary/[0.07]',
                       )}
                     >
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium">{goal.label}</span>
-                        {active && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+                      <div className={cn('mb-1.5 flex size-7 items-center justify-center rounded-md', goal.tint)}>
+                        <Icon className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-5">{goal.label}</p>
+                        <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-muted-foreground">{goal.desc}</p>
+                      </div>
+                      <span className={cn(
+                        'absolute right-2 top-2 flex size-4 items-center justify-center rounded-full',
+                        active ? 'bg-primary text-primary-foreground' : 'bg-background',
+                      )}>
+                        {active && <CheckCircle2 className="size-3" />}
                       </span>
-                      <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{goal.desc}</span>
                     </button>
                   )
                 })}
               </div>
-            </section>
-          </div>
+            </div>
+          )}
+
+          {currentPrompt && (
+            <div className="flex min-h-full flex-col">
+              <div className="mb-4">
+                <Badge variant="secondary" className="rounded-full text-[10px]">
+                  Question {step} / {PLACEMENT_PROMPTS.length}
+                </Badge>
+                <h2 className="mt-3 text-lg font-semibold tracking-tight">{currentPrompt.title}</h2>
+                <div className="mt-3 rounded-lg bg-muted/30 p-4">
+                  <p className="text-sm leading-6 text-foreground">{currentPrompt.prompt}</p>
+                  <p className="mt-2 border-t border-border/50 pt-2 text-xs leading-5 text-muted-foreground">{currentPrompt.promptZh}</p>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  {currentPrompt.helper}
+                </p>
+              </div>
+              <AssessmentAnswerInput
+                value={currentAnswer}
+                onChange={(nextValue) => setAnswers((current) => ({ ...current, [currentPrompt.id]: nextValue }))}
+                disabled={saving}
+              />
+            </div>
+          )}
+
+          {step === PLACEMENT_PROMPTS.length + 1 && (
+            <div className="space-y-5">
+              {!result ? (
+                <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                  <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    {saving ? <Loader2 className="size-6 animate-spin" /> : <Brain className="size-6" />}
+                  </div>
+                  <h2 className="mt-4 text-lg font-semibold tracking-tight">
+                    {saving ? 'AI 正在分析你的表达' : '准备提交评测'}
+                  </h2>
+                  <p className="mt-2 max-w-[280px] text-sm leading-6 text-muted-foreground">
+                    将根据你的目标和 3 道回答判断输出等级，并推荐学习包。
+                  </p>
+                  <div className="mt-5 flex flex-wrap justify-center gap-2">
+                    {selectedGoalLabels.map((label) => (
+                      <Badge key={label} variant="secondary" className="rounded-full">{label}</Badge>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <section className="rounded-lg border-0 bg-primary/[0.07] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">AI 评测报告</p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">{result.analysis.summary}</p>
+                    </div>
+                    <Badge className="rounded-full">{result.outputLevel}</Badge>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 gap-3">
+                    {result.analysis.strengths.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">优势</p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {result.analysis.strengths.map((item) => <Badge key={item} variant="secondary" className="rounded-full">{item}</Badge>)}
+                        </div>
+                      </div>
+                    )}
+                    {result.analysis.improvements.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">建议提升</p>
+                        <div className="mt-1 space-y-1">
+                          {result.analysis.improvements.map((item) => <p key={item} className="text-xs leading-5 text-muted-foreground">• {item}</p>)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {result.analysis.recommendedUnits.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-xs font-medium text-muted-foreground">推荐学习包</p>
+                      <div className="mt-2 space-y-2">
+                        {result.analysis.recommendedUnits.map((unit) => (
+                          <Link
+                            key={unit.id}
+                            to={`/learning/units/${unit.id}`}
+                            onClick={() => onOpenChange(false)}
+                            className="flex items-center gap-3 rounded-lg bg-background/80 p-3"
+                          >
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <BookOpen className="size-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="line-clamp-1 text-sm font-semibold">{unit.title}</p>
+                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.categoryName} · {unit.topicCount} 个话题</p>
+                            </div>
+                            <ChevronRight className="size-4 text-muted-foreground/60" />
+                          </Link>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{result.analysis.recommendationReason}</p>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          )}
         </div>
 
-        <DrawerFooter>
-          <Button onClick={handleSave} disabled={saving}>
+        <DialogFooter className="shrink-0 border-t border-border/50 p-4">
+          <Button
+            onClick={handlePrimary}
+            disabled={saving || (step < PLACEMENT_PROMPTS.length && !canGoNext) || (step === PLACEMENT_PROMPTS.length && !canSubmit)}
+            className="h-11 w-full rounded-full text-sm font-semibold"
+          >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            保存画像
+            {step < PLACEMENT_PROMPTS.length
+              ? '继续'
+              : result
+                ? '完成'
+                : '提交给 AI 评测'}
           </Button>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-            稍后再说
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -621,7 +1023,7 @@ function MobileProfileHome({
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
-  const [showAssessmentDrawer, setShowAssessmentDrawer] = useState(false)
+  const [showAssessmentDialog, setShowAssessmentDialog] = useState(false)
 
   useEffect(() => {
     loadProfileHome()
@@ -699,8 +1101,8 @@ function MobileProfileHome({
           icon={Brain}
           iconBg="bg-violet-500"
           label="英语评测"
-          subtitle={goalLabels.length > 0 ? `${outputLevel} · ${goalLabels.join('、')}` : '选择等级和学习目标'}
-          onTap={() => setShowAssessmentDrawer(true)}
+          subtitle={goalLabels.length > 0 ? `${outputLevel} · ${goalLabels.join('、')}` : '完成 3 步 AI 测评'}
+          onTap={() => setShowAssessmentDialog(true)}
         />
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
@@ -753,9 +1155,9 @@ function MobileProfileHome({
         </DrawerContent>
       </Drawer>
 
-      <LearningAssessmentDrawer
-        open={showAssessmentDrawer}
-        onOpenChange={setShowAssessmentDrawer}
+      <LearningAssessmentDialog
+        open={showAssessmentDialog}
+        onOpenChange={setShowAssessmentDialog}
         profile={userProfile}
       />
 

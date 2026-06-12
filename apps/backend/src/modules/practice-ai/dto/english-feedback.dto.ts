@@ -49,3 +49,23 @@ export class DialogueTurnJudgeResultDto {
   @IsNumber()
   confidence: number;
 }
+
+export class PlacementAssessmentAnswerDto {
+  @IsString()
+  promptId: string;
+
+  @IsString()
+  prompt: string;
+
+  @IsString()
+  answer: string;
+}
+
+export class PlacementAssessmentDto {
+  @IsArray()
+  @IsString({ each: true })
+  learningGoals: string[];
+
+  @IsArray()
+  answers: PlacementAssessmentAnswerDto[];
+}

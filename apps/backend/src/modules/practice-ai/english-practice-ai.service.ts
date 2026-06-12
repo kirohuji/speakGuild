@@ -21,6 +21,187 @@ export class EnglishPracticeAiService {
     return (model: string) => client.chat(model);
   }
 
+  private parseLevel(value: unknown) {
+    const match = String(value ?? '').match(/L[1-5]/i);
+    return match ? match[0].toUpperCase() : 'L1';
+  }
+
+  private extractJson(text: string) {
+    return text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? text;
+  }
+
+  async assessPlacement(
+    dto: {
+      learningGoals: string[];
+      answers: Array<{ promptId: string; prompt: string; answer: string }>;
+    },
+    userId: string,
+  ) {
+    const provider = this.getProvider();
+    const cleanGoals = [...new Set((dto.learningGoals ?? []).map((goal) => String(goal).trim()).filter(Boolean))].slice(0, 3);
+    const cleanAnswers = (dto.answers ?? [])
+      .map((answer) => ({
+        promptId: String(answer.promptId ?? ''),
+        prompt: String(answer.prompt ?? '').trim(),
+        answer: String(answer.answer ?? '').trim(),
+      }))
+      .filter((answer) => answer.prompt && answer.answer)
+      .slice(0, 5);
+
+    const scenes = await this.prisma.scene.findMany({
+      select: {
+        id: true,
+        title: true,
+        location: true,
+        description: true,
+        requiredOutputLevel: true,
+        requiredUserLevel: true,
+        category: { select: { name: true } },
+        _count: { select: { trainingTopics: true, scriptEpisodes: true } },
+        trainingTopics: {
+          select: { title: true, difficulty: true },
+          orderBy: { sortOrder: 'asc' },
+          take: 4,
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 30,
+    });
+
+    const candidateText = scenes.map((scene, index) => [
+      `${index + 1}. id=${scene.id}`,
+      `title=${scene.title}`,
+      `category=${scene.category.name}`,
+      `location=${scene.location}`,
+      `requiredOutputLevel=${scene.requiredOutputLevel}`,
+      `description=${scene.description ?? ''}`,
+      `topics=${scene.trainingTopics.map((topic) => `${topic.title}(${topic.difficulty})`).join(' / ')}`,
+    ].join(' | ')).join('\n');
+
+    const system = `You are an English speaking placement assessor for a mobile learning app.
+Evaluate the learner's written/voice-transcribed answers as speaking output evidence.
+Return only JSON. Be practical, concise, and learner-friendly.
+
+Level rubric:
+- L1: short phrases/simple sentences; can handle greetings, ordering, basic needs.
+- L2: can complete basic real-life tasks like check-in, shopping, appointments, simple problems.
+- L3: can explain reasons, preferences, simple conflicts, and keep a short conversation coherent.
+- L4: can negotiate, persuade, describe tradeoffs, and express more complex opinions.
+- L5: can discuss open-ended topics naturally with nuance and strong control.
+
+Recommend learning units from the provided candidate list only. Use exact candidate ids.`;
+
+    const user = `## Learner goals
+${cleanGoals.length ? cleanGoals.join(', ') : 'not specified'}
+
+## Assessment answers
+${cleanAnswers.map((answer, index) => `Task ${index + 1}: ${answer.prompt}\nLearner: ${answer.answer}`).join('\n\n')}
+
+## Candidate learning units
+${candidateText || 'No candidates'}
+
+Return this exact JSON shape:
+{
+  "outputLevel": "L1|L2|L3|L4|L5",
+  "confidence": 0.72,
+  "summary": "中文，2句话总结当前输出能力",
+  "strengths": ["中文优势1", "中文优势2"],
+  "improvements": ["中文改进1", "中文改进2"],
+  "recommendedUnitIds": ["candidate scene id", "candidate scene id", "candidate scene id"],
+  "recommendationReason": "中文说明为什么推荐这些学习包",
+  "nextStep": "中文的一句话下一步建议"
+}`;
+
+    const result = await generateText({
+      model: provider('deepseek-chat'),
+      system,
+      prompt: user,
+      temperature: 0.25,
+      maxOutputTokens: 1800,
+    });
+
+    if (result.usage) {
+      this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0);
+    }
+
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(this.extractJson(result.text));
+    } catch {
+      parsed = null;
+    }
+
+    const recommendedIds = new Set(
+      Array.isArray(parsed?.recommendedUnitIds)
+        ? parsed.recommendedUnitIds.map((id: unknown) => String(id))
+        : [],
+    );
+    const fallbackLevel = cleanAnswers.some((answer) => answer.answer.length > 120) ? 'L3' : cleanAnswers.some((answer) => answer.answer.length > 50) ? 'L2' : 'L1';
+    const outputLevel = this.parseLevel(parsed?.outputLevel ?? fallbackLevel);
+    const recommendedUnits = scenes
+      .filter((scene) => recommendedIds.has(scene.id))
+      .slice(0, 3);
+    const finalRecommendedUnits = (recommendedUnits.length ? recommendedUnits : scenes.slice(0, 3)).map((scene) => ({
+      id: scene.id,
+      title: scene.title,
+      categoryName: scene.category.name,
+      location: scene.location,
+      description: scene.description,
+      requiredOutputLevel: scene.requiredOutputLevel,
+      topicCount: scene._count.trainingTopics,
+      scriptCount: scene._count.scriptEpisodes,
+    }));
+
+    const analysis = {
+      outputLevel,
+      confidence: Number(parsed?.confidence ?? 0.6),
+      summary: String(parsed?.summary ?? '已根据你的测评回答生成初步画像。'),
+      strengths: Array.isArray(parsed?.strengths) ? parsed.strengths.map(String).slice(0, 4) : [],
+      improvements: Array.isArray(parsed?.improvements) ? parsed.improvements.map(String).slice(0, 4) : [],
+      recommendationReason: String(parsed?.recommendationReason ?? '这些学习包和你的目标与当前输出水平相对匹配。'),
+      nextStep: String(parsed?.nextStep ?? '建议先完成一个推荐学习包中的对话任务。'),
+      recommendedUnits: finalRecommendedUnits,
+      raw: result.text,
+    };
+
+    const outputLevelDetail = {
+      source: 'ai_placement_assessment',
+      assessedAt: new Date().toISOString(),
+      confidence: analysis.confidence,
+      summary: analysis.summary,
+      strengths: analysis.strengths,
+      improvements: analysis.improvements,
+      recommendationReason: analysis.recommendationReason,
+      nextStep: analysis.nextStep,
+      recommendedUnits: finalRecommendedUnits.map((unit) => ({
+        id: unit.id,
+        title: unit.title,
+        requiredOutputLevel: unit.requiredOutputLevel,
+      })),
+      answers: cleanAnswers.map((answer) => ({
+        promptId: answer.promptId,
+        prompt: answer.prompt,
+        answer: answer.answer,
+      })),
+    };
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        outputLevel,
+        learningGoals: cleanGoals,
+        outputLevelDetail,
+      },
+    });
+
+    return {
+      outputLevel,
+      learningGoals: cleanGoals,
+      outputLevelDetail,
+      analysis,
+    };
+  }
+
   /** 单轮 NPC 对话输入判定：把开放式用户输入转换为 Ink 可消费的变量 */
   async judgeDialogueTurn(dto: DialogueTurnJudgeDto, userId?: string) {
     const provider = this.getProvider();

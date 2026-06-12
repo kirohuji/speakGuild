@@ -1,7 +1,7 @@
 import { Body, Controller, Param, Post, Req, HttpException } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
-import { DialogueTurnJudgeDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, PlacementAssessmentDto } from './dto/english-feedback.dto';
 import { EnglishPracticeService } from '../practice/english-practice.service';
 import { requireAuthSession } from '../auth/session.util';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
@@ -27,6 +27,19 @@ export class EnglishPracticeAiController {
       );
     }
     return this.service.judgeDialogueTurn(dto, session.user.id);
+  }
+
+  @Post('placement-assessment')
+  async placementAssessment(@Req() req: Request, @Body() dto: PlacementAssessmentDto) {
+    const session = await requireAuthSession(req);
+    const check = await this.quotaService.checkAndDeduct(session.user.id, 'summary');
+    if (!check.allowed) {
+      throw new HttpException(
+        { code: 403, message: check.message, data: { canExchange: true, exchangeCost: check.exchangeCost } },
+        403,
+      );
+    }
+    return this.service.assessPlacement(dto, session.user.id);
   }
 
   @Post('sessions/:sessionId/analyze')

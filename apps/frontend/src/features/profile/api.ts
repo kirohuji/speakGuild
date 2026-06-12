@@ -1,4 +1,4 @@
-import { get, patch } from '@/lib/request'
+import { get, patch, post } from '@/lib/request'
 
 export interface ProfileOverview {
   userId: string
@@ -61,6 +61,31 @@ export interface UserProfile {
   } | null
 }
 
+export interface PlacementAssessmentResult {
+  outputLevel: string
+  learningGoals: string[]
+  outputLevelDetail: Record<string, unknown>
+  analysis: {
+    outputLevel: string
+    confidence: number
+    summary: string
+    strengths: string[]
+    improvements: string[]
+    recommendationReason: string
+    nextStep: string
+    recommendedUnits: Array<{
+      id: string
+      title: string
+      categoryName: string
+      location: string
+      description?: string | null
+      requiredOutputLevel: string
+      topicCount: number
+      scriptCount: number
+    }>
+  }
+}
+
 export const getProfileOverview = (): Promise<ProfileOverview> =>
   get<any>('/profile/overview').then((res) => ({
     userId: res.userId,
@@ -108,3 +133,9 @@ export const updateUserProfile = (payload: {
   outputLevelDetail?: Record<string, unknown>
 }): Promise<UserProfile> =>
   patch('/user/profile', payload)
+
+export const runPlacementAssessment = (payload: {
+  learningGoals: string[]
+  answers: Array<{ promptId: string; prompt: string; answer: string }>
+}): Promise<PlacementAssessmentResult> =>
+  post('/practice-ai/placement-assessment', payload, { timeout: 30_000 })
