@@ -20,6 +20,9 @@ export class ProfileService {
         phoneNumberVerified: true,
         emailVerified: true,
         hasCompletedOnboarding: true,
+        learningGoals: true,
+        outputLevel: true,
+        outputLevelDetail: true,
       },
     });
     return user;
@@ -37,6 +40,23 @@ export class ProfileService {
     if (dto.hasCompletedOnboarding !== undefined) {
       data.hasCompletedOnboarding = dto.hasCompletedOnboarding;
     }
+    if (dto.learningGoals !== undefined) {
+      data.learningGoals = dto.learningGoals
+        .map((goal) => goal.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    }
+    if (dto.outputLevel !== undefined) {
+      data.outputLevel = dto.outputLevel;
+    }
+    if (dto.outputLevelDetail !== undefined) {
+      data.outputLevelDetail = dto.outputLevelDetail;
+    } else if (dto.outputLevel !== undefined || dto.learningGoals !== undefined) {
+      data.outputLevelDetail = {
+        source: 'self_assessment',
+        assessedAt: new Date().toISOString(),
+      };
+    }
 
     const user = await this.prisma.user.update({
       where: { id: userId },
@@ -51,6 +71,9 @@ export class ProfileService {
         phoneNumberVerified: true,
         emailVerified: true,
         hasCompletedOnboarding: true,
+        learningGoals: true,
+        outputLevel: true,
+        outputLevelDetail: true,
       },
     });
 

@@ -102,6 +102,7 @@ export class AdminService {
         createdAt: true,
         updatedAt: true,
         outputLevel: true,
+        outputLevelDetail: true,
         totalXp: true,
         points: true,
         userLevel: true,

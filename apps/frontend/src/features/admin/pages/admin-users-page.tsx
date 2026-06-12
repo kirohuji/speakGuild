@@ -35,6 +35,15 @@ const fmtDateTime = (value: string | Date | undefined | null) => {
   return new Date(value).toLocaleString('zh-CN');
 };
 
+const learningGoalLabels: Record<string, string> = {
+  arrival_roots: '落地生根',
+  daily_hustle: '日常生活',
+  people: '社交关系',
+  work_study: '学业职场',
+  crisis_mode: '应急处理',
+  out_about: '旅行玩乐',
+};
+
 const summarizeUserAgent = (userAgent: string | null | undefined) => {
   if (!userAgent) return '未知设备';
   const os = /iPhone|iPad|iOS/i.test(userAgent)
@@ -681,8 +690,16 @@ function UserRow({
                 {detail.learningGoals && detail.learningGoals.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {detail.learningGoals.map((goal) => (
-                      <Badge key={goal} variant="secondary" className="text-[11px]">{goal}</Badge>
+                      <Badge key={goal} variant="secondary" className="text-[11px]">{learningGoalLabels[goal] ?? goal}</Badge>
                     ))}
+                  </div>
+                )}
+                {detail.outputLevelDetail && (
+                  <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      <span>来源：{detail.outputLevelDetail.source === 'self_assessment' ? '用户自评' : String(detail.outputLevelDetail.source || '未知')}</span>
+                      <span>更新时间：{fmtDateTime(String(detail.outputLevelDetail.assessedAt || ''))}</span>
+                    </div>
                   </div>
                 )}
               </div>

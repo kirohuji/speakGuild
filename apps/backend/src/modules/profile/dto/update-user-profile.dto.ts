@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsBoolean, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateUserProfileDto {
   @IsString()
@@ -14,4 +14,17 @@ export class UpdateUserProfileDto {
   @IsBoolean()
   @IsOptional()
   hasCompletedOnboarding?: boolean;
+
+  @IsIn(['L1', 'L2', 'L3', 'L4', 'L5'])
+  @IsOptional()
+  outputLevel?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  learningGoals?: string[];
+
+  @IsObject()
+  @IsOptional()
+  outputLevelDetail?: Record<string, unknown>;
 }

@@ -28,6 +28,11 @@ export interface AdminUser {
 
 export interface AdminUserDetail extends AdminUser {
   outputLevel?: string;
+  outputLevelDetail?: {
+    source?: string;
+    assessedAt?: string;
+    [key: string]: unknown;
+  } | null;
   totalXp?: number;
   points?: number;
   userLevel?: number;

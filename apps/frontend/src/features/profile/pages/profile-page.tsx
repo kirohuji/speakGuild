@@ -28,7 +28,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
 } from '@/components/ui/drawer'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
@@ -91,6 +91,25 @@ const mobileTitles: Record<string, string> = {
   member: 'member.title',
   storage: '存储管理',
 }
+
+const OUTPUT_LEVEL_OPTIONS = [
+  { value: 'L1', title: 'L1 起步表达', desc: '能用短句完成打招呼、点餐、问路等简单需求' },
+  { value: 'L2', title: 'L2 基础办事', desc: '能完成入住、购物、预约、说明简单问题' },
+  { value: 'L3', title: 'L3 清楚说明', desc: '能解释原因、表达偏好、处理轻微冲突' },
+  { value: 'L4', title: 'L4 协商表达', desc: '能协商、说服、表达较复杂观点' },
+  { value: 'L5', title: 'L5 自然交流', desc: '能参与开放讨论、复杂角色扮演和分支剧情' },
+] as const
+
+const LEARNING_GOAL_OPTIONS = [
+  { value: 'arrival_roots', label: '落地生根', desc: '机场、宿舍、租房、银行、报到' },
+  { value: 'daily_hustle', label: '日常生活', desc: '吃饭、购物、交通、家务' },
+  { value: 'people', label: '社交关系', desc: '破冰、朋友、聚会、感谢道歉' },
+  { value: 'work_study', label: '学业职场', desc: '课堂、面试、会议、邮件' },
+  { value: 'crisis_mode', label: '应急处理', desc: '看病、投诉、求助、紧急情况' },
+  { value: 'out_about', label: '旅行玩乐', desc: '酒店、景点、餐厅、活动' },
+] as const
+
+const goalLabelMap: Record<string, string> = Object.fromEntries(LEARNING_GOAL_OPTIONS.map((goal) => [goal.value, goal.label]))
 
 interface ProfilePageProps {
   onFeedbackOpen?: () => void
@@ -299,6 +318,146 @@ function IosSection({ header, children }: { header?: string; children: React.Rea
   )
 }
 
+function LearningAssessmentDrawer({
+  open,
+  onOpenChange,
+  profile,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  profile: UserProfile | null
+}) {
+  const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
+  const [selectedLevel, setSelectedLevel] = useState(profile?.outputLevel || 'L1')
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(profile?.learningGoals ?? [])
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setSelectedLevel(profile?.outputLevel || 'L1')
+    setSelectedGoals(profile?.learningGoals ?? [])
+  }, [open, profile?.outputLevel, profile?.learningGoals])
+
+  const toggleGoal = (goal: string) => {
+    setSelectedGoals((current) => {
+      if (current.includes(goal)) return current.filter((item) => item !== goal)
+      if (current.length >= 3) {
+        toast.message('最多选择 3 个学习目标')
+        return current
+      }
+      return [...current, goal]
+    })
+  }
+
+  const handleSave = async () => {
+    if (selectedGoals.length === 0) {
+      toast.message('请选择至少 1 个学习目标')
+      return
+    }
+    setSaving(true)
+    try {
+      const nextProfile = await updateUserProfile({
+        outputLevel: selectedLevel,
+        learningGoals: selectedGoals,
+      })
+      patchCachedProfile(nextProfile)
+      toast.success('学习画像已更新')
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || '保存失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[88vh] rounded-t-3xl">
+        <DrawerHeader className="text-left">
+          <DrawerTitle className="text-base">英语评测</DrawerTitle>
+          <DrawerDescription>
+            先记录一个轻量画像，后续练习复盘会继续校准。
+          </DrawerDescription>
+        </DrawerHeader>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+          <div className="space-y-5">
+            <section>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">当前输出等级</p>
+              <div className="space-y-2">
+                {OUTPUT_LEVEL_OPTIONS.map((level) => {
+                  const active = selectedLevel === level.value
+                  return (
+                    <button
+                      key={level.value}
+                      type="button"
+                      onClick={() => setSelectedLevel(level.value)}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-lg border bg-background px-3 py-3 text-left transition-colors',
+                        active ? 'border-primary bg-primary/5' : 'border-border/60 active:bg-muted/60',
+                      )}
+                    >
+                      <span className={cn(
+                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px]',
+                        active ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30',
+                      )}>
+                        {active ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium">{level.title}</span>
+                        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{level.desc}</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+
+            <section>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground">学习目标</p>
+                <p className="text-xs text-muted-foreground">{selectedGoals.length}/3</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {LEARNING_GOAL_OPTIONS.map((goal) => {
+                  const active = selectedGoals.includes(goal.value)
+                  return (
+                    <button
+                      key={goal.value}
+                      type="button"
+                      onClick={() => toggleGoal(goal.value)}
+                      className={cn(
+                        'rounded-lg border px-3 py-2.5 text-left transition-colors',
+                        active ? 'border-primary bg-primary/5' : 'border-border/60 bg-background active:bg-muted/60',
+                      )}
+                    >
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium">{goal.label}</span>
+                        {active && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{goal.desc}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <DrawerFooter>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            保存画像
+          </Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+            稍后再说
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
 // ─── 手机端：个人中心首页 ──────────────────────────────────────────────────
 function formatBytes(bytes?: number) {
   const value = Number(bytes ?? 0)
@@ -462,6 +621,7 @@ function MobileProfileHome({
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
+  const [showAssessmentDrawer, setShowAssessmentDrawer] = useState(false)
 
   useEffect(() => {
     loadProfileHome()
@@ -476,6 +636,10 @@ function MobileProfileHome({
   }
 
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
+  const outputLevel = userProfile?.outputLevel || 'L1'
+  const goalLabels = (userProfile?.learningGoals ?? [])
+    .map((goal) => goalLabelMap[goal] ?? goal)
+    .filter(Boolean)
 
   return (
     <div className="space-y-3">
@@ -513,6 +677,9 @@ function MobileProfileHome({
               <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] border-amber-500/30 text-amber-600">
                 <Gift className="size-2.5" />{pointsBalance}
               </Badge>
+              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] border-primary/25 text-primary">
+                {outputLevel}
+              </Badge>
             </div>
           </div>
 
@@ -528,6 +695,13 @@ function MobileProfileHome({
 
       {/* 主导航 */}
       <IosSection>
+        <IosRow
+          icon={Brain}
+          iconBg="bg-violet-500"
+          label="英语评测"
+          subtitle={goalLabels.length > 0 ? `${outputLevel} · ${goalLabels.join('、')}` : '选择等级和学习目标'}
+          onTap={() => setShowAssessmentDrawer(true)}
+        />
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
         <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
@@ -578,6 +752,12 @@ function MobileProfileHome({
           </div>
         </DrawerContent>
       </Drawer>
+
+      <LearningAssessmentDrawer
+        open={showAssessmentDrawer}
+        onOpenChange={setShowAssessmentDrawer}
+        profile={userProfile}
+      />
 
       {!onFeedbackOpen && <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />}
 
