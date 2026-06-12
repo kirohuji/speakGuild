@@ -67,7 +67,7 @@ import { useCountdown } from '@/hooks/use-countdown'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { learningContentRepository, offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
-import { isNative, revenueCat } from '@/lib/native'
+import { isNative, requestInAppReview, revenueCat } from '@/lib/native'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -638,6 +638,17 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
     }
   }
 
+  const handleRequestReview = async () => {
+    try {
+      const result = await requestInAppReview()
+      if (!result.requested) {
+        toast.message('当前环境暂不支持应用内评分')
+      }
+    } catch (error: any) {
+      toast.error(error?.message || '暂时无法打开评分弹窗')
+    }
+  }
+
   const openLegalDoc = async (key: string, title: string) => {
     if (mdContents[key]) {
       setLegalDrawer({ title, content: mdContents[key] })
@@ -760,6 +771,13 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
             label="Subscription management"
             subtitle="Manage purchases, restores, and billing"
             onTap={openCustomerCenter}
+          />
+        )}
+        {isNative() && (
+          <IosRow
+            label="给我们评分"
+            subtitle="喜欢漫语町的话，可以留下一点鼓励"
+            onTap={handleRequestReview}
           />
         )}
         <IosRow

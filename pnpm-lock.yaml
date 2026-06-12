@@ -183,6 +183,9 @@ importers:
       '@capgo/capacitor-autofill-save-password':
         specifier: ^8.0.28
         version: 8.0.28(@capacitor/core@8.3.1)
+      '@capgo/capacitor-in-app-review':
+        specifier: ^8.1.7
+        version: 8.1.7(@capacitor/core@8.3.1)
       '@capgo/capacitor-social-login':
         specifier: ^8.3.22
         version: 8.3.22(@capacitor/core@8.3.1)
@@ -661,6 +664,11 @@ packages:
 
   '@capgo/capacitor-autofill-save-password@8.0.28':
     resolution: {integrity: sha512-43Ss8nYm2P4Sjz88V7cQDlDfrbU5faqSxWFzMdD1nOlzEYRglUwMNdt/5TBlF15ns15b4CvPRWEW9HdJ0/Z1WQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-in-app-review@8.1.7':
+    resolution: {integrity: sha512-Q8Pj+OQadXyldX51czJ95zzteQnxHnfQnmBnTD8gU3JMPuECV3CUDI8TcjbQVScAEr7Jk5ckBwHjSi5VoWqJ9Q==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -5563,6 +5571,10 @@ snapshots:
       '@capacitor/core': 8.3.1
 
   '@capgo/capacitor-autofill-save-password@8.0.28(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
+  '@capgo/capacitor-in-app-review@8.1.7(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
