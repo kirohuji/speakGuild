@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileAudio, Keyboard, Loader2, Mic, Pause, Play, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeRecording } from '@/lib/practice-ai-api'
+import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 
 const TEXTAREA_MIN_HEIGHT = 36
 const TEXTAREA_MAX_HEIGHT = 108
@@ -57,6 +58,7 @@ export function VnInputPanel({
 
   // ── 录音 Refs ──
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const nativeVoiceSessionRef = useRef<NativeVoiceInputSession | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -68,6 +70,8 @@ export function VnInputPanel({
 
   // ── 清理录音资源 ──
   const cleanupRecording = useCallback(() => {
+    nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
+    nativeVoiceSessionRef.current = null
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
     mediaRecorderRef.current = null
@@ -75,6 +79,26 @@ export function VnInputPanel({
     if (localAudioUrlRef.current) {
       URL.revokeObjectURL(localAudioUrlRef.current)
       localAudioUrlRef.current = null
+    }
+  }, [])
+
+  const processAudioBlob = useCallback(async (blob: Blob, filename: string, fallbackAudioUrl: string | null) => {
+    setVoiceStatus('processing')
+    try {
+      const result = await transcribeRecording(blob, filename)
+      const transcribed = result.text?.trim()
+      if (transcribed) {
+        setTranscribedText(transcribed)
+        setText(transcribed)
+        setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
+        setVoiceStatus('done')
+      } else {
+        setVoiceError('未识别到语音内容，请重试')
+        setVoiceStatus('idle')
+      }
+    } catch {
+      setVoiceError('语音识别失败，请重试')
+      setVoiceStatus('idle')
     }
   }, [])
 
@@ -121,6 +145,20 @@ export function VnInputPanel({
     setTranscribedText('')
 
     try {
+      const nativeSession = await startBestNativeVoiceInput({
+        language: 'en-US',
+        onPartial: (partialText) => {
+          setTranscribedText(partialText)
+          setText(partialText)
+        },
+      })
+
+      if (nativeSession) {
+        nativeVoiceSessionRef.current = nativeSession
+        setVoiceStatus('recording')
+        return
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
 
@@ -139,30 +177,10 @@ export function VnInputPanel({
 
         const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm'
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || mimeType || 'audio/webm' })
-
-        // 保存本地 blob URL 供回放
         if (localAudioUrlRef.current) URL.revokeObjectURL(localAudioUrlRef.current)
         localAudioUrlRef.current = URL.createObjectURL(blob)
 
-        // 转写
-        setVoiceStatus('processing')
-        try {
-          const result = await transcribeRecording(blob, `recording.${ext}`)
-          const transcribed = result.text?.trim()
-          if (transcribed) {
-            setTranscribedText(transcribed)
-            setText(transcribed)
-            // 优先用服务端返回的 audioUrl，其次用本地 blob
-            setRecordedAudioUrl(result.audioUrl ?? localAudioUrlRef.current)
-            setVoiceStatus('done')
-          } else {
-            setVoiceError('未识别到语音内容，请重试')
-            setVoiceStatus('idle')
-          }
-        } catch {
-          setVoiceError('语音识别失败，请重试')
-          setVoiceStatus('idle')
-        }
+        await processAudioBlob(blob, `recording.${ext}`, localAudioUrlRef.current)
       }
 
       mediaRecorderRef.current = mr
@@ -171,15 +189,48 @@ export function VnInputPanel({
     } catch {
       setVoiceError('无法访问麦克风，请检查权限设置')
     }
-  }, [cleanupRecording])
+  }, [cleanupRecording, processAudioBlob])
 
   // ── 停止录音 ──
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
+    const nativeSession = nativeVoiceSessionRef.current
+    if (nativeSession) {
+      nativeVoiceSessionRef.current = null
+      setVoiceStatus('processing')
+      try {
+        if (nativeSession.kind === 'speech') {
+          const result = await nativeSession.stop()
+          const transcribed = result.text.trim()
+          if (transcribed) {
+            setTranscribedText(transcribed)
+            setText(transcribed)
+            setRecordedAudioUrl(null)
+            setVoiceStatus('done')
+          } else {
+            setVoiceError('未识别到语音内容，请重试')
+            setVoiceStatus('idle')
+          }
+          return
+        }
+
+        const result = await nativeSession.stop()
+        if (localAudioUrlRef.current?.startsWith('blob:')) {
+          URL.revokeObjectURL(localAudioUrlRef.current)
+        }
+        localAudioUrlRef.current = result.playbackUrl
+        await processAudioBlob(result.blob, result.filename, result.playbackUrl)
+      } catch {
+        setVoiceError('语音识别失败，请重试')
+        setVoiceStatus('idle')
+      }
+      return
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [])
+  }, [processAudioBlob])
 
   // ── 重置语音状态 ──
   const resetVoice = useCallback(() => {
