@@ -1,8 +1,10 @@
-import { useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { useEffect, useCallback, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { getUserProfile, updateUserProfile } from '@/features/profile/api'
+import { getUserProfile, updateUserProfile, type UserProfile } from '@/features/profile/api'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { LearningAssessmentDialog } from '@/features/profile/pages/profile-page'
 import { SpotlightOverlay } from '@/components/common/spotlight-overlay'
 
 interface OnboardingProviderProps {
@@ -20,6 +22,9 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const storeNext = useOnboardingStore((s) => s.next)
   const storePrev = useOnboardingStore((s) => s.prev)
   const storeFinish = useOnboardingStore((s) => s.finish)
+  const setCachedProfile = useProfileCacheStore((s) => s.setProfile)
+  const [placementOpen, setPlacementOpen] = useState(false)
+  const [placementProfile, setPlacementProfile] = useState<UserProfile | null>(null)
   const initializedRef = useRef(false)
 
   // 🧪 检测 test=2（兼容 HashRouter 下 query 在 hash 中的情况）
@@ -29,6 +34,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       : ''
   )
   const isTestMode = new URLSearchParams(searchStr).get('test') === '2'
+  const hasAiPlacementAssessment = (profile: UserProfile | null) =>
+    profile?.outputLevelDetail?.source === 'ai_placement_assessment'
+
+  const startGuidance = useCallback(() => {
+    storeStart()
+    if (location.pathname !== '/') {
+      navigate('/')
+    }
+  }, [location.pathname, navigate, storeStart])
 
   // ---- 启动引导：登录后检查后端标记 ----
   useEffect(() => {
@@ -38,23 +52,36 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     if (initializedRef.current) return
     initializedRef.current = true
 
-    // 🧪 test=2 强制触发引导
-    if (isTestMode) {
-      storeStart()
-      return
-    }
-
     getUserProfile()
       .then((profile) => {
+        setCachedProfile(profile)
+
+        // 🧪 test=2 强制走「先测评，测完再引导」
+        if (isTestMode) {
+          setPlacementProfile(profile)
+          setPlacementOpen(true)
+          return
+        }
+
         if (!profile.hasCompletedOnboarding) {
-          storeStart()
+          if (hasAiPlacementAssessment(profile)) {
+            startGuidance()
+          } else {
+            setPlacementProfile(profile)
+            setPlacementOpen(true)
+          }
         }
       })
       .catch(() => {
         // 请求失败时保守处理：不启动引导
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, session?.user?.id, isTestMode])
+  }, [isAuthenticated, session?.user?.id, isTestMode, setCachedProfile, startGuidance])
+
+  const handlePlacementCompleted = useCallback(() => {
+    setPlacementOpen(false)
+    startGuidance()
+  }, [startGuidance])
 
   // ---- 完成引导：写后端（test 模式跳过） ----
   const handleFinish = useCallback(async () => {
@@ -111,6 +138,14 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   return (
     <>
       {children}
+
+      <LearningAssessmentDialog
+        open={placementOpen}
+        onOpenChange={setPlacementOpen}
+        profile={placementProfile}
+        required
+        onCompleted={handlePlacementCompleted}
+      />
 
       {storeIsActive && currentStep && (
         <SpotlightOverlay

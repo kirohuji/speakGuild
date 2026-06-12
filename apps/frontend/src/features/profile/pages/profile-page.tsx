@@ -10,7 +10,7 @@ import {
   Search, X, Volume2, Loader2, ChevronLeft, ChevronRight, Calendar, SortAsc,
   Sparkles, BookOpen, Link2, ExternalLink, Brain, BarChart2, CheckSquare,
   GraduationCap, CheckCircle2, Lightbulb, Crown, Sun, Moon, Monitor,
-  Globe, Database, Zap, TrendingUp, Target, Flame, Camera,
+  Globe, Database, Zap, TrendingUp, Flame, Camera,
   IdCard, PencilLine, LogOut, ShieldAlert, Phone, Mail,
   MessageSquare, Gift, KeyRound, HardDrive, MapPin, Home, Users,
   BriefcaseBusiness, Shield, Compass, Mic, Square,
@@ -374,6 +374,7 @@ function AssessmentAnswerInput({
   onChange: (value: string) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
   const [voiceError, setVoiceError] = useState('')
@@ -418,7 +419,7 @@ function AssessmentAnswerInput({
       const result = await transcribeRecording(blob, filename)
       const text = normalizeAssessmentTranscript(result.text ?? '')
       if (!text) {
-        setVoiceError('未识别到语音内容，请重试')
+        setVoiceError(t('profile.placement.voiceNoContent'))
         setVoiceStatus('idle')
         return
       }
@@ -426,10 +427,10 @@ function AssessmentAnswerInput({
       setVoiceError('')
       setVoiceStatus('idle')
     } catch {
-      setVoiceError('语音识别失败，请重试')
+      setVoiceError(t('profile.placement.voiceFailed'))
       setVoiceStatus('idle')
     }
-  }, [onChange])
+  }, [onChange, t])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
@@ -475,10 +476,10 @@ function AssessmentAnswerInput({
       mediaRecorder.start(200)
       setVoiceStatus('recording')
     } catch {
-      setVoiceError('无法访问麦克风，请检查权限设置')
+      setVoiceError(t('profile.placement.micDenied'))
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
+  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, t, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current
@@ -493,7 +494,7 @@ function AssessmentAnswerInput({
             onChange(text)
             setVoiceError('')
           } else {
-            setVoiceError('未识别到语音内容，请重试')
+            setVoiceError(t('profile.placement.voiceNoContent'))
           }
           setVoiceStatus('idle')
           return
@@ -501,7 +502,7 @@ function AssessmentAnswerInput({
         const result = await nativeSession.stop()
         await processAudioBlob(result.blob, result.filename)
       } catch {
-        setVoiceError('语音识别失败，请重试')
+        setVoiceError(t('profile.placement.voiceFailed'))
         setVoiceStatus('idle')
       }
       return
@@ -511,7 +512,7 @@ function AssessmentAnswerInput({
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [onChange, processAudioBlob])
+  }, [onChange, processAudioBlob, t])
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
@@ -521,13 +522,17 @@ function AssessmentAnswerInput({
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Type your answer in English, or use voice input..."
+        placeholder={t('profile.placement.voicePlaceholder')}
         disabled={disabled || isProcessing}
-        className="min-h-[150px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
+        className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
       />
       <div className="mt-2 flex items-center justify-between gap-2">
         <p className={cn('min-w-0 flex-1 truncate text-xs text-muted-foreground', voiceError && 'text-destructive')}>
-          {voiceError || (isRecording ? `Recording ${formatAssessmentElapsed(elapsed)}` : isProcessing ? 'Transcribing...' : 'Tap the mic to answer by voice')}
+          {voiceError || (isRecording
+            ? t('profile.placement.voiceRecording', { time: formatAssessmentElapsed(elapsed) })
+            : isProcessing
+              ? t('profile.placement.voiceProcessing')
+              : t('profile.placement.voiceIdle'))}
         </p>
         <Button
           type="button"
@@ -544,54 +549,67 @@ function AssessmentAnswerInput({
           ) : (
             <Mic className="mr-1.5 size-4" />
           )}
-          {isRecording ? '停止' : isProcessing ? '识别中' : '语音'}
+          {isRecording ? t('profile.placement.voiceStop') : isProcessing ? t('profile.placement.voiceProcessingButton') : t('profile.placement.voiceButton')}
         </Button>
       </div>
     </div>
   )
 }
 
-function LearningAssessmentDialog({
+export function LearningAssessmentDialog({
   open,
   onOpenChange,
   profile,
+  required = false,
+  onCompleted,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   profile: UserProfile | null
+  required?: boolean
+  onCompleted?: () => void
 }) {
+  const { t } = useTranslation()
   const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [result, setResult] = useState<PlacementAssessmentResult | null>(null)
   const [saving, setSaving] = useState(false)
-  const selectedGoalLabels = selectedGoals.map((goal) => goalLabelMap[goal] ?? goal)
+  const wasOpenRef = useRef(false)
+  const goalStep = 1
+  const firstPromptStep = 2
+  const resultStep = firstPromptStep + PLACEMENT_PROMPTS.length
+  const selectedGoalLabels = selectedGoals.map((goal) => t(`profile.placement.goals.${goal}.label`, { defaultValue: goalLabelMap[goal] ?? goal }))
   const answeredCount = PLACEMENT_PROMPTS.filter((item) => (answers[item.id] ?? '').trim().length >= 12).length
   const canSubmit = selectedGoals.length > 0 && answeredCount >= PLACEMENT_PROMPTS.length
-  const totalSteps = 1 + PLACEMENT_PROMPTS.length + 1
-  const currentPrompt = step > 0 && step <= PLACEMENT_PROMPTS.length ? PLACEMENT_PROMPTS[step - 1] : null
+  const totalSteps = resultStep + 1
+  const currentPrompt = step >= firstPromptStep && step < resultStep ? PLACEMENT_PROMPTS[step - firstPromptStep] : null
   const currentAnswer = currentPrompt ? answers[currentPrompt.id] ?? '' : ''
   const canGoNext = step === 0
+    ? true
+    : step === goalStep
     ? selectedGoals.length > 0
     : currentPrompt
       ? currentAnswer.trim().length >= 12
       : true
 
   useEffect(() => {
-    if (!open) return
-    setStep(0)
-    setSelectedGoals(normalizeLearningGoals(profile?.learningGoals))
-    setAnswers({})
-    setResult(null)
-  }, [open, profile?.outputLevel, profile?.learningGoals])
+    if (open && !wasOpenRef.current) {
+      setStep(0)
+      setSelectedGoals(normalizeLearningGoals(profile?.learningGoals))
+      setAnswers({})
+      setResult(null)
+    }
+    wasOpenRef.current = open
+  }, [open])
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals((current) => {
       const normalized = normalizeLearningGoals(current)
       if (normalized.includes(goal)) return normalized.filter((item) => item !== goal)
       if (normalized.length >= 3) {
-        toast.message('最多选择 3 个学习目标')
+        toast.message(t('profile.placement.maxGoals'))
         return normalized
       }
       return [...normalized, goal]
@@ -600,11 +618,11 @@ function LearningAssessmentDialog({
 
   const handleSubmit = async () => {
     if (selectedGoals.length === 0) {
-      toast.message('请选择至少 1 个学习目标')
+      toast.message(t('profile.placement.chooseGoal'))
       return
     }
     if (!canSubmit) {
-      toast.message('请完成 3 道测评题，每题至少写一句完整回答')
+      toast.message(t('profile.placement.completeAll'))
       return
     }
     setSaving(true)
@@ -623,9 +641,9 @@ function LearningAssessmentDialog({
         learningGoals: assessment.learningGoals,
         outputLevelDetail: assessment.outputLevelDetail,
       })
-      toast.success('AI 评测完成')
+      toast.success(t('profile.placement.success'))
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || '评测失败')
+      toast.error(error?.response?.data?.message || error?.message || t('profile.placement.failed'))
     } finally {
       setSaving(false)
     }
@@ -633,9 +651,9 @@ function LearningAssessmentDialog({
 
   const handlePrimary = () => {
     if (saving) return
-    if (step < PLACEMENT_PROMPTS.length) {
+    if (step < resultStep) {
       if (!canGoNext) {
-        toast.message(step === 0 ? '请选择至少 1 个学习目标' : '请先写一句完整回答')
+        toast.message(step === goalStep ? t('profile.placement.chooseGoal') : t('profile.placement.answerRequired'))
         return
       }
       setStep((current) => current + 1)
@@ -645,6 +663,7 @@ function LearningAssessmentDialog({
       void handleSubmit()
       return
     }
+    onCompleted?.()
     onOpenChange(false)
   }
 
@@ -653,12 +672,22 @@ function LearningAssessmentDialog({
     if (step > 0) setStep((current) => current - 1)
   }
 
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (required && !nextOpen && !result) return
+    onOpenChange(nextOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[min(640px,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-lg border border-border/70 bg-background p-0 shadow-lg">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent
+        className={cn(
+          'flex h-[min(640px,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-lg border border-border/70 bg-background p-0 shadow-lg',
+          required && '[&>button:last-child]:hidden',
+        )}
+      >
         <DialogHeader className="sr-only">
-          <DialogTitle>AI 输出能力评测</DialogTitle>
-          <DialogDescription>完成分步测评，获得 AI 等级分析和学习包推荐。</DialogDescription>
+          <DialogTitle>{t('profile.placement.title')}</DialogTitle>
+          <DialogDescription>{t('profile.placement.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="shrink-0 border-b border-border/50 px-4 pb-3 pt-4">
@@ -675,8 +704,8 @@ function LearningAssessmentDialog({
               <ChevronLeft className="size-4" />
             </button>
             <div className="min-w-0 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Placement Test</p>
-              <p className="truncate text-sm font-semibold">AI 输出能力评测</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.placement.testLabel')}</p>
+              <p className="truncate text-sm font-semibold">{t('profile.placement.title')}</p>
             </div>
             <div className="size-8" aria-hidden="true" />
           </div>
@@ -695,15 +724,43 @@ function LearningAssessmentDialog({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
           {step === 0 && (
+            <div className="flex min-h-full flex-col justify-center space-y-4 py-2">
+              <div className="text-center">
+                <div className="mx-auto flex size-14 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <GraduationCap className="size-7" />
+                </div>
+                <h2 className="mt-4 text-lg font-semibold tracking-tight">{t('profile.placement.introTitle')}</h2>
+                <p className="mx-auto mt-2 max-w-[280px] text-sm leading-6 text-muted-foreground">
+                  {t('profile.placement.introDesc')}
+                </p>
+              </div>
+              <div className="grid gap-2">
+                {[
+                  { icon: ClipboardList, label: t('profile.placement.introGoal'), tint: 'bg-sky-500/10 text-sky-600' },
+                  { icon: Mic, label: t('profile.placement.introAnswer'), tint: 'bg-emerald-500/10 text-emerald-600' },
+                  { icon: BarChart2, label: t('profile.placement.introResult'), tint: 'bg-amber-500/10 text-amber-600' },
+                ].map(({ icon: Icon, label, tint }) => (
+                  <div key={label} className="flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2.5">
+                    <div className={cn('flex size-8 shrink-0 items-center justify-center rounded-md', tint)}>
+                      <Icon className="size-4" />
+                    </div>
+                    <p className="text-sm font-medium leading-5">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === goalStep && (
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Target className="size-5" />
+                  <Compass className="size-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-base font-semibold tracking-tight">你想先练什么？</h2>
+                  <h2 className="text-base font-semibold tracking-tight">{t('profile.placement.goalTitle')}</h2>
                   <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                    选 1 到 3 个目标，AI 会据此推荐学习包。
+                    {t('profile.placement.goalDesc')}
                   </p>
                 </div>
               </div>
@@ -725,8 +782,8 @@ function LearningAssessmentDialog({
                         <Icon className="size-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-5">{goal.label}</p>
-                        <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-muted-foreground">{goal.desc}</p>
+                        <p className="text-sm font-semibold leading-5">{t(`profile.placement.goals.${goal.value}.label`, { defaultValue: goal.label })}</p>
+                        <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-muted-foreground">{t(`profile.placement.goals.${goal.value}.desc`, { defaultValue: goal.desc })}</p>
                       </div>
                       <span className={cn(
                         'absolute right-2 top-2 flex size-4 items-center justify-center rounded-full',
@@ -743,17 +800,17 @@ function LearningAssessmentDialog({
 
           {currentPrompt && (
             <div className="flex min-h-full flex-col">
-              <div className="mb-4">
+              <div className="mb-3">
                 <Badge variant="secondary" className="rounded-full text-[10px]">
-                  Question {step} / {PLACEMENT_PROMPTS.length}
+                  {t('profile.placement.question', { current: step - firstPromptStep + 1, total: PLACEMENT_PROMPTS.length })}
                 </Badge>
-                <h2 className="mt-3 text-lg font-semibold tracking-tight">{currentPrompt.title}</h2>
-                <div className="mt-3 rounded-lg bg-muted/30 p-4">
-                  <p className="text-sm leading-6 text-foreground">{currentPrompt.prompt}</p>
-                  <p className="mt-2 border-t border-border/50 pt-2 text-xs leading-5 text-muted-foreground">{currentPrompt.promptZh}</p>
+                <h2 className="mt-2 text-base font-semibold tracking-tight">{t(`profile.placement.prompts.${currentPrompt.id}.title`, { defaultValue: currentPrompt.title })}</h2>
+                <div className="mt-2 rounded-lg bg-muted/30 p-3">
+                  <p className="text-sm leading-6 text-foreground">{t(`profile.placement.prompts.${currentPrompt.id}.prompt`, { defaultValue: currentPrompt.prompt })}</p>
+                  <p className="mt-2 border-t border-border/50 pt-2 text-xs leading-5 text-muted-foreground">{t(`profile.placement.prompts.${currentPrompt.id}.promptZh`, { defaultValue: currentPrompt.promptZh })}</p>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                  {currentPrompt.helper}
+                  {t(`profile.placement.prompts.${currentPrompt.id}.helper`, { defaultValue: currentPrompt.helper })}
                 </p>
               </div>
               <AssessmentAnswerInput
@@ -764,18 +821,18 @@ function LearningAssessmentDialog({
             </div>
           )}
 
-          {step === PLACEMENT_PROMPTS.length + 1 && (
+          {step === resultStep && (
             <div className="space-y-5">
               {!result ? (
                 <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
                   <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    {saving ? <Loader2 className="size-6 animate-spin" /> : <Brain className="size-6" />}
+                    {saving ? <Loader2 className="size-6 animate-spin" /> : <BarChart2 className="size-6" />}
                   </div>
                   <h2 className="mt-4 text-lg font-semibold tracking-tight">
-                    {saving ? 'AI 正在分析你的表达' : '准备提交评测'}
+                    {saving ? t('profile.placement.analyzing') : t('profile.placement.preparing')}
                   </h2>
                   <p className="mt-2 max-w-[280px] text-sm leading-6 text-muted-foreground">
-                    将根据你的目标和 3 道回答判断输出等级，并推荐学习包。
+                    {t('profile.placement.analyzingDesc')}
                   </p>
                   <div className="mt-5 flex flex-wrap justify-center gap-2">
                     {selectedGoalLabels.map((label) => (
@@ -787,7 +844,7 @@ function LearningAssessmentDialog({
                 <section className="rounded-lg border-0 bg-primary/[0.07] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold">AI 评测报告</p>
+                      <p className="text-sm font-semibold">{t('profile.placement.report')}</p>
                       <p className="mt-1 text-xs leading-5 text-muted-foreground">{result.analysis.summary}</p>
                     </div>
                     <Badge className="rounded-full">{result.outputLevel}</Badge>
@@ -795,7 +852,7 @@ function LearningAssessmentDialog({
                   <div className="mt-3 grid grid-cols-1 gap-3">
                     {result.analysis.strengths.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground">优势</p>
+                        <p className="text-xs font-medium text-muted-foreground">{t('profile.placement.strengths')}</p>
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {result.analysis.strengths.map((item) => <Badge key={item} variant="secondary" className="rounded-full">{item}</Badge>)}
                         </div>
@@ -803,7 +860,7 @@ function LearningAssessmentDialog({
                     )}
                     {result.analysis.improvements.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground">建议提升</p>
+                        <p className="text-xs font-medium text-muted-foreground">{t('profile.placement.improvements')}</p>
                         <div className="mt-1 space-y-1">
                           {result.analysis.improvements.map((item) => <p key={item} className="text-xs leading-5 text-muted-foreground">• {item}</p>)}
                         </div>
@@ -812,7 +869,7 @@ function LearningAssessmentDialog({
                   </div>
                   {result.analysis.recommendedUnits.length > 0 && (
                     <div className="mt-4">
-                      <p className="text-xs font-medium text-muted-foreground">推荐学习包</p>
+                      <p className="text-xs font-medium text-muted-foreground">{t('profile.placement.recommendedUnits')}</p>
                       <div className="mt-2 space-y-2">
                         {result.analysis.recommendedUnits.map((unit) => (
                           <Link
@@ -826,7 +883,9 @@ function LearningAssessmentDialog({
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="line-clamp-1 text-sm font-semibold">{unit.title}</p>
-                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.categoryName} · {unit.topicCount} 个话题</p>
+                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                                {unit.categoryName} · {t('profile.placement.topicCount', { count: unit.topicCount })}
+                              </p>
                             </div>
                             <ChevronRight className="size-4 text-muted-foreground/60" />
                           </Link>
@@ -844,15 +903,17 @@ function LearningAssessmentDialog({
         <DialogFooter className="shrink-0 border-t border-border/50 p-4">
           <Button
             onClick={handlePrimary}
-            disabled={saving || (step < PLACEMENT_PROMPTS.length && !canGoNext) || (step === PLACEMENT_PROMPTS.length && !canSubmit)}
+            disabled={saving || (step < resultStep && !canGoNext) || (step === resultStep && !canSubmit)}
             className="h-11 w-full rounded-full text-sm font-semibold"
           >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {step < PLACEMENT_PROMPTS.length
-              ? '继续'
+            {step === 0
+              ? t('profile.placement.start')
+              : step < resultStep
+                ? t('profile.placement.continue')
               : result
-                ? '完成'
-                : '提交给 AI 评测'}
+                ? t('profile.placement.finish')
+                : t('profile.placement.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1040,8 +1101,11 @@ function MobileProfileHome({
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
   const outputLevel = userProfile?.outputLevel || 'L1'
   const goalLabels = (userProfile?.learningGoals ?? [])
-    .map((goal) => goalLabelMap[goal] ?? goal)
+    .map((goal) => t(`profile.placement.goals.${goal}.label`, { defaultValue: goalLabelMap[goal] ?? goal }))
     .filter(Boolean)
+  const goalSummary = goalLabels.length > 0
+    ? `${outputLevel} · ${goalLabels.join(t('profile.placement.goalSeparator'))}`
+    : t('profile.placement.homeSubtitle')
 
   return (
     <div className="space-y-3">
@@ -1098,10 +1162,10 @@ function MobileProfileHome({
       {/* 主导航 */}
       <IosSection>
         <IosRow
-          icon={Brain}
-          iconBg="bg-violet-500"
-          label="英语评测"
-          subtitle={goalLabels.length > 0 ? `${outputLevel} · ${goalLabels.join('、')}` : '完成 3 步 AI 测评'}
+          icon={GraduationCap}
+          iconBg="bg-blue-500"
+          label={t('profile.placement.homeTitle')}
+          subtitle={goalSummary}
           onTap={() => setShowAssessmentDialog(true)}
         />
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
