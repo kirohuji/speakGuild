@@ -569,8 +569,8 @@ interface TtsSettings {       // Web Speech API（浏览器原生降级）
 | `home.store` | ❌ 内存 | 首页数据缓存 |
 | `practice.store` | ❌ 内存 | 练习会话状态 |
 | `search.store` | ✅ localStorage | 搜索历史（最多 10 条） |
-| `onboarding.store` | ✅ localStorage | 引导流程完成状态 |
-| `theme-preset.store` | ❌ 内存 | 主题预设配置 |
+| `onboarding.store` | ❌ 内存 | 引导流程完成状态 |
+| `theme-preset.store` | ✅ localStorage（自定义缓存层, 1h/7d TTL） | 主题预设配置 |
 
 ### 10.2 learning.store（最复杂）
 
