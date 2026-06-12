@@ -19,7 +19,7 @@
 export { isNative, isIOS, isAndroid, isWeb, getPlatform } from './platform';
 
 // React Provider + Hook
-export { NativeBridgeProvider, useNativeBridge, useNativeInitReady, getNativeBridge } from './native-bridge.provider';
+export { NativeBridgeProvider, useNativeBridge, getNativeBridge } from './native-bridge.provider';
 
 // 类型
 export type {
