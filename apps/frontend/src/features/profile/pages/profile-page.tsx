@@ -67,6 +67,7 @@ import { useCountdown } from '@/hooks/use-countdown'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { learningContentRepository, offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
+import { isNative, revenueCat } from '@/lib/native'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 type MobileView = Tab | 'home' | 'appearance' | 'member' | 'storage'
@@ -629,6 +630,14 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
   // 延迟导入 MD 内容（避免重复加载）
   const [mdContents, setMdContents] = useState<Record<string, string>>({})
 
+  const openCustomerCenter = async () => {
+    try {
+      await revenueCat.presentCustomerCenter()
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to open subscription management')
+    }
+  }
+
   const openLegalDoc = async (key: string, title: string) => {
     if (mdContents[key]) {
       setLegalDrawer({ title, content: mdContents[key] })
@@ -746,6 +755,13 @@ function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: (
       </IosSection>
 
       <IosSection>
+        {isNative() && (
+          <IosRow
+            label="Subscription management"
+            subtitle="Manage purchases, restores, and billing"
+            onTap={openCustomerCenter}
+          />
+        )}
         <IosRow
           label="存储管理"
           subtitle="查看缓存分布并清理本地学习数据"

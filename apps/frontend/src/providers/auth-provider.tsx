@@ -4,6 +4,7 @@ import { useConfigStore } from '@/stores/config.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
+import { isNative, revenueCat } from '@/lib/native'
 
 /**
  * App 前台同步 Hook
@@ -165,6 +166,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user?.id])
 
+  useEffect(() => {
+    if (!isNative()) return
+
+    if (session?.user?.id) {
+      void revenueCat.identify(session.user.id).catch((error) => {
+        console.warn('[RevenueCat] identify failed:', error)
+      })
+    } else {
+      void revenueCat.reset().catch((error) => {
+        console.warn('[RevenueCat] reset failed:', error)
+      })
+    }
+  }, [session?.user?.id])
+
   const refreshSession = async () => {
     setIsLoading(true)
     return fetchSession()
@@ -199,6 +214,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await authClient.signOut()
+    if (isNative()) {
+      await revenueCat.reset().catch((error) => {
+        console.warn('[RevenueCat] logout reset failed:', error)
+      })
+    }
     clearBearerToken()
     useProfileCacheStore.getState().reset()
     setSession(null)

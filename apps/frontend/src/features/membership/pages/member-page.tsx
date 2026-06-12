@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,8 @@ import {
 } from '@/features/membership/api'
 import { pointsApi } from '@/features/points/api'
 import { cn } from '@/lib/cn'
+import { isNative, revenueCat } from '@/lib/native'
+import { useRevenueCat } from '@/hooks/use-revenuecat'
 
 const planIcons: Record<string, React.ElementType> = {
   free: Star,
@@ -45,8 +48,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [benefits, setBenefits] = useState<MemberBenefit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
+  const revenueCatState = useRevenueCat()
 
+  const isRevenueCatUnlimited = isNative() && revenueCatState.hasUnlimited
   const isAdmin = current?.level === 'admin'
+  const hasActiveMembership = isRevenueCatUnlimited || !!current?.isActive
 
   // 支付弹窗
   const [payOpen, setPayOpen] = useState(false)
@@ -85,7 +91,20 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     )
   }, [])
 
-  const handleUpgrade = useCallback((plan: MemberPlan) => {
+  const handleUpgrade = useCallback(async (plan: MemberPlan) => {
+    if (isNative()) {
+      try {
+        const result = await revenueCat.presentPaywallIfNeeded()
+        await revenueCat.refreshCustomerInfo()
+        if (result?.result === 'PURCHASED' || result?.result === 'RESTORED') {
+          toast.success('Subscription updated')
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Unable to open RevenueCat paywall')
+      }
+      return
+    }
+
     setPayPlan(plan)
     setPayResult(null)
     setPayError(null)
@@ -239,11 +258,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           <div className="flex items-center gap-3">
             <div className={cn(
               'flex size-10 shrink-0 items-center justify-center rounded-xl',
-              isAdmin ? 'bg-purple-500/15' : current?.isActive ? 'bg-amber-500/15' : 'bg-muted',
+              isAdmin ? 'bg-purple-500/15' : hasActiveMembership ? 'bg-amber-500/15' : 'bg-muted',
             )}>
               {isAdmin ? (
                 <Shield className="size-5 text-purple-500" />
-              ) : current?.isActive ? (
+              ) : hasActiveMembership ? (
                 <Crown className="size-5 text-amber-500" />
               ) : (
                 <Star className="size-5 text-muted-foreground" />
@@ -252,8 +271,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold truncate">{isAdmin ? '管理员' : current?.planName || t('member.freeUser')}</p>
-                <Badge variant={isAdmin ? 'default' : current?.isActive ? 'default' : 'secondary'} className={cn('h-4.5 px-1.5 text-[10px] leading-none', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
-                  {isAdmin ? '全部权限' : current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
+                <Badge variant={isAdmin ? 'default' : hasActiveMembership ? 'default' : 'secondary'} className={cn('h-4.5 px-1.5 text-[10px] leading-none', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
+                  {isAdmin ? '全部权限' : hasActiveMembership ? t('member.badgeActive') : t('member.badgeFree')}
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
@@ -302,11 +321,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     'flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl',
-                    isAdmin ? 'bg-purple-500/10' : current?.isActive ? 'bg-amber-500/10' : 'bg-muted',
+                    isAdmin ? 'bg-purple-500/10' : hasActiveMembership ? 'bg-amber-500/10' : 'bg-muted',
                   )}>
                     {isAdmin ? (
                       <Shield className="h-5 w-5 text-purple-500" />
-                    ) : current?.isActive ? (
+                    ) : hasActiveMembership ? (
                       <Crown className="h-5 w-5 text-amber-500" />
                     ) : (
                       <Shield className="h-5 w-5 text-muted-foreground" />
@@ -315,8 +334,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-semibold">{isAdmin ? '管理员' : current?.planName || t('member.freeUser')}</p>
-                      <Badge variant={isAdmin ? 'default' : current?.isActive ? 'default' : 'secondary'} className={cn('text-xs', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
-                        {isAdmin ? '全部权限' : current?.isActive ? t('member.badgeActive') : t('member.badgeFree')}
+                      <Badge variant={isAdmin ? 'default' : hasActiveMembership ? 'default' : 'secondary'} className={cn('text-xs', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
+                        {isAdmin ? '全部权限' : hasActiveMembership ? t('member.badgeActive') : t('member.badgeFree')}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">

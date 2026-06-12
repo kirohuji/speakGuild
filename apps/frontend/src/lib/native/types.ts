@@ -4,6 +4,7 @@
 
 import type { StatusBarPlugin, Style as StatusBarStyle, Animation as StatusBarAnimation } from '@capacitor/status-bar';
 import type { FilesystemPlugin, Directory } from '@capacitor/filesystem';
+import type { RevenueCatAPI } from './revenuecat';
 
 export type { StatusBarStyle, StatusBarAnimation, Directory };
 
@@ -95,4 +96,5 @@ export interface NativeCapabilities {
   preferences: PreferencesAPI;
   pushNotifications: PushNotificationsAPI;
   filesystem: FilesystemAPI;
+  revenueCat: RevenueCatAPI;
 }

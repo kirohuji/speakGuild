@@ -25,6 +25,7 @@ import { updater }        from './updater';
 import { preferences }    from './preferences';
 import { pushNotifications } from './push-notifications';
 import { filesystem }     from './filesystem';
+import { revenueCat }     from './revenuecat';
 import { Style } from '@capacitor/status-bar';
 import { App } from '@capacitor/app';
 import { useLearningStore } from '@/stores/learning.store';
@@ -36,6 +37,7 @@ const capabilities: NativeCapabilities = {
   preferences,
   pushNotifications,
   filesystem,
+  revenueCat,
 };
 
 const NativeBridgeContext = createContext<NativeCapabilities | null>(null);
@@ -71,6 +73,10 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
 
       void capabilities.updater.notifyAppReady().catch((err) => {
         console.warn('[NativeBridge] notifyAppReady failed:', err);
+      });
+
+      void capabilities.revenueCat.configure().catch((err) => {
+        console.warn('[NativeBridge] RevenueCat configure failed:', err);
       });
 
       // ★ OTA 检查延迟 15 秒

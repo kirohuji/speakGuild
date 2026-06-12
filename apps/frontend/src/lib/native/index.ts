@@ -44,5 +44,11 @@ export { updater } from './updater';
 export { preferences } from './preferences';
 export { pushNotifications } from './push-notifications';
 export { filesystem } from './filesystem';
+export { revenueCat } from './revenuecat';
+export type { RevenueCatAPI, RevenueCatState, RevenueCatProductKey } from './revenuecat';
+export {
+  REVENUECAT_PRODUCT_IDS,
+  REVENUECAT_UNLIMITED_ENTITLEMENT_ID,
+} from './revenuecat';
 // export { requestNativeWechatAuthCode } from './wechat'; // wechat plugin removed
 export { requestNativeAppleSignIn } from './apple';
