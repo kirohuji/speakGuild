@@ -75,7 +75,6 @@ export default function App() {
               <Route element={<RootLayout />}>
                 {/* 首屏静态 */}
                 <Route path="/" element={<EnglishHomePage />} />
-                <Route path="/test=3" element={<EnglishHomePage />} />
                 <Route path="/learning" element={<LearningPlanPage />} />
                 <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
                 <Route path="/today" element={<TodayTaskPage />} />

@@ -18,12 +18,12 @@
 
 ## 当前代码需要统一的点
 
-目前前后端的 RevenueCat 权益 ID 不一致：
+实现前前后端的 RevenueCat 权益 ID 曾不一致：
 
-- 前端：`apps/frontend/src/lib/native/revenuecat.ts` 中是 `漫语町 Unlimited`
+- 前端：`apps/frontend/src/lib/native/revenuecat.ts` 中曾是 `漫语町 Unlimited`
 - 后端 seed：`apps/backend/prisma/seed.ts` 中是 `pro_member`
 
-建议统一为：
+现已统一为：
 
 ```ts
 pro_member
@@ -35,7 +35,7 @@ pro_member
 - 中文名称只用于 UI 展示。
 - Apple、RevenueCat、后端三处必须一致，否则会出现支付成功但会员不生效。
 
-当前前端还保留了 `lifetime` 包类型。既然当前阶段不卖永久会员，建议移除或暂时隐藏，避免 RevenueCat Offering 中没有 lifetime package 时触发 package not found。
+当前阶段不卖永久会员，前端 RevenueCat 包类型只保留 `monthly` 和 `yearly`，避免 RevenueCat Offering 中没有 lifetime package 时触发 package not found。
 
 ## 商品模型
 
@@ -270,7 +270,7 @@ Annual package -> lourd.manyu.pro.yearly
 RevenueCat webhook 应指向后端：
 
 ```text
-POST https://你的域名/api/pay/revenuecat/webhook
+POST https://你的域名/api/v1/manyu/pay/revenuecat/webhook
 ```
 
 建议处理事件：
@@ -477,12 +477,13 @@ Android：
 
 ## 上线前必须完成
 
-- `REVENUECAT_UNLIMITED_ENTITLEMENT_ID` 改为 `pro_member`
-- 移除或隐藏 `lifetime`
-- 正式环境移除硬编码 RevenueCat test key
+- `REVENUECAT_UNLIMITED_ENTITLEMENT_ID` 已改为 `pro_member`
+- 已移除当前阶段不用的 `lifetime`
+- 已移除前端硬编码 RevenueCat test key，正式环境需配置 `VITE_REVENUECAT_API_KEY`
+- 生产环境配置 `REVENUECAT_WEBHOOK_AUTHORIZATION`
 - App Store Connect 创建月付和年付订阅
 - RevenueCat 导入 products 并配置 entitlement/offering
-- 后端增加 RevenueCat webhook
+- 后端已增加 RevenueCat webhook：`POST /api/v1/manyu/pay/revenuecat/webhook`
 - iOS 审核截图和订阅本地化补齐
 - 隐私政策和服务条款说明自动续订、取消订阅、价格和权益
 

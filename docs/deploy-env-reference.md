@@ -167,8 +167,12 @@
 
 | 变量 | 分类 | 说明 | 获取方式 |
 |---|---|---|---|
+| `VITE_REVENUECAT_API_KEY` | 🔴 Secret | 前端 RevenueCat iOS Public SDK Key，用于 Capacitor App 初始化 Purchases SDK | RevenueCat 项目 App 设置 |
 | `REVENUECAT_API_KEY` | 🟡 Secret | RevenueCat Secret Key | [RevenueCat](https://www.revenuecat.com/) |
 | `REVENUECAT_PROJECT_ID` | 🟡 Secret | 项目 ID | 同上 |
+| `REVENUECAT_WEBHOOK_AUTHORIZATION` | 🔴 Secret | RevenueCat webhook 的 Authorization token；配置后后端只接受 `Bearer <token>` 或原值匹配的回调 | RevenueCat webhook 自定义 Authorization |
+
+> iOS 订阅 webhook 地址：`POST /api/v1/manyu/pay/revenuecat/webhook`。生产环境必须配置 `REVENUECAT_WEBHOOK_AUTHORIZATION`，本地未配置时后端会放行并打印警告。
 
 ---
 

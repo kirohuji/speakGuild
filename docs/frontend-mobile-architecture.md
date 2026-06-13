@@ -658,11 +658,10 @@ lib/perf/
 
 ```typescript
 REVENUECAT_PRODUCT_IDS = {
-  lifetime: 'lifetime',   // 终身会员
-  yearly: 'yearly',       // 年度订阅
-  monthly: 'monthly',     // 月度订阅
+  yearly: 'lourd.manyu.pro.yearly',       // 年度订阅
+  monthly: 'lourd.manyu.pro.monthly',     // 月度订阅
 }
-REVENUECAT_UNLIMITED_ENTITLEMENT_ID = '漫语町 Unlimited'
+REVENUECAT_UNLIMITED_ENTITLEMENT_ID = 'pro_member'
 ```
 
 ### 13.2 RevenueCat State

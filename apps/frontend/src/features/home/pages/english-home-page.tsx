@@ -46,20 +46,22 @@ export function EnglishHomePage() {
   const fetchSpecialNotifications = useHomeStore((s) => s.fetchSpecialNotifications)
   const storeCheckIn = useHomeStore((s) => s.checkIn)
 
-  // 🧪 检测 test=3（兼容 HashRouter 下 query 在 hash 中或路径中）
+  // 🧪 检测 test=3（?test=3，兼容 HashRouter）
   const searchStr = location.search || (
     typeof window !== 'undefined'
       ? (() => { const i = window.location.hash.indexOf('?'); return i >= 0 ? window.location.hash.slice(i) : '' })()
       : ''
   )
-  const isTestMode = new URLSearchParams(searchStr).get('test') === '3' || location.pathname === '/test=3'
+  const isTestMode = new URLSearchParams(searchStr).get('test') === '3'
   const testInjectedRef = useRef(false)
 
   // 进页面触发所有首页数据拉取（store 内部按日期/标志位缓存）
   useEffect(() => {
     fetchDailySentence()
     fetchCheckInStatus()
-    fetchSpecialNotifications()
+    if (!isTestMode) {
+      fetchSpecialNotifications()
+    }
 
     // 🧪 test=3 注入模拟的特殊通知
     if (isTestMode && !testInjectedRef.current) {
@@ -98,6 +100,7 @@ export function EnglishHomePage() {
         <h1 className="text-2xl font-bold text-foreground">ManYu</h1>
         <p className="mt-2 text-muted-foreground">多语种口语练习平台</p>
         <Button className="mt-6" asChild><Link to="/auth/login">登录 / 注册</Link></Button>
+        {isTestMode && <SpecialBanner />}
       </div>
     )
   }

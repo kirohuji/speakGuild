@@ -12,10 +12,14 @@ import type { Request, Response } from 'express';
 import { PayService } from './pay.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { requireAuthSession } from '../auth/session.util';
+import { RevenueCatService } from './revenuecat/revenuecat.service';
 
 @Controller('pay')
 export class PayController {
-  constructor(private readonly payService: PayService) {}
+  constructor(
+    private readonly payService: PayService,
+    private readonly revenueCatService: RevenueCatService,
+  ) {}
 
   /** 创建支付订单 */
   @Post('orders')
@@ -56,6 +60,13 @@ export class PayController {
     } else {
       res.status(500).json({ code: 'FAIL', message: '验证失败' });
     }
+  }
+
+  /** RevenueCat 订阅事件回调 */
+  @Post('revenuecat/webhook')
+  async revenueCatWebhook(@Req() req: Request, @Body() body: any) {
+    this.revenueCatService.verifyWebhookAuthorization(req.headers.authorization);
+    return this.revenueCatService.handleWebhook(body);
   }
 
   /** Mock: 模拟支付成功（开发环境用） */

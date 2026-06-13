@@ -38,7 +38,7 @@ export function useRevenueCat() {
         setIsLoading(false);
       }
     },
-    purchasePackage: async (product: 'lifetime' | 'yearly' | 'monthly') => {
+    purchasePackage: async (product: 'yearly' | 'monthly') => {
       setIsLoading(true);
       setError(null);
       try {

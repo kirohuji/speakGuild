@@ -15,15 +15,13 @@ import {
 } from '@revenuecat/purchases-capacitor-ui';
 import { isNative } from './platform';
 
-export const REVENUECAT_API_KEY =
-  import.meta.env.VITE_REVENUECAT_API_KEY || 'test_hsIvvvYArGeqIbGoXSaugWmxJwx';
+export const REVENUECAT_API_KEY = import.meta.env.VITE_REVENUECAT_API_KEY;
 
-export const REVENUECAT_UNLIMITED_ENTITLEMENT_ID = '漫语町 Unlimited';
+export const REVENUECAT_UNLIMITED_ENTITLEMENT_ID = 'pro_member';
 
 export const REVENUECAT_PRODUCT_IDS = {
-  lifetime: 'lifetime',
-  yearly: 'yearly',
-  monthly: 'monthly',
+  yearly: 'lourd.manyu.pro.yearly',
+  monthly: 'lourd.manyu.pro.monthly',
 } as const;
 
 export type RevenueCatProductKey = keyof typeof REVENUECAT_PRODUCT_IDS;
@@ -140,15 +138,12 @@ async function ensureConfigured(appUserID?: string | null): Promise<CustomerInfo
 }
 
 function findPackage(offering: PurchasesOffering, product: RevenueCatProductKey): PurchasesPackage | null {
-  if (product === 'lifetime' && offering.lifetime) return offering.lifetime;
   if (product === 'yearly' && offering.annual) return offering.annual;
   if (product === 'monthly' && offering.monthly) return offering.monthly;
 
   const productId = REVENUECAT_PRODUCT_IDS[product];
   const expectedPackageType =
-    product === 'lifetime'
-      ? PACKAGE_TYPE.LIFETIME
-      : product === 'yearly'
+    product === 'yearly'
         ? PACKAGE_TYPE.ANNUAL
         : PACKAGE_TYPE.MONTHLY;
 

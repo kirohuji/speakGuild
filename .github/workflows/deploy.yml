@@ -29,6 +29,8 @@ jobs:
           echo "COS_SECRET_ID=${{ secrets.COS_SECRET_ID }}" >> /tmp/deploy.env
           echo "COS_SECRET_KEY=${{ secrets.COS_SECRET_KEY }}" >> /tmp/deploy.env
           echo "BACKEND_URL=${{ secrets.BACKEND_URL }}" >> /tmp/deploy.env
+          echo "VITE_REVENUECAT_API_KEY=${{ secrets.VITE_REVENUECAT_API_KEY }}" >> /tmp/deploy.env
+          echo "REVENUECAT_WEBHOOK_AUTHORIZATION=${{ secrets.REVENUECAT_WEBHOOK_AUTHORIZATION }}" >> /tmp/deploy.env
 
           # ===== 🟢 With defaults (set GitHub Variable to override, or use default) =====
           echo "WHISPER_LANGUAGE=${{ vars.WHISPER_LANGUAGE || 'en' }}" >> /tmp/deploy.env
