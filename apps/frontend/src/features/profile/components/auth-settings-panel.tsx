@@ -84,8 +84,12 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
   // ── 删除账户 Dialog ──
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
+  const [deleteRequiresPassword, setDeleteRequiresPassword] = useState<boolean | null>(null)
+  const [deleteScheduledAt, setDeleteScheduledAt] = useState<string | null>(null)
+  const [deleteRequirementsLoading, setDeleteRequirementsLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [deleteMessage, setDeleteMessage] = useState('')
 
   // ── 反馈 Dialog ──
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
@@ -94,21 +98,52 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
     if (deleteDialogOpen) {
       setDeletePassword('')
       setDeleteError('')
+      setDeleteMessage('')
+      setDeleteRequiresPassword(null)
+      setDeleteScheduledAt(null)
+      setDeleteRequirementsLoading(true)
+      import('@/features/auth/api')
+        .then(({ getDeleteAccountRequirements }) => getDeleteAccountRequirements())
+        .then((requirements) => {
+          setDeleteRequiresPassword(requirements.requiresPassword)
+          setDeleteScheduledAt(requirements.deletionScheduledAt)
+        })
+        .catch((error: any) => {
+          setDeleteRequiresPassword(true)
+          setDeleteError(error?.message || t('profile.auth.loadFailed', { defaultValue: '加载失败，请稍后重试' }))
+        })
+        .finally(() => setDeleteRequirementsLoading(false))
     }
-  }, [deleteDialogOpen])
+  }, [deleteDialogOpen, t])
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword) { setDeleteError(t('profile.auth.passwordRequired')); return }
+    if (deleteRequiresPassword && !deletePassword) { setDeleteError(t('profile.auth.passwordRequired')); return }
     setDeleteLoading(true)
     setDeleteError('')
     try {
       const { deleteAccount } = await import('@/features/auth/api')
-      await deleteAccount(deletePassword)
-      localStorage.clear()
-      window.location.hash = '#/portal'
-      window.location.reload()
+      const result = await deleteAccount(deleteRequiresPassword ? deletePassword : undefined)
+      setDeletePassword('')
+      setDeleteScheduledAt(result.deletionScheduledAt)
+      setDeleteMessage(`注销申请已提交。账号将在 ${new Date(result.deletionScheduledAt).toLocaleString('zh-CN')} 后删除，期间可取消。`)
     } catch (error: any) {
       setDeleteError(error?.response?.data?.message || error?.message || t('profile.auth.deleteFailed'))
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const handleCancelDeleteAccount = async () => {
+    setDeleteLoading(true)
+    setDeleteError('')
+    setDeleteMessage('')
+    try {
+      const { cancelDeleteAccount } = await import('@/features/auth/api')
+      await cancelDeleteAccount()
+      setDeleteScheduledAt(null)
+      setDeleteMessage('注销申请已取消。')
+    } catch (error: any) {
+      setDeleteError(error?.response?.data?.message || error?.message || '取消注销失败')
     } finally {
       setDeleteLoading(false)
     }
@@ -274,25 +309,52 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
           <DialogHeader>
             <DialogTitle className="text-destructive">{t('profile.deleteAccount')}</DialogTitle>
             <DialogDescription>
-              {t('profile.auth.deleteAccountWarning')}
+              {deleteScheduledAt
+                ? `账号已进入 7 天注销缓冲期，将于 ${new Date(deleteScheduledAt).toLocaleString('zh-CN')} 后自动删除。期间你可以取消注销申请。`
+                : deleteRequiresPassword === false
+                  ? '此账号通过第三方登录创建。确认后将进入 7 天注销缓冲期，到期后账户及学习数据将被删除。'
+                  : '确认后账号将进入 7 天注销缓冲期。期间可取消；到期后账户及学习数据将被删除。请输入密码以确认。'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Input
-              value={deletePassword}
-              onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
-              type="password"
-              placeholder={t('profile.auth.currentPasswordPlaceholder')}
-              autoComplete="current-password"
-            />
+            {deleteRequirementsLoading ? (
+              <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                正在确认账号类型...
+              </div>
+            ) : deleteScheduledAt ? (
+              <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                你现在仍可正常使用账号。若不再希望注销，请点击下方“取消注销申请”。
+              </div>
+            ) : deleteRequiresPassword ? (
+              <Input
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
+                type="password"
+                placeholder={t('profile.auth.currentPasswordPlaceholder')}
+                autoComplete="current-password"
+              />
+            ) : (
+              <div className="rounded-lg bg-destructive/5 px-3 py-2 text-sm text-muted-foreground">
+                请再次确认：账号将进入 7 天注销缓冲期，到期后账户、学习进度和同步数据将无法恢复。
+              </div>
+            )}
+            {deleteMessage && <p className="text-sm text-success">{deleteMessage}</p>}
             {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>{t('common.cancel')}</Button>
-            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteLoading}>
+            {deleteScheduledAt ? (
+              <Button onClick={handleCancelDeleteAccount} disabled={deleteLoading || deleteRequirementsLoading}>
+                {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                取消注销申请
+              </Button>
+            ) : (
+            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteLoading || deleteRequirementsLoading || deleteRequiresPassword === null}>
               {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('common.confirm')}
             </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

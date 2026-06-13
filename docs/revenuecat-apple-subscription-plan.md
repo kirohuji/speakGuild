@@ -167,14 +167,14 @@ Display Name: 漫语町会员年卡
 Description: 解锁完整学习内容、AI 练习反馈和会员权益
 ```
 
-### 5. 可选配置首月优惠
+### 5. 配置首月 14 元优惠
 
-当前默认价格是月费 19 元、年费 198 元。如果以后要做新订阅用户首月优惠，推荐使用 Apple introductory offer：
+当前策略是：第一次订阅月会员的用户首月 14 元，之后恢复月费 19 元。这个应使用 Apple introductory offer 配置在月度订阅商品上：
 
 ```text
 Offer Type: Pay As You Go
 Duration: 1 Month
-Introductory Price: 按运营活动配置
+Introductory Price: CNY 14
 Applies To: monthly subscription
 ```
 
@@ -183,7 +183,7 @@ Applies To: monthly subscription
 - Introductory offer 通常只对该订阅组的新订阅用户可用。
 - 用户是否符合资格由 Apple 判断。
 - 如果用户已经用过同订阅组的新用户优惠，不能再次享受。
-- 前端文案应写成“符合条件的新订阅用户首月优惠”，不要承诺所有用户都一定可用。
+- 前端文案应写成“符合条件的新订阅用户首月 14 元”，不要承诺所有用户都一定可用。
 
 如果以后想做“邀请码用户首月优惠”，而不是所有新订阅用户首月优惠，可以考虑：
 
@@ -272,7 +272,21 @@ Annual package -> lourd.manyuding.app.yearly
 
 如果使用 RevenueCat Paywalls UI，则在 Paywall 编辑器里只展示月付和年付，不展示 lifetime。
 
-### 6. 配置 Webhook
+### 6. 配置首月优惠后的 RevenueCat 调整
+
+Apple introductory offer 配在 App Store Connect 的月度订阅商品 `lourd.manyuding.app.monthly` 上。RevenueCat 侧不需要新增 product、package 或 entitlement，仍然购买同一个 monthly package。
+
+需要做的是：
+
+- 在 App Store Connect 保存月度订阅的 introductory offer 后，等待 Apple 商品元数据同步。
+- 在 RevenueCat 中确认 `lourd.manyuding.app.monthly` 仍已导入，并能看到 Apple 返回的 introductory offer 信息。
+- Offering `default` 里继续使用 `Monthly package -> lourd.manyuding.app.monthly`。
+- Entitlement 继续使用 `pro_member`，不要为首月优惠单独创建 entitlement。
+- 前端继续调用 `Purchases.purchasePackage({ aPackage })` 购买 monthly package，RevenueCat SDK / App Store 会对符合条件的用户自动应用 introductory offer。
+- 如果使用 RevenueCat Paywalls UI，确认 paywall 展示的是月付首月优惠文案；如果使用自定义会员页，前端文案写“符合条件的新订阅用户首月 ¥14，之后 ¥19/月”。
+- Sandbox / TestFlight 测试时，如果优惠没有马上出现，先等待 Apple 商品元数据传播，再重新拉取 RevenueCat offerings。
+
+### 7. 配置 Webhook
 
 RevenueCat webhook 应指向后端：
 
@@ -314,7 +328,7 @@ revenueCat.identify(session.user.id)
 推荐做法：
 
 - 新用户注册成功后，后端直接给 5 天 `user_membership`
-- 用户输入有效邀请码后，后端再延长 5 天
+- 好友通过有效邀请码注册后，后端给邀请人延长 5 天
 - 如果已经是活跃会员，在当前 `expiredAt` 基础上叠加
 - 如果不是活跃会员，从当前时间开始计算
 
@@ -322,8 +336,8 @@ revenueCat.identify(session.user.id)
 
 ```text
 新用户奖励：+5 天
-邀请码奖励：被邀请人 +5 天
-邀请人奖励：可给积分、天数或其他权益
+邀请码奖励：邀请人 +5 天
+被邀请人奖励：不额外赠送邀请会员天数，可给积分或其他非会员权益
 ```
 
 需要注意：
@@ -350,28 +364,24 @@ Web/支付宝/微信订单价格：后端可用积分抵扣
 - 积分抵扣如果用于 iOS 数字订阅，容易和 App Store 审核规则冲突。
 - 如果想给 iOS 用户优惠，应优先使用 Apple introductory offer、offer codes 或 promotional offers。
 
-## 首月优惠方案
+## 首月 14 元方案
 
 ### 当前 MVP 方案
 
-当前先不配置首月优惠，直接使用固定订阅价格：
+使用 Apple introductory offer：
 
 ```text
-月会员：19 元/月
+月会员原价：19 元/月
+符合条件的新订阅用户首月：14 元
+之后自动续订：19 元/月
 年会员：198 元/年
 ```
 
 前端文案：
 
 ```text
-月卡 ¥19/月
+符合条件的新订阅用户首月 ¥14，之后 ¥19/月
 年卡 ¥198，约 ¥16.5/月
-```
-
-如果以后启用 introductory offer，更严谨文案：
-
-```text
-符合条件的新订阅用户首月优惠，之后 ¥19/月
 ```
 
 ### 不推荐的方案
@@ -475,7 +485,7 @@ Android：
 ### 本地业务
 
 - 新注册用户自动获得 5 天
-- 输入邀请码后再增加 5 天
+- 好友通过邀请码注册后，邀请人增加 5 天
 - 已有会员领取赠送天数时按当前 `expiredAt` 叠加
 - 免费权益到期后弹出 paywall
 - Web 支付成功后会员状态生效

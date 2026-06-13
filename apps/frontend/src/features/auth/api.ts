@@ -1,5 +1,5 @@
 import { authClient, clearBearerToken, setBearerToken } from './client'
-import request, { post } from '@/lib/request'
+import { del, get, post } from '@/lib/request'
 import { isIOS, isNative, requestNativeAppleSignIn, requestNativeWechatAuthCode } from '@/lib/native'
 
 export async function signInWithEmailPassword(email: string, password: string) {
@@ -149,6 +149,12 @@ export async function resetPasswordByOtp(email: string, otp: string, newPassword
   return post('/auth/reset-password', { email, otp, newPassword })
 }
 
+// ─── 新人推广试用 ───────────────────────────────────────────────
+
+export async function claimPromoTrial(): Promise<{ granted: boolean; days?: number; message: string }> {
+  return post('/auth/promo-trial')
+}
+
 // ─── 修改密码 ──────────────────────────────────────────────────
 
 export async function changePassword(currentPassword: string, newPassword: string) {
@@ -157,6 +163,27 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 // ─── 删除账户 ──────────────────────────────────────────────────
 
-export async function deleteAccount(password: string) {
-  return request.delete('/auth/delete-account', { data: { password } })
+export interface DeleteAccountRequirements {
+  requiresPassword: boolean
+  deletionRequestedAt: string | null
+  deletionScheduledAt: string | null
+  gracePeriodDays: number
+}
+
+export interface DeleteAccountResult {
+  message: string
+  deletionScheduledAt: string
+  gracePeriodDays: number
+}
+
+export async function getDeleteAccountRequirements(): Promise<DeleteAccountRequirements> {
+  return get('/auth/delete-account/requirements')
+}
+
+export async function deleteAccount(password?: string): Promise<DeleteAccountResult> {
+  return del('/auth/delete-account', { password })
+}
+
+export async function cancelDeleteAccount(): Promise<{ message: string }> {
+  return post('/auth/delete-account/cancel')
 }

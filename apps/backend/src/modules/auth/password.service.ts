@@ -1,9 +1,13 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
 export class PasswordService {
+  private readonly logger = new Logger(PasswordService.name);
+  private readonly deletionGracePeriodMs = 7 * 24 * 60 * 60 * 1000;
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -127,10 +131,40 @@ export class PasswordService {
   }
 
   /**
-   * 删除账户（已登录用户）
-   * 需要验证密码以确保安全
+   * 查询注销账户是否需要密码确认。
+   * 第三方登录账号可能没有 credential 密码，前端应展示二次确认而不是密码框。
    */
-  async deleteAccount(userId: string, password: string) {
+  async getDeleteAccountRequirements(userId: string) {
+    const [user, credentialAccount] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          deletionRequestedAt: true,
+          deletionScheduledAt: true,
+        },
+      }),
+      this.prisma.account.findFirst({
+        where: {
+          userId,
+          providerId: 'credential',
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    return {
+      requiresPassword: !!credentialAccount,
+      deletionRequestedAt: user?.deletionRequestedAt ?? null,
+      deletionScheduledAt: user?.deletionScheduledAt ?? null,
+      gracePeriodDays: 7,
+    };
+  }
+
+  /**
+   * 申请删除账户（已登录用户）。
+   * 为避免误操作，账号会进入 7 天缓冲期，到期后由定时任务真正删除。
+   */
+  async deleteAccount(userId: string, password?: string) {
     // 验证密码
     const account = await this.prisma.account.findFirst({
       where: {
@@ -150,11 +184,57 @@ export class PasswordService {
       }
     }
 
-    // 级联删除用户（所有关联数据会被自动清理）
-    await this.prisma.user.delete({
+    const now = new Date();
+    const scheduledAt = new Date(now.getTime() + this.deletionGracePeriodMs);
+
+    await this.prisma.user.update({
       where: { id: userId },
+      data: {
+        deletionRequestedAt: now,
+        deletionScheduledAt: scheduledAt,
+      },
     });
 
-    return { message: '账户已删除' };
+    return {
+      message: '注销申请已提交',
+      deletionScheduledAt: scheduledAt,
+      gracePeriodDays: 7,
+    };
+  }
+
+  async cancelDeleteAccount(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        deletionRequestedAt: null,
+        deletionScheduledAt: null,
+      },
+    });
+
+    return { message: '注销申请已取消' };
+  }
+
+  @Cron('0 20 3 * * *')
+  async purgeExpiredDeletionRequests() {
+    const now = new Date();
+    const users = await this.prisma.user.findMany({
+      where: {
+        deletionScheduledAt: { lte: now },
+      },
+      select: { id: true },
+      take: 100,
+    });
+
+    if (users.length === 0) return;
+
+    for (const user of users) {
+      try {
+        await this.prisma.user.delete({ where: { id: user.id } });
+      } catch (error) {
+        this.logger.warn(`清理注销账号失败 userId=${user.id}: ${String(error)}`);
+      }
+    }
+
+    this.logger.log(`已清理 ${users.length} 个到期注销账号`);
   }
 }

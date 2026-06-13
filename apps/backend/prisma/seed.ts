@@ -19,8 +19,8 @@ const defaultConfigs = [
   { key: 'maintenance_message', value: '系统维护中，请稍后再试', group: 'feature', label: '维护提示文案', type: 'textarea', description: '维护模式下的提示信息' },
 
   // ── 邀请与推广 ──
-  { key: 'invite_trial_days',        value: '3',   group: 'growth',  label: '邀请人奖励天数',   type: 'number', description: '邀请成功后邀请人获得的会员天数' },
-  { key: 'promo_trial_days',         value: '3',   group: 'growth',  label: '新人推广试用天数',   type: 'number', description: '前N名注册用户免费试用天数（需配合 promo_trial_max_claims）' },
+  { key: 'invite_trial_days',        value: '5',   group: 'growth',  label: '邀请人奖励天数',   type: 'number', description: '邀请成功后邀请人获得的会员天数' },
+  { key: 'promo_trial_days',         value: '5',   group: 'growth',  label: '新人推广试用天数',   type: 'number', description: '前N名注册用户免费试用天数（需配合 promo_trial_max_claims）' },
   { key: 'promo_trial_max_claims',   value: '100', group: 'growth',  label: '试用名额上限',       type: 'number', description: '最多允许多少人领取推广试用（配合 promo_trial_days）' },
   { key: 'promo_trial_claimed_count',value: '0',   group: 'growth',  label: '已领取试用人数',     type: 'number', description: '已成功领取推广试用的人数（自动递增，勿手动修改）' },
 

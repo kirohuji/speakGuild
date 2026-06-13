@@ -34,7 +34,7 @@ export function InvitePage() {
       try {
         await navigator.share({
           title: '漫语町 - 邀请你一起学习',
-          text: `用我的邀请码 ${codeData?.code} 注册，双方各得 3 天免费会员！`,
+          text: `用我的邀请码 ${codeData?.code} 注册漫语町。你注册成功后，我可以获得 5 天会员奖励。`,
           url: inviteLink,
         })
       } catch { /* ignore */ }
@@ -61,7 +61,7 @@ export function InvitePage() {
         </Button>
         <div>
           <h1 className="text-lg font-bold">邀请好友</h1>
-          <p className="text-xs text-muted-foreground">邀请好友一起学习，双方各得奖励</p>
+          <p className="text-xs text-muted-foreground">好友注册成功后，你获得会员奖励</p>
         </div>
       </div>
 
@@ -71,9 +71,9 @@ export function InvitePage() {
             <Gift className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">邀请好友，双方各得 3 天会员</h2>
+            <h2 className="text-xl font-bold">邀请好友，你得 5 天会员</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              好友通过你的邀请码注册，你们都能获得 3 天免费会员
+              好友通过你的邀请码注册成功后，你将获得 5 天漫语会员奖励
             </p>
           </div>
           <div className="inline-flex items-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-background px-6 py-3">

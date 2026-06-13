@@ -60,6 +60,7 @@ export class ReferralService {
       data: {
         referrerId: referrerCode.id,
         referredUserId,
+        rewardedAt: new Date(),
       },
     })
 
@@ -67,17 +68,15 @@ export class ReferralService {
     const config = await this.prisma.systemConfig.findUnique({
       where: { key: 'invite_trial_days' },
     });
-    const trialDays = parseInt(config?.value || '3', 10);
+    const trialDays = parseInt(config?.value || '5', 10);
 
     await this.prisma.referralCode.update({
       where: { id: referrerCode.id },
       data: { totalInvited: { increment: 1 }, totalReward: { increment: trialDays } },
     });
 
-    // 仅邀请人获得会员天数
+    // 仅邀请人获得会员天数；被邀请人只获得积分，不额外赠送邀请会员天数。
     await this.grantTrialDays(referrerCode.userId, trialDays)
-    // 被邀请人不给会员天数，仅积分
-    // await this.grantTrialDays(referredUserId, 7)  // 已移除
 
     // 积分奖励
     await this.grantPoints(referrerCode.userId, 100, 'invite_reward', '邀请好友注册奖励')
@@ -114,29 +113,33 @@ export class ReferralService {
   private async grantTrialDays(userId: string, days: number) {
     const membership = await this.prisma.userMembership.findUnique({ where: { userId } })
     const now = new Date()
+    const plan = await this.prisma.membershipPlan.findFirst({
+      where: { level: 'standard' },
+    })
+    if (!plan) return
+
     if (membership) {
       const newExpiry = new Date(
         Math.max(membership.expiredAt.getTime(), now.getTime()) + days * 86400000,
       )
       await this.prisma.userMembership.update({
         where: { userId },
-        data: { expiredAt: newExpiry },
+        data: {
+          planId: plan.id,
+          status: 'active',
+          expiredAt: newExpiry,
+        },
       })
     } else {
       // 给漫语会员（标准会员）
-      const plan = await this.prisma.membershipPlan.findFirst({
-        where: { level: 'standard' },
+      await this.prisma.userMembership.create({
+        data: {
+          userId,
+          planId: plan.id,
+          status: 'active',
+          expiredAt: new Date(now.getTime() + days * 86400000),
+        },
       })
-      if (plan) {
-        await this.prisma.userMembership.create({
-          data: {
-            userId,
-            planId: plan.id,
-            status: 'active',
-            expiredAt: new Date(now.getTime() + days * 86400000),
-          },
-        })
-      }
     }
   }
 }

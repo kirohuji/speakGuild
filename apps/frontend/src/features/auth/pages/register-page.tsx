@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Gift, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,12 +10,15 @@ import {
   authInputClassName,
   authLabelClassName,
 } from '@/features/auth/components/auth-page-shell'
-import { signUpWithEmailPassword } from '@/features/auth/api'
+import { claimPromoTrial, signUpWithEmailPassword } from '@/features/auth/api'
+import { applyReferral } from '@/features/referral/api'
 import { cn } from '@/lib/cn'
 
 export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const referralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,7 +40,15 @@ export function RegisterPage() {
       setLoading(true)
       setMessage('')
       await signUpWithEmailPassword(email, password, name.trim())
-      setMessage(t('auth.registerSuccess'))
+      const grants: string[] = []
+      const promoResult = await claimPromoTrial().catch(() => null)
+      if (promoResult?.granted && promoResult.days) {
+        grants.push(`新人 ${promoResult.days} 天会员`)
+      }
+      if (referralCode) {
+        await applyReferral(referralCode).catch(() => null)
+      }
+      setMessage(grants.length > 0 ? `注册成功，已获得${grants.join('、')}` : t('auth.registerSuccess'))
       setTimeout(() => navigate('/profile'), 1200)
     } catch (error: any) {
       setMessage(error?.response?.data?.message || error?.message || t('auth.registerFailed'))
@@ -73,6 +84,15 @@ export function RegisterPage() {
       )}
     >
       <div className="space-y-4">
+            {referralCode && (
+              <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+                <Gift className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>
+                  已填入邀请码 <span className="font-semibold text-primary">{referralCode}</span>。注册成功后，邀请人将获得 5 天会员奖励。
+                </span>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.userName')}</Label>
               <Input

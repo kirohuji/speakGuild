@@ -81,10 +81,22 @@ export class AuthController {
 
   // ─── 删除账户（已登录） ─────────────────────────────────────
 
+  @Get('delete-account/requirements')
+  async getDeleteAccountRequirements(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.passwordService.getDeleteAccountRequirements(session.user.id);
+  }
+
   @Delete('delete-account')
   async deleteAccount(@Req() req: Request, @Body() dto: DeleteAccountDto) {
     const session = await requireAuthSession(req);
     return this.passwordService.deleteAccount(session.user.id, dto.password);
+  }
+
+  @Post('delete-account/cancel')
+  async cancelDeleteAccount(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    return this.passwordService.cancelDeleteAccount(session.user.id);
   }
 
   // ─── 推广试用 —— 注册后调用，检查 promo_trial_days 配置 + 名额限制 ───

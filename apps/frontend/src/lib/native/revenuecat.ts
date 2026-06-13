@@ -20,8 +20,8 @@ export const REVENUECAT_API_KEY = import.meta.env.VITE_REVENUECAT_API_KEY;
 export const REVENUECAT_UNLIMITED_ENTITLEMENT_ID = 'pro_member';
 
 export const REVENUECAT_PRODUCT_IDS = {
-  yearly: 'lourd.manyu.pro.yearly',
-  monthly: 'lourd.manyu.pro.monthly',
+  yearly: 'lourd.manyuding.app.yearly',
+  monthly: 'lourd.manyuding.app.monthly',
 } as const;
 
 export type RevenueCatProductKey = keyof typeof REVENUECAT_PRODUCT_IDS;

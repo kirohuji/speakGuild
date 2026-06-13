@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, Gift } from 'lucide-react'
+import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, Gift, RefreshCw, Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -47,9 +47,11 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [benefits, setBenefits] = useState<MemberBenefit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
+  const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
   const revenueCatState = useRevenueCat()
 
-  const isRevenueCatUnlimited = isNative() && revenueCatState.hasUnlimited
+  const isNativeApp = isNative()
+  const isRevenueCatUnlimited = isNativeApp && revenueCatState.hasUnlimited
   const isAdmin = current?.level === 'admin'
   const hasActiveMembership = isRevenueCatUnlimited || !!current?.isActive
 
@@ -91,7 +93,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   }, [])
 
   const handleUpgrade = useCallback(async (plan: MemberPlan) => {
-    if (isNative()) {
+    if (isNativeApp) {
       try {
         const result = await revenueCat.presentPaywallIfNeeded()
         await revenueCat.refreshCustomerInfo()
@@ -108,7 +110,37 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     setPayResult(null)
     setPayError(null)
     setPayOpen(true)
+  }, [isNativeApp])
+
+  const refreshMembership = useCallback(async () => {
+    const cur = await getCurrentMembership()
+    setCurrent(cur)
   }, [])
+
+  const handleRestorePurchases = useCallback(async () => {
+    setSubscriptionAction('restore')
+    try {
+      await revenueCatState.restorePurchases()
+      await refreshMembership().catch(() => null)
+      toast.success('购买记录已恢复')
+    } catch (err: any) {
+      toast.error(err?.message || '恢复购买失败')
+    } finally {
+      setSubscriptionAction(null)
+    }
+  }, [refreshMembership, revenueCatState])
+
+  const handleManageSubscription = useCallback(async () => {
+    setSubscriptionAction('manage')
+    try {
+      await revenueCatState.presentCustomerCenter()
+      await refreshMembership().catch(() => null)
+    } catch (err: any) {
+      toast.error(err?.message || '暂时无法打开订阅管理')
+    } finally {
+      setSubscriptionAction(null)
+    }
+  }, [refreshMembership, revenueCatState])
 
   const handlePay = useCallback(async (method: 'alipay' | 'wechat') => {
     if (!payPlan) return
@@ -142,14 +174,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       await mockPayConfirm(payResult.orderNo)
       setPayOpen(false)
       // 刷新会员状态
-      const cur = await getCurrentMembership()
-      setCurrent(cur)
+      await refreshMembership()
     } catch {
       setPayError(t('member.mockConfirmFailed'))
     } finally {
       setPayLoading(false)
     }
-  }, [payResult])
+  }, [payResult, refreshMembership, t])
 
   const plansContent = isLoading ? (
     <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
@@ -348,6 +379,86 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {isNativeApp && !isAdmin && (
+        compact ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-xl text-xs"
+              onClick={handleRestorePurchases}
+              disabled={subscriptionAction !== null}
+            >
+              {subscriptionAction === 'restore' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              恢复购买
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-xl text-xs"
+              onClick={handleManageSubscription}
+              disabled={subscriptionAction !== null}
+            >
+              {subscriptionAction === 'manage' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Settings className="h-3.5 w-3.5" />
+              )}
+              管理订阅
+            </Button>
+          </div>
+        ) : (
+          <Card className="rounded-lg border-border/70 shadow-sm">
+            <CardContent className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold">Apple 订阅</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  恢复已购买的会员权益，或打开系统订阅中心管理续费。
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={handleRestorePurchases}
+                  disabled={subscriptionAction !== null}
+                >
+                  {subscriptionAction === 'restore' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  恢复购买
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={handleManageSubscription}
+                  disabled={subscriptionAction !== null}
+                >
+                  {subscriptionAction === 'manage' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings className="h-4 w-4" />
+                  )}
+                  管理订阅
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )
       )}
 
       {/* 选择套餐 — 管理员不显示 */}

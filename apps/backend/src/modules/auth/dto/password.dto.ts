@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength, MaxLength } from 'class-validator';
 
 export class ForgotPasswordDto {
   @IsEmail({}, { message: '请输入有效的邮箱地址' })
@@ -30,8 +30,9 @@ export class ChangePasswordDto {
 }
 
 export class DeleteAccountDto {
+  @IsOptional()
   @IsString()
-  password!: string;
+  password?: string;
 }
 
 export class NativeWechatSignInDto {
