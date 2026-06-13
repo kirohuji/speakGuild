@@ -159,11 +159,13 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             <MessageSquare className="h-5 w-5" />
             {t('feedback.title', { defaultValue: '意见与反馈' })}
           </DialogTitle>
-          <DialogDescription>
-            {isLoggedIn
-              ? t('feedback.description', { defaultValue: '请选择反馈类型并描述您的问题或建议' })
-              : t('feedback.descriptionAnonymous', { defaultValue: '请留下您的邮箱和反馈内容，我们会尽快回复' })}
-          </DialogDescription>
+          {
+            !submitted && <DialogDescription>
+              {isLoggedIn
+                ? t('feedback.description', { defaultValue: '请选择反馈类型并描述您的问题或建议' })
+                : t('feedback.descriptionAnonymous', { defaultValue: '请留下您的邮箱和反馈内容，我们会尽快回复' })}
+            </DialogDescription>
+          }
         </DialogHeader>
         {formContent}
       </DialogContent>

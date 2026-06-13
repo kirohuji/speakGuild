@@ -1,26 +1,65 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { X, ArrowLeft } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+import { X } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from '@/components/ui/sheet'
-import {
   markAsRead,
+  type NotificationItem,
   type SpecialNotification,
 } from '@/features/notification/api'
 import { useNotificationStore } from '@/features/notification/store'
 import { useHomeStore } from '@/stores/home.store'
-import { useIsMobile } from '@/hooks/use-mobile'
+import { NotificationDetailSheet } from './notification-detail-sheet'
+
+function toNotificationItem(item: SpecialNotification | null): NotificationItem | null {
+  if (!item) return null
+  return {
+    ...item,
+    type: 'broadcast',
+    sentById: '',
+    updatedAt: item.createdAt,
+    isRead: false,
+    readAt: null,
+  }
+}
 
 export function SpecialBanner() {
   // 数据来源：home.store（首页统一管理）
   const storeNotifs = useHomeStore((s) => s.specialNotifications)
-  const isMobile = useIsMobile()
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
+
+  // 🧪 test=3 注入模拟通知
+  const location = useLocation()
+  const searchStr = location.search || (
+    typeof window !== 'undefined'
+      ? (() => { const i = window.location.hash.indexOf('?'); return i >= 0 ? window.location.hash.slice(i) : '' })()
+      : ''
+  )
+  const isTestMode = new URLSearchParams(searchStr).get('test') === '3'
+  const testInjectedRef = useRef(false)
+
+  useEffect(() => {
+    if (isTestMode && !testInjectedRef.current) {
+      testInjectedRef.current = true
+      const timer = setTimeout(() => {
+        useHomeStore.setState({
+          specialNotifications: [
+            {
+              id: 'test-notification-3',
+              title: '🎉 测试活动通知',
+              content: '这是一条测试用的活动通知。\n\n你可以在此查看活动详情内容，图片和文字都可以正常展示。',
+              imageUrl: 'https://picsum.photos/400/300?random=1',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        })
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isTestMode])
 
   // 本地 UI 状态
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
@@ -33,6 +72,7 @@ export function SpecialBanner() {
   const notifs = storeNotifs.filter((n) => !dismissedIds.has(n.id))
 
   const currentNotification = notifs[currentIndex] ?? null
+  const detailItem = toNotificationItem(currentNotification)
 
   // ── 自动弹出居中卡片 ──
   useEffect(() => {
@@ -142,137 +182,11 @@ export function SpecialBanner() {
         </DialogContent>
       </Dialog>
 
-      {/* ── 详情页（"立即查看"后打开） ── */}
-      {isMobile ? (
-        <Dialog open={detailOpen} onOpenChange={(v) => { if (!v) dismissAndMarkRead() }}>
-          <DialogContent
-            className="left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 pt-safe text-foreground shadow-none sm:rounded-none [&>button]:hidden"
-            onOpenAutoFocus={(event) => event.preventDefault()}
-          >
-            <DialogTitle className="sr-only">{currentNotification?.title}</DialogTitle>
-            <DialogDescription className="sr-only">
-              {currentNotification?.createdAt ?? ''}
-            </DialogDescription>
-
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="shrink-0 border-b border-border/45 bg-background/95 px-4 pb-3 pt-3 backdrop-blur-xl">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 shrink-0 rounded-full"
-                    onClick={dismissAndMarkRead}
-                    aria-label="关闭"
-                  >
-                    <ArrowLeft className="size-5" />
-                  </Button>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-semibold tracking-tight text-foreground">
-                      {currentNotification?.title}
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {currentNotification?.createdAt
-                        ? new Date(currentNotification.createdAt).toLocaleString(undefined, {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : ''}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-5">
-                {currentNotification?.imageUrl && (
-                  <div className="mb-5 overflow-hidden rounded-xl">
-                    <img
-                      src={currentNotification.imageUrl}
-                      alt={currentNotification.title}
-                      className="w-full object-cover"
-                    />
-                  </div>
-                )}
-                {currentNotification && (
-                  <div
-                    className="prose prose-sm max-w-none text-muted-foreground [&_img]:w-full [&_img]:rounded-xl"
-                    dangerouslySetInnerHTML={{ __html: currentNotification.content }}
-                  />
-                )}
-                <div className="mt-8 flex justify-center">
-                  <Button
-                    variant="outline"
-                    className="rounded-full px-6 text-sm"
-                    onClick={dismissAndMarkRead}
-                  >
-                    我知道了
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Sheet open={detailOpen} onOpenChange={(v) => { if (!v) dismissAndMarkRead() }}>
-          <SheetContent
-            side="right"
-            className="flex flex-col bg-background p-0 text-foreground sm:max-w-[480px] [&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:p-2"
-          >
-            <SheetHeader className="flex-shrink-0 border-b border-border/45 px-5 pb-4 pt-3 text-left">
-              <div className="flex items-start gap-3 pr-10">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="min-w-0">
-                    <SheetTitle className="line-clamp-2 text-base font-semibold leading-tight tracking-tight">
-                      {currentNotification?.title}
-                    </SheetTitle>
-                    <SheetDescription className="mt-1 text-xs">
-                      {currentNotification?.createdAt
-                        ? new Date(currentNotification.createdAt).toLocaleString(undefined, {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : ''}
-                    </SheetDescription>
-                  </div>
-                </div>
-              </div>
-            </SheetHeader>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
-              {currentNotification?.imageUrl && (
-                <div className="mb-5 overflow-hidden rounded-xl">
-                  <img
-                    src={currentNotification.imageUrl}
-                    alt={currentNotification.title}
-                    className="w-full object-cover"
-                  />
-                </div>
-              )}
-              {currentNotification && (
-                <div
-                  className="prose prose-sm max-w-none text-muted-foreground [&_img]:w-full [&_img]:rounded-xl"
-                  dangerouslySetInnerHTML={{ __html: currentNotification.content }}
-                />
-              )}
-              <div className="mt-8 flex justify-center">
-                <Button
-                  variant="outline"
-                  className="rounded-full px-6 text-sm"
-                  onClick={dismissAndMarkRead}
-                >
-                  我知道了
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+      <NotificationDetailSheet
+        item={detailItem}
+        open={detailOpen}
+        onClose={dismissAndMarkRead}
+      />
     </>
   )
 }

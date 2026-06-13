@@ -282,7 +282,7 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
   const tabConfig = useTabConfig()
   const formatRelativeTime = useFormatRelativeTime()
   return (
-    <div className={cn(compact ? 'space-y-3' : 'space-y-5')}>
+    <div className={cn('min-h-0', compact ? 'flex h-full flex-col' : 'space-y-5')}>
       {/* 页面标题 */}
       {!compact && (
         <div>
@@ -292,21 +292,29 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
           </p>
         </div>
       )}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="space-y-3">
-        <TabsList className={cn('h-10 w-full rounded-full bg-muted/60 p-0.5', compact && 'border border-border/35 bg-muted/45')}>
-          {tabConfig.map(({ value, label, icon: Icon }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className={cn('flex-1 gap-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm', compact && 'rounded-full text-xs')}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as TabValue)}
+        className={cn(compact ? 'flex min-h-0 flex-1 flex-col' : 'space-y-3')}
+      >
+        <div className="shrink-0">
+          <TabsList className={cn('h-10 w-full rounded-full bg-muted/60 p-0.5', compact && 'border border-border/35 bg-muted/45')}>
+            {tabConfig.map(({ value, label, icon: Icon }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className={cn('flex-1 gap-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm', compact && 'rounded-full text-xs')}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-        <NotificationTabContent tab={activeTab} formatRelativeTime={formatRelativeTime} compact={compact} />
+        <div className={cn(compact ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain pt-3' : undefined)}>
+          <NotificationTabContent tab={activeTab} formatRelativeTime={formatRelativeTime} compact={compact} />
+        </div>
       </Tabs>
     </div>
   )

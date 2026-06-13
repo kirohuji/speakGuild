@@ -44,10 +44,10 @@ pro_member
 后端可以继续只保留一个会员计划：
 
 ```text
-name: 漫语会员
+name: 漫语町会员
 level: standard
 price: 2000
-yearlyPrice: 19900
+yearlyPrice: 19800
 durationDays: 30
 revenueCatEntitlementId: pro_member
 ```
@@ -55,7 +55,7 @@ revenueCatEntitlementId: pro_member
 说明：
 
 - `price = 2000` 表示月付原价 20 元。
-- `yearlyPrice = 19900` 表示年付 199 元，可按运营策略调整。
+- `yearlyPrice = 19800` 表示年付 198 元，可按运营策略调整。
 - 后端的 `yearlyPrice` 主要用于 Web/支付宝/微信支付展示和创建订单。
 - iOS App 内实际价格以 App Store Connect 配置为准，不应由前端硬编码金额。
 
@@ -64,24 +64,31 @@ revenueCatEntitlementId: pro_member
 在 App Store Connect 中创建一个订阅组，例如：
 
 ```text
-Subscription Group: Manyu Pro
+Subscription Group: ManYuDing Pro
 ```
 
 在该订阅组下创建两个 auto-renewable subscriptions：
 
 ```text
-Product ID: lourd.manyu.pro.monthly
-Reference Name: 漫语会员月度订阅
+Product ID: lourd.manyuding.app.monthly
+Reference Name: 漫语町会员月度订阅
 Duration: 1 Month
 Base Price: CNY 20
 
-Product ID: lourd.manyu.pro.yearly
-Reference Name: 漫语会员年度订阅
+Product ID: lourd.manyuding.app.yearly
+Reference Name: 漫语町会员年度订阅
 Duration: 1 Year
-Base Price: CNY 199
+Base Price: CNY 198
 ```
 
-Product ID 一旦上线后不建议更改。建议使用反域名风格，避免 `monthly`、`yearly` 这种过短、不可迁移的 ID。
+Product ID 保存后不可编辑，也不能删除后复用。因为旧的 `lourd.manyu.pro.yearly` 已经配置错，当前建议不要继续补救旧 ID，而是新建一组统一、对称的 Product ID：
+
+```text
+lourd.manyuding.app.monthly
+lourd.manyuding.app.yearly
+```
+
+旧的 `lourd.manyu.pro.monthly` / `lourd.manyu.pro.yearly` 如果还没有提交审核，可以留在 App Store Connect 里不使用；RevenueCat 和前端只接入新的这组商品。
 
 ## Apple Store Connect 配置步骤
 
@@ -112,14 +119,14 @@ App Store Connect -> My Apps -> 漫语町 -> Monetization -> Subscriptions
 创建订阅组：
 
 ```text
-Manyu Pro
+ManYuDing Pro
 ```
 
 订阅组展示名称可以本地化，例如：
 
 ```text
-zh-Hans: 漫语会员
-en-US: Manyu Pro
+zh-Hans: 漫语町会员
+en-US: ManYuDing Pro
 ```
 
 同一订阅组里的商品代表同一类权益的不同周期。月会员和年会员应该放在同一个订阅组里，这样用户可以在 Apple 订阅管理中升级、降级或切换周期。
@@ -129,8 +136,8 @@ en-US: Manyu Pro
 创建 auto-renewable subscription：
 
 ```text
-Product ID: lourd.manyu.pro.monthly
-Reference Name: Manyu Pro Monthly
+Product ID: lourd.manyuding.app.monthly
+Reference Name: 漫语町会员月度订阅
 Subscription Duration: 1 Month
 Price: CNY 20
 ```
@@ -138,7 +145,7 @@ Price: CNY 20
 本地化展示：
 
 ```text
-Display Name: 漫语会员月卡
+Display Name: 漫语町会员月卡
 Description: 解锁完整学习内容、AI 练习反馈和会员权益
 ```
 
@@ -147,16 +154,16 @@ Description: 解锁完整学习内容、AI 练习反馈和会员权益
 创建 auto-renewable subscription：
 
 ```text
-Product ID: lourd.manyu.pro.yearly
-Reference Name: Manyu Pro Yearly
+Product ID: lourd.manyuding.app.yearly
+Reference Name: 漫语町会员年度订阅
 Subscription Duration: 1 Year
-Price: CNY 199
+Price: CNY 198
 ```
 
 本地化展示：
 
 ```text
-Display Name: 漫语会员年卡
+Display Name: 漫语町会员年卡
 Description: 解锁完整学习内容、AI 练习反馈和会员权益
 ```
 
@@ -226,8 +233,8 @@ VITE_REVENUECAT_API_KEY=appl_xxx
 导入两个 Apple 商品：
 
 ```text
-lourd.manyu.pro.monthly
-lourd.manyu.pro.yearly
+lourd.manyuding.app.monthly
+lourd.manyuding.app.yearly
 ```
 
 ### 4. 创建 Entitlement
@@ -236,14 +243,14 @@ lourd.manyu.pro.yearly
 
 ```text
 Identifier: pro_member
-Display Name: 漫语会员
+Display Name: 漫语町会员
 ```
 
 将两个 products 都挂到同一个 entitlement：
 
 ```text
-lourd.manyu.pro.monthly -> pro_member
-lourd.manyu.pro.yearly -> pro_member
+lourd.manyuding.app.monthly -> pro_member
+lourd.manyuding.app.yearly -> pro_member
 ```
 
 这样无论用户买月付还是年付，App 都只需要判断 `pro_member` 是否 active。
@@ -259,8 +266,8 @@ Identifier: default
 添加 packages：
 
 ```text
-Monthly package -> lourd.manyu.pro.monthly
-Annual package -> lourd.manyu.pro.yearly
+Monthly package -> lourd.manyuding.app.monthly
+Annual package -> lourd.manyuding.app.yearly
 ```
 
 如果使用 RevenueCat Paywalls UI，则在 Paywall 编辑器里只展示月付和年付，不展示 lifetime。
@@ -353,13 +360,14 @@ Web/支付宝/微信订单价格：后端可用积分抵扣
 月会员原价：20 元/月
 新订阅用户首月：14 元
 之后自动续订：20 元/月
-年会员：199 元/年
+年会员：198 元/年
 ```
 
 前端文案：
 
 ```text
 新用户首月 ¥14，之后 ¥20/月
+年卡 ¥198，约 ¥16.5/月
 ```
 
 更严谨文案：
@@ -404,7 +412,7 @@ Web/支付宝/微信订单价格：后端可用积分抵扣
 ```text
 app_user_id -> user.id
 entitlement_ids -> pro_member
-product_id -> lourd.manyu.pro.monthly / lourd.manyu.pro.yearly
+product_id -> lourd.manyuding.app.monthly / lourd.manyuding.app.yearly
 expiration_at_ms 或 expires_at -> expiredAt
 period_type -> trial / intro / normal
 environment -> SANDBOX / PRODUCTION
@@ -481,8 +489,8 @@ Android：
 - 已移除当前阶段不用的 `lifetime`
 - 已移除前端硬编码 RevenueCat test key，正式环境需配置 `VITE_REVENUECAT_API_KEY`
 - 生产环境配置 `REVENUECAT_WEBHOOK_AUTHORIZATION`
-- App Store Connect 创建月付和年付订阅
-- RevenueCat 导入 products 并配置 entitlement/offering
+- App Store Connect 创建新的月付和年付订阅：`lourd.manyuding.app.monthly` / `lourd.manyuding.app.yearly`
+- RevenueCat 只导入新的 `manyuding` products，并配置 entitlement/offering
 - 后端已增加 RevenueCat webhook：`POST /api/v1/manyu/pay/revenuecat/webhook`
 - iOS 审核截图和订阅本地化补齐
 - 隐私政策和服务条款说明自动续订、取消订阅、价格和权益

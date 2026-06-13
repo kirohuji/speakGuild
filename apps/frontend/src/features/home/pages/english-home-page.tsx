@@ -53,35 +53,13 @@ export function EnglishHomePage() {
       : ''
   )
   const isTestMode = new URLSearchParams(searchStr).get('test') === '3'
-  const testInjectedRef = useRef(false)
 
   // 进页面触发所有首页数据拉取（store 内部按日期/标志位缓存）
   useEffect(() => {
     fetchDailySentence()
     fetchCheckInStatus()
-    if (!isTestMode) {
-      fetchSpecialNotifications()
-    }
-
-    // 🧪 test=3 注入模拟的特殊通知
-    if (isTestMode && !testInjectedRef.current) {
-      testInjectedRef.current = true
-      const timer = setTimeout(() => {
-        useHomeStore.setState({
-          specialNotifications: [
-            {
-              id: 'test-notification-3',
-              title: '🎉 测试活动通知',
-              content: '<p>这是一条测试用的活动通知。</p><p>你可以在此查看活动详情内容，图片和文字都可以正常展示。</p>',
-              imageUrl: 'https://picsum.photos/400/300?random=1',
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })
-      }, 800)
-      return () => clearTimeout(timer)
-    }
-  }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications, isTestMode])
+    fetchSpecialNotifications()
+  }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications])
 
   const handleCheckIn = async () => {
     try {
