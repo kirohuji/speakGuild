@@ -24,6 +24,7 @@ import { pointsApi } from '@/features/points/api'
 import { cn } from '@/lib/cn'
 import { isNative, revenueCat } from '@/lib/native'
 import { useRevenueCat } from '@/hooks/use-revenuecat'
+import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 
 const planIcons: Record<string, React.ElementType> = {
   free: Star,
@@ -48,6 +49,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
+  const setCachedMembership = useProfileCacheStore((s) => s.setMembership)
   const revenueCatState = useRevenueCat()
 
   const isNativeApp = isNative()
@@ -80,7 +82,10 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits(), pointsApi.getBalance()]).then(
       ([plansRes, curRes, benRes, ptsRes]) => {
         if (plansRes.status === 'fulfilled') setPlans(plansRes.value)
-        if (curRes.status === 'fulfilled') setCurrent(curRes.value)
+        if (curRes.status === 'fulfilled') {
+          setCurrent(curRes.value)
+          setCachedMembership(curRes.value)
+        }
         if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
         if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
           setBenefits(benRes.value)
@@ -90,7 +95,22 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         setIsLoading(false)
       }
     )
-  }, [])
+  }, [setCachedMembership])
+
+  const refreshMembership = useCallback(async (retryUntilActive = false) => {
+    let latest: CurrentMembership | null = null
+    const attempts = retryUntilActive ? 5 : 1
+
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      latest = await getCurrentMembership()
+      setCurrent(latest)
+      setCachedMembership(latest)
+      if (!retryUntilActive || latest.isActive || latest.level === 'admin') break
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+    }
+
+    return latest
+  }, [setCachedMembership])
 
   const handleUpgrade = useCallback(async (plan: MemberPlan) => {
     if (isNativeApp) {
@@ -98,6 +118,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         const result = await revenueCat.presentPaywallIfNeeded()
         await revenueCat.refreshCustomerInfo()
         if (result?.result === 'PURCHASED' || result?.result === 'RESTORED') {
+          await refreshMembership(true).catch(() => null)
           toast.success('Subscription updated')
         }
       } catch (err: any) {
@@ -110,18 +131,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     setPayResult(null)
     setPayError(null)
     setPayOpen(true)
-  }, [isNativeApp])
-
-  const refreshMembership = useCallback(async () => {
-    const cur = await getCurrentMembership()
-    setCurrent(cur)
-  }, [])
+  }, [isNativeApp, refreshMembership])
 
   const handleRestorePurchases = useCallback(async () => {
     setSubscriptionAction('restore')
     try {
       await revenueCatState.restorePurchases()
-      await refreshMembership().catch(() => null)
+      await refreshMembership(true).catch(() => null)
       toast.success('购买记录已恢复')
     } catch (err: any) {
       toast.error(err?.message || '恢复购买失败')
@@ -174,7 +190,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       await mockPayConfirm(payResult.orderNo)
       setPayOpen(false)
       // 刷新会员状态
-      await refreshMembership()
+      await refreshMembership(true)
     } catch {
       setPayError(t('member.mockConfirmFailed'))
     } finally {

@@ -226,7 +226,124 @@ VITE_REVENUECAT_API_KEY=appl_xxx
 
 ### 2. 连接 App Store Connect
 
-在 RevenueCat 的 Apple App 配置中连接 App Store Connect API key。连接后 RevenueCat 可以同步 Apple 商品和订阅状态。
+RevenueCat 建议同时补齐两类 Apple 凭据：
+
+1. In-App Purchase Key
+2. App Store Connect API Key
+
+这两个都在 RevenueCat 后台配置，不要写进前端 `.env`，也不要把 `.p8` 文件提交到 Git。
+
+#### 2.1 配置 In-App Purchase Key
+
+用途：
+
+- RevenueCat 使用 StoreKit 2 / Purchases v5+ 时验证 Apple 交易。
+- 获取更准确的国家、币种、价格数据。
+- 缺少这个 key 时，StoreKit 2 交易可能无法被 RevenueCat 正确记录，用户可能拿不到应有权益。
+
+App Store Connect 路径：
+
+```text
+Users and Access -> Integrations -> In-App Purchase
+```
+
+创建并下载 In-App Purchase Key 后，在 RevenueCat 的 iOS App 配置里填写：
+
+```text
+Private key: SubscriptionKey_xxx.p8
+Key ID: Apple 页面显示的 Key ID
+Issuer ID: Apple 页面显示的 Issuer ID
+Bundle ID: lourd.manyu.app
+```
+
+注意：
+
+- `.p8` 文件只能下载一次。
+- `.p8` 必须保存在安全位置，不能放进仓库。
+- Bundle ID 大小写和 App Store Connect / Capacitor 配置保持一致。
+
+当前 Capacitor Bundle ID：
+
+```text
+lourd.manyu.app
+```
+
+#### 2.2 配置 App Store Connect API Key
+
+用途：
+
+- RevenueCat 从 App Store Connect 导入产品和价格。
+- 帮助同步商品元数据、订阅信息和价格配置。
+
+App Store Connect 路径：
+
+```text
+Users and Access -> Integrations -> App Store Connect API
+```
+
+创建 API Key 后，在 RevenueCat 的 App Store Connect API 配置里填写：
+
+```text
+Private key: AuthKey_xxx.p8
+Key ID: Apple 页面显示的 Key ID
+Issuer ID: Apple 页面显示的 Issuer ID
+Vendor Number: App Store Connect 的供应商编号
+```
+
+Vendor Number 查找路径：
+
+```text
+App Store Connect -> Payments and Financial Reports
+```
+
+进入页面后，Vendor Number 通常显示在页面左上角。如果看不到该页面或没有权限，需要让 Account Holder / Admin 补齐付费协议、税务、银行信息，或给当前 Apple 账号开通财务相关访问权限。
+
+#### 2.3 Vendor Number 和 In-App Purchase Key 的区别
+
+Vendor Number 不是产品 ID，也不是 Bundle ID。
+
+```text
+In-App Purchase Key:
+  需要 .p8 + Key ID + Issuer ID + Bundle ID
+
+App Store Connect API Key:
+  需要 .p8 + Key ID + Issuer ID + Vendor Number
+```
+
+RevenueCat 后台有时会把多个凭据配置折叠在同一页。如果保存按钮不可用，展开所有 Apple 相关配置区，确认 In-App Purchase Key 和 App Store Connect API Key 里的必填字段都已经填写。
+
+#### 2.4 配置 App-Specific Shared Secret（Legacy）
+
+RevenueCat 仍可能显示 `App-specific shared secret (Legacy)` 字段。这个字段用于 StoreKit 1 收据校验，Apple 已不推荐新 App 继续依赖它；新 App 应优先使用 StoreKit 2，并配置上面的 In-App Purchase Key。
+
+但当前 iOS 工程最低系统版本包含 iOS 15：
+
+```text
+IPHONEOS_DEPLOYMENT_TARGET = 15.0 / 15.6
+```
+
+因此建议仍然填上 App-Specific Shared Secret，作为 iOS 15 或 StoreKit 1 收据校验的兼容兜底。
+
+App Store Connect 路径：
+
+```text
+My Apps -> 漫语町 -> General -> App Information -> App-Specific Shared Secret -> Manage
+```
+
+操作：
+
+1. 点击 `Manage`。
+2. 如果还没有生成，点击 `Generate`。
+3. 复制生成的 shared secret。
+4. 粘贴到 RevenueCat 的 `App-specific shared secret (Legacy)` 字段。
+5. 保存 RevenueCat 配置。
+
+注意：
+
+- 这个 shared secret 是字符串，不是 `.p8` 文件。
+- 不要写入前端 `.env`。
+- 不要提交到 Git。
+- 如果点击 `Regenerate`，旧 shared secret 会失效；Apple 文档提示切换可能有最多 24 小时过渡期。
 
 ### 3. 导入 Products
 

@@ -3,6 +3,7 @@ dist/
 .env
 .env.local
 *.log
+*.p8
 .DS_Store
 .cache/
 coverage/

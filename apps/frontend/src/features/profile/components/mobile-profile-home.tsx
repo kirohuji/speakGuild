@@ -16,6 +16,7 @@ import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { LearningAssessmentDialog, goalLabelMap } from '@/features/profile/components/placement-assessment-dialog'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
+import { MobileInviteDrawer } from '@/features/referral/components/mobile-invite-drawer'
 
 export type MobileView = 'overview' | 'records' | 'words' | 'account' | 'settings' | 'home' | 'appearance' | 'member' | 'storage'
 
@@ -31,14 +32,16 @@ export function MobileProfileHome({
   const { language, setLanguage } = usePreferencesStore()
   const userProfile = useProfileCacheStore((s) => s.profile)
   const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
+  const membership = useProfileCacheStore((s) => s.membership)
   const pointsBalance = useProfileCacheStore((s) => s.pointsBalance)
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
+  const [showInviteDrawer, setShowInviteDrawer] = useState(false)
   const [showAssessmentDialog, setShowAssessmentDialog] = useState(false)
 
   useEffect(() => {
-    loadProfileHome()
+    loadProfileHome(true)
   }, [loadProfileHome])
 
   const themeLabel: Record<string, string> = { light: t('profile.themeLight'), dark: t('profile.themeDark'), system: t('profile.themeSystem') }
@@ -50,6 +53,12 @@ export function MobileProfileHome({
   }
 
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
+  const hasActiveMembership = membership?.level === 'admin' || !!membership?.isActive
+  const membershipLabel = membership?.level === 'admin'
+    ? '管理员'
+    : hasActiveMembership
+      ? membership?.planName || t('member.badgeActive')
+      : t('member.freeUser')
   const outputLevel = userProfile?.outputLevel || 'L1'
   const goalLabels = (userProfile?.learningGoals ?? [])
     .map((goal) => t(`profile.placement.goals.${goal}.label`, { defaultValue: goalLabelMap[goal] ?? goal }))
@@ -88,8 +97,8 @@ export function MobileProfileHome({
           <div className="min-w-0 flex-1">
             <p className="text-base font-bold leading-tight">{nickname}</p>
             <div className="mt-1.5 flex items-center gap-1.5">
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                {t('member.freeUser')}
+              <Badge variant={hasActiveMembership ? 'default' : 'secondary'} className="h-5 px-1.5 text-[10px]">
+                {membershipLabel}
               </Badge>
               <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] border-amber-500/30 text-amber-600">
                 <Gift className="size-2.5" />{pointsBalance}
@@ -121,6 +130,13 @@ export function MobileProfileHome({
         />
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
+        <IosRow
+          icon={Gift}
+          iconBg="bg-pink-500"
+          label={t('invite.title')}
+          subtitle="好友注册成功后，你获得 5 天会员"
+          onTap={() => setShowInviteDrawer(true)}
+        />
         <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
       </IosSection>
 
@@ -175,6 +191,8 @@ export function MobileProfileHome({
         onOpenChange={setShowAssessmentDialog}
         profile={userProfile}
       />
+
+      <MobileInviteDrawer open={showInviteDrawer} onOpenChange={setShowInviteDrawer} />
 
       {!onFeedbackOpen && <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />}
 

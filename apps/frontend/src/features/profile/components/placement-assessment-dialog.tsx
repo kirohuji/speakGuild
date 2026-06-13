@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -338,7 +338,6 @@ export function LearningAssessmentDialog({
   onCompleted?: () => void
 }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
@@ -465,7 +464,6 @@ export function LearningAssessmentDialog({
     confirmedRef.current = true
     setPendingClose(false)
     onOpenChange(false)
-    navigate('/onboarding')
   }
 
   const handleCancelExit = () => {
