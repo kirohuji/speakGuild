@@ -52,14 +52,13 @@ async function seedSystemConfigs() {
 async function seedMembershipPlans() {
   await prisma.membershipPlan.create({
     data: {
-      name: '漫语会员', level: 'standard', price: 2000, yearlyPrice: 19900, period: 'month', durationDays: 30,
+      name: '漫语会员', level: 'standard', price: 1900, yearlyPrice: 19800, period: 'month', durationDays: 30,
       features: [
-        '每日 50 次 AI 纠错',
-        '全部学习单元',
+        'AI 评价与复盘次数更多',
         '完整剧本模式',
-        '探索模式全部地点',
-        '无限表达库',
-        '完整输出等级报告',
+        '更多主题化练习',
+        '练习完成后的自由练习模式',
+        '更多表达库收纳空间',
       ],
       sortOrder: 1, highlighted: true, revenueCatEntitlementId: 'pro_member',
     },
@@ -168,6 +167,9 @@ async function main() {
   await prisma.achievement.deleteMany()
 
   await prisma.feedback.deleteMany()
+  await prisma.notificationRead.deleteMany()
+  await prisma.notificationTarget.deleteMany()
+  await prisma.notification.deleteMany()
   await prisma.referral.deleteMany()
   await prisma.referralCode.deleteMany()
   await prisma.dailyActivity.deleteMany()

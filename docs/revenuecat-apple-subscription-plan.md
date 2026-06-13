@@ -1,6 +1,6 @@
 # RevenueCat 与 Apple 订阅配置方案
 
-本文档记录漫语町当前阶段的会员设计：不做永久买断，先做月度和年度自动续订会员，并兼容积分、新用户赠送、邀请码赠送和首月优惠。
+本文档记录漫语町当前阶段的会员设计：不做永久买断，先做月度和年度自动续订会员，并兼容积分、新用户赠送和邀请码赠送。
 
 ## 结论
 
@@ -12,9 +12,9 @@
 - 后端 `user_membership` 作为业务判权来源
 - RevenueCat webhook 同步 Apple 订阅状态到后端
 - 新用户 5 天、邀请码 5 天走后端赠送会员天数
-- 首月 14 元、原价 20 元走 Apple introductory offer
+- 月费 19 元、年费 198 元
 
-这个设计可以。原价月付 20 元、首月 14 元没有结构性问题，但最终价格必须选择 App Store Connect 支持的价格点。中国区通常可以配置接近或等于该金额的人民币价格点，提交前需要在 App Store Connect 的价格表里确认。
+这个设计可以。月付 19 元、年付 198 元没有结构性问题，但最终价格必须选择 App Store Connect 支持的价格点。中国区通常可以配置接近或等于该金额的人民币价格点，提交前需要在 App Store Connect 的价格表里确认。
 
 ## 当前代码需要统一的点
 
@@ -46,7 +46,7 @@ pro_member
 ```text
 name: 漫语町会员
 level: standard
-price: 2000
+price: 1900
 yearlyPrice: 19800
 durationDays: 30
 revenueCatEntitlementId: pro_member
@@ -54,7 +54,7 @@ revenueCatEntitlementId: pro_member
 
 说明：
 
-- `price = 2000` 表示月付原价 20 元。
+- `price = 1900` 表示月付 19 元。
 - `yearlyPrice = 19800` 表示年付 198 元，可按运营策略调整。
 - 后端的 `yearlyPrice` 主要用于 Web/支付宝/微信支付展示和创建订单。
 - iOS App 内实际价格以 App Store Connect 配置为准，不应由前端硬编码金额。
@@ -73,7 +73,7 @@ Subscription Group: ManYuDing Pro
 Product ID: lourd.manyuding.app.monthly
 Reference Name: 漫语町会员月度订阅
 Duration: 1 Month
-Base Price: CNY 20
+Base Price: CNY 19
 
 Product ID: lourd.manyuding.app.yearly
 Reference Name: 漫语町会员年度订阅
@@ -139,7 +139,7 @@ en-US: ManYuDing Pro
 Product ID: lourd.manyuding.app.monthly
 Reference Name: 漫语町会员月度订阅
 Subscription Duration: 1 Month
-Price: CNY 20
+Price: CNY 19
 ```
 
 本地化展示：
@@ -167,14 +167,14 @@ Display Name: 漫语町会员年卡
 Description: 解锁完整学习内容、AI 练习反馈和会员权益
 ```
 
-### 5. 配置首月 14 元
+### 5. 可选配置首月优惠
 
-如果规则是“新订阅用户首月 14 元，之后每月 20 元”，推荐使用 Apple introductory offer：
+当前默认价格是月费 19 元、年费 198 元。如果以后要做新订阅用户首月优惠，推荐使用 Apple introductory offer：
 
 ```text
 Offer Type: Pay As You Go
 Duration: 1 Month
-Introductory Price: CNY 14
+Introductory Price: 按运营活动配置
 Applies To: monthly subscription
 ```
 
@@ -183,9 +183,9 @@ Applies To: monthly subscription
 - Introductory offer 通常只对该订阅组的新订阅用户可用。
 - 用户是否符合资格由 Apple 判断。
 - 如果用户已经用过同订阅组的新用户优惠，不能再次享受。
-- 前端文案应写成“符合条件的新用户首月 14 元”，不要承诺所有用户都一定可用。
+- 前端文案应写成“符合条件的新订阅用户首月优惠”，不要承诺所有用户都一定可用。
 
-如果以后想做“邀请码用户首月 14 元”，而不是所有新订阅用户首月 14 元，可以考虑：
+如果以后想做“邀请码用户首月优惠”，而不是所有新订阅用户首月优惠，可以考虑：
 
 - Apple offer codes
 - Apple promotional offers
@@ -350,30 +350,28 @@ Web/支付宝/微信订单价格：后端可用积分抵扣
 - 积分抵扣如果用于 iOS 数字订阅，容易和 App Store 审核规则冲突。
 - 如果想给 iOS 用户优惠，应优先使用 Apple introductory offer、offer codes 或 promotional offers。
 
-## 首月 14 元方案
+## 首月优惠方案
 
-### 推荐 MVP 方案
+### 当前 MVP 方案
 
-使用 Apple introductory offer：
+当前先不配置首月优惠，直接使用固定订阅价格：
 
 ```text
-月会员原价：20 元/月
-新订阅用户首月：14 元
-之后自动续订：20 元/月
+月会员：19 元/月
 年会员：198 元/年
 ```
 
 前端文案：
 
 ```text
-新用户首月 ¥14，之后 ¥20/月
+月卡 ¥19/月
 年卡 ¥198，约 ¥16.5/月
 ```
 
-更严谨文案：
+如果以后启用 introductory offer，更严谨文案：
 
 ```text
-符合条件的新订阅用户首月 ¥14，之后 ¥20/月
+符合条件的新订阅用户首月优惠，之后 ¥19/月
 ```
 
 ### 不推荐的方案
@@ -381,7 +379,7 @@ Web/支付宝/微信订单价格：后端可用积分抵扣
 不要在 iOS App 内做：
 
 ```text
-用积分把 Apple 月会员从 20 元抵扣到 14 元
+用积分把 Apple 月会员从 19 元抵扣成其他价格
 ```
 
 这类价格不由 Apple 结算，容易造成支付和审核问题。
@@ -390,9 +388,9 @@ Web/支付宝/微信订单价格：后端可用积分抵扣
 
 如果以后要做更细的运营：
 
-- 普通新用户：首月 14 元
-- 邀请码用户：首月 9.9 元
-- 流失用户召回：首月 1 元
+- 普通新用户：首月优惠
+- 邀请码用户：专属优惠
+- 流失用户召回：限时优惠
 
 可以研究：
 

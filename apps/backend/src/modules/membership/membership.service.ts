@@ -5,6 +5,18 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 export class MembershipService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private getDisplayFeatures(level: string, features: string[]) {
+    if (level !== 'standard') return features;
+
+    return [
+      'AI 评价与复盘次数更多',
+      '完整剧本模式',
+      '更多主题化练习',
+      '练习完成后的自由练习模式',
+      '更多表达库收纳空间',
+    ];
+  }
+
   async getPlans() {
     const plans = await this.prisma.membershipPlan.findMany({
       orderBy: { sortOrder: 'asc' },
@@ -19,7 +31,7 @@ export class MembershipService {
       period: plan.period,
       durationDays: plan.durationDays,
       description: plan.level === 'free' ? '免费体验' : plan.level === 'standard' ? '适合大部分用户' : '解锁全部功能',
-      features: plan.features,
+      features: this.getDisplayFeatures(plan.level, plan.features),
       highlighted: plan.highlighted,
     }));
   }
@@ -73,14 +85,12 @@ export class MembershipService {
 
   getBenefits() {
     return [
-      { benefitId: '1', name: '题库使用数量', freeSupport: '1 套', standardSupport: '3 套', advancedSupport: '无限' },
-      { benefitId: '2', name: 'AI 练习反馈', freeSupport: false, standardSupport: true, advancedSupport: true },
-      { benefitId: '3', name: '模拟考试', freeSupport: '5 次/月', standardSupport: '30 次/月', advancedSupport: '无限' },
-      { benefitId: '4', name: '练习记录', freeSupport: true, standardSupport: true, advancedSupport: true },
-      { benefitId: '5', name: '收藏题目', freeSupport: true, standardSupport: true, advancedSupport: true },
-      { benefitId: '6', name: '生词本', freeSupport: true, standardSupport: true, advancedSupport: true },
-      { benefitId: '7', name: '客服支持', freeSupport: false, standardSupport: '工作日', advancedSupport: '全天' },
-      { benefitId: '8', name: 'AI 智能出卷', freeSupport: false, standardSupport: false, advancedSupport: true },
+      { benefitId: '1', name: 'AI 每轮评价', freeSupport: '5 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },
+      { benefitId: '2', name: 'AI 完成复盘', freeSupport: '1 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },
+      { benefitId: '3', name: '剧本模式', freeSupport: '体验剧集', standardSupport: '完整开放', advancedSupport: '完整开放' },
+      { benefitId: '4', name: '主题化练习', freeSupport: '基础主题', standardSupport: '更多主题', advancedSupport: '更多主题' },
+      { benefitId: '5', name: '完成后自由练习', freeSupport: false, standardSupport: true, advancedSupport: true },
+      { benefitId: '6', name: '表达库容量', freeSupport: '基础容量', standardSupport: '更多收纳', advancedSupport: '更多收纳' },
     ];
   }
 }
