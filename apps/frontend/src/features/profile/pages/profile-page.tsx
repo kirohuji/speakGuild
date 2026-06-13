@@ -724,17 +724,17 @@ export function LearningAssessmentDialog({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
           {step === 0 && (
-            <div className="flex min-h-full flex-col justify-center space-y-4 py-2">
+            <div className="flex min-h-full flex-col py-2">
               <div className="text-center">
-                <div className="mx-auto flex size-14 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                {/* <div className="mx-auto flex size-14 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <GraduationCap className="size-7" />
-                </div>
+                </div> */}
                 <h2 className="mt-4 text-lg font-semibold tracking-tight">{t('profile.placement.introTitle')}</h2>
                 <p className="mx-auto mt-2 max-w-[280px] text-sm leading-6 text-muted-foreground">
                   {t('profile.placement.introDesc')}
                 </p>
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 mt-4">
                 {[
                   { icon: ClipboardList, label: t('profile.placement.introGoal'), tint: 'bg-sky-500/10 text-sky-600' },
                   { icon: Mic, label: t('profile.placement.introAnswer'), tint: 'bg-emerald-500/10 text-emerald-600' },
