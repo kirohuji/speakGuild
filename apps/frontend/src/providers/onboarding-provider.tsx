@@ -4,7 +4,7 @@ import { useAuth } from '@/providers/auth-provider'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { getUserProfile, updateUserProfile, type UserProfile } from '@/features/profile/api'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
-import { LearningAssessmentDialog } from '@/features/profile/pages/profile-page'
+import { LearningAssessmentDialog } from '@/features/profile/components/placement-assessment-dialog'
 import { SpotlightOverlay } from '@/components/common/spotlight-overlay'
 
 interface OnboardingProviderProps {
