@@ -7,6 +7,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { auth } from './modules/auth/auth';
 import { MobileUpdatesService } from './modules/mobile-updates/mobile-updates.service';
+import { OpsAlertService } from './common/ops/ops-alert.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
@@ -101,7 +102,7 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(OpsAlertService)));
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

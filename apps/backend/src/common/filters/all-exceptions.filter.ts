@@ -7,10 +7,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { OpsAlertService } from '../ops/ops-alert.service';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  constructor(private readonly alerts?: OpsAlertService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -37,6 +40,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `Unhandled exception on ${request.method} ${request.url}`,
         exception.stack,
       );
+    }
+
+    if (status >= 500) {
+      void this.alerts?.notify({
+        key: `http-5xx:${request.method}:${request.route?.path || request.path}`,
+        title: `后端 5xx: ${request.method} ${request.originalUrl || request.url}`,
+        severity: 'critical',
+        details: {
+          status,
+          message,
+          path: request.originalUrl || request.url,
+          method: request.method,
+          stack: exception instanceof Error ? exception.stack : undefined,
+        },
+      });
     }
 
     response.status(status).json({

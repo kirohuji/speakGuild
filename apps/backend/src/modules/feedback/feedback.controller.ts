@@ -31,17 +31,28 @@ export class FeedbackController {
   }
 
   @Get()
-  async list(@Req() req: Request, @Query('status') status?: string, @Query('page') page?: string, @Query('pageSize') pageSize?: string) {
+  async list(
+    @Req() req: Request,
+    @Query('status') status?: string,
+    @Query('isCritical') isCritical?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
     const session = await requireAuthSession(req)
     if ((session.user as any)?.role !== 'admin') throw new ForbiddenException('仅管理员可查看所有反馈')
-    return this.feedbackService.findAll({ status, page: Number(page) || 1, pageSize: Number(pageSize) || 20 })
+    return this.feedbackService.findAll({
+      status,
+      isCritical: isCritical === undefined ? undefined : isCritical === 'true',
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
+    })
   }
 
   @Patch(':id')
-  async update(@Req() req: Request, @Param('id') id: string, @Body() body: { status: string; adminNote?: string }) {
+  async update(@Req() req: Request, @Param('id') id: string, @Body() body: { status: string; adminNote?: string; isCritical?: boolean }) {
     const session = await requireAuthSession(req)
     if ((session.user as any)?.role !== 'admin') throw new ForbiddenException('仅管理员可处理反馈')
-    return this.feedbackService.updateStatus(id, body.status, body.adminNote)
+    return this.feedbackService.updateStatus(id, body.status, body.adminNote, body.isCritical)
   }
 
   /** 管理员回复反馈，自动发送通知给用户 */

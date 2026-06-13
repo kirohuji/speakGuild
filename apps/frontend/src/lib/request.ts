@@ -1,5 +1,6 @@
 import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import { clearBearerToken, getBearerToken } from '@/features/auth/client'
+import { reportClientError } from '@/lib/monitoring'
 
 if (typeof window !== 'undefined') {
   try {
@@ -112,6 +113,9 @@ instance.interceptors.response.use(
     }
     const normalized = normalizeError(error)
     console.error('[API Error]', normalized.message, error)
+    if (normalized.status && normalized.status >= 500) {
+      reportClientError(normalized, 'api.5xx')
+    }
     return Promise.reject(normalized)
   },
 )

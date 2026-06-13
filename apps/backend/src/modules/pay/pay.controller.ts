@@ -13,12 +13,14 @@ import { PayService } from './pay.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { requireAuthSession } from '../auth/session.util';
 import { RevenueCatService } from './revenuecat/revenuecat.service';
+import { OpsAlertService } from '../../common/ops/ops-alert.service';
 
 @Controller('pay')
 export class PayController {
   constructor(
     private readonly payService: PayService,
     private readonly revenueCatService: RevenueCatService,
+    private readonly alerts: OpsAlertService,
   ) {}
 
   /** 创建支付订单 */
@@ -65,8 +67,22 @@ export class PayController {
   /** RevenueCat 订阅事件回调 */
   @Post('revenuecat/webhook')
   async revenueCatWebhook(@Req() req: Request, @Body() body: any) {
-    this.revenueCatService.verifyWebhookAuthorization(req.headers.authorization);
-    return this.revenueCatService.handleWebhook(body);
+    try {
+      this.revenueCatService.verifyWebhookAuthorization(req.headers.authorization);
+      return await this.revenueCatService.handleWebhook(body);
+    } catch (error) {
+      await this.alerts.notify({
+        key: 'revenuecat-webhook-failed',
+        title: 'RevenueCat webhook 处理失败',
+        severity: 'critical',
+        details: {
+          message: error instanceof Error ? error.message : String(error),
+          eventType: body?.event?.type,
+          appUserId: body?.event?.app_user_id,
+        },
+      });
+      throw error;
+    }
   }
 
   /** Mock: 模拟支付成功（开发环境用） */

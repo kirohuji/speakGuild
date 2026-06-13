@@ -41,10 +41,11 @@ export class FeedbackService {
     return { items, total, page, pageSize }
   }
 
-  async findAll(params: { status?: string; page?: number; pageSize?: number }) {
-    const { status, page = 1, pageSize = 20 } = params
+  async findAll(params: { status?: string; isCritical?: boolean; page?: number; pageSize?: number }) {
+    const { status, isCritical, page = 1, pageSize = 20 } = params
     const where: Prisma.FeedbackWhereInput = {}
     if (status) where.status = status as any
+    if (typeof isCritical === 'boolean') where.isCritical = isCritical
     const skip = (page - 1) * pageSize
     const [items, total] = await Promise.all([
       this.prisma.feedback.findMany({
@@ -59,10 +60,10 @@ export class FeedbackService {
     return { items, total, page, pageSize }
   }
 
-  async updateStatus(id: string, status: string, adminNote?: string) {
+  async updateStatus(id: string, status: string, adminNote?: string, isCritical?: boolean) {
     return this.prisma.feedback.update({
       where: { id },
-      data: { status: status as any, adminNote },
+      data: { status: status as any, adminNote, ...(typeof isCritical === 'boolean' ? { isCritical } : {}) },
     })
   }
 

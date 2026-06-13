@@ -501,12 +501,14 @@ model Feedback {
   content   String         @db.Text
   contact   String?
   status    FeedbackStatus @default(pending)
+  isCritical Boolean       @default(false)
   adminNote String?        @db.Text
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])
+  @@index([isCritical, status])
   @@map("feedback")
 }
 

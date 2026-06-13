@@ -7,6 +7,11 @@ settings:
 overrides:
   sql.js: 1.11.0
 
+patchedDependencies:
+  '@capgo/capacitor-wechat@8.0.32':
+    hash: b3353a21901db2b9b81285d9dae5ce556f6aeffbce4956e8e863b5df964184e8
+    path: patches/@capgo__capacitor-wechat@8.0.32.patch
+
 importers:
 
   .:
@@ -197,7 +202,7 @@ importers:
         version: 8.47.5(@capacitor/core@8.3.1)
       '@capgo/capacitor-wechat':
         specifier: ^8.0.32
-        version: 8.0.32(@capacitor/core@8.3.1)
+        version: 8.0.32(patch_hash=b3353a21901db2b9b81285d9dae5ce556f6aeffbce4956e8e863b5df964184e8)(@capacitor/core@8.3.1)
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.73.1(react@19.2.5))
@@ -234,6 +239,12 @@ importers:
       '@revenuecat/purchases-capacitor-ui':
         specifier: 13.1.5
         version: 13.1.5(@capacitor/core@8.3.1)
+      '@sentry/capacitor':
+        specifier: ^4.1.0
+        version: 4.1.0(@capacitor/core@8.3.1)(@sentry/react@10.52.0(react@19.2.5))
+      '@sentry/react':
+        specifier: 10.52.0
+        version: 10.52.0(react@19.2.5)
       '@tanstack/react-table':
         specifier: ^8.21.0
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -1755,6 +1766,55 @@ packages:
     resolution: {integrity: sha512-Nd/SgG27WoA9e+/TdK74KnHz852TLa94ovOYySo/yMPuTmpckK/jIF2jSwS3g7ELSKXK13/cVdmg1Z/DaCWKxA==}
     cpu: [x64]
     os: [win32]
+
+  '@sentry-internal/browser-utils@10.52.0':
+    resolution: {integrity: sha512-x/yEPZdpH6NGQeoeQnV9tj8reAH8twNttiltGZl2o8Rk7sQeUfe7E8yuYP2XbJ2RqyZK5qRS3COrNyMPzf6KFA==}
+    engines: {node: '>=18'}
+
+  '@sentry-internal/feedback@10.52.0':
+    resolution: {integrity: sha512-5kAn1W8ZvCuHtEHXpq6iRkUMdNCilwww+YxaN2yofVrCivAbB3Ha5JJUMqmWOPW0pC27zGYmoJMIDvG+PczUxA==}
+    engines: {node: '>=18'}
+
+  '@sentry-internal/replay-canvas@10.52.0':
+    resolution: {integrity: sha512-BI5ie4dxPuUJ344CXVSnAxY1xZCbghglPSCIlTOYODpR9so9yo5IZh+Mwspt0oWsUMaxWJiQSNYlbPWi7WDavg==}
+    engines: {node: '>=18'}
+
+  '@sentry-internal/replay@10.52.0':
+    resolution: {integrity: sha512-diywyuc/H7VTUR+W5ryVmLF+0X4UP1OskMqb6V8RSAvJHcj2JmIm7uP+Fc6ACTno+b6AUShwT/L4xVXzO6X9Cw==}
+    engines: {node: '>=18'}
+
+  '@sentry/browser@10.52.0':
+    resolution: {integrity: sha512-ijL9jN86oXwXQWbwhPlEb70ODJSEmjxQEQdnZkC4gDWbjswcwvRsVJPYk+1xl2ir2iZixRIHipVxDcLwian35g==}
+    engines: {node: '>=18'}
+
+  '@sentry/capacitor@4.1.0':
+    resolution: {integrity: sha512-NGTEo52AgFsrDNzm7pwPxWKf5wANbzv//T2f8IuUpgGkNJupVWWKfg2bZ/lacdfp593RvgqzJkwXHyM1MuKEoA==}
+    peerDependencies:
+      '@capacitor/core': '>=3.0.0'
+      '@sentry/angular': 10.52.0
+      '@sentry/react': 10.52.0
+      '@sentry/vue': 10.52.0
+    peerDependenciesMeta:
+      '@sentry/angular':
+        optional: true
+      '@sentry/react':
+        optional: true
+      '@sentry/vue':
+        optional: true
+
+  '@sentry/core@10.52.0':
+    resolution: {integrity: sha512-VA/kAqLhkMnRWY2RXdBLyTemR9D4m7MVRy/gyapoq9yvllVPx9WXbvKgnMP2LQp7mFgT/oLFvw58aQKaYTGn3A==}
+    engines: {node: '>=18'}
+
+  '@sentry/react@10.52.0':
+    resolution: {integrity: sha512-2m72QCsja2cJJHD0ALxRnVt0qMEC2FV4LSi6AAiEdEG4lTb6mgcxavx5pJrW90jE+6dMGPbUz4q8c9vi4jh1qQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: ^16.14.0 || 17.x || 18.x || 19.x
+
+  '@sentry/types@10.52.0':
+    resolution: {integrity: sha512-eDFXHcShZdEzVH4vumz8EZ6kJTN2G3lIMCSj9Qy9PlUf4X5pm2XxjszTU32Xw8ndBO3jtUaX/R79uWJE54IENg==}
+    engines: {node: '>=18'}
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
@@ -5599,7 +5659,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.1
 
-  '@capgo/capacitor-wechat@8.0.32(@capacitor/core@8.3.1)':
+  '@capgo/capacitor-wechat@8.0.32(patch_hash=b3353a21901db2b9b81285d9dae5ce556f6aeffbce4956e8e863b5df964184e8)(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
@@ -6555,6 +6615,53 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.60.2':
     optional: true
 
+  '@sentry-internal/browser-utils@10.52.0':
+    dependencies:
+      '@sentry/core': 10.52.0
+
+  '@sentry-internal/feedback@10.52.0':
+    dependencies:
+      '@sentry/core': 10.52.0
+
+  '@sentry-internal/replay-canvas@10.52.0':
+    dependencies:
+      '@sentry-internal/replay': 10.52.0
+      '@sentry/core': 10.52.0
+
+  '@sentry-internal/replay@10.52.0':
+    dependencies:
+      '@sentry-internal/browser-utils': 10.52.0
+      '@sentry/core': 10.52.0
+
+  '@sentry/browser@10.52.0':
+    dependencies:
+      '@sentry-internal/browser-utils': 10.52.0
+      '@sentry-internal/feedback': 10.52.0
+      '@sentry-internal/replay': 10.52.0
+      '@sentry-internal/replay-canvas': 10.52.0
+      '@sentry/core': 10.52.0
+
+  '@sentry/capacitor@4.1.0(@capacitor/core@8.3.1)(@sentry/react@10.52.0(react@19.2.5))':
+    dependencies:
+      '@capacitor/core': 8.3.1
+      '@sentry/browser': 10.52.0
+      '@sentry/core': 10.52.0
+      '@sentry/types': 10.52.0
+    optionalDependencies:
+      '@sentry/react': 10.52.0(react@19.2.5)
+
+  '@sentry/core@10.52.0': {}
+
+  '@sentry/react@10.52.0(react@19.2.5)':
+    dependencies:
+      '@sentry/browser': 10.52.0
+      '@sentry/core': 10.52.0
+      react: 19.2.5
+
+  '@sentry/types@10.52.0':
+    dependencies:
+      '@sentry/core': 10.52.0
+
   '@socket.io/component-emitter@3.1.2': {}
 
   '@standard-schema/spec@1.1.0': {}
@@ -7108,7 +7215,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.2.0
       '@noble/hashes': 2.2.0
-      better-call: 1.3.5(zod@3.25.76)
+      better-call: 1.3.5(zod@4.3.6)
       defu: 6.1.7
       jose: 6.2.3
       kysely: 0.28.16
@@ -7131,6 +7238,15 @@ snapshots:
       set-cookie-parser: 3.1.0
     optionalDependencies:
       zod: 3.25.76
+
+  better-call@1.3.5(zod@4.3.6):
+    dependencies:
+      '@better-auth/utils': 0.4.0
+      '@better-fetch/fetch': 1.1.21
+      rou3: 0.7.12
+      set-cookie-parser: 3.1.0
+    optionalDependencies:
+      zod: 4.3.6
 
   big-integer@1.6.52: {}
 

@@ -7,6 +7,7 @@ export interface FeedbackResult {
   content: string
   contact?: string
   status: 'pending' | 'resolved' | 'closed'
+  isCritical?: boolean
   adminNote?: string
   createdAt: string
   updatedAt: string
@@ -25,11 +26,11 @@ export function getMyFeedbacks(page = 1, pageSize = 20) {
   return get<{ items: FeedbackResult[]; total: number }>('/feedbacks/mine', { page, pageSize })
 }
 
-export function getAllFeedbacks(params?: { status?: string; page?: number; pageSize?: number }) {
+export function getAllFeedbacks(params?: { status?: string; isCritical?: boolean; page?: number; pageSize?: number }) {
   return get<{ items: (FeedbackResult & { user?: { name: string; email: string } })[]; total: number }>('/feedbacks', params)
 }
 
-export function updateFeedback(id: string, data: { status: string; adminNote?: string }) {
+export function updateFeedback(id: string, data: { status: string; adminNote?: string; isCritical?: boolean }) {
   return patch<FeedbackResult>(`/feedbacks/${id}`, data)
 }
 

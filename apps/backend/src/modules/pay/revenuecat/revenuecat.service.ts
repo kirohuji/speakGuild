@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { OpsAlertService } from '../../../common/ops/ops-alert.service';
 
 type RevenueCatWebhookEvent = {
   type?: string;
@@ -47,7 +48,10 @@ export class RevenueCatService {
   private readonly apiKey: string | undefined;
   private readonly webhookAuthorization: string | undefined;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly alerts: OpsAlertService,
+  ) {
     this.apiKey = process.env.REVENUECAT_API_KEY;
     this.webhookAuthorization =
       process.env.REVENUECAT_WEBHOOK_AUTHORIZATION ||
@@ -209,6 +213,17 @@ export class RevenueCatService {
 
     if (eventType === 'BILLING_ISSUE') {
       await this.markBillingIssueFromWebhook(userId, plan.id, event);
+      await this.alerts.notify({
+        key: 'revenuecat-billing-issue',
+        title: 'RevenueCat 订阅扣费异常',
+        severity: 'warning',
+        details: {
+          userId,
+          productId: event.product_id,
+          environment: event.environment,
+          store: event.store,
+        },
+      });
       return { success: true };
     }
 

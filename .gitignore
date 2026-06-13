@@ -13,6 +13,16 @@ uploads/
 ssl/
 hope-front-main
 ios/
+!apps/frontend/ios/
+apps/frontend/ios/*
+!apps/frontend/ios/App/
+apps/frontend/ios/App/*
+!apps/frontend/ios/App/App/
+apps/frontend/ios/App/App/*
+!apps/frontend/ios/App/App/PrivacyInfo.xcprivacy
+!apps/frontend/ios/App/ManYuDing.xcodeproj/
+apps/frontend/ios/App/ManYuDing.xcodeproj/*
+!apps/frontend/ios/App/ManYuDing.xcodeproj/project.pbxproj
 kaikki.org-dictionary-English.jsonl
 android/
 etl/

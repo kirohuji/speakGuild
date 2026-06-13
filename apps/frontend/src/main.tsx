@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import './lib/i18n'
+import { installMonitoring } from './lib/monitoring'
+
+installMonitoring()
 
 // 🔍 开发调试：暴露学习包状态到 window
 if (import.meta.env.DEV) {

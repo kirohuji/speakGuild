@@ -28,11 +28,13 @@ import { AiQuotaModule } from './common/ai-quota/ai-quota.module';
 import { MobileUpdatesModule } from './modules/mobile-updates/mobile-updates.module';
 import { DictionaryModule } from './modules/dictionary/dictionary.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { OpsModule } from './common/ops/ops.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    OpsModule,
     PrismaModule,
     PracticeModule,
     ProfileModule,

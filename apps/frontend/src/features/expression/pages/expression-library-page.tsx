@@ -270,7 +270,7 @@ export function ExpressionLibraryPage() {
       if (Math.abs(dx) < TAB_SWIPE_DISTANCE || Math.abs(dx) < Math.abs(dy) * 1.4) return
 
       const currentIndex = LIBRARY_TABS.indexOf(libraryTab)
-      const nextIndex = dx > 0 ? currentIndex + 1 : currentIndex - 1
+      const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1
       const nextTab = LIBRARY_TABS[nextIndex]
       if (!nextTab) return
 

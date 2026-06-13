@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { MessageSquare, CheckCircle2, XCircle, Clock, Send, Loader2 } from 'lucide-react'
+import { MessageSquare, CheckCircle2, XCircle, Clock, Send, Loader2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -55,6 +55,12 @@ export function AdminFeedbacksPage() {
     // 本地即时更新 selected 和列表状态，不关闭弹窗
     setSelected((prev) => prev && prev.id === id ? { ...prev, status: status as FeedbackResult['status'] } : prev)
     setFeedbacks((prev) => prev.map((fb) => fb.id === id ? { ...fb, status: status as FeedbackResult['status'] } : fb))
+  }
+
+  const handleCriticalChange = async (id: string, isCritical: boolean) => {
+    await updateFeedback(id, { status: selected?.status || 'pending', isCritical })
+    setSelected((prev) => prev && prev.id === id ? { ...prev, isCritical } : prev)
+    setFeedbacks((prev) => prev.map((fb) => fb.id === id ? { ...fb, isCritical } : fb))
   }
 
   const handleReply = async () => {
@@ -169,6 +175,11 @@ export function AdminFeedbacksPage() {
                       <Badge variant={STATUS_MAP[fb.status]?.variant || 'outline'} className="text-[10px]">
                         {STATUS_MAP[fb.status]?.label || fb.status}
                       </Badge>
+                      {fb.isCritical && (
+                        <Badge variant="outline" className="border-red-500/40 text-[10px] text-red-500">
+                          严重
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm line-clamp-2">{fb.content}</p>
                     <p className="text-[10px] text-muted-foreground mt-1.5">
@@ -221,6 +232,11 @@ export function AdminFeedbacksPage() {
                 <Badge variant={STATUS_MAP[selected.status]?.variant || 'outline'} className="text-[10px]">
                   {STATUS_MAP[selected.status]?.label || selected.status}
                 </Badge>
+                {selected.isCritical && (
+                  <Badge variant="outline" className="border-red-500/40 text-[10px] text-red-500">
+                    严重
+                  </Badge>
+                )}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-1">用户</p>
@@ -292,6 +308,15 @@ export function AdminFeedbacksPage() {
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </Select>
+                <Button
+                  size="sm"
+                  variant={selected.isCritical ? 'destructive' : 'outline'}
+                  onClick={() => handleCriticalChange(selected.id, !selected.isCritical)}
+                  className="gap-1.5"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {selected.isCritical ? '取消严重' : '标记严重'}
+                </Button>
               </div>
             </div>
           )}
