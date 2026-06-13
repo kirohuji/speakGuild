@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -107,6 +107,8 @@ function AssessmentAnswerInput({
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const recordedBlobRef = useRef<Blob | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -114,6 +116,11 @@ function AssessmentAnswerInput({
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     mediaRecorderRef.current = null
+    recordedBlobRef.current = null
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
@@ -192,6 +199,7 @@ function AssessmentAnswerInput({
         streamRef.current = null
         const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm'
         const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || mimeType || 'audio/webm' })
+        recordedBlobRef.current = blob
         await processAudioBlob(blob, `assessment.${ext}`)
       }
 
@@ -223,6 +231,7 @@ function AssessmentAnswerInput({
           return
         }
         const result = await nativeSession.stop()
+        recordedBlobRef.current = result.blob
         await processAudioBlob(result.blob, result.filename)
       } catch {
         setVoiceError(t('profile.placement.voiceFailed'))
@@ -239,6 +248,23 @@ function AssessmentAnswerInput({
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
+  const hasRecording = !isRecording && !isProcessing && recordedBlobRef.current !== null
+
+  const handlePlayback = () => {
+    if (!recordedBlobRef.current) return
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    const url = URL.createObjectURL(recordedBlobRef.current)
+    const audio = new Audio(url)
+    audioRef.current = audio
+    audio.onended = () => {
+      URL.revokeObjectURL(url)
+      audioRef.current = null
+    }
+    audio.play().catch(() => void 0)
+  }
 
   return (
     <div className="rounded-lg bg-muted/30 p-2">
@@ -255,25 +281,44 @@ function AssessmentAnswerInput({
             ? t('profile.placement.voiceRecording', { time: formatAssessmentElapsed(elapsed) })
             : isProcessing
               ? t('profile.placement.voiceProcessing')
+              : value.trim().length > 0 && value.trim().length < 5
+                ? t('profile.placement.charHint', { current: value.trim().length, min: 5, defaultValue: '至少输入 {{min}} 个字符（当前 {{current}}）' })
               : t('profile.placement.voiceIdle'))}
         </p>
-        <Button
-          type="button"
-          size="sm"
-          variant={isRecording ? 'destructive' : 'outline'}
-          disabled={disabled || isProcessing}
-          onClick={isRecording ? stopRecording : startRecording}
-          className="h-9 shrink-0 rounded-full px-3"
-        >
-          {isProcessing ? (
-            <Loader2 className="mr-1.5 size-4 animate-spin" />
-          ) : isRecording ? (
-            <Square className="mr-1.5 size-3.5 fill-current" />
-          ) : (
-            <Mic className="mr-1.5 size-4" />
+        <div className="flex items-center gap-1.5">
+          {hasRecording && (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={disabled || isProcessing}
+              onClick={handlePlayback}
+              className="h-9 shrink-0 rounded-full px-3"
+            >
+              <svg className="mr-1.5 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              回放
+            </Button>
           )}
-          {isRecording ? t('profile.placement.voiceStop') : isProcessing ? t('profile.placement.voiceProcessingButton') : t('profile.placement.voiceButton')}
-        </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={isRecording ? 'destructive' : 'outline'}
+            disabled={disabled || isProcessing}
+            onClick={isRecording ? stopRecording : startRecording}
+            className="h-9 shrink-0 rounded-full px-3"
+          >
+            {isProcessing ? (
+              <Loader2 className="mr-1.5 size-4 animate-spin" />
+            ) : isRecording ? (
+              <Square className="mr-1.5 size-3.5 fill-current" />
+            ) : (
+              <Mic className="mr-1.5 size-4" />
+            )}
+            {isRecording ? t('profile.placement.voiceStop') : isProcessing ? t('profile.placement.voiceProcessingButton') : t('profile.placement.voiceButton')}
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -293,18 +338,21 @@ export function LearningAssessmentDialog({
   onCompleted?: () => void
 }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [result, setResult] = useState<PlacementAssessmentResult | null>(null)
   const [saving, setSaving] = useState(false)
+  const [pendingClose, setPendingClose] = useState(false)
   const wasOpenRef = useRef(false)
+  const confirmedRef = useRef(false)
   const goalStep = 1
   const firstPromptStep = 2
   const resultStep = firstPromptStep + PLACEMENT_PROMPTS.length
   const selectedGoalLabels = selectedGoals.map((goal) => t(`profile.placement.goals.${goal}.label`, { defaultValue: goalLabelMap[goal] ?? goal }))
-  const answeredCount = PLACEMENT_PROMPTS.filter((item) => (answers[item.id] ?? '').trim().length >= 12).length
+  const answeredCount = PLACEMENT_PROMPTS.filter((item) => (answers[item.id] ?? '').trim().length >= 5).length
   const canSubmit = selectedGoals.length > 0 && answeredCount >= PLACEMENT_PROMPTS.length
   const totalSteps = resultStep + 1
   const currentPrompt = step >= firstPromptStep && step < resultStep ? PLACEMENT_PROMPTS[step - firstPromptStep] : null
@@ -314,7 +362,7 @@ export function LearningAssessmentDialog({
     : step === goalStep
     ? selectedGoals.length > 0
     : currentPrompt
-      ? currentAnswer.trim().length >= 12
+      ? currentAnswer.trim().length >= 5
       : true
 
   useEffect(() => {
@@ -372,6 +420,13 @@ export function LearningAssessmentDialog({
     }
   }
 
+  // 到达结果步骤时自动提交测评
+  useEffect(() => {
+    if (step === resultStep && !result && !saving && selectedGoals.length > 0 && canSubmit) {
+      handleSubmit()
+    }
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handlePrimary = () => {
     if (saving) return
     if (step < resultStep) {
@@ -397,12 +452,32 @@ export function LearningAssessmentDialog({
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (required && !nextOpen && !result) return
+    if (!nextOpen && !confirmedRef.current) {
+      setPendingClose(true)
+      return
+    }
+    confirmedRef.current = false
+    setPendingClose(false)
     onOpenChange(nextOpen)
+  }
+
+  const handleConfirmExit = () => {
+    confirmedRef.current = true
+    setPendingClose(false)
+    onOpenChange(false)
+    navigate('/onboarding')
+  }
+
+  const handleCancelExit = () => {
+    confirmedRef.current = false
+    setPendingClose(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
         className={cn(
           'flex h-[min(640px,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-lg border border-border/70 bg-background p-0 shadow-lg',
           required && '[&>button:last-child]:hidden',
@@ -587,7 +662,7 @@ export function LearningAssessmentDialog({
                       </div>
                     )}
                   </div>
-                  {result.analysis.recommendedUnits.length > 0 && (
+                  {/* {result.analysis.recommendedUnits.length > 0 && (
                     <div className="mt-4">
                       <p className="text-xs font-medium text-muted-foreground">{t('profile.placement.recommendedUnits')}</p>
                       <div className="mt-2 space-y-2">
@@ -613,7 +688,7 @@ export function LearningAssessmentDialog({
                       </div>
                       <p className="mt-2 text-xs leading-5 text-muted-foreground">{result.analysis.recommendationReason}</p>
                     </div>
-                  )}
+                  )} */}
                 </section>
               )}
             </div>
@@ -636,6 +711,32 @@ export function LearningAssessmentDialog({
                 : t('profile.placement.submit')}
           </Button>
         </DialogFooter>
+
+        {pendingClose && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
+            <div className="mx-auto max-w-[260px] text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                <svg className="size-6 text-destructive" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-base font-semibold">{t('profile.placement.exitTitle', { defaultValue: '确定退出测评？' })}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t('profile.placement.exitDesc', { defaultValue: '退出后当前回答将不会保存' })}
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <Button onClick={handleConfirmExit} variant="destructive" className="h-11 w-full rounded-full text-sm font-semibold">
+                  {t('profile.placement.exitConfirm', { defaultValue: '确认退出' })}
+                </Button>
+                <Button onClick={handleCancelExit} variant="outline" className="h-11 w-full rounded-full text-sm font-semibold">
+                  {t('profile.placement.exitCancel', { defaultValue: '继续测评' })}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

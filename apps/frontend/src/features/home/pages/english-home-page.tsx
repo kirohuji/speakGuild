@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { useTheme } from 'next-themes'
 import {
@@ -32,6 +32,7 @@ function useClock() {
 export function EnglishHomePage() {
   const { session } = useAuth()
   const { resolvedTheme, theme } = useTheme()
+  const location = useLocation()
   const clock = useClock()
   const isDark = resolvedTheme === 'dark' || theme === 'dark'
 
@@ -45,12 +46,40 @@ export function EnglishHomePage() {
   const fetchSpecialNotifications = useHomeStore((s) => s.fetchSpecialNotifications)
   const storeCheckIn = useHomeStore((s) => s.checkIn)
 
+  // 🧪 检测 test=3（兼容 HashRouter 下 query 在 hash 中或路径中）
+  const searchStr = location.search || (
+    typeof window !== 'undefined'
+      ? (() => { const i = window.location.hash.indexOf('?'); return i >= 0 ? window.location.hash.slice(i) : '' })()
+      : ''
+  )
+  const isTestMode = new URLSearchParams(searchStr).get('test') === '3' || location.pathname === '/test=3'
+  const testInjectedRef = useRef(false)
+
   // 进页面触发所有首页数据拉取（store 内部按日期/标志位缓存）
   useEffect(() => {
     fetchDailySentence()
     fetchCheckInStatus()
     fetchSpecialNotifications()
-  }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications])
+
+    // 🧪 test=3 注入模拟的特殊通知
+    if (isTestMode && !testInjectedRef.current) {
+      testInjectedRef.current = true
+      const timer = setTimeout(() => {
+        useHomeStore.setState({
+          specialNotifications: [
+            {
+              id: 'test-notification-3',
+              title: '🎉 测试活动通知',
+              content: '<p>这是一条测试用的活动通知。</p><p>你可以在此查看活动详情内容，图片和文字都可以正常展示。</p>',
+              imageUrl: 'https://picsum.photos/400/300?random=1',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        })
+      }, 800)
+      return () => clearTimeout(timer)
+    }
+  }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications, isTestMode])
 
   const handleCheckIn = async () => {
     try {

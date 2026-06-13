@@ -44,6 +44,7 @@ export function AuthRouteGate({ children }: { children: ReactElement }) {
   const isPublicPage =
     location.pathname === '/portal' ||
     location.pathname === '/marketing' ||
+    location.pathname === '/company' ||
     location.pathname === '/support' ||
     location.pathname === '/feedback' ||
     location.pathname.startsWith('/system/') ||
