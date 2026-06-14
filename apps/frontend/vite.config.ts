@@ -23,19 +23,5 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       exclude: ['@capgo/capacitor-wechat'],
     },
-    build: {
-      rollupOptions: {
-        onwarn(warning, warn) {
-          if (
-            warning.code === 'SOURCEMAP_ERROR' &&
-            typeof warning.loc?.file === 'string' &&
-            warning.loc.file.includes('@capgo/capacitor-wechat')
-          ) {
-            return
-          }
-          warn(warning)
-        },
-      },
-    },
   }
 })

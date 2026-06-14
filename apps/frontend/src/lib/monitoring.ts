@@ -1,5 +1,9 @@
 import * as Sentry from '@sentry/capacitor'
-import { init as sentryReactInit } from '@sentry/react'
+import {
+  browserTracingIntegration,
+  consoleLoggingIntegration,
+  init as sentryReactInit,
+} from '@sentry/react'
 
 type ClientErrorPayload = {
   message: string
@@ -73,8 +77,14 @@ export function installMonitoring() {
         dsn,
         environment: import.meta.env.MODE,
         enableAutoSessionTracking: true,
+        enableLogs: true,
+        integrations: (defaultIntegrations) => [
+          ...defaultIntegrations,
+          browserTracingIntegration(),
+          consoleLoggingIntegration({ levels: ['warn', 'error'] }),
+        ],
         sendDefaultPii: false,
-        tracesSampleRate: 0,
+        tracesSampleRate: 1,
       },
       sentryReactInit,
     )
