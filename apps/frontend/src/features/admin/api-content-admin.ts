@@ -60,7 +60,7 @@ export interface Scene {
   requiredOutputLevel: string
   requiredUserLevel: number
   category?: { id: string; name: string }
-  _count?: { trainingTopics: number }
+  _count?: { trainingTopics: number; storyEpisodes?: number }
   trainingTopics?: TrainingTopic[]
 }
 
@@ -230,8 +230,8 @@ export interface StoryEpisode {
   _count?: { records: number; dialogues: number }
 }
 
-export async function listScriptEpisodes(): Promise<StoryEpisode[]> {
-  return get('/admin/content/script-episodes')
+export async function listScriptEpisodes(sceneId?: string): Promise<StoryEpisode[]> {
+  return get('/admin/content/script-episodes', sceneId ? { sceneId } : undefined)
 }
 
 export async function getScriptEpisode(id: string): Promise<StoryEpisode> {

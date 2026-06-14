@@ -103,7 +103,7 @@ export class ContentAdminController {
       orderBy: { createdAt: 'asc' },
       include: {
         category: { select: { id: true, name: true } },
-        _count: { select: { trainingTopics: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true } },
       },
     });
   }
@@ -439,9 +439,10 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('script-episodes')
-  async listScriptEpisodes(@Req() req: Request) {
+  async listScriptEpisodes(@Req() req: Request, @Query('sceneId') sceneId?: string) {
     await this.requireAdmin(req);
     const episodes = await this.prisma.storyEpisode.findMany({
+      where: sceneId ? { sceneId } : undefined,
       orderBy: [{ chapterKey: 'asc' }, { sortOrder: 'asc' }],
       include: {
         scene: { select: { id: true, title: true } },

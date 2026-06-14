@@ -34,6 +34,7 @@ export default function AdminRoutes() {
         <Route path="feedbacks" element={<AdminFeedbacksPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
+        <Route path="learning-content" element={<AdminScenesPage />} />
         <Route path="scenes" element={<AdminScenesPage />} />
         <Route path="characters" element={<AdminCharactersPage />} />
         <Route path="stories" element={<AdminStoriesPage />} />

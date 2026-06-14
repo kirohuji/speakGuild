@@ -4,6 +4,7 @@ import {
   ChevronRight, X, Code2, Type, BookOpen,
   Volume2, Sparkles, ExternalLink, Loader2,
   CheckCircle2, Link2, Clock3, FileText, Settings2,
+  Film, Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,10 +35,11 @@ import {
   listScenes, getScene, createScene, updateScene, deleteScene,
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
-  listAllChunks, listStories,
+  listAllChunks, listStories, listScriptEpisodes, deleteScriptEpisode,
   listLibraryPatterns,
-  type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull,
+  type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
 } from '../api-content-admin'
+import { EpisodeEditDialog } from './admin-script-page'
 
 // ─── Category Dialog ────────────────────────────────────────
 
@@ -123,7 +125,7 @@ function SceneDialog({
     try {
       if (edit) await updateScene(edit.id, form)
       else await createScene(form)
-      toast.success(edit ? '场景已更新' : '场景已创建')
+      toast.success(edit ? '学习包已更新' : '学习包已创建')
       onSaved()
       onClose()
     } catch { toast.error('保存失败') }
@@ -134,7 +136,7 @@ function SceneDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{edit ? '编辑场景' : '新增场景'}</DialogTitle>
+          <DialogTitle>{edit ? '编辑学习包' : '新增学习包'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -170,7 +172,7 @@ function SceneDialog({
               onChange={(value) => setForm({ ...form, description: value })}
               height={160}
               preview="edit"
-              placeholder="这个场景面向什么任务、用户会遇到什么情境..."
+              placeholder="这个学习包面向什么任务、用户会遇到什么情境..."
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -430,12 +432,13 @@ function VocabularyLookupPreview({
 // ─── Training Topic Dialog ──────────────────────────────────
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, chunks, vocabs, patterns, onSaved,
+  open, onClose, edit, sceneId, packageType, chunks, vocabs, patterns, onSaved,
 }: {
   open: boolean
   onClose: () => void
   edit: TrainingTopic | null
   sceneId: string
+  packageType: Scene['packageType']
   chunks: Chunk[]
   vocabs: Vocabulary[]
   patterns: SentencePatternFull[]
@@ -457,10 +460,28 @@ function TrainingTopicDialog({
         patternIds: edit.topicPatterns?.map((tp: any) => tp.pattern.id) ?? [],
       })
     }
-    else setForm({ sceneId, title: '', description: '', teachingMarkdown: '', promptEn: '', promptZh: '', difficulty: 'L2', suggestedDurationSec: 60, sortOrder: 0, chunkIds: [], vocabIds: [], patternIds: [], inkScriptId: '' })
+    else setForm({
+      sceneId,
+      type: packageType === 'ielts' ? 'ielts' : 'daily',
+      metadata: packageType === 'ielts'
+        ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
+        : null,
+      title: '',
+      description: '',
+      teachingMarkdown: '',
+      promptEn: '',
+      promptZh: '',
+      difficulty: 'L2',
+      suggestedDurationSec: 60,
+      sortOrder: 0,
+      chunkIds: [],
+      vocabIds: [],
+      patternIds: [],
+      inkScriptId: '',
+    })
     setStorySearch('')
     setStoryType('all')
-  }, [edit, open, sceneId])
+  }, [edit, open, sceneId, packageType])
 
   // Load stories for binding
   useEffect(() => {
@@ -501,6 +522,17 @@ function TrainingTopicDialog({
     if (type === 'side_quest') return '支线'
     if (type === 'free') return '自由'
     return type || '未分类'
+  }
+
+  const updateMetadata = (patch: Record<string, any>) => {
+    setForm({
+      ...form,
+      metadata: {
+        ...(form.metadata ?? {}),
+        ...patch,
+        ...(form.type === 'ielts' ? { exam: 'IELTS', section: 'speaking' } : {}),
+      },
+    })
   }
 
   const handleSave = async () => {
@@ -558,7 +590,26 @@ function TrainingTopicDialog({
                   <Label>标题</Label>
                   <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                  <div className="space-y-1.5">
+                    <Label>话题类型</Label>
+                    <Select
+                      value={form.type ?? (packageType === 'ielts' ? 'ielts' : 'daily')}
+                      onChange={(e) => {
+                        const type = e.target.value
+                        setForm({
+                          ...form,
+                          type,
+                          metadata: type === 'ielts'
+                            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', ...(form.metadata ?? {}) }
+                            : null,
+                        })
+                      }}
+                    >
+                      <option value="daily">日常话题</option>
+                      <option value="ielts">雅思口语</option>
+                    </Select>
+                  </div>
                   <div className="space-y-1.5">
                     <Label>排序</Label>
                     <Input type="number" value={form.sortOrder ?? 0}
@@ -582,6 +633,38 @@ function TrainingTopicDialog({
                   </div>
                 </div>
               </div>
+              {(form.type ?? (packageType === 'ielts' ? 'ielts' : 'daily')) === 'ielts' && (
+                <div className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 md:grid-cols-5">
+                  <div className="space-y-1.5">
+                    <Label>Part</Label>
+                    <Select value={String(form.metadata?.part ?? 1)} onChange={(e) => updateMetadata({ part: Number(e.target.value) })}>
+                      <option value="1">Part 1</option>
+                      <option value="2">Part 2</option>
+                      <option value="3">Part 3</option>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>目标分数</Label>
+                    <Input value={form.metadata?.bandTarget ?? ''} onChange={(e) => updateMetadata({ bandTarget: e.target.value })} placeholder="6.5" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>题型</Label>
+                    <Select value={form.metadata?.questionType ?? 'interview'} onChange={(e) => updateMetadata({ questionType: e.target.value })}>
+                      <option value="interview">Interview</option>
+                      <option value="cue_card">Cue card</option>
+                      <option value="discussion">Discussion</option>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>准备秒数</Label>
+                    <Input type="number" value={form.metadata?.prepSeconds ?? ''} onChange={(e) => updateMetadata({ prepSeconds: e.target.value ? Number(e.target.value) : null })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>回答秒数</Label>
+                    <Input type="number" value={form.metadata?.answerSeconds ?? ''} onChange={(e) => updateMetadata({ answerSeconds: e.target.value ? Number(e.target.value) : null })} />
+                  </div>
+                </div>
+              )}
               <MarkdownEditor
                 label="话题说明"
                 value={form.description ?? ''}
@@ -841,23 +924,27 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [vocabs, setVocabs] = useState<Vocabulary[]>([])
   const [patterns, setPatterns] = useState<SentencePatternFull[]>([])
   const [topics, setTopics] = useState<TrainingTopic[]>([])
+  const [storyEpisodes, setStoryEpisodes] = useState<StoryEpisode[]>([])
   const [loading, setLoading] = useState(true)
 
   const [vocabDialog, setVocabDialog] = useState(false)
   const [editVocab, setEditVocab] = useState<Vocabulary | null>(null)
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
+  const [storyDialog, setStoryDialog] = useState(false)
+  const [editStoryEpisode, setEditStoryEpisode] = useState<StoryEpisode | null>(null)
   const [topicPage, setTopicPage] = useState(1)
   const [topicPageSize, setTopicPageSize] = useState(10)
 
   const load = async () => {
     setLoading(true)
     try {
-      const [s, v, t, p] = await Promise.all([
+      const [s, v, t, p, e] = await Promise.all([
         getScene(sceneId), listVocabularies(), listTrainingTopics(sceneId),
         listLibraryPatterns({ pageSize: 999 }).then((r) => r.items),
+        listScriptEpisodes(sceneId),
       ])
-      setScene(s); setVocabs(v); setTopics(t); setPatterns(p)
+      setScene(s); setVocabs(v); setTopics(t); setPatterns(p); setStoryEpisodes(e)
     } catch {}
     finally { setLoading(false) }
   }
@@ -869,13 +956,14 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
 
   const topicTotalPages = getTotalPages(topics.length, topicPageSize)
   const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
+  const packageTypeLabel = scene?.packageType === 'story' ? '故事剧情' : scene?.packageType === 'ielts' ? '雅思考试' : '日常练习'
 
   if (loading) return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
     </div>
   )
-  if (!scene) return <p className="text-muted-foreground py-8 text-center">场景未找到</p>
+  if (!scene) return <p className="text-muted-foreground py-8 text-center">学习包未找到</p>
 
   return (
     <div className="space-y-6">
@@ -883,7 +971,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         <Button variant="ghost" size="icon" onClick={onBack}><ChevronRight className="size-4 rotate-180" /></Button>
         <div>
           <h2 className="text-lg font-bold">{scene.title}</h2>
-          <p className="text-sm text-muted-foreground">{scene.location} · {scene.requiredOutputLevel}</p>
+          <p className="text-sm text-muted-foreground">{packageTypeLabel} · {scene.location || '未设置地点'} · {scene.requiredOutputLevel}</p>
         </div>
       </div>
 
@@ -921,6 +1009,9 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-sm font-medium">{t.title}</span>
+                            <Badge variant={t.type === 'ielts' ? 'default' : 'outline'} className="text-xs">
+                              {t.type === 'ielts' ? '雅思' : '日常'}
+                            </Badge>
                             <Badge variant="outline" className="text-xs">{t.difficulty}</Badge>
                             <Badge variant="secondary" className="text-xs">{t.suggestedDurationSec}s</Badge>
                           </div>
@@ -974,8 +1065,90 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Film className="size-4" /> 故事关卡 ({storyEpisodes.length})
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => { setEditStoryEpisode(null); setStoryDialog(true) }}>
+            <Plus className="mr-1 size-3.5" /> 添加
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {storyEpisodes.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-sm font-medium text-muted-foreground">暂无故事关卡</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">故事剧情类学习包可以在这里配置 play 关卡；日常和雅思包也可以按需添加实战挑战。</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">关卡</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">章节</th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">通关目标</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {storyEpisodes.map((episode) => (
+                    <tr key={episode.id} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium">{episode.title}</span>
+                            {episode.isPreview && <Badge variant="secondary" className="text-xs">体验</Badge>}
+                            <Badge variant="outline" className="text-xs">{episode.requiredOutputLevel}</Badge>
+                          </div>
+                          <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">
+                            {episode.npcName || '未设置角色'} · {episode.description || '未设置说明'}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 md:table-cell">
+                        <div className="text-sm font-medium">{episode.chapterTitle}</div>
+                        <div className="text-xs text-muted-foreground">{episode.chapterId} · 第 {episode.episodeOrder} 关</div>
+                      </td>
+                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Target className="size-3.5" />
+                          {episode.passObjectiveCount} 目标 · {episode.passChunkCount} Chunk · {episode.passMinDialogues} 轮
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="size-8" onClick={() => { setEditStoryEpisode(episode); setStoryDialog(true) }}>
+                            <Edit3 className="size-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-8 text-destructive"
+                            onClick={async () => { if (confirm('确认删除这个故事关卡？')) { await deleteScriptEpisode(episode.id); load() } }}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
-        edit={editTopic} sceneId={sceneId} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={load} />
+        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={load} />
+      <EpisodeEditDialog
+        open={storyDialog}
+        onClose={() => setStoryDialog(false)}
+        edit={editStoryEpisode}
+        defaultSceneId={sceneId}
+        onSaved={load}
+      />
     </div>
   )
 }
@@ -1026,8 +1199,8 @@ export function AdminScenesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">场景管理</h1>
-          <p className="text-sm text-muted-foreground">管理场景分类、场景、词汇和训练话题</p>
+          <h1 className="text-2xl font-bold">学习包内容管理</h1>
+          <p className="text-sm text-muted-foreground">统一管理日常练习、雅思话题、故事关卡和实战地图入口</p>
         </div>
         <Button onClick={() => { setEditCat(null); setCatDialog(true) }}>
           <Plus className="size-4 mr-1" /> 新增分类
@@ -1037,7 +1210,7 @@ export function AdminScenesPage() {
       {/* Categories */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">场景分类</CardTitle>
+          <CardTitle className="text-base">学习包分类</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -1069,10 +1242,10 @@ export function AdminScenesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <MapPin className="size-4" /> 场景列表 ({scenes.length})
+            <MapPin className="size-4" /> 学习包列表 ({scenes.length})
           </CardTitle>
           <Button size="sm" variant="outline" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
-            <Plus className="size-3.5 mr-1" /> 新增场景
+            <Plus className="size-3.5 mr-1" /> 新增学习包
           </Button>
         </CardHeader>
         <CardContent className="p-0">
@@ -1085,7 +1258,7 @@ export function AdminScenesPage() {
           ) : scenes.length === 0 ? (
             <div className="flex flex-col items-center py-16 text-center">
               <MapPin className="h-12 w-12 text-muted-foreground/30" />
-              <p className="mt-4 text-sm font-medium text-muted-foreground">暂无场景</p>
+              <p className="mt-4 text-sm font-medium text-muted-foreground">暂无学习包</p>
               <p className="mt-1 text-xs text-muted-foreground/60">新增后会显示在这里</p>
             </div>
           ) : (
@@ -1093,7 +1266,7 @@ export function AdminScenesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">场景</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">学习包</th>
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">要求</th>
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">内容量</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
@@ -1125,7 +1298,7 @@ export function AdminScenesPage() {
                         </div>
                       </td>
                       <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
-                        话题 {s._count?.trainingTopics ?? 0}
+                        话题 {s._count?.trainingTopics ?? 0} · 故事 {s._count?.storyEpisodes ?? 0}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">

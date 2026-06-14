@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Users, Settings, BarChart3, Bell,
   ChevronRight, ChevronDown, CreditCard, Receipt,
-  MessageSquare, MapPin, Film, Award, Palette, Quote,
+  MessageSquare, Award, Palette, Quote,
   Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -50,8 +50,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'notifications', label: t('admin.notificationPush', { defaultValue: '消息推送' }), icon: Bell, path: '/admin/notifications' },
     ]},
     { key: 'content', label: t('admin.contentManagement', { defaultValue: '内容管理' }), icon: FileText, items: [
-      { key: 'scenes', label: t('admin.sceneManagement', { defaultValue: '场景管理' }), icon: MapPin, path: '/admin/scenes' },
-      { key: 'script', label: t('admin.scriptManagement', { defaultValue: '剧本管理' }), icon: Film, path: '/admin/script' },
+      { key: 'learning-content', label: t('admin.learningContentManagement', { defaultValue: '学习包内容' }), icon: Archive, path: '/admin/learning-content' },
       { key: 'achievements', label: t('admin.achievementManagement', { defaultValue: '成就管理' }), icon: Award, path: '/admin/achievements' },
       { key: 'daily-sentences', label: t('admin.dailySentences', { defaultValue: '每日一句' }), icon: Quote, path: '/admin/daily-sentences' },
       { key: 'content-library', label: t('admin.contentLibrary', { defaultValue: '内容语料库' }), icon: Library, path: '/admin/content-library' },

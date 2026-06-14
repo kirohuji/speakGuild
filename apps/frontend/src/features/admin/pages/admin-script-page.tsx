@@ -261,10 +261,10 @@ function EpisodeDetailView({ episode, onSaved, onClose }: { episode: StoryEpisod
     )
 }
 
-function EpisodeEditDialog({
-    open, onClose, edit, onSaved,
+export function EpisodeEditDialog({
+    open, onClose, edit, onSaved, defaultSceneId,
 }: {
-    open: boolean; onClose: () => void; edit: StoryEpisode | null; onSaved: () => void
+    open: boolean; onClose: () => void; edit: StoryEpisode | null; onSaved: () => void; defaultSceneId?: string
 }) {
     const [form, setForm] = useState<any>({})
     const [saving, setSaving] = useState(false)
@@ -286,7 +286,7 @@ function EpisodeEditDialog({
         })
         else setForm({
             chapterId: 'chapter_0', chapterTitle: '新手体验',
-            episodeOrder: 1, title: '', description: '', sceneId: '',
+            episodeOrder: 1, title: '', description: '', sceneId: defaultSceneId ?? '',
             requiredOutputLevel: 'L1', requiredUserLevel: 1,
             vocabRequiredCount: 6, vocabTotalCount: 10,
             chunkRequiredCount: 6, chunkTotalCount: 10,
@@ -296,7 +296,7 @@ function EpisodeEditDialog({
             npcName: '', npcRole: '', npcPersonality: '',
             chunkIds: [], vocabIds: [], isPreview: false, rewards: {},
         })
-    }, [edit, open])
+    }, [edit, open, defaultSceneId])
 
     const handleSave = async () => {
         if (!form.title?.trim()) return
