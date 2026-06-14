@@ -215,28 +215,28 @@ export class AchievementEngineService {
         return { progress: payload.streakCount ?? 0, target };
 
       case 'chapter_complete': {
-        const count = await this.prisma.scriptRecord.count({
+        const count = await this.prisma.storyRecord.count({
           where: {
             userId,
             passed: true,
-            episode: { chapterId: check.chapterId! },
+            episode: { chapterKey: check.chapterId! },
           },
         });
-        const total = await this.prisma.scriptEpisode.count({
-          where: { chapterId: check.chapterId! },
+        const total = await this.prisma.storyEpisode.count({
+          where: { chapterKey: check.chapterId! },
         });
         return { progress: count, target: total };
       }
 
       case 'perfect_clear': {
         // payload 中 shouldPerfect=true 表示本次达成了完美通关
-        const perfectCount = await this.prisma.scriptRecord.count({
+        const perfectCount = await this.prisma.storyRecord.count({
           where: {
             userId,
             passed: true,
             AND: [
-              { objectivesDone: { gte: 4 } },
-              { chunksUsed: { gte: 3 } },
+              { completedObjectiveCount: { gte: 4 } },
+              { usedChunkCount: { gte: 3 } },
               { retellCompleted: true },
             ],
           },

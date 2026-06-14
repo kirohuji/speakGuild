@@ -64,7 +64,7 @@ export interface AdminUserDetail extends AdminUser {
   } | null;
   _count: {
     practiceSessions: number;
-    scriptRecords: number;
+    storyRecords: number;
   };
 }
 

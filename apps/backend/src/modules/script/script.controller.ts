@@ -59,11 +59,11 @@ export class ScriptController {
     const episode = await this.scriptService.getEpisodeForJudge(id);
     return this.judgeService.buildJudgePrompt({
       sceneTitle: episode.scene?.title ?? '',
-      npcName: episode.npcName,
-      npcRole: episode.npcRole,
-      npcPersonality: episode.npcPersonality ?? undefined,
+      npcName: episode.characterName,
+      npcRole: episode.characterRole,
+      npcPersonality: episode.characterPersona ?? undefined,
       objectives: episode.objectives as string[],
-      coreChunks: episode.coreChunks?.map((c: any) => c.chunk?.text ?? c.chunkId) ?? [],
+      coreChunks: episode.chunks?.map((c: any) => c.chunk?.text ?? c.chunkId) ?? [],
       lastNpcText: body.lastNpcText,
       userTranscript: body.userTranscript,
       completedObjectives: body.completedObjectives,

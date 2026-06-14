@@ -37,7 +37,7 @@ export interface ContentManifest {
     sentencePatterns: { id: string; updatedAt: string }[]
     scenes: { id: string; updatedAt: string }[]
     topics: { id: string; updatedAt: string }[]
-    scriptEpisodes: { id: string; updatedAt: string }[]
+    storyEpisodes: { id: string; updatedAt: string }[]
   }
   deleted: Record<string, string[]>
 }

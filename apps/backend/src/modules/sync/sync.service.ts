@@ -488,7 +488,7 @@ export class SyncService {
 
     // 各模型时间戳情况不同：
     // - DictionaryEntry/SentencePattern/Vocabulary 有 updatedAt → 用 updatedAt
-    // - Scene/Chunk/TrainingTopic/ScriptEpisode 只有 createdAt → 用 createdAt
+    // - Scene/Chunk/TrainingTopic/StoryEpisode 只有 createdAt → 用 createdAt
     const [
       dictionaries,
       vocabularies,
@@ -496,7 +496,7 @@ export class SyncService {
       sentencePatterns,
       scenes,
       topics,
-      scriptEpisodes,
+      storyEpisodes,
     ] = await Promise.all([
       this.prisma.dictionaryEntry.findMany({
         where: { updatedAt: { gt: sinceDate } },
@@ -529,7 +529,7 @@ export class SyncService {
         select: { id: true, createdAt: true },
         orderBy: { createdAt: 'asc' },
       }),
-      this.prisma.scriptEpisode.findMany({
+      this.prisma.storyEpisode.findMany({
         where: { createdAt: { gt: sinceDate } },
         select: { id: true, createdAt: true },
         orderBy: { createdAt: 'asc' },
@@ -547,7 +547,7 @@ export class SyncService {
         sentencePatterns: sentencePatterns.map((s) => ({ id: s.id, updatedAt: s.updatedAt.toISOString() })),
         scenes: scenes.map((s) => ({ id: s.id, updatedAt: s.createdAt.toISOString() })),
         topics: topics.map((t) => ({ id: t.id, updatedAt: t.createdAt.toISOString() })),
-        scriptEpisodes: scriptEpisodes.map((e) => ({ id: e.id, updatedAt: e.createdAt.toISOString() })),
+        storyEpisodes: storyEpisodes.map((e) => ({ id: e.id, updatedAt: e.createdAt.toISOString() })),
       },
       deleted: {
         dictionaries: [] as string[],
@@ -556,7 +556,7 @@ export class SyncService {
         sentencePatterns: [] as string[],
         scenes: [] as string[],
         topics: [] as string[],
-        scriptEpisodes: [] as string[],
+        storyEpisodes: [] as string[],
       },
     };
   }

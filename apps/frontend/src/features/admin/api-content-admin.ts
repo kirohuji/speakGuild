@@ -53,6 +53,7 @@ export async function deleteSceneCategory(id: string): Promise<void> {
 export interface Scene {
   id: string
   categoryId: string
+  packageType: 'daily' | 'story' | 'ielts'
   title: string
   location: string
   description: string | null
@@ -114,6 +115,7 @@ export async function deleteVocabulary(id: string): Promise<void> {
 export interface TrainingTopic {
   id: string
   sceneId: string
+  type?: 'daily' | 'ielts'
   title: string
   description?: string | null
   teachingMarkdown?: string | null
@@ -121,6 +123,7 @@ export interface TrainingTopic {
   promptZh: string
   suggestedDurationSec: number
   difficulty: string
+  metadata?: any
   sentencePatterns: SentencePattern[]  // still sent as sentencePatterns from API for compat
   inkScriptId?: string | null
   sortOrder: number
@@ -195,7 +198,7 @@ export async function deleteChunk(id: string): Promise<void> {
 
 // ─── Script Episodes ─────────────────────────────────────────
 
-export interface ScriptEpisode {
+export interface StoryEpisode {
   id: string
   chapterId: string
   chapterTitle: string
@@ -227,19 +230,19 @@ export interface ScriptEpisode {
   _count?: { records: number; dialogues: number }
 }
 
-export async function listScriptEpisodes(): Promise<ScriptEpisode[]> {
+export async function listScriptEpisodes(): Promise<StoryEpisode[]> {
   return get('/admin/content/script-episodes')
 }
 
-export async function getScriptEpisode(id: string): Promise<ScriptEpisode> {
+export async function getScriptEpisode(id: string): Promise<StoryEpisode> {
   return get(`/admin/content/script-episodes/${id}`)
 }
 
-export async function createScriptEpisode(data: any): Promise<ScriptEpisode> {
+export async function createScriptEpisode(data: any): Promise<StoryEpisode> {
   return post('/admin/content/script-episodes', data)
 }
 
-export async function updateScriptEpisode(id: string, data: any): Promise<ScriptEpisode> {
+export async function updateScriptEpisode(id: string, data: any): Promise<StoryEpisode> {
   return patch(`/admin/content/script-episodes/${id}`, data)
 }
 

@@ -1,29 +1,14 @@
 import { Controller, Get, Param, Post, Req } from '@nestjs/common'
 import type { Request } from 'express'
-import { AchievementService } from './achievement.service'
 import { AchievementEngineService } from './achievement-engine.service'
 import { requireAuthSession } from '../auth/session.util'
 
 @Controller('achievements')
 export class AchievementController {
   constructor(
-    private readonly achievementService: AchievementService,
     private readonly achievementEngine: AchievementEngineService,
   ) {}
 
-  // ---- V1 (legacy, kept for backward compatibility) ----
-  @Get('legacy')
-  async getAllLegacy() {
-    return this.achievementService.getAll()
-  }
-
-  @Get('legacy/mine')
-  async mineLegacy(@Req() req: Request) {
-    const session = await requireAuthSession(req)
-    return this.achievementService.getUserAchievements(session.user.id)
-  }
-
-  // ---- V2 (new achievement system) ----
   @Get()
   async getAll(@Req() req: Request) {
     const session = await requireAuthSession(req)

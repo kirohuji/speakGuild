@@ -114,7 +114,7 @@ function SceneDialog({
 
   useEffect(() => {
     if (edit) setForm(edit)
-    else setForm({ categoryId: categories[0]?.id, requiredOutputLevel: 'L1', requiredUserLevel: 1 })
+    else setForm({ categoryId: categories[0]?.id, packageType: 'daily', requiredOutputLevel: 'L1', requiredUserLevel: 1 })
   }, [edit, open, categories])
 
   const handleSave = async () => {
@@ -137,13 +137,23 @@ function SceneDialog({
           <DialogTitle>{edit ? '编辑场景' : '新增场景'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
-            <Label>所属分类</Label>
-            <Select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>所属分类</Label>
+              <Select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </Select>
+            </div>
+            <div>
+              <Label>学习包类型</Label>
+              <Select value={form.packageType ?? 'daily'} onChange={(e) => setForm({ ...form, packageType: e.target.value })}>
+                <option value="daily">日常练习</option>
+                <option value="story">故事剧情</option>
+                <option value="ielts">雅思考试</option>
               </Select>
+            </div>
           </div>
           <div>
             <Label>标题</Label>
@@ -1101,6 +1111,9 @@ export function AdminScenesPage() {
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-sm font-medium">{s.title}</span>
                             {s.category && <Badge variant="secondary" className="text-xs">{s.category.name}</Badge>}
+                            <Badge variant="outline" className="text-xs">
+                              {s.packageType === 'story' ? '故事' : s.packageType === 'ielts' ? '雅思' : '日常'}
+                            </Badge>
                           </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">{s.location || '未设置地点'}</p>
                         </div>

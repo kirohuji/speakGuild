@@ -21,14 +21,14 @@ import { ChunkMultiSelect, DynamicStringList } from '../components/content-autho
 import {
     listScriptEpisodes, getScriptEpisode, createScriptEpisode, updateScriptEpisode, deleteScriptEpisode,
     listSceneCategories, listScenes, listAllChunks, listVocabularies,
-    type ScriptEpisode, type SceneCategory, type Scene, type Chunk, type Vocabulary,
+    type StoryEpisode, type SceneCategory, type Scene, type Chunk, type Vocabulary,
 } from '../api-content-admin'
 
 export function AdminScriptPage() {
-    const [episodes, setEpisodes] = useState<ScriptEpisode[]>([])
+    const [episodes, setEpisodes] = useState<StoryEpisode[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [detail, setDetail] = useState<ScriptEpisode | null>(null)
+    const [detail, setDetail] = useState<StoryEpisode | null>(null)
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(10)
 
@@ -41,7 +41,7 @@ export function AdminScriptPage() {
         finally { setLoading(false) }
     }
 
-    const openDetail = async (episode: ScriptEpisode) => {
+    const openDetail = async (episode: StoryEpisode) => {
         try {
             const full = await getScriptEpisode(episode.id)
             setDetail(full)
@@ -187,7 +187,7 @@ function EpisodeCreateButton({ onCreated }: { onCreated: () => void }) {
     )
 }
 
-function EpisodeDetailView({ episode, onSaved, onClose }: { episode: ScriptEpisode; onSaved: () => void; onClose: () => void }) {
+function EpisodeDetailView({ episode, onSaved, onClose }: { episode: StoryEpisode; onSaved: () => void; onClose: () => void }) {
     const [editOpen, setEditOpen] = useState(false)
     return (
         <div className="space-y-6">
@@ -264,7 +264,7 @@ function EpisodeDetailView({ episode, onSaved, onClose }: { episode: ScriptEpiso
 function EpisodeEditDialog({
     open, onClose, edit, onSaved,
 }: {
-    open: boolean; onClose: () => void; edit: ScriptEpisode | null; onSaved: () => void
+    open: boolean; onClose: () => void; edit: StoryEpisode | null; onSaved: () => void
 }) {
     const [form, setForm] = useState<any>({})
     const [saving, setSaving] = useState(false)

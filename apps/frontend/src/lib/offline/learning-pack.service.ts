@@ -17,7 +17,7 @@ export interface LearningPackManifest {
   vocabularies: string[]
   chunks: string[]
   sentencePatterns: string[]
-  scriptEpisodes: string[]
+  storyEpisodes: string[]
   inkScripts: string[]
   assets: AssetRef[]
   files?: Record<string, string>
@@ -281,7 +281,7 @@ export const learningPackService = {
         vocabularies: (unitDetail.vocabularies ?? []).map((item: any) => item.id),
         chunks: (unitDetail.chunks ?? []).map((item: any) => item.id),
         sentencePatterns: (unitDetail.sentencePatterns ?? []).map((item: any) => item.pattern),
-        scriptEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
+        storyEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
         inkScripts: topicDetails.map((detail: any) => detail.inkScript?.id).filter(Boolean),
         assets,
       },

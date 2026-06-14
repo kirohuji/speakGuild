@@ -1,5 +1,5 @@
 import {
-  IsString, IsOptional, IsInt, IsArray, Min, Max,
+  IsString, IsOptional, IsInt, IsArray, Min, Max, IsIn,
 } from 'class-validator';
 
 export class CreateSceneCategoryDto {
@@ -33,6 +33,10 @@ export class CreateSceneDto {
   @IsString()
   categoryId: string;
 
+  @IsOptional()
+  @IsIn(['daily', 'story', 'ielts'])
+  packageType?: 'daily' | 'story' | 'ielts';
+
   @IsString()
   title: string;
 
@@ -57,6 +61,10 @@ export class UpdateSceneDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @IsOptional()
+  @IsIn(['daily', 'story', 'ielts'])
+  packageType?: 'daily' | 'story' | 'ielts';
 
   @IsOptional()
   @IsString()
@@ -121,6 +129,10 @@ export class CreateTrainingTopicDto {
   @IsString()
   sceneId: string;
 
+  @IsOptional()
+  @IsIn(['daily', 'ielts'])
+  type?: 'daily' | 'ielts';
+
   @IsString()
   title: string;
 
@@ -145,6 +157,9 @@ export class CreateTrainingTopicDto {
   @IsOptional()
   @IsString()
   difficulty?: string;
+
+  @IsOptional()
+  metadata?: any;
 
   @IsOptional()
   @IsArray()
@@ -180,6 +195,10 @@ export class UpdateTrainingTopicDto {
   sceneId?: string;
 
   @IsOptional()
+  @IsIn(['daily', 'ielts'])
+  type?: 'daily' | 'ielts';
+
+  @IsOptional()
   @IsString()
   title?: string;
 
@@ -206,6 +225,9 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsString()
   difficulty?: string;
+
+  @IsOptional()
+  metadata?: any;
 
   @IsOptional()
   @IsArray()

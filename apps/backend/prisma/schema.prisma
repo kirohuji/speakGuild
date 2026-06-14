@@ -13,54 +13,53 @@ enum UserRole {
 }
 
 model User {
-  id                  String    @id
-  name                String
-  email               String
-  emailVerified       Boolean   @default(false)
-  image               String?
-  username            String?   @unique
-  phoneNumber         String?   @unique
-  phoneNumberVerified Boolean   @default(false)
-  role                UserRole  @default(user)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  deletionRequestedAt DateTime?
-  deletionScheduledAt DateTime?
-  hasCompletedOnboarding Boolean @default(false)
-  sessions            Session[]
-  accounts            Account[]
-  dailyActivities     DailyActivity[]
-  userPreference      UserPreference?
-  fileReferences      FileReference[]
-  notificationReads   NotificationRead[]
-  notificationTargets NotificationTarget[]
-  sentNotifications   Notification[]
-  orders              Order[]
-  membership          UserMembership?
-  referralCode        ReferralCode?
-  referredBy          Referral?
-  achievements        UserAchievement[]
-  feedbacks           Feedback[]
+  id                     String               @id
+  name                   String
+  email                  String
+  emailVerified          Boolean              @default(false)
+  image                  String?
+  username               String?              @unique
+  phoneNumber            String?              @unique
+  phoneNumberVerified    Boolean              @default(false)
+  role                   UserRole             @default(user)
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  deletionRequestedAt    DateTime?
+  deletionScheduledAt    DateTime?
+  hasCompletedOnboarding Boolean              @default(false)
+  sessions               Session[]
+  accounts               Account[]
+  dailyActivities        DailyActivity[]
+  userPreference         UserPreference?
+  fileReferences         FileReference[]
+  notificationReads      NotificationRead[]
+  notificationTargets    NotificationTarget[]
+  sentNotifications      Notification[]
+  orders                 Order[]
+  membership             UserMembership?
+  referralCode           ReferralCode?
+  referredBy             Referral?
+  feedbacks              Feedback[]
 
   // --- English Output Training: 用户画像扩展 ---
-  learningGoals        String[]               @default([])
-  outputLevel          String                 @default("L1")
-  outputLevelDetail    Json?
-  totalXp              Int                    @default(0)
-  points               Int                    @default(0)
-  userLevel            Int                    @default(1)
-  sceneProgresses      UserSceneProgress[]
-  chunkProgresses      UserChunkProgress[]
-  expressionItems      ExpressionItem[]
-  scriptRecords        ScriptRecord[]
-  scriptDialogues      ScriptDialogue[]
-  practiceSessions     PracticeSession[]
-  explorationRecords   ExplorationRecord[]
-  userAchievementsV2   UserAchievementV2[]
-  gameSaves            GameSave[]
-  checkIns             UserCheckIn[]
-  pointTransactions    PointTransaction[]
-  aiUsages             AiUsageDaily[]
+  learningGoals      String[]            @default([])
+  outputLevel        String              @default("L1")
+  outputLevelDetail  Json?
+  totalXp            Int                 @default(0)
+  points             Int                 @default(0)
+  userLevel          Int                 @default(1)
+  sceneProgresses    UserSceneProgress[]
+  chunkProgresses    UserChunkProgress[]
+  expressionItems    ExpressionItem[]
+  storyRecords       StoryRecord[]
+  storyTurns         StoryTurn[]
+  practiceSessions   PracticeSession[]
+  explorationRecords ExplorationRecord[]
+  userAchievementsV2 UserAchievementV2[]
+  gameSaves          GameSave[]
+  checkIns           UserCheckIn[]
+  pointTransactions  PointTransaction[]
+  aiUsages           AiUsageDaily[]
 
   @@unique([email])
   @@index([deletionScheduledAt])
@@ -117,58 +116,60 @@ model Verification {
 // ---- 用户看板域 ----
 
 model DailyActivity {
-  id       String   @id @default(cuid())
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  date     DateTime @db.Date
-  count    Int      @default(1)
+  id     String   @id @default(cuid())
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  date   DateTime @db.Date
+  count  Int      @default(1)
+
   @@unique([userId, date])
   @@map("daily_activity")
 }
 
 model UserPreference {
-  id             String       @id @default(cuid())
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String       @unique
-  autoPlay       Boolean      @default(false)
-  language       String       @default("zh-CN")
-  theme          String       @default("system")
-  themePresetId  String?
-  themePreset    ThemePreset? @relation(fields: [themePresetId], references: [id], onDelete: SetNull)
-  updatedAt      DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String       @unique
+  autoPlay      Boolean      @default(false)
+  language      String       @default("zh-CN")
+  theme         String       @default("system")
+  themePresetId String?
+  themePreset   ThemePreset? @relation(fields: [themePresetId], references: [id], onDelete: SetNull)
+  updatedAt     DateTime     @updatedAt
+
   @@map("user_preference")
 }
 
 // ── 沉浸式主题套装 ──
 model ThemePreset {
-  id          String   @id @default(cuid())
-  name        String                           // 主题名称
-  description String?                          // 描述
-  sortOrder   Int      @default(0)            // 排序
-  isActive    Boolean  @default(true)         // 是否启用
-  isDefault   Boolean  @default(false)        // 是否默认主题
+  id          String  @id @default(cuid())
+  name        String // 主题名称
+  description String? // 描述
+  sortOrder   Int     @default(0) // 排序
+  isActive    Boolean @default(true) // 是否启用
+  isDefault   Boolean @default(false) // 是否默认主题
 
   // 背景类型: gradient | image | video
-  bgType      String   @default("gradient")
+  bgType String @default("gradient")
 
   // ── Light 模式色板（JSON: { background, foreground, primary, card, muted, accent, border ... }）──
-  lightColors       Json?
+  lightColors      Json?
   // ── Light 模式背景（CSS gradient string 或图片 URL）──
-  lightBackground   String?  @db.Text
+  lightBackground  String? @db.Text
   // ── Light 模式装饰配置（JSON: [{ type, color, position, size, blur, animation }]）──
-  lightDecorations  Json?
+  lightDecorations Json?
 
   // ── Dark 模式（同上）──
-  darkColors        Json?
-  darkBackground    String?  @db.Text
-  darkDecorations   Json?
+  darkColors      Json?
+  darkBackground  String? @db.Text
+  darkDecorations Json?
 
   // ── 音效 ──
-  bgmUrl            String?  // 背景音效 URL（COS 上）
-  bgmVolume         Float    @default(0.3)
+  bgmUrl    String? // 背景音效 URL（COS 上）
+  bgmVolume Float   @default(0.3)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   userPreferences UserPreference[]
 
@@ -184,16 +185,17 @@ model SystemConfig {
   type        String   @default("string")
   description String?
   updatedAt   DateTime @updatedAt
+
   @@map("system_config")
 }
 
 /// 每日一句：按日期管理的每日句子（首页展示）
 model DailySentence {
   id          String   @id @default(cuid())
-  date        DateTime @unique         /// 句子所属日期（仅日期部分有效）
-  quote       String                   /// 英文句子
-  translation String                   /// 中文翻译
-  author      String   @default("")    /// 出处/作者
+  date        DateTime @unique /// 句子所属日期（仅日期部分有效）
+  quote       String /// 英文句子
+  translation String /// 中文翻译
+  author      String   @default("") /// 出处/作者
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -209,21 +211,22 @@ enum MembershipLevel {
 }
 
 model MembershipPlan {
-  id                       String           @id @default(cuid())
-  name                     String
-  level                    MembershipLevel  @default(standard)
-  price                    Int              /// 月付价格（分）
-  yearlyPrice              Int?             /// 年付价格（分）
-  period                   String
-  durationDays             Int              @default(30)
-  features                 String[]
-  revenueCatEntitlementId  String?          /// RevenueCat 权益 ID（跨端同步用）
-  highlighted              Boolean          @default(false)
-  sortOrder                Int              @default(0)
-  orders                   Order[]
-  memberships              UserMembership[]
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
+  id                      String           @id @default(cuid())
+  name                    String
+  level                   MembershipLevel  @default(standard)
+  price                   Int /// 月付价格（分）
+  yearlyPrice             Int? /// 年付价格（分）
+  period                  String
+  durationDays            Int              @default(30)
+  features                String[]
+  revenueCatEntitlementId String? /// RevenueCat 权益 ID（跨端同步用）
+  highlighted             Boolean          @default(false)
+  sortOrder               Int              @default(0)
+  orders                  Order[]
+  memberships             UserMembership[]
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
   @@map("membership_plan")
 }
 
@@ -241,21 +244,21 @@ enum PaymentMethod {
 }
 
 model Order {
-  id            String        @id @default(cuid())
-  orderNo       String        @unique /// 商户订单号
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  orderNo       String          @unique /// 商户订单号
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String
-  plan          MembershipPlan @relation(fields: [planId], references: [id])
+  plan          MembershipPlan  @relation(fields: [planId], references: [id])
   planId        String
-  amount        Int           /// 实付金额（分）
+  amount        Int /// 实付金额（分）
   paymentMethod PaymentMethod
-  status        OrderStatus   @default(pending)
-  paymentRef    String?       /// 支付网关交易号
-  billingCycle  String        @default("monthly") /// monthly | yearly
+  status        OrderStatus     @default(pending)
+  paymentRef    String? /// 支付网关交易号
+  billingCycle  String          @default("monthly") /// monthly | yearly
   paidAt        DateTime?
   metadata      Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   membership    UserMembership?
   coupon        Coupon?         @relation(fields: [couponId], references: [id])
   couponId      String?
@@ -273,21 +276,21 @@ enum MembershipStatus {
 }
 
 model UserMembership {
-  id            String           @id @default(cuid())
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String           @unique
-  plan          MembershipPlan   @relation(fields: [planId], references: [id])
-  planId        String
-  status        MembershipStatus @default(active)
-  order         Order?           @relation(fields: [orderId], references: [id])
-  orderId        String?          @unique
-  rcCustomerId  String?          /// RevenueCat 用户 ID（跨端同步）
-  startedAt     DateTime         @default(now())
-  expiredAt     DateTime
-  autoRenew     Boolean          @default(false)
-  cancelledAt   DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String           @unique
+  plan         MembershipPlan   @relation(fields: [planId], references: [id])
+  planId       String
+  status       MembershipStatus @default(active)
+  order        Order?           @relation(fields: [orderId], references: [id])
+  orderId      String?          @unique
+  rcCustomerId String? /// RevenueCat 用户 ID（跨端同步）
+  startedAt    DateTime         @default(now())
+  expiredAt    DateTime
+  autoRenew    Boolean          @default(false)
+  cancelledAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([status, expiredAt])
   @@map("user_membership")
@@ -312,23 +315,24 @@ enum FileAssetStatus {
 }
 
 model FileAsset {
-  id               String          @id @default(cuid())
-  sha256           String          @unique
+  id               String            @id @default(cuid())
+  sha256           String            @unique
   bucket           String
   region           String
-  cosKey           String          @unique
+  cosKey           String            @unique
   group            FileAssetGroup
   size             Int
   mimeType         String
   filename         String
-  status           FileAssetStatus @default(active)
-  refCount         Int             @default(0)
+  status           FileAssetStatus   @default(active)
+  refCount         Int               @default(0)
   lastReferencedAt DateTime?
-  createdAt        DateTime        @default(now())
+  createdAt        DateTime          @default(now())
   references       FileReference[]
   mobileBundles    MobileBundle[]
   learningPackages LearningPackage[]
   deltaPackages    DeltaPackage[]
+
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
   @@map("file_asset")
@@ -343,6 +347,7 @@ model FileReference {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   createdAt DateTime  @default(now())
+
   @@unique([assetId, bizType, bizId, userId])
   @@index([bizType, bizId, userId])
   @@map("file_reference")
@@ -363,18 +368,19 @@ enum NotificationType {
 }
 
 model Notification {
-  id        String              @id @default(cuid())
+  id        String               @id @default(cuid())
   title     String
-  content   String              @db.Text /// Markdown 格式内容
+  content   String               @db.Text /// Markdown 格式内容
   type      NotificationType
-  sentBy    User                @relation(fields: [sentById], references: [id])
+  sentBy    User                 @relation(fields: [sentById], references: [id])
   sentById  String
-  isSpecial Boolean            @default(false)
-  imageUrl  String?             /// 特殊通知的活动图片 URL（首页横幅用）
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  isSpecial Boolean              @default(false)
+  imageUrl  String? /// 特殊通知的活动图片 URL（首页横幅用）
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
   reads     NotificationRead[]
   targets   NotificationTarget[]
+
   @@index([type, createdAt(sort: Desc)])
   @@map("notification")
 }
@@ -386,6 +392,7 @@ model NotificationRead {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
   readAt         DateTime     @default(now())
+
   @@unique([notificationId, userId])
   @@index([userId, readAt(sort: Desc)])
   @@map("notification_read")
@@ -397,6 +404,7 @@ model NotificationTarget {
   notificationId String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
+
   @@unique([notificationId, userId])
   @@index([userId])
   @@map("notification_target")
@@ -411,19 +419,19 @@ enum CouponType {
 }
 
 model Coupon {
-  id          String      @id @default(cuid())
-  code        String      @unique
-  type        CouponType
-  value       Float       /// 折扣值（百分比如20=20%，固定金额单位分，试用天数）
-  minAmount   Float?      /// 最低消费金额（分）
-  maxUses     Int?
-  usedCount   Int         @default(0)
-  validFrom   DateTime    @default(now())
-  validUntil  DateTime?
-  isActive    Boolean     @default(true)
-  orders      Order[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         String     @id @default(cuid())
+  code       String     @unique
+  type       CouponType
+  value      Float /// 折扣值（百分比如20=20%，固定金额单位分，试用天数）
+  minAmount  Float? /// 最低消费金额（分）
+  maxUses    Int?
+  usedCount  Int        @default(0)
+  validFrom  DateTime   @default(now())
+  validUntil DateTime?
+  isActive   Boolean    @default(true)
+  orders     Order[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   @@map("coupon")
 }
@@ -456,35 +464,6 @@ model Referral {
   @@map("referral")
 }
 
-// ──── 成就域 ────
-
-model Achievement {
-  id          String             @id @default(cuid())
-  key         String             @unique
-  name        String
-  description String
-  icon        String
-  category    String
-  condition   Json
-  sortOrder   Int                @default(0)
-  users       UserAchievement[]
-  createdAt   DateTime           @default(now())
-
-  @@map("achievement")
-}
-
-model UserAchievement {
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  achievementId String
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  unlockedAt    DateTime    @default(now())
-
-  @@id([userId, achievementId])
-  @@index([userId])
-  @@map("user_achievement")
-}
-
 // ──── 反馈域 ────
 
 enum FeedbackStatus {
@@ -494,17 +473,17 @@ enum FeedbackStatus {
 }
 
 model Feedback {
-  id        String         @id @default(cuid())
-  userId    String?
-  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  type      String         @default("other")
-  content   String         @db.Text
-  contact   String?
-  status    FeedbackStatus @default(pending)
-  isCritical Boolean       @default(false)
-  adminNote String?        @db.Text
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id         String         @id @default(cuid())
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type       String         @default("other")
+  content    String         @db.Text
+  contact    String?
+  status     FeedbackStatus @default(pending)
+  isCritical Boolean        @default(false)
+  adminNote  String?        @db.Text
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])
@@ -561,10 +540,10 @@ enum UserAchievementStatus {
 // ──── 场景系统 ────
 
 model SceneCategory {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   icon      String?
-  sortOrder Int     @default(0)
+  sortOrder Int      @default(0)
   scenes    Scene[]
   createdAt DateTime @default(now())
 
@@ -572,23 +551,24 @@ model SceneCategory {
 }
 
 model Scene {
-  id                   String             @id @default(cuid())
-  category             SceneCategory      @relation(fields: [categoryId], references: [id])
-  categoryId           String
-  title                String
-  location             String
-  description          String?
-  requiredOutputLevel  String             @default("L1")
-  requiredUserLevel    Int                @default(1)
-  isFree               Boolean            @default(false)  // 免费用户可访问
-  prerequisiteScenes   ScenePrerequisite[] @relation("Scene")
-  prerequisiteFor      ScenePrerequisite[] @relation("Prerequisite")
-  trainingTopics       TrainingTopic[]
-  scriptEpisodes       ScriptEpisode[]
-  userProgresses       UserSceneProgress[]
-  gameLocations        GameLocation[]
-  learningPackages     LearningPackage[]
-  createdAt            DateTime           @default(now())
+  id                  String              @id @default(cuid())
+  category            SceneCategory       @relation(fields: [categoryId], references: [id])
+  categoryId          String
+  packageType         LearningPackageType @default(daily)
+  title               String
+  location            String
+  description         String?
+  requiredOutputLevel String              @default("L1")
+  requiredUserLevel   Int                 @default(1)
+  isFree              Boolean             @default(false) // 免费用户可访问
+  prerequisiteScenes  ScenePrerequisite[] @relation("Scene")
+  prerequisiteFor     ScenePrerequisite[] @relation("Prerequisite")
+  trainingTopics      TrainingTopic[]
+  storyEpisodes       StoryEpisode[]
+  userProgresses      UserSceneProgress[]
+  gameLocations       GameLocation[]
+  learningPackages    LearningPackage[]
+  createdAt           DateTime            @default(now())
 
   @@map("scene")
 }
@@ -600,12 +580,24 @@ enum LearningPackageStatus {
   failed
 }
 
+enum LearningPackageType {
+  daily
+  story
+  ielts
+}
+
+enum TrainingTopicType {
+  daily
+  ielts
+}
+
 model LearningPackage {
   id               String                @id @default(cuid())
   scene            Scene                 @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   sceneId          String
   version          Int
   title            String
+  type             LearningPackageType   @default(daily)
   status           LearningPackageStatus @default(draft)
   fileAsset        FileAsset?            @relation(fields: [fileAssetId], references: [id])
   fileAssetId      String?
@@ -657,42 +649,42 @@ model ScenePrerequisite {
 // ──── Chunk 表达块 ────
 
 model Chunk {
-  id                  String              @id @default(cuid())
-  text                String
-  meaning             String
-  description         String?             @db.Text
-  category            String
-  difficulty          String              @default("L2")
-  examples            ChunkExample[]
-  userProgresses      UserChunkProgress[]
-  scriptEpisodeChunks ScriptEpisodeChunk[]
-  topicChunks         TrainingTopicChunk[]
-  createdAt           DateTime            @default(now())
+  id                 String               @id @default(cuid())
+  text               String
+  meaning            String
+  description        String?              @db.Text
+  category           String
+  difficulty         String               @default("L2")
+  examples           ChunkExample[]
+  userProgresses     UserChunkProgress[]
+  storyEpisodeChunks StoryEpisodeChunk[]
+  topicChunks        TrainingTopicChunk[]
+  createdAt          DateTime             @default(now())
 
-  @@index([difficulty])
   @@unique([text])
+  @@index([difficulty])
   @@map("chunk")
 }
 
 model Vocabulary {
-  id            String               @id @default(cuid())
-  word          String
-  meaning       String               // 中文释义
-  partOfSpeech  String?              // 词性：noun/verb/adj/phrase
-  phoneticUs    String?              // 美式音标
-  phoneticUk    String?              // 英式音标
-  audioUsUrl    String?              // 美式发音音频
-  audioUkUrl    String?              // 英式发音音频
-  definitionEn  String?              @db.Text  // 英文释义
-  synonyms      String[]             @default([])  // 同义词
-  examples      Json?                // 例句 [{ en, zh, note? }]
-  description   String?              @db.Text  // 用法讲解/搭配说明
-  difficulty    String               @default("L1")  // L1~L5
-  sortOrder     Int                  @default(0)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  episodeVocabs ScriptEpisodeVocab[]
-  topicVocabs   TrainingTopicVocab[]
+  id                       String                   @id @default(cuid())
+  word                     String
+  meaning                  String // 中文释义
+  partOfSpeech             String? // 词性：noun/verb/adj/phrase
+  phoneticUs               String? // 美式音标
+  phoneticUk               String? // 英式音标
+  audioUsUrl               String? // 美式发音音频
+  audioUkUrl               String? // 英式发音音频
+  definitionEn             String?                  @db.Text // 英文释义
+  synonyms                 String[]                 @default([]) // 同义词
+  examples                 Json? // 例句 [{ en, zh, note? }]
+  description              String?                  @db.Text // 用法讲解/搭配说明
+  difficulty               String                   @default("L1") // L1~L5
+  sortOrder                Int                      @default(0)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  storyEpisodeVocabularies StoryEpisodeVocabulary[]
+  topicVocabs              TrainingTopicVocab[]
 
   @@unique([word])
   @@map("vocabulary")
@@ -748,26 +740,28 @@ model UserChunkProgress {
 // ──── 训练话题 ────
 
 model TrainingTopic {
-  id                   String            @id @default(cuid())
-  scene                Scene             @relation(fields: [sceneId], references: [id])
-  sceneId              String
-  title                String
-  description          String?           @db.Text
-  knowledgePoints      String?           @db.Text
-  teachingMarkdown     String?           @db.Text
-  promptEn             String            @db.Text
-  promptZh             String            @db.Text
-  suggestedDurationSec Int               @default(60)
-  difficulty           String            @default("L2")
-  activeChunks         TrainingTopicChunk[]
-  topicPatterns        TrainingTopicSentencePattern[]
-  topicVocabs          TrainingTopicVocab[]
-  practiceSessions     PracticeSession[]
-  sentencePatternsDeprecated     Json?    @map("sentence_patterns")
-  inkScriptId          String?           @unique
-  inkScript            InkScript?        @relation("TopicInkScript", fields: [inkScriptId], references: [id])
-  sortOrder            Int               @default(0)
-  createdAt            DateTime          @default(now())
+  id                         String                         @id @default(cuid())
+  scene                      Scene                          @relation(fields: [sceneId], references: [id])
+  sceneId                    String
+  type                       TrainingTopicType              @default(daily)
+  title                      String
+  description                String?                        @db.Text
+  knowledgePoints            String?                        @db.Text
+  teachingMarkdown           String?                        @db.Text
+  promptEn                   String                         @db.Text
+  promptZh                   String                         @db.Text
+  suggestedDurationSec       Int                            @default(60)
+  difficulty                 String                         @default("L2")
+  metadata                   Json?
+  activeChunks               TrainingTopicChunk[]
+  topicPatterns              TrainingTopicSentencePattern[]
+  topicVocabs                TrainingTopicVocab[]
+  practiceSessions           PracticeSession[]
+  sentencePatternsDeprecated Json?                          @map("sentence_patterns")
+  inkScriptId                String?                        @unique
+  inkScript                  InkScript?                     @relation("TopicInkScript", fields: [inkScriptId], references: [id])
+  sortOrder                  Int                            @default(0)
+  createdAt                  DateTime                       @default(now())
 
   @@index([sceneId, difficulty])
   @@map("training_topic")
@@ -785,8 +779,8 @@ model SentencePattern {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  topicPatterns   TrainingTopicSentencePattern[]
-  episodePatterns ScriptEpisodeSentencePattern[]
+  topicPatterns        TrainingTopicSentencePattern[]
+  storyEpisodePatterns StoryEpisodeSentencePattern[]
 
   @@unique([pattern])
   @@map("sentence_pattern")
@@ -837,19 +831,19 @@ model PracticeSession {
 }
 
 model PracticeTurn {
-  id                 String          @id @default(cuid())
-  session            PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sessionId          String
-  round              Int
-  npcText            String          @db.Text
-  userText           String          @db.Text
-  userAudioUrl       String?
-  inputNodeId        String?
-  tags               Json?
-  judgement          Json?
-  objectivesCompleted String[]       @default([])
-  chunksUsed         String[]        @default([])
-  createdAt          DateTime        @default(now())
+  id                  String          @id @default(cuid())
+  session             PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId           String
+  round               Int
+  npcText             String          @db.Text
+  userText            String          @db.Text
+  userAudioUrl        String?
+  inputNodeId         String?
+  tags                Json?
+  judgement           Json?
+  objectivesCompleted String[]        @default([])
+  chunksUsed          String[]        @default([])
+  createdAt           DateTime        @default(now())
 
   @@index([sessionId, round])
   @@map("practice_turn")
@@ -867,73 +861,73 @@ model TrainingTopicChunk {
   @@map("training_topic_chunk")
 }
 
-// ──── 剧本系统 ────
+// ──── 故事剧情系统 ────
 
-model ScriptEpisode {
-  id                   String                 @id @default(cuid())
-  chapterId            String
-  chapterTitle         String
-  episodeOrder         Int
-  title                String
-  description          String?                @db.Text
-  scene                Scene                  @relation(fields: [sceneId], references: [id])
-  sceneId              String
-  requiredOutputLevel  String                 @default("L2")
-  requiredUserLevel    Int                    @default(1)
-  vocabRequiredCount   Int                    @default(6)
-  vocabTotalCount      Int                    @default(10)
-  chunkRequiredCount   Int                    @default(6)
-  chunkTotalCount      Int                    @default(10)
-  prerequisiteEpisodes String[]               @default([])
-  objectives           String[]
-  passObjectiveCount   Int                    @default(3)
-  passChunkCount       Int                    @default(3)
-  passRetellRequired   Boolean                @default(true)
-  passMinDialogues     Int                    @default(3)
-  rewards              Json?
-  npcName              String
-  npcRole              String
-  npcPersonality       String?
-  inkScriptId          String?
-  coreVocabularies     ScriptEpisodeVocab[]
-  coreChunks           ScriptEpisodeChunk[]
-  corePatterns         ScriptEpisodeSentencePattern[]
-  dialogues            ScriptDialogue[]
-  records              ScriptRecord[]
-  isPreview            Boolean                @default(false)
-  createdAt            DateTime               @default(now())
+model StoryEpisode {
+  id                      String                        @id @default(cuid())
+  chapterKey              String                        @map("chapterId")
+  chapterName             String                        @map("chapterTitle")
+  sortOrder               Int                           @map("episodeOrder")
+  title                   String
+  description             String?                       @db.Text
+  scene                   Scene                         @relation(fields: [sceneId], references: [id])
+  sceneId                 String
+  requiredOutputLevel     String                        @default("L2")
+  requiredUserLevel       Int                           @default(1)
+  requiredVocabularyCount Int                           @default(6) @map("vocabRequiredCount")
+  totalVocabularyCount    Int                           @default(10) @map("vocabTotalCount")
+  requiredChunkCount      Int                           @default(6) @map("chunkRequiredCount")
+  totalChunkCount         Int                           @default(10) @map("chunkTotalCount")
+  prerequisiteEpisodeIds  String[]                      @default([]) @map("prerequisiteEpisodes")
+  objectives              String[]
+  requiredObjectiveCount  Int                           @default(3) @map("passObjectiveCount")
+  requiredUsedChunkCount  Int                           @default(3) @map("passChunkCount")
+  requiresRetell          Boolean                       @default(true) @map("passRetellRequired")
+  minimumTurnCount        Int                           @default(3) @map("passMinDialogues")
+  rewards                 Json?
+  characterName           String                        @map("npcName")
+  characterRole           String                        @map("npcRole")
+  characterPersona        String?                       @map("npcPersonality")
+  inkScriptId             String?
+  vocabularies            StoryEpisodeVocabulary[]
+  chunks                  StoryEpisodeChunk[]
+  sentencePatterns        StoryEpisodeSentencePattern[]
+  turns                   StoryTurn[]
+  records                 StoryRecord[]
+  isPreview               Boolean                       @default(false)
+  createdAt               DateTime                      @default(now())
 
-  @@index([chapterId, episodeOrder])
+  @@index([chapterKey, sortOrder], map: "script_episode_chapterId_episodeOrder_idx")
   @@map("script_episode")
 }
 
-model ScriptEpisodeVocab {
-  id        String        @id @default(cuid())
-  episode   ScriptEpisode @relation(fields: [episodeId], references: [id])
-  episodeId String
-  vocab     Vocabulary    @relation(fields: [vocabId], references: [id])
-  vocabId   String
-  sortOrder Int           @default(0)
+model StoryEpisodeVocabulary {
+  id         String       @id @default(cuid())
+  episode    StoryEpisode @relation(fields: [episodeId], references: [id])
+  episodeId  String
+  vocabulary Vocabulary   @relation(fields: [vocabId], references: [id])
+  vocabId    String
+  sortOrder  Int          @default(0)
 
   @@unique([episodeId, vocabId])
   @@map("script_episode_vocab")
 }
 
-model ScriptEpisodeChunk {
-  id        String        @id @default(cuid())
-  episode   ScriptEpisode @relation(fields: [episodeId], references: [id])
+model StoryEpisodeChunk {
+  id        String       @id @default(cuid())
+  episode   StoryEpisode @relation(fields: [episodeId], references: [id])
   episodeId String
-  chunk     Chunk         @relation(fields: [chunkId], references: [id])
+  chunk     Chunk        @relation(fields: [chunkId], references: [id])
   chunkId   String
-  sortOrder Int           @default(0)
+  sortOrder Int          @default(0)
 
   @@unique([episodeId, chunkId])
   @@map("script_episode_chunk")
 }
 
-model ScriptEpisodeSentencePattern {
+model StoryEpisodeSentencePattern {
   id        String          @id @default(cuid())
-  episode   ScriptEpisode   @relation(fields: [episodeId], references: [id])
+  episode   StoryEpisode    @relation(fields: [episodeId], references: [id])
   episodeId String
   pattern   SentencePattern @relation(fields: [patternId], references: [id])
   patternId String
@@ -943,44 +937,44 @@ model ScriptEpisodeSentencePattern {
   @@map("script_episode_sentence_pattern")
 }
 
-// ──── 剧本对话/通关记录 ────
+// ──── 故事对话/通关记录 ────
 
-model ScriptDialogue {
-  id                 String         @id @default(cuid())
-  episode            ScriptEpisode  @relation(fields: [episodeId], references: [id])
-  episodeId          String
-  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId             String
-  round              Int
-  npcText            String         @db.Text
-  userAudioUrl       String?
-  userText           String?        @db.Text
-  isOnTopic          Boolean?
-  objectiveCompleted String[]       @default([])
-  chunksUsed         String[]       @default([])
-  grammarIssues      Json?
-  needsFollowUp      Boolean        @default(false)
-  createdAt          DateTime       @default(now())
+model StoryTurn {
+  id                  String       @id @default(cuid())
+  episode             StoryEpisode @relation(fields: [episodeId], references: [id])
+  episodeId           String
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String
+  round               Int
+  npcText             String       @db.Text
+  userAudioUrl        String?
+  userText            String?      @db.Text
+  isOnTopic           Boolean?
+  objectivesCompleted String[]     @default([]) @map("objectiveCompleted")
+  chunksUsed          String[]     @default([])
+  grammarIssues       Json?
+  needsFollowUp       Boolean      @default(false)
+  createdAt           DateTime     @default(now())
 
   @@index([episodeId, userId, round])
   @@map("script_dialogue")
 }
 
-model ScriptRecord {
-  id              String         @id @default(cuid())
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
-  episode         ScriptEpisode  @relation(fields: [episodeId], references: [id])
-  episodeId       String
-  passed          Boolean        @default(false)
-  objectivesDone  Int            @default(0)
-  chunksUsed      Int            @default(0)
-  dialogueRounds  Int            @default(0)
-  retellCompleted Boolean        @default(false)
-  aiFeedback      Json?
-  xpEarned        Int            @default(0)
-  completedAt     DateTime?
-  createdAt       DateTime       @default(now())
+model StoryRecord {
+  id                      String       @id @default(cuid())
+  user                    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                  String
+  episode                 StoryEpisode @relation(fields: [episodeId], references: [id])
+  episodeId               String
+  passed                  Boolean      @default(false)
+  completedObjectiveCount Int          @default(0) @map("objectivesDone")
+  usedChunkCount          Int          @default(0) @map("chunksUsed")
+  turnCount               Int          @default(0) @map("dialogueRounds")
+  retellCompleted         Boolean      @default(false)
+  aiFeedback              Json?
+  xpEarned                Int          @default(0)
+  completedAt             DateTime?
+  createdAt               DateTime     @default(now())
 
   @@unique([userId, episodeId])
   @@index([userId, createdAt(sort: Desc)])
@@ -1003,7 +997,7 @@ model ExpressionItem {
   easeFactor     Float          @default(2.5)
   lastReviewedAt DateTime?
   nextReviewAt   DateTime?
-  sourceType     String?        // Scene|Topic|Script|Manual|QuizFail
+  sourceType     String? // Scene|Topic|Script|Manual|QuizFail
   sourceId       String?
   sourceSnapshot Json?
   createdAt      DateTime       @default(now())
@@ -1043,21 +1037,21 @@ model UserSceneProgress {
 // ──── 探索模式（视觉小说架构）───
 
 model GameCharacter {
-  id              String            @id @default(cuid())
-  name            String
-  displayName     String
-  role            String
-  personality     String?
-  avatarUrl       String?
-  spriteBaseUrl   String?
-  expressions     Json?
-  defaultPosition String?
-  ttsVoice        String?           // TTS 音色 ID（如 MiniMax/Cartesia voice ID）
-  ttsModel        String?           // TTS 模型（如 speech-2.8-hd）
-  ttsParams       Json?             // TTS 参数（如 { speed, pitch, vol }）
-  locationNpcs    GameLocationNpc[]
+  id                 String              @id @default(cuid())
+  name               String
+  displayName        String
+  role               String
+  personality        String?
+  avatarUrl          String?
+  spriteBaseUrl      String?
+  expressions        Json?
+  defaultPosition    String?
+  ttsVoice           String? // TTS 音色 ID（如 MiniMax/Cartesia voice ID）
+  ttsModel           String? // TTS 模型（如 speech-2.8-hd）
+  ttsParams          Json? // TTS 参数（如 { speed, pitch, vol }）
+  locationNpcs       GameLocationNpc[]
   explorationRecords ExplorationRecord[]
-  createdAt       DateTime          @default(now())
+  createdAt          DateTime            @default(now())
 
   @@map("game_character")
 }
@@ -1081,32 +1075,32 @@ model GameMap {
 }
 
 model GameLocation {
-  id                   String             @id @default(cuid())
-  map                  GameMap            @relation(fields: [mapId], references: [id])
-  mapId                String
-  name                 String
-  displayName          String
-  description          String?
-  posX                 Float              @default(0)
-  posY                 Float              @default(0)
-  icon                 String?
-  backgroundUrl        String?
-  bgmUrl               String?
-  ambientUrl           String?
-  locationType         String             @default("vn_scene")
-  sceneId              String?
-  scene                Scene?             @relation(fields: [sceneId], references: [id])
-  inkScriptId          String?
-  npcs                 GameLocationNpc[]
-  exits                GameLocationExit[]  @relation("FromLocation")
-  incomingExits        GameLocationExit[]  @relation("ToLocation")
-  explorationRecords   ExplorationRecord[]
-  requiredOutputLevel  String             @default("L1")
-  requiredSceneIds     String[]           @default([])
-  requiredFlags        Json?
-  isPreview            Boolean            @default(false)
-  sortOrder            Int                @default(0)
-  createdAt            DateTime           @default(now())
+  id                  String              @id @default(cuid())
+  map                 GameMap             @relation(fields: [mapId], references: [id])
+  mapId               String
+  name                String
+  displayName         String
+  description         String?
+  posX                Float               @default(0)
+  posY                Float               @default(0)
+  icon                String?
+  backgroundUrl       String?
+  bgmUrl              String?
+  ambientUrl          String?
+  locationType        String              @default("vn_scene")
+  sceneId             String?
+  scene               Scene?              @relation(fields: [sceneId], references: [id])
+  inkScriptId         String?
+  npcs                GameLocationNpc[]
+  exits               GameLocationExit[]  @relation("FromLocation")
+  incomingExits       GameLocationExit[]  @relation("ToLocation")
+  explorationRecords  ExplorationRecord[]
+  requiredOutputLevel String              @default("L1")
+  requiredSceneIds    String[]            @default([])
+  requiredFlags       Json?
+  isPreview           Boolean             @default(false)
+  sortOrder           Int                 @default(0)
+  createdAt           DateTime            @default(now())
 
   @@map("game_location")
 }
@@ -1125,15 +1119,15 @@ model GameLocationExit {
 }
 
 model GameLocationNpc {
-  id               String        @id @default(cuid())
-  location         GameLocation  @relation(fields: [locationId], references: [id])
-  locationId       String
-  character        GameCharacter @relation(fields: [characterId], references: [id])
-  characterId      String
-  schedule         Json?
-  defaultGreeting  String?
-  inkTalkScriptId  String?
-  sortOrder        Int           @default(0)
+  id              String        @id @default(cuid())
+  location        GameLocation  @relation(fields: [locationId], references: [id])
+  locationId      String
+  character       GameCharacter @relation(fields: [characterId], references: [id])
+  characterId     String
+  schedule        Json?
+  defaultGreeting String?
+  inkTalkScriptId String?
+  sortOrder       Int           @default(0)
 
   @@unique([locationId, characterId])
   @@map("game_location_npc")
@@ -1142,22 +1136,22 @@ model GameLocationNpc {
 // ──── Ink 叙事脚本 & 游戏存档 ────
 
 model InkScript {
-  id                String          @id @default(cuid())
-  key               String          @unique
+  id                String         @id @default(cuid())
+  key               String         @unique
   title             String
-  scriptType        String          @default("episode")
+  scriptType        String         @default("episode")
   inkJson           Json?
-  inkSource         String?         @db.Text
+  inkSource         String?        @db.Text
   episodeId         String?
   locationId        String?
   characterId       String?
   topicId           String?
-  trainingTopic     TrainingTopic?  @relation("TopicInkScript")
+  trainingTopic     TrainingTopic? @relation("TopicInkScript")
   declaredVariables Json?
-  version           Int             @default(1)
+  version           Int            @default(1)
   changelog         String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   @@index([scriptType])
   @@index([episodeId])
@@ -1166,19 +1160,19 @@ model InkScript {
 }
 
 model GameSave {
-  id                String   @id @default(cuid())
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            String
-  inkState          Json?
-  currentMapId      String?
-  currentLocationId String?
+  id                 String   @id @default(cuid())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  inkState           Json?
+  currentMapId       String?
+  currentLocationId  String?
   visitedLocationIds String[] @default([])
-  flags             Json?
-  saveName          String   @default("自动存档")
-  playTimeSeconds   Int      @default(0)
-  slot              Int      @default(1)
-  updatedAt         DateTime @updatedAt
-  createdAt         DateTime @default(now())
+  flags              Json?
+  saveName           String   @default("自动存档")
+  playTimeSeconds    Int      @default(0)
+  slot               Int      @default(1)
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
 
   @@unique([userId, slot])
   @@index([userId, updatedAt(sort: Desc)])
@@ -1186,19 +1180,19 @@ model GameSave {
 }
 
 model ExplorationRecord {
-  id           String        @id @default(cuid())
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  character    GameCharacter @relation(fields: [characterId], references: [id])
-  characterId  String
-  location     GameLocation  @relation(fields: [locationId], references: [id])
-  locationId   String
-  userText     String        @db.Text
-  npcReply     String?       @db.Text
-  feedback     Json?
-  isInkDriven  Boolean       @default(false)
-  inkKnotName  String?
-  createdAt    DateTime      @default(now())
+  id          String        @id @default(cuid())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  character   GameCharacter @relation(fields: [characterId], references: [id])
+  characterId String
+  location    GameLocation  @relation(fields: [locationId], references: [id])
+  locationId  String
+  userText    String        @db.Text
+  npcReply    String?       @db.Text
+  feedback    Json?
+  isInkDriven Boolean       @default(false)
+  inkKnotName String?
+  createdAt   DateTime      @default(now())
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("exploration_record")
@@ -1207,37 +1201,37 @@ model ExplorationRecord {
 // ──── 成就 V2 系统 ────
 
 model AchievementDef {
-  id              String              @id @default(cuid())
-  key             String              @unique
-  title           String
-  description     String
-  category        AchievementCategory @default(milestone)
-  rarity          AchievementRarity   @default(common)
-  icon            String?
-  condition       Json
-  rewardXp        Int                 @default(0)
-  rewardTitle     String?
-  sortOrder       Int                 @default(0)
-  isHidden        Boolean             @default(false)
-  hintText        String?
-  createdAt       DateTime            @default(now())
+  id               String              @id @default(cuid())
+  key              String              @unique
+  title            String
+  description      String
+  category         AchievementCategory @default(milestone)
+  rarity           AchievementRarity   @default(common)
+  icon             String?
+  condition        Json
+  rewardXp         Int                 @default(0)
+  rewardTitle      String?
+  sortOrder        Int                 @default(0)
+  isHidden         Boolean             @default(false)
+  hintText         String?
+  createdAt        DateTime            @default(now())
   userAchievements UserAchievementV2[]
 
   @@map("achievement_def")
 }
 
 model UserAchievementV2 {
-  id              String                 @id @default(cuid())
-  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
-  achievement     AchievementDef         @relation(fields: [achievementId], references: [id])
-  achievementId   String
-  status          UserAchievementStatus  @default(locked)
-  progress        Int                    @default(0)
-  progressTarget  Int                    @default(0)
-  unlockedAt      DateTime?
-  seenAt          DateTime?
-  createdAt       DateTime               @default(now())
+  id             String                @id @default(cuid())
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  achievement    AchievementDef        @relation(fields: [achievementId], references: [id])
+  achievementId  String
+  status         UserAchievementStatus @default(locked)
+  progress       Int                   @default(0)
+  progressTarget Int                   @default(0)
+  unlockedAt     DateTime?
+  seenAt         DateTime?
+  createdAt      DateTime              @default(now())
 
   @@unique([userId, achievementId])
   @@index([userId, status])
@@ -1278,14 +1272,14 @@ model PointTransaction {
 // ── AI 额度追踪 ──
 
 model AiUsageDaily {
-  id       String   @id @default(cuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date     DateTime @db.Date
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime @db.Date
 
-  dialogue Int      @default(0)   // 对话判定次数
-  summary  Int      @default(0)   // 汇总/分析次数
-  tokens   Int      @default(0)   // 总 token 消耗量
+  dialogue Int @default(0) // 对话判定次数
+  summary  Int @default(0) // 汇总/分析次数
+  tokens   Int @default(0) // 总 token 消耗量
 
   @@unique([userId, date])
   @@index([userId])
@@ -1295,20 +1289,20 @@ model AiUsageDaily {
 // ── OTA 热更新：MobileBundle 安装包管理（zip 存在 COS，关联 FileAsset）──
 
 model MobileBundle {
-  id               String     @id @default(cuid())
-  version          String                          // 语义化版本号，如 "1.2.3"
-  platform         String                          // ios | android
-  channel          String     @default("production") // production | staging
-  assetId          String                          // 关联 FileAsset（COS 上的 zip 文件）
-  asset            FileAsset  @relation(fields: [assetId], references: [id])
-  checksum         String                          // SHA256 校验值
-  minNativeVersion String?                         // 最低原生版本要求
-  rolloutPercent   Int        @default(100)        // 灰度比例 0-100
-  enabled          Boolean    @default(true)       // 是否启用（可快速下架）
-  isMandatory      Boolean    @default(false)      // 是否强制更新（忽略灰度，下载后立即提示重启）
-  releaseNotes     String?    @db.Text             // 更新日志
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  id               String    @id @default(cuid())
+  version          String // 语义化版本号，如 "1.2.3"
+  platform         String // ios | android
+  channel          String    @default("production") // production | staging
+  assetId          String // 关联 FileAsset（COS 上的 zip 文件）
+  asset            FileAsset @relation(fields: [assetId], references: [id])
+  checksum         String // SHA256 校验值
+  minNativeVersion String? // 最低原生版本要求
+  rolloutPercent   Int       @default(100) // 灰度比例 0-100
+  enabled          Boolean   @default(true) // 是否启用（可快速下架）
+  isMandatory      Boolean   @default(false) // 是否强制更新（忽略灰度，下载后立即提示重启）
+  releaseNotes     String?   @db.Text // 更新日志
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@unique([version, platform, channel])
   @@index([platform, channel, enabled])
@@ -1321,16 +1315,16 @@ model MobileBundle {
 model DictionaryEntry {
   word            String   @id /// 小写单词，作为主键
   language        String   @default("en")
-  sourceUrl       String?  /// Wiktionary 原始页面 URL（CC BY-SA 4.0 署名用）
+  sourceUrl       String? /// Wiktionary 原始页面 URL（CC BY-SA 4.0 署名用）
   pronunciations  Json     @default("[]") /// CleanedPronunciation[]
   senseClusters   Json     @default("[]") /// SenseCluster[] — 聚类后的语义分组
   senses          Json     @default("[]") /// CleanedSense[] — 所有清洗后的义项（引用 clusterId）
   entrySynonyms   Json     @default("[]") /// string[] — 词条级别同义词（来自 Wiktionary）
   wordForms       Json     @default("[]") /// { word: string, tags: string[] }[] — 复数/过去式等词形变化
-  rawEntry        Json?    /// FreeDictionaryAPI 原始响应（调试/重新处理用）
+  rawEntry        Json? /// FreeDictionaryAPI 原始响应（调试/重新处理用）
   pipelineVersion String   @default("1.0")
   aiReviewed      Boolean  @default(false)
-  aiReviewMeta    Json?    /// { reviewedAt, issuesFound, fixesApplied, modelUsed }
+  aiReviewMeta    Json? /// { reviewedAt, issuesFound, fixesApplied, modelUsed }
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

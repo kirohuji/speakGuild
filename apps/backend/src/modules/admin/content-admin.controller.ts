@@ -441,67 +441,107 @@ export class ContentAdminController {
   @Get('script-episodes')
   async listScriptEpisodes(@Req() req: Request) {
     await this.requireAdmin(req);
-    return this.prisma.scriptEpisode.findMany({
-      orderBy: [{ chapterId: 'asc' }, { episodeOrder: 'asc' }],
+    const episodes = await this.prisma.storyEpisode.findMany({
+      orderBy: [{ chapterKey: 'asc' }, { sortOrder: 'asc' }],
       include: {
         scene: { select: { id: true, title: true } },
-        _count: { select: { records: true, dialogues: true } },
+        _count: { select: { records: true, turns: true } },
       },
     });
+    return episodes.map((episode) => ({
+      ...episode,
+      chapterId: episode.chapterKey,
+      chapterTitle: episode.chapterName,
+      episodeOrder: episode.sortOrder,
+      npcName: episode.characterName,
+      npcRole: episode.characterRole,
+      npcPersonality: episode.characterPersona,
+      vocabRequiredCount: episode.requiredVocabularyCount,
+      vocabTotalCount: episode.totalVocabularyCount,
+      chunkRequiredCount: episode.requiredChunkCount,
+      chunkTotalCount: episode.totalChunkCount,
+      prerequisiteEpisodes: episode.prerequisiteEpisodeIds,
+      passObjectiveCount: episode.requiredObjectiveCount,
+      passChunkCount: episode.requiredUsedChunkCount,
+      passRetellRequired: episode.requiresRetell,
+      passMinDialogues: episode.minimumTurnCount,
+      _count: { records: episode._count.records, dialogues: episode._count.turns },
+    }));
   }
 
   @Get('script-episodes/:id')
   async getScriptEpisode(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.prisma.scriptEpisode.findUnique({
+    const episode = await this.prisma.storyEpisode.findUnique({
       where: { id },
       include: {
         scene: true,
-        coreVocabularies: { include: { vocab: true } },
-        coreChunks: { include: { chunk: true } },
+        vocabularies: { include: { vocabulary: true } },
+        chunks: { include: { chunk: true } },
       },
     });
+    if (!episode) return null;
+    return {
+      ...episode,
+      chapterId: episode.chapterKey,
+      chapterTitle: episode.chapterName,
+      episodeOrder: episode.sortOrder,
+      npcName: episode.characterName,
+      npcRole: episode.characterRole,
+      npcPersonality: episode.characterPersona,
+      vocabRequiredCount: episode.requiredVocabularyCount,
+      vocabTotalCount: episode.totalVocabularyCount,
+      chunkRequiredCount: episode.requiredChunkCount,
+      chunkTotalCount: episode.totalChunkCount,
+      prerequisiteEpisodes: episode.prerequisiteEpisodeIds,
+      passObjectiveCount: episode.requiredObjectiveCount,
+      passChunkCount: episode.requiredUsedChunkCount,
+      passRetellRequired: episode.requiresRetell,
+      passMinDialogues: episode.minimumTurnCount,
+      coreVocabularies: episode.vocabularies.map((item) => ({ ...item, vocab: item.vocabulary })),
+      coreChunks: episode.chunks,
+    };
   }
 
   @Post('script-episodes')
   async createScriptEpisode(@Req() req: Request, @Body() dto: CreateScriptEpisodeDto) {
     await this.requireAdmin(req);
     const { vocabIds, chunkIds, ...rest } = dto;
-    const episode = await this.prisma.scriptEpisode.create({
+    const episode = await this.prisma.storyEpisode.create({
       data: {
-        chapterId: rest.chapterId,
-        chapterTitle: rest.chapterTitle,
-        episodeOrder: rest.episodeOrder,
+        chapterKey: rest.chapterId,
+        chapterName: rest.chapterTitle,
+        sortOrder: rest.episodeOrder,
         title: rest.title,
         description: rest.description ?? null,
         sceneId: rest.sceneId,
         requiredOutputLevel: rest.requiredOutputLevel ?? 'L1',
         requiredUserLevel: rest.requiredUserLevel ?? 1,
-        vocabRequiredCount: rest.vocabRequiredCount ?? 6,
-        vocabTotalCount: rest.vocabTotalCount ?? 10,
-        chunkRequiredCount: rest.chunkRequiredCount ?? 6,
-        chunkTotalCount: rest.chunkTotalCount ?? 10,
-        prerequisiteEpisodes: rest.prerequisiteEpisodes ?? [],
+        requiredVocabularyCount: rest.vocabRequiredCount ?? 6,
+        totalVocabularyCount: rest.vocabTotalCount ?? 10,
+        requiredChunkCount: rest.chunkRequiredCount ?? 6,
+        totalChunkCount: rest.chunkTotalCount ?? 10,
+        prerequisiteEpisodeIds: rest.prerequisiteEpisodes ?? [],
         objectives: rest.objectives ?? [],
-        passObjectiveCount: rest.passObjectiveCount ?? 3,
-        passChunkCount: rest.passChunkCount ?? 3,
-        passRetellRequired: rest.passRetellRequired ?? true,
-        passMinDialogues: rest.passMinDialogues ?? 3,
+        requiredObjectiveCount: rest.passObjectiveCount ?? 3,
+        requiredUsedChunkCount: rest.passChunkCount ?? 3,
+        requiresRetell: rest.passRetellRequired ?? true,
+        minimumTurnCount: rest.passMinDialogues ?? 3,
         rewards: rest.rewards ?? {},
-        npcName: rest.npcName ?? '',
-        npcRole: rest.npcRole ?? '',
-        npcPersonality: rest.npcPersonality ?? null,
+        characterName: rest.npcName ?? '',
+        characterRole: rest.npcRole ?? '',
+        characterPersona: rest.npcPersonality ?? null,
         inkScriptId: rest.inkScriptId ?? null,
         isPreview: rest.isPreview ?? false,
       },
     });
     if (vocabIds?.length) {
-      await this.prisma.scriptEpisodeVocab.createMany({
+      await this.prisma.storyEpisodeVocabulary.createMany({
         data: vocabIds.map((vocabId) => ({ episodeId: episode.id, vocabId })),
       });
     }
     if (chunkIds?.length) {
-      await this.prisma.scriptEpisodeChunk.createMany({
+      await this.prisma.storyEpisodeChunk.createMany({
         data: chunkIds.map((chunkId) => ({ episodeId: episode.id, chunkId })),
       });
     }
@@ -513,43 +553,43 @@ export class ContentAdminController {
     await this.requireAdmin(req);
     const { vocabIds, chunkIds, ...rest } = dto;
     const data: any = {};
-    if (rest.chapterId !== undefined) data.chapterId = rest.chapterId;
-    if (rest.chapterTitle !== undefined) data.chapterTitle = rest.chapterTitle;
-    if (rest.episodeOrder !== undefined) data.episodeOrder = rest.episodeOrder;
+    if (rest.chapterId !== undefined) data.chapterKey = rest.chapterId;
+    if (rest.chapterTitle !== undefined) data.chapterName = rest.chapterTitle;
+    if (rest.episodeOrder !== undefined) data.sortOrder = rest.episodeOrder;
     if (rest.title !== undefined) data.title = rest.title;
     if (rest.description !== undefined) data.description = rest.description;
     if (rest.sceneId !== undefined) data.sceneId = rest.sceneId;
     if (rest.requiredOutputLevel !== undefined) data.requiredOutputLevel = rest.requiredOutputLevel;
     if (rest.requiredUserLevel !== undefined) data.requiredUserLevel = rest.requiredUserLevel;
-    if (rest.vocabRequiredCount !== undefined) data.vocabRequiredCount = rest.vocabRequiredCount;
-    if (rest.vocabTotalCount !== undefined) data.vocabTotalCount = rest.vocabTotalCount;
-    if (rest.chunkRequiredCount !== undefined) data.chunkRequiredCount = rest.chunkRequiredCount;
-    if (rest.chunkTotalCount !== undefined) data.chunkTotalCount = rest.chunkTotalCount;
-    if (rest.prerequisiteEpisodes !== undefined) data.prerequisiteEpisodes = rest.prerequisiteEpisodes;
+    if (rest.vocabRequiredCount !== undefined) data.requiredVocabularyCount = rest.vocabRequiredCount;
+    if (rest.vocabTotalCount !== undefined) data.totalVocabularyCount = rest.vocabTotalCount;
+    if (rest.chunkRequiredCount !== undefined) data.requiredChunkCount = rest.chunkRequiredCount;
+    if (rest.chunkTotalCount !== undefined) data.totalChunkCount = rest.chunkTotalCount;
+    if (rest.prerequisiteEpisodes !== undefined) data.prerequisiteEpisodeIds = rest.prerequisiteEpisodes;
     if (rest.objectives !== undefined) data.objectives = rest.objectives;
-    if (rest.passObjectiveCount !== undefined) data.passObjectiveCount = rest.passObjectiveCount;
-    if (rest.passChunkCount !== undefined) data.passChunkCount = rest.passChunkCount;
-    if (rest.passRetellRequired !== undefined) data.passRetellRequired = rest.passRetellRequired;
-    if (rest.passMinDialogues !== undefined) data.passMinDialogues = rest.passMinDialogues;
+    if (rest.passObjectiveCount !== undefined) data.requiredObjectiveCount = rest.passObjectiveCount;
+    if (rest.passChunkCount !== undefined) data.requiredUsedChunkCount = rest.passChunkCount;
+    if (rest.passRetellRequired !== undefined) data.requiresRetell = rest.passRetellRequired;
+    if (rest.passMinDialogues !== undefined) data.minimumTurnCount = rest.passMinDialogues;
     if (rest.rewards !== undefined) data.rewards = rest.rewards;
-    if (rest.npcName !== undefined) data.npcName = rest.npcName;
-    if (rest.npcRole !== undefined) data.npcRole = rest.npcRole;
-    if (rest.npcPersonality !== undefined) data.npcPersonality = rest.npcPersonality;
+    if (rest.npcName !== undefined) data.characterName = rest.npcName;
+    if (rest.npcRole !== undefined) data.characterRole = rest.npcRole;
+    if (rest.npcPersonality !== undefined) data.characterPersona = rest.npcPersonality;
     if (rest.inkScriptId !== undefined) data.inkScriptId = rest.inkScriptId;
     if (rest.isPreview !== undefined) data.isPreview = rest.isPreview;
-    const episode = await this.prisma.scriptEpisode.update({ where: { id }, data });
+    const episode = await this.prisma.storyEpisode.update({ where: { id }, data });
     if (vocabIds) {
-      await this.prisma.scriptEpisodeVocab.deleteMany({ where: { episodeId: id } });
+      await this.prisma.storyEpisodeVocabulary.deleteMany({ where: { episodeId: id } });
       if (vocabIds.length > 0) {
-        await this.prisma.scriptEpisodeVocab.createMany({
+        await this.prisma.storyEpisodeVocabulary.createMany({
           data: vocabIds.map((vocabId) => ({ episodeId: id, vocabId })),
         });
       }
     }
     if (chunkIds) {
-      await this.prisma.scriptEpisodeChunk.deleteMany({ where: { episodeId: id } });
+      await this.prisma.storyEpisodeChunk.deleteMany({ where: { episodeId: id } });
       if (chunkIds.length > 0) {
-        await this.prisma.scriptEpisodeChunk.createMany({
+        await this.prisma.storyEpisodeChunk.createMany({
           data: chunkIds.map((chunkId) => ({ episodeId: id, chunkId })),
         });
       }
@@ -560,7 +600,7 @@ export class ContentAdminController {
   @Delete('script-episodes/:id')
   async deleteScriptEpisode(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.prisma.scriptEpisode.delete({ where: { id } });
+    return this.prisma.storyEpisode.delete({ where: { id } });
   }
 
   // ════════════════════════════════════════════════════════════

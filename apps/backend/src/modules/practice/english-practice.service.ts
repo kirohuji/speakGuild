@@ -511,14 +511,14 @@ export class EnglishPracticeService {
     chunksUsed?: string[];
     grammarIssues?: any;
   }) {
-    // Find the matching ScriptEpisode via the topic's scene
+    // Find the matching StoryEpisode via the topic's scene
     const topic = await this.prisma.trainingTopic.findUnique({
       where: { id: topicId },
       select: { sceneId: true, inkScriptId: true },
     });
     if (!topic) return null;
 
-    const episode = await this.prisma.scriptEpisode.findFirst({
+    const episode = await this.prisma.storyEpisode.findFirst({
       where: {
         sceneId: topic.sceneId,
         ...(topic.inkScriptId ? { inkScriptId: topic.inkScriptId } : {}),
@@ -527,7 +527,7 @@ export class EnglishPracticeService {
     });
     if (!episode) return null;
 
-    return this.prisma.scriptDialogue.create({
+    return this.prisma.storyTurn.create({
       data: {
         userId,
         episodeId: episode.id,
@@ -535,7 +535,7 @@ export class EnglishPracticeService {
         npcText: dto.npcText,
         userText: dto.userText ?? '',
         isOnTopic: dto.isOnTopic,
-        objectiveCompleted: dto.objectivesCompleted ?? [],
+        objectivesCompleted: dto.objectivesCompleted ?? [],
         chunksUsed: dto.chunksUsed ?? [],
         grammarIssues: dto.grammarIssues ?? null,
       },
@@ -544,14 +544,14 @@ export class EnglishPracticeService {
 
   /** 获取话题的所有对话记录（用于汇总分析） */
   async getTopicDialogues(topicId: string, userId: string) {
-    // Find the matching ScriptEpisode via the topic's scene
+    // Find the matching StoryEpisode via the topic's scene
     const topic = await this.prisma.trainingTopic.findUnique({
       where: { id: topicId },
       select: { sceneId: true, inkScriptId: true },
     });
     if (!topic) return [];
 
-    const episode = await this.prisma.scriptEpisode.findFirst({
+    const episode = await this.prisma.storyEpisode.findFirst({
       where: {
         sceneId: topic.sceneId,
         ...(topic.inkScriptId ? { inkScriptId: topic.inkScriptId } : {}),
@@ -560,7 +560,7 @@ export class EnglishPracticeService {
     });
     if (!episode) return [];
 
-    return this.prisma.scriptDialogue.findMany({
+    const turns = await this.prisma.storyTurn.findMany({
       where: { episodeId: episode.id, userId },
       orderBy: { round: 'asc' },
       select: {
@@ -568,10 +568,14 @@ export class EnglishPracticeService {
         npcText: true,
         userText: true,
         isOnTopic: true,
-        objectiveCompleted: true,
+        objectivesCompleted: true,
         chunksUsed: true,
         grammarIssues: true,
       },
     });
+    return turns.map((turn) => ({
+      ...turn,
+      objectiveCompleted: turn.objectivesCompleted,
+    }));
   }
 }

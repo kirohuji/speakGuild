@@ -57,7 +57,7 @@ export class EnglishPracticeAiService {
         requiredOutputLevel: true,
         requiredUserLevel: true,
         category: { select: { name: true } },
-        _count: { select: { trainingTopics: true, scriptEpisodes: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true } },
         trainingTopics: {
           select: { title: true, difficulty: true },
           orderBy: { sortOrder: 'asc' },
@@ -149,7 +149,7 @@ Return this exact JSON shape:
       description: scene.description,
       requiredOutputLevel: scene.requiredOutputLevel,
       topicCount: scene._count.trainingTopics,
-      scriptCount: scene._count.scriptEpisodes,
+      scriptCount: scene._count.storyEpisodes,
     }));
 
     const analysis = {

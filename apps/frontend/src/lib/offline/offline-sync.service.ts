@@ -472,7 +472,7 @@ export const offlineSyncService = {
         ...(manifest.changed?.vocabularies?.map((v: any) => v.id) ?? []),
         ...(manifest.changed?.chunks?.map((c: any) => c.id) ?? []),
         ...(manifest.changed?.sentencePatterns?.map((p: any) => p.id) ?? []),
-        ...(manifest.changed?.scriptEpisodes?.map((e: any) => e.id) ?? []),
+        ...(manifest.changed?.storyEpisodes?.map((e: any) => e.id) ?? []),
         ...(manifest.changed?.dictionaries?.map((d: any) => d.id) ?? []),
       ])
 
@@ -508,7 +508,7 @@ export const offlineSyncService = {
       ...(manifest.changed?.vocabularies?.map((v: any) => v.id) ?? []),
       ...(manifest.changed?.chunks?.map((c: any) => c.id) ?? []),
       ...(manifest.changed?.sentencePatterns?.map((p: any) => p.id) ?? []),
-      ...(manifest.changed?.scriptEpisodes?.map((e: any) => e.id) ?? []),
+      ...(manifest.changed?.storyEpisodes?.map((e: any) => e.id) ?? []),
       ...(manifest.changed?.dictionaries?.map((d: any) => d.id) ?? []),
     ])
 

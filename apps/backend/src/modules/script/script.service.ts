@@ -6,8 +6,8 @@ export class ScriptService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getChapters(userId: string) {
-    const episodes = await this.prisma.scriptEpisode.findMany({
-      orderBy: [{ chapterId: 'asc' }, { episodeOrder: 'asc' }],
+    const episodes = await this.prisma.storyEpisode.findMany({
+      orderBy: [{ chapterKey: 'asc' }, { sortOrder: 'asc' }],
       include: {
         records: {
           where: { userId },
@@ -19,18 +19,18 @@ export class ScriptService {
     // Group by chapter
     const chapterMap = new Map<string, any>();
     for (const ep of episodes) {
-      if (!chapterMap.has(ep.chapterId)) {
-        chapterMap.set(ep.chapterId, {
-          chapterId: ep.chapterId,
-          chapterTitle: ep.chapterTitle,
+      if (!chapterMap.has(ep.chapterKey)) {
+        chapterMap.set(ep.chapterKey, {
+          chapterId: ep.chapterKey,
+          chapterTitle: ep.chapterName,
           episodes: [],
         });
       }
       const userPassed = ep.records.length > 0 && ep.records[0].passed;
-      chapterMap.get(ep.chapterId).episodes.push({
+      chapterMap.get(ep.chapterKey).episodes.push({
         id: ep.id,
         title: ep.title,
-        episodeOrder: ep.episodeOrder,
+        episodeOrder: ep.sortOrder,
         requiredOutputLevel: ep.requiredOutputLevel,
         requiredUserLevel: ep.requiredUserLevel,
         isPreview: ep.isPreview,
@@ -42,15 +42,15 @@ export class ScriptService {
   }
 
   async getEpisodeDetail(episodeId: string, userId: string) {
-    const episode = await this.prisma.scriptEpisode.findUnique({
+    const episode = await this.prisma.storyEpisode.findUnique({
       where: { id: episodeId },
       include: {
         scene: { select: { id: true, title: true, location: true } },
-        coreVocabularies: {
-          include: { vocab: true },
+        vocabularies: {
+          include: { vocabulary: true },
           orderBy: { sortOrder: 'asc' },
         },
-        coreChunks: {
+        chunks: {
           include: {
             chunk: {
               include: {
@@ -66,11 +66,31 @@ export class ScriptService {
         },
       },
     });
-    return episode;
+    if (!episode) return null;
+    return {
+      ...episode,
+      chapterId: episode.chapterKey,
+      chapterTitle: episode.chapterName,
+      episodeOrder: episode.sortOrder,
+      npcName: episode.characterName,
+      npcRole: episode.characterRole,
+      npcPersonality: episode.characterPersona,
+      vocabRequiredCount: episode.requiredVocabularyCount,
+      vocabTotalCount: episode.totalVocabularyCount,
+      chunkRequiredCount: episode.requiredChunkCount,
+      chunkTotalCount: episode.totalChunkCount,
+      prerequisiteEpisodes: episode.prerequisiteEpisodeIds,
+      passObjectiveCount: episode.requiredObjectiveCount,
+      passChunkCount: episode.requiredUsedChunkCount,
+      passRetellRequired: episode.requiresRetell,
+      passMinDialogues: episode.minimumTurnCount,
+      coreVocabularies: episode.vocabularies.map((item) => ({ ...item, vocab: item.vocabulary })),
+      coreChunks: episode.chunks,
+    };
   }
 
   async getInkScript(episodeId: string) {
-    const episode = await this.prisma.scriptEpisode.findUnique({
+    const episode = await this.prisma.storyEpisode.findUnique({
       where: { id: episodeId },
       select: { inkScriptId: true },
     });
@@ -83,14 +103,14 @@ export class ScriptService {
   }
 
   async getEpisodeReadiness(episodeId: string, userId: string) {
-    const episode = await this.prisma.scriptEpisode.findUnique({
+    const episode = await this.prisma.storyEpisode.findUnique({
       where: { id: episodeId },
       select: {
         requiredOutputLevel: true,
-        vocabRequiredCount: true,
-        chunkRequiredCount: true,
+        requiredVocabularyCount: true,
+        requiredChunkCount: true,
         sceneId: true,
-        prerequisiteEpisodes: true,
+        prerequisiteEpisodeIds: true,
       },
     });
     if (!episode) return null;
@@ -105,9 +125,9 @@ export class ScriptService {
 
     // Check prerequisites
     let prerequisiteCompleted = true;
-    const prereqEpisodes = (episode.prerequisiteEpisodes ?? []) as string[];
+    const prereqEpisodes = (episode.prerequisiteEpisodeIds ?? []) as string[];
     if (prereqEpisodes.length > 0) {
-      const passedCount = await this.prisma.scriptRecord.count({
+      const passedCount = await this.prisma.storyRecord.count({
         where: {
           userId,
           episodeId: { in: prereqEpisodes },
@@ -128,24 +148,24 @@ export class ScriptService {
       outputLevelSatisfied: userLevel >= requiredLevel,
       prerequisiteCompleted,
       vocabLearned: sceneProgress?.vocabLearned ?? 0,
-      vocabRequired: episode.vocabRequiredCount,
+      vocabRequired: episode.requiredVocabularyCount,
       chunkMastered: sceneProgress?.chunkMastered ?? 0,
-      chunkRequired: episode.chunkRequiredCount,
+      chunkRequired: episode.requiredChunkCount,
       readiness: sceneProgress?.readiness ?? 0,
     };
   }
 
   async getEpisodeForJudge(episodeId: string) {
-    return this.prisma.scriptEpisode.findUnique({
+    return this.prisma.storyEpisode.findUnique({
       where: { id: episodeId },
       select: {
         id: true,
         scene: { select: { title: true } },
-        npcName: true,
-        npcRole: true,
-        npcPersonality: true,
+        characterName: true,
+        characterRole: true,
+        characterPersona: true,
         objectives: true,
-        coreChunks: {
+        chunks: {
           include: { chunk: { select: { text: true } } },
           orderBy: { sortOrder: 'asc' },
         },
@@ -160,7 +180,7 @@ export class ScriptService {
     chunksUsed?: string[];
     objectiveCompleted?: string[];
   }) {
-    return this.prisma.scriptDialogue.create({
+    return this.prisma.storyTurn.create({
       data: {
         userId,
         episodeId,
@@ -168,14 +188,14 @@ export class ScriptService {
         userText: data.userText,
         round: data.round,
         chunksUsed: data.chunksUsed ?? [],
-        objectiveCompleted: data.objectiveCompleted ?? [],
+        objectivesCompleted: data.objectiveCompleted ?? [],
       },
     });
   }
 
   async submitRetell(userId: string, episodeId: string, body: { userTranscript: string; targetText: string }) {
     // Save retell attempt and mark retellCompleted on the record
-    await this.prisma.scriptRecord.upsert({
+    await this.prisma.storyRecord.upsert({
       where: { userId_episodeId: { userId, episodeId } },
       create: {
         userId,
@@ -195,24 +215,35 @@ export class ScriptService {
     episodeId: string,
     data: {
       passed: boolean;
-      objectivesDone: number;
-      chunksUsed: number;
-      dialogueRounds: number;
+      objectivesDone?: number;
+      chunksUsed?: number;
+      dialogueRounds?: number;
+      completedObjectiveCount?: number;
+      usedChunkCount?: number;
+      turnCount?: number;
       retellCompleted: boolean;
       aiFeedback?: any;
     },
   ) {
-    const record = await this.prisma.scriptRecord.upsert({
+    const normalized = {
+      passed: data.passed,
+      completedObjectiveCount: data.completedObjectiveCount ?? data.objectivesDone ?? 0,
+      usedChunkCount: data.usedChunkCount ?? data.chunksUsed ?? 0,
+      turnCount: data.turnCount ?? data.dialogueRounds ?? 0,
+      retellCompleted: data.retellCompleted,
+      aiFeedback: data.aiFeedback,
+    };
+    const record = await this.prisma.storyRecord.upsert({
       where: { userId_episodeId: { userId, episodeId } },
       create: {
         userId,
         episodeId,
-        ...data,
+        ...normalized,
         xpEarned: data.passed ? 30 : 0,
         completedAt: data.passed ? new Date() : null,
       },
       update: {
-        ...data,
+        ...normalized,
         xpEarned: data.passed ? 30 : 0,
         completedAt: data.passed ? new Date() : null,
       },
@@ -230,14 +261,26 @@ export class ScriptService {
   }
 
   async getRecords(userId: string) {
-    return this.prisma.scriptRecord.findMany({
+    const records = await this.prisma.storyRecord.findMany({
       where: { userId },
       include: {
         episode: {
-          select: { id: true, title: true, chapterId: true, chapterTitle: true },
+          select: { id: true, title: true, chapterKey: true, chapterName: true },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return records.map((record) => ({
+      ...record,
+      objectivesDone: record.completedObjectiveCount,
+      chunksUsed: record.usedChunkCount,
+      dialogueRounds: record.turnCount,
+      episode: {
+        ...record.episode,
+        chapterId: record.episode.chapterKey,
+        chapterTitle: record.episode.chapterName,
+      },
+    }));
   }
 }

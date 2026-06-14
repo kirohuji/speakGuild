@@ -7,13 +7,13 @@
  *   chunks.csv → 句块（独立表 Chunk，通过 TrainingTopicChunk join 关联话题）
  *   training_topics.csv → 训练话题（通过 scene_title 关联场景）
  *   sentence_patterns.csv → 句型（独立表 SentencePattern，通过 TrainingTopicSentencePattern join）
- *   script_episodes.csv → 剧本关卡（通过 ScriptEpisodeChunk/ScriptEpisodeVocab join 关联）
+ *   script_episodes.csv → 剧本关卡（通过 StoryEpisodeChunk/StoryEpisodeVocabulary join 关联）
  *
  * 新 Schema 数据流（所有关联都通过 ID join 表）：
  *   Vocabulary ──→ TrainingTopicVocab ──→ TrainingTopic ──→ Scene
  *   Chunk      ──→ TrainingTopicChunk ──→ TrainingTopic
  *   SentencePattern ──→ TrainingTopicSentencePattern ──→ TrainingTopic
- *   ScriptEpisode ──→ ScriptEpisodeVocab / ScriptEpisodeChunk / ScriptEpisodeSentencePattern
+ *   StoryEpisode ──→ StoryEpisodeVocabulary / StoryEpisodeChunk / StoryEpisodeSentencePattern
  *
  * 包发现：扫描 data/packages/ 下所有子目录自动发现。
  */
@@ -348,29 +348,29 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     for (const row of epRows) {
       const sceneId = sceneMap.get(row.scene_title)
       if (!sceneId) continue
-      await prisma.scriptEpisode.create({
+      await prisma.storyEpisode.create({
         data: {
-          chapterId: row.chapter_id,
-          chapterTitle: row.chapter_title,
-          episodeOrder: parseInt(row.episode_order),
+          chapterKey: row.chapter_id,
+          chapterName: row.chapter_title,
+          sortOrder: parseInt(row.episode_order),
           title: row.title,
           sceneId,
           requiredOutputLevel: row.required_output_level || 'L1',
           requiredUserLevel: parseInt(row.required_user_level) || 1,
-          vocabRequiredCount: parseInt(row.vocab_required_count) || 2,
-          vocabTotalCount: parseInt(row.vocab_total_count) || 10,
-          chunkRequiredCount: parseInt(row.chunk_required_count) || 2,
-          chunkTotalCount: parseInt(row.chunk_total_count) || 10,
+          requiredVocabularyCount: parseInt(row.vocab_required_count) || 2,
+          totalVocabularyCount: parseInt(row.vocab_total_count) || 10,
+          requiredChunkCount: parseInt(row.chunk_required_count) || 2,
+          totalChunkCount: parseInt(row.chunk_total_count) || 10,
           objectives: parseJson<string[]>(row.objectives_json) || [],
-          passObjectiveCount: parseInt(row.pass_objective_count) || 2,
-          passChunkCount: parseInt(row.pass_chunk_count) || 2,
-          passMinDialogues: parseInt(row.pass_min_dialogues) || 2,
-          npcName: row.npc_name,
-          npcRole: row.npc_role,
+          requiredObjectiveCount: parseInt(row.pass_objective_count) || 2,
+          requiredUsedChunkCount: parseInt(row.pass_chunk_count) || 2,
+          minimumTurnCount: parseInt(row.pass_min_dialogues) || 2,
+          characterName: row.npc_name,
+          characterRole: row.npc_role,
           isPreview: row.is_preview === 'true',
           inkScriptId: inkKeyToId.get(row.ink_script_key) || null,
           rewards: parseJson(row.rewards_json),
-          prerequisiteEpisodes: [],
+          prerequisiteEpisodeIds: [],
         },
       })
       epCount++
@@ -378,10 +378,10 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     console.log(`  ✓ ${epCount} 个剧本关卡`)
     totalEpisodes += epCount
 
-    // ═══ 8. 关卡↔句块 关联（ScriptEpisodeChunk join 表） ═══
+    // ═══ 8. 关卡↔句块 关联（StoryEpisodeChunk join 表） ═══
     const epChunkRows = readCsv<CsvEpChunk>('episode_chunks.csv', pkgPath)
     // Get the episodes we just created
-    const pkgEpisodes = await prisma.scriptEpisode.findMany({
+    const pkgEpisodes = await prisma.storyEpisode.findMany({
       where: { title: { in: epRows.map(r => r.title) } },
     })
     const epOrderToId = new Map<string, string>()
@@ -402,7 +402,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
         where: { text: { contains: row.chunk_text_match } },
       })
       if (matchingChunk) {
-        await prisma.scriptEpisodeChunk.create({
+        await prisma.storyEpisodeChunk.create({
           data: { episodeId: epId, chunkId: matchingChunk.id, sortOrder: parseInt(row.sort_order) || 0 },
         }).catch(() => {})
         epChunkCount++
@@ -411,7 +411,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     console.log(`  ✓ ${epChunkCount} 个关卡↔句块关联`)
     totalEpChunks += epChunkCount
 
-    // ═══ 8.5. 关卡↔词汇 关联（ScriptEpisodeVocab join 表） ═══
+    // ═══ 8.5. 关卡↔词汇 关联（StoryEpisodeVocabulary join 表） ═══
     // Link each episode to all vocabs in the same scene
     let epVocabCount = 0
     for (const ep of pkgEpisodes) {
@@ -419,7 +419,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
       if (!match) continue
       const vocabIds = sceneVocabIds.get(match.scene_title) ?? []
       if (vocabIds.length > 0) {
-        await prisma.scriptEpisodeVocab.createMany({
+        await prisma.storyEpisodeVocabulary.createMany({
           data: vocabIds.map((vocabId, i) => ({ episodeId: ep.id, vocabId, sortOrder: i })),
           skipDuplicates: true,
         })

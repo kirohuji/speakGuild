@@ -4,13 +4,16 @@ import { del, get, post } from '@/lib/request'
 
 export interface TopicSummary {
   id: string
+  type?: 'daily' | 'ielts'
   title: string
   difficulty: string
+  metadata?: any
   suggestedDurationSec: number
 }
 
 export interface LearningUnitSummary {
   id: string
+  packageType?: 'daily' | 'story' | 'ielts'
   title: string
   location: string
   description?: string | null
@@ -93,16 +96,19 @@ export interface SentencePattern {
 
 export interface TrainingTopicItem {
   id: string
+  type?: 'daily' | 'ielts'
   title: string
   promptEn: string
   promptZh: string
   difficulty: string
+  metadata?: any
   suggestedDurationSec: number
   activeChunks: { id: string; text: string; meaning: string }[]
 }
 
 export interface UnitDetail {
   id: string
+  packageType?: 'daily' | 'story' | 'ielts'
   title: string
   location: string
   description: string | null
@@ -175,6 +181,7 @@ export interface TodayPlan {
 /** 用户正在学习的单元（从 my-units 接口返回） */
 export interface MyUnit {
   id: string
+  packageType?: 'daily' | 'story' | 'ielts'
   title: string
   location: string
   description?: string | null
@@ -213,7 +220,7 @@ export interface OfflineManifestResult {
     vocabularies: string[]
     chunks: string[]
     sentencePatterns: string[]
-    scriptEpisodes: string[]
+    storyEpisodes: string[]
     inkScripts: string[]
     assets: Array<{ assetId?: string; url: string; sha256?: string | null; mimeType?: string | null; size?: number | null; role?: string }>
   }

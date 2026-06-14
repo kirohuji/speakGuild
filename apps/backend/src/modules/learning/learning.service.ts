@@ -127,12 +127,14 @@ export class LearningService {
       },
       include: {
         category: { select: { id: true, name: true, icon: true } },
-        _count: { select: { trainingTopics: true, scriptEpisodes: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true } },
         trainingTopics: {
           select: {
             id: true,
+            type: true,
             title: true,
             difficulty: true,
+            metadata: true,
             suggestedDurationSec: true,
             _count: { select: { activeChunks: true, topicVocabs: true } },
           },
@@ -177,6 +179,7 @@ export class LearningService {
 
       return {
         id: scene.id,
+        packageType: scene.packageType,
         title: scene.title,
         location: scene.location,
         description: scene.description,
@@ -185,8 +188,10 @@ export class LearningService {
         categoryIcon: scene.category.icon,
         topics: scene.trainingTopics.map((t: any) => ({
           id: t.id,
+          type: t.type,
           title: t.title,
           difficulty: t.difficulty,
+          metadata: t.metadata,
           suggestedDurationSec: t.suggestedDurationSec,
         })),
         requiredOutputLevel: scene.requiredOutputLevel,
@@ -197,7 +202,7 @@ export class LearningService {
         vocabCount,
         chunkCount,
         topicCount: scene._count.trainingTopics,
-        scriptCount: scene._count.scriptEpisodes,
+        scriptCount: scene._count.storyEpisodes,
         progress: prog
           ? {
               readiness: prog.readiness,
@@ -252,12 +257,14 @@ export class LearningService {
         scene: {
           include: {
             category: { select: { name: true } },
-            _count: { select: { trainingTopics: true, scriptEpisodes: true } },
+            _count: { select: { trainingTopics: true, storyEpisodes: true } },
             trainingTopics: {
               select: {
                 id: true,
+                type: true,
                 title: true,
                 difficulty: true,
+                metadata: true,
                 suggestedDurationSec: true,
                 _count: { select: { activeChunks: true, topicVocabs: true } },
               },
@@ -286,20 +293,23 @@ export class LearningService {
 
       return {
         id: scene.id,
+        packageType: scene.packageType,
         title: scene.title,
         location: scene.location,
         description: scene.description,
         categoryName: scene.category.name,
         topics: scene.trainingTopics.map((t) => ({
           id: t.id,
+          type: t.type,
           title: t.title,
           difficulty: t.difficulty,
+          metadata: t.metadata,
           suggestedDurationSec: t.suggestedDurationSec,
         })),
         vocabCount,
         chunkCount,
         topicCount: scene._count.trainingTopics,
-        scriptCount: scene._count.scriptEpisodes,
+        scriptCount: scene._count.storyEpisodes,
         progress: {
           readiness: p.readiness,
           mastery: p.mastery,
@@ -343,14 +353,14 @@ export class LearningService {
             },
           },
         },
-        scriptEpisodes: {
-          orderBy: { episodeOrder: 'asc' },
+        storyEpisodes: {
+          orderBy: { sortOrder: 'asc' },
           take: 1,
           select: {
             id: true,
             title: true,
-            chapterTitle: true,
-            episodeOrder: true,
+            chapterName: true,
+            sortOrder: true,
             description: true,
             requiredOutputLevel: true,
           },
@@ -436,6 +446,7 @@ export class LearningService {
 
     return {
       id: scene.id,
+      packageType: scene.packageType,
       title: scene.title,
       location: scene.location,
       description: scene.description,
@@ -500,10 +511,12 @@ export class LearningService {
 
       trainingTopics: scene.trainingTopics.map((t) => ({
         id: t.id,
+        type: t.type,
         title: t.title,
         promptEn: t.promptEn,
         promptZh: t.promptZh,
         difficulty: t.difficulty,
+        metadata: t.metadata,
         suggestedDurationSec: t.suggestedDurationSec,
         activeChunks: t.activeChunks.map((ac) => ({
           id: ac.chunk.id,
@@ -513,13 +526,19 @@ export class LearningService {
       })),
 
       // 关联的剧本入口
-      firstEpisode: scene.scriptEpisodes[0] ?? null,
+      firstEpisode: scene.storyEpisodes[0]
+        ? {
+            ...scene.storyEpisodes[0],
+            chapterTitle: scene.storyEpisodes[0].chapterName,
+            episodeOrder: scene.storyEpisodes[0].sortOrder,
+          }
+        : null,
 
       // 元信息
       vocabCount: vocabularies.length,
       chunkCount: chunks.length,
       topicCount: scene.trainingTopics.length,
-      scriptCount: scene.scriptEpisodes.length,
+      scriptCount: scene.storyEpisodes.length,
     };
   }
 
@@ -689,7 +708,7 @@ export class LearningService {
         vocabularies: [...allVocabIds],
         chunks: [...allChunkIds],
         sentencePatterns: unitDetail.sentencePatterns.map((item: any) => item.pattern),
-        scriptEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
+        storyEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
         inkScripts: topics.map((t) => t.inkScript?.id).filter(Boolean),
         assets,
       },
@@ -1142,7 +1161,7 @@ export class LearningService {
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
       include: {
-        _count: { select: { trainingTopics: true, scriptEpisodes: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true } },
         trainingTopics: {
           select: {
             _count: { select: { topicVocabs: true, activeChunks: true } },
@@ -1168,7 +1187,7 @@ export class LearningService {
     totalVocab = totalVocab || 1;
     totalChunks = totalChunks || 1;
     const totalPractices = scene._count.trainingTopics || 1;
-    const totalScripts = scene._count.scriptEpisodes || 1;
+    const totalScripts = scene._count.storyEpisodes || 1;
 
     const finalVocab = data.vocabLearned ?? (await this.getCurrentVocabLearned(userId, unitId));
     const finalChunk = data.chunkMastered ?? (await this.getCurrentChunkMastered(userId, unitId));

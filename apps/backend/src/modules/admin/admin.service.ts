@@ -140,7 +140,7 @@ export class AdminService {
         _count: {
           select: {
             practiceSessions: true,
-            scriptRecords: true,
+            storyRecords: true,
           },
         },
       },

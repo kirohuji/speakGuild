@@ -712,7 +712,7 @@ function UserRow({
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <StatDot icon={MessageSquare} label="练习会话" value={detail._count.practiceSessions} accent="blue" />
-                  <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.scriptRecords} accent="violet" />
+                  <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.storyRecords} accent="violet" />
                 </div>
               </div>
 

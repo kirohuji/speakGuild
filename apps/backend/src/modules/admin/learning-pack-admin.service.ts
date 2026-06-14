@@ -47,14 +47,14 @@ export class LearningPackAdminService {
   async listScenes() {
     return this.prisma.scene.findMany({
       orderBy: [{ createdAt: 'desc' }],
-      select: { id: true, title: true, location: true },
+      select: { id: true, title: true, location: true, packageType: true },
     });
   }
 
   async generate(userId: string, sceneId: string, input?: { version?: number; title?: string; publish?: boolean }) {
     const scene = await this.prisma.scene.findUnique({
       where: { id: sceneId },
-      select: { id: true, title: true },
+      select: { id: true, title: true, packageType: true },
     });
     if (!scene) throw new NotFoundException('学习单元不存在');
 
@@ -73,10 +73,12 @@ export class LearningPackAdminService {
         sceneId,
         version,
         title,
+        type: scene.packageType,
         status: PACKAGE_STATUS.building,
       },
       update: {
         title,
+        type: scene.packageType,
         status: PACKAGE_STATUS.building,
         buildLog: null,
       },
@@ -107,7 +109,7 @@ export class LearningPackAdminService {
           buildLog: `Generated ${pack.fileName}`,
         },
         include: {
-          scene: { select: { id: true, title: true, location: true } },
+          scene: { select: { id: true, title: true, location: true, packageType: true } },
           fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
         },
       });
@@ -138,7 +140,7 @@ export class LearningPackAdminService {
   }) {
     const scene = await this.prisma.scene.findUnique({
       where: { id: input.sceneId },
-      select: { id: true, title: true },
+      select: { id: true, title: true, packageType: true },
     });
     if (!scene) throw new NotFoundException('学习单元不存在');
 
@@ -177,6 +179,7 @@ export class LearningPackAdminService {
         sceneId: input.sceneId,
         version,
         title,
+        type: scene.packageType,
         status: input.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
         fileAssetId: asset.id,
         zipChecksum: asset.sha256,
@@ -187,6 +190,7 @@ export class LearningPackAdminService {
       },
       update: {
         title,
+        type: scene.packageType,
         status: input.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
         fileAssetId: asset.id,
         zipChecksum: asset.sha256,

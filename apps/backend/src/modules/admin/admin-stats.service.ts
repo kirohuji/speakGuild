@@ -91,7 +91,7 @@ export class AdminStatsService {
       }),
 
       // 总剧本通关数
-      this.prisma.scriptRecord.count({ where: { passed: true } }),
+      this.prisma.storyRecord.count({ where: { passed: true } }),
 
       // 场景总数
       this.prisma.scene.count(),
