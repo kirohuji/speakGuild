@@ -90,7 +90,7 @@ export function MobileInviteDrawer({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">邀请好友，你得 5 天会员</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      好友通过你的邀请码注册成功后，你将获得 5 天漫语会员奖励。
+                      好友通过你的邀请码注册后，你将获得会员奖励。
                     </p>
                   </div>
                 </div>

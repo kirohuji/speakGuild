@@ -148,6 +148,8 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
 
   const nickname = profile?.name || sessionUser?.name || t('profile.notBound')
   const phoneNumber = profile?.phoneNumber || sessionUser?.phoneNumber || null
+  const normalizedBindPhone = bindPhone.replace(/\s+/g, '')
+  const displayPhoneNumber = phoneNumber?.replace(/\s+/g, '') || null
   const email = profile?.email || sessionUser?.email || null
 
   const handleSendVerification = async () => {
@@ -353,7 +355,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
               <div>
                 <p className="text-sm">{t('profile.phone')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {phoneNumber || t('profile.notBound')}
+                  {displayPhoneNumber || t('profile.notBound')}
                 </p>
               </div>
             </div>
@@ -467,30 +469,34 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
 
       {/* 手机号绑定弹窗 */}
       <Dialog open={phoneBindOpen} onOpenChange={(v) => { setPhoneBindOpen(v); if (!v) { setBindPhone(''); setBindOtp(''); setBindError(''); setBindOtpSent(false); resetBindCountdown() } }}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>{t('profile.bindPhone')}</DialogTitle>
             <DialogDescription>{t('profile.bindPhoneDesc')}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="flex gap-2">
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
               <Input
                 value={bindPhone}
-                onChange={(e) => { setBindPhone(e.target.value); setBindOtpSent(false); resetBindCountdown() }}
+                onChange={(e) => { setBindPhone(e.target.value.replace(/\s+/g, '')); setBindOtpSent(false); resetBindCountdown() }}
                 placeholder="+8613800000000"
-                className="flex-1"
+                className="min-w-0"
                 autoComplete="tel"
+                inputMode="tel"
               />
               <Button
                 variant="outline"
                 className="h-11 shrink-0"
-                disabled={bindLoading || bindCountdown > 0 || !bindPhone.trim()}
+                disabled={bindLoading || bindCountdown > 0 || !normalizedBindPhone}
                 onClick={async () => {
-                  if (!bindPhone.trim()) return
+                  if (!normalizedBindPhone) return
                   setBindLoading(true)
                   setBindError('')
                   try {
-                    await sendBindPhoneOtp(bindPhone.trim())
+                    await sendBindPhoneOtp(normalizedBindPhone)
                     setBindOtpSent(true)
                     startBindCountdown()
                   } catch (e: any) {
@@ -513,18 +519,19 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
             />
             {bindError && <p className="text-sm text-destructive">{bindError}</p>}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPhoneBindOpen(false)} disabled={bindLoading}>
+          <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+            <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setPhoneBindOpen(false)} disabled={bindLoading}>
               {t('common.cancel')}
             </Button>
             <Button
+              className="flex-1 sm:flex-none"
               onClick={async () => {
-                if (!bindPhone.trim() || bindOtp.length !== 6) return
+                if (!normalizedBindPhone || bindOtp.length !== 6) return
                 setBindLoading(true)
                 setBindError('')
                 try {
-                  const result = await bindPhoneNumber(bindPhone.trim(), bindOtp)
-                  const boundPhoneNumber = result?.user?.phoneNumber || bindPhone.trim()
+                  const result = await bindPhoneNumber(normalizedBindPhone, bindOtp)
+                  const boundPhoneNumber = result?.user?.phoneNumber?.replace(/\s+/g, '') || normalizedBindPhone
                   await refreshSession()
                   patchCachedProfile({
                     phoneNumber: boundPhoneNumber,
@@ -539,7 +546,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
                   setBindLoading(false)
                 }
               }}
-              disabled={bindLoading || !bindOtpSent || bindOtp.length !== 6}
+              disabled={bindLoading || !bindOtpSent || !normalizedBindPhone || bindOtp.length !== 6}
             >
               {bindLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {t('common.confirm')}
