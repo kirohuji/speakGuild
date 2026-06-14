@@ -1,0 +1,13 @@
+diff --git a/Package.swift b/Package.swift
+index 913e3f62f3fc372e5dde824e05f7573d2d680dcf..7a5ff6ff8e7ef49f86b38e0816ce0da25d93dce3 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -19,7 +19,7 @@ let package = Package(
+             dependencies: [
+                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
+                 .product(name: "Cordova", package: "capacitor-swift-pm"),
+-                .product(name: "Sentry", package: "sentry-cocoa")
++                .product(name: "Sentry-Dynamic", package: "sentry-cocoa")
+             ],
+             path: "ios/Sources/SentryCapacitorPlugin"),
+         .testTarget(

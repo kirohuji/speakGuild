@@ -21,7 +21,8 @@
       "sql.js": "1.11.0"
     },
     "patchedDependencies": {
-      "@capgo/capacitor-wechat@8.0.32": "patches/@capgo__capacitor-wechat@8.0.32.patch"
+      "@capgo/capacitor-wechat@8.0.32": "patches/@capgo__capacitor-wechat@8.0.32.patch",
+      "@sentry/capacitor@4.1.0": "patches/@sentry__capacitor@4.1.0.patch"
     }
   }
 }

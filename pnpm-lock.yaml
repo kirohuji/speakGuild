@@ -11,6 +11,9 @@ patchedDependencies:
   '@capgo/capacitor-wechat@8.0.32':
     hash: 643906a9ef3a7af4556b2c68af41c9bb36f8f69637556eaa5fdc206a772fd1e5
     path: patches/@capgo__capacitor-wechat@8.0.32.patch
+  '@sentry/capacitor@4.1.0':
+    hash: 4a8b45b18318253635b9e4e431269e94b2e0985504b7bab7e250f385512bb936
+    path: patches/@sentry__capacitor@4.1.0.patch
 
 importers:
 
@@ -247,7 +250,7 @@ importers:
         version: 13.1.5(@capacitor/core@8.3.1)
       '@sentry/capacitor':
         specifier: ^4.1.0
-        version: 4.1.0(@capacitor/core@8.3.1)(@sentry/react@10.52.0(react@19.2.5))
+        version: 4.1.0(patch_hash=4a8b45b18318253635b9e4e431269e94b2e0985504b7bab7e250f385512bb936)(@capacitor/core@8.3.1)(@sentry/react@10.52.0(react@19.2.5))
       '@sentry/react':
         specifier: 10.52.0
         version: 10.52.0(react@19.2.5)
@@ -6665,7 +6668,7 @@ snapshots:
       '@sentry-internal/replay-canvas': 10.52.0
       '@sentry/core': 10.52.0
 
-  '@sentry/capacitor@4.1.0(@capacitor/core@8.3.1)(@sentry/react@10.52.0(react@19.2.5))':
+  '@sentry/capacitor@4.1.0(patch_hash=4a8b45b18318253635b9e4e431269e94b2e0985504b7bab7e250f385512bb936)(@capacitor/core@8.3.1)(@sentry/react@10.52.0(react@19.2.5))':
     dependencies:
       '@capacitor/core': 8.3.1
       '@sentry/browser': 10.52.0
