@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { CheckCircle2, Copy, Gift, Share2, Users } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { CheckCircle2, Copy, Gift, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getReferralCode, getReferralStats, type ReferralCodeData, type ReferralStats } from '@/features/referral/api'
+import { isNative } from '@/lib/native/platform'
+
+const PUBLIC_INVITE_BASE_URL =
+  ((import.meta.env.VITE_INVITE_BASE_URL as string | undefined)?.replace(/\/$/, '')) ||
+  window.location.origin
+
+function buildInviteLink(code?: string) {
+  const normalizedCode = code?.trim()
+  return `${PUBLIC_INVITE_BASE_URL}/#/auth/login${normalizedCode ? `?ref=${encodeURIComponent(normalizedCode)}` : ''}`
+}
 
 export function MobileInviteDrawer({
   open,
@@ -24,25 +33,44 @@ export function MobileInviteDrawer({
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!open || codeData || loading) return
+    if (!open) return
+    let cancelled = false
     setLoading(true)
-    Promise.all([getReferralCode(), getReferralStats()])
-      .then(([code, referralStats]) => {
+    getReferralCode()
+      .then(async (code) => {
+        if (cancelled) return
         setCodeData(code)
+        const referralStats = await getReferralStats()
+        if (cancelled) return
         setStats(referralStats)
       })
       .catch((error: any) => {
-        toast.error(error?.message || '暂时无法加载邀请码')
+        if (!cancelled) toast.error(error?.message || '暂时无法加载邀请码')
       })
-      .finally(() => setLoading(false))
-  }, [open, codeData, loading])
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
 
-  const inviteLink = `${window.location.origin}/#/auth/register?ref=${codeData?.code || ''}`
+    return () => {
+      cancelled = true
+    }
+  }, [open])
+
+  const inviteLink = buildInviteLink(codeData?.code)
+  const shareTitle = '漫语町 - 邀请你一起学习'
+  const shareText = `用我的邀请码 ${codeData?.code || ''} 注册漫语町。你注册成功后，我可以获得会员奖励。`
 
   const handleCopyInvite = async () => {
     if (!codeData?.code) return
     try {
-      await navigator.clipboard.writeText(inviteLink)
+      if (isNative()) {
+        const { Clipboard } = await import('@capacitor/clipboard')
+        await Clipboard.write({ string: inviteLink })
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(inviteLink)
+      } else {
+        throw new Error('Clipboard is unavailable')
+      }
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -52,11 +80,47 @@ export function MobileInviteDrawer({
 
   const handleShareInvite = async () => {
     if (!codeData?.code) return
+
+    if (isNative()) {
+      try {
+        const { CapacitorWechat } = await import('@capgo/capacitor-wechat')
+        const { installed } = await CapacitorWechat.isInstalled()
+        if (installed) {
+          await CapacitorWechat.share({
+            scene: 0,
+            type: 'link',
+            title: shareTitle,
+            description: shareText,
+            link: inviteLink,
+          })
+          return
+        }
+      } catch {
+        // Fall back to the system share sheet below.
+      }
+    }
+
+    try {
+      const { Share } = await import('@capacitor/share')
+      const { value: canShare } = await Share.canShare()
+      if (canShare) {
+        await Share.share({
+          title: shareTitle,
+          text: shareText,
+          url: inviteLink,
+          dialogTitle: '分享给好友',
+        })
+        return
+      }
+    } catch {
+      // Fall back to Web Share or copy below.
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '漫语町 - 邀请你一起学习',
-          text: `用我的邀请码 ${codeData.code} 注册漫语町。你注册成功后，我可以获得 5 天会员奖励。`,
+          title: shareTitle,
+          text: shareText,
           url: inviteLink,
         })
       } catch {
@@ -107,7 +171,7 @@ export function MobileInviteDrawer({
                   </Button>
                   <Button className="rounded-lg" onClick={handleShareInvite} disabled={!codeData?.code}>
                     <Share2 className="h-4 w-4" />
-                    分享
+                    分享微信
                   </Button>
                 </div>
               </div>
@@ -121,44 +185,6 @@ export function MobileInviteDrawer({
                   <p className="text-xl font-semibold text-amber-600">{stats?.totalReward || 0}</p>
                   <p className="mt-1 text-xs text-muted-foreground">累计奖励天数</p>
                 </div>
-              </div>
-
-              <div className="overflow-hidden rounded-lg bg-muted/30">
-                <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">邀请记录</p>
-                </div>
-                {stats?.referrals && stats.referrals.length > 0 ? (
-                  <div>
-                    {stats.referrals.map((ref) => (
-                      <div
-                        key={ref.userId}
-                        className="flex items-center gap-3 border-b border-border/50 px-4 py-3 last:border-b-0"
-                      >
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={ref.userImage || undefined} />
-                          <AvatarFallback className="text-[10px]">{ref.userName?.slice(0, 2)}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{ref.userName}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {new Date(ref.joinedAt).toLocaleDateString('zh-CN')}
-                          </p>
-                        </div>
-                        {ref.rewarded && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-success">
-                            <CheckCircle2 className="h-3 w-3" />
-                            已奖励
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                    还没有邀请记录，分享给好友试试看。
-                  </p>
-                )}
               </div>
             </div>
           )}

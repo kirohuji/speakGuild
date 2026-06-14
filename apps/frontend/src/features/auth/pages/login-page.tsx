@@ -16,6 +16,7 @@ import {
   signInWithApple,
   verifyPhoneOtp,
 } from '@/features/auth/api'
+import { applyReferral } from '@/features/referral/api'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { useCountdown } from '@/hooks/use-countdown'
@@ -59,8 +60,13 @@ export function LoginPage() {
   const [message, setMessage] = useState('')
   const actionRunningRef = useRef(false)
   const fromPath = (location.state as { from?: string } | null)?.from
+  const referralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
+  const registerPath = `/auth/register${referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ''}`
 
-  const navigateAfterLogin = () => {
+  const navigateAfterLogin = async () => {
+    if (referralCode) {
+      await applyReferral(referralCode).catch(() => null)
+    }
     navigate(fromPath || '/', { replace: true })
   }
 
@@ -81,7 +87,7 @@ export function LoginPage() {
   const runAction = async (
     task: () => Promise<any>,
     successMessage: string,
-    onSuccess?: () => void,
+    onSuccess?: () => void | Promise<void>,
   ) => {
     if (actionRunningRef.current) return
     actionRunningRef.current = true
@@ -90,7 +96,7 @@ export function LoginPage() {
       setMessage('')
       await task()
       setMessage(successMessage)
-      if (onSuccess) onSuccess()
+      if (onSuccess) await onSuccess()
     } catch (error: any) {
       setMessage(getLoginErrorMessage(error, t))
     } finally {
@@ -267,7 +273,7 @@ export function LoginPage() {
                   await signInWithWechat()
                   const nextSession = await refreshSession()
                   if (nextSession?.user?.id) {
-                    navigateAfterLogin()
+                    await navigateAfterLogin()
                   }
                 },
                 t('auth.wechatRedirecting'),
@@ -291,7 +297,7 @@ export function LoginPage() {
                   await signInWithApple()
                   const nextSession = await refreshSession()
                   if (nextSession?.user?.id) {
-                    navigateAfterLogin()
+                    await navigateAfterLogin()
                   }
                 },
                 '正在跳转 Apple 登录',
@@ -315,7 +321,7 @@ export function LoginPage() {
         )}
         <p className="text-center text-xs text-muted-foreground">
           {t('auth.noAccount')}
-          <Link to="/auth/register" className="ml-1 font-semibold text-primary hover:underline">
+          <Link to={registerPath} className="ml-1 font-semibold text-primary hover:underline">
             {t('auth.goRegister')}
           </Link>
         </p>
