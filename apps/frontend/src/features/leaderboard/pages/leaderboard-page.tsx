@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, PenLine, Flame, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
   getPracticeLeaderboard, getStreakLeaderboard,
@@ -67,11 +67,7 @@ export function LeaderboardPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-          ))}
-        </div>
+        <MobileListSkeleton rows={8} showHeader={false} />
       ) : (
         <div className="space-y-2">
           {items.map((item, idx) => (

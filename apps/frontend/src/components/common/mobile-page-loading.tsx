@@ -9,6 +9,17 @@ type MobilePageLoadingProps = {
   minHeightClassName?: string
 }
 
+type MobileListSkeletonProps = {
+  rows?: number
+  className?: string
+  showHeader?: boolean
+}
+
+type MobileGridSkeletonProps = {
+  items?: number
+  className?: string
+}
+
 export function MobileTopProgress({ loading = true }: { loading?: boolean }) {
   const visible = useDelayedLoading(loading, 300)
   if (!visible) return null
@@ -32,21 +43,54 @@ export function MobilePageLoading({
   return (
     <div className={cn('relative flex items-start justify-center px-4 py-6', minHeightClassName, className)}>
       <MobileTopProgress loading={loading} />
-      <div className="w-full max-w-2xl space-y-3">
-        <Skeleton className="h-8 w-2/5 rounded-md" />
+      <div className="w-full max-w-2xl">
+        <MobileListSkeleton rows={rows} />
+      </div>
+    </div>
+  )
+}
+
+export function MobileListSkeleton({ rows = 4, className, showHeader = true }: MobileListSkeletonProps) {
+  return (
+    <div className={cn('space-y-3', className)}>
+      {showHeader && (
+        <div className="px-1">
+          <Skeleton className="h-5 w-28 rounded-full bg-muted/70" />
+        </div>
+      )}
+      <div className="overflow-hidden rounded-lg bg-muted/30">
         {Array.from({ length: rows }).map((_, index) => (
-          <div key={index} className="rounded-lg border border-border/60 bg-card/60 p-4">
-            <div className="flex items-start gap-3">
-              <Skeleton className="size-10 flex-shrink-0 rounded-md" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/5" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-2/3" />
-              </div>
+          <div
+            key={index}
+            className={cn(
+              'flex min-h-[52px] items-center gap-3 px-4 py-3',
+              index < rows - 1 && 'border-b border-border/50'
+            )}
+          >
+            <Skeleton className="size-8 shrink-0 rounded-[10px] bg-background/80" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-3.5 w-2/5 rounded-full bg-background/80" />
+              <Skeleton className="h-3 w-3/4 rounded-full bg-background/70" />
             </div>
+            <Skeleton className="h-3.5 w-10 rounded-full bg-background/70" />
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+export function MobileGridSkeleton({ items = 6, className }: MobileGridSkeletonProps) {
+  return (
+    <div className={cn('grid grid-cols-2 gap-3', className)}>
+      {Array.from({ length: items }).map((_, index) => (
+        <div key={index} className="rounded-lg bg-muted/30 p-4">
+          <Skeleton className="mx-auto mb-3 size-12 rounded-2xl bg-background/80" />
+          <Skeleton className="mx-auto h-3.5 w-20 rounded-full bg-background/80" />
+          <Skeleton className="mx-auto mt-2 h-3 w-24 rounded-full bg-background/70" />
+          <Skeleton className="mx-auto mt-3 h-4 w-12 rounded-full bg-background/70" />
+        </div>
+      ))}
     </div>
   )
 }

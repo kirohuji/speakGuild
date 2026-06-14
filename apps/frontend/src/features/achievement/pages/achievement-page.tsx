@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, Crown, Flame, Medal, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { MobileGridSkeleton } from '@/components/common/mobile-page-loading'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { getMyAchievements, checkAchievements, type AchievementItem } from '@/features/achievement/api'
 import { cn } from '@/lib/cn'
@@ -72,11 +72,7 @@ export function AchievementPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
-          ))}
-        </div>
+        <MobileGridSkeleton items={8} className="md:grid-cols-3 lg:grid-cols-4" />
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {items.map((item) => {

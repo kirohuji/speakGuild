@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, Inbox, Mail, MailOpen, CheckCheck, ArrowRight, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import {
@@ -201,22 +201,7 @@ function NotificationTabContent({ tab, formatRelativeTime, compact = false }: { 
       )}
 
       {loading && list.length === 0 ? (
-        <div className={cn(
-          compact
-            ? 'space-y-2'
-            : 'space-y-3'
-        )}>
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className={cn('flex items-start gap-3', compact ? 'rounded-lg bg-muted/30 px-3 py-3' : 'rounded-2xl border border-border/50 p-4')}>
-              <Skeleton className={cn('h-10 w-10', compact ? 'h-9 w-9 rounded-md' : 'rounded-xl')} />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/5" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-1/3" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <MobileListSkeleton rows={4} showHeader={false} className={compact ? 'space-y-2' : undefined} />
       ) : list.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">

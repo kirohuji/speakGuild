@@ -4,7 +4,7 @@ import { ArrowLeft, MessageSquare, Send, Loader2, CheckCircle2 } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
 import { Select, SelectItem } from '@/components/ui/select'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { submitFeedback, getMyFeedbacks, type FeedbackResult } from '@/features/feedback/api'
@@ -129,10 +129,7 @@ export function FeedbackPage() {
         </CardHeader>
         <CardContent>
           {loadingFeedbacks ? (
-            <div className="space-y-3">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-            </div>
+            <MobileListSkeleton rows={2} showHeader={false} />
           ) : myFeedbacks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">{t('feedback.noRecords', { defaultValue: '暂无反馈记录' })}</p>
           ) : (
