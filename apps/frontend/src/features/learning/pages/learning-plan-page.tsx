@@ -80,7 +80,7 @@ export function LearningPlanPage() {
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
-          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background">
+          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background drawer-surface">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
               <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>

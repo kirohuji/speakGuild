@@ -105,8 +105,9 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(app.get(OpsAlertService)));
 
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`Backend running on http://localhost:${port}/api/v1/manyu`);
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host);
+  console.log(`Backend running on http://${host}:${port}/api/v1/manyu`);
 }
 
 bootstrap();

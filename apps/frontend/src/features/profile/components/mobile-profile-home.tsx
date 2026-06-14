@@ -156,7 +156,7 @@ export function MobileProfileHome({
       </IosSection>
 
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
-        <DrawerContent className="rounded-t-3xl">
+        <DrawerContent className="rounded-t-3xl drawer-surface">
           <DrawerHeader>
             <DrawerTitle className="text-base">{t('profile.selectLanguage')}</DrawerTitle>
           </DrawerHeader>

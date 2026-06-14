@@ -1,9 +1,20 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+const liveReloadUrl = process.env.CAP_LIVE_RELOAD_URL;
+
 const config: CapacitorConfig = {
   appId: 'lourd.manyu.app',
   appName: '漫语町',
   webDir: 'dist',
+
+  ...(liveReloadUrl
+    ? {
+        server: {
+          url: liveReloadUrl,
+          cleartext: true,
+        },
+      }
+    : {}),
 
   ios: {
     contentInset: 'never',

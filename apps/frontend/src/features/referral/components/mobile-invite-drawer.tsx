@@ -69,7 +69,7 @@ export function MobileInviteDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[88dvh] rounded-t-3xl">
+      <DrawerContent className="max-h-[88dvh] rounded-t-3xl drawer-surface">
         <DrawerHeader className="px-4 pb-2 text-left">
           <DrawerTitle className="text-base">{t('invite.title')}</DrawerTitle>
         </DrawerHeader>
