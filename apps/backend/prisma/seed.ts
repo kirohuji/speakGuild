@@ -123,7 +123,10 @@ async function seedExtras(adminUser: any, normalUser: any) {
 // ══════════════════════════════════════════════════════════
 
 async function main() {
-  // ═══ 清空所有数据（按 FK 依赖顺序） ═══
+  // ═══ 清空可重建数据（按 FK 依赖顺序） ═══
+  //
+  // 公共内容库（Vocabulary / Chunk / SentencePattern / DictionaryEntry）保留。
+  // 学习包 seed 会通过 upsert 复用这些记录，只重建场景、话题、关卡以及关联表。
   console.log('🧹 清空旧数据...')
   await prisma.explorationRecord.deleteMany()
   await prisma.gameSave.deleteMany()
@@ -146,10 +149,6 @@ async function main() {
   await prisma.trainingTopicSentencePattern.deleteMany()
   await prisma.trainingTopic.deleteMany()
   await prisma.userChunkProgress.deleteMany()
-  await prisma.chunkExample.deleteMany()
-  await prisma.chunk.deleteMany()
-  await prisma.sentencePattern.deleteMany()
-  await prisma.vocabulary.deleteMany()
   await prisma.scenePrerequisite.deleteMany()
   await prisma.userSceneProgress.deleteMany()
   await prisma.scene.deleteMany()

@@ -359,8 +359,8 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
         <div className="divide-y divide-border/40">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                <Phone className="size-4 text-green-500" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                <Phone className="size-4 text-emerald-500" />
               </div>
               <div>
                 <p className="text-sm">{t('profile.phone')}</p>
@@ -374,7 +374,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
                 {t('profile.boundPrefix')}
               </Badge>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => setPhoneBindOpen(true)}>
+              <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => setPhoneBindOpen(true)}>
                 <ExternalLink className="mr-1 size-3" />
                 {t('profile.bind')}
               </Button>
