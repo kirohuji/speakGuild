@@ -50,6 +50,30 @@ export class NotificationService {
     return notification;
   }
 
+  /** 系统事件：给单个用户发送站内通知 */
+  async createSystemTargetedNotification(
+    senderUserId: string,
+    targetUserId: string,
+    title: string,
+    content: string,
+  ) {
+    const notification = await this.prisma.notification.create({
+      data: {
+        title,
+        content,
+        type: 'targeted',
+        sentById: senderUserId,
+        targets: {
+          create: { userId: targetUserId },
+        },
+      },
+    });
+
+    this.gateway.pushNotification(notification.id, 'targeted', [targetUserId]);
+
+    return notification;
+  }
+
   /** 用户：获取我的通知列表（含已读状态） */
   async getUserNotifications(userId: string, query: QueryNotificationDto) {
     const { page = 1, pageSize = 20, isRead } = query;

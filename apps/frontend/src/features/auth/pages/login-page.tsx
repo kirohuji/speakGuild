@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Gift, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -59,8 +59,12 @@ export function LoginPage() {
   const [otpSent, setOtpSent] = useState(false)
   const [message, setMessage] = useState('')
   const actionRunningRef = useRef(false)
+  const savedPasswordReadRef = useRef(false)
   const fromPath = (location.state as { from?: string } | null)?.from
-  const referralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
+  const initialReferralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
+  const [showReferralInput, setShowReferralInput] = useState(Boolean(initialReferralCode))
+  const [referralInput, setReferralInput] = useState(initialReferralCode)
+  const referralCode = referralInput.trim().toUpperCase()
   const registerPath = `/auth/register${referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ''}`
 
   const navigateAfterLogin = async () => {
@@ -70,19 +74,16 @@ export function LoginPage() {
     navigate(fromPath || '/', { replace: true })
   }
 
-  useEffect(() => {
-    let cancelled = false
+  const handleCredentialInputFocus = () => {
+    if (savedPasswordReadRef.current) return
+    savedPasswordReadRef.current = true
 
     readSavedPassword().then((credentials) => {
-      if (cancelled || !credentials) return
+      if (!credentials) return
       setEmail((current) => current || credentials.username)
       setPassword((current) => current || credentials.password)
     })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  }
 
   const runAction = async (
     task: () => Promise<any>,
@@ -134,6 +135,7 @@ export function LoginPage() {
               <Input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onFocus={handleCredentialInputFocus}
                 placeholder="you@example.com"
                 className={authInputClassName}
                 autoComplete="email"
@@ -144,6 +146,7 @@ export function LoginPage() {
               <Input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={handleCredentialInputFocus}
                 type="password"
                 placeholder={t('auth.enterPassword')}
                 className={authInputClassName}
@@ -250,6 +253,32 @@ export function LoginPage() {
             ? `${t('auth.phone')}${t('auth.verificationCode')}${t('auth.login')}`
             : t('auth.passwordLogin')}
         </button>
+
+        <div className="flex flex-col gap-2 rounded-xl bg-muted/40 px-3 py-2.5">
+          <button
+            type="button"
+            onClick={() => setShowReferralInput((current) => !current)}
+            className="flex items-center justify-between text-left text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <Gift className="h-3.5 w-3.5" />
+              {referralCode ? `邀请码 ${referralCode}` : '输入邀请码'}
+            </span>
+            <span>{showReferralInput ? '收起' : '填写'}</span>
+          </button>
+          {showReferralInput && (
+            <Input
+              value={referralInput}
+              onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+              placeholder="好友邀请码"
+              className={cn(authInputClassName, 'h-10 bg-background/80 text-sm uppercase')}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={16}
+            />
+          )}
+        </div>
 
         {/* 分割线 + 第三方登录 */}
         <div className="relative">

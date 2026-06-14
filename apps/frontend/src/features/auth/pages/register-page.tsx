@@ -18,13 +18,16 @@ export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const referralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
+  const initialReferralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showReferralInput, setShowReferralInput] = useState(Boolean(initialReferralCode))
+  const [referralInput, setReferralInput] = useState(initialReferralCode)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const referralCode = referralInput.trim().toUpperCase()
 
   const validate = () => {
     if (!name.trim()) { setMessage(t('auth.enterName')); return false }
@@ -84,14 +87,36 @@ export function RegisterPage() {
       )}
     >
       <div className="space-y-4">
-            {referralCode && (
-              <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-                <Gift className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>
-                  已填入邀请码 <span className="font-semibold text-primary">{referralCode}</span>。注册成功后，邀请人将获得 5 天会员奖励。
+            <div className="flex flex-col gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5">
+              <button
+                type="button"
+                onClick={() => setShowReferralInput((current) => !current)}
+                className="flex items-center justify-between text-left text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Gift className="h-3.5 w-3.5" />
+                  {referralCode ? `邀请码 ${referralCode}` : '输入邀请码'}
                 </span>
-              </div>
-            )}
+                <span>{showReferralInput ? '收起' : '填写'}</span>
+              </button>
+              {showReferralInput && (
+                <>
+                  <Input
+                    value={referralInput}
+                    onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                    placeholder="好友邀请码"
+                    className={cn(authInputClassName, 'h-10 bg-background/80 text-sm uppercase')}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    maxLength={16}
+                  />
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    注册成功后会自动绑定邀请关系，邀请人将获得会员奖励。
+                  </p>
+                </>
+              )}
+            </div>
 
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.userName')}</Label>

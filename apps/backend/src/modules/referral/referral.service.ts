@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../common/prisma/prisma.service'
+import { NotificationService } from '../notification/notification.service'
 import * as crypto from 'crypto'
 
 @Injectable()
 export class ReferralService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   private generateCode(): string {
     return crypto.randomBytes(4).toString('hex').toUpperCase()
@@ -77,6 +81,15 @@ export class ReferralService {
 
     // 仅邀请人获得会员天数；被邀请人只获得积分，不额外赠送邀请会员天数。
     await this.grantTrialDays(referrerCode.userId, trialDays)
+
+    await this.notificationService.createSystemTargetedNotification(
+      referredUserId,
+      referrerCode.userId,
+      '邀请奖励已到账',
+      `你邀请的好友已完成注册，系统已为你延长 ${trialDays} 天漫语会员。`,
+    ).catch((error) => {
+      console.warn('[Referral] create invite reward notification failed:', error)
+    })
 
     // 积分奖励
     await this.grantPoints(referrerCode.userId, 100, 'invite_reward', '邀请好友注册奖励')

@@ -305,7 +305,10 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
 
       {/* ── 注销账户 Dialog ── */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="text-destructive">{t('profile.deleteAccount')}</DialogTitle>
             <DialogDescription>
@@ -316,14 +319,14 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
                   : '确认后账号将进入 7 天注销缓冲期。期间可取消；到期后账户及学习数据将被删除。请输入密码以确认。'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 py-2">
             {deleteRequirementsLoading ? (
-              <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 正在确认账号类型...
               </div>
             ) : deleteScheduledAt ? (
-              <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
                 你现在仍可正常使用账号。若不再希望注销，请点击下方“取消注销申请”。
               </div>
             ) : deleteRequiresPassword ? (
@@ -335,25 +338,41 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
                 autoComplete="current-password"
               />
             ) : (
-              <div className="rounded-lg bg-destructive/5 px-3 py-2 text-sm text-muted-foreground">
+              <div className="rounded-xl bg-destructive/5 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
                 请再次确认：账号将进入 7 天注销缓冲期，到期后账户、学习进度和同步数据将无法恢复。
               </div>
             )}
             {deleteMessage && <p className="text-sm text-success">{deleteMessage}</p>}
             {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>{t('common.cancel')}</Button>
+          <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteLoading}
+            >
+              {t('common.cancel')}
+            </Button>
             {deleteScheduledAt ? (
-              <Button onClick={handleCancelDeleteAccount} disabled={deleteLoading || deleteRequirementsLoading}>
+              <Button
+                className="flex-1 sm:flex-none"
+                onClick={handleCancelDeleteAccount}
+                disabled={deleteLoading || deleteRequirementsLoading}
+              >
                 {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 取消注销申请
               </Button>
             ) : (
-            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteLoading || deleteRequirementsLoading || deleteRequiresPassword === null}>
-              {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {t('common.confirm')}
-            </Button>
+              <Button
+                variant="destructive"
+                className="flex-1 sm:flex-none"
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading || deleteRequirementsLoading || deleteRequiresPassword === null}
+              >
+                {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {t('common.confirm')}
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>

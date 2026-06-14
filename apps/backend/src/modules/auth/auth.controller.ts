@@ -5,6 +5,7 @@ import { auth } from './auth';
 import { PasswordService } from './password.service';
 import { requireAuthSession } from './session.util';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 import {
   ForgotPasswordDto,
   ResetPasswordDto,
@@ -20,6 +21,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
     private readonly prisma: PrismaService,
     private readonly nativeWechatAuthService: NativeWechatAuthService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   @Get('ok')
@@ -168,6 +170,15 @@ export class AuthController {
         where: { key: 'promo_trial_claimed_count' },
         data: { value: String(claimedCount + 1) },
       });
+    });
+
+    await this.notificationService.createSystemTargetedNotification(
+      session.user.id,
+      session.user.id,
+      '新人会员已到账',
+      `欢迎来到漫语町！系统已为你赠送 ${days} 天漫语会员，可直接体验完整练习权益。`,
+    ).catch((error) => {
+      console.warn('[Auth] create promo trial notification failed:', error);
     });
 
     return { granted: true, days, message: `已赠送 ${days} 天会员试用` };
