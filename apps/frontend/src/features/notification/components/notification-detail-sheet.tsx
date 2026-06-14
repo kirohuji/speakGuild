@@ -50,7 +50,7 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-9 shrink-0 rounded-full"
+                  className="size-10 shrink-0 rounded-full"
                   onClick={onClose}
                   aria-label={t('common.back')}
                 >

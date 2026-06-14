@@ -799,10 +799,10 @@ export function VnPlayer({
                 </div>
                 <button
                   type="button"
-                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={() => toggleHistory(false)}
                 >
-                  <X className="size-4" />
+                  <X className="size-5" />
                 </button>
               </div>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">

@@ -286,9 +286,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           type="button"
           aria-label="返回"
           onClick={() => navigate(-1)}
-          className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+          className="absolute left-0 inline-flex size-10 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-[22px] w-[22px]" />
         </button>
         <h1 className="text-base font-semibold">{t('member.title')}</h1>
       </div>}

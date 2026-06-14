@@ -32,7 +32,7 @@ export function BottomNav() {
   return (
     <nav className="fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl"
          style={{ bottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px))` }}>
-      <div className="flex h-14 items-center justify-around px-1">
+      <div className="flex h-16 items-center justify-around px-1.5">
         {navItems.map(({ label, path, icon: Icon }) => {
           const active = isActive(path)
           return (
@@ -43,12 +43,12 @@ export function BottomNav() {
                 if (active) event.preventDefault()
               }}
               className={cn(
-                'relative flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 transition-colors',
+                'relative flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 transition-colors',
                 active ? 'bg-background/54 text-foreground shadow-sm' : 'text-muted-foreground'
               )}
             >
-              <Icon className={cn('h-5 w-5', active && 'stroke-[2.35] text-primary')} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <Icon className={cn('h-[21px] w-[21px]', active && 'stroke-[2.35] text-primary')} />
+              <span className="text-[11.5px] font-medium leading-4">{label}</span>
             </Link>
           )
         })}

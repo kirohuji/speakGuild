@@ -70,11 +70,11 @@ export function PracticeVnDrawer({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-sm"
-                className="shrink-0 rounded-full"
+                size="icon"
+                className="size-10 shrink-0 rounded-full"
                 onClick={() => setOpen(false)}
               >
-                <X className="size-4" />
+                <X className="size-5" />
               </Button>
             </div>
           </DrawerHeader>

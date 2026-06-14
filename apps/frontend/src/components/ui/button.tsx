@@ -27,7 +27,7 @@ const buttonVariants = cva(
         sm: "h-8 px-4 py-1.5 text-xs rounded-lg",
         lg: "h-11 px-8 py-2.5 rounded-xl",
         "icon-sm": "h-8 w-8 rounded-lg",
-        "icon": "h-9 w-9 rounded-lg",
+        "icon": "h-10 w-10 rounded-lg",
         // 新增：修长但不扁的主按钮
         "primary-lg": "h-[46px] px-7 py-2.5 rounded-xl text-[15px] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.06)_inset] hover:shadow-[0_3px_8px_rgba(0,0,0,0.14),0_0_0_1px_rgba(255,255,255,0.1)_inset] active:shadow-[0_1px_2px_rgba(0,0,0,0.1)]",
       },

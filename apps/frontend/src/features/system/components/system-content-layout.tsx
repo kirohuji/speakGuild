@@ -31,12 +31,12 @@ export function SystemContentLayout({ title, children, backPath }: SystemContent
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+            className="inline-flex size-10 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
             aria-label="返回"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-[22px] w-[22px]" />
           </button>
-          <h1 className="flex-1 truncate text-center text-base font-semibold pr-8">{title}</h1>
+          <h1 className="flex-1 truncate text-center text-base font-semibold pr-10">{title}</h1>
         </div>
         {/* 移动端内容区 */}
         <div className="px-4 py-5 pb-24">

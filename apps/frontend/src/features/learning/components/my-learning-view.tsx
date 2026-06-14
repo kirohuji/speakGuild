@@ -170,8 +170,8 @@ function InProgressUnitCard({
                 <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
               <button type="button" onClick={(e) => { e.preventDefault(); setConfirmQuit(true) }}
-                className="shrink-0 rounded-md p-1 text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-400">
-                <X className="size-4" />
+                className="-mr-2 -mt-2 flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-400">
+                <X className="size-5" />
               </button>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>

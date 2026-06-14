@@ -24,9 +24,9 @@ export function AuthPageShell({
             <button
               type="button"
               onClick={onBack}
-              className="press-feedback inline-flex items-center gap-1.5 rounded-full bg-background/60 px-3 py-2 text-xs font-medium text-muted-foreground ring-1 ring-border/50 backdrop-blur-xl transition-colors hover:text-foreground"
+              className="press-feedback inline-flex min-h-10 items-center gap-1.5 rounded-full bg-background/60 px-4 py-2 text-sm font-medium text-muted-foreground ring-1 ring-border/50 backdrop-blur-xl transition-colors hover:text-foreground"
             >
-              <ArrowLeft className="size-3.5" />
+              <ArrowLeft className="size-4" />
               {backLabel}
             </button>
           </div>

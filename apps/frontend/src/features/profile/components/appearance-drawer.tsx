@@ -30,9 +30,9 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
             type="button"
             aria-label={t('common.back')}
             onClick={() => onOpenChange(false)}
-            className="absolute left-4 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+            className="absolute left-3 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-[22px] w-[22px]" />
           </button>
           <DrawerTitle className="text-center text-base font-semibold leading-6">{t('profile.theme')}</DrawerTitle>
         </DrawerHeader>

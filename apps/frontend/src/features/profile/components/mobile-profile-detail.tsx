@@ -21,9 +21,9 @@ export function MobileProfileDetail({
           type="button"
           aria-label={t('common.back')}
           onClick={onBack}
-          className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
+          className="absolute left-0 inline-flex size-10 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-[22px] w-[22px]" />
         </button>
         <h1 className="max-w-[70%] truncate text-base font-semibold">
           {title}
