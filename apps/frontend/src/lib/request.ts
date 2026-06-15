@@ -110,6 +110,8 @@ instance.interceptors.response.use(
   (error) => {
     if (error?.response?.status === 401) {
       clearBearerToken()
+      // Notify auth system so it can redirect to login page
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'))
     }
     const normalized = normalizeError(error)
     console.error('[API Error]', normalized.message, error)

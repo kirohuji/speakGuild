@@ -56,7 +56,7 @@ export function MyLearningView({
       <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="mt-4 text-sm text-muted-foreground">{t('learning.notStarted')}</p>
-        <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onGoToShop} data-spotlight="go-to-shop">
+        <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={(e) => { e.currentTarget.blur(); onGoToShop() }} data-spotlight="go-to-shop">
           {t('learning.goToShop')}
         </Button>
       </div>

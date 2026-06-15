@@ -114,6 +114,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Listen for 401 events from request interceptor (token expired/invalid)
+  // so we can clear session and let AuthRouteGate redirect to login
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setSession(null)
+    }
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  }, [])
+
   useAppForegroundSync(session?.user?.id)
 
   const fetchSession = async (): Promise<Session | null> => {

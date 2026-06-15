@@ -54,12 +54,12 @@ export function LearningPlanPage() {
         <div className="mb-3 flex items-center justify-between">
           <div />
           <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
-            <button type="button" onClick={() => setRecordsOpen(true)}
+            <button type="button" onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
               aria-label={t('profile.records')}>
               <ClipboardList className="size-[18px]" />
             </button>
-            <button type="button" onClick={() => { setShopOpen(true); refreshShop({ packageType: 'daily' }); fetchTags('daily') }}
+            <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop({ packageType: 'daily' }); fetchTags('daily') }}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
               aria-label={t('member.title')}>
               <ShoppingBag className="size-[18px]" />

@@ -84,7 +84,7 @@ function PixiThemeLayer({ themeId, isDark, testMode }: {
     // Clean up previous theme
     if (setupRef.current) {
       for (const item of setupRef.current.items) {
-        app.stage.removeChild(item);
+        if (app.stage) app.stage.removeChild(item);
         item.destroy();
       }
       setupRef.current = null;
@@ -100,7 +100,7 @@ function PixiThemeLayer({ themeId, isDark, testMode }: {
     return () => {
       if (setupRef.current) {
         for (const item of setupRef.current.items) {
-          app.stage.removeChild(item);
+          if (app.stage) app.stage.removeChild(item);
           item.destroy();
         }
         setupRef.current = null;
@@ -111,7 +111,7 @@ function PixiThemeLayer({ themeId, isDark, testMode }: {
   // ── Per-frame animation loop ──
   useTick((ticker) => {
     const setup = setupRef.current;
-    if (!setup) return;
+    if (!setup || !app.stage) return;
 
     // ★ 键盘弹出或 VN 激活时跳过渲染
     if (
@@ -126,7 +126,7 @@ function PixiThemeLayer({ themeId, isDark, testMode }: {
 
     for (let i = items.length - 1; i >= 0; i--) {
       if (typeof items[i].update !== 'function' || !items[i].update(dt, w, h)) {
-        app.stage.removeChild(items[i]);
+        if (app.stage) app.stage.removeChild(items[i]);
         items[i].destroy();
         items.splice(i, 1);
       }
