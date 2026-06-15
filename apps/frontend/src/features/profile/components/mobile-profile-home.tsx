@@ -55,7 +55,7 @@ export function MobileProfileHome({
   const nickname = userProfile?.name || userProfile?.username || t('app.name')
   const hasActiveMembership = membership?.level === 'admin' || !!membership?.isActive
   const membershipLabel = membership?.level === 'admin'
-    ? '管理员'
+    ? t('member.admin')
     : hasActiveMembership
       ? membership?.planName || t('member.badgeActive')
       : t('member.freeUser')
@@ -134,7 +134,7 @@ export function MobileProfileHome({
           icon={Gift}
           iconBg="bg-pink-500"
           label={t('invite.title')}
-          subtitle="好友注册成功后，你获得 5 天会员"
+          // subtitle="好友注册成功后，你获得 5 天会员"
           onTap={() => setShowInviteDrawer(true)}
         />
         <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />

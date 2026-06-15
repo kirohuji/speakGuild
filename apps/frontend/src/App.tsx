@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { NativeBridgeProvider } from '@/lib/native'
@@ -57,17 +58,18 @@ function PageLoader() {
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <NativeBridgeProvider>
-        <KeyboardProvider>
-        <AuthProvider>
-          <ThemePresetProvider>
-          <HashRouter>
-          <AuthRouteGate>
-            <MobileGestureProvider>
-            <OnboardingProvider>
-            <Suspense fallback={<PageLoader />}>
-            <Routes>
+    <HelmetProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <NativeBridgeProvider>
+          <KeyboardProvider>
+          <AuthProvider>
+            <ThemePresetProvider>
+            <HashRouter>
+            <AuthRouteGate>
+              <MobileGestureProvider>
+              <OnboardingProvider>
+              <Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* ── Web 独有：后台管理 — Capacitor 端不注册 ── */}
               {!isNative() && <Route path="/admin/*" element={<AdminRoutes />} />}
 
@@ -152,5 +154,6 @@ export default function App() {
       </KeyboardProvider>
       </NativeBridgeProvider>
     </ThemeProvider>
+    </HelmetProvider>
   )
 }

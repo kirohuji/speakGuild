@@ -41,10 +41,10 @@ const mobileTitles: Record<string, string> = {
   records: 'profile.records',
   words: 'profile.words',
   account: 'profile.account',
-  settings: '系统设置',
+  settings: 'profile.systemSettings',
   appearance: 'profile.theme',
   member: 'member.title',
-  storage: '存储管理',
+  storage: 'profile.storageManagement',
 }
 
 interface ProfilePageProps {

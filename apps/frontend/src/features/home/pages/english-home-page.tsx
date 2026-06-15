@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { useTheme } from 'next-themes'
@@ -15,6 +16,7 @@ import { useHomeStore } from '@/stores/home.store'
 import { toast } from 'sonner'
 
 function useClock() {
+  const { t } = useTranslation()
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -24,12 +26,13 @@ function useClock() {
 
   const hours = now.getHours().toString().padStart(2, '0')
   const minutes = now.getMinutes().toString().padStart(2, '0')
-  const period = now.getHours() < 12 ? '上午' : '下午'
+  const period = now.getHours() < 12 ? t('home.am') : t('home.pm')
 
   return { hours, minutes, period }
 }
 
 export function EnglishHomePage() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const { resolvedTheme, theme } = useTheme()
   const location = useLocation()
@@ -66,7 +69,7 @@ export function EnglishHomePage() {
       const message = await storeCheckIn()
       toast.success(message)
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || '签到失败')
+      toast.error(e?.response?.data?.message || t('home.checkInFailed'))
     }
   }
 
@@ -75,9 +78,9 @@ export function EnglishHomePage() {
     return (
       <div className="mx-auto flex max-w-2xl flex-col items-center px-4 pb-24 pt-20 text-center">
         <BookOpen className="mb-4 size-16 text-muted-foreground/30" />
-        <h1 className="text-2xl font-bold text-foreground">ManYu</h1>
-        <p className="mt-2 text-muted-foreground">多语种口语练习平台</p>
-        <Button className="mt-6" asChild><Link to="/auth/login">登录 / 注册</Link></Button>
+        <h1 className="text-2xl font-bold text-foreground">{t('app.name')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('app.tagline')}</p>
+        <Button className="mt-6" asChild><Link to="/auth/login">{t('auth.loginRegister')}</Link></Button>
         {isTestMode && <SpecialBanner />}
       </div>
     )
@@ -182,7 +185,7 @@ export function EnglishHomePage() {
             >
               <Gift className="size-4 text-amber-500" />
               <span className={cn('text-sm font-medium', isDark ? 'text-amber-200' : 'text-amber-800')}>
-                {checkInLoading ? '签到中...' : '每日签到'}
+                {checkInLoading ? t('home.checkingIn') : t('home.checkIn')}
               </span>
             </button>
         </motion.div>

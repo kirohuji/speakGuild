@@ -1,19 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Loader2, CheckCircle2, MessageSquare, Mail, Bug, Lightbulb } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, MessageSquare, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectItem } from '@/components/ui/select'
+import { FeedbackTypePicker } from '@/features/feedback/components/feedback-type-picker'
 import { submitAnonymousFeedback, submitFeedback } from '@/features/feedback/api'
 import { useAuth } from '@/providers/auth-provider'
-
-const TYPE_OPTIONS = [
-  { value: 'bug', label: '问题反馈', labelKey: 'feedback.typeBug' },
-  { value: 'suggestion', label: '功能建议', labelKey: 'feedback.typeSuggestion' },
-  { value: 'other', label: '其他', labelKey: 'feedback.typeOther' },
-]
 
 interface FeedbackDialogProps {
   open: boolean
@@ -83,11 +77,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             <>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.type', { defaultValue: '反馈类型' })}</label>
-                <Select value={type} onChange={(e) => setType(e.target.value)} className="w-full">
-                  {TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey, { defaultValue: opt.label })}</SelectItem>
-                  ))}
-                </Select>
+                <FeedbackTypePicker value={type} onValueChange={setType} />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">

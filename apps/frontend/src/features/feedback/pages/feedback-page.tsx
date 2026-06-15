@@ -5,17 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
-import { Select, SelectItem } from '@/components/ui/select'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { submitFeedback, getMyFeedbacks, type FeedbackResult } from '@/features/feedback/api'
-import { cn } from '@/lib/cn'
+import { FeedbackTypePicker, FEEDBACK_TYPE_OPTIONS } from '@/features/feedback/components/feedback-type-picker'
 import { useTranslation } from 'react-i18next'
-
-const TYPE_OPTIONS = [
-  { value: 'bug', label: '问题反馈', labelKey: 'feedback.typeBug' },
-  { value: 'suggestion', label: '功能建议', labelKey: 'feedback.typeSuggestion' },
-  { value: 'other', label: '其他', labelKey: 'feedback.typeOther' },
-]
 
 const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondary' | 'default'; labelKey: string }> = {
   pending: { label: '处理中', variant: 'secondary', labelKey: 'feedback.statusPending' },
@@ -26,7 +18,6 @@ const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondar
 export function FeedbackPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const isMobile = useIsMobile()
   const [type, setType] = useState('bug')
   const [content, setContent] = useState('')
   const [contact, setContact] = useState('')
@@ -89,11 +80,7 @@ export function FeedbackPage() {
             <>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.type')}</label>
-                <Select value={type} onChange={(e) => setType(e.target.value)} className="w-full">
-                  {TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey, { defaultValue: opt.label })}</SelectItem>
-                  ))}
-                </Select>
+                <FeedbackTypePicker value={type} onValueChange={setType} />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.detail')}</label>
@@ -138,7 +125,7 @@ export function FeedbackPage() {
                 <div key={fb.id} className="rounded-lg border border-border/60 p-3 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-[10px]">
-                      {t(TYPE_OPTIONS.find((opt) => opt.value === fb.type)?.labelKey || 'feedback.typeOther', { defaultValue: fb.type })}
+                      {t(FEEDBACK_TYPE_OPTIONS.find((opt) => opt.value === fb.type)?.labelKey || 'feedback.typeOther', { defaultValue: fb.type })}
                     </Badge>
                     <Badge variant={STATUS_MAP[fb.status]?.variant || 'outline'} className="text-[10px]">
                       {t(STATUS_MAP[fb.status]?.labelKey || 'feedback.statusPending', { defaultValue: fb.status })}

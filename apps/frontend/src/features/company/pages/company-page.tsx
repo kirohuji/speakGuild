@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { motion, useInView } from 'motion/react'
 import {
   Building2, MapPin, Mail,
@@ -83,7 +84,12 @@ const capabilities = [
 
 export function CompanyPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background">
+    <>
+      <Helmet>
+        <title>上海影与达科技有限公司 — 软件定制开发与技术咨询</title>
+        <meta name="description" content="上海影与达科技有限公司，专注移动端/Web 全栈开发与从 0 到 1 上线交付，提供技术咨询与长期维护服务。" />
+      </Helmet>
+      <div className="relative min-h-screen overflow-x-hidden bg-background">
       {/* 背景光晕 — 与 Portal 对齐 */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-40 top-[32%] size-80 rounded-full bg-primary/[0.04] blur-3xl" />
@@ -367,6 +373,7 @@ export function CompanyPage() {
         </div>
       </footer>
     </div>
+    </>
   )
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Copy, Share2, Users, Gift, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { getReferralCode, getReferralStats, type ReferralCodeData, type ReferralStats } from '@/features/referral/api'
 
 export function InvitePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [codeData, setCodeData] = useState<ReferralCodeData | null>(null)
   const [stats, setStats] = useState<ReferralStats | null>(null)
@@ -33,8 +35,8 @@ export function InvitePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '漫语町 - 邀请你一起学习',
-          text: `用我的邀请码 ${codeData?.code} 注册漫语町。你注册成功后，我可以获得 5 天会员奖励。`,
+          title: t('invite.shareTitle'),
+          text: t('invite.shareText', { code: codeData?.code || '' }),
           url: inviteLink,
         })
       } catch { /* ignore */ }
@@ -60,8 +62,8 @@ export function InvitePage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold">邀请好友</h1>
-          <p className="text-xs text-muted-foreground">好友注册成功后，你获得会员奖励</p>
+          <h1 className="text-lg font-bold">{t('invite.title')}</h1>
+          <p className="text-xs text-muted-foreground">{t('invite.guestSubtitle')}</p>
         </div>
       </div>
 
@@ -71,9 +73,9 @@ export function InvitePage() {
             <Gift className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">邀请好友，你得 5 天会员</h2>
+            <h2 className="text-xl font-bold">{t('invite.rewardTitle')}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              好友通过你的邀请码注册成功后，你将获得 5 天漫语会员奖励
+              {t('invite.rewardDescFull')}
             </p>
           </div>
           <div className="inline-flex items-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-background px-6 py-3">
@@ -84,11 +86,11 @@ export function InvitePage() {
           <div className="flex items-center justify-center gap-3">
             <Button onClick={handleCopy} variant="outline" className="gap-2">
               {copied ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-              {copied ? '已复制' : '复制链接'}
+              {copied ? t('invite.copied') : t('invite.copyLink')}
             </Button>
             <Button onClick={handleShare} className="gap-2">
               <Share2 className="h-4 w-4" />
-              分享给好友
+              {t('invite.shareDialogTitle')}
             </Button>
           </div>
         </CardContent>
@@ -97,18 +99,18 @@ export function InvitePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4" /> 邀请记录
+            <Users className="h-4 w-4" /> {t('invite.records')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="rounded-xl bg-muted/30 p-4 text-center">
               <p className="text-2xl font-bold text-primary">{stats?.totalInvited || 0}</p>
-              <p className="text-xs text-muted-foreground mt-1">已邀请人数</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('invite.totalInvited')}</p>
             </div>
             <div className="rounded-xl bg-muted/30 p-4 text-center">
               <p className="text-2xl font-bold text-accent">{stats?.totalReward || 0}</p>
-              <p className="text-xs text-muted-foreground mt-1">累计奖励天数</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('invite.totalReward')}</p>
             </div>
           </div>
           {stats?.referrals && stats.referrals.length > 0 ? (
@@ -127,14 +129,14 @@ export function InvitePage() {
                   </div>
                   {ref.rewarded && (
                     <span className="text-[10px] text-success flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> 已奖励
+                      <CheckCircle2 className="h-3 w-3" /> {t('invite.rewarded')}
                     </span>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-6">还没有邀请记录，快去邀请好友吧！</p>
+            <p className="text-sm text-muted-foreground text-center py-6">{t('invite.emptyRecords')}</p>
           )}
         </CardContent>
       </Card>

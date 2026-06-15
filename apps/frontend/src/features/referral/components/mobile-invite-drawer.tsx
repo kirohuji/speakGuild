@@ -45,7 +45,7 @@ export function MobileInviteDrawer({
         setStats(referralStats)
       })
       .catch((error: any) => {
-        if (!cancelled) toast.error(error?.message || '暂时无法加载邀请码')
+        if (!cancelled) toast.error(error?.message || t('invite.loadFailed'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -57,8 +57,8 @@ export function MobileInviteDrawer({
   }, [open])
 
   const inviteLink = buildInviteLink(codeData?.code)
-  const shareTitle = '漫语町 - 邀请你一起学习'
-  const shareText = `用我的邀请码 ${codeData?.code || ''} 注册漫语町。你注册成功后，我可以获得会员奖励。`
+  const shareTitle = t('invite.shareTitle')
+  const shareText = t('invite.shareText', { code: codeData?.code || '' })
 
   const handleCopyInvite = async () => {
     if (!codeData?.code) return
@@ -74,7 +74,7 @@ export function MobileInviteDrawer({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('复制失败，请稍后重试')
+      toast.error(t('invite.copyFailed'))
     }
   }
 
@@ -108,7 +108,7 @@ export function MobileInviteDrawer({
           title: shareTitle,
           text: shareText,
           url: inviteLink,
-          dialogTitle: '分享给好友',
+          dialogTitle: t('invite.shareDialogTitle'),
         })
         return
       }
@@ -152,14 +152,14 @@ export function MobileInviteDrawer({
                     <Gift className="h-5 w-5 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">邀请好友，你得 5 天会员</p>
+                    <p className="text-sm font-semibold">{t('invite.rewardTitle')}</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      好友通过你的邀请码注册后，你将获得会员奖励。
+                      {t('invite.rewardDesc')}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4 rounded-lg border border-dashed border-primary/30 bg-background px-4 py-3 text-center">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">邀请码</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{t('invite.codeLabel')}</p>
                   <p className="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-primary">
                     {codeData?.code || '----'}
                   </p>
@@ -167,11 +167,11 @@ export function MobileInviteDrawer({
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Button variant="outline" className="rounded-lg" onClick={handleCopyInvite} disabled={!codeData?.code}>
                     {copied ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-                    {copied ? '已复制' : '复制链接'}
+                    {copied ? t('invite.copied') : t('invite.copyLink')}
                   </Button>
                   <Button className="rounded-lg" onClick={handleShareInvite} disabled={!codeData?.code}>
                     <Share2 className="h-4 w-4" />
-                    分享微信
+                    {t('invite.shareWechat')}
                   </Button>
                 </div>
               </div>
@@ -179,11 +179,11 @@ export function MobileInviteDrawer({
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted/30 px-4 py-3 text-center">
                   <p className="text-xl font-semibold text-primary">{stats?.totalInvited || 0}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">已邀请人数</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('invite.totalInvited')}</p>
                 </div>
                 <div className="rounded-lg bg-muted/30 px-4 py-3 text-center">
                   <p className="text-xl font-semibold text-amber-600">{stats?.totalReward || 0}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">累计奖励天数</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('invite.totalReward')}</p>
                 </div>
               </div>
             </div>

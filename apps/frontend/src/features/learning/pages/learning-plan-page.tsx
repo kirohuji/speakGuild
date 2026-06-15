@@ -123,7 +123,7 @@ export function LearningPlanPage() {
 
 // ─── 练习记录列表内容 ──────────────────────────────────────────────────────
 function PracticeRecordsContent() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [data, setData] = useState<PracticeRecordsResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -176,9 +176,9 @@ function PracticeRecordsContent() {
             {v === 'analyzed' ? t('profile.practiceRecords.status.analyzed') : v === 'analyzing' ? t('profile.practiceRecords.status.analyzing') : v === 'completed' ? t('profile.practiceRecords.status.completed') : v === 'failed' ? t('profile.practiceRecords.status.failed') : t('profile.practiceRecords.status.inProgress')}
           </Badge>
           <div className="text-[11px] text-muted-foreground">
-            {typeof row.score === 'number' && <span className="font-semibold text-primary tabular-nums">{row.score}分</span>}
+            {typeof row.score === 'number' && <span className="font-semibold text-primary tabular-nums">{row.score}{t('profile.reviewScoreUnit')}</span>}
             {typeof row.score === 'number' && <span className="mx-1 text-border">·</span>}
-            <span>{row.practiceCount}次</span>
+            <span>{row.practiceCount}{t('profile.reviewPracticeCountUnit')}</span>
           </div>
         </div>
       ),
@@ -189,7 +189,7 @@ function PracticeRecordsContent() {
       header: t('profile.practiceRecords.columns.date'),
       cell: (v) => (
         <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-          {new Date(v).toLocaleDateString('zh-CN')}
+          {new Date(v).toLocaleDateString(i18n.language)}
         </span>
       ),
       align: 'center',
@@ -199,7 +199,7 @@ function PracticeRecordsContent() {
   return (
     <div className="space-y-4">
       <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
-        中途退出的练习不会计入记录。
+        {t('profile.reviewIncompleteHint')}
       </p>
       <ConfigDataTable
         data={data?.list || []}
@@ -230,6 +230,7 @@ function PracticeRecordReadonlyReviewDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation()
   const [session, setSession] = useState<PracticeSession | null>(null)
   const [topicDetail, setTopicDetail] = useState<TopicDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -274,54 +275,54 @@ function PracticeRecordReadonlyReviewDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
         <DrawerHeader className="sr-only">
-          <DrawerTitle>练习回顾</DrawerTitle>
+          <DrawerTitle>{t('profile.reviewTitle')}</DrawerTitle>
         </DrawerHeader>
         {loading ? (
           <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
         ) : !session ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-muted-foreground">暂时无法加载这次练习回顾</p>
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>关闭</Button>
+            <p className="text-sm text-muted-foreground">{t('profile.reviewLoadFailed')}</p>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
         ) : showAnalysis ? (
           <div className="h-full overflow-y-auto bg-background">
             <div className="mx-auto max-w-2xl px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))]">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <Button variant="ghost" size="sm" onClick={() => setShowAnalysis(false)}>返回对话</Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowAnalysis(false)}>{t('profile.reviewBackToChat')}</Button>
                 <Badge variant={passed ? 'default' : 'secondary'} className={cn('rounded-full', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
-                  {score > 0 ? `${score} 分 · ${passed ? '已掌握' : '继续练习'}` : '等待评估'}
+                  {score > 0 ? `${score} ${t('profile.reviewScoreUnit')} · ${passed ? t('profile.reviewScorePassed') : t('profile.reviewScoreRetry')}` : t('profile.reviewScorePending')}
                 </Badge>
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>关闭</Button>
+                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
               </div>
               {session.analysisResult ? (
                 <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
               ) : (
-                <p className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">这次练习还没有最终 AI 评估</p>
+                <p className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">{t('profile.reviewNoAnalysis')}</p>
               )}
             </div>
           </div>
         ) : replayLines.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-muted-foreground">这次练习没有保存可回放的对话</p>
-            {session.analysisResult && <Button size="sm" onClick={() => setShowAnalysis(true)}>查看最终评价</Button>}
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>关闭</Button>
+            <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
+            {session.analysisResult && <Button size="sm" onClick={() => setShowAnalysis(true)}>{t('profile.reviewViewAnalysis')}</Button>}
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
         ) : (
           <div className="relative h-full bg-background">
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2">
               <div className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 text-foreground shadow-lg backdrop-blur-2xl">
-                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={() => onOpenChange(false)}>关闭</Button>
+                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
                 <div className="min-w-0 flex-1 text-center">
-                  <p className="truncate text-xs font-semibold">只读回顾 · {record?.questionText}</p>
+                  <p className="truncate text-xs font-semibold">{t('profile.reviewReadonlyHeader')} · {record?.questionText}</p>
                 </div>
                 <Badge variant={passed ? 'default' : 'secondary'} className={cn('h-6 rounded-full px-2 text-[10px]', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
-                  {score > 0 ? `${score} 分` : '回顾'}
+                  {score > 0 ? `${score} ${t('profile.reviewScoreUnit')}` : t('profile.reviewBadge')}
                 </Badge>
                 <button
                   type="button"
                   className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={() => vnPlayerRef.current?.toggleSettings()}
-                  aria-label="设置"
+                  aria-label={t('profile.settings')}
                 >
                   <Settings className="size-3.5" />
                 </button>
@@ -347,7 +348,7 @@ function PracticeRecordReadonlyReviewDrawer({
               showHistoryButton={false}
               endedActions={(
                 <Button size="sm" className="h-8 rounded-full px-4 text-xs" onClick={() => setShowAnalysis(true)}>
-                  查看最终评价
+                  {t('profile.reviewViewAnalysis')}
                 </Button>
               )}
             />
@@ -365,6 +366,7 @@ function PracticeReplayFeedback({
   turn: NonNullable<PracticeSession['turns']>[number]
   compact?: boolean
 }) {
+  const { t } = useTranslation()
   const judgement = turn.judgement as { passed?: boolean; feedback?: string; chunksUsed?: string[] } | null
   if (!judgement) return null
 
@@ -376,7 +378,7 @@ function PracticeReplayFeedback({
     )}>
       <div className="flex items-center gap-2 text-xs font-semibold">
         {judgement.passed ? <CircleCheck className="size-3.5 text-emerald-500" /> : <CircleDashed className="size-3.5 text-amber-500" />}
-        <span>{judgement.passed ? '本轮表达通过' : '本轮建议调整'}</span>
+        <span>{judgement.passed ? t('profile.reviewRoundPassed') : t('profile.reviewRoundNeedsAdjust')}</span>
       </div>
       {judgement.feedback && <p className="mt-1.5 text-xs leading-5 text-foreground/75">{judgement.feedback}</p>}
       {(judgement.chunksUsed ?? turn.chunksUsed).length > 0 && (

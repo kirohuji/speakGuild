@@ -125,10 +125,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     try {
       const result = await requestInAppReview()
       if (!result.requested) {
-        toast.message('当前环境暂不支持应用内评分')
+        toast.message(t('profile.rateUnavailable'))
       }
     } catch (error: any) {
-      toast.error(error?.message || '暂时无法打开评分弹窗')
+      toast.error(error?.message || t('profile.rateFailed'))
     }
   }
 
@@ -178,8 +178,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
       <IosSection>
         {nativeSpeechRecognitionAvailable && (
           <IosRow
-            label="原生语音识别"
-            subtitle="录音时优先使用系统 STT"
+            label={t('profile.nativeSpeechRecognition')}
+            subtitle={t('profile.nativeSpeechRecognitionSubtitle')}
             right={
               <Switch
                 checked={nativeSpeechRecognitionEnabled}
@@ -210,14 +210,14 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
       <IosSection>
         {isNative() && (
           <IosRow
-            label="给我们评分"
-            subtitle="喜欢漫语町的话，可以留下一点鼓励"
+            label={t('profile.rateUs')}
+            subtitle={t('profile.rateUsSubtitle')}
             onTap={handleRequestReview}
           />
         )}
         <IosRow
-          label="存储管理"
-          subtitle="查看缓存分布并清理本地学习数据"
+          label={t('profile.storageManagement')}
+          subtitle={t('profile.storageManagementSubtitle')}
           onTap={() => onNavigate?.('storage')}
         />
         <IosRow
@@ -273,7 +273,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             {deleteRequirementsLoading ? (
               <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                正在确认账号类型...
+                {t('profile.deleteConfirmingAccountType')}
               </div>
             ) : deleteScheduledAt ? (
               <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
