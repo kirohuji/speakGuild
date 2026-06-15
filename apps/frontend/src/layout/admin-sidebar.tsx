@@ -14,7 +14,7 @@ import { cn } from '@/lib/cn'
 interface MenuItem {
   key: string
   label: string
-  icon: React.ElementType
+  icon: React.ComponentType<{ className?: string }>
   path: string
   soon?: boolean
 }
@@ -22,7 +22,7 @@ interface MenuItem {
 interface MenuGroup {
   key: string
   label: string
-  icon: React.ElementType
+  icon: React.ComponentType<{ className?: string }>
   items: MenuItem[]
 }
 

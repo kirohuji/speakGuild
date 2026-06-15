@@ -78,7 +78,7 @@ const summarizeUserAgent = (userAgent: string | null | undefined) => {
 function StatDot({
   icon: Icon, label, value, accent,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: number;
   accent: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';

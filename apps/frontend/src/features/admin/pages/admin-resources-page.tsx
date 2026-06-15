@@ -43,7 +43,7 @@ const typeLabels: Record<string, string> = {
   other: '其他',
 };
 
-const typeIcons: Record<string, React.ElementType> = {
+const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   folder: Folder,
   video_url: FileVideo,
   video: FileVideo,

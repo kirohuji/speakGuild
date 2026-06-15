@@ -14,7 +14,7 @@ import { cn } from '@/lib/cn'
 
 type Tab = 'practice' | 'streak'
 
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: 'practice', label: '练习达人', icon: PenLine },
   { key: 'streak', label: '连续打卡', icon: Flame },
 ]

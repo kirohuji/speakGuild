@@ -28,7 +28,7 @@ import { SettingsTab } from '@/features/profile/components/settings-tab'
 
 type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
 
-const tabs: { key: Tab; icon: React.ElementType }[] = [
+const tabs: { key: Tab; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: 'overview', icon: LayoutDashboard },
   { key: 'records', icon: ClipboardList },
   { key: 'words', icon: BookMarked },

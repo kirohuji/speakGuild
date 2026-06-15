@@ -18,7 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 
 type TabValue = 'all' | 'unread' | 'read'
 
-const tabConfig: { value: TabValue; label: string; icon: React.ElementType }[] = [
+const tabConfig: { value: TabValue; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { value: 'all', label: '全部', icon: Inbox },
   { value: 'unread', label: '未读', icon: Mail },
   { value: 'read', label: '已读', icon: MailOpen },

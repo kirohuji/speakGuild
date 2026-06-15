@@ -23,7 +23,7 @@ import { useAuth } from '@/providers/auth-provider';
 interface GroupMeta {
   key: string;
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   desc: string;
 }
 

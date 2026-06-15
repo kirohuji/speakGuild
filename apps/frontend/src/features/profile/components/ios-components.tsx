@@ -14,7 +14,7 @@ export function IosRow({
   right,
 }: {
   iconBg?: string
-  icon?: React.ElementType
+  icon?: React.ComponentType<{ className?: string }>
   label: string
   subtitle?: string
   value?: string

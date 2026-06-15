@@ -26,7 +26,7 @@ import { isNative, revenueCat } from '@/lib/native'
 import { useRevenueCat } from '@/hooks/use-revenuecat'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 
-const planIcons: Record<string, React.ElementType> = {
+const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   free: Star,
   standard: Crown,
 }
