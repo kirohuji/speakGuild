@@ -1,0 +1,5 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"托福·学术讨论",校园学术场景,"Let me talk about ___.",引入话题,校园学术场景,"Let me talk about 校园学术场景.",L3,0
+"托福·学术讨论",观点表达与论证,"Let me talk about ___.",引入话题,观点表达与论证,"Let me talk about 观点表达与论证.",L3,1
+"托福·综合口语",信息整合表达,"Let me talk about ___.",引入话题,信息整合表达,"Let me talk about 信息整合表达.",L3,0
+"托福·综合口语",学术讲座复述,"Let me talk about ___.",引入话题,学术讲座复述,"Let me talk about 学术讲座复述.",L3,1

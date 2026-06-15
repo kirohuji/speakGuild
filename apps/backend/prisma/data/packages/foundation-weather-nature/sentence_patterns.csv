@@ -1,0 +1,5 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·天气与季节",谈论天气,"What's the weather like ___?",...天气怎么样？,today, tomorrow, in summer,What's the weather like today?,L1,0
+"基础·天气与季节",谈论天气,"It's ___ today.",今天...,sunny, rainy, cold, hot, cloudy,It's sunny today.,L1,1
+"基础·天气与季节",季节与自然,"My favorite season is ___.",我最喜欢的季节是...,spring, summer, autumn, winter,My favorite season is spring.,L1,2
+"基础·天气与季节",季节与自然,"Let's go for a ___.",我们去...吧,walk, hike, swim, run,Let's go for a walk.,L1,3

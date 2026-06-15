@@ -1,0 +1,9 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·喜好与感受",表达喜好,"I like ___ very much.",我非常喜欢...,this, music, sports,I like this very much.,L1,0
+"基础·喜好与感受",表达喜好,"I prefer ___ over ___.",比起...我更喜欢...,tea / coffee, cats / dogs, summer / winter,I prefer tea over coffee.,L1,1
+"基础·喜好与感受",表达感受,"I feel ___.",我感觉...,great, tired, happy, bored,I feel great today!,L1,2
+"基础·喜好与感受",表达感受,"I'm ___ about ___.",我对...感到...,excited / the trip, worried / the exam, happy / the news,I'm excited about the trip!,L1,3
+"基础·简单观点",同意与不同意,"I think ___.",我认为...,so, not, you're right,I think so.,L1,4
+"基础·简单观点",同意与不同意,"I agree with ___.",我同意...,you, that, your opinion,I agree with you.,L1,5
+"基础·简单观点",提建议,"How about ___?",...怎么样？,having coffee, going out, taking a break,How about having coffee?,L1,6
+"基础·简单观点",提建议,"Why don't we ___?",我们为什么不...？,go together, try it, start now,Why don't we go together?,L1,7

@@ -1,0 +1,9 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·问候与介绍",见面问候,"How ___ you?",你...怎么样？,are, have, were,How are you?,L1,0
+"基础·问候与介绍",见面问候,"Nice to ___ you!",很高兴...你！,meet, see,Nice to meet you!,L1,1
+"基础·问候与介绍",自我介绍,"I'm from ___.",我来自...,China, Beijing, a small town,I'm from China.,L1,2
+"基础·问候与介绍",自我介绍,"I like ___ and ___.",我喜欢...和...,traveling / reading, singing / dancing, sports / music,I like traveling and reading.,L1,3
+"基础·礼貌与请求",礼貌用语,"Thank you for ___.",谢谢你的...,your help, your time, your kindness,Thank you for your help.,L1,4
+"基础·礼貌与请求",礼貌用语,"Sorry to ___.",抱歉...,bother you, interrupt, be late,Sorry to bother you.,L1,5
+"基础·礼貌与请求",请求与帮助,"Can you ___?",你能...吗？,help me, open the door, come here,Can you help me?,L1,6
+"基础·礼貌与请求",请求与帮助,"Would you like ___?",你想要...吗？,some water, some tea, a break,Would you like some water?,L1,7

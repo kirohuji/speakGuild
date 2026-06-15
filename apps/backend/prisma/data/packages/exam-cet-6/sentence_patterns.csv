@@ -1,0 +1,5 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"六级·社会发展",城市化进程,"Let me talk about ___.",引入话题,城市化进程,"Let me talk about 城市化进程.",L3,0
+"六级·社会发展",经济与就业,"Let me talk about ___.",引入话题,经济与就业,"Let me talk about 经济与就业.",L3,1
+"六级·文化教育",文化交流,"Let me talk about ___.",引入话题,文化交流,"Let me talk about 文化交流.",L3,0
+"六级·文化教育",教育改革,"Let me talk about ___.",引入话题,教育改革,"Let me talk about 教育改革.",L3,1

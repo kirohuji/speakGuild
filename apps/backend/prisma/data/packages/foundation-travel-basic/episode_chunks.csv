@@ -1,0 +1,61 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+found_foundation_travel_basic_0,1,Excuse me, where is the station?,0
+found_foundation_travel_basic_0,1,How do I get to the museum?,1
+found_foundation_travel_basic_0,1,Is it far from here?,2
+found_foundation_travel_basic_0,1,Go straight ahead.,3
+found_foundation_travel_basic_0,1,Turn left at the corner.,4
+found_foundation_travel_basic_0,1,Turn right at the traffic lights.,5
+found_foundation_travel_basic_0,1,It's next to the bank.,6
+found_foundation_travel_basic_0,1,It's across from the park.,7
+found_foundation_travel_basic_0,1,It's on your left.,8
+found_foundation_travel_basic_0,1,Walk for about 5 minutes.,9
+found_foundation_travel_basic_0,1,You can take the bus.,10
+found_foundation_travel_basic_0,1,It's about 2 blocks away.,11
+found_foundation_travel_basic_0,1,I'm lost. Can you help me?,12
+found_foundation_travel_basic_0,1,Is there a toilet near here?,13
+found_foundation_travel_basic_0,1,I'm looking for this address.,14
+found_foundation_travel_basic_0,2,Which bus goes to the airport?,0
+found_foundation_travel_basic_0,2,How much is the fare?,1
+found_foundation_travel_basic_0,2,Please take me to this address.,2
+found_foundation_travel_basic_0,2,Where is the nearest subway station?,3
+found_foundation_travel_basic_0,2,Which line goes to the city center?,4
+found_foundation_travel_basic_0,2,How many stops to the hotel?,5
+found_foundation_travel_basic_0,2,Please stop here.,6
+found_foundation_travel_basic_0,2,Can I have a ticket to London?,7
+found_foundation_travel_basic_0,2,How long does it take?,8
+found_foundation_travel_basic_0,2,The train is delayed.,9
+found_foundation_travel_basic_0,2,Which platform does the train leave from?,10
+found_foundation_travel_basic_0,2,I need to buy a ticket.,11
+found_foundation_travel_basic_0,2,One-way or round-trip?,12
+found_foundation_travel_basic_0,2,Do I need to transfer?,13
+found_foundation_travel_basic_0,2,Please call a taxi for me.,14
+found_foundation_travel_basic_1,1,A table for two, please.,0
+found_foundation_travel_basic_1,1,I'd like to order now.,1
+found_foundation_travel_basic_1,1,What would you recommend?,2
+found_foundation_travel_basic_1,1,I'll have the steak.,3
+found_foundation_travel_basic_1,1,Could I have the menu?,4
+found_foundation_travel_basic_1,1,What's today's special?,5
+found_foundation_travel_basic_1,1,I'm allergic to nuts.,6
+found_foundation_travel_basic_1,1,This is not what I ordered.,7
+found_foundation_travel_basic_1,1,The food is delicious!,8
+found_foundation_travel_basic_1,1,Could I have the check, please?,9
+found_foundation_travel_basic_1,1,Keep the change.,10
+found_foundation_travel_basic_1,1,Can I pay by card?,11
+found_foundation_travel_basic_1,1,I'd like a glass of water.,12
+found_foundation_travel_basic_1,1,Is service charge included?,13
+found_foundation_travel_basic_1,1,We'd like to split the bill.,14
+found_foundation_travel_basic_1,2,How much is this?,0
+found_foundation_travel_basic_1,2,Is there a discount?,1
+found_foundation_travel_basic_1,2,Can I try this on?,2
+found_foundation_travel_basic_1,2,Where is the fitting room?,3
+found_foundation_travel_basic_1,2,Do you have this in a smaller size?,4
+found_foundation_travel_basic_1,2,I'm just looking, thanks.,5
+found_foundation_travel_basic_1,2,I'll take it.,6
+found_foundation_travel_basic_1,2,Do you accept credit cards?,7
+found_foundation_travel_basic_1,2,Can I get a receipt?,8
+found_foundation_travel_basic_1,2,I'd like to return this.,9
+found_foundation_travel_basic_1,2,It doesn't fit me.,10
+found_foundation_travel_basic_1,2,Is this on sale?,11
+found_foundation_travel_basic_1,2,Do you have this in other colors?,12
+found_foundation_travel_basic_1,2,That's too expensive.,13
+found_foundation_travel_basic_1,2,I'm looking for a gift.,14

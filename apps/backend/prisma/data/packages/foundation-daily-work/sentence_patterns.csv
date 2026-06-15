@@ -1,0 +1,5 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·办公室日常",办公室交流,"Let's start the ___.",我们开始...吧,meeting, discussion, presentation,Let's start the meeting.,L1,0
+"基础·办公室日常",办公室交流,"I'm available on ___.",我...有空,Monday, Tuesday, Friday,I'm available on Monday.,L1,1
+"基础·办公室日常",日程与安排,"I need to ___ a ___.",我需要...一份...,prepare / report, write / document, submit / proposal,I need to prepare a report.,L1,2
+"基础·办公室日常",日程与安排,"What time is ___?",...几点了？,the meeting, lunch, the appointment,What time is the meeting?,L1,3

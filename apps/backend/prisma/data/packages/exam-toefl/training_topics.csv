@@ -1,0 +1,5 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+"托福·学术讨论",校园学术场景,Discuss campus academic scenarios for TOEFL speaking.,讨论托福口语中的校园学术场景。,60,L3,托福Task 1-2：应对校园学术相关口语题。,TOEFL 学术 校园,
+"托福·学术讨论",观点表达与论证,Express and support your opinion on various topics.,就各种话题表达和支撑你的观点。,60,L3,托福Task 3-4：学习观点表达和论证结构。,TOEFL 观点 论证,
+"托福·综合口语",信息整合表达,Integrate information from reading and listening.,整合阅读和听力中的信息。,65,L3,托福Task 3：整合阅读+听力内容进行口语表达。,TOEFL 整合 表达,
+"托福·综合口语",学术讲座复述,Summarize an academic lecture in your own words.,用自己的话总结学术讲座。,65,L3,托福Task 4：复述学术讲座的核心内容和例证。,TOEFL 讲座 复述,

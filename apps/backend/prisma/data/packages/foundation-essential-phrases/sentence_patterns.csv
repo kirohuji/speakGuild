@@ -1,0 +1,9 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·日常高频短语",常用动词短语,"I'm looking for ___.",我在找...,my keys, my phone, the station,I'm looking for my keys.,L1,0
+"基础·日常高频短语",常用动词短语,"Don't give up on ___.",不要放弃...,your dreams, your goal, hope,Don't give up on your dreams.,L1,1
+"基础·日常高频短语",情景常用语,"What's the ___?",...怎么了？,matter, problem, time,What's the matter?,L1,2
+"基础·日常高频短语",情景常用语,"Take your ___.",慢慢...,time, seat, turn,Take your time.,L1,3
+"基础·电话与应急",电话用语,"Can I speak to ___?",我能和...通话吗？,Mary, the manager, Mr. Smith,Can I speak to Mary?,L1,4
+"基础·电话与应急",电话用语,"I'll call you ___.",我...打给你,back later, tomorrow, tonight,I'll call you back later.,L1,5
+"基础·电话与应急",紧急求助,"I need a ___.",我需要一个...,doctor, police, lawyer,I need a doctor!,L1,6
+"基础·电话与应急",紧急求助,"I lost my ___.",我丢了...,passport, wallet, phone, keys,I lost my passport.,L1,7

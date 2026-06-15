@@ -1,0 +1,9 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·问路与交通",问路指路,"Where is the ___?",...在哪里？,station, museum, toilet, bank,Where is the station?,L1,0
+"基础·问路与交通",问路指路,"How do I get to ___?",我怎么去...？,the museum, the station, the airport,How do I get to the museum?,L1,1
+"基础·问路与交通",乘坐交通,"How much is ___?",...多少钱？,the fare, a ticket, this,How much is the fare?,L1,2
+"基础·问路与交通",乘坐交通,"How long does ___ take?",...需要多长时间？,it, the trip, the journey,How long does it take?,L1,3
+"基础·餐厅与购物",餐厅点餐,"I'd like to ___.",我想要...,order, pay, have the steak,I'd like to order.,L1,4
+"基础·餐厅与购物",餐厅点餐,"Could I have ___?",能给我...吗？,the menu, the check, a glass of water,Could I have the menu?,L1,5
+"基础·餐厅与购物",购物逛街,"How much is ___?",...多少钱？,this, that, it,How much is this?,L1,6
+"基础·餐厅与购物",购物逛街,"Do you have this in ___?",这个有...吗？,a smaller size, other colors, a larger size,Do you have this in a smaller size?,L1,7

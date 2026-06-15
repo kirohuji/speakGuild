@@ -1,0 +1,11 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+"基础·起床与洗漱",起床与洗漱,"Time to ___.",该...了,wake up, get up, go,Time to wake up!,L1,0
+"基础·起床与洗漱",起床与洗漱,"I need to ___.",我需要...,brush my teeth, wash my face, comb my hair,I need to brush my teeth.,L1,1
+"基础·起床与洗漱",起床与洗漱,"I ___ at 7 every morning.",我每天早上7点...,get up, wake up, have breakfast,I get up at 7 every morning.,L1,2
+"基础·起床与洗漱",早餐与出门,"What's for ___?",...吃什么？,breakfast, lunch, dinner,What's for breakfast?,L1,3
+"基础·起床与洗漱",早餐与出门,"I'll have ___ and ___.",我吃...和...,toast / eggs, cereal / milk, bread / butter,I'll have toast and eggs.,L1,4
+"基础·起床与洗漱",早餐与出门,"Have a nice ___!",祝...愉快！,day, weekend, trip,Have a nice day!,L1,5
+"基础·家务与居家",家务劳动,"I need to ___ the ___.",我需要...,clean / room, wash / dishes, sweep / floor,I need to clean the room.,L1,6
+"基础·家务与居家",家务劳动,"Please ___ the ___.",请...,take out / trash, fold / clothes, water / plants,Please take out the trash.,L1,7
+"基础·家务与居家",居家休息,"Let's ___ a ___.",我们...吧,watch / movie, listen to / song, play / game,Let's watch a movie.,L1,8
+"基础·家务与居家",居家休息,"I'm going to ___.",我去...,take a nap, cook dinner, read a book,I'm going to take a nap.,L1,9

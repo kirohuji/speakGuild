@@ -1,0 +1,7 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+"基础·天气与季节",谈论天气,weather,天气,noun,/ˈweðər/,/ˈweðə/,L1,天气。,[{"en":"The weather is nice.","zh":"天气很好。"}],0
+"基础·天气与季节",谈论天气,temperature,温度,noun,/ˈtemprətʃər/,/ˈtemprətʃə/,L1,温度。,[{"en":"The temperature is high.","zh":"温度很高。"}],1
+"基础·天气与季节",谈论天气,season,季节,noun,/ˈsiːzən/,/ˈsiːzən/,L1,季节。,[{"en":"My favorite season is spring.","zh":"我最喜欢的季节是春天。"}],2
+"基础·天气与季节",季节与自然,weather,天气,noun,/ˈweðər/,/ˈweðə/,L1,天气。,[{"en":"The weather is nice.","zh":"天气很好。"}],3
+"基础·天气与季节",季节与自然,temperature,温度,noun,/ˈtemprətʃər/,/ˈtemprətʃə/,L1,温度。,[{"en":"The temperature is high.","zh":"温度很高。"}],4
+"基础·天气与季节",季节与自然,season,季节,noun,/ˈsiːzən/,/ˈsiːzən/,L1,季节。,[{"en":"My favorite season is spring.","zh":"我最喜欢的季节是春天。"}],5
