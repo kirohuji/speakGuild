@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
   ChevronRight, X, Code2, Type, BookOpen,
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -94,6 +94,9 @@ function CategoryDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑分类' : '新增分类'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {edit ? '修改分类名称和图标。' : '创建一个新的学习包分类。'}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -153,6 +156,9 @@ function SceneDialog({
       <DialogContent className="sm:max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑学习包' : '新增学习包'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {edit ? '修改学习包的标题、分类、类型和其他配置。' : '创建一个新的学习包。'}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -289,6 +295,9 @@ function VocabularyDialog({
       <DialogContent className="sm:max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑词汇' : '新增词汇'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {edit ? '修改词汇的英文、中文释义和讲解。' : '添加一个新词汇到词汇库。'}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -468,6 +477,10 @@ function TrainingTopicDialog({
   const [storiesLoading, setStoriesLoading] = useState(false)
   const [storySearch, setStorySearch] = useState('')
   const [storyType, setStoryType] = useState('all')
+  const [storyPage, setStoryPage] = useState(1)
+  const [storyPageSize, setStoryPageSize] = useState(20)
+  const [storyTotal, setStoryTotal] = useState(0)
+  const storiesLoadedRef = useRef(false)
 
   useEffect(() => {
     if (edit) {
@@ -501,16 +514,31 @@ function TrainingTopicDialog({
     setStoryType('all')
   }, [edit, open, sceneId, packageType])
 
-  // Load stories for binding
+  // 弹窗关闭时重置加载标记
   useEffect(() => {
-    if (open) {
-      setStoriesLoading(true)
-      listStories()
-        .then((res) => setStories(res.items))
-        .catch(() => toast.error('Ink 故事加载失败'))
-        .finally(() => setStoriesLoading(false))
+    if (!open) {
+      storiesLoadedRef.current = false
+      setStories([])
     }
   }, [open])
+
+  const storyTotalPages = Math.max(1, Math.ceil(storyTotal / storyPageSize))
+
+  // 切换到 Ink 故事 tab 时才懒加载
+  const loadStoriesIfNeeded = (page = 1) => {
+    if (!storiesLoadedRef.current && page === 1) {
+      storiesLoadedRef.current = true
+    }
+    setStoriesLoading(true)
+    listStories({ page, pageSize: storyPageSize })
+      .then((res) => {
+        setStories(res.items)
+        setStoryTotal(res.total)
+        setStoryPage(res.page)
+      })
+      .catch(() => toast.error('Ink 故事加载失败'))
+      .finally(() => setStoriesLoading(false))
+  }
 
   const selectedStory = useMemo(
     () => stories.find((story) => story.id === form.inkScriptId) ?? null,
@@ -572,12 +600,13 @@ function TrainingTopicDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="flex max-h-[92vh] flex-col gap-0 p-0 sm:max-w-5xl">
         <DialogHeader className="shrink-0 border-b border-border/70 px-6 pb-4 pt-5">
+          <DialogTitle className="sr-only">{edit ? '编辑话题' : '新增话题'}</DialogTitle>
           <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
             <div>
-              <DialogTitle>{edit ? '编辑话题' : '新增话题'}</DialogTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-lg font-semibold leading-none tracking-tight">{edit ? '编辑话题' : '新增话题'}</p>
+              <DialogDescription className="mt-1 text-sm text-muted-foreground">
                 组织练习提示、句型 Chunk，并为话题绑定可交互 Ink 故事。
-              </p>
+              </DialogDescription>
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">{form.difficulty ?? 'L2'}</Badge>
@@ -586,7 +615,7 @@ function TrainingTopicDialog({
             </div>
           </div>
         </DialogHeader>
-        <Tabs defaultValue="basic" className="flex min-h-0 flex-1 flex-col">
+        <Tabs defaultValue="basic" className="flex min-h-0 flex-1 flex-col" onValueChange={(v) => { if (v === 'ink') loadStoriesIfNeeded() }}>
           <div className="shrink-0 border-b border-border/70 bg-muted/20 px-6 py-3">
             <TabsList className="h-9 w-full justify-start overflow-x-auto bg-background/80">
               <TabsTrigger value="basic" className="gap-1.5">
@@ -863,9 +892,9 @@ function TrainingTopicDialog({
                 <div className="rounded-lg border border-border/70">
                   <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
                     <p className="text-sm font-medium">故事列表</p>
-                    <span className="text-xs text-muted-foreground">{filteredStories.length} / {stories.length}</span>
+                    <span className="text-xs text-muted-foreground">共 {storyTotal} 个</span>
                   </div>
-                  <div className="h-[390px] overflow-y-auto">
+                  <div className="h-[350px] overflow-y-auto">
                     {storiesLoading ? (
                       <div className="space-y-2 p-3">
                         {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
@@ -914,6 +943,13 @@ function TrainingTopicDialog({
                       </div>
                     )}
                   </div>
+                  <AdminPagination
+                    total={storyTotal}
+                    page={storyPage}
+                    pageSize={storyPageSize}
+                    onPageChange={(p) => loadStoriesIfNeeded(p)}
+                    onPageSizeChange={(size) => { setStoryPageSize(size); setStoryPage(1); loadStoriesIfNeeded(1) }}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -993,170 +1029,175 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         </div>
       </div>
 
-      {/* Training Topics */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Layers className="size-4" /> 训练话题 ({topics.length})
-          </CardTitle>
-          <Button size="sm" variant="outline" onClick={() => { setEditTopic(null); setTopicDialog(true) }}>
-            <Plus className="size-3.5 mr-1" /> 添加
-          </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          {topics.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm font-medium text-muted-foreground">暂无话题</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">添加后会显示在这里</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">话题</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">关联内容</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">配置</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {topicItems.map((t) => (
-                    <tr key={t.id} className="transition-colors hover:bg-muted/30">
-                      <td className="px-4 py-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium">{t.title}</span>
-                            <Badge variant={t.type === 'ielts' ? 'default' : 'outline'} className="text-xs">
-                              {t.type === 'ielts' ? '雅思' : '日常'}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">{t.difficulty}</Badge>
-                            <Badge variant="secondary" className="text-xs">{t.suggestedDurationSec}s</Badge>
-                          </div>
-                          <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">{t.promptEn}</p>
-                        </div>
-                      </td>
-                      <td className="hidden px-4 py-3 md:table-cell">
-                        <div className="flex max-w-xs flex-wrap gap-1">
-                          {(t.topicPatterns ?? []).slice(0, 2).map((tp: any) => (
-                            <Badge key={tp.id} variant="outline" className="font-mono text-[10px]">{tp.pattern.pattern}</Badge>
-                          ))}
-                          {(t.activeChunks ?? []).slice(0, 2).map((ac: any) => (
-                            <Badge key={ac.id} variant="outline" className="text-[10px]">{ac.chunk.text}</Badge>
-                          ))}
-                          {(t.topicVocabs ?? []).slice(0, 2).map((tv: any) => (
-                            <Badge key={tv.id} variant="secondary" className="text-[10px]">{tv.vocab.word}</Badge>
-                          ))}
-                          {((t.topicPatterns?.length ?? 0) + (t.activeChunks?.length ?? 0) + (t.topicVocabs?.length ?? 0)) > 6 && (
-                            <Badge variant="secondary" className="text-[10px]">+{(t.topicPatterns?.length ?? 0) + (t.activeChunks?.length ?? 0) + (t.topicVocabs?.length ?? 0) - 6}</Badge>
-                          )}
-                        </div>
-                      </td>
-                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
-                        排序 {t.sortOrder}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" className="size-8"
-                            onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
-                            <Edit3 className="size-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                            onClick={async () => { await deleteTrainingTopic(t.id); load() }}>
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      </td>
+      {/* Training Topics — 非 story 类型的学习包 */}
+      {scene.packageType !== 'story' && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Layers className="size-4" /> 训练话题 ({topics.length})
+            </CardTitle>
+            <Button size="sm" variant="outline" onClick={() => { setEditTopic(null); setTopicDialog(true) }}>
+              <Plus className="size-3.5 mr-1" /> 添加
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            {topics.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm font-medium text-muted-foreground">暂无话题</p>
+                <p className="mt-1 text-xs text-muted-foreground/60">添加后会显示在这里</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">话题</th>
+                      <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">关联内容</th>
+                      <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">配置</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <AdminPagination
-            total={topics.length}
-            page={Math.min(topicPage, topicTotalPages)}
-            pageSize={topicPageSize}
-            onPageChange={setTopicPage}
-            onPageSizeChange={(size) => { setTopicPageSize(size); setTopicPage(1) }}
-          />
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {topicItems.map((t) => (
+                      <tr key={t.id} className="transition-colors hover:bg-muted/30">
+                        <td className="px-4 py-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-medium">{t.title}</span>
+                              <Badge variant={t.type === 'ielts' ? 'default' : 'outline'} className="text-xs">
+                                {t.type === 'ielts' ? '雅思' : '日常'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">{t.difficulty}</Badge>
+                              <Badge variant="secondary" className="text-xs">{t.suggestedDurationSec}s</Badge>
+                            </div>
+                            <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">{t.promptEn}</p>
+                          </div>
+                        </td>
+                        <td className="hidden px-4 py-3 md:table-cell">
+                          <div className="flex max-w-xs flex-wrap gap-1">
+                            {(t.topicPatterns ?? []).slice(0, 2).map((tp: any) => (
+                              <Badge key={tp.id} variant="outline" className="font-mono text-[10px]">{tp.pattern.pattern}</Badge>
+                            ))}
+                            {(t.activeChunks ?? []).slice(0, 2).map((ac: any) => (
+                              <Badge key={ac.id} variant="outline" className="text-[10px]">{ac.chunk.text}</Badge>
+                            ))}
+                            {(t.topicVocabs ?? []).slice(0, 2).map((tv: any) => (
+                              <Badge key={tv.id} variant="secondary" className="text-[10px]">{tv.vocab.word}</Badge>
+                            ))}
+                            {((t.topicPatterns?.length ?? 0) + (t.activeChunks?.length ?? 0) + (t.topicVocabs?.length ?? 0)) > 6 && (
+                              <Badge variant="secondary" className="text-[10px]">+{(t.topicPatterns?.length ?? 0) + (t.activeChunks?.length ?? 0) + (t.topicVocabs?.length ?? 0) - 6}</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                          排序 {t.sortOrder}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button size="icon" variant="ghost" className="size-8"
+                              onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
+                              <Edit3 className="size-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="size-8 text-destructive"
+                              onClick={async () => { await deleteTrainingTopic(t.id); load() }}>
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <AdminPagination
+              total={topics.length}
+              page={Math.min(topicPage, topicTotalPages)}
+              pageSize={topicPageSize}
+              onPageChange={setTopicPage}
+              onPageSizeChange={(size) => { setTopicPageSize(size); setTopicPage(1) }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Film className="size-4" /> 故事关卡 ({storyEpisodes.length})
-          </CardTitle>
-          <Button size="sm" variant="outline" onClick={() => { setEditStoryEpisode(null); setStoryDialog(true) }}>
-            <Plus className="mr-1 size-3.5" /> 添加
-          </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          {storyEpisodes.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm font-medium text-muted-foreground">暂无故事关卡</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">故事类学习包可以在这里配置 play 关卡；日常、考试、课程包也可以按需添加实战挑战。</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">关卡</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">章节</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">通关目标</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {storyEpisodes.map((episode) => (
-                    <tr key={episode.id} className="transition-colors hover:bg-muted/30">
-                      <td className="px-4 py-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium">{episode.title}</span>
-                            {episode.isPreview && <Badge variant="secondary" className="text-xs">体验</Badge>}
-                            <Badge variant="outline" className="text-xs">{episode.requiredOutputLevel}</Badge>
-                          </div>
-                          <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">
-                            {episode.npcName || '未设置角色'} · {episode.description || '未设置说明'}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="hidden px-4 py-3 md:table-cell">
-                        <div className="text-sm font-medium">{episode.chapterTitle}</div>
-                        <div className="text-xs text-muted-foreground">{episode.chapterId} · 第 {episode.episodeOrder} 关</div>
-                      </td>
-                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
-                        <div className="flex items-center gap-2">
-                          <Target className="size-3.5" />
-                          {episode.passObjectiveCount} 目标 · {episode.passChunkCount} Chunk · {episode.passMinDialogues} 轮
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" className="size-8" onClick={() => { setEditStoryEpisode(episode); setStoryDialog(true) }}>
-                            <Edit3 className="size-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-8 text-destructive"
-                            onClick={async () => { if (confirm('确认删除这个故事关卡？')) { await deleteScriptEpisode(episode.id); load() } }}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      </td>
+      {/* Story Episodes — 仅 story 类型的学习包 */}
+      {scene.packageType === 'story' && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Film className="size-4" /> 故事关卡 ({storyEpisodes.length})
+            </CardTitle>
+            <Button size="sm" variant="outline" onClick={() => { setEditStoryEpisode(null); setStoryDialog(true) }}>
+              <Plus className="mr-1 size-3.5" /> 添加
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            {storyEpisodes.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm font-medium text-muted-foreground">暂无故事关卡</p>
+                <p className="mt-1 text-xs text-muted-foreground/60">在这里配置互动剧情对话关卡，包含 NPC 角色、任务目标和通关条件。</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">关卡</th>
+                      <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">章节</th>
+                      <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">通关目标</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {storyEpisodes.map((episode) => (
+                      <tr key={episode.id} className="transition-colors hover:bg-muted/30">
+                        <td className="px-4 py-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-medium">{episode.title}</span>
+                              {episode.isPreview && <Badge variant="secondary" className="text-xs">体验</Badge>}
+                              <Badge variant="outline" className="text-xs">{episode.requiredOutputLevel}</Badge>
+                            </div>
+                            <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">
+                              {episode.npcName || '未设置角色'} · {episode.description || '未设置说明'}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="hidden px-4 py-3 md:table-cell">
+                          <div className="text-sm font-medium">{episode.chapterTitle}</div>
+                          <div className="text-xs text-muted-foreground">{episode.chapterId} · 第 {episode.episodeOrder} 关</div>
+                        </td>
+                        <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                          <div className="flex items-center gap-2">
+                            <Target className="size-3.5" />
+                            {episode.passObjectiveCount} 目标 · {episode.passChunkCount} Chunk · {episode.passMinDialogues} 轮
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button size="icon" variant="ghost" className="size-8" onClick={() => { setEditStoryEpisode(episode); setStoryDialog(true) }}>
+                              <Edit3 className="size-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 text-destructive"
+                              onClick={async () => { if (confirm('确认删除这个故事关卡？')) { await deleteScriptEpisode(episode.id); load() } }}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
         edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={load} />
