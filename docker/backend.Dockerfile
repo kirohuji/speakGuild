@@ -43,5 +43,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=60s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/v1/manyu/ops/health || exit 1
 
-# 启动时自动执行数据库迁移，然后启动应用
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+CMD ["node", "dist/src/main.js"]
