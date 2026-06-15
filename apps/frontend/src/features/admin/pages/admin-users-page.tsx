@@ -36,12 +36,17 @@ const fmtDateTime = (value: string | Date | undefined | null) => {
 };
 
 const learningGoalLabels: Record<string, string> = {
-  arrival_roots: '落地生根',
-  daily_hustle: '日常生活',
-  people: '社交关系',
-  work_study: '学业职场',
-  crisis_mode: '应急处理',
-  out_about: '旅行玩乐',
+  foundation_start: '零基础开口',
+  daily_scenes: '日常实战',
+  exam_ielts: '雅思口语',
+  story_roleplay: '故事剧情',
+  course_system: '系统课程',
+  arrival_roots: '日常实战',
+  daily_hustle: '日常实战',
+  people: '日常实战',
+  work_study: '系统课程',
+  crisis_mode: '日常实战',
+  out_about: '日常实战',
 };
 
 const summarizeUserAgent = (userAgent: string | null | undefined) => {

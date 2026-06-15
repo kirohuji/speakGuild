@@ -75,6 +75,7 @@ export interface PlacementAssessmentResult {
     nextStep: string
     recommendedUnits: Array<{
       id: string
+      packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
       title: string
       categoryName: string
       location: string

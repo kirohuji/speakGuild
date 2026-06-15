@@ -7,6 +7,22 @@ import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 export class ProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizeLearningGoals(goals?: string[]) {
+    const aliases: Record<string, string> = {
+      arrival_roots: 'daily_scenes',
+      daily_hustle: 'daily_scenes',
+      people: 'daily_scenes',
+      work_study: 'course_system',
+      crisis_mode: 'daily_scenes',
+      out_about: 'daily_scenes',
+    };
+    const valid = new Set(['foundation_start', 'daily_scenes', 'exam_ielts', 'story_roleplay', 'course_system']);
+    return [...new Set((goals ?? [])
+      .map((goal) => aliases[goal.trim()] ?? goal.trim())
+      .filter((goal) => valid.has(goal)))]
+      .slice(0, 3);
+  }
+
   async getUserProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -41,10 +57,7 @@ export class ProfileService {
       data.hasCompletedOnboarding = dto.hasCompletedOnboarding;
     }
     if (dto.learningGoals !== undefined) {
-      data.learningGoals = dto.learningGoals
-        .map((goal) => goal.trim())
-        .filter(Boolean)
-        .slice(0, 3);
+      data.learningGoals = this.normalizeLearningGoals(dto.learningGoals);
     }
     if (dto.outputLevel !== undefined) {
       data.outputLevel = dto.outputLevel;

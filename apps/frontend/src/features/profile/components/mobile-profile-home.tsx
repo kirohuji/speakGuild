@@ -14,7 +14,7 @@ import i18n from '@/lib/i18n'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
-import { LearningAssessmentDialog, goalLabelMap } from '@/features/profile/components/placement-assessment-dialog'
+import { LearningAssessmentDialog, goalLabelMap, normalizeLearningGoals } from '@/features/profile/components/placement-assessment-dialog'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 import { MobileInviteDrawer } from '@/features/referral/components/mobile-invite-drawer'
 
@@ -60,7 +60,7 @@ export function MobileProfileHome({
       ? membership?.planName || t('member.badgeActive')
       : t('member.freeUser')
   const outputLevel = userProfile?.outputLevel || 'L1'
-  const goalLabels = (userProfile?.learningGoals ?? [])
+  const goalLabels = normalizeLearningGoals(userProfile?.learningGoals)
     .map((goal) => t(`profile.placement.goals.${goal}.label`, { defaultValue: goalLabelMap[goal] ?? goal }))
     .filter(Boolean)
   const goalSummary = goalLabels.length > 0

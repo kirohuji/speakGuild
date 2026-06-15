@@ -30,6 +30,22 @@ export class EnglishPracticeAiService {
     return text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? text;
   }
 
+  private normalizeLearningGoals(goals?: string[]) {
+    const aliases: Record<string, string> = {
+      arrival_roots: 'daily_scenes',
+      daily_hustle: 'daily_scenes',
+      people: 'daily_scenes',
+      work_study: 'course_system',
+      crisis_mode: 'daily_scenes',
+      out_about: 'daily_scenes',
+    };
+    const valid = new Set(['foundation_start', 'daily_scenes', 'exam_ielts', 'story_roleplay', 'course_system']);
+    return [...new Set((goals ?? [])
+      .map((goal) => aliases[String(goal).trim()] ?? String(goal).trim())
+      .filter((goal) => valid.has(goal)))]
+      .slice(0, 3);
+  }
+
   async assessPlacement(
     dto: {
       learningGoals: string[];
@@ -38,7 +54,7 @@ export class EnglishPracticeAiService {
     userId: string,
   ) {
     const provider = this.getProvider();
-    const cleanGoals = [...new Set((dto.learningGoals ?? []).map((goal) => String(goal).trim()).filter(Boolean))].slice(0, 3);
+    const cleanGoals = this.normalizeLearningGoals(dto.learningGoals);
     const cleanAnswers = (dto.answers ?? [])
       .map((answer) => ({
         promptId: String(answer.promptId ?? ''),
@@ -51,6 +67,7 @@ export class EnglishPracticeAiService {
     const scenes = await this.prisma.scene.findMany({
       select: {
         id: true,
+        packageType: true,
         title: true,
         location: true,
         description: true,
@@ -68,8 +85,24 @@ export class EnglishPracticeAiService {
       take: 30,
     });
 
+    const goalTypeHints: Record<string, string> = {
+      foundation_start: 'foundation',
+      daily_scenes: 'daily',
+      exam_ielts: 'exam',
+      story_roleplay: 'story',
+      course_system: 'course',
+      arrival_roots: 'daily',
+      daily_hustle: 'daily',
+      people: 'daily',
+      work_study: 'course',
+      crisis_mode: 'daily',
+      out_about: 'daily',
+    };
+    const preferredPackageTypes = [...new Set(cleanGoals.map((goal) => goalTypeHints[goal]).filter(Boolean))];
+
     const candidateText = scenes.map((scene, index) => [
       `${index + 1}. id=${scene.id}`,
+      `packageType=${scene.packageType}`,
       `title=${scene.title}`,
       `category=${scene.category.name}`,
       `location=${scene.location}`,
@@ -93,6 +126,9 @@ Recommend learning units from the provided candidate list only. Use exact candid
 
     const user = `## Learner goals
 ${cleanGoals.length ? cleanGoals.join(', ') : 'not specified'}
+
+## Preferred package types inferred from goals
+${preferredPackageTypes.length ? preferredPackageTypes.join(', ') : 'not specified'}
 
 ## Assessment answers
 ${cleanAnswers.map((answer, index) => `Task ${index + 1}: ${answer.prompt}\nLearner: ${answer.answer}`).join('\n\n')}
@@ -141,8 +177,15 @@ Return this exact JSON shape:
     const recommendedUnits = scenes
       .filter((scene) => recommendedIds.has(scene.id))
       .slice(0, 3);
-    const finalRecommendedUnits = (recommendedUnits.length ? recommendedUnits : scenes.slice(0, 3)).map((scene) => ({
+    const fallbackScenes = preferredPackageTypes.length
+      ? [
+          ...scenes.filter((scene) => preferredPackageTypes.includes(scene.packageType)),
+          ...scenes.filter((scene) => !preferredPackageTypes.includes(scene.packageType)),
+        ]
+      : scenes;
+    const finalRecommendedUnits = (recommendedUnits.length ? recommendedUnits : fallbackScenes.slice(0, 3)).map((scene) => ({
       id: scene.id,
+      packageType: scene.packageType,
       title: scene.title,
       categoryName: scene.category.name,
       location: scene.location,
@@ -175,6 +218,7 @@ Return this exact JSON shape:
       nextStep: analysis.nextStep,
       recommendedUnits: finalRecommendedUnits.map((unit) => ({
         id: unit.id,
+        packageType: unit.packageType,
         title: unit.title,
         requiredOutputLevel: unit.requiredOutputLevel,
       })),

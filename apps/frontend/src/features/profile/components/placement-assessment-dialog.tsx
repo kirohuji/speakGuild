@@ -24,48 +24,64 @@ import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { transcribeRecording } from '@/lib/practice-ai-api'
 import {
-  MapPin, Home, Users, BriefcaseBusiness, Shield, Compass as CompassIcon,
+  Home, BriefcaseBusiness, Shield, Compass as CompassIcon,
 } from 'lucide-react'
 
 export const LEARNING_GOAL_OPTIONS = [
-  { value: 'arrival_roots', label: '落地生根', desc: '机场、宿舍、租房、银行、报到', icon: MapPin, tint: 'text-sky-600 bg-sky-500/10' },
-  { value: 'daily_hustle', label: '日常生活', desc: '吃饭、购物、交通、家务', icon: Home, tint: 'text-emerald-600 bg-emerald-500/10' },
-  { value: 'people', label: '社交关系', desc: '破冰、朋友、聚会、感谢道歉', icon: Users, tint: 'text-violet-600 bg-violet-500/10' },
-  { value: 'work_study', label: '学业职场', desc: '课堂、面试、会议、邮件', icon: BriefcaseBusiness, tint: 'text-blue-600 bg-blue-500/10' },
-  { value: 'crisis_mode', label: '应急处理', desc: '看病、投诉、求助、紧急情况', icon: Shield, tint: 'text-rose-600 bg-rose-500/10' },
-  { value: 'out_about', label: '旅行玩乐', desc: '酒店、景点、餐厅、活动', icon: CompassIcon, tint: 'text-amber-600 bg-amber-500/10' },
+  { value: 'foundation_start', label: '零基础开口', desc: '自我介绍、基础句、敢说第一句', icon: Shield, tint: 'text-rose-600 bg-rose-500/10' },
+  { value: 'daily_scenes', label: '日常实战', desc: '吃饭、住宿、交通、社交求助', icon: Home, tint: 'text-emerald-600 bg-emerald-500/10' },
+  { value: 'exam_ielts', label: '雅思口语', desc: 'Part 1/2/3、观点、展开和追问', icon: GraduationCap, tint: 'text-blue-600 bg-blue-500/10' },
+  { value: 'story_roleplay', label: '故事剧情', desc: '角色扮演、剧情选择、自由探索', icon: CompassIcon, tint: 'text-violet-600 bg-violet-500/10' },
+  { value: 'course_system', label: '系统课程', desc: '发音、句型、表达策略系统补齐', icon: BriefcaseBusiness, tint: 'text-amber-600 bg-amber-500/10' },
 ] as const
 
-export const goalLabelMap: Record<string, string> = Object.fromEntries(LEARNING_GOAL_OPTIONS.map((goal) => [goal.value, goal.label]))
+export const goalLabelMap: Record<string, string> = {
+  ...Object.fromEntries(LEARNING_GOAL_OPTIONS.map((goal) => [goal.value, goal.label])),
+  arrival_roots: '日常实战',
+  daily_hustle: '日常实战',
+  people: '日常实战',
+  work_study: '系统课程',
+  crisis_mode: '日常实战',
+  out_about: '日常实战',
+}
 const learningGoalValueSet = new Set(LEARNING_GOAL_OPTIONS.map((goal) => goal.value))
+const legacyGoalAliases: Record<string, typeof LEARNING_GOAL_OPTIONS[number]['value']> = {
+  arrival_roots: 'daily_scenes',
+  daily_hustle: 'daily_scenes',
+  people: 'daily_scenes',
+  work_study: 'course_system',
+  crisis_mode: 'daily_scenes',
+  out_about: 'daily_scenes',
+}
 
 export function normalizeLearningGoals(goals?: string[] | null) {
-  return (goals ?? [])
-    .filter((goal) => learningGoalValueSet.has(goal as typeof LEARNING_GOAL_OPTIONS[number]['value']))
+  return Array.from(new Set((goals ?? [])
+    .map((goal) => legacyGoalAliases[goal] ?? goal)
+    .filter((goal) => learningGoalValueSet.has(goal as typeof LEARNING_GOAL_OPTIONS[number]['value']))))
     .slice(0, 3)
 }
 
 const PLACEMENT_PROMPTS = [
   {
+    id: 'foundation_intro',
+    title: '介绍自己和目标',
+    prompt: 'Introduce yourself briefly and say why you want to improve your English speaking.',
+    promptZh: '请用英语简单介绍自己，并说明你为什么想提升英语口语。',
+    helper: '可以写名字、身份、学习原因，以及最想先解决的问题。',
+  },
+  {
     id: 'daily_request',
     title: '处理一个真实请求',
-    prompt: 'You just moved into a dorm and the air conditioner is not working. Write what you would say to the front desk.',
-    promptZh: '你刚搬进宿舍，空调坏了。请用英语对前台说明情况并提出请求。',
-    helper: '说明问题、提出请求、补充你希望怎么解决。',
+    prompt: 'You just arrived at a hotel, but the room is not ready. Write what you would say to the front desk.',
+    promptZh: '你到了酒店，但房间还没准备好。请用英语对前台说明情况并提出请求。',
+    helper: '说明情况、提出请求，也可以补充你希望怎么安排。',
   },
   {
-    id: 'explain_preference',
-    title: '解释你的选择',
-    prompt: 'A classmate asks why you want to improve your English speaking. Explain your reason and what situations you want to handle better.',
-    promptZh: '同学问你为什么想提升英语口语。请用英语解释原因，以及你最想应对哪些场景。',
-    helper: '尽量说明原因、目标和你现在的困难。',
-  },
-  {
-    id: 'soft_conflict',
-    title: '委婉处理冲突',
-    prompt: 'Your roommate keeps making noise late at night. Write a polite but clear message to talk about it.',
-    promptZh: '室友经常深夜制造噪音。请用英语写一段礼貌但清楚的沟通。',
-    helper: '注意语气：礼貌、清楚、有解决方案。',
+    id: 'exam_story_opinion',
+    title: '讲述经历并表达观点',
+    prompt: 'Describe a place or experience you remember clearly, and explain why it was important to you.',
+    promptZh: '请用英语描述一个你印象深刻的地点或经历，并解释它为什么重要。',
+    helper: '尽量包含具体细节、感受和原因，这会帮助判断考试表达和故事表达能力。',
   },
 ] as const
 
