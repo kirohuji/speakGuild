@@ -1,0 +1,10 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+英国文化·传统与现代,王室与君主制,"Let me tell you about ___.",引入话题,"王室与君主制","Let me tell you about 王室与君主制.",L2,0
+英国文化·传统与现代,下午茶与美食文化,"Let me tell you about ___.",引入话题,"下午茶与美食文化","Let me tell you about 下午茶与美食文化.",L2,1
+英国文化·传统与现代,英国体育与娱乐,"Let me tell you about ___.",引入话题,"英国体育与娱乐","Let me tell you about 英国体育与娱乐.",L2,2
+美国文化·节日与生活方式,美国主要节日,"Let me tell you about ___.",引入话题,"美国主要节日","Let me tell you about 美国主要节日.",L2,3
+美国文化·节日与生活方式,美国流行文化,"Let me tell you about ___.",引入话题,"美国流行文化","Let me tell you about 美国流行文化.",L2,4
+全球文化·节日与习俗,亚洲文化与传统,"Let me tell you about ___.",引入话题,"亚洲文化与传统","Let me tell you about 亚洲文化与传统.",L2,5
+全球文化·节日与习俗,世界各地的文化,"Let me tell you about ___.",引入话题,"世界各地的文化","Let me tell you about 世界各地的文化.",L2,6
+现代文化·数字时代,社交媒体与数字生活,"Let me tell you about ___.",引入话题,"社交媒体与数字生活","Let me tell you about 社交媒体与数字生活.",L2,7
+现代文化·数字时代,当代社会议题,"Let me tell you about ___.",引入话题,"当代社会议题","Let me tell you about 当代社会议题.",L2,8

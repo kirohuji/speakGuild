@@ -1,0 +1,11 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+英国历史·从罗马到诺曼征服,罗马不列颠,"Let me tell you about ___.",引入话题,"罗马不列颠","Let me tell you about 罗马不列颠.",L2,0
+英国历史·从罗马到诺曼征服,盎格鲁-撒克逊时代,"Let me tell you about ___.",引入话题,"盎格鲁-撒克逊时代","Let me tell you about 盎格鲁-撒克逊时代.",L2,1
+英国历史·从罗马到诺曼征服,维京人与诺曼征服,"Let me tell you about ___.",引入话题,"维京人与诺曼征服","Let me tell you about 维京人与诺曼征服.",L2,2
+英国历史·都铎王朝到工业革命,都铎王朝,"Let me tell you about ___.",引入话题,"都铎王朝","Let me tell you about 都铎王朝.",L2,3
+英国历史·都铎王朝到工业革命,英国内战与光荣革命,"Let me tell you about ___.",引入话题,"英国内战与光荣革命","Let me tell you about 英国内战与光荣革命.",L2,4
+英国历史·都铎王朝到工业革命,工业革命,"Let me tell you about ___.",引入话题,"工业革命","Let me tell you about 工业革命.",L2,5
+美国历史·独立与建国,美国独立战争,"Let me tell you about ___.",引入话题,"美国独立战争","Let me tell you about 美国独立战争.",L2,6
+美国历史·独立与建国,建国与宪法,"Let me tell you about ___.",引入话题,"建国与宪法","Let me tell you about 建国与宪法.",L2,7
+美国历史·西进到民权运动,西进运动与南北战争,"Let me tell you about ___.",引入话题,"西进运动与南北战争","Let me tell you about 西进运动与南北战争.",L2,8
+美国历史·西进到民权运动,工业时代与民权运动,"Let me tell you about ___.",引入话题,"工业时代与民权运动","Let me tell you about 工业时代与民权运动.",L2,9

@@ -1,0 +1,7 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+myth_0,诸神与英雄,1,奥林匹斯众神,希腊神话·诸神与英雄,L2,1,2,3,2,2,"[""学习奥林匹斯众神相关表达""]",2,2,2,Tutor,故事导师,true,,"{""xp"":20}"
+myth_0,诸神与英雄,2,普罗米修斯与潘多拉,希腊神话·诸神与英雄,L2,1,2,2,2,2,"[""学习普罗米修斯与潘多拉相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
+myth_1,特洛伊与奥德赛,1,特洛伊战争,希腊神话·特洛伊与奥德赛,L2,1,2,2,2,2,"[""学习特洛伊战争相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
+myth_1,特洛伊与奥德赛,2,奥德赛历险,希腊神话·特洛伊与奥德赛,L2,1,2,1,2,2,"[""学习奥德赛历险相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
+myth_2,诸神黄昏,1,北欧诸神与创世,北欧神话·诸神黄昏,L2,1,2,2,2,2,"[""学习北欧诸神与创世相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
+myth_2,诸神黄昏,2,诸神黄昏与重生,北欧神话·诸神黄昏,L2,1,2,1,2,2,"[""学习诸神黄昏与重生相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"

@@ -1,0 +1,7 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+伊索寓言·动物与智慧,龟兔赛跑,"Let me tell you about ___.",引入话题,"龟兔赛跑","Let me tell you about 龟兔赛跑.",L2,0
+伊索寓言·动物与智慧,狐狸与葡萄,"Let me tell you about ___.",引入话题,"狐狸与葡萄","Let me tell you about 狐狸与葡萄.",L2,1
+伊索寓言·动物与智慧,狼来了,"Let me tell you about ___.",引入话题,"狼来了","Let me tell you about 狼来了.",L2,2
+伊索寓言·教训与反思,蚂蚁和蚱蜢,"Let me tell you about ___.",引入话题,"蚂蚁和蚱蜢","Let me tell you about 蚂蚁和蚱蜢.",L2,3
+伊索寓言·教训与反思,乌鸦和水罐,"Let me tell you about ___.",引入话题,"乌鸦和水罐","Let me tell you about 乌鸦和水罐.",L2,4
+伊索寓言·教训与反思,牧童和狼与反思,"Let me tell you about ___.",引入话题,"牧童和狼与反思","Let me tell you about 牧童和狼与反思.",L2,5
