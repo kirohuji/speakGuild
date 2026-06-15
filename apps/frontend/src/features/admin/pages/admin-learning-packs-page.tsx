@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectItem } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { FileUploadField } from '@/features/admin/components/file-upload-field';
 import {
   learningPackAdminApi,
+  type LearningPackFilters,
   type LearningPackItem,
   type LearningPackSceneOption,
   type LearningPackStatus,
@@ -87,6 +89,11 @@ export function AdminLearningPacksPage() {
   const [uploading, setUploading] = useState(false);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
 
+  // ── Filters ──
+  const [packageTypeFilter, setPackageTypeFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [filterOptions, setFilterOptions] = useState<LearningPackFilters>({ packageTypes: [], categories: [] });
+
   const selectedScene = useMemo(
     () => scenes.find((scene) => scene.id === sceneId) ?? null,
     [sceneId, scenes],
@@ -100,12 +107,18 @@ export function AdminLearningPacksPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [packResult, sceneResult] = await Promise.all([
-        learningPackAdminApi.list({ pageSize: 100 }),
+      const listParams: any = { pageSize: 100 };
+      if (packageTypeFilter !== 'all') listParams.packageType = packageTypeFilter;
+      if (categoryFilter !== 'all') listParams.categoryId = categoryFilter;
+
+      const [packResult, sceneResult, filterResult] = await Promise.all([
+        learningPackAdminApi.list(listParams),
         learningPackAdminApi.scenes(),
+        learningPackAdminApi.filters(),
       ]);
       setPacks(packResult.list);
       setScenes(sceneResult);
+      setFilterOptions(filterResult);
       if (!sceneId && sceneResult[0]) setSceneId(sceneResult[0].id);
       if (!uploadSceneId && sceneResult[0]) setUploadSceneId(sceneResult[0].id);
     } catch (error) {
@@ -114,7 +127,7 @@ export function AdminLearningPacksPage() {
     } finally {
       setLoading(false);
     }
-  }, [sceneId, uploadSceneId]);
+  }, [sceneId, uploadSceneId, packageTypeFilter, categoryFilter]);
 
   useEffect(() => {
     void load();
@@ -223,6 +236,23 @@ export function AdminLearningPacksPage() {
             刷新
           </Button>
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={packageTypeFilter} onChange={(e) => setPackageTypeFilter((e.target as HTMLSelectElement).value)} className="w-[130px]">
+          <SelectItem value="all">一级分类</SelectItem>
+          {filterOptions.packageTypes.map((t) => (
+            <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
+          ))}
+        </Select>
+        <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[150px]">
+          <SelectItem value="all">二级分类</SelectItem>
+          {filterOptions.categories.map((c) => (
+            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+          ))}
+        </Select>
+        <span className="text-sm text-muted-foreground">共 {packs.length} 个</span>
       </div>
 
       <Card>

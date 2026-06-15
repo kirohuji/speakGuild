@@ -20,11 +20,13 @@ export class LearningPackAdminService {
     private readonly fileAssets: FileAssetsService,
   ) {}
 
-  async list(params: { sceneId?: string; status?: string; page?: number; pageSize?: number }) {
+  async list(params: { sceneId?: string; packageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) {
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
     const where: any = {};
     if (params.sceneId) where.sceneId = params.sceneId;
+    if (params.packageType) where.type = params.packageType;
+    if (params.categoryId) where.scene = { categoryId: params.categoryId };
     if (params.status) where.status = params.status;
 
     const [list, total] = await this.prisma.$transaction([
@@ -49,6 +51,23 @@ export class LearningPackAdminService {
       orderBy: [{ createdAt: 'desc' }],
       select: { id: true, title: true, location: true, packageType: true },
     });
+  }
+
+  async listFilters() {
+    const [packageTypes, categories] = await Promise.all([
+      (this.prisma as any).learningPackage.findMany({
+        select: { type: true },
+        distinct: ['type'],
+      }),
+      this.prisma.sceneCategory.findMany({
+        select: { id: true, name: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+    ]);
+    return {
+      packageTypes: packageTypes.map((p: any) => p.type),
+      categories,
+    };
   }
 
   async generate(userId: string, sceneId: string, input?: { version?: number; title?: string; publish?: boolean }) {

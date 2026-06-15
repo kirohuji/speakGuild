@@ -36,17 +36,17 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
 
   // ── List filters ──
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [packageTypeFilter, setPackageTypeFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState<StoryFilters>({ scriptTypes: [], categories: [] })
+  const [filters, setFilters] = useState<StoryFilters>({ scriptTypes: [], packageTypes: [], categories: [] })
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const params: any = { page, pageSize: PAGE_SIZE }
       if (search) params.search = search
-      if (typeFilter !== 'all') params.scriptType = typeFilter
+      if (packageTypeFilter !== 'all') params.packageType = packageTypeFilter
       if (categoryFilter !== 'all') params.categoryId = categoryFilter
       const data = await listStories(params)
       setStories(data.items)
@@ -54,7 +54,7 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
       setTotalPages(data.totalPages)
     } catch { toast.error('加载故事列表失败') }
     finally { setLoading(false) }
-  }, [page, search, typeFilter, categoryFilter])
+  }, [page, search, packageTypeFilter, categoryFilter])
 
   useEffect(() => { load() }, [load])
 
@@ -166,7 +166,11 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
     characters.find((c) => c.id === id)?.displayName ?? null
 
   // ── Filters & pagination (must be before any early return!) ──
-  useEffect(() => { setPage(1) }, [search, typeFilter, categoryFilter])
+  useEffect(() => { setPage(1) }, [search, packageTypeFilter, categoryFilter])
+
+  // ─── packageType label helper ───
+  const packageTypeLabel = (t: string) =>
+    t === 'daily' ? '日常' : t === 'exam' ? '考试' : t === 'story' ? '故事' : t === 'course' ? '课程' : t === 'foundation' ? '零基础' : t
 
   // ─── Editor View ─────────────────────────────
 
@@ -228,16 +232,14 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
             className="pl-9"
           />
         </div>
-        <Select value={typeFilter} onChange={(e) => setTypeFilter((e.target as HTMLSelectElement).value)} className="w-[110px]">
-          <SelectItem value="all">全部类型</SelectItem>
-          {filters.scriptTypes.map((t) => (
-            <SelectItem key={t} value={t}>
-              {t === 'practice' ? '练习' : t === 'episode' ? '关卡' : t}
-            </SelectItem>
+        <Select value={packageTypeFilter} onChange={(e) => setPackageTypeFilter((e.target as HTMLSelectElement).value)} className="w-[110px]">
+          <SelectItem value="all">一级分类</SelectItem>
+          {filters.packageTypes.map((t) => (
+            <SelectItem key={t} value={t}>{packageTypeLabel(t)}</SelectItem>
           ))}
         </Select>
         <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[140px]">
-          <SelectItem value="all">全部分类</SelectItem>
+          <SelectItem value="all">二级分类</SelectItem>
           {filters.categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
@@ -254,9 +256,9 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <ScrollText className="size-10 text-muted-foreground/30" />
           <p className="mt-3 text-sm text-muted-foreground">
-            {search || typeFilter !== 'all' || categoryFilter !== 'all' ? '没有匹配的故事' : '暂无故事'}
+            {search || packageTypeFilter !== 'all' || categoryFilter !== 'all' ? '没有匹配的故事' : '暂无故事'}
           </p>
-          {!search && typeFilter === 'all' && categoryFilter === 'all' && (
+          {!search && packageTypeFilter === 'all' && categoryFilter === 'all' && (
             <>
               <p className="mt-1 text-xs text-muted-foreground/60">
                 点击「新建故事」开始编写第一个对话脚本

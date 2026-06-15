@@ -41,10 +41,16 @@ export interface LearningPackListResult {
   pageSize: number;
 }
 
+export interface LearningPackFilters {
+  packageTypes: string[]
+  categories: { id: string; name: string }[]
+}
+
 export const learningPackAdminApi = {
-  list: (params?: { sceneId?: string; status?: string; page?: number; pageSize?: number }) =>
+  list: (params?: { sceneId?: string; packageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) =>
     get<LearningPackListResult>('/admin/learning-packs', params),
   scenes: () => get<LearningPackSceneOption[]>('/admin/learning-packs/scenes'),
+  filters: () => get<LearningPackFilters>('/admin/learning-packs/filters'),
   generate: (data: { sceneId: string; version?: number; title?: string; publish?: boolean }) =>
     post<LearningPackItem>('/admin/learning-packs/generate', data),
   upload: (data: { sceneId: string; assetId: string; version?: number; title?: string; publish?: boolean }) =>

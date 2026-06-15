@@ -787,6 +787,7 @@ export class ContentAdminController {
     @Req() req: Request,
     @Query('search') search?: string,
     @Query('scriptType') scriptType?: string,
+    @Query('packageType') packageType?: string,
     @Query('categoryId') categoryId?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -800,8 +801,12 @@ export class ContentAdminController {
       ]
     }
     if (scriptType && scriptType !== 'all') where.scriptType = scriptType
-    if (categoryId) {
-      where.trainingTopic = { scene: { categoryId } }
+    // 一级分类 (packageType) 和二级分类 (categoryId) 都通过 trainingTopic → scene 过滤
+    const sceneWhere: any = {}
+    if (packageType && packageType !== 'all') sceneWhere.packageType = packageType
+    if (categoryId && categoryId !== 'all') sceneWhere.categoryId = categoryId
+    if (Object.keys(sceneWhere).length > 0) {
+      where.trainingTopic = { scene: sceneWhere }
     }
 
     const p = Math.max(1, parseInt(page || '1'))
@@ -837,13 +842,12 @@ export class ContentAdminController {
       this.prisma.sceneCategory.findMany({
         select: { id: true, name: true },
         orderBy: { sortOrder: 'asc' },
-        where: {
-          scenes: { some: { trainingTopics: { some: { inkScriptId: { not: null } } } } },
-        },
       }),
     ])
     return {
       scriptTypes: scriptTypes.map((s) => s.scriptType),
+      // 一级分类使用枚举常量，与学习包管理完全一致
+      packageTypes: ['daily', 'exam', 'story', 'course', 'foundation'],
       categories,
     }
   }

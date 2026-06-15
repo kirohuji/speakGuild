@@ -11,6 +11,8 @@ export class LearningPackAdminController {
   async list(
     @Req() req: Request,
     @Query('sceneId') sceneId?: string,
+    @Query('packageType') packageType?: string,
+    @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -18,6 +20,8 @@ export class LearningPackAdminController {
     await requireAdmin(req);
     return this.service.list({
       sceneId,
+      packageType,
+      categoryId,
       status,
       page: Number(page || 1),
       pageSize: Number(pageSize || 20),
@@ -28,6 +32,12 @@ export class LearningPackAdminController {
   async scenes(@Req() req: Request) {
     await requireAdmin(req);
     return this.service.listScenes();
+  }
+
+  @Get('filters')
+  async filters(@Req() req: Request) {
+    await requireAdmin(req);
+    return this.service.listFilters();
   }
 
   @Post('generate')

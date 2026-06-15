@@ -419,12 +419,14 @@ export interface StoryListResponse {
 
 export interface StoryFilters {
   scriptTypes: string[]
+  packageTypes: string[]
   categories: { id: string; name: string }[]
 }
 
 export async function listStories(params?: {
   search?: string
   scriptType?: string
+  packageType?: string
   categoryId?: string
   page?: number
   pageSize?: number

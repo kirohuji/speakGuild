@@ -127,14 +127,10 @@ async function main() {
   //
   // 公共内容库（Vocabulary / Chunk / SentencePattern / DictionaryEntry）保留。
   // 学习包 seed 会通过 upsert 复用这些记录，只重建场景、话题、关卡以及关联表。
+  //
+  // 🎮 角色 & 地图数据（gameCharacter / gameMap / gameLocation / ...）保留，
+  //    这些由后台"角色管理""地图管理"维护，seed 不再清空。
   console.log('🧹 清空旧数据...')
-  await prisma.explorationRecord.deleteMany()
-  await prisma.gameSave.deleteMany()
-  await prisma.gameLocationExit.deleteMany()
-  await prisma.gameLocationNpc.deleteMany()
-  await prisma.gameLocation.deleteMany()
-  await prisma.gameMap.deleteMany()
-  await prisma.gameCharacter.deleteMany()
   await prisma.inkScript.deleteMany()
   await prisma.storyTurn.deleteMany()
   await prisma.storyRecord.deleteMany()
