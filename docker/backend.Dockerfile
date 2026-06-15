@@ -33,10 +33,15 @@ COPY --from=builder /app/apps/backend/dist apps/backend/dist
 COPY --from=builder /app/apps/backend/prisma apps/backend/prisma
 COPY --from=builder /app/apps/backend/src apps/backend/src
 COPY --from=builder /app/apps/backend/tsconfig.json apps/backend/tsconfig.json
+COPY --from=builder /app/apps/backend/package.json apps/backend/package.json
 RUN pnpm --filter @manyu/backend prisma:generate
 
 WORKDIR /app/apps/backend
 
 EXPOSE 3001
 
-CMD ["node", "dist/src/main.js"]
+HEALTHCHECK --interval=60s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/v1/manyu/ops/health || exit 1
+
+# 启动时自动执行数据库迁移，然后启动应用
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]

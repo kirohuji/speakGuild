@@ -8,9 +8,17 @@ import { Server, Socket } from 'socket.io';
 import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../auth/auth';
 
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 @WebSocketGateway({
   namespace: '/notifications',
-  cors: { origin: '*' },
+  cors: {
+    origin: allowedOrigins.length ? allowedOrigins : ['capacitor://localhost', 'ionic://localhost'],
+    credentials: true,
+  },
 })
 export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()

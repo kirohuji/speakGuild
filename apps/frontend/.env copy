@@ -1,8 +1,0 @@
-# ====== Frontend (Vite) ======
-VITE_API_BASE_URL=https://hope.lourd.top:3605/api/v1/manyu
-VITE_AUTH_BASE_URL=https://hope.lourd.top:3605/api/auth
-VITE_WS_URL=http://localhost:3001
-VITE_DEV_PROXY_TARGET=http://localhost:3001
-VITE_WECHAT_APP_ID=
-VITE_WECHAT_UNIVERSAL_LINK=https://hope.lourd.top:3605/wechat/
-VITE_REVENUECAT_API_KEY=appl_JrpspfUYOrTRHtdHVDUytndhWYi
