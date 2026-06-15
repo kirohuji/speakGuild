@@ -1,18 +1,42 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-chapter_0,1,I'm here to check in.,0
-chapter_0,1,My booking is under the name...,1
-chapter_0,1,Thank you for your help.,2
-chapter_0,3,I'm from...,0
-chapter_0,3,It's nice to meet you.,1
-chapter_0,3,My major is...,2
-chapter_1,1,I'm here to study.,0
-chapter_1,1,I have nothing to declare.,1
-chapter_1,1,Can I see your passport?,2
-chapter_1,3,I'm here to check in.,0
-chapter_1,3,Is there Wi-Fi in the building?,1
-chapter_1,3,Where is the laundry room?,2
-chapter_1,4,How much is it?,0
-chapter_1,4,I'm looking for...,1
-chapter_1,5,I'm from...,0
-chapter_1,5,What do you do in your free time?,1
-chapter_1,5,Would you like to grab a coffee sometime?,2
+chapter_1,1,I'm here to check in.,0
+chapter_1,1,My booking is under the name...,1
+chapter_1,1,Here is my student ID.,2
+chapter_1,1,Could you tell me where my room is?,3
+chapter_1,2,Is there Wi-Fi in the building?,0
+chapter_1,2,Where is the laundry room?,1
+chapter_1,2,Is there a shared kitchen?,2
+chapter_1,2,How do I get to the campus from here?,3
+chapter_1,3,How do I use this washing machine?,0
+chapter_1,3,Is this machine available?,1
+chapter_1,3,How long does a cycle take?,2
+chapter_1,3,Do I need an app or coins?,3
+chapter_1,4,I need to report a maintenance issue.,0
+chapter_1,4,The heater isn't working.,1
+chapter_1,4,When can someone come to fix it?,2
+chapter_1,4,I have a package to pick up.,3
+chapter_2,1,It's nice to meet you.,0
+chapter_2,1,I'm from...,1
+chapter_2,1,My major is...,2
+chapter_2,2,What do you do in your free time?,0
+chapter_2,2,I'm into...,1
+chapter_2,2,Have you tried...,2
+chapter_2,2,It's near...,3
+chapter_2,3,Would you like to grab dinner sometime?,0
+chapter_2,3,Let's cook together tonight.,1
+chapter_2,3,Let's split the bill.,2
+chapter_2,4,Let's set some ground rules.,0
+chapter_2,4,Quiet hours after 11pm?,1
+chapter_2,4,Whose turn is it to take out the rubbish?,2
+chapter_2,4,Do you mind if I have friends over?,3
+chapter_3,1,I'm looking for this book.,0
+chapter_3,1,Can I borrow this?,1
+chapter_3,1,Can I renew it online?,2
+chapter_3,1,Where is the quiet study area?,3
+chapter_3,2,Can I book a study room?,0
+chapter_3,2,How many people can it fit?,1
+chapter_3,2,How long can we use it for?,2
+chapter_3,3,How do I print something?,0
+chapter_3,3,How much does it cost per page?,1
+chapter_3,3,Is there a scanner I can use?,2
+chapter_3,3,Can I print from my laptop?,3

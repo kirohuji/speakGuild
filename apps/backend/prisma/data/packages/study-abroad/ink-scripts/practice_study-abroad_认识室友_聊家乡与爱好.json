@@ -1,0 +1,6 @@
+{
+  "key": "practice_study-abroad_认识室友_聊家乡与爱好",
+  "title": "认识室友 - 聊家乡与爱好",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_study-abroad_认识室友_聊家乡与爱好\ntitle: 认识室友 - 聊家乡与爱好\n---\nAlex: So tell me more about your hometown! What's it like? And what do you like to do in your free time?\n#objective: Describe your hometown and share your hobbies.\n#chunks: I'm from...,It's near...,It's famous for...,I'm into...,What do you do in your free time?\n#user_input\nAlex: Oh wow, I've never been there! Is it near Shanghai? And photography sounds awesome — we should go take some photos around campus sometime.\n#objective: Ask Alex about his hobbies and find common interests.\n#chunks: What do you do in your free time?,Have you tried...,I'm into...\n#user_input\nAlex: I'm really into hiking and I love trying new food. Have you tried any British food yet?\n#objective: Respond about food and suggest cooking together.\n#chunks: Have you tried...,I'm into...,Let's cook together tonight\n#user_input\nAlex: That sounds great! Maybe we can do a potluck with the other flatmates this weekend?\n-> END\n"
+}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_hotel_酒店入住_办理入住",
-  "title": "酒店入住 - 办理入住",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_hotel_酒店入住_办理入住\ntitle: 酒店入住 - 办理入住\n---\nStaff: Check in at a hotel. Tell them you have a reservation.\n#objective: Check in at a hotel. Tell them you have a reservation.\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Can you help me with...?,I'd like to...,Could you tell me...?\n#user_input\nStaff: Got it. That was really helpful. Have a great day!\n-> END\n"
-}

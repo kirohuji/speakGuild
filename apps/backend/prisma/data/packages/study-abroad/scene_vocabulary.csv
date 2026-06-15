@@ -1,86 +1,83 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-宿舍入住,办理入住,dormitory,宿舍,noun,/ˈdɔːrmətɔːri/,/ˈdɔːmɪtri/,L1,,"[{""en"":""I live in a dormitory near campus."",""zh"":""我住在校园附近的宿舍。""}]",0
-宿舍入住,办理入住,reception,前台,noun,/rɪˈsepʃən/,/rɪˈsepʃən/,L1,,"[{""en"":""Go to the reception desk to check in."",""zh"":""去前台办理入住。""}]",1
-宿舍入住,办理入住,check in,办理入住,phrase,/tʃek ɪn/,/tʃek ɪn/,L1,,"[{""en"":""I need to check in at the dormitory."",""zh"":""我需要去宿舍办理入住。""}]",2
-宿舍入住,办理入住,booking,预订,noun,/ˈbʊkɪŋ/,/ˈbʊkɪŋ/,L1,,"[{""en"":""My booking is under the name Li."",""zh"":""我的预订姓名是李。""}]",3
-宿舍入住,办理入住,room key,房间钥匙,noun,/ruːm kiː/,/ruːm kiː/,L1,,"[{""en"":""Here is your room key for room 302."",""zh"":""这是你302房间的钥匙。""}]",4
-宿舍入住,办理入住,student ID,学生证,noun,/ˈstjuːdənt aɪˈdiː/,/ˈstjuːdənt aɪˈdiː/,L1,,"[{""en"":""Please show your student ID to register."",""zh"":""请出示学生证办理登记。""}]",5
-宿舍入住,询问设施,Wi-Fi,无线网络,noun,/ˈwaɪ faɪ/,/ˈwaɪ faɪ/,L1,,"[{""en"":""What's the Wi-Fi password for the dorm?"",""zh"":""宿舍的Wi-Fi密码是什么？""}]",6
-宿舍入住,询问设施,laundry room,洗衣房,noun,/ˈlɔːndri ruːm/,/ˈlɔːndri ruːm/,L1,,"[{""en"":""The laundry room is on the first floor."",""zh"":""洗衣房在一楼。""}]",7
-宿舍入住,询问设施,shared kitchen,共享厨房,noun,/ʃerd ˈkɪtʃɪn/,/ʃeəd ˈkɪtʃɪn/,L2,,"[{""en"":""We have a shared kitchen on each floor."",""zh"":""每层楼都有一个共享厨房。""}]",8
-宿舍入住,询问设施,elevator,电梯,noun,/ˈelɪveɪtər/,/ˈelɪveɪtər/,L1,,"[{""en"":""Take the elevator to the third floor."",""zh"":""坐电梯到三楼。""}]",9
-宿舍入住,申请换房间,deposit,押金,noun,/dɪˈpɑːzɪt/,/dɪˈpɒzɪt/,L2,入住前需要缴纳的押金，退宿时退还。,"[{""en"":""You need to pay a deposit before moving in."",""zh"":""入住前需要交押金。""}]",10
-宿舍入住,申请换房间,contract,合同,noun,/ˈkɑːntrækt/,/ˈkɒntrækt/,L2,,"[{""en"":""Please sign the housing contract."",""zh"":""请签住宿合同。""}]",11
-宿舍入住,,utility bill,水电账单,noun,/juːˈtɪləti bɪl/,/juːˈtɪləti bɪl/,L2,,"[{""en"":""The utility bill is included in the rent."",""zh"":""水电费包含在租金里。""}]",12
-宿舍入住,描述宿舍问题,maintenance,维修,noun,/ˈmeɪntənəns/,/ˈmeɪntənəns/,L2,,"[{""en"":""Please call maintenance if the light is broken."",""zh"":""如果灯坏了请打电话报修。""}]",13
-宿舍入住,描述宿舍问题,air conditioner,空调,noun,/er kənˈdɪʃənər/,/eə kənˈdɪʃənə/,L1,,"[{""en"":""The air conditioner isn't working properly."",""zh"":""空调不太好用。""}]",14
-宿舍入住,描述宿舍问题,heater,暖气,noun,/ˈhiːtər/,/ˈhiːtər/,L1,,"[{""en"":""Can I adjust the heater in my room?"",""zh"":""我可以调节房间的暖气吗？""}]",15
-宿舍入住,,curfew,宵禁,noun,/ˈkɜːrfjuː/,/ˈkɜːfjuː/,L2,,"[{""en"":""There's a curfew at 11 PM in the dorm."",""zh"":""宿舍晚上11点宵禁。""}]",16
-宿舍入住,,bedding,床上用品,noun,/ˈbedɪŋ/,/ˈbedɪŋ/,L2,,"[{""en"":""Do I need to bring my own bedding?"",""zh"":""我需要自己带床上用品吗？""}]",17
-宿舍入住,办理入住,registration form,登记表,noun,/ˌredʒɪˈstreɪʃən fɔːrm/,/ˌredʒɪˈstreɪʃən fɔːm/,L2,,"[{""en"":""Please fill out this registration form."",""zh"":""请填写这张登记表。""}]",18
-宿舍入住,,visitor policy,访客政策,noun,/ˈvɪzɪtər ˈpɑːləsi/,/ˈvɪzɪtə ˈpɒləsi/,L2,,"[{""en"":""The visitor policy allows guests until 10 PM."",""zh"":""访客政策允许客人待到晚上10点。""}]",19
-宿舍入住,,quiet hours,安静时间,noun,/ˈkwaɪət aʊərz/,/ˈkwaɪət aʊəz/,L2,,"[{""en"":""Quiet hours start at 10 PM."",""zh"":""安静时间从晚上10点开始。""}]",20
-宿舍入住,申请换房间,single room,单人间,noun,/ˈsɪŋɡəl ruːm/,/ˈsɪŋɡəl ruːm/,L1,,"[{""en"":""I prefer a single room."",""zh"":""我更喜欢单人间。""}]",21
-宿舍入住,申请换房间,shared room,双人间,noun,/ʃerd ruːm/,/ʃeəd ruːm/,L1,,"[{""en"":""A shared room is cheaper than a single room."",""zh"":""双人间比单人间便宜。""}]",22
-宿舍入住,申请换房间,landlord,房东,noun,/ˈlændlɔːrd/,/ˈlændlɔːd/,L2,,"[{""en"":""The landlord lives on the first floor."",""zh"":""房东住在一楼。""}]",23
-宿舍入住,申请换房间,lease agreement,租赁协议,noun,/liːs əˈɡriːmənt/,/liːs əˈɡriːmənt/,L2,,"[{""en"":""Read the lease agreement carefully before signing."",""zh"":""签之前仔细阅读租赁协议。""}]",24
-宿舍入住,办理入住,move in,搬入,phrase,/muːv ɪn/,/muːv ɪn/,L1,,"[{""en"":""When can I move in?"",""zh"":""我什么时候可以搬进来？""}]",25
-宿舍入住,申请换房间,move out,搬出,phrase,/muːv aʊt/,/muːv aʊt/,L1,,"[{""en"":""You need to give notice before moving out."",""zh"":""搬出前需要提前通知。""}]",26
-宿舍入住,描述宿舍问题,fire alarm,火灾报警器,noun,/ˈfaɪər əˌlɑːrm/,/ˈfaɪər əˌlɑːm/,L2,,"[{""en"":""Don't ignore the fire alarm."",""zh"":""不要忽视火灾报警器。""}]",27
-宿舍入住,描述宿舍问题,emergency exit,紧急出口,noun,/ɪˈmɜːrdʒənsi ˈeksɪt/,/ɪˈmɜːdʒənsi ˈeksɪt/,L2,,"[{""en"":""The emergency exit is at the end of the hall."",""zh"":""紧急出口在走廊尽头。""}]",28
-宿舍入住,,resident,住户,noun,/ˈrezɪdənt/,/ˈrezɪdənt/,L2,,"[{""en"":""All residents must sign in after 10 PM."",""zh"":""所有住户晚上10点后需登记。""}]",29
-宿舍入住,询问设施,common room,公共休息室,noun,/ˈkɑːmən ruːm/,/ˈkɒmən ruːm/,L2,,"[{""en"":""The common room has a TV and sofas."",""zh"":""公共休息室有电视和沙发。""}]",30
-宿舍入住,询问设施,laundry card,洗衣卡,noun,/ˈlɔːndri kɑːrd/,/ˈlɔːndri kɑːd/,L2,,"[{""en"":""You need a laundry card to use the washing machine."",""zh"":""你需要洗衣卡才能用洗衣机。""}]",31
-宿舍入住,询问设施,recycling bin,回收箱,noun,/ˌriːˈsaɪklɪŋ bɪn/,/ˌriːˈsaɪklɪŋ bɪn/,L2,,"[{""en"":""Put plastic bottles in the recycling bin."",""zh"":""把塑料瓶放进回收箱。""}]",32
-宿舍入住,,key card,门禁卡,noun,/kiː kɑːrd/,/kiː kɑːd/,L1,,"[{""en"":""Use your key card to enter the building."",""zh"":""用门禁卡进入大楼。""}]",33
-宿舍入住,,security guard,保安,noun,/sɪˈkjʊrəti ɡɑːrd/,/sɪˈkjʊərəti ɡɑːd/,L2,,"[{""en"":""The security guard is at the front gate."",""zh"":""保安在大门口。""}]",34
-宿舍入住,,room number,房间号,noun,/ruːm ˈnʌmbər/,/ruːm ˈnʌmbə/,L1,,"[{""en"":""What's your room number?"",""zh"":""你的房间号是多少？""}]",35
-宿舍入住,询问设施,floor plan,楼层平面图,noun,/flɔːr plæn/,/flɔː plæn/,L2,,"[{""en"":""The floor plan shows where the exit is."",""zh"":""楼层平面图显示了出口位置。""}]",36
-宿舍入住,,neighbor,邻居,noun,/ˈneɪbər/,/ˈneɪbə/,L1,,"[{""en"":""My neighbor is also a freshman."",""zh"":""我的邻居也是一年级新生。""}]",37
-宿舍入住,描述宿舍问题,noise complaint,噪音投诉,noun,/nɔɪz kəmˈpleɪnt/,/nɔɪz kəmˈpleɪnt/,L2,,"[{""en"":""If you have a noise complaint, call reception."",""zh"":""如果有噪音投诉，打电话给前台。""}]",38
-宿舍入住,申请换房间,accommodation,住宿,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,,"[{""en"":""The accommodation office can help with housing issues."",""zh"":""住宿办公室可以帮忙解决住宿问题。""}]",39
-机场入境,说明来访目的,passport,护照,noun,/ˈpæspɔːrt/,/ˈpɑːspɔːt/,L1,,"[{""en"":""Please show your passport at immigration."",""zh"":""请在入境处出示护照。""}]",0
-机场入境,说明来访目的,visa,签证,noun,/ˈviːzə/,/ˈviːzə/,L1,,"[{""en"":""My student visa is valid for two years."",""zh"":""我的学生签证有效期两年。""}]",1
-机场入境,,customs,海关,noun,/ˈkʌstəmz/,/ˈkʌstəmz/,L2,,"[{""en"":""You need to declare this at customs."",""zh"":""你需要在海关申报这个。""}]",2
-机场入境,,declare,申报,verb,/dɪˈkler/,/dɪˈkleə/,L2,,"[{""en"":""Do you have anything to declare?"",""zh"":""你有什么需要申报的吗？""}]",3
-机场入境,行李丢失申报,luggage,行李,noun,/ˈlʌɡɪdʒ/,/ˈlʌɡɪdʒ/,L1,,"[{""en"":""Please collect your luggage from carousel 3."",""zh"":""请到3号转盘取行李。""}]",4
-机场入境,说明来访目的,boarding pass,登机牌,noun,/ˈbɔːrdɪŋ pæs/,/ˈbɔːdɪŋ pɑːs/,L1,,"[{""en"":""Here is your boarding pass for flight BA168."",""zh"":""这是你BA168航班的登机牌。""}]",5
-机场入境,说明来访目的,immigration,入境检查,noun,/ˌɪmɪˈɡreɪʃən/,/ˌɪmɪˈɡreɪʃən/,L2,,"[{""en"":""Go through immigration after you get off the plane."",""zh"":""下飞机后通过入境检查。""}]",6
-机场入境,说明来访目的,purpose of visit,来访目的,noun,/ˈpɜːrpəs əv ˈvɪzɪt/,/ˈpɜːpəs əv ˈvɪzɪt/,L2,,"[{""en"":""What is the purpose of your visit?"",""zh"":""你来访的目的是什么？""}]",7
-机场入境,,customs declaration,报关单,noun,/ˈkʌstəmz ˌdekləˈreɪʃən/,/ˈkʌstəmz ˌdekləˈreɪʃən/,L2,,"[{""en"":""Fill out this customs declaration form."",""zh"":""填一下这张报关单。""}]",8
-机场入境,,duty-free,免税,adj,/ˈduːti friː/,/ˈdjuːti friː/,L2,,"[{""en"":""You can buy duty-free items at the airport."",""zh"":""你可以在机场买免税商品。""}]",9
-机场入境,行李丢失申报,baggage claim,行李提取处,noun,/ˈbæɡɪdʒ kleɪm/,/ˈbæɡɪdʒ kleɪm/,L1,,"[{""en"":""The baggage claim area is downstairs."",""zh"":""行李提取处在一楼。""}]",10
-机场入境,转机问路,arrival hall,到达大厅,noun,/əˈraɪvəl hɔːl/,/əˈraɪvəl hɔːl/,L1,,"[{""en"":""I'll meet you in the arrival hall."",""zh"":""我会在到达大厅接你。""}]",11
-机场入境,转机问路,transit,中转,noun,/ˈtrænzɪt/,/ˈtrænsɪt/,L2,,"[{""en"":""I have a transit flight in Dubai."",""zh"":""我在迪拜中转。""}]",12
-机场入境,转机问路,connecting flight,转机航班,noun,/kəˈnektɪŋ flaɪt/,/kəˈnektɪŋ flaɪt/,L2,,"[{""en"":""Your connecting flight is at gate 15."",""zh"":""你的转机航班在15号登机口。""}]",13
-机场入境,转机问路,departure lounge,候机厅,noun,/dɪˈpɑːrtʃər laʊndʒ/,/dɪˈpɑːtʃə laʊndʒ/,L2,,"[{""en"":""Wait in the departure lounge until boarding."",""zh"":""在候机厅等候登机。""}]",14
-机场入境,行李丢失申报,carry-on,随身行李,noun,/ˈkæri ɑːn/,/ˈkæri ɒn/,L1,,"[{""en"":""You can only take one carry-on bag."",""zh"":""你只能带一件随身行李。""}]",15
-机场入境,行李丢失申报,checked baggage,托运行李,noun,/tʃekt ˈbæɡɪdʒ/,/tʃekt ˈbæɡɪdʒ/,L2,,"[{""en"":""Your checked baggage is 23 kilograms."",""zh"":""你的托运行李是23公斤。""}]",16
-机场入境,,security check,安检,noun,/sɪˈkjʊrəti tʃek/,/sɪˈkjʊərəti tʃek/,L1,,"[{""en"":""Please go through the security check."",""zh"":""请通过安检。""}]",17
-机场入境,说明来访目的,immigration officer,入境官员,noun,/ˌɪmɪˈɡreɪʃən ˈɔːfɪsər/,/ˌɪmɪˈɡreɪʃən ˈɒfɪsə/,L2,,"[{""en"":""The immigration officer asked me a few questions."",""zh"":""入境官员问了我几个问题。""}]",18
-机场入境,说明来访目的,duration of stay,停留时间,noun,/dʊˈreɪʃən əv steɪ/,/djʊˈreɪʃən əv steɪ/,L2,,"[{""en"":""What's your duration of stay in the UK?"",""zh"":""你在英国停留多久？""}]",19
-机场入境,说明来访目的,return ticket,回程机票,noun,/rɪˈtɜːrn ˈtɪkɪt/,/rɪˈtɜːn ˈtɪkɪt/,L1,,"[{""en"":""Do you have a return ticket?"",""zh"":""你有回程机票吗？""}]",20
-机场入境,说明来访目的,entry permit,入境许可,noun,/ˈentri pərˈmɪt/,/ˈentri ˈpɜːmɪt/,L2,,"[{""en"":""You need an entry permit to enter the country."",""zh"":""你需要入境许可才能入境。""}]",21
-机场入境,说明来访目的,travel document,旅行证件,noun,/ˈtrævəl ˈdɑːkjumənt/,/ˈtrævəl ˈdɒkjʊmənt/,L2,,"[{""en"":""Make sure your travel documents are valid."",""zh"":""确保你的旅行证件有效。""}]",22
-机场入境,说明来访目的,landing card,入境卡,noun,/ˈlændɪŋ kɑːrd/,/ˈlændɪŋ kɑːd/,L2,,"[{""en"":""Fill in your landing card before arrival."",""zh"":""到达前填好入境卡。""}]",23
-机场入境,行李丢失申报,suitcase,行李箱,noun,/ˈsuːtkeɪs/,/ˈsuːtkeɪs/,L1,,"[{""en"":""My suitcase was damaged during the flight."",""zh"":""我的行李箱在飞行中损坏了。""}]",24
-机场入境,行李丢失申报,lost and found,失物招领,noun,/lɔːst ænd faʊnd/,/lɒst ænd faʊnd/,L2,,"[{""en"":""Check at the lost and found for your bag."",""zh"":""去失物招领处找找你的包。""}]",25
-认识室友,初次见面,introduce,介绍,verb,/ˌɪntrəˈduːs/,/ˌɪntrəˈdjuːs/,L1,,"[{""en"":""Let me introduce myself."",""zh"":""让我自我介绍一下。""}]",0
-认识室友,初次见面,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,,"[{""en"":""My hometown is Shanghai."",""zh"":""我的家乡是上海。""}]",1
-认识室友,初次见面,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L1,,"[{""en"":""What's your major?"",""zh"":""你学什么专业？""}]",2
-认识室友,聊家乡,get used to,适应,phrase,/ɡet juːzd tuː/,/ɡet juːzd tuː/,L2,,"[{""en"":""I'm still getting used to the weather here."",""zh"":""我还在适应这里的天气。""}]",3
-认识室友,邀请一起吃饭,hang out,出去玩,phrase,/hæŋ aʊt/,/hæŋ aʊt/,L1,,"[{""en"":""Do you want to hang out this weekend?"",""zh"":""这周末想一起出去玩吗？""}]",4
-认识室友,邀请一起吃饭,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,,"[{""en"":""My class schedule is quite busy on Mondays."",""zh"":""我周一的上课安排很满。""}]",5
-认识室友,邀请一起吃饭,semester,学期,noun,/sɪˈmestər/,/sɪˈmestə/,L1,,"[{""en"":""This semester I'm taking four courses."",""zh"":""这学期我选了四门课。""}]",6
-认识室友,聊家乡,campus,校园,noun,/ˈkæmpəs/,/ˈkæmpəs/,L1,,"[{""en"":""The campus is beautiful in autumn."",""zh"":""秋天的校园很美。""}]",7
-认识室友,,roommate,室友,noun,/ˈruːmmeɪt/,/ˈruːmmeɪt/,L1,,"[{""en"":""My roommate is from South Korea."",""zh"":""我的室友来自韩国。""}]",8
-认识室友,初次见面,originally from,来自,phrase,/əˈrɪdʒənəli frəm/,/əˈrɪdʒənəli frəm/,L1,,"[{""en"":""I'm originally from China."",""zh"":""我来自中国。""}]",9
-认识室友,分享兴趣爱好,spoken language,口语,noun,/ˈspoʊkən ˈlæŋɡwɪdʒ/,/ˈspəʊkən ˈlæŋɡwɪdʒ/,L2,,"[{""en"":""What spoken language do you use at home?"",""zh"":""你在家里说什么语言？""}]",10
-认识室友,聊家乡,culture shock,文化冲击,noun,/ˈkʌltʃər ʃɑːk/,/ˈkʌltʃə ʃɒk/,L2,,"[{""en"":""I experienced some culture shock at first."",""zh"":""一开始我经历了一些文化冲击。""}]",11
-认识室友,聊家乡,adapt,适应,verb,/əˈdæpt/,/əˈdæpt/,L2,,"[{""en"":""It took me a few weeks to adapt."",""zh"":""我花了几个星期才适应。""}]",12
-认识室友,分享兴趣爱好,personality,性格,noun,/ˌpɜːrsəˈnæləti/,/ˌpɜːsəˈnæləti/,L2,,"[{""en"":""We have similar personalities."",""zh"":""我们性格很相似。""}]",13
-认识室友,分享兴趣爱好,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,,"[{""en"":""My hobbies include reading and hiking."",""zh"":""我的爱好包括阅读和徒步。""}]",14
-认识室友,初次见面,freshman,大一新生,noun,/ˈfreʃmən/,/ˈfreʃmən/,L1,,"[{""en"":""I'm a freshman at the university."",""zh"":""我是大学一年级新生。""}]",15
+宿舍入住,办理入住,dormitory,宿舍,noun,/ˈdɔːrmətɔːri/,/ˈdɔːmɪtri/,L1,学生宿舍(美式常用 dorm)。英式常说 accommodation 或 residence hall。,"[{""en"":""I live in a dormitory near campus."",""zh"":""我住在校园附近的宿舍。""}]",0
+宿舍入住,办理入住,reception,前台,noun,/rɪˈsepʃən/,/rɪˈsepʃən/,L1,宿舍或酒店的前台接待处。去 reception desk 办理入住。,"[{""en"":""Go to the reception desk to check in."",""zh"":""去前台办理入住。""}]",1
+宿舍入住,办理入住,check in,办理入住,phrase,/tʃek ɪn/,/tʃek ɪn/,L1,入住登记。check-in time = 入住时间。反义词: check out (退房)。,"[{""en"":""I need to check in at the dormitory."",""zh"":""我需要去宿舍办理入住。""}]",2
+宿舍入住,办理入住,student ID,学生证,noun,/ˈstjuːdənt aɪˈdiː/,/ˈstjuːdənt aɪˈdiː/,L1,学生身份证明。入住、借书、考试都要用。,"[{""en"":""Please show your student ID to register."",""zh"":""请出示学生证办理登记。""}]",3
+宿舍入住,了解设施,Wi-Fi,无线网络,noun,/ˈwaɪ faɪ/,/ˈwaɪ faɪ/,L1,校园 Wi-Fi 通常叫 eduroam，用学生账号登录。,"[{""en"":""What's the Wi-Fi password for the dorm?"",""zh"":""宿舍的Wi-Fi密码是什么？""}]",0
+宿舍入住,了解设施,laundry room,洗衣房,noun,/ˈlɔːndri ruːm/,/ˈlɔːndri ruːm/,L1,宿舍公共洗衣房。英美大学多用 App 支付而非投币。,"[{""en"":""The laundry room is on the first floor."",""zh"":""洗衣房在一楼。""}]",1
+宿舍入住,了解设施,shared kitchen,共享厨房,noun,/ʃerd ˈkɪtʃɪn/,/ʃeəd ˈkɪtʃɪn/,L2,宿舍公共厨房。冰箱里的食物要贴标签(label your food)。,"[{""en"":""We have a shared kitchen on each floor."",""zh"":""每层楼都有一个共享厨房。""}]",2
+宿舍入住,报修问题,maintenance,维修,noun,/ˈmeɪntənəns/,/ˈmeɪntənəns/,L2,报修叫 maintenance request。维修工叫 maintenance person 或 handyman。,"[{""en"":""Please call maintenance if the light is broken."",""zh"":""如果灯坏了请打电话报修。""}]",0
+宿舍入住,报修问题,heater,暖气,noun,/ˈhiːtər/,/ˈhiːtər/,L1,英美宿舍常见暖气问题。英国多用 radiator(暖气片)。,"[{""en"":""The heater in my room isn't working."",""zh"":""我房间的暖气坏了。""}]",1
+宿舍入住,签收快递,parcel,包裹,noun,/ˈpɑːrsəl/,/ˈpɑːsəl/,L1,快递包裹。美式常说 package。前台代收叫 parcel collection。,"[{""en"":""I have a parcel to collect from reception."",""zh"":""我去前台取包裹。""}]",0
+宿舍入住,签收快递,delivery,快递/外卖,noun,/dɪˈlɪvəri/,/dɪˈlɪvəri/,L1,包括快递(package delivery)和外卖(food delivery)。,"[{""en"":""Where do I pick up food deliveries?"",""zh"":""我在哪取外卖？""}]",1
+认识室友,初次见面,flatmate,室友(英式),noun,/ˈflætmeɪt/,/ˈflætmeɪt/,L1,各有各的房间、共用公共区域的室友。美式叫 roommate 或 housemate。,"[{""en"":""My flatmate is also a first-year student."",""zh"":""我的室友也是一年级新生。""}]",0
+认识室友,初次见面,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L1,大学主修专业。英式常说 course。What's your major? = 你学什么专业？,"[{""en"":""My major is Computer Science."",""zh"":""我的专业是计算机科学。""}]",1
+认识室友,聊家乡与爱好,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,兴趣爱好。What do you do in your free time? 比 What are your hobbies? 更自然。,"[{""en"":""My hobbies include photography and hiking."",""zh"":""我的爱好包括摄影和徒步。""}]",0
+认识室友,聊家乡与爱好,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,家乡。Describe your hometown = 描述你的家乡。老外常用 nearby [大城市] 来参考。,"[{""en"":""My hometown is a small city near Shanghai."",""zh"":""我的家乡是上海附近的一个小城市。""}]",1
+认识室友,邀请一起吃饭,potluck,百乐餐(每人带一道菜),noun,/ˈpɑːtlʌk/,/ˈpɒtlʌk/,L2,每人带一道菜的聚餐形式，在英美大学宿舍非常流行。,"[{""en"":""We're having a potluck on Friday. Want to join?"",""zh"":""我们周五有百乐餐，一起来？""}]",0
+认识室友,邀请一起吃饭,split the bill,AA制,phrase,/splɪt ðə bɪl/,/splɪt ðə bɪl/,L1,平分账单。国外吃饭 AA 制是常态。It's on me = 我请客。,"[{""en"":""Let's split the bill."",""zh"":""我们 AA 吧。""}]",1
+认识室友,商量宿舍规则,ground rules,基本规则,noun,/ɡraʊnd ruːlz/,/ɡraʊnd ruːlz/,L2,共同生活的基本约定。Let's set some ground rules = 我们定些基本规则。,"[{""en"":""Let's set some ground rules for the kitchen."",""zh"":""我们定一些厨房的基本规则吧。""}]",0
+认识室友,商量宿舍规则,quiet hours,安静时间,noun,/ˈkwaɪət aʊərz/,/ˈkwaɪət aʊəz/,L2,宿舍规定的安静时段(通常晚上10-11点后)。,"[{""en"":""Quiet hours start at 11pm."",""zh"":""安静时间从晚上11点开始。""}]",1
+认识室友,商量宿舍规则,recycling bin,回收箱,noun,/ˌriːˈsaɪklɪŋ bɪn/,/ˌriːˈsaɪklɪŋ bɪn/,L2,垃圾分类用。一般分 recycling(可回收)和 general waste(一般垃圾)。,"[{""en"":""Put plastic bottles in the recycling bin."",""zh"":""把塑料瓶放进回收箱。""}]",2
+洗衣房,使用洗衣机,washing machine,洗衣机,noun,/ˈwɑːʃɪŋ məˌʃiːn/,/ˈwɒʃɪŋ məˌʃiːn/,L1,洗衣机。dryer = 烘干机。cycle = 洗衣周期。,"[{""en"":""How do I use this washing machine?"",""zh"":""这个洗衣机怎么用？""}]",0
+洗衣房,使用洗衣机,dryer,烘干机,noun,/ˈdraɪər/,/ˈdraɪə/,L1,烘干机。英国有些宿舍没有 dryer，用 drying rack(晾衣架)。,"[{""en"":""The dryer takes about 50 minutes."",""zh"":""烘干机大约需要50分钟。""}]",1
+洗衣房,洗衣用品,detergent,洗衣液,noun,/dɪˈtɜːrdʒənt/,/dɪˈtɜːdʒənt/,L1,洗衣液/洗衣粉。liquid detergent = 液体洗衣液。pods = 洗衣球。,"[{""en"":""Where can I buy laundry detergent?"",""zh"":""哪里可以买洗衣液？""}]",0
+洗衣房,洗衣用品,fabric softener,柔顺剂,noun,/ˈfæbrɪk ˈsɔːfənər/,/ˈfæbrɪk ˈsɒfənə/,L2,衣物柔顺剂。选 fragrance-free(无香型)不会冒犯室友。,"[{""en"":""Do I need fabric softener?"",""zh"":""我需要柔顺剂吗？""}]",1
+洗衣房,洗衣礼仪,timer,计时器,noun,/ˈtaɪmər/,/ˈtaɪmə/,L1,设 timer 提醒自己回来取衣服——洗衣房生存第一法则。,"[{""en"":""Set a timer on your phone so you don't forget."",""zh"":""在手机上设个计时器，别忘了。""}]",0
+图书馆,找书借书,catalogue,目录,noun,/ˈkætəlɔːɡ/,/ˈkætəlɒɡ/,L2,图书馆网上目录。查书先在 library catalogue 搜 call number(索书号)。,"[{""en"":""You can search the library catalogue online."",""zh"":""你可以在网上搜索图书馆目录。""}]",0
+图书馆,找书借书,due date,到期日,noun,/duː deɪt/,/djuː deɪt/,L1,还书截止日期。overdue = 逾期，要罚款(fine)。renew = 续借。,"[{""en"":""When is the due date for this book?"",""zh"":""这本书什么时候到期？""}]",1
+图书馆,预约学习室,study room,学习室,noun,/ˈstʌdi ruːm/,/ˈstʌdi ruːm/,L2,图书馆可预约的独立学习室。期末季至少提前一周预约。,"[{""en"":""Can I book a study room for this afternoon?"",""zh"":""我能预约今天下午的学习室吗？""}]",0
+图书馆,打印与设施,printing credit,打印额度,noun,/ˈprɪntɪŋ ˈkredɪt/,/ˈprɪntɪŋ ˈkredɪt/,L2,学校每学期给的打印额度(如£10)。用完要 top up(充值)。,"[{""en"":""How do I top up my printing credit?"",""zh"":""怎么充值打印额度？""}]",0
+图书馆,打印与设施,scanner,扫描仪,noun,/ˈskænər/,/ˈskænə/,L1,扫描仪。很多打印机支持 scan to email(扫描发邮箱)。,"[{""en"":""Is there a scanner I can use?"",""zh"":""有扫描仪可以用吗？""}]",1
+宿舍入住,办理入住,key card,门禁卡,noun,/kiː kɑːrd/,/kiː kɑːd/,L1,宿舍门禁卡，也用于洗衣房、图书馆。不要弄丢——补办要花钱。,"[{""en"":""Use your key card to enter the building."",""zh"":""用门禁卡进入大楼。""}]",0
+宿舍入住,办理入住,check-out,退房,noun,/tʃek aʊt/,/tʃek aʊt/,L1,退房。check-in 的反义词。退房时间通常是上午 10-11 点。,"[{""en"":""What time is check-out?"",""zh"":""退房时间是几点？""}]",1
+宿舍入住,了解设施,eduroam,校园Wi-Fi,noun,/ˈedʒʊroʊm/,/ˈedjʊrəʊm/,L2,全球大学通用的 Wi-Fi 网络。用学校邮箱+密码登录。,"[{""en"":""Connect to eduroam with your student account."",""zh"":""用学生账号连接 eduroam。""}]",0
+宿舍入住,了解设施,common room,公共休息室,noun,/ˈkɑːmən ruːm/,/ˈkɒmən ruːm/,L2,宿舍的公共休息室，有沙发、电视。和 lounge 类似。,"[{""en"":""The common room is on the ground floor."",""zh"":""公共休息室在一楼。""}]",1
+宿舍入住,报修问题,radiator,暖气片,noun,/ˈreɪdieɪtər/,/ˈreɪdieɪtə/,L2,英式宿舍常见的暖气设备。美式多说 heater。,"[{""en"":""The radiator in my room is cold."",""zh"":""我房间的暖气片是凉的。""}]",0
+宿舍入住,报修问题,handyman,维修工,noun,/ˈhændimæn/,/ˈhændimæn/,L2,上门维修的人。也常说 maintenance person。,"[{""en"":""The handyman will come tomorrow morning."",""zh"":""维修工明天早上来。""}]",1
+宿舍入住,签收快递,parcel locker,包裹柜,noun,/ˈpɑːrsəl ˈlɑːkər/,/ˈpɑːsəl ˈlɒkə/,L2,宿舍的电子包裹柜。快递员放进去后你会收到取件码。,"[{""en"":""Your package is in parcel locker number 12."",""zh"":""你的包裹在12号包裹柜。""}]",0
+认识室友,初次见面,fresher,大一新生,noun,/ˈfreʃər/,/ˈfreʃə/,L2,英式英语：大一新生。美式叫 freshman。freshers' week = 新生周。,"[{""en"":""Are you a fresher too?"",""zh"":""你也是大一新生吗？""}]",0
+认识室友,初次见面,international student,国际学生,noun,/ˌɪntərˈnæʃənəl ˈstuːdənt/,/ˌɪntəˈnæʃənəl ˈstjuːdənt/,L1,留学生。大家都有类似的经历——刚到陌生国家的紧张感。,"[{""en"":""Most of my flatmates are international students."",""zh"":""我的室友大部分是国际学生。""}]",1
+认识室友,聊家乡与爱好,culture shock,文化冲击,noun,/ˈkʌltʃər ʃɑːk/,/ˈkʌltʃə ʃɒk/,L2,刚到异国时的不适应感。每个留学生都会经历，完全正常。,"[{""en"":""I had some culture shock in the first few weeks."",""zh"":""头几周我经历了文化冲击。""}]",0
+认识室友,聊家乡与爱好,get used to,适应,phrase,/ɡet juːzd tuː/,/ɡet juːzd tuː/,L2,适应/习惯。I'm still getting used to... = 我还在适应...。,"[{""en"":""I'm still getting used to the weather here."",""zh"":""我还在适应这里的天气。""}]",1
+认识室友,邀请一起吃饭,hang out,一起玩/打发时间,phrase,/hæŋ aʊt/,/hæŋ aʊt/,L1,和朋友 casually 待在一起。比正式邀请更轻松。,"[{""en"":""Do you want to hang out this weekend?"",""zh"":""周末一起玩吗？""}]",0
+认识室友,邀请一起吃饭,to-go box,打包盒,noun,/tə ɡoʊ bɑːks/,/tə ɡəʊ bɒks/,L1,外卖打包盒。吃不完说 Can I get a to-go box?。英式叫 takeaway box。,"[{""en"":""Can I get a to-go box for this?"",""zh"":""这个能打包吗？""}]",1
+认识室友,商量宿舍规则,cleaning rota,打扫轮值表,noun,/ˈkliːnɪŋ ˈroʊtə/,/ˈkliːnɪŋ ˈrəʊtə/,L2,室友之间排的打扫轮值表。贴在冰箱上，每人一周。,"[{""en"":""Let's make a cleaning rota for the kitchen."",""zh"":""我们做个厨房打扫轮值表吧。""}]",0
+认识室友,商量宿舍规则,personal space,个人空间,noun,/ˈpɜːrsənəl speɪs/,/ˈpɜːsənəl speɪs/,L2,西方文化非常看重个人空间。问室友习惯时用 Do you mind if... 比直接问更礼貌。,"[{""en"":""I respect your personal space."",""zh"":""我尊重你的个人空间。""}]",1
+洗衣房,使用洗衣机,laundry app,洗衣App,noun,/ˈlɔːndri æp/,/ˈlɔːndri æp/,L1,英美大学洗衣房用的支付 App。如 Circuit Laundry, LaundryView。,"[{""en"":""You need to download the laundry app first."",""zh"":""你需要先下载洗衣 App。""}]",0
+洗衣房,使用洗衣机,drying rack,晾衣架,noun,/ˈdraɪɪŋ ræk/,/ˈdraɪɪŋ ræk/,L1,晾衣架。英国很多宿舍没有烘干机，在房间用晾衣架晾衣服。,"[{""en"":""I use a drying rack in my room instead of the dryer."",""zh"":""我在房间用晾衣架，没用烘干机。""}]",1
+洗衣房,洗衣用品,laundry pod,洗衣球,noun,/ˈlɔːndri pɑːd/,/ˈlɔːndri pɒd/,L1,一次一颗的洗衣胶囊。比液体洗衣液更方便，但偏贵。,"[{""en"":""Just throw in a laundry pod and start the machine."",""zh"":""丢一颗洗衣球进去，启动机器就行。""}]",0
+洗衣房,洗衣用品,fragrance-free,无香型,adj,/ˈfreɪɡrəns friː/,/ˈfreɪɡrəns friː/,L2,无香料的。选 fragrance-free 的洗衣液比较不会冒犯对香味敏感的室友。,"[{""en"":""I buy fragrance-free detergent because my flatmate is sensitive to smells."",""zh"":""我买无香型洗衣液，因为我室友对气味敏感。""}]",1
+洗衣房,洗衣礼仪,spin cycle,脱水周期,noun,/spɪn ˈsaɪkəl/,/spɪn ˈsaɪkəl/,L2,洗衣机的脱水阶段。结束后衣服是半干的，可以直接烘干或晾晒。,"[{""en"":""The spin cycle is really loud in this machine."",""zh"":""这台机器的脱水声音很大。""}]",0
+图书馆,找书借书,call number,索书号,noun,/kɔːl ˈnʌmbər/,/kɔːl ˈnʌmbə/,L2,图书馆书脊上的编号。先在 catalogue 查到 call number，再按号找书架。,"[{""en"":""The call number for this book is 808.042."",""zh"":""这本书的索书号是 808.042。""}]",0
+图书馆,找书借书,overdue,逾期,adj,/ˌoʊvərˈduː/,/ˌəʊvəˈdjuː/,L2,超过还书日期。overdue book = 逾期书籍。逾期要交 fine(罚款)。,"[{""en"":""Your book is three days overdue."",""zh"":""你的书逾期三天了。""}]",1
+图书馆,预约学习室,silent zone,静音区,noun,/ˈsaɪlənt zoʊn/,/ˈsaɪlənt zəʊn/,L2,图书馆的绝对安静区——不能说话、手机要静音。讨论请去 group study area。,"[{""en"":""The silent zone is on the third floor."",""zh"":""静音区在三楼。""}]",0
+图书馆,打印与设施,print queue,打印队列,noun,/prɪnt kjuː/,/prɪnt kjuː/,L2,打印任务排队。从电脑发送到 print queue，然后去任意打印机刷卡 release。,"[{""en"":""Your document is in the print queue. Go to any printer and scan your card."",""zh"":""你的文件在打印队列里了，去任意打印机刷卡即可。""}]",0
+图书馆,打印与设施,top up,充值,phrase,/tɑːp ʌp/,/tɒp ʌp/,L1,给账户充值。打印额度用完了去 student portal top up。,"[{""en"":""I need to top up my printing credit online."",""zh"":""我需要在网上充值打印额度。""}]",1
+宿舍入住,办理入住,suitcase,行李箱,noun,/ˈsuːtkeɪs/,/ˈsuːtkeɪs/,L1,行李箱。入住第一天拖着它到处走。pack/unpack = 装/取出行李。,"[{""en"":""I need to unpack my suitcase."",""zh"":""我需要打开行李箱整理。""}]",0
+宿舍入住,办理入住,deposit,押金,noun,/dɪˈpɑːzɪt/,/dɪˈpɒzɪt/,L2,入住时可能需要缴纳的押金，退宿时退还(如果没有损坏)。,"[{""en"":""Do I need to pay a deposit?"",""zh"":""需要交押金吗？""}]",1
+宿舍入住,了解设施,lift / elevator,电梯,noun,/lɪft/ /ˈelɪveɪtər/,/lɪft/ /ˈelɪveɪtə/,L1,lift(英式) / elevator(美式)。搬行李时必问—— Is there a lift?,"[{""en"":""Is there a lift in the building?"",""zh"":""楼里有电梯吗？""}]",0
+宿舍入住,了解设施,ground floor,一楼(英式),noun,/ɡraʊnd flɔːr/,/ɡraʊnd flɔː/,L1,英式的一楼 = 美式的 first floor。英国的 first floor 其实是二楼。,"[{""en"":""The laundry room is on the ground floor."",""zh"":""洗衣房在一楼(英式ground floor)。""}]",1
+宿舍入住,了解设施,corridor,走廊,noun,/ˈkɔːrɪdɔːr/,/ˈkɒrɪdɔː/,L1,宿舍走廊。Your room is at the end of the corridor = 你房间在走廊尽头。,"[{""en"":""My room is at the end of the corridor."",""zh"":""我房间在走廊尽头。""}]",2
+宿舍入住,了解设施,notice board,公告栏,noun,/ˈnoʊtɪs bɔːrd/,/ˈnəʊtɪs bɔːd/,L1,宿舍公告栏。fire safety、活动通知、打扫轮值表都贴这。,"[{""en"":""Check the notice board for updates."",""zh"":""查看公告栏了解最新通知。""}]",3
+宿舍入住,报修问题,leaking / clogged,漏水/堵了,adj,/ˈliːkɪŋ/ /klɔːɡd/,/ˈliːkɪŋ/ /klɒɡd/,L2,报修最常用的两个形容词——the sink is leaking(漏水)/the drain is clogged(下水道堵了)。,"[{""en"":""The sink is leaking and the drain is clogged."",""zh"":""水槽在漏水，下水道也堵了。""}]",0
+宿舍入住,报修问题,fire alarm,火警报警器,noun,/ˈfaɪər əlɑːrm/,/ˈfaɪər əlɑːm/,L2,宿舍火警。响了必须马上出去——不管是不是演习(fire drill)。,"[{""en"":""The fire alarm went off at 3am last night."",""zh"":""昨晚凌晨3点火警响了。""}]",1
+认识室友,初次见面,degree,学位,noun,/dɪˈɡriː/,/dɪˈɡriː/,L1,学位。bachelor's = 学士, master's = 硕士, PhD = 博士。What degree are you doing?,"[{""en"":""I'm doing a bachelor's degree in Engineering."",""zh"":""我在读工程学学士学位。""}]",0
+认识室友,初次见面,course,课程(英式),noun,/kɔːrs/,/kɔːs/,L1,英式的 course = 美式的 major(专业)。也指具体的一门课。,"[{""en"":""What course are you on?"",""zh"":""你读什么专业？(英式问法)""}]",1
+认识室友,聊家乡与爱好,get along with,与...相处融洽,phrase,/ɡet əˈlɔːŋ wɪð/,/ɡet əˈlɒŋ wɪð/,L2,和某人相处得好。We get along really well = 我们相处得很好。,"[{""en"":""I get along well with all my flatmates."",""zh"":""我和所有室友都相处融洽。""}]",0
+认识室友,聊家乡与爱好,hang out with,和...一起玩,phrase,/hæŋ aʊt wɪð/,/hæŋ aʊt wɪð/,L1,和某人 casually 待在一起。Who do you hang out with? = 你平时和谁一起玩？,"[{""en"":""I usually hang out with my flatmates on weekends."",""zh"":""我周末通常和室友一起。""}]",1
+认识室友,聊家乡与爱好,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L2,推荐。Can you recommend...? = 你能推荐...吗？聊家乡/美食时的万能句。,"[{""en"":""Can you recommend any good places to eat around here?"",""zh"":""你能推荐附近好吃的餐厅吗？""}]",2
+认识室友,邀请一起吃饭,leftovers,剩菜,noun,/ˈleftoʊvərz/,/ˈleftəʊvəz/,L1,剩饭剩菜。吃完可以打包当第二天午饭。,"[{""en"":""We can have the leftovers for lunch tomorrow."",""zh"":""剩菜可以明天当午饭。""}]",0
+认识室友,邀请一起吃饭,cuisine,菜系/烹饪风格,noun,/kwɪˈziːn/,/kwɪˈziːn/,L2,菜系。Chinese cuisine / Italian cuisine。比 food 更正式。,"[{""en"":""I'd love to try authentic Chinese cuisine."",""zh"":""我很想尝尝地道的中国菜。""}]",1
+认识室友,商量宿舍规则,compromise,妥协/折中,noun,/ˈkɑːmprəmaɪz/,/ˈkɒmprəmaɪz/,L2,室友相处最重要的技能——学会妥协。We need to compromise = 我们需要各退一步。,"[{""en"":""We need to compromise on the cleaning schedule."",""zh"":""打扫安排上我们需要各退一步。""}]",0
+认识室友,商量宿舍规则,boundary,边界/底线,noun,/ˈbaʊndəri/,/ˈbaʊndəri/,L3,个人边界。Set boundaries = 设定边界。西方室友文化非常看重这个。,"[{""en"":""It's important to set boundaries early on."",""zh"":""早点设定边界很重要。""}]",1
+洗衣房,使用洗衣机,detergent drawer,洗衣液槽,noun,/dɪˈtɜːrdʒənt drɔːr/,/dɪˈtɜːdʒənt drɔː/,L2,洗衣机上放洗衣液的小抽屉。通常有标记——I (预洗) / II (主洗) / flower(柔顺剂)。,"[{""en"":""Pour the detergent into the drawer, not directly on the clothes."",""zh"":""把洗衣液倒进槽里，不要直接倒在衣服上。""}]",0
+洗衣房,洗衣用品,stain remover,去渍剂,noun,/steɪn rɪˈmuːvər/,/steɪn rɪˈmuːvə/,L2,去渍剂。咖啡渍、油渍——洗之前先涂一下。,"[{""en"":""Do you have any stain remover? I spilled coffee on my shirt."",""zh"":""有去渍剂吗？我把咖啡洒在衬衫上了。""}]",0
+洗衣房,洗衣礼仪,shrink,缩水,verb,/ʃrɪŋk/,/ʃrɪŋk/,L2,衣服缩水。热水+烘干机=衣服变小。看 care label(洗标)！,"[{""en"":""My jumper shrank in the dryer."",""zh"":""我的毛衣在烘干机里缩水了。""}]",0
+图书馆,找书借书,reference book,参考书,noun,/ˈrefərəns bʊk/,/ˈrefərəns bʊk/,L2,参考书——只能在馆内阅读，不能外借。,"[{""en"":""This is a reference book — you can't take it out."",""zh"":""这是参考书，不能外借。""}]",0
+图书馆,找书借书,self-service kiosk,自助借书机,noun,/self ˈsɜːrvɪs ˈkiːɒsk/,/self ˈsɜːvɪs ˈkiːɒsk/,L2,自助借书机——扫学生卡+书上的 barcode。英美大学图书馆标配。,"[{""en"":""You can borrow books at the self-service kiosk."",""zh"":""你可以在自助借书机上借书。""}]",1
+图书馆,预约学习室,learning commons,学习共享空间,noun,/ˈlɜːrnɪŋ ˈkɑːmənz/,/ˈlɜːnɪŋ ˈkɒmənz/,L2,图书馆里可以讨论的学习区。不像 silent zone 那么严格。,"[{""en"":""Let's meet at the learning commons on the ground floor."",""zh"":""我们在一楼的学习共享空间见面吧。""}]",0
+图书馆,打印与设施,wireless printing,无线打印,noun,/ˈwaɪərləs ˈprɪntɪŋ/,/ˈwaɪələs ˈprɪntɪŋ/,L2,从自己的 laptop 发送打印任务到图书馆打印机。连学校 Wi-Fi 就行。,"[{""en"":""The library supports wireless printing from your laptop."",""zh"":""图书馆支持从你的笔记本电脑无线打印。""}]",0
 认识室友,分享兴趣爱好,common interest,共同兴趣,noun,/ˈkɑːmən ˈɪntrəst/,/ˈkɒmən ˈɪntrəst/,L2,,"[{""en"":""We have a lot of common interests."",""zh"":""我们有很多共同兴趣。""}]",16
 认识室友,商量宿舍规则,share,分享,verb,/ʃer/,/ʃeə/,L1,,"[{""en"":""We share the kitchen and bathroom."",""zh"":""我们共用厨房和卫生间。""}]",17
 认识室友,商量宿舍规则,privacy,隐私,noun,/ˈpraɪvəsi/,/ˈprɪvəsi/,L2,,"[{""en"":""I need some privacy sometimes."",""zh"":""我有时候需要一些隐私。""}]",18
