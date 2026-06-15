@@ -37,6 +37,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const [acquiring, setAcquiring] = useState(false)
   const [topicPage, setTopicPage] = useState(1)
   const [descExpanded, setDescExpanded] = useState(false)
+  const [justEnrolled, setJustEnrolled] = useState(false)
   const pageSize = 6
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
@@ -55,18 +56,17 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
     setAcquiring(true)
     try {
       await onEnroll?.(unit.id)
-      navigate(`/learning/units/${unit.id}`)
+      setJustEnrolled(true)
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || ''
       if (msg.includes('最多同时')) {
         toast.error(msg)
-      } else {
-        navigate(`/learning/units/${unit.id}`)
       }
+      // 其他错误也静默处理，让用户可以在 dialog 中重试
     } finally {
       setAcquiring(false)
     }
-  }, [unit.id, unit.isUnlocked, acquiring, navigate, onEnroll])
+  }, [unit.id, unit.isUnlocked, acquiring, onEnroll])
 
   return (
     <>
@@ -159,12 +159,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             )}
 
             <div className="p-4">
-              {isJoined ? (
-                <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
-                  <ArrowRight className="size-4" />
-                  {t('learning.continue')}
-                </Button>
-              ) : isDownloading ? (
+              {isDownloading ? (
                 <div className="flex items-center gap-3">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
@@ -182,6 +177,16 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               ) : downloadTask?.status === 'error' ? (
                 <Button className="w-full gap-2" variant="destructive" onClick={handleAcquire}>
                   {t('learning.downloadFailedRetry', { defaultValue: '下载失败，点击重试' })}
+                </Button>
+              ) : downloadTask?.status === 'done' || justEnrolled ? (
+                <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
+                  <ArrowRight className="size-4" />
+                  {t('learning.continue')}
+                </Button>
+              ) : isJoined ? (
+                <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
+                  <ArrowRight className="size-4" />
+                  {t('learning.continue')}
                 </Button>
               ) : (
                 <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">

@@ -512,13 +512,22 @@ async function processDownloadQueue() {
     }
     if (progressTimer) clearInterval(progressTimer)
 
+    // 先跳到 100% 进度，短暂停留让用户感知完成
     useLearningStore.setState((s) => ({
       downloadTasks: s.downloadTasks.map((t) =>
-        t.packId === next.packId ? { ...t, status: 'done' as const, progress: 100 } : t,
+        t.packId === next.packId ? { ...t, progress: 100 } : t,
+      ),
+    }))
+    await new Promise((r) => setTimeout(r, 600))
+
+    useLearningStore.setState((s) => ({
+      downloadTasks: s.downloadTasks.map((t) =>
+        t.packId === next.packId ? { ...t, status: 'done' as const } : t,
       ),
       packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
     console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
+    toast.success(i18n.t('learning.packDownloadSuccess', { defaultValue: `${next.title} 下载完成` }))
 
     const downloadedPacks = await learningPackService.listInstalled()
     const updates = useLearningStore.getState().availablePackUpdates
@@ -546,6 +555,7 @@ async function processDownloadQueue() {
       ),
       packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
+    toast.error(i18n.t('learning.packDownloadFailed', { defaultValue: `${next.title} 下载失败，请重试` }))
   } finally {
     processDownloadQueue()
   }
