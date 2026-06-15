@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
-import * as PIXI from 'pixi.js';
+import { useEffect, useRef, useMemo } from 'react';
 import { useTheme } from 'next-themes';
+import { Application, useApplication, useTick } from '@pixi/react';
+import { initDevtools } from '@pixi/devtools';
 import type { ThemeSetup } from './pixi-themes/types';
 import { setupOcean } from './pixi-themes/ocean';
 import { setupStars } from './pixi-themes/stars';
@@ -17,75 +18,125 @@ interface AnimatedBackgroundProps {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Main Component
+// Main Component — <Application> manages PixiJS lifecycle
 // ═══════════════════════════════════════════════════════════
 
 export function PixiAnimatedBackground({ themeId, testMode }: AnimatedBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<PIXI.Application | null>(null);
-  const setupRef = useRef<ThemeSetup | null>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
+  const resolution = isNative() ? 1 : Math.min(window.devicePixelRatio, 2);
 
+  return (
+    <div
+      ref={containerRef}
+      className="absolute inset-0 overflow-hidden pointer-events-none"
+      aria-hidden
+    >
+      <Application
+        resizeTo={containerRef as React.RefObject<HTMLElement>}
+        backgroundAlpha={0}
+        antialias={!isNative()}
+        resolution={resolution}
+      >
+        <PixiThemeLayer
+          themeId={themeId}
+          isDark={isDark}
+          testMode={testMode}
+        />
+      </Application>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// Inner Layer — runs inside <Application> context, has access
+// to the PIXI.Application via useApplication() hook.
+// ═══════════════════════════════════════════════════════════
+
+function PixiThemeLayer({ themeId, isDark, testMode }: {
+  themeId?: string;
+  isDark: boolean;
+  testMode?: boolean;
+}) {
+  const { app, isInitialised } = useApplication();
+  const setupRef = useRef<ThemeSetup | null>(null);
+
+  // Stable reference to the theme setup function
+  const setupFn = useMemo(() => {
+    if (themeId?.includes('ocean')) return setupOcean;
+    if (themeId?.includes('rain')) return setupRain;
+    if (themeId?.includes('aurora')) return setupAurora;
+    if (themeId?.includes('little-prince')) return setupLittlePrince;
+    return setupStars;
+  }, [themeId]);
+
+  // ── DevTools (dev only) ──
   useEffect(() => {
-    if (appRef.current) {
-      appRef.current.destroy(true, { children: true });
-      appRef.current = null;
+    if (!isInitialised || !import.meta.env.DEV) return;
+    initDevtools({ app }).catch(() => { /* ignore */ });
+  }, [app, isInitialised]);
+
+  // ── Theme setup / teardown ──
+  useEffect(() => {
+    if (!isInitialised) return;
+
+    // Clean up previous theme
+    if (setupRef.current) {
+      for (const item of setupRef.current.items) {
+        app.stage.removeChild(item);
+        item.destroy();
+      }
+      setupRef.current = null;
     }
-    setupRef.current = null;
 
-    const container = containerRef.current;
-    if (!container) return;
-
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+    const w = app.screen.width;
+    const h = app.screen.height;
     if (w === 0 || h === 0) return;
 
-    // ★ 原生移动端降低分辨率到 1
-    const resolution = isNative() ? 1 : Math.min(window.devicePixelRatio, 2);
+    const setup = setupFn(app, w, h, isDark, testMode);
+    setupRef.current = setup;
 
-    const app = new PIXI.Application();
-    let cancelled = false;
-
-    app.init({
-      width: w, height: h,
-      backgroundAlpha: 0,
-      antialias: !isNative(),
-      resolution,
-    }).then(() => {
-      if (cancelled) { app.destroy(true); return; }
-      container.appendChild(app.canvas);
-      appRef.current = app;
-
-      const setup: ThemeSetup =
-        themeId?.includes('ocean')         ? setupOcean(app, w, h, isDark, testMode) :
-        themeId?.includes('rain')          ? setupRain(app, w, h, isDark, testMode) :
-        themeId?.includes('aurora')        ? setupAurora(app, w, h, isDark) :
-        themeId?.includes('little-prince') ? setupLittlePrince(app, w, h, isDark) :
-                                             setupStars(app, w, h, isDark, testMode);
-      setupRef.current = setup;
-
-      app.ticker.add((ticker) => {
-        // ★ 键盘弹出或 VN 激活时跳过渲染
-        if (
-          document.body.dataset.keyboardOpen === 'true' ||
-          document.body.dataset.vnActive === 'true'
-        ) return;
-
-        const dt = ticker.deltaTime;
-        const { items, onTick } = setup;
-        for (let i = items.length - 1; i >= 0; i--) {
-          if (typeof items[i].update !== 'function' || !items[i].update(dt, w, h)) {
-            app.stage.removeChild(items[i]);
-            items[i].destroy();
-            items.splice(i, 1);
-          }
+    return () => {
+      if (setupRef.current) {
+        for (const item of setupRef.current.items) {
+          app.stage.removeChild(item);
+          item.destroy();
         }
-        onTick(dt, w, h, items);
-      });
-    });
+        setupRef.current = null;
+      }
+    };
+  }, [app, isInitialised, setupFn, isDark, testMode]);
 
-    // ★ 页面不可见时暂停 ticker
+  // ── Per-frame animation loop ──
+  useTick((ticker) => {
+    const setup = setupRef.current;
+    if (!setup) return;
+
+    // ★ 键盘弹出或 VN 激活时跳过渲染
+    if (
+      document.body.dataset.keyboardOpen === 'true' ||
+      document.body.dataset.vnActive === 'true'
+    ) return;
+
+    const dt = ticker.deltaTime;
+    const w = app.screen.width;
+    const h = app.screen.height;
+    const { items, onTick } = setup;
+
+    for (let i = items.length - 1; i >= 0; i--) {
+      if (typeof items[i].update !== 'function' || !items[i].update(dt, w, h)) {
+        app.stage.removeChild(items[i]);
+        items[i].destroy();
+        items.splice(i, 1);
+      }
+    }
+    onTick(dt, w, h, items);
+  });
+
+  // ── Pause ticker when page is hidden ──
+  useEffect(() => {
+    if (!isInitialised) return;
     const onVisibilityChange = () => {
       if (document.visibilityState !== 'visible') {
         app.ticker.stop();
@@ -94,22 +145,10 @@ export function PixiAnimatedBackground({ themeId, testMode }: AnimatedBackground
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [app, isInitialised]);
 
-    return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      if (appRef.current) {
-        appRef.current.destroy(true, { children: true });
-        appRef.current = null;
-      }
-    };
-  }, [themeId]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 overflow-hidden pointer-events-none"
-      aria-hidden
-    />
-  );
+  // This component doesn't render PixiJS children — all rendering is
+  // done imperatively via the theme setup functions.
+  return null;
 }
