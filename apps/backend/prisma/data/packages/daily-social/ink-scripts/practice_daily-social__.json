@@ -1,6 +1,6 @@
 {
   "key": "practice_daily-social__",
-  "title": " - ",
+  "title": "日常社交 - 占位",
   "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social__\ntitle:  - \n---\nLibrarian: \n#objective: Respond to the Librarian's question\n#chunks: I'd like to borrow...,Do you have...?,How long can I keep it?\n#user_input\nLibrarian: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like to borrow...,Do you have...?,How long can I keep it?\n#user_input\nLibrarian: Got it. That was really helpful. Have a great day!\n-> END\n"
+  "inkSource": "---\nkey: practice_daily-social__\ntitle: 日常社交 - 占位\n---\n# 这是一个占位脚本，后续会替换为正式内容\n-> END\n"
 }

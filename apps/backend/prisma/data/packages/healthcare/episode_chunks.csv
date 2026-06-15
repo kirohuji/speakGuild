@@ -1,0 +1,35 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+chapter_1,1,I'd like to make an appointment.,0
+chapter_1,1,Is Dr. Williams available this week?,1
+chapter_1,1,I'd like to see a doctor as soon as possible.,2
+chapter_1,1,Can you help me with...?,3
+chapter_1,2,I need to reschedule my appointment.,0
+chapter_1,2,I'm sorry but I need to cancel.,1
+chapter_1,2,Can I get a refund for the cancellation?,2
+chapter_1,3,I have an appointment at 10 AM.,0
+chapter_1,3,Here is my insurance card.,1
+chapter_1,3,Do I need to fill out any forms?,2
+chapter_2,1,I haven't been feeling well.,0
+chapter_2,1,I have a headache and a fever.,1
+chapter_2,1,I've been coughing a lot.,2
+chapter_2,1,It hurts when I swallow.,3
+chapter_2,2,It started three days ago.,0
+chapter_2,2,I'm allergic to penicillin.,1
+chapter_2,2,I've taken some painkillers but they didn't help.,2
+chapter_2,2,No I don't have any other medical conditions.,3
+chapter_2,3,What exactly is wrong with me?,0
+chapter_2,3,Is it serious?,1
+chapter_2,3,Do I need any tests?,2
+chapter_2,4,What do you recommend?,0
+chapter_2,4,How many times a day should I take this?,1
+chapter_2,4,Should I come back for a follow-up?,2
+chapter_2,4,Are there any side effects?,3
+chapter_3,1,Do you have something for a cold?,0
+chapter_3,1,Can you recommend something for a headache?,1
+chapter_3,1,Is this available over-the-counter?,2
+chapter_3,2,How often should I take this?,0
+chapter_3,2,Should I take it with food?,1
+chapter_3,2,Can I drink alcohol while taking this?,2
+chapter_3,3,I'm here to pick up a prescription.,0
+chapter_3,3,How much does it cost?,1
+chapter_3,3,Do you have a generic version?,2

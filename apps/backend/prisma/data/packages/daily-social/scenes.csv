@@ -1,3 +1,4 @@
-category_name,title,location,required_output_level,required_user_level,description
-日常社交,咖啡店点餐,校园咖啡店,L1,1,在咖啡店点饮品，学会基本点餐用语。
-日常社交,超市购物,超市,L1,1,去超市采购生活用品。
+category_name,title,location,required_output_level,required_user_level,description,package_type
+日常社交,咖啡店点餐,校园咖啡店,L1,1,在咖啡店点饮品、修改订单、办理会员卡、投诉问题。,daily
+日常社交,超市购物,超市,L1,1,在超市询问商品位置、退货、了解优惠、自助结账。,daily
+日常社交,朋友聚会,朋友家/餐厅,L1,1,邀请朋友聚会、商量计划、确认时间地点。,daily

@@ -1,6 +1,0 @@
-{
-  "key": "practice_academic_小组讨论_回应不同意见",
-  "title": "小组讨论 - 回应不同意见",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_academic_小组讨论_回应不同意见\ntitle: 小组讨论 - 回应不同意见\n---\nGroup Member: Someone disagrees with you. Respond politely.\n#objective: Someone disagrees with you. Respond politely.\n#chunks: I agree with...,What do you think about...?,Maybe we should...\n#user_input\nGroup Member: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I agree with...,What do you think about...?,Maybe we should...\n#user_input\nGroup Member: Got it. That was really helpful. Have a great day!\n-> END\n"
-}

@@ -28,7 +28,7 @@ const PKG_DIR = 'packages'
 const PKG_ABS = resolve(__dirname, 'data', PKG_DIR)
 
 // ── CSV 类型 ──
-type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string }
+type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string; package_type?: string }
 type CsvVocab = { scene_title: string; topic_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
 type CsvChunk = { scene_title: string; topic_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
 type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; description: string; knowledge_points: string; ink_script_key: string }
@@ -468,7 +468,7 @@ async function seedIeltsAndStoryExamples(prisma: PrismaClient, catMap: Map<strin
   }
 }
 
-export async function seedLearningPackages(prisma: PrismaClient) {
+export async function seedLearningPackages(prisma: PrismaClient, packageName?: string) {
   console.log('📦 开始处理学习包...\n')
 
   // 发现可用包
@@ -486,7 +486,22 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     return { sceneMap: new Map<string, string>() }
   }
 
-  console.log(`  发现 ${packageDirs.length} 个学习包: ${packageDirs.join(', ')}\n`)
+  // 筛选目标包
+  let targetDirs: string[]
+  if (packageName) {
+    // 指定包名，仅处理匹配的包
+    targetDirs = packageDirs.filter(d => d === packageName)
+    if (targetDirs.length === 0) {
+      console.log(`  ⚠️  未找到名为 "${packageName}" 的学习包，可用包: ${packageDirs.join(', ')}`)
+      return { sceneMap: new Map<string, string>() }
+    }
+    console.log(`  发现 ${packageDirs.length} 个学习包: ${packageDirs.join(', ')}`)
+    console.log(`  ▶ 仅导入指定包: ${targetDirs[0]}\n`)
+  } else {
+    // 未指定包名，默认导入全部包（调试中可改回只导入 study-abroad）
+    targetDirs = packageDirs
+    console.log(`  发现 ${packageDirs.length} 个学习包: ${packageDirs.join(', ')}\n`)
+  }
 
   // 场景分类 name → id 映射（从 init 包创建）
   const allCategories = await prisma.sceneCategory.findMany()
@@ -518,10 +533,6 @@ export async function seedLearningPackages(prisma: PrismaClient) {
   let totalEpChunks = 0
   let totalEpVocabs = 0
 
-  // TODO: 正式环境移除 .filter，处理全部包
-  const targetDirs = packageDirs.filter(d => d === 'study-abroad')
-  console.log(`  处理 ${targetDirs.length} 个包: ${targetDirs.join(', ')}\n`)
-
   for (const dirName of targetDirs) {
     const pkgPath = `${PKG_DIR}/${dirName}`
     console.log(`📁 packages/${dirName}/`)
@@ -534,10 +545,20 @@ export async function seedLearningPackages(prisma: PrismaClient) {
         console.warn(`  ⚠️  分类未找到: ${row.category_name}, 跳过场景: ${row.title}`)
         continue
       }
+      // 追加模式安全：检查场景是否已存在（按分类+标题），避免 duplicate
+      const existingScene = await prisma.scene.findFirst({
+        where: { categoryId: catId, title: row.title },
+      })
+      if (existingScene) {
+        sceneMap.set(row.title, existingScene.id)
+        // 确保 LearningPackage 记录存在（防止之前被意外删除）
+        await createLearningPackageRecord(prisma, { sceneId: existingScene.id, title: row.title, type: 'daily' })
+        continue
+      }
       const scene = await prisma.scene.create({
         data: {
           categoryId: catId,
-          packageType: 'daily',
+          packageType: (row.package_type as any) || 'daily',
           title: row.title,
           location: row.location,
           description: row.description || null,
@@ -687,7 +708,16 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           usedInkIds.add(found)
         }
       }
-      const topic = await prisma.trainingTopic.create({
+      const topic = await prisma.trainingTopic.findFirst({
+        where: { sceneId, title: row.title },
+      })
+      if (topic) {
+        // 已存在，记录映射后跳过
+        topicTitleSceneToId.set(`${row.scene_title}|${row.title}`, topic.id)
+        topicCount++
+        continue
+      }
+      const newTopic = await prisma.trainingTopic.create({
         data: {
           sceneId,
           title: row.title,
@@ -701,7 +731,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           sortOrder: topicCount,
         },
       })
-      topicTitleSceneToId.set(`${row.scene_title}|${row.title}`, topic.id)
+      topicTitleSceneToId.set(`${row.scene_title}|${row.title}`, newTopic.id)
       topicCount++
     }
     console.log(`  ✓ ${topicCount} 个训练话题`)
@@ -782,6 +812,14 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     for (const row of epRows) {
       const sceneId = sceneMap.get(row.scene_title)
       if (!sceneId) continue
+      // 追加模式安全：检查关卡是否已存在
+      const existingEp = await prisma.storyEpisode.findFirst({
+        where: { chapterKey: row.chapter_id, sceneId, title: row.title },
+      })
+      if (existingEp) {
+        // 关联仍沿用旧数据，不重复创建
+        continue
+      }
       await prisma.storyEpisode.create({
         data: {
           chapterKey: row.chapter_id,
@@ -828,6 +866,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     }
 
     let epChunkCount = 0
+    const chunkLinks: { episodeId: string; chunkId: string; sortOrder: number }[] = []
     for (const row of epChunkRows) {
       const epId = epOrderToId.get(`${row.episode_chapter},${row.episode_order}`)
       if (!epId) continue
@@ -836,11 +875,12 @@ export async function seedLearningPackages(prisma: PrismaClient) {
         where: { text: { contains: row.chunk_text_match } },
       })
       if (matchingChunk) {
-        await prisma.storyEpisodeChunk.create({
-          data: { episodeId: epId, chunkId: matchingChunk.id, sortOrder: parseInt(row.sort_order) || 0 },
-        }).catch(() => {})
-        epChunkCount++
+        chunkLinks.push({ episodeId: epId, chunkId: matchingChunk.id, sortOrder: parseInt(row.sort_order) || 0 })
       }
+    }
+    if (chunkLinks.length > 0) {
+      await prisma.storyEpisodeChunk.createMany({ data: chunkLinks, skipDuplicates: true })
+      epChunkCount = chunkLinks.length
     }
     console.log(`  ✓ ${epChunkCount} 个关卡↔句块关联`)
     totalEpChunks += epChunkCount
@@ -866,17 +906,21 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     console.log('')
   }
 
-  console.log('📁 generated/ielts-and-story-examples/')
-  const extra = await seedIeltsAndStoryExamples(prisma, catMap)
-  totalVocab += extra.vocabularies
-  totalChunks += extra.chunks
-  totalTopics += extra.topics
-  totalPatterns += extra.patterns
-  totalEpisodes += extra.episodes
-  console.log(`  ✓ ${extra.scenes} 个示例学习包（日常体系外补充：Exam + Story + Course + Foundation）`)
-  console.log(`  ✓ ${extra.topics} 个示例话题`)
-  console.log(`  ✓ ${extra.episodes} 个故事关卡`)
-  console.log('')
+  // 追加模式：跳过 generated 示例场景（它们不属于任何数据包）
+  let extra = { scenes: 0, topics: 0, episodes: 0, vocabularies: 0, chunks: 0, patterns: 0 }
+  if (!packageName) {
+    console.log('📁 generated/ielts-and-story-examples/')
+    extra = await seedIeltsAndStoryExamples(prisma, catMap)
+    totalVocab += extra.vocabularies
+    totalChunks += extra.chunks
+    totalTopics += extra.topics
+    totalPatterns += extra.patterns
+    totalEpisodes += extra.episodes
+    console.log(`  ✓ ${extra.scenes} 个示例学习包（日常体系外补充：Exam + Story + Course + Foundation）`)
+    console.log(`  ✓ ${extra.topics} 个示例话题`)
+    console.log(`  ✓ ${extra.episodes} 个故事关卡`)
+    console.log('')
+  }
 
   // ── 汇总 ──
   console.log('📊 学习包汇总:')

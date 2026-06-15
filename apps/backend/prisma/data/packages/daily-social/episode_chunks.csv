@@ -1,4 +1,21 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-chapter_0,2,I'd like a...,please.
-chapter_0,2,How much is it?,1
-chapter_0,2,For here or to go?,2
+chapter_1,1,I'd like a..., please.,0
+chapter_1,1,For here or to go?,1
+chapter_1,1,What size would you like?,2
+chapter_1,2,Sorry I wanted a different size.,0
+chapter_1,3,How do I get a loyalty card?,0
+chapter_1,3,What are the benefits?,1
+chapter_1,4,I'm sorry but this isn't what I ordered.,0
+chapter_2,1,Where can I find...?,0
+chapter_2,1,Do you have this in stock?,1
+chapter_2,2,I'd like to return this.,0
+chapter_2,2,Can I exchange it for a different size?,1
+chapter_2,3,Is there a sale today?,0
+chapter_2,3,Do you have a student discount?,1
+chapter_2,4,The machine won't scan this item.,0
+chapter_2,4,Can I pay here using my card?,1
+chapter_3,1,Do you want to hang out this weekend?,0
+chapter_3,1,Would you like to come to my party?,1
+chapter_3,2,Where should we meet?,0
+chapter_3,2,What time works for you?,1
+chapter_3,3,I'd love to come! What should I bring?,0

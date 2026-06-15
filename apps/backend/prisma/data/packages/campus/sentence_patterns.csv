@@ -1,9 +1,13 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-宿舍入住,办理入住,"Hi, I'm here to ___.",打招呼说明来意,"check in, see my room","Hi, I'm here to check in.",L2,0
-宿舍入住,办理入住,My booking is under the name ___.,说明有预订,"Li, Wang",My booking is under the name Li.,L2,1
-宿舍入住,办理入住,Here is my ___.,出示证件,"student ID, passport",Here is my student ID.,L2,2
-机场入境,说明来访目的,I'm here to ___.,说明来访目的,"study, work, travel",I'm here to study.,L2,0
-机场入境,说明来访目的,I'll be staying for ___.,说明停留时间,"two years, a week, three months",I'll be staying for two years.,L2,1
-认识室友,初次见面,"Hi, I'm ___.",打招呼自我介绍,"Alex, Li Ming","Hi, I'm Alex.",L1,0
-认识室友,初次见面,I'm from ___.,说明来自哪里,"China, the US, Japan",I'm from China.,L1,1
-认识室友,初次见面,My major is ___.,说明专业,"Computer Science, English Literature",My major is Computer Science.,L1,2
+图书馆借书,借书,"How do I ___ a book?",怎么操作借书,"borrow, return, renew","How do I borrow a book?",L1,0
+图书馆借书,借书,"How long can I ___ this book?",问时间期限,"keep, borrow, renew","How long can I keep this book?",L1,1
+图书馆借书,续借与归还,"I'd like to ___ this book.",表达意愿,"renew, return, extend","I'd like to renew this book.",L1,0
+图书馆借书,查找资料,"I'm looking for a ___ about ___.",表达查找目标,"book / history, journal / biology","I'm looking for a book about history.",L2,0
+社团活动,咨询社团信息,"What does your club ___?",问社团信息,"do, offer, focus on","What does your club do?",L1,0
+社团活动,报名加入,"How do I ___ the club?",问加入方式,"join, sign up for, register for","How do I join the club?",L1,0
+社团活动,参加社团活动,"When is the next ___?",问活动安排,"meeting, event, activity","When is the next meeting?",L1,0
+食堂就餐,点餐,"I'll have the ___, please.",点餐,"chicken with rice, beef noodles, set meal A","I'll have the chicken with rice, please.",L1,0
+食堂就餐,餐卡充值,"I'd like to ___ my meal card.",充值相关,"top up, check the balance of","I'd like to top up my meal card.",L1,0
+选课咨询,咨询课程,"Can you tell me about ___?",问课程信息,"this course, the professor, the grading","Can you tell me about this course?",L2,0
+选课咨询,选课操作,"How do I ___ for a course?",选课相关,"register, sign up, enroll","How do I register for a course?",L2,0
+选课咨询,退课调整,"I'd like to ___ this course.",改变课程,"drop, withdraw from, switch","I'd like to drop this course.",L2,0

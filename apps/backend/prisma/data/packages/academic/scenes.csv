@@ -1,4 +1,4 @@
-category_name,title,location,required_output_level,required_user_level,description
-学术挑战,小组讨论,教室,L3,1,参与课堂小组讨论，表达观点。
-学术挑战,课堂辩论,辩论厅,L4,1,参与课堂英语辩论，锻炼逻辑表达。
-学术挑战,学术报告,报告厅,L3,1,准备并发表简短学术报告。
+category_name,title,location,required_output_level,required_user_level,description,package_type
+雅思口语,Part 1 日常问答,雅思口语考场,L2,1,模拟雅思口语第一部分：考官就日常话题进行提问和追问。,exam
+雅思口语,Part 2 话题独白,雅思口语考场,L3,1,模拟雅思口语第二部分：根据Cue Card进行1-2分钟独白。,exam
+雅思口语,Part 3 抽象讨论,雅思口语考场,L3,1,模拟雅思口语第三部分：就抽象话题展开讨论。,exam

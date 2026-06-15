@@ -1,18 +1,40 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-chapter_0,1,I'm here to check in.,0
-chapter_0,1,My booking is under the name...,1
-chapter_0,1,Thank you for your help.,2
-chapter_0,3,I'm from...,0
-chapter_0,3,It's nice to meet you.,1
-chapter_0,3,My major is...,2
-chapter_1,1,I'm here to study.,0
-chapter_1,1,I have nothing to declare.,1
-chapter_1,1,Can I see your passport?,2
-chapter_1,3,I'm here to check in.,0
-chapter_1,3,Is there Wi-Fi in the building?,1
-chapter_1,3,Where is the laundry room?,2
-chapter_1,4,How much is it?,0
-chapter_1,4,I'm looking for...,1
-chapter_1,5,I'm from...,0
-chapter_1,5,What do you do in your free time?,1
-chapter_1,5,Would you like to grab a coffee sometime?,2
+chapter_1,1,I'd like to check in for my flight.,0
+chapter_1,1,Can I have a window seat please?,1
+chapter_1,1,How many bags can I check in?,2
+chapter_1,1,What gate does my flight depart from?,3
+chapter_1,2,Do I need to take my laptop out?,0
+chapter_1,2,Can I bring this in my carry-on?,1
+chapter_1,2,Please put your bag on the belt.,2
+chapter_1,3,When does boarding start?,0
+chapter_1,3,Is the flight on time?,1
+chapter_1,3,Has the gate changed?,2
+chapter_2,1,I'm here for tourism.,0
+chapter_2,1,I'll be staying for a week.,1
+chapter_2,1,I have a return ticket.,2
+chapter_2,1,I'm staying at the Grand Hotel.,3
+chapter_2,2,Which carousel is my luggage on?,0
+chapter_2,2,My luggage didn't arrive.,1
+chapter_2,2,I need to report a lost bag.,2
+chapter_2,3,I have nothing to declare.,0
+chapter_2,3,I have some gifts to declare.,1
+chapter_2,3,These are for personal use.,2
+chapter_3,1,Can you take me to this address?,0
+chapter_3,1,How much will it cost?,1
+chapter_3,1,How long does it take to get there?,2
+chapter_3,1,Please drop me off here.,3
+chapter_3,2,Is this your first time visiting?,0
+chapter_3,2,Can you recommend a good restaurant?,1
+chapter_4,1,I have a reservation under the name Maya.,0
+chapter_4,1,Can I see your ID please?,1
+chapter_4,1,What time is check-out?,2
+chapter_4,1,Is breakfast included?,3
+chapter_4,2,Can I have a wake-up call at 6 AM?,0
+chapter_4,2,The AC in my room isn't working.,1
+chapter_4,2,Can I have extra towels please?,2
+chapter_4,3,I'd like to check out now.,0
+chapter_4,3,Can I get a receipt?,1
+chapter_4,3,Can I store my luggage here?,2
+chapter_5,1,Excuse me how do I get to the museum?,0
+chapter_5,1,Is it far from here?,1
+chapter_5,1,Go straight then turn left.,2

@@ -123,6 +123,21 @@ async function seedExtras(adminUser: any, normalUser: any) {
 // ══════════════════════════════════════════════════════════
 
 async function main() {
+  // 可选指定学习包：环境变量 SEED_PACKAGE 或 CLI 参数 --package <name>
+  const cliIndex = process.argv.indexOf('--package')
+  const targetPackage = process.env.SEED_PACKAGE?.trim()
+    || (cliIndex !== -1 ? process.argv[cliIndex + 1]?.trim() : undefined)
+    || undefined
+
+  if (targetPackage) {
+    // ── 追加模式：仅导入指定学习包，不动其他数据 ──
+    console.log(`🎯 SEED_PACKAGE=${targetPackage} — 追加模式，仅导入指定学习包\n`)
+    console.log('🌱 跳过清空 & 基础设施，直接导入学习包\n')
+    await seedLearningPackages(prisma, targetPackage)
+    console.log('\n🎉 Seed complete!')
+    return
+  }
+
   // ═══ 清空可重建数据（按 FK 依赖顺序） ═══
   //
   // 公共内容库（Vocabulary / Chunk / SentencePattern / DictionaryEntry）保留。
@@ -201,7 +216,7 @@ async function main() {
   // 第三阶段：学习包（按场景分类组织的内容数据）
   // ══════════════════════════════════════════════════════
   console.log('\n🌱 第三阶段：学习包')
-  await seedLearningPackages(prisma)
+  await seedLearningPackages(prisma, targetPackage)
 
   console.log('\n🎉 Seed complete!')
 }

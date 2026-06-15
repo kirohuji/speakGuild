@@ -1,3 +1,5 @@
-category_name,title,location,required_output_level,required_user_level,description
-校园生活,图书馆借书,图书馆,L1,1,在图书馆借书和询问规则。
-校园生活,社团招新,社团摊位,L2,1,了解社团信息、报名参加。
+category_name,title,location,required_output_level,required_user_level,description,package_type
+校园生活,图书馆借书,大学图书馆,L1,1,在图书馆借书、续借、查找资料、询问规则。,daily
+校园生活,社团活动,社团招新摊位,L1,1,了解社团信息、报名加入、参与活动。,daily
+校园生活,食堂就餐,大学食堂,L1,1,在食堂点餐、询问菜品、充值餐卡。,daily
+校园生活,选课咨询,教学楼/选课中心,L2,1,咨询课程信息、选课操作、退课调整。,daily

@@ -1,0 +1,45 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+预约看病,电话预约,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L2,make an appointment = 预约。看病前必须先预约。,"[{""en"":""I'd like to make an appointment with Dr. Williams."",""zh"":""我想约威廉姆斯医生。""}]",0
+预约看病,电话预约,clinic,诊所,noun,/ˈklɪnɪk/,/ˈklɪnɪk/,L2,社区诊所，比hospital小。海外看常见病先去clinic。,"[{""en"":""I need to find a clinic near my house."",""zh"":""我需要在附近找一家诊所。""}]",1
+预约看病,电话预约,receptionist,前台,noun,/rɪˈsepʃənɪst/,/rɪˈsepʃənɪst/,L2,诊所前台接待人员。负责预约和登记。,"[{""en"":""The receptionist asked for my name and date of birth."",""zh"":""前台问了我的姓名和出生日期。""}]",2
+预约看病,电话预约,available,有空的/可预约的,adj,/əˈveɪləbəl/,/əˈveɪləbəl/,L2,询问医生是否有空位。Is Dr. Williams available?,"[{""en"":""Is Dr. Williams available this afternoon?"",""zh"":""威廉姆斯医生今天下午有空吗？""}]",3
+预约看病,电话预约,patient,病人,noun,/ˈpeɪʃənt/,/ˈpeɪʃənt/,L2,患者。fill out patient information form = 填写病人信息表。,"[{""en"":""I'm a new patient. Do I need to fill out a form?"",""zh"":""我是新患者，需要填表吗？""}]",4
+预约看病,改期取消,reschedule,改期,verb,/riːˈskedʒuːl/,/riːˈʃedjuːl/,L2,改变预约时间。I need to reschedule = 我需要改期。,"[{""en"":""I need to reschedule my appointment for next week."",""zh"":""我需要把预约改到下周。""}]",0
+预约看病,改期取消,cancel,取消,verb,/ˈkænsəl/,/ˈkænsəl/,L2,取消预约。cancel an appointment = 取消预约。,"[{""en"":""I'm sorry, I need to cancel my appointment tomorrow."",""zh"":""抱歉，我需要取消明天的预约。""}]",1
+预约看病,改期取消,confirm,确认,verb,/kənˈfɜːrm/,/kənˈfɜːm/,L2,确认预约。有些诊所会发confirmation短信。,"[{""en"":""Can you confirm my appointment for Friday?"",""zh"":""能确认一下我周五的预约吗？""}]",2
+预约看病,前台登记,registration,登记,noun,/ˌredʒɪˈstreɪʃən/,/ˌredʒɪˈstreɪʃən/,L2,首次就诊需要registration(登记)个人信息和保险。,"[{""en"":""I'm here for my appointment. I need to register first."",""zh"":""我来就诊的，需要先登记。""}]",0
+预约看病,前台登记,insurance card,保险卡,noun,/ɪnˈʃʊrəns kɑːrd/,/ɪnˈʃʊərəns kɑːd/,L2,海外看病必备。每次就诊都要出示。,"[{""en"":""Please show your insurance card at registration."",""zh"":""登记时请出示保险卡。""}]",1
+预约看病,前台登记,ID document,身份证件,noun,/aɪ diː ˈdɑːkjumənt/,/aɪ diː ˈdɒkjʊmənt/,L1,登记时需出示有效身份证件。护照或驾照。,"[{""en"":""What ID documents do I need to bring?"",""zh"":""我需要带什么身份证件？""}]",2
+看医生,描述症状,symptom,症状,noun,/ˈsɪmptəm/,/ˈsɪmptəm/,L2,症状——描述病情的第一步。What are your symptoms?,"[{""en"":""My symptoms include a headache and a fever."",""zh"":""我的症状包括头痛和发烧。""}]",0
+看医生,描述症状,fever,发烧,noun,/ˈfiːvər/,/ˈfiːvə/,L1,发烧。have a fever / have a temperature = 发烧。,"[{""en"":""I have a fever and feel very tired."",""zh"":""我发烧了，感觉很累。""}]",1
+看医生,描述症状,headache,头痛,noun,/ˈhedeɪk/,/ˈhedeɪk/,L1,头痛。have a headache = 头痛。,"[{""en"":""I've had a headache for three days."",""zh"":""我头痛三天了。""}]",2
+看医生,描述症状,sore throat,喉咙痛,noun,/sɔːr θroʊt/,/sɔː θrəʊt/,L1,喉咙痛。感冒的常见症状之一。,"[{""en"":""I have a sore throat and it hurts when I swallow."",""zh"":""我喉咙痛，吞东西的时候疼。""}]",3
+看医生,描述症状,cough,咳嗽,noun/verb,/kɔːf/,/kɒf/,L1,咳嗽。dry cough = 干咳，cough up phlegm = 咳痰。,"[{""en"":""I've been coughing a lot at night."",""zh"":""我晚上咳得很厉害。""}]",4
+看医生,描述症状,runny nose,流鼻涕,noun,/ˈrʌni noʊz/,/ˈrʌni nəʊz/,L1,流鼻涕。感冒/过敏常见症状。,"[{""en"":""I have a runny nose and keep sneezing."",""zh"":""我流鼻涕，一直打喷嚏。""}]",5
+看医生,回答问诊,allergy,过敏,noun,/ˈælərdʒi/,/ˈælədʒi/,L2,过敏。do you have any allergies? = 你有过敏史吗？,"[{""en"":""I'm allergic to penicillin."",""zh"":""我对青霉素过敏。""}]",0
+看医生,回答问诊,medication,药物,noun,/ˌmedɪˈkeɪʃən/,/ˌmedɪˈkeɪʃən/,L2,药物/用药。take medication = 服药。any medication? = 在吃什么药吗？,"[{""en"":""Have you taken any medication for this?"",""zh"":""你吃过什么药吗？""}]",1
+看医生,回答问诊,duration,持续时间,noun,/dʊˈreɪʃən/,/djʊˈreɪʃən/,L3,症状持续的时间。How long?/how many days?是医生必问题。,"[{""en"":""The symptoms started three days ago."",""zh"":""症状是三天前开始的。""}]",2
+看医生,回答问诊,stomachache,肚子痛,noun,/ˈstʌməkeɪk/,/ˈstʌməkeɪk/,L1,肚子痛/胃痛。have a stomachache = 肚子痛。,"[{""en"":""I have a terrible stomachache after eating."",""zh"":""我吃完东西后肚子很痛。""}]",3
+看医生,理解诊断,diagnosis,诊断,noun,/ˌdaɪəɡˈnoʊsɪs/,/ˌdaɪəɡˈnəʊsɪs/,L3,医生给出的诊断结果。What's your diagnosis? = 诊断结果是什么？,"[{""en"":""The diagnosis is a throat infection."",""zh"":""诊断结果是喉咙感染。""}]",0
+看医生,理解诊断,infection,感染,noun,/ɪnˈfekʃən/,/ɪnˈfekʃən/,L3,感染。throat infection = 喉咙感染，ear infection = 耳朵感染。,"[{""en"":""You have a mild ear infection."",""zh"":""你有轻微的耳朵感染。""}]",1
+看医生,理解诊断,prescription,处方,noun,/prɪˈskrɪpʃən/,/prɪˈskrɪpʃən/,L2,医生开的处方。需要去药房取药。write a prescription = 开处方。,"[{""en"":""I'll write you a prescription for antibiotics."",""zh"":""我给你开一些抗生素。""}]",2
+看医生,治疗方案,treatment,治疗,noun,/ˈtriːtmənt/,/ˈtriːtmənt/,L3,治疗方案。treatment plan = 治疗计划。,"[{""en"":""What treatment do you recommend?"",""zh"":""你建议怎么治疗？""}]",0
+看医生,治疗方案,dosage,剂量,noun,/ˈdoʊsɪdʒ/,/ˈdəʊsɪdʒ/,L3,用药剂量。take one tablet twice a day = 一天两次每次一片。,"[{""en"":""What's the recommended dosage?"",""zh"":""建议剂量是多少？""}]",1
+看医生,治疗方案,pharmacy,药房,noun,/ˈfɑːrməsi/,/ˈfɑːməsi/,L2,药房。英式常说chemist。处方要去pharmacy取。,"[{""en"":""You can get the medicine at any pharmacy."",""zh"":""你可以在任何药房取药。""}]",2
+看医生,治疗方案,follow-up,复诊,noun,/ˈfɑːloʊ ʌp/,/ˈfɒləʊ ʌp/,L3,复诊/随访。follow-up appointment = 复诊预约。,"[{""en"":""I need to schedule a follow-up in two weeks."",""zh"":""我需要两周后安排复诊。""}]",3
+药房买药,询问药品,pharmacist,药剂师,noun,/ˈfɑːrməsɪst/,/ˈfɑːməsɪst/,L2,药剂师。比doctor更容易约到，小病可以直接咨询。,"[{""en"":""The pharmacist recommended some cold medicine."",""zh"":""药剂师推荐了感冒药。""}]",0
+药房买药,询问药品,over-the-counter,非处方药,adj,/ˈoʊvər ðə ˈkaʊntər/,/ˈəʊvə ðə ˈkaʊntər/,L2,非处方药(OTC)。不需要prescription就能买。,"[{""en"":""Is this medication available over-the-counter?"",""zh"":""这个药是非处方药吗？""}]",1
+药房买药,询问药品,pain reliever,止痛药,noun,/peɪn rɪˈliːvər/,/peɪn rɪˈliːvə/,L1,止痛药。ibuprofen(布洛芬)和acetaminophen(对乙酰氨基酚)最常见。,"[{""en"":""Do you have something for pain relief?"",""zh"":""有止痛药吗？""}]",2
+药房买药,询问药品,cold medicine,感冒药,noun,/koʊld ˈmedəsɪn/,/kəʊld ˈmedsɪn/,L1,感冒药。常见有daytime/nighttime之分。,"[{""en"":""Can you recommend a good cold medicine?"",""zh"":""你能推荐一种好用的感冒药吗？""}]",3
+药房买药,理解用法,side effect,副作用,noun,/saɪd ɪˈfekt/,/saɪd ɪˈfekt/,L3,药物副作用。服药前了解possible side effects。,"[{""en"":""What are the common side effects of this medicine?"",""zh"":""这个药常见的副作用是什么？""}]",0
+药房买药,理解用法,dosage instruction,用法说明,noun,/ˈdoʊsɪdʒ ɪnˈstrʌkʃən/,/ˈdəʊsɪdʒ ɪnˈstrʌkʃən/,L3,药品用法说明。take with food = 随餐服用。,"[{""en"":""Please read the dosage instructions carefully."",""zh"":""请仔细阅读用法说明。""}]",1
+药房买药,理解用法,generic,仿制药/非专利药,adj/noun,/dʒəˈnerɪk/,/dʒəˈnerɪk/,L3,便宜一些的非专利药。比品牌药(brand name)便宜很多。,"[{""en"":""Do you have a generic version of this medication?"",""zh"":""这药有仿制药吗？""}]",2
+药房买药,处方取药,prescription slip,处方单,noun,/prɪˈskrɪpʃən slɪp/,/prɪˈskrɪpʃən slɪp/,L2,医生开的处方单。取药时必须出示。,"[{""en"":""Here is my prescription slip from Dr. Williams."",""zh"":""这是威廉姆斯医生开的处方单。""}]",0
+药房买药,处方取药,insurance,保险,noun,/ɪnˈʃʊrəns/,/ɪnˈʃʊərəns/,L2,医疗保险。有保险药品价格可能便宜很多。,"[{""en"":""Does my insurance cover this medication?"",""zh"":""我的保险能报销这个药吗？""}]",1
+药房买药,处方取药,wait time,等待时间,noun,/weɪt taɪm/,/weɪt taɪm/,L1,取药的等待时间。通常15-30分钟。,"[{""en"":""How long is the wait time for prescriptions?"",""zh"":""取处方药需要等多久？""}]",2
+医院急诊,急诊求助,emergency,紧急情况,noun,/ɪˈmɜːrdʒənsi/,/ɪˈmɜːdʒənsi/,L2,急诊/紧急情况。emergency room (ER) = 急诊室。,"[{""en"":""This is an emergency! Please call an ambulance."",""zh"":""这是紧急情况！请叫救护车。""}]",0
+医院急诊,急诊求助,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L2,救护车。call an ambulance = 叫救护车。紧急号:911(英美)/999(英国)。,"[{""en"":""Can someone call an ambulance?"",""zh"":""谁能叫一下救护车？""}]",1
+医院急诊,急诊求助,injury,受伤,noun,/ˈɪndʒəri/,/ˈɪndʒəri/,L2,受伤。serious injury = 重伤。minor injury = 轻伤。,"[{""en"":""He has a serious injury to his leg."",""zh"":""他腿受了重伤。""}]",2
+医院急诊,急诊分诊,triage,分诊,noun,/ˈtriːɑːʒ/,/ˈtriːɑːʒ/,L3,急诊分诊——护士先评估紧急程度。最严重的先看。,"[{""en"":""The triage nurse will assess your condition first."",""zh"":""分诊护士会先评估你的情况。""}]",0
+医院急诊,急诊分诊,medical history,病史,noun,/ˈmedɪkəl ˈhɪstəri/,/ˈmedɪkəl ˈhɪstəri/,L3,病史/既往病史。包括慢性病、手术史、过敏史。,"[{""en"":""Do you have any medical history I should know about?"",""zh"":""你有什么病史需要告诉我吗？""}]",1
+医院急诊,急诊分诊,condition,状况/病情,noun,/kənˈdɪʃən/,/kənˈdɪʃən/,L2,病情/状况。stable condition = 病情稳定。serious condition = 情况严重。,"[{""en"":""His condition is stable now."",""zh"":""他现在情况稳定了。""}]",2

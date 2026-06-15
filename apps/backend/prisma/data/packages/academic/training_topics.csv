@@ -1,5 +1,13 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-小组讨论,提出观点,Express your opinion on the group discussion topic.,在小组讨论中表达你的观点。,45,L3,,,practice_academic_小组讨论_提出观点
-小组讨论,回应不同意见,Someone disagrees with you. Respond politely.,有人不同意你的观点，礼貌地回应。,45,L3,,,practice_academic_小组讨论_回应不同意见
-小组讨论,总结讨论,Summarize the group discussion and propose next steps.,总结小组讨论并提出下一步计划。,50,L3,,,practice_academic_小组讨论_总结讨论
-,,,,,,,,practice_academic__
+Part 1 日常问答,住所与家居,Answer questions about your home and accommodation.,回答关于住所和家居的问题。,45,L2,描述住房类型、喜欢的房间、家居环境。,Part 1 住所 家居,
+Part 1 日常问答,家乡,Answer questions about your hometown.,回答关于家乡的问题。,45,L2,描述家乡特点、推荐景点、家乡变化。,Part 1 家乡 地点,
+Part 1 日常问答,工作与学习,Answer questions about your work or studies.,回答关于工作或学习的问题。,45,L2,描述学习领域、工作内容、未来规划。,Part 1 工作 学习,
+Part 1 日常问答,兴趣爱好,Answer questions about your hobbies and free time.,回答关于兴趣爱好的问题。,45,L2,描述业余爱好、如何开始、为什么喜欢。,Part 1 爱好 休闲,
+Part 2 话题独白,推荐旅游地,Describe a place you would recommend to visitors.,描述一个你想推荐给游客的地方。,90,L3,按Cue Card要点描述地点、位置、活动和推荐理由。,Part 2 地点描述 旅游推荐,
+Part 2 话题独白,喜欢的城市角落,Describe a part of a city or town you enjoy spending time in.,描述一个你喜欢的城市角落。,90,L3,描述地点特点、在那里的活动、为什么喜欢。,Part 2 地点描述 城市生活,
+Part 2 话题独白,运动场馆,Describe a popular place for sports that you have been to.,描述一个你去过的热门运动场所。,90,L3,描述场馆位置、设施、你的活动、感受。,Part 2 地点描述 运动,
+Part 2 话题独白,新开的商店,Describe a new shop that recently opened in your city.,描述一个你城市里新开的商店。,90,L3,描述商店位置、卖什么、顾客类型、前景。,Part 2 地点描述 购物,
+Part 3 抽象讨论,城市发展与旅游,Discuss how cities can improve tourism and what impact tourism has.,讨论城市如何改善旅游以及旅游的影响。,60,L3,讨论旅游业的利弊、城市如何吸引游客。,Part 3 旅游 城市发展,
+Part 3 抽象讨论,科技与生活,Discuss how technology has changed people's daily lives.,讨论科技如何改变了人们的日常生活。,60,L4,讨论科技对生活的影响、利弊、未来趋势。,Part 3 科技 社会,
+Part 3 抽象讨论,工作与职业,Discuss factors that influence career choices and job satisfaction.,讨论影响职业选择和工作满意度的因素。,60,L4,讨论工作价值观、职业发展、工作生活平衡。,Part 3 工作 职业发展,
+Part 3 抽象讨论,学习与教育,Discuss how education methods have changed and what makes effective learning.,讨论教育方式的变化和有效学习的要素。,60,L4,讨论教育方式、自学、在线教育等。,Part 3 教育 学习方式,

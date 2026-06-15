@@ -1,0 +1,25 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+Part 1 日常问答,住所与家居,"I live in a ___ near ___.",描述住所位置,"flat / the city center, house / the university","I live in a flat near the city center.",L1,0
+Part 1 日常问答,住所与家居,"My favorite room is ___ because ___.",描述最喜欢的房间,"my bedroom / it's cozy, the living room / it has a great view","My favorite room is my bedroom because it's cozy.",L1,1
+Part 1 日常问答,家乡,"My hometown is a ___ city in ___.",描述家乡,"small / southern China, coastal / Japan","My hometown is a small city in southern China.",L1,0
+Part 1 日常问答,家乡,"It's famous for ___ and ___.",描述特色,"its food / scenery, its history / culture","It's famous for its food and scenery.",L2,1
+Part 1 日常问答,工作与学习,"I'm studying ___ at ___.",说明学习,"Business / Beijing University, Computer Science / MIT","I'm studying Computer Science at Beijing University.",L1,0
+Part 1 日常问答,工作与学习,"I work as a ___ for ___.",说明工作,"software engineer / a tech company, teacher / an international school","I work as a software engineer for a tech company.",L1,1
+Part 1 日常问答,兴趣爱好,"In my free time, I like to ___.",描述爱好,"read, take photos, play basketball","In my free time, I like to take photos.",L1,0
+Part 1 日常问答,兴趣爱好,"I got into ___ when I was ___.",爱好如何开始的,"photography / 15, painting / in high school","I got into photography when I was 15.",L2,1
+Part 2 话题独白,推荐旅游地,"The place I'd like to recommend is ___.",开场句,"a small town in Yunnan, a coastal city in Spain","The place I'd like to recommend is a small town in Yunnan.",L3,0
+Part 2 话题独白,推荐旅游地,"It's located in ___ and is known for ___.",位置与特色,"the mountains / its scenery, the city center / its night markets","It's located in the mountains and is known for its scenery.",L2,1
+Part 2 话题独白,推荐旅游地,"I would recommend it because ___.",推荐理由,"the view is amazing, it's not too touristy","I would recommend it because the view is amazing.",L2,2
+Part 2 话题独白,喜欢的城市角落,"What makes ___ special is ___.",独特之处,"this area / the atmosphere, this city / the mix of old and new","What makes this area special is the vibrant atmosphere.",L3,0
+Part 2 话题独白,运动场馆,"I've been to ___ several times.",到达某地,"the National Stadium, the local sports center","I've been to the National Stadium several times.",L2,0
+Part 2 话题独白,运动场馆,"The atmosphere when ___ was ___ .",描述气氛,"the match was on / electric, I was there / incredible","The atmosphere when the match was on was electric.",L3,1
+Part 2 话题独白,新开的商店,"A new shop has recently opened ___.",新店位置,"near my house, in the city center","A new shop has recently opened near my house.",L2,0
+Part 2 话题独白,新开的商店,"It specializes in ___.",主营内容,"organic food, handmade crafts, second-hand books","It specializes in organic food.",L2,1
+Part 3 抽象讨论,城市发展与旅游,"While tourism brings ___, it also ___.",利弊论述,"economic benefits / harms the environment","While tourism brings economic benefits, it also harms the environment.",L4,0
+Part 3 抽象讨论,城市发展与旅游,"One way to solve this is ___.",解决方案,"to limit visitor numbers, to promote eco-tourism","One way to solve this is to limit visitor numbers.",L3,1
+Part 3 抽象讨论,科技与生活,"Technology has changed how we ___.",谈变化,"communicate, work, shop","Technology has changed how we communicate.",L3,0
+Part 3 抽象讨论,科技与生活,"On the one hand ___. On the other hand ___.",对比论证,"it's convenient / it's distracting, it saves time / it reduces face-to-face interaction","On the one hand it's convenient. On the other hand it's distracting.",L4,1
+Part 3 抽象讨论,工作与职业,"When choosing a job, people value ___ over ___.",择业因素,"salary / passion, stability / growth","When choosing a job, people value stability over growth.",L3,0
+Part 3 抽象讨论,工作与职业,"___ depends on the individual's ___.",因人而异,"Job satisfaction / priorities, Career choice / values","Job satisfaction depends on the individual's priorities.",L3,1
+Part 3 抽象讨论,学习与教育,"___ is more effective than ___ because ___.",比较,"Interactive learning / rote memorization / it engages students","Interactive learning is more effective than rote memorization because it engages students.",L4,0
+Part 3 抽象讨论,学习与教育,"I believe that education should ___.",表达观点,"be more practical, focus on critical thinking","I believe that education should focus more on critical thinking.",L3,1

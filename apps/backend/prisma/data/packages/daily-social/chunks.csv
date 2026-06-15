@@ -1,13 +1,22 @@
-scene_title,category,text,meaning,difficulty,description,examples_json
-咖啡店点餐,咖啡店点餐,"I'd like a..., please.",我想要一杯...,L1,,,
-咖啡店点餐,咖啡店点餐,For here or to go?,堂食还是打包？,L1,,,
-咖啡店点餐,咖啡店点餐,"Can I get the bill, please?",能给我账单吗？,L1,,,
-咖啡店点餐,咖啡店点餐,Do you have any dairy-free options?,有非乳制品选项吗？,L2,,,
-咖啡店点餐,咖啡店点餐,How much is it?,多少钱？,L1,,,
-咖啡店点餐,咖啡店点餐,What do you recommend?,你有什么推荐？,L1,,,
-超市购物,超市购物,Where can I find...?,我在哪能找到...？,L1,,,
-超市购物,超市购物,Do you have this in a different size?,这个有其他尺寸吗？,L2,,,
-超市购物,超市购物,I'm looking for...,我在找...,L1,,,
-超市购物,超市购物,Is this on sale?,这个在打折吗？,L1,,,
-超市购物,超市购物,Can I return this?,这个可以退吗？,L2,,,
-超市购物,超市购物,I'll pay by card.,我刷卡支付。,L1,,,
+scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
+咖啡店点餐,点咖啡,点咖啡,"I'd like a..., please.",我想要一杯...,L1,点饮品的标准句型。后接饮品名称。,"[{""en"":""I'd like a latte, please."",""zh"":""我要一杯拿铁。""}]"
+咖啡店点餐,点咖啡,点咖啡,For here or to go?,堂食还是打包？,L1,店员会问是否堂食。for here = 堂食，to go = 外带。,"[{""en"":""For here or to go?"",""zh"":""在这喝还是带走？""}]"
+咖啡店点餐,点咖啡,点咖啡,What size would you like?,您要什么尺寸？,L1,问杯型。small / regular / large。,"[{""en"":""What size would you like? Small or regular?"",""zh"":""您要什么尺寸？小杯还是中杯？""}]"
+咖啡店点餐,修改订单,修改订单,Sorry I wanted a different size.,抱歉我想要不同尺寸。,L1,修改订单的礼貌表达。,"[{""en"":""Sorry, I wanted a medium, not a small."",""zh"":""抱歉，我要中杯不是小杯。""}]"
+咖啡店点餐,办理会员卡,办理会员卡,How do I get a loyalty card?,怎么办会员卡？,L2,询问办理会员卡的方式。,"[{""en"":""How do I get a loyalty card? Is it free?"",""zh"":""怎么办会员卡？免费吗？""}]"
+咖啡店点餐,办理会员卡,办理会员卡,What are the benefits?,有什么优惠？,L2,询问会员权益。benefits / rewards / discounts。,"[{""en"":""What are the benefits of the loyalty program?"",""zh"":""会员计划有什么优惠？""}]"
+咖啡店点餐,投诉饮品,投诉饮品,I'm sorry but this isn't what I ordered.,抱歉这不是我点的。,L2,礼貌投诉。指出问题和正确的要求。,"[{""en"":""I'm sorry, but this isn't what I ordered. I ordered a latte."",""zh"":""抱歉，这不是我点的，我点的是拿铁。""}]"
+超市购物,询问商品位置,询问商品位置,Where can I find...?,我在哪能找到...？,L1,问商品位置的标准句型。,"[{""en"":""Where can I find milk and bread?"",""zh"":""我在哪能找到牛奶和面包？""}]"
+超市购物,询问商品位置,询问商品位置,Do you have this in stock?,这个还有库存吗？,L1,询问商品是否有货。in stock / available。,"[{""en"":""Do you have this in stock? It's not on the shelf."",""zh"":""这个还有库存吗？货架上没看到。""}]"
+超市购物,退货,退货,I'd like to return this.,我想退这个。,L2,退货的标准说法。,"[{""en"":""I'd like to return this. I bought the wrong size."",""zh"":""我想退这个，我买错了尺寸。""}]"
+超市购物,退货,退货,Can I exchange it for a different size?,能换一个尺寸吗？,L2,换货。exchange = 换。different size/color。,"[{""en"":""Can I exchange it for a larger size?"",""zh"":":"能换个大一码的吗？""}]"
+超市购物,优惠活动,优惠活动,Is there a sale today?,今天有什么打折活动吗？,L1,问当日优惠。sale = 打折/促销。,"[{""en"":""Is there a sale today on these items?"",""zh"":""今天这些东西打折吗？""}]"
+超市购物,优惠活动,优惠活动,Do you have a student discount?,有学生折扣吗？,L1,很多超市有学生优惠。出示学生证即可。,"[{""en"":""Do you offer a student discount?"",""zh"":":"你们有学生折扣吗？""}]"
+超市购物,自助结账,自助结账,The machine won't scan this item.,这台机器扫不出这个商品。,L1,自助结账常见问题。scan = 扫码。,"[{""en"":""The machine won't scan this item. Can you help?"",""zh"":""机器扫不出这个商品，能帮我一下吗？""}]"
+超市购物,自助结账,自助结账,Can I pay here using my card?,能在这里刷卡支付吗？,L1,自助结账机通常支持卡支付。,"[{""en"":""Can I pay here using my card or is it cash only?"",""zh"":":"能在这里刷卡吗还是只收现金？""}]"
+朋友聚会,邀请朋友,邀请朋友,Do you want to hang out this weekend?,这周末想一起出来玩吗？,L1,邀请朋友的标准说法。hang out = 一起玩。,"[{""en"":""Do you want to hang out this weekend?"",""zh"":""这周末想一起出来玩吗？""}]"
+朋友聚会,邀请朋友,邀请朋友,Would you like to come to my party?,你愿意来我的聚会吗？,L1,正式一点邀请。party / gathering / dinner。,"[{""en"":""Would you like to come to my party on Saturday?"",""zh"":""你愿意来我周六的聚会吗？""}]"
+朋友聚会,商量计划,商量计划,Where should we meet?,我们在哪见面？,L1,商量见面地点。,"[{""en"":""Where should we meet? How about the café near school?"",""zh"":""我们在哪见面？学校附近的咖啡厅怎么样？""}]"
+朋友聚会,商量计划,商量计划,What time works for you?,你什么时间方便？,L1,询问方便的时间。,"[{""en"":""What time works for you? I'm free after 5."",""zh"":""你什么时间方便？我5点以后有空。""}]"
+朋友聚会,确认参加,确认参加,I'd love to come! What should I bring?,我很愿意来！需要带什么吗？,L1,回复邀请表达参加意愿。主动问需要带什么。,"[{""en"":""I'd love to come! What should I bring?"",""zh"":":"我很愿意来！需要带什么吗？""}]"
+朋友聚会,提议活动,提议活动,Let's go to...!,我们去...吧！,L1,提议去哪里或做什么。,"[{""en"":""Let's go to the new café downtown!"",""zh"":""我们去市中心新开的咖啡厅吧！""}]"

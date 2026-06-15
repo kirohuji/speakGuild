@@ -1,6 +1,0 @@
-{
-  "key": "practice_academic_小组讨论_提出观点",
-  "title": "小组讨论 - 提出观点",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_academic_小组讨论_提出观点\ntitle: 小组讨论 - 提出观点\n---\nGroup Member: Express your opinion on the group discussion topic.\n#objective: Express your opinion on the group discussion topic.\n#chunks: I agree with...,What do you think about...?,Maybe we should...\n#user_input\nGroup Member: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I agree with...,What do you think about...?,Maybe we should...\n#user_input\nGroup Member: Got it. That was really helpful. Have a great day!\n-> END\n"
-}

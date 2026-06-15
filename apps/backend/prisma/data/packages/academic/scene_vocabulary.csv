@@ -1,0 +1,34 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+Part 1 日常问答,住所与家居,accommodation,住宿/住所,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,IELTS Part 1高频词。包括flat/apartment/house等类型。,"[{""en"":""I live in a comfortable flat."",""zh"":""我住在一个舒适的公寓里。""}]",0
+Part 1 日常问答,住所与家居,cozy,舒适的,adj,/ˈkoʊzi/,/ˈkəʊzi/,L2,描述家居环境的常用词。比comfortable更口语化。,"[{""en"":""My room is small but cozy."",""zh"":""我的房间小但舒适。""}]",1
+Part 1 日常问答,住所与家居,neighborhood,社区/街区,noun,/ˈneɪbərhʊd/,/ˈneɪbəhʊd/,L2,居住的社区。描述周边环境时常用。,"[{""en"":""It's a quiet neighborhood with nice cafes."",""zh"":""这是一个安静的社区，有不错的咖啡馆。""}]",2
+Part 1 日常问答,家乡,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,IELTS Part 1必问题目。描述你长大的地方。,"[{""en"":""My hometown is a small city in southern China."",""zh"":""我的家乡是中国南部的一个小城市。""}]",0
+Part 1 日常问答,家乡,scenic,风景优美的,adj,/ˈsiːnɪk/,/ˈsiːnɪk/,L2,描述家乡风景的常用形容词。scenic spot = 景点。,"[{""en"":""My hometown has many scenic spots."",""zh"":""我家乡有很多风景优美的地方。""}]",1
+Part 1 日常问答,家乡,livable,宜居的,adj,/ˈlɪvəbəl/,/ˈlɪvəbəl/,L3,适合居住的。IELTS描述城市/家乡的常用词。,"[{""en"":""It's a livable city with a relaxed pace of life."",""zh"":""这是一个宜居的城市，生活节奏慢。""}]",2
+Part 1 日常问答,工作与学习,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L2,大学主修专业。IELTS常见问题: What's your major?,"[{""en"":""My major is Computer Science."",""zh"":""我的专业是计算机科学。""}]",0
+Part 1 日常问答,工作与学习,career,职业,noun,/kəˈrɪr/,/kəˈrɪə/,L2,职业生涯。IELTS常讨论career plan/goal。,"[{""en"":""I'm building a career in marketing."",""zh"":""我在市场营销领域发展职业。""}]",1
+Part 1 日常问答,工作与学习,assignment,作业/任务,noun,/əˈsaɪnmənt/,/əˈsaɪnmənt/,L2,学生的作业或工作任务。,"[{""en"":""I spend about 20 hours per week on assignments."",""zh"":""我每周花大约20小时做作业。""}]",2
+Part 1 日常问答,兴趣爱好,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,业余爱好。IELTS常问: Do you have any hobbies?,"[{""en"":""My main hobby is photography."",""zh"":""我的主要爱好是摄影。""}]",0
+Part 1 日常问答,兴趣爱好,leisure,休闲,noun,/ˈliːʒər/,/ˈleʒə/,L2,休闲/空闲时间。leisure time/leisure activity。,"[{""en"":""In my leisure time, I like to read."",""zh"":""空闲时我喜欢阅读。""}]",1
+Part 1 日常问答,兴趣爱好,relaxing,放松的,adj,/rɪˈlæksɪŋ/,/rɪˈlæksɪŋ/,L1,描述爱好或活动让人放松。,"[{""en"":""I find painting very relaxing."",""zh"":""我觉得画画很放松。""}]",2
+Part 2 话题独白,推荐旅游地,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L2,P2 cue card常见动词。recommend...to visitors。,"[{""en"":""I would highly recommend this place to visitors."",""zh"":""我强烈推荐这个地方给游客。""}]",0
+Part 2 话题独白,推荐旅游地,magnificent,壮丽的,adj,/mæɡˈnɪfɪsənt/,/mæɡˈnɪfɪsənt/,L3,描述景色/建筑的褒义词。IELTS高分词汇。,"[{""en"":""The view from the mountain was magnificent."",""zh"":""山上的景色壮丽无比。""}]",1
+Part 2 话题独白,推荐旅游地,breathtaking,令人惊叹的,adj,/ˈbreθteɪkɪŋ/,/ˈbreθteɪkɪŋ/,L3,形容景色美到令人屏息。比beautiful更高级。,"[{""en"":""The sunrise was absolutely breathtaking."",""zh"":""日出令人叹为观止。""}]",2
+Part 2 话题独白,喜欢的城市角落,atmosphere,氛围,noun,/ˈætməsfɪr/,/ˈætməsfɪə/,L2,描述地点氛围。vibrant/relaxed atmosphere。,"[{""en"":""The café has a really cozy atmosphere."",""zh"":""这家咖啡馆氛围很舒适。""}]",0
+Part 2 话题独白,喜欢的城市角落,vibrant,充满活力的,adj,/ˈvaɪbrənt/,/ˈvaɪbrənt/,L3,形容城市或区域有活力。IELTS P2描述地点常用词。,"[{""en"":""The area is vibrant and full of street art."",""zh"":""这个区域充满活力，到处都是街头艺术。""}]",1
+Part 2 话题独白,运动场馆,facility,设施,noun,/fəˈsɪləti/,/fəˈsɪləti/,L2,场馆设施。sports facilities / training facilities。,"[{""en"":""The stadium has world-class facilities."",""zh"":""这个体育场有世界一流的设施。""}]",0
+Part 2 话题独白,运动场馆,spectator,观众,noun,/ˈspekteɪtər/,/spekˈteɪtə/,L3,现场观看比赛的观众。spectator sport = 观赏性运动。,"[{""en"":""Thousands of spectators filled the stadium."",""zh"":""成千上万的观众挤满了体育场。""}]",1
+Part 2 话题独白,新开的商店,specialize in,专营,phrase,/ˈspeʃəlaɪz ɪn/,/ˈspeʃəlaɪz ɪn/,L2,描述商店主营什么。specialize in organic products。,"[{""en"":""The shop specializes in organic food."",""zh"":""这家店专营有机食品。""}]",0
+Part 2 话题独白,新开的商店,customer service,客户服务,noun,/ˈkʌstəmər ˈsɜːrvɪs/,/ˈkʌstəmə ˈsɜːvɪs/,L2,商店服务质量。excellent/poor customer service。,"[{""en"":""They offer excellent customer service."",""zh"":""他们提供优质的客户服务。""}]",1
+Part 3 抽象讨论,城市发展与旅游,tourism,旅游业,noun,/ˈtʊrɪzəm/,/ˈtʊərɪzəm/,L2,旅游业/旅游。IELTS常讨论tourism的利弊。,"[{""en"":""Tourism has brought many benefits to the city."",""zh"":""旅游业给这个城市带来了很多好处。""}]",0
+Part 3 抽象讨论,城市发展与旅游,infrastructure,基础设施,noun,/ˈɪnfrəstrʌktʃər/,/ˈɪnfrəstrʌktʃə/,L3,城市的基础设施。包括交通、网络、水电等。,"[{""en"":""The city needs to improve its infrastructure."",""zh"":""这个城市需要改善基础设施。""}]",1
+Part 3 抽象讨论,城市发展与旅游,preserve,保护,verb,/prɪˈzɜːrv/,/prɪˈzɜːv/,L3,保护(文化/环境)。preserve cultural heritage。,"[{""en"":""We should preserve historical buildings while developing tourism."",""zh"":""我们在发展旅游的同时应该保护历史建筑。""}]",2
+Part 3 抽象讨论,科技与生活,technology,科技,noun,/tekˈnɑːlədʒi/,/tekˈnɒlədʒi/,L2,科技/技术。IELTS高频话题。,"[{""en"":""Technology has changed the way we communicate."",""zh"":""科技改变了我们的沟通方式。""}]",0
+Part 3 抽象讨论,科技与生活,digital,数字的,adj,/ˈdɪdʒɪtəl/,/ˈdɪdʒɪtəl/,L2,数字的/数码的。digital age/device。,"[{""en"":""We live in the digital age."",""zh"":""我们生活在数字时代。""}]",1
+Part 3 抽象讨论,科技与生活,efficient,高效的,adj,/ɪˈfɪʃənt/,/ɪˈfɪʃənt/,L3,高效的。描述科技提高效率。反义词: inefficient。,"[{""en"":""Technology makes our work more efficient."",""zh"":""科技让我们的工作更高效。""}]",2
+Part 3 抽象讨论,工作与职业,career path,职业发展道路,noun,/kəˈrɪr pæθ/,/kəˈrɪə pɑːθ/,L3,职业发展方向。IELTS常讨论career choice/path。,"[{""en"":""I'm still figuring out my career path."",""zh"":""我还在想我的职业发展道路。""}]",0
+Part 3 抽象讨论,工作与职业,work-life balance,工作生活平衡,noun,/wɜːrk laɪf ˈbæləns/,/wɜːk laɪf ˈbæləns/,L3,IELTS Part 3高频话题词。,"[{""en"":""Maintaining a good work-life balance is important."",""zh"":""保持良好的工作生活平衡很重要。""}]",1
+Part 3 抽象讨论,工作与职业,fulfilling,有成就感的,adj,/fʊlˈfɪlɪŋ/,/fʊlˈfɪlɪŋ/,L3,形容工作让人有成就感。fulfilling career/job。,"[{""en"":""I find my job very fulfilling."",""zh"":""我觉得我的工作很有成就感。""}]",2
+Part 3 抽象讨论,学习与教育,approach,方式/方法,noun,/əˈproʊtʃ/,/əˈprəʊtʃ/,L2,教育方法/学习方式。learning approach。,"[{""en"":""The school uses a new approach to teaching."",""zh"":""这所学校采用新的教学方法。""}]",0
+Part 3 抽象讨论,学习与教育,self-discipline,自律,noun,/self ˈdɪsəplɪn/,/self ˈdɪsɪplɪn/,L3,自学/在线学习需要self-discipline。IELTS常讨论。,"[{""en"":""Online learning requires a lot of self-discipline."",""zh"":""在线学习需要很强的自律性。""}]",1
+Part 3 抽象讨论,学习与教育,interactive,互动的,adj,/ˌɪntərˈæktɪv/,/ˌɪntəˈræktɪv/,L3,互动的。interactive learning/teaching method。,"[{""en"":""Interactive classes are more engaging."",""zh"":""互动式课堂更有吸引力。""}]",2

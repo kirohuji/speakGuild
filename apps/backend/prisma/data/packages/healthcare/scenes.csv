@@ -1,3 +1,5 @@
-category_name,title,location,required_output_level,required_user_level,description
-健康医疗,预约看病,诊所,L2,1,打电话或前台预约看病时间。
-健康医疗,药房买药,药房,L1,1,去药房描述症状、买药。
+category_name,title,location,required_output_level,required_user_level,description,package_type
+健康医疗,预约看病,诊所前台,L2,1,打电话或到前台预约看病时间、改期、登记信息。,daily
+健康医疗,看医生,诊室,L2,1,进入诊室向医生描述症状、回答问题、理解诊断。,daily
+健康医疗,药房买药,药房柜台,L1,1,去药房描述症状买药、取处方药、咨询用法。,daily
+健康医疗,医院急诊,急诊室,L3,1,紧急情况下去医院急诊、说明病情、填表。,daily

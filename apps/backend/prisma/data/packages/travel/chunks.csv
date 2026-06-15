@@ -1,6 +1,42 @@
-scene_title,category,text,meaning,difficulty,description,examples_json
-打车出行,打车出行,"Could you take me to..., please?",能带我去...吗？,L1,,,
-打车出行,打车出行,How much will it cost?,大概多少钱？,L1,,,
-打车出行,打车出行,How long does it take to get there?,到那要多久？,L1,,,
-打车出行,打车出行,Please drop me off here.,请在这里停。,L1,,,
-打车出行,打车出行,Can you turn on the AC?,能开空调吗？,L1,,,
+scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
+机场出发,办理值机,办理值机,I'd like to check in for my flight.,我要办理值机。,L1,值机柜台的标准开场白。,"[{""en"":""Hi, I'd like to check in for my flight to London."",""zh"":""你好，我要办理去伦敦的值机。""}]"
+机场出发,办理值机,办理值机,Can I have a window seat please?,能给我靠窗座位吗？,L1,选座位。window seat = 靠窗，aisle seat = 靠走道。,"[{""en"":""Can I have a window seat, please?"",""zh"":""能给我靠窗座位吗？""}]"
+机场出发,办理值机,办理值机,How many bags can I check in?,我能托运几件行李？,L1,询问托运行李件数和限额。,
+机场出发,办理值机,办理值机,Is my luggage overweight?,我的行李超重了吗？,L2,超重要付费。overweight = 超重，extra fee = 额外费用。,"[{""en"":""Is my luggage overweight? I can take some things out."",""zh"":""我的行李超重了吗？我可以拿出一些东西。""}]"
+机场出发,办理值机,办理值机,What gate does my flight depart from?,我的航班在哪个登机口？,L1,确认登机口。登机口可能在起飞前变更。,"[{""en"":""What gate does my flight depart from?"",""zh"":""我的航班在哪个登机口？""}]"
+机场出发,过安检,过安检,Do I need to take my laptop out?,我需要把笔记本电脑拿出来吗？,L1,安检时电脑、平板等电子产品需单独放托盘。,"[{""en"":""Do I need to take my laptop out of the bag?"",""zh"":""我需要把笔记本电脑从包里拿出来吗？""}]"
+机场出发,过安检,过安检,Can I bring this in my carry-on?,这个能带随身行李吗？,L1,确定物品是否符合随身行李规定。液体限100ml。,"[{""en"":""Can I bring this bottle in my carry-on?"",""zh"":""这个瓶子能带随身行李吗？""}]"
+机场出发,过安检,过安检,Please put your bag on the belt.,请把包放在传送带上。,L1,安检人员指示把行李放进扫描机。,"[{""en"":""Please put your bag on the belt and walk through."",""zh"":""请把包放上传送带，然后走过去。""}]"
+机场出发,登机口候机,登机口候机,When does boarding start?,什么时候开始登机？,L1,确认登机时间。boarding time = 登机时间。,"[{""en"":""When does boarding start for flight BA168?"",""zh"":""BA168航班什么时候开始登机？""}]"
+机场出发,登机口候机,登机口候机,Is the flight on time?,航班准时吗？,L1,确认航班是否延误。on time = 准时，delayed = 延误。,"[{""en"":""Is the flight to Tokyo on time?"",""zh"":""去东京的航班准时吗？""}]"
+机场出发,登机口候机,登机口候机,Has the gate changed?,登机口变了吗？,L2,登机口变更很常见，随时注意显示屏和广播。,"[{""en"":""Has the gate changed? I heard an announcement."",""zh"":""登机口变了吗？我听到广播了。""}]"
+机场入境,入境问答,入境问答,I'm here for tourism.,我来旅游的。,L1,说明来访目的最常见回答。tourism/business/study。,"[{""en"":""I'm here for tourism. I'm staying for a week."",""zh"":""我来旅游的，待一周。""}]"
+机场入境,入境问答,入境问答,I'll be staying for a week.,我待一周。,L1,说明停留时间。入境官员关心的是你什么时候离境。,"[{""en"":""I'll be staying for a week."",""zh"":""我待一周。""}]"
+机场入境,入境问答,入境问答,I have a return ticket.,我有回程机票。,L1,入境官员可能要求出示回程机票。电子版也可以。,"[{""en"":""Yes, I have a return ticket."",""zh"":""有的，我有回程机票。""}]"
+机场入境,入境问答,入境问答,I'm staying at the Grand Hotel.,我住在大酒店。,L1,说明住宿地址。酒店名或 Airbnb 地址都行。,"[{""en"":""I'm staying at the Grand Hotel in the city center."",""zh"":""我住在市中心的大酒店。""}]"
+机场入境,提取行李,提取行李,Which carousel is my luggage on?,我的行李在哪个转盘？,L1,下飞机后先看大屏幕找行李转盘号。,"[{""en"":""Which carousel is my luggage on?"",""zh"":""我的行李在哪个转盘？""}]"
+机场入境,提取行李,提取行李,My luggage didn't arrive.,我的行李没到。,L2,行李丢失立即去航空公司柜台报失。,"[{""en"":""My luggage didn't arrive. What should I do?"",""zh"":""我的行李没到，该怎么办？""}]"
+机场入境,提取行李,提取行李,I need to report a lost bag.,我需要报失行李。,L2,在 baggage claim 附近的航空公司柜台办理。,"[{""en"":""I need to report a lost bag. Here's my baggage tag."",""zh"":""我需要报失行李，这是我的行李牌。""}]"
+机场入境,海关申报,海关申报,I have nothing to declare.,我没有需要申报的东西。,L2,走绿色通道(无申报)的标准回答。,"[{""en"":""I have nothing to declare. Just personal items."",""zh"":""我没有需要申报的，都是个人物品。""}]"
+机场入境,海关申报,海关申报,I have some gifts to declare.,我有一些礼物需要申报。,L2,携带礼品超过免税额度时需要申报。,"[{""en"":""I have some gifts to declare. They're worth about 200 dollars."",""zh"":""我有一些礼物要申报，大约价值200美元。""}]"
+机场入境,海关申报,海关申报,These are for personal use.,这些是自用的。,L2,说明物品用途。for personal use = 自用，as gifts = 作为礼物。,"[{""en"":""These items are for personal use."",""zh"":""这些物品是自用的。""}]"
+出租车,打车去酒店,打车去酒店,Can you take me to this address?,能带我去这个地址吗？,L1,告诉司机目的地。可以直接展示手机上的地址。,"[{""en"":""Can you take me to this address, please?"",""zh"":""能带我去这个地址吗？""}]"
+出租车,打车去酒店,打车去酒店,How much will it cost?,大概多少钱？,L1,问车费。有些城市 flat rate(一口价)有的打表。,"[{""en"":""How much will it cost to get to the airport?"",""zh"":""去机场大概多少钱？""}]"
+出租车,打车去酒店,打车去酒店,Please turn on the meter.,请打表。,L2,确保司机使用计价器。meter = 计价器。,"[{""en"":""Could you please turn on the meter?"",""zh"":""能打表吗？""}]"
+出租车,打车去酒店,打车去酒店,How long does it take to get there?,到那里要多久？,L1,问大概的行车时间。好规划接下来的安排。,"[{""en"":""How long does it take to get to the hotel?"",""zh"":""到酒店要多久？""}]"
+出租车,打车去酒店,打车去酒店,Please drop me off here.,请在这里停。,L1,到了目的地让司机停车。drop off = 让...下车。,"[{""en"":""Please drop me off here. Thank you!"",""zh"":""请在这里停，谢谢！""}]"
+出租车,和司机聊天,和司机聊天,Is this your first time visiting?,你是第一次来吗？,L2,和司机聊天的开场白。司机通常很了解当地。,"[{""en"":""Is this your first time visiting our city?"",""zh"":""你是第一次来我们城市吗？""}]"
+出租车,和司机聊天,和司机聊天,Can you recommend a good restaurant?,你能推荐一个好餐厅吗？,L2,问司机当地美食推荐。local food = 当地特色。,"[{""en"":""Can you recommend a good local restaurant?"",""zh"":""你能推荐一个好的本地餐厅吗？""}]"
+酒店大堂,办理入住,办理入住,I have a reservation under the name Maya.,我用Maya的名字做了预订。,L1,酒店入住确认预订的标准说法。,"[{""en"":""I have a reservation under the name Maya."",""zh"":""我用Maya的名字做了预订。""}]"
+酒店大堂,办理入住,办理入住,Can I see your ID please?,能看一下您的证件吗？,L1,前台要求出示身份证件。需要用护照或身份证。,"[{""en"":""Can I see your passport or ID, please?"",""zh"":""能看一下您的护照或身份证吗？""}]"
+酒店大堂,办理入住,办理入住,What time is check-out?,退房时间是几点？,L1,确认退房时间。通常酒店是 11 AM。,"[{""en"":""What time is check-out?"",""zh"":""退房时间是几点？""}]"
+酒店大堂,办理入住,办理入住,Is breakfast included?,含早餐吗？,L1,确认房价是否含早餐。breakfast included = 含早。,"[{""en"":""Is breakfast included in the price?"",""zh"":""房价含早餐吗？""}]"
+酒店大堂,客房服务,客房服务,Can I have a wake-up call at 6 AM?,能早上6点叫醒我吗？,L2,设置叫醒服务。出国赶早班机/行程很有用。,"[{""en"":""Can I have a wake-up call at 6 AM?"",""zh"":""能早上6点叫醒我吗？""}]"
+酒店大堂,客房服务,客房服务,The AC in my room isn't working.,我房间的空调坏了。,L2,报修。AC = air conditioner(空调)。,"[{""en"":""The AC in my room isn't working. Can you send someone?"",""zh"":""我房间的空调坏了，能派人来看看吗？""}]"
+酒店大堂,客房服务,客房服务,Can I have extra towels please?,能多拿几条毛巾吗？,L1,索要额外用品。extra pillows/towels/blankets。,"[{""en"":""Can I have extra towels, please?"",""zh"":""能多拿几条毛巾吗？""}]"
+酒店大堂,退房离店,退房离店,I'd like to check out now.,我现在想退房。,L1,退房时告诉前台。check out = 退房。,"[{""en"":""I'd like to check out now. Here's my room key."",""zh"":""我现在想退房，这是我的房卡。""}]"
+酒店大堂,退房离店,退房离店,Can I get a receipt?,能给我收据吗？,L1,退房后需要发票或收据报销。receipt = 收据。,"[{""en"":""Can I get a receipt for my stay?"",""zh"":""能给我住宿的收据吗？""}]"
+酒店大堂,退房离店,退房离店,Can I store my luggage here?,能在这里寄存行李吗？,L2,退房后行李寄存。luggage storage = 行李寄存。,"[{""en"":""Can I store my luggage here until 3 PM?"",""zh"":""我能把行李寄存到下午3点吗？""}]"
+街头,问路找地方,问路找地方,Excuse me how do I get to the museum?,请问去博物馆怎么走？,L1,问路标准开场。Excuse me 开头更礼貌。,"[{""en"":""Excuse me, how do I get to the museum?"",""zh"":""请问去博物馆怎么走？""}]"
+街头,问路找地方,问路找地方,Is it far from here?,离这里远吗？,L1,确认距离。far = 远，walking distance = 步行距离。,"[{""en"":""Is it far from here? Can I walk?"",""zh"":""离这里远吗？可以走路吗？""}]"
+街头,问路找地方,问路找地方,Go straight then turn left.,直走然后左转。,L1,常用方向表达。turn left = 左转，turn right = 右转。,"[{""en"":""Go straight ahead, then turn left at the traffic light."",""zh"":""直走，在红绿灯那左转。""}]"

@@ -1,0 +1,38 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+chapter_1,1,I live in a...,0
+chapter_1,1,My favorite room is...,1
+chapter_1,1,What I like most about my home is...,2
+chapter_1,2,My hometown is a...,0
+chapter_1,2,It's famous for...,1
+chapter_1,2,One thing I like about my hometown is...,2
+chapter_1,3,I'm studying... at...,0
+chapter_1,3,I work as a...,1
+chapter_1,3,I chose this because...,2
+chapter_1,4,In my free time I like to...,0
+chapter_1,4,I got into... when I was...,1
+chapter_1,4,It helps me relax after a long day.,2
+chapter_2,1,The place I'd like to recommend is...,0
+chapter_2,1,It's located in...,1
+chapter_2,1,You can... there.,2
+chapter_2,1,I would recommend it because...,3
+chapter_2,2,The area I really enjoy is...,0
+chapter_2,2,What makes it special is...,1
+chapter_2,2,I usually go there to...,2
+chapter_2,3,I've been to...,0
+chapter_2,3,It can hold... people.,1
+chapter_2,3,The atmosphere was incredible.,2
+chapter_2,4,A new shop has recently opened...,0
+chapter_2,4,It specializes in...,1
+chapter_2,4,I think it will be successful because...,2
+chapter_3,1,Tourism brings both benefits and drawbacks.,0
+chapter_3,1,One solution is to...,1
+chapter_3,1,The government should...,2
+chapter_3,2,Technology has changed the way we...,0
+chapter_3,2,On the one hand... on the other hand...,1
+chapter_3,2,In the future...,2
+chapter_3,3,When choosing a career people consider...,0
+chapter_3,3,It depends on the individual.,1
+chapter_3,3,In my country...,2
+chapter_3,4,Traditional education focuses on...,0
+chapter_3,4,The advantage of... is that...,1
+chapter_3,4,I believe that...,2

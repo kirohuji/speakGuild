@@ -1,53 +1,26 @@
-scene_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-宿舍入住,dormitory,宿舍,noun,/ˈdɔːrmətɔːri/,/ˈdɔːmɪtri/,L1,,"[{""en"":""I live in a dormitory near campus."",""zh"":""我住在校园附近的宿舍。""}]",0
-宿舍入住,reception,前台,noun,/rɪˈsepʃən/,/rɪˈsepʃən/,L1,,"[{""en"":""Go to the reception desk to check in."",""zh"":""去前台办理入住。""}]",1
-宿舍入住,check in,办理入住,phrase,/tʃek ɪn/,/tʃek ɪn/,L1,,"[{""en"":""I need to check in at the dormitory."",""zh"":""我需要去宿舍办理入住。""}]",2
-宿舍入住,booking,预订,noun,/ˈbʊkɪŋ/,/ˈbʊkɪŋ/,L1,,"[{""en"":""My booking is under the name Li."",""zh"":""我的预订姓名是李。""}]",3
-宿舍入住,room key,房间钥匙,noun,/ruːm kiː/,/ruːm kiː/,L1,,"[{""en"":""Here is your room key for room 302."",""zh"":""这是你302房间的钥匙。""}]",4
-宿舍入住,student ID,学生证,noun,/ˈstjuːdənt aɪˈdiː/,/ˈstjuːdənt aɪˈdiː/,L1,,"[{""en"":""Please show your student ID to register."",""zh"":""请出示学生证办理登记。""}]",5
-宿舍入住,Wi-Fi,无线网络,noun,/ˈwaɪ faɪ/,/ˈwaɪ faɪ/,L1,,"[{""en"":""What's the Wi-Fi password for the dorm?"",""zh"":""宿舍的Wi-Fi密码是什么？""}]",6
-宿舍入住,laundry room,洗衣房,noun,/ˈlɔːndri ruːm/,/ˈlɔːndri ruːm/,L1,,"[{""en"":""The laundry room is on the first floor."",""zh"":""洗衣房在一楼。""}]",7
-宿舍入住,shared kitchen,共享厨房,noun,/ʃerd ˈkɪtʃɪn/,/ʃeəd ˈkɪtʃɪn/,L2,,"[{""en"":""We have a shared kitchen on each floor."",""zh"":""每层楼都有一个共享厨房。""}]",8
-宿舍入住,elevator,电梯,noun,/ˈelɪveɪtər/,/ˈelɪveɪtər/,L1,,"[{""en"":""Take the elevator to the third floor."",""zh"":""坐电梯到三楼。""}]",9
-宿舍入住,deposit,押金,noun,/dɪˈpɑːzɪt/,/dɪˈpɒzɪt/,L2,入住前需要缴纳的押金，退宿时退还。,"[{""en"":""You need to pay a deposit before moving in."",""zh"":""入住前需要交押金。""}]",10
-宿舍入住,contract,合同,noun,/ˈkɑːntrækt/,/ˈkɒntrækt/,L2,,"[{""en"":""Please sign the housing contract."",""zh"":""请签住宿合同。""}]",11
-宿舍入住,utility bill,水电账单,noun,/juːˈtɪləti bɪl/,/juːˈtɪləti bɪl/,L2,,"[{""en"":""The utility bill is included in the rent."",""zh"":""水电费包含在租金里。""}]",12
-宿舍入住,maintenance,维修,noun,/ˈmeɪntənəns/,/ˈmeɪntənəns/,L2,,"[{""en"":""Please call maintenance if the light is broken."",""zh"":""如果灯坏了请打电话报修。""}]",13
-宿舍入住,air conditioner,空调,noun,/er kənˈdɪʃənər/,/eə kənˈdɪʃənə/,L1,,"[{""en"":""The air conditioner isn't working properly."",""zh"":""空调不太好用。""}]",14
-宿舍入住,heater,暖气,noun,/ˈhiːtər/,/ˈhiːtər/,L1,,"[{""en"":""Can I adjust the heater in my room?"",""zh"":""我可以调节房间的暖气吗？""}]",15
-宿舍入住,curfew,宵禁,noun,/ˈkɜːrfjuː/,/ˈkɜːfjuː/,L2,,"[{""en"":""There's a curfew at 11 PM in the dorm."",""zh"":""宿舍晚上11点宵禁。""}]",16
-宿舍入住,bedding,床上用品,noun,/ˈbedɪŋ/,/ˈbedɪŋ/,L2,,"[{""en"":""Do I need to bring my own bedding?"",""zh"":""我需要自己带床上用品吗？""}]",17
-宿舍入住,registration form,登记表,noun,/ˌredʒɪˈstreɪʃən fɔːrm/,/ˌredʒɪˈstreɪʃən fɔːm/,L2,,"[{""en"":""Please fill out this registration form."",""zh"":""请填写这张登记表。""}]",18
-宿舍入住,visitor policy,访客政策,noun,/ˈvɪzɪtər ˈpɑːləsi/,/ˈvɪzɪtə ˈpɒləsi/,L2,,"[{""en"":""The visitor policy allows guests until 10 PM."",""zh"":""访客政策允许客人待到晚上10点。""}]",19
-宿舍入住,quiet hours,安静时间,noun,/ˈkwaɪət aʊərz/,/ˈkwaɪət aʊəz/,L2,,"[{""en"":""Quiet hours start at 10 PM."",""zh"":""安静时间从晚上10点开始。""}]",20
-宿舍入住,single room,单人间,noun,/ˈsɪŋɡəl ruːm/,/ˈsɪŋɡəl ruːm/,L1,,"[{""en"":""I prefer a single room."",""zh"":""我更喜欢单人间。""}]",21
-宿舍入住,shared room,双人间,noun,/ʃerd ruːm/,/ʃeəd ruːm/,L1,,"[{""en"":""A shared room is cheaper than a single room."",""zh"":""双人间比单人间便宜。""}]",22
-宿舍入住,landlord,房东,noun,/ˈlændlɔːrd/,/ˈlændlɔːd/,L2,,"[{""en"":""The landlord lives on the first floor."",""zh"":""房东住在一楼。""}]",23
-宿舍入住,lease agreement,租赁协议,noun,/liːs əˈɡriːmənt/,/liːs əˈɡriːmənt/,L2,,"[{""en"":""Read the lease agreement carefully before signing."",""zh"":""签之前仔细阅读租赁协议。""}]",24
-宿舍入住,move in,搬入,phrase,/muːv ɪn/,/muːv ɪn/,L1,,"[{""en"":""When can I move in?"",""zh"":""我什么时候可以搬进来？""}]",25
-宿舍入住,move out,搬出,phrase,/muːv aʊt/,/muːv aʊt/,L1,,"[{""en"":""You need to give notice before moving out."",""zh"":""搬出前需要提前通知。""}]",26
-宿舍入住,fire alarm,火灾报警器,noun,/ˈfaɪər əˌlɑːrm/,/ˈfaɪər əˌlɑːm/,L2,,"[{""en"":""Don't ignore the fire alarm."",""zh"":""不要忽视火灾报警器。""}]",27
-宿舍入住,emergency exit,紧急出口,noun,/ɪˈmɜːrdʒənsi ˈeksɪt/,/ɪˈmɜːdʒənsi ˈeksɪt/,L2,,"[{""en"":""The emergency exit is at the end of the hall."",""zh"":""紧急出口在走廊尽头。""}]",28
-宿舍入住,resident,住户,noun,/ˈrezɪdənt/,/ˈrezɪdənt/,L2,,"[{""en"":""All residents must sign in after 10 PM."",""zh"":""所有住户晚上10点后需登记。""}]",29
-宿舍入住,common room,公共休息室,noun,/ˈkɑːmən ruːm/,/ˈkɒmən ruːm/,L2,,"[{""en"":""The common room has a TV and sofas."",""zh"":""公共休息室有电视和沙发。""}]",30
-宿舍入住,laundry card,洗衣卡,noun,/ˈlɔːndri kɑːrd/,/ˈlɔːndri kɑːd/,L2,,"[{""en"":""You need a laundry card to use the washing machine."",""zh"":""你需要洗衣卡才能用洗衣机。""}]",31
-宿舍入住,recycling bin,回收箱,noun,/ˌriːˈsaɪklɪŋ bɪn/,/ˌriːˈsaɪklɪŋ bɪn/,L2,,"[{""en"":""Put plastic bottles in the recycling bin."",""zh"":""把塑料瓶放进回收箱。""}]",32
-宿舍入住,key card,门禁卡,noun,/kiː kɑːrd/,/kiː kɑːd/,L1,,"[{""en"":""Use your key card to enter the building."",""zh"":""用门禁卡进入大楼。""}]",33
-宿舍入住,security guard,保安,noun,/sɪˈkjʊrəti ɡɑːrd/,/sɪˈkjʊərəti ɡɑːd/,L2,,"[{""en"":""The security guard is at the front gate."",""zh"":""保安在大门口。""}]",34
-宿舍入住,room number,房间号,noun,/ruːm ˈnʌmbər/,/ruːm ˈnʌmbə/,L1,,"[{""en"":""What's your room number?"",""zh"":""你的房间号是多少？""}]",35
-宿舍入住,floor plan,楼层平面图,noun,/flɔːr plæn/,/flɔː plæn/,L2,,"[{""en"":""The floor plan shows where the exit is."",""zh"":""楼层平面图显示了出口位置。""}]",36
-宿舍入住,neighbor,邻居,noun,/ˈneɪbər/,/ˈneɪbə/,L1,,"[{""en"":""My neighbor is also a freshman."",""zh"":""我的邻居也是一年级新生。""}]",37
-宿舍入住,noise complaint,噪音投诉,noun,/nɔɪz kəmˈpleɪnt/,/nɔɪz kəmˈpleɪnt/,L2,,"[{""en"":""If you have a noise complaint, call reception."",""zh"":""如果有噪音投诉，打电话给前台。""}]",38
-宿舍入住,accommodation,住宿,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,,"[{""en"":""The accommodation office can help with housing issues."",""zh"":""住宿办公室可以帮忙解决住宿问题。""}]",39
-机场入境,passport,护照,noun,/ˈpæspɔːrt/,/ˈpɑːspɔːt/,L1,,"[{""en"":""Please show your passport at immigration."",""zh"":""请在入境处出示护照。""}]",0
-机场入境,visa,签证,noun,/ˈviːzə/,/ˈviːzə/,L1,,"[{""en"":""My student visa is valid for two years."",""zh"":""我的学生签证有效期两年。""}]",1
-机场入境,customs,海关,noun,/ˈkʌstəmz/,/ˈkʌstəmz/,L2,,"[{""en"":""You need to declare this at customs."",""zh"":""你需要在海关申报这个。""}]",2
-机场入境,declare,申报,verb,/dɪˈkler/,/dɪˈkleə/,L2,,"[{""en"":""Do you have anything to declare?"",""zh"":""你有什么需要申报的吗？""}]",3
-机场入境,luggage,行李,noun,/ˈlʌɡɪdʒ/,/ˈlʌɡɪdʒ/,L1,,"[{""en"":""Please collect your luggage from carousel 3."",""zh"":""请到3号转盘取行李。""}]",4
-机场入境,boarding pass,登机牌,noun,/ˈbɔːrdɪŋ pæs/,/ˈbɔːdɪŋ pɑːs/,L1,,"[{""en"":""Here is your boarding pass for flight BA168."",""zh"":""这是你BA168航班的登机牌。""}]",5
-机场入境,immigration,入境检查,noun,/ˌɪmɪˈɡreɪʃən/,/ˌɪmɪˈɡreɪʃən/,L2,,"[{""en"":""Go through immigration after you get off the plane."",""zh"":""下飞机后通过入境检查。""}]",6
-机场入境,purpose of visit,来访目的,noun,/ˈpɜːrpəs əv ˈvɪzɪt/,/ˈpɜːpəs əv ˈvɪzɪt/,L2,,"[{""en"":""What is the purpose of your visit?"",""zh"":""你来访的目的是什么？""}]",7
-机场入境,customs declaration,报关单,noun,/ˈkʌstəmz ˌdekləˈreɪʃən/,/ˈkʌstəmz ˌdekləˈreɪʃən/,L2,,"[{""en"":""Fill out this customs declaration form."",""zh"":""填一下这张报关单。""}]",8
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+图书馆借书,借书,library card,借书证,noun,/ˈlaɪbreri kɑːrd/,/ˈlaɪbreri kɑːd/,L1,学生证通常就是借书证。办 card 需要带学生证。,"[{""en"":""I need a library card to borrow books."",""zh"":""我需要借书证才能借书。""}]",0
+图书馆借书,借书,borrow,借,verb,/ˈbɑːroʊ/,/ˈbɒrəʊ/,L1,borrow a book = 借书。return = 还书。,"[{""en"":""How many books can I borrow at once?"",""zh"":""我一次能借几本书？""}]",1
+图书馆借书,续借与归还,renew,续借,verb,/rɪˈnuː/,/rɪˈnjuː/,L1,续借已借的书。可以在网上或到柜台办理。,"[{""en"":""Can I renew this book online?"",""zh"":""我能在网上续借这本书吗？""}]",0
+图书馆借书,续借与归还,overdue,逾期的,adj,/ˌoʊvərˈduː/,/ˌəʊvəˈdjuː/,L1,超过还书日期的。overdue book / overdue fine。,"[{""en"":""This book is overdue. You need to pay a fine."",""zh"":""这本书逾期了，需要交罚款。""}]",1
+图书馆借书,续借与归还,due date,到期日,noun,/duː deɪt/,/djuː deɪt/,L1,还书截止日期。due = 到期的。,"[{""en"":""The due date is March 15th."",""zh"":""到期日是3月15日。""}]",2
+图书馆借书,查找资料,catalogue,目录,noun,/ˈkætəlɔːɡ/,/ˈkætəlɒɡ/,L2,图书馆目录系统。网上或电脑查询。,"[{""en"":""You can search the library catalogue online."",""zh"":""你可以在网上查图书馆目录。""}]",0
+图书馆借书,查找资料,reference book,参考书,noun,/ˈrefərəns bʊk/,/ˈrefərəns bʊk/,L2,只能在馆内阅读不能外借的书。,"[{""en"":""Reference books cannot be taken out of the library."",""zh"":""参考书不能带出图书馆。""}]",1
+社团活动,咨询社团信息,club,社团,noun,/klʌb/,/klʌb/,L1,学生社团。join a club = 加入社团。,"[{""en"":""How many clubs are there on campus?"",""zh"":""校园里有多少个社团？""}]",0
+社团活动,咨询社团信息,activity,活动,noun,/ækˈtɪvəti/,/ækˈtɪvəti/,L1,社团活动。extracurricular activity = 课外活动。,"[{""en"":""What kind of activities does your club have?"",""zh"":""你们社团有什么活动？""}]",1
+社团活动,报名加入,registration form,报名表,noun,/ˌredʒɪˈstreɪʃən fɔːrm/,/ˌredʒɪˈstreɪʃən fɔːm/,L1,加入社团需要填写的表格。,"[{""en"":""Please fill out this registration form."",""zh"":":"请填写这张报名表。""}]",0
+社团活动,参加社团活动,membership,会员资格,noun,/ˈmembərʃɪp/,/ˈmembəʃɪp/,L2,会员身份。membership fee = 会费。,"[{""en"":""Is there a membership fee to join the club?"",""zh"":""加入社团需要会费吗？""}]",0
+食堂就餐,点餐,meal card,餐卡,noun,/miːl kɑːrd/,/miːl kɑːd/,L1,校园餐卡。充值后刷卡用餐。,"[{""en"":""You can pay with your meal card."",""zh"":""你可以用餐卡支付。""}]",0
+食堂就餐,点餐,cafeteria,食堂,noun,/ˌkæfəˈtɪriə/,/ˌkæfəˈtɪəriə/,L1,大学食堂/自助餐厅。和美式校园生活紧密相关。,"[{""en"":""The cafeteria has a good selection of food."",""zh"":""食堂有很多菜品选择。""}]",1
+食堂就餐,询问菜品,special,特供/noun,/ˈspeʃəl/,/ˈspeʃəl/,L1,今日特供/特色菜。today's special = 今日特供。,"[{""en"":""What's today's special at the cafeteria?"",""zh"":""食堂今日特供是什么？""}]",0
+食堂就餐,餐卡充值,balance,余额,noun,/ˈbæləns/,/ˈbæləns/,L1,餐卡余额。check balance = 查余额。,"[{""en"":""My balance is running low. I need to top up."",""zh"":""我余额不多了，需要充值。""}]",0
+食堂就餐,餐卡充值,top up,充值,phrase,/tɑːp ʌp/,/tɒp ʌp/,L1,给餐卡充值。top up your meal card。,"[{""en"":""Where can I top up my meal card?"",""zh"":""我在哪可以给餐卡充值？""}]",1
+选课咨询,咨询课程,course,课程,noun,/kɔːrs/,/kɔːs/,L2,大学课程。选课/退课的核心词汇。,"[{""en"":""This course is about modern Chinese history."",""zh"":""这门课关于中国现代史。""}]",0
+选课咨询,咨询课程,credit,学分,noun,/ˈkredɪt/,/ˈkredɪt/,L2,大学课程学分。一门课通常 2-4 学分。,"[{""en"":""How many credits is this course worth?"",""zh"":""这门课几个学分？""}]",1
+选课咨询,选课操作,register,注册/选课,verb,/ˈredʒɪstər/,/ˈredʒɪstə/,L2,注册课程。registration period = 选课期。,"[{""en"":""I need to register for my courses before Friday."",""zh"":""我需要在周五前选课。""}]",0
+选课咨询,选课操作,semester,学期,noun,/sɪˈmestər/,/sɪˈmestə/,L1,学期。fall/spring semester = 秋/春季学期。,"[{""en"":""What courses are you taking this semester?"",""zh"":""你这学期选了什么课？""}]",1
+选课咨询,退课调整,drop,退课,verb,/drɑːp/,/drɒp/,L2,退课。drop a course = 退一门课。withdraw = 退出。,"[{""en"":""You can drop a course within the first two weeks."",""zh"":""你可以在前两周内退课。""}]",0
+选课咨询,退课调整,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L2,退课/选课的截止日期。,"[{""en"":""The drop deadline is next Friday."",""zh"":""退课截止日期是下周五。""}]",1
 机场入境,duty-free,免税,adj,/ˈduːti friː/,/ˈdjuːti friː/,L2,,"[{""en"":""You can buy duty-free items at the airport."",""zh"":""你可以在机场买免税商品。""}]",9
 机场入境,baggage claim,行李提取处,noun,/ˈbæɡɪdʒ kleɪm/,/ˈbæɡɪdʒ kleɪm/,L1,,"[{""en"":""The baggage claim area is downstairs."",""zh"":""行李提取处在一楼。""}]",10
 机场入境,arrival hall,到达大厅,noun,/əˈraɪvəl hɔːl/,/əˈraɪvəl hɔːl/,L1,,"[{""en"":""I'll meet you in the arrival hall."",""zh"":""我会在到达大厅接你。""}]",11

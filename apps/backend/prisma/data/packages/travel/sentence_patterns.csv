@@ -1,9 +1,25 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-宿舍入住,办理入住,"Hi, I'm here to ___.",打招呼说明来意,"check in, see my room","Hi, I'm here to check in.",L2,0
-宿舍入住,办理入住,My booking is under the name ___.,说明有预订,"Li, Wang",My booking is under the name Li.,L2,1
-宿舍入住,办理入住,Here is my ___.,出示证件,"student ID, passport",Here is my student ID.,L2,2
-机场入境,说明来访目的,I'm here to ___.,说明来访目的,"study, work, travel",I'm here to study.,L2,0
-机场入境,说明来访目的,I'll be staying for ___.,说明停留时间,"two years, a week, three months",I'll be staying for two years.,L2,1
-认识室友,初次见面,"Hi, I'm ___.",打招呼自我介绍,"Alex, Li Ming","Hi, I'm Alex.",L1,0
-认识室友,初次见面,I'm from ___.,说明来自哪里,"China, the US, Japan",I'm from China.,L1,1
-认识室友,初次见面,My major is ___.,说明专业,"Computer Science, English Literature",My major is Computer Science.,L1,2
+机场出发,办理值机,"I'd like to ___ for my flight.",值机或选座,"check in, choose a seat","I'd like to check in for my flight.",L1,0
+机场出发,办理值机,"Can I have a ___ seat?",选座位,"window, aisle","Can I have a window seat?",L1,1
+机场出发,办理值机,"How many ___ can I ___?",询问行李限额,"bags / check in, bags / bring","How many bags can I check in?",L1,2
+机场出发,过安检,"Do I need to ___?",确认安检要求,"take out my laptop, remove my shoes","Do I need to take out my laptop?",L1,0
+机场出发,过安检,"Can I bring ___ in my carry-on?",确认随身携带限制,"this bottle, my phone charger","Can I bring this bottle in my carry-on?",L1,1
+机场出发,登机口候机,"Is the flight ___?",确认航班状态,"on time, delayed, cancelled","Is the flight on time?",L1,0
+机场出发,登机口候机,"What time does ___ start?",确认时间点,"boarding, the movie, dinner service","What time does boarding start?",L1,1
+机场入境,入境问答,"I'm here for ___.",说明来访目的,"tourism, business, a conference","I'm here for tourism.",L1,0
+机场入境,入境问答,"I'll be staying for ___.",说明停留时间,"a week, ten days, two months","I'll be staying for a week.",L1,1
+机场入境,入境问答,"I'm staying at ___.",说明住宿地址,"the Grand Hotel, my friend's place","I'm staying at the Grand Hotel.",L1,2
+机场入境,提取行李,"Which ___ is my luggage on?",找行李转盘,"carousel, belt","Which carousel is my luggage on?",L1,0
+机场入境,提取行李,"My luggage ___.",描述行李问题,"didn't arrive, is damaged, is lost","My luggage didn't arrive.",L2,1
+机场入境,海关申报,"I have ___ to declare.",申报物品,"nothing, some gifts, two bottles of wine","I have nothing to declare.",L2,0
+出租车,打车去酒店,"Can you take me to ___?",告诉目的地,"this address, the airport, the Grand Hotel","Can you take me to this address?",L1,0
+出租车,打车去酒店,"How much does it cost to ___?",问价格,"get to the airport, go downtown","How much does it cost to get to the airport?",L1,1
+出租车,打车去酒店,"Please drop me off ___.",要求停车,"here, at the corner, in front of the hotel","Please drop me off here.",L1,2
+酒店大堂,办理入住,"I have a reservation under ___.",确认预订,"the name Maya, the name Chen","I have a reservation under the name Maya.",L1,0
+酒店大堂,办理入住,"Is ___ included?",确认包含项目,"breakfast, parking, Wi-Fi","Is breakfast included?",L1,1
+酒店大堂,办理入住,"What time is ___?",确认时间,"check-in, check-out, breakfast","What time is check-out?",L1,2
+酒店大堂,客房服务,"Can I have ___?",索要用品,"extra towels, a wake-up call, a blanket","Can I have extra towels?",L1,0
+酒店大堂,退房离店,"I'd like to ___ now.",表达意图,"check out, pay the bill, extend my stay","I'd like to check out now.",L1,0
+酒店大堂,退房离店,"Can I ___ my luggage?",处理行李,"store, leave, pick up","Can I store my luggage here?",L1,1
+街头,问路找地方,"How do I get to ___?",问路,"the museum, the train station, this café","How do I get to the museum?",L1,0
+街头,问路找地方,"Is it ___ from here?",确认距离和方向,"far, near, walkable","Is it far from here?",L1,1

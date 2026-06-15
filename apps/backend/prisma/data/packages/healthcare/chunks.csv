@@ -1,14 +1,41 @@
-scene_title,category,text,meaning,difficulty,description,examples_json
-预约看病,预约看病,I'd like to make an appointment.,我想预约。,L2,,,
-预约看病,预约看病,I'm not feeling well.,我感觉不舒服。,L1,,,
-预约看病,预约看病,I have a sore throat / fever / cough.,我喉咙痛/发烧/咳嗽。,L2,,,
-预约看病,预约看病,What time should I come in?,我什么时间过来？,L1,,,
-预约看病,预约看病,Can I see Dr. Smith?,我能看史密斯医生吗？,L2,,,
-预约看病,预约看病,I need to reschedule my appointment.,我需要改预约时间。,L2,,,
-预约看病,预约看病,Is this covered by my insurance?,这个保险能报销吗？,L3,,,
-药房买药,药房买药,Do you have anything for a cold?,有感冒药吗？,L1,,,
-药房买药,药房买药,How many times a day should I take this?,这个一天吃几次？,L1,,,
-药房买药,药房买药,Do I need a prescription for this?,这个需要处方吗？,L2,,,
-药房买药,药房买药,Could you recommend something for a headache?,能推荐治头痛的药吗？,L1,,,
-药房买药,药房买药,What are the side effects?,有什么副作用？,L2,,,
-药房买药,药房买药,Is there a generic version?,有仿制药吗？,L3,,,
+scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
+预约看病,电话预约,电话预约,I'd like to make an appointment.,我想预约。,L2,预约看病的标准开场。,"[{""en"":""I'd like to make an appointment to see Dr. Williams."",""zh"":""我想预约看威廉姆斯医生。""}]"
+预约看病,电话预约,电话预约,Can you help me with...?,你能帮我...吗？,L2,请求帮助的礼貌说法。预约时常见开场。,
+预约看病,电话预约,电话预约,Is Dr. Williams available this week?,威廉姆斯医生这周有空吗？,L2,询问医生是否有可预约的时间。available = 有空的。,"[{""en"":""Is Dr. Williams available this Friday?"",""zh"":""威廉姆斯医生这周五有空吗？""}]"
+预约看病,电话预约,电话预约,I'd like to see a doctor as soon as possible.,我想尽快看医生。,L2,表达紧急性。不舒服想尽快就诊。,"[{""en"":""I'm not feeling well. I'd like to see a doctor as soon as possible."",""zh"":""我不太舒服，想尽快看医生。""}]"
+预约看病,改期取消,改期取消,I need to reschedule my appointment.,我需要改期。,L2,改期的标准说法。reschedule = 重新安排时间。,"[{""en"":""I need to reschedule my appointment from Friday to Monday."",""zh"":""我需要把预约从周五改到周一。""}]"
+预约看病,改期取消,改期取消,I'm sorry but I need to cancel.,抱歉，我需要取消。,L2,取消预约。提前取消不要no-show。,"[{""en"":""I'm sorry, but I need to cancel my appointment for tomorrow."",""zh"":""抱歉，我需要取消明天的预约。""}]"
+预约看病,改期取消,改期取消,Can I get a refund for the cancellation?,取消能退款吗？,L3,有些诊所取消预约需付费，提前确认。,"[{""en"":""Is there a cancellation fee?"",""zh"":""取消有费用吗？""}]"
+预约看病,前台登记,前台登记,I have an appointment at 10 AM.,我上午10点有预约。,L1,到前台登记时报预约时间。,"[{""en"":""Hi, I have an appointment at 10 AM with Dr. Williams."",""zh"":""你好，我上午10点约了威廉姆斯医生。""}]"
+预约看病,前台登记,前台登记,Here is my insurance card.,这是我的保险卡。,L2,出示保险卡。在英美国家每次就诊都需要。,"[{""en"":""Here is my insurance card and ID."",""zh"":""这是我的保险卡和身份证。""}]"
+预约看病,前台登记,前台登记,Do I need to fill out any forms?,我需要填什么表吗？,L2,首次就诊需填patient information form(病人信息表)。,
+看医生,描述症状,描述症状,I haven't been feeling well.,我一直不太舒服。,L1,描述病情的通用开场。比I'm sick更自然。,"[{""en"":""I haven't been feeling well for a few days."",""zh"":""我几天来一直不太舒服。""}]"
+看医生,描述症状,描述症状,I have a headache and a fever.,我头痛而且发烧。,L1,描述两个常见症状。and连接多个症状。,"[{""en"":""I have a headache, a fever, and a sore throat."",""zh"":""我头痛、发烧、喉咙痛。""}]"
+看医生,描述症状,描述症状,I've been coughing a lot.,我一直咳得很厉害。,L2,描述持续症状。have been + doing = 一直在。,"[{""en"":""I've been coughing a lot, especially at night."",""zh"":""我一直咳得很厉害，尤其是晚上。""}]"
+看医生,描述症状,描述症状,It hurts when I swallow.,我吞东西的时候疼。,L2,描述具体疼痛情况。,"[{""en"":""My throat hurts when I swallow."",""zh"":""我吞东西的时候喉咙疼。""}]"
+看医生,回答问诊,回答问诊,It started three days ago.,三天前开始的。,L2,回答症状何时开始。it started + 时间。,"[{""en"":""It started three days ago after I came back from a trip."",""zh"":""三天前我旅行回来后开始的。""}]"
+看医生,回答问诊,回答问诊,I'm allergic to penicillin.,我对青霉素过敏。,L2,说明药物过敏史。非常重要一定要说。,"[{""en"":""I'm allergic to penicillin. Is this medication safe for me?"",""zh"":""我对青霉素过敏，这药我能吃吗？""}]"
+看医生,回答问诊,回答问诊,I've taken some painkillers but they didn't help.,我吃了一些止痛药但没有用。,L2,说明已尝试的治疗和效果。,"[{""en"":""I've taken ibuprofen but it didn't help much."",""zh"":""我吃了布洛芬但没什么用。""}]"
+看医生,回答问诊,回答问诊,No I don't have any other medical conditions.,没有，我没有其他疾病。,L2,回答是否有其他病史。medical conditions = 疾病。,"[{""en"":""No, I don't have any other medical conditions."",""zh"":""没有，我没有其他疾病。""}]"
+看医生,理解诊断,理解诊断,What exactly is wrong with me?,我到底是什么问题？,L3,直接询问诊断结果。比问得更直接。,"[{""en"":""Can you tell me exactly what's wrong with me?"",""zh"":""能告诉我到底是什么问题吗？""}]"
+看医生,理解诊断,理解诊断,Is it serious?,严重吗？,L2,担心病情是否严重。医生会用not serious/mild/severe来描述。,"[{""en"":""Is it serious? Do I need to be worried?"",""zh"":""严重吗？我需要担心吗？""}]"
+看医生,理解诊断,理解诊断,Do I need any tests?,我需要做检查吗？,L2,询问是否需要进一步检查。blood test = 血检，X-ray = X光。,"[{""en"":""Do I need any tests to find out what's wrong?"",""zh"":":"我需要做检查来确定是什么问题吗？""}]"
+看医生,治疗方案,治疗方案,What do you recommend?,你推荐怎么治疗？,L2,询问医生的治疗建议。,"[{""en"":""What do you recommend for my condition?"",""zh"":""针对我的情况你有什么建议？""}]"
+看医生,治疗方案,治疗方案,How many times a day should I take this?,这个一天吃几次？,L2,询问用药频率。,"[{""en"":""How many times a day should I take this medicine?"",""zh"":""这个药一天吃几次？""}]"
+看医生,治疗方案,治疗方案,Should I come back for a follow-up?,我需要回来复诊吗？,L3,询问是否需要复诊。follow-up = 复诊。,"[{""en"":""Should I come back for a follow-up if it doesn't get better?"",""zh"":""如果没好我需要回来复诊吗？""}]"
+看医生,治疗方案,治疗方案,Are there any side effects?,有什么副作用吗？,L3,询问药物可能的副作用。,"[{""en"":""Are there any common side effects I should know about?"",""zh"":""有什么常见的副作用我需要知道吗？""}]"
+药房买药,询问药品,询问药品,Do you have something for a cold?,有治感冒的药吗？,L1,在药房描述需求。something for + 症状。,"[{""en"":""Do you have something for a cold and cough?"",""zh"":""有治感冒咳嗽的药吗？""}]"
+药房买药,询问药品,询问药品,Can you recommend something for a headache?,能推荐治头痛的药吗？,L1,请药剂师推荐药品。recommend = 推荐。,"[{""en"":""Can you recommend something for a headache?"",""zh"":""能推荐治头痛的药吗？""}]"
+药房买药,询问药品,询问药品,Is this available over-the-counter?,这个是非处方药吗？,L2,询问是否需要处方。OTC = over-the-counter。,"[{""en"":""Do I need a prescription for this or is it over-the-counter?"",""zh"":""这个需要处方还是非处方？""}]"
+药房买药,理解用法,理解用法,How often should I take this?,这个多久吃一次？,L2,询问用药频率。take [number] times a day。,"[{""en"":""How often should I take this medicine?"",""zh"":""这个药多久吃一次？""}]"
+药房买药,理解用法,理解用法,Should I take it with food?,需要随餐服用吗？,L2,有些药需要随餐服用减少胃部不适。,"[{""en"":""Should I take this with food or on an empty stomach?"",""zh"":""这个需要随餐服用还是空腹？""}]"
+药房买药,理解用法,理解用法,Can I drink alcohol while taking this?,吃这个药能喝酒吗？,L3,很多抗生素不能喝酒。直接问药剂师。,"[{""en"":""Can I drink alcohol while taking this medication?"",""zh"":""吃这个药能喝酒吗？""}]"
+药房买药,处方取药,处方取药,I'm here to pick up a prescription.,我来取处方药。,L2,凭处方取药的标准说法。,"[{""en"":""I'm here to pick up a prescription for Liam."",""zh"":""我来取利亚姆的处方药。""}]"
+药房买药,处方取药,处方取药,How much does it cost?,多少钱？,L1,问价格。有保险可能co-pay(自付额)很少。,"[{""en"":""How much does it cost with insurance?"",""zh"":""用保险的话多少钱？""}]"
+药房买药,处方取药,处方取药,Do you have a generic version?,有仿制药吗？,L3,问有没有便宜一些的仿制药。brand name = 品牌药。,"[{""en"":""Do you have a generic version? It's cheaper right?"",""zh"":""有仿制药吗？便宜一些对吧？""}]"
+医院急诊,急诊求助,急诊求助,I need an ambulance please!,我需要救护车！,L2,紧急情况下叫救护车。保持冷静说明位置。,"[{""en"":""I need an ambulance! My friend is unconscious."",""zh"":""我需要救护车！我的朋友失去意识了。""}]"
+医院急诊,急诊求助,急诊求助,There's been an accident.,发生了事故。,L2,报告事故。accident = 意外/事故。,"[{""en"":""There's been a car accident. Someone is injured."",""zh"":""发生了车祸，有人受伤了。""}]"
+医院急诊,急诊求助,急诊求助,What's your location?,你的位置在哪？,L2,急救接线员会问你的具体位置。address / landmark。,"[{""en"":""What's your current location?"",""zh"":""你现在的位置在哪？""}]"
+医院急诊,急诊分诊,急诊分诊,I have severe chest pain.,我胸口剧痛。,L3,紧急分诊最严重的描述之一。chest pain = 胸痛。,"[{""en"":""I have severe chest pain and difficulty breathing."",""zh"":""我胸口剧痛而且呼吸困难。""}]"
+医院急诊,急诊分诊,急诊分诊,On a scale of 1 to 10 the pain is about...,从1到10的话痛感大概是...,L3,用数字描述疼痛程度。分诊必问题。,"[{""en"":""On a scale of 1 to 10, the pain is about 8."",""zh"":""从1到10的话，痛感大概是8。""}]"
+医院急诊,急诊分诊,急诊分诊,Can you tell me your medical history?,能告诉我你的病史吗？,L3,分诊护士会询问病史。包括慢性病、过敏、用药。,"[{""en"":""Do you have any medical history I should know about?"",""zh"":""你有什么病史需要告诉我吗？""}]"

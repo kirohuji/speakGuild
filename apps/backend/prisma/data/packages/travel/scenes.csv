@@ -1,4 +1,6 @@
-category_name,title,location,required_output_level,required_user_level,description
-旅行英语,打车出行,机场出租车站,L1,1,打车前往住处，告诉司机目的地。
-旅行英语,机场入境,机场海关,L2,1,通过海关检查，回答入境问题。
-旅行英语,酒店叫车,酒店门口,L1,1,让礼宾叫出租车前往目的地。
+category_name,title,location,required_output_level,required_user_level,description,package_type
+旅行英语,机场出发,机场值机柜台,L1,1,办理值机、托运行李、过安检、找登机口。,daily
+旅行英语,机场入境,机场入境大厅,L2,1,通过海关入境、回答移民官问题、提取行李。,daily
+旅行英语,出租车,城市街道/出租车站,L1,1,打车去目的地、和司机交流、付车费。,daily
+旅行英语,酒店大堂,酒店前台,L1,1,办理入住和退房、咨询酒店设施、客房服务。,daily
+旅行英语,街头,城市街头,L2,1,问路、确认方向、找目的地。,daily
