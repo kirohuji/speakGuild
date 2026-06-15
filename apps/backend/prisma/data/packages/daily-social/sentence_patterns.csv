@@ -1,15 +1,15 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-咖啡店点餐,点咖啡,"I'd like a ___, please.",点饮品,"latte, cappuccino, americano","I'd like a latte, please.",L1,0
-咖啡店点餐,点咖啡,For ___ or to go?,问堂食打包,"here, there","For here or to go?",L1,1
-咖啡店点餐,点咖啡,"What ___ would you like?",问尺寸,"size, type","What size would you like?",L1,2
-咖啡店点餐,修改订单,"Sorry, I wanted a ___.",修改表达,"different size, latte not cappuccino","Sorry, I wanted a different size.",L1,0
-咖啡店点餐,办理会员卡,"How do I ___?",问怎么办,"get a loyalty card, sign up","How do I get a loyalty card?",L2,0
-咖啡店点餐,投诉饮品,"I'm sorry, but this isn't what ___.",礼貌投诉,"I ordered, I asked for","I'm sorry, but this isn't what I ordered.",L2,0
-超市购物,询问商品位置,"Where can I find ___?",问位置,"milk, bread, pasta","Where can I find milk?",L1,0
-超市购物,退货,"I'd like to ___ this.",退货换货,"return, exchange","I'd like to return this.",L1,0
-超市购物,优惠活动,"Is there a ___ today?",问优惠,"sale, discount, promotion","Is there a sale today?",L1,0
-超市购物,自助结账,"The ___ won't ___.",描述故障,"machine / scan, scanner / work","The machine won't scan this item.",L1,0
-朋友聚会,邀请朋友,"Do you want to ___ this weekend?",邀请,"hang out, grab coffee, meet up","Do you want to hang out this weekend?",L1,0
-朋友聚会,商量计划,"Where ___ we meet?",商量,"should, can, could","Where should we meet?",L1,0
-朋友聚会,确认参加,"I'd love to come! What should I ___?",确认参加,"bring, prepare, wear","I'd love to come! What should I bring?",L1,0
-朋友聚会,提议活动,"Let's ___!",提议,"go to the park, watch a movie, try that new cafe","Let's go to the park!",L1,0
+"日常·咖啡店点餐",点咖啡,"I'd like a ___, please.",点饮品,"latte, cappuccino, americano","I'd like a latte, please.",L1,0
+"日常·咖啡店点餐",点咖啡,For ___ or to go?,问堂食打包,"here, there",For here or to go?,L1,1
+"日常·咖啡店点餐",点咖啡,What ___ would you like?,问尺寸,"size, type",What size would you like?,L1,2
+"日常·咖啡店点餐",修改订单,"Sorry, I wanted a ___.",修改表达,"different size, latte not cappuccino","Sorry, I wanted a different size.",L1,0
+"日常·咖啡店点餐",办理会员卡,How do I ___?,问怎么办,"get a loyalty card, sign up",How do I get a loyalty card?,L2,0
+"日常·咖啡店点餐",投诉饮品,"I'm sorry, but this isn't what ___.",礼貌投诉,"I ordered, I asked for","I'm sorry, but this isn't what I ordered.",L2,0
+"日常·超市购物",询问商品位置,Where can I find ___?,问位置,"milk, bread, pasta",Where can I find milk?,L1,0
+"日常·超市购物",退货,I'd like to ___ this.,退货换货,"return, exchange",I'd like to return this.,L1,0
+"日常·超市购物",优惠活动,Is there a ___ today?,问优惠,"sale, discount, promotion",Is there a sale today?,L1,0
+"日常·超市购物",自助结账,The ___ won't ___.,描述故障,"machine / scan, scanner / work",The machine won't scan this item.,L1,0
+"日常·朋友聚会",邀请朋友,Do you want to ___ this weekend?,邀请,"hang out, grab coffee, meet up",Do you want to hang out this weekend?,L1,0
+"日常·朋友聚会",商量计划,Where ___ we meet?,商量,"should, can, could",Where should we meet?,L1,0
+"日常·朋友聚会",确认参加,I'd love to come! What should I ___?,确认参加,"bring, prepare, wear",I'd love to come! What should I bring?,L1,0
+"日常·朋友聚会",提议活动,Let's ___!,提议,"go to the park, watch a movie, try that new cafe",Let's go to the park!,L1,0

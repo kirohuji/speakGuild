@@ -1,21 +1,21 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-频率与程度副词,频率副词,"I ___ brush my teeth.",总是,"always","I always brush my teeth.",L1,0
-频率与程度副词,频率副词,"I ___ have breakfast at 8.",通常,"usually","I usually have breakfast at 8.",L1,1
-频率与程度副词,频率副词,"I ___ read before bed.",经常,"often","I often read before bed.",L1,2
-频率与程度副词,频率副词,"___ I go jogging.",有时,"Sometimes","Sometimes I go jogging.",L1,3
-频率与程度副词,频率副词,"I ___ smoke.",从不,"never","I never smoke.",L1,4
-频率与程度副词,程度副词,"She is ___ smart.",非常,"very","She is very smart.",L1,0
-频率与程度副词,程度副词,"The movie is ___ good.",相当,"quite","The movie is quite good.",L1,1
-频率与程度副词,程度副词,"It's ___ cold today.",颇/挺,"rather","It's rather cold today.",L2,2
-频率与程度副词,程度副词,"That's ___ kind.",极其,"extremely","That's extremely kind.",L2,3
-频率与程度副词,程度副词,"This coffee is ___ hot.",太/过分,"too","This coffee is too hot.",L1,4
-方式与评论副词,方式副词,"Please read ___ .",仔细地,"carefully","Please read carefully.",L2,0
-方式与评论副词,方式副词,"He ___ finished his homework.",快速地,"quickly","He quickly finished his homework.",L1,1
-方式与评论副词,方式副词,"The children played ___ .",快乐地,"happily","The children played happily.",L1,2
-方式与评论副词,方式副词,"She ___ solved the problem.",容易地,"easily","She easily solved the problem.",L2,3
-方式与评论副词,方式副词,"She speaks English ___ .",好地,"well","She speaks English well.",L1,4
-方式与评论副词,评论副词,"___ no one was hurt.",幸运的是,"Luckily","Luckily no one was hurt.",L2,0
-方式与评论副词,评论副词,"___ I don't care.",坦白说,"Frankly","Frankly I don't care.",L2,1
-方式与评论副词,评论副词,"___ that's the best option.",老实地,"Honestly","Honestly that's the best option.",L2,2
-方式与评论副词,评论副词,"___ he agreed with us.",令人惊讶地,"Surprisingly","Surprisingly he agreed with us.",L3,3
-方式与评论副词,评论副词,"___ she was lying.",显然,"Obviously","Obviously she was lying.",L3,4
+"副词·频率与程度副词",频率副词,I ___ brush my teeth.,总是,always,I always brush my teeth.,L1,0
+"副词·频率与程度副词",频率副词,I ___ have breakfast at 8.,通常,usually,I usually have breakfast at 8.,L1,1
+"副词·频率与程度副词",频率副词,I ___ read before bed.,经常,often,I often read before bed.,L1,2
+"副词·频率与程度副词",频率副词,___ I go jogging.,有时,Sometimes,Sometimes I go jogging.,L1,3
+"副词·频率与程度副词",频率副词,I ___ smoke.,从不,never,I never smoke.,L1,4
+"副词·频率与程度副词",程度副词,She is ___ smart.,非常,very,She is very smart.,L1,0
+"副词·频率与程度副词",程度副词,The movie is ___ good.,相当,quite,The movie is quite good.,L1,1
+"副词·频率与程度副词",程度副词,It's ___ cold today.,颇/挺,rather,It's rather cold today.,L2,2
+"副词·频率与程度副词",程度副词,That's ___ kind.,极其,extremely,That's extremely kind.,L2,3
+"副词·频率与程度副词",程度副词,This coffee is ___ hot.,太/过分,too,This coffee is too hot.,L1,4
+"副词·方式与评论副词",方式副词,Please read ___ .,仔细地,carefully,Please read carefully.,L2,0
+"副词·方式与评论副词",方式副词,He ___ finished his homework.,快速地,quickly,He quickly finished his homework.,L1,1
+"副词·方式与评论副词",方式副词,The children played ___ .,快乐地,happily,The children played happily.,L1,2
+"副词·方式与评论副词",方式副词,She ___ solved the problem.,容易地,easily,She easily solved the problem.,L2,3
+"副词·方式与评论副词",方式副词,She speaks English ___ .,好地,well,She speaks English well.,L1,4
+"副词·方式与评论副词",评论副词,___ no one was hurt.,幸运的是,Luckily,Luckily no one was hurt.,L2,0
+"副词·方式与评论副词",评论副词,___ I don't care.,坦白说,Frankly,Frankly I don't care.,L2,1
+"副词·方式与评论副词",评论副词,___ that's the best option.,老实地,Honestly,Honestly that's the best option.,L2,2
+"副词·方式与评论副词",评论副词,___ he agreed with us.,令人惊讶地,Surprisingly,Surprisingly he agreed with us.,L3,3
+"副词·方式与评论副词",评论副词,___ she was lying.,显然,Obviously,Obviously she was lying.,L3,4

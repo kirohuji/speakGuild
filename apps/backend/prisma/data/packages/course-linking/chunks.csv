@@ -1,11 +1,11 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-并列与转折,并列连接,并列连接,I was tired but...,我很累但是...,L1,用but表达转折。,"[{""en"":""I was tired but I finished my work."",""zh"":""我很累但是完成了工作。""}]"
-并列与转折,并列连接,并列连接,She likes... and...,她喜欢...和...,L1,用and连接同类事物。,"[{""en"":""She likes reading and swimming."",""zh"":""她喜欢阅读和游泳。""}]"
-并列与转折,对比与选择,对比与选择,He is... whereas I am...,他...而我...,L3,用whereas对比两个人或事物。,"[{""en"":""He is outgoing whereas I am shy."",""zh"":""他外向而我内向。""}]"
-因果与让步,因果关系,因果关系,I stayed home because...,我待在家因为...,L1,用because表达原因。,"[{""en"":""I stayed home because I was sick."",""zh"":""我待在家因为我病了。""}]"
-因果与让步,因果关系,因果关系,He didn't study therefore...,他没学习因此...,L2,用therefore表达结果。,"[{""en"":""He didn't study therefore he failed."",""zh"":""他没学习所以没通过。""}]"
-因果与让步,让步关系,让步关系,Although it was..., although + 从句,"Although it was raining we went out.",""zh"":""虽然下着雨但我们还是出去了。"",虽然",
-从句与复杂句,时间与条件从句,时间与条件从句,When I..., I...,当我...时我...,L1,when引导时间从句。,"[{""en"":""When I got home I cooked dinner."",""zh"":""我到家时做了晚饭。""}]"
-从句与复杂句,时间与条件从句,时间与条件从句,If it..., I will...,如果...我就...,L1,if引导条件从句。,"[{""en"":""If it rains I will stay home."",""zh"":""如果下雨我就待在家。""}]"
-从句与复杂句,定语从句,定语从句,The person who...,...的人(定语从句),L2,who定语从句修饰人。,"[{""en"":""The person who helped me was very kind."",""zh"":""帮助我的那个人很善良。""}]"
-从句与复杂句,定语从句,定语从句,The book which I...,我...的那本书,L2,which定语从句修饰物。,"[{""en"":""The book which I borrowed was great."",""zh"":""我借的那本书很好。""}]"
+"连接词·并列与转折",并列连接,并列连接,I was tired but...,我很累但是...,L1,用but表达转折。,"[{""en"":""I was tired but I finished my work."",""zh"":""我很累但是完成了工作。""}]"
+"连接词·并列与转折",并列连接,并列连接,She likes... and...,她喜欢...和...,L1,用and连接同类事物。,"[{""en"":""She likes reading and swimming."",""zh"":""她喜欢阅读和游泳。""}]"
+"连接词·并列与转折",对比与选择,对比与选择,He is... whereas I am...,他...而我...,L3,用whereas对比两个人或事物。,"[{""en"":""He is outgoing whereas I am shy."",""zh"":""他外向而我内向。""}]"
+"连接词·因果与让步",因果关系,因果关系,I stayed home because...,我待在家因为...,L1,用because表达原因。,"[{""en"":""I stayed home because I was sick."",""zh"":""我待在家因为我病了。""}]"
+"连接词·因果与让步",因果关系,因果关系,He didn't study therefore...,他没学习因此...,L2,用therefore表达结果。,"[{""en"":""He didn't study therefore he failed."",""zh"":""他没学习所以没通过。""}]"
+"连接词·因果与让步",让步关系,让步关系,Although it was..., although + 从句,Although it was raining we went out.,zh:虽然下着雨但我们还是出去了。,"虽然,"
+"连词·从句与复杂句",时间与条件从句,时间与条件从句,When I..., I...,当我...时我...,L1,when引导时间从句。,"[{""en"":""When I got home I cooked dinner."",""zh"":""我到家时做了晚饭。""}]"
+"连词·从句与复杂句",时间与条件从句,时间与条件从句,If it..., I will...,如果...我就...,L1,if引导条件从句。,"[{""en"":""If it rains I will stay home."",""zh"":""如果下雨我就待在家。""}]"
+"连词·从句与复杂句",定语从句,定语从句,The person who...,...的人(定语从句),L2,who定语从句修饰人。,"[{""en"":""The person who helped me was very kind."",""zh"":""帮助我的那个人很善良。""}]"
+"连词·从句与复杂句",定语从句,定语从句,The book which I...,我...的那本书,L2,which定语从句修饰物。,"[{""en"":""The book which I borrowed was great."",""zh"":""我借的那本书很好。""}]"

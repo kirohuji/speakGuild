@@ -1,19 +1,19 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-副词精练,频率与程度,always,总是,adv,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,频率副词100%。放在行为动词前be动词后。,"[{""en"":""I always brush my teeth before bed."",""zh"":""我睡前总是刷牙。""}]",0
-副词精练,频率与程度,usually,通常,adv,/ˈjuːʒuəli/,/ˈjuːʒuəli/,L1,频率副词90%。表示大多数情况下。,"[{""en"":""I usually take the bus to work."",""zh"":""我通常坐公交上班。""}]",1
-副词精练,频率与程度,quite,相当,adv,/kwaɪt/,/kwaɪt/,L2,程度副词。比very弱但比fairly强。quite good / quite interesting。,"[{""en"":""The movie was quite good."",""zh"":""这部电影相当不错。""}]",2
-副词精练,方式与评论,carefully,仔细地,adv,/ˈkerfəli/,/ˈkeəfəli/,L2,方式副词。描述动作方式。通常放在动词后。,"[{""en"":""Please read the instructions carefully."",""zh"":""请仔细阅读说明。""}]",0
-副词精练,方式与评论,happily,快乐地,adv,/ˈhæpɪli/,/ˈhæpɪli/,L1,方式副词。描述以快乐的方式做某事。,"[{""en"":""The children played happily in the park."",""zh"":""孩子们在公园里快乐地玩耍。""}]",1
-副词精练,方式与评论,luckily,幸运的是,adv,/ˈlʌkɪli/,/ˈlʌkɪli/,L2,评论副词。放在句首修饰整个句子。,"[{""en"":""Luckily I caught the last train."",""zh"":""幸运的是我赶上了末班车。""}]",2
-时间表达,时间介词,in,在(时间段),prep,/ɪn/,/ɪn/,L1,用于月份/年份/季节/一天中的部分。in March / in 2024。,"[{""en"":""I was born in 1998."",""zh"":""我生于1998年。""}]",0
-时间表达,时间介词,on,在(具体一天),prep,/ɑːn/,/ɒn/,L1,用于星期/具体日期/节日前。on Monday / on June 5th。,"[{""en"":""The party is on Friday."",""zh"":""聚会在周五。""}]",1
-时间表达,时间介词,at,在(具体时间),prep,/æt/,/æt/,L1,用于钟表时间/年龄/特定时期。at 5pm / at night。,"[{""en"":""The meeting starts at 9 AM."",""zh"":""会议在上午9点开始。""}]",2
-时间表达,时间连词与顺序,before,在...之前,conj,/bɪˈfɔːr/,/bɪˈfɔː/,L1,表示主句动作发生在从句之前。,"[{""en"":""Before I go to bed I read for 30 minutes."",""zh"":""睡觉前我会读30分钟书。""}]",0
-时间表达,时间连词与顺序,after,在...之后,conj,/ˈæftər/,/ˈɑːftə/,L1,表示主句动作发生在从句之后。,"[{""en"":""After I finished work I went to the gym."",""zh"":""我下班后去了健身房。""}]",1
-时间表达,时间连词与顺序,while,在...期间,conj,/waɪl/,/waɪl/,L2,表示两个动作同时发生。常与进行时连用。,"[{""en"":""While I was cooking he was watching TV."",""zh"":""我做饭时他在看电视。""}]",2
-方位与指路,方位介词,in,在...里面,prep,/ɪn/,/ɪn/,L1,在空间/区域内部。in the room / in the city。,"[{""en"":""The milk is in the fridge."",""zh"":""牛奶在冰箱里。""}]",0
-方位与指路,方位介词,on,在...上面,prep,/ɑːn/,/ɒn/,L1,在表面。on the table / on the wall / on the floor。,"[{""en"":""The book is on the desk."",""zh"":""书在书桌上。""}]",1
-方位与指路,方位介词,next to,在...旁边,prep,/nekst tuː/,/nekst tuː/,L1,紧邻。next to / beside / by。,"[{""en"":""The bank is next to the post office."",""zh"":""银行在邮局旁边。""}]",2
-方位与指路,指路表达,go straight,直走,phrase,/ɡoʊ streɪt/,/ɡəʊ streɪt/,L1,指路基本指令。,"[{""en"":""Go straight until you reach the traffic lights."",""zh"":""直走直到你看到红绿灯。""}]",0
-方位与指路,指路表达,turn left,左转,phrase,/tɜːrn left/,/tɜːn left/,L1,向左转弯。turn right = 右转。,"[{""en"":""Turn left at the next corner."",""zh"":""在下一个路口左转。""}]",1
-方位与指路,指路表达,opposite,在...对面,prep,/ˈɑːpəzɪt/,/ˈɒpəzɪt/,L2,在街道/房间的另一侧。,"[{""en"":""The café is opposite the cinema."",""zh"":""咖啡馆在电影院对面。""}]",2
+"表达·副词精练",频率与程度,always,总是,adv,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,频率副词100%。放在行为动词前be动词后。,"[{""en"":""I always brush my teeth before bed."",""zh"":""我睡前总是刷牙。""}]",0
+"表达·副词精练",频率与程度,usually,通常,adv,/ˈjuːʒuəli/,/ˈjuːʒuəli/,L1,频率副词90%。表示大多数情况下。,"[{""en"":""I usually take the bus to work."",""zh"":""我通常坐公交上班。""}]",1
+"表达·副词精练",频率与程度,quite,相当,adv,/kwaɪt/,/kwaɪt/,L2,程度副词。比very弱但比fairly强。quite good / quite interesting。,"[{""en"":""The movie was quite good."",""zh"":""这部电影相当不错。""}]",2
+"表达·副词精练",方式与评论,carefully,仔细地,adv,/ˈkerfəli/,/ˈkeəfəli/,L2,方式副词。描述动作方式。通常放在动词后。,"[{""en"":""Please read the instructions carefully."",""zh"":""请仔细阅读说明。""}]",0
+"表达·副词精练",方式与评论,happily,快乐地,adv,/ˈhæpɪli/,/ˈhæpɪli/,L1,方式副词。描述以快乐的方式做某事。,"[{""en"":""The children played happily in the park."",""zh"":""孩子们在公园里快乐地玩耍。""}]",1
+"表达·副词精练",方式与评论,luckily,幸运的是,adv,/ˈlʌkɪli/,/ˈlʌkɪli/,L2,评论副词。放在句首修饰整个句子。,"[{""en"":""Luckily I caught the last train."",""zh"":""幸运的是我赶上了末班车。""}]",2
+"表达·时间表达",时间介词,in,在(时间段),prep,/ɪn/,/ɪn/,L1,用于月份/年份/季节/一天中的部分。in March / in 2024。,"[{""en"":""I was born in 1998."",""zh"":""我生于1998年。""}]",0
+"表达·时间表达",时间介词,on,在(具体一天),prep,/ɑːn/,/ɒn/,L1,用于星期/具体日期/节日前。on Monday / on June 5th。,"[{""en"":""The party is on Friday."",""zh"":""聚会在周五。""}]",1
+"表达·时间表达",时间介词,at,在(具体时间),prep,/æt/,/æt/,L1,用于钟表时间/年龄/特定时期。at 5pm / at night。,"[{""en"":""The meeting starts at 9 AM."",""zh"":""会议在上午9点开始。""}]",2
+"表达·时间表达",时间连词与顺序,before,在...之前,conj,/bɪˈfɔːr/,/bɪˈfɔː/,L1,表示主句动作发生在从句之前。,"[{""en"":""Before I go to bed I read for 30 minutes."",""zh"":""睡觉前我会读30分钟书。""}]",0
+"表达·时间表达",时间连词与顺序,after,在...之后,conj,/ˈæftər/,/ˈɑːftə/,L1,表示主句动作发生在从句之后。,"[{""en"":""After I finished work I went to the gym."",""zh"":""我下班后去了健身房。""}]",1
+"表达·时间表达",时间连词与顺序,while,在...期间,conj,/waɪl/,/waɪl/,L2,表示两个动作同时发生。常与进行时连用。,"[{""en"":""While I was cooking he was watching TV."",""zh"":""我做饭时他在看电视。""}]",2
+"表达·方位与指路",方位介词,in,在...里面,prep,/ɪn/,/ɪn/,L1,在空间/区域内部。in the room / in the city。,"[{""en"":""The milk is in the fridge."",""zh"":""牛奶在冰箱里。""}]",0
+"表达·方位与指路",方位介词,on,在...上面,prep,/ɑːn/,/ɒn/,L1,在表面。on the table / on the wall / on the floor。,"[{""en"":""The book is on the desk."",""zh"":""书在书桌上。""}]",1
+"表达·方位与指路",方位介词,next to,在...旁边,prep,/nekst tuː/,/nekst tuː/,L1,紧邻。next to / beside / by。,"[{""en"":""The bank is next to the post office."",""zh"":""银行在邮局旁边。""}]",2
+"表达·方位与指路",指路表达,go straight,直走,phrase,/ɡoʊ streɪt/,/ɡəʊ streɪt/,L1,指路基本指令。,"[{""en"":""Go straight until you reach the traffic lights."",""zh"":""直走直到你看到红绿灯。""}]",0
+"表达·方位与指路",指路表达,turn left,左转,phrase,/tɜːrn left/,/tɜːn left/,L1,向左转弯。turn right = 右转。,"[{""en"":""Turn left at the next corner."",""zh"":""在下一个路口左转。""}]",1
+"表达·方位与指路",指路表达,opposite,在...对面,prep,/ˈɑːpəzɪt/,/ˈɒpəzɪt/,L2,在街道/房间的另一侧。,"[{""en"":""The café is opposite the cinema."",""zh"":""咖啡馆在电影院对面。""}]",2

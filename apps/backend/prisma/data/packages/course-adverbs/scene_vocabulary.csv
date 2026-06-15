@@ -1,21 +1,21 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-频率与程度副词,频率副词,always,总是,adverb,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,100%频率。,"[{""en"":""I always brush my teeth before bed."",""zh"":""我睡前总是刷牙。""}]",0
-频率与程度副词,频率副词,usually,通常,adverb,/ˈjuːʒuəli/,/ˈjuːʒuəli/,L1,80%频率。,"[{""en"":""I usually have breakfast at 8."",""zh"":""我通常8点吃早餐。""}]",1
-频率与程度副词,频率副词,often,经常,adverb,/ˈɔːfən/,/ˈɒfən/,L1,60%频率。,"[{""en"":""I often read before bed."",""zh"":""我经常睡前看书。""}]",2
-频率与程度副词,频率副词,sometimes,有时,adverb,/ˈsʌmtaɪmz/,/ˈsʌmtaɪmz/,L1,40%频率。,"[{""en"":""Sometimes I go jogging."",""zh"":""我有时去慢跑。""}]",3
-频率与程度副词,频率副词,never,从不,adverb,/ˈnevər/,/ˈnevə/,L1,0%频率。,"[{""en"":""I never smoke."",""zh"":""我从不抽烟。""}]",4
-频率与程度副词,程度副词,very,非常,adverb,/ˈveri/,/ˈveri/,L1,最高程度。修饰形容词或副词。,"[{""en"":""She is very smart."",""zh"":""她非常聪明。""}]",0
-频率与程度副词,程度副词,quite,相当,adverb,/kwaɪt/,/kwaɪt/,L1,较强程度。比very弱。,"[{""en"":""The movie is quite good."",""zh"":""这部电影相当不错。""}]",1
-频率与程度副词,程度副词,rather,颇/相当,adverb,/ˈræðər/,/ˈrɑːðə/,L2,中等偏上程度。,"[{""en"":""It's rather cold today."",""zh"":""今天挺冷的。""}]",2
-频率与程度副词,程度副词,extremely,极其,adverb,/ɪkˈstriːmli/,/ɪkˈstriːmli/,L2,最高程度。,"[{""en"":""That's extremely kind of you."",""zh"":""你真是太善良了。""}]",3
-频率与程度副词,程度副词,too,太,adverb,/tuː/,/tuː/,L1,过量(负面含义)。,"[{""en"":""This coffee is too hot."",""zh"":""这咖啡太烫了。""}]",4
-方式与评论副词,方式副词,carefully,仔细地,adverb,/ˈkerəfəli/,/ˈkeəfəli/,L2,小心仔细地。,"[{""en"":""Please read the instructions carefully."",""zh"":""请仔细阅读说明。""}]",0
-方式与评论副词,方式副词,quickly,快速地,adverb,/ˈkwɪkli/,/ˈkwɪkli/,L1,动作迅速。,"[{""en"":""He quickly finished his homework."",""zh"":""他快速完成了作业。""}]",1
-方式与评论副词,方式副词,happily,快乐地,adverb,/ˈhæpɪli/,/ˈhæpɪli/,L1,快乐地做某事。,"[{""en"":""The children played happily."",""zh"":""孩子们快乐地玩耍。""}]",2
-方式与评论副词,方式副词,easily,容易地,adverb,/ˈiːzəli/,/ˈiːzɪli/,L2,轻易地。,"[{""en"":""She easily solved the problem."",""zh"":""她轻松地解决了问题。""}]",3
-方式与评论副词,方式副词,well,好地,adverb,/wel/,/wel/,L1,表现好。,"[{""en"":""She speaks English well."",""zh"":""她英语说得很好。""}]",4
-方式与评论副词,评论副词,luckily,幸运的是,adverb,/ˈlʌkɪli/,/ˈlʌkɪli/,L2,表达幸运。放句首修饰全句。,"[{""en"":""Luckily no one was hurt."",""zh"":""幸运的是没人受伤。""}]",0
-方式与评论副词,评论副词,frankly,坦白说,adverb,/ˈfræŋkli/,/ˈfræŋkli/,L2,表达坦诚。,"[{""en"":""Frankly I don't care."",""zh"":""坦白说我不在乎。""}]",1
-方式与评论副词,评论副词,honestly,诚实地,adverb,/ˈɑːnɪstli/,/ˈɒnɪstli/,L2,表达诚实态度。,"[{""en"":""Honestly that's the best option."",""zh"":""老实说那是最好的选择。""}]",2
-方式与评论副词,评论副词,surprisingly,令人惊讶的是,adverb,/sərˈpraɪzɪŋli/,/səˈpraɪzɪŋli/,L3,表达惊讶。,"[{""en"":""Surprisingly he agreed with us."",""zh"":""令人惊讶的是他同意了我们。""}]",3
-方式与评论副词,评论副词,obviously,显然,adverb,/ˈɑːbviəsli/,/ˈɒbviəsli/,L3,表达显而易见。,"[{""en"":""Obviously she was lying."",""zh"":""显然她在撒谎。""}]",4
+"副词·频率与程度副词",频率副词,always,总是,adverb,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,100%频率。,"[{""en"":""I always brush my teeth before bed."",""zh"":""我睡前总是刷牙。""}]",0
+"副词·频率与程度副词",频率副词,usually,通常,adverb,/ˈjuːʒuəli/,/ˈjuːʒuəli/,L1,80%频率。,"[{""en"":""I usually have breakfast at 8."",""zh"":""我通常8点吃早餐。""}]",1
+"副词·频率与程度副词",频率副词,often,经常,adverb,/ˈɔːfən/,/ˈɒfən/,L1,60%频率。,"[{""en"":""I often read before bed."",""zh"":""我经常睡前看书。""}]",2
+"副词·频率与程度副词",频率副词,sometimes,有时,adverb,/ˈsʌmtaɪmz/,/ˈsʌmtaɪmz/,L1,40%频率。,"[{""en"":""Sometimes I go jogging."",""zh"":""我有时去慢跑。""}]",3
+"副词·频率与程度副词",频率副词,never,从不,adverb,/ˈnevər/,/ˈnevə/,L1,0%频率。,"[{""en"":""I never smoke."",""zh"":""我从不抽烟。""}]",4
+"副词·频率与程度副词",程度副词,very,非常,adverb,/ˈveri/,/ˈveri/,L1,最高程度。修饰形容词或副词。,"[{""en"":""She is very smart."",""zh"":""她非常聪明。""}]",0
+"副词·频率与程度副词",程度副词,quite,相当,adverb,/kwaɪt/,/kwaɪt/,L1,较强程度。比very弱。,"[{""en"":""The movie is quite good."",""zh"":""这部电影相当不错。""}]",1
+"副词·频率与程度副词",程度副词,rather,颇/相当,adverb,/ˈræðər/,/ˈrɑːðə/,L2,中等偏上程度。,"[{""en"":""It's rather cold today."",""zh"":""今天挺冷的。""}]",2
+"副词·频率与程度副词",程度副词,extremely,极其,adverb,/ɪkˈstriːmli/,/ɪkˈstriːmli/,L2,最高程度。,"[{""en"":""That's extremely kind of you."",""zh"":""你真是太善良了。""}]",3
+"副词·频率与程度副词",程度副词,too,太,adverb,/tuː/,/tuː/,L1,过量(负面含义)。,"[{""en"":""This coffee is too hot."",""zh"":""这咖啡太烫了。""}]",4
+"副词·方式与评论副词",方式副词,carefully,仔细地,adverb,/ˈkerəfəli/,/ˈkeəfəli/,L2,小心仔细地。,"[{""en"":""Please read the instructions carefully."",""zh"":""请仔细阅读说明。""}]",0
+"副词·方式与评论副词",方式副词,quickly,快速地,adverb,/ˈkwɪkli/,/ˈkwɪkli/,L1,动作迅速。,"[{""en"":""He quickly finished his homework."",""zh"":""他快速完成了作业。""}]",1
+"副词·方式与评论副词",方式副词,happily,快乐地,adverb,/ˈhæpɪli/,/ˈhæpɪli/,L1,快乐地做某事。,"[{""en"":""The children played happily."",""zh"":""孩子们快乐地玩耍。""}]",2
+"副词·方式与评论副词",方式副词,easily,容易地,adverb,/ˈiːzəli/,/ˈiːzɪli/,L2,轻易地。,"[{""en"":""She easily solved the problem."",""zh"":""她轻松地解决了问题。""}]",3
+"副词·方式与评论副词",方式副词,well,好地,adverb,/wel/,/wel/,L1,表现好。,"[{""en"":""She speaks English well."",""zh"":""她英语说得很好。""}]",4
+"副词·方式与评论副词",评论副词,luckily,幸运的是,adverb,/ˈlʌkɪli/,/ˈlʌkɪli/,L2,表达幸运。放句首修饰全句。,"[{""en"":""Luckily no one was hurt."",""zh"":""幸运的是没人受伤。""}]",0
+"副词·方式与评论副词",评论副词,frankly,坦白说,adverb,/ˈfræŋkli/,/ˈfræŋkli/,L2,表达坦诚。,"[{""en"":""Frankly I don't care."",""zh"":""坦白说我不在乎。""}]",1
+"副词·方式与评论副词",评论副词,honestly,诚实地,adverb,/ˈɑːnɪstli/,/ˈɒnɪstli/,L2,表达诚实态度。,"[{""en"":""Honestly that's the best option."",""zh"":""老实说那是最好的选择。""}]",2
+"副词·方式与评论副词",评论副词,surprisingly,令人惊讶的是,adverb,/sərˈpraɪzɪŋli/,/səˈpraɪzɪŋli/,L3,表达惊讶。,"[{""en"":""Surprisingly he agreed with us."",""zh"":""令人惊讶的是他同意了我们。""}]",3
+"副词·方式与评论副词",评论副词,obviously,显然,adverb,/ˈɑːbviəsli/,/ˈɒbviəsli/,L3,表达显而易见。,"[{""en"":""Obviously she was lying."",""zh"":""显然她在撒谎。""}]",4

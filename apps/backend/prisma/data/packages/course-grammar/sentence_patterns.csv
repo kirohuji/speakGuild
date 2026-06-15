@@ -1,27 +1,27 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-动词短语实战,常见动词短语,"Don't ___! You can do it.",鼓励句式,"give up, stop, quit","Don't give up! You can do it.",L1,0
-动词短语实战,常见动词短语,"I'm looking for ___.",寻找某物,"my keys, a good book, a new job","I'm looking for my keys.",L1,1
-动词短语实战,动词短语对话,"I came up with ___.",想出主意,"a great idea, a solution, a plan","I came up with a great idea.",L2,0
-动词短语实战,动词短语对话,"I can't put up with ___ anymore.",无法忍受,"the noise, the heat, this situation","I can't put up with the noise anymore.",L2,1
-时态精准表达,时态选择与对比,"I usually ___ every day.",一般现在时描述习惯,"wake up at 7, have coffee, go to the gym","I usually wake up at 7 every day.",L1,0
-时态精准表达,时态选择与对比,"I'm currently ___ing.",现在进行时描述当前,"work on a project, learn Spanish, read a book","I'm currently reading a good book.",L1,1
-时态精准表达,时态选择与对比,"I have already ___ (present perfect)",现在完成时,"finished, done, seen, tried","I have already finished the report.",L2,2
-时态精准表达,时态在叙事中,"Yesterday I ___ (past simple).",一般过去时,"visited the museum, met a friend, watched a movie","Yesterday I visited the museum.",L1,0
-时态精准表达,时态在叙事中,"I was ___ing when ___ happened.",过去进行时+过去时,"cooking / the phone rang, sleeping / someone knocked","I was cooking when the phone rang.",L2,1
-句子组织与衔接,连接词与过渡,"It was ___, but I ___.",but表示转折,"difficult / managed, expensive / bought it","It was difficult but I managed.",L1,0
-句子组织与衔接,连接词与过渡,"I was ___, so I ___.",so表示因果,"late / missed the bus, tired / went to bed early","I was tired so I went to bed early.",L1,1
-句子组织与衔接,复杂句结构,"The ___ that/which I ___ was ___.",定语从句,"book / read / interesting, movie / saw / great","The book that I read was interesting.",L3,0
-句子组织与衔接,复杂句结构,"If I ___, I would ___.",条件句,"had more time / travel, were you / tell you","If I had more time, I would travel.",L3,1
-副词与状语,程度与频率副词,"I ___ (frequency adv) ___ (verb).",频率副词用法,"always / have breakfast, never / smoke, often / read","I always have breakfast before work.",L1,0
-副词与状语,程度与频率副词,"It's ___ (degree adv) ___.",程度副词用法,"quite / good, very / interesting, extremely / hot","It's quite good.",L1,1
-副词与状语,方式与评论副词,"Please ___ (verb) ___ (adv of manner).",方式副词,"drive / carefully, speak / clearly, write / neatly","Please drive carefully.",L1,0
-副词与状语,方式与评论副词,"___ (comment adv), ___.",评论副词句首,"Luckily / I made it, Frankly / I don't care","Luckily, I made it on time.",L2,1
-时间表达法,时间介词与连词,"The ___ is on ___.",on+具体日期,"meeting / Monday, party / Friday, exam / June 5th","The meeting is on Monday.",L1,0
-时间表达法,时间介词与连词,"I was born in ___.",in+月份/年份,"March, 1998, spring","I was born in March.",L1,1
-时间表达法,时间介词与连词,"The class starts at ___.",at+具体时间,"9 AM, 8:30, noon","The class starts at 9 AM.",L1,2
-时间表达法,时间从句描述,"While ___ing, I ___.",while引导同时,"cooking / listened to music, studying / took notes","While studying, I took notes.",L2,0
-时间表达法,时间从句描述,"After I ___, I ___.",after先后,"finished work / went home, woke up / had breakfast","After I finished work, I went home.",L1,1
-方位与位置表达,方位介词,"The ___ is in/on/at the ___.",方位介词基础,"cat / in / box, book / on / shelf, station / at / corner","The cat is on the sofa.",L1,0
-方位与位置表达,方位介词,"The ___ is next to/behind ___.",相对位置,"bank / next to / supermarket, car / behind / house","The bank is next to the supermarket.",L1,1
-方位与位置表达,描述位置与路线,"Go straight until you see ___.",指路直走,"the traffic lights, the intersection, the park","Go straight until you see the traffic lights.",L1,0
-方位与位置表达,描述位置与路线,"Turn ___ at the ___.",指路转弯,"left / corner, right / traffic light","Turn left at the corner.",L1,1
+"语法·动词短语实战",常见动词短语,Don't ___! You can do it.,鼓励句式,"give up, stop, quit",Don't give up! You can do it.,L1,0
+"语法·动词短语实战",常见动词短语,I'm looking for ___.,寻找某物,"my keys, a good book, a new job",I'm looking for my keys.,L1,1
+"语法·动词短语实战",动词短语对话,I came up with ___.,想出主意,"a great idea, a solution, a plan",I came up with a great idea.,L2,0
+"语法·动词短语实战",动词短语对话,I can't put up with ___ anymore.,无法忍受,"the noise, the heat, this situation",I can't put up with the noise anymore.,L2,1
+"语法·时态精准表达",时态选择与对比,I usually ___ every day.,一般现在时描述习惯,"wake up at 7, have coffee, go to the gym",I usually wake up at 7 every day.,L1,0
+"语法·时态精准表达",时态选择与对比,I'm currently ___ing.,现在进行时描述当前,"work on a project, learn Spanish, read a book",I'm currently reading a good book.,L1,1
+"语法·时态精准表达",时态选择与对比,I have already ___ (present perfect),现在完成时,"finished, done, seen, tried",I have already finished the report.,L2,2
+"语法·时态精准表达",时态在叙事中,Yesterday I ___ (past simple).,一般过去时,"visited the museum, met a friend, watched a movie",Yesterday I visited the museum.,L1,0
+"语法·时态精准表达",时态在叙事中,I was ___ing when ___ happened.,过去进行时+过去时,"cooking / the phone rang, sleeping / someone knocked",I was cooking when the phone rang.,L2,1
+"语法·句子组织与衔接",连接词与过渡,"It was ___, but I ___.",but表示转折,"difficult / managed, expensive / bought it",It was difficult but I managed.,L1,0
+"语法·句子组织与衔接",连接词与过渡,"I was ___, so I ___.",so表示因果,"late / missed the bus, tired / went to bed early",I was tired so I went to bed early.,L1,1
+"语法·句子组织与衔接",复杂句结构,The ___ that/which I ___ was ___.,定语从句,"book / read / interesting, movie / saw / great",The book that I read was interesting.,L3,0
+"语法·句子组织与衔接",复杂句结构,"If I ___, I would ___.",条件句,"had more time / travel, were you / tell you","If I had more time, I would travel.",L3,1
+"语法·副词与状语",程度与频率副词,I ___ (frequency adv) ___ (verb).,频率副词用法,"always / have breakfast, never / smoke, often / read",I always have breakfast before work.,L1,0
+"语法·副词与状语",程度与频率副词,It's ___ (degree adv) ___.,程度副词用法,"quite / good, very / interesting, extremely / hot",It's quite good.,L1,1
+"语法·副词与状语",方式与评论副词,Please ___ (verb) ___ (adv of manner).,方式副词,"drive / carefully, speak / clearly, write / neatly",Please drive carefully.,L1,0
+"语法·副词与状语",方式与评论副词,"___ (comment adv), ___.",评论副词句首,"Luckily / I made it, Frankly / I don't care","Luckily, I made it on time.",L2,1
+"语法·时间表达法",时间介词与连词,The ___ is on ___.,on+具体日期,"meeting / Monday, party / Friday, exam / June 5th",The meeting is on Monday.,L1,0
+"语法·时间表达法",时间介词与连词,I was born in ___.,in+月份/年份,"March, 1998, spring",I was born in March.,L1,1
+"语法·时间表达法",时间介词与连词,The class starts at ___.,at+具体时间,"9 AM, 8:30, noon",The class starts at 9 AM.,L1,2
+"语法·时间表达法",时间从句描述,"While ___ing, I ___.",while引导同时,"cooking / listened to music, studying / took notes","While studying, I took notes.",L2,0
+"语法·时间表达法",时间从句描述,"After I ___, I ___.",after先后,"finished work / went home, woke up / had breakfast","After I finished work, I went home.",L1,1
+"语法·方位与位置表达",方位介词,The ___ is in/on/at the ___.,方位介词基础,"cat / in / box, book / on / shelf, station / at / corner",The cat is on the sofa.,L1,0
+"语法·方位与位置表达",方位介词,The ___ is next to/behind ___.,相对位置,"bank / next to / supermarket, car / behind / house",The bank is next to the supermarket.,L1,1
+"语法·方位与位置表达",描述位置与路线,Go straight until you see ___.,指路直走,"the traffic lights, the intersection, the park",Go straight until you see the traffic lights.,L1,0
+"语法·方位与位置表达",描述位置与路线,Turn ___ at the ___.,指路转弯,"left / corner, right / traffic light",Turn left at the corner.,L1,1

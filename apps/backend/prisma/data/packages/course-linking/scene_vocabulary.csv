@@ -1,13 +1,13 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-并列与转折,并列连接,and,和/而且,conj,/ænd/,/ænd/,L1,最常用的并列连词。连接同类词或句子。,"[{""en"":""I like reading and listening to music."",""zh"":""我喜欢阅读和听音乐。""}]",0
-并列与转折,并列连接,but,但是,conj,/bʌt/,/bʌt/,L1,表示转折。连接两个相反或对比的观点。,"[{""en"":""I was tired but I kept working."",""zh"":""我很累但继续工作。""}]",1
-并列与转折,对比与选择,however,然而,adv,/haʊˈevər/,/haʊˈevə/,L2,比but更正式。用于句首或句中，用逗号隔开。,"[{""en"":""The weather was bad. However we still went out."",""zh"":""天气很糟，然而我们还是出去了。""}]",0
-并列与转折,对比与选择,whereas,而/反之,conj,/werˈæz/,/weərˈæz/,L3,用于对比两个不同的事实。,"[{""en"":""My sister is outgoing whereas I am shy."",""zh"":""我姐姐外向而我内向。""}]",1
-因果与让步,因果关系,because,因为,conj,/bɪˈkɔːz/,/bɪˈkɒz/,L1,直接原因。because + 从句。,"[{""en"":""I stayed home because I was sick."",""zh"":""我待在家里因为我病了。""}]",0
-因果与让步,因果关系,therefore,因此,adv,/ˈðerfɔːr/,/ˈðeəfɔː/,L2,正式因果连接词。用句号或分号与前句隔开。,"[{""en"":""He didn't study. Therefore he failed the exam."",""zh"":""他没学习，所以考试没通过。""}]",1
-因果与让步,让步关系,although,虽然,conj,/ɔːlˈðoʊ/,/ɔːlˈðəʊ/,L2,引导让步从句。although + 从句 + 主句。,"[{""en"":""Although it rained we had a great time."",""zh"":""虽然下雨了但我们玩得很开心。""}]",0
-因果与让步,让步关系,despite,尽管(后接名词),prep,/dɪˈspaɪt/,/dɪˈspaɪt/,L3,后接名词或动名词。despite the rain / despite being tired。,"[{""en"":""We went out despite the heavy rain."",""zh"":""尽管下着大雨我们还是出去了。""}]",1
-从句与复杂句,时间与条件从句,when,当...时,conj,/wen/,/wen/,L1,引导时间从句。when + 从句表示"当...的时候"。,"[{""en"":""When I arrived they were having dinner."",""zh"":""我到达时他们正在吃晚饭。""}]",0
-从句与复杂句,时间与条件从句,if,如果,conj,/ɪf/,/ɪf/,L1,引导条件从句。if + 从句 + 主句。,"[{""en"":""If it rains I will stay home."",""zh"":""如果下雨我就待在家里。""}]",1
-从句与复杂句,定语从句,who,谁(关系代词),pron,/huː/,/huː/,L2,引导定语从句修饰人。who + 动词。,"[{""en"":""The girl who sits next to me is very kind."",""zh"":""坐我旁边的女孩很善良。""}]",0
-从句与复杂句,定语从句,which,哪个(关系代词),pron,/wɪtʃ/,/wɪtʃ/,L2,引导定语从句修饰物或动物。,"[{""en"":""The book which I borrowed was fascinating."",""zh"":""我借的那本书很吸引人。""}]",1
+"连接词·并列与转折",并列连接,and,和/而且,conj,/ænd/,/ænd/,L1,最常用的并列连词。连接同类词或句子。,"[{""en"":""I like reading and listening to music."",""zh"":""我喜欢阅读和听音乐。""}]",0
+"连接词·并列与转折",并列连接,but,但是,conj,/bʌt/,/bʌt/,L1,表示转折。连接两个相反或对比的观点。,"[{""en"":""I was tired but I kept working."",""zh"":""我很累但继续工作。""}]",1
+"连接词·并列与转折",对比与选择,however,然而,adv,/haʊˈevər/,/haʊˈevə/,L2,比but更正式。用于句首或句中，用逗号隔开。,"[{""en"":""The weather was bad. However we still went out."",""zh"":""天气很糟，然而我们还是出去了。""}]",0
+"连接词·并列与转折",对比与选择,whereas,而/反之,conj,/werˈæz/,/weərˈæz/,L3,用于对比两个不同的事实。,"[{""en"":""My sister is outgoing whereas I am shy."",""zh"":""我姐姐外向而我内向。""}]",1
+"连接词·因果与让步",因果关系,because,因为,conj,/bɪˈkɔːz/,/bɪˈkɒz/,L1,直接原因。because + 从句。,"[{""en"":""I stayed home because I was sick."",""zh"":""我待在家里因为我病了。""}]",0
+"连接词·因果与让步",因果关系,therefore,因此,adv,/ˈðerfɔːr/,/ˈðeəfɔː/,L2,正式因果连接词。用句号或分号与前句隔开。,"[{""en"":""He didn't study. Therefore he failed the exam."",""zh"":""他没学习，所以考试没通过。""}]",1
+"连接词·因果与让步",让步关系,although,虽然,conj,/ɔːlˈðoʊ/,/ɔːlˈðəʊ/,L2,引导让步从句。although + 从句 + 主句。,"[{""en"":""Although it rained we had a great time."",""zh"":""虽然下雨了但我们玩得很开心。""}]",0
+"连接词·因果与让步",让步关系,despite,尽管(后接名词),prep,/dɪˈspaɪt/,/dɪˈspaɪt/,L3,后接名词或动名词。despite the rain / despite being tired。,"[{""en"":""We went out despite the heavy rain."",""zh"":""尽管下着大雨我们还是出去了。""}]",1
+"连词·从句与复杂句",时间与条件从句,when,当...时,conj,/wen/,/wen/,L1,引导时间从句。when + 从句表示当...的时候。,"[{""en"":""When I arrived they were having dinner."",""zh"":""我到达时他们正在吃晚饭。""}]",0
+"连词·从句与复杂句",时间与条件从句,if,如果,conj,/ɪf/,/ɪf/,L1,引导条件从句。if + 从句 + 主句。,"[{""en"":""If it rains I will stay home."",""zh"":""如果下雨我就待在家里。""}]",1
+"连词·从句与复杂句",定语从句,who,谁(关系代词),pron,/huː/,/huː/,L2,引导定语从句修饰人。who + 动词。,"[{""en"":""The girl who sits next to me is very kind."",""zh"":""坐我旁边的女孩很善良。""}]",0
+"连词·从句与复杂句",定语从句,which,哪个(关系代词),pron,/wɪtʃ/,/wɪtʃ/,L2,引导定语从句修饰物或动物。,"[{""en"":""The book which I borrowed was fascinating."",""zh"":""我借的那本书很吸引人。""}]",1

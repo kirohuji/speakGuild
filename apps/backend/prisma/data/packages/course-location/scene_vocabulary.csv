@@ -1,17 +1,17 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-方位介词,基本方位介词,in,在...里面,preposition,/ɪn/,/ɪn/,L1,表示在空间内部。,"[{""en"":""The book is in my bag."",""zh"":""书在我的书包里。""}]",0
-方位介词,基本方位介词,on,在...上面,preposition,/ɑːn/,/ɒn/,L1,表示在物体表面。,"[{""en"":""The cat is on the table."",""zh"":""猫在桌子上。""}]",1
-方位介词,基本方位介词,at,在(位置点),preposition,/æt/,/æt/,L1,表示在某个位置点。,"[{""en"":""She is at the bus stop."",""zh"":""她在公交站。""}]",2
-方位介词,基本方位介词,under,在...下面,preposition,/ˈʌndər/,/ˈʌndə/,L1,表示在物体下方。,"[{""en"":""The dog is under the bed."",""zh"":""狗在床底下。""}]",3
-方位介词,基本方位介词,behind,在...后面,preposition,/bɪˈhaɪnd/,/bɪˈhaɪnd/,L1,表示在物体后方。,"[{""en"":""The car is behind the house."",""zh"":""车在房子后面。""}]",4
-方位介词,相对位置,next to,紧挨着,phrase,/nekst tuː/,/nekst tuː/,L1,表示旁边/紧邻。,"[{""en"":""The school is next to the park."",""zh"":""学校在公园旁边。""}]",0
-方位介词,相对位置,between,在...之间,preposition,/bɪˈtwiːn/,/bɪˈtwiːn/,L1,表示在两者之间。,"[{""en"":""The bank is between the cafe and the library."",""zh"":""银行在咖啡厅和图书馆之间。""}]",1
-方位介词,相对位置,opposite,在...对面,preposition,/ˈɑːpəzɪt/,/ˈɒpəzɪt/,L2,表示在街道/房间对面。,"[{""en"":""The supermarket is opposite the station."",""zh"":""超市在车站对面。""}]",2
-方位介词,相对位置,across from,在...对面,phrase,/əˈkrɔːs frəm/,/əˈkrɒs frəm/,L2,与opposite同义。,"[{""en"":""He lives across from me."",""zh"":""他住在我对面。""}]",3
-指路与位置描述,指路指令,go straight,直走,phrase,/ɡoʊ streɪt/,/ɡəʊ streɪt/,L1,指示向前直行。,"[{""en"":""Go straight for two blocks."",""zh"":""直走两个街区。""}]",0
-指路与位置描述,指路指令,turn left,左转,phrase,/tɜːrn left/,/tɜːn left/,L1,向左转弯。,"[{""en"":""Turn left at the traffic light."",""zh"":""在红绿灯处左转。""}]",1
-指路与位置描述,指路指令,turn right,右转,phrase,/tɜːrn raɪt/,/tɜːn raɪt/,L1,向右转弯。,"[{""en"":""Turn right after the bridge."",""zh"":""过桥后右转。""}]",2
-指路与位置描述,指路指令,at the corner,在拐角处,phrase,/æt ðə ˈkɔːrnər/,/æt ðə ˈkɔːnə/,L1,表示在街角。,"[{""en"":""The pharmacy is at the corner."",""zh"":""药房在拐角处。""}]",3
-指路与位置描述,描述路线,past,经过,preposition,/pæst/,/pɑːst/,L2,指路时表示经过某地。,"[{""en"":""Go past the hospital."",""zh"":""经过医院。""}]",0
-指路与位置描述,描述路线,on your left,在你的左边,phrase,/ɑːn jɔːr left/,/ɒn jɔː left/,L1,表示某物在行进方向左侧。,"[{""en"":""The museum is on your left."",""zh"":""博物馆在你的左边。""}]",1
-指路与位置描述,描述路线,on your right,在你的右边,phrase,/ɑːn jɔːr raɪt/,/ɒn jɔː raɪt/,L1,表示某物在行进方向右侧。,"[{""en"":""The bookstore is on your right."",""zh"":""书店在你的右边。""}]",2
+"方位·方位介词",基本方位介词,in,在...里面,preposition,/ɪn/,/ɪn/,L1,表示在空间内部。,"[{""en"":""The book is in my bag."",""zh"":""书在我的书包里。""}]",0
+"方位·方位介词",基本方位介词,on,在...上面,preposition,/ɑːn/,/ɒn/,L1,表示在物体表面。,"[{""en"":""The cat is on the table."",""zh"":""猫在桌子上。""}]",1
+"方位·方位介词",基本方位介词,at,在(位置点),preposition,/æt/,/æt/,L1,表示在某个位置点。,"[{""en"":""She is at the bus stop."",""zh"":""她在公交站。""}]",2
+"方位·方位介词",基本方位介词,under,在...下面,preposition,/ˈʌndər/,/ˈʌndə/,L1,表示在物体下方。,"[{""en"":""The dog is under the bed."",""zh"":""狗在床底下。""}]",3
+"方位·方位介词",基本方位介词,behind,在...后面,preposition,/bɪˈhaɪnd/,/bɪˈhaɪnd/,L1,表示在物体后方。,"[{""en"":""The car is behind the house."",""zh"":""车在房子后面。""}]",4
+"方位·方位介词",相对位置,next to,紧挨着,phrase,/nekst tuː/,/nekst tuː/,L1,表示旁边/紧邻。,"[{""en"":""The school is next to the park."",""zh"":""学校在公园旁边。""}]",0
+"方位·方位介词",相对位置,between,在...之间,preposition,/bɪˈtwiːn/,/bɪˈtwiːn/,L1,表示在两者之间。,"[{""en"":""The bank is between the cafe and the library."",""zh"":""银行在咖啡厅和图书馆之间。""}]",1
+"方位·方位介词",相对位置,opposite,在...对面,preposition,/ˈɑːpəzɪt/,/ˈɒpəzɪt/,L2,表示在街道/房间对面。,"[{""en"":""The supermarket is opposite the station."",""zh"":""超市在车站对面。""}]",2
+"方位·方位介词",相对位置,across from,在...对面,phrase,/əˈkrɔːs frəm/,/əˈkrɒs frəm/,L2,与opposite同义。,"[{""en"":""He lives across from me."",""zh"":""他住在我对面。""}]",3
+"方位·指路与位置描述",指路指令,go straight,直走,phrase,/ɡoʊ streɪt/,/ɡəʊ streɪt/,L1,指示向前直行。,"[{""en"":""Go straight for two blocks."",""zh"":""直走两个街区。""}]",0
+"方位·指路与位置描述",指路指令,turn left,左转,phrase,/tɜːrn left/,/tɜːn left/,L1,向左转弯。,"[{""en"":""Turn left at the traffic light."",""zh"":""在红绿灯处左转。""}]",1
+"方位·指路与位置描述",指路指令,turn right,右转,phrase,/tɜːrn raɪt/,/tɜːn raɪt/,L1,向右转弯。,"[{""en"":""Turn right after the bridge."",""zh"":""过桥后右转。""}]",2
+"方位·指路与位置描述",指路指令,at the corner,在拐角处,phrase,/æt ðə ˈkɔːrnər/,/æt ðə ˈkɔːnə/,L1,表示在街角。,"[{""en"":""The pharmacy is at the corner."",""zh"":""药房在拐角处。""}]",3
+"方位·指路与位置描述",描述路线,past,经过,preposition,/pæst/,/pɑːst/,L2,指路时表示经过某地。,"[{""en"":""Go past the hospital."",""zh"":""经过医院。""}]",0
+"方位·指路与位置描述",描述路线,on your left,在你的左边,phrase,/ɑːn jɔːr left/,/ɒn jɔː left/,L1,表示某物在行进方向左侧。,"[{""en"":""The museum is on your left."",""zh"":""博物馆在你的左边。""}]",1
+"方位·指路与位置描述",描述路线,on your right,在你的右边,phrase,/ɑːn jɔːr raɪt/,/ɒn jɔː raɪt/,L1,表示某物在行进方向右侧。,"[{""en"":""The bookstore is on your right."",""zh"":""书店在你的右边。""}]",2

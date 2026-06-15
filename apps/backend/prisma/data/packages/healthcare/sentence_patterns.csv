@@ -1,28 +1,28 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-预约看病,电话预约,"I'd like to make an appointment with ___.",预约医生,"Dr. Williams, a dentist","I'd like to make an appointment with Dr. Williams.",L2,0
-预约看病,电话预约,"Is ___ available ___?",询问医生是否可用,"Dr. Williams / this Friday, the doctor / tomorrow","Is Dr. Williams available this Friday?",L2,1
-预约看病,改期取消,"I need to ___ my appointment.",改期或取消,"reschedule, cancel","I need to reschedule my appointment.",L2,0
-预约看病,前台登记,"I have an appointment at ___ with ___.",登记时报预约,"10 AM / Dr. Williams, 2 PM / the dentist","I have an appointment at 10 AM with Dr. Williams.",L2,0
-预约看病,前台登记,"Here is my ___ for registration.",出示证件,"insurance card, ID, passport","Here is my insurance card for registration.",L2,1
-看医生,描述症状,"I have a ___ and ___.",描述症状,"headache / fever, sore throat / cough","I have a headache and a fever.",L1,0
-看医生,描述症状,"I've been ___ for ___.",描述持续症状,"coughing / a few days, feeling tired / a week","I've been coughing for a few days.",L2,1
-看医生,描述症状,"It hurts when I ___.",描述疼痛,"swallow, cough, breathe deeply","It hurts when I swallow.",L2,2
-看医生,回答问诊,"It started ___.",说明何时开始,"three days ago, last week, yesterday morning","It started three days ago.",L2,0
-看医生,回答问诊,"I'm allergic to ___.",说明过敏,"penicillin, nuts, pollen","I'm allergic to penicillin.",L2,1
-看医生,回答问诊,"I've taken ___ but ___.",说明已使用的治疗,"painkillers / they didn't help, some medicine / it got worse","I've taken some painkillers but they didn't help.",L2,2
-看医生,理解诊断,"Is it ___?",确认严重程度,"serious, contagious, common","Is it serious?",L2,0
-看医生,理解诊断,"Do I need ___?",询问是否需要检查,"any tests, an X-ray, a blood test","Do I need any tests?",L2,1
-看医生,治疗方案,"How many times a day should I ___?",询问用法,"take this, use this cream","How many times a day should I take this?",L2,0
-看医生,治疗方案,"Should I ___?",询问建议,"come back for a follow-up, rest at home, avoid certain foods","Should I come back for a follow-up?",L2,1
-药房买药,询问药品,"Do you have something for ___?",询问药物,"a cold, a headache, an allergy","Do you have something for a cold?",L1,0
-药房买药,询问药品,"Can you recommend ___?",请推荐,"something for a headache, a good cold medicine","Can you recommend something for a headache?",L1,1
-药房买药,理解用法,"How often should I ___?",询问频率,"take this, use this, take this medicine","How often should I take this?",L2,0
-药房买药,理解用法,"Should I take it ___?",询问服用方式,"with food, on an empty stomach, in the morning","Should I take it with food?",L2,1
-药房买药,处方取药,"I'm here to ___ a prescription.",取药,"pick up, fill, collect","I'm here to pick up a prescription.",L2,0
-药房买药,处方取药,"Do you have a ___ version?",问仿制药,"generic, cheaper, alternative","Do you have a generic version?",L3,1
-医院急诊,急诊求助,"I need ___ please!",求助,"an ambulance, help, a doctor","I need an ambulance please!",L2,0
-医院急诊,急诊求助,"There's been a/an ___.",报告事故,"accident, emergency, fire","There's been an accident.",L2,1
-医院急诊,急诊分诊,"On a scale of 1 to 10, the pain is about ___.",描述疼痛程度,"7, 8, 9","On a scale of 1 to 10, the pain is about 8.",L3,0
-医院急诊,急诊分诊,"I have ___ and ___.",描述紧急症状,"chest pain / difficulty breathing, severe bleeding / dizziness","I have chest pain and difficulty breathing.",L3,1
-预约看病,电话预约,"What's the earliest ___ I can ___?",问最早时间,"appointment / see a doctor, time / come in","What's the earliest appointment I can get?",L2,0
-看医生,治疗方案,"Are there any ___ I should know about?",问注意事项,"side effects, restrictions, precautions","Are there any side effects I should know about?",L3,0
+"健康·预约看病",电话预约,I'd like to make an appointment with ___.,预约医生,"Dr. Williams, a dentist",I'd like to make an appointment with Dr. Williams.,L2,0
+"健康·预约看病",电话预约,Is ___ available ___?,询问医生是否可用,"Dr. Williams / this Friday, the doctor / tomorrow",Is Dr. Williams available this Friday?,L2,1
+"健康·预约看病",改期取消,I need to ___ my appointment.,改期或取消,"reschedule, cancel",I need to reschedule my appointment.,L2,0
+"健康·预约看病",前台登记,I have an appointment at ___ with ___.,登记时报预约,"10 AM / Dr. Williams, 2 PM / the dentist",I have an appointment at 10 AM with Dr. Williams.,L2,0
+"健康·预约看病",前台登记,Here is my ___ for registration.,出示证件,"insurance card, ID, passport",Here is my insurance card for registration.,L2,1
+"健康·看医生",描述症状,I have a ___ and ___.,描述症状,"headache / fever, sore throat / cough",I have a headache and a fever.,L1,0
+"健康·看医生",描述症状,I've been ___ for ___.,描述持续症状,"coughing / a few days, feeling tired / a week",I've been coughing for a few days.,L2,1
+"健康·看医生",描述症状,It hurts when I ___.,描述疼痛,"swallow, cough, breathe deeply",It hurts when I swallow.,L2,2
+"健康·看医生",回答问诊,It started ___.,说明何时开始,"three days ago, last week, yesterday morning",It started three days ago.,L2,0
+"健康·看医生",回答问诊,I'm allergic to ___.,说明过敏,"penicillin, nuts, pollen",I'm allergic to penicillin.,L2,1
+"健康·看医生",回答问诊,I've taken ___ but ___.,说明已使用的治疗,"painkillers / they didn't help, some medicine / it got worse",I've taken some painkillers but they didn't help.,L2,2
+"健康·看医生",理解诊断,Is it ___?,确认严重程度,"serious, contagious, common",Is it serious?,L2,0
+"健康·看医生",理解诊断,Do I need ___?,询问是否需要检查,"any tests, an X-ray, a blood test",Do I need any tests?,L2,1
+"健康·看医生",治疗方案,How many times a day should I ___?,询问用法,"take this, use this cream",How many times a day should I take this?,L2,0
+"健康·看医生",治疗方案,Should I ___?,询问建议,"come back for a follow-up, rest at home, avoid certain foods",Should I come back for a follow-up?,L2,1
+"健康·药房买药",询问药品,Do you have something for ___?,询问药物,"a cold, a headache, an allergy",Do you have something for a cold?,L1,0
+"健康·药房买药",询问药品,Can you recommend ___?,请推荐,"something for a headache, a good cold medicine",Can you recommend something for a headache?,L1,1
+"健康·药房买药",理解用法,How often should I ___?,询问频率,"take this, use this, take this medicine",How often should I take this?,L2,0
+"健康·药房买药",理解用法,Should I take it ___?,询问服用方式,"with food, on an empty stomach, in the morning",Should I take it with food?,L2,1
+"健康·药房买药",处方取药,I'm here to ___ a prescription.,取药,"pick up, fill, collect",I'm here to pick up a prescription.,L2,0
+"健康·药房买药",处方取药,Do you have a ___ version?,问仿制药,"generic, cheaper, alternative",Do you have a generic version?,L3,1
+"健康·医院急诊",急诊求助,I need ___ please!,求助,"an ambulance, help, a doctor",I need an ambulance please!,L2,0
+"健康·医院急诊",急诊求助,There's been a/an ___.,报告事故,"accident, emergency, fire",There's been an accident.,L2,1
+"健康·医院急诊",急诊分诊,"On a scale of 1 to 10, the pain is about ___.",描述疼痛程度,"7, 8, 9","On a scale of 1 to 10, the pain is about 8.",L3,0
+"健康·医院急诊",急诊分诊,I have ___ and ___.,描述紧急症状,"chest pain / difficulty breathing, severe bleeding / dizziness",I have chest pain and difficulty breathing.,L3,1
+"健康·预约看病",电话预约,What's the earliest ___ I can ___?,问最早时间,"appointment / see a doctor, time / come in",What's the earliest appointment I can get?,L2,0
+"健康·看医生",治疗方案,Are there any ___ I should know about?,问注意事项,"side effects, restrictions, precautions",Are there any side effects I should know about?,L3,0

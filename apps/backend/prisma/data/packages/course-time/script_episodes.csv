@@ -1,5 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_sjtime,时间介词篇,1,时间点与时间段,时间介词,L2,1,2,3,2,2,"[""用at表达时间点"",""用in表达月份/年份""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
-ch_sjtime,时间介词篇,2,持续与起止,时间介词,L2,1,2,5,2,3,"[""用since表达从某时起"",""用for表达持续时长"",""用until/by表达截止""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
-ch_shunxu,时间连词与顺序篇,1,先后顺序,时间连词与顺序,L2,1,2,4,2,2,"[""用before/after表达先后"",""用first/then表达顺序""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
-ch_shunxu,时间连词与顺序篇,2,同时与截止,时间连词与顺序,L2,1,2,3,2,2,"[""用when/while表达同时"",""用as表达同步变化""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_sjtime,时间介词篇,1,时间点与时间段,"时间·时间介词",L2,1,2,3,2,2,"[""用at表达时间点"",""用in表达月份/年份""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+ch_sjtime,时间介词篇,2,持续与起止,"时间·时间介词",L2,1,2,5,2,3,"[""用since表达从某时起"",""用for表达持续时长"",""用until/by表达截止""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_shunxu,时间连词与顺序篇,1,先后顺序,"时间·时间连词与顺序",L2,1,2,4,2,2,"[""用before/after表达先后"",""用first/then表达顺序""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+ch_shunxu,时间连词与顺序篇,2,同时与截止,"时间·时间连词与顺序",L2,1,2,3,2,2,"[""用when/while表达同时"",""用as表达同步变化""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"

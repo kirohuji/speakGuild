@@ -1,24 +1,24 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-问候与介绍,打招呼,"Hello! How ___ you?",问候,"are, is","Hello! How are you?",L1,0
-问候与介绍,打招呼,"Nice to ___ you.",初次见面,"meet, see","Nice to meet you.",L1,1
-问候与介绍,自我介绍,"My name is ___.",自我介绍,"Li Ming, Tom, Sarah","My name is Li Ming.",L1,0
-问候与介绍,自我介绍,"I'm from ___.",来自哪里,"China, the US, Japan","I'm from China.",L1,1
-数字与时间,数字1-100,"I have ___ books.",表达数量,"one, two, three, ten","I have two books.",L1,0
-数字与时间,时间与日期,"It's ___ o'clock.",说时间,"3, 5, 9, 12","It's 5 o'clock.",L1,0
-数字与时间,时间与日期,"Today is ___.",说星期,"Monday, Tuesday, Sunday","Today is Monday.",L1,1
-日常表达,礼貌用语,"___ you very much.",感谢,"Thank, Thanks","Thank you very much.",L1,0
-日常表达,礼貌用语,"You're ___.",回应感谢,"welcome","You're welcome.",L1,1
-日常表达,表达需求,"Can I have ___?",请求,"some water, a pen, a cup of tea","Can I have some water?",L1,0
-日常表达,表达需求,"I need ___.",需求,"help, water, a break","I need help.",L1,1
-基本问答,问与答,"What is ___?",问事物,"this, that, your name","What is this?",L1,0
-基本问答,问与答,"Who is ___?",问人,"he, she, that, that man","Who is she?",L1,1
-基本问答,地点与方位,"Where is ___?",问位置,"the bathroom, my bag, the station","Where is the bathroom?",L1,0
-基本问答,地点与方位,"It's ___.",指位置,"here, there, over there","It's over there.",L1,1
-基础动词,动词 be,"I am a ___.",我是...,"student, teacher, doctor","I am a student.",L1,0
-基础动词,动词 be,"You are ___.",你是...,"kind, smart, right","You are kind.",L1,1
-基础动词,常用动作动词,"I go to ___.",去某地,"school, work, home, the park","I go to school every day.",L1,0
-基础动词,常用动作动词,"I like to ___.",喜欢做,"read, swim, play, cook","I like to read.",L1,1
-描述事物,大小与颜色,"It is very ___.",描述大小,"big, small, long, short","It is very big.",L1,0
-描述事物,大小与颜色,"What ___ is it?",问颜色,"color","What color is it?",L1,1
-描述事物,感受与评价,"I am ___ today.",感受,"happy, tired, hungry, sleepy","I am happy today.",L1,0
-描述事物,感受与评价,"The ___ is very good.",评价,"food, movie, book","The food is very good.",L1,1
+"基础·问候与介绍",打招呼,Hello! How ___ you?,问候,"are, is",Hello! How are you?,L1,0
+"基础·问候与介绍",打招呼,Nice to ___ you.,初次见面,"meet, see",Nice to meet you.,L1,1
+"基础·问候与介绍",自我介绍,My name is ___.,自我介绍,"Li Ming, Tom, Sarah",My name is Li Ming.,L1,0
+"基础·问候与介绍",自我介绍,I'm from ___.,来自哪里,"China, the US, Japan",I'm from China.,L1,1
+"基础·数字与时间",数字1-100,I have ___ books.,表达数量,"one, two, three, ten",I have two books.,L1,0
+"基础·数字与时间",时间与日期,It's ___ o'clock.,说时间,"3, 5, 9, 12",It's 5 o'clock.,L1,0
+"基础·数字与时间",时间与日期,Today is ___.,说星期,"Monday, Tuesday, Sunday",Today is Monday.,L1,1
+"基础·日常表达",礼貌用语,___ you very much.,感谢,"Thank, Thanks",Thank you very much.,L1,0
+"基础·日常表达",礼貌用语,You're ___.,回应感谢,welcome,You're welcome.,L1,1
+"基础·日常表达",表达需求,Can I have ___?,请求,"some water, a pen, a cup of tea",Can I have some water?,L1,0
+"基础·日常表达",表达需求,I need ___.,需求,"help, water, a break",I need help.,L1,1
+"基础·基本问答",问与答,What is ___?,问事物,"this, that, your name",What is this?,L1,0
+"基础·基本问答",问与答,Who is ___?,问人,"he, she, that, that man",Who is she?,L1,1
+"基础·基本问答",地点与方位,Where is ___?,问位置,"the bathroom, my bag, the station",Where is the bathroom?,L1,0
+"基础·基本问答",地点与方位,It's ___.,指位置,"here, there, over there",It's over there.,L1,1
+"基础·基础动词",动词 be,I am a ___.,我是...,"student, teacher, doctor",I am a student.,L1,0
+"基础·基础动词",动词 be,You are ___.,你是...,"kind, smart, right",You are kind.,L1,1
+"基础·基础动词",常用动作动词,I go to ___.,去某地,"school, work, home, the park",I go to school every day.,L1,0
+"基础·基础动词",常用动作动词,I like to ___.,喜欢做,"read, swim, play, cook",I like to read.,L1,1
+"基础·描述事物",大小与颜色,It is very ___.,描述大小,"big, small, long, short",It is very big.,L1,0
+"基础·描述事物",大小与颜色,What ___ is it?,问颜色,color,What color is it?,L1,1
+"基础·描述事物",感受与评价,I am ___ today.,感受,"happy, tired, hungry, sleepy",I am happy today.,L1,0
+"基础·描述事物",感受与评价,The ___ is very good.,评价,"food, movie, book",The food is very good.,L1,1

@@ -1,31 +1,31 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-问候与介绍,打招呼,hello,你好,interj,/həˈloʊ/,/həˈləʊ/,L1,最常用的打招呼用语。全天适用。,"[{""en"":""Hello! How are you today?"",""zh"":""你好！你今天怎么样？""}]",0
-问候与介绍,打招呼,goodbye,再见,interj,/ɡʊdˈbaɪ/,/ɡʊdˈbaɪ/,L1,再见。口语也常说Bye或See you。,"[{""en"":""Goodbye! See you tomorrow."",""zh"":""再见！明天见。""}]",1
-问候与介绍,自我介绍,name,名字,noun,/neɪm/,/neɪm/,L1,姓名。My name is... = 我叫...。,"[{""en"":""My name is Li Ming."",""zh"":""我叫李明。""}]",0
-问候与介绍,自我介绍,from,来自,prep,/frɑːm/,/frɒm/,L1,I'm from... = 我来自...。后接国家或城市。,"[{""en"":""I'm from China."",""zh"":""我来自中国。""}]",1
-数字与时间,数字1-100,one,一,num,/wʌn/,/wʌn/,L1,数字1。基数词的基本单位。,"[{""en"":""I have one book."",""zh"":":"我有一本书。""}]",0
-数字与时间,数字1-100,ten,十,num,/ten/,/ten/,L1,数字10。注意与teen的区别：13是thirteen，30是thirty。,"[{""en"":""There are ten students in the room."",""zh"":""房间里有十个学生。""}]",1
-数字与时间,数字1-100,hundred,百,num,/ˈhʌndrəd/,/ˈhʌndrəd/,L1,一百。one hundred = 100。,"[{""en"":""The book costs one hundred yuan."",""zh"":""这本书一百元。""}]",2
-数字与时间,时间与日期,o'clock,...点,adv,/əˈklɑːk/,/əˈklɒk/,L1,表示整点。It's 3 o'clock = 现在三点。,"[{""en"":""It's 5 o'clock."",""zh"":""现在五点了。""}]",0
-数字与时间,时间与日期,today,今天,adv/noun,/təˈdeɪ/,/təˈdeɪ/,L1,今天。What day is today? = 今天星期几？,"[{""en"":""Today is Monday."",""zh"":""今天是星期一。""}]",1
-日常表达,礼貌用语,thank you,谢谢,phrase,/θæŋk juː/,/θæŋk juː/,L1,感谢用语。Thanks更口语化。You're welcome = 不客气。,"[{""en"":""Thank you for your help."",""zh"":""谢谢你的帮助。""}]",0
-日常表达,礼貌用语,sorry,对不起,adj,/ˈsɑːri/,/ˈsɒri/,L1,道歉用语。I'm sorry = 对不起/我很遗憾。,"[{""en"":""I'm sorry I'm late."",""zh"":""对不起我迟到了。""}]",1
-日常表达,礼貌用语,please,请,adv,/pliːz/,/pliːz/,L1,礼貌请求。放在句首或句末。,"[{""en"":""Please sit down."",""zh"":""请坐。""}]",2
-日常表达,表达需求,water,水,noun,/ˈwɔːtər/,/ˈwɔːtə/,L1,水。Can I have water? = 能给我水吗？,"[{""en"":""Can I have some water, please?"",""zh"":":"能给我一些水吗？""}]",0
-日常表达,表达需求,help,帮助,noun/verb,/help/,/help/,L1,帮助。Help me = 帮我。I need help = 我需要帮助。,"[{""en"":""Can you help me?"",""zh"":""你能帮我吗？""}]",1
-基本问答,问与答,what,什么,pron,/wɑːt/,/wɒt/,L1,疑问词"什么"。What's this? / What is it?,"[{""en"":""What is your name?"",""zh"":""你叫什么名字？""}]",0
-基本问答,问与答,who,谁,pron,/huː/,/huː/,L1,疑问词"谁"。Who is he/she?,"[{""en"":""Who is that girl?"",""zh"":""那个女孩是谁？""}]",1
-基本问答,地点与方位,where,哪里,adv,/wer/,/weə/,L1,疑问词"哪里"。Where is...? = ...在哪里？,"[{""en"":""Where is the bathroom?"",""zh"":""洗手间在哪里？""}]",0
-基本问答,地点与方位,here,这里,adv,/hɪr/,/hɪə/,L1,这里/在这儿。It's here = 它在这儿。,"[{""en"":""Your bag is here."",""zh"":""你的包在这里。""}]",1
-基础动词,动词 be,am,是(第一人称),verb,/æm/,/æm/,L1,be动词第一人称单数形式。I am = 我是。,"[{""en"":""I am a student."",""zh"":""我是学生。""}]",0
-基础动词,动词 be,is,是(第三人称),verb,/ɪz/,/ɪz/,L1,be动词第三人称单数。He/She/It is。,"[{""en"":""She is a teacher."",""zh"":""她是一名老师。""}]",1
-基础动词,动词 be,are,是(复数),verb,/ɑːr/,/ɑː/,L1,be动词第二人称和复数。You/We/They are。,"[{""en"":""They are my friends."",""zh"":":"他们是我的朋友。""}]",2
-基础动词,常用动作动词,go,去,verb,/ɡoʊ/,/ɡəʊ/,L1,去。go to school / go home。,"[{""en"":""I go to school every day."",""zh"":""我每天去上学。""}]",0
-基础动词,常用动作动词,eat,吃,verb,/iːt/,/iːt/,L1,吃。eat breakfast / eat lunch / eat dinner。,"[{""en"":""I eat breakfast at 7."",""zh"":""我7点吃早餐。""}]",1
-基础动词,常用动作动词,drink,喝,verb,/drɪŋk/,/drɪŋk/,L1,喝。drink water / drink tea。,"[{""en"":""I drink tea every morning."",""zh"":""我每天早上喝茶。""}]",2
-描述事物,大小与颜色,big,大的,adj,/bɪɡ/,/bɪɡ/,L1,大的。反义词: small(小的)。,"[{""en"":""The box is big."",""zh"":""这个盒子很大。""}]",0
-描述事物,大小与颜色,small,小的,adj,/smɔːl/,/smɔːl/,L1,小的。反义词: big。,"[{""en"":""I have a small dog."",""zh"":":我有一只小狗。""}]",1
-描述事物,大小与颜色,red,红色,adj/noun,/red/,/red/,L1,红色。基本颜色之一。,"[{""en"":""My bag is red."",""zh"":""我的包是红色的。""}]",2
-描述事物,感受与评价,good,好的,adj,/ɡʊd/,/ɡʊd/,L1,好的。最常用的评价形容词。反义词: bad。,"[{""en"":""The food is very good."",""zh"":""这个食物很好。""}]",0
-描述事物,感受与评价,hot,热的,adj,/hɑːt/,/hɒt/,L1,热的/烫的。反义词: cold(冷的)。,"[{""en"":""The soup is hot."",""zh"":""汤是热的。""}]",1
-描述事物,感受与评价,happy,开心的,adj,/ˈhæpi/,/ˈhæpi/,L1,开心的/快乐的。I'm happy = 我很开心。,"[{""en"":""I'm happy to see you."",""zh"":""我很高兴见到你。""}]",2
+"基础·问候与介绍",打招呼,hello,你好,interj,/həˈloʊ/,/həˈləʊ/,L1,最常用的打招呼用语。全天适用。,"[{""en"":""Hello! How are you today?"",""zh"":""你好！你今天怎么样？""}]",0
+"基础·问候与介绍",打招呼,goodbye,再见,interj,/ɡʊdˈbaɪ/,/ɡʊdˈbaɪ/,L1,再见。口语也常说Bye或See you。,"[{""en"":""Goodbye! See you tomorrow."",""zh"":""再见！明天见。""}]",1
+"基础·问候与介绍",自我介绍,name,名字,noun,/neɪm/,/neɪm/,L1,姓名。My name is... = 我叫...。,"[{""en"":""My name is Li Ming."",""zh"":""我叫李明。""}]",0
+"基础·问候与介绍",自我介绍,from,来自,prep,/frɑːm/,/frɒm/,L1,I'm from... = 我来自...。后接国家或城市。,"[{""en"":""I'm from China."",""zh"":""我来自中国。""}]",1
+"基础·数字与时间",数字1-100,one,一,num,/wʌn/,/wʌn/,L1,数字1。基数词的基本单位。,"[{""en"":""I have one book."",""zh""::我有一本书。""}]",0
+"基础·数字与时间",数字1-100,ten,十,num,/ten/,/ten/,L1,数字10。注意与teen的区别：13是thirteen，30是thirty。,"[{""en"":""There are ten students in the room."",""zh"":""房间里有十个学生。""}]",1
+"基础·数字与时间",数字1-100,hundred,百,num,/ˈhʌndrəd/,/ˈhʌndrəd/,L1,一百。one hundred = 100。,"[{""en"":""The book costs one hundred yuan."",""zh"":""这本书一百元。""}]",2
+"基础·数字与时间",时间与日期,o'clock,...点,adv,/əˈklɑːk/,/əˈklɒk/,L1,表示整点。It's 3 o'clock = 现在三点。,"[{""en"":""It's 5 o'clock."",""zh"":""现在五点了。""}]",0
+"基础·数字与时间",时间与日期,today,今天,adv/noun,/təˈdeɪ/,/təˈdeɪ/,L1,今天。What day is today? = 今天星期几？,"[{""en"":""Today is Monday."",""zh"":""今天是星期一。""}]",1
+"基础·日常表达",礼貌用语,thank you,谢谢,phrase,/θæŋk juː/,/θæŋk juː/,L1,感谢用语。Thanks更口语化。You're welcome = 不客气。,"[{""en"":""Thank you for your help."",""zh"":""谢谢你的帮助。""}]",0
+"基础·日常表达",礼貌用语,sorry,对不起,adj,/ˈsɑːri/,/ˈsɒri/,L1,道歉用语。I'm sorry = 对不起/我很遗憾。,"[{""en"":""I'm sorry I'm late."",""zh"":""对不起我迟到了。""}]",1
+"基础·日常表达",礼貌用语,please,请,adv,/pliːz/,/pliːz/,L1,礼貌请求。放在句首或句末。,"[{""en"":""Please sit down."",""zh"":""请坐。""}]",2
+"基础·日常表达",表达需求,water,水,noun,/ˈwɔːtər/,/ˈwɔːtə/,L1,水。Can I have water? = 能给我水吗？,"[{""en"":""Can I have some water, please?"",""zh""::能给我一些水吗？""}]",0
+"基础·日常表达",表达需求,help,帮助,noun/verb,/help/,/help/,L1,帮助。Help me = 帮我。I need help = 我需要帮助。,"[{""en"":""Can you help me?"",""zh"":""你能帮我吗？""}]",1
+"基础·基本问答",问与答,what,什么,pron,/wɑːt/,/wɒt/,L1,疑问词什么。What's this? / What is it?,"[{""en"":""What is your name?"",""zh"":""你叫什么名字？""}]",0
+"基础·基本问答",问与答,who,谁,pron,/huː/,/huː/,L1,疑问词谁。Who is he/she?,"[{""en"":""Who is that girl?"",""zh"":""那个女孩是谁？""}]",1
+"基础·基本问答",地点与方位,where,哪里,adv,/wer/,/weə/,L1,疑问词哪里。Where is...? = ...在哪里？,"[{""en"":""Where is the bathroom?"",""zh"":""洗手间在哪里？""}]",0
+"基础·基本问答",地点与方位,here,这里,adv,/hɪr/,/hɪə/,L1,这里/在这儿。It's here = 它在这儿。,"[{""en"":""Your bag is here."",""zh"":""你的包在这里。""}]",1
+"基础·基础动词",动词 be,am,是(第一人称),verb,/æm/,/æm/,L1,be动词第一人称单数形式。I am = 我是。,"[{""en"":""I am a student."",""zh"":""我是学生。""}]",0
+"基础·基础动词",动词 be,is,是(第三人称),verb,/ɪz/,/ɪz/,L1,be动词第三人称单数。He/She/It is。,"[{""en"":""She is a teacher."",""zh"":""她是一名老师。""}]",1
+"基础·基础动词",动词 be,are,是(复数),verb,/ɑːr/,/ɑː/,L1,be动词第二人称和复数。You/We/They are。,"[{""en"":""They are my friends."",""zh""::他们是我的朋友。""}]",2
+"基础·基础动词",常用动作动词,go,去,verb,/ɡoʊ/,/ɡəʊ/,L1,去。go to school / go home。,"[{""en"":""I go to school every day."",""zh"":""我每天去上学。""}]",0
+"基础·基础动词",常用动作动词,eat,吃,verb,/iːt/,/iːt/,L1,吃。eat breakfast / eat lunch / eat dinner。,"[{""en"":""I eat breakfast at 7."",""zh"":""我7点吃早餐。""}]",1
+"基础·基础动词",常用动作动词,drink,喝,verb,/drɪŋk/,/drɪŋk/,L1,喝。drink water / drink tea。,"[{""en"":""I drink tea every morning."",""zh"":""我每天早上喝茶。""}]",2
+"基础·描述事物",大小与颜色,big,大的,adj,/bɪɡ/,/bɪɡ/,L1,大的。反义词: small(小的)。,"[{""en"":""The box is big."",""zh"":""这个盒子很大。""}]",0
+"基础·描述事物",大小与颜色,small,小的,adj,/smɔːl/,/smɔːl/,L1,小的。反义词: big。,"[{""en"":""I have a small dog."",""zh""::我有一只小狗。}],1"
+"基础·描述事物",大小与颜色,red,红色,adj/noun,/red/,/red/,L1,红色。基本颜色之一。,"[{""en"":""My bag is red."",""zh"":""我的包是红色的。""}]",2
+"基础·描述事物",感受与评价,good,好的,adj,/ɡʊd/,/ɡʊd/,L1,好的。最常用的评价形容词。反义词: bad。,"[{""en"":""The food is very good."",""zh"":""这个食物很好。""}]",0
+"基础·描述事物",感受与评价,hot,热的,adj,/hɑːt/,/hɒt/,L1,热的/烫的。反义词: cold(冷的)。,"[{""en"":""The soup is hot."",""zh"":""汤是热的。""}]",1
+"基础·描述事物",感受与评价,happy,开心的,adj,/ˈhæpi/,/ˈhæpi/,L1,开心的/快乐的。I'm happy = 我很开心。,"[{""en"":""I'm happy to see you."",""zh"":""我很高兴见到你。""}]",2

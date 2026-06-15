@@ -1,41 +1,41 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-动词短语 UP 篇,UP 基础短语,"Don't ___! You can do it.",鼓励不放弃,"give up, stop, quit","Don't give up! You can do it.",L1,0
-动词短语 UP 篇,UP 基础短语,"I ___ up at ___ every day.",描述起床,"wake / 7, get / 6","I wake up at 7 every day.",L1,1
-动词短语 UP 篇,UP 在对话中,"Can you pick me up ___?",请求接人,"at the station, after work, at 5","Can you pick me up at the station?",L1,0
-动词短语 UP 篇,UP 在对话中,"He didn't show up ___.",缺席,"for the meeting, at the party","He didn't show up for the meeting.",L2,1
-动词短语 DOWN 篇,DOWN 基础短语,"Please ___ down.",请求坐下/冷静,"sit, calm","Please sit down.",L1,0
-动词短语 DOWN 篇,DOWN 基础短语,"My car ___ down.",故障,"broke","My car broke down.",L2,1
-动词短语 DOWN 篇,DOWN 在对话中,"He ___ down the ___.",拒绝,"turned / offer, turned / invitation","He turned down the job offer.",L2,0
-动词短语 DOWN 篇,DOWN 在对话中,"___ down your ___.",写下来,"Write / ideas, Write / name","Write down your ideas.",L1,1
-动词短语 OUT 篇,OUT 基础短语,"I need to ___ out ___.",查明了解,"find / the truth, figure / this problem","I need to find out the truth.",L2,0
-动词短语 OUT 篇,OUT 基础短语,"I ___ out every ___.",锻炼,"work / day, work / morning","I work out every day.",L1,1
-动词短语 OUT 篇,OUT 在对话中,"I've ___ out of ___.",用完,"run / milk, run / time","I've run out of milk.",L2,0
-动词短语 OUT 篇,OUT 在对话中,"___ this ___!",来看/检查,"Check / out, Try / out","Check this out!",L1,1
-动词短语 OFF 篇,OFF 基础短语,"The plane ___ off at ___.",起飞,"takes / 3 PM, took / noon","The plane takes off at 3 PM.",L1,0
-动词短语 OFF 篇,OFF 基础短语,"Please ___ off the ___.",关掉,"turn / lights, turn / TV","Please turn off the lights.",L1,1
-动词短语 OFF 篇,OFF 在对话中,"Don't ___ off your ___.",拖延,"put / homework, put / work","Don't put off your homework.",L2,0
-动词短语 OFF 篇,OFF 在对话中,"Hard work always ___ off.",回报,"pays","Hard work always pays off.",L2,1
-动词短语 ON 篇,ON 基础短语,"___ on your ___.",穿上/打开,"Put / coat, Turn / the TV","Put on your coat.",L1,0
-动词短语 ON 篇,ON 基础短语,"Carry on with ___.",继续,"your work, your studies","Carry on with your work.",L2,1
-动词短语 ON 篇,ON 在对话中,"What's ___ on?",询问情况,"going","What's going on?",L1,0
-动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,"He finally ___ in.",让步,"gave","He finally gave in.",L2,0
-动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,"___ over ___!",过来/拜访,"Come / tonight, Come / this weekend","Come over tonight!",L1,1
-动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 在对话中,"I'll ___ you back.",回电/回复,"call, get","I'll call you back.",L1,0
-动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 在对话中,"Let me ___ it over.",考虑,"think","Let me think it over.",L2,1
-动词搭配 MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,"I need to ___ a ___.",做决定,"make / decision, make / choice","I need to make a decision.",L2,0
-动词搭配 MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,"She ___ care of ___.",照顾,"takes / her family, takes / the kids","She takes care of her family.",L2,1
-动词搭配 MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,"___ a look at ___!",看一看,"Have / this, Have / my new phone","Have a look at this!",L1,2
-动词搭配 MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,"They ___ business with ___.",做生意,"do / clients, do / many countries","They do business with foreign clients.",L2,3
-动词搭配 GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,"___ ready for ___!",做好准备,"Get / the exam, Get / the trip","Get ready for the exam!",L1,0
-动词搭配 GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,"___ in touch with ___.",保持联系,"Keep / me, Keep / us","Keep in touch with me.",L2,1
-动词搭配 GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,"Her dream ___ true.",实现梦想,"came","Her dream came true.",L2,2
-动词搭配 GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,"We need to ___ up ___.",建立/设置,"set / a system, set / a meeting","We need to set up a system.",L2,3
-介词固定搭配,介词固定搭配基础,"I'm ___ in ___.",对...感兴趣,"interested / music, interested / art","I'm interested in music.",L2,0
-介词固定搭配,介词固定搭配基础,"She is ___ at ___.",擅长,"good / math, good / painting","She is good at math.",L1,1
-介词固定搭配,介词固定搭配基础,"I'm afraid of ___.",害怕,"heights, spiders, flying","I'm afraid of heights.",L1,2
-介词固定搭配,介词固定搭配基础,"It ___ on ___.",取决于,"depends / the weather, depends / you","It depends on the weather.",L2,3
-介词固定搭配,介词固定搭配基础,"Please ___ for ___.",等待,"wait / me, wait / the bus","Please wait for me.",L1,4
-其他高频固定搭配,其他高频固定搭配,"I ___ forward to ___.",期待,"look / your reply, look / meeting you","I look forward to your reply.",L2,0
-其他高频固定搭配,其他高频固定搭配,"He ___ part in ___.",参加,"took / the contest, took / the event","He took part in the contest.",L2,1
-其他高频固定搭配,其他高频固定搭配,"I need to ___ up with ___.",赶上进度,"catch / the news, catch / my friends","I need to catch up with the news.",L2,2
-其他高频固定搭配,其他高频固定搭配,"___ sure you ___.",确保,"Make / lock the door, Make / arrive early","Make sure you lock the door.",L1,3
+动词短语·UP 篇,UP 基础短语,Don't ___! You can do it.,鼓励不放弃,"give up, stop, quit",Don't give up! You can do it.,L1,0
+动词短语·UP 篇,UP 基础短语,I ___ up at ___ every day.,描述起床,"wake / 7, get / 6",I wake up at 7 every day.,L1,1
+动词短语·UP 篇,UP 在对话中,Can you pick me up ___?,请求接人,"at the station, after work, at 5",Can you pick me up at the station?,L1,0
+动词短语·UP 篇,UP 在对话中,He didn't show up ___.,缺席,"for the meeting, at the party",He didn't show up for the meeting.,L2,1
+动词短语·DOWN 篇,DOWN 基础短语,Please ___ down.,请求坐下/冷静,"sit, calm",Please sit down.,L1,0
+动词短语·DOWN 篇,DOWN 基础短语,My car ___ down.,故障,broke,My car broke down.,L2,1
+动词短语·DOWN 篇,DOWN 在对话中,He ___ down the ___.,拒绝,"turned / offer, turned / invitation",He turned down the job offer.,L2,0
+动词短语·DOWN 篇,DOWN 在对话中,___ down your ___.,写下来,"Write / ideas, Write / name",Write down your ideas.,L1,1
+动词短语·OUT 篇,OUT 基础短语,I need to ___ out ___.,查明了解,"find / the truth, figure / this problem",I need to find out the truth.,L2,0
+动词短语·OUT 篇,OUT 基础短语,I ___ out every ___.,锻炼,"work / day, work / morning",I work out every day.,L1,1
+动词短语·OUT 篇,OUT 在对话中,I've ___ out of ___.,用完,"run / milk, run / time",I've run out of milk.,L2,0
+动词短语·OUT 篇,OUT 在对话中,___ this ___!,来看/检查,"Check / out, Try / out",Check this out!,L1,1
+动词短语·OFF 篇,OFF 基础短语,The plane ___ off at ___.,起飞,"takes / 3 PM, took / noon",The plane takes off at 3 PM.,L1,0
+动词短语·OFF 篇,OFF 基础短语,Please ___ off the ___.,关掉,"turn / lights, turn / TV",Please turn off the lights.,L1,1
+动词短语·OFF 篇,OFF 在对话中,Don't ___ off your ___.,拖延,"put / homework, put / work",Don't put off your homework.,L2,0
+动词短语·OFF 篇,OFF 在对话中,Hard work always ___ off.,回报,pays,Hard work always pays off.,L2,1
+动词短语·ON 篇,ON 基础短语,___ on your ___.,穿上/打开,"Put / coat, Turn / the TV",Put on your coat.,L1,0
+动词短语·ON 篇,ON 基础短语,Carry on with ___.,继续,"your work, your studies",Carry on with your work.,L2,1
+动词短语·ON 篇,ON 在对话中,What's ___ on?,询问情况,going,What's going on?,L1,0
+动词短语·IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,He finally ___ in.,让步,gave,He finally gave in.,L2,0
+动词短语·IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,___ over ___!,过来/拜访,"Come / tonight, Come / this weekend",Come over tonight!,L1,1
+动词短语·IN/OVER/BACK 篇,IN/OVER/BACK 在对话中,I'll ___ you back.,回电/回复,"call, get",I'll call you back.,L1,0
+动词短语·IN/OVER/BACK 篇,IN/OVER/BACK 在对话中,Let me ___ it over.,考虑,think,Let me think it over.,L2,1
+动词短语·MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,I need to ___ a ___.,做决定,"make / decision, make / choice",I need to make a decision.,L2,0
+动词短语·MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,She ___ care of ___.,照顾,"takes / her family, takes / the kids",She takes care of her family.,L2,1
+动词短语·MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,___ a look at ___!,看一看,"Have / this, Have / my new phone",Have a look at this!,L1,2
+动词短语·MAKE/TAKE/HAVE/DO,MAKE/TAKE/HAVE/DO基础搭配,They ___ business with ___.,做生意,"do / clients, do / many countries",They do business with foreign clients.,L2,3
+动词短语·GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,___ ready for ___!,做好准备,"Get / the exam, Get / the trip",Get ready for the exam!,L1,0
+动词短语·GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,___ in touch with ___.,保持联系,"Keep / me, Keep / us",Keep in touch with me.,L2,1
+动词短语·GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,Her dream ___ true.,实现梦想,came,Her dream came true.,L2,2
+动词短语·GET/KEEP/SET/COME,GET/KEEP/SET/COME基础搭配,We need to ___ up ___.,建立/设置,"set / a system, set / a meeting",We need to set up a system.,L2,3
+"动词短语·介词固定搭配",介词固定搭配基础,I'm ___ in ___.,对...感兴趣,"interested / music, interested / art",I'm interested in music.,L2,0
+"动词短语·介词固定搭配",介词固定搭配基础,She is ___ at ___.,擅长,"good / math, good / painting",She is good at math.,L1,1
+"动词短语·介词固定搭配",介词固定搭配基础,I'm afraid of ___.,害怕,"heights, spiders, flying",I'm afraid of heights.,L1,2
+"动词短语·介词固定搭配",介词固定搭配基础,It ___ on ___.,取决于,"depends / the weather, depends / you",It depends on the weather.,L2,3
+"动词短语·介词固定搭配",介词固定搭配基础,Please ___ for ___.,等待,"wait / me, wait / the bus",Please wait for me.,L1,4
+"动词短语·其他高频固定搭配",其他高频固定搭配,I ___ forward to ___.,期待,"look / your reply, look / meeting you",I look forward to your reply.,L2,0
+"动词短语·其他高频固定搭配",其他高频固定搭配,He ___ part in ___.,参加,"took / the contest, took / the event",He took part in the contest.,L2,1
+"动词短语·其他高频固定搭配",其他高频固定搭配,I need to ___ up with ___.,赶上进度,"catch / the news, catch / my friends",I need to catch up with the news.,L2,2
+"动词短语·其他高频固定搭配",其他高频固定搭配,___ sure you ___.,确保,"Make / lock the door, Make / arrive early",Make sure you lock the door.,L1,3

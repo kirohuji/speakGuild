@@ -1,21 +1,21 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,My name is... / I'm...,我是... / 我叫...,L2,面试开场自我介绍。My name is [全名], and I'm [简短身份]。,"[{""en"":""My name is Cheng, and I'm a recent graduate."",""zh"":""我叫程，是应届毕业生。"",""level"":""basic""}]"
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,I'm studying...,我在学...,L2,说明当前在读的课程或专业。在读学生用 I'm studying。,"[{""en"":""I'm studying Computer Science at Beijing University."",""zh"":""我在北京大学读计算机科学。"",""level"":""basic""}]"
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,I majored in...,我的专业是...,L2,说明大学主修专业。已毕业用 I majored in，在读用 I'm studying。,"[{""en"":""I majored in Marketing."",""zh"":""我的专业是市场营销。"",""level"":""basic""}]"
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,I have experience in...,我在...方面有经验。,L3,概述经验领域。不要只说"我有经验"，后面跟具体领域。,
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,I'm looking for a position where I can...,我在找一个能让我...的职位。,L3,表达求职期望。让面试官知道你为什么对这个职位感兴趣。,"[{""en"":""I'm looking for a position where I can apply my skills and grow."",""zh"":""我在找一个能让我运用技能并成长的职位。"",""level"":""basic""}]"
-面试自我介绍,描述过往经历,描述过往经历,I have experience in...,我在...方面有经验。,L3,开启经历描述。后面接具体领域：project management / customer service / data analysis 等。,
-面试自我介绍,描述过往经历,描述过往经历,In my previous role, I...,在我之前的职位中，我...,L3,描述前一份工作的具体职责。比 I did... 更职业化。,
-面试自我介绍,描述过往经历,描述过往经历,I was responsible for...,我负责...,L3,说明职责范围。responsible for + 名词/doing。是面试中最常用的职责表达。,
-面试自我介绍,描述过往经历,描述过往经历,One of my achievements was...,我的成就之一是...,L4,展示成果。最好带具体数字：increased sales by 20% / reduced costs 等。,"[{""en"":""One of my achievements was increasing user engagement by 30%."",""zh"":""我的成就之一是将用户参与度提高了30%。"",""level"":""advanced""}]"
-面试自我介绍,描述过往经历,描述过往经历,I learned how to... during that experience.,在那段经历中我学会了...,L3,说明从经历中的成长。展示反思能力(面试官很看重)。,
-面试自我介绍,回答优缺点,回答优缺点,One of my strengths is...,我的一个优势是...,L3,说出优势。strength = 强项。选和工作相关的优势，不要空泛。,
-面试自我介绍,回答优缺点,回答优缺点,I'm good at...,我擅长...,L3,表达擅长的事。比 One of my strengths is... 更口语化一些。,
-面试自我介绍,回答优缺点,回答优缺点,I'm working on improving...,我正在改进...,L3,说缺点的正确方式——不是"I'm bad at"，而是"I'm working on..."。,
-面试自我介绍,回答优缺点,回答优缺点,I'm quite... , which helps me...,我相当...，这帮助我...,L3,优势+效果=一个有说服力的回答。前半说优势词，后半说带来的好处。,"[{""en"":""I'm quite organized, which helps me meet deadlines consistently."",""zh"":""我做事很有条理，这帮助我始终按时完成任务。"",""level"":""basic""}]"
-面试自我介绍,回答优缺点,回答优缺点,To improve, I've started...,为了改进，我已经开始...,L4,说明具体改进行动。上课程、每天练习、主动寻求反馈——行动比态度更有说服力。,
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,I graduated from... with a degree in...,我毕业于...，获得...学位。,L2,说明学历背景。先说大学，再说专业和学位。,"[{""en"":""I graduated from Fudan University with a degree in Economics."",""zh"":""我毕业于复旦大学，获得经济学学位。"",""level"":""basic""}]"
-面试自我介绍,1分钟自我介绍,1分钟自我介绍,I'm particularly interested in this role because...,我对这个职位特别感兴趣，因为...,L4,表达求职动机。不要只说"I need a job"，要说为什么是这家公司、这个职位。,
-面试自我介绍,描述过往经历,描述过往经历,I collaborated with... on...,我与...在...上进行了协作。,L3,描述协作经历。collaborate with 比 work with 更职业化，展示团队能力。,
-面试自我介绍,描述过往经历,描述过往经历,I managed... / I led...,我管理了... / 我领导了...,L4,展示领导力或管理经验。manage 可以是管人也可以是管事。,
-面试自我介绍,回答优缺点,回答优缺点,I'm very... (adaptable / organized / proactive).,我非常...(适应力强/有条理/积极主动)。,L3,面试高频形容词。adaptable(适应力强)、proactive(积极主动)、reliable(可靠)都很受欢迎。,
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,My name is... / I'm...,我是... / 我叫...,L2,面试开场自我介绍。My name is [全名], and I'm [简短身份]。,"[{""en"":""My name is Cheng, and I'm a recent graduate."",""zh"":""我叫程，是应届毕业生。"",""level"":""basic""}]"
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,I'm studying...,我在学...,L2,说明当前在读的课程或专业。在读学生用 I'm studying。,"[{""en"":""I'm studying Computer Science at Beijing University."",""zh"":""我在北京大学读计算机科学。"",""level"":""basic""}]"
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,I majored in...,我的专业是...,L2,说明大学主修专业。已毕业用 I majored in，在读用 I'm studying。,"[{""en"":""I majored in Marketing."",""zh"":""我的专业是市场营销。"",""level"":""basic""}]"
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,I have experience in...,我在...方面有经验。,L3,概述经验领域。不要只说我有经验，后面跟具体领域。,
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,I'm looking for a position where I can...,我在找一个能让我...的职位。,L3,表达求职期望。让面试官知道你为什么对这个职位感兴趣。,"[{""en"":""I'm looking for a position where I can apply my skills and grow."",""zh"":""我在找一个能让我运用技能并成长的职位。"",""level"":""basic""}]"
+"职场·面试自我介绍",描述过往经历,描述过往经历,I have experience in...,我在...方面有经验。,L3,开启经历描述。后面接具体领域：project management / customer service / data analysis 等。,
+"职场·面试自我介绍",描述过往经历,描述过往经历,In my previous role, I...,在我之前的职位中，我...,L3,描述前一份工作的具体职责。比 I did... 更职业化。,
+"职场·面试自我介绍",描述过往经历,描述过往经历,I was responsible for...,我负责...,L3,说明职责范围。responsible for + 名词/doing。是面试中最常用的职责表达。,
+"职场·面试自我介绍",描述过往经历,描述过往经历,One of my achievements was...,我的成就之一是...,L4,展示成果。最好带具体数字：increased sales by 20% / reduced costs 等。,"[{""en"":""One of my achievements was increasing user engagement by 30%."",""zh"":""我的成就之一是将用户参与度提高了30%。"",""level"":""advanced""}]"
+"职场·面试自我介绍",描述过往经历,描述过往经历,I learned how to... during that experience.,在那段经历中我学会了...,L3,说明从经历中的成长。展示反思能力(面试官很看重)。,
+"职场·面试自我介绍",回答优缺点,回答优缺点,One of my strengths is...,我的一个优势是...,L3,说出优势。strength = 强项。选和工作相关的优势，不要空泛。,
+"职场·面试自我介绍",回答优缺点,回答优缺点,I'm good at...,我擅长...,L3,表达擅长的事。比 One of my strengths is... 更口语化一些。,
+"职场·面试自我介绍",回答优缺点,回答优缺点,I'm working on improving...,我正在改进...,L3,说缺点的正确方式——不是I'm bad at，而是I'm working on...。,
+"职场·面试自我介绍",回答优缺点,回答优缺点,I'm quite... , which helps me...,我相当...，这帮助我...,L3,优势+效果=一个有说服力的回答。前半说优势词，后半说带来的好处。,"[{""en"":""I'm quite organized, which helps me meet deadlines consistently."",""zh"":""我做事很有条理，这帮助我始终按时完成任务。"",""level"":""basic""}]"
+"职场·面试自我介绍",回答优缺点,回答优缺点,To improve, I've started...,为了改进，我已经开始...,L4,说明具体改进行动。上课程、每天练习、主动寻求反馈——行动比态度更有说服力。,
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,I graduated from... with a degree in...,我毕业于...，获得...学位。,L2,说明学历背景。先说大学，再说专业和学位。,"[{""en"":""I graduated from Fudan University with a degree in Economics."",""zh"":""我毕业于复旦大学，获得经济学学位。"",""level"":""basic""}]"
+"职场·面试自我介绍",1分钟自我介绍,1分钟自我介绍,I'm particularly interested in this role because...,我对这个职位特别感兴趣，因为...,L4,表达求职动机。不要只说I need a job，要说为什么是这家公司、这个职位。,
+"职场·面试自我介绍",描述过往经历,描述过往经历,I collaborated with... on...,我与...在...上进行了协作。,L3,描述协作经历。collaborate with 比 work with 更职业化，展示团队能力。,
+"职场·面试自我介绍",描述过往经历,描述过往经历,I managed... / I led...,我管理了... / 我领导了...,L4,展示领导力或管理经验。manage 可以是管人也可以是管事。,
+"职场·面试自我介绍",回答优缺点,回答优缺点,I'm very... (adaptable / organized / proactive).,我非常...(适应力强/有条理/积极主动)。,L3,面试高频形容词。adaptable(适应力强)、proactive(积极主动)、reliable(可靠)都很受欢迎。,

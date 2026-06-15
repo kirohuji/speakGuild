@@ -1,4 +1,4 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-chapter_1,面试通关,1,1分钟自我介绍,面试自我介绍,L3,1,3,10,2,7,"[""做1分钟自我介绍"",""说明姓名和专业"",""说明经验领域"",""表达求职意向""]",2,2,2,Olivia,HR经理,true,practice_workplace_面试自我介绍_1分钟自我介绍,"{""xp"":30}"
-chapter_1,面试通关,2,描述过往经历,面试自我介绍,L3,1,3,9,2,7,"[""描述实习或工作经历"",""说明具体职责"",""展示项目成果"",""说明从经历中学到的""]",2,2,2,Olivia,HR经理,false,practice_workplace_面试自我介绍_描述过往经历,"{""xp"":30}"
-chapter_1,面试通关,3,回答优缺点,面试自我介绍,L3,1,3,9,2,6,"[""说明自己的优势"",""诚恳表述待改进之处"",""说明改进计划"",""展示自我认知""]",2,2,2,Olivia,HR经理,false,practice_workplace_面试自我介绍_回答优缺点,"{""xp"":30}"
+chapter_1,面试通关,1,1分钟自我介绍,"职场·面试自我介绍",L3,1,3,10,2,7,"[""做1分钟自我介绍"",""说明姓名和专业"",""说明经验领域"",""表达求职意向""]",2,2,2,Olivia,HR经理,true,practice_workplace_面试自我介绍_1分钟自我介绍,"{""xp"":30}"
+chapter_1,面试通关,2,描述过往经历,"职场·面试自我介绍",L3,1,3,9,2,7,"[""描述实习或工作经历"",""说明具体职责"",""展示项目成果"",""说明从经历中学到的""]",2,2,2,Olivia,HR经理,false,practice_workplace_面试自我介绍_描述过往经历,"{""xp"":30}"
+chapter_1,面试通关,3,回答优缺点,"职场·面试自我介绍",L3,1,3,9,2,6,"[""说明自己的优势"",""诚恳表述待改进之处"",""说明改进计划"",""展示自我认知""]",2,2,2,Olivia,HR经理,false,practice_workplace_面试自我介绍_回答优缺点,"{""xp"":30}"

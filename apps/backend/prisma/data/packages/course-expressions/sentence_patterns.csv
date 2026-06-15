@@ -1,16 +1,16 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-副词精练,频率与程度,"I ___ (freq) ___ (verb).",频率副词,"always / have breakfast, never / smoke, often / read","I always have breakfast.",L1,0
-副词精练,频率与程度,"It's ___ (degree) ___.",程度副词,"quite / good, very / expensive, extremely / hot","It's quite good.",L1,1
-副词精练,方式与评论,"Please ___ (adv of manner).",方式副词,"drive carefully, speak clearly, write neatly","Please drive carefully.",L1,0
-副词精练,方式与评论,"___ (comment adv), ___.",评论副词句首,"Luckily / I made it, Frankly / I don't care","Luckily I made it.",L2,1
-时间表达,时间介词,"The ___ is on ___.",on+具体日期,"meeting / Monday, party / Friday","The meeting is on Monday.",L1,0
-时间表达,时间介词,"I was born in ___.",in+月份,"March, June, October","I was born in March.",L1,1
-时间表达,时间介词,"___ starts at ___.",at+时间,"The class / 9 AM, The movie / 7 PM","The class starts at 9 AM.",L1,2
-时间表达,时间连词与顺序,"Before ___, I ___.",before之前,"going out / check the weather, sleeping / read","Before sleeping I read a book.",L1,0
-时间表达,时间连词与顺序,"After ___, I ___.",after之后,"finishing work / go to the gym, waking up / have breakfast","After finishing work I go to the gym.",L1,1
-时间表达,时间连词与顺序,"While ___, I ___.",while同时,"cooking / listen to music, studying / take notes","While cooking I listen to music.",L2,2
-方位与指路,方位介词,"The ___ is in/on/at ___.",方位,"cat / on / sofa, milk / in / fridge, keys / on / table","The cat is on the sofa.",L1,0
-方位与指路,方位介词,"The ___ is next to / between ___.",相对位置,"bank / next to / the hotel, store / between / bank and post office","The bank is next to the hotel.",L1,1
-方位与指路,指路表达,"Go straight until ___.",直走,"you see the traffic lights, the end of the street","Go straight until you see the traffic lights.",L1,0
-方位与指路,指路表达,"Turn ___ at ___.",转弯,"left / the corner, right / the traffic lights","Turn left at the corner.",L1,1
-方位与指路,指路表达,"It's on the ___ / opposite ___.",地标,"corner / opposite the bank, right / next to the station","It's on the corner opposite the bank.",L1,2
+"表达·副词精练",频率与程度,I ___ (freq) ___ (verb).,频率副词,"always / have breakfast, never / smoke, often / read",I always have breakfast.,L1,0
+"表达·副词精练",频率与程度,It's ___ (degree) ___.,程度副词,"quite / good, very / expensive, extremely / hot",It's quite good.,L1,1
+"表达·副词精练",方式与评论,Please ___ (adv of manner).,方式副词,"drive carefully, speak clearly, write neatly",Please drive carefully.,L1,0
+"表达·副词精练",方式与评论,"___ (comment adv), ___.",评论副词句首,"Luckily / I made it, Frankly / I don't care",Luckily I made it.,L2,1
+"表达·时间表达",时间介词,The ___ is on ___.,on+具体日期,"meeting / Monday, party / Friday",The meeting is on Monday.,L1,0
+"表达·时间表达",时间介词,I was born in ___.,in+月份,"March, June, October",I was born in March.,L1,1
+"表达·时间表达",时间介词,___ starts at ___.,at+时间,"The class / 9 AM, The movie / 7 PM",The class starts at 9 AM.,L1,2
+"表达·时间表达",时间连词与顺序,"Before ___, I ___.",before之前,"going out / check the weather, sleeping / read",Before sleeping I read a book.,L1,0
+"表达·时间表达",时间连词与顺序,"After ___, I ___.",after之后,"finishing work / go to the gym, waking up / have breakfast",After finishing work I go to the gym.,L1,1
+"表达·时间表达",时间连词与顺序,"While ___, I ___.",while同时,"cooking / listen to music, studying / take notes",While cooking I listen to music.,L2,2
+"表达·方位与指路",方位介词,The ___ is in/on/at ___.,方位,"cat / on / sofa, milk / in / fridge, keys / on / table",The cat is on the sofa.,L1,0
+"表达·方位与指路",方位介词,The ___ is next to / between ___.,相对位置,"bank / next to / the hotel, store / between / bank and post office",The bank is next to the hotel.,L1,1
+"表达·方位与指路",指路表达,Go straight until ___.,直走,"you see the traffic lights, the end of the street",Go straight until you see the traffic lights.,L1,0
+"表达·方位与指路",指路表达,Turn ___ at ___.,转弯,"left / the corner, right / the traffic lights",Turn left at the corner.,L1,1
+"表达·方位与指路",指路表达,It's on the ___ / opposite ___.,地标,"corner / opposite the bank, right / next to the station",It's on the corner opposite the bank.,L1,2

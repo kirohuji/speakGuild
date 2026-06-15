@@ -1,11 +1,11 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-并列与转折,并列连接,"I was ___, but I ___.",but转折,"tired / finished, busy / helped","I was tired but I finished.",L1,0
-并列与转折,并列连接,"She likes ___ and ___.",and并列,"reading / swimming, cooking / baking","She likes reading and swimming.",L1,1
-并列与转折,对比与选择,"He is ___, whereas I am ___.",whereas对比,"outgoing / shy, tall / short","He is outgoing whereas I am shy.",L3,0
-因果与让步,因果关系,"I ___ because ___.",because原因,"stayed home / I was sick, was late / I missed the bus","I stayed home because I was sick.",L1,0
-因果与让步,因果关系,"___, therefore ___.",therefore结果,"He didn't study / he failed the exam","He didn't study, therefore he failed.",L2,1
-因果与让步,让步关系,"Although ___, ___." ,although让步,"it rained / we went out, I was tired / I kept working","Although it rained, we went out.",L2,0
-从句与复杂句,时间与条件从句,"When ___, ___.",when时间,"I arrived / they were eating, I got home / I cooked dinner","When I arrived, they were eating.",L1,0
-从句与复杂句,时间与条件从句,"If ___, I will ___.",if条件,"it rains / stay home, I have time / help you","If it rains, I will stay home.",L1,1
-从句与复杂句,定语从句,"The person who ___ is ___.",who定语,"helped me / very kind, sits next to me / my friend","The person who helped me is very kind.",L2,0
-从句与复杂句,定语从句,"The book which I ___ was ___.",which定语,"read / interesting, borrowed / great","The book which I read was interesting.",L2,1
+"连接词·并列与转折",并列连接,"I was ___, but I ___.",but转折,"tired / finished, busy / helped",I was tired but I finished.,L1,0
+"连接词·并列与转折",并列连接,She likes ___ and ___.,and并列,"reading / swimming, cooking / baking",She likes reading and swimming.,L1,1
+"连接词·并列与转折",对比与选择,"He is ___, whereas I am ___.",whereas对比,"outgoing / shy, tall / short",He is outgoing whereas I am shy.,L3,0
+"连接词·因果与让步",因果关系,I ___ because ___.,because原因,"stayed home / I was sick, was late / I missed the bus",I stayed home because I was sick.,L1,0
+"连接词·因果与让步",因果关系,"___, therefore ___.",therefore结果,He didn't study / he failed the exam,"He didn't study, therefore he failed.",L2,1
+"连接词·因果与让步",让步关系,"Although ___, ___. ",although让步,"it rained / we went out, I was tired / I kept working","Although it rained, we went out.",L2,0
+"连词·从句与复杂句",时间与条件从句,"When ___, ___.",when时间,"I arrived / they were eating, I got home / I cooked dinner","When I arrived, they were eating.",L1,0
+"连词·从句与复杂句",时间与条件从句,"If ___, I will ___.",if条件,"it rains / stay home, I have time / help you","If it rains, I will stay home.",L1,1
+"连词·从句与复杂句",定语从句,The person who ___ is ___.,who定语,"helped me / very kind, sits next to me / my friend",The person who helped me is very kind.,L2,0
+"连词·从句与复杂句",定语从句,The book which I ___ was ___.,which定语,"read / interesting, borrowed / great",The book which I read was interesting.,L2,1

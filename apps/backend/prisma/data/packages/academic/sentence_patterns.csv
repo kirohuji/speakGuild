@@ -1,25 +1,25 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-IELTS Band 6 基础,家乡与住所,"My hometown is a ___ in ___.",描述家乡,"small city / China, coastal town / Japan","My hometown is a small city in China.",L1,0
-IELTS Band 6 基础,家乡与住所,"I live in a ___ near ___.",描述住所,"flat / the city center, house / the university","I live in a flat near the city center.",L1,1
-IELTS Band 6 基础,学习与工作,"I'm studying ___ at ___.",说明学习,"Computer Science / university, Business / college","I'm studying Computer Science at university.",L1,0
-IELTS Band 6 基础,学习与工作,"I work as a ___ for ___.",说明工作,"teacher / a school, engineer / a company","I work as a teacher for a school.",L1,1
-IELTS Band 6.5 发展,兴趣爱好,"In my free time, I like to ___.",描述爱好,"read, take photos, play sports","In my free time, I like to take photos.",L1,0
-IELTS Band 6.5 发展,兴趣爱好,"I got into ___ when I was ___.",爱好如何开始,"photography / 15, painting / in high school","I got into photography when I was 15.",L2,1
-IELTS Band 6.5 发展,交通出行,"I usually take ___ to ___.",交通方式,"the bus / work, the subway / school","I usually take the bus to work.",L1,0
-IELTS Band 6.5 发展,交通出行,"I prefer ___ because ___.",表达偏好,"walking / it's healthy, driving / it's fast","I prefer walking because it's healthy.",L2,1
-IELTS Band 7 良好,推荐旅游地,"The place I'd like to recommend is ___.",P2开场句,"a small town in Yunnan, a coastal city in Spain","The place I'd like to recommend is a small town in Yunnan.",L3,0
-IELTS Band 7 良好,推荐旅游地,"I would recommend it because ___.",推荐理由,"the view is amazing, it's not too touristy","I would recommend it because the view is amazing.",L2,1
-IELTS Band 7 良好,城市发展,"While tourism brings ___, it also ___.",利弊论述,"economic benefits / harms the environment","While tourism brings economic benefits, it also harms the environment.",L4,0
-IELTS Band 7 良好,城市发展,"One way to solve this is ___.",解决方案,"to limit visitor numbers, to promote eco-tourism","One way to solve this is to limit visitor numbers.",L3,1
-IELTS Band 7.5 优良,印象深刻的人,"The person I'd like to describe is ___.",P2人物开场,"my teacher, an old friend, a stranger I met","The person I'd like to describe is my teacher.",L3,0
-IELTS Band 7.5 优良,印象深刻的人,"What impressed me most was ___.",最深的印象,"his kindness, her creativity, their generosity","What impressed me most was his kindness.",L3,1
-IELTS Band 7.5 优良,科技与社交,"Technology has changed how we ___.",谈变化,"communicate, interact, maintain relationships","Technology has changed how we communicate.",L3,0
-IELTS Band 7.5 优良,科技与社交,"On the one hand ___. On the other hand ___.",对比论证,"it connects us / it isolates us","On the one hand it connects us. On the other hand it isolates us.",L4,1
-IELTS Band 8 优秀,难忘的经历,"One of the most memorable experiences was ___.",P2经历开场,"volunteering abroad, studying overseas","One of the most memorable experiences was volunteering abroad.",L4,0
-IELTS Band 8 优秀,难忘的经历,"This experience taught me that ___.",感悟,"perseverance pays off, failure is part of growth","This experience taught me that failure is part of growth.",L4,1
-IELTS Band 8 优秀,教育与社会,"The role of education is to ___.",教育的作用,"prepare students for life, develop critical thinking","The role of education is to develop critical thinking.",L4,0
-IELTS Band 8 优秀,教育与社会,"___ is more effective than ___ because ___.",比较,"Interactive learning / rote memorization / it engages students","Interactive learning is more effective than rote memorization.",L4,1
-IELTS Band 8.5 卓越,理想的改变,"The change I'd like to see is ___.",P2抽象开场,"greater environmental awareness, more equality","The change I'd like to see is greater environmental awareness.",L4,0
-IELTS Band 8.5 卓越,理想的改变,"If I could change one thing, ___.",表达愿景,"I would reduce pollution, I would promote education","If I could change one thing, I would promote education.",L4,1
-IELTS Band 8.5 卓越,全球化与文化,"Globalization has led to ___.",P3开场,"cultural exchange, economic growth, homogenization","Globalization has led to greater cultural exchange.",L4,0
-IELTS Band 8.5 卓越,全球化与文化,"It's important to strike a balance between ___.",平衡观点,"development / tradition, globalization / cultural preservation","It's important to strike a balance between development and tradition.",L4,1
+"雅思·IELTS Band 6 基础",家乡与住所,My hometown is a ___ in ___.,描述家乡,"small city / China, coastal town / Japan",My hometown is a small city in China.,L1,0
+"雅思·IELTS Band 6 基础",家乡与住所,I live in a ___ near ___.,描述住所,"flat / the city center, house / the university",I live in a flat near the city center.,L1,1
+"雅思·IELTS Band 6 基础",学习与工作,I'm studying ___ at ___.,说明学习,"Computer Science / university, Business / college",I'm studying Computer Science at university.,L1,0
+"雅思·IELTS Band 6 基础",学习与工作,I work as a ___ for ___.,说明工作,"teacher / a school, engineer / a company",I work as a teacher for a school.,L1,1
+"雅思·IELTS Band 6.5 发展",兴趣爱好,"In my free time, I like to ___.",描述爱好,"read, take photos, play sports","In my free time, I like to take photos.",L1,0
+"雅思·IELTS Band 6.5 发展",兴趣爱好,I got into ___ when I was ___.,爱好如何开始,"photography / 15, painting / in high school",I got into photography when I was 15.,L2,1
+"雅思·IELTS Band 6.5 发展",交通出行,I usually take ___ to ___.,交通方式,"the bus / work, the subway / school",I usually take the bus to work.,L1,0
+"雅思·IELTS Band 6.5 发展",交通出行,I prefer ___ because ___.,表达偏好,"walking / it's healthy, driving / it's fast",I prefer walking because it's healthy.,L2,1
+"雅思·IELTS Band 7 良好",推荐旅游地,The place I'd like to recommend is ___.,P2开场句,"a small town in Yunnan, a coastal city in Spain",The place I'd like to recommend is a small town in Yunnan.,L3,0
+"雅思·IELTS Band 7 良好",推荐旅游地,I would recommend it because ___.,推荐理由,"the view is amazing, it's not too touristy",I would recommend it because the view is amazing.,L2,1
+"雅思·IELTS Band 7 良好",城市发展,"While tourism brings ___, it also ___.",利弊论述,economic benefits / harms the environment,"While tourism brings economic benefits, it also harms the environment.",L4,0
+"雅思·IELTS Band 7 良好",城市发展,One way to solve this is ___.,解决方案,"to limit visitor numbers, to promote eco-tourism",One way to solve this is to limit visitor numbers.,L3,1
+"雅思·IELTS Band 7.5 优良",印象深刻的人,The person I'd like to describe is ___.,P2人物开场,"my teacher, an old friend, a stranger I met",The person I'd like to describe is my teacher.,L3,0
+"雅思·IELTS Band 7.5 优良",印象深刻的人,What impressed me most was ___.,最深的印象,"his kindness, her creativity, their generosity",What impressed me most was his kindness.,L3,1
+"雅思·IELTS Band 7.5 优良",科技与社交,Technology has changed how we ___.,谈变化,"communicate, interact, maintain relationships",Technology has changed how we communicate.,L3,0
+"雅思·IELTS Band 7.5 优良",科技与社交,On the one hand ___. On the other hand ___.,对比论证,it connects us / it isolates us,On the one hand it connects us. On the other hand it isolates us.,L4,1
+"雅思·IELTS Band 8 优秀",难忘的经历,One of the most memorable experiences was ___.,P2经历开场,"volunteering abroad, studying overseas",One of the most memorable experiences was volunteering abroad.,L4,0
+"雅思·IELTS Band 8 优秀",难忘的经历,This experience taught me that ___.,感悟,"perseverance pays off, failure is part of growth",This experience taught me that failure is part of growth.,L4,1
+"雅思·IELTS Band 8 优秀",教育与社会,The role of education is to ___.,教育的作用,"prepare students for life, develop critical thinking",The role of education is to develop critical thinking.,L4,0
+"雅思·IELTS Band 8 优秀",教育与社会,___ is more effective than ___ because ___.,比较,Interactive learning / rote memorization / it engages students,Interactive learning is more effective than rote memorization.,L4,1
+"雅思·IELTS Band 8.5 卓越",理想的改变,The change I'd like to see is ___.,P2抽象开场,"greater environmental awareness, more equality",The change I'd like to see is greater environmental awareness.,L4,0
+"雅思·IELTS Band 8.5 卓越",理想的改变,"If I could change one thing, ___.",表达愿景,"I would reduce pollution, I would promote education","If I could change one thing, I would promote education.",L4,1
+"雅思·IELTS Band 8.5 卓越",全球化与文化,Globalization has led to ___.,P3开场,"cultural exchange, economic growth, homogenization",Globalization has led to greater cultural exchange.,L4,0
+"雅思·IELTS Band 8.5 卓越",全球化与文化,It's important to strike a balance between ___.,平衡观点,"development / tradition, globalization / cultural preservation",It's important to strike a balance between development and tradition.,L4,1

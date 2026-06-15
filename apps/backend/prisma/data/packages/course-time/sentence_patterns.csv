@@ -1,16 +1,16 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-时间介词,时间点与时间段,"The meeting starts ___ 3 PM.",在时间点,"at","The meeting starts at 3 PM.",L1,0
-时间介词,时间点与时间段,"I was born ___ March.",在月份/年份,"in","I was born in March.",L1,1
-时间介词,时间点与时间段,"We'll meet ___ Monday.",在星期/日期,"on","We'll meet on Monday.",L1,2
-时间介词,持续与起止,"He fell asleep ___ the movie.",在...期间,"during","He fell asleep during the movie.",L2,0
-时间介词,持续与起止,"I've been here ___ 9 AM.",自从,"since","I've been here since 9 AM.",L2,1
-时间介词,持续与起止,"I studied ___ three hours.",持续时长,"for","I studied for three hours.",L1,2
-时间介词,持续与起止,"The store is open ___ 9 PM.",直到,"until","The store is open until 9 PM.",L1,3
-时间介词,持续与起止,"Please finish ___ Friday.",截止到,"by","Please finish by Friday.",L2,4
-时间连词与顺序,先后顺序,"Wash your hands ___ you eat.",在...之前,"before","Wash your hands before you eat.",L1,0
-时间连词与顺序,先后顺序,"We went out ___ dinner.",在...之后,"after","We went out after dinner.",L1,1
-时间连词与顺序,先后顺序,"___ mix the flour and eggs.",首先,"First","First mix the flour and eggs.",L1,2
-时间连词与顺序,先后顺序,"First shower ___ get dressed.",然后,"then","First shower then get dressed.",L1,3
-时间连词与顺序,同时与截止,"___ she arrived we had dinner.",当...时,"When","When she arrived we had dinner.",L1,0
-时间连词与顺序,同时与截止,"She listened to music ___ studying.",同时持续,"while","She listened to music while studying.",L2,1
-时间连词与顺序,同时与截止,"___ I got older I changed.",随着,"As","As I got older I changed.",L2,2
+"时间·时间介词",时间点与时间段,The meeting starts ___ 3 PM.,在时间点,at,The meeting starts at 3 PM.,L1,0
+"时间·时间介词",时间点与时间段,I was born ___ March.,在月份/年份,in,I was born in March.,L1,1
+"时间·时间介词",时间点与时间段,We'll meet ___ Monday.,在星期/日期,on,We'll meet on Monday.,L1,2
+"时间·时间介词",持续与起止,He fell asleep ___ the movie.,在...期间,during,He fell asleep during the movie.,L2,0
+"时间·时间介词",持续与起止,I've been here ___ 9 AM.,自从,since,I've been here since 9 AM.,L2,1
+"时间·时间介词",持续与起止,I studied ___ three hours.,持续时长,for,I studied for three hours.,L1,2
+"时间·时间介词",持续与起止,The store is open ___ 9 PM.,直到,until,The store is open until 9 PM.,L1,3
+"时间·时间介词",持续与起止,Please finish ___ Friday.,截止到,by,Please finish by Friday.,L2,4
+"时间·时间连词与顺序",先后顺序,Wash your hands ___ you eat.,在...之前,before,Wash your hands before you eat.,L1,0
+"时间·时间连词与顺序",先后顺序,We went out ___ dinner.,在...之后,after,We went out after dinner.,L1,1
+"时间·时间连词与顺序",先后顺序,___ mix the flour and eggs.,首先,First,First mix the flour and eggs.,L1,2
+"时间·时间连词与顺序",先后顺序,First shower ___ get dressed.,然后,then,First shower then get dressed.,L1,3
+"时间·时间连词与顺序",同时与截止,___ she arrived we had dinner.,当...时,When,When she arrived we had dinner.,L1,0
+"时间·时间连词与顺序",同时与截止,She listened to music ___ studying.,同时持续,while,She listened to music while studying.,L2,1
+"时间·时间连词与顺序",同时与截止,___ I got older I changed.,随着,As,As I got older I changed.,L2,2

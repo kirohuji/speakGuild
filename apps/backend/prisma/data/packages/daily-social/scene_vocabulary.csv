@@ -1,19 +1,19 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-咖啡店点餐,点咖啡,latte,拿铁,noun,/ˈlɑːteɪ/,/ˈlæteɪ/,L1,意式咖啡经典款。浓缩咖啡+蒸牛奶。,"[{""en"":""I'll have a latte, please."",""zh"":""我要一杯拿铁。""}]",0
-咖啡店点餐,点咖啡,cappuccino,卡布奇诺,noun,/ˌkæpuˈtʃiːnoʊ/,/ˌkæpuˈtʃiːnəʊ/,L1,浓缩+蒸奶泡。比拿铁奶泡更多。,"[{""en"":""A cappuccino with extra foam, please."",""zh"":""一杯卡布奇诺，多加奶泡。""}]",1
-咖啡店点餐,点咖啡,espresso,浓缩咖啡,noun,/eˈspresoʊ/,/eˈspresəʊ/,L1,浓缩咖啡。咖啡基底，小杯但咖啡因浓度高。,"[{""en"":""I'd like a double espresso."",""zh"":""我要一杯双份浓缩咖啡。""}]",2
-咖啡店点餐,点咖啡,regular,中杯,noun,/ˈreɡjələr/,/ˈreɡjʊlə/,L1,标准杯型。比 small 大，比 large 小。,"[{""en"":""I'll take a regular size."",""zh"":""我要中杯。""}]",3
-咖啡店点餐,修改订单,extra shot,加一份浓缩,noun,/ˈekstrə ʃɑːt/,/ˈekstrə ʃɒt/,L2,多加一份浓缩咖啡。通常要加钱。,"[{""en"":""Can I get an extra shot in my latte?"",""zh"":""我的拿铁能加一份浓缩吗？""}]",0
-咖啡店点餐,办理会员卡,loyalty card,会员卡,noun,/ˈlɔɪəlti kɑːrd/,/ˈlɔɪəlti kɑːd/,L2,积分卡/会员卡。集满几点换一杯免费饮品。,"[{""en"":""Get a stamp on your loyalty card."",""zh"":""在你的会员卡上盖个章。""}]",0
-咖啡店点餐,投诉饮品,refund,退款,noun/verb,/ˈriːfʌnd/,/ˈriːfʌnd/,L2,退款。get a refund / ask for a refund。,"[{""en"":""I'd like a refund please."",""zh"":""我想退款。""}]",0
-超市购物,询问商品位置,aisle,货架通道,noun,/aɪl/,/aɪl/,L1,超市货架间的通道。问路常用: Which aisle?,"[{""en"":""Which aisle can I find pasta?"",""zh"":""意大利面在哪个货架通道？""}]",0
-超市购物,询问商品位置,in stock,有货,phrase,/ɪn stɑːk/,/ɪn stɒk/,L1,商品有库存。out of stock = 缺货。,"[{""en"":""Is this item in stock?"",""zh"":":"这个商品有货吗？""}]",1
-超市购物,退货,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,退货必须出示收据。keep your receipt = 保管好收据。,"[{""en"":""Do you have the receipt for this item?"",""zh"":""你有这个商品的收据吗？""}]",0
-超市购物,退货,exchange,换货,verb,/ɪksˈtʃeɪndʒ/,/ɪksˈtʃeɪndʒ/,L1,换货。exchange for a different size/color。,"[{""en"":""Can I exchange this for a different size?"",""zh"":":"我能换一个尺寸吗？""}]",1
-超市购物,优惠活动,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣/优惠。student discount / 10% off。,"[{""en"":""Is there a discount for students?"",""zh"":""学生有折扣吗？""}]",0
-超市购物,自助结账,self-checkout,自助结账,noun,/self ˈtʃekaʊt/,/self ˈtʃekaʊt/,L1,自助结账机。scan and pay by yourself。,"[{""en"":""You can use the self-checkout machines."",""zh"":""你可以用自助结账机。""}]",0
-超市购物,自助结账,scanner,扫码器,noun,/ˈskænər/,/ˈskænə/,L1,自助结账机的扫码器。scan the barcode。,"[{""en"":""Hold the barcode under the scanner."",""zh"":""把条形码放在扫码器下面。""}]",1
-朋友聚会,邀请朋友,invitation,邀请,noun,/ˌɪnvɪˈteɪʃən/,/ˌɪnvɪˈteɪʃən/,L1,邀请。send an invitation = 发出邀请。,"[{""en"":""Thanks for the invitation! I'd love to come."",""zh"":""谢谢邀请！我很愿意来。""}]",0
-朋友聚会,商量计划,plan,计划,noun,/plæn/,/plæn/,L1,计划。make plans = 做计划。change plans = 改变计划。,"[{""en"":""What's the plan for this weekend?"",""zh"":""这周末有什么计划？""}]",0
-朋友聚会,确认参加,confirm,确认,verb,/kənˈfɜːrm/,/kənˈfɜːm/,L1,确认参加。confirm attendance = 确认出席。,"[{""en"":""Can you confirm if you can come?"",""zh"":""你能确认是否能来吗？""}]",0
-朋友聚会,提议活动,suggestion,建议,noun,/səˈdʒestʃən/,/səˈdʒestʃən/,L1,建议/提议。make a suggestion = 提建议。,"[{""en"":""That's a great suggestion!"",""zh"":""好建议！""}]",0
+"日常·咖啡店点餐",点咖啡,latte,拿铁,noun,/ˈlɑːteɪ/,/ˈlæteɪ/,L1,意式咖啡经典款。浓缩咖啡+蒸牛奶。,"[{""en"":""I'll have a latte, please."",""zh"":""我要一杯拿铁。""}]",0
+"日常·咖啡店点餐",点咖啡,cappuccino,卡布奇诺,noun,/ˌkæpuˈtʃiːnoʊ/,/ˌkæpuˈtʃiːnəʊ/,L1,浓缩+蒸奶泡。比拿铁奶泡更多。,"[{""en"":""A cappuccino with extra foam, please."",""zh"":""一杯卡布奇诺，多加奶泡。""}]",1
+"日常·咖啡店点餐",点咖啡,espresso,浓缩咖啡,noun,/eˈspresoʊ/,/eˈspresəʊ/,L1,浓缩咖啡。咖啡基底，小杯但咖啡因浓度高。,"[{""en"":""I'd like a double espresso."",""zh"":""我要一杯双份浓缩咖啡。""}]",2
+"日常·咖啡店点餐",点咖啡,regular,中杯,noun,/ˈreɡjələr/,/ˈreɡjʊlə/,L1,标准杯型。比 small 大，比 large 小。,"[{""en"":""I'll take a regular size."",""zh"":""我要中杯。""}]",3
+"日常·咖啡店点餐",修改订单,extra shot,加一份浓缩,noun,/ˈekstrə ʃɑːt/,/ˈekstrə ʃɒt/,L2,多加一份浓缩咖啡。通常要加钱。,"[{""en"":""Can I get an extra shot in my latte?"",""zh"":""我的拿铁能加一份浓缩吗？""}]",0
+"日常·咖啡店点餐",办理会员卡,loyalty card,会员卡,noun,/ˈlɔɪəlti kɑːrd/,/ˈlɔɪəlti kɑːd/,L2,积分卡/会员卡。集满几点换一杯免费饮品。,"[{""en"":""Get a stamp on your loyalty card."",""zh"":""在你的会员卡上盖个章。""}]",0
+"日常·咖啡店点餐",投诉饮品,refund,退款,noun/verb,/ˈriːfʌnd/,/ˈriːfʌnd/,L2,退款。get a refund / ask for a refund。,"[{""en"":""I'd like a refund please."",""zh"":""我想退款。""}]",0
+"日常·超市购物",询问商品位置,aisle,货架通道,noun,/aɪl/,/aɪl/,L1,超市货架间的通道。问路常用: Which aisle?,"[{""en"":""Which aisle can I find pasta?"",""zh"":""意大利面在哪个货架通道？""}]",0
+"日常·超市购物",询问商品位置,in stock,有货,phrase,/ɪn stɑːk/,/ɪn stɒk/,L1,商品有库存。out of stock = 缺货。,"[{""en"":""Is this item in stock?"",""zh""::这个商品有货吗？""}]",1
+"日常·超市购物",退货,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,退货必须出示收据。keep your receipt = 保管好收据。,"[{""en"":""Do you have the receipt for this item?"",""zh"":""你有这个商品的收据吗？""}]",0
+"日常·超市购物",退货,exchange,换货,verb,/ɪksˈtʃeɪndʒ/,/ɪksˈtʃeɪndʒ/,L1,换货。exchange for a different size/color。,"[{""en"":""Can I exchange this for a different size?"",""zh""::我能换一个尺寸吗？""}]",1
+"日常·超市购物",优惠活动,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣/优惠。student discount / 10% off。,"[{""en"":""Is there a discount for students?"",""zh"":""学生有折扣吗？""}]",0
+"日常·超市购物",自助结账,self-checkout,自助结账,noun,/self ˈtʃekaʊt/,/self ˈtʃekaʊt/,L1,自助结账机。scan and pay by yourself。,"[{""en"":""You can use the self-checkout machines."",""zh"":""你可以用自助结账机。""}]",0
+"日常·超市购物",自助结账,scanner,扫码器,noun,/ˈskænər/,/ˈskænə/,L1,自助结账机的扫码器。scan the barcode。,"[{""en"":""Hold the barcode under the scanner."",""zh"":""把条形码放在扫码器下面。""}]",1
+"日常·朋友聚会",邀请朋友,invitation,邀请,noun,/ˌɪnvɪˈteɪʃən/,/ˌɪnvɪˈteɪʃən/,L1,邀请。send an invitation = 发出邀请。,"[{""en"":""Thanks for the invitation! I'd love to come."",""zh"":""谢谢邀请！我很愿意来。""}]",0
+"日常·朋友聚会",商量计划,plan,计划,noun,/plæn/,/plæn/,L1,计划。make plans = 做计划。change plans = 改变计划。,"[{""en"":""What's the plan for this weekend?"",""zh"":""这周末有什么计划？""}]",0
+"日常·朋友聚会",确认参加,confirm,确认,verb,/kənˈfɜːrm/,/kənˈfɜːm/,L1,确认参加。confirm attendance = 确认出席。,"[{""en"":""Can you confirm if you can come?"",""zh"":""你能确认是否能来吗？""}]",0
+"日常·朋友聚会",提议活动,suggestion,建议,noun,/səˈdʒestʃən/,/səˈdʒestʃən/,L1,建议/提议。make a suggestion = 提建议。,"[{""en"":""That's a great suggestion!"",""zh"":""好建议！""}]",0

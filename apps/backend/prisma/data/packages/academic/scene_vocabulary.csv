@@ -1,29 +1,29 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-IELTS Band 6 基础,家乡与住所,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,6分基础词汇。描述你长大的地方。,"[{""en"":""My hometown is a small city."",""zh"":""我的家乡是一个小城市。""}]",0
-IELTS Band 6 基础,家乡与住所,accommodation,住所,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,6分词汇。包括flat/house/dorm等类型。,"[{""en"":""I live in a comfortable flat."",""zh"":""我住在一个舒适的公寓里。""}]",1
-IELTS Band 6 基础,家乡与住所,neighborhood,社区,noun,/ˈneɪbərhʊd/,/ˈneɪbəhʊd/,L2,6分词汇。描述居住环境。,"[{""en"":""It's a quiet neighborhood."",""zh"":""这是一个安静的社区。""}]",2
-IELTS Band 6 基础,学习与工作,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L2,6分词汇。大学主修专业。,"[{""en"":""My major is Computer Science."",""zh"":""我的专业是计算机科学。""}]",0
-IELTS Band 6 基础,学习与工作,career,职业,noun,/kəˈrɪr/,/kəˈrɪə/,L2,6分词汇。职业生涯。,"[{""en"":""I'm building a career in marketing."",""zh"":""我在市场营销领域发展职业。""}]",1
-IELTS Band 6.5 发展,兴趣爱好,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,6.5分词汇。业余爱好。,"[{""en"":""My main hobby is photography."",""zh"":""我的主要爱好是摄影。""}]",0
-IELTS Band 6.5 发展,兴趣爱好,leisure,休闲,noun,/ˈliːʒər/,/ˈleʒə/,L2,6.5分词汇。休闲/空闲时间。,"[{""en"":""In my leisure time, I like to read."",""zh"":""空闲时我喜欢阅读。""}]",1
-IELTS Band 6.5 发展,交通出行,transportation,交通,noun,/ˌtrænspɔːrˈteɪʃən/,/ˌtrænspɔːˈteɪʃən/,L2,6.5分词汇。交通方式总称。,"[{""en"":""Public transportation is convenient here."",""zh"":""这里的公共交通很方便。""}]",0
-IELTS Band 6.5 发展,交通出行,prefer,偏好,verb,/prɪˈfɜːr/,/prɪˈfɜː/,L2,6.5分词汇。表达偏好。,"[{""en"":""I prefer taking the subway."",""zh"":""我更喜欢坐地铁。""}]",1
-IELTS Band 7 良好,推荐旅游地,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L2,7分P2词汇。recommend...to visitors。,"[{""en"":""I highly recommend this place."",""zh"":""我强烈推荐这个地方。""}]",0
-IELTS Band 7 良好,推荐旅游地,magnificent,壮丽的,adj,/mæɡˈnɪfɪsənt/,/mæɡˈnɪfɪsənt/,L3,7分高分形容词。,"[{""en"":""The view was magnificent."",""zh"":""景色壮丽。""}]",1
-IELTS Band 7 良好,推荐旅游地,breathtaking,令人惊叹的,adj,/ˈbreθteɪkɪŋ/,/ˈbreθteɪkɪŋ/,L3,7分高分形容词。,"[{""en"":""The sunset was breathtaking."",""zh"":""日落令人叹为观止。""}]",2
-IELTS Band 7 良好,城市发展,tourism,旅游业,noun,/ˈtʊrɪzəm/,/ˈtʊərɪzəm/,L2,7分P3词汇。,"[{""en"":""Tourism brings many benefits."",""zh"":""旅游业带来很多好处。""}]",0
-IELTS Band 7 良好,城市发展,infrastructure,基础设施,noun,/ˈɪnfrəstrʌktʃər/,/ˈɪnfrəstrʌktʃə/,L3,7分P3词汇。,"[{""en"":""The city needs better infrastructure."",""zh"":""这个城市需要更好的基础设施。""}]",1
-IELTS Band 7 良好,城市发展,sustainable,可持续的,adj,/səˈsteɪnəbəl/,/səˈsteɪnəbəl/,L3,7分P3学术词汇。,"[{""en"":""We need sustainable tourism."",""zh"":""我们需要可持续旅游。""}]",2
-IELTS Band 7.5 优良,印象深刻的人,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L3,7.5分P2词汇。leave a deep impression。,"[{""en"":""She left a deep impression on me."",""zh"":""她给我留下了深刻印象。""}]",0
-IELTS Band 7.5 优良,印象深刻人,personality,性格,noun,/ˌpɜːrsəˈnæləti/,/ˌpɜːsəˈnæləti/,L2,7.5分P2词汇。描述人物性格。,"[{""en"":""She has a warm personality."",""zh"":""她性格温暖。""}]",1
-IELTS Band 7.5 优良,科技与社交,digital,数字的,adj,/ˈdɪdʒɪtəl/,/ˈdɪdʒɪtəl/,L2,7.5分P3词汇。digital age / digital communication。,"[{""en"":""We live in the digital age."",""zh"":""我们生活在数字时代。""}]",0
-IELTS Band 7.5 优良,科技与社交,interaction,互动,noun,/ˌɪntərˈækʃən/,/ˌɪntərˈækʃən/,L3,7.5分P3词汇。social interaction / human interaction。,"[{""en"":""Online interaction can't replace face-to-face communication."",""zh"":""线上互动不能替代面对面交流。""}]",1
-IELTS Band 8 优秀,难忘的经历,memorable,难忘的,adj,/ˈmemərəbəl/,/ˈmemərəbəl/,L3,8分P2词汇。memorable experience/moment。,"[{""en"":""It was a truly memorable experience."",""zh"":""那真是一次难忘的经历。""}]",0
-IELTS Band 8 优秀,难忘的经历,perspective,视角/观点,noun,/pərˈspektɪv/,/pəˈspektɪv/,L4,8分词汇。从经历中获得新的视角。,"[{""en"":""This experience gave me a new perspective."",""zh"":""这次经历给了我新的视角。""}]",1
-IELTS Band 8 优秀,教育与社会,evolve,演变,verb,/ɪˈvɑːlv/,/ɪˈvɒlv/,L4,8分P3学术词汇。education has evolved。,"[{""en"":""Education has evolved significantly."",""zh"":""教育已经发生了显著的演变。""}]",0
-IELTS Band 8 优秀,教育与社会,critical thinking,批判性思维,noun,/ˈkrɪtɪkəl ˈθɪŋkɪŋ/,/ˈkrɪtɪkəl ˈθɪŋkɪŋ/,L4,8分P3关键词汇。,"[{""en"":""Schools should encourage critical thinking."",""zh"":""学校应该鼓励批判性思维。""}]",1
-IELTS Band 8.5 卓越,理想的改变,global awareness,全球意识,noun,/ˈɡloʊbəl əˈwernəs/,/ˈɡləʊbəl əˈweənəs/,L4,8.5分抽象词汇。,"[{""en"":""We need greater global awareness."",""zh"":""我们需要更强的全球意识。""}]",0
-IELTS Band 8.5 卓越,理想的改变,vision,愿景,noun,/ˈvɪʒən/,/ˈvɪʒən/,L4,8.5分词汇。表达理想和愿景。,"[{""en"":""We share a common vision for the future."",""zh"":""我们对未来有共同的愿景。""}]",1
-IELTS Band 8.5 卓越,全球化与文化,globalization,全球化,noun,/ˌɡloʊbələˈzeɪʃən/,/ˌɡləʊbəlaɪˈzeɪʃən/,L4,8.5分P3学术词汇。,"[{""en"":""Globalization has both advantages and disadvantages."",""zh"":""全球化有利也有弊。""}]",0
-IELTS Band 8.5 卓越,全球化与文化,cultural diversity,文化多样性,noun,/ˈkʌltʃərəl daɪˈvɜːrsəti/,/ˈkʌltʃərəl daɪˈvɜːsəti/,L4,8.5分学术词汇。,"[{""en"":""Cultural diversity should be celebrated."",""zh"":""文化多样性应该被珍视。""}]",1
-IELTS Band 8.5 卓越,全球化与文化,homogenization,同质化,noun,/həˌmɑːdʒənəˈzeɪʃən/,/həˌmɒdʒənaɪˈzeɪʃən/,L4,8.5分高级词汇。,"[{""en"":""Cultural homogenization is a risk of globalization."",""zh"":""文化同质化是全球化的一个风险。""}]",2
+"雅思·IELTS Band 6 基础",家乡与住所,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,6分基础词汇。描述你长大的地方。,"[{""en"":""My hometown is a small city."",""zh"":""我的家乡是一个小城市。""}]",0
+"雅思·IELTS Band 6 基础",家乡与住所,accommodation,住所,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,6分词汇。包括flat/house/dorm等类型。,"[{""en"":""I live in a comfortable flat."",""zh"":""我住在一个舒适的公寓里。""}]",1
+"雅思·IELTS Band 6 基础",家乡与住所,neighborhood,社区,noun,/ˈneɪbərhʊd/,/ˈneɪbəhʊd/,L2,6分词汇。描述居住环境。,"[{""en"":""It's a quiet neighborhood."",""zh"":""这是一个安静的社区。""}]",2
+"雅思·IELTS Band 6 基础",学习与工作,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L2,6分词汇。大学主修专业。,"[{""en"":""My major is Computer Science."",""zh"":""我的专业是计算机科学。""}]",0
+"雅思·IELTS Band 6 基础",学习与工作,career,职业,noun,/kəˈrɪr/,/kəˈrɪə/,L2,6分词汇。职业生涯。,"[{""en"":""I'm building a career in marketing."",""zh"":""我在市场营销领域发展职业。""}]",1
+"雅思·IELTS Band 6.5 发展",兴趣爱好,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,6.5分词汇。业余爱好。,"[{""en"":""My main hobby is photography."",""zh"":""我的主要爱好是摄影。""}]",0
+"雅思·IELTS Band 6.5 发展",兴趣爱好,leisure,休闲,noun,/ˈliːʒər/,/ˈleʒə/,L2,6.5分词汇。休闲/空闲时间。,"[{""en"":""In my leisure time, I like to read."",""zh"":""空闲时我喜欢阅读。""}]",1
+"雅思·IELTS Band 6.5 发展",交通出行,transportation,交通,noun,/ˌtrænspɔːrˈteɪʃən/,/ˌtrænspɔːˈteɪʃən/,L2,6.5分词汇。交通方式总称。,"[{""en"":""Public transportation is convenient here."",""zh"":""这里的公共交通很方便。""}]",0
+"雅思·IELTS Band 6.5 发展",交通出行,prefer,偏好,verb,/prɪˈfɜːr/,/prɪˈfɜː/,L2,6.5分词汇。表达偏好。,"[{""en"":""I prefer taking the subway."",""zh"":""我更喜欢坐地铁。""}]",1
+"雅思·IELTS Band 7 良好",推荐旅游地,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L2,7分P2词汇。recommend...to visitors。,"[{""en"":""I highly recommend this place."",""zh"":""我强烈推荐这个地方。""}]",0
+"雅思·IELTS Band 7 良好",推荐旅游地,magnificent,壮丽的,adj,/mæɡˈnɪfɪsənt/,/mæɡˈnɪfɪsənt/,L3,7分高分形容词。,"[{""en"":""The view was magnificent."",""zh"":""景色壮丽。""}]",1
+"雅思·IELTS Band 7 良好",推荐旅游地,breathtaking,令人惊叹的,adj,/ˈbreθteɪkɪŋ/,/ˈbreθteɪkɪŋ/,L3,7分高分形容词。,"[{""en"":""The sunset was breathtaking."",""zh"":""日落令人叹为观止。""}]",2
+"雅思·IELTS Band 7 良好",城市发展,tourism,旅游业,noun,/ˈtʊrɪzəm/,/ˈtʊərɪzəm/,L2,7分P3词汇。,"[{""en"":""Tourism brings many benefits."",""zh"":""旅游业带来很多好处。""}]",0
+"雅思·IELTS Band 7 良好",城市发展,infrastructure,基础设施,noun,/ˈɪnfrəstrʌktʃər/,/ˈɪnfrəstrʌktʃə/,L3,7分P3词汇。,"[{""en"":""The city needs better infrastructure."",""zh"":""这个城市需要更好的基础设施。""}]",1
+"雅思·IELTS Band 7 良好",城市发展,sustainable,可持续的,adj,/səˈsteɪnəbəl/,/səˈsteɪnəbəl/,L3,7分P3学术词汇。,"[{""en"":""We need sustainable tourism."",""zh"":""我们需要可持续旅游。""}]",2
+"雅思·IELTS Band 7.5 优良",印象深刻的人,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L3,7.5分P2词汇。leave a deep impression。,"[{""en"":""She left a deep impression on me."",""zh"":""她给我留下了深刻印象。""}]",0
+"雅思·IELTS Band 7.5 优良",印象深刻人,personality,性格,noun,/ˌpɜːrsəˈnæləti/,/ˌpɜːsəˈnæləti/,L2,7.5分P2词汇。描述人物性格。,"[{""en"":""She has a warm personality."",""zh"":""她性格温暖。""}]",1
+"雅思·IELTS Band 7.5 优良",科技与社交,digital,数字的,adj,/ˈdɪdʒɪtəl/,/ˈdɪdʒɪtəl/,L2,7.5分P3词汇。digital age / digital communication。,"[{""en"":""We live in the digital age."",""zh"":""我们生活在数字时代。""}]",0
+"雅思·IELTS Band 7.5 优良",科技与社交,interaction,互动,noun,/ˌɪntərˈækʃən/,/ˌɪntərˈækʃən/,L3,7.5分P3词汇。social interaction / human interaction。,"[{""en"":""Online interaction can't replace face-to-face communication."",""zh"":""线上互动不能替代面对面交流。""}]",1
+"雅思·IELTS Band 8 优秀",难忘的经历,memorable,难忘的,adj,/ˈmemərəbəl/,/ˈmemərəbəl/,L3,8分P2词汇。memorable experience/moment。,"[{""en"":""It was a truly memorable experience."",""zh"":""那真是一次难忘的经历。""}]",0
+"雅思·IELTS Band 8 优秀",难忘的经历,perspective,视角/观点,noun,/pərˈspektɪv/,/pəˈspektɪv/,L4,8分词汇。从经历中获得新的视角。,"[{""en"":""This experience gave me a new perspective."",""zh"":""这次经历给了我新的视角。""}]",1
+"雅思·IELTS Band 8 优秀",教育与社会,evolve,演变,verb,/ɪˈvɑːlv/,/ɪˈvɒlv/,L4,8分P3学术词汇。education has evolved。,"[{""en"":""Education has evolved significantly."",""zh"":""教育已经发生了显著的演变。""}]",0
+"雅思·IELTS Band 8 优秀",教育与社会,critical thinking,批判性思维,noun,/ˈkrɪtɪkəl ˈθɪŋkɪŋ/,/ˈkrɪtɪkəl ˈθɪŋkɪŋ/,L4,8分P3关键词汇。,"[{""en"":""Schools should encourage critical thinking."",""zh"":""学校应该鼓励批判性思维。""}]",1
+"雅思·IELTS Band 8.5 卓越",理想的改变,global awareness,全球意识,noun,/ˈɡloʊbəl əˈwernəs/,/ˈɡləʊbəl əˈweənəs/,L4,8.5分抽象词汇。,"[{""en"":""We need greater global awareness."",""zh"":""我们需要更强的全球意识。""}]",0
+"雅思·IELTS Band 8.5 卓越",理想的改变,vision,愿景,noun,/ˈvɪʒən/,/ˈvɪʒən/,L4,8.5分词汇。表达理想和愿景。,"[{""en"":""We share a common vision for the future."",""zh"":""我们对未来有共同的愿景。""}]",1
+"雅思·IELTS Band 8.5 卓越",全球化与文化,globalization,全球化,noun,/ˌɡloʊbələˈzeɪʃən/,/ˌɡləʊbəlaɪˈzeɪʃən/,L4,8.5分P3学术词汇。,"[{""en"":""Globalization has both advantages and disadvantages."",""zh"":""全球化有利也有弊。""}]",0
+"雅思·IELTS Band 8.5 卓越",全球化与文化,cultural diversity,文化多样性,noun,/ˈkʌltʃərəl daɪˈvɜːrsəti/,/ˈkʌltʃərəl daɪˈvɜːsəti/,L4,8.5分学术词汇。,"[{""en"":""Cultural diversity should be celebrated."",""zh"":""文化多样性应该被珍视。""}]",1
+"雅思·IELTS Band 8.5 卓越",全球化与文化,homogenization,同质化,noun,/həˌmɑːdʒənəˈzeɪʃən/,/həˌmɒdʒənaɪˈzeɪʃən/,L4,8.5分高级词汇。,"[{""en"":""Cultural homogenization is a risk of globalization."",""zh"":""文化同质化是全球化的一个风险。""}]",2

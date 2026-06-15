@@ -1,22 +1,22 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-面试自我介绍,1分钟自我介绍,"My name is ___. I graduated from ___.",自我介绍+学历,"Cheng, Beijing University / a master's program","My name is Cheng. I graduated from Beijing University.",L2,0
-面试自我介绍,1分钟自我介绍,I majored in ___.,说明专业,"Computer Science, Marketing, Finance, Business Administration","I majored in Computer Science.",L2,1
-面试自我介绍,1分钟自我介绍,I'm applying for the ___ position.,说明申请的职位,"marketing, junior developer, sales, project coordinator","I'm applying for the marketing position.",L2,2
-面试自我介绍,1分钟自我介绍,"I have ___ years of experience in ___.",说明经验年限+领域,"two / marketing, one / customer service","I have two years of experience in marketing.",L3,3
-面试自我介绍,描述过往经历,I have experience in ___.,说明经验领域,"project management, data analysis, customer service","I have experience in project management.",L3,0
-面试自我介绍,描述过往经历,In my previous role, I ___.,描述前一份工作的职责,"managed a team, handled client accounts, coordinated events","In my previous role, I managed a team of five.",L3,1
-面试自我介绍,描述过往经历,I was responsible for ___.,说明具体职责,"social media, client communication, data entry","I was responsible for social media management.",L3,2
-面试自我介绍,描述过往经历,"I worked on ___ during my internship.",描述实习经历,"several projects, a marketing campaign, the website redesign","I worked on several projects during my internship.",L3,3
-面试自我介绍,描述过往经历,"One of my achievements was ___.",展示成果(用数字),"increasing sales by 20%, reducing costs, launching a new feature","One of my achievements was increasing sales by 20%.",L4,4
-面试自我介绍,回答优缺点,"One of my strengths is ___.",说明优势,"attention to detail, teamwork, problem-solving, adaptability","One of my strengths is attention to detail.",L3,0
-面试自我介绍,回答优缺点,"I'm good at ___.",表达擅长的事,"communicating, organizing, working under pressure","I'm good at communicating with different teams.",L3,1
-面试自我介绍,回答优缺点,"I'm working on improving ___.",说明正在改进的方面,"my time management, my public speaking, my technical skills","I'm working on improving my time management.",L3,2
-面试自我介绍,回答优缺点,"I believe my ___ could be stronger.",委婉说缺点,"presentation skills, coding skills, leadership experience","I believe my presentation skills could be stronger.",L4,3
-面试自我介绍,1分钟自我介绍,"I'm particularly interested in ___ because ___.",表达兴趣+原因,"this role / it aligns with my goals, the company culture / I value collaboration","I'm particularly interested in this role because it aligns with my career goals.",L4,0
-面试自我介绍,1分钟自我介绍,"Could you tell me more about ___?",反问面试官,"the team, the day-to-day responsibilities, the company culture","Could you tell me more about the day-to-day responsibilities?",L3,1
-面试自我介绍,描述过往经历,"I collaborated with ___ on ___.",描述协作经历,"the design team / a rebranding project, the engineering team / a new feature","I collaborated with the design team on a rebranding project.",L3,0
-面试自我介绍,描述过往经历,"I learned how to ___ during that experience.",说明从经历中学到的,"manage my time, communicate effectively, work under pressure","I learned how to manage my time during that experience.",L3,1
-面试自我介绍,回答优缺点,"I'm quite ___, which helps me ___.",优势+为什么有用,"organized / meet deadlines, adaptable / handle change, patient / work with clients","I'm quite organized, which helps me meet deadlines.",L3,0
-面试自我介绍,回答优缺点,"To improve, I've started ___.",说明改进行动,"taking a course, practicing daily, asking for feedback","To improve, I've started taking an online course on public speaking.",L4,1
-面试自我介绍,1分钟自我介绍,"I'm looking for a position where I can ___.",说明求职期望,"grow professionally, apply my skills, make an impact","I'm looking for a position where I can grow professionally.",L3,0
-面试自我介绍,1分钟自我介绍,"Thank you for ___. I look forward to ___.",面试收尾,"this opportunity / hearing from you, your time / the next steps","Thank you for your time. I look forward to hearing from you.",L2,1
+"职场·面试自我介绍",1分钟自我介绍,My name is ___. I graduated from ___.,自我介绍+学历,"Cheng, Beijing University / a master's program",My name is Cheng. I graduated from Beijing University.,L2,0
+"职场·面试自我介绍",1分钟自我介绍,I majored in ___.,说明专业,"Computer Science, Marketing, Finance, Business Administration",I majored in Computer Science.,L2,1
+"职场·面试自我介绍",1分钟自我介绍,I'm applying for the ___ position.,说明申请的职位,"marketing, junior developer, sales, project coordinator",I'm applying for the marketing position.,L2,2
+"职场·面试自我介绍",1分钟自我介绍,I have ___ years of experience in ___.,说明经验年限+领域,"two / marketing, one / customer service",I have two years of experience in marketing.,L3,3
+"职场·面试自我介绍",描述过往经历,I have experience in ___.,说明经验领域,"project management, data analysis, customer service",I have experience in project management.,L3,0
+"职场·面试自我介绍",描述过往经历,In my previous role, I ___.,描述前一份工作的职责,"managed a team, handled client accounts, coordinated events","In my previous role, I managed a team of five.",L3,1
+"职场·面试自我介绍",描述过往经历,I was responsible for ___.,说明具体职责,"social media, client communication, data entry",I was responsible for social media management.,L3,2
+"职场·面试自我介绍",描述过往经历,I worked on ___ during my internship.,描述实习经历,"several projects, a marketing campaign, the website redesign",I worked on several projects during my internship.,L3,3
+"职场·面试自我介绍",描述过往经历,One of my achievements was ___.,展示成果(用数字),"increasing sales by 20%, reducing costs, launching a new feature",One of my achievements was increasing sales by 20%.,L4,4
+"职场·面试自我介绍",回答优缺点,One of my strengths is ___.,说明优势,"attention to detail, teamwork, problem-solving, adaptability",One of my strengths is attention to detail.,L3,0
+"职场·面试自我介绍",回答优缺点,I'm good at ___.,表达擅长的事,"communicating, organizing, working under pressure",I'm good at communicating with different teams.,L3,1
+"职场·面试自我介绍",回答优缺点,I'm working on improving ___.,说明正在改进的方面,"my time management, my public speaking, my technical skills",I'm working on improving my time management.,L3,2
+"职场·面试自我介绍",回答优缺点,I believe my ___ could be stronger.,委婉说缺点,"presentation skills, coding skills, leadership experience",I believe my presentation skills could be stronger.,L4,3
+"职场·面试自我介绍",1分钟自我介绍,I'm particularly interested in ___ because ___.,表达兴趣+原因,"this role / it aligns with my goals, the company culture / I value collaboration",I'm particularly interested in this role because it aligns with my career goals.,L4,0
+"职场·面试自我介绍",1分钟自我介绍,Could you tell me more about ___?,反问面试官,"the team, the day-to-day responsibilities, the company culture",Could you tell me more about the day-to-day responsibilities?,L3,1
+"职场·面试自我介绍",描述过往经历,I collaborated with ___ on ___.,描述协作经历,"the design team / a rebranding project, the engineering team / a new feature",I collaborated with the design team on a rebranding project.,L3,0
+"职场·面试自我介绍",描述过往经历,I learned how to ___ during that experience.,说明从经历中学到的,"manage my time, communicate effectively, work under pressure",I learned how to manage my time during that experience.,L3,1
+"职场·面试自我介绍",回答优缺点,"I'm quite ___, which helps me ___.",优势+为什么有用,"organized / meet deadlines, adaptable / handle change, patient / work with clients","I'm quite organized, which helps me meet deadlines.",L3,0
+"职场·面试自我介绍",回答优缺点,"To improve, I've started ___.",说明改进行动,"taking a course, practicing daily, asking for feedback","To improve, I've started taking an online course on public speaking.",L4,1
+"职场·面试自我介绍",1分钟自我介绍,I'm looking for a position where I can ___.,说明求职期望,"grow professionally, apply my skills, make an impact",I'm looking for a position where I can grow professionally.,L3,0
+"职场·面试自我介绍",1分钟自我介绍,Thank you for ___. I look forward to ___.,面试收尾,"this opportunity / hearing from you, your time / the next steps",Thank you for your time. I look forward to hearing from you.,L2,1

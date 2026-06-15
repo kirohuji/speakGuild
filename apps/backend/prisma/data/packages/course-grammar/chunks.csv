@@ -1,33 +1,33 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-动词短语实战,常见动词短语,常见动词短语,Don't give up.,不要放弃。,L1,鼓励他人的常用动词短语句子。,"[{""en"":""Don't give up! You can do it."",""zh"":""不要放弃！你能做到的。""}]"
-动词短语实战,常见动词短语,常见动词短语,I'm looking for...,我在找...,L1,表示寻找某物/某人。,"[{""en"":""I'm looking for my phone. Have you seen it?"",""zh"":""我在找我的手机，你看见了吗？""}]"
-动词短语实战,常见动词短语,常见动词短语,I've run out of...,我用光了...,L2,表示用完/耗尽某物。,"[{""en"":""I've run out of milk. I need to buy some."",""zh"":""牛奶喝完了，我需要买一些。""}]"
-动词短语实战,动词短语对话,动词短语对话,I came up with a...,我想出了一个...,L2,表示想出主意/方案。,"[{""en"":""I came up with a solution to the problem."",""zh"":""我想出了一个解决问题的办法。""}]"
-动词短语实战,动词短语对话,动词短语对话,I can't put up with...,我受不了...,L2,表示无法忍受某事/某人。,"[{""en"":""I can't put up with this noise anymore."",""zh"":""我再也受不了这噪音了。""}]"
-动词短语实战,动词短语对话,动词短语对话,We get along well.,我们相处得很好。,L1,表示关系融洽。,"[{""en"":""My colleagues and I get along well."",""zh"":""我和同事们相处得很好。""}]"
-时态精准表达,时态选择与对比,时态选择与对比,I usually... (present simple),我通常...(一般现在时),L1,描述习惯性动作。always/usually/often + 一般现在时。,"[{""en"":""I usually wake up at 7 AM."",""zh"":""我通常早上7点起床。""}]"
-时态精准表达,时态选择与对比,时态选择与对比,I'm currently... (present continuous),我目前正在...(现在进行时),L1,描述当前正在进行的动作。,"[{""en"":""I'm currently working on a new project."",""zh"":""我目前正在做一个新项目。""}]"
-时态精准表达,时态选择与对比,时态选择与对比,I have already... (present perfect),我已经...(现在完成时),L2,描述已经完成的事情。already / just / ever / never。,"[{""en"":""I have already finished the report."",""zh"":""我已经完成了报告。""}]"
-时态精准表达,时态在叙事中,时态在叙事中,Yesterday I... (past simple),昨天我...(一般过去时),L1,描述过去某时发生的事。,"[{""en"":""Yesterday I visited the museum."",""zh"":""昨天我参观了博物馆。""}]"
-时态精准表达,时态在叙事中,时态在叙事中,I was... when... (past continuous),我正...这时...(过去进行时),L2,描述过去某时正在做的事被另一件事打断。,"[{""en"":""I was having dinner when the phone rang."",""zh"":""我正吃晚饭时电话响了。""}]"
-时态精准表达,时态在叙事中,时态在叙事中,I had never... before...,我以前从未...过...(过去完成时),L3,描述过去某时间点之前从未有过的经历。,"[{""en"":""I had never tried sushi before that day."",""zh"":""在那天之前我从未尝过寿司。""}]"
-句子组织与衔接,连接词与过渡,连接词与过渡,It was difficult but I...,很困难但我...,L1,用but表示转折。,"[{""en"":""It was difficult but I managed to do it."",""zh"":""很困难但我设法做到了。""}]"
-句子组织与衔接,连接词与过渡,连接词与过渡,I was late so I...,我迟到了所以我...,L1,用so表示因果。,"[{""en"":""I was late so I missed the bus."",""zh"":""我迟到了所以没赶上公交。""}]"
-句子组织与衔接,连接词与过渡,连接词与过渡,Although it was..., although + 从句表达让步,Although + 从句 + 主句表示"虽然...但是..."。,"[{""en"":""Although it was raining, we went for a walk."",""zh"":""虽然下着雨我们还是去散步了。""}]"
-句子组织与衔接,复杂句结构,复杂句结构,The book that I read was...,我读的那本书...,L3,用that从句修饰名词。defining relative clause。,"[{""en"":""The book that I read was really interesting."",""zh"":""我读的那本书非常有趣。""}]"
-句子组织与衔接,复杂句结构,复杂句结构,If I had more time, I would...,如果我有更多时间我会...,L3,用if引导的条件句表达假设。,"[{""en"":""If I had more time, I would learn another language."",""zh"":""如果我有更多时间我会再学一门语言。""}]"
-副词与状语,程度与频率副词,程度与频率副词,I always... / I never...,我总是... / 我从不...,L1,频率副词的典型用法。,"[{""en"":""I always have breakfast before leaving."",""zh"":""我总是在出门前吃早餐。""}]"
-副词与状语,程度与频率副词,程度与频率副词,It's quite... / It's very...,它相当... / 它很...,L1,程度副词的典型用法。,"[{""en"":""The movie was quite interesting."",""zh"":""这部电影相当有趣。""}]"
-副词与状语,方式与评论副词,方式与评论副词,Please... carefully.,请仔细地...,L1,方式副词修饰动作。,"[{""en"":""Please drive carefully on the icy road."",""zh"":""在结冰的路上请小心驾驶。""}]"
-副词与状语,方式与评论副词,方式与评论副词,Luckily... / Frankly...,幸运的是... / 坦诚说...,L2,评论副词放在句首修饰全句。,"[{""en"":""Luckily, I had my umbrella with me."",""zh"":""幸运的是我带了伞。""}]"
-时间表达法,时间介词与连词,时间介词与连词,The meeting is on...,会议在(具体某天),L1,on + 具体日期/星期。,"[{""en"":""The meeting is on Monday afternoon."",""zh"":""会议在周一下午。""}]"
-时间表达法,时间介词与连词,时间介词与连词,I was born in...,我出生在(年月),L1,in + 月份/年份/季节。,"[{""en"":""I was born in March 1998."",""zh"":""我出生在1998年3月。""}]"
-时间表达法,时间介词与连词,时间介词与连词,The class starts at...,课程在(具体时间)开始,L1,at + 具体钟表时间。,"[{""en"":""The class starts at 9 o'clock."",""zh"":""课程在9点开始。""}]"
-时间表达法,时间从句描述,时间从句描述,While I was..., I...,当我在...时，我...,L2,while引导的时间从句表示同时发生。,"[{""en"":""While I was cooking, I listened to music."",""zh"":""我做饭时听音乐。""}]"
-时间表达法,时间从句描述,时间从句描述,After I..., I...,在...之后我...,L1,after引导时间从句表示先后。,"[{""en"":""After I finished work, I went home."",""zh"":""下班后我回家了。""}]"
-时间表达法,时间从句描述,时间从句描述,I... before I...,我在...之前...,L1,before引导时间从句表示之前。,"[{""en"":""I always check my email before I leave the office."",""zh"":":"我离开办公室前总是检查邮件。""}]"
-方位与位置表达,方位介词,方位介词,The... is in/on/at...,...在...,L1,方位介词的基本用法。,"[{""en"":""The cat is on the sofa."",""zh"":""猫在沙发上。""}]"
-方位与位置表达,方位介词,方位介词,The... is next to / behind / under...,...在...旁边/后面/下面,L1,表示相对位置。,"[{""en"":""The bank is next to the supermarket."",""zh"":""银行在超市旁边。""}]"
-方位与位置表达,描述位置与路线,描述位置与路线,Go straight until you see...,直走直到你看到...,L1,指路的基本句型。,"[{""en"":""Go straight until you see the traffic lights."",""zh"":""直走直到你看到红绿灯。""}]"
-方位与位置表达,描述位置与路线,描述位置与路线,Turn left / right at...,在...左转/右转,L1,指路的转弯指令。,"[{""en"":""Turn left at the corner and you'll see the hotel."",""zh"":""在角落左转你就会看到酒店。""}]"
-方位与位置表达,描述位置与路线,描述位置与路线,It's on the corner / at the end of the street.,它在转角处/在街道尽头。,L1,描述地标位置。,"[{""en"":""The post office is at the end of the street."",""zh"":""邮局在街道尽头。""}]"
+"语法·动词短语实战",常见动词短语,常见动词短语,Don't give up.,不要放弃。,L1,鼓励他人的常用动词短语句子。,"[{""en"":""Don't give up! You can do it."",""zh"":""不要放弃！你能做到的。""}]"
+"语法·动词短语实战",常见动词短语,常见动词短语,I'm looking for...,我在找...,L1,表示寻找某物/某人。,"[{""en"":""I'm looking for my phone. Have you seen it?"",""zh"":""我在找我的手机，你看见了吗？""}]"
+"语法·动词短语实战",常见动词短语,常见动词短语,I've run out of...,我用光了...,L2,表示用完/耗尽某物。,"[{""en"":""I've run out of milk. I need to buy some."",""zh"":""牛奶喝完了，我需要买一些。""}]"
+"语法·动词短语实战",动词短语对话,动词短语对话,I came up with a...,我想出了一个...,L2,表示想出主意/方案。,"[{""en"":""I came up with a solution to the problem."",""zh"":""我想出了一个解决问题的办法。""}]"
+"语法·动词短语实战",动词短语对话,动词短语对话,I can't put up with...,我受不了...,L2,表示无法忍受某事/某人。,"[{""en"":""I can't put up with this noise anymore."",""zh"":""我再也受不了这噪音了。""}]"
+"语法·动词短语实战",动词短语对话,动词短语对话,We get along well.,我们相处得很好。,L1,表示关系融洽。,"[{""en"":""My colleagues and I get along well."",""zh"":""我和同事们相处得很好。""}]"
+"语法·时态精准表达",时态选择与对比,时态选择与对比,I usually... (present simple),我通常...(一般现在时),L1,描述习惯性动作。always/usually/often + 一般现在时。,"[{""en"":""I usually wake up at 7 AM."",""zh"":""我通常早上7点起床。""}]"
+"语法·时态精准表达",时态选择与对比,时态选择与对比,I'm currently... (present continuous),我目前正在...(现在进行时),L1,描述当前正在进行的动作。,"[{""en"":""I'm currently working on a new project."",""zh"":""我目前正在做一个新项目。""}]"
+"语法·时态精准表达",时态选择与对比,时态选择与对比,I have already... (present perfect),我已经...(现在完成时),L2,描述已经完成的事情。already / just / ever / never。,"[{""en"":""I have already finished the report."",""zh"":""我已经完成了报告。""}]"
+"语法·时态精准表达",时态在叙事中,时态在叙事中,Yesterday I... (past simple),昨天我...(一般过去时),L1,描述过去某时发生的事。,"[{""en"":""Yesterday I visited the museum."",""zh"":""昨天我参观了博物馆。""}]"
+"语法·时态精准表达",时态在叙事中,时态在叙事中,I was... when... (past continuous),我正...这时...(过去进行时),L2,描述过去某时正在做的事被另一件事打断。,"[{""en"":""I was having dinner when the phone rang."",""zh"":""我正吃晚饭时电话响了。""}]"
+"语法·时态精准表达",时态在叙事中,时态在叙事中,I had never... before...,我以前从未...过...(过去完成时),L3,描述过去某时间点之前从未有过的经历。,"[{""en"":""I had never tried sushi before that day."",""zh"":""在那天之前我从未尝过寿司。""}]"
+"语法·句子组织与衔接",连接词与过渡,连接词与过渡,It was difficult but I...,很困难但我...,L1,用but表示转折。,"[{""en"":""It was difficult but I managed to do it."",""zh"":""很困难但我设法做到了。""}]"
+"语法·句子组织与衔接",连接词与过渡,连接词与过渡,I was late so I...,我迟到了所以我...,L1,用so表示因果。,"[{""en"":""I was late so I missed the bus."",""zh"":""我迟到了所以没赶上公交。""}]"
+"语法·句子组织与衔接",连接词与过渡,连接词与过渡,Although it was..., although + 从句表达让步,Although + 从句 + 主句表示虽然...但是...。,"[{""en"":""Although it was raining, we went for a walk."",""zh"":""虽然下着雨我们还是去散步了。""}]"
+"语法·句子组织与衔接",复杂句结构,复杂句结构,The book that I read was...,我读的那本书...,L3,用that从句修饰名词。defining relative clause。,"[{""en"":""The book that I read was really interesting."",""zh"":""我读的那本书非常有趣。""}]"
+"语法·句子组织与衔接",复杂句结构,复杂句结构,If I had more time, I would...,如果我有更多时间我会...,L3,用if引导的条件句表达假设。,"[{""en"":""If I had more time, I would learn another language."",""zh"":""如果我有更多时间我会再学一门语言。""}]"
+"语法·副词与状语",程度与频率副词,程度与频率副词,I always... / I never...,我总是... / 我从不...,L1,频率副词的典型用法。,"[{""en"":""I always have breakfast before leaving."",""zh"":""我总是在出门前吃早餐。""}]"
+"语法·副词与状语",程度与频率副词,程度与频率副词,It's quite... / It's very...,它相当... / 它很...,L1,程度副词的典型用法。,"[{""en"":""The movie was quite interesting."",""zh"":""这部电影相当有趣。""}]"
+"语法·副词与状语",方式与评论副词,方式与评论副词,Please... carefully.,请仔细地...,L1,方式副词修饰动作。,"[{""en"":""Please drive carefully on the icy road."",""zh"":""在结冰的路上请小心驾驶。""}]"
+"语法·副词与状语",方式与评论副词,方式与评论副词,Luckily... / Frankly...,幸运的是... / 坦诚说...,L2,评论副词放在句首修饰全句。,"[{""en"":""Luckily, I had my umbrella with me."",""zh"":""幸运的是我带了伞。""}]"
+"语法·时间表达法",时间介词与连词,时间介词与连词,The meeting is on...,会议在(具体某天),L1,on + 具体日期/星期。,"[{""en"":""The meeting is on Monday afternoon."",""zh"":""会议在周一下午。""}]"
+"语法·时间表达法",时间介词与连词,时间介词与连词,I was born in...,我出生在(年月),L1,in + 月份/年份/季节。,"[{""en"":""I was born in March 1998."",""zh"":""我出生在1998年3月。""}]"
+"语法·时间表达法",时间介词与连词,时间介词与连词,The class starts at...,课程在(具体时间)开始,L1,at + 具体钟表时间。,"[{""en"":""The class starts at 9 o'clock."",""zh"":""课程在9点开始。""}]"
+"语法·时间表达法",时间从句描述,时间从句描述,While I was..., I...,当我在...时，我...,L2,while引导的时间从句表示同时发生。,"[{""en"":""While I was cooking, I listened to music."",""zh"":""我做饭时听音乐。""}]"
+"语法·时间表达法",时间从句描述,时间从句描述,After I..., I...,在...之后我...,L1,after引导时间从句表示先后。,"[{""en"":""After I finished work, I went home."",""zh"":""下班后我回家了。""}]"
+"语法·时间表达法",时间从句描述,时间从句描述,I... before I...,我在...之前...,L1,before引导时间从句表示之前。,"[{""en"":""I always check my email before I leave the office."",""zh""::我离开办公室前总是检查邮件。""}]"
+"语法·方位与位置表达",方位介词,方位介词,The... is in/on/at...,...在...,L1,方位介词的基本用法。,"[{""en"":""The cat is on the sofa."",""zh"":""猫在沙发上。""}]"
+"语法·方位与位置表达",方位介词,方位介词,The... is next to / behind / under...,...在...旁边/后面/下面,L1,表示相对位置。,"[{""en"":""The bank is next to the supermarket."",""zh"":""银行在超市旁边。""}]"
+"语法·方位与位置表达",描述位置与路线,描述位置与路线,Go straight until you see...,直走直到你看到...,L1,指路的基本句型。,"[{""en"":""Go straight until you see the traffic lights."",""zh"":""直走直到你看到红绿灯。""}]"
+"语法·方位与位置表达",描述位置与路线,描述位置与路线,Turn left / right at...,在...左转/右转,L1,指路的转弯指令。,"[{""en"":""Turn left at the corner and you'll see the hotel."",""zh"":""在角落左转你就会看到酒店。""}]"
+"语法·方位与位置表达",描述位置与路线,描述位置与路线,It's on the corner / at the end of the street.,它在转角处/在街道尽头。,L1,描述地标位置。,"[{""en"":""The post office is at the end of the street."",""zh"":""邮局在街道尽头。""}]"

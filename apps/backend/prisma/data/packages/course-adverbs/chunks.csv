@@ -1,21 +1,21 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-频率与程度副词,频率副词,频率副词,I always brush my teeth.,我总是刷牙。,L1,用always表达100%频率。,"[{""en"":""I always get up early."",""zh"":""我总是早起。""}]"
-频率与程度副词,频率副词,频率副词,I usually have breakfast at 8.,我通常8点吃早餐。,L1,用usually表达通常习惯。,"[{""en"":""She usually walks to school."",""zh"":""她通常走路去学校。""}]"
-频率与程度副词,频率副词,频率副词,I often read before bed.,我经常睡前看书。,L1,用often表达经常做的事。,"[{""en"":""They often visit their grandparents."",""zh"":""他们经常去看望祖父母。""}]"
-频率与程度副词,频率副词,频率副词,Sometimes I go jogging.,我有时去慢跑。,L1,用sometimes表达偶尔做的活动。,"[{""en"":""Sometimes we eat out."",""zh"":""我们有时出去吃饭。""}]"
-频率与程度副词,频率副词,频率副词,I never smoke.,我从不抽烟。,L1,用never表达0频率。,"[{""en"":""I never eat fast food."",""zh"":""我从不吃快餐。""}]"
-频率与程度副词,程度副词,程度副词,She is very smart.,她非常聪明。,L1,用very加强形容词。,"[{""en"":""It's very hot outside."",""zh"":""外面非常热。""}]"
-频率与程度副词,程度副词,程度副词,The movie is quite good.,电影相当不错。,L1,用quite表达相当程度。,"[{""en"":""I'm quite tired."",""zh"":""我相当累。""}]"
-频率与程度副词,程度副词,程度副词,It's rather cold today.,今天挺冷的。,L2,用rather表达较高度程度。,"[{""en"":""She is rather shy."",""zh"":""她挺害羞的。""}]"
-频率与程度副词,程度副词,程度副词,That's extremely kind.,你真是太善良了。,L2,用extremely强调极高程度。,"[{""en"":""The view is extremely beautiful."",""zh"":""景色极其美丽。""}]"
-频率与程度副词,程度副词,程度副词,This coffee is too hot.,咖啡太烫了。,L1,用too表达过量(负面)。,"[{""en"":""It's too late to go out."",""zh"":""太晚了不能出去了。""}]"
-方式与评论副词,方式副词,方式副词,Please read carefully.,请仔细阅读。,L2,用carefully表达仔细方式。,"[{""en"":""Drive carefully on the highway."",""zh"":""在高速上小心驾驶。""}]"
-方式与评论副词,方式副词,方式副词,He quickly finished his homework.,他快速完成了作业。,L1,用quickly描述动作速度。,"[{""en"":""She quickly answered the question."",""zh"":""她快速回答了问题。""}]"
-方式与评论副词,方式副词,方式副词,The children played happily.,孩子们快乐地玩耍。,L1,用happily表达快乐的状态。,"[{""en"":""The dog wagged its tail happily."",""zh"":""狗快乐地摇着尾巴。""}]"
-方式与评论副词,方式副词,方式副词,She easily solved the problem.,她轻松解决了问题。,L2,用easily描述轻松完成。,"[{""en"":""He easily won the race."",""zh"":""他轻松赢得了比赛。""}]"
-方式与评论副词,方式副词,方式副词,She speaks English well.,她英语说得很好。,L1,用well描述表现好。,"[{""en"":""He plays the guitar well."",""zh"":""他吉他弹得很好。""}]"
-方式与评论副词,评论副词,评论副词,Luckily no one was hurt.,幸运的是没人受伤。,L2,用luckily表达幸运。,"[{""en"":""Luckily I brought an umbrella."",""zh"":""幸运的是我带了伞。""}]"
-方式与评论副词,评论副词,评论副词,Frankly I don't care.,坦白说我不在乎。,L2,用frankly表达坦诚态度。,"[{""en"":""Frankly it's not my problem."",""zh"":""坦白说这不是我的问题。""}]"
-方式与评论副词,评论副词,评论副词,Honestly that's the best option.,老实说那是最好的选择。,L2,用honestly表达真诚。,"[{""en"":""Honestly I don't know."",""zh"":""老实说我不知道。""}]"
-方式与评论副词,评论副词,评论副词,Surprisingly he agreed with us.,令人惊讶的是他同意了。,L3,用surprisingly表达意外。,"[{""en"":""Surprisingly the test was easy."",""zh"":""令人惊讶的是考试很简单。""}]"
-方式与评论副词,评论副词,评论副词,Obviously she was lying.,显然她在撒谎。,L3,用obviously表达明显事实。,"[{""en"":""Obviously he forgot the appointment."",""zh"":""显然他忘了约会。""}]"
+"副词·频率与程度副词",频率副词,频率副词,I always brush my teeth.,我总是刷牙。,L1,用always表达100%频率。,"[{""en"":""I always get up early."",""zh"":""我总是早起。""}]"
+"副词·频率与程度副词",频率副词,频率副词,I usually have breakfast at 8.,我通常8点吃早餐。,L1,用usually表达通常习惯。,"[{""en"":""She usually walks to school."",""zh"":""她通常走路去学校。""}]"
+"副词·频率与程度副词",频率副词,频率副词,I often read before bed.,我经常睡前看书。,L1,用often表达经常做的事。,"[{""en"":""They often visit their grandparents."",""zh"":""他们经常去看望祖父母。""}]"
+"副词·频率与程度副词",频率副词,频率副词,Sometimes I go jogging.,我有时去慢跑。,L1,用sometimes表达偶尔做的活动。,"[{""en"":""Sometimes we eat out."",""zh"":""我们有时出去吃饭。""}]"
+"副词·频率与程度副词",频率副词,频率副词,I never smoke.,我从不抽烟。,L1,用never表达0频率。,"[{""en"":""I never eat fast food."",""zh"":""我从不吃快餐。""}]"
+"副词·频率与程度副词",程度副词,程度副词,She is very smart.,她非常聪明。,L1,用very加强形容词。,"[{""en"":""It's very hot outside."",""zh"":""外面非常热。""}]"
+"副词·频率与程度副词",程度副词,程度副词,The movie is quite good.,电影相当不错。,L1,用quite表达相当程度。,"[{""en"":""I'm quite tired."",""zh"":""我相当累。""}]"
+"副词·频率与程度副词",程度副词,程度副词,It's rather cold today.,今天挺冷的。,L2,用rather表达较高度程度。,"[{""en"":""She is rather shy."",""zh"":""她挺害羞的。""}]"
+"副词·频率与程度副词",程度副词,程度副词,That's extremely kind.,你真是太善良了。,L2,用extremely强调极高程度。,"[{""en"":""The view is extremely beautiful."",""zh"":""景色极其美丽。""}]"
+"副词·频率与程度副词",程度副词,程度副词,This coffee is too hot.,咖啡太烫了。,L1,用too表达过量(负面)。,"[{""en"":""It's too late to go out."",""zh"":""太晚了不能出去了。""}]"
+"副词·方式与评论副词",方式副词,方式副词,Please read carefully.,请仔细阅读。,L2,用carefully表达仔细方式。,"[{""en"":""Drive carefully on the highway."",""zh"":""在高速上小心驾驶。""}]"
+"副词·方式与评论副词",方式副词,方式副词,He quickly finished his homework.,他快速完成了作业。,L1,用quickly描述动作速度。,"[{""en"":""She quickly answered the question."",""zh"":""她快速回答了问题。""}]"
+"副词·方式与评论副词",方式副词,方式副词,The children played happily.,孩子们快乐地玩耍。,L1,用happily表达快乐的状态。,"[{""en"":""The dog wagged its tail happily."",""zh"":""狗快乐地摇着尾巴。""}]"
+"副词·方式与评论副词",方式副词,方式副词,She easily solved the problem.,她轻松解决了问题。,L2,用easily描述轻松完成。,"[{""en"":""He easily won the race."",""zh"":""他轻松赢得了比赛。""}]"
+"副词·方式与评论副词",方式副词,方式副词,She speaks English well.,她英语说得很好。,L1,用well描述表现好。,"[{""en"":""He plays the guitar well."",""zh"":""他吉他弹得很好。""}]"
+"副词·方式与评论副词",评论副词,评论副词,Luckily no one was hurt.,幸运的是没人受伤。,L2,用luckily表达幸运。,"[{""en"":""Luckily I brought an umbrella."",""zh"":""幸运的是我带了伞。""}]"
+"副词·方式与评论副词",评论副词,评论副词,Frankly I don't care.,坦白说我不在乎。,L2,用frankly表达坦诚态度。,"[{""en"":""Frankly it's not my problem."",""zh"":""坦白说这不是我的问题。""}]"
+"副词·方式与评论副词",评论副词,评论副词,Honestly that's the best option.,老实说那是最好的选择。,L2,用honestly表达真诚。,"[{""en"":""Honestly I don't know."",""zh"":""老实说我不知道。""}]"
+"副词·方式与评论副词",评论副词,评论副词,Surprisingly he agreed with us.,令人惊讶的是他同意了。,L3,用surprisingly表达意外。,"[{""en"":""Surprisingly the test was easy."",""zh"":""令人惊讶的是考试很简单。""}]"
+"副词·方式与评论副词",评论副词,评论副词,Obviously she was lying.,显然她在撒谎。,L3,用obviously表达明显事实。,"[{""en"":""Obviously he forgot the appointment."",""zh"":""显然他忘了约会。""}]"
