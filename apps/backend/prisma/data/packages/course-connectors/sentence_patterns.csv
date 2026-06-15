@@ -1,0 +1,20 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+并列与转折,并列连词,"I like ___ and ___.",连接两个名词,"coffee / tea, apples / oranges","I like coffee and tea.",L1,0
+并列与转折,并列连词,"He is rich ___ unhappy.",转折,"but","He is rich but unhappy.",L1,1
+并列与转折,并列连词,"Do you want ___ or ___?",选择,"coffee / tea, now / later","Do you want coffee or tea?",L1,2
+并列与转折,并列连词,"I was tired ___ I went home.",因果,"so","I was tired so I went home.",L1,3
+并列与转折,对比与选择,"It's raining; ___ we'll go out.",正式转折,"however","It's raining; however we'll go out.",L2,0
+并列与转折,对比与选择,"She likes pop ___ I prefer rock.",对比,"whereas","She likes pop whereas I prefer rock.",L3,1
+并列与转折,对比与选择,"She is tired ___ she keeps working.",转折,"yet","She is tired yet she keeps working.",L2,2
+因果与让步,因果关系,"I stayed home ___ I was sick.",直接原因,"because","I stayed home because I was sick.",L1,0
+因果与让步,因果关系,"___ you're here let's start.",已知原因,"Since","Since you're here let's start.",L2,1
+因果与让步,因果关系,"He was late; ___ he missed the bus.",结果,"therefore","He was late; therefore he missed the bus.",L3,2
+因果与让步,让步关系,"___ it rained we had fun.",虽然,"Although","Although it rained we had fun.",L2,0
+因果与让步,让步关系,"___ she was scared she spoke.",尽管,"Even though","Even though she was scared she spoke.",L2,1
+因果与让步,让步关系,"___ the rain we went out.",尽管+名词,"Despite","Despite the rain we went out.",L2,2
+从句连接,时间与条件从句,"___ I arrived they were eating.",当...时,"When","When I arrived they were eating.",L1,0
+从句连接,时间与条件从句,"___ it rains we'll stay home.",如果,"If","If it rains we'll stay home.",L1,1
+从句连接,时间与条件从句,"You won't pass ___ you study.",除非,"unless","You won't pass unless you study.",L2,2
+从句连接,定语从句,"The girl ___ sang is my sister.",修饰人,"who","The girl who sang is my sister.",L2,0
+从句连接,定语从句,"The book ___ I read was great.",修饰物,"which","The book which I read was great.",L2,1
+从句连接,定语从句,"The movie ___ I saw was boring.",通用关系代词,"that","The movie that I saw was boring.",L1,2

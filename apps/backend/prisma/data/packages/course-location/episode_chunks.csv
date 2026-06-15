@@ -1,0 +1,17 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_fangwei,1,The book is in my bag.,0
+ch_fangwei,1,The cat is on the table.,1
+ch_fangwei,1,She is at the bus stop.,2
+ch_fangwei,1,The dog is under the bed.,3
+ch_fangwei,1,The car is behind the house.,4
+ch_fangwei,2,The school is next to the park.,0
+ch_fangwei,2,The bank is between the cafe and the library.,1
+ch_fangwei,2,The supermarket is opposite the station.,2
+ch_fangwei,2,He lives across from me.,3
+ch_zhilu,1,Go straight for two blocks.,0
+ch_zhilu,1,Turn left at the traffic light.,1
+ch_zhilu,1,Turn right after the bridge.,2
+ch_zhilu,1,The pharmacy is at the corner.,3
+ch_zhilu,2,Go past the hospital.,0
+ch_zhilu,2,The museum is on your left.,1
+ch_zhilu,2,The bookstore is on your right.,2

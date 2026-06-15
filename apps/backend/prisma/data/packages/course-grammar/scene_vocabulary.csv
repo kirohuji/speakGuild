@@ -1,0 +1,33 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+动词短语实战,常见动词短语,phrasal verb,动词短语,noun,/ˈfreɪzəl vɜːrb/,/ˈfreɪzəl vɜːb/,L2,动词+介词/副词构成的固定搭配。含义常不同于原动词。,"[{""en"":""'Give up' is a common phrasal verb meaning to stop trying."",""zh"":""give up是一个常见动词短语，意思是放弃。""}]",0
+动词短语实战,常见动词短语,give up,放弃,phrase,/ɡɪv ʌp/,/ɡɪv ʌp/,L2,停止尝试/放弃。后接名词或动名词。,"[{""en"":""Don't give up even if it's difficult."",""zh"":""即使困难也不要放弃。""}]",1
+动词短语实战,常见动词短语,look for,寻找,phrase,/lʊk fɔːr/,/lʊk fɔː/,L2,寻找某物/某人。比search更口语化。,"[{""en"":""I'm looking for my keys."",""zh"":""我在找我的钥匙。""}]",2
+动词短语实战,常见动词短语,run out of,用光,phrase,/rʌn aʊt əv/,/rʌn aʊt əv/,L2,用完/耗尽某物。,"[{""en"":""We've run out of milk."",""zh"":""我们牛奶喝完了。""}]",3
+动词短语实战,动词短语对话,come up with,想出,phrase,/kʌm ʌp wɪð/,/kʌm ʌp wɪð/,L2,想出(主意/方案)。,"[{""en"":""I came up with a great idea."",""zh"":""我想出了一个好主意。""}]",0
+动词短语实战,动词短语对话,put up with,忍受,phrase,/pʊt ʌp wɪð/,/pʊt ʌp wɪð/,L2,容忍/忍受。常用于负面语境。,"[{""en"":""I can't put up with the noise anymore."",""zh"":""我再也受不了那噪音了。""}]",1
+动词短语实战,动词短语对话,get along with,相处,phrase,/ɡet əˈlɔːŋ wɪð/,/ɡet əˈlɒŋ wɪð/,L2,与某人相处融洽。,"[{""en"":""I get along well with my colleagues."",""zh"":""我和同事们相处得很好。""}]",2
+时态精准表达,时态选择与对比,present simple,一般现在时,noun,/ˈprezənt ˈsɪmpəl/,/ˈprezənt ˈsɪmpəl/,L2,表示习惯、事实、常态。I eat breakfast at 8.。,"[{""en"":""I go to work by bus every day."",""zh"":""我每天乘公交上班。""}]",0
+时态精准表达,时态选择与对比,present continuous,现在进行时,noun,/ˈprezənt kənˈtɪnjuəs/,/ˈprezənt kənˈtɪnjuəs/,L2,表示正在进行的动作或当前阶段的安排。,"[{""en"":""I'm currently working on a new project."",""zh"":""我目前正在做一个新项目。""}]",1
+时态精准表达,时态选择与对比,present perfect,现在完成时,noun,/ˈprezənt pərˈfekt/,/ˈprezənt pəˈfekt/,L2,表示过去发生但与现在相关的动作。已有经验或持续到现在。,"[{""en"":""I have already finished my homework."",""zh"":""我已经完成了作业。""}]",2
+时态精准表达,时态在叙事中,past simple,一般过去时,noun,/pæst ˈsɪmpəl/,/pɑːst ˈsɪmpəl/,L2,表示过去某个时间发生的动作或状态。常与yesterday/last week连用。,"[{""en"":""I visited Paris last summer."",""zh"":""我去年夏天去了巴黎。""}]",0
+时态精准表达,时态在叙事中,past continuous,过去进行时,noun,/pæst kənˈtɪnjuəs/,/pɑːst kənˈtɪnjuəs/,L2,表示过去某时正在进行的动作。常用于背景描述。,"[{""en"":""I was reading when she called."",""zh"":""她打电话时我正在看书。""}]",1
+句子组织与衔接,连接词与过渡,however,然而,adv,/haʊˈevər/,/haʊˈevə/,L2,表示转折。比but更正式。用于句首或句中。,"[{""en"":""The task was difficult. However, I managed to finish it."",""zh"":""任务很困难，然而我设法完成了。""}]",0
+句子组织与衔接,连接词与过渡,therefore,因此,adv,/ˈðerfɔːr/,/ˈðeəfɔː/,L2,表示因果。用于正式衔接。比so更书面化。,"[{""en"":""I was late. Therefore, I missed the first part of the meeting."",""zh"":""我迟到了，因此错过了会议第一部分。""}]",1
+句子组织与衔接,复杂句结构,although,虽然/尽管,conj,/ɔːlˈðoʊ/,/ɔːlˈðəʊ/,L2,引导让步状语从句。although + 从句 + 主句。,"[{""en"":""Although it was raining, we went for a walk."",""zh"":""虽然下着雨，我们还是去散步了。""}]",0
+句子组织与衔接,复杂句结构,relative clause,定语从句,noun,/ˈrelətɪv klɔːz/,/ˈrelətɪv klɔːz/,L3,用who/which/that修饰名词的从句，提供更多信息。,"[{""en"":""The book that I borrowed was very interesting."",""zh"":""我借的那本书很有趣。""}]",1
+副词与状语,程度与频率副词,always,总是,adv,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,频率副词。100%频率。always/usually/often/sometimes/rarely/never。,"[{""en"":""I always have coffee in the morning."",""zh"":""我早上总是喝咖啡。""}]",0
+副词与状语,程度与频率副词,quite,相当,adv,/kwaɪt/,/kwaɪt/,L2,程度副词。比very弱，比fairly强。quite good / quite interesting。,"[{""en"":""The movie was quite good."",""zh"":""这部电影相当不错。""}]",1
+副词与状语,方式与评论副词,carefully,仔细地,adv,/ˈkerfəli/,/ˈkeəfəli/,L2,方式副词。描述动作的方式。常放在动词后。,"[{""en"":""Please read the instructions carefully."",""zh"":""请仔细阅读说明。""}]",0
+副词与状语,方式与评论副词,luckily,幸运的是,adv,/ˈlʌkɪli/,/ˈlʌkɪli/,L2,评论副词。放在句首修饰整个句子，表达说话人的态度。,"[{""en"":""Luckily, nobody was hurt in the accident."",""zh"":""幸运的是，事故中没有人受伤。""}]",1
+时间表达法,时间介词与连词,on,+具体某天,prep,/ɑːn/,/ɒn/,L2,用于具体日期、星期、节日(带day)。on Monday / on June 5th。,"[{""en"":""The meeting is on Friday."",""zh"":""会议在周五。""}]",0
+时间表达法,时间介词与连词,in,+时间段,prep,/ɪn/,/ɪn/,L2,用于月份、年份、季节、一天中的部分。in March / in 2024。,"[{""en"":""I was born in July."",""zh"":""我出生在七月。""}]",1
+时间表达法,时间介词与连词,at,+具体时间点,prep,/æt/,/æt/,L2,用于钟表时间、节日(不带day)。at 5pm / at night。,"[{""en"":""The class starts at 9 AM."",""zh"":""课程上午9点开始。""}]",2
+时间表达法,时间从句描述,while,当...时,conj,/waɪl/,/waɪl/,L2,表示两个动作同时发生。while + 进行时从句。,"[{""en"":""While I was cooking, the phone rang."",""zh"":""我在做饭时电话响了。""}]",0
+时间表达法,时间从句描述,before,在...之前,conj,/bɪˈfɔːr/,/bɪˈfɔː/,L2,表示主句动作发生在从句之前。,"[{""en"":""Before I left, I checked the weather."",""zh"":""我离开前查了天气。""}]",1
+时间表达法,时间从句描述,after,在...之后,conj,/ˈæftər/,/ˈɑːftə/,L2,表示主句动作发生在从句之后。,"[{""en"":""After I finished work, I went to the gym."",""zh"":""我下班后去了健身房。""}]",2
+方位与位置表达,方位介词,in,在...里面,prep,/ɪn/,/ɪn/,L1,表示在某空间内部。in the room / in the box。,"[{""en"":""The book is in my bag."",""zh"":""书在我的包里。""}]",0
+方位与位置表达,方位介词,on,在...上面,prep,/ɑːn/,/ɒn/,L1,表示在某物表面。on the table / on the wall。,"[{""en"":""The keys are on the table."",""zh"":""钥匙在桌子上。""}]",1
+方位与位置表达,方位介词,next to,在...旁边,prep,/nekst tuː/,/nekst tuː/,L1,表示紧邻某物/某人。,"[{""en"":""The bank is next to the supermarket."",""zh"":""银行在超市旁边。""}]",2
+方位与位置表达,描述位置与路线,opposite,在...对面,prep,/ˈɑːpəzɪt/,/ˈɒpəzɪt/,L2,表示在街道/房间的另一侧。,"[{""en"":""The café is opposite the station."",""zh"":""咖啡馆在车站对面。""}]",0
+方位与位置表达,描述位置与路线,between,在...之间,prep,/bɪˈtwiːn/,/bɪˈtwiːn/,L1,表示在两者之间。,"[{""en"":""The pharmacy is between the bank and the post office."",""zh"":""药房在银行和邮局之间。""}]",1
+方位与位置表达,描述位置与路线,go straight,直走,phrase,/ɡoʊ streɪt/,/ɡəʊ streɪt/,L1,指路时的基本指令。,"[{""en"":""Go straight until you see the traffic light."",""zh"":""直走直到看到红绿灯。""}]",2

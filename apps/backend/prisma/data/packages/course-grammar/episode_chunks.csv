@@ -1,0 +1,33 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_pv,1,Don't give up.,0
+ch_pv,1,I'm looking for...,1
+ch_pv,1,I've run out of...,2
+ch_pv,2,I came up with a...,0
+ch_pv,2,I can't put up with...,1
+ch_pv,2,We get along well.,2
+ch_tense,1,I usually... (present simple),0
+ch_tense,1,I'm currently... (present continuous),1
+ch_tense,1,I have already... (present perfect),2
+ch_tense,2,Yesterday I... (past simple),0
+ch_tense,2,I was... when... (past continuous),1
+ch_tense,2,I had never... before...,2
+ch_link,1,It was difficult but I...,0
+ch_link,1,I was late so I...,1
+ch_link,1,Although it was...,2
+ch_link,2,The book that I read was...,0
+ch_link,2,If I had more time I would...,1
+ch_adv,1,I always... / I never...,0
+ch_adv,1,It's quite... / It's very...,1
+ch_adv,2,Please... carefully.,0
+ch_adv,2,Luckily... / Frankly...,1
+ch_time,1,The meeting is on...,0
+ch_time,1,I was born in...,1
+ch_time,1,The class starts at...,2
+ch_time,2,While I was... I...,0
+ch_time,2,After I... I...,1
+ch_time,2,I... before I...,2
+ch_pos,1,The... is in/on/at...,0
+ch_pos,1,The... is next to / behind / under...,1
+ch_pos,2,Go straight until you see...,0
+ch_pos,2,Turn left / right at...,1
+ch_pos,2,It's on the corner / at the end of the street.,2

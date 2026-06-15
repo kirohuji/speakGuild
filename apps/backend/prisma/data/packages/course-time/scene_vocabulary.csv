@@ -1,0 +1,16 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+时间介词,时间点与时间段,at,在(时间点),preposition,/æt/,/æt/,L1,用于钟表时间和具体时刻。,"[{""en"":""The meeting starts at 3 PM."",""zh"":""会议下午3点开始。""}]",0
+时间介词,时间点与时间段,in,在(时间段),preposition,/ɪn/,/ɪn/,L1,用于月份/年份/季节/一天中的某部分。,"[{""en"":""I was born in March."",""zh"":""我出生在三月。""}]",1
+时间介词,时间点与时间段,on,在(具体日期),preposition,/ɑːn/,/ɒn/,L1,用于星期几和具体日期。,"[{""en"":""We'll meet on Monday."",""zh"":""我们周一见。""}]",2
+时间介词,持续与起止,during,在...期间,preposition,/ˈdʊrɪŋ/,/ˈdjʊərɪŋ/,L2,表示某时间段内。,"[{""en"":""He fell asleep during the movie."",""zh"":""他在看电影时睡着了。""}]",0
+时间介词,持续与起止,since,自从,preposition,/sɪns/,/sɪns/,L2,从过去某时间点开始(持续到现)。,"[{""en"":""I've been here since 9 AM."",""zh"":""我从早上9点就在这里了。""}]",1
+时间介词,持续与起止,for,持续(一段时间),preposition,/fɔːr/,/fɔː/,L1,表示动作持续多长时间。,"[{""en"":""I studied for three hours."",""zh"":""我学习了三个小时。""}]",2
+时间介词,持续与起止,until,直到,preposition,/ənˈtɪl/,/ənˈtɪl/,L1,表示截止时间。,"[{""en"":""The store is open until 9 PM."",""zh"":""商店营业到晚上9点。""}]",3
+时间介词,持续与起止,by,在...之前/截止到,preposition,/baɪ/,/baɪ/,L2,表示截止期限。,"[{""en"":""Please finish by Friday."",""zh"":""请在周五前完成。""}]",4
+时间连词与顺序,先后顺序,before,在...之前,conjunction,/bɪˈfɔːr/,/bɪˈfɔː/,L1,表示在另一事件之前。,"[{""en"":""Wash your hands before you eat."",""zh"":""吃饭前洗手。""}]",0
+时间连词与顺序,先后顺序,after,在...之后,conjunction,/ˈæftər/,/ˈɑːftə/,L1,表示在另一事件之后。,"[{""en"":""We went out after dinner."",""zh"":""晚饭后我们出去了。""}]",1
+时间连词与顺序,先后顺序,first,首先,adverb,/fɜːrst/,/fɜːst/,L1,序列中的第一步。,"[{""en"":""First mix the flour and eggs."",""zh"":""首先混合面粉和鸡蛋。""}]",2
+时间连词与顺序,先后顺序,then,然后,adverb,/ðen/,/ðen/,L1,表示下一步。,"[{""en"":""First shower then get dressed."",""zh"":""先洗澡然后穿衣服。""}]",3
+时间连词与顺序,同时与截止,when,当...时,conjunction,/wen/,/wen/,L1,表示同时或先后。,"[{""en"":""When she arrived we had dinner."",""zh"":""她到的时候我们正在吃晚饭。""}]",0
+时间连词与顺序,同时与截止,while,当...时(持续),conjunction,/waɪl/,/waɪl/,L2,表示两个持续动作同时进行。,"[{""en"":""She listened to music while studying."",""zh"":""她学习时听音乐。""}]",1
+时间连词与顺序,同时与截止,as,当...时/随着,conjunction,/æz/,/æz/,L2,表示两个动作同步发生。,"[{""en"":""As I got older I changed."",""zh"":""随着年龄增长我变了。""}]",2

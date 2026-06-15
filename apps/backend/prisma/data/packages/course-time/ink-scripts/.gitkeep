@@ -1,0 +1,5 @@
+{
+  "scene": "course-time",
+  "type": "placeholder",
+  "note": "ink-scripts will be generated during seed based on script_episodes.csv data"
+}

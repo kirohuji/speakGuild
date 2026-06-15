@@ -1,0 +1,7 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+ch_l1,并列与转折,1,并列连接,并列与转折,L2,1,2,2,2,2,"[""用and连接"",""用but转折""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+ch_l1,并列与转折,2,对比与选择,并列与转折,L2,1,2,2,2,2,"[""用whereas对比"",""用however表达转折""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_l2,因果与让步,1,因果关系,因果与让步,L2,1,2,2,2,2,"[""用because表达原因"",""用therefore表达结果""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_l2,因果与让步,2,让步关系,因果与让步,L2,1,2,2,2,2,"[""用although表达让步"",""用despite+名词结构""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_l3,从句与复杂句,1,时间与条件从句,从句与复杂句,L3,1,2,2,2,2,"[""用when时间从句"",""用if条件从句""]",2,2,2,Tutor,语法导师,false,,"{""xp"":25}"
+ch_l3,从句与复杂句,2,定语从句,从句与复杂句,L3,1,2,2,2,2,"[""用who定语从句"",""用which定语从句""]",2,2,2,Tutor,语法导师,false,,"{""xp"":25}"

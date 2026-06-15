@@ -1,0 +1,16 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_sjtime,1,The meeting starts at 3 PM.,0
+ch_sjtime,1,I was born in March.,1
+ch_sjtime,1,We'll meet on Monday.,2
+ch_sjtime,2,He fell asleep during the movie.,0
+ch_sjtime,2,I've been here since 9 AM.,1
+ch_sjtime,2,I studied for three hours.,2
+ch_sjtime,2,The store is open until 9 PM.,3
+ch_sjtime,2,Please finish by Friday.,4
+ch_shunxu,1,Wash your hands before you eat.,0
+ch_shunxu,1,We went out after dinner.,1
+ch_shunxu,1,First mix the flour and eggs.,2
+ch_shunxu,1,First shower then get dressed.,3
+ch_shunxu,2,When she arrived we had dinner.,0
+ch_shunxu,2,She listened to music while studying.,1
+ch_shunxu,2,As I got older I changed.,2

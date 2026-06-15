@@ -1,0 +1,16 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_e1,1,I always... / I never...,0
+ch_e1,1,It's quite... / It's very...,1
+ch_e1,2,Please... carefully.,0
+ch_e1,2,Luckily... / Frankly...,1
+ch_e2,1,The meeting is on...,0
+ch_e2,1,I was born in...,1
+ch_e2,1,The class starts at...,2
+ch_e2,2,Before I... I...,0
+ch_e2,2,After I... I...,1
+ch_e2,2,While I was... I...,2
+ch_e3,1,The... is in/on/at the...,0
+ch_e3,1,The... is next to / between...,1
+ch_e3,2,Go straight until...,0
+ch_e3,2,Turn left / right at...,1
+ch_e3,2,It's on the corner / opposite...,2

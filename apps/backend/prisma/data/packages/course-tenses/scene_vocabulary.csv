@@ -1,0 +1,9 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+一般与进行时,一般现在与现在进行,present simple,一般现在时,noun,/ˈprezənt ˈsɪmpəl/,/ˈprezənt ˈsɪmpəl/,L2,表示习惯/事实/常态。动词用原形(第三人称加s)。,"[{""en"":""I eat breakfast every day."",""zh"":""我每天吃早餐。""}]",0
+一般与进行时,一般现在与现在进行,present continuous,现在进行时,noun,/ˈprezənt kənˈtɪnjuəs/,/ˈprezənt kənˈtɪnjuəs/,L2,表示现在正在进行的动作。be + doing。,"[{""en"":""I am eating lunch right now."",""zh"":""我正在吃午饭。""}]",1
+一般与进行时,一般过去与过去进行,past simple,一般过去时,noun,/pæst ˈsɪmpəl/,/pɑːst ˈsɪmpəl/,L2,表示过去完成的动作。动词用过去式。,"[{""en"":""I visited Paris last year."",""zh"":""我去年去了巴黎。""}]",0
+一般与进行时,一般过去与过去进行,past continuous,过去进行时,noun,/pæst kənˈtɪnjuəs/,/pɑːst kənˈtɪnjuəs/,L2,表示过去某时正在进行的动作。was/were + doing。,"[{""en"":""I was watching TV when she called."",""zh"":""她打电话时我正在看电视。""}]",1
+完成时与将来时,现在完成时,present perfect,现在完成时,noun,/ˈprezənt pərˈfekt/,/ˈprezənt pəˈfekt/,L2,表示过去发生但与现在相关的动作。have/has + 过去分词。,"[{""en"":""I have finished my homework."",""zh"":""我已经完成了作业。""}]",0
+完成时与将来时,现在完成时,past participle,过去分词,noun,/pæst pɑːrˈtɪsɪpəl/,/pɑːst pɑːˈtɪsɪpəl/,L2,动词的过去分词形式。用于完成时和被动语态。,"[{""en"":"""Eaten"" is the past participle of ""eat""."",""zh"":""eaten是eat的过去分词。""}]",1
+完成时与将来时,将来时表达,will,将(即时决定),modal,/wɪl/,/wɪl/,L1,用于即时决定、预测、承诺。I'll help you。,"[{""en"":""I will call you tomorrow."",""zh"":""我明天会打电话给你。""}]",0
+完成时与将来时,将来时表达,going to,打算/将(计划),phrase,/ˈɡoʊɪŋ tuː/,/ˈɡəʊɪŋ tə/,L1,用于已有计划或迹象预示的事情。,"[{""en"":""I am going to visit my grandparents this weekend."",""zh"":""我这周末打算去看望祖父母。""}]",1

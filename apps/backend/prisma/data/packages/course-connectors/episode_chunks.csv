@@ -1,0 +1,20 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_binglie,1,I like coffee and tea.,0
+ch_binglie,1,He is rich but unhappy.,1
+ch_binglie,1,Do you want coffee or tea?,2
+ch_binglie,1,I was tired so I went home.,3
+ch_binglie,2,It's raining however we'll go out.,0
+ch_binglie,2,She likes pop whereas I prefer rock.,1
+ch_binglie,2,She is tired yet she keeps working.,2
+ch_yinguo,1,I stayed home because I was sick.,0
+ch_yinguo,1,Since you're here let's start.,1
+ch_yinguo,1,He was late therefore he missed the bus.,2
+ch_yinguo,2,Although it rained we had fun.,0
+ch_yinguo,2,Even though she was scared she spoke.,1
+ch_yinguo,2,Despite the rain we went out.,2
+ch_congju,1,When I arrived they were eating.,0
+ch_congju,1,If it rains we'll stay home.,1
+ch_congju,1,You won't pass unless you study.,2
+ch_congju,2,The girl who sang is my sister.,0
+ch_congju,2,The book which I read was great.,1
+ch_congju,2,The movie that I saw was boring.,2

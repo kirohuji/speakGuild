@@ -1,0 +1,48 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+动词短语 UP 篇,UP 基础短语,give up,放弃,phrase,/ɡɪv ʌp/,/ɡɪv ʌp/,L2,停止尝试。后接名词或动名词。,"[{""en"":""Don't give up on your dreams."",""zh"":""不要放弃你的梦想。""}]",0
+动词短语 UP 篇,UP 基础短语,wake up,醒来,phrase,/weɪk ʌp/,/weɪk ʌp/,L1,从睡眠中醒来。wake up + 时间。,"[{""en"":""I wake up at 6 AM every day."",""zh"":""我每天早上6点醒来。""}]",1
+动词短语 UP 篇,UP 基础短语,pick up,捡起/接人,phrase,/pɪk ʌp/,/pɪk ʌp/,L2,捡起某物或开车接人。,"[{""en"":""Can you pick me up at the station?"",""zh"":""你能到车站接我吗？""}]",2
+动词短语 UP 篇,UP 基础短语,clean up,清理,phrase,/kliːn ʌp/,/kliːn ʌp/,L1,打扫/清理干净。,"[{""en"":""Please clean up your room."",""zh"":""请把你的房间收拾干净。""}]",3
+动词短语 UP 篇,UP 基础短语,show up,出现/到场,phrase,/ʃoʊ ʌp/,/ʃəʊ ʌp/,L2,到达某地/露面。,"[{""en"":""He didn't show up for the meeting."",""zh"":""他没有来开会。""}]",4
+动词短语 DOWN 篇,DOWN 基础短语,sit down,坐下,phrase,/sɪt daʊn/,/sɪt daʊn/,L1,从站立到坐下的动作。,"[{""en"":""Please sit down and relax."",""zh"":""请坐下来放松。""}]",0
+动词短语 DOWN 篇,DOWN 基础短语,calm down,冷静下来,phrase,/kɑːm daʊn/,/kɑːm daʊn/,L2,从激动/愤怒中平静下来。,"[{""en"":""Calm down and tell me what happened."",""zh"":""冷静下来告诉我发生了什么。""}]",1
+动词短语 DOWN 篇,DOWN 基础短语,break down,出故障/崩溃,phrase,/breɪk daʊn/,/breɪk daʊn/,L2,机器出故障或情绪崩溃。,"[{""en"":""My car broke down on the highway."",""zh"":""我的车在高速上抛锚了。""}]",2
+动词短语 DOWN 篇,DOWN 基础短语,turn down,调低/拒绝,phrase,/tɜːrn daʊn/,/tɜːn daʊn/,L2,降低音量或拒绝提议。,"[{""en"":""He turned down the job offer."",""zh"":""他拒绝了那份工作邀请。""}]",3
+动词短语 DOWN 篇,DOWN 基础短语,write down,写下来,phrase,/raɪt daʊn/,/raɪt daʊn/,L1,记录在纸上。,"[{""en"":""Write down your ideas."",""zh"":""把你的想法写下来。""}]",4
+动词短语 OUT 篇,OUT 基础短语,find out,查明/发现,phrase,/faɪnd aʊt/,/faɪnd aʊt/,L2,通过查询或经历发现某事。,"[{""en"":""I need to find out the truth."",""zh"":""我需要查明真相。""}]",0
+动词短语 OUT 篇,OUT 基础短语,work out,锻炼/解决,phrase,/wɜːrk aʊt/,/wɜːk aʊt/,L2,锻炼身体或解决问题。,"[{""en"":""I work out at the gym three times a week."",""zh"":""我每周去健身房锻炼三次。""}]",1
+动词短语 OUT 篇,OUT 基础短语,run out of,用完,phrase,/rʌn aʊt əv/,/rʌn aʊt əv/,L2,耗尽某物的供应。,"[{""en"":""We've run out of milk."",""zh"":""我们牛奶喝完了。""}]",2
+动词短语 OUT 篇,OUT 基础短语,figure out,弄清楚,phrase,/ˈfɪɡjər aʊt/,/ˈfɪɡə aʊt/,L2,经过思考理解或解决。,"[{""en"":""I can't figure out this problem."",""zh"":""我弄不明白这个问题。""}]",3
+动词短语 OUT 篇,OUT 基础短语,check out,退房/查看,phrase,/tʃek aʊt/,/tʃek aʊt/,L1,退房或查看某物。,"[{""en"":""Check out this new website!"",""zh"":""看看这个新网站！""}]",4
+动词短语 OFF 篇,OFF 基础短语,take off,起飞/脱下,phrase,/teɪk ɔːf/,/teɪk ɒf/,L2,飞机起飞或脱掉衣物。,"[{""en"":""The plane took off at 3 PM."",""zh"":""飞机下午3点起飞了。""}]",0
+动词短语 OFF 篇,OFF 基础短语,turn off,关掉,phrase,/tɜːrn ɔːf/,/tɜːn ɒf/,L1,关闭电器或设备。,"[{""en"":""Please turn off the lights."",""zh"":""请关灯。""}]",1
+动词短语 OFF 篇,OFF 基础短语,put off,推迟,phrase,/pʊt ɔːf/,/pʊt ɒf/,L2,推迟/延后。,"[{""en"":""Don't put off your homework."",""zh"":""别拖延你的作业。""}]",2
+动词短语 OFF 篇,OFF 基础短语,show off,炫耀,phrase,/ʃoʊ ɔːf/,/ʃəʊ ɒf/,L2,故意展示以吸引注意。,"[{""en"":""He likes to show off his new car."",""zh"":""他喜欢炫耀他的新车。""}]",3
+动词短语 OFF 篇,OFF 基础短语,pay off,还清/成功,phrase,/peɪ ɔːf/,/peɪ ɒf/,L2,还清债务或努力终有回报。,"[{""en"":""Hard work always pays off."",""zh"":""努力工作总有回报。""}]",4
+动词短语 ON 篇,ON 基础短语,put on,穿上/戴上,phrase,/pʊt ɑːn/,/pʊt ɒn/,L1,穿衣服或戴配饰。,"[{""en"":""Put on your coat. It's cold."",""zh"":""穿上外套，天冷。""}]",0
+动词短语 ON 篇,ON 基础短语,turn on,打开,phrase,/tɜːrn ɑːn/,/tɜːn ɒn/,L1,打开电器/设备。,"[{""en"":""Turn on the TV, please."",""zh"":""请打开电视。""}]",1
+动词短语 ON 篇,ON 基础短语,get on,上车/相处,phrase,/ɡet ɑːn/,/ɡet ɒn/,L2,上公交/火车/飞机或相处。,"[{""en"":""They get on well with each other."",""zh"":""他们相处得很好。""}]",2
+动词短语 ON 篇,ON 基础短语,carry on,继续,phrase,/ˈkæri ɑːn/,/ˈkæri ɒn/,L2,继续做某事。,"[{""en"":""Carry on with your work."",""zh"":""继续你的工作。""}]",3
+动词短语 ON 篇,ON 基础短语,go on,继续/发生,phrase,/ɡoʊ ɑːn/,/ɡəʊ ɒn/,L2,继续进行或发生。,"[{""en"":""What's going on here?"",""zh"":""这里发生了什么？""}]",4
+动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,give in,屈服/让步,phrase,/ɡɪv ɪn/,/ɡɪv ɪn/,L2,不再抵抗/妥协。,"[{""en"":""Finally he gave in and agreed."",""zh"":""最后他让步同意了。""}]",0
+动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,come over,过来/拜访,phrase,/kʌm ˈoʊvər/,/kʌm ˈəʊvə/,L2,到某人家里或所在处。,"[{""en"":""Come over to my house tonight."",""zh"":""今晚来我家吧。""}]",1
+动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,call back,回电,phrase,/kɔːl bæk/,/kɔːl bæk/,L1,回复电话。,"[{""en"":""I'll call you back later."",""zh"":""我稍后给你回电话。""}]",2
+动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,get back,回来,phrase,/ɡet bæk/,/ɡet bæk/,L1,返回某地。,"[{""en"":""I'll get back to you soon."",""zh"":""我很快回复你。""}]",3
+动词短语 IN/OVER/BACK 篇,IN/OVER/BACK 基础短语,think over,仔细考虑,phrase,/θɪŋk ˈoʊvər/,/θɪŋk ˈəʊvə/,L2,认真思考后再做决定。,"[{""en"":""Let me think it over."",""zh"":""让我好好想想。""}]",4
+动词搭配 MAKE/TAKE/HAVE/DO,动词搭配 MAKE/TAKE/HAVE/DO,make a decision,做决定,phrase,/meɪk ə dɪˈsɪʒən/,/meɪk ə dɪˈsɪʒən/,L2,做出决定。,"[{""en"":""I need to make a decision soon."",""zh"":""我需要尽快做决定。""}]",0
+动词搭配 MAKE/TAKE/HAVE/DO,动词搭配 MAKE/TAKE/HAVE/DO,take care of,照顾,phrase,/teɪk ker əv/,/teɪk keər əv/,L2,照顾某人或处理某事。,"[{""en"":""She takes care of her brother."",""zh"":""她照顾她的弟弟。""}]",1
+动词搭配 MAKE/TAKE/HAVE/DO,动词搭配 MAKE/TAKE/HAVE/DO,have a look,看一看,phrase,/hæv ə lʊk/,/hæv ə lʊk/,L1,快速看一下。,"[{""en"":""Have a look at this photo."",""zh"":""看看这张照片。""}]",2
+动词搭配 MAKE/TAKE/HAVE/DO,动词搭配 MAKE/TAKE/HAVE/DO,do business,做生意,phrase,/duː ˈbɪznəs/,/duː ˈbɪznɪs/,L2,经商。,"[{""en"":""They do business with many countries."",""zh"":""他们和许多国家有生意往来。""}]",3
+动词搭配 GET/KEEP/SET/COME,动词搭配 GET/KEEP/SET/COME,get ready,准备好,phrase,/ɡet ˈredi/,/ɡet ˈredi/,L1,做好准备。,"[{""en"":""Get ready for the trip."",""zh"":""为旅行做好准备。""}]",0
+动词搭配 GET/KEEP/SET/COME,动词搭配 GET/KEEP/SET/COME,keep in touch,保持联系,phrase,/kiːp ɪn tʌtʃ/,/kiːp ɪn tʌtʃ/,L2,保持联系。,"[{""en"":""Keep in touch after you move."",""zh"":""你搬家后保持联系。""}]",1
+动词搭配 GET/KEEP/SET/COME,动词搭配 GET/KEEP/SET/COME,come true,实现,phrase,/kʌm truː/,/kʌm truː/,L2,梦想实现。,"[{""en"":""Her dream came true."",""zh"":""她的梦想实现了。""}]",2
+动词搭配 GET/KEEP/SET/COME,动词搭配 GET/KEEP/SET/COME,set up,建立,phrase,/set ʌp/,/set ʌp/,L2,建立/创办。,"[{""en"":""They set up a new company."",""zh"":""他们成立了一家新公司。""}]",3
+介词固定搭配,介词固定搭配,interested in,感兴趣,phrase,/ˈɪntrəstɪd ɪn/,/ˈɪntrəstɪd ɪn/,L2,对...感兴趣。,"[{""en"":""I'm interested in learning Japanese."",""zh"":""我对学日语感兴趣。""}]",0
+介词固定搭配,介词固定搭配,good at,擅长,phrase,/ɡʊd æt/,/ɡʊd æt/,L1,擅长。,"[{""en"":""She is good at playing piano."",""zh"":""她擅长弹钢琴。""}]",1
+介词固定搭配,介词固定搭配,afraid of,害怕,phrase,/əˈfreɪd əv/,/əˈfreɪd əv/,L1,害怕。,"[{""en"":""I'm afraid of spiders."",""zh"":""我怕蜘蛛。""}]",2
+介词固定搭配,介词固定搭配,depend on,取决于,phrase,/dɪˈpend ɑːn/,/dɪˈpend ɒn/,L2,取决于/依赖。,"[{""en"":""It depends on the weather."",""zh"":""这取决于天气。""}]",3
+介词固定搭配,介词固定搭配,wait for,等待,phrase,/weɪt fɔːr/,/weɪt fɔː/,L1,等待。,"[{""en"":""I'm waiting for the bus."",""zh"":""我在等公交车。""}]",4
+其他高频固定搭配,其他高频固定搭配,look forward to,期待,phrase,/lʊk ˈfɔːrwərd tuː/,/lʊk ˈfɔːwəd tuː/,L2,期待。,"[{""en"":""I look forward to meeting you."",""zh"":""我期待与你见面。""}]",0
+其他高频固定搭配,其他高频固定搭配,take part in,参加,phrase,/teɪk pɑːrt ɪn/,/teɪk pɑːt ɪn/,L2,参加活动。,"[{""en"":""He took part in the competition."",""zh"":""他参加了比赛。""}]",1
+其他高频固定搭配,其他高频固定搭配,catch up with,赶上,phrase,/kætʃ ʌp wɪð/,/kætʃ ʌp wɪð/,L2,赶上/叙旧。,"[{""en"":""I need to catch up with my friends."",""zh"":""我需要和老朋友叙叙旧。""}]",2
+其他高频固定搭配,其他高频固定搭配,make sure,确保,phrase,/meɪk ʃʊr/,/meɪk ʃʊə/,L1,确保。,"[{""en"":""Make sure you lock the door."",""zh"":""确保锁好门。""}]",3

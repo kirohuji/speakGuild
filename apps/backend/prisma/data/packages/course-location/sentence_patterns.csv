@@ -1,0 +1,17 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+方位介词,基本方位介词,"The book is ___ my bag.",在内部,"in","The book is in my bag.",L1,0
+方位介词,基本方位介词,"The cat is ___ the table.",在表面,"on","The cat is on the table.",L1,1
+方位介词,基本方位介词,"She is ___ the bus stop.",在位置点,"at","She is at the bus stop.",L1,2
+方位介词,基本方位介词,"The dog is ___ the bed.",在下方,"under","The dog is under the bed.",L1,3
+方位介词,基本方位介词,"The car is ___ the house.",在后方,"behind","The car is behind the house.",L1,4
+方位介词,相对位置,"The school is ___ the park.",在旁边,"next to","The school is next to the park.",L1,0
+方位介词,相对位置,"The bank is ___ the cafe and the library.",在两者之间,"between","The bank is between the cafe and the library.",L1,1
+方位介词,相对位置,"The supermarket is ___ the station.",在对面,"opposite","The supermarket is opposite the station.",L2,2
+方位介词,相对位置,"He lives ___ me.",在对面(美式),"across from","He lives across from me.",L2,3
+指路与位置描述,指路指令,"___ for two blocks.",直走,"Go straight","Go straight for two blocks.",L1,0
+指路与位置描述,指路指令,"___ at the traffic light.",左转,"Turn left","Turn left at the traffic light.",L1,1
+指路与位置描述,指路指令,"___ after the bridge.",右转,"Turn right","Turn right after the bridge.",L1,2
+指路与位置描述,指路指令,"The pharmacy is ___ .",在拐角,"at the corner","The pharmacy is at the corner.",L1,3
+指路与位置描述,描述路线,"Go ___ the hospital.",经过,"past","Go past the hospital.",L2,0
+指路与位置描述,描述路线,"The museum is ___ .",在左边,"on your left","The museum is on your left.",L1,1
+指路与位置描述,描述路线,"The bookstore is ___ .",在右边,"on your right","The bookstore is on your right.",L1,2

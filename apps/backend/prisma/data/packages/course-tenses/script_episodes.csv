@@ -1,0 +1,5 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+ch_t1,一般与进行时,1,一般现在与现在进行,一般与进行时,L2,1,2,2,2,2,"[""用一般现在描述习惯"",""用现在进行描述当前""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+ch_t1,一般与进行时,2,一般过去与过去进行,一般与进行时,L2,1,2,2,2,2,"[""用过去时描述已发生的事"",""用过去进行描述背景""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_t2,完成时与将来时,1,现在完成时,完成时与将来时,L2,1,2,2,2,2,"[""用完成时表达已做"",""用完成时表达从未做""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_t2,完成时与将来时,2,将来时表达,完成时与将来时,L2,1,2,2,2,2,"[""用will表达决定"",""用going to表达计划""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"

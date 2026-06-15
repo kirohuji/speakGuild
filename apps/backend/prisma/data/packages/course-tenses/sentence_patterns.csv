@@ -1,0 +1,8 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+一般与进行时,一般现在与现在进行,"I usually ___ (present simple).",描述习惯,"wake up at 7, have coffee, go to school","I usually wake up at 7.",L1,0
+一般与进行时,一般现在与现在进行,"I'm currently ___ing (present continuous).",描述当前,"work on a project, read a book, learn Spanish","I'm currently reading a good book.",L1,1
+一般与进行时,一般过去与过去进行,"Yesterday I ___ (past simple).",描述过去,"visited the museum, met a friend, watched a movie","Yesterday I visited the museum.",L1,0
+一般与进行时,一般过去与过去进行,"I was ___ing when ___.",过去进行,"cooking / the phone rang, sleeping / someone knocked","I was cooking when the phone rang.",L2,1
+完成时与将来时,现在完成时,"I have already ___ (past participle).",完成时,"finished, done, eaten, seen","I have already finished the report.",L2,0
+完成时与将来时,将来时表达,"I will ___ (verb).",将来时will,"help, call, go, buy","I will call you tomorrow.",L1,0
+完成时与将来时,将来时表达,"I'm going to ___ (verb).",将来时going to,"visit, start, buy, travel","I'm going to visit my family.",L1,1

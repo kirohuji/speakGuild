@@ -1,0 +1,47 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_up,1,Don't give up!,0
+ch_up,1,I wake up at...,1
+ch_up,1,Please clean up...,2
+ch_up,2,Can you pick me up?,0
+ch_up,2,He didn't show up.,1
+ch_down,1,Please sit down.,0
+ch_down,1,Calm down!,1
+ch_down,1,My car broke down.,2
+ch_down,2,He turned down the offer.,0
+ch_down,2,Write down your ideas.,1
+ch_out,1,I need to find out...,0
+ch_out,1,I work out every day.,1
+ch_out,1,I've run out of...,2
+ch_out,2,I can't figure it out.,0
+ch_out,2,Check this out!,1
+ch_off,1,The plane takes off at...,0
+ch_off,1,Please turn off...,1
+ch_off,1,Don't put off...,2
+ch_off,2,Hard work pays off.,0
+ch_on,1,Put on your coat.,0
+ch_on,1,Can you turn on...?,1
+ch_on,1,Carry on with your work.,2
+ch_on,2,They get on well.,0
+ch_on,2,What's going on?,1
+ch_maketake,1,I need to make a decision.,0
+ch_maketake,1,She takes care of her family.,1
+ch_maketake,1,Have a look at this!,2
+ch_maketake,1,They do business overseas.,3
+ch_getkeep,1,Get ready for the exam!,0
+ch_getkeep,1,Keep in touch with me.,1
+ch_getkeep,1,Her dream finally came true.,2
+ch_getkeep,1,We need to set up a system.,3
+ch_prep,1,I'm interested in music.,0
+ch_prep,1,She is good at math.,1
+ch_prep,1,I'm afraid of heights.,2
+ch_prep,1,It depends on the situation.,3
+ch_prep,1,Please wait for me.,4
+ch_other,1,I look forward to your reply.,0
+ch_other,1,He took part in the contest.,1
+ch_other,1,I need to catch up with news.,2
+ch_other,1,Make sure you lock the door.,3
+ch_inover,1,He finally gave in.,0
+ch_inover,1,Come over!,1
+ch_inover,1,I'll call you back.,2
+ch_inover,2,I'll get back to you.,0
+ch_inover,2,Let me think it over.,1

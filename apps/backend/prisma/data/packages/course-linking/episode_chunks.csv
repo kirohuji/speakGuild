@@ -1,0 +1,11 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_l1,1,I was tired but...,0
+ch_l1,1,She likes... and...,1
+ch_l1,2,He is... whereas I am...,0
+ch_l2,1,I stayed home because...,0
+ch_l2,1,He didn't study therefore...,1
+ch_l2,2,Although it was...,0
+ch_l3,1,When I... I...,0
+ch_l3,1,If it... I will...,1
+ch_l3,2,The person who...,0
+ch_l3,2,The book which I...,1

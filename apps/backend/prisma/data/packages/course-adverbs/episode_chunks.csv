@@ -1,0 +1,21 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_pinlv,1,I always brush my teeth.,0
+ch_pinlv,1,I usually have breakfast at 8.,1
+ch_pinlv,1,I often read before bed.,2
+ch_pinlv,1,Sometimes I go jogging.,3
+ch_pinlv,1,I never smoke.,4
+ch_pinlv,2,She is very smart.,0
+ch_pinlv,2,The movie is quite good.,1
+ch_pinlv,2,It's rather cold today.,2
+ch_pinlv,2,That's extremely kind.,3
+ch_pinlv,2,This coffee is too hot.,4
+ch_fangshi,1,Please read carefully.,0
+ch_fangshi,1,He quickly finished his homework.,1
+ch_fangshi,1,The children played happily.,2
+ch_fangshi,1,She easily solved the problem.,3
+ch_fangshi,1,She speaks English well.,4
+ch_fangshi,2,Luckily no one was hurt.,0
+ch_fangshi,2,Frankly I don't care.,1
+ch_fangshi,2,Honestly that's the best option.,2
+ch_fangshi,2,Surprisingly he agreed with us.,3
+ch_fangshi,2,Obviously she was lying.,4

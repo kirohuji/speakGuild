@@ -1,0 +1,9 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_t1,1,I usually... (present simple),0
+ch_t1,1,I'm currently... (present continuous),1
+ch_t1,2,Yesterday I... (past simple),0
+ch_t1,2,I was... when... (past continuous),1
+ch_t2,1,I have already... (present perfect),0
+ch_t2,1,I have never... (present perfect),1
+ch_t2,2,I will... (will + verb),0
+ch_t2,2,I'm going to... (going to),1
