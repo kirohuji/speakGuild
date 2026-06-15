@@ -13,6 +13,8 @@ export interface AdminNotificationItem {
   createdAt: string;
   updatedAt: string;
   _count: { reads: number; targets: number };
+  /** 定向通知的目标用户（列表最多返回前 10 个） */
+  targets?: { user: SearchUserResult }[];
 }
 
 export interface AdminNotificationListResult {
@@ -38,6 +40,7 @@ export async function listNotifications(params: {
   page?: number;
   pageSize?: number;
   keyword?: string;
+  userId?: string;
 }) {
   return get<AdminNotificationListResult>('/admin/notifications', params);
 }

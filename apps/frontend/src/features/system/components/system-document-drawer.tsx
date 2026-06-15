@@ -14,7 +14,7 @@ export function SystemDocumentDrawer({ open, onClose, title, content }: SystemDo
     <Drawer open={open} onClose={onClose}>
       <DrawerContent className="h-[90dvh] w-full max-w-full rounded-none border-0">
         {/* 顶部标题栏 */}
-        <div className="flex items-center justify-center border-b border-border/50 bg-background px-4 py-3">
+        <div className="flex items-center justify-center border-b border-border/50 bg-transparent px-4 py-3">
           <DrawerTitle className="text-base font-semibold">{title}</DrawerTitle>
         </div>
 

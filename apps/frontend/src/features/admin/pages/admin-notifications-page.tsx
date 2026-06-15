@@ -370,6 +370,14 @@ export function AdminNotificationsPage() {
   const [keyword, setKeyword] = useState('')
   const [searchInput, setSearchInput] = useState('')
 
+  // User filter
+  const [filterUserId, setFilterUserId] = useState('')
+  const [filterUserName, setFilterUserName] = useState('')
+  const [filterUserInput, setFilterUserInput] = useState('')
+  const [filterUserResults, setFilterUserResults] = useState<SearchUserResult[]>([])
+  const [filterUserSearching, setFilterUserSearching] = useState(false)
+  const [filterUserPopoverOpen, setFilterUserPopoverOpen] = useState(false)
+
   // Stats
   const [stats, setStats] = useState<NotificationStats | null>(null)
 
@@ -399,12 +407,12 @@ export function AdminNotificationsPage() {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
-      const result = await listNotifications({ page, pageSize, keyword: keyword || undefined })
+      const result = await listNotifications({ page, pageSize, keyword: keyword || undefined, userId: filterUserId || undefined })
       setData(result.list)
       setTotal(result.total)
     } catch { setData([]) }
     finally { setLoading(false) }
-  }, [page, pageSize, keyword])
+  }, [page, pageSize, keyword, filterUserId])
 
   const fetchStats = useCallback(async () => {
     try { setStats(await getNotificationStats()) } catch {}
@@ -420,6 +428,34 @@ export function AdminNotificationsPage() {
 
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSearch()
+  }
+
+  const handleFilterUserSearch = async () => {
+    if (!filterUserInput.trim()) return
+    setFilterUserSearching(true)
+    try {
+      const results = await searchUsers(filterUserInput.trim())
+      setFilterUserResults(results)
+      setFilterUserPopoverOpen(true)
+    } catch { setFilterUserResults([]) }
+    finally { setFilterUserSearching(false) }
+  }
+
+  const selectFilterUser = (user: SearchUserResult) => {
+    setFilterUserId(user.id)
+    setFilterUserName(user.name || user.email)
+    setFilterUserInput('')
+    setFilterUserResults([])
+    setFilterUserPopoverOpen(false)
+    setPage(1)
+  }
+
+  const clearFilterUser = () => {
+    setFilterUserId('')
+    setFilterUserName('')
+    setFilterUserInput('')
+    setFilterUserResults([])
+    setPage(1)
   }
 
   const handleDelete = async () => {
@@ -577,7 +613,7 @@ export function AdminNotificationsPage() {
       </div>
 
       {/* 搜索栏 */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -588,14 +624,61 @@ export function AdminNotificationsPage() {
             className="pl-9"
           />
         </div>
+        {/* 用户过滤 */}
+        <Popover open={filterUserPopoverOpen} onOpenChange={setFilterUserPopoverOpen}>
+          <PopoverTrigger asChild>
+            <div className="relative flex-1 max-w-[200px]">
+              <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="按用户过滤..."
+                value={filterUserInput}
+                onChange={(e) => {
+                  setFilterUserInput(e.target.value)
+                  if (e.target.value.trim()) {
+                    setFilterUserPopoverOpen(true)
+                  }
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleFilterUserSearch()}
+                className="pl-9"
+              />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-[280px] p-0" align="start" sideOffset={4} onOpenAutoFocus={(e) => e.preventDefault()}>
+            {filterUserSearching ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+            ) : filterUserResults.length > 0 ? (
+              <div className="max-h-[200px] overflow-y-auto">
+                {filterUserResults.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => selectFilterUser(user)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    <span className="font-medium">{user.name || '未命名'}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                  </button>
+                ))}
+              </div>
+            ) : filterUserInput.trim() ? (
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-xs text-muted-foreground">按 Enter 搜索用户</span>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleFilterUserSearch}>搜索</Button>
+              </div>
+            ) : (
+              <div className="px-3 py-2 text-xs text-muted-foreground">输入用户名或邮箱搜索</div>
+            )}
+          </PopoverContent>
+        </Popover>
         <Button onClick={handleSearch} size="sm">搜索</Button>
-        {keyword && (
+        {(keyword || filterUserId) && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
               setSearchInput('')
               setKeyword('')
+              clearFilterUser()
               setPage(1)
             }}
           >
@@ -603,6 +686,20 @@ export function AdminNotificationsPage() {
           </Button>
         )}
       </div>
+
+      {/* 当前过滤条件提示 */}
+      {filterUserId && (
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1.5">
+            <Users className="h-3 w-3" />
+            用户：{filterUserName}
+            <button type="button" onClick={clearFilterUser}><X className="h-3 w-3" /></button>
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            显示该用户收到的广播及定向通知
+          </span>
+        </div>
+      )}
 
       {/* 表格卡片 */}
       <Card>
@@ -629,13 +726,40 @@ export function AdminNotificationsPage() {
                         {item.type === 'broadcast' ? <Globe className="mr-0.5 h-3 w-3 inline" /> : <Users className="mr-0.5 h-3 w-3 inline" />}
                         {item.type === 'broadcast' ? '广播' : '定向'}
                       </Badge>
+                      {item.isSpecial && (
+                        <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600">
+                          <Megaphone className="mr-0.5 h-3 w-3 inline" />特殊
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
                       {item.content.replace(/[#*`>\[\]()!\-]/g, '').substring(0, 100)}
                     </p>
-                    <div className="mt-1.5 flex items-center gap-3 text-[10px] text-muted-foreground/60">
-                      <span>阅读 {item._count.reads} · 目标 {item.type === 'broadcast' ? '全部用户' : `${item._count.targets} 人`}</span>
-                      <span>发送者 {item.sentBy.name || item.sentBy.email}</span>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground/60">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="font-medium text-muted-foreground/80">类型：</span>
+                        {item.type === 'broadcast' ? '广播通知（全部用户）' : '定向通知'}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="font-medium text-muted-foreground/80">发起人：</span>
+                        {item.sentBy.name || item.sentBy.email}
+                      </span>
+                      {item.type === 'targeted' && item.targets && item.targets.length > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <span className="font-medium text-muted-foreground/80">接收人：</span>
+                          <span className="truncate max-w-[200px]">
+                            {item.targets.map((t) => t.user.name || t.user.email).join('、')}
+                            {item._count.targets > item.targets.length && ` 等${item._count.targets}人`}
+                          </span>
+                        </span>
+                      )}
+                      {item.type === 'targeted' && (!item.targets || item.targets.length === 0) && (
+                        <span className="inline-flex items-center gap-1">
+                          <span className="font-medium text-muted-foreground/80">接收人：</span>
+                          {item._count.targets} 人
+                        </span>
+                      )}
+                      <span>阅读 {item._count.reads}</span>
                       <span>{new Date(item.createdAt).toLocaleDateString('zh-CN')}</span>
                     </div>
                   </div>

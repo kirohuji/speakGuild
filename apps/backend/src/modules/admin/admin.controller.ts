@@ -111,6 +111,27 @@ export class AdminController {
     return this.adminService.getUserAiUsage(id);
   }
 
+  // ─── RevenueCat 订阅查询 ──────────────────────────────────
+
+  @Get('revenuecat/subscribers')
+  async listRCSubscribers(
+    @Req() req: Request,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    await this.requireAdmin(req);
+    return this.adminService.listRCSubscribers({
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 20,
+    });
+  }
+
+  @Get('revenuecat/subscribers/:id')
+  async getRCSubscriberDetail(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.adminService.getRCSubscriberDetail(id);
+  }
+
   // ─── 测试支付 ──────────────────────────────────────────────
 
   /** 测试支付：自动创建 1 元订单并模拟支付成功 */

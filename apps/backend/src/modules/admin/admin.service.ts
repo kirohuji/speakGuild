@@ -3,12 +3,14 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { NotificationGateway } from '../notification/notification.gateway';
+import { RevenueCatService } from '../pay/revenuecat/revenuecat.service';
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationGateway: NotificationGateway,
+    private readonly revenueCatService: RevenueCatService,
   ) {}
 
   // ─── 用户管理 ──────────────────────────────────────────────
@@ -316,6 +318,24 @@ export class AdminService {
       totalRevenue: totalAmount._sum.amount || 0,
       recentOrders,
     };
+  }
+
+  // ─── RevenueCat 订阅查询 ─────────────────────────────────
+
+  async listRCSubscribers(params: { page: number; pageSize: number }) {
+    const result = await this.revenueCatService.listSubscribers(params);
+    if (!result) {
+      return { list: [], total: 0, message: 'RevenueCat API 未配置或查询失败' };
+    }
+    return result;
+  }
+
+  async getRCSubscriberDetail(userId: string) {
+    const detail = await this.revenueCatService.getSubscriberDetail(userId);
+    if (!detail) {
+      throw new NotFoundException('RevenueCat 用户未找到或 API 未配置');
+    }
+    return detail;
   }
 
   // ─── AI 用量查询 ──────────────────────────────────────────

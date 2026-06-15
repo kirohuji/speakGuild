@@ -177,6 +177,42 @@ export async function getOrderStats() {
   return get<AdminOrderStats>('/admin/orders/stats');
 }
 
+// ─── RevenueCat 订阅查询 ────────────────────────────────────
+
+export interface RCSubscriber {
+  userId: string;
+  entitlements: Record<string, { productId: string; expiresDate: string | null; isActive: boolean; store: string }>;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+export interface RCSubscriberDetail {
+  userId: string;
+  originalAppUserId: string;
+  firstSeen: string;
+  lastSeen: string;
+  managementUrl: string;
+  entitlements: Array<{
+    id: string;
+    productId: string;
+    purchasedAt: string;
+    expiresDate: string;
+    isActive: boolean;
+    isSandbox: boolean;
+    store: string;
+    unsubscribeDetectedAt: string | null;
+    billingIssueDetectedAt: string | null;
+  }>;
+}
+
+export async function listRCSubscribers(params: { page?: number; pageSize?: number }) {
+  return get<{ list: RCSubscriber[]; total: number; message?: string }>('/admin/revenuecat/subscribers', params);
+}
+
+export async function getRCSubscriberDetail(userId: string) {
+  return get<RCSubscriberDetail>(`/admin/revenuecat/subscribers/${userId}`);
+}
+
 // ─── AI 用量统计 ──────────────────────────────────────────
 
 export interface AiUsageOverview {

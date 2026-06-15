@@ -11,6 +11,6 @@ import { PointsModule } from '../points/points.module';
   imports: [PrismaModule, PointsModule],
   controllers: [PayController],
   providers: [PayService, AlipayProvider, WechatProvider, RevenueCatService],
-  exports: [PayService],
+  exports: [PayService, RevenueCatService],
 })
 export class PayModule {}

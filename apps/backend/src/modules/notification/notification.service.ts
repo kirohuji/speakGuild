@@ -199,18 +199,35 @@ export class NotificationService {
     return Number(result[0]?.count ?? 0);
   }
 
-  /** 管理员：获取所有通知列表（含已读统计） */
-  async listAllNotifications(pagination: PaginationDto, keyword?: string) {
+  /** 管理员：获取所有通知列表（含已读统计，可按用户过滤） */
+  async listAllNotifications(pagination: PaginationDto, keyword?: string, userId?: string) {
     const { page = 1, pageSize = 20 } = pagination;
     const skip = (page - 1) * pageSize;
 
-    const where = keyword
-      ? {
-          OR: [
-            { title: { contains: keyword, mode: 'insensitive' as const } },
-            { content: { contains: keyword, mode: 'insensitive' as const } },
-          ],
-        }
+    // 构建基础条件
+    const conditions: Record<string, unknown>[] = [];
+
+    if (keyword) {
+      conditions.push({
+        OR: [
+          { title: { contains: keyword, mode: 'insensitive' as const } },
+          { content: { contains: keyword, mode: 'insensitive' as const } },
+        ],
+      });
+    }
+
+    // 按用户过滤：查出该用户能收到的所有通知（广播 + 定向到该用户的）
+    if (userId) {
+      conditions.push({
+        OR: [
+          { type: 'broadcast' },
+          { targets: { some: { userId } } },
+        ],
+      });
+    }
+
+    const where = conditions.length > 0
+      ? (conditions.length === 1 ? conditions[0] : { AND: conditions })
       : {};
 
     const [list, total] = await this.prisma.$transaction([
@@ -221,6 +238,12 @@ export class NotificationService {
         take: pageSize,
         include: {
           sentBy: { select: { id: true, name: true, email: true } },
+          targets: {
+            select: {
+              user: { select: { id: true, name: true, email: true } },
+            },
+            take: 10,
+          },
           _count: { select: { reads: true, targets: true } },
         },
       }),

@@ -28,9 +28,10 @@ export class NotificationAdminController {
     @Req() req: Request,
     @Query() pagination: PaginationDto,
     @Query('keyword') keyword?: string,
+    @Query('userId') userId?: string,
   ) {
     await this.requireAdmin(req);
-    return this.notificationService.listAllNotifications(pagination, keyword || undefined);
+    return this.notificationService.listAllNotifications(pagination, keyword || undefined, userId || undefined);
   }
 
   @Post()

@@ -221,7 +221,7 @@ export function AdminFeedbacksPage() {
 
       {/* detail dialog */}
       <Dialog open={!!selected} onOpenChange={(v) => { if (!v) handleDialogClose() }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>反馈详情</DialogTitle>
           </DialogHeader>

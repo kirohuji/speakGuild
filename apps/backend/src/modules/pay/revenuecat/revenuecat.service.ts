@@ -170,6 +170,109 @@ export class RevenueCatService {
     }
   }
 
+  /** 列出订阅用户（分页） */
+  async listSubscribers(params: { page?: number; pageSize?: number }): Promise<{
+    list: Array<{
+      userId: string;
+      entitlements: Record<string, { productId: string; expiresDate: string | null; isActive: boolean; store: string }>;
+      firstSeen: string;
+      lastSeen: string;
+    }>;
+    total: number;
+  } | null> {
+    if (!this.apiKey) return null;
+
+    try {
+      const { page = 1, pageSize = 20 } = params;
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers?` +
+        new URLSearchParams({
+          limit: String(pageSize),
+          starting_after_id: '',
+        }).toString(),
+        {
+          headers: { 'Authorization': `Bearer ${this.apiKey}` },
+        },
+      );
+
+      if (!response.ok) {
+        const err = await response.text();
+        this.logger.error(`RevenueCat 查询订阅列表失败: ${response.status} ${err}`);
+        return null;
+      }
+
+      const data = await response.json() as any;
+      const items = (data?.items || []).map((c: any) => ({
+        userId: c.id || '',
+        entitlements: Object.fromEntries(
+          Object.entries(c.entitlements || {}).map(([key, ent]: [string, any]) => [
+            key,
+            {
+              productId: ent.product_identifier || '',
+              expiresDate: ent.expires_date || null,
+              isActive: ent.expires_date ? new Date(ent.expires_date) > new Date() : false,
+              store: ent.store || 'unknown',
+            },
+          ]),
+        ),
+        firstSeen: c.first_seen || '',
+        lastSeen: c.last_seen || '',
+      }));
+
+      const total = items.length;
+
+      return {
+        list: items.slice((page - 1) * pageSize, page * pageSize),
+        total,
+      };
+    } catch (error) {
+      this.logger.error('RevenueCat 查询订阅列表异常', error);
+      return null;
+    }
+  }
+
+  /** 获取单个订阅用户详情 */
+  async getSubscriberDetail(userId: string): Promise<any | null> {
+    if (!this.apiKey) return null;
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${userId}`,
+        {
+          headers: { 'Authorization': `Bearer ${this.apiKey}` },
+        },
+      );
+
+      if (!response.ok) return null;
+
+      const data = await response.json() as any;
+      const c = data?.subscriber || {};
+      const entitlements = c.entitlements || {};
+
+      return {
+        userId: c.app_user_id || userId,
+        originalAppUserId: c.original_app_user_id || '',
+        firstSeen: c.first_seen || '',
+        lastSeen: c.last_seen || '',
+        managementUrl: c.management_url || '',
+        entitlements: Object.entries(entitlements).map(([key, ent]: [string, any]) => ({
+          id: key,
+          productId: ent.product_identifier || '',
+          purchasedAt: ent.purchase_date || '',
+          expiresDate: ent.expires_date || '',
+          isActive: ent.expires_date ? new Date(ent.expires_date) > new Date() : false,
+          isSandbox: ent.is_sandbox || false,
+          store: ent.store || 'unknown',
+          unsubscribeDetectedAt: ent.unsubscribe_detected_at || null,
+          billingIssueDetectedAt: ent.billing_issue_detected_at || null,
+        })),
+      };
+    } catch (error) {
+      this.logger.error('RevenueCat 查询订阅详情异常', error);
+      return null;
+    }
+  }
+
   async handleWebhook(payload: RevenueCatWebhookPayload) {
     const event = payload?.event;
     if (!event?.type) {
