@@ -582,8 +582,10 @@ enum LearningPackageStatus {
 
 enum LearningPackageType {
   daily
+  exam
   story
-  ielts
+  course
+  foundation
 }
 
 enum TrainingTopicType {

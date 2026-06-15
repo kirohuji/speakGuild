@@ -71,8 +71,15 @@ export class LearningService {
   /**
    * 获取全部教材分类标签列表（供筛选下拉使用）
    */
-  async getTags() {
+  async getTags(packageType?: string) {
     const categories = await this.prisma.sceneCategory.findMany({
+      where: packageType
+        ? {
+            scenes: {
+              some: { packageType: packageType as any },
+            },
+          }
+        : undefined,
       orderBy: { sortOrder: 'asc' },
       select: { name: true, icon: true },
     });
@@ -82,10 +89,18 @@ export class LearningService {
   /**
    * 获取全部「教材」（即 Scene）列表，附带用户进度。
    * 免费用户看到全部单元，但非免费单元标记为锁定。
-   * @param tag    按分类名称过滤（可选）
-   * @param search 按单元标题模糊搜索（可选）
+   * @param params.tag 按主题分类名称过滤（可选）
+   * @param params.packageType 按一级学习包类型过滤（可选）
+   * @param params.search 按单元标题模糊搜索（可选）
    */
-  async getLearningUnits(userId: string, tag?: string, search?: string, page = 1, pageSize = 20) {
+  async getLearningUnits(userId: string, params: {
+    tag?: string;
+    packageType?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}) {
+    const { tag, packageType, search, page = 1, pageSize = 20 } = params;
     // 管理员拥有全部权限
     const adminCheck = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -102,6 +117,9 @@ export class LearningService {
 
     // 查询条件
     const sceneWhere: any = {};
+    if (packageType) {
+      sceneWhere.packageType = packageType;
+    }
     if (search) {
       sceneWhere.title = { contains: search, mode: 'insensitive' };
     }

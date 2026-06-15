@@ -36,6 +36,438 @@ type CsvPattern = { scene_title: string; topic_title: string; pattern: string; m
 type CsvEpisode = { chapter_id: string; chapter_title: string; episode_order: string; title: string; scene_title: string; required_output_level: string; required_user_level: string; vocab_required_count: string; vocab_total_count: string; chunk_required_count: string; chunk_total_count: string; objectives_json: string; pass_objective_count: string; pass_chunk_count: string; pass_min_dialogues: string; npc_name: string; npc_role: string; is_preview: string; ink_script_key: string; rewards_json: string }
 type CsvEpChunk = { episode_chapter: string; episode_order: string; chunk_text_match: string; sort_order: string }
 
+async function createLearningPackageRecord(prisma: PrismaClient, input: {
+  sceneId: string
+  title: string
+  type: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+}) {
+  await prisma.learningPackage.upsert({
+    where: { sceneId_version: { sceneId: input.sceneId, version: 1 } },
+    create: {
+      sceneId: input.sceneId,
+      version: 1,
+      title: `${input.title} v1`,
+      type: input.type,
+      status: 'draft',
+      manifestSnapshot: {
+        packId: input.sceneId,
+        title: input.title,
+        type: input.type,
+        seeded: true,
+      },
+      buildLog: 'Seeded draft package. Generate zip from admin before publishing.',
+    },
+    update: {
+      title: `${input.title} v1`,
+      type: input.type,
+      status: 'draft',
+      buildLog: 'Seeded draft package. Generate zip from admin before publishing.',
+    },
+  })
+}
+
+async function upsertSeedVocabulary(prisma: PrismaClient, word: string, meaning: string, difficulty = 'L2') {
+  return prisma.vocabulary.upsert({
+    where: { word },
+    create: {
+      word,
+      meaning,
+      partOfSpeech: 'phrase',
+      difficulty,
+      examples: [{ en: word, zh: meaning, level: 'basic' }],
+      description: null,
+    },
+    update: { meaning, difficulty },
+  })
+}
+
+async function upsertSeedChunk(prisma: PrismaClient, text: string, meaning: string, category: string, difficulty = 'L2') {
+  return prisma.chunk.upsert({
+    where: { text },
+    create: {
+      text,
+      meaning,
+      category,
+      difficulty,
+      description: null,
+      examples: {
+        create: [{ en: text, zh: meaning, level: 'basic', sortOrder: 0 }],
+      },
+    },
+    update: { meaning, category, difficulty },
+  })
+}
+
+async function upsertSeedPattern(prisma: PrismaClient, pattern: string, meaning: string, difficulty = 'L2') {
+  return prisma.sentencePattern.upsert({
+    where: { pattern },
+    create: {
+      pattern,
+      meaning,
+      difficulty,
+      examples: [{ en: pattern, zh: meaning, level: 'basic' }],
+    },
+    update: { meaning, difficulty },
+  })
+}
+
+async function attachTopicAssets(prisma: PrismaClient, topicId: string, assets: {
+  vocabIds?: string[]
+  chunkIds?: string[]
+  patternIds?: string[]
+}) {
+  if (assets.vocabIds?.length) {
+    await prisma.trainingTopicVocab.createMany({
+      data: assets.vocabIds.map((vocabId, sortOrder) => ({ topicId, vocabId, sortOrder })),
+      skipDuplicates: true,
+    })
+  }
+  if (assets.chunkIds?.length) {
+    await prisma.trainingTopicChunk.createMany({
+      data: assets.chunkIds.map((chunkId, sortOrder) => ({ topicId, chunkId, sortOrder })),
+      skipDuplicates: true,
+    })
+  }
+  if (assets.patternIds?.length) {
+    await prisma.trainingTopicSentencePattern.createMany({
+      data: assets.patternIds.map((patternId, sortOrder) => ({ topicId, patternId, sortOrder })),
+      skipDuplicates: true,
+    })
+  }
+}
+
+async function seedIeltsAndStoryExamples(prisma: PrismaClient, catMap: Map<string, string>) {
+  const ieltsCategoryId = catMap.get('雅思口语')
+  const storyCategoryId = catMap.get('留学生活')
+  const foundationCategoryId = catMap.get('基础入门')
+  const cultureCategoryId = catMap.get('历史文化')
+  if (!ieltsCategoryId || !storyCategoryId) {
+    console.warn('  ⚠️  缺少「雅思口语」或「留学生活」分类，跳过 IELTS/故事样例包')
+    return { scenes: 0, topics: 0, episodes: 0, vocabularies: 0, chunks: 0, patterns: 0 }
+  }
+
+  const ieltsScene = await prisma.scene.create({
+    data: {
+      categoryId: ieltsCategoryId,
+      packageType: 'exam',
+      title: 'IELTS Speaking 6.5 冲刺',
+      location: 'IELTS 口语考场',
+      description: '围绕 IELTS Speaking Part 1/2/3 的高频题型，训练答题结构、扩展能力和评分维度。',
+      requiredOutputLevel: 'L3',
+      requiredUserLevel: 2,
+      isFree: true,
+    },
+  })
+  await createLearningPackageRecord(prisma, { sceneId: ieltsScene.id, title: ieltsScene.title, type: 'exam' })
+
+  const ieltsVocabs = await Promise.all([
+    upsertSeedVocabulary(prisma, 'upbringing', '成长环境', 'L3'),
+    upsertSeedVocabulary(prisma, 'work-life balance', '工作与生活平衡', 'L3'),
+    upsertSeedVocabulary(prisma, 'environmentally friendly', '环保的', 'L3'),
+    upsertSeedVocabulary(prisma, 'public facilities', '公共设施', 'L3'),
+  ])
+  const ieltsChunks = await Promise.all([
+    upsertSeedChunk(prisma, 'That depends on the situation.', '这取决于具体情况。', 'IELTS', 'L3'),
+    upsertSeedChunk(prisma, 'One example that comes to mind is...', '我想到的一个例子是……', 'IELTS', 'L3'),
+    upsertSeedChunk(prisma, 'From my perspective, the main reason is...', '在我看来，主要原因是……', 'IELTS', 'L3'),
+    upsertSeedChunk(prisma, 'It has become increasingly common for people to...', '人们越来越常……', 'IELTS', 'L4'),
+  ])
+  const ieltsPatterns = await Promise.all([
+    upsertSeedPattern(prisma, 'I would say [answer], mainly because [reason].', 'Part 1 简洁回答 + 原因', 'L3'),
+    upsertSeedPattern(prisma, 'The person/place/object I would like to describe is [x].', 'Part 2 开场结构', 'L3'),
+    upsertSeedPattern(prisma, 'Although [contrast], I still believe [opinion].', 'Part 3 对比让步观点', 'L4'),
+  ])
+  const ieltsTopics = [
+    {
+      title: 'Part 1: Hometown and Daily Life',
+      promptEn: 'The examiner asks you about your hometown, daily routine, and hobbies. Answer naturally and give one short reason.',
+      promptZh: '考官询问你的家乡、日常生活和兴趣爱好。请自然回答，并补充一个简短原因。',
+      metadata: { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', rubric: ['fluency', 'lexical_resource', 'grammar', 'pronunciation'] },
+      duration: 45,
+      difficulty: 'L3',
+    },
+    {
+      title: 'Part 2: Describe a Useful Object',
+      promptEn: 'Describe a useful object you use often. Say what it is, when you use it, and why it is useful.',
+      promptZh: '描述一个你经常使用且有用的物品。说明它是什么、什么时候使用、为什么有用。',
+      metadata: { exam: 'IELTS', section: 'speaking', part: 2, bandTarget: '6.5', questionType: 'cue_card', prepSeconds: 60, answerSeconds: 120, rubric: ['fluency', 'lexical_resource', 'grammar', 'pronunciation'] },
+      duration: 120,
+      difficulty: 'L3',
+    },
+    {
+      title: 'Part 3: Cities and Public Services',
+      promptEn: 'Discuss how cities can improve public services and whether technology helps people live better.',
+      promptZh: '讨论城市如何改善公共服务，以及科技是否能让人们生活得更好。',
+      metadata: { exam: 'IELTS', section: 'speaking', part: 3, bandTarget: '6.5', questionType: 'discussion', rubric: ['fluency', 'lexical_resource', 'grammar', 'pronunciation'] },
+      duration: 90,
+      difficulty: 'L4',
+    },
+  ]
+  for (const [sortOrder, topic] of ieltsTopics.entries()) {
+    const created = await prisma.trainingTopic.create({
+      data: {
+        sceneId: ieltsScene.id,
+        type: 'ielts',
+        title: topic.title,
+        description: 'IELTS 口语专项训练题。',
+        teachingMarkdown: '## 答题策略\n\n先直接回答，再给原因或例子。Part 2 注意时间结构，Part 3 注意观点深度。',
+        promptEn: topic.promptEn,
+        promptZh: topic.promptZh,
+        suggestedDurationSec: topic.duration,
+        difficulty: topic.difficulty,
+        metadata: topic.metadata,
+        sortOrder,
+      },
+    })
+    await attachTopicAssets(prisma, created.id, {
+      vocabIds: ieltsVocabs.map((v) => v.id),
+      chunkIds: ieltsChunks.map((c) => c.id),
+      patternIds: ieltsPatterns.map((p) => p.id),
+    })
+  }
+
+  const storyScene = await prisma.scene.create({
+    data: {
+      categoryId: storyCategoryId,
+      packageType: 'story',
+      title: '留学第一周：迷路的新生',
+      location: '校园与宿舍区',
+      description: '一个轻剧情学习包：新生第一周在校园里解决入住、问路、认识同伴等任务，练习后进入故事关卡实战。',
+      requiredOutputLevel: 'L2',
+      requiredUserLevel: 1,
+      isFree: true,
+    },
+  })
+  await createLearningPackageRecord(prisma, { sceneId: storyScene.id, title: storyScene.title, type: 'story' })
+
+  const storyVocabs = await Promise.all([
+    upsertSeedVocabulary(prisma, 'orientation', '迎新活动', 'L2'),
+    upsertSeedVocabulary(prisma, 'student ID', '学生证', 'L1'),
+    upsertSeedVocabulary(prisma, 'residence hall', '学生宿舍楼', 'L2'),
+  ])
+  const storyChunks = await Promise.all([
+    upsertSeedChunk(prisma, "I'm new here. Could you help me find...?", '我是新来的。你能帮我找……吗？', 'story', 'L2'),
+    upsertSeedChunk(prisma, 'I was told to check in at...', '我被告知要在……办理登记。', 'story', 'L2'),
+    upsertSeedChunk(prisma, 'Could you show me where that is on the map?', '你能在地图上告诉我那在哪里吗？', 'story', 'L2'),
+  ])
+  const storyPatterns = await Promise.all([
+    upsertSeedPattern(prisma, "I'm looking for [place].", '说明自己要找的地点', 'L1'),
+    upsertSeedPattern(prisma, 'Could you tell me how to get to [place]?', '礼貌问路', 'L2'),
+  ])
+  const storyTopic = await prisma.trainingTopic.create({
+    data: {
+      sceneId: storyScene.id,
+      type: 'daily',
+      title: '校园问路准备',
+      description: '故事关卡前的语言准备：问路、说明身份、确认地点。',
+      teachingMarkdown: '## 故事前置练习\n\n先说自己是新生，再说明要找的地点，最后确认路线。',
+      promptEn: "You are a new student on campus. Ask a student helper how to get to the residence hall.",
+      promptZh: '你是刚到校园的新生，请向学生志愿者询问如何去宿舍楼。',
+      suggestedDurationSec: 60,
+      difficulty: 'L2',
+      sortOrder: 0,
+    },
+  })
+  await attachTopicAssets(prisma, storyTopic.id, {
+    vocabIds: storyVocabs.map((v) => v.id),
+    chunkIds: storyChunks.map((c) => c.id),
+    patternIds: storyPatterns.map((p) => p.id),
+  })
+  const episodes = await Promise.all([
+    prisma.storyEpisode.create({
+      data: {
+        sceneId: storyScene.id,
+        chapterKey: 'arrival_week',
+        chapterName: 'Arrival Week',
+        sortOrder: 1,
+        title: '找到宿舍楼',
+        description: '你拖着行李来到校园，需要向志愿者确认宿舍楼的位置。',
+        requiredOutputLevel: 'L2',
+        requiredUserLevel: 1,
+        requiredVocabularyCount: 2,
+        totalVocabularyCount: storyVocabs.length,
+        requiredChunkCount: 2,
+        totalChunkCount: storyChunks.length,
+        objectives: ['说明自己是新生', '询问宿舍楼方向', '确认下一步该去哪里'],
+        requiredObjectiveCount: 2,
+        requiredUsedChunkCount: 2,
+        requiresRetell: false,
+        minimumTurnCount: 3,
+        rewards: { xp: 25, title: 'Campus Starter' },
+        characterName: 'Maya',
+        characterRole: '迎新志愿者',
+        characterPersona: '热情、语速适中，会主动用简单表达解释路线。',
+        isPreview: true,
+        prerequisiteEpisodeIds: [],
+      },
+    }),
+    prisma.storyEpisode.create({
+      data: {
+        sceneId: storyScene.id,
+        chapterKey: 'arrival_week',
+        chapterName: 'Arrival Week',
+        sortOrder: 2,
+        title: '错过迎新集合',
+        description: '你发现自己走错楼，需要向宿舍前台解释情况并请求帮助。',
+        requiredOutputLevel: 'L2',
+        requiredUserLevel: 1,
+        requiredVocabularyCount: 2,
+        totalVocabularyCount: storyVocabs.length,
+        requiredChunkCount: 2,
+        totalChunkCount: storyChunks.length,
+        objectives: ['解释自己走错楼', '询问迎新集合地点', '感谢对方帮助'],
+        requiredObjectiveCount: 2,
+        requiredUsedChunkCount: 2,
+        requiresRetell: true,
+        minimumTurnCount: 4,
+        rewards: { xp: 35 },
+        characterName: 'Daniel',
+        characterRole: '宿舍前台工作人员',
+        characterPersona: '耐心但比较忙，会要求你说清姓名和学生证信息。',
+        isPreview: false,
+        prerequisiteEpisodeIds: [],
+      },
+    }),
+  ])
+  for (const episode of episodes) {
+    await prisma.storyEpisodeVocabulary.createMany({
+      data: storyVocabs.map((vocab, sortOrder) => ({ episodeId: episode.id, vocabId: vocab.id, sortOrder })),
+      skipDuplicates: true,
+    })
+    await prisma.storyEpisodeChunk.createMany({
+      data: storyChunks.map((chunk, sortOrder) => ({ episodeId: episode.id, chunkId: chunk.id, sortOrder })),
+      skipDuplicates: true,
+    })
+    await prisma.storyEpisodeSentencePattern.createMany({
+      data: storyPatterns.map((pattern, sortOrder) => ({ episodeId: episode.id, patternId: pattern.id, sortOrder })),
+      skipDuplicates: true,
+    })
+  }
+
+  let extraScenes = 2
+  let extraTopics = ieltsTopics.length + 1
+  let extraVocabs = ieltsVocabs.length + storyVocabs.length
+  let extraChunks = ieltsChunks.length + storyChunks.length
+  let extraPatterns = ieltsPatterns.length + storyPatterns.length
+
+  if (foundationCategoryId) {
+    const foundationScene = await prisma.scene.create({
+      data: {
+        categoryId: foundationCategoryId,
+        packageType: 'foundation',
+        title: '零基础开口第一课',
+        location: 'Beginner Lab',
+        description: '面向刚开始开口的学习者，训练问候、自我介绍、请求重复和简单确认。',
+        requiredOutputLevel: 'L1',
+        requiredUserLevel: 1,
+        isFree: true,
+      },
+    })
+    await createLearningPackageRecord(prisma, { sceneId: foundationScene.id, title: foundationScene.title, type: 'foundation' })
+    const foundationVocabs = await Promise.all([
+      upsertSeedVocabulary(prisma, 'hello', '你好', 'L1'),
+      upsertSeedVocabulary(prisma, 'again', '再一次', 'L1'),
+      upsertSeedVocabulary(prisma, 'slowly', '慢一点', 'L1'),
+    ])
+    const foundationChunks = await Promise.all([
+      upsertSeedChunk(prisma, 'My name is...', '我的名字是……', 'foundation', 'L1'),
+      upsertSeedChunk(prisma, 'Could you say that again?', '你能再说一遍吗？', 'foundation', 'L1'),
+      upsertSeedChunk(prisma, 'I am learning English.', '我正在学英语。', 'foundation', 'L1'),
+    ])
+    const foundationPatterns = await Promise.all([
+      upsertSeedPattern(prisma, 'My name is [name].', '介绍自己的名字', 'L1'),
+      upsertSeedPattern(prisma, 'Could you [verb], please?', '礼貌请求', 'L1'),
+    ])
+    const foundationTopic = await prisma.trainingTopic.create({
+      data: {
+        sceneId: foundationScene.id,
+        type: 'daily',
+        title: '第一次自我介绍',
+        description: '从最短句开始，完成姓名、学习状态和请求重复。',
+        teachingMarkdown: '## 开口顺序\n\n先说名字，再说自己正在学习英语，听不懂时请求对方重复。',
+        promptEn: 'Introduce yourself with simple sentences. Ask the other person to repeat if needed.',
+        promptZh: '用简单句介绍自己。如果没听清，请请求对方重复。',
+        suggestedDurationSec: 45,
+        difficulty: 'L1',
+        sortOrder: 0,
+      },
+    })
+    await attachTopicAssets(prisma, foundationTopic.id, {
+      vocabIds: foundationVocabs.map((v) => v.id),
+      chunkIds: foundationChunks.map((c) => c.id),
+      patternIds: foundationPatterns.map((p) => p.id),
+    })
+    extraScenes += 1
+    extraTopics += 1
+    extraVocabs += foundationVocabs.length
+    extraChunks += foundationChunks.length
+    extraPatterns += foundationPatterns.length
+  }
+
+  if (cultureCategoryId) {
+    const courseScene = await prisma.scene.create({
+      data: {
+        categoryId: cultureCategoryId,
+        packageType: 'course',
+        title: '历史文化表达课：博物馆讲解',
+        location: 'Museum Gallery',
+        description: '课程型学习包：围绕历史文化、展品介绍和观点表达，适合作为付费专题课样例。',
+        requiredOutputLevel: 'L3',
+        requiredUserLevel: 2,
+        isFree: false,
+      },
+    })
+    await createLearningPackageRecord(prisma, { sceneId: courseScene.id, title: courseScene.title, type: 'course' })
+    const courseVocabs = await Promise.all([
+      upsertSeedVocabulary(prisma, 'artifact', '文物；手工艺品', 'L3'),
+      upsertSeedVocabulary(prisma, 'heritage', '遗产；传统', 'L3'),
+      upsertSeedVocabulary(prisma, 'exhibition', '展览', 'L2'),
+    ])
+    const courseChunks = await Promise.all([
+      upsertSeedChunk(prisma, 'This artifact dates back to...', '这件文物可以追溯到……', 'culture', 'L3'),
+      upsertSeedChunk(prisma, 'It reflects the way people used to...', '它反映了过去人们如何……', 'culture', 'L3'),
+      upsertSeedChunk(prisma, 'What I find interesting is...', '我觉得有趣的是……', 'culture', 'L3'),
+    ])
+    const coursePatterns = await Promise.all([
+      upsertSeedPattern(prisma, 'This [object] dates back to [period].', '介绍年代', 'L3'),
+      upsertSeedPattern(prisma, 'It reflects [idea/culture/value].', '解释文化意义', 'L3'),
+    ])
+    const courseTopic = await prisma.trainingTopic.create({
+      data: {
+        sceneId: courseScene.id,
+        type: 'daily',
+        title: '介绍一件展品',
+        description: '学习如何用英语介绍展品年代、用途和文化意义。',
+        teachingMarkdown: '## 讲解结构\n\n年代 -> 用途 -> 文化意义 -> 个人观察。',
+        promptEn: 'You are introducing an artifact in a museum. Explain what it is, when it was made, and why it matters.',
+        promptZh: '你正在介绍博物馆里的一件展品。说明它是什么、年代，以及它为什么重要。',
+        suggestedDurationSec: 90,
+        difficulty: 'L3',
+        sortOrder: 0,
+      },
+    })
+    await attachTopicAssets(prisma, courseTopic.id, {
+      vocabIds: courseVocabs.map((v) => v.id),
+      chunkIds: courseChunks.map((c) => c.id),
+      patternIds: coursePatterns.map((p) => p.id),
+    })
+    extraScenes += 1
+    extraTopics += 1
+    extraVocabs += courseVocabs.length
+    extraChunks += courseChunks.length
+    extraPatterns += coursePatterns.length
+  }
+
+  return {
+    scenes: extraScenes,
+    topics: extraTopics,
+    episodes: episodes.length,
+    vocabularies: extraVocabs,
+    chunks: extraChunks,
+    patterns: extraPatterns,
+  }
+}
+
 export async function seedLearningPackages(prisma: PrismaClient) {
   console.log('📦 开始处理学习包...\n')
 
@@ -105,6 +537,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
       const scene = await prisma.scene.create({
         data: {
           categoryId: catId,
+          packageType: 'daily',
           title: row.title,
           location: row.location,
           description: row.description || null,
@@ -113,6 +546,7 @@ export async function seedLearningPackages(prisma: PrismaClient) {
           isFree: ['宿舍入住', '机场入境', '认识室友'].includes(row.title),
         },
       })
+      await createLearningPackageRecord(prisma, { sceneId: scene.id, title: scene.title, type: 'daily' })
       sceneMap.set(row.title, scene.id)
     }
     console.log(`  ✓ ${sceneRows.length} 个场景`)
@@ -432,10 +866,22 @@ export async function seedLearningPackages(prisma: PrismaClient) {
     console.log('')
   }
 
+  console.log('📁 generated/ielts-and-story-examples/')
+  const extra = await seedIeltsAndStoryExamples(prisma, catMap)
+  totalVocab += extra.vocabularies
+  totalChunks += extra.chunks
+  totalTopics += extra.topics
+  totalPatterns += extra.patterns
+  totalEpisodes += extra.episodes
+  console.log(`  ✓ ${extra.scenes} 个示例学习包（日常体系外补充：Exam + Story + Course + Foundation）`)
+  console.log(`  ✓ ${extra.topics} 个示例话题`)
+  console.log(`  ✓ ${extra.episodes} 个故事关卡`)
+  console.log('')
+
   // ── 汇总 ──
   console.log('📊 学习包汇总:')
-  console.log(`  ${packageDirs.length} 个包`)
-  console.log(`  ${sceneMap.size} 个场景`)
+  console.log(`  ${targetDirs.length + extra.scenes} 个包`)
+  console.log(`  ${sceneMap.size + extra.scenes} 个场景`)
   console.log(`  ${totalVocab} 个词汇`)
   console.log(`  ${totalChunks} 个句块`)
   console.log(`  ${totalTopics} 个训练话题`)

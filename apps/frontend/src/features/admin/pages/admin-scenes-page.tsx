@@ -41,6 +41,22 @@ import {
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
 
+function packageTypeLabel(type?: Scene['packageType']) {
+  if (type === 'exam') return '考试'
+  if (type === 'story') return '故事'
+  if (type === 'course') return '课程'
+  if (type === 'foundation') return '零基础'
+  return '日常'
+}
+
+const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
+  { id: 'daily', label: '日常' },
+  { id: 'exam', label: '考试' },
+  { id: 'story', label: '故事' },
+  { id: 'course', label: '课程' },
+  { id: 'foundation', label: '零基础' },
+]
+
 // ─── Category Dialog ────────────────────────────────────────
 
 function CategoryDialog({
@@ -152,8 +168,10 @@ function SceneDialog({
               <Label>学习包类型</Label>
               <Select value={form.packageType ?? 'daily'} onChange={(e) => setForm({ ...form, packageType: e.target.value })}>
                 <option value="daily">日常练习</option>
+                <option value="exam">考试专项</option>
                 <option value="story">故事剧情</option>
-                <option value="ielts">雅思考试</option>
+                <option value="course">付费课程</option>
+                <option value="foundation">零基础</option>
               </Select>
             </div>
           </div>
@@ -462,8 +480,8 @@ function TrainingTopicDialog({
     }
     else setForm({
       sceneId,
-      type: packageType === 'ielts' ? 'ielts' : 'daily',
-      metadata: packageType === 'ielts'
+      type: packageType === 'exam' ? 'ielts' : 'daily',
+      metadata: packageType === 'exam'
         ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
         : null,
       title: '',
@@ -594,7 +612,7 @@ function TrainingTopicDialog({
                   <div className="space-y-1.5">
                     <Label>话题类型</Label>
                     <Select
-                      value={form.type ?? (packageType === 'ielts' ? 'ielts' : 'daily')}
+                      value={form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')}
                       onChange={(e) => {
                         const type = e.target.value
                         setForm({
@@ -633,7 +651,7 @@ function TrainingTopicDialog({
                   </div>
                 </div>
               </div>
-              {(form.type ?? (packageType === 'ielts' ? 'ielts' : 'daily')) === 'ielts' && (
+              {(form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')) === 'ielts' && (
                 <div className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 md:grid-cols-5">
                   <div className="space-y-1.5">
                     <Label>Part</Label>
@@ -956,7 +974,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
 
   const topicTotalPages = getTotalPages(topics.length, topicPageSize)
   const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
-  const packageTypeLabel = scene?.packageType === 'story' ? '故事剧情' : scene?.packageType === 'ielts' ? '雅思考试' : '日常练习'
+  const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
   if (loading) return (
     <div className="space-y-3">
@@ -971,7 +989,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         <Button variant="ghost" size="icon" onClick={onBack}><ChevronRight className="size-4 rotate-180" /></Button>
         <div>
           <h2 className="text-lg font-bold">{scene.title}</h2>
-          <p className="text-sm text-muted-foreground">{packageTypeLabel} · {scene.location || '未设置地点'} · {scene.requiredOutputLevel}</p>
+          <p className="text-sm text-muted-foreground">{currentPackageTypeLabel} · {scene.location || '未设置地点'} · {scene.requiredOutputLevel}</p>
         </div>
       </div>
 
@@ -1078,7 +1096,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
           {storyEpisodes.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-sm font-medium text-muted-foreground">暂无故事关卡</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">故事剧情类学习包可以在这里配置 play 关卡；日常和雅思包也可以按需添加实战挑战。</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">故事类学习包可以在这里配置 play 关卡；日常、考试、课程包也可以按需添加实战挑战。</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -1161,6 +1179,7 @@ export function AdminScenesPage() {
   const [chunks, setChunks] = useState<Chunk[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
+  const [selectedPackageType, setSelectedPackageType] = useState<Scene['packageType']>('daily')
   const [detailSceneId, setDetailSceneId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -1174,15 +1193,22 @@ export function AdminScenesPage() {
     setLoading(true)
     try {
       const [cats, scns, chks] = await Promise.all([
-        listSceneCategories(), listScenes(selectedCat ?? undefined), listAllChunks(),
+        listSceneCategories(selectedPackageType),
+        listScenes(selectedCat ?? undefined, selectedPackageType),
+        listAllChunks(),
       ])
       setCategories(cats); setScenes(scns); setChunks(chks)
     } catch {}
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [selectedCat])
-  useEffect(() => { setPage(1) }, [selectedCat])
+  useEffect(() => { load() }, [selectedCat, selectedPackageType])
+  useEffect(() => { setPage(1) }, [selectedCat, selectedPackageType])
+  useEffect(() => {
+    if (selectedCat && !categories.some((category) => category.id === selectedCat)) {
+      setSelectedCat(null)
+    }
+  }, [categories, selectedCat])
 
   const totalPages = getTotalPages(scenes.length, pageSize)
   const pageItems = getPageItems(scenes, Math.min(page, totalPages), pageSize)
@@ -1210,31 +1236,54 @@ export function AdminScenesPage() {
       {/* Categories */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">学习包分类</CardTitle>
+          <CardTitle className="text-base">筛选</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={!selectedCat ? 'default' : 'outline'}
-              className="cursor-pointer" onClick={() => setSelectedCat(null)}>
-              全部
-            </Badge>
-            {categories.map((c) => (
-              <Badge key={c.id} variant={selectedCat === c.id ? 'default' : 'outline'}
-                className="cursor-pointer flex items-center gap-1"
-                onClick={() => setSelectedCat(c.id)}>
-                {c.name}
-                <span className="text-xs opacity-60">({c._count?.scenes ?? 0})</span>
-                <button className="ml-1 hover:text-destructive"
-                  onClick={(e) => { e.stopPropagation(); setEditCat(c); setCatDialog(true) }}>
-                  <Edit3 className="size-2.5" />
-                </button>
-                <button className="hover:text-destructive"
-                  onClick={async (e) => { e.stopPropagation(); if (confirm('确认删除？')) { await deleteSceneCategory(c.id); load() } }}>
-                  <X className="size-2.5" />
-                </button>
-              </Badge>
-            ))}
+        <CardContent className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">一级类型</p>
+            <div className="flex flex-wrap gap-2">
+              {PACKAGE_TYPE_FILTERS.map((item) => (
+                <Badge
+                  key={item.id}
+                  variant={selectedPackageType === item.id ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setSelectedPackageType(item.id)
+                    setSelectedCat(null)
+                  }}
+                >
+                  {item.label}
+                </Badge>
+              ))}
+            </div>
           </div>
+          {categories.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">二级主题</p>
+              <div className="flex flex-wrap gap-2">
+              <Badge variant={!selectedCat ? 'default' : 'outline'}
+                className="cursor-pointer" onClick={() => setSelectedCat(null)}>
+                全部
+              </Badge>
+              {categories.map((c) => (
+                <Badge key={c.id} variant={selectedCat === c.id ? 'default' : 'outline'}
+                  className="cursor-pointer flex items-center gap-1"
+                  onClick={() => setSelectedCat(c.id)}>
+                  {c.name}
+                  <span className="text-xs opacity-60">({c._count?.scenes ?? 0})</span>
+                  <button className="ml-1 hover:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); setEditCat(c); setCatDialog(true) }}>
+                    <Edit3 className="size-2.5" />
+                  </button>
+                  <button className="hover:text-destructive"
+                    onClick={async (e) => { e.stopPropagation(); if (confirm('确认删除？')) { await deleteSceneCategory(c.id); load() } }}>
+                    <X className="size-2.5" />
+                  </button>
+                </Badge>
+              ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1285,7 +1334,7 @@ export function AdminScenesPage() {
                             <span className="text-sm font-medium">{s.title}</span>
                             {s.category && <Badge variant="secondary" className="text-xs">{s.category.name}</Badge>}
                             <Badge variant="outline" className="text-xs">
-                              {s.packageType === 'story' ? '故事' : s.packageType === 'ielts' ? '雅思' : '日常'}
+                              {packageTypeLabel(s.packageType)}
                             </Badge>
                           </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">{s.location || '未设置地点'}</p>

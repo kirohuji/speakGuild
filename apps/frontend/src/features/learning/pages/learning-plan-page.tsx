@@ -59,7 +59,7 @@ export function LearningPlanPage() {
               aria-label={t('profile.records')}>
               <ClipboardList className="size-[18px]" />
             </button>
-            <button type="button" onClick={() => { setShopOpen(true); refreshShop(); fetchTags() }}
+            <button type="button" onClick={() => { setShopOpen(true); refreshShop({ packageType: 'daily' }); fetchTags('daily') }}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
               aria-label={t('member.title')}>
               <ShoppingBag className="size-[18px]" />
@@ -70,7 +70,7 @@ export function LearningPlanPage() {
         <MyLearningView
           myUnits={myUnits} inProgress={inProgress} completed={completed}
           loading={myLoading}
-          onGoToShop={() => { setShopOpen(true); refreshShop(); fetchTags() }}
+          onGoToShop={() => { setShopOpen(true); refreshShop({ packageType: 'daily' }); fetchTags('daily') }}
           onRefresh={refreshMyUnits}
           onQuitUnit={storeQuitUnit}
           downloadedPackIds={downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)}

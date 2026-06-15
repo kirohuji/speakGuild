@@ -1,11 +1,13 @@
 import { del, get, post } from '@/lib/request';
 
 export type LearningPackStatus = 'draft' | 'building' | 'published' | 'failed';
+export type LearningPackType = 'daily' | 'exam' | 'story' | 'course' | 'foundation';
 
 export interface LearningPackSceneOption {
   id: string;
   title: string;
   location: string;
+  packageType?: LearningPackType;
 }
 
 export interface LearningPackItem {
@@ -13,6 +15,7 @@ export interface LearningPackItem {
   sceneId: string;
   version: number;
   title: string;
+  type?: LearningPackType;
   status: LearningPackStatus;
   fileAssetId?: string | null;
   zipChecksum?: string | null;

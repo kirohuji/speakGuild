@@ -20,6 +20,7 @@ import {
   type LearningPackItem,
   type LearningPackSceneOption,
   type LearningPackStatus,
+  type LearningPackType,
 } from '../api-learning-packs';
 
 function fmtSize(bytes?: number | null) {
@@ -48,6 +49,14 @@ function statusLabel(status: LearningPackStatus) {
     published: '已发布',
     failed: '失败',
   }[status];
+}
+
+function packageTypeLabel(type?: LearningPackType) {
+  if (type === 'exam') return '考试'
+  if (type === 'story') return '故事'
+  if (type === 'course') return '课程'
+  if (type === 'foundation') return '零基础'
+  return '日常'
 }
 
 function saveBlob(buffer: ArrayBuffer, filename: string) {
@@ -233,7 +242,7 @@ export function AdminLearningPacksPage() {
             >
               {scenes.map((scene) => (
                 <option key={scene.id} value={scene.id}>
-                  {scene.title} - {scene.location}
+                  [{packageTypeLabel(scene.packageType)}] {scene.title} - {scene.location}
                 </option>
               ))}
             </select>
@@ -290,7 +299,10 @@ export function AdminLearningPacksPage() {
                     <tr key={pack.id} className="border-b last:border-0">
                       <td className="py-3 pr-4">
                         <div className="font-medium">{pack.scene?.title ?? pack.title}</div>
-                        <div className="text-xs text-muted-foreground">{pack.scene?.location ?? pack.sceneId}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px]">{packageTypeLabel(pack.type ?? pack.scene?.packageType)}</Badge>
+                          <span className="text-xs text-muted-foreground">{pack.scene?.location ?? pack.sceneId}</span>
+                        </div>
                         {pack.buildLog && <div className="mt-1 max-w-md truncate text-xs text-muted-foreground">{pack.buildLog}</div>}
                       </td>
                       <td className="py-3 pr-4">v{pack.version}</td>
@@ -354,7 +366,7 @@ export function AdminLearningPacksPage() {
               >
                 {scenes.map((scene) => (
                   <option key={scene.id} value={scene.id}>
-                    {scene.title} - {scene.location}
+                    [{packageTypeLabel(scene.packageType)}] {scene.title} - {scene.location}
                   </option>
                 ))}
               </select>

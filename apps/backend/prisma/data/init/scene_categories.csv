@@ -7,3 +7,7 @@ name,icon,sort_order
 健康医疗,HeartPulse,6
 酒店出行,Hotel,7
 校园生活,School,8
+雅思口语,FileText,9
+历史文化,Landmark,10
+寓言故事,ScrollText,11
+基础入门,BookOpenCheck,12

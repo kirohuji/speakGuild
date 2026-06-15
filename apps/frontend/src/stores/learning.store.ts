@@ -3,6 +3,7 @@ import { Network } from '@capacitor/network'
 import {
   learningApi,
   type LearningUnitSummary,
+  type LearningPackageType,
   type MyUnit,
   type PackUpdateInfo,
   type TagInfo,
@@ -59,11 +60,11 @@ interface LearningStore {
   // Actions
   fetchMyLearning: () => Promise<void>
   refreshMyUnits: () => Promise<void>
-  fetchTags: () => Promise<void>
+  fetchTags: (packageType?: LearningPackageType) => Promise<void>
   fetchUnitDetail: (unitId: string) => Promise<void>
-  fetchShop: (params?: { tag?: string; search?: string; page?: number }) => Promise<void>
-  refreshShop: (params?: { tag?: string; search?: string; page?: number }) => Promise<void>
-  loadMoreShop: (params?: { tag?: string; search?: string }) => Promise<void>
+  fetchShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
+  refreshShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
+  loadMoreShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string }) => Promise<void>
   fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<void>
   enrollUnit: (unitId: string, title?: string) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
@@ -222,11 +223,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
   },
 
-  async fetchTags() {
-    const { tags } = getState()
-    if (tags.length > 0) return
+  async fetchTags(packageType) {
     try {
-      const data = await learningApi.getTags()
+      const data = await learningApi.getTags(packageType)
       set({ tags: data })
     } catch {
       // ignore

@@ -31,7 +31,7 @@ export class LearningPackAdminService {
       (this.prisma as any).learningPackage.findMany({
         where,
         include: {
-          scene: { select: { id: true, title: true, location: true } },
+          scene: { select: { id: true, title: true, location: true, packageType: true } },
           fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
         },
         orderBy: [{ updatedAt: 'desc' }],
@@ -209,7 +209,7 @@ export class LearningPackAdminService {
     const result = await (this.prisma as any).learningPackage.findUnique({
       where: { id: record.id },
       include: {
-        scene: { select: { id: true, title: true, location: true } },
+        scene: { select: { id: true, title: true, location: true, packageType: true } },
         fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
       },
     });
@@ -250,7 +250,7 @@ export class LearningPackAdminService {
       where: { id },
       data: { status: PACKAGE_STATUS.published, publishedAt: new Date() },
       include: {
-        scene: { select: { id: true, title: true, location: true } },
+        scene: { select: { id: true, title: true, location: true, packageType: true } },
         fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
       },
     });

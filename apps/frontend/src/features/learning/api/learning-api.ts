@@ -13,7 +13,7 @@ export interface TopicSummary {
 
 export interface LearningUnitSummary {
   id: string
-  packageType?: 'daily' | 'story' | 'ielts'
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
   title: string
   location: string
   description?: string | null
@@ -108,7 +108,7 @@ export interface TrainingTopicItem {
 
 export interface UnitDetail {
   id: string
-  packageType?: 'daily' | 'story' | 'ielts'
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
   title: string
   location: string
   description: string | null
@@ -181,7 +181,7 @@ export interface TodayPlan {
 /** 用户正在学习的单元（从 my-units 接口返回） */
 export interface MyUnit {
   id: string
-  packageType?: 'daily' | 'story' | 'ielts'
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
   title: string
   location: string
   description?: string | null
@@ -208,6 +208,8 @@ export interface TagInfo {
   name: string
   icon: string | null
 }
+
+export type LearningPackageType = 'daily' | 'exam' | 'story' | 'course' | 'foundation'
 
 export interface OfflineManifestResult {
   manifest: {
@@ -266,10 +268,11 @@ export interface PackUpdateInfo {
 
 export const learningApi = {
   /** 获取可用分类标签列表 */
-  getTags: () => get<TagInfo[]>('/learning/tags'),
+  getTags: (packageType?: LearningPackageType) =>
+    get<TagInfo[]>('/learning/tags', packageType ? { packageType } : undefined),
 
   /** 获取教材列表（分页），支持按分类标签过滤和模糊搜索 */
-  getUnits: (params?: { tag?: string; search?: string; page?: number; pageSize?: number }) =>
+  getUnits: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number; pageSize?: number }) =>
     get<UnitsListResult>('/learning/units', params),
 
   /** 获取用户正在学习的单元 */

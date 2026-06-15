@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
 import { BookOpen, Search } from 'lucide-react'
@@ -8,59 +8,88 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
 import { ShopCard } from './shop-card'
+import type { LearningPackageType } from '../api/learning-api'
 
 interface Props {
   onMemberOpen: () => void
   onEnrollUnit?: (id: string) => Promise<void>
-  onRefreshShop: (params?: { tag?: string; search?: string; page?: number }) => Promise<void>
-  onLoadMore: (params?: { tag?: string; search?: string }) => Promise<void>
+  onRefreshShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
+  onLoadMore: (params?: { tag?: string; packageType?: LearningPackageType; search?: string }) => Promise<void>
 }
+
+const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; label: string }> = [
+  { id: 'daily', label: '日常' },
+  { id: 'exam', label: '考试' },
+  { id: 'story', label: '故事' },
+  { id: 'course', label: '课程' },
+  { id: 'foundation', label: '零基础' },
+]
 
 export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore }: Props) {
   const { t } = useTranslation()
   const tags = useLearningStore((s) => s.tags)
+  const fetchTags = useLearningStore((s) => s.fetchTags)
   const units = useLearningStore((s) => s.shopUnits)
   const loading = useLearningStore((s) => s.shopLoading)
   const shopTotal = useLearningStore((s) => s.shopTotal)
   const shopHasMore = useLearningStore((s) => s.shopHasMore)
+  const [activeType, setActiveType] = useState<LearningPackageType>('daily')
   const [activeTag, setActiveTag] = useState('all')
   const [keyword, setKeyword] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const doSearch = useCallback((kw: string, tag: string) => {
-    const params: { tag?: string; search?: string } = {}
+  const doSearch = useCallback((kw: string, tag: string, packageType: LearningPackageType) => {
+    const params: { tag?: string; packageType?: LearningPackageType; search?: string } = { packageType }
     if (tag !== 'all') params.tag = tag
     if (kw.trim()) params.search = kw.trim()
     onRefreshShop(params)
   }, [onRefreshShop])
 
+  useEffect(() => {
+    fetchTags(activeType)
+  }, [activeType, fetchTags])
+
+  useEffect(() => {
+    if (activeTag === 'all') return
+    if (!tags.some((tag) => tag.name === activeTag)) {
+      setActiveTag('all')
+    }
+  }, [activeTag, tags])
+
   const handleKeywordChange = (value: string) => {
     setKeyword(value)
     clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => doSearch(value, activeTag), 300)
+    debounceRef.current = setTimeout(() => doSearch(value, activeTag, activeType), 300)
+  }
+
+  const handleTypeChange = (type: LearningPackageType) => {
+    setActiveType(type)
+    setActiveTag('all')
+    doSearch(keyword, 'all', type)
   }
 
   const handleTagChange = (tag: string) => {
     setActiveTag(tag)
-    doSearch(keyword, tag)
+    doSearch(keyword, tag, activeType)
   }
 
   const handleEndReached = () => {
     if (shopHasMore && !loading) {
-      const params: { tag?: string; search?: string } = {}
+      const params: { tag?: string; packageType?: LearningPackageType; search?: string } = { packageType: activeType }
       if (activeTag !== 'all') params.tag = activeTag
       if (keyword.trim()) params.search = keyword.trim()
       onLoadMore(params)
     }
   }
 
-  const tagTabs = useMemo(
+  const categoryTabs = useMemo(
     () => [
       { id: 'all', label: t('learning.all') },
       ...tags.map((tag) => ({ id: tag.name, label: tag.name })),
     ],
     [tags, t],
   )
+  const showCategoryTabs = tags.length > 0
 
   const headerEl = (
     <div className="space-y-3 pb-2">
@@ -73,15 +102,15 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
           className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
         />
       </div>
-      <div className="scrollbar-hide overflow-x-auto mx-4">
+      <div className="scrollbar-hide mx-4 overflow-x-auto">
         <div className="flex w-max gap-2 pb-1">
-          {tagTabs.map((tab) => (
+          {PACKAGE_TYPE_TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => handleTagChange(tab.id)}
+              onClick={() => handleTypeChange(tab.id)}
               className={cn(
                 'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
-                activeTag === tab.id
+                activeType === tab.id
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'bg-muted text-muted-foreground',
               )}
@@ -91,6 +120,26 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
           ))}
         </div>
       </div>
+      {showCategoryTabs && (
+        <div className="scrollbar-hide mx-4 overflow-x-auto">
+          <div className="flex w-max gap-2 pb-1">
+            {categoryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTagChange(tab.id)}
+                className={cn(
+                  'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
+                  activeTag === tab.id
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-muted text-muted-foreground',
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 

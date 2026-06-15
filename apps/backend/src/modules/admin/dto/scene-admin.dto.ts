@@ -34,8 +34,8 @@ export class CreateSceneDto {
   categoryId: string;
 
   @IsOptional()
-  @IsIn(['daily', 'story', 'ielts'])
-  packageType?: 'daily' | 'story' | 'ielts';
+  @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation';
 
   @IsString()
   title: string;
@@ -63,8 +63,8 @@ export class UpdateSceneDto {
   categoryId?: string;
 
   @IsOptional()
-  @IsIn(['daily', 'story', 'ielts'])
-  packageType?: 'daily' | 'story' | 'ielts';
+  @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation';
 
   @IsOptional()
   @IsString()

@@ -57,12 +57,23 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('scene-categories')
-  async listCategories(@Req() req: Request) {
+  async listCategories(@Req() req: Request, @Query('packageType') packageType?: string) {
     await this.requireAdmin(req);
     return this.prisma.sceneCategory.findMany({
+      where: packageType
+        ? {
+            scenes: {
+              some: { packageType: packageType as any },
+            },
+          }
+        : undefined,
       orderBy: { sortOrder: 'asc' },
       include: {
-        _count: { select: { scenes: true } },
+        _count: {
+          select: {
+            scenes: packageType ? { where: { packageType: packageType as any } } : true,
+          },
+        },
       },
     });
   }
@@ -94,10 +105,15 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('scenes')
-  async listScenes(@Req() req: Request, @Query('categoryId') categoryId?: string) {
+  async listScenes(
+    @Req() req: Request,
+    @Query('categoryId') categoryId?: string,
+    @Query('packageType') packageType?: string,
+  ) {
     await this.requireAdmin(req);
     const where: any = {};
     if (categoryId) where.categoryId = categoryId;
+    if (packageType) where.packageType = packageType;
     return this.prisma.scene.findMany({
       where,
       orderBy: { createdAt: 'asc' },

@@ -15,6 +15,14 @@ import { getCategoryIcon } from './category-icons'
 import { UnitCover } from './unit-cover'
 import { useLearningStore } from '@/stores/learning.store'
 
+function packageTypeLabel(type?: LearningUnitSummary['packageType']) {
+  if (type === 'exam') return '考试'
+  if (type === 'story') return '故事'
+  if (type === 'course') return '课程'
+  if (type === 'foundation') return '零基础'
+  return '日常'
+}
+
 interface Props {
   unit: LearningUnitSummary & { categoryName?: string }
   onMemberOpen: () => void
@@ -82,6 +90,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             {unit.topicCount}{t('learning.topics')} · {unit.vocabCount}{t('learning.vocab')} · {unit.chunkCount}{t('learning.chunks')}
           </p>
           <div className="mt-2 flex items-center gap-1.5">
+            <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{packageTypeLabel(unit.packageType)}</Badge>
             {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
             {isJoined && (
               <Badge variant="outline" className="h-5 rounded-full border-emerald-400/50 px-2 text-[10px] text-emerald-600 dark:text-emerald-400">
@@ -117,6 +126,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               <UnitCover unit={unit} icon={Icon} className="size-20" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
+                  <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(unit.packageType)}</Badge>
                   {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
                   {(!unit.isUnlocked || unit.isLocked) && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
                 </div>

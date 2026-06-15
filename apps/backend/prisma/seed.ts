@@ -148,6 +148,7 @@ async function main() {
   await prisma.trainingTopicVocab.deleteMany()
   await prisma.trainingTopicSentencePattern.deleteMany()
   await prisma.trainingTopic.deleteMany()
+  await prisma.learningPackage.deleteMany()
   await prisma.userChunkProgress.deleteMany()
   await prisma.scenePrerequisite.deleteMany()
   await prisma.userSceneProgress.deleteMany()

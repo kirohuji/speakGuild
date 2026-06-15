@@ -9,8 +9,8 @@ export class LearningController {
 
   /** 获取全部教材分类标签（供筛选下拉使用） */
   @Get('tags')
-  async getTags() {
-    return this.learningService.getTags();
+  async getTags(@Query('packageType') packageType?: string) {
+    return this.learningService.getTags(packageType);
   }
 
   /** 获取全部教材（学习单元）列表，支持分页、按分类标签过滤和模糊搜索 */
@@ -18,6 +18,7 @@ export class LearningController {
   async getUnits(
     @Req() req: Request,
     @Query('tag') tag?: string,
+    @Query('packageType') packageType?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -25,7 +26,7 @@ export class LearningController {
     const session = await requireAuthSession(req);
     const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
     const size = Math.min(50, Math.max(1, parseInt(pageSize || '20', 10) || 20));
-    return this.learningService.getLearningUnits(session.user.id, tag, search, pageNum, size);
+    return this.learningService.getLearningUnits(session.user.id, { tag, packageType, search, page: pageNum, pageSize: size });
   }
 
   /** 获取用户正在学习的单元（有进度记录的） */

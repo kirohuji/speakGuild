@@ -32,8 +32,8 @@ export interface SceneCategory {
   _count?: { scenes: number }
 }
 
-export async function listSceneCategories(): Promise<SceneCategory[]> {
-  return get('/admin/content/scene-categories')
+export async function listSceneCategories(packageType?: Scene['packageType']): Promise<SceneCategory[]> {
+  return get('/admin/content/scene-categories', packageType ? { packageType } : undefined)
 }
 
 export async function createSceneCategory(data: Partial<SceneCategory>): Promise<SceneCategory> {
@@ -53,7 +53,7 @@ export async function deleteSceneCategory(id: string): Promise<void> {
 export interface Scene {
   id: string
   categoryId: string
-  packageType: 'daily' | 'story' | 'ielts'
+  packageType: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
   title: string
   location: string
   description: string | null
@@ -64,8 +64,11 @@ export interface Scene {
   trainingTopics?: TrainingTopic[]
 }
 
-export async function listScenes(categoryId?: string): Promise<Scene[]> {
-  return get('/admin/content/scenes', categoryId ? { categoryId } : undefined)
+export async function listScenes(categoryId?: string, packageType?: Scene['packageType']): Promise<Scene[]> {
+  const params: Record<string, string> = {}
+  if (categoryId) params.categoryId = categoryId
+  if (packageType) params.packageType = packageType
+  return get('/admin/content/scenes', Object.keys(params).length ? params : undefined)
 }
 
 export async function getScene(id: string): Promise<Scene> {
