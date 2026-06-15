@@ -24,7 +24,7 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 "基础·基础动词",常用动作动词,eat,吃,verb,/iːt/,/iːt/,L1,吃。eat breakfast / eat lunch / eat dinner。,"[{""en"":""I eat breakfast at 7."",""zh"":""我7点吃早餐。""}]",1
 "基础·基础动词",常用动作动词,drink,喝,verb,/drɪŋk/,/drɪŋk/,L1,喝。drink water / drink tea。,"[{""en"":""I drink tea every morning."",""zh"":""我每天早上喝茶。""}]",2
 "基础·描述事物",大小与颜色,big,大的,adj,/bɪɡ/,/bɪɡ/,L1,大的。反义词: small(小的)。,"[{""en"":""The box is big."",""zh"":""这个盒子很大。""}]",0
-"基础·描述事物",大小与颜色,small,小的,adj,/smɔːl/,/smɔːl/,L1,小的。反义词: big。,"[{""en"":""I have a small dog."",""zh""::我有一只小狗。}],1"
+"基础·描述事物",大小与颜色,small,小的,adj,/smɔːl/,/smɔːl/,L1,小的。反义词: big。,"[{""en"":""I have a small dog."",""zh""::我有一只小狗。}],1"
 "基础·描述事物",大小与颜色,red,红色,adj/noun,/red/,/red/,L1,红色。基本颜色之一。,"[{""en"":""My bag is red."",""zh"":""我的包是红色的。""}]",2
 "基础·描述事物",感受与评价,good,好的,adj,/ɡʊd/,/ɡʊd/,L1,好的。最常用的评价形容词。反义词: bad。,"[{""en"":""The food is very good."",""zh"":""这个食物很好。""}]",0
 "基础·描述事物",感受与评价,hot,热的,adj,/hɑːt/,/hɒt/,L1,热的/烫的。反义词: cold(冷的)。,"[{""en"":""The soup is hot."",""zh"":""汤是热的。""}]",1

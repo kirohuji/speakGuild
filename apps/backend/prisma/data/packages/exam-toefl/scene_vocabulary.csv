@@ -1,9 +1,9 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"托福·学术讨论",校园学术场景,academic,学术的,adj,/ˌækəˈdemɪk/,/ˌækəˈdemɪk/,L3,学术的。,[{"en":"Academic writing requires clear structure.","zh":"学术写作需要清晰的结构。"}],0
-"托福·学术讨论",校园学术场景,argument,论点,noun,/ˈɑːrɡjumənt/,/ˈɑːɡjumənt/,L3,论点、论证。,[{"en":"Develop a strong argument with examples.","zh":"用例子构建有力的论点。"}],1
-"托福·学术讨论",观点表达与论证,academic,学术的,adj,/ˌækəˈdemɪk/,/ˌækəˈdemɪk/,L3,学术的。,[{"en":"Academic writing requires clear structure.","zh":"学术写作需要清晰的结构。"}],2
-"托福·学术讨论",观点表达与论证,argument,论点,noun,/ˈɑːrɡjumənt/,/ˈɑːɡjumənt/,L3,论点、论证。,[{"en":"Develop a strong argument with examples.","zh":"用例子构建有力的论点。"}],3
-"托福·综合口语",信息整合表达,summarize,总结,verb,/ˈsʌməraɪz/,/ˈsʌməraɪz/,L3,总结、概括。,[{"en":"Summarize the main points of the lecture.","zh":"总结讲座的要点。"}],4
-"托福·综合口语",信息整合表达,integrate,整合,verb,/ˈɪntɪɡreɪt/,/ˈɪntɪɡreɪt/,L3,整合、融合。,[{"en":"Integrate information from multiple sources.","zh":"整合来自多个来源的信息。"}],5
-"托福·综合口语",学术讲座复述,summarize,总结,verb,/ˈsʌməraɪz/,/ˈsʌməraɪz/,L3,总结、概括。,[{"en":"Summarize the main points of the lecture.","zh":"总结讲座的要点。"}],6
-"托福·综合口语",学术讲座复述,integrate,整合,verb,/ˈɪntɪɡreɪt/,/ˈɪntɪɡreɪt/,L3,整合、融合。,[{"en":"Integrate information from multiple sources.","zh":"整合来自多个来源的信息。"}],7
+托福·学术讨论,校园学术场景,academic,学术的,adj,/ˌækəˈdemɪk/,/ˌækəˈdemɪk/,L3,学术的。,"""""""[{""""""""en"""""""":""""""""Academic writing requires clear structure.""""""""""""","zh:学术写作需要清晰的结构。}]"""
+托福·学术讨论,校园学术场景,argument,论点,noun,/ˈɑːrɡjumənt/,/ˈɑːɡjumənt/,L3,论点、论证。,"""""""[{""""""""en"""""""":""""""""Develop a strong argument with examples.""""""""""""","zh:用例子构建有力的论点。}]"""
+托福·学术讨论,观点表达与论证,academic,学术的,adj,/ˌækəˈdemɪk/,/ˌækəˈdemɪk/,L3,学术的。,"""""""[{""""""""en"""""""":""""""""Academic writing requires clear structure.""""""""""""","zh:学术写作需要清晰的结构。}]"""
+托福·学术讨论,观点表达与论证,argument,论点,noun,/ˈɑːrɡjumənt/,/ˈɑːɡjumənt/,L3,论点、论证。,"""""""[{""""""""en"""""""":""""""""Develop a strong argument with examples.""""""""""""","zh:用例子构建有力的论点。}]"""
+托福·综合口语,信息整合表达,summarize,总结,verb,/ˈsʌməraɪz/,/ˈsʌməraɪz/,L3,总结、概括。,"""""""[{""""""""en"""""""":""""""""Summarize the main points of the lecture.""""""""""""","zh:总结讲座的要点。}]"""
+托福·综合口语,信息整合表达,integrate,整合,verb,/ˈɪntɪɡreɪt/,/ˈɪntɪɡreɪt/,L3,整合、融合。,"""""""[{""""""""en"""""""":""""""""Integrate information from multiple sources.""""""""""""","zh:整合来自多个来源的信息。}]"""
+托福·综合口语,学术讲座复述,summarize,总结,verb,/ˈsʌməraɪz/,/ˈsʌməraɪz/,L3,总结、概括。,"""""""[{""""""""en"""""""":""""""""Summarize the main points of the lecture.""""""""""""","zh:总结讲座的要点。}]"""
+托福·综合口语,学术讲座复述,integrate,整合,verb,/ˈɪntɪɡreɪt/,/ˈɪntɪɡreɪt/,L3,整合、融合。,"""""""[{""""""""en"""""""":""""""""Integrate information from multiple sources.""""""""""""","zh:整合来自多个来源的信息。}]"""

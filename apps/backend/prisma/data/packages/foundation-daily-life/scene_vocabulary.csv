@@ -1,15 +1,15 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·起床与洗漱",起床与洗漱,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,[{"en":"I set the alarm for 7.","zh":"我把闹钟设到7点。"}],0
-"基础·起床与洗漱",起床与洗漱,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,[{"en":"I take a shower every morning.","zh":"我每天早上淋浴。"}],1
-"基础·起床与洗漱",起床与洗漱,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,[{"en":"I had breakfast at 8.","zh":"我8点吃了早餐。"}],2
-"基础·起床与洗漱",起床与洗漱,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,[{"en":"I'm in a hurry.","zh":"我很匆忙。"}],3
-"基础·起床与洗漱",早餐与出门,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,[{"en":"I set the alarm for 7.","zh":"我把闹钟设到7点。"}],4
-"基础·起床与洗漱",早餐与出门,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,[{"en":"I take a shower every morning.","zh":"我每天早上淋浴。"}],5
-"基础·起床与洗漱",早餐与出门,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,[{"en":"I had breakfast at 8.","zh":"我8点吃了早餐。"}],6
-"基础·起床与洗漱",早餐与出门,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,[{"en":"I'm in a hurry.","zh":"我很匆忙。"}],7
-"基础·家务与居家",家务劳动,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,[{"en":"I need to do the laundry.","zh":"我需要洗衣服。"}],8
-"基础·家务与居家",家务劳动,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,[{"en":"Please tidy your room.","zh":"请整理你的房间。"}],9
-"基础·家务与居家",家务劳动,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,[{"en":"Take out the trash.","zh":"把垃圾拿出去。"}],10
-"基础·家务与居家",居家休息,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,[{"en":"I need to do the laundry.","zh":"我需要洗衣服。"}],11
-"基础·家务与居家",居家休息,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,[{"en":"Please tidy your room.","zh":"请整理你的房间。"}],12
-"基础·家务与居家",居家休息,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,[{"en":"Take out the trash.","zh":"把垃圾拿出去。"}],13
+"基础·起床与洗漱",起床与洗漱,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",0
+"基础·起床与洗漱",起床与洗漱,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",1
+"基础·起床与洗漱",起床与洗漱,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",2
+"基础·起床与洗漱",起床与洗漱,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,"[{""en"":""I'm in a hurry."",""zh"":""我很匆忙。""}]",3
+"基础·起床与洗漱",早餐与出门,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",4
+"基础·起床与洗漱",早餐与出门,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",5
+"基础·起床与洗漱",早餐与出门,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",6
+"基础·起床与洗漱",早餐与出门,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,"[{""en"":""I'm in a hurry."",""zh"":""我很匆忙。""}]",7
+"基础·家务与居家",家务劳动,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",8
+"基础·家务与居家",家务劳动,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",9
+"基础·家务与居家",家务劳动,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",10
+"基础·家务与居家",居家休息,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",11
+"基础·家务与居家",居家休息,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",12
+"基础·家务与居家",居家休息,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",13

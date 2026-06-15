@@ -23,7 +23,9 @@ export function readCsv<T extends Record<string, string>>(
   const raw = readFileSync(filePath, 'utf-8')
   // Strip BOM
   const cleaned = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw
-  const records: T[] = parse(cleaned, {
+  // Normalize line endings: CRLF -> LF, also strip standalone CR
+  const normalized = cleaned.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const records: T[] = parse(normalized, {
     columns: true,
     skip_empty_lines: true,
     trim: true,

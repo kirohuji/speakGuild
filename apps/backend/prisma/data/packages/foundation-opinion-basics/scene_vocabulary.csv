@@ -1,13 +1,13 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·喜好与感受",表达喜好,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。,[{"en":"This is my favorite song.","zh":"这是我最喜欢的歌。"}],0
-"基础·喜好与感受",表达喜好,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。,[{"en":"I'm so excited!","zh":"我好兴奋！"}],1
-"基础·喜好与感受",表达喜好,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。,[{"en":"I feel nervous.","zh":"我感到紧张。"}],2
-"基础·喜好与感受",表达感受,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。,[{"en":"This is my favorite song.","zh":"这是我最喜欢的歌。"}],3
-"基础·喜好与感受",表达感受,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。,[{"en":"I'm so excited!","zh":"我好兴奋！"}],4
-"基础·喜好与感受",表达感受,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。,[{"en":"I feel nervous.","zh":"我感到紧张。"}],5
-"基础·简单观点",同意与不同意,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点、看法。,[{"en":"In my opinion, it's good.","zh":"在我看来这很好。"}],6
-"基础·简单观点",同意与不同意,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。,[{"en":"I agree with you.","zh":"我同意你。"}],7
-"基础·简单观点",同意与不同意,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。,[{"en":"That's a good suggestion.","zh":"这是个好建议。"}],8
-"基础·简单观点",提建议,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点、看法。,[{"en":"In my opinion, it's good.","zh":"在我看来这很好。"}],9
-"基础·简单观点",提建议,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。,[{"en":"I agree with you.","zh":"我同意你。"}],10
-"基础·简单观点",提建议,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。,[{"en":"That's a good suggestion.","zh":"这是个好建议。"}],11
+"基础·喜好与感受",表达喜好,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。,"[{""en"":""This is my favorite song."",""zh"":""这是我最喜欢的歌。""}]",0
+"基础·喜好与感受",表达喜好,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。,"[{""en"":""I'm so excited!"",""zh"":""我好兴奋！""}]",1
+"基础·喜好与感受",表达喜好,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。,"[{""en"":""I feel nervous."",""zh"":""我感到紧张。""}]",2
+"基础·喜好与感受",表达感受,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。,"[{""en"":""This is my favorite song."",""zh"":""这是我最喜欢的歌。""}]",3
+"基础·喜好与感受",表达感受,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。,"[{""en"":""I'm so excited!"",""zh"":""我好兴奋！""}]",4
+"基础·喜好与感受",表达感受,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。,"[{""en"":""I feel nervous."",""zh"":""我感到紧张。""}]",5
+"基础·简单观点",同意与不同意,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点、看法。,"[{""en"":""In my opinion, it's good."",""zh"":""在我看来这很好。""}]",6
+"基础·简单观点",同意与不同意,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。,"[{""en"":""I agree with you."",""zh"":""我同意你。""}]",7
+"基础·简单观点",同意与不同意,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。,"[{""en"":""That's a good suggestion."",""zh"":""这是个好建议。""}]",8
+"基础·简单观点",提建议,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点、看法。,"[{""en"":""In my opinion, it's good."",""zh"":""在我看来这很好。""}]",9
+"基础·简单观点",提建议,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。,"[{""en"":""I agree with you."",""zh"":""我同意你。""}]",10
+"基础·简单观点",提建议,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。,"[{""en"":""That's a good suggestion."",""zh"":""这是个好建议。""}]",11

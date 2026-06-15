@@ -1,9 +1,9 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"雅思·IELTS Band 7.5 优良",印象深刻的人,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L3,印象、感受。,[{"en":"She left a lasting impression on me.","zh":"她给我留下了持久的印象。"}],0
-"雅思·IELTS Band 7.5 优良",印象深刻的人,interact,互动,verb,/ˌɪntərˈækt/,/ˌɪntərˈækt/,L3,相互作用、交流。,[{"en":"People interact differently online.","zh":"人们在网上互动方式不同。"}],1
-"雅思·IELTS Band 7.5 优良",印象深刻的人,significant,重要的,adj,/sɪɡˈnɪfɪkənt/,/sɪɡˈnɪfɪkənt/,L3,重要的、有意义的。,[{"en":"Technology has had a significant impact.","zh":"技术产生了重大影响。"}],2
-"雅思·IELTS Band 7.5 优良",印象深刻的人,evolve,演变,verb,/ɪˈvɑːlv/,/ɪˈvɒlv/,L3,进化、发展。,[{"en":"Social norms have evolved over time.","zh":"社会规范随着时间演变。"}],3
-"雅思·IELTS Band 7.5 优良",科技与社交,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L3,印象、感受。,[{"en":"She left a lasting impression on me.","zh":"她给我留下了持久的印象。"}],4
-"雅思·IELTS Band 7.5 优良",科技与社交,interact,互动,verb,/ˌɪntərˈækt/,/ˌɪntərˈækt/,L3,相互作用、交流。,[{"en":"People interact differently online.","zh":"人们在网上互动方式不同。"}],5
-"雅思·IELTS Band 7.5 优良",科技与社交,significant,重要的,adj,/sɪɡˈnɪfɪkənt/,/sɪɡˈnɪfɪkənt/,L3,重要的、有意义的。,[{"en":"Technology has had a significant impact.","zh":"技术产生了重大影响。"}],6
-"雅思·IELTS Band 7.5 优良",科技与社交,evolve,演变,verb,/ɪˈvɑːlv/,/ɪˈvɒlv/,L3,进化、发展。,[{"en":"Social norms have evolved over time.","zh":"社会规范随着时间演变。"}],7
+雅思·IELTS Band 7.5 优良,印象深刻的人,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L3,印象、感受。,"""""""[{""""""""en"""""""":""""""""She left a lasting impression on me.""""""""""""","zh:她给我留下了持久的印象。}]"""
+雅思·IELTS Band 7.5 优良,印象深刻的人,interact,互动,verb,/ˌɪntərˈækt/,/ˌɪntərˈækt/,L3,相互作用、交流。,"""""""[{""""""""en"""""""":""""""""People interact differently online.""""""""""""","zh:人们在网上互动方式不同。}]"""
+雅思·IELTS Band 7.5 优良,印象深刻的人,significant,重要的,adj,/sɪɡˈnɪfɪkənt/,/sɪɡˈnɪfɪkənt/,L3,重要的、有意义的。,"""""""[{""""""""en"""""""":""""""""Technology has had a significant impact.""""""""""""","zh:技术产生了重大影响。}]"""
+雅思·IELTS Band 7.5 优良,印象深刻的人,evolve,演变,verb,/ɪˈvɑːlv/,/ɪˈvɒlv/,L3,进化、发展。,"""""""[{""""""""en"""""""":""""""""Social norms have evolved over time.""""""""""""","zh:社会规范随着时间演变。}]"""
+雅思·IELTS Band 7.5 优良,科技与社交,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L3,印象、感受。,"""""""[{""""""""en"""""""":""""""""She left a lasting impression on me.""""""""""""","zh:她给我留下了持久的印象。}]"""
+雅思·IELTS Band 7.5 优良,科技与社交,interact,互动,verb,/ˌɪntərˈækt/,/ˌɪntərˈækt/,L3,相互作用、交流。,"""""""[{""""""""en"""""""":""""""""People interact differently online.""""""""""""","zh:人们在网上互动方式不同。}]"""
+雅思·IELTS Band 7.5 优良,科技与社交,significant,重要的,adj,/sɪɡˈnɪfɪkənt/,/sɪɡˈnɪfɪkənt/,L3,重要的、有意义的。,"""""""[{""""""""en"""""""":""""""""Technology has had a significant impact.""""""""""""","zh:技术产生了重大影响。}]"""
+雅思·IELTS Band 7.5 优良,科技与社交,evolve,演变,verb,/ɪˈvɑːlv/,/ɪˈvɒlv/,L3,进化、发展。,"""""""[{""""""""en"""""""":""""""""Social norms have evolved over time.""""""""""""","zh:社会规范随着时间演变。}]"""

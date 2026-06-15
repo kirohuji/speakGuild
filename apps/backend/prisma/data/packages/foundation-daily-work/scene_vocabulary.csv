@@ -1,7 +1,7 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·办公室日常",办公室交流,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程安排。,[{"en":"Check my schedule.","zh":"查一下我的日程。"}],0
-"基础·办公室日常",办公室交流,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L1,截止日期。,[{"en":"The deadline is Friday.","zh":"截止日期是周五。"}],1
-"基础·办公室日常",办公室交流,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L1,预约。,[{"en":"I have a doctor's appointment.","zh":"我有个医生的预约。"}],2
-"基础·办公室日常",日程与安排,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程安排。,[{"en":"Check my schedule.","zh":"查一下我的日程。"}],3
-"基础·办公室日常",日程与安排,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L1,截止日期。,[{"en":"The deadline is Friday.","zh":"截止日期是周五。"}],4
-"基础·办公室日常",日程与安排,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L1,预约。,[{"en":"I have a doctor's appointment.","zh":"我有个医生的预约。"}],5
+"基础·办公室日常",办公室交流,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程安排。,"[{""en"":""Check my schedule."",""zh"":""查一下我的日程。""}]",0
+"基础·办公室日常",办公室交流,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L1,截止日期。,"[{""en"":""The deadline is Friday."",""zh"":""截止日期是周五。""}]",1
+"基础·办公室日常",办公室交流,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L1,预约。,"[{""en"":""I have a doctor's appointment."",""zh"":""我有个医生的预约。""}]",2
+"基础·办公室日常",日程与安排,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程安排。,"[{""en"":""Check my schedule."",""zh"":""查一下我的日程。""}]",3
+"基础·办公室日常",日程与安排,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L1,截止日期。,"[{""en"":""The deadline is Friday."",""zh"":""截止日期是周五。""}]",4
+"基础·办公室日常",日程与安排,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L1,预约。,"[{""en"":""I have a doctor's appointment."",""zh"":""我有个医生的预约。""}]",5

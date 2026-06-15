@@ -1,13 +1,13 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_greet,问候与介绍,1,打招呼,"基础·问候与介绍",L1,1,2,2,2,3,"[""说Hello"",""问候How are you"",""说Nice to meet you""]",2,2,2,Tutor,英语导师,true,,"{""xp"":10}"
-ch_greet,问候与介绍,2,自我介绍,"基础·问候与介绍",L1,1,2,2,2,3,"[""说名字"",""说来自哪里"",""说身份""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_num,数字与时间,1,数字1-100,"基础·数字与时间",L1,1,2,3,2,2,"[""说数字1-10"",""问How many"",""用数字回答""]",2,2,2,Tutor,英语导师,true,,"{""xp"":10}"
-ch_num,数字与时间,2,时间与日期,"基础·数字与时间",L1,1,2,2,2,3,"[""问What time is it"",""说整点时间"",""说星期""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_daily,日常表达,1,礼貌用语,"基础·日常表达",L1,1,2,2,2,3,"[""说Thank you"",""说You're welcome"",""说I'm sorry""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_daily,日常表达,2,表达需求,"基础·日常表达",L1,1,2,2,2,3,"[""说I need"",""说Can I have"",""说I want""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_qa,基本问答,1,问与答,"基础·基本问答",L1,1,2,2,2,2,"[""用What提问"",""用Who提问""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_qa,基本问答,2,地点与方位,"基础·基本问答",L1,1,2,2,2,2,"[""问Where"",""说It's here/there""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_verb,基础动词,1,动词be,"基础·基础动词",L1,1,2,3,2,3,"[""说I am"",""说You are"",""说It is""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_verb,基础动词,2,动作动词,"基础·基础动词",L1,1,2,3,2,3,"[""说I go to"",""说I eat"",""说I like to""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
-ch_desc,描述事物,1,大小与颜色,"基础·描述事物",L1,1,2,3,2,2,"[""说大小"",""问颜色""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_greet,问候与介绍,1,打招呼,"基础·问候与介绍",L1,1,2,2,2,3,"[""说Hello"",""问候How are you"",""说Nice to meet you""]",2,2,2,Tutor,英语导师,true,,"{""xp"":10}"
+ch_greet,问候与介绍,2,自我介绍,"基础·问候与介绍",L1,1,2,2,2,3,"[""说名字"",""说来自哪里"",""说身份""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_num,数字与时间,1,数字1-100,"基础·数字与时间",L1,1,2,3,2,2,"[""说数字1-10"",""问How many"",""用数字回答""]",2,2,2,Tutor,英语导师,true,,"{""xp"":10}"
+ch_num,数字与时间,2,时间与日期,"基础·数字与时间",L1,1,2,2,2,3,"[""问What time is it"",""说整点时间"",""说星期""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_daily,日常表达,1,礼貌用语,"基础·日常表达",L1,1,2,2,2,3,"[""说Thank you"",""说You're welcome"",""说I'm sorry""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_daily,日常表达,2,表达需求,"基础·日常表达",L1,1,2,2,2,3,"[""说I need"",""说Can I have"",""说I want""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_qa,基本问答,1,问与答,"基础·基本问答",L1,1,2,2,2,2,"[""用What提问"",""用Who提问""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_qa,基本问答,2,地点与方位,"基础·基本问答",L1,1,2,2,2,2,"[""问Where"",""说It's here/there""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_verb,基础动词,1,动词be,"基础·基础动词",L1,1,2,3,2,3,"[""说I am"",""说You are"",""说It is""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_verb,基础动词,2,动作动词,"基础·基础动词",L1,1,2,3,2,3,"[""说I go to"",""说I eat"",""说I like to""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
+ch_desc,描述事物,1,大小与颜色,"基础·描述事物",L1,1,2,3,2,2,"[""说大小"",""问颜色""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"
 ch_desc,描述事物,2,感受与评价,"基础·描述事物",L1,1,2,3,2,3,"[""说I'm happy/tired"",""说It's good"",""说It's hot/cold""]",2,2,2,Tutor,英语导师,false,,"{""xp"":10}"

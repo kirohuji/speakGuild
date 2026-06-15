@@ -1,13 +1,13 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·问候与介绍",见面问候,introduce,介绍,verb,/ˌɪntrəˈduːs/,/ˌɪntrəˈdjuːs/,L1,介绍。,[{"en":"Let me introduce myself.","zh":"让我自我介绍。"}],0
-"基础·问候与介绍",见面问候,classmate,同学,noun,/ˈklæsmeɪt/,/ˈklɑːsmeɪt/,L1,同班同学。,[{"en":"She is my classmate.","zh":"她是我的同学。"}],1
-"基础·问候与介绍",见面问候,vacation,假期,noun,/veɪˈkeɪʃən/,/vəˈkeɪʃən/,L1,假期、休假。,[{"en":"I'm on vacation.","zh":"我在度假。"}],2
-"基础·问候与介绍",自我介绍,introduce,介绍,verb,/ˌɪntrəˈduːs/,/ˌɪntrəˈdjuːs/,L1,介绍。,[{"en":"Let me introduce myself.","zh":"让我自我介绍。"}],3
-"基础·问候与介绍",自我介绍,classmate,同学,noun,/ˈklæsmeɪt/,/ˈklɑːsmeɪt/,L1,同班同学。,[{"en":"She is my classmate.","zh":"她是我的同学。"}],4
-"基础·问候与介绍",自我介绍,vacation,假期,noun,/veɪˈkeɪʃən/,/vəˈkeɪʃən/,L1,假期、休假。,[{"en":"I'm on vacation.","zh":"我在度假。"}],5
-"基础·礼貌与请求",礼貌用语,welcome,欢迎,adj,/ˈwelkəm/,/ˈwelkəm/,L1,受欢迎的。,[{"en":"You're welcome.","zh":"不客气。"}],6
-"基础·礼貌与请求",礼貌用语,appreciate,感激,verb,/əˈpriːʃieɪt/,/əˈpriːʃieɪt/,L2,感激、感谢。,[{"en":"I appreciate it.","zh":"我很感激。"}],7
-"基础·礼貌与请求",礼貌用语,borrow,借,verb,/ˈbɑːroʊ/,/ˈbɒrəʊ/,L1,借入。,[{"en":"Can I borrow your pen?","zh":"我可以借你的笔吗？"}],8
-"基础·礼貌与请求",请求与帮助,welcome,欢迎,adj,/ˈwelkəm/,/ˈwelkəm/,L1,受欢迎的。,[{"en":"You're welcome.","zh":"不客气。"}],9
-"基础·礼貌与请求",请求与帮助,appreciate,感激,verb,/əˈpriːʃieɪt/,/əˈpriːʃieɪt/,L2,感激、感谢。,[{"en":"I appreciate it.","zh":"我很感激。"}],10
-"基础·礼貌与请求",请求与帮助,borrow,借,verb,/ˈbɑːroʊ/,/ˈbɒrəʊ/,L1,借入。,[{"en":"Can I borrow your pen?","zh":"我可以借你的笔吗？"}],11
+"基础·问候与介绍",见面问候,introduce,介绍,verb,/ˌɪntrəˈduːs/,/ˌɪntrəˈdjuːs/,L1,介绍。,"[{""en"":""Let me introduce myself."",""zh"":""让我自我介绍。""}]",0
+"基础·问候与介绍",见面问候,classmate,同学,noun,/ˈklæsmeɪt/,/ˈklɑːsmeɪt/,L1,同班同学。,"[{""en"":""She is my classmate."",""zh"":""她是我的同学。""}]",1
+"基础·问候与介绍",见面问候,vacation,假期,noun,/veɪˈkeɪʃən/,/vəˈkeɪʃən/,L1,假期、休假。,"[{""en"":""I'm on vacation."",""zh"":""我在度假。""}]",2
+"基础·问候与介绍",自我介绍,introduce,介绍,verb,/ˌɪntrəˈduːs/,/ˌɪntrəˈdjuːs/,L1,介绍。,"[{""en"":""Let me introduce myself."",""zh"":""让我自我介绍。""}]",3
+"基础·问候与介绍",自我介绍,classmate,同学,noun,/ˈklæsmeɪt/,/ˈklɑːsmeɪt/,L1,同班同学。,"[{""en"":""She is my classmate."",""zh"":""她是我的同学。""}]",4
+"基础·问候与介绍",自我介绍,vacation,假期,noun,/veɪˈkeɪʃən/,/vəˈkeɪʃən/,L1,假期、休假。,"[{""en"":""I'm on vacation."",""zh"":""我在度假。""}]",5
+"基础·礼貌与请求",礼貌用语,welcome,欢迎,adj,/ˈwelkəm/,/ˈwelkəm/,L1,受欢迎的。,"[{""en"":""You're welcome."",""zh"":""不客气。""}]",6
+"基础·礼貌与请求",礼貌用语,appreciate,感激,verb,/əˈpriːʃieɪt/,/əˈpriːʃieɪt/,L2,感激、感谢。,"[{""en"":""I appreciate it."",""zh"":""我很感激。""}]",7
+"基础·礼貌与请求",礼貌用语,borrow,借,verb,/ˈbɑːroʊ/,/ˈbɒrəʊ/,L1,借入。,"[{""en"":""Can I borrow your pen?"",""zh"":""我可以借你的笔吗？""}]",8
+"基础·礼貌与请求",请求与帮助,welcome,欢迎,adj,/ˈwelkəm/,/ˈwelkəm/,L1,受欢迎的。,"[{""en"":""You're welcome."",""zh"":""不客气。""}]",9
+"基础·礼貌与请求",请求与帮助,appreciate,感激,verb,/əˈpriːʃieɪt/,/əˈpriːʃieɪt/,L2,感激、感谢。,"[{""en"":""I appreciate it."",""zh"":""我很感激。""}]",10
+"基础·礼貌与请求",请求与帮助,borrow,借,verb,/ˈbɑːroʊ/,/ˈbɒrəʊ/,L1,借入。,"[{""en"":""Can I borrow your pen?"",""zh"":""我可以借你的笔吗？""}]",11

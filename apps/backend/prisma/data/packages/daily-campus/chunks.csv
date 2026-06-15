@@ -1,28 +1,28 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-"校园·图书馆借书",借书,借书,How do I borrow a book?,怎么借书？,L1,询问借书流程。需要什么证件、如何操作。,"[{""en"":""Excuse me, how do I borrow a book from this library?"",""zh"":""请问，怎么从图书馆借书？""}]"
-"校园·图书馆借书",借书,借书,How long can I keep this book?,这本书能借多久？,L1,询问借阅期限。通常 2-4 周。,"[{""en"":""How long can I keep this book before returning it?"",""zh"":""这本书能借多久？""}]"
-"校园·图书馆借书",借书,借书,Can I borrow this with my student ID?,用学生证能借吗？,L1,确认借书所需证件。学生证通常就是借书证。,"[{""en"":""Do I just need my student ID to borrow books?"",""zh"":""我用学生证就能借书吗？""}]"
-"校园·图书馆借书",续借与归还,续借与归还,I'd like to renew this book.,我想续借这本书。,L1,续借的标准表达。renew = 续借。,"[{""en"":""I'd like to renew this book for another two weeks."",""zh"":""我想续借这本书两周。""}]"
-"校园·图书馆借书",续借与归还,续借与归还,What's the late return fee?,逾期费是多少？,L1,问逾期费用。late return / overdue。,"[{""en"":""How much is the late return fee per day?"",""zh"":""逾期费每天多少钱？""}]"
-"校园·图书馆借书",续借与归还,续借与归还,I'm returning this book.,我来还这本书。,L1,还书的标准说法。,"[{""en"":""I'm returning these books. They're due today."",""zh"":""我来还这些书，今天到期。""}]"
-"校园·图书馆借书",查找资料,查找资料,I'm looking for a book about...,我在找一本关于...的书。,L2,在图书馆查书。可以按主题/作者/书名。,"[{""en"":""I'm looking for a book about environmental science."",""zh"":""我在找一本关于环境科学的书。""}]"
-"校园·图书馆借书",查找资料,查找资料,Can you help me find this journal?,能帮我找到这本期刊吗？,L2,找期刊或论文。journal / article / paper。,"[{""en"":""Can you help me find this journal on the shelf?"",""zh"":""能帮我在书架上找到这本期刊吗？""}]"
-"校园·图书馆借书",查找资料,查找资料,How do I use the online catalogue?,怎么用网上目录查书？,L2,请求指导使用查询系统。catalogue = 目录。,"[{""en"":""How do I search the online catalogue for books?"",""zh"":""怎么在网上目录查书？""}]"
-"校园·社团活动",咨询社团信息,咨询社团信息,What does your club do?,你们社团是做什么的？,L1,了解社团基本信息。,"[{""en"":""What does your club do? I'm interested in joining."",""zh"":""你们社团是做什么的？我有兴趣加入。""}]"
-"校园·社团活动",咨询社团信息,咨询社团信息,How often do you meet?,你们多久活动一次？,L1,问活动频率。weekly / bi-weekly / monthly。,"[{""en"":""How often do you meet? Is it every week?"",""zh"":""你们多久活动一次？每周吗？""}]"
-"校园·社团活动",报名加入,报名加入,How do I join?,我该怎么加入？,L1,询问加入方式。是否需要报名表或面试。,"[{""en"":""How do I join the club? Is there a registration form?"",""zh"":""我该怎么加入？有报名表吗？""}]"
-"校园·社团活动",报名加入,报名加入,Sounds interesting. I'd like to join.,听起来很有意思，我想加入。,L1,表达加入意愿。,"[{""en"":""Sounds interesting. I'd like to join. What do I need to do?"",""zh"":""听起来很有意思，我想加入，需要做什么？""}]"
-"校园·社团活动",参加社团活动,参加社团活动,When is the next meeting?,下次活动是什么时候？,L1,询问活动安排。,"[{""en"":""When is the next meeting? I'd like to come."",""zh"":""下次活动是什么时候？我想来。""}]"
-"校园·社团活动",参加社团活动,参加社团活动,Can I bring a friend?,能带朋友来吗？,L1,问能否带非会员参加活动。,"[{""en"":""Can I bring a friend to the next meeting?"",""zh"":""我能带朋友来参加下次活动吗？""}]"
-"校园·食堂就餐",点餐,点餐,I'll have the... please.,我要一份...谢谢。,L1,在食堂点餐。rice / noodles / chicken。,"[{""en"":""I'll have the chicken with rice, please."",""zh"":""我要一份鸡肉饭。""}]"
-"校园·食堂就餐",点餐,点餐,How much is this set meal?,这个套餐多少钱？,L1,问价格。,"[{""en"":""How much is this set meal?"",""zh"":""这个套餐多少钱？""}]"
-"校园·食堂就餐",询问菜品,询问菜品,What's today's special?,今日特供是什么？,L1,问今日特色菜。,"[{""en"":""What's today's special? I'd like to try it."",""zh"":""今日特供是什么？我想试试。""}]"
-"校园·食堂就餐",询问菜品,询问菜品,Does this contain...?,这个含有...吗？,L2,询问食材成分。meat / nuts / dairy。,"[{""en"":""Does this dish contain any nuts or dairy?"",""zh"":""这道菜含有坚果或乳制品吗？""}]"
-"校园·食堂就餐",餐卡充值,餐卡充值,I'd like to top up my meal card.,我想充值餐卡。,L1,充值餐卡。top up = 充值。,"[{""en"":""I'd like to top up my meal card with 50 dollars."",""zh"":""我想给餐卡充值50美元。""}]"
-"校园·食堂就餐",餐卡充值,餐卡充值,What's my current balance?,我卡上还有多少钱？,L1,查询余额。balance = 余额。,"[{""en"":""Can you check my current balance?"",""zh"":""能查一下我卡上的余额吗？""}]"
-"校园·选课咨询",咨询课程,咨询课程,Can you tell me about this course?,能给我介绍一下这门课吗？,L2,了解课程基本信息。内容、学分、老师。,"[{""en"":""Can you tell me about this course? What topics does it cover?"",""zh"":""能给我介绍一下这门课吗？覆盖哪些主题？""}]"
-"校园·选课咨询",咨询课程,咨询课程,How is this course assessed?,这门课怎么考核？,L2,了解考核方式。exam / essay / project。,"[{""en"":""How is this course assessed? Is it exam or coursework?"",""zh"":""这门课怎么考核？考试还是作业？""}]"
-"校园·选课咨询",选课操作,选课操作,How do I register for this course?,怎么注册这门课？,L2,问选课操作流程。register / sign up / enroll。,"[{""en"":""How do I register for this course online?"",""zh"":""我怎样在网上注册这门课？""}]"
-"校园·选课咨询",选课操作,选课操作,When does registration open?,什么时候开始选课？,L2,问选课开始时间。registration period = 选课期。,"[{""en"":""When does registration open for next semester?"",""zh"":""下学期的选课什么时候开始？""}]"
-"校园·选课咨询",退课调整,退课调整,I'd like to drop this course.,我想退这门课。,L2,退课的标准表达。drop / withdraw。,"[{""en"":""I'd like to drop this course. What's the deadline?"",""zh"":""我想退这门课，截止日期是什么时候？""}]"
+"校园·图书馆借书",借书,借书,How do I borrow a book?,怎么借书？,L1,询问借书流程。需要什么证件、如何操作。,"[{""en"":""Excuse me, how do I borrow a book from this library?"",""zh"":""请问，怎么从图书馆借书？""}]"
+"校园·图书馆借书",借书,借书,How long can I keep this book?,这本书能借多久？,L1,询问借阅期限。通常 2-4 周。,"[{""en"":""How long can I keep this book before returning it?"",""zh"":""这本书能借多久？""}]"
+"校园·图书馆借书",借书,借书,Can I borrow this with my student ID?,用学生证能借吗？,L1,确认借书所需证件。学生证通常就是借书证。,"[{""en"":""Do I just need my student ID to borrow books?"",""zh"":""我用学生证就能借书吗？""}]"
+"校园·图书馆借书",续借与归还,续借与归还,I'd like to renew this book.,我想续借这本书。,L1,续借的标准表达。renew = 续借。,"[{""en"":""I'd like to renew this book for another two weeks."",""zh"":""我想续借这本书两周。""}]"
+"校园·图书馆借书",续借与归还,续借与归还,What's the late return fee?,逾期费是多少？,L1,问逾期费用。late return / overdue。,"[{""en"":""How much is the late return fee per day?"",""zh"":""逾期费每天多少钱？""}]"
+"校园·图书馆借书",续借与归还,续借与归还,I'm returning this book.,我来还这本书。,L1,还书的标准说法。,"[{""en"":""I'm returning these books. They're due today."",""zh"":""我来还这些书，今天到期。""}]"
+"校园·图书馆借书",查找资料,查找资料,I'm looking for a book about...,我在找一本关于...的书。,L2,在图书馆查书。可以按主题/作者/书名。,"[{""en"":""I'm looking for a book about environmental science."",""zh"":""我在找一本关于环境科学的书。""}]"
+"校园·图书馆借书",查找资料,查找资料,Can you help me find this journal?,能帮我找到这本期刊吗？,L2,找期刊或论文。journal / article / paper。,"[{""en"":""Can you help me find this journal on the shelf?"",""zh"":""能帮我在书架上找到这本期刊吗？""}]"
+"校园·图书馆借书",查找资料,查找资料,How do I use the online catalogue?,怎么用网上目录查书？,L2,请求指导使用查询系统。catalogue = 目录。,"[{""en"":""How do I search the online catalogue for books?"",""zh"":""怎么在网上目录查书？""}]"
+"校园·社团活动",咨询社团信息,咨询社团信息,What does your club do?,你们社团是做什么的？,L1,了解社团基本信息。,"[{""en"":""What does your club do? I'm interested in joining."",""zh"":""你们社团是做什么的？我有兴趣加入。""}]"
+"校园·社团活动",咨询社团信息,咨询社团信息,How often do you meet?,你们多久活动一次？,L1,问活动频率。weekly / bi-weekly / monthly。,"[{""en"":""How often do you meet? Is it every week?"",""zh"":""你们多久活动一次？每周吗？""}]"
+"校园·社团活动",报名加入,报名加入,How do I join?,我该怎么加入？,L1,询问加入方式。是否需要报名表或面试。,"[{""en"":""How do I join the club? Is there a registration form?"",""zh"":""我该怎么加入？有报名表吗？""}]"
+"校园·社团活动",报名加入,报名加入,Sounds interesting. I'd like to join.,听起来很有意思，我想加入。,L1,表达加入意愿。,"[{""en"":""Sounds interesting. I'd like to join. What do I need to do?"",""zh"":""听起来很有意思，我想加入，需要做什么？""}]"
+"校园·社团活动",参加社团活动,参加社团活动,When is the next meeting?,下次活动是什么时候？,L1,询问活动安排。,"[{""en"":""When is the next meeting? I'd like to come."",""zh"":""下次活动是什么时候？我想来。""}]"
+"校园·社团活动",参加社团活动,参加社团活动,Can I bring a friend?,能带朋友来吗？,L1,问能否带非会员参加活动。,"[{""en"":""Can I bring a friend to the next meeting?"",""zh"":""我能带朋友来参加下次活动吗？""}]"
+"校园·食堂就餐",点餐,点餐,I'll have the... please.,我要一份...谢谢。,L1,在食堂点餐。rice / noodles / chicken。,"[{""en"":""I'll have the chicken with rice, please."",""zh"":""我要一份鸡肉饭。""}]"
+"校园·食堂就餐",点餐,点餐,How much is this set meal?,这个套餐多少钱？,L1,问价格。,"[{""en"":""How much is this set meal?"",""zh"":""这个套餐多少钱？""}]"
+"校园·食堂就餐",询问菜品,询问菜品,What's today's special?,今日特供是什么？,L1,问今日特色菜。,"[{""en"":""What's today's special? I'd like to try it."",""zh"":""今日特供是什么？我想试试。""}]"
+"校园·食堂就餐",询问菜品,询问菜品,Does this contain...?,这个含有...吗？,L2,询问食材成分。meat / nuts / dairy。,"[{""en"":""Does this dish contain any nuts or dairy?"",""zh"":""这道菜含有坚果或乳制品吗？""}]"
+"校园·食堂就餐",餐卡充值,餐卡充值,I'd like to top up my meal card.,我想充值餐卡。,L1,充值餐卡。top up = 充值。,"[{""en"":""I'd like to top up my meal card with 50 dollars."",""zh"":""我想给餐卡充值50美元。""}]"
+"校园·食堂就餐",餐卡充值,餐卡充值,What's my current balance?,我卡上还有多少钱？,L1,查询余额。balance = 余额。,"[{""en"":""Can you check my current balance?"",""zh"":""能查一下我卡上的余额吗？""}]"
+"校园·选课咨询",咨询课程,咨询课程,Can you tell me about this course?,能给我介绍一下这门课吗？,L2,了解课程基本信息。内容、学分、老师。,"[{""en"":""Can you tell me about this course? What topics does it cover?"",""zh"":""能给我介绍一下这门课吗？覆盖哪些主题？""}]"
+"校园·选课咨询",咨询课程,咨询课程,How is this course assessed?,这门课怎么考核？,L2,了解考核方式。exam / essay / project。,"[{""en"":""How is this course assessed? Is it exam or coursework?"",""zh"":""这门课怎么考核？考试还是作业？""}]"
+"校园·选课咨询",选课操作,选课操作,How do I register for this course?,怎么注册这门课？,L2,问选课操作流程。register / sign up / enroll。,"[{""en"":""How do I register for this course online?"",""zh"":""我怎样在网上注册这门课？""}]"
+"校园·选课咨询",选课操作,选课操作,When does registration open?,什么时候开始选课？,L2,问选课开始时间。registration period = 选课期。,"[{""en"":""When does registration open for next semester?"",""zh"":""下学期的选课什么时候开始？""}]"
+"校园·选课咨询",退课调整,退课调整,I'd like to drop this course.,我想退这门课。,L2,退课的标准表达。drop / withdraw。,"[{""en"":""I'd like to drop this course. What's the deadline?"",""zh"":""我想退这门课，截止日期是什么时候？""}]"
 "校园·选课咨询",退课调整,退课调整,Can I switch to another section?,我能换到另一个班吗？,L2,换班/换 section。,"[{""en"":""Can I switch to the afternoon section instead?"",""zh"":""我能换到下午的班吗？""}]"

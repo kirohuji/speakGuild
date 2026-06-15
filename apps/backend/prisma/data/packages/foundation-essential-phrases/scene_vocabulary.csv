@@ -1,13 +1,13 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·日常高频短语",常用动词短语,matter,事情,noun,/ˈmætər/,/ˈmætə/,L1,事情、问题。,[{"en":"What's the matter?","zh":"怎么了？"}],0
-"基础·日常高频短语",常用动词短语,congratulations,恭喜,noun,/kənˌɡrætʃuˈleɪʃənz/,/kənˌɡrætʃuˈleɪʃənz/,L1,祝贺。,[{"en":"Congratulations on your success!","zh":"祝贺你的成功！"}],1
-"基础·日常高频短语",常用动词短语,cheers,干杯,noun,/tʃɪrz/,/tʃɪəz/,L1,干杯/谢谢。,[{"en":"Cheers!","zh":"干杯！"}],2
-"基础·日常高频短语",情景常用语,matter,事情,noun,/ˈmætər/,/ˈmætə/,L1,事情、问题。,[{"en":"What's the matter?","zh":"怎么了？"}],3
-"基础·日常高频短语",情景常用语,congratulations,恭喜,noun,/kənˌɡrætʃuˈleɪʃənz/,/kənˌɡrætʃuˈleɪʃənz/,L1,祝贺。,[{"en":"Congratulations on your success!","zh":"祝贺你的成功！"}],4
-"基础·日常高频短语",情景常用语,cheers,干杯,noun,/tʃɪrz/,/tʃɪəz/,L1,干杯/谢谢。,[{"en":"Cheers!","zh":"干杯！"}],5
-"基础·电话与应急",电话用语,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,[{"en":"Call me in an emergency.","zh":"紧急情况给我打电话。"}],6
-"基础·电话与应急",电话用语,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,[{"en":"Please call an ambulance!","zh":"请叫救护车！"}],7
-"基础·电话与应急",电话用语,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,[{"en":"I lost my passport.","zh":"我丢了护照。"}],8
-"基础·电话与应急",紧急求助,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,[{"en":"Call me in an emergency.","zh":"紧急情况给我打电话。"}],9
-"基础·电话与应急",紧急求助,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,[{"en":"Please call an ambulance!","zh":"请叫救护车！"}],10
-"基础·电话与应急",紧急求助,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,[{"en":"I lost my passport.","zh":"我丢了护照。"}],11
+"基础·日常高频短语",常用动词短语,matter,事情,noun,/ˈmætər/,/ˈmætə/,L1,事情、问题。,"[{""en"":""What's the matter?"",""zh"":""怎么了？""}]",0
+"基础·日常高频短语",常用动词短语,congratulations,恭喜,noun,/kənˌɡrætʃuˈleɪʃənz/,/kənˌɡrætʃuˈleɪʃənz/,L1,祝贺。,"[{""en"":""Congratulations on your success!"",""zh"":""祝贺你的成功！""}]",1
+"基础·日常高频短语",常用动词短语,cheers,干杯,noun,/tʃɪrz/,/tʃɪəz/,L1,干杯/谢谢。,"[{""en"":""Cheers!"",""zh"":""干杯！""}]",2
+"基础·日常高频短语",情景常用语,matter,事情,noun,/ˈmætər/,/ˈmætə/,L1,事情、问题。,"[{""en"":""What's the matter?"",""zh"":""怎么了？""}]",3
+"基础·日常高频短语",情景常用语,congratulations,恭喜,noun,/kənˌɡrætʃuˈleɪʃənz/,/kənˌɡrætʃuˈleɪʃənz/,L1,祝贺。,"[{""en"":""Congratulations on your success!"",""zh"":""祝贺你的成功！""}]",4
+"基础·日常高频短语",情景常用语,cheers,干杯,noun,/tʃɪrz/,/tʃɪəz/,L1,干杯/谢谢。,"[{""en"":""Cheers!"",""zh"":""干杯！""}]",5
+"基础·电话与应急",电话用语,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,"[{""en"":""Call me in an emergency."",""zh"":""紧急情况给我打电话。""}]",6
+"基础·电话与应急",电话用语,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,"[{""en"":""Please call an ambulance!"",""zh"":""请叫救护车！""}]",7
+"基础·电话与应急",电话用语,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,"[{""en"":""I lost my passport."",""zh"":""我丢了护照。""}]",8
+"基础·电话与应急",紧急求助,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,"[{""en"":""Call me in an emergency."",""zh"":""紧急情况给我打电话。""}]",9
+"基础·电话与应急",紧急求助,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,"[{""en"":""Please call an ambulance!"",""zh"":""请叫救护车！""}]",10
+"基础·电话与应急",紧急求助,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,"[{""en"":""I lost my passport."",""zh"":""我丢了护照。""}]",11

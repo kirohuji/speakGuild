@@ -1,11 +1,17 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"四级·校园生活",选课与课程,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,[{"en":"The curriculum is very flexible.","zh":"课程设置非常灵活。"}],0
-"四级·校园生活",选课与课程,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,[{"en":"I joined several extracurricular activities.","zh":"我参加了几个课外活动。"}],1
-"四级·校园生活",选课与课程,semester,学期,noun,/sɪˈmestər/,/sɪˈmestə/,L2,学期。,[{"en":"This semester I have five courses.","zh":"这学期我有五门课。"}],2
-"四级·校园生活",社团与活动,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,[{"en":"The curriculum is very flexible.","zh":"课程设置非常灵活。"}],3
-"四级·校园生活",社团与活动,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,[{"en":"I joined several extracurricular activities.","zh":"我参加了几个课外活动。"}],4
-"四级·校园生活",社团与活动,semester,学期,noun,/sɪˈmestər/,/sɪˈmestə/,L2,学期。,[{"en":"This semester I have five courses.","zh":"这学期我有五门课。"}],5
-"四级·社会热点",环境保护,environment,环境,noun,/ɪnˈvaɪrənmənt/,/ɪnˈvaɪrənmənt/,L2,自然环境。,[{"en":"We should protect the environment.","zh":"我们应该保护环境。"}],6
-"四级·社会热点",环境保护,technology,技术,noun,/tekˈnɑːlədʒi/,/tekˈnɒlədʒi/,L2,科技。,[{"en":"Technology has changed our lives.","zh":"科技改变了我们的生活。"}],7
-"四级·社会热点",科技与生活,environment,环境,noun,/ɪnˈvaɪrənmənt/,/ɪnˈvaɪrənmənt/,L2,自然环境。,[{"en":"We should protect the environment.","zh":"我们应该保护环境。"}],8
-"四级·社会热点",科技与生活,technology,技术,noun,/tekˈnɑːlədʒi/,/tekˈnɒlədʒi/,L2,科技。,[{"en":"Technology has changed our lives.","zh":"科技改变了我们的生活。"}],9
+四级·校园生活,选课与课程,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",0
+四级·校园生活,选课与课程,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",1
+四级·校园生活,社团与活动,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",2
+四级·校园生活,社团与活动,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",3
+四级·校园生活,环境保护,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",4
+四级·校园生活,环境保护,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",5
+四级·校园生活,科技与生活,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",6
+四级·校园生活,科技与生活,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",7
+四级·社会热点,选课与课程,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",8
+四级·社会热点,选课与课程,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",9
+四级·社会热点,社团与活动,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",10
+四级·社会热点,社团与活动,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",11
+四级·社会热点,环境保护,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",12
+四级·社会热点,环境保护,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",13
+四级·社会热点,科技与生活,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",14
+四级·社会热点,科技与生活,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",15

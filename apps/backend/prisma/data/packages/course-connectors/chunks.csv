@@ -1,20 +1,20 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-"连接词·并列与转折",并列连词,并列连词,I like coffee and tea.,我喜欢咖啡和茶。,L1,用and连接两个并列的名词。,"[{""en"":""I bought apples and oranges."",""zh"":""我买了苹果和橙子。""}]"
-"连接词·并列与转折",并列连词,并列连词,He is rich but unhappy.,他富有但不快乐。,L1,用but表示转折。,"[{""en"":""She is young but very wise."",""zh"":""她年轻但很有智慧。""}]"
-"连接词·并列与转折",并列连词,并列连词,Do you want coffee or tea?,你想要咖啡还是茶？,L1,用or提供选择。,"[{""en"":""Should we go now or later?"",""zh"":""我们应该现在去还是晚点去？""}]"
-"连接词·并列与转折",并列连词,并列连词,I was tired so I went home.,我累了所以回家了。,L1,用so表达结果。,"[{""en"":""It was late so we left."",""zh"":""很晚了所以我们离开了。""}]"
-"连接词·并列与转折",对比与选择,对比与选择,It's raining however we'll go out.,下雨了但我们还是要出去。,L2,用however表示正式转折。,"[{""en"":""The price is high; however the quality is good."",""zh"":""价格高但质量好。""}]"
-"连接词·并列与转折",对比与选择,对比与选择,She likes pop whereas I prefer rock.,她喜欢流行而我喜欢摇滚。,L3,用whereas对比差异。,"[{""en"":""My brother is tall whereas I am short."",""zh"":""我哥哥很高而我很矮。""}]"
-"连接词·并列与转折",对比与选择,对比与选择,She is tired yet she keeps working.,她累了却还在工作。,L2,用yet表达转折。,"[{""en"":""He failed yet he didn't give up."",""zh"":""他失败了却没有放弃。""}]"
-"连接词·因果与让步",因果关系,因果关系,I stayed home because I was sick.,我待在家里因为我病了。,L1,用because说明原因。,"[{""en"":""I called him because I missed him."",""zh"":""我打电话给他因为我想他。""}]"
-"连接词·因果与让步",因果关系,因果关系,Since you're here let's start.,既然你来了我们开始吧。,L2,用since表示已知原因放句首。,"[{""en"":""Since everyone is ready let's go."",""zh"":""既然大家都准备好了我们走吧。""}]"
-"连接词·因果与让步",因果关系,因果关系,He was late therefore he missed the bus.,他迟到了因此错过了公交车。,L3,用therefore引出结果。,"[{""en"":""She studied hard; therefore she passed."",""zh"":""她努力学习因此通过了。""}]"
-"连接词·因果与让步",让步关系,让步关系,Although it rained we had fun.,虽然下雨了我们玩得很开心。,L2,用although表达让步。,"[{""en"":""Although he is old he is active."",""zh"":""虽然他年纪大了但很活跃。""}]"
-"连接词·因果与让步",让步关系,让步关系,Even though she was scared she spoke.,尽管害怕她还是发言了。,L2,用even though强调让步。,"[{""en"":""Even though it was hard he finished."",""zh"":""尽管很难他还是完成了。""}]"
-"连接词·因果与让步",让步关系,让步关系,Despite the rain we went out.,尽管下雨我们还是出去了。,L2,用despite+名词表示让步。,"[{""en"":""Despite his injury he played on."",""zh"":""尽管受伤了他继续比赛。""}]"
-"连接词·从句连接",时间与条件从句,时间与条件从句,When I arrived they were eating.,我到达时他们正在吃饭。,L1,用when引导时间从句。,"[{""en"":""When she called I was sleeping."",""zh"":""她打电话时我正在睡觉。""}]"
-"连接词·从句连接",时间与条件从句,时间与条件从句,If it rains we'll stay home.,如果下雨我们就待在家。,L1,用if引导条件从句。,"[{""en"":""If you study you'll pass."",""zh"":""如果你学习就会通过。""}]"
-"连接词·从句连接",时间与条件从句,时间与条件从句,You won't pass unless you study.,除非你学习否则不会通过。,L2,用unless表达否定条件。,"[{""en"":""I won't go unless she invites me."",""zh"":""除非她邀请我否则我不去。""}]"
-"连接词·从句连接",定语从句,定语从句,The girl who sang is my sister.,唱歌的女孩是我妹妹。,L2,用who引导修饰人的定语从句。,"[{""en"":""The man who helped us was kind."",""zh"":""帮助我们的那个人很善良。""}]"
-"连接词·从句连接",定语从句,定语从句,The book which I read was great.,我读的那本书很棒。,L2,用which引导修饰物的定语从句。,"[{""en"":""The movie which won the award was excellent."",""zh"":""获奖的那部电影很出色。""}]"
+"连接词·并列与转折",并列连词,并列连词,I like coffee and tea.,我喜欢咖啡和茶。,L1,用and连接两个并列的名词。,"[{""en"":""I bought apples and oranges."",""zh"":""我买了苹果和橙子。""}]"
+"连接词·并列与转折",并列连词,并列连词,He is rich but unhappy.,他富有但不快乐。,L1,用but表示转折。,"[{""en"":""She is young but very wise."",""zh"":""她年轻但很有智慧。""}]"
+"连接词·并列与转折",并列连词,并列连词,Do you want coffee or tea?,你想要咖啡还是茶？,L1,用or提供选择。,"[{""en"":""Should we go now or later?"",""zh"":""我们应该现在去还是晚点去？""}]"
+"连接词·并列与转折",并列连词,并列连词,I was tired so I went home.,我累了所以回家了。,L1,用so表达结果。,"[{""en"":""It was late so we left."",""zh"":""很晚了所以我们离开了。""}]"
+"连接词·并列与转折",对比与选择,对比与选择,It's raining however we'll go out.,下雨了但我们还是要出去。,L2,用however表示正式转折。,"[{""en"":""The price is high; however the quality is good."",""zh"":""价格高但质量好。""}]"
+"连接词·并列与转折",对比与选择,对比与选择,She likes pop whereas I prefer rock.,她喜欢流行而我喜欢摇滚。,L3,用whereas对比差异。,"[{""en"":""My brother is tall whereas I am short."",""zh"":""我哥哥很高而我很矮。""}]"
+"连接词·并列与转折",对比与选择,对比与选择,She is tired yet she keeps working.,她累了却还在工作。,L2,用yet表达转折。,"[{""en"":""He failed yet he didn't give up."",""zh"":""他失败了却没有放弃。""}]"
+"连接词·因果与让步",因果关系,因果关系,I stayed home because I was sick.,我待在家里因为我病了。,L1,用because说明原因。,"[{""en"":""I called him because I missed him."",""zh"":""我打电话给他因为我想他。""}]"
+"连接词·因果与让步",因果关系,因果关系,Since you're here let's start.,既然你来了我们开始吧。,L2,用since表示已知原因放句首。,"[{""en"":""Since everyone is ready let's go."",""zh"":""既然大家都准备好了我们走吧。""}]"
+"连接词·因果与让步",因果关系,因果关系,He was late therefore he missed the bus.,他迟到了因此错过了公交车。,L3,用therefore引出结果。,"[{""en"":""She studied hard; therefore she passed."",""zh"":""她努力学习因此通过了。""}]"
+"连接词·因果与让步",让步关系,让步关系,Although it rained we had fun.,虽然下雨了我们玩得很开心。,L2,用although表达让步。,"[{""en"":""Although he is old he is active."",""zh"":""虽然他年纪大了但很活跃。""}]"
+"连接词·因果与让步",让步关系,让步关系,Even though she was scared she spoke.,尽管害怕她还是发言了。,L2,用even though强调让步。,"[{""en"":""Even though it was hard he finished."",""zh"":""尽管很难他还是完成了。""}]"
+"连接词·因果与让步",让步关系,让步关系,Despite the rain we went out.,尽管下雨我们还是出去了。,L2,用despite+名词表示让步。,"[{""en"":""Despite his injury he played on."",""zh"":""尽管受伤了他继续比赛。""}]"
+"连接词·从句连接",时间与条件从句,时间与条件从句,When I arrived they were eating.,我到达时他们正在吃饭。,L1,用when引导时间从句。,"[{""en"":""When she called I was sleeping."",""zh"":""她打电话时我正在睡觉。""}]"
+"连接词·从句连接",时间与条件从句,时间与条件从句,If it rains we'll stay home.,如果下雨我们就待在家。,L1,用if引导条件从句。,"[{""en"":""If you study you'll pass."",""zh"":""如果你学习就会通过。""}]"
+"连接词·从句连接",时间与条件从句,时间与条件从句,You won't pass unless you study.,除非你学习否则不会通过。,L2,用unless表达否定条件。,"[{""en"":""I won't go unless she invites me."",""zh"":""除非她邀请我否则我不去。""}]"
+"连接词·从句连接",定语从句,定语从句,The girl who sang is my sister.,唱歌的女孩是我妹妹。,L2,用who引导修饰人的定语从句。,"[{""en"":""The man who helped us was kind."",""zh"":""帮助我们的那个人很善良。""}]"
+"连接词·从句连接",定语从句,定语从句,The book which I read was great.,我读的那本书很棒。,L2,用which引导修饰物的定语从句。,"[{""en"":""The movie which won the award was excellent."",""zh"":""获奖的那部电影很出色。""}]"
 "连接词·从句连接",定语从句,定语从句,The movie that I saw was boring.,我看的那部电影很无聊。,L1,用that替代which/who。,"[{""en"":""The car that I bought is red."",""zh"":""我买的那辆车是红色的。""}]"

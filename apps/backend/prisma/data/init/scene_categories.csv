@@ -12,3 +12,13 @@ name,icon,sort_order
 寓言故事,ScrollText,11
 基础入门,BookOpenCheck,12
 课程,GraduationCap,13
+神话故事,Scroll,14
+文化探索,Globe,15
+哲学思想,Brain,16
+科技发展,Microchip,17
+中世纪冒险,Sword,18
+大学英语,BookOpenText,19
+冒险故事厅,Compass,20
+
+托福,FileText,21
+基础口语,BookOpenCheck,22

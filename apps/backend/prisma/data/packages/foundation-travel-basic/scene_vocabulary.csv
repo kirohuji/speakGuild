@@ -1,13 +1,13 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·问路与交通",问路指路,station,车站,noun,/ˈsteɪʃən/,/ˈsteɪʃən/,L1,火车站/地铁站。,[{"en":"Where is the train station?","zh":"火车站在哪里？"}],0
-"基础·问路与交通",问路指路,ticket,票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,车票、门票。,[{"en":"I need a ticket.","zh":"我需要一张票。"}],1
-"基础·问路与交通",问路指路,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘。,[{"en":"You need to transfer at the next stop.","zh":"你需要在下一站换乘。"}],2
-"基础·问路与交通",乘坐交通,station,车站,noun,/ˈsteɪʃən/,/ˈsteɪʃən/,L1,火车站/地铁站。,[{"en":"Where is the train station?","zh":"火车站在哪里？"}],3
-"基础·问路与交通",乘坐交通,ticket,票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,车票、门票。,[{"en":"I need a ticket.","zh":"我需要一张票。"}],4
-"基础·问路与交通",乘坐交通,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘。,[{"en":"You need to transfer at the next stop.","zh":"你需要在下一站换乘。"}],5
-"基础·餐厅与购物",餐厅点餐,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。,[{"en":"Can I see the menu?","zh":"我能看看菜单吗？"}],6
-"基础·餐厅与购物",餐厅点餐,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。,[{"en":"Is there any discount?","zh":"有折扣吗？"}],7
-"基础·餐厅与购物",餐厅点餐,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据、小票。,[{"en":"Please give me a receipt.","zh":"请给我一张收据。"}],8
-"基础·餐厅与购物",购物逛街,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。,[{"en":"Can I see the menu?","zh":"我能看看菜单吗？"}],9
-"基础·餐厅与购物",购物逛街,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。,[{"en":"Is there any discount?","zh":"有折扣吗？"}],10
-"基础·餐厅与购物",购物逛街,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据、小票。,[{"en":"Please give me a receipt.","zh":"请给我一张收据。"}],11
+"基础·问路与交通",问路指路,station,车站,noun,/ˈsteɪʃən/,/ˈsteɪʃən/,L1,火车站/地铁站。,"[{""en"":""Where is the train station?"",""zh"":""火车站在哪里？""}]",0
+"基础·问路与交通",问路指路,ticket,票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,车票、门票。,"[{""en"":""I need a ticket."",""zh"":""我需要一张票。""}]",1
+"基础·问路与交通",问路指路,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘。,"[{""en"":""You need to transfer at the next stop."",""zh"":""你需要在下一站换乘。""}]",2
+"基础·问路与交通",乘坐交通,station,车站,noun,/ˈsteɪʃən/,/ˈsteɪʃən/,L1,火车站/地铁站。,"[{""en"":""Where is the train station?"",""zh"":""火车站在哪里？""}]",3
+"基础·问路与交通",乘坐交通,ticket,票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,车票、门票。,"[{""en"":""I need a ticket."",""zh"":""我需要一张票。""}]",4
+"基础·问路与交通",乘坐交通,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘。,"[{""en"":""You need to transfer at the next stop."",""zh"":""你需要在下一站换乘。""}]",5
+"基础·餐厅与购物",餐厅点餐,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。,"[{""en"":""Can I see the menu?"",""zh"":""我能看看菜单吗？""}]",6
+"基础·餐厅与购物",餐厅点餐,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。,"[{""en"":""Is there any discount?"",""zh"":""有折扣吗？""}]",7
+"基础·餐厅与购物",餐厅点餐,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据、小票。,"[{""en"":""Please give me a receipt."",""zh"":""请给我一张收据。""}]",8
+"基础·餐厅与购物",购物逛街,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。,"[{""en"":""Can I see the menu?"",""zh"":""我能看看菜单吗？""}]",9
+"基础·餐厅与购物",购物逛街,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。,"[{""en"":""Is there any discount?"",""zh"":""有折扣吗？""}]",10
+"基础·餐厅与购物",购物逛街,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据、小票。,"[{""en"":""Please give me a receipt."",""zh"":""请给我一张收据。""}]",11

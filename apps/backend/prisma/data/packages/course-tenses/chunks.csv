@@ -1,9 +1,9 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-"时态·一般与进行时",一般现在与现在进行,一般现在与现在进行,I usually... (present simple),我通常...(一般现在时),L1,描述习惯性动作。,"[{""en"":""I usually wake up at 7."",""zh"":""我通常7点起床。""}]"
-"时态·一般与进行时",一般现在与现在进行,一般现在与现在进行,I'm currently... (present continuous),我目前正在...(现在进行时),L1,描述当前正在做的事。,"[{""en"":""I'm currently working on a project."",""zh"":""我目前正在做一个项目。""}]"
-"时态·一般与进行时",一般过去与过去进行,一般过去与过去进行,Yesterday I... (past simple),昨天我...(一般过去时),L1,描述过去发生的事。,"[{""en"":""Yesterday I visited my grandparents."",""zh"":""昨天我去看了祖父母。""}]"
-"时态·一般与进行时",一般过去与过去进行,一般过去与过去进行,I was... when... (past continuous),我正...这时...(过去进行时+一般过去时),L2,描述过去正在做某事时另一件事发生。,"[{""en"":""I was sleeping when the alarm went off."",""zh"":""我正睡着时闹钟响了。""}]"
-"时态·完成时与将来时",现在完成时,现在完成时,I have already... (present perfect),我已经...(现在完成时),L2,描述已经完成的事情。,"[{""en"":""I have already eaten lunch."",""zh"":""我已经吃过午饭了。""}]"
-"时态·完成时与将来时",现在完成时,现在完成时,I have never... (present perfect),我从未...(现在完成时),L2,描述从未有过的经历。,"[{""en"":""I have never been to Japan."",""zh"":""我从未去过日本。""}]"
-"时态·完成时与将来时",将来时表达,将来时表达,I will... (will + verb),我将...(一般将来时),L1,表达即时决定或预测。,"[{""en"":""I will help you with your homework."",""zh"":""我会帮你做作业。""}]"
+"时态·一般与进行时",一般现在与现在进行,一般现在与现在进行,I usually... (present simple),我通常...(一般现在时),L1,描述习惯性动作。,"[{""en"":""I usually wake up at 7."",""zh"":""我通常7点起床。""}]"
+"时态·一般与进行时",一般现在与现在进行,一般现在与现在进行,I'm currently... (present continuous),我目前正在...(现在进行时),L1,描述当前正在做的事。,"[{""en"":""I'm currently working on a project."",""zh"":""我目前正在做一个项目。""}]"
+"时态·一般与进行时",一般过去与过去进行,一般过去与过去进行,Yesterday I... (past simple),昨天我...(一般过去时),L1,描述过去发生的事。,"[{""en"":""Yesterday I visited my grandparents."",""zh"":""昨天我去看了祖父母。""}]"
+"时态·一般与进行时",一般过去与过去进行,一般过去与过去进行,I was... when... (past continuous),我正...这时...(过去进行时+一般过去时),L2,描述过去正在做某事时另一件事发生。,"[{""en"":""I was sleeping when the alarm went off."",""zh"":""我正睡着时闹钟响了。""}]"
+"时态·完成时与将来时",现在完成时,现在完成时,I have already... (present perfect),我已经...(现在完成时),L2,描述已经完成的事情。,"[{""en"":""I have already eaten lunch."",""zh"":""我已经吃过午饭了。""}]"
+"时态·完成时与将来时",现在完成时,现在完成时,I have never... (present perfect),我从未...(现在完成时),L2,描述从未有过的经历。,"[{""en"":""I have never been to Japan."",""zh"":""我从未去过日本。""}]"
+"时态·完成时与将来时",将来时表达,将来时表达,I will... (will + verb),我将...(一般将来时),L1,表达即时决定或预测。,"[{""en"":""I will help you with your homework."",""zh"":""我会帮你做作业。""}]"
 "时态·完成时与将来时",将来时表达,将来时表达,I'm going to... (going to),我打算...(going to将来时),L1,表达已有计划。,"[{""en"":""I'm going to start a new job next month."",""zh"":""我下个月要开始一份新工作。""}]"

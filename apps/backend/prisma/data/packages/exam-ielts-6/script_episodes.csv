@@ -1,3 +1,3 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ielts_6,Band 6 基础,1,家乡与住所,"雅思·IELTS Band 6 基础",L2,1,2,4,2,2,"[""学习家乡与住所相关表达""]",2,2,2,Tutor,口语考官,true,,{"xp":20}
-ielts_6,Band 6 基础,2,学习与工作,"雅思·IELTS Band 6 基础",L2,1,2,4,2,2,"[""学习学习与工作相关表达""]",2,2,2,Tutor,口语考官,false,,{"xp":20}
+ielts_6,Band 6 基础,1,家乡与住所,雅思·IELTS Band 6 基础,L2,1,2,4,2,2,"[""学习家乡与住所相关表达""]",2,2,2,Tutor,口语考官,true,,"{""xp"":20}"
+ielts_6,Band 6 基础,2,学习与工作,雅思·IELTS Band 6 基础,L2,1,2,4,2,2,"[""学习学习与工作相关表达""]",2,2,2,Tutor,口语考官,false,,"{""xp"":20}"
