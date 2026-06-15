@@ -1,0 +1,13 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+chapter_1,1,My name is... / I'm...,0
+chapter_1,1,I'm studying...,1
+chapter_1,1,I have experience in...,2
+chapter_1,1,I'm looking for a position where I can...,3
+chapter_1,2,I have experience in...,0
+chapter_1,2,In my previous role, I...,1
+chapter_1,2,I was responsible for...,2
+chapter_1,2,One of my achievements was...,3
+chapter_1,3,One of my strengths is...,0
+chapter_1,3,I'm good at...,1
+chapter_1,3,I'm working on improving...,2
+chapter_1,3,To improve, I've started...,3
