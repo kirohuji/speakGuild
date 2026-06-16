@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-travel_旅行_机场入境_海关申报",
+  "title": "旅行·机场入境 - 海关申报",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-travel_旅行_机场入境_海关申报\ntitle: 旅行·机场入境 - 海关申报\n---\nCustoms Officer: Let's talk about 海关申报. What do you think about it?\n#objective: 回答海关问题\n#chunks: I have nothing to declare.,I have some gifts to declare.,These are for personal use.\n#user_input\nCustoms Officer: That's interesting! Can you tell me more about that?\n#objective: 说明是否申报\n#chunks: I have nothing to declare.,I have some gifts to declare.,These are for personal use.\n#user_input\nCustoms Officer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

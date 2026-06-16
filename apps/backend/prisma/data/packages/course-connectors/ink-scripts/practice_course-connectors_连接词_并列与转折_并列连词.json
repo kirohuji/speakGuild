@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-connectors_连接词_并列与转折_并列连词",
+  "title": "连接词·并列与转折 - 并列连词",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-connectors_连接词_并列与转折_并列连词\ntitle: 连接词·并列与转折 - 并列连词\n---\nTutor: Let's talk about 并列连词. What do you think about it?\n#objective: 用and连接并列\n#chunks: I like coffee and tea.,He is rich but unhappy.,Do you want coffee or tea?,I was tired so I went home.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用but表达转折\n#chunks: I like coffee and tea.,He is rich but unhappy.,Do you want coffee or tea?,I was tired so I went home.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

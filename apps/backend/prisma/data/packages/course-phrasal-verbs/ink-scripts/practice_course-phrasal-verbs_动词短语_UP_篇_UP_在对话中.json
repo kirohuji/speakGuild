@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-phrasal-verbs_动词短语_UP_篇_UP_在对话中",
+  "title": "动词短语·UP 篇 - UP 在对话中",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-phrasal-verbs_动词短语_UP_篇_UP_在对话中\ntitle: 动词短语·UP 篇 - UP 在对话中\n---\nInstructor: Let's talk about UP 在对话中. What do you think about it?\n#objective: Practice talking about UP 在对话中\n#chunks: Can you pick me up?,He didn't show up.\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Can you pick me up?,He didn't show up.\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

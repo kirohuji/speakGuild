@@ -1,0 +1,6 @@
+{
+  "key": "practice_exam-academic_雅思_IELTS_Band_7_良好_推荐旅游地",
+  "title": "雅思·IELTS Band 7 良好 - 推荐旅游地",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_exam-academic_雅思_IELTS_Band_7_良好_推荐旅游地\ntitle: 雅思·IELTS Band 7 良好 - 推荐旅游地\n---\nExaminer: Let's talk about 推荐旅游地. What do you think about it?\n#objective: 介绍推荐地点\n#chunks: The place I'd like to recommend is...,It's located in...,I would recommend it because...\n#user_input\nExaminer: That's interesting! Can you tell me more about that?\n#objective: 说明位置\n#chunks: The place I'd like to recommend is...,It's located in...,I would recommend it because...\n#user_input\nExaminer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

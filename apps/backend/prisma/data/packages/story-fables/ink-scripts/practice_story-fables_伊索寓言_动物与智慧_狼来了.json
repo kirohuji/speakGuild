@@ -1,0 +1,6 @@
+{
+  "key": "practice_story-fables_伊索寓言_动物与智慧_狼来了",
+  "title": "伊索寓言·动物与智慧 - 狼来了",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_story-fables_伊索寓言_动物与智慧_狼来了\ntitle: 伊索寓言·动物与智慧 - 狼来了\n---\nInstructor: Let's talk about 狼来了. What do you think about it?\n#objective: Practice talking about 狼来了\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

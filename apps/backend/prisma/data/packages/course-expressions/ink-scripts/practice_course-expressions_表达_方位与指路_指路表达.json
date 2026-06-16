@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-expressions_表达_方位与指路_指路表达",
+  "title": "表达·方位与指路 - 指路表达",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-expressions_表达_方位与指路_指路表达\ntitle: 表达·方位与指路 - 指路表达\n---\nTutor: Let's talk about 指路表达. What do you think about it?\n#objective: 用go straight直走\n#chunks: Go straight until...,Turn left / right at...,It's on the corner / opposite...\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用turn left/right转弯\n#chunks: Go straight until...,Turn left / right at...,It's on the corner / opposite...\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

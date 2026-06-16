@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-healthcare_健康_看医生_理解诊断",
+  "title": "健康·看医生 - 理解诊断",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-healthcare_健康_看医生_理解诊断\ntitle: 健康·看医生 - 理解诊断\n---\nDr. Williams: Let's talk about 理解诊断. What do you think about it?\n#objective: 询问诊断\n#chunks: What exactly is wrong with me?,Is it serious?,Do I need any tests?\n#user_input\nDr. Williams: That's interesting! Can you tell me more about that?\n#objective: 确认严重程度\n#chunks: What exactly is wrong with me?,Is it serious?,Do I need any tests?\n#user_input\nDr. Williams: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

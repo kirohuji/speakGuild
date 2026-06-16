@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-social_日常_咖啡店点餐_投诉饮品",
+  "title": "日常·咖啡店点餐 - 投诉饮品",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-social_日常_咖啡店点餐_投诉饮品\ntitle: 日常·咖啡店点餐 - 投诉饮品\n---\nBarista: Let's talk about 投诉饮品. What do you think about it?\n#objective: 礼貌指出问题\n#chunks: I'm sorry but this isn't what I ordered.\n#user_input\nBarista: That's interesting! Can you tell me more about that?\n#objective: 说正确的要求\n#chunks: I'm sorry but this isn't what I ordered.\n#user_input\nBarista: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-campus_校园_社团活动_咨询社团信息",
+  "title": "校园·社团活动 - 咨询社团信息",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-campus_校园_社团活动_咨询社团信息\ntitle: 校园·社团活动 - 咨询社团信息\n---\nClub Member: Let's talk about 咨询社团信息. What do you think about it?\n#objective: 问社团类型\n#chunks: What does your club do?,How often do you meet?\n#user_input\nClub Member: That's interesting! Can you tell me more about that?\n#objective: 问活动频率\n#chunks: What does your club do?,How often do you meet?\n#user_input\nClub Member: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

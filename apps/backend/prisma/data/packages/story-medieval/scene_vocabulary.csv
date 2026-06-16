@@ -1,7 +1,49 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-中世纪·骑士与城堡,骑士精神与受封,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与骑士精神与受封相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",0
-中世纪·骑士与城堡,城堡攻防战,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与城堡攻防战相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",1
-中世纪·骑士与城堡,亚瑟王与圆桌骑士,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与亚瑟王与圆桌骑士相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",2
-中世纪·探险与传奇,马可·波罗的东方之旅,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与马可·波罗的东方之旅相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",3
-中世纪·探险与传奇,维京航海家,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与维京航海家相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",4
-中世纪·探险与传奇,中世纪的世界,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与中世纪的世界相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",5
+"中世纪·骑士与城堡","骑士精神与受封","knight","骑士","noun","/knight/","/knight/","L2","中世纪的骑马战士。","[{""en"":""The knight swore an oath of loyalty."",""zh"":""骑士宣誓效忠。""}]",0
+"中世纪·骑士与城堡","骑士精神与受封","chivalry","骑士精神","noun","/chivalry/","/chivalry/","L3","骑士的道德准则。","[{""en"":""Chivalry required knights to protect the weak."",""zh"":""骑士精神要求骑士保护弱者。""}]",1
+"中世纪·骑士与城堡","骑士精神与受封","armor","盔甲","noun","/armor/","/armor/","L1","战斗中穿的保护装备。","[{""en"":""The knight wore heavy armor into battle."",""zh"":""骑士穿着厚重的盔甲上战场。""}]",2
+"中世纪·骑士与城堡","骑士精神与受封","sword","剑","noun","/sword/","/sword/","L1","骑士的主要武器。","[{""en"":""He drew his sword and prepared to fight."",""zh"":""他拔出剑准备战斗。""}]",3
+"中世纪·骑士与城堡","骑士精神与受封","ceremony","仪式","noun","/ceremony/","/ceremony/","L2","正式的典礼。","[{""en"":""The knighting ceremony was very solemn."",""zh"":""封爵仪式非常庄严。""}]",4
+"中世纪·骑士与城堡","骑士精神与受封","oath","誓言","noun","/oath/","/oath/","L2","庄严的承诺。","[{""en"":""Knights took an oath to serve the king."",""zh"":""骑士宣誓效忠国王。""}]",5
+"中世纪·骑士与城堡","骑士精神与受封","noble","贵族","noun","/noble/","/noble/","L2","有高贵血统的人。","[{""en"":""Only nobles could become knights."",""zh"":""只有贵族才能成为骑士。""}]",6
+"中世纪·骑士与城堡","骑士精神与受封","squire","侍从","noun","/squire/","/squire/","L3","骑士的助手和学徒。","[{""en"":""The squire helped the knight put on his armor."",""zh"":""侍从帮骑士穿上盔甲。""}]",7
+"中世纪·骑士与城堡","城堡攻防战","castle","城堡","noun","/castle/","/castle/","L1","中世纪的防御建筑。","[{""en"":""The castle had thick stone walls for protection."",""zh"":""城堡有厚厚的石墙用来防御。""}]",0
+"中世纪·骑士与城堡","城堡攻防战","siege","围攻","noun","/siege/","/siege/","L3","长时间包围攻击城堡。","[{""en"":""The siege of the castle lasted for months."",""zh"":""对城堡的围攻持续了数月。""}]",1
+"中世纪·骑士与城堡","城堡攻防战","catapult","投石机","noun","/catapult/","/catapult/","L3","投掷石块的攻城器械。","[{""en"":""The catapult hurled huge stones at the walls."",""zh"":""投石机向城墙投掷巨大的石头。""}]",2
+"中世纪·骑士与城堡","城堡攻防战","moat","护城河","noun","/moat/","/moat/","L2","城堡周围的水道防御。","[{""en"":""A deep moat surrounded the castle."",""zh"":""一条深深的护城河环绕着城堡。""}]",3
+"中世纪·骑士与城堡","城堡攻防战","drawbridge","吊桥","noun","/drawbridge/","/drawbridge/","L2","可以升降的桥梁。","[{""en"":""The drawbridge was raised at night for safety."",""zh"":""吊桥在夜间升起以保证安全。""}]",4
+"中世纪·骑士与城堡","城堡攻防战","archer","弓箭手","noun","/archer/","/archer/","L2","使用弓箭的战士。","[{""en"":""Archers fired arrows from the castle towers."",""zh"":""弓箭手从城堡塔楼射出箭矢。""}]",5
+"中世纪·骑士与城堡","城堡攻防战","battlement","城垛","noun","/battlement/","/battlement/","L3","城墙上锯齿状的防御结构。","[{""en"":""Soldiers hid behind the battlements during attacks."",""zh"":""攻击时士兵躲在城垛后面。""}]",6
+"中世纪·骑士与城堡","城堡攻防战","trebuchet","重型投石机","noun","/trebuchet/","/trebuchet/","L3","大型攻城投石器械。","[{""en"":""The trebuchet could throw stones weighing hundreds of pounds."",""zh"":""重型投石机能投掷数百磅重的石头。""}]",7
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","Excalibur","王者之剑","noun","/excalibur/","/excalibur/","L3","亚瑟王的神剑。","[{""en"":""King Arthur pulled Excalibur from the stone."",""zh"":""亚瑟王从石头中拔出王者之剑。""}]",0
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","round table","圆桌","noun","/roundtable/","/roundtable/","L2","亚瑟王骑士们的会议桌。","[{""en"":""The Round Table represented equality among knights."",""zh"":""圆桌代表骑士之间的平等。""}]",1
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","Merlin","梅林","noun","/merlin/","/merlin/","L2","亚瑟王的巫师顾问。","[{""en"":""Merlin was the wise wizard who advised King Arthur."",""zh"":""梅林是为亚瑟王出谋划策的智慧巫师。""}]",2
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","Camelot","卡美洛","noun","/camelot/","/camelot/","L3","亚瑟王的王宫和城堡。","[{""en"":""Camelot was the legendary castle of King Arthur."",""zh"":""卡美洛是亚瑟王传说中的城堡。""}]",3
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","quest","探索/使命","noun","/quest/","/quest/","L2","骑士的神圣使命。","[{""en"":""The knights went on a quest for the Holy Grail."",""zh"":""骑士们踏上了寻找圣杯的征程。""}]",4
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","Holy Grail","圣杯","noun","/holygrail/","/holygrail/","L3","传说中耶稣最后晚餐用的杯子。","[{""en"":""The search for the Holy Grail was the greatest quest."",""zh"":""寻找圣杯是最伟大的使命。""}]",5
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","legend","传说","noun","/legend/","/legend/","L2","代代相传的故事。","[{""en"":""The legend of King Arthur has inspired many stories."",""zh"":""亚瑟王的传说启发了无数故事。""}]",6
+"中世纪·骑士与城堡","亚瑟王与圆桌骑士","loyalty","忠诚","noun","/loyalty/","/loyalty/","L2","对君主或信念的坚定支持。","[{""en"":""Loyalty was the highest virtue of a knight."",""zh"":""忠诚是骑士的最高美德。""}]",7
+"中世纪·探险与传奇","马可·波罗的东方之旅","Silk Road","丝绸之路","noun","/silkroad/","/silkroad/","L2","连接东西方的古代贸易路线。","[{""en"":""Marco Polo traveled along the Silk Road to China."",""zh"":""马可波罗沿着丝绸之路来到中国。""}]",0
+"中世纪·探险与传奇","马可·波罗的东方之旅","Venice","威尼斯","noun","/venice/","/venice/","L2","马可波罗的故乡。","[{""en"":""Marco Polo was born in Venice, Italy."",""zh"":""马可波罗出生在意大利威尼斯。""}]",1
+"中世纪·探险与传奇","马可·波罗的东方之旅","merchant","商人","noun","/merchant/","/merchant/","L2","从事贸易的人。","[{""en"":""Marco Polo came from a family of merchants."",""zh"":""马可波罗出身商人家庭。""}]",2
+"中世纪·探险与传奇","马可·波罗的东方之旅","Khan","可汗","noun","/khan/","/khan/","L3","蒙古统治者的称号。","[{""en"":""Marco Polo served Kublai Khan for many years."",""zh"":""马可波罗为忽必烈可汗服务多年。""}]",3
+"中世纪·探险与传奇","马可·波罗的东方之旅","expedition","远征/探险","noun","/expedition/","/expedition/","L3","有组织的探索之旅。","[{""en"":""The expedition to the East took over three years."",""zh"":""前往东方的远征历时三年多。""}]",4
+"中世纪·探险与传奇","马可·波罗的东方之旅","spice","香料","noun","/spice/","/spice/","L2","古代最珍贵的商品之一。","[{""en"":""He described the amazing spices he found in Asia."",""zh"":""他描述了在亚洲发现的奇妙香料。""}]",5
+"中世纪·探险与传奇","马可·波罗的东方之旅","travelogue","旅行见闻录","noun","/travelogue/","/travelogue/","L3","记录旅行经历的作品。","[{""en"":""His travelogue amazed readers across Europe."",""zh"":""他的旅行见闻录让全欧洲的读者惊叹。""}]",6
+"中世纪·探险与传奇","马可·波罗的东方之旅","caravan","商队","noun","/caravan/","/caravan/","L2","结伴穿越沙漠的商人队伍。","[{""en"":""They joined a caravan for safety across the desert."",""zh"":""他们加入商队以求安全穿越沙漠。""}]",7
+"中世纪·探险与传奇","维京航海家","Viking","维京人","noun","/viking/","/viking/","L2","8-11世纪的北欧航海民族。","[{""en"":""The Vikings were skilled sailors and warriors."",""zh"":""维京人是技艺高超的水手和战士。""}]",0
+"中世纪·探险与传奇","维京航海家","longship","长船","noun","/longship/","/longship/","L3","维京人的快速战船。","[{""en"":""The Viking longship could sail in shallow waters."",""zh"":""维京长船能在浅水中航行。""}]",1
+"中世纪·探险与传奇","维京航海家","explorer","探险家","noun","/explorer/","/explorer/","L2","探索未知世界的人。","[{""en"":""Leif Erikson was a famous Viking explorer."",""zh"":""莱夫·埃里克松是著名的维京探险家。""}]",2
+"中世纪·探险与传奇","维京航海家","Greenland","格陵兰","noun","/greenland/","/greenland/","L2","维京人最早定居的北大西洋岛屿。","[{""en"":""The Vikings established settlements in Greenland."",""zh"":""维京人在格陵兰建立了定居点。""}]",3
+"中世纪·探险与传奇","维京航海家","navigation","导航","noun","/navigation/","/navigation/","L3","在海上确定方向的技术。","[{""en"":""Vikings navigated using the sun and stars."",""zh"":""维京人利用太阳和星星导航。""}]",4
+"中世纪·探险与传奇","维京航海家","settlement","定居点","noun","/settlement/","/settlement/","L2","人类建立的新居住地。","[{""en"":""Viking settlements have been found in North America."",""zh"":""在北美发现了维京定居点。""}]",5
+"中世纪·探险与传奇","维京航海家","raid","突袭","noun","/raid/","/raid/","L2","突然的攻击和掠夺。","[{""en"":""Viking raids terrified coastal villages in Europe."",""zh"":""维京人的突袭让欧洲沿海村庄惊恐不已。""}]",6
+"中世纪·探险与传奇","维京航海家","saga","传奇故事","noun","/saga/","/saga/","L3","北欧的长篇叙事诗。","[{""en"":""The Viking sagas tell tales of great adventures."",""zh"":""维京传奇讲述了伟大的冒险故事。""}]",7
+"中世纪·探险与传奇","中世纪的世界","feudalism","封建制度","noun","/feudalism/","/feudalism/","L3","以土地分封为基础的社会制度。","[{""en"":""Feudalism was the social system of medieval Europe."",""zh"":""封建制度是中世纪欧洲的社会制度。""}]",0
+"中世纪·探险与传奇","中世纪的世界","manor","庄园","noun","/manor/","/manor/","L3","贵族的大片土地和住宅。","[{""en"":""The lord lived in a manor surrounded by farmland."",""zh"":""领主住在被农田环绕的庄园里。""}]",1
+"中世纪·探险与传奇","中世纪的世界","peasant","农民","noun","/peasant/","/peasant/","L2","中世纪耕作土地的劳动者。","[{""en"":""Peasants worked the land for the lord."",""zh"":""农民为领主耕种土地。""}]",2
+"中世纪·探险与传奇","中世纪的世界","guild","行会","noun","/guild/","/guild/","L3","工匠和商人的组织。","[{""en"":""Craftsmen formed guilds to protect their interests."",""zh"":""工匠组成行会来保护自己的利益。""}]",3
+"中世纪·探险与传奇","中世纪的世界","monastery","修道院","noun","/monastery/","/monastery/","L3","修士修女居住和抄书的地方。","[{""en"":""Monks in monasteries copied books by hand."",""zh"":""修道院里的修士手抄书籍。""}]",4
+"中世纪·探险与传奇","中世纪的世界","marketplace","集市","noun","/marketplace/","/marketplace/","L2","买卖商品的公共场所。","[{""en"":""The marketplace was the center of medieval towns."",""zh"":""集市是中世纪城镇的中心。""}]",5
+"中世纪·探险与传奇","中世纪的世界","pilgrimage","朝圣","noun","/pilgrimage/","/pilgrimage/","L3","前往宗教圣地的旅程。","[{""en"":""Many people went on pilgrimages to holy sites."",""zh"":""许多人前往圣地朝圣。""}]",6
+"中世纪·探险与传奇","中世纪的世界","blacksmith","铁匠","noun","/blacksmith/","/blacksmith/","L2","打铁的工匠。","[{""en"":""The blacksmith made tools and weapons for the village."",""zh"":""铁匠为村子制作工具和武器。""}]",7

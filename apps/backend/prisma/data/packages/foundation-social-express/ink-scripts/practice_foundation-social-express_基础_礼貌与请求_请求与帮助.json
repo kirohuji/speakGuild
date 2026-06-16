@@ -1,0 +1,6 @@
+{
+  "key": "practice_foundation-social-express_基础_礼貌与请求_请求与帮助",
+  "title": "基础·礼貌与请求 - 请求与帮助",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_foundation-social-express_基础_礼貌与请求_请求与帮助\ntitle: 基础·礼貌与请求 - 请求与帮助\n---\nTutor: Let's talk about 请求与帮助. What do you think about it?\n#objective: 练习请求与帮助相关表达\n#chunks: Can you help me?,Could you please open the door?,May I come in?,Would you mind helping me?\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Can you help me?,Could you please open the door?,May I come in?,Would you mind helping me?\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

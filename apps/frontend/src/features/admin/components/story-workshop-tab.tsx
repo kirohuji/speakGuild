@@ -11,8 +11,9 @@ import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import {
   listStories, createStory, updateStory, deleteStory, getStory, getStoryFilters,
+  listSceneCategories,
   listLocations, listCharacters, updateTrainingTopic,
-  type StoryData, type StoryFilters, type GameLocationData, type GameCharacter,
+  type StoryData, type StoryFilters, type GameLocationData, type GameCharacter, type SceneCategory,
 } from '../api-content-admin'
 import { InkStoryEditor } from './ink-story-editor'
 import { cn } from '@/lib/cn'
@@ -40,6 +41,8 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<StoryFilters>({ scriptTypes: [], packageTypes: [], categories: [] })
+  // 二级分类 — 按一级分类过滤（与学习包内容管理一致，使用 listSceneCategories）
+  const [categories, setCategories] = useState<SceneCategory[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -58,10 +61,17 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
 
   useEffect(() => { load() }, [load])
 
-  // Load filter options once
+  // Load scriptTypes + packageTypes once (static)
   useEffect(() => {
     getStoryFilters().then(setFilters).catch(() => {})
   }, [])
+
+  // Load categories filtered by packageType (same pattern as admin-scenes-page)
+  useEffect(() => {
+    listSceneCategories(packageTypeFilter !== 'all' ? packageTypeFilter as any : undefined)
+      .then(setCategories)
+      .catch(() => {})
+  }, [packageTypeFilter])
 
   useEffect(() => { load() }, [load])
 
@@ -167,6 +177,14 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
 
   // ── Filters & pagination (must be before any early return!) ──
   useEffect(() => { setPage(1) }, [search, packageTypeFilter, categoryFilter])
+  // Reset secondary filter when primary filter changes
+  useEffect(() => { setCategoryFilter('all') }, [packageTypeFilter])
+  // Safeguard: reset category if it no longer exists in filtered list
+  useEffect(() => {
+    if (categoryFilter !== 'all' && !categories.some((c) => c.id === categoryFilter)) {
+      setCategoryFilter('all')
+    }
+  }, [categories, categoryFilter])
 
   // ─── packageType label helper ───
   const packageTypeLabel = (t: string) =>
@@ -240,7 +258,7 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
         </Select>
         <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[140px]">
           <SelectItem value="all">二级分类</SelectItem>
-          {filters.categories.map((c) => (
+          {categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
         </Select>

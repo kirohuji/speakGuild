@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-grammar_语法_动词短语实战_常见动词短语",
+  "title": "语法·动词短语实战 - 常见动词短语",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-grammar_语法_动词短语实战_常见动词短语\ntitle: 语法·动词短语实战 - 常见动词短语\n---\nInstructor: Let's talk about 常见动词短语. What do you think about it?\n#objective: Practice talking about 常见动词短语\n#chunks: Don't give up.,I'm looking for...,I've run out of...\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Don't give up.,I'm looking for...,I've run out of...\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

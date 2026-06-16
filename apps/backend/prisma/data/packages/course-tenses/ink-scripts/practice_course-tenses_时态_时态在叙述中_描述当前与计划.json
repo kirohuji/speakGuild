@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-tenses_时态_时态在叙述中_描述当前与计划",
+  "title": "时态·时态在叙述中 - 描述当前与计划",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-tenses_时态_时态在叙述中_描述当前与计划\ntitle: 时态·时态在叙述中 - 描述当前与计划\n---\nInstructor: Let's talk about 描述当前与计划. What do you think about it?\n#objective: Practice talking about 描述当前与计划\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

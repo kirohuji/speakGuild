@@ -1,32 +1,32 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_up,UP篇,1,UP基础短语,动词短语·UP 篇,L2,1,2,5,2,3,"[""用give up表达放弃"",""用wake up表达起床"",""用clean up表达收拾""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}
-"
-ch_up,UP篇,2,UP在对话中,动词短语·UP 篇,L2,1,2,2,2,2,"[""用pick up表达接人"",""用show up表达到场""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_down,DOWN篇,1,DOWN基础短语,动词短语·DOWN 篇,L2,1,2,4,2,3,"[""用sit down请坐"",""用calm down劝冷静"",""用break down表达故障""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}
-"
-ch_down,DOWN篇,2,DOWN在对话中,动词短语·DOWN 篇,L2,1,2,2,2,2,"[""用turn down表达拒绝"",""用write down记录""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_out,OUT篇,1,OUT基础短语,动词短语·OUT 篇,L2,1,2,4,2,3,"[""用find out查明"",""用work out锻炼"",""用run out of用完""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_out,OUT篇,2,OUT在对话中,动词短语·OUT 篇,L2,1,2,2,2,2,"[""用figure out弄明白"",""用check out查看""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_off,OFF篇,1,OFF基础短语,动词短语·OFF 篇,L2,1,2,4,2,3,"[""用take off表达起飞"",""用turn off关掉"",""用put off表达推迟""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_off,OFF篇,2,OFF在对话中,动词短语·OFF 篇,L2,1,2,2,2,2,"[""用pay off表达回报"",""用show off表达炫耀""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_on,ON篇,1,ON基础短语,动词短语·ON 篇,L2,1,2,4,2,3,"[""用put on穿上"",""用turn on打开"",""用carry on继续""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_on,ON篇,2,ON在对话中,动词短语·ON 篇,L2,1,2,2,2,2,"[""用get on表达相处"",""用go on询问情况""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_inover,IN/OVER/BACK篇,1,IN/OVER/BACK基础,动词短语·IN/OVER/BACK 篇,L2,1,2,4,2,3,"[""用give in让步"",""用come over邀请"",""用call back回电""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_inover,IN/OVER/BACK篇,2,IN/OVER/BACK在对话中,动词短语·IN/OVER/BACK 篇,L2,1,2,2,2,2,"[""用get back to回复"",""用think over考虑""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}
-"
-ch_maketake,动词搭配篇,1,MAKE/TAKE/HAVE/DO基础搭配,动词短语·MAKE/TAKE/HAVE/DO,L2,1,2,4,2,3,"[""用make a decision做决定"",""用take care of照顾"",""用have a look看一看""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}
-"
-ch_getkeep,动词搭配篇,1,GET/KEEP/SET/COME基础搭配,动词短语·GET/KEEP/SET/COME,L2,1,2,4,2,3,"[""用get ready做好准备"",""用keep in touch保持联系"",""用come true实现""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}
-"
-ch_prep,介词固定搭配篇,1,介词固定搭配基础,"动词短语·介词固定搭配",L2,1,2,4,2,3,"[""用interested in表达兴趣"",""用good at表达擅长"",""用afraid of表达恐惧""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}
-"
-ch_other,其他高频固定搭配篇,1,"动词短语·其他高频固定搭配","动词短语·其他高频固定搭配",L2,1,2,4,2,3,"[""用look forward to表达期待"",""用take part in表达参加"",""用make sure表达确保""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+ch_up,UP篇,1,UP基础短语,动词短语·UP 篇,L2,1,2,5,2,3,"[""用give up表达放弃"",""用wake up表达起床"",""用clean up表达收拾""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+
+ch_up,UP篇,2,UP在对话中,动词短语·UP 篇,L2,1,2,2,2,2,"[""用pick up表达接人"",""用show up表达到场""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_down,DOWN篇,1,DOWN基础短语,动词短语·DOWN 篇,L2,1,2,4,2,3,"[""用sit down请坐"",""用calm down劝冷静"",""用break down表达故障""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
+
+ch_down,DOWN篇,2,DOWN在对话中,动词短语·DOWN 篇,L2,1,2,2,2,2,"[""用turn down表达拒绝"",""用write down记录""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_out,OUT篇,1,OUT基础短语,动词短语·OUT 篇,L2,1,2,4,2,3,"[""用find out查明"",""用work out锻炼"",""用run out of用完""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_out,OUT篇,2,OUT在对话中,动词短语·OUT 篇,L2,1,2,2,2,2,"[""用figure out弄明白"",""用check out查看""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_off,OFF篇,1,OFF基础短语,动词短语·OFF 篇,L2,1,2,4,2,3,"[""用take off表达起飞"",""用turn off关掉"",""用put off表达推迟""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_off,OFF篇,2,OFF在对话中,动词短语·OFF 篇,L2,1,2,2,2,2,"[""用pay off表达回报"",""用show off表达炫耀""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_on,ON篇,1,ON基础短语,动词短语·ON 篇,L2,1,2,4,2,3,"[""用put on穿上"",""用turn on打开"",""用carry on继续""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_on,ON篇,2,ON在对话中,动词短语·ON 篇,L2,1,2,2,2,2,"[""用get on表达相处"",""用go on询问情况""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_inover,IN/OVER/BACK篇,1,IN/OVER/BACK基础,动词短语·IN/OVER/BACK 篇,L2,1,2,4,2,3,"[""用give in让步"",""用come over邀请"",""用call back回电""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_inover,IN/OVER/BACK篇,2,IN/OVER/BACK在对话中,动词短语·IN/OVER/BACK 篇,L2,1,2,2,2,2,"[""用get back to回复"",""用think over考虑""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+
+ch_maketake,动词搭配篇,1,MAKE/TAKE/HAVE/DO基础搭配,动词短语·MAKE/TAKE/HAVE/DO,L2,1,2,4,2,3,"[""用make a decision做决定"",""用take care of照顾"",""用have a look看一看""]",2,2,2,Tutor,语法导师,true,practice_course-phrasal-verbs_动词短语_MAKETAKEHAVEDO_MAKETAKEHAVEDO基础搭配,"{""xp"":20}"
+
+ch_getkeep,动词搭配篇,1,GET/KEEP/SET/COME基础搭配,动词短语·GET/KEEP/SET/COME,L2,1,2,4,2,3,"[""用get ready做好准备"",""用keep in touch保持联系"",""用come true实现""]",2,2,2,Tutor,语法导师,true,practice_course-phrasal-verbs_动词短语_GETKEEPSETCOME_GETKEEPSETCOME基础搭配,"{""xp"":20}"
+
+ch_prep,介词固定搭配篇,1,介词固定搭配基础,动词短语·介词固定搭配,L2,1,2,4,2,3,"[""用interested in表达兴趣"",""用good at表达擅长"",""用afraid of表达恐惧""]",2,2,2,Tutor,语法导师,true,practice_course-phrasal-verbs_动词短语_介词固定搭配_介词固定搭配基础,"{""xp"":20}"
+
+ch_other,其他高频固定搭配篇,1,动词短语·其他高频固定搭配,动词短语·其他高频固定搭配,L2,1,2,4,2,3,"[""用look forward to表达期待"",""用take part in表达参加"",""用make sure表达确保""]",2,2,2,Tutor,语法导师,true,practice_course-phrasal-verbs_动词短语_其他高频固定搭配_动词短语_其他高频固定搭配,"{""xp"":20}"

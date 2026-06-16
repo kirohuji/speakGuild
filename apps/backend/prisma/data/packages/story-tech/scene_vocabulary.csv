@@ -1,6 +1,41 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-科技·改变世界的发明,印刷术与知识传播,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与印刷术与知识传播相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",0
-科技·改变世界的发明,蒸汽机与工业革命,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与蒸汽机与工业革命相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",1
-科技·改变世界的发明,电力与通信革命,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与电力与通信革命相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",2
-科技·数字革命与未来,计算机与互联网,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与计算机与互联网相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",3
-科技·数字革命与未来,人工智能与未来科技,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与人工智能与未来科技相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",4
+"科技·人工智能","AI的历史与未来","artificial intelligence","人工智能","noun","/artificialintelligence/","/artificialintelligence/","L3","模拟人类智能的计算机系统。","[{""en"":""AI is transforming every industry today."",""zh"":""AI正在改变当今每个行业。""}]",0
+"科技·人工智能","AI的历史与未来","algorithm","算法","noun","/algorithm/","/algorithm/","L3","解决问题的计算步骤。","[{""en"":""Algorithms power everything from search to recommendations."",""zh"":""算法驱动着从搜索到推荐的一切。""}]",1
+"科技·人工智能","AI的历史与未来","machine learning","机器学习","noun","/machinelearning/","/machinelearning/","L3","让计算机从数据中学习的技术。","[{""en"":""Machine learning helps computers improve over time."",""zh"":""机器学习帮助计算机随时间不断改进。""}]",2
+"科技·人工智能","AI的历史与未来","neural network","神经网络","noun","/neuralnetwork/","/neuralnetwork/","L3","模仿人脑结构的计算模型。","[{""en"":""Neural networks can recognize images and speech."",""zh"":""神经网络能识别图像和语音。""}]",3
+"科技·人工智能","AI的历史与未来","automation","自动化","noun","/automation/","/automation/","L3","用机器代替人工的过程。","[{""en"":""Automation is changing the future of work."",""zh"":""自动化正在改变工作的未来。""}]",4
+"科技·人工智能","AI的历史与未来","robot","机器人","noun","/robot/","/robot/","L1","能执行任务的自动机器。","[{""en"":""Robots are now used in factories and hospitals."",""zh"":""机器人如今被用于工厂和医院。""}]",5
+"科技·人工智能","AI的历史与未来","data","数据","noun","/data/","/data/","L2","被收集和分析的信息。","[{""en"":""Data is the fuel that powers AI systems."",""zh"":""数据是驱动AI系统的燃料。""}]",6
+"科技·人工智能","AI的历史与未来","Turing test","图灵测试","noun","/turingtest/","/turingtest/","L3","判断机器是否具有智能的测试。","[{""en"":""The Turing test measures if a machine can think like a human."",""zh"":""图灵测试衡量机器是否能像人一样思考。""}]",7
+"科技·人工智能","AI与日常生活","virtual assistant","虚拟助手","noun","/virtualassistant/","/virtualassistant/","L2","如Siri、Alexa的AI助手。","[{""en"":""Virtual assistants can set reminders and answer questions."",""zh"":""虚拟助手可以设置提醒和回答问题。""}]",0
+"科技·人工智能","AI与日常生活","recommendation","推荐","noun","/recommendation/","/recommendation/","L2","AI根据用户喜好推荐内容。","[{""en"":""Recommendation systems suggest movies you might like."",""zh"":""推荐系统建议你可能喜欢的电影。""}]",1
+"科技·人工智能","AI与日常生活","facial recognition","面部识别","noun","/facialrecognition/","/facialrecognition/","L3","通过面部特征识别身份的技术。","[{""en"":""Facial recognition is used to unlock smartphones."",""zh"":""面部识别被用于解锁智能手机。""}]",2
+"科技·人工智能","AI与日常生活","chatbot","聊天机器人","noun","/chatbot/","/chatbot/","L2","能与用户对话的AI程序。","[{""en"":""Many websites now use chatbots for customer service."",""zh"":""许多网站现在用聊天机器人做客服。""}]",3
+"科技·人工智能","AI与日常生活","smart home","智能家居","noun","/smarthome/","/smarthome/","L2","用AI控制的家庭设备。","[{""en"":""Smart home devices can control lights and temperature."",""zh"":""智能家居设备可以控制灯光和温度。""}]",4
+"科技·人工智能","AI与日常生活","privacy","隐私","noun","/privacy/","/privacy/","L2","个人信息不被泄露的权利。","[{""en"":""AI raises important questions about privacy."",""zh"":""AI引发了关于隐私的重要问题。""}]",5
+"科技·人工智能","AI与日常生活","bias","偏见","noun","/bias/","/bias/","L3","AI系统中可能存在的不公平倾向。","[{""en"":""AI systems can sometimes reflect human bias."",""zh"":""AI系统有时会反映人类偏见。""}]",6
+"科技·人工智能","AI与日常生活","convenience","便利","noun","/convenience/","/convenience/","L2","让生活更轻松方便。","[{""en"":""AI brings great convenience but also challenges."",""zh"":""AI带来巨大便利但也带来挑战。""}]",7
+"科技·数字世界","互联网的演变","internet","互联网","noun","/internet/","/internet/","L1","全球互联的计算机网络。","[{""en"":""The internet has changed how we live and work."",""zh"":""互联网改变了我们的生活和工作方式。""}]",0
+"科技·数字世界","互联网的演变","World Wide Web","万维网","noun","/worldwideweb/","/worldwideweb/","L2","互联网上的信息空间。","[{""en"":""The World Wide Web was invented by Tim Berners-Lee."",""zh"":""万维网由蒂姆·伯纳斯-李发明。""}]",1
+"科技·数字世界","互联网的演变","browser","浏览器","noun","/browser/","/browser/","L1","访问网页的软件。","[{""en"":""You need a browser to access websites."",""zh"":""你需要浏览器来访问网站。""}]",2
+"科技·数字世界","互联网的演变","social media","社交媒体","noun","/socialmedia/","/socialmedia/","L2","在线社交平台。","[{""en"":""Social media connects billions of people worldwide."",""zh"":""社交媒体连接了全球数十亿人。""}]",3
+"科技·数字世界","互联网的演变","cloud computing","云计算","noun","/cloudcomputing/","/cloudcomputing/","L3","通过互联网提供计算服务。","[{""en"":""Cloud computing lets you access files from anywhere."",""zh"":""云计算让你能在任何地方访问文件。""}]",4
+"科技·数字世界","互联网的演变","bandwidth","带宽","noun","/bandwidth/","/bandwidth/","L3","网络传输数据的能力。","[{""en"":""Higher bandwidth means faster internet speeds."",""zh"":""更高的带宽意味着更快的网速。""}]",5
+"科技·数字世界","互联网的演变","digital divide","数字鸿沟","noun","/digitaldivide/","/digitaldivide/","L3","能上网和不能上网人群之间的差距。","[{""en"":""The digital divide is still a global challenge."",""zh"":""数字鸿沟仍然是一个全球性挑战。""}]",6
+"科技·数字世界","互联网的演变","streaming","流媒体播放","noun","/streaming/","/streaming/","L2","在线实时播放音视频。","[{""en"":""Streaming services have replaced traditional TV."",""zh"":""流媒体服务已经取代了传统电视。""}]",7
+"科技·数字世界","网络安全","cybersecurity","网络安全","noun","/cybersecurity/","/cybersecurity/","L3","保护计算机和网络免受攻击。","[{""en"":""Cybersecurity is more important than ever."",""zh"":""网络安全比以往任何时候都重要。""}]",0
+"科技·数字世界","网络安全","hacker","黑客","noun","/hacker/","/hacker/","L2","试图非法侵入计算机系统的人。","[{""en"":""Hackers try to steal personal information."",""zh"":""黑客试图窃取个人信息。""}]",1
+"科技·数字世界","网络安全","password","密码","noun","/password/","/password/","L1","用于验证身份的保密字符串。","[{""en"":""Use a strong password to protect your account."",""zh"":""使用强密码保护你的账户。""}]",2
+"科技·数字世界","网络安全","encryption","加密","noun","/encryption/","/encryption/","L3","将信息转换为只有授权者能读的形式。","[{""en"":""Encryption keeps your messages private."",""zh"":""加密保护你的消息私密性。""}]",3
+"科技·数字世界","网络安全","phishing","网络钓鱼","noun","/phishing/","/phishing/","L3","伪装成可信来源骗取信息的攻击。","[{""en"":""Phishing emails trick people into revealing passwords."",""zh"":""网络钓鱼邮件欺骗人们泄露密码。""}]",4
+"科技·数字世界","网络安全","firewall","防火墙","noun","/firewall/","/firewall/","L2","阻止未授权访问的安全系统。","[{""en"":""A firewall protects your computer from attacks."",""zh"":""防火墙保护你的电脑免受攻击。""}]",5
+"科技·数字世界","网络安全","malware","恶意软件","noun","/malware/","/malware/","L3","病毒、木马等有害软件。","[{""en"":""Malware can damage your computer and steal data."",""zh"":""恶意软件可以损坏电脑和窃取数据。""}]",6
+"科技·数字世界","网络安全","two-factor authentication","双因素认证","noun","/two-factorauthentication/","/two-factorauthentication/","L3","需要两种方式验证身份的登录方式。","[{""en"":""Enable two-factor authentication for extra security."",""zh"":""启用双因素认证以获得额外安全。""}]",7
+"科技·未来展望","太空探索与移民","Mars","火星","noun","/mars/","/mars/","L2","人类最有可能移民的星球。","[{""en"":""NASA plans to send humans to Mars."",""zh"":""NASA计划将人类送往火星。""}]",0
+"科技·未来展望","太空探索与移民","space station","空间站","noun","/spacestation/","/spacestation/","L2","在地球轨道上运行的科学设施。","[{""en"":""Astronauts live on the International Space Station."",""zh"":""宇航员生活在国际空间站上。""}]",1
+"科技·未来展望","太空探索与移民","colonization","殖民/移民","noun","/colonization/","/colonization/","L3","在其他星球建立人类定居点。","[{""en"":""Mars colonization could happen within this century."",""zh"":""火星移民可能在本世纪内实现。""}]",2
+"科技·未来展望","太空探索与移民","gravity","重力","noun","/gravity/","/gravity/","L2","物体之间的吸引力。","[{""en"":""Mars has only about 38% of Earth's gravity."",""zh"":""火星只有地球大约38%的重力。""}]",3
+"科技·未来展望","太空探索与移民","spacecraft","宇宙飞船","noun","/spacecraft/","/spacecraft/","L2","用于太空旅行的交通工具。","[{""en"":""The spacecraft will take months to reach Mars."",""zh"":""宇宙飞船需要几个月才能到达火星。""}]",4
+"科技·未来展望","太空探索与移民","oxygen","氧气","noun","/oxygen/","/oxygen/","L1","生物呼吸需要的气体。","[{""en"":""Mars has almost no oxygen in its atmosphere."",""zh"":""火星大气中几乎没有氧气。""}]",5
+"科技·未来展望","太空探索与移民","telescope","望远镜","noun","/telescope/","/telescope/","L2","观测遥远天体的仪器。","[{""en"":""The James Webb telescope shows us distant galaxies."",""zh"":""詹姆斯·韦伯望远镜向我们展示遥远的星系。""}]",6
+"科技·未来展望","太空探索与移民","solar system","太阳系","noun","/solarsystem/","/solarsystem/","L2","太阳及其周围的行星系统。","[{""en"":""Our solar system has eight planets."",""zh"":""我们的太阳系有八颗行星。""}]",7

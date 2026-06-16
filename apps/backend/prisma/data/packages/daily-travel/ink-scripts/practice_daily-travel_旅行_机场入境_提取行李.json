@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-travel_旅行_机场入境_提取行李",
+  "title": "旅行·机场入境 - 提取行李",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-travel_旅行_机场入境_提取行李\ntitle: 旅行·机场入境 - 提取行李\n---\n——: Let's talk about 提取行李. What do you think about it?\n#objective: 找行李转盘\n#chunks: Which carousel is my luggage on?,My luggage didn't arrive.,I need to report a lost bag.\n#user_input\n——: That's interesting! Can you tell me more about that?\n#objective: 确认行李\n#chunks: Which carousel is my luggage on?,My luggage didn't arrive.,I need to report a lost bag.\n#user_input\n——: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-travel_旅行_酒店大堂_办理入住",
+  "title": "旅行·酒店大堂 - 办理入住",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-travel_旅行_酒店大堂_办理入住\ntitle: 旅行·酒店大堂 - 办理入住\n---\nMr. Wilson: Let's talk about 办理入住. What do you think about it?\n#objective: 确认预订\n#chunks: I have a reservation under the name Maya.,Can I see your ID please?,What time is check-out?,Is breakfast included?\n#user_input\nMr. Wilson: That's interesting! Can you tell me more about that?\n#objective: 出示证件\n#chunks: I have a reservation under the name Maya.,Can I see your ID please?,What time is check-out?,Is breakfast included?\n#user_input\nMr. Wilson: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

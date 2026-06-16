@@ -1,9 +1,17 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-雅思·IELTS Band 6.5 发展,兴趣爱好,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,业余爱好。,"""""""[{""""""""en"""""""":""""""""My hobby is playing the guitar.""""""""""""","zh:我的爱好是弹吉他。}]"""
-雅思·IELTS Band 6.5 发展,兴趣爱好,relaxing,放松的,adj,/rɪˈlæksɪŋ/,/rɪˈlæksɪŋ/,L2,让人放松的。,"""""""[{""""""""en"""""""":""""""""I find swimming very relaxing.""""""""""""","zh:我觉得游泳很放松。}]"""
-雅思·IELTS Band 6.5 发展,兴趣爱好,transportation,交通,noun,/ˌtrænspɔːrˈteɪʃən/,/ˌtrænspɔːˈteɪʃən/,L2,交通方式。,"""""""[{""""""""en"""""""":""""""""Public transportation in my city is convenient.""""""""""""","zh:我市的公共交通很方便。}]"""
-雅思·IELTS Band 6.5 发展,兴趣爱好,convenient,方便的,adj,/kənˈviːniənt/,/kənˈviːniənt/,L2,方便、便利的。,"""""""[{""""""""en"""""""":""""""""The subway is very convenient.""""""""""""","zh:地铁非常方便。}]"""
-雅思·IELTS Band 6.5 发展,交通出行,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,业余爱好。,"""""""[{""""""""en"""""""":""""""""My hobby is playing the guitar.""""""""""""","zh:我的爱好是弹吉他。}]"""
-雅思·IELTS Band 6.5 发展,交通出行,relaxing,放松的,adj,/rɪˈlæksɪŋ/,/rɪˈlæksɪŋ/,L2,让人放松的。,"""""""[{""""""""en"""""""":""""""""I find swimming very relaxing.""""""""""""","zh:我觉得游泳很放松。}]"""
-雅思·IELTS Band 6.5 发展,交通出行,transportation,交通,noun,/ˌtrænspɔːrˈteɪʃən/,/ˌtrænspɔːˈteɪʃən/,L2,交通方式。,"""""""[{""""""""en"""""""":""""""""Public transportation in my city is convenient.""""""""""""","zh:我市的公共交通很方便。}]"""
-雅思·IELTS Band 6.5 发展,交通出行,convenient,方便的,adj,/kənˈviːniənt/,/kənˈviːniənt/,L2,方便、便利的。,"""""""[{""""""""en"""""""":""""""""The subway is very convenient.""""""""""""","zh:地铁非常方便。}]"""
+"雅思·IELTS Band 6.5 发展","兴趣爱好","hobby","爱好","noun","/ˈhɑːbi/","/ˈhɒbi/","L1","业余爱好。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""My hobby is playing the guitar.""""""""""""""""""""""""""","zh:我的爱好是弹吉他。}]"""
+"雅思·IELTS Band 6.5 发展","兴趣爱好","relaxing","放松的","adj","/rɪˈlæksɪŋ/","/rɪˈlæksɪŋ/","L2","让人放松的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I find swimming very relaxing.""""""""""""""""""""""""""","zh:我觉得游泳很放松。}]"""
+"雅思·IELTS Band 6.5 发展","兴趣爱好","transportation","交通","noun","/ˌtrænspɔːrˈteɪʃən/","/ˌtrænspɔːˈteɪʃən/","L2","交通方式。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""Public transportation in my city is convenient.""""""""""""""""""""""""""","zh:我市的公共交通很方便。}]"""
+"雅思·IELTS Band 6.5 发展","兴趣爱好","convenient","方便的","adj","/kənˈviːniənt/","/kənˈviːniənt/","L2","方便、便利的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The subway is very convenient.""""""""""""""""""""""""""","zh:地铁非常方便。}]"""
+"雅思·IELTS Band 6.5 发展","交通出行","hobby","爱好","noun","/ˈhɑːbi/","/ˈhɒbi/","L1","业余爱好。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""My hobby is playing the guitar.""""""""""""""""""""""""""","zh:我的爱好是弹吉他。}]"""
+"雅思·IELTS Band 6.5 发展","交通出行","relaxing","放松的","adj","/rɪˈlæksɪŋ/","/rɪˈlæksɪŋ/","L2","让人放松的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I find swimming very relaxing.""""""""""""""""""""""""""","zh:我觉得游泳很放松。}]"""
+"雅思·IELTS Band 6.5 发展","交通出行","transportation","交通","noun","/ˌtrænspɔːrˈteɪʃən/","/ˌtrænspɔːˈteɪʃən/","L2","交通方式。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""Public transportation in my city is convenient.""""""""""""""""""""""""""","zh:我市的公共交通很方便。}]"""
+"雅思·IELTS Band 6.5 发展","交通出行","convenient","方便的","adj","/kənˈviːniənt/","/kənˈviːniənt/","L2","方便、便利的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The subway is very convenient.""""""""""""""""""""""""""","zh:地铁非常方便。}]"""
+"雅思·IELTS Band 6.5 发展","兴趣爱好","passion","热情/爱好","noun","/passion/","/passion/","L2","对某事强烈的热爱。","[{""en"":""Music is my greatest passion."",""zh"":""音乐是我最大的热情。""}]",8
+"雅思·IELTS Band 6.5 发展","兴趣爱好","recreation","消遣/娱乐","noun","/recreation/","/recreation/","L2","工作之余的休闲活动。","[{""en"":""Reading is my favorite form of recreation."",""zh"":""阅读是我最喜欢的消遣方式。""}]",9
+"雅思·IELTS Band 6.5 发展","兴趣爱好","pursue","追求","verb","/pursue/","/pursue/","L2","努力实现或获得。","[{""en"":""I want to pursue my dream of becoming an artist."",""zh"":""我想追求成为艺术家的梦想。""}]",10
+"雅思·IELTS Band 6.5 发展","兴趣爱好","leisure","闲暇","noun","/leisure/","/leisure/","L2","不工作的自由时间。","[{""en"":""I spend my leisure time reading novels."",""zh"":""我闲暇时间读小说。""}]",11
+"","旅行与假期","destination","目的地","noun","/destination/","/destination/","L2","旅行的目标地点。","[{""en"":""Paris is a popular travel destination."",""zh"":""巴黎是一个受欢迎的旅游目的地。""}]",8
+"","旅行与假期","itinerary","行程计划","noun","/itinerary/","/itinerary/","L2","旅行的详细安排。","[{""en"":""We planned a detailed itinerary."",""zh"":""我们制定了详细的行程计划。""}]",9
+"","旅行与假期","sightseeing","观光","noun","/sightseeing/","/sightseeing/","L2","参观旅游景点。","[{""en"":""We spent the day sightseeing around the city."",""zh"":""我们花了一天在城市观光。""}]",10
+"","旅行与假期","accommodation","住宿","noun","/accommodation/","/accommodation/","L2","旅途中住的地方。","[{""en"":""I booked accommodation near the beach."",""zh"":""我订了海滩附近的住宿。""}]",11

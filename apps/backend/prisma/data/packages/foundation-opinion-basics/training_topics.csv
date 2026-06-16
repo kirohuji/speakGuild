@@ -1,5 +1,5 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-"基础·喜好与感受",表达喜好,undefined,undefined,30,L1,学习表达喜欢和不喜欢的表达。,喜好 喜欢 不喜欢,
-"基础·喜好与感受",表达感受,undefined,undefined,30,L1,学习表达各种感受和情绪。,感受 情绪 状态,
-"基础·简单观点",同意与不同意,undefined,undefined,30,L1,学习表达同意和不同意。,同意 不同意 观点,
-"基础·简单观点",提建议,undefined,undefined,30,L1,学习提建议和回应的表达。,建议 提议 回应,
+基础·喜好与感受,表达喜好,undefined,undefined,30,L1,学习表达喜欢和不喜欢的表达。,喜好 喜欢 不喜欢,practice_foundation-opinion-basics_基础_喜好与感受_表达喜好
+基础·喜好与感受,表达感受,undefined,undefined,30,L1,学习表达各种感受和情绪。,感受 情绪 状态,practice_foundation-opinion-basics_基础_喜好与感受_表达感受
+基础·简单观点,同意与不同意,undefined,undefined,30,L1,学习表达同意和不同意。,同意 不同意 观点,practice_foundation-opinion-basics_基础_简单观点_同意与不同意
+基础·简单观点,提建议,undefined,undefined,30,L1,学习提建议和回应的表达。,建议 提议 回应,practice_foundation-opinion-basics_基础_简单观点_提建议

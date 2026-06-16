@@ -1,13 +1,13 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-"基础·问候与介绍",打招呼,Practice greeting people in English. Say hello and ask how they are.,练习用英语打招呼。说你好并问候对方。,30,L1,掌握Hello/Hi/Good morning/How are you?等基本问候语。,问候语 礼貌 介绍,
-"基础·问候与介绍",自我介绍,Introduce yourself: say your name and where you are from.,自我介绍：说出你的名字和来自哪里。,35,L1,学会说My name is.../I'm from.../Nice to meet you.。,自我介绍 姓名 国籍,
-"基础·数字与时间",数字1-100,Practice numbers from 1 to 100 in English.,练习英语数字1到100的读法。,35,L1,掌握1-100的英语数字，特别注意十几和几十的区别(13/30)。,基数词 数字 发音,
-"基础·数字与时间",时间与日期,Say the time day or date in English.,用英语说出时间和日期。,40,L1,学会说几点几分、今天星期几、几月几号。,时间 星期 月份,
-"基础·日常表达",礼貌用语,Use polite expressions: thank you sorry please and excuse me.,使用礼貌用语：谢谢、对不起、请、打扰一下。,30,L1,掌握Thank you/Sorry/Please/Excuse me/You're welcome。,礼貌 感谢 道歉,
-"基础·日常表达",表达需求,Use simple expressions to ask for what you need like Can I have water?,用简单的表达说出你的需求，如我能要水吗？,35,L1,学会用Can I.../I want.../I need...表达基本需求。,需求 请求 确认,
-"基础·基本问答",问与答,Ask and answer simple questions with What and Who.,用What和Who提问和回答简单问题。,35,L1,学会What's this?/Who is he?等基本问句和回答。,疑问词 问答 基础,
-"基础·基本问答",地点与方位,Ask and answer Where questions about places.,用Where询问地点并回答。,35,L1,学会Where is...?/It's here/there等关于位置的基本问答。,地点 方位 指路,
-"基础·基础动词",动词 be,Practice the verb 'to be' in simple sentences.,练习be动词的简单句。,35,L1,掌握I am/You are/He is/She is/It is的用法。,be动词 主谓搭配 陈述句,
-"基础·基础动词",常用动作动词,Use common action verbs like go come eat drink sleep.,使用常见动作动词如去、来、吃、喝、睡。,35,L1,掌握go/come/eat/drink/sleep/like等基础动词的用法。,动词 动作 日常,
-"基础·描述事物",大小与颜色,Describe things using size and color words.,用大小和颜色词描述事物。,35,L1,学习big/small/long/short以及基本颜色的用法。,形容词 大小 颜色,
-"基础·描述事物",感受与评价,Describe how you feel and give simple opinions.,描述你的感受并给出简单评价。,35,L1,学习用good/bad/hot/cold/happy/tired等表达感受。,感受 评价 温度,
+基础·问候与介绍,打招呼,Practice greeting people in English. Say hello and ask how they are.,练习用英语打招呼。说你好并问候对方。,30,L1,掌握Hello/Hi/Good morning/How are you?等基本问候语。,问候语 礼貌 介绍,practice_foundation-beginner_基础_问候与介绍_打招呼
+基础·问候与介绍,自我介绍,Introduce yourself: say your name and where you are from.,自我介绍：说出你的名字和来自哪里。,35,L1,学会说My name is.../I'm from.../Nice to meet you.。,自我介绍 姓名 国籍,practice_foundation-beginner_基础_问候与介绍_自我介绍
+基础·数字与时间,数字1-100,Practice numbers from 1 to 100 in English.,练习英语数字1到100的读法。,35,L1,掌握1-100的英语数字，特别注意十几和几十的区别(13/30)。,基数词 数字 发音,practice_foundation-beginner_基础_数字与时间_数字1100
+基础·数字与时间,时间与日期,Say the time day or date in English.,用英语说出时间和日期。,40,L1,学会说几点几分、今天星期几、几月几号。,时间 星期 月份,practice_foundation-beginner_基础_数字与时间_时间与日期
+基础·日常表达,礼貌用语,Use polite expressions: thank you sorry please and excuse me.,使用礼貌用语：谢谢、对不起、请、打扰一下。,30,L1,掌握Thank you/Sorry/Please/Excuse me/You're welcome。,礼貌 感谢 道歉,practice_foundation-beginner_基础_日常表达_礼貌用语
+基础·日常表达,表达需求,Use simple expressions to ask for what you need like Can I have water?,用简单的表达说出你的需求，如我能要水吗？,35,L1,学会用Can I.../I want.../I need...表达基本需求。,需求 请求 确认,practice_foundation-beginner_基础_日常表达_表达需求
+基础·基本问答,问与答,Ask and answer simple questions with What and Who.,用What和Who提问和回答简单问题。,35,L1,学会What's this?/Who is he?等基本问句和回答。,疑问词 问答 基础,practice_foundation-beginner_基础_基本问答_问与答
+基础·基本问答,地点与方位,Ask and answer Where questions about places.,用Where询问地点并回答。,35,L1,学会Where is...?/It's here/there等关于位置的基本问答。,地点 方位 指路,practice_foundation-beginner_基础_基本问答_地点与方位
+基础·基础动词,动词 be,Practice the verb 'to be' in simple sentences.,练习be动词的简单句。,35,L1,掌握I am/You are/He is/She is/It is的用法。,be动词 主谓搭配 陈述句,practice_foundation-beginner_基础_基础动词_动词_be
+基础·基础动词,常用动作动词,Use common action verbs like go come eat drink sleep.,使用常见动作动词如去、来、吃、喝、睡。,35,L1,掌握go/come/eat/drink/sleep/like等基础动词的用法。,动词 动作 日常,practice_foundation-beginner_基础_基础动词_常用动作动词
+基础·描述事物,大小与颜色,Describe things using size and color words.,用大小和颜色词描述事物。,35,L1,学习big/small/long/short以及基本颜色的用法。,形容词 大小 颜色,practice_foundation-beginner_基础_描述事物_大小与颜色
+基础·描述事物,感受与评价,Describe how you feel and give simple opinions.,描述你的感受并给出简单评价。,35,L1,学习用good/bad/hot/cold/happy/tired等表达感受。,感受 评价 温度,practice_foundation-beginner_基础_描述事物_感受与评价

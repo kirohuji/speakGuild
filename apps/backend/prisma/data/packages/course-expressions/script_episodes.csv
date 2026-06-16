@@ -1,7 +1,7 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_e1,副词精练,1,频率与程度,"表达·副词精练",L2,1,2,3,2,2,"[""用频率副词描述频率"",""用程度副词修饰""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
-ch_e1,副词精练,2,方式与评论,"表达·副词精练",L2,1,2,3,2,2,"[""用方式副词修饰动作"",""用评论副词表达态度""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
-ch_e2,时间表达,1,"时间·时间介词","表达·时间表达",L2,1,2,3,2,3,"[""用on表达具体天"",""用in表达月份"",""用at表达具体时间""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
-ch_e2,时间表达,2,"时间·时间连词与顺序","表达·时间表达",L2,1,2,3,2,3,"[""用before表达之前"",""用after表达之后"",""用while表达同时""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
-ch_e3,方位与指路,1,"方位·方位介词","表达·方位与指路",L2,1,2,3,2,2,"[""用in/on/at描述位置"",""用next to/between描述关系""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
-ch_e3,方位与指路,2,指路表达,"表达·方位与指路",L2,1,2,3,2,3,"[""用go straight直走"",""用turn left/right转弯"",""用地标描述位置""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_e1,副词精练,1,频率与程度,表达·副词精练,L2,1,2,3,2,2,"[""用频率副词描述频率"",""用程度副词修饰""]",2,2,2,Tutor,语法导师,true,practice_course-expressions_表达_副词精练_频率与程度,"{""xp"":20}"
+ch_e1,副词精练,2,方式与评论,表达·副词精练,L2,1,2,3,2,2,"[""用方式副词修饰动作"",""用评论副词表达态度""]",2,2,2,Tutor,语法导师,false,practice_course-expressions_表达_副词精练_方式与评论,"{""xp"":20}"
+ch_e2,时间表达,1,时间·时间介词,表达·时间表达,L2,1,2,3,2,3,"[""用on表达具体天"",""用in表达月份"",""用at表达具体时间""]",2,2,2,Tutor,语法导师,false,practice_course-expressions_表达_时间表达_时间_时间介词,"{""xp"":20}"
+ch_e2,时间表达,2,时间·时间连词与顺序,表达·时间表达,L2,1,2,3,2,3,"[""用before表达之前"",""用after表达之后"",""用while表达同时""]",2,2,2,Tutor,语法导师,false,practice_course-expressions_表达_时间表达_时间_时间连词与顺序,"{""xp"":20}"
+ch_e3,方位与指路,1,方位·方位介词,表达·方位与指路,L2,1,2,3,2,2,"[""用in/on/at描述位置"",""用next to/between描述关系""]",2,2,2,Tutor,语法导师,false,practice_course-expressions_表达_方位与指路_方位_方位介词,"{""xp"":20}"
+ch_e3,方位与指路,2,指路表达,表达·方位与指路,L2,1,2,3,2,3,"[""用go straight直走"",""用turn left/right转弯"",""用地标描述位置""]",2,2,2,Tutor,语法导师,false,practice_course-expressions_表达_方位与指路_指路表达,"{""xp"":20}"

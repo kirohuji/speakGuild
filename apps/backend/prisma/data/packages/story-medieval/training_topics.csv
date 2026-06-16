@@ -1,7 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-中世纪·骑士与城堡,骑士精神与受封,Talk about knighthood and the ceremony of becoming a knight.,讲述骑士精神和受封仪式的故事。,50,L2,学习骑士准则、受封仪式、盔甲武器和相关中世纪词汇。,骑士 受封 盔甲,
-中世纪·骑士与城堡,城堡攻防战,Describe medieval castle defenses and siege warfare.,描述中世纪城堡防御和攻城战。,55,L2,学习城堡结构、攻城器械（投石机/攻城锤）和防御策略词汇。,城堡 攻城 防御,
-中世纪·骑士与城堡,亚瑟王与圆桌骑士,Narrate the legend of King Arthur and the Knights of the Round Table.,叙述亚瑟王和圆桌骑士的传说故事。,55,L2,学习亚瑟王、石中剑、梅林法师和圆桌骑士的传奇故事。,亚瑟王 圆桌骑士 梅林,
-中世纪·探险与传奇,马可·波罗的东方之旅,Talk about Marco Polo's journey to the East.,讲述马可·波罗的东方之旅。,55,L2,学习马可·波罗从威尼斯到元朝中国的旅行故事和沿途见闻。,马可波罗 东方 丝绸之路,
-中世纪·探险与传奇,维京航海家,Narrate the Viking explorations and discoveries.,叙述维京航海家的探索和发现。,50,L2,学习维京长船、莱夫·埃里克松发现北美和维京文化。,维京 航海 探索,
-中世纪·探险与传奇,中世纪的世界,Talk about what the world was like in medieval times.,讲述中世纪世界的样貌。,50,L2,综合讨论中世纪的生活、贸易、文化和知识传播。,中世纪 生活 贸易,
+中世纪·骑士与城堡,骑士精神与受封,Talk about knighthood and the ceremony of becoming a knight.,讲述骑士精神和受封仪式的故事。,50,L2,学习骑士准则、受封仪式、盔甲武器和相关中世纪词汇。,骑士 受封 盔甲,practice_story-medieval_中世纪_骑士与城堡_骑士精神与受封
+中世纪·骑士与城堡,城堡攻防战,Describe medieval castle defenses and siege warfare.,描述中世纪城堡防御和攻城战。,55,L2,学习城堡结构、攻城器械（投石机/攻城锤）和防御策略词汇。,城堡 攻城 防御,practice_story-medieval_中世纪_骑士与城堡_城堡攻防战
+中世纪·骑士与城堡,亚瑟王与圆桌骑士,Narrate the legend of King Arthur and the Knights of the Round Table.,叙述亚瑟王和圆桌骑士的传说故事。,55,L2,学习亚瑟王、石中剑、梅林法师和圆桌骑士的传奇故事。,亚瑟王 圆桌骑士 梅林,practice_story-medieval_中世纪_骑士与城堡_亚瑟王与圆桌骑士
+中世纪·探险与传奇,马可·波罗的东方之旅,Talk about Marco Polo's journey to the East.,讲述马可·波罗的东方之旅。,55,L2,学习马可·波罗从威尼斯到元朝中国的旅行故事和沿途见闻。,马可波罗 东方 丝绸之路,practice_story-medieval_中世纪_探险与传奇_马可_波罗的东方之旅
+中世纪·探险与传奇,维京航海家,Narrate the Viking explorations and discoveries.,叙述维京航海家的探索和发现。,50,L2,学习维京长船、莱夫·埃里克松发现北美和维京文化。,维京 航海 探索,practice_story-medieval_中世纪_探险与传奇_维京航海家
+中世纪·探险与传奇,中世纪的世界,Talk about what the world was like in medieval times.,讲述中世纪世界的样貌。,50,L2,综合讨论中世纪的生活、贸易、文化和知识传播。,中世纪 生活 贸易,practice_story-medieval_中世纪_探险与传奇_中世纪的世界

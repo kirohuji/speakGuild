@@ -1,7 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-伊索寓言·动物与智慧,龟兔赛跑,Retell the story of The Tortoise and the Hare.,复述龟兔赛跑的故事。,50,L2,学习"slow and steady wins the race"的含义和故事叙述基本词汇。,龟兔赛跑 坚持 骄傲,
-伊索寓言·动物与智慧,狐狸与葡萄,Retell the story of The Fox and the Grapes.,复述狐狸与葡萄的故事。,45,L2,学习"sour grapes"的比喻含义和表达失望的词汇。,狐狸与葡萄 酸葡萄 心理,
-伊索寓言·动物与智慧,狼来了,Retell the story of The Boy Who Cried Wolf.,复述狼来了的故事。,50,L2,学习关于诚实和信任的教训以及过去时叙述。,狼来了 诚实 信任,
-伊索寓言·教训与反思,蚂蚁和蚱蜢,Retell the story of The Ant and the Grasshopper.,复述蚂蚁和蚱蜢的故事。,50,L2,学习"prepare for the future"的寓意和关于勤奋的词汇。,蚂蚁蚱蜢 勤奋 准备,
-伊索寓言·教训与反思,乌鸦和水罐,Retell the story of The Crow and the Pitcher.,复述乌鸦和水罐的故事。,45,L2,学习"little by little"的智慧和解决问题相关的表达。,乌鸦水罐 坚持 智慧,
-伊索寓言·教训与反思,牧童和狼与反思,Talk about the lessons learned from Aesop's fables.,讨论从伊索寓言中学到的人生教训。,50,L2,综合讨论多个寓言的寓意，练习表达观点和道德判断。,寓言 教训 讨论,
+伊索寓言·动物与智慧,龟兔赛跑,Retell the story of The Tortoise and the Hare.,复述龟兔赛跑的故事。,50,L2,学习slow and steady wins the race的含义和故事叙述基本词汇。,龟兔赛跑 坚持 骄傲,practice_story-fables_伊索寓言_动物与智慧_龟兔赛跑
+伊索寓言·动物与智慧,狐狸与葡萄,Retell the story of The Fox and the Grapes.,复述狐狸与葡萄的故事。,45,L2,学习sour grapes的比喻含义和表达失望的词汇。,狐狸与葡萄 酸葡萄 心理,practice_story-fables_伊索寓言_动物与智慧_狐狸与葡萄
+伊索寓言·动物与智慧,狼来了,Retell the story of The Boy Who Cried Wolf.,复述狼来了的故事。,50,L2,学习关于诚实和信任的教训以及过去时叙述。,狼来了 诚实 信任,practice_story-fables_伊索寓言_动物与智慧_狼来了
+伊索寓言·教训与反思,蚂蚁和蚱蜢,Retell the story of The Ant and the Grasshopper.,复述蚂蚁和蚱蜢的故事。,50,L2,学习prepare for the future的寓意和关于勤奋的词汇。,蚂蚁蚱蜢 勤奋 准备,practice_story-fables_伊索寓言_教训与反思_蚂蚁和蚱蜢
+伊索寓言·教训与反思,乌鸦和水罐,Retell the story of The Crow and the Pitcher.,复述乌鸦和水罐的故事。,45,L2,学习little by little的智慧和解决问题相关的表达。,乌鸦水罐 坚持 智慧,practice_story-fables_伊索寓言_教训与反思_乌鸦和水罐
+伊索寓言·教训与反思,牧童和狼与反思,Talk about the lessons learned from Aesop's fables.,讨论从伊索寓言中学到的人生教训。,50,L2,综合讨论多个寓言的寓意，练习表达观点和道德判断。,寓言 教训 讨论,practice_story-fables_伊索寓言_教训与反思_牧童和狼与反思

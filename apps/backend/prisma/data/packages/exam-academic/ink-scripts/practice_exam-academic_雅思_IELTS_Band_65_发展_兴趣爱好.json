@@ -1,0 +1,6 @@
+{
+  "key": "practice_exam-academic_雅思_IELTS_Band_65_发展_兴趣爱好",
+  "title": "雅思·IELTS Band 6.5 发展 - 兴趣爱好",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_exam-academic_雅思_IELTS_Band_65_发展_兴趣爱好\ntitle: 雅思·IELTS Band 6.5 发展 - 兴趣爱好\n---\nExaminer: Let's talk about 兴趣爱好. What do you think about it?\n#objective: 描述爱好\n#chunks: In my free time I like to...,I got into... when I was...,It helps me relax after a long day.\n#user_input\nExaminer: That's interesting! Can you tell me more about that?\n#objective: 说如何开始的\n#chunks: In my free time I like to...,I got into... when I was...,It helps me relax after a long day.\n#user_input\nExaminer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

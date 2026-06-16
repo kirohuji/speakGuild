@@ -1,10 +1,73 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-英国文化·传统与现代,王室与君主制,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与王室与君主制相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",0
-英国文化·传统与现代,下午茶与美食文化,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与下午茶与美食文化相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",1
-英国文化·传统与现代,英国体育与娱乐,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与英国体育与娱乐相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",2
-美国文化·节日与生活方式,美国主要节日,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与美国主要节日相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",3
-美国文化·节日与生活方式,美国流行文化,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与美国流行文化相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",4
-全球文化·节日与习俗,亚洲文化与传统,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与亚洲文化与传统相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",5
-全球文化·节日与习俗,世界各地的文化,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与世界各地的文化相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",6
-现代文化·数字时代,社交媒体与数字生活,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与社交媒体与数字生活相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",7
-现代文化·数字时代,当代社会议题,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与当代社会议题相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",8
+"英国文化·传统与现代","王室与君主制","monarchy","君主制","noun","/ˈmɑːnərki/","/ˈmɑːnərki/","L2","由国王或女王统治的国家制度。","[{""en"":""The UK is a constitutional monarchy."",""zh"":""英国是君主立宪制国家。""}]",0
+"英国文化·传统与现代","王室与君主制","royal family","王室","noun","/ˈrɔɪəl ˈfæməli/","/ˈrɔɪəl ˈfæməli/","L2","国王/女王及其亲属。","[{""en"":""The royal family lives in Buckingham Palace."",""zh"":""王室住在白金汉宫。""}]",1
+"英国文化·传统与现代","王室与君主制","coronation","加冕典礼","noun","/ˌkɔːrəˈneɪʃən/","/ˌkɔːrəˈneɪʃən/","L2","君主登基仪式。","[{""en"":""The coronation was a grand ceremony."",""zh"":""加冕典礼是一场盛大的仪式。""}]",2
+"英国文化·传统与现代","王室与君主制","castle","城堡","noun","/ˈkæsəl/","/ˈkæsəl/","L1","中世纪贵族居住的大型建筑。","[{""en"":""Windsor Castle is the oldest inhabited castle."",""zh"":""温莎城堡是最古老的有人居住的城堡。""}]",3
+"英国文化·传统与现代","王室与君主制","guard","卫兵","noun","/ɡɑːrd/","/ɡɑːrd/","L1","保护重要人物或建筑的人。","[{""en"":""The guards wear red uniforms and bearskin hats."",""zh"":""卫兵穿着红色制服和熊皮帽子。""}]",4
+"英国文化·传统与现代","王室与君主制","ceremony","仪式","noun","/ˈserəmoʊni/","/ˈserəmoʊni/","L2","正式的典礼或庆祝活动。","[{""en"":""The changing of the guard is a daily ceremony."",""zh"":""卫兵换岗是每天的仪式。""}]",5
+"英国文化·传统与现代","王室与君主制","tradition","传统","noun","/trəˈdɪʃən/","/trəˈdɪʃən/","L2","代代相传的习俗。","[{""en"":""This tradition dates back hundreds of years."",""zh"":""这个传统可以追溯到几百年前。""}]",6
+"英国文化·传统与现代","王室与君主制","throne","王座","noun","/θroʊn/","/θroʊn/","L2","国王或女王的座位，象征权力。","[{""en"":""The king sat on his throne."",""zh"":""国王坐在他的王座上。""}]",7
+"英国文化·传统与现代","下午茶与美食文化","afternoon tea","下午茶","noun","/ˌæftərˈnuːn tiː/","/ˌæftərˈnuːn tiː/","L2","英国传统，下午享用的茶点。","[{""en"":""Afternoon tea includes sandwiches and scones."",""zh"":""下午茶包括三明治和司康饼。""}]",0
+"英国文化·传统与现代","下午茶与美食文化","scone","司康饼","noun","/skoʊn/","/skoʊn/","L2","英式烤饼，配奶油和果酱。","[{""en"":""Scones are served with clotted cream and jam."",""zh"":""司康饼配凝脂奶油和果酱。""}]",1
+"英国文化·传统与现代","下午茶与美食文化","pub","酒吧","noun","/pʌb/","/pʌb/","L1","英式小酒馆，提供酒和简餐。","[{""en"":""Let's meet at the pub for lunch."",""zh"":""我们去酒吧吃午饭吧。""}]",2
+"英国文化·传统与现代","下午茶与美食文化","fish and chips","炸鱼薯条","noun","/fɪʃ ænd tʃɪps/","/fɪʃ ænd tʃɪps/","L1","英国最经典的食物。","[{""en"":""Fish and chips is a British classic."",""zh"":""炸鱼薯条是英国经典美食。""}]",3
+"英国文化·传统与现代","下午茶与美食文化","cuisine","菜系/烹饪","noun","/kwɪˈziːn/","/kwɪˈziːn/","L2","某国家或地区的烹饪风格。","[{""en"":""British cuisine has improved a lot."",""zh"":""英国菜系进步了很多。""}]",4
+"英国文化·传统与现代","下午茶与美食文化","roast dinner","周日烤肉","noun","/roʊst ˈdɪnər/","/roʊst ˈdɪnər/","L2","英国传统周日烤肉大餐。","[{""en"":""A traditional roast dinner has meat, potatoes, and vegetables."",""zh"":""传统的周日烤肉有肉、土豆和蔬菜。""}]",5
+"英国文化·传统与现代","下午茶与美食文化","teapot","茶壶","noun","/ˈtiːpɑːt/","/ˈtiːpɑːt/","L1","泡茶用的壶。","[{""en"":""She poured tea from the teapot."",""zh"":""她从茶壶里倒茶。""}]",6
+"英国文化·传统与现代","下午茶与美食文化","etiquette","礼仪","noun","/ˈetɪket/","/ˈetɪket/","L2","社交场合的行为规范。","[{""en"":""There is a certain etiquette for afternoon tea."",""zh"":""喝下午茶有一定的礼仪。""}]",7
+"英国文化·传统与现代","英国体育与娱乐","football","足球","noun","/ˈfʊtbɔːl/","/ˈfʊtbɔːl/","L1","英国最流行的运动。美式叫soccer。","[{""en"":""Football is the most popular sport in the UK."",""zh"":""足球是英国最流行的运动。""}]",0
+"英国文化·传统与现代","英国体育与娱乐","Premier League","英超联赛","noun","/prɪˈmɪr liːɡ/","/prɪˈmɪr liːɡ/","L2","英格兰顶级足球联赛。","[{""en"":""The Premier League is watched worldwide."",""zh"":""英超联赛在全球被观看。""}]",1
+"英国文化·传统与现代","英国体育与娱乐","Wimbledon","温布尔登网球赛","noun","/ˈwɪmbldən/","/ˈwɪmbldən/","L2","世界最古老的网球锦标赛。","[{""en"":""Wimbledon is the oldest tennis tournament."",""zh"":""温布尔登是最古老的网球锦标赛。""}]",2
+"英国文化·传统与现代","英国体育与娱乐","cricket","板球","noun","/ˈkrɪkɪt/","/ˈkrɪkɪt/","L2","英联邦国家流行的球类运动。","[{""en"":""Cricket matches can last for days."",""zh"":""板球比赛可以持续好几天。""}]",3
+"英国文化·传统与现代","英国体育与娱乐","match","比赛","noun","/mætʃ/","/mætʃ/","L1","体育比赛。","[{""en"":""Did you watch the match last night?"",""zh"":""你昨晚看比赛了吗？""}]",4
+"英国文化·传统与现代","英国体育与娱乐","tournament","锦标赛","noun","/ˈtʊrnəmənt/","/ˈtʊrnəmənt/","L2","系列比赛组成的赛事。","[{""en"":""The tournament attracts the best players."",""zh"":""这个锦标赛吸引了最好的选手。""}]",5
+"英国文化·传统与现代","英国体育与娱乐","stadium","体育场","noun","/ˈsteɪdiəm/","/ˈsteɪdiəm/","L2","大型体育场馆。","[{""en"":""Wembley Stadium holds 90,000 people."",""zh"":""温布利体育场可容纳9万人。""}]",6
+"英国文化·传统与现代","英国体育与娱乐","fan","粉丝/球迷","noun","/fæn/","/fæn/","L1","热情支持某队或某人的追随者。","[{""en"":""The fans were singing in the stadium."",""zh"":""球迷们在体育场里唱歌。""}]",7
+"美国文化·节日与生活方式","美国主要节日","Thanksgiving","感恩节","noun","/ˌθæŋksˈɡɪvɪŋ/","/ˌθæŋksˈɡɪvɪŋ/","L2","美国11月第四个星期四，家庭团聚感恩。","[{""en"":""We have turkey and pumpkin pie on Thanksgiving."",""zh"":""感恩节我们吃火鸡和南瓜派。""}]",0
+"美国文化·节日与生活方式","美国主要节日","Independence Day","独立日","noun","/ˌɪndɪˈpendəns deɪ/","/ˌɪndɪˈpendəns deɪ/","L2","7月4日，美国国庆日，放烟花。","[{""en"":""We watch fireworks on Independence Day."",""zh"":""独立日我们看烟花。""}]",1
+"美国文化·节日与生活方式","美国主要节日","turkey","火鸡","noun","/ˈtɜːrki/","/ˈtɜːrki/","L1","感恩节传统主菜。","[{""en"":""Roast turkey is the centerpiece of Thanksgiving."",""zh"":""烤火鸡是感恩节的主菜。""}]",2
+"美国文化·节日与生活方式","美国主要节日","fireworks","烟花","noun","/ˈfaɪrwɜːrks/","/ˈfaɪrwɜːrks/","L1","节日庆典的烟火表演。","[{""en"":""The fireworks display lasted 20 minutes."",""zh"":""烟花表演持续了20分钟。""}]",3
+"美国文化·节日与生活方式","美国主要节日","parade","游行","noun","/pəˈreɪd/","/pəˈreɪd/","L2","节日庆祝的游行队伍。","[{""en"":""The Macy's parade is a Thanksgiving tradition."",""zh"":""梅西游行是感恩节的传统。""}]",4
+"美国文化·节日与生活方式","美国主要节日","barbecue","烧烤","noun","/ˈbɑːrbɪkjuː/","/ˈbɑːrbɪkjuː/","L1","户外烤肉聚会，独立日必备。","[{""en"":""We had a barbecue to celebrate the holiday."",""zh"":""我们烧烤庆祝节日。""}]",5
+"美国文化·节日与生活方式","美国主要节日","flag","国旗","noun","/flæɡ/","/flæɡ/","L1","美国国旗（Stars and Stripes）。","[{""en"":""People display American flags on July 4th."",""zh"":""人们在7月4日展示美国国旗。""}]",6
+"美国文化·节日与生活方式","美国主要节日","pilgrim","清教徒","noun","/ˈpɪlɡrɪm/","/ˈpɪlɡrɪm/","L2","1620年乘五月花号到美洲的英国移民。","[{""en"":""The Pilgrims had the first Thanksgiving with Native Americans."",""zh"":""清教徒和美洲原住民举行了第一个感恩节。""}]",7
+"美国文化·节日与生活方式","美国流行文化","Hollywood","好莱坞","noun","/ˈhɑːliwʊd/","/ˈhɑːliwʊd/","L2","美国电影工业中心。","[{""en"":""Hollywood produces hundreds of movies each year."",""zh"":""好莱坞每年制作数百部电影。""}]",0
+"美国文化·节日与生活方式","美国流行文化","blockbuster","大片","noun","/ˈblɑːkbʌstər/","/ˈblɑːkbʌstər/","L2","高票房的大制作电影。","[{""en"":""The new superhero movie is a blockbuster."",""zh"":""这部新的超级英雄电影是一部大片。""}]",1
+"美国文化·节日与生活方式","美国流行文化","Broadway","百老汇","noun","/ˈbrɔːdweɪ/","/ˈbrɔːdweɪ/","L2","纽约剧院区，音乐剧中心。","[{""en"":""We saw a musical on Broadway."",""zh"":""我们在百老汇看了一部音乐剧。""}]",2
+"美国文化·节日与生活方式","美国流行文化","Grammy","格莱美奖","noun","/ˈɡræmi/","/ˈɡræmi/","L2","美国音乐界最高奖项。","[{""en"":""She won three Grammys last night."",""zh"":""她昨晚赢得了三个格莱美奖。""}]",3
+"美国文化·节日与生活方式","美国流行文化","streaming","流媒体","noun","/ˈstriːmɪŋ/","/ˈstriːmɪŋ/","L2","在线播放音乐或视频。","[{""en"":""Most people watch movies on streaming platforms."",""zh"":""大多数人都在流媒体平台看电影。""}]",4
+"美国文化·节日与生活方式","美国流行文化","influencer","网红/影响者","noun","/ˈɪnfluənsər/","/ˈɪnfluənsər/","L2","社交媒体上有大量粉丝的人。","[{""en"":""She became a famous influencer on Instagram."",""zh"":""她成了Instagram上的知名网红。""}]",5
+"美国文化·节日与生活方式","美国流行文化","jazz","爵士乐","noun","/dʒæz/","/dʒæz/","L2","起源于美国的音乐风格。","[{""en"":""Jazz was born in New Orleans."",""zh"":""爵士乐诞生于新奥尔良。""}]",6
+"美国文化·节日与生活方式","美国流行文化","hip-hop","嘻哈音乐","noun","/ˈhɪp hɑːp/","/ˈhɪp hɑːp/","L2","源自美国街头的音乐文化。","[{""en"":""Hip-hop is one of the most popular music genres."",""zh"":""嘻哈是最流行的音乐类型之一。""}]",7
+"全球文化·节日与习俗","亚洲文化与传统","Spring Festival","春节","noun","/sprɪŋ ˈfestɪvəl/","/sprɪŋ ˈfestɪvəl/","L2","中国农历新年，最重要的传统节日。","[{""en"":""During Spring Festival, families gather for reunion dinner."",""zh"":""春节期间家人团聚吃年夜饭。""}]",0
+"全球文化·节日与习俗","亚洲文化与传统","tea ceremony","茶道","noun","/tiː ˈserəmoʊni/","/tiː ˈserəmoʊni/","L2","日本传统的泡茶与品茶仪式。","[{""en"":""The Japanese tea ceremony is a form of art."",""zh"":""日本茶道是一种艺术形式。""}]",1
+"全球文化·节日与习俗","亚洲文化与传统","lantern","灯笼","noun","/ˈlæntərn/","/ˈlæntərn/","L1","传统节日用的照明装饰。","[{""en"":""Red lanterns are hung during Chinese New Year."",""zh"":""春节期间挂红灯笼。""}]",2
+"全球文化·节日与习俗","亚洲文化与传统","dragon dance","舞龙","noun","/ˈdræɡən dæns/","/ˈdræɡən dæns/","L2","中国传统舞蹈表演。","[{""en"":""The dragon dance brings good luck."",""zh"":""舞龙带来好运。""}]",3
+"全球文化·节日与习俗","亚洲文化与传统","kimono","和服","noun","/kɪˈmoʊnoʊ/","/kɪˈmoʊnoʊ/","L2","日本传统服装。","[{""en"":""She wore a beautiful kimono to the ceremony."",""zh"":""她穿着美丽的和服参加仪式。""}]",4
+"全球文化·节日与习俗","亚洲文化与传统","Diwali","排灯节","noun","/dɪˈwɑːli/","/dɪˈwɑːli/","L2","印度教的光明节，点灯庆祝。","[{""en"":""Diwali is the festival of lights."",""zh"":""排灯节是光明的节日。""}]",5
+"全球文化·节日与习俗","亚洲文化与传统","calligraphy","书法","noun","/kəˈlɪɡrəfi/","/kəˈlɪɡrəfi/","L2","用毛笔书写汉字的艺术。","[{""en"":""Chinese calligraphy is an ancient art."",""zh"":""中国书法是古老的艺术。""}]",6
+"全球文化·节日与习俗","亚洲文化与传统","dumpling","饺子","noun","/ˈdʌmplɪŋ/","/ˈdʌmplɪŋ/","L1","春节传统食物，象征团圆。","[{""en"":""We make dumplings together on New Year's Eve."",""zh"":""除夕夜我们一起包饺子。""}]",7
+"全球文化·节日与习俗","世界各地的文化","Day of the Dead","亡灵节","noun","/deɪ əv ðə ded/","/deɪ əv ðə ded/","L2","墨西哥纪念逝者的传统节日。","[{""en"":""Day of the Dead celebrates loved ones who have passed."",""zh"":""亡灵节纪念逝去的亲人。""}]",0
+"全球文化·节日与习俗","世界各地的文化","Carnival","狂欢节","noun","/ˈkɑːrnɪvəl/","/ˈkɑːrnɪvəl/","L2","巴西等国的盛大庆祝活动。","[{""en"":""Rio Carnival is the biggest carnival in the world."",""zh"":""里约狂欢节是世界上最大的狂欢节。""}]",1
+"全球文化·节日与习俗","世界各地的文化","baguette","法棍面包","noun","/bæˈɡet/","/bæˈɡet/","L1","法国标志性长面包。","[{""en"":""The French eat baguettes every day."",""zh"":""法国人每天都吃法棍面包。""}]",2
+"全球文化·节日与习俗","世界各地的文化","Oktoberfest","慕尼黑啤酒节","noun","/ɑːkˈtoʊbərfest/","/ɑːkˈtoʊbərfest/","L2","德国慕尼黑的啤酒节庆。","[{""en"":""Oktoberfest is the world's largest beer festival."",""zh"":""慕尼黑啤酒节是世界上最大的啤酒节。""}]",3
+"全球文化·节日与习俗","世界各地的文化","tango","探戈舞","noun","/ˈtæŋɡoʊ/","/ˈtæŋɡoʊ/","L2","阿根廷传统舞蹈。","[{""en"":""Tango originated in Buenos Aires."",""zh"":""探戈起源于布宜诺斯艾利斯。""}]",4
+"全球文化·节日与习俗","世界各地的文化","safari","野生动物观赏","noun","/səˈfɑːri/","/səˈfɑːri/","L2","在非洲草原观赏野生动物。","[{""en"":""We went on a safari in Kenya."",""zh"":""我们在肯尼亚进行了野生动物观赏。""}]",5
+"全球文化·节日与习俗","世界各地的文化","origami","折纸","noun","/ˌɔːrɪˈɡɑːmi/","/ˌɔːrɪˈɡɑːmi/","L2","日本折纸艺术。","[{""en"":""She taught me how to make origami cranes."",""zh"":""她教我折纸鹤。""}]",6
+"全球文化·节日与习俗","世界各地的文化","cuisine","菜系","noun","/kwɪˈziːn/","/kwɪˈziːn/","L2","特定文化的烹饪传统。","[{""en"":""French cuisine is famous worldwide."",""zh"":""法国菜系世界闻名。""}]",7
+"现代文化·数字时代","社交媒体与数字生活","social media","社交媒体","noun","/ˈsoʊʃəl ˈmiːdiə/","/ˈsoʊʃəl ˈmiːdiə/","L2","在线社交平台如微信、Instagram。","[{""en"":""Social media has changed how we communicate."",""zh"":""社交媒体改变了我们的沟通方式。""}]",0
+"现代文化·数字时代","社交媒体与数字生活","algorithm","算法","noun","/ˈælɡərɪðəm/","/ˈælɡərɪðəm/","L3","决定内容推荐的计算机程序。","[{""en"":""The algorithm decides what content you see."",""zh"":""算法决定你看到什么内容。""}]",1
+"现代文化·数字时代","社交媒体与数字生活","remote work","远程办公","noun","/rɪˈmoʊt wɜːrk/","/rɪˈmoʊt wɜːrk/","L2","在家或异地通过互联网工作。","[{""en"":""Remote work became common during the pandemic."",""zh"":""疫情期间远程办公变得普遍。""}]",2
+"现代文化·数字时代","社交媒体与数字生活","digital nomad","数字游民","noun","/ˈdɪdʒɪtl ˈnoʊmæd/","/ˈdɪdʒɪtl ˈnoʊmæd/","L3","边旅行边远程工作的人。","[{""en"":""More people are becoming digital nomads."",""zh"":""越来越多人成为数字游民。""}]",3
+"现代文化·数字时代","社交媒体与数字生活","hashtag","话题标签","noun","/ˈhæʃtæɡ/","/ˈhæʃtæɡ/","L1","用#符号标记话题。","[{""en"":""Use the hashtag to join the conversation."",""zh"":""用话题标签加入对话。""}]",4
+"现代文化·数字时代","社交媒体与数字生活","viral","病毒式传播","adj","/ˈvaɪrəl/","/ˈvaɪrəl/","L2","内容在网上迅速传播。","[{""en"":""The video went viral overnight."",""zh"":""那个视频一夜之间病毒式传播。""}]",5
+"现代文化·数字时代","社交媒体与数字生活","screen time","屏幕时间","noun","/skriːn taɪm/","/skriːn taɪm/","L2","花在电子设备屏幕上的时间。","[{""en"":""I'm trying to reduce my screen time."",""zh"":""我在尝试减少屏幕时间。""}]",6
+"现代文化·数字时代","社交媒体与数字生活","privacy","隐私","noun","/ˈpraɪvəsi/","/ˈpraɪvəsi/","L2","个人信息不被泄露的权利。","[{""en"":""Online privacy is a growing concern."",""zh"":""网络隐私是一个日益严重的问题。""}]",7
+"现代文化·数字时代","当代社会议题","climate change","气候变化","noun","/ˈklaɪmət tʃeɪndʒ/","/ˈklaɪmət tʃeɪndʒ/","L2","全球气候变暖及其影响。","[{""en"":""Climate change is the biggest challenge of our time."",""zh"":""气候变化是我们时代最大的挑战。""}]",0
+"现代文化·数字时代","当代社会议题","sustainability","可持续性","noun","/səˌsteɪnəˈbɪləti/","/səˌsteɪnəˈbɪləti/","L3","满足当代需求而不损害后代。","[{""en"":""Companies are focusing more on sustainability."",""zh"":""企业越来越关注可持续性。""}]",1
+"现代文化·数字时代","当代社会议题","diversity","多样性","noun","/daɪˈvɜːrsəti/","/daɪˈvɜːrsəti/","L2","包含不同背景的人和文化。","[{""en"":""Diversity makes our community stronger."",""zh"":""多样性让我们的社区更强大。""}]",2
+"现代文化·数字时代","当代社会议题","mental health","心理健康","noun","/ˈmentl helθ/","/ˈmentl helθ/","L2","心理和情绪的健康状态。","[{""en"":""Mental health is just as important as physical health."",""zh"":""心理健康和身体健康一样重要。""}]",3
+"现代文化·数字时代","当代社会议题","globalization","全球化","noun","/ˌɡloʊbəlaɪˈzeɪʃən/","/ˌɡloʊbəlaɪˈzeɪʃən/","L3","世界各国经济文化日益互联。","[{""en"":""Globalization has connected cultures worldwide."",""zh"":""全球化连接了世界各地的文化。""}]",4
+"现代文化·数字时代","当代社会议题","equality","平等","noun","/iˈkwɑːləti/","/iˈkwɑːləti/","L2","人人享有同等权利和机会。","[{""en"":""We should fight for equality for everyone."",""zh"":""我们应该为每个人的平等而奋斗。""}]",5
+"现代文化·数字时代","当代社会议题","renewable energy","可再生能源","noun","/rɪˈnuːəbəl ˈenərdʒi/","/rɪˈnuːəbəl ˈenərdʒi/","L3","太阳能、风能等可持续能源。","[{""en"":""Renewable energy is the future."",""zh"":""可再生能源是未来。""}]",6
+"现代文化·数字时代","当代社会议题","artificial intelligence","人工智能","noun","/ˌɑːrtɪˈfɪʃəl ɪnˈtelɪdʒəns/","/ˌɑːrtɪˈfɪʃəl ɪnˈtelɪdʒəns/","L3","模拟人类智能的计算机系统。","[{""en"":""AI is transforming every industry."",""zh"":""人工智能正在改变每个行业。""}]",7

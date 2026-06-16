@@ -1,8 +1,57 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-希腊神话·诸神与英雄,奥林匹斯众神,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与奥林匹斯众神相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",0
-希腊神话·诸神与英雄,普罗米修斯与潘多拉,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与普罗米修斯与潘多拉相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",1
-希腊神话·诸神与英雄,赫拉克勒斯十二任务,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与赫拉克勒斯十二任务相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",2
-希腊神话·特洛伊与奥德赛,特洛伊战争,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与特洛伊战争相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",3
-希腊神话·特洛伊与奥德赛,奥德赛历险,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与奥德赛历险相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",4
-北欧神话·诸神黄昏,北欧诸神与创世,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与北欧诸神与创世相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",5
-北欧神话·诸神黄昏,诸神黄昏与重生,keyword,关键词,noun,/kiːwɜːrd/,/kiːwɜːd/,L2,学习与诸神黄昏与重生相关的核心词汇。,"[{""en"":""This is an example sentence."",""zh"":""这是一个例句。""}]",6
+"神话·希腊神话","奥林匹斯众神","Zeus","宙斯","noun","/zeus/","/zeus/","L2","希腊神话中的众神之王。","[{""en"":""Zeus was the king of the Greek gods."",""zh"":""宙斯是希腊众神之王。""}]",0
+"神话·希腊神话","奥林匹斯众神","Olympus","奥林匹斯山","noun","/olympus/","/olympus/","L2","希腊众神的居所。","[{""en"":""The gods lived on Mount Olympus."",""zh"":""众神住在奥林匹斯山上。""}]",1
+"神话·希腊神话","奥林匹斯众神","thunderbolt","雷电","noun","/thunderbolt/","/thunderbolt/","L2","宙斯的武器。","[{""en"":""Zeus used his thunderbolt to punish the wicked."",""zh"":""宙斯用他的雷电惩罚恶人。""}]",2
+"神话·希腊神话","奥林匹斯众神","Poseidon","波塞冬","noun","/poseidon/","/poseidon/","L2","海神，宙斯的兄弟。","[{""en"":""Poseidon ruled the seas with his trident."",""zh"":""波塞冬用三叉戟统治海洋。""}]",3
+"神话·希腊神话","奥林匹斯众神","Athena","雅典娜","noun","/athena/","/athena/","L2","智慧与战争女神。","[{""en"":""Athena was the goddess of wisdom and war."",""zh"":""雅典娜是智慧与战争女神。""}]",4
+"神话·希腊神话","奥林匹斯众神","immortal","不朽的","adj","/immortal/","/immortal/","L3","永远不会死去的。","[{""en"":""The Greek gods were believed to be immortal."",""zh"":""希腊众神被认为是不朽的。""}]",5
+"神话·希腊神话","奥林匹斯众神","temple","神庙","noun","/temple/","/temple/","L2","供奉神祇的建筑。","[{""en"":""The Parthenon was a temple dedicated to Athena."",""zh"":""帕特农神庙是献给雅典娜的神庙。""}]",6
+"神话·希腊神话","奥林匹斯众神","myth","神话","noun","/myth/","/myth/","L2","关于神和英雄的传统故事。","[{""en"":""Greek myths explain natural phenomena."",""zh"":""希腊神话解释自然现象。""}]",7
+"神话·希腊神话","英雄传奇","Hercules","赫拉克勒斯","noun","/hercules/","/hercules/","L3","希腊神话中最著名的英雄。","[{""en"":""Hercules completed twelve impossible labors."",""zh"":""赫拉克勒斯完成了十二项不可能的任务。""}]",0
+"神话·希腊神话","英雄传奇","hero","英雄","noun","/hero/","/hero/","L2","做出伟大事迹的人。","[{""en"":""Every Greek hero had to overcome great challenges."",""zh"":""每个希腊英雄都必须克服巨大挑战。""}]",1
+"神话·希腊神话","英雄传奇","monster","怪物","noun","/monster/","/monster/","L1","可怕的神话生物。","[{""en"":""The hero had to fight many monsters."",""zh"":""英雄必须与许多怪物战斗。""}]",2
+"神话·希腊神话","英雄传奇","oracle","神谕","noun","/oracle/","/oracle/","L3","神通过祭司传达的预言。","[{""en"":""The oracle warned the hero of his fate."",""zh"":""神谕警告英雄他的命运。""}]",3
+"神话·希腊神话","英雄传奇","quest","探索","noun","/quest/","/quest/","L2","英雄的伟大使命。","[{""en"":""Jason went on a quest for the Golden Fleece."",""zh"":""伊阿宋踏上了寻找金羊毛的征程。""}]",4
+"神话·希腊神话","英雄传奇","tragedy","悲剧","noun","/tragedy/","/tragedy/","L3","英雄因命运或缺陷而失败的故事。","[{""en"":""Greek tragedies often told of heroes who fell from grace."",""zh"":""希腊悲剧常讲述英雄失势的故事。""}]",5
+"神话·希腊神话","英雄传奇","destiny","命运","noun","/destiny/","/destiny/","L2","注定要发生的事。","[{""en"":""No hero could escape their destiny."",""zh"":""没有英雄能逃脱自己的命运。""}]",6
+"神话·希腊神话","英雄传奇","labyrinth","迷宫","noun","/labyrinth/","/labyrinth/","L3","复杂的迷宫，关着牛头怪。","[{""en"":""Theseus entered the labyrinth to fight the Minotaur."",""zh"":""忒修斯进入迷宫与牛头怪战斗。""}]",7
+"神话·希腊神话","特洛伊战争","Trojan War","特洛伊战争","noun","/trojanwar/","/trojanwar/","L2","希腊与特洛伊的十年战争。","[{""en"":""The Trojan War lasted for ten years."",""zh"":""特洛伊战争持续了十年。""}]",0
+"神话·希腊神话","特洛伊战争","Achilles","阿喀琉斯","noun","/achilles/","/achilles/","L3","希腊最伟大的战士。","[{""en"":""Achilles was the greatest warrior of the Greeks."",""zh"":""阿喀琉斯是希腊最伟大的战士。""}]",1
+"神话·希腊神话","特洛伊战争","Trojan Horse","特洛伊木马","noun","/trojanhorse/","/trojanhorse/","L3","希腊人用来攻入特洛伊城的木马计。","[{""en"":""The Greeks hid inside the Trojan Horse."",""zh"":""希腊人藏在特洛伊木马中。""}]",2
+"神话·希腊神话","特洛伊战争","Helen","海伦","noun","/helen/","/helen/","L2","引发特洛伊战争的美女。","[{""en"":""Helen of Troy was said to be the most beautiful woman."",""zh"":""特洛伊的海伦据说是最美的女人。""}]",3
+"神话·希腊神话","特洛伊战争","siege","围攻","noun","/siege/","/siege/","L3","长期包围攻击城市。","[{""en"":""The Greeks laid siege to Troy for ten years."",""zh"":""希腊人围攻特洛伊十年。""}]",4
+"神话·希腊神话","特洛伊战争","warrior","战士","noun","/warrior/","/warrior/","L2","战斗的人。","[{""en"":""The greatest warriors fought at Troy."",""zh"":""最伟大的战士在特洛伊战斗。""}]",5
+"神话·希腊神话","特洛伊战争","shield","盾牌","noun","/shield/","/shield/","L1","防御武器。","[{""en"":""The warrior raised his shield to block the attack."",""zh"":""战士举起盾牌挡住攻击。""}]",6
+"神话·希腊神话","特洛伊战争","Homer","荷马","noun","/homer/","/homer/","L3","古希腊诗人，著有《伊利亚特》。","[{""en"":""Homer wrote the Iliad about the Trojan War."",""zh"":""荷马写了关于特洛伊战争的《伊利亚特》。""}]",7
+"神话·北欧神话","北欧众神","Odin","奥丁","noun","/odin/","/odin/","L3","北欧神话中的众神之父。","[{""en"":""Odin sacrificed an eye for wisdom."",""zh"":""奥丁为智慧牺牲了一只眼睛。""}]",0
+"神话·北欧神话","北欧众神","Thor","雷神索尔","noun","/thor/","/thor/","L2","北欧神话中的雷神。","[{""en"":""Thor wielded the mighty hammer Mjolnir."",""zh"":""雷神索尔挥舞着强大的雷神之锤。""}]",1
+"神话·北欧神话","北欧众神","Asgard","阿斯加德","noun","/asgard/","/asgard/","L3","北欧众神的居所。","[{""en"":""Asgard was the home of the Norse gods."",""zh"":""阿斯加德是北欧众神的家园。""}]",2
+"神话·北欧神话","北欧众神","Valhalla","英灵殿","noun","/valhalla/","/valhalla/","L3","战死勇士的永生殿堂。","[{""en"":""Fallen warriors hoped to enter Valhalla."",""zh"":""战死的勇士希望能进入英灵殿。""}]",3
+"神话·北欧神话","北欧众神","Ragnarok","诸神黄昏","noun","/ragnarok/","/ragnarok/","L3","北欧神话中的末日之战。","[{""en"":""Ragnarok was the prophesied end of the world."",""zh"":""诸神黄昏是预言中的世界末日。""}]",4
+"神话·北欧神话","北欧众神","Loki","洛基","noun","/loki/","/loki/","L2","诡计之神。","[{""en"":""Loki was the trickster god who caused trouble."",""zh"":""洛基是制造麻烦的诡计之神。""}]",5
+"神话·北欧神话","北欧众神","giant","巨人","noun","/giant/","/giant/","L1","与神为敌的巨大生物。","[{""en"":""The giants were the enemies of the gods."",""zh"":""巨人是众神的敌人。""}]",6
+"神话·北欧神话","北欧众神","Valkyrie","女武神","noun","/valkyrie/","/valkyrie/","L3","挑选战死勇士的女神。","[{""en"":""The Valkyries chose warriors to go to Valhalla."",""zh"":""女武神选择勇士进入英灵殿。""}]",7
+"神话·北欧神话","世界树与九界","Yggdrasil","世界树","noun","/yggdrasil/","/yggdrasil/","L3","连接北欧神话九界的大树。","[{""en"":""Yggdrasil connected all nine worlds."",""zh"":""世界树连接了所有九个世界。""}]",0
+"神话·北欧神话","世界树与九界","Midgard","中庭","noun","/midgard/","/midgard/","L3","人类居住的世界。","[{""en"":""Humans lived in Midgard, the middle world."",""zh"":""人类住在中庭，中间的世界。""}]",1
+"神话·北欧神话","世界树与九界","Jotunheim","约顿海姆","noun","/jotunheim/","/jotunheim/","L3","巨人的世界。","[{""en"":""The giants lived in the frozen land of Jotunheim."",""zh"":""巨人住在冰封的约顿海姆。""}]",2
+"神话·北欧神话","世界树与九界","Bifrost","彩虹桥","noun","/bifrost/","/bifrost/","L3","连接阿斯加德和中庭的彩虹桥。","[{""en"":""Heimdall guarded the Bifrost bridge."",""zh"":""海姆达尔守护着彩虹桥。""}]",3
+"神话·北欧神话","世界树与九界","dwarf","矮人","noun","/dwarf/","/dwarf/","L2","住在山中的工匠。","[{""en"":""Dwarves forged mighty weapons for the gods."",""zh"":""矮人为众神锻造强大的武器。""}]",4
+"神话·北欧神话","世界树与九界","elf","精灵","noun","/elf/","/elf/","L2","住在光之世界的美丽生物。","[{""en"":""The light elves lived in Alfheim."",""zh"":""光之精灵住在亚尔夫海姆。""}]",5
+"神话·北欧神话","世界树与九界","cosmic","宇宙的","adj","/cosmic/","/cosmic/","L3","与宇宙和世界结构相关的。","[{""en"":""Norse mythology describes a cosmic tree of life."",""zh"":""北欧神话描述了一棵宇宙生命树。""}]",6
+"神话·北欧神话","世界树与九界","realm","领域/王国","noun","/realm/","/realm/","L3","一种存在的世界或领域。","[{""en"":""Each realm had its own unique inhabitants."",""zh"":""每个领域都有自己独特的居民。""}]",7
+"神话·东方神话","中国创世神话","Pangu","盘古","noun","/pangu/","/pangu/","L3","中国神话中开天辟地的巨人。","[{""en"":""Pangu separated heaven and earth with his axe."",""zh"":""盘古用斧头分开了天地。""}]",0
+"神话·东方神话","中国创世神话","Nuwa","女娲","noun","/nuwa/","/nuwa/","L3","中国神话中造人和补天的女神。","[{""en"":""Nuwa created humans from clay."",""zh"":""女娲用泥土造人。""}]",1
+"神话·东方神话","中国创世神话","creation","创世","noun","/creation/","/creation/","L2","世界被创造的过程。","[{""en"":""Creation myths explain how the world began."",""zh"":""创世神话解释世界如何开始。""}]",2
+"神话·东方神话","中国创世神话","heaven","天","noun","/heaven/","/heaven/","L2","神话中神的居所和上方世界。","[{""en"":""In Chinese myth, heaven and earth were once one."",""zh"":""在中国神话中，天地曾是一体。""}]",3
+"神话·东方神话","中国创世神话","chaos","混沌","noun","/chaos/","/chaos/","L3","创世前的无序状态。","[{""en"":""In the beginning, there was only chaos."",""zh"":""起初只有混沌。""}]",4
+"神话·东方神话","中国创世神话","cosmic egg","宇宙蛋","noun","/cosmicegg/","/cosmicegg/","L3","许多创世神话中的原始形态。","[{""en"":""Pangu was born from a cosmic egg."",""zh"":""盘古从宇宙蛋中诞生。""}]",5
+"神话·东方神话","中国创世神话","pillar","柱子","noun","/pillar/","/pillar/","L2","支撑天的柱子。","[{""en"":""Nuwa used pillars to hold up the sky."",""zh"":""女娲用柱子撑起天。""}]",6
+"神话·东方神话","中国创世神话","mythical","神话的","adj","/mythical/","/mythical/","L2","与神话相关的。","[{""en"":""These mythical stories have been told for centuries."",""zh"":""这些神话故事已经流传了几个世纪。""}]",7
+"神话·东方神话","日本神话故事","Izanagi","伊邪那岐","noun","/izanagi/","/izanagi/","L3","日本神话中的创世男神。","[{""en"":""Izanagi and Izanami created the islands of Japan."",""zh"":""伊邪那岐和伊邪那美创造了日本列岛。""}]",0
+"神话·东方神话","日本神话故事","Amaterasu","天照大神","noun","/amaterasu/","/amaterasu/","L3","日本神话中的太阳女神。","[{""en"":""Amaterasu is the sun goddess in Japanese mythology."",""zh"":""天照大神是日本神话中的太阳女神。""}]",1
+"神话·东方神话","日本神话故事","kami","神/灵","noun","/kami/","/kami/","L3","日本神道教中的神灵。","[{""en"":""In Japan, kami are spirits found in nature."",""zh"":""在日本，神是存在于自然中的灵。""}]",2
+"神话·东方神话","日本神话故事","tsunami","海啸","noun","/tsunami/","/tsunami/","L2","神话中常出现的大海浪。","[{""en"":""The god of the sea could cause terrible tsunamis."",""zh"":""海神可以引发可怕的海啸。""}]",3
+"神话·东方神话","日本神话故事","sacred","神圣的","adj","/sacred/","/sacred/","L2","与神相关的，不可侵犯的。","[{""en"":""Mount Fuji is considered a sacred mountain."",""zh"":""富士山被认为是一座圣山。""}]",4
+"神话·东方神话","日本神话故事","mirror","镜子","noun","/mirror/","/mirror/","L2","日本神话中的重要神器。","[{""en"":""The sacred mirror was one of Japan's three treasures."",""zh"":""神镜是日本三神器之一。""}]",5
+"神话·东方神话","日本神话故事","dragon","龙","noun","/dragon/","/dragon/","L1","东亚神话中的神兽。","[{""en"":""Japanese dragons are often associated with water."",""zh"":""日本的龙常与水相关联。""}]",6
+"神话·东方神话","日本神话故事","shrine","神社","noun","/shrine/","/shrine/","L2","供奉神祇的日式建筑。","[{""en"":""People visit shrines to pray to the kami."",""zh"":""人们去神社向神灵祈祷。""}]",7

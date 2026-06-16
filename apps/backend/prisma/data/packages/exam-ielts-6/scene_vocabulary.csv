@@ -1,9 +1,16 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-雅思·IELTS Band 6 基础,家乡与住所,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,你的出生地或成长的地方。,"""""""[{""""""""en"""""""":""""""""My hometown is a small city in the south.""""""""""""","zh:我的家乡是南方的一个小城市。}]"""
-雅思·IELTS Band 6 基础,家乡与住所,accommodation,住所,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,住处/住宿。,"""""""[{""""""""en"""""""":""""""""I live in a flat near the city center.""""""""""""","zh:我住在市中心附近的一套公寓里。}]"""
-雅思·IELTS Band 6 基础,家乡与住所,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L1,大学主修专业。,"""""""[{""""""""en"""""""":""""""""My major is Business Administration.""""""""""""","zh:我的专业是工商管理。}]"""
-雅思·IELTS Band 6 基础,家乡与住所,colleague,同事,noun,/ˈkɑːliːɡ/,/ˈkɒliːɡ/,L2,一起工作的人。,"""""""[{""""""""en"""""""":""""""""I get along well with my colleagues.""""""""""""","zh:我和同事相处融洽。}]"""
-雅思·IELTS Band 6 基础,学习与工作,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,你的出生地或成长的地方。,"""""""[{""""""""en"""""""":""""""""My hometown is a small city in the south.""""""""""""","zh:我的家乡是南方的一个小城市。}]"""
-雅思·IELTS Band 6 基础,学习与工作,accommodation,住所,noun,/əˌkɑːməˈdeɪʃən/,/əˌkɒməˈdeɪʃən/,L2,住处/住宿。,"""""""[{""""""""en"""""""":""""""""I live in a flat near the city center.""""""""""""","zh:我住在市中心附近的一套公寓里。}]"""
-雅思·IELTS Band 6 基础,学习与工作,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L1,大学主修专业。,"""""""[{""""""""en"""""""":""""""""My major is Business Administration.""""""""""""","zh:我的专业是工商管理。}]"""
-雅思·IELTS Band 6 基础,学习与工作,colleague,同事,noun,/ˈkɑːliːɡ/,/ˈkɒliːɡ/,L2,一起工作的人。,"""""""[{""""""""en"""""""":""""""""I get along well with my colleagues.""""""""""""","zh:我和同事相处融洽。}]"""
+"雅思·IELTS Band 6 基础","家乡与住所","hometown","家乡","noun","/ˈhoʊmtaʊn/","/ˈhəʊmtaʊn/","L1","你的出生地或成长的地方。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""My hometown is a small city in the south.""""""""""""""""""""""""""","zh:我的家乡是南方的一个小城市。}]"""
+"雅思·IELTS Band 6 基础","家乡与住所","accommodation","住所","noun","/əˌkɑːməˈdeɪʃən/","/əˌkɒməˈdeɪʃən/","L2","住处/住宿。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I live in a flat near the city center.""""""""""""""""""""""""""","zh:我住在市中心附近的一套公寓里。}]"""
+"雅思·IELTS Band 6 基础","家乡与住所","major","专业","noun","/ˈmeɪdʒər/","/ˈmeɪdʒə/","L1","大学主修专业。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""My major is Business Administration.""""""""""""""""""""""""""","zh:我的专业是工商管理。}]"""
+"雅思·IELTS Band 6 基础","家乡与住所","colleague","同事","noun","/ˈkɑːliːɡ/","/ˈkɒliːɡ/","L2","一起工作的人。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I get along well with my colleagues.""""""""""""""""""""""""""","zh:我和同事相处融洽。}]"""
+"雅思·IELTS Band 6 基础","学习与工作","hometown","家乡","noun","/ˈhoʊmtaʊn/","/ˈhəʊmtaʊn/","L1","你的出生地或成长的地方。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""My hometown is a small city in the south.""""""""""""""""""""""""""","zh:我的家乡是南方的一个小城市。}]"""
+"雅思·IELTS Band 6 基础","学习与工作","accommodation","住所","noun","/əˌkɑːməˈdeɪʃən/","/əˌkɒməˈdeɪʃən/","L2","住处/住宿。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I live in a flat near the city center.""""""""""""""""""""""""""","zh:我住在市中心附近的一套公寓里。}]"""
+"雅思·IELTS Band 6 基础","学习与工作","major","专业","noun","/ˈmeɪdʒər/","/ˈmeɪdʒə/","L1","大学主修专业。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""My major is Business Administration.""""""""""""""""""""""""""","zh:我的专业是工商管理。}]"""
+"雅思·IELTS Band 6 基础","学习与工作","colleague","同事","noun","/ˈkɑːliːɡ/","/ˈkɒliːɡ/","L2","一起工作的人。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I get along well with my colleagues.""""""""""""""""""""""""""","zh:我和同事相处融洽。}]"""
+"雅思·IELTS Band 6 基础","家乡与住所","suburb","郊区","noun","/suburb/","/suburb/","L2","城市外围的住宅区。","[{""en"":""I grew up in the suburbs of London."",""zh"":""我在伦敦郊区长大。""}]",8
+"雅思·IELTS Band 6 基础","家乡与住所","downtown","市中心","noun","/downtown/","/downtown/","L1","城市的商业中心区。","[{""en"":""There are many shops downtown."",""zh"":""市中心有很多商店。""}]",9
+"雅思·IELTS Band 6 基础","家乡与住所","cozy","舒适的","adj","/cozy/","/cozy/","L2","小而温暖舒适的。","[{""en"":""My apartment is small but cozy."",""zh"":""我的公寓很小但很舒适。""}]",10
+"雅思·IELTS Band 6 基础","家乡与住所","neighborhood","社区/街区","noun","/neighborhood/","/neighborhood/","L2","居住的周边区域。","[{""en"":""The neighborhood is quiet and safe."",""zh"":""这个社区安静又安全。""}]",11
+"雅思·IELTS Band 6 基础","学习与工作","schedule","日程/时间表","noun","/schedule/","/schedule/","L2","安排好的时间计划。","[{""en"":""My schedule is quite busy this week."",""zh"":""我这周的日程很忙。""}]",8
+"雅思·IELTS Band 6 基础","学习与工作","deadline","截止日期","noun","/deadline/","/deadline/","L2","必须完成任务的最后期限。","[{""en"":""The deadline for the project is Friday."",""zh"":""项目的截止日期是周五。""}]",9
+"雅思·IELTS Band 6 基础","学习与工作","qualification","资格/学历","noun","/qualification/","/qualification/","L2","证明能力或学历的凭证。","[{""en"":""What qualifications do you have?"",""zh"":""你有什么资质？""}]",11

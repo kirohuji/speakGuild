@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-campus_校园_选课咨询_选课操作",
+  "title": "校园·选课咨询 - 选课操作",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-campus_校园_选课咨询_选课操作\ntitle: 校园·选课咨询 - 选课操作\n---\nAcademic Advisor: Let's talk about 选课操作. What do you think about it?\n#objective: 问怎么选课\n#chunks: How do I register for this course?,When does registration open?\n#user_input\nAcademic Advisor: That's interesting! Can you tell me more about that?\n#objective: 问选课时间\n#chunks: How do I register for this course?,When does registration open?\n#user_input\nAcademic Advisor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

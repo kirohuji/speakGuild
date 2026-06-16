@@ -1,0 +1,6 @@
+{
+  "key": "practice_foundation-daily-life_基础_家务与居家_居家休息",
+  "title": "基础·家务与居家 - 居家休息",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_foundation-daily-life_基础_家务与居家_居家休息\ntitle: 基础·家务与居家 - 居家休息\n---\nTutor: Let's talk about 居家休息. What do you think about it?\n#objective: 练习居家休息相关表达\n#chunks: I'm just relaxing at home.,Let's watch a movie.,I like to read books.,What TV show are you watching?\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I'm just relaxing at home.,Let's watch a movie.,I like to read books.,What TV show are you watching?\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

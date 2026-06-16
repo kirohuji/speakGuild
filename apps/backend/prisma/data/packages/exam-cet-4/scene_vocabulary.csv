@@ -1,17 +1,33 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-四级·校园生活,选课与课程,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",0
-四级·校园生活,选课与课程,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",1
-四级·校园生活,社团与活动,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",2
-四级·校园生活,社团与活动,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",3
-四级·校园生活,环境保护,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",4
-四级·校园生活,环境保护,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",5
-四级·校园生活,科技与生活,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",6
-四级·校园生活,科技与生活,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",7
-四级·社会热点,选课与课程,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",8
-四级·社会热点,选课与课程,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",9
-四级·社会热点,社团与活动,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",10
-四级·社会热点,社团与活动,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",11
-四级·社会热点,环境保护,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",12
-四级·社会热点,环境保护,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",13
-四级·社会热点,科技与生活,curriculum,课程,noun,/kəˈrɪkjələm/,/kəˈrɪkjələm/,L2,全部课程。,"[{""en"":""The curriculum is very flexible."",""zh"":""课程设置非常灵活。""}]",14
-四级·社会热点,科技与生活,extracurricular,课外的,adj,/ˌekstrəkəˈrɪkjələr/,/ˌekstrəkəˈrɪkjələ/,L2,课外的。,"[{""en"":""I joined several extracurricular activities."",""zh"":""我参加了几个课外活动。""}]",15
+"四级·校园生活","选课与课程","course","课程","noun","/course/","/course/","L1","大学开设的课程。","[{""en"":""I need to choose my courses for next semester."",""zh"":""我需要为下学期选课。""}]",0
+"四级·校园生活","选课与课程","credit","学分","noun","/credit/","/credit/","L2","课程学分。","[{""en"":""This course is worth three credits."",""zh"":""这门课三个学分。""}]",1
+"四级·校园生活","选课与课程","semester","学期","noun","/semester/","/semester/","L2","学年的一半。","[{""en"":""The new semester starts in September."",""zh"":""新学期九月开始。""}]",2
+"四级·校园生活","选课与课程","syllabus","教学大纲","noun","/syllabus/","/syllabus/","L3","课程的内容和安排。","[{""en"":""The syllabus lists all the topics we will cover."",""zh"":""教学大纲列出了我们将覆盖的所有主题。""}]",3
+"四级·校园生活","选课与课程","assignment","作业","noun","/assignment/","/assignment/","L2","老师布置的任务。","[{""en"":""The assignment is due next Monday."",""zh"":""作业下周一交。""}]",4
+"四级·校园生活","选课与课程","lecture","讲座/大课","noun","/lecture/","/lecture/","L2","老师在教室讲授的课程。","[{""en"":""The lecture hall can seat 200 students."",""zh"":""这个阶梯教室能坐200个学生。""}]",5
+"四级·校园生活","选课与课程","elective","选修课","noun","/elective/","/elective/","L3","可自由选择的课程。","[{""en"":""I chose photography as my elective."",""zh"":""我选了摄影作为选修课。""}]",6
+"四级·校园生活","选课与课程","GPA","平均绩点","noun","/gpa/","/gpa/","L2","综合学业成绩的指标。","[{""en"":""My GPA improved this semester."",""zh"":""我这学期的绩点提高了。""}]",7
+"四级·校园生活","社团与活动","club","社团","noun","/club/","/club/","L1","学生组织。","[{""en"":""I joined the photography club."",""zh"":""我加入了摄影社团。""}]",0
+"四级·校园生活","社团与活动","volunteer","志愿者","noun","/volunteer/","/volunteer/","L2","自愿无偿服务的人。","[{""en"":""I volunteer at the animal shelter every weekend."",""zh"":""我每个周末在动物收容所做志愿者。""}]",1
+"四级·校园生活","社团与活动","activity","活动","noun","/activity/","/activity/","L1","课外活动。","[{""en"":""Extracurricular activities are important for college life."",""zh"":""课外活动对大学生活很重要。""}]",2
+"四级·校园生活","社团与活动","organize","组织","verb","/organize/","/organize/","L2","安排和筹划活动。","[{""en"":""I helped organize the campus festival."",""zh"":""我帮忙组织了校园文化节。""}]",3
+"四级·校园生活","社团与活动","teamwork","团队合作","noun","/teamwork/","/teamwork/","L2","多人协作完成任务。","[{""en"":""Teamwork is an important skill to develop."",""zh"":""团队合作是需要培养的重要技能。""}]",4
+"四级·校园生活","社团与活动","leadership","领导力","noun","/leadership/","/leadership/","L2","带领团队的能力。","[{""en"":""Being club president developed my leadership skills."",""zh"":""当社长培养了我的领导能力。""}]",5
+"四级·校园生活","社团与活动","membership","会员资格","noun","/membership/","/membership/","L2","成为组织成员的身份。","[{""en"":""Club membership costs 50 yuan per year."",""zh"":""社团会员费每年50元。""}]",6
+"四级·校园生活","社团与活动","recruit","招募","verb","/recruit/","/recruit/","L2","招收新成员。","[{""en"":""We are recruiting new members for the club."",""zh"":""我们正在为社团招募新成员。""}]",7
+"四级·社会热点","环境保护","environment","环境","noun","/environment/","/environment/","L2","我们周围的自然环境。","[{""en"":""Protecting the environment is everyone's responsibility."",""zh"":""保护环境是每个人的责任。""}]",0
+"四级·社会热点","环境保护","recycle","回收","verb","/recycle/","/recycle/","L2","将废物转化为可再用材料。","[{""en"":""We should recycle paper, plastic, and glass."",""zh"":""我们应该回收纸张、塑料和玻璃。""}]",1
+"四级·社会热点","环境保护","pollution","污染","noun","/pollution/","/pollution/","L2","环境中的有害物质。","[{""en"":""Air pollution is a serious problem in big cities."",""zh"":""空气污染是大城市的严重问题。""}]",2
+"四级·社会热点","环境保护","carbon emission","碳排放","noun","/carbonemission/","/carbonemission/","L3","燃烧化石燃料释放的二氧化碳。","[{""en"":""Reducing carbon emissions is crucial."",""zh"":""减少碳排放至关重要。""}]",3
+"四级·社会热点","环境保护","renewable","可再生的","adj","/renewable/","/renewable/","L3","能自然补充的。","[{""en"":""Solar and wind power are renewable energy sources."",""zh"":""太阳能和风能是可再生能源。""}]",4
+"四级·社会热点","环境保护","conservation","保护","noun","/conservation/","/conservation/","L3","保护自然资源。","[{""en"":""Water conservation is important in dry areas."",""zh"":""水资源保护在干旱地区很重要。""}]",5
+"四级·社会热点","环境保护","sustainable","可持续的","adj","/sustainable/","/sustainable/","L3","不损害未来的发展方式。","[{""en"":""We need to find sustainable ways of living."",""zh"":""我们需要找到可持续的生活方式。""}]",6
+"四级·社会热点","环境保护","greenhouse effect","温室效应","noun","/greenhouseeffect/","/greenhouseeffect/","L3","大气层保温导致全球变暖。","[{""en"":""The greenhouse effect is causing global temperatures to rise."",""zh"":""温室效应导致全球气温上升。""}]",7
+"四级·社会热点","科技与生活","technology","科技","noun","/technology/","/technology/","L2","科学技术和应用。","[{""en"":""Technology has changed every aspect of our lives."",""zh"":""科技改变了我们生活的方方面面。""}]",0
+"四级·社会热点","科技与生活","smartphone","智能手机","noun","/smartphone/","/smartphone/","L1","智能移动电话。","[{""en"":""Smartphones have become essential tools."",""zh"":""智能手机已成为必备工具。""}]",1
+"四级·社会热点","科技与生活","convenience","便利","noun","/convenience/","/convenience/","L2","省时省力的特性。","[{""en"":""Online shopping offers great convenience."",""zh"":""网购提供了极大的便利。""}]",2
+"四级·社会热点","科技与生活","addiction","上瘾","noun","/addiction/","/addiction/","L2","过度依赖。","[{""en"":""Phone addiction is a growing concern among young people."",""zh"":""手机上瘾在年轻人中日益严重。""}]",3
+"四级·社会热点","科技与生活","innovation","创新","noun","/innovation/","/innovation/","L3","新想法和新方法。","[{""en"":""Technological innovation drives economic growth."",""zh"":""技术创新驱动经济增长。""}]",4
+"四级·社会热点","科技与生活","efficiency","效率","noun","/efficiency/","/efficiency/","L3","用最少资源达到最好效果。","[{""en"":""Technology improves efficiency in many fields."",""zh"":""科技提高了许多领域的效率。""}]",5
+"四级·社会热点","科技与生活","digital","数字的","adj","/digital/","/digital/","L2","使用电子技术的。","[{""en"":""The digital age has transformed education."",""zh"":""数字时代改变了教育。""}]",6
+"四级·社会热点","科技与生活","privacy","隐私","noun","/privacy/","/privacy/","L2","个人信息保护。","[{""en"":""Technology poses challenges to personal privacy."",""zh"":""科技对个人隐私构成挑战。""}]",7

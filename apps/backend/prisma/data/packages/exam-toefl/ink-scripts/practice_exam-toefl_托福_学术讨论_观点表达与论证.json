@@ -1,0 +1,6 @@
+{
+  "key": "practice_exam-toefl_托福_学术讨论_观点表达与论证",
+  "title": "托福·学术讨论 - 观点表达与论证",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_exam-toefl_托福_学术讨论_观点表达与论证\ntitle: 托福·学术讨论 - 观点表达与论证\n---\nTutor: Let's talk about 观点表达与论证. What do you think about it?\n#objective: 学习观点表达与论证相关表达\n#chunks: Let me talk about 观点表达与论证.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me talk about 观点表达与论证.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-tenses_时态_一般与进行时_一般现在与现在进行",
+  "title": "时态·一般与进行时 - 一般现在与现在进行",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-tenses_时态_一般与进行时_一般现在与现在进行\ntitle: 时态·一般与进行时 - 一般现在与现在进行\n---\nTutor: Let's talk about 一般现在与现在进行. What do you think about it?\n#objective: 用一般现在描述习惯\n#chunks: I usually... (present simple),I'm currently... (present continuous)\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用现在进行描述当前\n#chunks: I usually... (present simple),I'm currently... (present continuous)\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-campus_校园_选课咨询_咨询课程",
+  "title": "校园·选课咨询 - 咨询课程",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-campus_校园_选课咨询_咨询课程\ntitle: 校园·选课咨询 - 咨询课程\n---\nAcademic Advisor: Let's talk about 咨询课程. What do you think about it?\n#objective: 问课程内容\n#chunks: Can you tell me about this course?,How is this course assessed?\n#user_input\nAcademic Advisor: That's interesting! Can you tell me more about that?\n#objective: 问考核方式\n#chunks: Can you tell me about this course?,How is this course assessed?\n#user_input\nAcademic Advisor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

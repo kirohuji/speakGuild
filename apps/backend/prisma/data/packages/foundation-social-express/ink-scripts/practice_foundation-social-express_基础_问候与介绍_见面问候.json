@@ -1,0 +1,6 @@
+{
+  "key": "practice_foundation-social-express_基础_问候与介绍_见面问候",
+  "title": "基础·问候与介绍 - 见面问候",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_foundation-social-express_基础_问候与介绍_见面问候\ntitle: 基础·问候与介绍 - 见面问候\n---\nTutor: Let's talk about 见面问候. What do you think about it?\n#objective: 练习见面问候相关表达\n#chunks: Hello! How are you?,Hi! Long time no see.,Nice to meet you!,How's it going?\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Hello! How are you?,Hi! Long time no see.,Nice to meet you!,How's it going?\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

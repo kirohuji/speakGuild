@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-linking_连词_从句与复杂句_定语从句",
+  "title": "连词·从句与复杂句 - 定语从句",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-linking_连词_从句与复杂句_定语从句\ntitle: 连词·从句与复杂句 - 定语从句\n---\nTutor: Let's talk about 定语从句. What do you think about it?\n#objective: 用who定语从句\n#chunks: The person who...,The book which I...\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用which定语从句\n#chunks: The person who...,The book which I...\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

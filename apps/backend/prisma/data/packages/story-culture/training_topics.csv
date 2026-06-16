@@ -1,10 +1,10 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-英国文化·传统与现代,王室与君主制,Talk about the British monarchy and royal traditions.,讲述英国君主制和皇家传统。,50,L2,学习王室相关词汇（king/queen/castle/coronation）和皇家传统如卫兵换岗。,王室 君主制 伦敦,
-英国文化·传统与现代,下午茶与美食文化,Describe British food culture: afternoon tea and pub.,描述英国饮食文化：下午茶和酒吧文化。,50,L2,学习下午茶礼仪、传统英式菜肴（fish and chips）和酒吧文化词汇。,下午茶 美食 酒吧,
-英国文化·传统与现代,英国体育与娱乐,Talk about British sports: football tennis and cricket.,讲述英国体育：足球/温网/板球。,45,L2,学习英超俱乐部、温布尔登网球和板球规则的基本词汇。,体育 足球 温网,
-美国文化·节日与生活方式,美国主要节日,Describe major US holidays: Thanksgiving and the 4th of July.,描述美国主要节日：感恩节和独立日。,50,L2,学习感恩节起源、独立日庆祝活动和家庭聚会相关词汇。,节日 感恩节 独立日,
-美国文化·节日与生活方式,美国流行文化,Talk about American pop culture: Hollywood and music.,讲述美国流行文化：好莱坞和音乐。,50,L2,学习电影类型、格莱美、百老汇等流行文化词汇。,流行文化 好莱坞 音乐,
-全球文化·节日与习俗,亚洲文化与传统,Describe Asian cultural traditions: Spring Festival and tea ceremony.,描述亚洲文化传统：春节和茶道。,55,L2,学习中国春节习俗、日本茶道、印度排灯节等亚洲文化表达。,亚洲 春节 茶道 排灯节,
-全球文化·节日与习俗,世界各地的文化,Narrate cultural traditions from around the world.,叙述世界各地的文化传统。,55,L2,学习墨西哥亡灵节、法国美食文化、非洲鼓乐等多样文化词汇。,亡灵节 法国美食 非洲,
-现代文化·数字时代,社交媒体与数字生活,Talk about social media and digital lifestyle.,讲述社交媒体和数字生活方式。,55,L3,学习社交媒体平台、网络现象、远程办公和数字时尚等现代词汇。,社交媒体 数字 远程,
-现代文化·数字时代,当代社会议题,Discuss contemporary social issues and global trends.,讨论当代社会议题和全球趋势。,60,L3,学习环保运动、多元文化、心理健康和全球化等相关词汇和讨论表达。,社会议题 环保 全球化,
+英国文化·传统与现代,王室与君主制,Talk about the British monarchy and royal traditions.,讲述英国君主制和皇家传统。,50,L2,学习王室相关词汇（king/queen/castle/coronation）和皇家传统如卫兵换岗。,王室 君主制 伦敦,practice_story-culture_英国文化_传统与现代_王室与君主制
+英国文化·传统与现代,下午茶与美食文化,Describe British food culture: afternoon tea and pub.,描述英国饮食文化：下午茶和酒吧文化。,50,L2,学习下午茶礼仪、传统英式菜肴（fish and chips）和酒吧文化词汇。,下午茶 美食 酒吧,practice_story-culture_英国文化_传统与现代_下午茶与美食文化
+英国文化·传统与现代,英国体育与娱乐,Talk about British sports: football tennis and cricket.,讲述英国体育：足球/温网/板球。,45,L2,学习英超俱乐部、温布尔登网球和板球规则的基本词汇。,体育 足球 温网,practice_story-culture_英国文化_传统与现代_英国体育与娱乐
+美国文化·节日与生活方式,美国主要节日,Describe major US holidays: Thanksgiving and the 4th of July.,描述美国主要节日：感恩节和独立日。,50,L2,学习感恩节起源、独立日庆祝活动和家庭聚会相关词汇。,节日 感恩节 独立日,practice_story-culture_美国文化_节日与生活方式_美国主要节日
+美国文化·节日与生活方式,美国流行文化,Talk about American pop culture: Hollywood and music.,讲述美国流行文化：好莱坞和音乐。,50,L2,学习电影类型、格莱美、百老汇等流行文化词汇。,流行文化 好莱坞 音乐,practice_story-culture_美国文化_节日与生活方式_美国流行文化
+全球文化·节日与习俗,亚洲文化与传统,Describe Asian cultural traditions: Spring Festival and tea ceremony.,描述亚洲文化传统：春节和茶道。,55,L2,学习中国春节习俗、日本茶道、印度排灯节等亚洲文化表达。,亚洲 春节 茶道 排灯节,practice_story-culture_全球文化_节日与习俗_亚洲文化与传统
+全球文化·节日与习俗,世界各地的文化,Narrate cultural traditions from around the world.,叙述世界各地的文化传统。,55,L2,学习墨西哥亡灵节、法国美食文化、非洲鼓乐等多样文化词汇。,亡灵节 法国美食 非洲,practice_story-culture_全球文化_节日与习俗_世界各地的文化
+现代文化·数字时代,社交媒体与数字生活,Talk about social media and digital lifestyle.,讲述社交媒体和数字生活方式。,55,L3,学习社交媒体平台、网络现象、远程办公和数字时尚等现代词汇。,社交媒体 数字 远程,practice_story-culture_现代文化_数字时代_社交媒体与数字生活
+现代文化·数字时代,当代社会议题,Discuss contemporary social issues and global trends.,讨论当代社会议题和全球趋势。,60,L3,学习环保运动、多元文化、心理健康和全球化等相关词汇和讨论表达。,社会议题 环保 全球化,practice_story-culture_现代文化_数字时代_当代社会议题

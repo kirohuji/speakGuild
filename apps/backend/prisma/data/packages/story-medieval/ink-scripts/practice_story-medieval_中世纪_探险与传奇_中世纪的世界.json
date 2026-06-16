@@ -1,0 +1,6 @@
+{
+  "key": "practice_story-medieval_中世纪_探险与传奇_中世纪的世界",
+  "title": "中世纪·探险与传奇 - 中世纪的世界",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_story-medieval_中世纪_探险与传奇_中世纪的世界\ntitle: 中世纪·探险与传奇 - 中世纪的世界\n---\nInstructor: Let's talk about 中世纪的世界. What do you think about it?\n#objective: Practice talking about 中世纪的世界\n#chunks: Let me tell you about 中世纪的世界.\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me tell you about 中世纪的世界.\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

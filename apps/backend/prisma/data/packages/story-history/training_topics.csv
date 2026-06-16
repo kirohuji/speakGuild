@@ -1,11 +1,11 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-英国历史·从罗马到诺曼征服,罗马不列颠,Talk about Roman Britain and Hadrian's Wall.,讲述罗马占领不列颠和哈德良长城的故事。,55,L3,学习罗马占领不列颠的起因、哈德良长城的修建和罗马人的日常生活词汇。,罗马 不列颠 哈德良长城,
-英国历史·从罗马到诺曼征服,盎格鲁-撒克逊时代,Describe the Anglo-Saxon period and King Alfred.,描述盎格鲁-撒克逊时期和阿尔弗雷德大帝的故事。,55,L3,学习七国时代、阿尔弗雷德大帝抵抗维京人和古英语文化。,盎格鲁-撒克逊 七国 阿尔弗雷德,
-英国历史·从罗马到诺曼征服,维京人与诺曼征服,Narrate the Viking invasions and the Norman Conquest.,叙述维京入侵和1066年诺曼征服的故事。,60,L3,学习维京人入侵、黑斯廷斯战役和威廉征服者的历史意义。,维京 诺曼 黑斯廷斯,
-英国历史·都铎王朝到工业革命,都铎王朝,Talk about the Tudor dynasty: Henry VIII and Elizabeth I.,讲述都铎王朝的故事：亨利八世和伊丽莎白一世。,55,L3,学习都铎王朝的宗教改革、西班牙无敌舰队和伊丽莎白时代繁荣。,都铎 亨利八世 伊丽莎白,
-英国历史·都铎王朝到工业革命,英国内战与光荣革命,Describe the English Civil War and the Glorious Revolution.,描述英国内战和光荣革命的故事。,55,L3,学习克伦威尔、议会与国王之争和权利法案的诞生。,内战 克伦威尔 光荣革命,
-英国历史·都铎王朝到工业革命,工业革命,Narrate the Industrial Revolution and its impact.,叙述工业革命及其对社会的影响。,60,L3,学习蒸汽机、工厂制度、城市化和社会变革的关键词汇。,工业革命 蒸汽机 城市化,
-美国历史·独立与建国,美国独立战争,Talk about the American Revolutionary War.,讲述美国独立战争的故事。,55,L3,学习波士顿倾茶事件、独立宣言和乔治·华盛顿的领导。,独立战争 独立宣言 华盛顿,
-美国历史·独立与建国,建国与宪法,Describe the founding of the US and the Constitution.,描述美国建国和宪法制定的过程。,55,L3,学习制宪会议、联邦制度、权利法案和建国先贤们。,宪法 建国 联邦,
-美国历史·西进到民权运动,西进运动与南北战争,Narrate Westward Expansion and the Civil War.,叙述西进运动和南北战争的故事。,60,L3,学习路易斯安那购地、南北分歧、林肯和解放宣言。,西进 南北战争 林肯,
-美国历史·西进到民权运动,工业时代与民权运动,Describe the Gilded Age and the Civil Rights Movement.,描述镀金时代和民权运动的故事。,55,L3,学习移民潮、工业巨头、马丁·路德·金和种族平等斗争。,镀金时代 民权 马丁路德金,
+英国历史·从罗马到诺曼征服,罗马不列颠,Talk about Roman Britain and Hadrian's Wall.,讲述罗马占领不列颠和哈德良长城的故事。,55,L3,学习罗马占领不列颠的起因、哈德良长城的修建和罗马人的日常生活词汇。,罗马 不列颠 哈德良长城,practice_story-history_英国历史_从罗马到诺曼征服_罗马不列颠
+英国历史·从罗马到诺曼征服,盎格鲁-撒克逊时代,Describe the Anglo-Saxon period and King Alfred.,描述盎格鲁-撒克逊时期和阿尔弗雷德大帝的故事。,55,L3,学习七国时代、阿尔弗雷德大帝抵抗维京人和古英语文化。,盎格鲁-撒克逊 七国 阿尔弗雷德,practice_story-history_英国历史_从罗马到诺曼征服_盎格鲁撒克逊时代
+英国历史·从罗马到诺曼征服,维京人与诺曼征服,Narrate the Viking invasions and the Norman Conquest.,叙述维京入侵和1066年诺曼征服的故事。,60,L3,学习维京人入侵、黑斯廷斯战役和威廉征服者的历史意义。,维京 诺曼 黑斯廷斯,practice_story-history_英国历史_从罗马到诺曼征服_维京人与诺曼征服
+英国历史·都铎王朝到工业革命,都铎王朝,Talk about the Tudor dynasty: Henry VIII and Elizabeth I.,讲述都铎王朝的故事：亨利八世和伊丽莎白一世。,55,L3,学习都铎王朝的宗教改革、西班牙无敌舰队和伊丽莎白时代繁荣。,都铎 亨利八世 伊丽莎白,practice_story-history_英国历史_都铎王朝到工业革命_都铎王朝
+英国历史·都铎王朝到工业革命,英国内战与光荣革命,Describe the English Civil War and the Glorious Revolution.,描述英国内战和光荣革命的故事。,55,L3,学习克伦威尔、议会与国王之争和权利法案的诞生。,内战 克伦威尔 光荣革命,practice_story-history_英国历史_都铎王朝到工业革命_英国内战与光荣革命
+英国历史·都铎王朝到工业革命,工业革命,Narrate the Industrial Revolution and its impact.,叙述工业革命及其对社会的影响。,60,L3,学习蒸汽机、工厂制度、城市化和社会变革的关键词汇。,工业革命 蒸汽机 城市化,practice_story-history_英国历史_都铎王朝到工业革命_工业革命
+美国历史·独立与建国,美国独立战争,Talk about the American Revolutionary War.,讲述美国独立战争的故事。,55,L3,学习波士顿倾茶事件、独立宣言和乔治·华盛顿的领导。,独立战争 独立宣言 华盛顿,practice_story-history_美国历史_独立与建国_美国独立战争
+美国历史·独立与建国,建国与宪法,Describe the founding of the US and the Constitution.,描述美国建国和宪法制定的过程。,55,L3,学习制宪会议、联邦制度、权利法案和建国先贤们。,宪法 建国 联邦,practice_story-history_美国历史_独立与建国_建国与宪法
+美国历史·西进到民权运动,西进运动与南北战争,Narrate Westward Expansion and the Civil War.,叙述西进运动和南北战争的故事。,60,L3,学习路易斯安那购地、南北分歧、林肯和解放宣言。,西进 南北战争 林肯,practice_story-history_美国历史_西进到民权运动_西进运动与南北战争
+美国历史·西进到民权运动,工业时代与民权运动,Describe the Gilded Age and the Civil Rights Movement.,描述镀金时代和民权运动的故事。,55,L3,学习移民潮、工业巨头、马丁·路德·金和种族平等斗争。,镀金时代 民权 马丁路德金,practice_story-history_美国历史_西进到民权运动_工业时代与民权运动

@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-social_日常_超市购物_优惠活动",
+  "title": "日常·超市购物 - 优惠活动",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-social_日常_超市购物_优惠活动\ntitle: 日常·超市购物 - 优惠活动\n---\nStore Clerk: Let's talk about 优惠活动. What do you think about it?\n#objective: 问今日优惠\n#chunks: Is there a sale today?,Do you have a student discount?\n#user_input\nStore Clerk: That's interesting! Can you tell me more about that?\n#objective: 问学生折扣\n#chunks: Is there a sale today?,Do you have a student discount?\n#user_input\nStore Clerk: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

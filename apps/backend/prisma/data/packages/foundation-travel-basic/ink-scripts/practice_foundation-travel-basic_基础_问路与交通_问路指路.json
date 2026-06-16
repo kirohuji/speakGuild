@@ -1,0 +1,6 @@
+{
+  "key": "practice_foundation-travel-basic_基础_问路与交通_问路指路",
+  "title": "基础·问路与交通 - 问路指路",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_foundation-travel-basic_基础_问路与交通_问路指路\ntitle: 基础·问路与交通 - 问路指路\n---\nTutor: Let's talk about 问路指路. What do you think about it?\n#objective: 练习问路指路相关表达\n#chunks: Excuse me,How do I get to the museum?,Is it far from here?,Go straight ahead.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Excuse me,How do I get to the museum?,Is it far from here?,Go straight ahead.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

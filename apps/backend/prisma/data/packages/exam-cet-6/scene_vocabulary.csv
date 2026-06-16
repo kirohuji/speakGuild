@@ -1,17 +1,33 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-六级·社会发展,城市化进程,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",0
-六级·社会发展,城市化进程,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",1
-六级·社会发展,经济与就业,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",2
-六级·社会发展,经济与就业,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",3
-六级·社会发展,文化交流,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",4
-六级·社会发展,文化交流,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",5
-六级·社会发展,教育改革,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",6
-六级·社会发展,教育改革,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",7
-六级·文化教育,城市化进程,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",8
-六级·文化教育,城市化进程,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",9
-六级·文化教育,经济与就业,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",10
-六级·文化教育,经济与就业,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",11
-六级·文化教育,文化交流,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",12
-六级·文化教育,文化交流,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",13
-六级·文化教育,教育改革,urbanization,城市化,noun,/ˌɜːrbənɪˈzeɪʃən/,/ˌɜːbənaɪˈzeɪʃən/,L3,城市化过程。,"[{""en"":""Urbanization has accelerated in recent decades."",""zh"":""近几十年来城市化加速了。""}]",14
-六级·文化教育,教育改革,employment,就业,noun,/ɪmˈplɔɪmənt/,/ɪmˈplɔɪmənt/,L3,就业、工作。,"[{""en"":""The employment rate has been rising."",""zh"":""就业率一直在上升。""}]",15
+"六级·学术讨论","学术研究与论文","research","研究","noun","/research/","/research/","L2","系统的调查和探究。","[{""en"":""I am doing research on renewable energy."",""zh"":""我在做可再生能源方面的研究。""}]",0
+"六级·学术讨论","学术研究与论文","thesis","论文","noun","/thesis/","/thesis/","L3","学术研究论文。","[{""en"":""I am writing my graduation thesis."",""zh"":""我在写毕业论文。""}]",1
+"六级·学术讨论","学术研究与论文","methodology","方法论","noun","/methodology/","/methodology/","L3","研究方法的系统。","[{""en"":""The methodology section explains how the research was done."",""zh"":""方法论部分解释研究是如何进行的。""}]",2
+"六级·学术讨论","学术研究与论文","hypothesis","假设","noun","/hypothesis/","/hypothesis/","L3","需要验证的初步想法。","[{""en"":""We need to test this hypothesis with experiments."",""zh"":""我们需要通过实验验证这个假设。""}]",3
+"六级·学术讨论","学术研究与论文","citation","引用","noun","/citation/","/citation/","L3","引用他人研究成果。","[{""en"":""Proper citation is essential in academic writing."",""zh"":""正确引用在学术写作中至关重要。""}]",4
+"六级·学术讨论","学术研究与论文","peer review","同行评审","noun","/peerreview/","/peerreview/","L3","同领域专家对研究的审查。","[{""en"":""The paper went through peer review."",""zh"":""这篇论文经过了同行评审。""}]",5
+"六级·学术讨论","学术研究与论文","plagiarism","抄袭","noun","/plagiarism/","/plagiarism/","L3","未经授权使用他人作品。","[{""en"":""Plagiarism is a serious academic offense."",""zh"":""抄袭是严重的学术违规。""}]",6
+"六级·学术讨论","学术研究与论文","abstract","摘要","noun","/abstract/","/abstract/","L3","论文的简短概述。","[{""en"":""The abstract summarizes the main findings."",""zh"":""摘要总结了主要发现。""}]",7
+"六级·学术讨论","国际交流与合作","exchange program","交流项目","noun","/exchangeprogram/","/exchangeprogram/","L2","学生国际交流计划。","[{""en"":""I participated in an exchange program in the UK."",""zh"":""我参加了英国的交流项目。""}]",0
+"六级·学术讨论","国际交流与合作","cross-cultural","跨文化的","adj","/cross-cultural/","/cross-cultural/","L3","涉及不同文化的。","[{""en"":""Cross-cultural communication skills are valuable."",""zh"":""跨文化沟通技巧很有价值。""}]",1
+"六级·学术讨论","国际交流与合作","scholarship","奖学金","noun","/scholarship/","/scholarship/","L2","资助学习的奖金。","[{""en"":""She received a scholarship to study abroad."",""zh"":""她获得了出国留学奖学金。""}]",2
+"六级·学术讨论","国际交流与合作","collaboration","合作","noun","/collaboration/","/collaboration/","L3","共同工作达成目标。","[{""en"":""International collaboration advances scientific research."",""zh"":""国际合作推进科学研究。""}]",3
+"六级·学术讨论","国际交流与合作","conference","会议","noun","/conference/","/conference/","L2","学术交流会议。","[{""en"":""I presented my paper at an international conference."",""zh"":""我在国际会议上发表了我的论文。""}]",4
+"六级·学术讨论","国际交流与合作","diversity","多样性","noun","/diversity/","/diversity/","L2","包含不同的背景和观点。","[{""en"":""Diversity enriches the learning experience."",""zh"":""多样性丰富了学习体验。""}]",5
+"六级·学术讨论","国际交流与合作","global perspective","全球视角","noun","/globalperspective/","/globalperspective/","L3","从全球角度看问题。","[{""en"":""Studying abroad gave me a global perspective."",""zh"":""出国留学给了我全球视角。""}]",6
+"六级·学术讨论","国际交流与合作","adaptability","适应能力","noun","/adaptability/","/adaptability/","L3","适应新环境的能力。","[{""en"":""Living abroad develops adaptability."",""zh"":""在国外生活培养适应能力。""}]",7
+"六级·社会议题","就业与职业规划","career","职业/事业","noun","/career/","/career/","L2","长期从事的工作方向。","[{""en"":""Career planning should start early in college."",""zh"":""职业规划应该在大学早期开始。""}]",0
+"六级·社会议题","就业与职业规划","internship","实习","noun","/internship/","/internship/","L2","学生在公司的短期工作。","[{""en"":""An internship provides valuable work experience."",""zh"":""实习提供了宝贵的工作经验。""}]",1
+"六级·社会议题","就业与职业规划","resume","简历","noun","/resume/","/resume/","L2","个人经历和技能的概述。","[{""en"":""Make sure your resume highlights your strengths."",""zh"":""确保你的简历突出你的优势。""}]",2
+"六级·社会议题","就业与职业规划","interview","面试","noun","/interview/","/interview/","L2","求职时的面谈评估。","[{""en"":""I have a job interview tomorrow afternoon."",""zh"":""我明天下午有工作面试。""}]",3
+"六级·社会议题","就业与职业规划","networking","人际网络","noun","/networking/","/networking/","L3","建立职业人际关系。","[{""en"":""Networking is key to finding job opportunities."",""zh"":""人际网络是找到工作机会的关键。""}]",4
+"六级·社会议题","就业与职业规划","entrepreneurship","创业","noun","/entrepreneurship/","/entrepreneurship/","L3","自己创办和经营企业。","[{""en"":""Many graduates are interested in entrepreneurship."",""zh"":""许多毕业生对创业感兴趣。""}]",5
+"六级·社会议题","就业与职业规划","soft skills","软技能","noun","/softskills/","/softskills/","L3","沟通、团队合作等非技术能力。","[{""en"":""Employers value soft skills as much as technical skills."",""zh"":""雇主对软技能和技术技能同等重视。""}]",6
+"六级·社会议题","就业与职业规划","promotion","晋升","noun","/promotion/","/promotion/","L2","职位和薪水的提升。","[{""en"":""Hard work led to a quick promotion."",""zh"":""努力工作带来了快速晋升。""}]",7
+"六级·社会议题","媒体与信息素养","media","媒体","noun","/media/","/media/","L2","传播信息的渠道。","[{""en"":""Social media has changed how we get news."",""zh"":""社交媒体改变了我们获取新闻的方式。""}]",0
+"六级·社会议题","媒体与信息素养","fake news","假新闻","noun","/fakenews/","/fakenews/","L2","虚假或误导性的新闻报道。","[{""en"":""It's important to identify fake news."",""zh"":""识别假新闻很重要。""}]",1
+"六级·社会议题","媒体与信息素养","fact-check","事实核查","verb","/fact-check/","/fact-check/","L3","验证信息的真实性。","[{""en"":""Always fact-check before sharing information."",""zh"":""分享信息前一定要先核查事实。""}]",2
+"六级·社会议题","媒体与信息素养","bias","偏见","noun","/bias/","/bias/","L3","不客观的倾向。","[{""en"":""Media bias can influence public opinion."",""zh"":""媒体偏见可以影响公众舆论。""}]",3
+"六级·社会议题","媒体与信息素养","censorship","审查制度","noun","/censorship/","/censorship/","L3","对信息内容的控制。","[{""en"":""Internet censorship varies from country to country."",""zh"":""互联网审查制度因国家而异。""}]",4
+"六级·社会议题","媒体与信息素养","critical thinking","批判性思维","noun","/criticalthinking/","/criticalthinking/","L3","理性分析和评估信息。","[{""en"":""Critical thinking helps us evaluate information."",""zh"":""批判性思维帮助我们评估信息。""}]",5
+"六级·社会议题","媒体与信息素养","influencer","网红/影响者","noun","/influencer/","/influencer/","L2","社交媒体上有影响力的人。","[{""en"":""Influencers can shape public opinion."",""zh"":""网红可以塑造公众舆论。""}]",6
+"六级·社会议题","媒体与信息素养","clickbait","标题党","noun","/clickbait/","/clickbait/","L3","用夸张标题吸引点击。","[{""en"":""Don't fall for clickbait headlines."",""zh"":""不要被标题党欺骗。""}]",7

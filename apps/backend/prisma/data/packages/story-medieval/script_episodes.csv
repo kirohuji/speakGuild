@@ -1,5 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-med_0,骑士与城堡,1,骑士精神与受封,中世纪·骑士与城堡,L2,1,2,3,2,2,"[""学习骑士精神与受封相关表达""]",2,2,2,Tutor,故事导师,true,,"{""xp"":20}"
-med_0,骑士与城堡,2,城堡攻防战,中世纪·骑士与城堡,L2,1,2,2,2,2,"[""学习城堡攻防战相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
-med_1,探险与传奇,1,马可·波罗的东方之旅,中世纪·探险与传奇,L2,1,2,3,2,2,"[""学习马可·波罗的东方之旅相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
-med_1,探险与传奇,2,维京航海家,中世纪·探险与传奇,L2,1,2,2,2,2,"[""学习维京航海家相关表达""]",2,2,2,Tutor,故事导师,false,,"{""xp"":20}"
+med_0,骑士与城堡,1,骑士精神与受封,中世纪·骑士与城堡,L2,1,2,3,2,2,"[""学习骑士精神与受封相关表达""]",2,2,2,Tutor,故事导师,true,practice_story-medieval_中世纪_骑士与城堡_骑士精神与受封,"{""xp"":20}"
+med_0,骑士与城堡,2,城堡攻防战,中世纪·骑士与城堡,L2,1,2,2,2,2,"[""学习城堡攻防战相关表达""]",2,2,2,Tutor,故事导师,false,practice_story-medieval_中世纪_骑士与城堡_城堡攻防战,"{""xp"":20}"
+med_1,探险与传奇,1,马可·波罗的东方之旅,中世纪·探险与传奇,L2,1,2,3,2,2,"[""学习马可·波罗的东方之旅相关表达""]",2,2,2,Tutor,故事导师,false,practice_story-medieval_中世纪_探险与传奇_马可_波罗的东方之旅,"{""xp"":20}"
+med_1,探险与传奇,2,维京航海家,中世纪·探险与传奇,L2,1,2,2,2,2,"[""学习维京航海家相关表达""]",2,2,2,Tutor,故事导师,false,practice_story-medieval_中世纪_探险与传奇_维京航海家,"{""xp"":20}"

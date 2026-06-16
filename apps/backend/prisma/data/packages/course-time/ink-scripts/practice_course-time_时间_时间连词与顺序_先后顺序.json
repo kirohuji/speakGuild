@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-time_时间_时间连词与顺序_先后顺序",
+  "title": "时间·时间连词与顺序 - 先后顺序",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-time_时间_时间连词与顺序_先后顺序\ntitle: 时间·时间连词与顺序 - 先后顺序\n---\nTutor: Let's talk about 先后顺序. What do you think about it?\n#objective: 用before/after表达先后\n#chunks: Wash your hands before you eat.,We went out after dinner.,First mix the flour and eggs.,First shower then get dressed.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用first/then表达顺序\n#chunks: Wash your hands before you eat.,We went out after dinner.,First mix the flour and eggs.,First shower then get dressed.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

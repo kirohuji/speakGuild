@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-campus_校园_食堂就餐_询问菜品",
+  "title": "校园·食堂就餐 - 询问菜品",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-campus_校园_食堂就餐_询问菜品\ntitle: 校园·食堂就餐 - 询问菜品\n---\nCafeteria Staff: Let's talk about 询问菜品. What do you think about it?\n#objective: 问今日特供\n#chunks: What's today's special?,Does this contain...?\n#user_input\nCafeteria Staff: That's interesting! Can you tell me more about that?\n#objective: 问食材成分\n#chunks: What's today's special?,Does this contain...?\n#user_input\nCafeteria Staff: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

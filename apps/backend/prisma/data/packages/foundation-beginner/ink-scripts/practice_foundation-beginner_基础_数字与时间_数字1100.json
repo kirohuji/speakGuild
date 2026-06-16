@@ -1,0 +1,6 @@
+{
+  "key": "practice_foundation-beginner_基础_数字与时间_数字1100",
+  "title": "基础·数字与时间 - 数字1-100",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_foundation-beginner_基础_数字与时间_数字1100\ntitle: 基础·数字与时间 - 数字1-100\n---\nTutor: Let's talk about 数字1-100. What do you think about it?\n#objective: 说数字1-10\n#chunks: How many...?,I have... books.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 问How many\n#chunks: How many...?,I have... books.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

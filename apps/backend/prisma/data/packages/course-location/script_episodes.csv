@@ -1,5 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_fangwei,方位介词篇,1,基本方位介词,"方位·方位介词",L2,1,2,5,2,3,"[""用in表达在内部"",""用on表达在表面"",""用under/behind表达位置""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
-ch_fangwei,方位介词篇,2,相对位置,"方位·方位介词",L2,1,2,4,2,2,"[""用next to表达旁边"",""用between表达两者之间"",""用opposite表达对面""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
-ch_zhilu,指路与位置描述篇,1,指路指令,"方位·指路与位置描述",L2,1,2,4,2,2,"[""用go straight表达直走"",""用turn left/right转弯""]",2,2,2,Tutor,语法导师,true,,"{""xp"":20}"
-ch_zhilu,指路与位置描述篇,2,描述路线,"方位·指路与位置描述",L2,1,2,3,2,2,"[""用past表示经过"",""用on your left/right指示位置""]",2,2,2,Tutor,语法导师,false,,"{""xp"":20}"
+ch_fangwei,方位介词篇,1,基本方位介词,方位·方位介词,L2,1,2,5,2,3,"[""用in表达在内部"",""用on表达在表面"",""用under/behind表达位置""]",2,2,2,Tutor,语法导师,true,practice_course-location_方位_方位介词_基本方位介词,"{""xp"":20}"
+ch_fangwei,方位介词篇,2,相对位置,方位·方位介词,L2,1,2,4,2,2,"[""用next to表达旁边"",""用between表达两者之间"",""用opposite表达对面""]",2,2,2,Tutor,语法导师,false,practice_course-location_方位_方位介词_相对位置,"{""xp"":20}"
+ch_zhilu,指路与位置描述篇,1,指路指令,方位·指路与位置描述,L2,1,2,4,2,2,"[""用go straight表达直走"",""用turn left/right转弯""]",2,2,2,Tutor,语法导师,true,practice_course-location_方位_指路与位置描述_指路指令,"{""xp"":20}"
+ch_zhilu,指路与位置描述篇,2,描述路线,方位·指路与位置描述,L2,1,2,3,2,2,"[""用past表示经过"",""用on your left/right指示位置""]",2,2,2,Tutor,语法导师,false,practice_course-location_方位_指路与位置描述_描述路线,"{""xp"":20}"

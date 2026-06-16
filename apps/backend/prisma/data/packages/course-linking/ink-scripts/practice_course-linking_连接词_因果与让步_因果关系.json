@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-linking_连接词_因果与让步_因果关系",
+  "title": "连接词·因果与让步 - 因果关系",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-linking_连接词_因果与让步_因果关系\ntitle: 连接词·因果与让步 - 因果关系\n---\nTutor: Let's talk about 因果关系. What do you think about it?\n#objective: 用because表达原因\n#chunks: I stayed home because...,He didn't study therefore...\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用therefore表达结果\n#chunks: I stayed home because...,He didn't study therefore...\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

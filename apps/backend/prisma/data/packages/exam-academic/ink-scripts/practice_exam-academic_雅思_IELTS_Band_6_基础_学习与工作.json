@@ -1,0 +1,6 @@
+{
+  "key": "practice_exam-academic_雅思_IELTS_Band_6_基础_学习与工作",
+  "title": "雅思·IELTS Band 6 基础 - 学习与工作",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_exam-academic_雅思_IELTS_Band_6_基础_学习与工作\ntitle: 雅思·IELTS Band 6 基础 - 学习与工作\n---\nExaminer: Let's talk about 学习与工作. What do you think about it?\n#objective: 说明专业或职业\n#chunks: I'm studying... at...,I work as a...,I chose this because...\n#user_input\nExaminer: That's interesting! Can you tell me more about that?\n#objective: 说明选择原因\n#chunks: I'm studying... at...,I work as a...,I chose this because...\n#user_input\nExaminer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

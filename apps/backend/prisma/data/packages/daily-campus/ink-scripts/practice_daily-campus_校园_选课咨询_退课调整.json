@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-campus_校园_选课咨询_退课调整",
+  "title": "校园·选课咨询 - 退课调整",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-campus_校园_选课咨询_退课调整\ntitle: 校园·选课咨询 - 退课调整\n---\nAcademic Advisor: Let's talk about 退课调整. What do you think about it?\n#objective: 说想退课\n#chunks: I'd like to drop this course.,Can I switch to another section?\n#user_input\nAcademic Advisor: That's interesting! Can you tell me more about that?\n#objective: 问能否换班\n#chunks: I'd like to drop this course.,Can I switch to another section?\n#user_input\nAcademic Advisor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

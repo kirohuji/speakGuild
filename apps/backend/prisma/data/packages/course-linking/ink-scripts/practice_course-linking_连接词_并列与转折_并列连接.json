@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-linking_连接词_并列与转折_并列连接",
+  "title": "连接词·并列与转折 - 并列连接",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-linking_连接词_并列与转折_并列连接\ntitle: 连接词·并列与转折 - 并列连接\n---\nTutor: Let's talk about 并列连接. What do you think about it?\n#objective: 用and连接\n#chunks: I was tired but...,She likes... and...\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用but转折\n#chunks: I was tired but...,She likes... and...\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

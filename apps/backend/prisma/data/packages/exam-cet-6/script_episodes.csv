@@ -1,5 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-exam_exam_cet_6_0,社会发展,1,城市化进程,六级·社会发展,L3,1,2,2,2,2,"[""学习城市化进程相关表达""]",2,2,2,Tutor,考官,true,,"{""xp"":20}"
-exam_exam_cet_6_0,社会发展,2,经济与就业,六级·社会发展,L3,1,2,2,2,2,"[""学习经济与就业相关表达""]",2,2,2,Tutor,考官,false,,"{""xp"":20}"
-exam_exam_cet_6_1,文化教育,1,文化交流,六级·文化教育,L3,1,2,2,2,2,"[""学习文化交流相关表达""]",2,2,2,Tutor,考官,false,,"{""xp"":20}"
-exam_exam_cet_6_1,文化教育,2,教育改革,六级·文化教育,L3,1,2,2,2,2,"[""学习教育改革相关表达""]",2,2,2,Tutor,考官,false,,"{""xp"":20}"
+exam_exam_cet_6_0,社会发展,1,城市化进程,六级·社会发展,L3,1,2,2,2,2,"[""学习城市化进程相关表达""]",2,2,2,Tutor,考官,true,practice_exam-cet-6_六级_社会发展_城市化进程,"{""xp"":20}"
+exam_exam_cet_6_0,社会发展,2,经济与就业,六级·社会发展,L3,1,2,2,2,2,"[""学习经济与就业相关表达""]",2,2,2,Tutor,考官,false,practice_exam-cet-6_六级_社会发展_经济与就业,"{""xp"":20}"
+exam_exam_cet_6_1,文化教育,1,文化交流,六级·文化教育,L3,1,2,2,2,2,"[""学习文化交流相关表达""]",2,2,2,Tutor,考官,false,practice_exam-cet-6_六级_文化教育_文化交流,"{""xp"":20}"
+exam_exam_cet_6_1,文化教育,2,教育改革,六级·文化教育,L3,1,2,2,2,2,"[""学习教育改革相关表达""]",2,2,2,Tutor,考官,false,practice_exam-cet-6_六级_文化教育_教育改革,"{""xp"":20}"

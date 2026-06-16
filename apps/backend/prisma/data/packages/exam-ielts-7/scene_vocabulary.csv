@@ -1,9 +1,17 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-雅思·IELTS Band 7 良好,推荐旅游地,scenic,风景优美的,adj,/ˈsiːnɪk/,/ˈsiːnɪk/,L3,景色优美的。,"""""""[{""""""""en"""""""":""""""""The scenic spots are worth visiting.""""""""""""","zh:这些风景点值得一看。}]"""
-雅思·IELTS Band 7 良好,推荐旅游地,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L2,推荐。,"""""""[{""""""""en"""""""":""""""""I highly recommend visiting the Great Wall.""""""""""""","zh:我强烈推荐去长城。}]"""
-雅思·IELTS Band 7 良好,推荐旅游地,attract,吸引,verb,/əˈtrækt/,/əˈtrækt/,L2,吸引。,"""""""[{""""""""en"""""""":""""""""The city attracts millions of tourists.""""""""""""","zh:这座城市吸引了数百万游客。}]"""
-雅思·IELTS Band 7 良好,推荐旅游地,diverse,多样化的,adj,/daɪˈvɜːrs/,/daɪˈvɜːs/,L3,多元的、多样的。,"""""""[{""""""""en"""""""":""""""""The city has a diverse culture.""""""""""""","zh:这座城市有多元文化。}]"""
-雅思·IELTS Band 7 良好,城市发展,scenic,风景优美的,adj,/ˈsiːnɪk/,/ˈsiːnɪk/,L3,景色优美的。,"""""""[{""""""""en"""""""":""""""""The scenic spots are worth visiting.""""""""""""","zh:这些风景点值得一看。}]"""
-雅思·IELTS Band 7 良好,城市发展,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L2,推荐。,"""""""[{""""""""en"""""""":""""""""I highly recommend visiting the Great Wall.""""""""""""","zh:我强烈推荐去长城。}]"""
-雅思·IELTS Band 7 良好,城市发展,attract,吸引,verb,/əˈtrækt/,/əˈtrækt/,L2,吸引。,"""""""[{""""""""en"""""""":""""""""The city attracts millions of tourists.""""""""""""","zh:这座城市吸引了数百万游客。}]"""
-雅思·IELTS Band 7 良好,城市发展,diverse,多样化的,adj,/daɪˈvɜːrs/,/daɪˈvɜːs/,L3,多元的、多样的。,"""""""[{""""""""en"""""""":""""""""The city has a diverse culture.""""""""""""","zh:这座城市有多元文化。}]"""
+"雅思·IELTS Band 7 良好","推荐旅游地","scenic","风景优美的","adj","/ˈsiːnɪk/","/ˈsiːnɪk/","L3","景色优美的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The scenic spots are worth visiting.""""""""""""""""""""""""""","zh:这些风景点值得一看。}]"""
+"雅思·IELTS Band 7 良好","推荐旅游地","recommend","推荐","verb","/ˌrekəˈmend/","/ˌrekəˈmend/","L2","推荐。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I highly recommend visiting the Great Wall.""""""""""""""""""""""""""","zh:我强烈推荐去长城。}]"""
+"雅思·IELTS Band 7 良好","推荐旅游地","attract","吸引","verb","/əˈtrækt/","/əˈtrækt/","L2","吸引。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The city attracts millions of tourists.""""""""""""""""""""""""""","zh:这座城市吸引了数百万游客。}]"""
+"雅思·IELTS Band 7 良好","推荐旅游地","diverse","多样化的","adj","/daɪˈvɜːrs/","/daɪˈvɜːs/","L3","多元的、多样的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The city has a diverse culture.""""""""""""""""""""""""""","zh:这座城市有多元文化。}]"""
+"雅思·IELTS Band 7 良好","城市发展","scenic","风景优美的","adj","/ˈsiːnɪk/","/ˈsiːnɪk/","L3","景色优美的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The scenic spots are worth visiting.""""""""""""""""""""""""""","zh:这些风景点值得一看。}]"""
+"雅思·IELTS Band 7 良好","城市发展","recommend","推荐","verb","/ˌrekəˈmend/","/ˌrekəˈmend/","L2","推荐。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""I highly recommend visiting the Great Wall.""""""""""""""""""""""""""","zh:我强烈推荐去长城。}]"""
+"雅思·IELTS Band 7 良好","城市发展","attract","吸引","verb","/əˈtrækt/","/əˈtrækt/","L2","吸引。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The city attracts millions of tourists.""""""""""""""""""""""""""","zh:这座城市吸引了数百万游客。}]"""
+"雅思·IELTS Band 7 良好","城市发展","diverse","多样化的","adj","/daɪˈvɜːrs/","/daɪˈvɜːs/","L3","多元的、多样的。","""""""""""""""[{""""""""""""""""en"""""""""""""""":""""""""""""""""The city has a diverse culture.""""""""""""""""""""""""""","zh:这座城市有多元文化。}]"""
+"","科技与社会","innovation","创新","noun","/innovation/","/innovation/","L3","新想法、新方法的创造。","[{""en"":""Technological innovation is accelerating."",""zh"":""技术创新正在加速。""}]",8
+"","科技与社会","impact","影响","noun","/impact/","/impact/","L2","对某事产生的效果或改变。","[{""en"":""The internet has had a huge impact on society."",""zh"":""互联网对社会产生了巨大影响。""}]",9
+"","科技与社会","automation","自动化","noun","/automation/","/automation/","L3","用机器代替人工的过程。","[{""en"":""Automation is changing the job market."",""zh"":""自动化正在改变就业市场。""}]",10
+"","科技与社会","ethical","伦理的","adj","/ethical/","/ethical/","L3","关于道德和正确行为的。","[{""en"":""There are ethical concerns about AI."",""zh"":""关于人工智能存在伦理担忧。""}]",11
+"","环境问题","carbon footprint","碳足迹","noun","/carbonfootprint/","/carbonfootprint/","L3","个人或组织排放的温室气体量。","[{""en"":""We should all try to reduce our carbon footprint."",""zh"":""我们都应该尝试减少碳足迹。""}]",8
+"","环境问题","conservation","保护","noun","/conservation/","/conservation/","L3","保护自然资源和环境。","[{""en"":""Wildlife conservation is important."",""zh"":""野生动物保护很重要。""}]",9
+"","环境问题","ecosystem","生态系统","noun","/ecosystem/","/ecosystem/","L3","生物与其环境的相互作用系统。","[{""en"":""Pollution threatens the marine ecosystem."",""zh"":""污染威胁着海洋生态系统。""}]",10
+"","环境问题","sustainable","可持续的","adj","/sustainable/","/sustainable/","L3","能长期维持而不损害环境的。","[{""en"":""We need more sustainable energy sources."",""zh"":""我们需要更多可持续的能源。""}]",11

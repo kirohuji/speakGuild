@@ -1,0 +1,6 @@
+{
+  "key": "practice_daily-healthcare_健康_看医生_治疗方案",
+  "title": "健康·看医生 - 治疗方案",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_daily-healthcare_健康_看医生_治疗方案\ntitle: 健康·看医生 - 治疗方案\n---\nDr. Williams: Let's talk about 治疗方案. What do you think about it?\n#objective: 询问治疗建议\n#chunks: What do you recommend?,How many times a day should I take this?,Should I come back for a follow-up?,Are there any side effects?\n#user_input\nDr. Williams: That's interesting! Can you tell me more about that?\n#objective: 询问用法\n#chunks: What do you recommend?,How many times a day should I take this?,Should I come back for a follow-up?,Are there any side effects?\n#user_input\nDr. Williams: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

@@ -1,5 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-found_foundation_essential_phrases_0,日常高频短语,1,常用动词短语,"基础·日常高频短语",L1,1,2,6,2,15,"[""练习常用动词短语相关表达""]",2,2,2,Tutor,口语教练,true,,{"xp":10}
-found_foundation_essential_phrases_0,日常高频短语,2,情景常用语,"基础·日常高频短语",L1,1,2,6,2,15,"[""练习情景常用语相关表达""]",2,2,2,Tutor,口语教练,false,,{"xp":10}
-found_foundation_essential_phrases_1,电话与应急,1,电话用语,"基础·电话与应急",L1,1,2,6,2,15,"[""练习电话用语相关表达""]",2,2,2,Tutor,口语教练,false,,{"xp":10}
-found_foundation_essential_phrases_1,电话与应急,2,紧急求助,"基础·电话与应急",L1,1,2,6,2,15,"[""练习紧急求助相关表达""]",2,2,2,Tutor,口语教练,false,,{"xp":10}
+found_foundation_essential_phrases_0,日常高频短语,1,常用动词短语,基础·日常高频短语,L1,1,2,6,2,15,"[""练习常用动词短语相关表达""]",2,2,2,Tutor,口语教练,true,practice_foundation-essential-phrases_基础_日常高频短语_常用动词短语,{xp:10}
+found_foundation_essential_phrases_0,日常高频短语,2,情景常用语,基础·日常高频短语,L1,1,2,6,2,15,"[""练习情景常用语相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-essential-phrases_基础_日常高频短语_情景常用语,{xp:10}
+found_foundation_essential_phrases_1,电话与应急,1,电话用语,基础·电话与应急,L1,1,2,6,2,15,"[""练习电话用语相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-essential-phrases_基础_电话与应急_电话用语,{xp:10}
+found_foundation_essential_phrases_1,电话与应急,2,紧急求助,基础·电话与应急,L1,1,2,6,2,15,"[""练习紧急求助相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-essential-phrases_基础_电话与应急_紧急求助,{xp:10}

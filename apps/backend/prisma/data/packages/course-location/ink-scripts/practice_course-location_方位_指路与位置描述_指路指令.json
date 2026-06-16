@@ -1,0 +1,6 @@
+{
+  "key": "practice_course-location_方位_指路与位置描述_指路指令",
+  "title": "方位·指路与位置描述 - 指路指令",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_course-location_方位_指路与位置描述_指路指令\ntitle: 方位·指路与位置描述 - 指路指令\n---\nTutor: Let's talk about 指路指令. What do you think about it?\n#objective: 用go straight表达直走\n#chunks: Go straight for two blocks.,Turn left at the traffic light.,Turn right after the bridge.,The pharmacy is at the corner.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用turn left/right转弯\n#chunks: Go straight for two blocks.,Turn left at the traffic light.,Turn right after the bridge.,The pharmacy is at the corner.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}

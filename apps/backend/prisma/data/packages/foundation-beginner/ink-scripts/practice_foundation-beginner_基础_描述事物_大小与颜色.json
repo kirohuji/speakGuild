@@ -1,0 +1,6 @@
+{
+  "key": "practice_foundation-beginner_基础_描述事物_大小与颜色",
+  "title": "基础·描述事物 - 大小与颜色",
+  "scriptType": "practice",
+  "inkSource": "---\nkey: practice_foundation-beginner_基础_描述事物_大小与颜色\ntitle: 基础·描述事物 - 大小与颜色\n---\nTutor: Let's talk about 大小与颜色. What do you think about it?\n#objective: 说大小\n#chunks: It is very big.,What color is it?\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 问颜色\n#chunks: It is very big.,What color is it?\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
+}
