@@ -139,7 +139,7 @@ export interface UnitDetail {
 
 export interface TodayTask {
   id: string
-  type: 'vocab' | 'chunk' | 'practice' | 'script'
+  type: 'vocab' | 'chunk' | 'pattern' | 'practice' | 'script'
   title: string
   description: string
   unitId: string

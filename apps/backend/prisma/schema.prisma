@@ -683,6 +683,8 @@ model Vocabulary {
   description              String?                  @db.Text // 用法讲解/搭配说明
   difficulty               String                   @default("L1") // L1~L5
   sortOrder                Int                      @default(0)
+  outputPriority           String                   @default("low") @map("output_priority") // low | medium | high
+  collocations             Json?                    @map("collocations")
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
   storyEpisodeVocabularies StoryEpisodeVocabulary[]
@@ -845,6 +847,8 @@ model PracticeTurn {
   judgement           Json?
   objectivesCompleted String[]        @default([])
   chunksUsed          String[]        @default([])
+  isRetry             Boolean         @default(false) @map("is_retry")
+  parentTurnId        String?         @map("parent_turn_id")
   createdAt           DateTime        @default(now())
 
   @@index([sessionId, round])

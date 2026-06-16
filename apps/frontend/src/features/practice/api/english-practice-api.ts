@@ -136,6 +136,8 @@ export const practiceApi = {
     judgement?: any
     objectivesCompleted?: string[]
     chunksUsed?: string[]
+    isRetry?: boolean
+    parentTurnId?: string
   }) => post(`/practice/sessions/${sessionId}/turns`, data),
 
   completeSession: (sessionId: string) =>
@@ -186,14 +188,27 @@ export const practiceAiApi = {
     expectedIntent?: string
     objectives?: string[]
     targetChunks?: string[]
+    mode?: string
+    requiredChunks?: string[]
+    targetWords?: string[]
+    essentialSlots?: string[]
+    allowParaphrase?: boolean
   }) => post<{
     intent: string
     passed: boolean
     objectiveCompleted: string[]
     chunksUsed: string[]
+    targetWordsUsed?: string[]
+    missingTargets?: string[]
     inkVariables: Record<string, string | number | boolean>
     feedback: string
     confidence: number
+    correction?: string | null
+    upgraded?: string | null
+    retryRequired?: boolean
+    retryPrompt?: string | null
+    focusChunk?: string | null
+    grammarIssues?: Array<{ type: string; original: string; correction: string }>
   }>('/practice-ai/dialogue-turn', dto),
 
   analyzeSession: (sessionId: string) =>

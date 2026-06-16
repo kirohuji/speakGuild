@@ -251,8 +251,12 @@ Return this exact JSON shape:
     const provider = this.getProvider();
     const objectives = dto.objectives?.length ? dto.objectives : ['respond_to_npc'];
     const targetChunks = dto.targetChunks ?? [];
+    const mode = dto.mode ?? 'communicative';
+    const requiredChunks = dto.requiredChunks ?? [];
+    const targetWords = dto.targetWords ?? [];
+    const essentialSlots = dto.essentialSlots ?? [];
 
-    const system = `You evaluate one turn in an English speaking practice dialogue.
+    let system = `You evaluate one turn in an English speaking practice dialogue.
 Return only JSON. Be practical, learner-friendly, and tolerant of normal learner variation.
 
 The "passed" field answers only this question: did the learner communicate the expected intent clearly enough for the NPC to understand and continue the conversation?
@@ -267,20 +271,58 @@ Evaluation rules:
 - Keep "objectiveCompleted" separate from "chunksUsed". An objective can be completed with zero chunks used.
 
 Determine the user's intent, completed objectives, and naturally used target chunks.
-Use short snake_case strings for intent and Ink variables.`;
+Use short snake_case strings for intent and Ink variables.
 
-    const user = `## Context
+## Correction & Retry
+When the learner's response is understandable but unnatural:
+1. Set "passed" to true (communication succeeded).
+2. Provide a natural "correction" version.
+3. Provide a more fluent "upgraded" version.
+4. Set "retryRequired" to true, with a friendly "retryPrompt".
+5. Identify one "focusChunk" the learner should practice.
+6. List grammar issues in "grammarIssues". Be concise (1-3 items max).`;
+
+    if (mode === 'targeted_output') {
+      system += `
+
+## Targeted Output Mode
+
+When mode is "targeted_output", evaluate only the targets provided in the request.
+
+- If requiredChunks are provided, the learner should use one of them or a clear equivalent structure.
+- If targetWords are provided, check whether the learner naturally used those words or close inflected forms.
+- If essentialSlots are provided, check whether the required meaning/content was expressed.
+- Return targetWordsUsed as the target words used naturally.
+- Return missingTargets as required chunks, target words, or slots that were not expressed.
+- If any required target is missing, mark "passed": false unless allowParaphrase is true and the learner expressed the same meaning naturally.`;
+    }
+
+    let user = `## Context
 Input node: ${dto.inputNodeId ?? 'unknown'}
 Expected intent: ${dto.expectedIntent ?? 'infer_from_context'}
+Judge mode: ${mode}
 NPC says: ${dto.npcText}
 
 ## Practice objectives
 ${objectives.map((item, index) => `${index + 1}. ${item}`).join('\n')}
 
 ## Target chunks
-${targetChunks.length ? targetChunks.join('\n') : 'None'}
+${targetChunks.length ? targetChunks.join('\n') : 'None'}`;
 
-## User response
+    if (requiredChunks.length) {
+      user += `\n\n## Required Chunks (targeted output)
+${requiredChunks.join('\n')}`;
+    }
+    if (targetWords.length) {
+      user += `\n\n## Target Words (targeted output)
+${targetWords.join('\n')}`;
+    }
+    if (essentialSlots.length) {
+      user += `\n\n## Essential Slots (targeted output)
+${essentialSlots.join('\n')}`;
+    }
+
+    user += `\n\n## User response
 ${dto.userText}
 
 Return this exact JSON shape:
@@ -289,23 +331,32 @@ Return this exact JSON shape:
   "passed": true,
   "objectiveCompleted": ["objective text from the list"],
   "chunksUsed": ["target chunk text from the list"],
+  "targetWordsUsed": ["target word used naturally"],
+  "missingTargets": ["required target not expressed"],
   "inkVariables": {
     "objective_done": true,
     "user_intent": "short_snake_case_intent",
     "needs_retry": false
   },
   "feedback": "中文一句话反馈",
-  "confidence": 0.86
+  "confidence": 0.86,
+  "correction": "natural correction version or null",
+  "upgraded": "more fluent version or null",
+  "retryRequired": false,
+  "retryPrompt": "friendly retry prompt in Chinese or null",
+  "focusChunk": "chunk to focus on or null",
+  "grammarIssues": [{"type": "grammar|collocation|chinglish|unnatural", "original": "...", "correction": "..."}]
 }
 
-Before returning JSON, check that "passed" reflects communicative success rather than target-chunk matching.`;
+Before returning JSON, check that "passed" reflects communicative success rather than target-chunk matching.
+For correction/upgraded/retryRequired: only populate these when the response is understandable but unnatural. Omit or set to null when not applicable.`;
 
     const result = await generateText({
       model: provider('deepseek-chat'),
       system,
       prompt: user,
       temperature: 0.2,
-      maxOutputTokens: 900,
+      maxOutputTokens: 1200,
     });
 
     // 记录 token 消耗
@@ -323,6 +374,8 @@ Before returning JSON, check that "passed" reflects communicative success rather
         passed,
         objectiveCompleted: Array.isArray(parsed.objectiveCompleted) ? parsed.objectiveCompleted : [],
         chunksUsed: Array.isArray(parsed.chunksUsed) ? parsed.chunksUsed : [],
+        targetWordsUsed: Array.isArray(parsed.targetWordsUsed) ? parsed.targetWordsUsed : [],
+        missingTargets: Array.isArray(parsed.missingTargets) ? parsed.missingTargets : [],
         inkVariables: {
           ...(parsed.inkVariables && typeof parsed.inkVariables === 'object' ? parsed.inkVariables : {}),
           objective_done: passed,
@@ -331,6 +384,12 @@ Before returning JSON, check that "passed" reflects communicative success rather
         },
         feedback: String(parsed.feedback || ''),
         confidence: Number(parsed.confidence ?? 0),
+        correction: parsed.correction || null,
+        upgraded: parsed.upgraded || null,
+        retryRequired: Boolean(parsed.retryRequired),
+        retryPrompt: parsed.retryPrompt || null,
+        focusChunk: parsed.focusChunk || null,
+        grammarIssues: Array.isArray(parsed.grammarIssues) ? parsed.grammarIssues : [],
         raw: result.text,
       };
     } catch {
@@ -340,6 +399,8 @@ Before returning JSON, check that "passed" reflects communicative success rather
         passed: false,
         objectiveCompleted: [],
         chunksUsed: [],
+        targetWordsUsed: [],
+        missingTargets: targetWords.length ? [...targetWords] : [],
         inkVariables: {
           objective_done: false,
           user_intent: fallbackIntent,
@@ -347,6 +408,12 @@ Before returning JSON, check that "passed" reflects communicative success rather
         },
         feedback: '暂时无法稳定判断这一轮回答，请再试一次。',
         confidence: 0,
+        correction: null,
+        upgraded: null,
+        retryRequired: false,
+        retryPrompt: null,
+        focusChunk: null,
+        grammarIssues: [],
         raw: result.text,
       };
     }
@@ -493,11 +560,153 @@ ${dialogueText}
     }
 
     const jsonText = result.text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? result.text;
+    let analysis: any = null;
     try {
-      return { analysis: JSON.parse(jsonText), raw: result.text };
+      analysis = JSON.parse(jsonText);
     } catch {
-      return { analysis: null, raw: result.text };
+      analysis = null;
     }
+
+    // 自动生成复练卡片
+    if (userId && analysis) {
+      try {
+        await this.generateReviewCardsFromAnalysis(
+          userId,
+          session.id,
+          analysis,
+          session.topicId,
+        );
+      } catch (err: any) {
+        this.logger.warn(`[summarize] 自动生成复练卡失败: ${err.message}`);
+      }
+    }
+
+    return { analysis, raw: result.text };
+  }
+
+  /** 从分析结果自动生成复练卡片（错句/Chunk/升级/词汇） */
+  private async generateReviewCardsFromAnalysis(
+    userId: string,
+    sessionId: string,
+    analysis: any,
+    topicId: string,
+  ) {
+    // 从 grammarHighlights 生成错句卡
+    for (const issue of analysis.grammarHighlights ?? []) {
+      if (issue.original && issue.correction) {
+        await this.createIfNotExist({
+          userId, type: 'error_sentence',
+          original: issue.original, corrected: issue.correction,
+          sourceType: 'PracticeSession', sourceId: sessionId,
+          sourceSnapshot: { round: issue.round },
+          masteryStatus: 'learning', nextReviewAt: this.nextDay(),
+        })
+      }
+    }
+
+    // 从 chunkUsageAnalysis 生成未使用的 Chunk 卡
+    for (const chunk of analysis.chunkUsageAnalysis ?? []) {
+      if (!chunk.used) {
+        await this.createIfNotExist({
+          userId, type: 'chunk', chunkText: chunk.chunk, original: chunk.chunk,
+          sourceType: 'PracticeSession', sourceId: sessionId,
+          masteryStatus: 'learning', nextReviewAt: this.nextDay(),
+        })
+      }
+    }
+
+    // 从 upgradedAnswer 生成升级卡
+    if (analysis.upgradedAnswer?.natural) {
+      await this.createIfNotExist({
+        userId, type: 'upgraded',
+        original: analysis.upgradedAnswer.original ?? '',
+        corrected: analysis.upgradedAnswer.natural,
+        sourceType: 'PracticeSession', sourceId: sessionId,
+        masteryStatus: 'learning', nextReviewAt: this.nextDay(),
+      })
+    }
+
+    // 高优先级词汇未使用 → 词汇复练卡
+    await this.generateVocabReviewCards(userId, sessionId, analysis, topicId);
+  }
+
+  /** 去重创建 ExpressionItem：组合条件去重 */
+  private async createIfNotExist(data: {
+    userId: string;
+    type: string;
+    original?: string;
+    corrected?: string;
+    chunkText?: string;
+    sourceType?: string;
+    sourceId?: string;
+    sourceSnapshot?: any;
+    masteryStatus?: string;
+    nextReviewAt?: Date;
+  }) {
+    const where: any = {
+      userId: data.userId,
+      sourceType: data.sourceType ?? 'PracticeSession',
+      sourceId: data.sourceId ?? '',
+      type: data.type as any,
+    };
+    if (data.type === 'error_sentence' || data.type === 'upgraded') {
+      where.original = data.original ?? '';
+      where.corrected = data.corrected ?? '';
+    } else if (data.type === 'chunk') {
+      where.chunkText = data.chunkText ?? '';
+    } else if (data.type === 'word') {
+      where.original = data.original ?? '';
+    }
+
+    const existing = await this.prisma.expressionItem.findFirst({ where, select: { id: true } });
+    if (!existing) {
+      await (this.prisma as any).expressionItem.create({ data });
+    }
+  }
+
+  /** 高优先级词汇未使用 → 生成词汇复练卡 */
+  private async generateVocabReviewCards(
+    userId: string,
+    sessionId: string,
+    _analysis: any,
+    topicId: string,
+  ) {
+    if (!topicId) return;
+    try {
+      const highPriorityVocabs = await (this.prisma as any).trainingTopicVocab.findMany({
+        where: { topicId, vocab: { outputPriority: 'high' } },
+        include: { vocab: true },
+      });
+      for (const tv of highPriorityVocabs) {
+        const usedInTurns = await (this.prisma as any).practiceTurn.findMany({
+          where: {
+            sessionId,
+            userText: { contains: tv.vocab.word, mode: 'insensitive' },
+          },
+          take: 1,
+        });
+        if (usedInTurns.length === 0) {
+          await this.createIfNotExist({
+            userId,
+            type: 'word',
+            original: tv.vocab.word,
+            sourceType: 'PracticeSession',
+            sourceId: sessionId,
+            masteryStatus: 'learning',
+            nextReviewAt: this.nextDay(),
+          });
+        }
+      }
+    } catch (err: any) {
+      this.logger.warn(`[generateVocabReviewCards] 失败: ${err.message}`);
+    }
+  }
+
+  private nextDay(): Date {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(10, 0, 0, 0);
+    return d;
   }
 
   /** 批量翻译：单词 + 例句列表 → { wordZh, examplesZh[] } */

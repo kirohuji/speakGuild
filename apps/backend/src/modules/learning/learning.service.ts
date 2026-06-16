@@ -1104,7 +1104,30 @@ export class LearningService {
       });
     }
 
-    // 任务3: 开口练习（每日限额 3 个）
+    // 任务3: 学习句型（如果有 sentencePatterns）
+    const sentencePatterns = (sceneDetail as any).sentencePatterns ?? [];
+    if (sentencePatterns.length > 0) {
+      tasks.push({
+        id: `pattern-${currentScene.id}`,
+        type: 'pattern',
+        title: '今日句型',
+        description: `${sentencePatterns.length} 个句型`,
+        count: sentencePatterns.length,
+        dayCount: sentencePatterns.length,
+        done: 0,
+        total: sentencePatterns.length,
+        hasMore: false,
+        unitId: currentScene.id,
+        unitTitle: currentScene.title,
+        data: sentencePatterns.map((p: any) => ({
+          id: p.id,
+          text: p.pattern,
+          meaning: p.meaning,
+        })),
+      });
+    }
+
+    // 任务4: 开口练习（每日限额 3 个）
     const passedPracticeTopicIds = passedPracticeTopicIdsByScene.get(currentScene.id) ?? new Set<string>();
     const uncompletedTopics = sceneDetail.trainingTopics.filter(
       (topic) => !passedPracticeTopicIds.has(topic.id),
@@ -1125,7 +1148,7 @@ export class LearningService {
       });
     }
 
-    // 任务4: 剧本挑战（如果词汇和 chunk 掌握足够）
+    // 任务5: 剧本挑战（如果词汇和 chunk 掌握足够）
     if (
       sceneDetail.firstEpisode &&
       vocabLearned >= sceneDetail.vocabularies.length * 0.7

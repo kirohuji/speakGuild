@@ -129,4 +129,12 @@ export class SubmitPracticeTurnDto {
   @IsArray()
   @IsOptional()
   chunksUsed?: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  isRetry?: boolean;
+
+  @IsString()
+  @IsOptional()
+  parentTurnId?: string;
 }

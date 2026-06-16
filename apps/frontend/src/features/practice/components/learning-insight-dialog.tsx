@@ -19,7 +19,7 @@ import {
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -372,6 +372,8 @@ interface LearningInsightDialogProps {
   onIndexChange: (index: number) => void
   /** 在"我的学习库"页面使用时设为 true，隐藏保存按钮 */
   hideSaveActions?: boolean
+  /** 'inspect' | 'guided' | 'review' — review 模式底部显示复述输入 */
+  mode?: string
 }
 
 export function LearningInsightDialog({
@@ -381,6 +383,7 @@ export function LearningInsightDialog({
   onOpenChange,
   onIndexChange,
   hideSaveActions = false,
+  mode,
 }: LearningInsightDialogProps) {
   const { t } = useTranslation()
   const current = items[index] ?? null
@@ -441,6 +444,9 @@ export function LearningInsightDialog({
           <DialogTitle className="sr-only">
             {current.kind === 'word' ? current.word : current.kind === 'chunk' ? current.text : current.pattern}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {current.kind === 'word' ? current.meaning : current.kind === 'chunk' ? current.meaning : ''}
+          </DialogDescription>
           <div className="flex h-full flex-col">
             {/* Header - 固定在顶部，关闭按钮在右侧 */}
             <InsightHeader item={current} onClose={() => onOpenChange(false)} />

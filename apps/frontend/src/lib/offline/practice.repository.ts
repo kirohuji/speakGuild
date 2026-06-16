@@ -18,6 +18,8 @@ export type PracticeTurnPayload = {
   judgement?: any
   objectivesCompleted?: string[]
   chunksUsed?: string[]
+  isRetry?: boolean
+  parentTurnId?: string
 }
 
 function createLocalId(prefix: string) {

@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { Progress } from '@/components/ui/progress'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
@@ -21,6 +23,8 @@ import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
 import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
+import { ChunkOutputDrillCard } from '../components/chunk-output-drill-card'
+import { VocabOutputCard } from '../components/vocab-output-card'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
@@ -28,7 +32,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { usePracticeStore } from '@/stores/practice.store'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
-type Phase = 'prepare' | 'practice' | 'analysis'
+type Phase = 'prepare' | 'guided' | 'practice' | 'analysis'
 const PASSED_FEEDBACK_LINGER_MS = 1500
 
 interface TurnFeedback {
@@ -41,7 +45,15 @@ interface TurnFeedback {
     passed: boolean
     feedback: string
     chunksUsed: string[]
+    targetWordsUsed?: string[]
+    missingTargets?: string[]
     inkVariables: Record<string, string | number | boolean>
+    correction?: string | null
+    upgraded?: string | null
+    retryRequired?: boolean
+    retryPrompt?: string | null
+    focusChunk?: string | null
+    grammarIssues?: Array<{ type: string; original: string; correction: string }>
   }
   error?: string
 }
@@ -164,9 +176,32 @@ function PracticeTurnFeedback({
   const isLoading = feedback.status === 'loading'
   const isError = feedback.status === 'error'
   const isPassed = Boolean(feedback.result?.passed)
+  const isRetry = Boolean(feedback.result?.retryRequired)
+  const correction = feedback.result?.correction
+  const upgraded = feedback.result?.upgraded
+  const retryPrompt = feedback.result?.retryPrompt
+  const grammarIssues = feedback.result?.grammarIssues ?? []
   const suggestedChunks = feedback.targetChunks.filter((chunk) => !feedback.result?.chunksUsed.includes(chunk))
   const example = suggestedChunks.length ? suggestedChunks.join(' ') : feedback.targetChunks.join(' ')
   const isChat = tone === 'chat'
+
+  const icon = isLoading
+    ? <Loader2 className="size-3.5 animate-spin text-primary" />
+    : isPassed && !isRetry
+      ? <CheckCircle2 className="size-3.5 text-green-500" />
+      : isRetry
+        ? <CheckCircle2 className="size-3.5 text-blue-500" />
+        : <Lightbulb className="size-3.5 text-amber-500" />
+
+  const title = isLoading
+    ? t('practiceVn.feedbackEvaluating')
+    : isPassed && !isRetry
+      ? t('practiceVn.feedbackPassed')
+      : isRetry
+        ? '请重说一遍'
+        : isError
+          ? t('practiceVn.feedbackUnavailable')
+          : t('practiceVn.feedbackRetry')
 
   return (
     <div className={cn(
@@ -176,18 +211,12 @@ function PracticeTurnFeedback({
     )}>
       <div className={cn('flex gap-2 mb-2', (isPassed && !isLoading) ? 'items-start' : 'items-center')}>
         <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-muted/70')}>
-          {isLoading
-            ? <Loader2 className="size-3.5 animate-spin text-primary" />
-            : isPassed
-              ? <CheckCircle2 className="size-3.5 text-green-500" />
-              : <Lightbulb className="size-3.5 text-amber-500" />}
+          {icon}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold">
-              {isLoading ? t('practiceVn.feedbackEvaluating') : isPassed ? t('practiceVn.feedbackPassed') : isError ? t('practiceVn.feedbackUnavailable') : t('practiceVn.feedbackRetry')}
-            </p>
-            {!isLoading && !isPassed && (
+            <p className="text-xs font-semibold">{title}</p>
+            {!isLoading && (!isPassed || isRetry) && (
               <button type="button" onClick={onContinue} className="shrink-0 text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground">
                 {t('practiceVn.continueAnyway')}
               </button>
@@ -198,14 +227,46 @@ function PracticeTurnFeedback({
               {isError ? feedback.error : feedback.result?.feedback || t('practiceVn.feedbackContinue')}
             </p>
           )}
-          {!isLoading && !isPassed && suggestedChunks.length > 0 && (
+
+          {/* Retry correction: reuse existing card style */}
+          {!isLoading && isRetry && (correction || upgraded) && (
+            <div className="mt-2 space-y-1.5">
+              {correction && (
+                <div className="rounded bg-blue-500/10 px-2 py-1.5">
+                  <p className="text-[10px] text-blue-600 dark:text-blue-400">{correction}</p>
+                </div>
+              )}
+              {upgraded && (
+                <div className="rounded bg-blue-500/5 px-2 py-1.5">
+                  <p className="text-[10px] text-blue-500/70 dark:text-blue-300/70">{upgraded}</p>
+                </div>
+              )}
+              {retryPrompt && (
+                <p className="text-[11px] font-medium text-foreground/85">{retryPrompt}</p>
+              )}
+            </div>
+          )}
+
+          {/* Grammar issues */}
+          {!isLoading && grammarIssues.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {grammarIssues.slice(0, 3).map((issue, idx) => (
+                <div key={idx} className="rounded bg-muted/60 px-2 py-1">
+                  <p className="text-[10px] text-muted-foreground line-through">{issue.original}</p>
+                  <p className="text-[10px] text-foreground/75">→ {issue.correction}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && !isPassed && !isRetry && suggestedChunks.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {suggestedChunks.map((chunk) => (
                 <span key={chunk} className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">{chunk}</span>
               ))}
             </div>
           )}
-          {!isLoading && !isPassed && (
+          {!isLoading && !isPassed && !isRetry && (
             <details className="mt-2 text-[11px] text-foreground/75">
               <summary className="flex cursor-pointer list-none items-center gap-1 font-medium text-foreground/75 hover:text-foreground">
                 <ChevronDown className="size-3" />
@@ -219,6 +280,149 @@ function PracticeTurnFeedback({
             </details>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** Interactive guided warmup — uses ChunkOutputDrillCard and VocabOutputCard */
+function GuidedWarmupPhase({
+  topicId,
+  topicTitle,
+  warmupItems,
+  onBack,
+  onComplete,
+  onStartPractice,
+}: {
+  topicId: string
+  topicTitle: string
+  warmupItems: any[]
+  onBack: () => void
+  onComplete: () => void
+  onStartPractice: () => void
+}) {
+  const { t } = useTranslation()
+  const storageKey = `guided-progress:${topicId}`
+
+  // Count total sub-items
+  const totalSteps = useMemo(() => {
+    let count = 0
+    for (const item of warmupItems) {
+      if (item.type === 'chunk_substitution') count += (item.items ?? []).length
+      else if (item.type === 'vocab_drill') count += (item.vocabs ?? []).length
+    }
+    return count
+  }, [warmupItems])
+
+  const [doneIds, setDoneIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (raw) return new Set<string>(JSON.parse(raw) as string[])
+      return new Set<string>()
+    } catch { return new Set<string>() }
+  })
+
+  const persistDone = useCallback((ids: Set<string>) => {
+    try { localStorage.setItem(storageKey, JSON.stringify([...ids])) } catch {}
+  }, [storageKey])
+
+  const markDone = useCallback((stepId: string) => {
+    setDoneIds(prev => {
+      const next = new Set(prev)
+      next.add(stepId)
+      persistDone(next)
+      return next
+    })
+  }, [persistDone])
+
+  const doneCount = doneIds.size
+  const allDone = totalSteps > 0 && doneCount >= totalSteps
+
+  if (totalSteps === 0) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+        <div className="mb-4 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
+          <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
+        </div>
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <p className="text-muted-foreground">{t('practiceSession.noWarmupHint')}</p>
+          <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (allDone) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+        <div className="mb-4 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
+          <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
+        </div>
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <CheckCircle2 className="size-12 text-green-500" />
+          <p className="text-sm font-semibold text-foreground">{doneCount}/{totalSteps} 已完成</p>
+          <p className="text-xs text-muted-foreground">热身完成，开始 VN 对话吧</p>
+          <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+      <div className="mb-4 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
+        <div className="flex-1">
+          <p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {doneCount}/{totalSteps}</p>
+          <h1 className="text-lg font-bold text-foreground">{topicTitle}</h1>
+        </div>
+      </div>
+      <Progress value={(doneCount / totalSteps) * 100} className="mb-4 h-1.5" />
+
+      <div className="flex flex-col gap-4">
+        {warmupItems.map((item: any, itemIdx: number) => {
+          if (item.type === 'chunk_substitution') {
+            return (
+              <ChunkOutputDrillCard
+                key={item.id}
+                chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
+                items={(item.items ?? []).map((sub: any) => ({ zh: sub.zh, answer: sub.answer }))}
+                groupTitle={item.title}
+                onComplete={(_subIdx, _passed) => {
+                  const stepId = `${item.id}_${_subIdx}`
+                  markDone(stepId)
+                }}
+              />
+            )
+          }
+          if (item.type === 'vocab_drill') {
+            return (
+              <VocabOutputCard
+                key={item.id}
+                title={item.title}
+                vocabs={(item.vocabs ?? []).map((v: any) => ({
+                  vocabId: v.vocabId,
+                  promptZh: v.promptZh,
+                  targetWords: v.targetWords,
+                  suggestedAnswer: v.suggestedAnswer,
+                }))}
+                onComplete={(_idx, _passed) => {
+                  const stepId = `${item.id}_${_idx}`
+                  markDone(stepId)
+                }}
+              />
+            )
+          }
+          return null
+        })}
+      </div>
+
+      <div className="mt-6">
+        <Button variant="ghost" className="w-full min-h-11" size="default" onClick={onStartPractice}>
+          {t('practiceSession.startPractice')}
+        </Button>
       </div>
     </div>
   )
@@ -257,6 +461,11 @@ export function PracticeSessionPage() {
   const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; translation?: string; audioUrl?: string }[]>([])
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(null)
   const [turnFeedback, setTurnFeedback] = useState<TurnFeedback | null>(null)
+  // Retry state: when AI suggests correction, user must re-speak before advancing
+  const [retryState, setRetryState] = useState<'idle' | 'retrying'>('idle')
+  const retryCountRef = useRef(0)
+  const lastRetryFocusRef = useRef<{ chunk?: string | null; prompt?: string | null }>({})
+  const parentRoundRef = useRef<number>(0) // round number when retry started
 
   // Fallback NPC dialogue (when no Ink script)
   const [fallbackRound, setFallbackRound] = useState(0)
@@ -299,7 +508,7 @@ export function PracticeSessionPage() {
   // ── Immersive mode (hide layout chrome during practice) ──
   const setImmersiveMode = useLayoutStore((s) => s.setImmersiveMode)
   useEffect(() => {
-    if (phase === 'practice') {
+    if (phase === 'practice' || phase === 'guided') {
       setImmersiveMode(true)
     } else {
       setImmersiveMode(false)
@@ -321,6 +530,25 @@ export function PracticeSessionPage() {
       // Keep local practice usable even if session persistence is temporarily unavailable.
     }
   }, [setImmersiveMode, topicId])
+
+  // Switch to guided warmup phase before practice
+  const handleStartGuided = useCallback(() => {
+    setImmersiveMode(true)
+    setPhase('guided')
+  }, [setImmersiveMode])
+
+  // Complete guided and go to practice
+  const handleGuidedComplete = useCallback(async () => {
+    setPhase('practice')
+    if (!topicId) return
+    try {
+      const session = await practiceRepository.createSession(topicId)
+      console.log('[practice-session] 🆕 创建练习会话:', session.id)
+      setPracticeSessionId(session.id)
+    } catch (err) {
+      console.error('[practice-session] ❌ 创建会话失败:', err)
+    }
+  }, [topicId])
 
   // ── Objectives & chunks from detail ──
   const objectives = useMemo(() => {
@@ -689,6 +917,9 @@ export function PracticeSessionPage() {
           userText: userMsg,
           objectives: objectiveForRound,
           targetChunks: targetChunksForRound,
+          mode: retryState === 'retrying' ? 'targeted_output' : undefined,
+          requiredChunks: retryState === 'retrying' && lastRetryFocusRef.current.chunk
+            ? [lastRetryFocusRef.current.chunk] : undefined,
         })
 
         objectiveCompleted = judgement.objectiveCompleted ?? objectiveCompleted
@@ -696,13 +927,43 @@ export function PracticeSessionPage() {
         inkVariables = judgement.inkVariables
         turnJudgement = judgement
         passed = judgement.passed
+
+        // ── Retry flow ──
+        if (retryState === 'retrying') {
+          retryCountRef.current += 1
+          if (passed) {
+            // Retry succeeded
+            setRetryState('idle')
+            retryCountRef.current = 0
+            lastRetryFocusRef.current = {}
+          } else if (retryCountRef.current >= 2) {
+            // Max retries exceeded, allow skip
+            setRetryState('idle')
+            retryCountRef.current = 0
+            lastRetryFocusRef.current = {}
+            passed = true // Let it through after max attempts
+          }
+          // Still retrying: stay in retryState, show feedback
+        } else if (judgement.retryRequired && judgement.passed) {
+          // First-time: expression is understandable but unnatural → require retry
+          setRetryState('retrying')
+          retryCountRef.current = 0
+          parentRoundRef.current = round
+          lastRetryFocusRef.current = {
+            chunk: judgement.focusChunk,
+            prompt: judgement.retryPrompt,
+          }
+          passed = false // Don't advance the story yet
+        }
+        // ── End retry flow ──
+
         setTurnFeedback({
           status: 'success',
           userText: userMsg,
           objective: objectiveForRound.join('；'),
           hint: hintForRound,
           targetChunks: targetChunksForRound,
-          result: judgement,
+          result: { ...judgement, passed },
         })
 
         if (passed && objectiveCompleted.length) {
@@ -735,6 +996,8 @@ export function PracticeSessionPage() {
           judgement: turnJudgement,
           objectivesCompleted: objectiveCompleted,
           chunksUsed: chunksUsedForRound,
+          isRetry: retryState === 'retrying',
+          parentTurnId: retryState === 'retrying' ? String(parentRoundRef.current) : undefined,
         }).then(() => {
           console.log(`[practice-session] ✅ submitTurn 成功 | round=${round}`)
         }).catch((err) => {
@@ -815,13 +1078,22 @@ export function PracticeSessionPage() {
 
   const continueDespiteFeedback = useCallback(() => {
     if (!turnFeedback) return
+    setRetryState('idle')
+    retryCountRef.current = 0
+    parentRoundRef.current = 0
+    lastRetryFocusRef.current = {}
     resumeAfterInput(turnFeedback.userText, turnFeedback.result?.inkVariables)
     setTurnFeedback(null)
   }, [resumeAfterInput, turnFeedback])
 
   // ==================== Analysis ====================
   const goBackToScene = useCallback(() => {
-    navigate(unitId ? `/learning/units/${unitId}` : '/learning', { replace: true })
+    // Use history back so user returns to the page they came from (today, learning, etc.)
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate(unitId ? `/learning/units/${unitId}` : '/learning', { replace: true })
+    }
   }, [navigate, unitId])
 
   const startAnalysis = useCallback(async () => {
@@ -872,6 +1144,10 @@ export function PracticeSessionPage() {
     setUsedChunks(new Set())
     setAiHints([])
     setTurnFeedback(null)
+    setRetryState('idle')
+    retryCountRef.current = 0
+    parentRoundRef.current = 0
+    lastRetryFocusRef.current = {}
     setAnalysisResult(null)
     setAnalysisLoading(false)
     setRestartKey((k) => k + 1)
@@ -1081,9 +1357,29 @@ export function PracticeSessionPage() {
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
-            <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={handleStartPractice} data-spotlight="start-vn-practice">
-              <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
-            </Button>
+            {(detail?.topic as any)?.metadata?.outputTraining?.enabled && (detail?.topic as any)?.metadata?.outputTraining?.pipeline?.length > 0 ? (
+              <div className="mt-4 flex gap-3">
+                <Button className="flex-1 min-h-11" variant="outline" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
+                  {t('practiceSession.startWarmup')}
+                </Button>
+                <Button className="flex-1 min-h-11 bg-accent text-accent-foreground hover:bg-accent/85" size="default" onClick={handleStartPractice}>
+                  <Play className="mr-1.5 size-4" /> {t('practiceSession.startPractice')}
+                </Button>
+              </div>
+            ) : detail?.activeChunks?.some(c => c.examples?.length) ? (
+              <div className="mt-4 flex gap-3">
+                <Button className="flex-1 min-h-11" variant="outline" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
+                  {t('practiceSession.startWarmup')}
+                </Button>
+                <Button className="flex-1 min-h-11 bg-accent text-accent-foreground hover:bg-accent/85" size="default" onClick={handleStartPractice}>
+                  <Play className="mr-1.5 size-4" /> {t('practiceSession.startPractice')}
+                </Button>
+              </div>
+            ) : (
+              <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={handleStartPractice} data-spotlight="start-vn-practice">
+                <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
+              </Button>
+            )}
           </section>
         </div>
 
@@ -1095,6 +1391,41 @@ export function PracticeSessionPage() {
           onIndexChange={setInsightIndex}
         />
       </div>
+    )
+  }
+
+  // ==================== Phase: Guided (输出热身) ====================
+  if (phase === 'guided') {
+    const metadataPipeline = (detail?.topic as any)?.metadata?.outputTraining?.pipeline ?? []
+    const metadataItems = metadataPipeline.filter((item: any) =>
+      item.type === 'chunk_substitution' || item.type === 'vocab_drill'
+    )
+
+    // Auto-generate warmup items from activeChunks with examples if no metadata pipeline
+    const autoItems = metadataItems.length === 0
+      ? (detail?.activeChunks ?? [])
+          .filter(c => c.examples?.length)
+          .map(c => ({
+            id: c.id,
+            type: 'chunk_substitution' as const,
+            title: c.text,
+            chunk: c.text,
+            chunkMeaning: c.meaning || '',
+            items: (c.examples ?? []).map((e: any) => ({ zh: e.zh, answer: e.en })),
+          }))
+      : []
+
+    const warmupItems = metadataItems.length > 0 ? metadataItems : autoItems
+
+    return (
+      <GuidedWarmupPhase
+        topicId={topicId || ''}
+        topicTitle={detail?.topic.title || ''}
+        warmupItems={warmupItems}
+        onBack={() => setPhase('prepare')}
+        onComplete={handleGuidedComplete}
+        onStartPractice={handleStartPractice}
+      />
     )
   }
 

@@ -153,6 +153,7 @@ export class EnglishPracticeService {
         promptZh: topic.promptZh,
         suggestedDurationSec: topic.suggestedDurationSec,
         difficulty: topic.difficulty,
+        metadata: topic.metadata,
         sentencePatterns: topic.topicPatterns.map((tp) => tp.pattern),
         inkScriptId: topic.inkScriptId,
       },
@@ -340,6 +341,8 @@ export class EnglishPracticeService {
         judgement: dto.judgement ?? undefined,
         objectivesCompleted: dto.objectivesCompleted ?? [],
         chunksUsed: dto.chunksUsed ?? [],
+        isRetry: dto.isRetry ?? false,
+        parentTurnId: dto.parentTurnId,
       },
     });
 

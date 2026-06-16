@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
-import { BookOpen, Home, Library } from 'lucide-react'
+import { BookOpen, Home, Library, ListChecks } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useAuth } from '@/providers/auth-provider'
@@ -16,6 +16,7 @@ export function BottomNav() {
 
   const navItems = [
     { label: t('nav.home'), path: '/', icon: Home },
+    { label: t('nav.todayTask'), path: '/today', icon: ListChecks },
     { label: t('nav.learningPlan'), path: '/learning', icon: BookOpen },
     { label: t('nav.myLibrary'), path: '/expressions', icon: Library },
   ]

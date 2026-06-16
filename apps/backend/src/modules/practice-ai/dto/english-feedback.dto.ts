@@ -25,6 +25,26 @@ export class DialogueTurnJudgeDto {
   @IsArray()
   @IsOptional()
   targetChunks?: string[];
+
+  @IsString()
+  @IsOptional()
+  mode?: string; // 'communicative' | 'targeted_output'
+
+  @IsArray()
+  @IsOptional()
+  requiredChunks?: string[];
+
+  @IsArray()
+  @IsOptional()
+  targetWords?: string[];
+
+  @IsArray()
+  @IsOptional()
+  essentialSlots?: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  allowParaphrase?: boolean;
 }
 
 export class DialogueTurnJudgeResultDto {
