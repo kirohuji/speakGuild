@@ -27,6 +27,21 @@ import { enrichVocabulary } from './seed-vocab-enrich'
 const PKG_DIR = 'packages'
 const PKG_ABS = resolve(__dirname, 'data', PKG_DIR)
 
+/** 从 Ink 文本的 YAML front matter 中提取 key、title 和 scriptType */
+function parseInkMeta(raw: string): { key: string; title: string; scriptType: string } {
+  const match = raw.match(/^---\n([\s\S]*?)\n---/)
+  if (!match) return { key: '', title: '', scriptType: 'practice' }
+  const front = match[1]
+  const keyMatch = front.match(/^key:\s*(.+)$/m)
+  const titleMatch = front.match(/^title:\s*(.+)$/m)
+  const typeMatch = front.match(/^scriptType:\s*(.+)$/m)
+  return {
+    key: (keyMatch?.[1] || '').trim(),
+    title: (titleMatch?.[1] || '').trim(),
+    scriptType: (typeMatch?.[1] || 'practice').trim(),
+  }
+}
+
 // ── CSV 类型 ──
 type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string; package_type?: string }
 type CsvVocab = { scene_title: string; topic_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
@@ -674,17 +689,19 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
     console.log(`  ✓ ${chunkCount} 个句块`)
     totalChunks += chunkCount
 
-    // ═══ 3.5. Ink 脚本（从包目录加载） ═══
+    // ═══ 3.5. Ink 脚本（从包目录加载 .ink 文件） ═══
     try {
       const inkDir = resolve(__dirname, 'data', pkgPath, 'ink-scripts')
       if (existsSync(inkDir)) {
-        const inkFiles = readdirSync(inkDir).filter((f: string) => f.endsWith('.json'))
+        const inkFiles = readdirSync(inkDir).filter((f: string) => f.endsWith('.ink'))
         for (const file of inkFiles) {
-          const inkData = JSON.parse(require('fs').readFileSync(resolve(inkDir, file), 'utf-8'))
+          const raw = require('fs').readFileSync(resolve(inkDir, file), 'utf-8')
+          const { key, title, scriptType } = parseInkMeta(raw)
+          if (!key) continue
           const ink = await prisma.inkScript.upsert({
-            where: { key: inkData.key },
-            create: inkData,
-            update: inkData,
+            where: { key },
+            create: { key, title: title || key, scriptType: scriptType || 'practice', inkSource: raw, inkJson: {} },
+            update: { inkSource: raw },
           })
           inkKeyToId.set(ink.key, ink.id)
         }

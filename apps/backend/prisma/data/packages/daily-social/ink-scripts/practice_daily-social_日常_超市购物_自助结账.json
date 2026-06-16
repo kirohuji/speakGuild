@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-social_日常_超市购物_自助结账",
-  "title": "日常·超市购物 - 自助结账",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_日常_超市购物_自助结账\ntitle: 日常·超市购物 - 自助结账\n---\nStore Clerk: Let's talk about 自助结账. What do you think about it?\n#objective: 描述故障\n#chunks: The machine won't scan this item.,Can I pay here using my card?\n#user_input\nStore Clerk: That's interesting! Can you tell me more about that?\n#objective: 请求帮助\n#chunks: The machine won't scan this item.,Can I pay here using my card?\n#user_input\nStore Clerk: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

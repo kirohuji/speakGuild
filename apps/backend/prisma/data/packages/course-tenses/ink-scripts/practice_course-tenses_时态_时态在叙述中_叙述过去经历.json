@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-tenses_时态_时态在叙述中_叙述过去经历",
-  "title": "时态·时态在叙述中 - 叙述过去经历",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-tenses_时态_时态在叙述中_叙述过去经历\ntitle: 时态·时态在叙述中 - 叙述过去经历\n---\nInstructor: Let's talk about 叙述过去经历. What do you think about it?\n#objective: Practice talking about 叙述过去经历\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

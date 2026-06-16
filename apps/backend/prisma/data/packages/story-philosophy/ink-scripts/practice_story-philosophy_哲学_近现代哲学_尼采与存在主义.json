@@ -1,6 +1,0 @@
-{
-  "key": "practice_story-philosophy_哲学_近现代哲学_尼采与存在主义",
-  "title": "哲学·近现代哲学 - 尼采与存在主义",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_story-philosophy_哲学_近现代哲学_尼采与存在主义\ntitle: 哲学·近现代哲学 - 尼采与存在主义\n---\nInstructor: Let's talk about 尼采与存在主义. What do you think about it?\n#objective: Practice talking about 尼采与存在主义\n#chunks: Let me tell you about 尼采与存在主义.\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me tell you about 尼采与存在主义.\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

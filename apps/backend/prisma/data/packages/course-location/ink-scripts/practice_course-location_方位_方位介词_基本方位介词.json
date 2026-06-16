@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-location_方位_方位介词_基本方位介词",
-  "title": "方位·方位介词 - 基本方位介词",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-location_方位_方位介词_基本方位介词\ntitle: 方位·方位介词 - 基本方位介词\n---\nTutor: Let's talk about 基本方位介词. What do you think about it?\n#objective: 用in表达在内部\n#chunks: The book is in my bag.,The cat is on the table.,She is at the bus stop.,The dog is under the bed.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用on表达在表面\n#chunks: The book is in my bag.,The cat is on the table.,She is at the bus stop.,The dog is under the bed.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

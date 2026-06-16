@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-campus_校园_图书馆借书_查找资料",
-  "title": "校园·图书馆借书 - 查找资料",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-campus_校园_图书馆借书_查找资料\ntitle: 校园·图书馆借书 - 查找资料\n---\nLibrarian: Let's talk about 查找资料. What do you think about it?\n#objective: 说想找什么书\n#chunks: I'm looking for a book about...,Can you help me find this journal?,How do I use the online catalogue?\n#user_input\nLibrarian: That's interesting! Can you tell me more about that?\n#objective: 问如何查目录\n#chunks: I'm looking for a book about...,Can you help me find this journal?,How do I use the online catalogue?\n#user_input\nLibrarian: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

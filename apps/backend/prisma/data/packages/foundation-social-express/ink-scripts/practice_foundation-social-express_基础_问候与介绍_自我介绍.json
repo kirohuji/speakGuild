@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-social-express_基础_问候与介绍_自我介绍",
-  "title": "基础·问候与介绍 - 自我介绍",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-social-express_基础_问候与介绍_自我介绍\ntitle: 基础·问候与介绍 - 自我介绍\n---\nTutor: Let's talk about 自我介绍. What do you think about it?\n#objective: 练习自我介绍相关表达\n#chunks: My name is...,I'm from China.,I live in Beijing.,I'm a student.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: My name is...,I'm from China.,I live in Beijing.,I'm a student.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

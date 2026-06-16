@@ -1,6 +1,0 @@
-{
-  "key": "practice_story-culture_现代文化_数字时代_当代社会议题",
-  "title": "现代文化·数字时代 - 当代社会议题",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_story-culture_现代文化_数字时代_当代社会议题\ntitle: 现代文化·数字时代 - 当代社会议题\n---\nTutor: Let's talk about 当代社会议题. What do you think about it?\n#objective: 学习当代社会议题相关表达\n#chunks: Let me tell you about 当代社会议题.,I find 当代社会议题 really interesting.,One interesting thing about 当代社会议题 is that...\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me tell you about 当代社会议题.,I find 当代社会议题 really interesting.,One interesting thing about 当代社会议题 is that...\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

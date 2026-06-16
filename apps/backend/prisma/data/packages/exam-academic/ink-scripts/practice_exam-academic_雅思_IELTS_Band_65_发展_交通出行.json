@@ -1,6 +1,0 @@
-{
-  "key": "practice_exam-academic_雅思_IELTS_Band_65_发展_交通出行",
-  "title": "雅思·IELTS Band 6.5 发展 - 交通出行",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_exam-academic_雅思_IELTS_Band_65_发展_交通出行\ntitle: 雅思·IELTS Band 6.5 发展 - 交通出行\n---\nExaminer: Let's talk about 交通出行. What do you think about it?\n#objective: 说交通方式\n#chunks: I usually take... to...,The traffic in my city is...,I prefer... because...\n#user_input\nExaminer: That's interesting! Can you tell me more about that?\n#objective: 表达偏好\n#chunks: I usually take... to...,The traffic in my city is...,I prefer... because...\n#user_input\nExaminer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

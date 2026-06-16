@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-campus_校园_图书馆借书_续借与归还",
-  "title": "校园·图书馆借书 - 续借与归还",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-campus_校园_图书馆借书_续借与归还\ntitle: 校园·图书馆借书 - 续借与归还\n---\nLibrarian: Let's talk about 续借与归还. What do you think about it?\n#objective: 说明要续借\n#chunks: I'd like to renew this book.,What's the late return fee?,I'm returning this book.\n#user_input\nLibrarian: That's interesting! Can you tell me more about that?\n#objective: 问逾期费\n#chunks: I'd like to renew this book.,What's the late return fee?,I'm returning this book.\n#user_input\nLibrarian: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

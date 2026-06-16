@@ -1,6 +1,0 @@
-{
-  "key": "practice_story-medieval_中世纪_探险与传奇_维京航海家",
-  "title": "中世纪·探险与传奇 - 维京航海家",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_story-medieval_中世纪_探险与传奇_维京航海家\ntitle: 中世纪·探险与传奇 - 维京航海家\n---\nTutor: Let's talk about 维京航海家. What do you think about it?\n#objective: 学习维京航海家相关表达\n#chunks: Let me tell you about 维京航海家.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me tell you about 维京航海家.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

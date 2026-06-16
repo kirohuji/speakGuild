@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-connectors_连接词_从句连接_时间与条件从句",
-  "title": "连接词·从句连接 - 时间与条件从句",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-connectors_连接词_从句连接_时间与条件从句\ntitle: 连接词·从句连接 - 时间与条件从句\n---\nTutor: Let's talk about 时间与条件从句. What do you think about it?\n#objective: 用when表达时间\n#chunks: When I arrived they were eating.,If it rains we'll stay home.,You won't pass unless you study.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用if/unless表达条件\n#chunks: When I arrived they were eating.,If it rains we'll stay home.,You won't pass unless you study.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

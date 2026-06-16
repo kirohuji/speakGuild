@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-travel_旅行_机场出发_登机口候机",
-  "title": "旅行·机场出发 - 登机口候机",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-travel_旅行_机场出发_登机口候机\ntitle: 旅行·机场出发 - 登机口候机\n---\nGate Agent: Let's talk about 登机口候机. What do you think about it?\n#objective: 确认登机时间\n#chunks: When does boarding start?,Is the flight on time?,Has the gate changed?\n#user_input\nGate Agent: That's interesting! Can you tell me more about that?\n#objective: 确认登机口\n#chunks: When does boarding start?,Is the flight on time?,Has the gate changed?\n#user_input\nGate Agent: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-location_方位_指路与位置描述_描述路线",
-  "title": "方位·指路与位置描述 - 描述路线",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-location_方位_指路与位置描述_描述路线\ntitle: 方位·指路与位置描述 - 描述路线\n---\nTutor: Let's talk about 描述路线. What do you think about it?\n#objective: 用past表示经过\n#chunks: Go past the hospital.,The museum is on your left.,The bookstore is on your right.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用on your left/right指示位置\n#chunks: Go past the hospital.,The museum is on your left.,The bookstore is on your right.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

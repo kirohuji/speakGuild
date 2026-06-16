@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-healthcare_健康_预约看病_前台登记",
-  "title": "健康·预约看病 - 前台登记",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-healthcare_健康_预约看病_前台登记\ntitle: 健康·预约看病 - 前台登记\n---\nReceptionist: Let's talk about 前台登记. What do you think about it?\n#objective: 报预约信息\n#chunks: I have an appointment at 10 AM.,Here is my insurance card.,Do I need to fill out any forms?\n#user_input\nReceptionist: That's interesting! Can you tell me more about that?\n#objective: 出示证件/保险\n#chunks: I have an appointment at 10 AM.,Here is my insurance card.,Do I need to fill out any forms?\n#user_input\nReceptionist: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

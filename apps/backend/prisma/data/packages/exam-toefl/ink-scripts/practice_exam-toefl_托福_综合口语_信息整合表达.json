@@ -1,6 +1,0 @@
-{
-  "key": "practice_exam-toefl_托福_综合口语_信息整合表达",
-  "title": "托福·综合口语 - 信息整合表达",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_exam-toefl_托福_综合口语_信息整合表达\ntitle: 托福·综合口语 - 信息整合表达\n---\nTutor: Let's talk about 信息整合表达. What do you think about it?\n#objective: 学习信息整合表达相关表达\n#chunks: Let me talk about 信息整合表达.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me talk about 信息整合表达.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

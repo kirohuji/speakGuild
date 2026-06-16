@@ -79,6 +79,7 @@ function buildInkJson(
     '---',
     `key: ${key}`,
     `title: ${sceneTitle} - ${topicTitle}`,
+    'scriptType: practice',
     '---',
     `${npcName}: Let's talk about ${topicTitle}. What do you think about it?`,
     `#objective: ${obj1}`,
@@ -214,7 +215,7 @@ function main() {
       const sceneTitle = f[uSceneIdx]
       const topicTitle = f[uTitleIdx]
 
-      const inkFile = join(inkDir, `${key}.json`)
+      const inkFile = join(inkDir, `${key}.ink`)
       if (existsSync(inkFile)) continue
 
       const chunks = chunkMap.get(`${sceneTitle}|${topicTitle}`) || []
@@ -223,7 +224,7 @@ function main() {
       const objectives = npcInfo?.objectives || []
 
       const json = buildInkJson(key, sceneTitle, topicTitle, chunks, npcName, objectives)
-      writeFileSync(inkFile, JSON.stringify(json, null, 2), 'utf-8')
+      writeFileSync(inkFile, json.inkSource, 'utf-8')
       pkgInk++
     }
 

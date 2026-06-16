@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-travel_旅行_机场出发_办理值机",
-  "title": "旅行·机场出发 - 办理值机",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-travel_旅行_机场出发_办理值机\ntitle: 旅行·机场出发 - 办理值机\n---\nEmily: Let's talk about 办理值机. What do you think about it?\n#objective: 出示护照和订票信息\n#chunks: I'd like to check in for my flight.,Can I have a window seat please?,How many bags can I check in?,Is my luggage overweight?\n#user_input\nEmily: That's interesting! Can you tell me more about that?\n#objective: 选择座位\n#chunks: I'd like to check in for my flight.,Can I have a window seat please?,How many bags can I check in?,Is my luggage overweight?\n#user_input\nEmily: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

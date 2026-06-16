@@ -1,6 +1,0 @@
-{
-  "key": "practice_workplace_面试自我介绍_描述过往经历",
-  "title": "面试自我介绍 - 描述过往经历",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_workplace_面试自我介绍_描述过往经历\ntitle: 面试自我介绍 - 描述过往经历\n---\nInterviewer: Can you describe your previous work or internship experience?\n#objective: Describe your previous work or internship experience\n#chunks: I have experience in...,In my previous role, I...,I was responsible for...,I worked on...\n#user_input\nInterviewer: That sounds interesting. What was your biggest achievement during that experience?\n#objective: Share a specific achievement with measurable results\n#chunks: One of my achievements was...,I managed to...,I learned how to...\n#user_input\nInterviewer: What did you learn from that experience that you can bring to this role?\n#objective: Reflect on what you learned and how it applies\n#chunks: I learned how to...,During that experience I...,I collaborated with...\n#user_input\nInterviewer: That's very relevant to what we do here. Thanks for sharing!\n-> END\n"
-}

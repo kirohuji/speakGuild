@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-travel_旅行_酒店大堂_退房离店",
-  "title": "旅行·酒店大堂 - 退房离店",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-travel_旅行_酒店大堂_退房离店\ntitle: 旅行·酒店大堂 - 退房离店\n---\nMr. Wilson: Let's talk about 退房离店. What do you think about it?\n#objective: 退房\n#chunks: I'd like to check out now.,Can I get a receipt?,Can I store my luggage here?\n#user_input\nMr. Wilson: That's interesting! Can you tell me more about that?\n#objective: 核对账单\n#chunks: I'd like to check out now.,Can I get a receipt?,Can I store my luggage here?\n#user_input\nMr. Wilson: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

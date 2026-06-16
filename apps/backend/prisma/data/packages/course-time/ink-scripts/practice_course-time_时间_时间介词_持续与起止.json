@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-time_时间_时间介词_持续与起止",
-  "title": "时间·时间介词 - 持续与起止",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-time_时间_时间介词_持续与起止\ntitle: 时间·时间介词 - 持续与起止\n---\nTutor: Let's talk about 持续与起止. What do you think about it?\n#objective: 用since表达从某时起\n#chunks: He fell asleep during the movie.,I've been here since 9 AM.,I studied for three hours.,The store is open until 9 PM.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用for表达持续时长\n#chunks: He fell asleep during the movie.,I've been here since 9 AM.,I studied for three hours.,The store is open until 9 PM.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

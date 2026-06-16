@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-travel_旅行_酒店大堂_客房服务",
-  "title": "旅行·酒店大堂 - 客房服务",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-travel_旅行_酒店大堂_客房服务\ntitle: 旅行·酒店大堂 - 客房服务\n---\nMr. Wilson: Let's talk about 客房服务. What do you think about it?\n#objective: 索要用品\n#chunks: Can I have a wake-up call at 6 AM?,The AC in my room isn't working.,Can I have extra towels please?\n#user_input\nMr. Wilson: That's interesting! Can you tell me more about that?\n#objective: 报修\n#chunks: Can I have a wake-up call at 6 AM?,The AC in my room isn't working.,Can I have extra towels please?\n#user_input\nMr. Wilson: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

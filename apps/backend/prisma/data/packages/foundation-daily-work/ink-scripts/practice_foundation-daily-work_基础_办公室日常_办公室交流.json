@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-daily-work_基础_办公室日常_办公室交流",
-  "title": "基础·办公室日常 - 办公室交流",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-daily-work_基础_办公室日常_办公室交流\ntitle: 基础·办公室日常 - 办公室交流\n---\nTutor: Let's talk about 办公室交流. What do you think about it?\n#objective: 练习办公室交流相关表达\n#chunks: Good morning,How was your weekend?,Let's start the meeting.,I have a question.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Good morning,How was your weekend?,Let's start the meeting.,I have a question.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

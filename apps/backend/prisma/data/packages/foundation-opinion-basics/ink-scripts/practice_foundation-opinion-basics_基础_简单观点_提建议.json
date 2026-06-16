@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-opinion-basics_基础_简单观点_提建议",
-  "title": "基础·简单观点 - 提建议",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-opinion-basics_基础_简单观点_提建议\ntitle: 基础·简单观点 - 提建议\n---\nTutor: Let's talk about 提建议. What do you think about it?\n#objective: 练习提建议相关表达\n#chunks: Let's go to the park.,How about having coffee?,What do you think?,Why don't we go together?\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let's go to the park.,How about having coffee?,What do you think?,Why don't we go together?\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

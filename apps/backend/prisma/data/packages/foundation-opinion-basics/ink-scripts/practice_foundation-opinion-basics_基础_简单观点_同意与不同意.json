@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-opinion-basics_基础_简单观点_同意与不同意",
-  "title": "基础·简单观点 - 同意与不同意",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-opinion-basics_基础_简单观点_同意与不同意\ntitle: 基础·简单观点 - 同意与不同意\n---\nTutor: Let's talk about 同意与不同意. What do you think about it?\n#objective: 练习同意与不同意相关表达\n#chunks: I think so too.,I agree with you.,That's a good idea!,You're right.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I think so too.,I agree with you.,That's a good idea!,You're right.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

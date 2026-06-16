@@ -1,6 +1,0 @@
-{
-  "key": "practice_story-medieval_中世纪_骑士与城堡_亚瑟王与圆桌骑士",
-  "title": "中世纪·骑士与城堡 - 亚瑟王与圆桌骑士",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_story-medieval_中世纪_骑士与城堡_亚瑟王与圆桌骑士\ntitle: 中世纪·骑士与城堡 - 亚瑟王与圆桌骑士\n---\nInstructor: Let's talk about 亚瑟王与圆桌骑士. What do you think about it?\n#objective: Practice talking about 亚瑟王与圆桌骑士\n#chunks: Let me tell you about 亚瑟王与圆桌骑士.\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Let me tell you about 亚瑟王与圆桌骑士.\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

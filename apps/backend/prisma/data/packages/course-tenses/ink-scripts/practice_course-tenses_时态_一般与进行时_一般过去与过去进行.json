@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-tenses_时态_一般与进行时_一般过去与过去进行",
-  "title": "时态·一般与进行时 - 一般过去与过去进行",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-tenses_时态_一般与进行时_一般过去与过去进行\ntitle: 时态·一般与进行时 - 一般过去与过去进行\n---\nTutor: Let's talk about 一般过去与过去进行. What do you think about it?\n#objective: 用过去时描述已发生的事\n#chunks: Yesterday I... (past simple),I was... when... (past continuous)\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用过去进行描述背景\n#chunks: Yesterday I... (past simple),I was... when... (past continuous)\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

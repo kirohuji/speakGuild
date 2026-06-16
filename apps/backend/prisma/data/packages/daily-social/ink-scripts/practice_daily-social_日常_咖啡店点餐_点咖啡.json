@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-social_日常_咖啡店点餐_点咖啡",
-  "title": "日常·咖啡店点餐 - 点咖啡",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_日常_咖啡店点餐_点咖啡\ntitle: 日常·咖啡店点餐 - 点咖啡\n---\nBarista: Let's talk about 点咖啡. What do you think about it?\n#objective: 点饮品\n#chunks: I'd like a..., please.,For here or to go?,What size would you like?\n#user_input\nBarista: That's interesting! Can you tell me more about that?\n#objective: 确认温度/大小\n#chunks: I'd like a..., please.,For here or to go?,What size would you like?\n#user_input\nBarista: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-daily-life_基础_起床与洗漱_早餐与出门",
-  "title": "基础·起床与洗漱 - 早餐与出门",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-daily-life_基础_起床与洗漱_早餐与出门\ntitle: 基础·起床与洗漱 - 早餐与出门\n---\nTutor: Let's talk about 早餐与出门. What do you think about it?\n#objective: 练习早餐与出门相关表达\n#chunks: What's for breakfast?,I'll have toast and eggs.,Please pass the milk.,I like my coffee black.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: What's for breakfast?,I'll have toast and eggs.,Please pass the milk.,I like my coffee black.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-healthcare_健康_医院急诊_急诊分诊",
-  "title": "健康·医院急诊 - 急诊分诊",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-healthcare_健康_医院急诊_急诊分诊\ntitle: 健康·医院急诊 - 急诊分诊\n---\nInstructor: Let's talk about 急诊分诊. What do you think about it?\n#objective: Practice talking about 急诊分诊\n#chunks: I have severe chest pain.,On a scale of 1 to 10 the pain is about...,Can you tell me your medical history?\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I have severe chest pain.,On a scale of 1 to 10 the pain is about...,Can you tell me your medical history?\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

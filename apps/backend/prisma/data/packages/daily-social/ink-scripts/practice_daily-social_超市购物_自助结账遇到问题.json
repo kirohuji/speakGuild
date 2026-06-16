@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-social_超市购物_自助结账遇到问题",
-  "title": "超市购物 - 自助结账遇到问题",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_超市购物_自助结账遇到问题\ntitle: 超市购物 - 自助结账遇到问题\n---\nStore Clerk: The self-checkout machine has an error. Ask for help.\n#objective: The self-checkout machine has an error. Ask for help.\n#chunks: Where can I find...?,How much is this?,Do you have...?\n#user_input\nStore Clerk: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: Where can I find...?,How much is this?,Do you have...?\n#user_input\nStore Clerk: Got it. That was really helpful. Have a great day!\n-> END\n"
-}

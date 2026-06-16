@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-travel_旅行_出租车_打车去酒店",
-  "title": "旅行·出租车 - 打车去酒店",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-travel_旅行_出租车_打车去酒店\ntitle: 旅行·出租车 - 打车去酒店\n---\nDriver: Let's talk about 打车去酒店. What do you think about it?\n#objective: 告诉司机地址\n#chunks: Can you take me to this address?,How much will it cost?,Please turn on the meter.,How long does it take to get there?\n#user_input\nDriver: That's interesting! Can you tell me more about that?\n#objective: 确认费用\n#chunks: Can you take me to this address?,How much will it cost?,Please turn on the meter.,How long does it take to get there?\n#user_input\nDriver: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

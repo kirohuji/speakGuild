@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-social_日常_朋友聚会_确认参加",
-  "title": "日常·朋友聚会 - 确认参加",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_日常_朋友聚会_确认参加\ntitle: 日常·朋友聚会 - 确认参加\n---\nFriend: Let's talk about 确认参加. What do you think about it?\n#objective: 回复邀请\n#chunks: I'd love to come! What should I bring?\n#user_input\nFriend: That's interesting! Can you tell me more about that?\n#objective: 问需要带什么\n#chunks: I'd love to come! What should I bring?\n#user_input\nFriend: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

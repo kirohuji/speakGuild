@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-healthcare_健康_看医生_回答问诊",
-  "title": "健康·看医生 - 回答问诊",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-healthcare_健康_看医生_回答问诊\ntitle: 健康·看医生 - 回答问诊\n---\nDr. Williams: Let's talk about 回答问诊. What do you think about it?\n#objective: 回答何时开始\n#chunks: It started three days ago.,I'm allergic to penicillin.,I've taken some painkillers but they didn't help.,No I don't have any other medical conditions.\n#user_input\nDr. Williams: That's interesting! Can you tell me more about that?\n#objective: 说明过敏史\n#chunks: It started three days ago.,I'm allergic to penicillin.,I've taken some painkillers but they didn't help.,No I don't have any other medical conditions.\n#user_input\nDr. Williams: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

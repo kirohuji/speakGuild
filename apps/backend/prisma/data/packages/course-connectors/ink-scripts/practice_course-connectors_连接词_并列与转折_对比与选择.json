@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-connectors_连接词_并列与转折_对比与选择",
-  "title": "连接词·并列与转折 - 对比与选择",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-connectors_连接词_并列与转折_对比与选择\ntitle: 连接词·并列与转折 - 对比与选择\n---\nTutor: Let's talk about 对比与选择. What do you think about it?\n#objective: 用however正式转折\n#chunks: It's raining however we'll go out.,She likes pop whereas I prefer rock.,She is tired yet she keeps working.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 用whereas对比差异\n#chunks: It's raining however we'll go out.,She likes pop whereas I prefer rock.,She is tired yet she keeps working.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

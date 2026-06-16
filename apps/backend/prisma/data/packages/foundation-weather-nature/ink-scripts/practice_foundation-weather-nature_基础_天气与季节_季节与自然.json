@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-weather-nature_基础_天气与季节_季节与自然",
-  "title": "基础·天气与季节 - 季节与自然",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-weather-nature_基础_天气与季节_季节与自然\ntitle: 基础·天气与季节 - 季节与自然\n---\nTutor: Let's talk about 季节与自然. What do you think about it?\n#objective: 练习季节与自然相关表达\n#chunks: My favorite season is spring.,Summer is very hot.,Leaves fall in autumn.,It snows in winter.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: My favorite season is spring.,Summer is very hot.,Leaves fall in autumn.,It snows in winter.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,0 +1,15 @@
+---
+key: practice_travel__
+title:  - 
+scriptType: practice
+---
+Librarian: 
+#objective: Respond to the Librarian's question
+#chunks: I'd like to borrow...,Do you have...?,How long can I keep it?
+#user_input
+Librarian: Thanks for sharing! Is there anything else you'd like to add or ask?
+#objective: Follow up or ask a related question
+#chunks: I'd like to borrow...,Do you have...?,How long can I keep it?
+#user_input
+Librarian: Got it. That was really helpful. Have a great day!
+-> END

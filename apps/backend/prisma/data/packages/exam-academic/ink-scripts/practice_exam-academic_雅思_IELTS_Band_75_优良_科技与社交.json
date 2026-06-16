@@ -1,6 +1,0 @@
-{
-  "key": "practice_exam-academic_雅思_IELTS_Band_75_优良_科技与社交",
-  "title": "雅思·IELTS Band 7.5 优良 - 科技与社交",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_exam-academic_雅思_IELTS_Band_75_优良_科技与社交\ntitle: 雅思·IELTS Band 7.5 优良 - 科技与社交\n---\nExaminer: Let's talk about 科技与社交. What do you think about it?\n#objective: 说明科技影响\n#chunks: Technology has changed the way we...,On the one hand... on the other hand...,In my opinion...\n#user_input\nExaminer: That's interesting! Can you tell me more about that?\n#objective: 用对比结构论述\n#chunks: Technology has changed the way we...,On the one hand... on the other hand...,In my opinion...\n#user_input\nExaminer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

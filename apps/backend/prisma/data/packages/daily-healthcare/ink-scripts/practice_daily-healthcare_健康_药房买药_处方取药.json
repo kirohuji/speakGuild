@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-healthcare_健康_药房买药_处方取药",
-  "title": "健康·药房买药 - 处方取药",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-healthcare_健康_药房买药_处方取药\ntitle: 健康·药房买药 - 处方取药\n---\nMr. Patel: Let's talk about 处方取药. What do you think about it?\n#objective: 出示处方\n#chunks: I'm here to pick up a prescription.,How much does it cost?,Do you have a generic version?\n#user_input\nMr. Patel: That's interesting! Can you tell me more about that?\n#objective: 询问价格\n#chunks: I'm here to pick up a prescription.,How much does it cost?,Do you have a generic version?\n#user_input\nMr. Patel: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_study-abroad_认识室友_初次见面",
-  "title": "认识室友 - 初次见面",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_study-abroad_认识室友_初次见面\ntitle: 认识室友 - 初次见面\n---\nAlex: Hey! You must be new here. I'm Alex, your flatmate. What's your name?\n#objective: Introduce yourself — say your name, where you're from, and that you just moved in.\n#chunks: It's nice to meet you,I'm from...,I just moved in,My major is...\n#user_input\nAlex: Nice to meet you too! So where are you from? And what are you studying?\n#objective: Share where you're from and your major.\n#chunks: I'm from...,My major is...,I'm studying...\n#user_input\nAlex: That's cool! I'm from Manchester and I'm studying Engineering. Let me know if you need help settling in!\n-> END\n"
-}

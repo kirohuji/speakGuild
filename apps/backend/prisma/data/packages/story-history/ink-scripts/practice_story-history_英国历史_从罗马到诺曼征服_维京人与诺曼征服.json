@@ -1,6 +1,0 @@
-{
-  "key": "practice_story-history_英国历史_从罗马到诺曼征服_维京人与诺曼征服",
-  "title": "英国历史·从罗马到诺曼征服 - 维京人与诺曼征服",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_story-history_英国历史_从罗马到诺曼征服_维京人与诺曼征服\ntitle: 英国历史·从罗马到诺曼征服 - 维京人与诺曼征服\n---\nInstructor: Let's talk about 维京人与诺曼征服. What do you think about it?\n#objective: Practice talking about 维京人与诺曼征服\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

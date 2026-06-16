@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-travel_旅行_机场出发_过安检",
-  "title": "旅行·机场出发 - 过安检",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-travel_旅行_机场出发_过安检\ntitle: 旅行·机场出发 - 过安检\n---\nSecurity Staff: Let's talk about 过安检. What do you think about it?\n#objective: 拿出证件\n#chunks: Do I need to take my laptop out?,Can I bring this in my carry-on?,Please put your bag on the belt.\n#user_input\nSecurity Staff: That's interesting! Can you tell me more about that?\n#objective: 取出电子产品\n#chunks: Do I need to take my laptop out?,Can I bring this in my carry-on?,Please put your bag on the belt.\n#user_input\nSecurity Staff: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

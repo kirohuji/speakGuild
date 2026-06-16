@@ -1,0 +1,15 @@
+---
+key: practice_study-abroad_宿舍入住_了解设施
+title: 宿舍入住 - 了解设施
+scriptType: practice
+---
+Sarah: Now that you're checked in, do you have any questions about the facilities?
+#objective: Ask about Wi-Fi, laundry room, shared kitchen, or how to get to campus.
+#chunks: Is there Wi-Fi in the building?,Where is the laundry room?,Is there a shared kitchen?,How do I get to the campus from here?
+#user_input
+Sarah: Good questions! The Wi-Fi network is 'eduroam' — just log in with your student account. The laundry room is on the ground floor, and the shared kitchen is at the end of each corridor. Anything else?
+#objective: Ask another question or confirm you understand.
+#chunks: Is there Wi-Fi in the building?,Where is the laundry room?,How do I get to the campus from here?
+#user_input
+Sarah: The campus is just a 10-minute walk. Go out the main entrance and turn right. You'll see the signs.
+-> END

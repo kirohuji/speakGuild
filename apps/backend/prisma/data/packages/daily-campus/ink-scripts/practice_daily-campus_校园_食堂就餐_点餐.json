@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-campus_校园_食堂就餐_点餐",
-  "title": "校园·食堂就餐 - 点餐",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-campus_校园_食堂就餐_点餐\ntitle: 校园·食堂就餐 - 点餐\n---\nCafeteria Staff: Let's talk about 点餐. What do you think about it?\n#objective: 选择菜品\n#chunks: I'll have the... please.,How much is this set meal?\n#user_input\nCafeteria Staff: That's interesting! Can you tell me more about that?\n#objective: 确认价格\n#chunks: I'll have the... please.,How much is this set meal?\n#user_input\nCafeteria Staff: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

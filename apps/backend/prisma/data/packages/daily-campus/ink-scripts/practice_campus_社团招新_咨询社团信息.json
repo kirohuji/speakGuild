@@ -1,6 +1,0 @@
-{
-  "key": "practice_campus_社团招新_咨询社团信息",
-  "title": "社团招新 - 咨询社团信息",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_campus_社团招新_咨询社团信息\ntitle: 社团招新 - 咨询社团信息\n---\nClub President: Ask a club member about their activities and meetings.\n#objective: Ask a club member about their activities and meetings.\n#chunks: I'm interested in joining,What activities do you have?,When do you meet?\n#user_input\nClub President: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'm interested in joining,What activities do you have?,When do you meet?\n#user_input\nClub President: Got it. That was really helpful. Have a great day!\n-> END\n"
-}

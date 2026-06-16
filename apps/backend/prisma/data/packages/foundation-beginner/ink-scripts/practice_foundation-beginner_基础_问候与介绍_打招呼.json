@@ -1,6 +1,0 @@
-{
-  "key": "practice_foundation-beginner_基础_问候与介绍_打招呼",
-  "title": "基础·问候与介绍 - 打招呼",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_foundation-beginner_基础_问候与介绍_打招呼\ntitle: 基础·问候与介绍 - 打招呼\n---\nTutor: Let's talk about 打招呼. What do you think about it?\n#objective: 说Hello\n#chunks: Hello! How are you?,Good morning! / Good afternoon! / Good evening!,Nice to meet you.\n#user_input\nTutor: That's interesting! Can you tell me more about that?\n#objective: 问候How are you\n#chunks: Hello! How are you?,Good morning! / Good afternoon! / Good evening!,Nice to meet you.\n#user_input\nTutor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-social_日常_咖啡店点餐_办理会员卡",
-  "title": "日常·咖啡店点餐 - 办理会员卡",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_日常_咖啡店点餐_办理会员卡\ntitle: 日常·咖啡店点餐 - 办理会员卡\n---\nBarista: Let's talk about 办理会员卡. What do you think about it?\n#objective: 问怎么办卡\n#chunks: How do I get a loyalty card?,What are the benefits?\n#user_input\nBarista: That's interesting! Can you tell me more about that?\n#objective: 问会员权益\n#chunks: How do I get a loyalty card?,What are the benefits?\n#user_input\nBarista: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

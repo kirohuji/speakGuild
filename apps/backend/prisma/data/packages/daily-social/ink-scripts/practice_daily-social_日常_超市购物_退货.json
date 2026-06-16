@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-social_日常_超市购物_退货",
-  "title": "日常·超市购物 - 退货",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-social_日常_超市购物_退货\ntitle: 日常·超市购物 - 退货\n---\nStore Clerk: Let's talk about 退货. What do you think about it?\n#objective: 说明要退货\n#chunks: I'd like to return this.,Can I exchange it for a different size?\n#user_input\nStore Clerk: That's interesting! Can you tell me more about that?\n#objective: 问能否换货\n#chunks: I'd like to return this.,Can I exchange it for a different size?\n#user_input\nStore Clerk: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

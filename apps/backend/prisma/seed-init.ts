@@ -13,6 +13,21 @@ import * as path from 'path'
 const INIT_DIR = 'init'
 const INK_DIR = path.resolve(__dirname, 'data', INIT_DIR, 'ink-scripts')
 
+/** 从 Ink 文本的 YAML front matter 中提取 key、title 和 scriptType */
+function parseInkMeta(raw: string): { key: string; title: string; scriptType: string } {
+  const match = raw.match(/^---\n([\s\S]*?)\n---/)
+  if (!match) return { key: '', title: '', scriptType: 'practice' }
+  const front = match[1]
+  const keyMatch = front.match(/^key:\s*(.+)$/m)
+  const titleMatch = front.match(/^title:\s*(.+)$/m)
+  const typeMatch = front.match(/^scriptType:\s*(.+)$/m)
+  return {
+    key: (keyMatch?.[1] || '').trim(),
+    title: (titleMatch?.[1] || '').trim(),
+    scriptType: (typeMatch?.[1] || 'practice').trim(),
+  }
+}
+
 // ── CSV 类型 ──
 type CsvSceneCategory = { name: string; icon: string; sort_order: string }
 type CsvChunk = { scene_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
@@ -73,14 +88,16 @@ export async function seedInit(prisma: PrismaClient) {
 
   // ═══ 3. Ink 对话脚本 ═══
   try {
-    const inkFiles = fs.readdirSync(INK_DIR).filter((f: string) => f.endsWith('.json'))
+    const inkFiles = fs.readdirSync(INK_DIR).filter((f: string) => f.endsWith('.ink'))
     let inkCount = 0
     for (const file of inkFiles) {
-      const inkData = JSON.parse(fs.readFileSync(path.resolve(INK_DIR, file), 'utf-8'))
+      const raw = fs.readFileSync(path.resolve(INK_DIR, file), 'utf-8')
+      const { key, title, scriptType } = parseInkMeta(raw)
+      if (!key) continue
       await prisma.inkScript.upsert({
-        where: { key: inkData.key },
-        create: inkData,
-        update: {},
+        where: { key },
+        create: { key, title: title || key, scriptType: scriptType || 'practice', inkSource: raw, inkJson: {} },
+        update: { inkSource: raw },
       })
       inkCount++
     }

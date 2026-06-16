@@ -1,6 +1,0 @@
-{
-  "key": "practice_campus_图书馆借书_借书",
-  "title": "图书馆借书 - 借书",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_campus_图书馆借书_借书\ntitle: 图书馆借书 - 借书\n---\nLibrarian: Ask the librarian how to borrow a book.\n#objective: Ask the librarian how to borrow a book.\n#chunks: I'd like to borrow...,Do you have...?,How long can I keep it?\n#user_input\nLibrarian: Thanks for sharing! Is there anything else you'd like to add or ask?\n#objective: Follow up or ask a related question\n#chunks: I'd like to borrow...,Do you have...?,How long can I keep it?\n#user_input\nLibrarian: Got it. That was really helpful. Have a great day!\n-> END\n"
-}

@@ -1,6 +1,0 @@
-{
-  "key": "practice_daily-healthcare_健康_药房买药_询问药品",
-  "title": "健康·药房买药 - 询问药品",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_daily-healthcare_健康_药房买药_询问药品\ntitle: 健康·药房买药 - 询问药品\n---\nMr. Patel: Let's talk about 询问药品. What do you think about it?\n#objective: 描述症状\n#chunks: Do you have something for a cold?,Can you recommend something for a headache?,Is this available over-the-counter?\n#user_input\nMr. Patel: That's interesting! Can you tell me more about that?\n#objective: 请药剂师推荐\n#chunks: Do you have something for a cold?,Can you recommend something for a headache?,Is this available over-the-counter?\n#user_input\nMr. Patel: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

@@ -1,0 +1,15 @@
+---
+key: practice_story-history_美国历史_西进到民权运动_工业时代与民权运动
+title: 美国历史·西进到民权运动 - 工业时代与民权运动
+scriptType: practice
+---
+Tutor: Let's talk about 工业时代与民权运动. What do you think about it?
+#objective: 学习工业时代与民权运动相关表达
+#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?
+#user_input
+Tutor: That's interesting! Can you tell me more about that?
+#objective: Add more details and follow up
+#chunks: I'd like to talk about...,Let me explain...,In my opinion...,Could you tell me more?
+#user_input
+Tutor: Great conversation! I've learned a lot. Thanks for sharing with me.
+-> END

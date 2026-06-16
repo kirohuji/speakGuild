@@ -1,6 +1,0 @@
-{
-  "key": "practice_course-grammar_语法_时态精准表达_时态在叙事中",
-  "title": "语法·时态精准表达 - 时态在叙事中",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_course-grammar_语法_时态精准表达_时态在叙事中\ntitle: 语法·时态精准表达 - 时态在叙事中\n---\nInstructor: Let's talk about 时态在叙事中. What do you think about it?\n#objective: Practice talking about 时态在叙事中\n#chunks: Yesterday I... (past simple),I was... when... (past continuous),I had never... before...\n#user_input\nInstructor: That's interesting! Can you tell me more about that?\n#objective: Add more details and follow up\n#chunks: Yesterday I... (past simple),I was... when... (past continuous),I had never... before...\n#user_input\nInstructor: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}

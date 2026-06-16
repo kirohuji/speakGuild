@@ -1,6 +1,0 @@
-{
-  "key": "practice_exam-academic_雅思_IELTS_Band_8_优秀_教育与社会",
-  "title": "雅思·IELTS Band 8 优秀 - 教育与社会",
-  "scriptType": "practice",
-  "inkSource": "---\nkey: practice_exam-academic_雅思_IELTS_Band_8_优秀_教育与社会\ntitle: 雅思·IELTS Band 8 优秀 - 教育与社会\n---\nExaminer: Let's talk about 教育与社会. What do you think about it?\n#objective: 论述教育作用\n#chunks: The role of education is to...,Traditional education focuses on...,I believe that...\n#user_input\nExaminer: That's interesting! Can you tell me more about that?\n#objective: 比较教育方式\n#chunks: The role of education is to...,Traditional education focuses on...,I believe that...\n#user_input\nExaminer: Great conversation! I've learned a lot. Thanks for sharing with me.\n-> END"
-}
