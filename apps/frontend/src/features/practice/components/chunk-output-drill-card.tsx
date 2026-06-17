@@ -18,6 +18,7 @@ interface ChunkOutputDrillCardProps {
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
   onComplete?: (itemIndex: number, passed: boolean) => void
+  onRecord?: (data: { stepType: string; zh: string; answer: string; userAnswer: string; passed: boolean; feedback: string; groupTitle?: string }) => void
 }
 
 /** 在文本中高亮目标词/句块 */
@@ -39,6 +40,7 @@ export function ChunkOutputDrillCard({
   direction = 'zh_to_en',
   kind = 'chunk',
   onComplete,
+  onRecord,
 }: ChunkOutputDrillCardProps) {
   const { t } = useTranslation()
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -81,10 +83,12 @@ export function ChunkOutputDrillCard({
         setFeedback(judgement.feedback || '正确！')
         setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true)
+        onRecord?.({ stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
+        onRecord?.({ stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle })
       }
     } catch (err: any) {
       setStatus('failed')

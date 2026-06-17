@@ -22,7 +22,8 @@ import { isIOS } from '@/lib/native'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
-import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
+import { practiceApi, practiceAiApi, chunkApi, warmupRecordApi, type TopicDetail } from '../api/english-practice-api'
+import { WarmupHistoryDrawer } from '../components/warmup-history-drawer'
 import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { ChunkOutputDrillCard } from '../components/chunk-output-drill-card'
@@ -334,6 +335,7 @@ function GuidedWarmupPhase({
                 kind={item.kind ?? 'chunk'}
                 groupTitle={item.title}
                 onComplete={(_subIdx, _passed) => markDone(`${item.id}_${subIdx}`)}
+                onRecord={recordAnswer}
               />
             ),
           })
@@ -350,6 +352,7 @@ function GuidedWarmupPhase({
                 direction={item.direction ?? 'zh_to_en'}
                 vocabs={[v]}
                 onComplete={(_idx, _passed) => markDone(`${item.id}_${vIdx}`)}
+                onRecord={recordAnswer}
               />
             ),
           })
@@ -369,6 +372,7 @@ function GuidedWarmupPhase({
                   direction={item.direction ?? 'zh_to_en'}
                   groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
                   onComplete={(_subIdx, _passed) => markDone(flatId)}
+                  onRecord={recordAnswer}
                 />
               ),
             })
@@ -402,6 +406,7 @@ function GuidedWarmupPhase({
                 direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
                 onComplete={(_subIdx, _passed) => markDone(`${item.id}_${subIdx}`)}
+                onRecord={recordAnswer}
               />
             ),
           })
@@ -421,6 +426,16 @@ function GuidedWarmupPhase({
     } catch { return new Set<string>() }
   })
 
+  // ── Answer recording for practice history ──
+  const answerLogRef = useRef<any[]>([])
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [assessing, setAssessing] = useState(false)
+  const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
+
+  const recordAnswer = useCallback((data: any) => {
+    answerLogRef.current.push(data)
+  }, [])
+
   const persistDone = useCallback((ids: Set<string>) => {
     try { localStorage.setItem(storageKey, JSON.stringify([...ids])) } catch {}
   }, [storageKey])
@@ -436,6 +451,17 @@ function GuidedWarmupPhase({
 
   const doneCount = doneIds.size
   const allDone = totalSteps > 0 && doneCount >= totalSteps
+
+  // ── AI assess when all done ──
+  useEffect(() => {
+    if (allDone && answerLogRef.current.length > 0 && !assessing && !lastAssessment) {
+      setAssessing(true)
+      warmupRecordApi.assess(topicId, topicTitle, [...answerLogRef.current])
+        .then((res) => setLastAssessment(res))
+        .catch(() => {})
+        .finally(() => setAssessing(false))
+    }
+  }, [allDone, topicId, topicTitle, assessing, lastAssessment])
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -467,12 +493,32 @@ function GuidedWarmupPhase({
           <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
           <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
         </div>
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
           <CheckCircle2 className="size-12 text-green-500" />
           <p className="text-sm font-semibold text-foreground">{doneCount}/{totalSteps} 已完成</p>
-          <p className="text-xs text-muted-foreground">热身完成，开始 VN 对话吧</p>
-          <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
+          {assessing ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> AI 综合评估中...
+            </div>
+          ) : lastAssessment ? (
+            <div className="w-full max-w-sm rounded-xl border bg-card px-4 py-3 text-left space-y-2">
+              <div className="flex items-center gap-2">
+                <Badge variant={lastAssessment.score >= 80 ? 'default' : 'secondary'} className="text-sm px-2">
+                  {lastAssessment.score} 分
+                </Badge>
+                <span className="text-xs text-muted-foreground">综合评估</span>
+              </div>
+              <p className="text-sm text-foreground">{lastAssessment.feedback}</p>
+            </div>
+          ) : null}
+          <div className="flex gap-3">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setHistoryOpen(true)}>
+              <History className="size-4" /> 查看练习记录
+            </Button>
+            <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
+          </div>
         </div>
+        <WarmupHistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} topicId={topicId} topicTitle={topicTitle} />
       </div>
     )
   }
@@ -586,6 +632,7 @@ export function PracticeSessionPage() {
   const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
   const [savingTexts, setSavingTexts] = useState<Set<string>>(new Set())
@@ -1515,6 +1562,11 @@ export function PracticeSessionPage() {
                 <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
               </Button>
             )}
+            <div className="mt-3 text-center">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={() => setHistoryOpen(true)}>
+                <History className="size-3.5" /> 查看练习记录
+              </Button>
+            </div>
           </section>
         </div>
 
@@ -1525,6 +1577,7 @@ export function PracticeSessionPage() {
           onOpenChange={setInsightOpen}
           onIndexChange={setInsightIndex}
         />
+        <WarmupHistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} topicId={topicId} topicTitle={detail.topic.title} />
       </div>
     )
   }

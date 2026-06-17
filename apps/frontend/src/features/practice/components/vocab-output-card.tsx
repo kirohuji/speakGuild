@@ -21,6 +21,7 @@ interface VocabOutputCardProps {
   vocabs: VocabDrillSubItem[]
   direction?: DrillDirection
   onComplete?: (index: number, passed: boolean) => void
+  onRecord?: (data: { stepType: string; zh: string; answer: string; userAnswer: string; passed: boolean; feedback: string; groupTitle?: string }) => void
 }
 
 /** 高亮目标词汇 */
@@ -43,6 +44,7 @@ export function VocabOutputCard({
   vocabs,
   direction = 'zh_to_en',
   onComplete,
+  onRecord,
 }: VocabOutputCardProps) {
   const { t } = useTranslation()
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -81,8 +83,10 @@ export function VocabOutputCard({
         setResult({ passed: true, feedback: judgement.feedback || '正确！' })
         setHintLevel('answer')
         onComplete?.(currentIdx, true)
+        onRecord?.({ stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle: title })
       } else {
         setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || current.suggestedAnswer || '' })
+        onRecord?.({ stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle: title })
       }
     } catch (err: any) {
       setResult({ passed: false, feedback: err?.message || t('practiceVn.feedbackUnavailable') })

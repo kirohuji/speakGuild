@@ -346,12 +346,28 @@ export const chunkApi = {
   markRead: (chunkId: string) => post(`/chunks/${chunkId}/read`),
 }
 
-// ---- 等级 ----
-export const levelApi = {
-  getOverview: () => get('/level/overview'),
-  getWeeklyStats: () => get('/level/weekly-stats'),
-  getCommonErrors: () => get('/level/common-errors'),
-  getRecommendedPath: () => get('/level/recommended-path'),
+// ---- Warmup Records ----
+export interface WarmupRecord {
+  id: string
+  score: number | null
+  feedback: string | null
+  items: any[]
+  topicTitle?: string
+  createdAt: string
+}
+
+export const warmupRecordApi = {
+  list: (topicId: string) =>
+    get<WarmupRecord[]>('/practice/warmup-records', { topicId }),
+
+  listAll: () =>
+    get<WarmupRecord[]>('/practice/warmup-records'),
+
+  save: (topicId: string, items: any[]) =>
+    post<{ id: string }>('/practice/warmup-records', { topicId, items }),
+
+  assess: (topicId: string, topicTitle: string, items: any[]) =>
+    post<{ id: string; score: number; feedback: string }>('/practice/warmup-records/assess', { topicId, topicTitle, items }),
 }
 
 export default practiceApi

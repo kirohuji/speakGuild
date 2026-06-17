@@ -18,6 +18,7 @@ interface PatternDrillCardProps {
   groupTitle?: string
   direction?: DrillDirection
   onComplete?: (itemIndex: number, passed: boolean) => void
+  onRecord?: (data: { stepType: string; zh: string; answer: string; userAnswer: string; passed: boolean; feedback: string; groupTitle?: string }) => void
 }
 
 /** 高亮答案中的句型 key words */
@@ -41,6 +42,7 @@ export function PatternDrillCard({
   groupTitle,
   direction = 'zh_to_en',
   onComplete,
+  onRecord,
 }: PatternDrillCardProps) {
   const { t } = useTranslation()
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -80,10 +82,12 @@ export function PatternDrillCard({
         setFeedback(judgement.feedback || '正确！')
         setHintLevel('answer')
         onComplete?.(currentIdx, true)
+        onRecord?.({ stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
+        onRecord?.({ stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle })
       }
     } catch (err: any) {
       setStatus('failed')

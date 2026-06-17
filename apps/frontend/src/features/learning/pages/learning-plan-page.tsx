@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
-import { type PracticeSession, type TopicDetail } from '@/features/practice/api/english-practice-api'
+import { type PracticeSession, type TopicDetail, warmupRecordApi, type WarmupRecord } from '@/features/practice/api/english-practice-api'
 import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
 import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { MemberPage } from '@/features/membership/pages/member-page'
@@ -80,12 +81,12 @@ export function LearningPlanPage() {
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
-          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/70 bg-background drawer-surface">
+          <DrawerContent className="max-h-[95vh] rounded-t-[28px] border-border/70 bg-background drawer-surface">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
               <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-              <PracticeRecordsContent />
+              <PracticeRecordsWithTabs />
             </div>
           </DrawerContent>
         </Drawer>
@@ -117,6 +118,182 @@ export function LearningPlanPage() {
           </DrawerContent>
         </Drawer>
     </div>
+  )
+}
+
+
+// ─── Tabbed Records (VN + Warmup) ──────────────────────────────────────────
+function PracticeRecordsWithTabs() {
+  const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState('vn')
+
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="mb-3 w-full">
+        <TabsTrigger value="vn" className="flex-1 text-xs">{t('profile.records')}</TabsTrigger>
+        <TabsTrigger value="warmup" className="flex-1 text-xs">知识点练习</TabsTrigger>
+      </TabsList>
+      <TabsContent value="vn" className="mt-0">
+        <PracticeRecordsContent />
+      </TabsContent>
+      <TabsContent value="warmup" className="mt-0">
+        <WarmupRecordsContent />
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+
+// ─── 知识点练习记录 ────────────────────────────────────────────────────────
+function WarmupRecordsContent() {
+  const { t } = useTranslation()
+  const [records, setRecords] = useState<WarmupRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const pageSize = 15
+  const [page, setPage] = useState(1)
+  const [selectedRecord, setSelectedRecord] = useState<WarmupRecord | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    warmupRecordApi.listAll()
+      .then(setRecords)
+      .catch(() => setRecords([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const pagedRecords = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return records.slice(start, start + pageSize)
+  }, [records, page])
+
+  const columns: ColumnConfig<WarmupRecord>[] = [
+    {
+      key: 'topicTitle',
+      header: '话题',
+      cell: (v, row) => {
+        const passedItems = row.items?.filter((i: any) => i.passed).length ?? 0
+        const totalItems = row.items?.length ?? 0
+        return (
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <span className="text-sm font-medium">{v || '知识点练习'}</span>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {passedItems}/{totalItems} 通过
+              </p>
+              {row.feedback && (
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.feedback}</p>
+              )}
+            </div>
+            <Eye className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" />
+          </div>
+        )
+      },
+    },
+    {
+      key: 'score',
+      header: '评分',
+      width: 70,
+      cell: (v) => (
+        <span className={cn(
+          'text-sm font-bold tabular-nums',
+          v != null && v >= 80 ? 'text-green-600' : v != null && v >= 50 ? 'text-amber-600' : 'text-muted-foreground',
+        )}>
+          {v ?? '-'}
+        </span>
+      ),
+      align: 'center',
+    },
+    {
+      key: 'createdAt',
+      header: '日期',
+      cell: (v) => (
+        <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+          {new Date(v).toLocaleDateString()}
+        </span>
+      ),
+      align: 'center',
+    },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
+        仅记录全部完成的练习，中途退出不会计入。
+      </p>
+      <ConfigDataTable
+        data={pagedRecords}
+        columns={columns}
+        total={records.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        isLoading={loading}
+        emptyMessage="暂无知识点练习记录"
+        onRowClick={setSelectedRecord}
+      />
+      <WarmupRecordDetailDrawer
+        record={selectedRecord}
+        open={Boolean(selectedRecord)}
+        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+      />
+    </div>
+  )
+}
+
+function WarmupRecordDetailDrawer({
+  record,
+  open,
+  onOpenChange,
+}: {
+  record: WarmupRecord | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useTranslation()
+  if (!record) return null
+
+  const typeLabel = (item: any) => {
+    if (item?.stepType === 'chunk_substitution') return '句块'
+    if (item?.stepType === 'pattern_drill') return '句型'
+    if (item?.stepType === 'vocab_drill') return '词汇'
+    return '练习'
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[85vh] rounded-t-2xl">
+        <DrawerHeader className="px-4 pb-2 pt-3">
+          <DrawerTitle className="text-base">
+            {record.topicTitle || '知识点练习'} · {record.score ?? '-'} 分
+          </DrawerTitle>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-8 space-y-3">
+          {record.feedback && (
+            <div className="rounded-lg bg-muted/50 px-3 py-2.5">
+              <p className="text-sm text-foreground">{record.feedback}</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            {record.items?.map((item: any, idx: number) => (
+              <div key={idx} className="rounded-lg border bg-card px-3 py-2.5 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                  <Badge variant="outline" className="text-[10px]">{typeLabel(item)}</Badge>
+                  {item.passed ? '✓' : '✗'}
+                  {item.groupTitle && <span className="text-[10px] text-muted-foreground truncate">{item.groupTitle}</span>}
+                </div>
+                <p className="text-sm text-muted-foreground">题目: {item.zh}</p>
+                {item.answer && <p className="text-sm">答案: <span className="text-green-600 font-medium">{item.answer}</span></p>}
+                {item.userAnswer && (
+                  <p className="text-sm">你的回答: <span className={item.passed ? 'text-green-600' : 'text-red-500'}>{item.userAnswer}</span></p>
+                )}
+                {item.feedback && <p className="text-xs text-muted-foreground/70 italic">{item.feedback}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </DrawerContent>
+    </Drawer>
   )
 }
 

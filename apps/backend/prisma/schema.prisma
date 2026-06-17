@@ -855,6 +855,20 @@ model PracticeTurn {
   @@map("practice_turn")
 }
 
+model PracticeWarmupRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  topicId   String
+  score     Int?
+  feedback  String?  @db.Text
+  items     Json
+  createdAt DateTime @default(now())
+
+  @@index([userId, topicId])
+  @@index([userId, createdAt])
+  @@map("practice_warmup_record")
+}
+
 model TrainingTopicChunk {
   id        String        @id @default(cuid())
   topic     TrainingTopic @relation(fields: [topicId], references: [id])
