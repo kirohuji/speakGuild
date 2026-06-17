@@ -208,6 +208,7 @@ export interface StoryEpisode {
   episodeOrder: number
   title: string
   description?: string | null
+  backgroundUrl?: string | null
   sceneId: string
   requiredOutputLevel: string
   requiredUserLevel: number

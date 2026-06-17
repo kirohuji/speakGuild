@@ -7,105 +7,119 @@ scriptType: practice
 -> start
 
 === start ===
-#bg: /assets/bg/shopping_mall.png
+#bg: /assets/bg/mountain_trail.png
 #speaker: Emma
-#expression: default
+#expression: happy
 #position: center
-#translation: 好啦，到商场了！我妹妹的生日就在下周，我需要给她买个礼物。你能帮我参考一下吗？
-Emma: Alright, we're at the mall! My sister's birthday is next week, and I need to get her a gift. Can you help me pick something out?
+#translation: 终于到山脚下了！我听说这条徒步路线的风景特别美。准备好了吗？
+Emma: We finally made it to the trailhead! I've heard this hiking route has incredibly beautiful scenery. Ready to go?
 
 #speaker: Emma
 #expression: thinking
-#translation: 但她这个人品味很挑剔，所以我得谨慎选。我们先看看那家店的毛衣吧——你觉得那件蓝色的怎么样？
+#translation: 不过我刚看了下天气预报——今天山顶可能会有点热。你看看这条山路，觉得难度怎么样？
 #wait:input
-#objective: 用程度副词评价你看到的商品（very/quite/rather/extremely/too）
-#hint: 用 "It's very...", "It's quite...", "This is rather...", "It's too..." 来评价商品
-#chunks: She is very smart.,The movie is quite good.,It's rather cold today.,That's extremely kind.,This coffee is too hot.
-Emma: But she's picky, so I need to be careful. Let's check out that sweater shop first — what do you think of the blue one over there?
+#objective: 用程度副词评价眼前的山路和天气情况
+#hint: 用 "The trail looks very steep", "It's quite hot today", "The path seems rather rocky", "It's extremely beautiful here" 来描述
+#chunks: The view is very beautiful.,The trail looks quite steep.,It's rather hot today.,The path is extremely long.,This backpack is too heavy.
+Emma: But I checked the weather — it might get quite hot at the summit. Take a look at this trail — what do you think of the conditions?
 
-*   [It's very nice! The color is quite pretty.] -> clothes_shop
-*   [It's rather plain. And the price is too high.] -> clothes_shop
-*   [It's too basic. She'd look extremely good in something more stylish.] -> clothes_shop
+*   [The view is very beautiful! Let's go for it.] -> trail_scene
+*   [It's quite hot already. The trail looks rather steep.] -> trail_scene
+*   [The scenery is extremely stunning! A bit of heat won't stop us.] -> trail_scene
 
-=== clothes_shop ===
+=== trail_scene ===
 #speaker: Emma
 #expression: happy
-#translation: 嗯，你说得有道理。再看看别的——那边那家饰品店怎么样？我妹妹很喜欢那些小玩意儿。
-Emma: Hmm, good point. Let's look elsewhere — what about that accessory store? My sister loves little trinkets.
+#translation: 走了二十分钟，回头看——哇，山下的景色太壮观了！你看那边那片树林，颜色真漂亮。
+Emma: Twenty minutes in and look back — wow, the view is breathtaking! Check out that forest down there, the colors are gorgeous.
 
-#speaker: Shop Assistant
-#expression: default
-#position: right
-#translation: 欢迎光临！这是我们新款的手链系列，需要我介绍一下吗？
-Shop Assistant: Welcome! This is our new bracelet collection. Would you like me to show you around?
-
-#speaker: Emma
-#expression: default
-#translation: 哇，这条手链好好看！你觉得呢？——用程度词帮我描述一下，我好决定买不买。
-#wait:input
-#objective: 用程度副词评价手链的外观和品质
-#hint: 用 "It's very elegant", "The design is quite unique", "It's rather expensive", "It's too delicate" 等表达
-#chunks: She is very smart.,The movie is quite good.,It's rather cold today.,That's extremely kind.,This coffee is too hot.
-Emma: Wow, this bracelet is lovely! What do you think? — Use degree words to help me decide.
-
-*   [It's very elegant! And the price is quite reasonable.] -> more_shopping
-*   [It's rather delicate. The quality looks extremely good.] -> more_shopping
-*   [It's too expensive for what it is. Let's keep looking.] -> more_shopping
-
-=== more_shopping ===
 #speaker: Emma
 #expression: thinking
-#translation: 好纠结啊。对了，我们先去喝杯咖啡休息一下吧？那边新开了一家咖啡店。
-Emma: Such a hard choice. Hey, let's grab a coffee first? There's a new café over there.
+#translation: 还有那些野花，我从来没见过这种颜色！你觉得这片景色怎么样？用程度词帮我描述一下。
+#wait:input
+#objective: 用程度副词评价你看到的自然景色——山林、野花、天空
+#hint: 用 "The forest is very dense", "The flowers are quite colorful", "The sky is extremely clear", "The air is rather fresh" 等表达
+#chunks: The lake is very calm.,The flowers are quite colorful.,The forest looks rather mysterious.,The sky is extremely clear today.,The wind is too strong.
+Emma: And look at those wildflowers — I've never seen such colors! What do you think of this view? Use degree words to describe it!
 
-#bg: /assets/bg/cafe.png
+*   [The forest is very lush, and the air is extremely fresh!] -> weather_change
+*   [The flowers are quite beautiful, but the sun is rather strong.] -> weather_change
+*   [This place is too beautiful! The colors are extremely vibrant.] -> weather_change
+
+=== weather_change ===
+#speaker: Emma
+#expression: surprised
+#translation: 等等，你看那边的云！刚才还晴空万里，现在天突然阴下来了。这山里的天气变得真快。
+Emma: Wait, look at those clouds! It was perfectly clear a moment ago, now it's getting dark. The weather in the mountains changes so fast.
+
+#speaker: Emma
+#expression: default
+#translation: 风也大起来了，我感觉有点凉。你觉得这天怎么样？咱们要不要找个地方避一避？
+#wait:input
+#objective: 用程度副词描述天气的突然变化和你的感受
+#hint: 用 "It's getting very cold", "The wind is quite strong now", "The temperature dropped rather quickly", "The clouds are extremely dark" 来描述
+#chunks: This coffee is too hot.,That's extremely dark.,It's rather cold today.,She is very smart.,The wind is quite strong.
+Emma: The wind is picking up too, I'm getting chilly. What do you think of this weather change? Should we find shelter?
+
+*   [It's getting very cold! Let's find shelter quickly.] -> picnic
+*   [The wind is quite strong, but I think it'll pass rather soon.] -> picnic
+*   [The clouds are extremely dark — we should head down now.] -> picnic
+
+=== picnic ===
+#bg: /assets/bg/mountain_cabin.png
 #speaker: Emma
 #expression: happy
-#translation: 哇，他们的拿铁看起来不错。你尝尝看怎么样？
-#wait:input
-#objective: 用程度副词评价咖啡的口味
-#hint: 用 "It's very smooth", "It's quite strong", "It's rather bitter", "It's too sweet" 来描述味道
-#chunks: She is very smart.,The movie is quite good.,It's rather cold today.,That's extremely kind.,This coffee is too hot.
-Emma: Their latte looks amazing! Give it a taste — how is it?
-
-*   [It's very smooth! The flavor is quite rich.] -> coffee_talk
-*   [It's rather bitter. I think it's too strong for me.] -> coffee_talk
-*   [It's extremely good! Best coffee I've had in a while.] -> coffee_talk
-
-=== coffee_talk ===
-#speaker: Emma
-#expression: thinking
-#translation: 对了，刚刚说到礼物——我在那家饰品店看到一条围巾，你觉得怎么样？那条灰色的。
-Emma: By the way, about the gift — I saw a scarf at that accessory store. What did you think of the gray one?
+#translation: 呼，还好前面有个小木屋可以躲雨。雨来得快去得也快——看，天又快晴了！
+Emma: Phew, lucky there's a cabin here! The rain came and went fast — look, it's clearing up already!
 
 #speaker: Emma
 #expression: default
-#translation: 我妹妹是个很讲究的人，我不想买个太普通的。用你的眼光帮我评价一下那条围巾？
+#translation: 既然都在这里了，不如吃点东西？我带了自制三明治和水果。尝尝看怎么样？
 #wait:input
-#objective: 用程度副词全面评价围巾的各个方面
-#hint: 从颜色、材质、款式等方面入手，用 "The material is very soft", "The color is quite versatile", "It's rather stylish", "It's too simple"
-#chunks: She is very smart.,The movie is quite good.,It's rather cold today.,That's extremely kind.,This coffee is too hot.
-Emma: My sister is very particular. I don't want to get something too ordinary. Give me your honest review of the scarf?
+#objective: 用程度副词评价 Emma 做的野餐食物——味道、口感、分量
+#hint: 用 "The sandwich is very tasty", "The fruit is quite sweet", "This is rather filling", "The bread is too dry", "It's extremely delicious!" 等表达
+#chunks: The sandwich is very tasty.,This fruit is quite sweet.,The bread is rather dry.,The juice is extremely refreshing.,This salad is too salty.
+Emma: Since we're here, how about a snack? I brought homemade sandwiches and fruit. Give them a try — what do you think?
 
-*   [The material is very soft, and the color is quite versatile.] -> final_choice
-*   [It's rather stylish. She would look extremely good in it.] -> final_choice
-*   [To be honest, it's too simple. Let's find something better.] -> final_choice
+*   [The sandwich is very tasty! The fruit is quite sweet too.] -> sunset_view
+*   [The bread is rather dry, but the fruit is extremely refreshing.] -> sunset_view
+*   [Everything is very fresh! This is quite a nice picnic spot.] -> sunset_view
 
-=== final_choice ===
+=== sunset_view ===
+#bg: /assets/bg/mountain_sunset.png
 #speaker: Emma
 #expression: happy
-#translation: 好，我决定买那条围巾了！你的评价帮了大忙。说真的，你选东西的眼光很不错诶！
-Emma: OK, I'm getting the scarf! Your reviews really helped. Seriously, you have really good taste!
-
-#speaker: Emma
-#expression: default
-#translation: 今天逛得挺开心的。对了，晚上要不要来我家一起做饭？我奶奶教了我一道新菜谱，但我一个人搞不定。
-Emma: Today was fun! Hey, want to come over tonight and cook together? My grandma taught me a new recipe, but I can't manage it alone.
+#translation: 雨停了，我们出来看看吧！天哪——你看那边的日落。整个天空都是橙红色的。太美了！
+Emma: Rain's gone, come outside! Oh wow — look at that sunset. The whole sky is orange and red. It's magnificent!
 
 #speaker: Emma
 #expression: thinking
-#translation: 不过提前说好——我是个相当糟糕的厨师，所以你可能会很"惊喜"哈哈。
-Emma: Fair warning though — I'm a rather terrible cook, so you might be extremely... surprised. Ha!
+#translation: 我真不知道该用什么词来形容了。你能用程度副词帮我描述一下这日落吗？我想记住这一刻。
+#wait:input
+#objective: 用程度副词全面评价日落的景象——颜色、氛围、感受
+#hint: 从色彩、氛围、心情等角度入手，用 "The colors are very warm", "The sky is quite dramatic", "It's rather peaceful here", "This is extremely romantic"
+#chunks: The sunset is very warm and golden.,The sky is quite dramatic tonight.,The view is rather peaceful.,This moment is extremely special.,The stars are too faint to see yet.
+Emma: I don't even have the words. Can you describe this sunset for me using degree adverbs? I want to remember this moment forever.
+
+*   [The colors are very warm! The whole sky looks quite dramatic.] -> ending
+*   [It's rather peaceful up here. This view is extremely special.] -> ending
+*   [The sunset is too beautiful for words. I'm very grateful we came.] -> ending
+
+=== ending ===
+#speaker: Emma
+#expression: happy
+#translation: 你说得太好了！这一趟真的太值得了。有你在真是太好了——你总能发现事物的美好之处。
+Emma: Perfectly said! This hike was so worth it. I'm really glad you came — you always notice the beauty in everything.
+
+#speaker: Emma
+#expression: default
+#translation: 对了，下周末我奶奶要教我做一种新菜。上次那道红烧肉你做得特别棒——要不要一起来？
+Emma: Oh, my grandma is teaching me a new recipe next weekend. You were amazing with that braised pork last time — want to join?
+
+#speaker: Emma
+#expression: thinking
+#translation: 不过先别急着答应……我是个相当糟糕的厨师，你可能会很"惊喜"哈哈。
+Emma: But don't say yes too quickly... I'm a rather terrible cook, so you might be extremely... surprised. Ha!
 
 #wait
 

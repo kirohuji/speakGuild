@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   BookText, MessageSquareText, Mic, Play, ChevronRight,
   CheckCircle2, Target, Clock, ArrowRight, Sparkles, ListChecks,
@@ -21,7 +21,6 @@ import { isIOS } from '@/lib/native'
 import {
   learningApi,
   type TodayPlan,
-  type TodayTask,
 } from '../api/learning-api'
 import { expressionApi, practiceAiApi } from '@/features/practice/api/english-practice-api'
 import { synthesizeText } from '@/lib/tts-api'
@@ -44,6 +43,7 @@ const TASK_COLORS = {
 
 export function TodayTaskPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [plan, setPlan] = useState<TodayPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
@@ -199,7 +199,7 @@ export function TodayTaskPage() {
               className={cn(
                 'border-0 bg-muted/30 shadow-none transition-all',
                 isDone && 'opacity-60',
-                (task.type === 'vocab' || task.type === 'chunk' || task.type === 'pattern') && !isDone && 'cursor-pointer active:scale-[0.98]',
+                !isDone && 'cursor-pointer active:scale-[0.98]',
               )}
               onClick={() => {
                 if (isDone) return
@@ -227,12 +227,16 @@ export function TodayTaskPage() {
                     isVocab: false,
                   }))
                   if (items.length > 0) { setDrillItems(items); setDrillIndex(0); setDrillInput(''); setDrillResult(null); setDrillShowHint(false); setDrillOpen(true) }
+                } else if (task.type === 'practice') {
+                  navigate(`/practice/session/${task.topicId}`)
+                } else if (task.type === 'script') {
+                  navigate(`/script/${task.episodeId}`)
                 }
               }}
             >
               <CardContent className="flex items-start gap-3 p-4">
                 {/* Checkbox */}
-                <button
+                {/* <button
                   onClick={() => toggleTask(task.id)}
                   className={cn(
                     'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full transition-colors',
@@ -242,7 +246,7 @@ export function TodayTaskPage() {
                   )}
                 >
                   {isDone && <CheckCircle2 className="size-5" />}
-                </button>
+                </button> */}
 
                 {/* Icon */}
                 <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-lg', TASK_COLORS[task.type])}>
@@ -285,8 +289,7 @@ export function TodayTaskPage() {
                   )}
                 </div>
 
-                {/* Secondary action for vocab/chunk — still links to unit for full context */}
-                <TaskAction task={task} isDone={isDone} />
+
               </CardContent>
             </Card>
           )
@@ -667,56 +670,4 @@ export function TodayTaskPage() {
   )
 }
 
-function TaskAction({ task, isDone }: { task: TodayTask; isDone: boolean }) {
-  if (isDone) return null
 
-  const baseClass = 'flex shrink-0 items-center gap-1 text-xs font-medium'
-
-  switch (task.type) {
-    case 'vocab':
-      return (
-        <Link
-          to={`/learning/units/${task.unitId}`}
-          className={cn(baseClass, 'text-muted-foreground hover:text-primary hover:underline')}
-          onClick={(e) => e.stopPropagation()}
-        >
-          详情
-          <ChevronRight className="size-3" />
-        </Link>
-      )
-    case 'chunk':
-    case 'pattern':
-      return (
-        <Link
-          to={`/learning/units/${task.unitId}`}
-          className={cn(baseClass, 'text-muted-foreground hover:text-primary hover:underline')}
-          onClick={(e) => e.stopPropagation()}
-        >
-          详情
-          <ChevronRight className="size-3" />
-        </Link>
-      )
-    case 'practice':
-      return (
-        <Link
-          to={`/practice/session/${task.topicId}`}
-          className={cn(baseClass, 'text-primary hover:underline')}
-        >
-          开始
-          <ChevronRight className="size-3" />
-        </Link>
-      )
-    case 'script':
-      return (
-        <Link
-          to={`/script/${task.episodeId}`}
-          className={cn(baseClass, 'text-primary hover:underline')}
-        >
-          挑战
-          <ChevronRight className="size-3" />
-        </Link>
-      )
-    default:
-      return null
-  }
-}

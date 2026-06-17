@@ -32,6 +32,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
+import { ImageUploadField } from './image-upload-field'
 import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { toast } from 'sonner'
@@ -1143,6 +1144,16 @@ export function InkStoryEditor({
                         <option value="">选择地点背景</option>
                         {locations.map((location) => <option key={location.id} value={location.id}>{location.displayName}</option>)}
                       </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">或上传自定义背景</Label>
+                      <ImageUploadField
+                        value={selectedItem.url}
+                        onChange={(url) => updateSelectedItem({ url })}
+                        placeholder="点击上传图片到 COS 或粘贴 URL"
+                        previewSize="lg"
+                        disabled={readOnly}
+                      />
                     </div>
                     <div>
                       <Label className="text-xs">背景 URL</Label>
