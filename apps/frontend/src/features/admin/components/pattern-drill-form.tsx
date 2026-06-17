@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, GripVertical, Zap } from 'lucide-react'
+import { Plus, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,13 +24,18 @@ interface Props {
   patterns?: { id: string; pattern: string; meaning?: string }[]
 }
 
+const computePatternDrillTitle = (item: { pattern: string }) => {
+  if (!item.pattern) return ''
+  return `${item.pattern} 句型操练`
+}
+
 export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: Props) {
   const [local, setLocal] = useState<PatternDrillItem>(value)
 
   useEffect(() => { setLocal(value) }, [value])
 
   const commit = (patch: Partial<PatternDrillItem>) => {
-    const next = { ...local, ...patch } as PatternDrillItem
+    const next = { ...local, ...patch, title: computePatternDrillTitle({ ...local, ...patch }) } as PatternDrillItem
     setLocal(next)
     onChange(next)
   }
@@ -68,16 +73,7 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-border/60 bg-muted/10 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <GripVertical className="size-4 text-muted-foreground" />
-          <Badge variant="secondary" className="text-[10px]">句型操练</Badge>
-          <Badge variant="outline" className="text-[10px]">{local.direction === 'en_to_zh' ? '英→中' : '中→英'}</Badge>
-        </div>
-        <Button variant="ghost" size="icon-sm" className="text-destructive size-7" onClick={onDelete}><Trash2 className="size-3.5" /></Button>
-      </div>
-
+    <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5 sm:col-span-1">
           <Label className="text-xs">方向</Label>
@@ -88,7 +84,9 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label className="text-xs">练习名称</Label>
-          <Input className="h-8 text-xs" value={local.title} onChange={e => commit({ title: e.target.value })} placeholder="I'd like to 句型操练" />
+          <div className="h-8 flex items-center text-xs text-muted-foreground bg-muted/50 rounded-md px-3 truncate">
+            {local.title || '输入句型模板后自动生成'}
+          </div>
         </div>
       </div>
 

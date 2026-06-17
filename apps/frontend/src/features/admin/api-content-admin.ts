@@ -130,7 +130,7 @@ export interface TrainingTopic {
   sentencePatterns: SentencePattern[]  // still sent as sentencePatterns from API for compat
   inkScriptId?: string | null
   sortOrder: number
-  scene?: { id: string; title: string }
+  scene?: { id: string; title: string; packageType?: string }
   activeChunks?: { id: string; chunk: { id: string; text: string } }[]
   topicPatterns?: { id: string; pattern: SentencePattern; sortOrder: number }[]
   topicVocabs?: { id: string; vocab: Vocabulary; sortOrder: number }[]
@@ -150,6 +150,10 @@ export async function updateTrainingTopic(id: string, data: any): Promise<Traini
 
 export async function deleteTrainingTopic(id: string): Promise<void> {
   return _delete(`/admin/content/training-topics/${id}`)
+}
+
+export async function getTrainingTopic(id: string): Promise<TrainingTopic> {
+  return get(`/admin/content/training-topics/${id}`)
 }
 
 // ─── Chunks ──────────────────────────────────────────────────

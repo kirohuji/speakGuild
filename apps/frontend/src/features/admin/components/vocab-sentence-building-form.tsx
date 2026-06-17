@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, GripVertical, Zap } from 'lucide-react'
+import { Plus, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,13 +28,18 @@ interface Props {
   chunks?: { id: string; text: string; meaning: string }[]
 }
 
+const computeVocabSubTitle = (item: { vocabWord: string }) => {
+  if (!item.vocabWord) return ''
+  return `${item.vocabWord} 一词多句`
+}
+
 export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
   const [local, setLocal] = useState<VocabSentenceBuildingItem>(value)
 
   useEffect(() => { setLocal(value) }, [value])
 
   const commit = (patch: Partial<VocabSentenceBuildingItem>) => {
-    const next = { ...local, ...patch } as VocabSentenceBuildingItem
+    const next = { ...local, ...patch, title: computeVocabSubTitle({ ...local, ...patch }) } as VocabSentenceBuildingItem
     setLocal(next)
     onChange(next)
   }
@@ -96,19 +101,13 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-border/60 bg-muted/10 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <GripVertical className="size-4 text-muted-foreground" />
-          <Badge variant="secondary" className="text-[10px]">一词多句</Badge>
-        </div>
-        <Button variant="ghost" size="icon-sm" className="text-destructive size-7" onClick={onDelete}><Trash2 className="size-3.5" /></Button>
-      </div>
-
+    <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label className="text-xs">练习名称</Label>
-          <Input className="h-8 text-xs" value={local.title} onChange={e => commit({ title: e.target.value })} placeholder="check in 搭配练习" />
+          <div className="h-8 flex items-center text-xs text-muted-foreground bg-muted/50 rounded-md px-3 truncate">
+            {local.title || '输入核心词汇后自动生成'}
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">核心词汇</Label>

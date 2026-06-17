@@ -69,6 +69,8 @@ export interface SentenceDecompositionItem {
   type: 'sentence_decomposition'
   id: string
   title: string
+  fullSentence?: string
+  fullSentenceZh?: string
   levels: Array<{
     level: number
     label: string

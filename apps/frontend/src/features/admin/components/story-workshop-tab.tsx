@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Plus, Trash2, Edit3, MapPin, Users, BookOpen, Play,
-  ChevronRight, ScrollText, X, Search, ChevronLeft,
+  ChevronRight, ScrollText, X, Search, ChevronLeft, PackageOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +11,7 @@ import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import {
   listStories, createStory, updateStory, deleteStory, getStory, getStoryFilters,
-  listSceneCategories,
+  listSceneCategories, getTrainingTopic,
   listLocations, listCharacters, updateTrainingTopic,
   type StoryData, type StoryFilters, type GameLocationData, type GameCharacter, type SceneCategory,
 } from '../api-content-admin'
@@ -23,9 +23,10 @@ const PAGE_SIZE = 12
 interface StoryWorkshopTabProps {
   locations: GameLocationData[]
   characters: GameCharacter[]
+  initialStoryId?: string
 }
 
-export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProps) {
+export function StoryWorkshopTab({ locations, characters, initialStoryId }: StoryWorkshopTabProps) {
   const [stories, setStories] = useState<StoryData[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -73,8 +74,6 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
       .catch(() => {})
   }, [packageTypeFilter])
 
-  useEffect(() => { load() }, [load])
-
   // Load full story for editing
   const openEditor = useCallback(async (story: StoryData) => {
     try {
@@ -88,6 +87,20 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
       setIsCreating(false)
     }
   }, [])
+
+  // Auto-open story from URL param (cross-page navigation) — fetch directly to bypass pagination
+  const autoOpenedRef = useRef(false)
+  useEffect(() => {
+    if (!initialStoryId || autoOpenedRef.current) return
+    autoOpenedRef.current = true
+    getStory(initialStoryId)
+      .then((full) => {
+        setEditingStory(full)
+        setSelectedId(full.id)
+        setIsCreating(false)
+      })
+      .catch(() => {})
+  }, [initialStoryId])
 
   const openCreate = useCallback(() => {
     setEditingStory(null)
@@ -193,6 +206,23 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
   // ─── Editor View ─────────────────────────────
 
   if (isCreating || editingStory) {
+    const handleGoToLearningPacks = async () => {
+      const topicId = editingStory?.trainingTopic?.id
+      if (topicId) {
+        try {
+          const topic = await getTrainingTopic(topicId)
+          const params = new URLSearchParams()
+          if (topic.scene?.packageType) params.set('packageType', topic.scene.packageType)
+          // Navigate with scene context
+          window.location.hash = '#/admin/learning-packs' + (params.toString() ? '?' + params.toString() : '')
+        } catch {
+          window.location.hash = '#/admin/learning-packs'
+        }
+      } else {
+        window.location.hash = '#/admin/learning-packs'
+      }
+    }
+
     return (
       <div className="space-y-4">
         {/* Back button */}
@@ -200,7 +230,7 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
           <Button variant="ghost" size="icon" onClick={closeEditor}>
             <ChevronRight className="size-4 rotate-180" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h2 className="text-lg font-bold">
               {isCreating ? '新建故事' : `编辑: ${editingStory?.title}`}
             </h2>
@@ -210,6 +240,12 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
                 : `Key: ${editingStory?.key} · 版本 ${(editingStory?.version ?? 0) + 1}`}
             </p>
           </div>
+          {editingStory?.trainingTopic && (
+            <Button size="sm" variant="outline" className="gap-1" onClick={handleGoToLearningPacks}>
+              <PackageOpen className="size-3.5" />
+              学习包管理
+            </Button>
+          )}
         </div>
 
         <InkStoryEditor
@@ -265,6 +301,16 @@ export function StoryWorkshopTab({ locations, characters }: StoryWorkshopTabProp
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>共 {total} 个</span>
         </div>
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => {
+          const params = new URLSearchParams()
+          if (packageTypeFilter !== 'all') params.set('packageType', packageTypeFilter)
+          if (categoryFilter !== 'all') params.set('categoryId', categoryFilter)
+          const qs = params.toString()
+          window.location.hash = '#/admin/learning-packs' + (qs ? '?' + qs : '')
+        }}>
+          <PackageOpen className="size-3.5" />
+          学习包管理
+        </Button>
         <Button size="sm" onClick={openCreate}>
           <Plus className="mr-1 size-4" />新建故事
         </Button>

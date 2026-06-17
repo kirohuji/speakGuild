@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, GripVertical, ArrowRightLeft, Zap } from 'lucide-react'
+import { Plus, Trash2, ArrowRightLeft, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +28,12 @@ interface Props {
   chunks?: { id: string; text: string; meaning: string }[]
 }
 
+const computeChunkSubTitle = (item: { chunk: string; kind?: string }) => {
+  if (!item.chunk) return ''
+  const typeLabel = item.kind === 'word' ? '单词替换' : '句块替换'
+  return `${item.chunk} ${typeLabel}`
+}
+
 export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
   const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
 
@@ -35,6 +41,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
 
   const commit = (patch: Partial<ChunkSubstitutionItem>) => {
     const next = { ...local, ...patch }
+    next.title = computeChunkSubTitle(next)
     setLocal(next as ChunkSubstitutionItem)
     onChange(next as ChunkSubstitutionItem)
   }
@@ -77,16 +84,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-border/60 bg-muted/10 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <GripVertical className="size-4 text-muted-foreground" />
-          <Badge variant="secondary" className="text-[10px]">Chunk 替换</Badge>
-          <Badge variant="outline" className="text-[10px]">{local.direction === 'en_to_zh' ? '英→中' : '中→英'}</Badge>
-        </div>
-        <Button variant="ghost" size="icon-sm" className="text-destructive size-7" onClick={onDelete}><Trash2 className="size-3.5" /></Button>
-      </div>
-
+    <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5 sm:col-span-1">
           <Label className="text-xs">类型</Label>
@@ -104,7 +102,9 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         </div>
         <div className="space-y-1.5 sm:col-span-1">
           <Label className="text-xs">练习名称</Label>
-          <Input className="h-8 text-xs" value={local.title} onChange={e => commit({ title: e.target.value })} placeholder="用 I'd like to 造句" />
+          <div className="h-8 flex items-center text-xs text-muted-foreground bg-muted/50 rounded-md px-3 truncate">
+            {local.title || '输入核心词/句块后自动生成'}
+          </div>
         </div>
       </div>
 

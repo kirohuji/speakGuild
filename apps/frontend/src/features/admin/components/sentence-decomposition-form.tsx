@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, GripVertical, Zap } from 'lucide-react'
+import { Plus, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { cn } from '@/lib/cn'
 
 export interface SentenceDecompositionItem {
   id: string
   type: 'sentence_decomposition'
   title: string
+  fullSentence: string
+  fullSentenceZh: string
   levels: Array<{
     level: number
     label: string
@@ -24,15 +27,38 @@ interface Props {
   value: SentenceDecompositionItem
   onChange: (value: SentenceDecompositionItem) => void
   onDelete: () => void
+  chunks?: { id: string; text: string; meaning: string }[]
+  patterns?: { id: string; pattern: string; meaning?: string }[]
 }
 
-export function SentenceDecompositionForm({ value, onChange, onDelete }: Props) {
-  const [local, setLocal] = useState<SentenceDecompositionItem>(value)
+const computeDecompTitle = (item: { fullSentence: string }) => {
+  if (!item.fullSentence) return ''
+  const truncated = item.fullSentence.length > 20 ? item.fullSentence.slice(0, 20) + '…' : item.fullSentence
+  return `${truncated} 句子拆解`
+}
 
-  useEffect(() => { setLocal(value) }, [value])
+export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = [], patterns = [] }: Props) {
+  const [local, setLocal] = useState<SentenceDecompositionItem>(value)
+  // Local state for source chunk (not persisted, used for AI generation)
+  const [sourceChunk, setSourceChunk] = useState('')
+  const [generatingLong, setGeneratingLong] = useState(false)
+
+  useEffect(() => {
+    // Backward compat: migrate old data (levels[last].en → fullSentence)
+    const v = { ...value }
+    if (!v.fullSentence && v.levels?.length > 0) {
+      const last = v.levels[v.levels.length - 1]
+      if (last?.en) {
+        v.fullSentence = last.en
+        v.fullSentenceZh = last.zh || ''
+      }
+    }
+    v.title = computeDecompTitle(v)
+    setLocal(v)
+  }, [value])
 
   const commit = (patch: Partial<SentenceDecompositionItem>) => {
-    const next = { ...local, ...patch } as SentenceDecompositionItem
+    const next = { ...local, ...patch, title: computeDecompTitle({ ...local, ...patch }) } as SentenceDecompositionItem
     setLocal(next)
     onChange(next)
   }
@@ -63,20 +89,38 @@ export function SentenceDecompositionForm({ value, onChange, onDelete }: Props) 
     commit({ levels: next })
   }
 
+  const aiGenerateLongSentence = async () => {
+    if (!sourceChunk.trim()) { toast.error('请先输入源句块或句型'); return }
+    setGeneratingLong(true)
+    try {
+      const { post } = await import('@/lib/request')
+      const res: any = await post('/practice-ai/generate-drills', {
+        type: 'sentence_decomposition',
+        keyword: sourceChunk.trim(),
+        generateSentence: true,
+      })
+      if (res?.fullSentence) {
+        commit({ fullSentence: res.fullSentence, fullSentenceZh: res.fullSentenceZh ?? '' })
+        toast.success('已生成长句')
+      } else {
+        toast.error('AI 未能生成长句')
+      }
+    } catch { toast.error('AI 生成失败') }
+    finally { setGeneratingLong(false) }
+  }
+
   const aiGenerate = async () => {
-    if (local.levels.length === 0 || !local.levels[local.levels.length - 1].en) {
-      toast.error('请先在最后一级填入完整长句')
+    if (!local.fullSentence) {
+      toast.error('请先输入完整长句或使用 AI 生成长句')
       return
     }
     try {
       const { post } = await import('@/lib/request')
-      const fullSentence = local.levels[local.levels.length - 1].en
-      const fullZh = local.levels[local.levels.length - 1].zh
       const res: any = await post('/practice-ai/generate-drills', {
         type: 'sentence_decomposition',
-        keyword: fullSentence,
-        sentence: fullSentence,
-        zh: fullZh,
+        keyword: local.fullSentence,
+        sentence: local.fullSentence,
+        zh: local.fullSentenceZh,
         count: 5,
       })
       if (res?.levels?.length) {
@@ -87,18 +131,89 @@ export function SentenceDecompositionForm({ value, onChange, onDelete }: Props) 
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-border/60 bg-muted/10 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <GripVertical className="size-4 text-muted-foreground" />
-          <Badge variant="secondary" className="text-[10px]">句子拆解</Badge>
-        </div>
-        <Button variant="ghost" size="icon-sm" className="text-destructive size-7" onClick={onDelete}><Trash2 className="size-3.5" /></Button>
-      </div>
-
+    <div className="space-y-3">
+      {/* Auto-generated title */}
       <div className="space-y-1.5">
         <Label className="text-xs">练习名称</Label>
-        <Input className="h-8 text-xs" value={local.title} onChange={e => commit({ title: e.target.value })} placeholder="句子拆解：从简单到复杂" />
+        <div className="h-8 flex items-center text-xs text-muted-foreground bg-muted/50 rounded-md px-3 truncate">
+          {local.title || '输入完整长句后自动生成'}
+        </div>
+      </div>
+
+      {/* Source chunk — select from available chunks/patterns, or type manually */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">源句块（可选）</Label>
+        {(chunks.length > 0 || patterns.length > 0) && (
+          <div className="flex flex-wrap gap-1">
+            {chunks.slice(0, 6).map(c => (
+              <Badge
+                key={c.id}
+                variant="outline"
+                className={cn('cursor-pointer text-[10px] truncate max-w-[180px]', sourceChunk === c.text && 'border-primary')}
+                onClick={() => setSourceChunk(c.text)}
+              >
+                {c.text}
+              </Badge>
+            ))}
+            {patterns.slice(0, 4).map(p => (
+              <Badge
+                key={p.id}
+                variant="outline"
+                className={cn('cursor-pointer text-[10px] font-mono truncate max-w-[180px]', sourceChunk === p.pattern && 'border-primary')}
+                onClick={() => setSourceChunk(p.pattern)}
+              >
+                {p.pattern}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Input
+            className="h-8 flex-1 text-xs font-mono"
+            value={sourceChunk}
+            onChange={(e) => setSourceChunk(e.target.value)}
+            placeholder="e.g. I'd like to order..."
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-[11px] gap-1 shrink-0"
+            onClick={aiGenerateLongSentence}
+            disabled={generatingLong || !sourceChunk.trim()}
+          >
+            <Zap className="size-3" />
+            {generatingLong ? '生成中...' : 'AI 生成长句'}
+          </Button>
+        </div>
+        <p className="text-[10px] text-muted-foreground">选择上方句块或手动输入，AI 将扩展为适合拆解的完整长句。</p>
+      </div>
+
+      {/* Full sentence display + edit */}
+      <div className="space-y-2 rounded border border-border/40 bg-background/50 p-3">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-[10px] shrink-0">完整长句</Badge>
+          <span className="text-[10px] text-muted-foreground">用于拆解的目标句子</span>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">英文</Label>
+            <Input
+              className="h-8 text-xs font-mono"
+              value={local.fullSentence}
+              onChange={(e) => commit({ fullSentence: e.target.value })}
+              placeholder="e.g. She speaks English very well at the hotel every morning."
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">中文</Label>
+            <Input
+              className="h-8 text-xs"
+              value={local.fullSentenceZh}
+              onChange={(e) => commit({ fullSentenceZh: e.target.value })}
+              placeholder="她每天早上在酒店英语说得很好。"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Levels */}
@@ -106,10 +221,19 @@ export function SentenceDecompositionForm({ value, onChange, onDelete }: Props) 
         <div className="flex items-center justify-between">
           <Label className="text-xs">拆解层级 ({local.levels.length})</Label>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 拆解</Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addLevel}><Plus className="size-3" />添加层级</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}>
+              <Zap className="size-3" />AI 拆解
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addLevel}>
+              <Plus className="size-3" />添加层级
+            </Button>
           </div>
         </div>
+        {local.levels.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-4">
+            输入完整长句后，点击「AI 拆解」自动生成渐进式层级。
+          </p>
+        )}
         {local.levels.map((level, idx) => (
           <div key={idx} className="space-y-2 rounded border border-border/40 bg-background/50 p-3">
             <div className="flex items-center gap-2">

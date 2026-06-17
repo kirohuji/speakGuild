@@ -35,7 +35,7 @@ import {
   listScenes, getScene, createScene, updateScene, deleteScene,
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
-  listAllChunks, listStories, listScriptEpisodes, deleteScriptEpisode,
+  listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
   listLibraryPatterns,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
 } from '../api-content-admin'
@@ -474,6 +474,7 @@ function TrainingTopicDialog({
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('basic')
   const [stories, setStories] = useState<StoryData[]>([])
   const [storiesLoading, setStoriesLoading] = useState(false)
   const [storySearch, setStorySearch] = useState('')
@@ -482,8 +483,21 @@ function TrainingTopicDialog({
   const [storyPageSize, setStoryPageSize] = useState(20)
   const [storyTotal, setStoryTotal] = useState(0)
   const storiesLoadedRef = useRef(false)
+  // Fetch the bound story individually (bypasses pagination)
+  const [boundStory, setBoundStory] = useState<StoryData | null>(null)
+  // Stable key to only re-init form when a different topic is opened, not on prop reference change
+  const editKey = edit?.id ?? '__new__'
+  const [lastInitKey, setLastInitKey] = useState<string | null>(null)
 
+  // Only re-init form when a genuinely different topic is opened (keyed by edit.id)
+  // This prevents form reset when parent re-fetches data after save
   useEffect(() => {
+    if (!open) {
+      setLastInitKey(null)
+      return
+    }
+    if (lastInitKey === editKey) return // already initialized for this topic, skip
+
     if (edit) {
       setForm({
         ...edit,
@@ -520,7 +534,18 @@ function TrainingTopicDialog({
     })
     setStorySearch('')
     setStoryType('all')
-  }, [edit, open, sceneId, packageType])
+    setActiveTab('basic')
+    setLastInitKey(editKey)
+  }, [open, editKey, sceneId, packageType, lastInitKey])
+
+  // Fetch the currently bound story individually (bypasses pagination)
+  useEffect(() => {
+    if (form.inkScriptId) {
+      getStory(form.inkScriptId).then(setBoundStory).catch(() => setBoundStory(null))
+    } else {
+      setBoundStory(null)
+    }
+  }, [form.inkScriptId])
 
   // 弹窗关闭时重置加载标记
   useEffect(() => {
@@ -552,6 +577,9 @@ function TrainingTopicDialog({
     () => stories.find((story) => story.id === form.inkScriptId) ?? null,
     [form.inkScriptId, stories],
   )
+
+  // Prefer individually-fetched bound story, fall back to list
+  const displayStory = boundStory ?? selectedStory
 
   const storyTypes = useMemo(
     () => Array.from(new Set(stories.map((story) => story.scriptType).filter(Boolean))),
@@ -599,7 +627,6 @@ function TrainingTopicDialog({
       else await createTrainingTopic(payload)
       toast.success('话题已保存')
       onSaved()
-      onClose()
     } catch { toast.error('保存失败') }
     finally { setSaving(false) }
   }
@@ -619,11 +646,11 @@ function TrainingTopicDialog({
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">{form.difficulty ?? 'L2'}</Badge>
               <Badge variant="secondary">{form.suggestedDurationSec ?? 60}s</Badge>
-              {selectedStory && <Badge variant="outline" className="gap-1"><Link2 className="size-3" />已绑定 Ink</Badge>}
+              {displayStory && <Badge variant="outline" className="gap-1"><Link2 className="size-3" />已绑定 Ink</Badge>}
             </div>
           </div>
         </DialogHeader>
-        <Tabs defaultValue="basic" className="flex min-h-0 flex-1 flex-col" onValueChange={(v) => { if (v === 'ink') loadStoriesIfNeeded() }}>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v === 'ink') loadStoriesIfNeeded() }} className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 border-b border-border/70 bg-muted/20 px-6 py-3">
             <TabsList className="h-9 w-full justify-start overflow-x-auto bg-background/80">
               <TabsTrigger value="basic" className="gap-1.5">
@@ -854,16 +881,25 @@ function TrainingTopicDialog({
                         </Button>
                       )}
                     </div>
-                    {selectedStory ? (
+                    {displayStory ? (
                       <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3">
                         <div className="flex items-start gap-3">
                           <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold">{selectedStory.title}</p>
-                            <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{selectedStory.key}</p>
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              <Badge variant="outline" className="text-[10px]">{storyTypeLabel(selectedStory.scriptType)}</Badge>
-                              <Badge variant="secondary" className="text-[10px]">v{selectedStory.version}</Badge>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{displayStory.title}</p>
+                            <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{displayStory.key}</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <Badge variant="outline" className="text-[10px]">{storyTypeLabel(displayStory.scriptType)}</Badge>
+                              <Badge variant="secondary" className="text-[10px]">v{displayStory.version}</Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                                onClick={() => { window.location.hash = `#/admin/nqtr?tab=stories&storyId=${displayStory.id}` }}
+                              >
+                                <ExternalLink className="size-3" />
+                                在故事工坊中编辑
+                              </Button>
                             </div>
                           </div>
                         </div>

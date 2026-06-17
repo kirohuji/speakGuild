@@ -898,6 +898,7 @@ Rules:
     chunks?: string[];
     sentence?: string;
     zh?: string;
+    generateSentence?: boolean;
   }) {
     const provider = this.getProvider();
     const count = Math.min(dto.count ?? 4, 8);
@@ -973,6 +974,39 @@ Create 3 patterns with 2-3 items each.`;
     }
 
     if (dto.type === 'sentence_decomposition') {
+      // Mode 1: Generate a complex long sentence from a simple chunk/pattern
+      if (dto.generateSentence) {
+        const chunk = dto.keyword;
+        const system = `You are an ESL exercise generator for Chinese learners of English.
+Given a simple English chunk or pattern, generate a rich, natural long sentence that expands it into a realistic conversational context.
+
+The sentence should:
+- Be 12-25 words long
+- Sound like natural spoken English
+- Add time, place, reason, or manner to make it vivid
+- Be suitable for sentence decomposition exercises
+
+Return ONLY a JSON object (no markdown):
+{ "fullSentence": "the generated long English sentence", "fullSentenceZh": "Chinese translation" }`;
+
+        const user = `Chunk: "${chunk}"${dto.meaning ? `\nMeaning: ${dto.meaning}` : ''}`;
+
+        const { text } = await generateText({
+          model: provider('deepseek-chat'),
+          system,
+          prompt: user,
+          temperature: 0.7,
+          maxOutputTokens: 500,
+        });
+        try {
+          const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          return JSON.parse(cleaned);
+        } catch {
+          return { fullSentence: '', fullSentenceZh: '' };
+        }
+      }
+
+      // Mode 2: Decompose a full sentence into progressive levels
       const fullSentence = dto.sentence ?? dto.keyword;
       const fullZh = dto.zh ?? '';
       const system = `You are an ESL exercise generator.

@@ -22,7 +22,12 @@ import { listCharacters, listLocations, type GameCharacter, type GameLocationDat
 export function AdminNqtrPage() {
   const [characters, setCharacters] = useState<GameCharacter[]>([])
   const [locations, setLocations] = useState<GameLocationData[]>([])
-  const [activeTab, setActiveTab] = useState('stories')
+  // Read URL params for cross-page navigation (parse from hash for HashRouter)
+  const hashQuery = location.hash.includes('?') ? location.hash.split('?')[1] : ''
+  const urlParams = new URLSearchParams(hashQuery)
+  const initialTab = urlParams.get('tab') || 'stories'
+  const initialStoryId = urlParams.get('storyId') || undefined
+  const [activeTab, setActiveTab] = useState(initialTab)
 
   useEffect(() => {
     let cancelled = false
@@ -100,6 +105,7 @@ export function AdminNqtrPage() {
           <StoryWorkshopTab
             locations={locations}
             characters={characters}
+            initialStoryId={initialStoryId}
           />
         </TabsContent>
 

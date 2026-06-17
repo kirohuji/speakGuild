@@ -125,4 +125,8 @@ export class GenerateDrillsDto {
   @IsString()
   @IsOptional()
   zh?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  generateSentence?: boolean;
 }
