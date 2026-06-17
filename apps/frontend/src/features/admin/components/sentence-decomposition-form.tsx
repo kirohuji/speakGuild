@@ -74,6 +74,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete }: Props) 
       const fullZh = local.levels[local.levels.length - 1].zh
       const res: any = await post('/practice-ai/generate-drills', {
         type: 'sentence_decomposition',
+        keyword: fullSentence,
         sentence: fullSentence,
         zh: fullZh,
         count: 5,

@@ -492,7 +492,7 @@ function TrainingTopicDialog({
         patternIds: edit.topicPatterns?.map((tp: any) => tp.pattern.id) ?? [],
         metadata: {
           ...(edit.metadata ?? {}),
-          warmupPipeline: edit.metadata?.warmupPipeline ?? { version: 1, enabled: true, pipeline: [] },
+          outputTraining: edit.metadata?.outputTraining ?? { version: 1, enabled: true, pipeline: [] },
         },
       })
     }
@@ -503,7 +503,7 @@ function TrainingTopicDialog({
         ...(packageType === 'exam'
           ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
           : {}),
-        warmupPipeline: { version: 1, enabled: true, pipeline: [] },
+        outputTraining: { version: 1, enabled: true, pipeline: [] },
       },
       title: '',
       description: '',
@@ -655,13 +655,13 @@ function TrainingTopicDialog({
                       value={form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')}
                       onChange={(e) => {
                         const type = e.target.value
-                        const existingWarmup = form.metadata?.warmupPipeline
+                        const existingWarmup = form.metadata?.outputTraining
                         setForm({
                           ...form,
                           type,
                           metadata: type === 'ielts'
-                            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', warmupPipeline: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } }
-                            : { warmupPipeline: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } },
+                            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', outputTraining: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } }
+                            : { outputTraining: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } },
                         })
                       }}
                     >
@@ -968,8 +968,8 @@ function TrainingTopicDialog({
 
             <TabsContent value="warmup" className="mt-0">
               <WarmupPipelineTab
-                value={form.metadata?.warmupPipeline ?? { version: 1, enabled: true, pipeline: [] }}
-                onChange={(v) => setForm({ ...form, metadata: { ...(form.metadata ?? {}), warmupPipeline: v } })}
+                value={form.metadata?.outputTraining ?? { version: 1, enabled: true, pipeline: [] }}
+                onChange={(v) => setForm({ ...form, metadata: { ...(form.metadata ?? {}), outputTraining: v } })}
                 vocabs={vocabs}
                 chunks={chunks}
                 patterns={patterns}
