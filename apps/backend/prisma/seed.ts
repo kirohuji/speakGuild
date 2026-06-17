@@ -8,6 +8,100 @@ import { seedDailySentences } from './seed-daily-sentences';
 const prisma = new PrismaClient();
 
 // ══════════════════════════════════════════════════════════
+// Warmup Demo — 为测试输出热身功能添加 pipeline 种子数据
+// ══════════════════════════════════════════════════════════
+
+async function seedWarmupPipeline() {
+  // 在 "方式副词" 话题上配置完整的 outputTraining pipeline
+  const topic = await prisma.trainingTopic.findFirst({
+    where: { title: '方式副词' },
+  })
+  if (!topic) {
+    console.log('  ⚠️ 未找到"方式副词"话题，跳过 warmup pipeline 配置')
+    return
+  }
+
+  await prisma.trainingTopic.update({
+    where: { id: topic.id },
+    data: {
+      metadata: {
+        outputTraining: {
+          version: 1,
+          enabled: true,
+          pipeline: [
+            // ── 1. chunk_substitution (zh→en) ──
+            {
+              id: 'cs_zh_1',
+              type: 'chunk_substitution',
+              direction: 'zh_to_en',
+              title: '用 carefully 造句',
+              chunk: 'carefully',
+              chunkMeaning: '仔细地',
+              items: [
+                { zh: '仔细听老师说。', answer: 'Listen to the teacher carefully.' },
+                { zh: '请仔细检查你的作业。', answer: 'Please check your homework carefully.' },
+              ],
+            },
+            // ── 2. chunk_substitution (en→zh) ──
+            {
+              id: 'cs_en_1',
+              type: 'chunk_substitution',
+              direction: 'en_to_zh',
+              title: '英译中理解',
+              chunk: 'quickly / happily',
+              chunkMeaning: '快速地 / 快乐地',
+              items: [
+                { zh: '他快速完成了作业。', answer: 'He quickly finished his homework.' },
+                { zh: '孩子们快乐地玩耍。', answer: 'The children played happily.' },
+              ],
+            },
+            // ── 3. vocab_sentence_building — 一词多句 ──
+            {
+              id: 'vsb_1',
+              type: 'vocab_sentence_building',
+              title: 'easily 搭配练习',
+              vocabWord: 'easily',
+              vocabMeaning: '容易地',
+              direction: 'zh_to_en',
+              patterns: [
+                {
+                  chunk: 'She easily...',
+                  items: [
+                    { zh: '她轻松解决了问题。', answer: 'She easily solved the problem.' },
+                    { zh: '她轻松通过了考试。', answer: 'She easily passed the exam.' },
+                  ],
+                },
+                {
+                  chunk: 'He easily...',
+                  items: [
+                    { zh: '他轻松赢得了比赛。', answer: 'He easily won the game.' },
+                    { zh: '他轻松地回答了所有问题。', answer: 'He easily answered all the questions.' },
+                  ],
+                },
+              ],
+            },
+            // ── 4. sentence_decomposition — 长句拆解 ──
+            {
+              id: 'sd_1',
+              type: 'sentence_decomposition',
+              title: '句子拆解：从简单到复杂',
+              levels: [
+                { level: 1, label: '核心句', en: 'She speaks well.', zh: '她说得好。' },
+                { level: 2, label: '加对象', en: 'She speaks English well.', zh: '她英语说得好。', highlight: 'English', hint: '试着加入语言名称' },
+                { level: 3, label: '加程度', en: 'She speaks English very well.', zh: '她英语说得非常好。', highlight: 'very', hint: '试着加入程度副词' },
+                { level: 4, label: '加频率', en: 'She always speaks English very well.', zh: '她总是英语说得非常好。', highlight: 'always', hint: '试着加入频率副词' },
+                { level: 5, label: '完整表达', en: 'She always speaks English very well because she practices every day.', zh: '她总是英语说得非常好，因为她每天练习。', highlight: 'because she practices every day', hint: '试着加入原因' },
+              ],
+            },
+          ],
+        },
+      },
+    },
+  })
+  console.log('  ✓ 方式副词话题 → 已配置 outputTraining pipeline（含 4 种类型）')
+}
+
+// ══════════════════════════════════════════════════════════
 // SystemConfig — 后台可配置的系统参数
 // ══════════════════════════════════════════════════════════
 
@@ -134,6 +228,7 @@ async function main() {
     console.log(`🎯 SEED_PACKAGE=${targetPackage} — 追加模式，仅导入指定学习包\n`)
     console.log('🌱 跳过清空 & 基础设施，直接导入学习包\n')
     await seedLearningPackages(prisma, targetPackage)
+    await seedWarmupPipeline()
     console.log('\n🎉 Seed complete!')
     return
   }
@@ -217,6 +312,12 @@ async function main() {
   // ══════════════════════════════════════════════════════
   console.log('\n🌱 第三阶段：学习包')
   await seedLearningPackages(prisma, targetPackage)
+
+  // ══════════════════════════════════════════════════════
+  // 第四阶段：输出热身 pipeline 种子数据
+  // ══════════════════════════════════════════════════════
+  console.log('\n🌱 第四阶段：输出热身 pipeline')
+  await seedWarmupPipeline()
 
   console.log('\n🎉 Seed complete!')
 }

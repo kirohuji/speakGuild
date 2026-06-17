@@ -190,6 +190,8 @@ export class EnglishPracticeService {
         examples: tv.vocab.examples,
         description: tv.vocab.description,
         difficulty: tv.vocab.difficulty,
+        outputPriority: tv.vocab.outputPriority,
+        collocations: tv.vocab.collocations,
       })),
       activeChunks: topic.activeChunks.map((tc) => {
         const progress = progressMap.get(tc.chunkId);

@@ -9,6 +9,90 @@ export interface TrainingTopic {
   suggestedDurationSec: number
 }
 
+// ── Output Training Pipeline Types ──
+
+export type DrillDirection = 'zh_to_en' | 'en_to_zh'
+
+export interface ChunkSubstitutionItem {
+  type: 'chunk_substitution'
+  id: string
+  title: string
+  chunk: string
+  chunkMeaning?: string
+  direction?: DrillDirection
+  items: Array<{ zh: string; answer: string }>
+}
+
+export interface VocabDrillItem {
+  type: 'vocab_drill'
+  id: string
+  title: string
+  direction?: DrillDirection
+  vocabs: Array<{
+    vocabId: string
+    promptZh: string
+    targetWords?: string[]
+    suggestedAnswer: string
+  }>
+}
+
+export interface VnDialogueItem {
+  type: 'vn_dialogue'
+  id: string
+  title: string
+  structuredObjectives: Array<{
+    id: string
+    title: string
+    requiredIntent: string
+    essentialSlots: string[]
+    targetChunks: string[]
+  }>
+}
+
+/** 一词多句：围绕核心词 + 多种 Chunk 搭配生成句子，在 Phase 中拆成多个 ChunkOutputDrillCard */
+export interface VocabSentenceBuildingItem {
+  type: 'vocab_sentence_building'
+  id: string
+  title: string
+  vocabWord: string
+  vocabMeaning: string
+  direction?: DrillDirection
+  patterns: Array<{
+    chunk: string
+    items: Array<{ zh: string; answer: string }>
+  }>
+}
+
+/** 长句拆解：从简单句逐级扩展到复杂长句 */
+export interface SentenceDecompositionItem {
+  type: 'sentence_decomposition'
+  id: string
+  title: string
+  levels: Array<{
+    level: number
+    label: string
+    en: string
+    zh: string
+    highlight?: string
+    hint?: string
+  }>
+}
+
+export type OutputPipelineItem =
+  | ChunkSubstitutionItem
+  | VocabDrillItem
+  | VnDialogueItem
+  | VocabSentenceBuildingItem
+  | SentenceDecompositionItem
+
+export interface OutputTrainingMetadata {
+  version: number
+  enabled: boolean
+  pipeline: OutputPipelineItem[]
+}
+
+// ── TopicDetail ──
+
 export interface TopicDetail {
   topic: {
     id: string
@@ -21,6 +105,9 @@ export interface TopicDetail {
     suggestedDurationSec: number
     difficulty: string
     inkScriptId?: string | null
+    metadata?: {
+      outputTraining?: OutputTrainingMetadata
+    } | null
   }
   inkScript?: {
     id: string
@@ -59,6 +146,8 @@ export interface TopicDetail {
     examples?: Array<{ en: string; zh?: string; note?: string | null; level?: string }>
     description?: string | null
     difficulty?: string
+    outputPriority?: 'low' | 'medium' | 'high'
+    collocations?: Array<{ collocation: string; zh?: string }> | null
   }>
   activeChunks: {
     id: string

@@ -1,28 +1,29 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mic, Edit3, MessageSquare, Volume2, Loader2, CheckCircle2 } from 'lucide-react'
+import { Edit3, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
-import { synthesizeText } from '@/lib/tts-api'
-import { practiceAiApi } from '../api/english-practice-api'
+import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 
-type DrillStatus = 'idle' | 'playing' | 'judging' | 'passed' | 'failed'
+type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 
 interface ChunkOutputDrillCardProps {
   chunk: { text: string; meaning?: string; description?: string | null }
   items: { zh: string; answer?: string }[]
   groupTitle?: string
+  direction?: DrillDirection
   onComplete?: (itemIndex: number, passed: boolean) => void
 }
 
-/** Chunk 输出热身卡片 — 跟读/替换/回答三步 */
+/** Chunk 输出热身卡片 */
 export function ChunkOutputDrillCard({
   chunk,
   items,
   groupTitle,
+  direction = 'zh_to_en',
   onComplete,
 }: ChunkOutputDrillCardProps) {
   const { t } = useTranslation()
@@ -32,31 +33,10 @@ export function ChunkOutputDrillCard({
   const [feedback, setFeedback] = useState('')
   const [correction, setCorrection] = useState('')
   const [showAnswer, setShowAnswer] = useState(false)
-  const [audioPlaying, setAudioPlaying] = useState(false)
 
   const current = items[currentIdx]
   const totalItems = items.length
-
-  // ── 播放 TTS 跟读范文 ──
-  const playAudio = useCallback(async () => {
-    if (!current?.answer) return
-    setAudioPlaying(true)
-    try {
-      const result = await synthesizeText({
-        text: current.answer,
-        provider: 'minimax' as any,
-        model: 'speech-02',
-      })
-      const blob = await fetch(`data:${result.mimeType};base64,${result.audioBase64}`).then(r => r.blob())
-      const url = URL.createObjectURL(blob)
-      const audio = new Audio(url)
-      audio.onended = () => { URL.revokeObjectURL(url); setAudioPlaying(false) }
-      audio.onerror = () => { setAudioPlaying(false) }
-      await audio.play()
-    } catch {
-      setAudioPlaying(false)
-    }
-  }, [current?.answer])
+  const isZhToEn = direction === 'zh_to_en'
 
   // ── 提交判断 ──
   const submit = useCallback(async () => {
@@ -65,32 +45,33 @@ export function ChunkOutputDrillCard({
     setFeedback('')
     try {
       const judgement = await practiceAiApi.judgeDialogueTurn({
-        topicId: '', // not needed for drill
-        npcText: current.zh,
+        topicId: '',
+        npcText: isZhToEn ? current.zh : (current.answer ?? ''),
         userText: userInput.trim(),
-        objectives: [current.zh],
-        targetChunks: current.answer ? [current.answer] : [],
+        objectives: isZhToEn ? [current.zh] : [`理解英文：${current.answer ?? ''}`],
         mode: 'targeted_output',
-        requiredChunks: current.answer ? [current.answer] : [],
+        ...(isZhToEn && current.answer
+          ? { targetChunks: [current.answer], requiredChunks: [current.answer] }
+          : {}),
       })
       if (judgement.passed) {
         setStatus('passed')
-        setFeedback(judgement.feedback || '通过！')
+        setFeedback(judgement.feedback || t('passed'))
         onComplete?.(currentIdx, true)
-        setTimeout(() => advance(), 1000)
+        setTimeout(() => advance(true), 1000)
       } else {
         setStatus('failed')
-        setFeedback(judgement.feedback || '再试一次')
+        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
         setCorrection(judgement.correction || current.answer || '')
       }
     } catch (err: any) {
       setStatus('failed')
-      setFeedback(err?.message || '判断失败')
+      setFeedback(err?.message || t('practiceVn.feedbackUnavailable'))
     }
-  }, [userInput, current, status, currentIdx, onComplete])
+  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, t])
 
-  // ── 前进到下一题 ──
-  const advance = useCallback(() => {
+  // ── 前进（仅通过后自动触发） ──
+  const advance = useCallback((_passed: boolean) => {
     setStatus('idle')
     setUserInput('')
     setFeedback('')
@@ -102,6 +83,11 @@ export function ChunkOutputDrillCard({
   }, [currentIdx, totalItems])
 
   if (!current) return null
+
+  const promptLabel = isZhToEn
+    ? t('practiceSession.sayInEnglish')
+    : t('practiceSession.sayInChinese')
+  const displayText = isZhToEn ? current.zh : (current.answer ?? current.zh)
 
   return (
     <Card className="border-0 bg-muted/30 shadow-none">
@@ -121,23 +107,15 @@ export function ChunkOutputDrillCard({
 
         {/* Task prompt */}
         <div>
-          <p className="text-xs text-muted-foreground">{t('practiceSession.sayInEnglish')}:</p>
-          <p className="text-base font-semibold text-foreground">{current.zh}</p>
+          <p className="text-xs text-muted-foreground">{promptLabel}:</p>
+          <p className="text-base font-semibold text-foreground">{displayText}</p>
         </div>
 
-        {/* Action buttons: 跟读 / 提示 / 跳过 */}
+        {/* Action: 提示 */}
         <div className="flex gap-2">
-          <Button size="default" variant="outline" className="min-h-11 flex-1 gap-1.5 text-sm" onClick={playAudio} disabled={audioPlaying}>
-            {audioPlaying ? <Loader2 className="size-4 animate-spin" /> : <Volume2 className="size-4" />}
-            {'跟读'}
-          </Button>
           <Button size="default" variant="outline" className="min-h-11 flex-1 gap-1.5 text-sm" onClick={() => setShowAnswer(!showAnswer)}>
             <Edit3 className="size-4" />
-            {showAnswer ? '隐藏' : '提示'}
-          </Button>
-          <Button size="default" variant="outline" className="min-h-11 flex-1 gap-1.5 text-sm" onClick={advance}>
-            <MessageSquare className="size-4" />
-            跳过
+            {showAnswer ? t('common.collapse') : t('practiceSession.showAnswer')}
           </Button>
         </div>
 
@@ -152,7 +130,7 @@ export function ChunkOutputDrillCard({
         <Textarea
           value={userInput}
           onChange={(e) => { setUserInput(e.target.value); setStatus('idle'); setFeedback('') }}
-          placeholder="输入英文或使用语音..."
+          placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
           className="min-h-[60px] resize-none rounded-xl border-0 bg-background/70 text-base"
           disabled={status === 'judging' || status === 'passed'}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
@@ -163,7 +141,7 @@ export function ChunkOutputDrillCard({
           <div className={cn('rounded-md px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
             <div className="flex items-center gap-1.5">
               {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
-              <p className="text-[11px] font-medium">{status === 'passed' ? '通过' : '再试一次'}</p>
+              <p className="text-[11px] font-medium">{status === 'passed' ? t('practiceSession.passed') : t('practiceSession.tryAgain')}</p>
             </div>
             <p className="mt-1 text-[11px] text-muted-foreground">{feedback}</p>
             {correction && (
@@ -175,7 +153,7 @@ export function ChunkOutputDrillCard({
         {/* Submit */}
         <Button className="w-full min-h-11" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
           {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {status === 'judging' ? '判断中...' : status === 'passed' ? '已通过' : '提交'}
+          {status === 'judging' ? t('practiceVn.feedbackEvaluating') : status === 'passed' ? t('practiceSession.passed') : t('practiceSession.submit')}
         </Button>
       </CardContent>
     </Card>

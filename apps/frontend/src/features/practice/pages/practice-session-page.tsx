@@ -25,6 +25,7 @@ import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { ChunkOutputDrillCard } from '../components/chunk-output-drill-card'
 import { VocabOutputCard } from '../components/vocab-output-card'
+import { SentenceDecompositionCard } from '../components/sentence-decomposition-card'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
@@ -308,8 +309,13 @@ function GuidedWarmupPhase({
   const totalSteps = useMemo(() => {
     let count = 0
     for (const item of warmupItems) {
-      if (item.type === 'chunk_substitution') count += (item.items ?? []).length
-      else if (item.type === 'vocab_drill') count += (item.vocabs ?? []).length
+      if (item.type === 'chunk_substitution' || item.type === 'vocab_drill') {
+        count += (item.items ?? item.vocabs ?? []).length
+      } else if (item.type === 'vocab_sentence_building') {
+        for (const p of (item.patterns ?? [])) count += (p.items ?? []).length
+      } else if (item.type === 'sentence_decomposition') {
+        count += (item.levels ?? []).length
+      }
     }
     return count
   }, [warmupItems])
@@ -382,17 +388,17 @@ function GuidedWarmupPhase({
       <Progress value={(doneCount / totalSteps) * 100} className="mb-4 h-1.5" />
 
       <div className="flex flex-col gap-4">
-        {warmupItems.map((item: any, itemIdx: number) => {
+        {warmupItems.map((item: any) => {
           if (item.type === 'chunk_substitution') {
             return (
               <ChunkOutputDrillCard
                 key={item.id}
                 chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
                 items={(item.items ?? []).map((sub: any) => ({ zh: sub.zh, answer: sub.answer }))}
+                direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
                 onComplete={(_subIdx, _passed) => {
-                  const stepId = `${item.id}_${_subIdx}`
-                  markDone(stepId)
+                  markDone(`${item.id}_${_subIdx}`)
                 }}
               />
             )
@@ -402,6 +408,7 @@ function GuidedWarmupPhase({
               <VocabOutputCard
                 key={item.id}
                 title={item.title}
+                direction={item.direction ?? 'zh_to_en'}
                 vocabs={(item.vocabs ?? []).map((v: any) => ({
                   vocabId: v.vocabId,
                   promptZh: v.promptZh,
@@ -409,9 +416,49 @@ function GuidedWarmupPhase({
                   suggestedAnswer: v.suggestedAnswer,
                 }))}
                 onComplete={(_idx, _passed) => {
-                  const stepId = `${item.id}_${_idx}`
-                  markDone(stepId)
+                  markDone(`${item.id}_${_idx}`)
                 }}
+              />
+            )
+          }
+          if (item.type === 'vocab_sentence_building') {
+            // 拆成多个 ChunkOutputDrillCard，每组一种 Chunk 搭配
+            let flatIdx = 0
+            return (
+              <Card key={item.id} className="border-0 bg-muted/30 shadow-none">
+                <CardContent className="space-y-4 p-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px]">核心词</Badge>
+                    <span className="text-sm font-semibold text-primary">{item.vocabWord}</span>
+                    <span className="text-xs text-muted-foreground">{item.vocabMeaning}</span>
+                  </div>
+                  {(item.patterns ?? []).map((pattern: any, patternIdx: number) => {
+                    const startIdx = flatIdx
+                    flatIdx += (pattern.items ?? []).length
+                    return (
+                      <ChunkOutputDrillCard
+                        key={`${item.id}_${patternIdx}`}
+                        chunk={{ text: pattern.chunk }}
+                        items={pattern.items}
+                        direction={item.direction ?? 'zh_to_en'}
+                        groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
+                        onComplete={(subIdx, _passed) => {
+                          markDone(`${item.id}_${startIdx + subIdx}`)
+                        }}
+                      />
+                    )
+                  })}
+                </CardContent>
+              </Card>
+            )
+          }
+          if (item.type === 'sentence_decomposition') {
+            return (
+              <SentenceDecompositionCard
+                key={item.id}
+                title={item.title}
+                levels={item.levels}
+                onComplete={(_passed) => markDone(item.id)}
               />
             )
           }
@@ -419,11 +466,11 @@ function GuidedWarmupPhase({
         })}
       </div>
 
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <Button variant="ghost" className="w-full min-h-11" size="default" onClick={onStartPractice}>
           {t('practiceSession.startPractice')}
         </Button>
-      </div>
+      </div> */}
     </div>
   )
 }
@@ -1357,7 +1404,7 @@ export function PracticeSessionPage() {
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
-            {(detail?.topic as any)?.metadata?.outputTraining?.enabled && (detail?.topic as any)?.metadata?.outputTraining?.pipeline?.length > 0 ? (
+            {detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0 ? (
               <div className="mt-4 flex gap-3">
                 <Button className="flex-1 min-h-11" variant="outline" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
                   {t('practiceSession.startWarmup')}
@@ -1396,9 +1443,9 @@ export function PracticeSessionPage() {
 
   // ==================== Phase: Guided (输出热身) ====================
   if (phase === 'guided') {
-    const metadataPipeline = (detail?.topic as any)?.metadata?.outputTraining?.pipeline ?? []
+    const metadataPipeline = detail?.topic?.metadata?.outputTraining?.pipeline ?? []
     const metadataItems = metadataPipeline.filter((item: any) =>
-      item.type === 'chunk_substitution' || item.type === 'vocab_drill'
+      item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition'
     )
 
     // Auto-generate warmup items from activeChunks with examples if no metadata pipeline
