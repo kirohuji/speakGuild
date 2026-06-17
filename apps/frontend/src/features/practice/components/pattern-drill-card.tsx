@@ -77,19 +77,19 @@ export function PatternDrillCard({
       })
       if (judgement.passed) {
         setStatus('passed')
-        setFeedback(judgement.feedback || t('passed'))
+        setFeedback(judgement.feedback || '正确！')
+        setHintLevel('answer')
         onComplete?.(currentIdx, true)
-        setTimeout(() => advance(), 1000)
       } else {
         setStatus('failed')
-        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
+        setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
       }
     } catch (err: any) {
       setStatus('failed')
-      setFeedback(err?.message || t('practiceVn.feedbackUnavailable'))
+      setFeedback(err?.message || '反馈不可用')
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, pattern, onComplete, t])
+  }, [userInput, current, status, currentIdx, isZhToEn, pattern, onComplete])
 
   const advance = useCallback(() => {
     setStatus('idle')
@@ -164,10 +164,10 @@ export function PatternDrillCard({
         )}
       </div>
 
-      {/* Input area */}
+      {/* Input area — persist on success */}
       <Textarea
         value={userInput}
-        onChange={(e) => { setUserInput(e.target.value); setStatus('idle'); setFeedback('') }}
+        onChange={(e) => { if (status !== 'passed') { setUserInput(e.target.value); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
         className="min-h-[60px] resize-none rounded-xl border-0 bg-background/70 text-base"
         disabled={status === 'judging' || status === 'passed'}
@@ -186,11 +186,17 @@ export function PatternDrillCard({
         </div>
       )}
 
-      {/* Submit */}
-      <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
-        {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-        {status === 'judging' ? '评判中...' : status === 'passed' ? '正确！' : '提交'}
-      </Button>
+      {/* Actions */}
+      {status === 'passed' ? (
+        <Button className="w-full min-h-11 rounded-xl" onClick={advance}>
+          {currentIdx < totalItems - 1 ? '下一题' : '完成'}
+        </Button>
+      ) : (
+        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || !userInput.trim()}>
+          {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+          {status === 'judging' ? '评判中...' : '提交'}
+        </Button>
+      )}
     </div>
   )
 }

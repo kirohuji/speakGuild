@@ -78,21 +78,22 @@ export function ChunkOutputDrillCard({
       })
       if (judgement.passed) {
         setStatus('passed')
-        setFeedback(judgement.feedback || t('passed'))
+        setFeedback(judgement.feedback || '正确！')
+        setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true)
-        setTimeout(() => advance(true), 1000)
       } else {
         setStatus('failed')
-        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
+        setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
       }
     } catch (err: any) {
       setStatus('failed')
-      setFeedback(err?.message || t('practiceVn.feedbackUnavailable'))
+      setFeedback(err?.message || '反馈不可用')
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, t])
+  }, [userInput, current, status, currentIdx, isZhToEn, onComplete])
 
-  const advance = useCallback((_passed: boolean) => {
+  // ── 前进（手动触发） ──
+  const advance = useCallback(() => {
     setStatus('idle')
     setUserInput('')
     setFeedback('')
@@ -183,10 +184,10 @@ export function ChunkOutputDrillCard({
         )}
       </div>
 
-      {/* Input area */}
+      {/* Input area — persist on success */}
       <Textarea
         value={userInput}
-        onChange={(e) => { setUserInput(e.target.value); setStatus('idle'); setFeedback('') }}
+        onChange={(e) => { if (status !== 'passed') { setUserInput(e.target.value); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
         className="min-h-[60px] resize-none rounded-xl border-0 bg-background/70 text-base"
         disabled={status === 'judging' || status === 'passed'}
@@ -207,11 +208,19 @@ export function ChunkOutputDrillCard({
         </div>
       )}
 
-      {/* Submit */}
-      <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
-        {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-        {status === 'judging' ? '评判中...' : status === 'passed' ? '正确！' : '提交'}
-      </Button>
+      {/* Actions */}
+      {status === 'passed' ? (
+        <div className="flex gap-2">
+          <Button className="flex-1 min-h-11 rounded-xl" variant="default" onClick={advance}>
+            {currentIdx < totalItems - 1 ? '下一题' : '完成'}
+          </Button>
+        </div>
+      ) : (
+        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || !userInput.trim()}>
+          {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+          {status === 'judging' ? '评判中...' : '提交'}
+        </Button>
+      )}
     </div>
   )
 }

@@ -78,11 +78,11 @@ export function VocabOutputCard({
           : {}),
       })
       if (judgement.passed) {
-        setResult({ passed: true, feedback: judgement.feedback || t('practiceSession.passed') })
+        setResult({ passed: true, feedback: judgement.feedback || '正确！' })
+        setHintLevel('answer')
         onComplete?.(currentIdx, true)
-        setTimeout(() => advance(), 1000)
       } else {
-        setResult({ passed: false, feedback: judgement.feedback || t('practiceSession.tryAgain'), correction: judgement.correction || current.suggestedAnswer || '' })
+        setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || current.suggestedAnswer || '' })
       }
     } catch (err: any) {
       setResult({ passed: false, feedback: err?.message || t('practiceVn.feedbackUnavailable') })
@@ -172,13 +172,13 @@ export function VocabOutputCard({
         )}
       </div>
 
-      {/* Input */}
+      {/* Input — persist on success */}
       <Textarea
         value={userInput}
-        onChange={(e) => { setUserInput(e.target.value); setResult(null) }}
+        onChange={(e) => { if (!result?.passed) { setUserInput(e.target.value); setResult(null) } }}
         placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
         className="min-h-[60px] resize-none rounded-xl border-0 bg-background/70 text-base"
-        disabled={judging}
+        disabled={judging || !!result?.passed}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
       />
 
@@ -196,11 +196,17 @@ export function VocabOutputCard({
         </div>
       )}
 
-      {/* Submit */}
-      <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={judging || !userInput.trim()}>
-        {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-        {judging ? '评判中...' : '提交'}
-      </Button>
+      {/* Actions */}
+      {result?.passed ? (
+        <Button className="w-full min-h-11 rounded-xl" onClick={advance}>
+          {currentIdx < totalItems - 1 ? '下一题' : '完成'}
+        </Button>
+      ) : (
+        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={judging || !userInput.trim()}>
+          {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+          {judging ? '评判中...' : '提交'}
+        </Button>
+      )}
     </div>
   )
 }
