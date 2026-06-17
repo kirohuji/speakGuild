@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, Zap, Loader2, GripVertical, Trash2, ChevronUp, ChevronDown, ChevronRight, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -96,11 +96,28 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   // Track which items are collapsed (by id)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  const initializedRef = useRef(false)
+  // Track previous pipeline ID set to detect structural changes (new topic opened, items added/removed)
+  const prevIdsRef = useRef<string>('')
 
   useEffect(() => {
     setLocal(value)
-    // Default all items to collapsed
-    setCollapsedIds(new Set(value.pipeline.map((item) => item.id)))
+    const newIds = new Set(value.pipeline.map(item => item.id))
+    const currentIds = [...newIds].sort().join(',')
+    // On initial load or when pipeline structure changes, collapse all
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      prevIdsRef.current = currentIds
+      setCollapsedIds(newIds)
+    } else if (currentIds !== prevIdsRef.current) {
+      // Only add newly added items to collapsed set
+      prevIdsRef.current = currentIds
+      setCollapsedIds(prev => {
+        const next = new Set(prev)
+        for (const id of newIds) next.add(id)
+        return next
+      })
+    }
   }, [value])
 
   const commit = (patch: Partial<WarmupPipelineData>) => {

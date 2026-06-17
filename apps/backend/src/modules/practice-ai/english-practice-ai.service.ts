@@ -899,11 +899,45 @@ Rules:
     sentence?: string;
     zh?: string;
     generateSentence?: boolean;
+    generateHints?: boolean;
+    itemCount?: number;
+    items?: Array<{ zh: string; answer: string }>;
   }) {
     const provider = this.getProvider();
     const count = Math.min(dto.count ?? 4, 8);
     const direction = dto.direction ?? 'zh_to_en';
     const kind = dto.kind ?? 'chunk';
+
+    // ── Generate per-item teaching hints ──
+    if (dto.generateHints && dto.items?.length) {
+      const system = `You are an ESL teaching assistant for Chinese learners of English.
+For each exercise item below, write a short, helpful teaching hint (1-2 sentences in Chinese).
+Each hint should guide the learner on how to construct the answer without giving it away completely.
+
+Tailor hints to the exercise type:
+- chunk_substitution: hint about how to use the target chunk naturally in a sentence
+- pattern_drill: hint about how to fill the pattern's slot with the right words
+- vocab_sentence_building: hint about which sentence pattern or collocation to use for this specific item
+
+Return ONLY a JSON object: { "hints": ["hint1", "hint2", ...] }`;
+
+      const itemsJson = dto.items.map((it, i) => `[${i + 1}] ZH: ${it.zh} | Answer: ${it.answer}`).join('\n')
+      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}\nExercises:\n${itemsJson}`;
+
+      try {
+        const { text } = await generateText({
+          model: provider('deepseek-chat'),
+          system,
+          prompt: user,
+          temperature: 0.6,
+          maxOutputTokens: 500,
+        });
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      } catch {
+        return { hints: [] };
+      }
+    }
 
     if (dto.type === 'chunk_substitution') {
       const system = `You are an ESL exercise generator for Chinese learners of English.

@@ -17,7 +17,7 @@ export interface ChunkSubstitutionItem {
   chunkMeaning?: string
   direction?: 'zh_to_en' | 'en_to_zh'
   kind?: 'chunk' | 'word'
-  items: Array<{ zh: string; answer: string }>
+  items: Array<{ zh: string; answer: string; hint?: string }>
 }
 
 interface Props {
@@ -47,10 +47,10 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
   }
 
   const addItem = () => {
-    commit({ items: [...local.items, { zh: '', answer: '' }] })
+    commit({ items: [...local.items, { zh: '', answer: '', hint: '' }] })
   }
 
-  const updateItem = (idx: number, field: 'zh' | 'answer', val: string) => {
+  const updateItem = (idx: number, field: 'zh' | 'answer' | 'hint', val: string) => {
     const next = [...local.items]
     next[idx] = { ...next[idx], [field]: val }
     commit({ items: next })
@@ -81,6 +81,29 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         toast.success(`已生成 ${res.items.length} 道题目`)
       }
     } catch { toast.error('AI 生成失败') }
+  }
+
+  // AI 为所有题目生成提示
+  const aiGenerateHints = async () => {
+    const source = local.chunk
+    if (!source) { toast.error('请先输入核心词/句块'); return }
+    try {
+      const { post } = await import('@/lib/request')
+      const res: any = await post('/practice-ai/generate-drills', {
+        type: 'chunk_substitution',
+        keyword: source,
+        meaning: local.chunkMeaning || '',
+        kind: local.kind ?? 'chunk',
+        generateHints: true,
+        itemCount: local.items.length,
+        items: local.items.map(it => ({ zh: it.zh, answer: it.answer })),
+      })
+      if (res?.hints?.length) {
+        const updated = local.items.map((it, i) => ({ ...it, hint: res.hints[i] ?? it.hint ?? '' }))
+        commit({ items: updated })
+        toast.success(`已为 ${res.hints.length} 道题生成提示`)
+      }
+    } catch { toast.error('AI 生成提示失败') }
   }
 
   return (
@@ -144,6 +167,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
           <Label className="text-xs">练习题目 ({local.items.length})</Label>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 生成</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints}><Zap className="size-3" />AI 提示</Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addItem}><Plus className="size-3" />添加</Button>
           </div>
         </div>
@@ -155,6 +179,8 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                 placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '中文提示...'} />
               <Input className="h-7 text-xs" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
                 placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+              <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
+                placeholder="教学提示（选填）" />
             </div>
             <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removeItem(idx)}><Trash2 className="size-3" /></Button>
           </div>

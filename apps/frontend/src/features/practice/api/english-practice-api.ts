@@ -21,7 +21,7 @@ export interface ChunkSubstitutionItem {
   chunkMeaning?: string
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
-  items: Array<{ zh: string; answer: string }>
+  items: Array<{ zh: string; answer: string; hint?: string }>
 }
 
 export interface VocabDrillItem {
@@ -34,6 +34,7 @@ export interface VocabDrillItem {
     promptZh: string
     targetWords?: string[]
     suggestedAnswer: string
+    hint?: string
   }>
 }
 
@@ -60,7 +61,7 @@ export interface VocabSentenceBuildingItem {
   direction?: DrillDirection
   patterns: Array<{
     chunk: string
-    items: Array<{ zh: string; answer: string }>
+    items: Array<{ zh: string; answer: string; hint?: string }>
   }>
 }
 
@@ -89,7 +90,7 @@ export interface PatternDrillItem {
   pattern: string
   patternMeaning?: string
   direction?: DrillDirection
-  items: Array<{ zh: string; answer: string }>
+  items: Array<{ zh: string; answer: string; hint?: string }>
 }
 
 export type OutputPipelineItem =

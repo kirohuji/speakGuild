@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
@@ -16,7 +17,7 @@ export interface VocabSentenceBuildingItem {
   direction?: 'zh_to_en' | 'en_to_zh'
   patterns: Array<{
     chunk: string
-    items: Array<{ zh: string; answer: string }>
+    items: Array<{ zh: string; answer: string; hint?: string }>
   }>
 }
 
@@ -60,7 +61,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     commit({ patterns: next })
   }
 
-  const updatePatternItem = (pIdx: number, iIdx: number, field: 'zh' | 'answer', val: string) => {
+  const updatePatternItem = (pIdx: number, iIdx: number, field: 'zh' | 'answer' | 'hint', val: string) => {
     const next = [...local.patterns]
     const items = [...next[pIdx].items]
     items[iIdx] = { ...items[iIdx], [field]: val }
@@ -100,6 +101,31 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     } catch { toast.error('AI 生成失败') }
   }
 
+  const aiGenerateHints = async () => {
+    if (!local.vocabWord) { toast.error('请先输入核心词汇'); return }
+    try {
+      const { post } = await import('@/lib/request')
+      const allItems = local.patterns.flatMap(p => p.items)
+      const res: any = await post('/practice-ai/generate-drills', {
+        type: 'vocab_sentence_building',
+        keyword: local.vocabWord,
+        meaning: local.vocabMeaning || '',
+        generateHints: true,
+        itemCount: allItems.length,
+        items: allItems.map(it => ({ zh: it.zh, answer: it.answer })),
+      })
+      if (res?.hints?.length) {
+        let hintIdx = 0
+        const updated = local.patterns.map(p => ({
+          ...p,
+          items: p.items.map(it => ({ ...it, hint: res.hints[hintIdx++] ?? it.hint ?? '' })),
+        }))
+        commit({ patterns: updated })
+        toast.success(`已为 ${res.hints.length} 道题生成提示`)
+      }
+    } catch { toast.error('AI 生成提示失败') }
+  }
+
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -135,6 +161,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
           <Label className="text-xs">句型搭配 ({local.patterns.length})</Label>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 生成</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints}><Zap className="size-3" />AI 提示</Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addPattern}><Plus className="size-3" />添加句型</Button>
           </div>
         </div>
@@ -160,6 +187,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                 <div className="flex-1 space-y-1.5">
                   <Input className="h-7 text-xs" value={item.zh} onChange={e => updatePatternItem(pIdx, iIdx, 'zh', e.target.value)} placeholder="中文提示..." />
                   <Input className="h-7 text-xs" value={item.answer} onChange={e => updatePatternItem(pIdx, iIdx, 'answer', e.target.value)} placeholder="英文答案..." />
+                  <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updatePatternItem(pIdx, iIdx, 'hint', e.target.value)} placeholder="教学提示（选填）" />
                 </div>
                 <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removePatternItem(pIdx, iIdx)}><Trash2 className="size-3" /></Button>
               </div>

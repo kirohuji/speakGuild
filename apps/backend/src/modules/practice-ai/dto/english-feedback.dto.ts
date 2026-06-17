@@ -129,4 +129,16 @@ export class GenerateDrillsDto {
   @IsBoolean()
   @IsOptional()
   generateSentence?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  generateHints?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  itemCount?: number;
+
+  @IsArray()
+  @IsOptional()
+  items?: Array<{ zh: string; answer: string }>;
 }
