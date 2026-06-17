@@ -79,12 +79,24 @@ export interface SentenceDecompositionItem {
   }>
 }
 
+/** 句型操练：语法框架固定 + 槽位内容可变 */
+export interface PatternDrillItem {
+  type: 'pattern_drill'
+  id: string
+  title: string
+  pattern: string
+  patternMeaning?: string
+  direction?: DrillDirection
+  items: Array<{ zh: string; answer: string }>
+}
+
 export type OutputPipelineItem =
   | ChunkSubstitutionItem
   | VocabDrillItem
   | VnDialogueItem
   | VocabSentenceBuildingItem
   | SentenceDecompositionItem
+  | PatternDrillItem
 
 export interface OutputTrainingMetadata {
   version: number

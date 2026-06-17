@@ -89,3 +89,40 @@ export class PlacementAssessmentDto {
   @IsArray()
   answers: PlacementAssessmentAnswerDto[];
 }
+
+export class GenerateDrillsDto {
+  @IsString()
+  type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
+
+  @IsString()
+  keyword: string;
+
+  @IsString()
+  @IsOptional()
+  meaning?: string;
+
+  @IsString()
+  @IsOptional()
+  direction?: string;
+
+  @IsString()
+  @IsOptional()
+  kind?: string;
+
+  @IsNumber()
+  @IsOptional()
+  count?: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  chunks?: string[];
+
+  @IsString()
+  @IsOptional()
+  sentence?: string;
+
+  @IsString()
+  @IsOptional()
+  zh?: string;
+}

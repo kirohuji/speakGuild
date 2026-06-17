@@ -20,7 +20,7 @@
 
 import { PrismaClient } from '@prisma/client'
 import { readCsv, parseJson } from './seed-csv'
-import { readdirSync, existsSync } from 'fs'
+import { readdirSync, existsSync, readFileSync } from 'fs'
 import { resolve } from 'path'
 import { enrichVocabulary } from './seed-vocab-enrich'
 
@@ -753,6 +753,25 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
     }
     console.log(`  ✓ ${topicCount} 个训练话题`)
     totalTopics += topicCount
+
+    // ═══ 4.1. 知识点练习 pipeline（从 warmup_pipeline.json 加载） ═══
+    const pipelinePath = resolve(__dirname, 'data', pkgPath, 'warmup_pipeline.json')
+    if (existsSync(pipelinePath)) {
+      try {
+        const pipelineData = JSON.parse(readFileSync(pipelinePath, 'utf-8'))
+        let pipelineCount = 0
+        for (const [topicTitle, pipeline] of Object.entries(pipelineData)) {
+          // 在所有已创建的话题中按 title 查找
+          const t = await prisma.trainingTopic.findFirst({ where: { title: topicTitle } })
+          if (!t) continue
+          await prisma.trainingTopic.update({ where: { id: t.id }, data: { metadata: pipeline as any } })
+          pipelineCount++
+        }
+        if (pipelineCount > 0) console.log(`  ✓ ${pipelineCount} 个知识点练习 pipeline`)
+      } catch (err: any) {
+        console.warn(`  ⚠️ warmup_pipeline.json 解析失败: ${err.message}`)
+      }
+    }
 
     // ═══ 4.5. 话题↔词汇 关联 ═══
     // Scene-level vocab (topic_title empty) → shared to all topics in the scene

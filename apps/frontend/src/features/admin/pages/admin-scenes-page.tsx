@@ -4,7 +4,7 @@ import {
   ChevronRight, X, Code2, Type, BookOpen,
   Volume2, Sparkles, ExternalLink, Loader2,
   CheckCircle2, Link2, Clock3, FileText, Settings2,
-  Film, Target,
+  Film, Target, Dumbbell,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +40,7 @@ import {
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
+import { WarmupPipelineTab, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
 
 function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'exam') return '考试'
@@ -489,14 +490,21 @@ function TrainingTopicDialog({
         chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [],
         vocabIds: edit.topicVocabs?.map((tv: any) => tv.vocab.id) ?? [],
         patternIds: edit.topicPatterns?.map((tp: any) => tp.pattern.id) ?? [],
+        metadata: {
+          ...(edit.metadata ?? {}),
+          warmupPipeline: edit.metadata?.warmupPipeline ?? { version: 1, enabled: true, pipeline: [] },
+        },
       })
     }
     else setForm({
       sceneId,
       type: packageType === 'exam' ? 'ielts' : 'daily',
-      metadata: packageType === 'exam'
-        ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
-        : null,
+      metadata: {
+        ...(packageType === 'exam'
+          ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
+          : {}),
+        warmupPipeline: { version: 1, enabled: true, pipeline: [] },
+      },
       title: '',
       description: '',
       teachingMarkdown: '',
@@ -627,6 +635,9 @@ function TrainingTopicDialog({
               <TabsTrigger value="ink" className="gap-1.5">
                 <Link2 className="size-3.5" />Ink 故事
               </TabsTrigger>
+              <TabsTrigger value="warmup" className="gap-1.5">
+                <Dumbbell className="size-3.5" />知识点练习
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -644,12 +655,13 @@ function TrainingTopicDialog({
                       value={form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')}
                       onChange={(e) => {
                         const type = e.target.value
+                        const existingWarmup = form.metadata?.warmupPipeline
                         setForm({
                           ...form,
                           type,
                           metadata: type === 'ielts'
-                            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', ...(form.metadata ?? {}) }
-                            : null,
+                            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', warmupPipeline: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } }
+                            : { warmupPipeline: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } },
                         })
                       }}
                     >
@@ -953,6 +965,16 @@ function TrainingTopicDialog({
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="warmup" className="mt-0">
+              <WarmupPipelineTab
+                value={form.metadata?.warmupPipeline ?? { version: 1, enabled: true, pipeline: [] }}
+                onChange={(v) => setForm({ ...form, metadata: { ...(form.metadata ?? {}), warmupPipeline: v } })}
+                vocabs={vocabs}
+                chunks={chunks}
+                patterns={patterns}
+              />
+            </TabsContent>
           </div>
         </Tabs>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-background px-6 py-4">
@@ -1059,7 +1081,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                   </thead>
                   <tbody className="divide-y divide-border">
                     {topicItems.map((t) => (
-                      <tr key={t.id} className="transition-colors hover:bg-muted/30">
+                      <tr key={t.id} className="cursor-pointer transition-colors hover:bg-muted/30"
+                        onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
                         <td className="px-4 py-3">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
@@ -1095,11 +1118,11 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">
                             <Button size="icon" variant="ghost" className="size-8"
-                              onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
+                              onClick={(e) => { e.stopPropagation(); setEditTopic(t); setTopicDialog(true) }}>
                               <Edit3 className="size-3.5" />
                             </Button>
                             <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                              onClick={async () => { await deleteTrainingTopic(t.id); load() }}>
+                              onClick={async (e) => { e.stopPropagation(); await deleteTrainingTopic(t.id); load() }}>
                               <Trash2 className="size-3.5" />
                             </Button>
                           </div>

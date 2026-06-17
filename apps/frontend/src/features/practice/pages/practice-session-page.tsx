@@ -28,6 +28,7 @@ import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { ChunkOutputDrillCard } from '../components/chunk-output-drill-card'
 import { VocabOutputCard } from '../components/vocab-output-card'
 import { SentenceDecompositionCard } from '../components/sentence-decomposition-card'
+import { PatternDrillCard } from '../components/pattern-drill-card'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
@@ -386,6 +387,25 @@ function GuidedWarmupPhase({
             />
           ),
         })
+      } else if (item.type === 'pattern_drill') {
+        const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
+        for (const [subIdx, sub] of (item.items ?? []).entries()) {
+          steps.push({
+            id: `${item.id}_${subIdx}`,
+            type: 'pattern_drill',
+            label: `${item.title} (${dirLabel})`,
+            render: () => (
+              <PatternDrillCard
+                pattern={item.pattern}
+                patternMeaning={item.patternMeaning}
+                items={[sub]}
+                direction={item.direction ?? 'zh_to_en'}
+                groupTitle={item.title}
+                onComplete={(_subIdx, _passed) => markDone(`${item.id}_${subIdx}`)}
+              />
+            ),
+          })
+        }
       }
     }
     return steps

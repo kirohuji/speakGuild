@@ -886,6 +886,172 @@ Rules:
       return { chineseTranslation: '（数据加载失败）', meanings: [], examples: [], memoryTip: '' };
     }
   }
+
+  /** AI 生成练习题：根据关键词和题型批量生成练习项目 */
+  async generateDrills(dto: {
+    type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
+    keyword: string;
+    meaning?: string;
+    direction?: string;
+    kind?: string;
+    count?: number;
+    chunks?: string[];
+    sentence?: string;
+    zh?: string;
+  }) {
+    const provider = this.getProvider();
+    const count = Math.min(dto.count ?? 4, 8);
+    const direction = dto.direction ?? 'zh_to_en';
+    const kind = dto.kind ?? 'chunk';
+
+    if (dto.type === 'chunk_substitution') {
+      const system = `You are an ESL exercise generator for Chinese learners of English.
+Create ${count} Chinese→English translation exercises focusing on the target word/chunk.
+
+Rules:
+- Each item has a Chinese prompt (zh) and the expected English answer (answer).
+- The English answer MUST naturally include the target word/chunk: "${dto.keyword}".
+- If direction is "en_to_zh", swap: the prompt is the English sentence and answer is the Chinese translation.
+- Keep sentences natural, practical, and at an intermediate level.
+- Vary the sentence contexts (different situations, verb tenses, subjects).
+
+Return ONLY a JSON object (no markdown):
+{ "items": [{ "zh": "中文句子", "answer": "English sentence" }, ...] }`;
+
+      const user = `Target: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
+Direction: ${direction}
+Kind: ${kind}
+Count: ${count}`;
+
+      const { text } = await generateText({
+        model: provider('deepseek-chat'),
+        system,
+        prompt: user,
+        temperature: 0.7,
+        maxOutputTokens: 1200,
+      });
+      try {
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        return { items: (parsed.items ?? []).slice(0, count) };
+      } catch {
+        return { items: [] };
+      }
+    }
+
+    if (dto.type === 'vocab_sentence_building') {
+      const availableChunks = dto.chunks?.length ? dto.chunks.slice(0, 6).join(', ') : '';
+      const system = `You are an ESL exercise generator.
+Create vocabulary sentence-building exercises for the word: "${dto.keyword}".
+
+For each pattern:
+- "chunk" is a sentence starter or collocation frame using the target word (e.g., "She easily...", "I find it easy to...")
+- Each pattern has 2-3 "items" with zh (Chinese prompt) and answer (English full sentence using the chunk)
+- Vary the patterns to show different uses of the word
+
+${availableChunks ? `You may use these available chunks as inspiration: ${availableChunks}` : ''}
+
+Return ONLY a JSON object (no markdown):
+{ "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "中文", "answer": "English" }, ...] }, ...] }`;
+
+      const user = `Word: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
+Create 3 patterns with 2-3 items each.`;
+
+      const { text } = await generateText({
+        model: provider('deepseek-chat'),
+        system,
+        prompt: user,
+        temperature: 0.7,
+        maxOutputTokens: 1500,
+      });
+      try {
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      } catch {
+        return { patterns: [] };
+      }
+    }
+
+    if (dto.type === 'sentence_decomposition') {
+      const fullSentence = dto.sentence ?? dto.keyword;
+      const fullZh = dto.zh ?? '';
+      const system = `You are an ESL exercise generator.
+Decompose a long English sentence into 5 progressive levels, from simple to complex.
+
+Each level builds on the previous, adding one new element (object, adverb, frequency, reason, etc.).
+- level 1: core sentence (subject + verb, simplest form)
+- level 2: add object or basic modifier
+- level 3: add adverb or degree
+- level 4: add frequency or time
+- level 5: full complex sentence (the original)
+
+Each level needs:
+- "level": number 1-5
+- "label": short Chinese description of what was added (e.g., "加对象", "加程度")
+- "en": English sentence at this level
+- "zh": Chinese translation
+- "highlight": the newly added part (text that differentiates from previous level)
+- "hint": Chinese hint for the learner (e.g., "试着加入地点")
+
+Return ONLY a JSON object (no markdown):
+{ "levels": [{ "level": 1, "label": "...", "en": "...", "zh": "...", "highlight": "...", "hint": "..." }, ...] }`;
+
+      const user = `Full sentence: "${fullSentence}"${fullZh ? `\nChinese: ${fullZh}` : ''}`;
+
+      const { text } = await generateText({
+        model: provider('deepseek-chat'),
+        system,
+        prompt: user,
+        temperature: 0.5,
+        maxOutputTokens: 1500,
+      });
+      try {
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      } catch {
+        return { levels: [] };
+      }
+    }
+
+    if (dto.type === 'pattern_drill') {
+      const system = `You are an ESL exercise generator for Chinese learners of English.
+Create ${count} sentence-building exercises focusing on a target sentence pattern.
+
+The pattern is a grammar framework with a variable slot. Learners must fill the slot to create complete sentences.
+
+Rules:
+- Each item has a Chinese prompt (zh) and the expected English answer (answer).
+- The English answer MUST follow the target pattern: "${dto.keyword}".
+- If direction is "en_to_zh", swap: the prompt is the English sentence using the pattern, and answer is Chinese.
+- Vary the slot fillers to show different real-world uses of the same pattern.
+- Keep sentences practical and at an intermediate level.
+
+Return ONLY a JSON object (no markdown):
+{ "items": [{ "zh": "中文句子", "answer": "English sentence using the pattern" }, ...] }`;
+
+      const user = `Pattern: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
+Direction: ${direction}
+Count: ${count}
+Create exercises where the learner practices this pattern with different content.`;
+
+      const { text } = await generateText({
+        model: provider('deepseek-chat'),
+        system,
+        prompt: user,
+        temperature: 0.7,
+        maxOutputTokens: 1200,
+      });
+      try {
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        return { items: (parsed.items ?? []).slice(0, count) };
+      } catch {
+        return { items: [] };
+      }
+    }
+
+    return { items: [] };
+  }
 }
 
 // ─── 类型定义 ────────────────────────────────────────────────

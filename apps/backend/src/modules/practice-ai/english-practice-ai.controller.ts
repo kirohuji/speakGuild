@@ -1,7 +1,7 @@
 import { Body, Controller, Param, Post, Req, HttpException } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
-import { DialogueTurnJudgeDto, PlacementAssessmentDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, PlacementAssessmentDto, GenerateDrillsDto } from './dto/english-feedback.dto';
 import { EnglishPracticeService } from '../practice/english-practice.service';
 import { requireAuthSession } from '../auth/session.util';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
@@ -78,5 +78,12 @@ export class EnglishPracticeAiController {
   @Post('word-enrichment')
   async wordEnrichment(@Body() dto: { word: string; englishDefinitions?: string }) {
     return this.service.enrichWord(dto.word, dto.englishDefinitions);
+  }
+
+  /** AI 生成练习题：根据关键词和题型生成练习项目（管理后台用） */
+  @Post('generate-drills')
+  async generateDrills(@Req() req: Request, @Body() dto: GenerateDrillsDto) {
+    await requireAuthSession(req);
+    return this.service.generateDrills(dto);
   }
 }

@@ -1,0 +1,165 @@
+import { useState, useEffect } from 'react'
+import { Plus, Trash2, GripVertical, ArrowRightLeft, Zap } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Select } from '@/components/ui/select'
+import { toast } from 'sonner'
+import { cn } from '@/lib/cn'
+
+export interface ChunkSubstitutionItem {
+  id: string
+  type: 'chunk_substitution'
+  title: string
+  chunk: string
+  chunkMeaning?: string
+  direction?: 'zh_to_en' | 'en_to_zh'
+  kind?: 'chunk' | 'word'
+  items: Array<{ zh: string; answer: string }>
+}
+
+interface Props {
+  value: ChunkSubstitutionItem
+  onChange: (value: ChunkSubstitutionItem) => void
+  onDelete: () => void
+  vocabs?: { id: string; word: string; meaning: string }[]
+  chunks?: { id: string; text: string; meaning: string }[]
+}
+
+export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
+  const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
+
+  useEffect(() => { setLocal(value) }, [value])
+
+  const commit = (patch: Partial<ChunkSubstitutionItem>) => {
+    const next = { ...local, ...patch }
+    setLocal(next as ChunkSubstitutionItem)
+    onChange(next as ChunkSubstitutionItem)
+  }
+
+  const addItem = () => {
+    commit({ items: [...local.items, { zh: '', answer: '' }] })
+  }
+
+  const updateItem = (idx: number, field: 'zh' | 'answer', val: string) => {
+    const next = [...local.items]
+    next[idx] = { ...next[idx], [field]: val }
+    commit({ items: next })
+  }
+
+  const removeItem = (idx: number) => {
+    commit({ items: local.items.filter((_, i) => i !== idx) })
+  }
+
+  // AI 生成：根据选中的词汇和方向批量生成题目
+  const aiGenerate = async () => {
+    const selectedVocab = vocabs.find(v => v.word === local.chunk)
+    const selectedChunk = chunks.find(c => c.text === local.chunk)
+    const source = selectedVocab?.word || selectedChunk?.text || local.chunk
+    if (!source) { toast.error('请先输入或选择核心词/句块'); return }
+    try {
+      const { post } = await import('@/lib/request')
+      const res: any = await post('/practice-ai/generate-drills', {
+        type: 'chunk_substitution',
+        keyword: source,
+        meaning: local.chunkMeaning || selectedVocab?.meaning || selectedChunk?.meaning || '',
+        direction: local.direction ?? 'zh_to_en',
+        kind: local.kind ?? 'chunk',
+        count: 4,
+      })
+      if (res?.items?.length) {
+        commit({ items: res.items.map((it: any) => ({ zh: it.zh, answer: it.answer })) })
+        toast.success(`已生成 ${res.items.length} 道题目`)
+      }
+    } catch { toast.error('AI 生成失败') }
+  }
+
+  return (
+    <div className="space-y-4 rounded-lg border border-border/60 bg-muted/10 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <GripVertical className="size-4 text-muted-foreground" />
+          <Badge variant="secondary" className="text-[10px]">Chunk 替换</Badge>
+          <Badge variant="outline" className="text-[10px]">{local.direction === 'en_to_zh' ? '英→中' : '中→英'}</Badge>
+        </div>
+        <Button variant="ghost" size="icon-sm" className="text-destructive size-7" onClick={onDelete}><Trash2 className="size-3.5" /></Button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1.5 sm:col-span-1">
+          <Label className="text-xs">类型</Label>
+          <div className="flex gap-2">
+            <Button size="sm" variant={local.kind === 'word' ? 'default' : 'outline'} className="h-8 text-xs" onClick={() => commit({ kind: 'word' })}>单词</Button>
+            <Button size="sm" variant={local.kind !== 'word' ? 'default' : 'outline'} className="h-8 text-xs" onClick={() => commit({ kind: 'chunk' })}>句块</Button>
+          </div>
+        </div>
+        <div className="space-y-1.5 sm:col-span-1">
+          <Label className="text-xs">方向</Label>
+          <div className="flex gap-2">
+            <Button size="sm" variant={local.direction !== 'en_to_zh' ? 'default' : 'outline'} className="h-8 text-xs" onClick={() => commit({ direction: 'zh_to_en' })}>中→英</Button>
+            <Button size="sm" variant={local.direction === 'en_to_zh' ? 'default' : 'outline'} className="h-8 text-xs" onClick={() => commit({ direction: 'en_to_zh' })}>英→中</Button>
+          </div>
+        </div>
+        <div className="space-y-1.5 sm:col-span-1">
+          <Label className="text-xs">练习名称</Label>
+          <Input className="h-8 text-xs" value={local.title} onChange={e => commit({ title: e.target.value })} placeholder="用 I'd like to 造句" />
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs">核心{local.kind === 'word' ? '单词' : '句块'}</Label>
+          <div className="flex gap-2">
+            <Input className="h-8 text-xs" value={local.chunk} onChange={e => commit({ chunk: e.target.value })}
+              placeholder={local.kind === 'word' ? 'e.g. carefully' : 'e.g. I\'d like to...'} />
+          </div>
+          {local.kind === 'word' && vocabs.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {vocabs.slice(0, 8).map(v => (
+                <Badge key={v.id} variant="outline" className={cn('cursor-pointer text-[10px]', local.chunk === v.word && 'border-primary')}
+                  onClick={() => commit({ chunk: v.word, chunkMeaning: v.meaning })}>{v.word}</Badge>
+              ))}
+            </div>
+          )}
+          {local.kind !== 'word' && chunks.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {chunks.slice(0, 8).map(c => (
+                <Badge key={c.id} variant="outline" className={cn('cursor-pointer text-[10px] truncate max-w-[180px]', local.chunk === c.text && 'border-primary')}
+                  onClick={() => commit({ chunk: c.text, chunkMeaning: c.meaning })}>{c.text}</Badge>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">含义</Label>
+          <Input className="h-8 text-xs" value={local.chunkMeaning ?? ''} onChange={e => commit({ chunkMeaning: e.target.value })} placeholder="中文含义" />
+        </div>
+      </div>
+
+      {/* 题目列表 */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">练习题目 ({local.items.length})</Label>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 生成</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addItem}><Plus className="size-3" />添加</Button>
+          </div>
+        </div>
+        {local.items.map((item, idx) => (
+          <div key={idx} className="flex gap-2 items-start">
+            <span className="mt-2 text-[10px] text-muted-foreground w-4 text-right">{idx + 1}</span>
+            <div className="flex-1 space-y-1.5">
+              <Input className="h-7 text-xs" value={item.zh} onChange={e => updateItem(idx, 'zh', e.target.value)}
+                placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '中文提示...'} />
+              <Input className="h-7 text-xs" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
+                placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+            </div>
+            <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removeItem(idx)}><Trash2 className="size-3" /></Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
