@@ -15,6 +15,7 @@ interface ChunkOutputDrillCardProps {
   items: { zh: string; answer?: string }[]
   groupTitle?: string
   direction?: DrillDirection
+  kind?: 'chunk' | 'word'
   onComplete?: (itemIndex: number, passed: boolean) => void
 }
 
@@ -24,6 +25,7 @@ export function ChunkOutputDrillCard({
   items,
   groupTitle,
   direction = 'zh_to_en',
+  kind = 'chunk',
   onComplete,
 }: ChunkOutputDrillCardProps) {
   const { t } = useTranslation()
@@ -94,7 +96,7 @@ export function ChunkOutputDrillCard({
       <CardContent className="space-y-3 p-4">
         {/* Header */}
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-[10px]">Chunk</Badge>
+          <Badge variant="secondary" className="text-[10px]">{kind === 'word' ? '单词' : '句块'}</Badge>
           {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>}
           <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
         </div>

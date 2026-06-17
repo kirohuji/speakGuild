@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
-  Lightbulb, CheckCircle2, ChevronRight,
+  Lightbulb, CheckCircle2, ChevronRight, ChevronLeft, Check, ListMusic,
   BookText, Search, BookmarkPlus, History, Settings, ChevronDown, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
@@ -305,20 +307,91 @@ function GuidedWarmupPhase({
   const { t } = useTranslation()
   const storageKey = `guided-progress:${topicId}`
 
-  // Count total sub-items
-  const totalSteps = useMemo(() => {
-    let count = 0
+  // ── Flatten all warmup items into individual steps ──
+  interface FlatStep {
+    id: string
+    type: string
+    label: string
+    render: () => React.ReactNode
+  }
+
+  const flatSteps = useMemo<FlatStep[]>(() => {
+    const steps: FlatStep[] = []
     for (const item of warmupItems) {
-      if (item.type === 'chunk_substitution' || item.type === 'vocab_drill') {
-        count += (item.items ?? item.vocabs ?? []).length
+      if (item.type === 'chunk_substitution') {
+        const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
+        for (const [subIdx, sub] of (item.items ?? []).entries()) {
+          steps.push({
+            id: `${item.id}_${subIdx}`,
+            type: 'chunk_substitution',
+            label: `${item.title} (${dirLabel})`,
+            render: () => (
+              <ChunkOutputDrillCard
+                chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
+                items={[sub]}
+                direction={item.direction ?? 'zh_to_en'}
+                kind={item.kind ?? 'chunk'}
+                groupTitle={item.title}
+                onComplete={(_subIdx, _passed) => markDone(`${item.id}_${subIdx}`)}
+              />
+            ),
+          })
+        }
+      } else if (item.type === 'vocab_drill') {
+        for (const [vIdx, v] of (item.vocabs ?? []).entries()) {
+          steps.push({
+            id: `${item.id}_${vIdx}`,
+            type: 'vocab_drill',
+            label: `${item.title}: ${v.targetWords?.join(', ') || v.promptZh?.slice(0, 20)}`,
+            render: () => (
+              <VocabOutputCard
+                title={item.title}
+                direction={item.direction ?? 'zh_to_en'}
+                vocabs={[v]}
+                onComplete={(_idx, _passed) => markDone(`${item.id}_${vIdx}`)}
+              />
+            ),
+          })
+        }
       } else if (item.type === 'vocab_sentence_building') {
-        for (const p of (item.patterns ?? [])) count += (p.items ?? []).length
+        for (const pattern of (item.patterns ?? [])) {
+          for (const [subIdx, sub] of (pattern.items ?? []).entries()) {
+            const flatId = `${item.id}_${pattern.chunk}_${subIdx}`
+            steps.push({
+              id: flatId,
+              type: 'chunk_substitution',
+              label: `${item.vocabWord} + ${pattern.chunk}`,
+              render: () => (
+                <ChunkOutputDrillCard
+                  chunk={{ text: pattern.chunk }}
+                  items={[sub]}
+                  direction={item.direction ?? 'zh_to_en'}
+                  groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
+                  onComplete={(_subIdx, _passed) => markDone(flatId)}
+                />
+              ),
+            })
+          }
+        }
       } else if (item.type === 'sentence_decomposition') {
-        count += (item.levels ?? []).length
+        steps.push({
+          id: item.id,
+          type: 'sentence_decomposition',
+          label: item.title,
+          render: () => (
+            <SentenceDecompositionCard
+              title={item.title}
+              levels={item.levels}
+              onComplete={(_passed) => markDone(item.id)}
+            />
+          ),
+        })
       }
     }
-    return count
+    return steps
   }, [warmupItems])
+
+  const totalSteps = flatSteps.length
 
   const [doneIds, setDoneIds] = useState<Set<string>>(() => {
     try {
@@ -343,6 +416,14 @@ function GuidedWarmupPhase({
 
   const doneCount = doneIds.size
   const allDone = totalSteps > 0 && doneCount >= totalSteps
+
+  // ── Carousel state ──
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const gotoPrev = useCallback(() => setCurrentIdx(prev => Math.max(0, prev - 1)), [])
+  const gotoNext = useCallback(() => setCurrentIdx(prev => Math.min(totalSteps - 1, prev + 1)), [totalSteps])
+  const hasPrev = currentIdx > 0
+  const hasNext = currentIdx < totalSteps - 1
+  const [playlistOpen, setPlaylistOpen] = useState(false)
 
   if (totalSteps === 0) {
     return (
@@ -377,100 +458,87 @@ function GuidedWarmupPhase({
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+    <div className="mx-auto flex h-full max-w-2xl flex-col px-4 pt-4">
+      {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
-        <div className="flex-1">
-          <p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {doneCount}/{totalSteps}</p>
-          <h1 className="text-lg font-bold text-foreground">{topicTitle}</h1>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
+          <h1 className="truncate text-lg font-bold text-foreground">{topicTitle}</h1>
+          <p className="truncate text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
       </div>
-      <Progress value={(doneCount / totalSteps) * 100} className="mb-4 h-1.5" />
+      <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5" />
 
-      <div className="flex flex-col gap-4">
-        {warmupItems.map((item: any) => {
-          if (item.type === 'chunk_substitution') {
-            return (
-              <ChunkOutputDrillCard
-                key={item.id}
-                chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
-                items={(item.items ?? []).map((sub: any) => ({ zh: sub.zh, answer: sub.answer }))}
-                direction={item.direction ?? 'zh_to_en'}
-                groupTitle={item.title}
-                onComplete={(_subIdx, _passed) => {
-                  markDone(`${item.id}_${_subIdx}`)
-                }}
-              />
-            )
-          }
-          if (item.type === 'vocab_drill') {
-            return (
-              <VocabOutputCard
-                key={item.id}
-                title={item.title}
-                direction={item.direction ?? 'zh_to_en'}
-                vocabs={(item.vocabs ?? []).map((v: any) => ({
-                  vocabId: v.vocabId,
-                  promptZh: v.promptZh,
-                  targetWords: v.targetWords,
-                  suggestedAnswer: v.suggestedAnswer,
-                }))}
-                onComplete={(_idx, _passed) => {
-                  markDone(`${item.id}_${_idx}`)
-                }}
-              />
-            )
-          }
-          if (item.type === 'vocab_sentence_building') {
-            // 拆成多个 ChunkOutputDrillCard，每组一种 Chunk 搭配
-            let flatIdx = 0
-            return (
-              <Card key={item.id} className="border-0 bg-muted/30 shadow-none">
-                <CardContent className="space-y-4 p-4">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px]">核心词</Badge>
-                    <span className="text-sm font-semibold text-primary">{item.vocabWord}</span>
-                    <span className="text-xs text-muted-foreground">{item.vocabMeaning}</span>
-                  </div>
-                  {(item.patterns ?? []).map((pattern: any, patternIdx: number) => {
-                    const startIdx = flatIdx
-                    flatIdx += (pattern.items ?? []).length
-                    return (
-                      <ChunkOutputDrillCard
-                        key={`${item.id}_${patternIdx}`}
-                        chunk={{ text: pattern.chunk }}
-                        items={pattern.items}
-                        direction={item.direction ?? 'zh_to_en'}
-                        groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
-                        onComplete={(subIdx, _passed) => {
-                          markDone(`${item.id}_${startIdx + subIdx}`)
-                        }}
-                      />
-                    )
-                  })}
-                </CardContent>
-              </Card>
-            )
-          }
-          if (item.type === 'sentence_decomposition') {
-            return (
-              <SentenceDecompositionCard
-                key={item.id}
-                title={item.title}
-                levels={item.levels}
-                onComplete={(_passed) => markDone(item.id)}
-              />
-            )
-          }
-          return null
-        })}
+      {/* Current card — scrollable */}
+      <div className="min-h-0 flex-1 overflow-y-auto pb-4">
+        {flatSteps[currentIdx]?.render() ?? null}
       </div>
 
-      {/* <div className="mt-6">
-        <Button variant="ghost" className="w-full min-h-11" size="default" onClick={onStartPractice}>
-          {t('practiceSession.startPractice')}
+      {/* Bottom nav — fixed at bottom like LearningInsightDialog */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
+        <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+          <ChevronLeft className="size-4" /> 上一个
         </Button>
-      </div> */}
+        <span className="text-xs text-muted-foreground">
+          {currentIdx + 1} / {totalSteps}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+            下一个 <ChevronRight className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setPlaylistOpen(true)}
+            title="列表"
+          >
+            <ListMusic className="size-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Playlist drawer */}
+      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+        <DrawerContent className="h-[80dvh] rounded-t-2xl">
+          <div className="flex items-center justify-between px-5 py-3">
+            <DrawerTitle className="text-lg">题目列表</DrawerTitle>
+            <button
+              onClick={() => setPlaylistOpen(false)}
+              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+            >
+              <ChevronDown className="size-5" />
+            </button>
+          </div>
+          <ScrollArea className="flex-1 px-4 pb-8">
+            <div className="space-y-1">
+              {flatSteps.map((step, i) => {
+                const isDone = doneIds.has(step.id)
+                const isCurrent = i === currentIdx
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => { setCurrentIdx(i); setPlaylistOpen(false) }}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                      isCurrent ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+                    )}
+                  >
+                    <span className={cn(
+                      'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-medium',
+                      isDone ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary/20 text-primary' : 'bg-muted-foreground/10 text-muted-foreground',
+                    )}>
+                      {isDone ? <Check className="size-3.5" /> : i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{step.label}</span>
+                    {isDone && <CheckCircle2 className="size-3.5 shrink-0 text-green-500" />}
+                  </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

@@ -20,6 +20,7 @@ export interface ChunkSubstitutionItem {
   chunk: string
   chunkMeaning?: string
   direction?: DrillDirection
+  kind?: 'chunk' | 'word'
   items: Array<{ zh: string; answer: string }>
 }
 

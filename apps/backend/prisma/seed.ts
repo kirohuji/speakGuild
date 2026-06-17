@@ -33,6 +33,7 @@ async function seedWarmupPipeline() {
             {
               id: 'cs_zh_1',
               type: 'chunk_substitution',
+              kind: 'word',
               direction: 'zh_to_en',
               title: '用 carefully 造句',
               chunk: 'carefully',
@@ -46,6 +47,7 @@ async function seedWarmupPipeline() {
             {
               id: 'cs_en_1',
               type: 'chunk_substitution',
+              kind: 'word',
               direction: 'en_to_zh',
               title: '英译中理解',
               chunk: 'quickly / happily',
