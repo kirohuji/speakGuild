@@ -670,6 +670,7 @@ export class LearningService {
           knowledgePoints: topic.knowledgePoints,
           teachingMarkdown: topic.teachingMarkdown,
           inkScriptId: topic.inkScriptId,
+          metadata: topic.metadata,
         },
         inkScript: topic.inkScript
           ? {
