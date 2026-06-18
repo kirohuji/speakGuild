@@ -22,6 +22,8 @@ interface VocabOutputCardProps {
   stepId: string
   direction?: DrillDirection
   onComplete?: (index: number, passed: boolean, score: WarmupScore) => void
+  /** Dialog 已提供题型标签时，隐藏内部 header badge */
+  hideHeader?: boolean
 }
 
 /** 高亮目标词汇 */
@@ -60,6 +62,7 @@ export function VocabOutputCard({
   stepId,
   direction = 'zh_to_en',
   onComplete,
+  hideHeader = false,
 }: VocabOutputCardProps) {
   const store = useWarmupSessionStore()
   const saved = store.stepStates[stepId]
@@ -145,6 +148,7 @@ export function VocabOutputCard({
   return (
     <div className="space-y-2.5">
       {/* Header */}
+      {!hideHeader && (
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="gap-1 text-[10px]">
           <Layers3 className="size-3" />
@@ -153,6 +157,7 @@ export function VocabOutputCard({
         <Badge variant="outline" className="text-[10px]">{title}</Badge>
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
       </div>
+      )}
 
       {/* Target words */}
       {isZhToEn && current.targetWords?.length ? (

@@ -21,6 +21,8 @@ interface SentenceDecompositionCardProps {
   levels: DecompositionLevel[]
   stepId: string
   onComplete?: (passed: boolean, score: WarmupScore) => void
+  /** Dialog 已提供题型标签时，隐藏内部 header badge */
+  hideHeader?: boolean
 }
 
 /** 长句拆解 — 从简单句逐级扩展到复杂长句 */
@@ -29,6 +31,7 @@ export function SentenceDecompositionCard({
   levels,
   stepId,
   onComplete,
+  hideHeader = false,
 }: SentenceDecompositionCardProps) {
   const { t } = useTranslation()
   const totalLevels = levels.length
@@ -73,7 +76,7 @@ export function SentenceDecompositionCard({
             onClick={goBack}
           >
             <ChevronLeft className="size-4" />
-            上一步
+            上一级
           </Button>
         </CardContent>
       </Card>
@@ -115,11 +118,13 @@ export function SentenceDecompositionCard({
     <Card className="border-0 bg-muted/30 shadow-none">
       <CardContent className="space-y-2.5 p-3">
         {/* Header */}
+        {!hideHeader && (
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-[10px]">{t('practiceSession.sentenceDecomposition')}</Badge>
           <Badge variant="outline" className="text-[10px]">{title}</Badge>
           <span className="ml-auto text-[10px] text-muted-foreground">{current.level}/{totalLevels}</span>
         </div>
+        )}
 
         {/* Progress */}
         <Progress value={(current.level / totalLevels) * 100} className="h-1" />
@@ -141,7 +146,7 @@ export function SentenceDecompositionCard({
           )}
         </div>
 
-        {/* Navigation: 上一步 / 下一步 */}
+        {/* Navigation: 上一级 / 下一级 */}
         <div className="flex gap-2">
           <Button
             size="default"
@@ -151,7 +156,7 @@ export function SentenceDecompositionCard({
             disabled={isFirst}
           >
             <ChevronLeft className="size-4" />
-            上一步
+            上一级
           </Button>
           <Button
             size="default"
@@ -159,7 +164,7 @@ export function SentenceDecompositionCard({
             className="min-h-11 flex-1 gap-1.5 text-sm"
             onClick={advance}
           >
-            {isLast ? '完成' : '下一步'}
+            {isLast ? '完成' : '下一级'}
             <ChevronRight className="size-4" />
           </Button>
         </div>

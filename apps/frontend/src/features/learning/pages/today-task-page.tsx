@@ -3,13 +3,14 @@ import type React from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight, BookOpen, BookText, ChevronDown, ChevronLeft, ChevronRight,
-  ClipboardList, ListChecks, MessageSquareText, Target, Sparkles, Package,
-  CheckCircle2, XCircle, Clock3, RefreshCw,
+  ClipboardList, ListMusic, MessageSquareText, Target,
+  CheckCircle2, RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -23,7 +24,7 @@ import { PatternDrillCard } from '@/features/practice/components/pattern-drill-c
 import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
-import { getCategoryIcon } from '../components/category-icons'
+import { TodayRecordsDrawer } from '../components/today-records-drawer'
 
 // ── 类型 ──
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
@@ -35,13 +36,15 @@ type VocabPromptItem = {
   hint?: string
 }
 
-type PracticeItem = {
+export type PracticeItem = {
   id: string
   type: string
   label: string
   topicTitle: string
   /** 准确描述练习内容的标签，用于卡片和抽屉标题 */
   displayLabel: string
+  /** Dialog header 大字展示的原始练习数据（单词/句型/句块） */
+  headerContent: string
   render: () => React.ReactNode
 }
 
@@ -61,6 +64,19 @@ function shuffle<T>(items: T[]) {
   return result
 }
 
+/** 在文本中高亮目标词（不区分大小写） */
+function highlightWord(text: string, word: string): React.ReactNode {
+  if (!word || !text) return text
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escaped})`, 'gi')
+  const parts = text.split(regex)
+  return parts.map((part, i) =>
+    regex.test(part)
+      ? <mark key={i} className="rounded bg-blue-500/20 px-0.5 text-blue-600 dark:text-blue-400 font-semibold">{part}</mark>
+      : part,
+  )
+}
+
 // ── 类型显示映射 ──
 const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: string }> = {
   chunk_substitution: {
@@ -74,7 +90,7 @@ const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: s
     color: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
   },
   vocab_sentence_building: {
-    label: '词汇造句',
+    label: '一词多句',
     icon: BookText,
     color: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
   },
@@ -104,6 +120,7 @@ export function TodayTaskPage() {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [runSeed, setRunSeed] = useState(() => Math.random())
 
@@ -135,7 +152,7 @@ export function TodayTaskPage() {
     setLoading(true)
     Promise.all([
       learningPackService.listInstalled(),
-      learningRepository.getCachedMyUnits().catch(() => [] as MyUnit[]),
+      learningRepository.getCachedMyUnits().catch(() => []),
     ])
       .then(async ([packs, units]) => {
         if (cancelled) return
@@ -183,8 +200,9 @@ export function TodayTaskPage() {
           built.push({
             id: sid,
             type: 'chunk_substitution',
-            label: item.title || item.chunk || (isWord ? '词汇替换' : '句块替换'),
+            label: item.title || item.chunk || sub.zh || '短语练习',
             displayLabel: isWord ? '词汇替换' : '句块替换',
+            headerContent: item.chunk || '',
             topicTitle: topic.title,
             render: () => (
               <ChunkOutputDrillCard
@@ -206,8 +224,9 @@ export function TodayTaskPage() {
           built.push({
             id: sid,
             type: 'vocab_drill',
-            label: item.title || vocab.targetWords?.join(', ') || '词汇输出',
+            label: item.title || vocab.targetWords?.join(', ') || '词汇练习',
             displayLabel: '词汇输出',
+            headerContent: vocab.targetWords?.join(', ') || vocab.promptZh || '',
             topicTitle: topic.title,
             render: () => (
               <VocabOutputCard
@@ -216,30 +235,71 @@ export function TodayTaskPage() {
                 direction={item.direction ?? 'zh_to_en'}
                 vocabs={[vocab]}
                 onComplete={(_idx, _passed, score) => markDone(sid, score)}
+                hideHeader
               />
             ),
           })
         } else if (item.type === 'vocab_sentence_building') {
-          const pattern = pickOne<any>(item.patterns ?? [])?.[0]
-          const picked = pickOne<SimplePromptItem>((pattern?.items ?? []) as SimplePromptItem[])
-          if (!pattern || !picked) continue
-          const [sub, subIdx] = picked
-          const sid = stepId(`${pattern.chunk}:${subIdx}`)
+          // 一词多句：参考单词 Dialog 的 ExampleBlock 样式，只读展示全部句型
+          const allPatterns = (item.patterns ?? []) as any[]
+          if (allPatterns.length === 0) continue
+
+          type PatternEntry = { chunk: string; zh: string; answer: string }
+          const entries: PatternEntry[] = []
+          for (const pat of allPatterns) {
+            const picked = pickOne<SimplePromptItem>((pat.items ?? []) as SimplePromptItem[])
+            if (!picked) continue
+            const [sub] = picked
+            entries.push({
+              chunk: pat.chunk || '',
+              zh: sub.zh,
+              answer: sub.answer || '',
+            })
+          }
+          if (entries.length === 0) continue
+
+          const sid = stepId(`vocab_${item.id}`)
+          const vocabWord = item.vocabWord || ''
           built.push({
             id: sid,
             type: 'vocab_sentence_building',
-            label: `${item.vocabWord || '词汇'} + ${pattern.chunk}`,
-            displayLabel: '词汇造句',
+            label: `${vocabWord || '词汇'} · ${entries.length} 种用法`,
+            displayLabel: '一词多句',
+            headerContent: vocabWord,
             topicTitle: topic.title,
             render: () => (
-              <ChunkOutputDrillCard
-                chunk={{ text: pattern.chunk }}
-                items={[sub]}
-                stepId={sid}
-                direction={item.direction ?? 'zh_to_en'}
-                groupTitle={`${item.vocabWord || '词汇'} + ${pattern.chunk}`}
-                onComplete={(_idx, _passed, score) => markDone(sid, score)}
-              />
+              <div className="space-y-4">
+
+                {/* Body：参考 ExampleBlock 的样式 */}
+                <div className="space-y-2.5">
+                  {entries.map((entry, ei) => {
+                    const displayText = entry.answer || entry.chunk
+                    return (
+                      <div key={ei} className="rounded-md bg-muted/60 p-3">
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 shrink-0 text-xs tabular-nums text-muted-foreground/40">{ei + 1}.</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium leading-relaxed text-foreground">
+                              {highlightWord(displayText, vocabWord)}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">{entry.zh}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => markDone(sid, 'ok')}
+                >
+                  <CheckCircle2 className="mr-1.5 size-4" />
+                 完成
+                </Button>
+              </div>
             ),
           })
         } else if (item.type === 'pattern_drill') {
@@ -250,8 +310,9 @@ export function TodayTaskPage() {
           built.push({
             id: sid,
             type: 'pattern_drill',
-            label: item.title || item.pattern || '句型操练',
+            label: item.title || item.pattern || '句型练习',
             displayLabel: '句型操练',
+            headerContent: item.pattern || '',
             topicTitle: topic.title,
             render: () => (
               <PatternDrillCard
@@ -262,17 +323,20 @@ export function TodayTaskPage() {
                 direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
                 onComplete={(_idx, _passed, score) => markDone(sid, score)}
+                hideHeader
               />
             ),
           })
         } else if (item.type === 'sentence_decomposition') {
           const sid = stepId('decomp')
-          const title = item.title || '句子拆解'
+          const title = item.title || '长句拆解'
+          const headerContent = item.levels?.[0]?.en || item.fullSentence || title
           built.push({
             id: sid,
             type: 'sentence_decomposition',
             label: title,
             displayLabel: '句子拆解',
+            headerContent,
             topicTitle: topic.title,
             render: () => (
               <SentenceDecompositionCard
@@ -280,6 +344,7 @@ export function TodayTaskPage() {
                 levels={item.levels}
                 stepId={sid}
                 onComplete={(_passed, score) => markDone(sid, score)}
+                hideHeader
               />
             ),
           })
@@ -287,7 +352,49 @@ export function TodayTaskPage() {
       }
     }
 
-    return shuffle(built).slice(0, Math.max(1, dailyGoal))
+    // 检查缺失的题型，为每种缺失类型添加占位卡片
+    const allTypes = Object.keys(TYPE_META)
+    const presentTypes = new Set(built.map((b) => b.type))
+    const missingTypes = allTypes.filter((t) => !presentTypes.has(t))
+
+    // 为缺失类型预留位置
+    const placeholderCount = missingTypes.length
+    const realLimit = Math.max(1, dailyGoal - placeholderCount)
+    const limited = shuffle(built).slice(0, realLimit)
+
+    // 添加占位卡片
+    for (const mt of missingTypes) {
+      const meta = TYPE_META[mt]
+      const Icon = meta?.icon ?? BookOpen
+      limited.push({
+        id: `placeholder:${mt}`,
+        type: mt,
+        label: '暂无题目',
+        displayLabel: meta?.label ?? mt,
+        headerContent: meta?.label ?? mt,
+        topicTitle: '该题型未配置练习数据',
+        render: () => (
+          <div className="flex flex-col items-center gap-2 py-12 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+              <Icon className="size-6 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm text-muted-foreground">暂无{meta?.label ?? mt}练习题目</p>
+            <p className="text-xs text-muted-foreground/60">请联系管理员在后台添加该题型</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => markDone(`placeholder:${mt}`, 'ok')}
+            >
+              <CheckCircle2 className="mr-1.5 size-4" />
+              跳过，标记完成
+            </Button>
+          </div>
+        ),
+      })
+    }
+
+    return limited
   }, [dailyGoal, markDone, runSeed, unit])
 
   // ── 进度统计 ──
@@ -360,27 +467,18 @@ export function TodayTaskPage() {
       </div>
 
       {/* ── 进度条 ── */}
-      <Card className="mb-5 border-0 bg-primary/[0.07] shadow-none">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                <ListChecks className="size-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
-                  今日练习 · {doneCount}/{steps.length} 题
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  每日目标 {dailyGoal} 题
-                </p>
-              </div>
-            </div>
-            {doneCount === steps.length && <Sparkles className="size-5 text-primary" />}
+      <div className="mb-4 rounded-lg bg-muted/30 p-3.5">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="size-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">今日进度</p>
           </div>
-          <Progress value={donePercent} className="mt-3 h-2" />
-        </CardContent>
-      </Card>
+          <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
+            {doneCount}/{steps.length} 题
+          </Badge>
+        </div>
+        <Progress value={donePercent} className="h-1.5" />
+      </div>
 
       {/* ── 练习卡片列表 ── */}
       <div className="space-y-2.5">
@@ -402,7 +500,11 @@ export function TodayTaskPage() {
               )}
               onClick={() => {
                 setCurrentIdx(index)
-                setDrawerOpen(true)
+                if (step.id.startsWith('placeholder:')) {
+                  markDone(step.id, 'ok')
+                } else {
+                  setDrawerOpen(true)
+                }
               }}
             >
               <CardContent className="flex items-center gap-3 p-3.5">
@@ -417,9 +519,9 @@ export function TodayTaskPage() {
                     {step.topicTitle} · {step.label}
                   </p>
                 </div>
-                <Badge variant={isDone ? 'default' : 'outline'} className="shrink-0 text-[10px]">
+                {/* <Badge variant={isDone ? 'default' : 'outline'} className="shrink-0 text-[10px]">
                   {isDone ? '✓' : index + 1}
-                </Badge>
+                </Badge> */}
               </CardContent>
             </Card>
           )
@@ -431,35 +533,31 @@ export function TodayTaskPage() {
         <>
           <Separator className="my-6" />
           <section>
-            <div className="mb-3 flex items-center gap-2">
+            {/* <div className="mb-3 flex items-center gap-2">
               <Package className="size-4 text-muted-foreground" />
               <h2 className="text-sm font-semibold text-foreground">今日话题</h2>
               <span className="text-xs text-muted-foreground">快捷练习入口</span>
-            </div>
-            <div className="space-y-2">
-              {(unit.trainingTopics ?? []).map((topic) => (
+            </div> */}
+            <div className="space-y-1.5">
+              {(unit.trainingTopics ?? []).map((topic, index) => (
                 <Link
                   key={topic.id}
                   to={`/practice/session/${topic.id}`}
-                  className="flex items-center gap-3 rounded-lg bg-muted/30 p-3.5 transition-colors hover:bg-muted/50 active:scale-[0.98]"
+                  className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3 transition-colors hover:bg-muted/50 active:scale-[0.98]"
                 >
-                  <div className="relative flex aspect-square size-[52px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-                    {(() => { const Icon = getCategoryIcon(unit.category); return <Icon className="relative size-6" /> })()}
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                    {index + 1}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{topic.title}</p>
-                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                      {topic.promptZh?.slice(0, 40) || '暂无描述'}
+                    <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {topic.activeChunks?.length ?? 0} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟
                     </p>
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <Badge variant="outline" className="text-[10px]">{topic.difficulty}</Badge>
-                      <span className="text-[10px] text-muted-foreground">
-                        {topic.activeChunks?.length ?? 0} 表达 · {topic.suggestedDurationSec}s
-                      </span>
+                    <div className="mt-1">
+                      <Badge variant="secondary" className="rounded-full text-[10px]">{unit.title}</Badge>
                     </div>
                   </div>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
                 </Link>
               ))}
             </div>
@@ -467,140 +565,130 @@ export function TodayTaskPage() {
         </>
       )}
 
-      {/* ── 练习 Drawer ── */}
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} shouldScaleBackground={false}>
-        <DrawerContent className="h-[88dvh] rounded-t-[28px] border-border/20 bg-background">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
-            <div className="min-w-0">
-              <DrawerTitle className="truncate text-base">{currentStep?.displayLabel || currentMeta.label}</DrawerTitle>
-              <p className="truncate text-xs text-muted-foreground">
-                {currentStep?.label} · {currentIdx + 1}/{steps.length}
-              </p>
+      {/* ── 练习 Dialog（与 LearningInsightDialog 完全统一）── */}
+      <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DialogContent className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
+          <DialogTitle className="sr-only">
+            {currentStep?.displayLabel || currentMeta.label} · {currentStep?.topicTitle}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {currentStep?.label}
+          </DialogDescription>
+
+          <div className="flex h-full flex-col">
+            {/* Header：Badge 标识题型，大字展示练习内容 */}
+            <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  {(() => { const Icon = currentMeta.icon; return <Icon className="size-[18px]" /> })()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Badge variant="secondary" className="mb-1.5">{currentMeta.label}</Badge>
+                  <h2 className="truncate text-lg font-bold leading-tight text-foreground">
+                    {currentStep?.headerContent || currentStep?.label}
+                  </h2>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                    {currentStep?.topicTitle}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                >
+                  <ChevronDown className="size-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Body */}
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-6 pt-4 md:px-6">
+              <div key={currentStep?.id}>
+                {currentStep?.render()}
+              </div>
+            </div>
+
+            {/* Bottom nav */}
+            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
+              <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+                <ChevronLeft className="size-4" />
+                <span className="ml-1">上一题</span>
+              </Button>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {currentIdx + 1} / {steps.length}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+                  <span className="mr-1">下一题</span>
+                  <ChevronRight className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setPlaylistOpen(true)}
+                  title="题目列表"
+                >
+                  <ListMusic className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── 题目列表 Drawer ── */}
+      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+        <DrawerContent className="h-[100dvh] rounded-none pt-safe">
+          <div className="flex items-center justify-between px-5 py-3">
+            <DrawerTitle className="text-lg">今日练习</DrawerTitle>
             <button
               type="button"
-              onClick={() => setDrawerOpen(false)}
-              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-            >
-              <ChevronDown className="size-5" />
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-6 pt-4">
-            <div key={currentStep?.id}>
-              {currentStep?.render()}
-            </div>
-          </div>
-
-          {/* Bottom nav */}
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
-            <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev}>
-              <ChevronLeft className="size-4" />
-              <span className="ml-1">上一题</span>
-            </Button>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {currentIdx + 1} / {steps.length}
-            </span>
-            <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext}>
-              <span className="mr-1">下一题</span>
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      {/* ── 练习记录 Drawer ── */}
-      <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
-        <DrawerContent className="h-[82dvh] rounded-t-2xl">
-          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-            <DrawerTitle className="text-lg">今日练习记录</DrawerTitle>
-            <button
-              type="button"
-              onClick={() => setRecordsOpen(false)}
+              onClick={() => setPlaylistOpen(false)}
               className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
             >
               <ChevronDown className="size-5" />
             </button>
           </div>
           <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
-            {todayRecords.length === 0 ? (
-              <div className="flex flex-col items-center py-16 text-center">
-                <ClipboardList className="size-10 text-muted-foreground/30" />
-                <p className="mt-3 text-sm text-muted-foreground">暂无练习记录</p>
-                <p className="text-xs text-muted-foreground/60">完成题目提交后会自动记录</p>
-              </div>
-            ) : (
-              <div className="space-y-2 pt-4">
-                {todayRecords.map((record, idx) => {
-                  const step = steps.find((s) => s.id === record.stepId)
-                  const stepIndex = steps.findIndex((s) => s.id === record.stepId)
-                  return (
-                    <div key={record.stepId || idx} className="rounded-lg border bg-card p-3">
-                      <div className="flex items-start gap-3">
-                        <div className={cn(
-                          'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                          record.passed
-                            ? 'bg-green-500/15 text-green-600'
-                            : 'bg-red-500/15 text-red-500',
-                        )}>
-                          {record.passed ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px]">{step?.displayLabel || '练习'}</Badge>
-                            {record.groupTitle && (
-                              <span className="truncate text-xs font-medium text-foreground">{record.groupTitle}</span>
-                            )}
-                          </div>
-                          <p className="mt-1 text-sm text-foreground">{record.zh}</p>
-                          {record.answer && (
-                            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
-                              {record.answer}
-                            </p>
-                          )}
-                          <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
-                            <Clock3 className="size-3" />
-                            <span>第 {stepIndex >= 0 ? stepIndex + 1 : '?'} 题</span>
-                            {record.score && (
-                              <>
-                                <span>·</span>
-                                <span className={cn(
-                                  record.score === 'strong' && 'text-green-600',
-                                  record.score === 'ok' && 'text-blue-600',
-                                  record.score === 'weak' && 'text-amber-600',
-                                  record.score === 'miss' && 'text-red-500',
-                                )}>
-                                  {record.score === 'strong' ? '熟练' : record.score === 'ok' ? '通过' : record.score === 'weak' ? '待稳' : '复练'}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (stepIndex >= 0) {
-                              setCurrentIdx(stepIndex)
-                              setRecordsOpen(false)
-                              setDrawerOpen(true)
-                            }
-                          }}
-                          className="mt-0.5 shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          title="回放此题"
-                        >
-                          <ChevronRight className="size-4" />
-                        </button>
-                      </div>
+            <div className="space-y-1">
+              {steps.map((step, i) => {
+                const isActive = i === currentIdx
+                const isDone = doneIds.has(step.id)
+                const meta = TYPE_META[step.type]
+                const Icon = meta?.icon ?? MessageSquareText
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => { setCurrentIdx(i); setPlaylistOpen(false) }}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
+                      isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{step.displayLabel}</p>
+                      <p className="truncate text-xs text-muted-foreground">{step.topicTitle} · {step.label}</p>
                     </div>
-                  )
-                })}
-              </div>
-            )}
+                    {isDone && <CheckCircle2 className="size-4 shrink-0 text-green-500" />}
+                    {isActive && <Badge variant="default" className="px-1.5 py-0 text-[10px]">当前</Badge>}
+                  </button>
+                )
+              })}
+            </div>
           </ScrollArea>
         </DrawerContent>
       </Drawer>
+
+      {/* ── 练习记录 Drawer ── */}
+      <TodayRecordsDrawer
+        open={recordsOpen}
+        onOpenChange={setRecordsOpen}
+        records={todayRecords}
+        steps={steps}
+        onReplay={(idx) => { setCurrentIdx(idx); setRecordsOpen(false); setDrawerOpen(true) }}
+      />
     </div>
   )
 }

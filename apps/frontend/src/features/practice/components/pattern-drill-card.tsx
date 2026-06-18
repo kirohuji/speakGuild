@@ -19,6 +19,8 @@ interface PatternDrillCardProps {
   groupTitle?: string
   direction?: DrillDirection
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
+  /** Dialog 已提供题型标签时，隐藏内部 header badge */
+  hideHeader?: boolean
 }
 
 /** 高亮答案中的句型 key words */
@@ -56,6 +58,7 @@ export function PatternDrillCard({
   groupTitle,
   direction = 'zh_to_en',
   onComplete,
+  hideHeader = false,
 }: PatternDrillCardProps) {
   const store = useWarmupSessionStore()
   const saved = store.stepStates[stepId]
@@ -134,6 +137,7 @@ export function PatternDrillCard({
   return (
     <div className="space-y-2.5">
       {/* Header */}
+      {!hideHeader && (
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="text-[10px] gap-1">
           <Braces className="size-3" />句型
@@ -141,9 +145,10 @@ export function PatternDrillCard({
         {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>}
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
       </div>
+      )}
 
       {/* Pattern display */}
-      <div className="rounded-lg bg-gradient-to-br from-violet-500/8 to-violet-500/3 px-3 py-2.5">
+      <div className="rounded-lg bg-gradient-to-br from-violet-500/8 to-violet-500/3 px-1 py-2.5">
         <p className="text-xs text-muted-foreground">核心句型</p>
         <p className="mt-0.5 font-mono text-base font-bold text-violet-600 dark:text-violet-400">{pattern}</p>
         {patternMeaning && <p className="mt-0.5 text-xs text-muted-foreground">{patternMeaning}</p>}
