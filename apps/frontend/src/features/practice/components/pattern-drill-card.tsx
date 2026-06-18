@@ -205,7 +205,7 @@ export function PatternDrillCard({
         value={userInput}
         onChange={(e) => { if (status !== 'passed') { setUserInput(e.target.value); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
-        className="min-h-[52px] resize-none rounded-lg border-0 bg-background/70 px-4 text-base"
+        className="mx-2 min-h-[52px] w-[calc(100%-12px)] min-w-0 resize-none rounded-lg border-0 bg-background/70 px-4 text-base"
         disabled={status === 'judging' || status === 'passed'}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
       />

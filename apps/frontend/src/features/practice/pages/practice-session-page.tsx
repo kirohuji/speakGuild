@@ -655,7 +655,7 @@ function GuidedWarmupPhase({
       <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5" />
 
       {/* Current card — scrollable */}
-      <div className="min-h-0 flex-1 overflow-y-auto pb-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pb-4">
         <div key={flatSteps[currentIdx]?.id}>
           {flatSteps[currentIdx]?.render() ?? null}
         </div>
