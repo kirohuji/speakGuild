@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import AdmZip = require('adm-zip');
 import { createHash } from 'crypto';
@@ -738,6 +738,7 @@ export class LearningService {
 
   async buildLearningPackZip(userId: string, unitId: string, overrides?: { version?: number; title?: string }) {
     const source = await this.getOfflineManifest(userId, unitId);
+    if (!source) throw new NotFoundException('学习包不存在或已被删除，请刷新页面');
     const baseManifest = {
       ...source.manifest,
       version: overrides?.version ?? source.manifest.version,

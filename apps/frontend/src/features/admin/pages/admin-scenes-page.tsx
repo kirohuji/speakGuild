@@ -1414,7 +1414,7 @@ export function AdminScenesPage() {
                 if (!pkgName) { toast.error('无法识别文件名'); setUploading(false); return }
                 try {
                   const res = await packageDataAdminApi.import(file, pkgName)
-                  toast.success(`导入成功：${res.data?.sceneTitle ?? pkgName}（词汇${res.data?.vocabCount} 话题${res.data?.topicCount}）`)
+                  toast.success(`导入成功：${(res as any).sceneTitle ?? pkgName}（词汇${(res as any).vocabCount ?? 0} 话题${(res as any).topicCount ?? 0}）`)
                   load()
                 } catch (err: any) {
                   toast.error(err?.response?.data?.message || err?.message || '导入失败')
@@ -1528,7 +1528,7 @@ export function AdminScenesPage() {
                                 setUpdatingId(s.id)
                                 try {
                                   const res = await packageDataAdminApi.import(file, pkgName)
-                                  toast.success(`已覆盖：${res.data?.sceneTitle ?? pkgName}`)
+                                  toast.success(`已覆盖：${(res as any).sceneTitle ?? pkgName}`)
                                   load()
                                 } catch (err: any) {
                                   toast.error(err?.response?.data?.message || err?.message || '更新失败')

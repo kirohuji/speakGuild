@@ -41,6 +41,76 @@ export class PackageDataController {
     return session;
   }
 
+  /** 按 FK 依赖顺序清理场景的所有关联数据，然后删除场景 */
+  private async cleanupScene(sceneId: string) {
+    // 1. 查找关联 ID
+    const topicRecords = await this.prisma.trainingTopic.findMany({
+      where: { sceneId }, select: { id: true, inkScriptId: true },
+    });
+    const plainTopicIds = topicRecords.map(t => t.id);
+    const inkScriptIds = topicRecords.map(t => t.inkScriptId).filter(Boolean) as string[];
+    const storyEpisodeIds = (await this.prisma.storyEpisode.findMany({
+      where: { sceneId }, select: { id: true },
+    })).map(e => e.id);
+
+    // 2. Practice 相关（必须先删，因为 PracticeSession.topic FK 无 cascade）
+    // PracticeTurn 有 onDelete: Cascade from session，删 session 会自动级联删 turn
+    await this.prisma.practiceSession.deleteMany({ where: { sceneId } }).catch(() => {});
+    if (plainTopicIds.length > 0) {
+      await this.prisma.practiceWarmupRecord.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
+    }
+
+    // 3. Story 相关
+    if (storyEpisodeIds.length > 0) {
+      await this.prisma.storyTurn.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
+      await this.prisma.storyRecord.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
+      await this.prisma.storyEpisodeChunk.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
+      await this.prisma.storyEpisodeVocabulary.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
+      await this.prisma.storyEpisodeSentencePattern.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
+    }
+    await this.prisma.storyEpisode.deleteMany({ where: { sceneId } }).catch(() => {});
+
+    // 4. TrainingTopic 关联（必须在删 topic 之前）
+    if (plainTopicIds.length > 0) {
+      await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
+      await this.prisma.trainingTopicVocab.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
+      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
+    }
+    // 解除 InkScript 关联（使用 inkScriptIds 而非 topicIds）
+    if (inkScriptIds.length > 0) {
+      await this.prisma.inkScript.updateMany({
+        where: { id: { in: inkScriptIds } }, data: { topicId: null },
+      }).catch(() => {});
+    }
+    await this.prisma.trainingTopic.deleteMany({ where: { sceneId } }).catch(() => {});
+
+    // 5. 其他关联
+    await this.prisma.learningPackage.deleteMany({ where: { sceneId } }).catch(() => {});
+    await this.prisma.userSceneProgress.deleteMany({ where: { sceneId } }).catch(() => {});
+    await this.prisma.scenePrerequisite.deleteMany({
+      where: { OR: [{ sceneId }, { prerequisiteId: sceneId }] },
+    }).catch(() => {});
+
+    // 6. 删除场景
+    await this.prisma.scene.delete({ where: { id: sceneId } });
+  }
+
+  /** 安全解析 JSON 字符串，非 JSON 时当作纯文本放入数组 */
+  private parseObjectives(raw?: string): string[] {
+    if (!raw?.trim()) return [];
+    try { return JSON.parse(raw); } catch {
+      return [raw.trim()];
+    }
+  }
+
+  /** 安全解析 JSON，失败返回 undefined */
+  private parseJsonSafe(raw?: string): any {
+    if (!raw?.trim()) return undefined;
+    try { return JSON.parse(raw); } catch {
+      return undefined;
+    }
+  }
+
   // ════════════════════════════════════════════════════════════
   // 导入数据包
   // ════════════════════════════════════════════════════════════
@@ -101,18 +171,37 @@ export class PackageDataController {
         }
       }
 
-      // 3. 读取 CSV 数据
+      // 3. 读取 CSV 数据（支持引号包裹的字段，如 JSON 值含逗号）
       const readCsv = (filename: string): CsvRow[] => {
         const filePath = join(pkgDir, filename);
         if (!existsSync(filePath)) return [];
-        const content = readFileSync(filePath, 'utf-8');
+        const content = readFileSync(filePath, 'utf-8').trim();
+        if (!content) return [];
         const lines = content.split('\n').filter(line => line.trim());
         if (lines.length < 2) return [];
-        const headers = lines[0].split(',').map(h => h.trim());
+        const parseLine = (line: string): string[] => {
+          const result: string[] = [];
+          let current = '';
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+              inQuotes = !inQuotes;
+            } else if (ch === ',' && !inQuotes) {
+              result.push(current.trim());
+              current = '';
+            } else {
+              current += ch;
+            }
+          }
+          result.push(current.trim());
+          return result;
+        };
+        const headers = parseLine(lines[0]);
         return lines.slice(1).map(line => {
-          const values = line.split(',');
+          const values = parseLine(line);
           const row: CsvRow = {};
-          headers.forEach((h, i) => { row[h] = (values[i] || '').trim(); });
+          headers.forEach((h, i) => { row[h] = (values[i] || ''); });
           return row;
         });
       };
@@ -145,9 +234,9 @@ export class PackageDataController {
         where: { title: sceneTitle, packageType: packageType as any },
       });
 
-      // 5. 如果已存在，先清空（级联删除场景会清理关联数据）
+      // 5. 如果已存在，先清空关联数据
       if (existingScene) {
-        await this.prisma.scene.delete({ where: { id: existingScene.id } });
+        await this.cleanupScene(existingScene.id);
       }
 
       // 6. 获取场景分类
@@ -178,6 +267,23 @@ export class PackageDataController {
         },
       });
 
+      // 补建 LearningPackage 记录（移动端学习包系统依赖此记录）
+      await this.prisma.learningPackage.upsert({
+        where: { sceneId_version: { sceneId: scene.id, version: 1 } },
+        create: {
+          sceneId: scene.id, version: 1,
+          title: `${scene.title} v1`,
+          type: packageType as any,
+          status: 'draft',
+          buildLog: 'Imported from admin data package.',
+        },
+        update: {
+          title: `${scene.title} v1`,
+          type: packageType as any,
+          buildLog: 'Re-imported from admin data package.',
+        },
+      });
+
       // 8. 导入词汇
       const vocabIdMap = new Map<string, string>();
       for (const row of vocabRows) {
@@ -188,7 +294,7 @@ export class PackageDataController {
             meaning: row.meaning,
             partOfSpeech: row.part_of_speech || null,
             difficulty: row.difficulty || 'L1',
-            sortOrder: parseInt(row.sort_order || '0'),
+            sortOrder: parseInt(row.sort_order) || 0,
           },
           update: { meaning: row.meaning },
         });
@@ -265,7 +371,7 @@ export class PackageDataController {
         const topicId = topicIds.find((_id, i) => topicRows[i]?.title === topicTitle || topicRows[i]?.scene_title === topicTitle);
         if (topicId) {
           await this.prisma.trainingTopicSentencePattern.create({
-            data: { topicId, patternId: pattern.id, sortOrder: parseInt(row.sort_order || '0') },
+            data: { topicId, patternId: pattern.id, sortOrder: parseInt(row.sort_order) || 0 },
           }).catch(() => {});  // skip duplicates
         }
       }
@@ -285,7 +391,7 @@ export class PackageDataController {
             totalVocabularyCount: parseInt(row.vocab_total_count || '10'),
             requiredChunkCount: parseInt(row.chunk_required_count || '6'),
             totalChunkCount: parseInt(row.chunk_total_count || '10'),
-            objectives: row.objectives_json ? JSON.parse(row.objectives_json) : [],
+            objectives: this.parseObjectives(row.objectives_json),
             requiredObjectiveCount: parseInt(row.pass_objective_count || '3'),
             requiredUsedChunkCount: parseInt(row.pass_chunk_count || '2'),
             requiresRetell: false,
@@ -293,7 +399,7 @@ export class PackageDataController {
             characterName: row.npc_name || '',
             characterRole: row.npc_role || '',
             isPreview: row.is_preview === 'true',
-            rewards: row.rewards_json ? JSON.parse(row.rewards_json) : undefined,
+            rewards: this.parseJsonSafe(row.rewards_json),
           },
         });
 
@@ -639,14 +745,33 @@ export class PackageDataController {
     const readCsv = (filename: string): CsvRow[] => {
       const filePath = pathJoin(pkgDir, filename);
       if (!existsSync(filePath)) return [];
-      const content = readFileSync(filePath, 'utf-8');
+      const content = readFileSync(filePath, 'utf-8').trim();
+      if (!content) return [];
       const lines = content.split('\n').filter(line => line.trim());
       if (lines.length < 2) return [];
-      const headers = lines[0].split(',').map(h => h.trim());
+      const parseLine = (line: string): string[] => {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            inQuotes = !inQuotes;
+          } else if (ch === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += ch;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      };
+      const headers = parseLine(lines[0]);
       return lines.slice(1).map(line => {
-        const values = line.split(',');
+        const values = parseLine(line);
         const row: CsvRow = {};
-        headers.forEach((h, i) => { row[h] = (values[i] || '').trim(); });
+        headers.forEach((h, i) => { row[h] = (values[i] || ''); });
         return row;
       });
     };
@@ -676,7 +801,7 @@ export class PackageDataController {
       where: { title: sceneTitle, packageType: packageType as any },
     });
     if (existingScene) {
-      await this.prisma.scene.delete({ where: { id: existingScene.id } });
+      await this.cleanupScene(existingScene.id);
     }
 
     const categoryName = sceneRows[0]?.category_name || '';
@@ -699,11 +824,28 @@ export class PackageDataController {
       },
     });
 
+    // 补建 LearningPackage 记录
+    await this.prisma.learningPackage.upsert({
+      where: { sceneId_version: { sceneId: scene.id, version: 1 } },
+      create: {
+        sceneId: scene.id, version: 1,
+        title: `${scene.title} v1`,
+        type: packageType as any,
+        status: 'draft',
+        buildLog: 'Imported from admin data package.',
+      },
+      update: {
+        title: `${scene.title} v1`,
+        type: packageType as any,
+        buildLog: 'Re-imported from admin data package.',
+      },
+    });
+
     const vocabIdMap = new Map<string, string>();
     for (const row of vocabRows) {
       const vocab = await this.prisma.vocabulary.upsert({
         where: { word: row.word },
-        create: { word: row.word, meaning: row.meaning, partOfSpeech: row.part_of_speech || null, difficulty: row.difficulty || 'L1', sortOrder: parseInt(row.sort_order || '0') },
+        create: { word: row.word, meaning: row.meaning, partOfSpeech: row.part_of_speech || null, difficulty: row.difficulty || 'L1', sortOrder: parseInt(row.sort_order) || 0 },
         update: { meaning: row.meaning },
       });
       vocabIdMap.set(row.word, vocab.id);
@@ -746,7 +888,7 @@ export class PackageDataController {
       const topicId = topicIds.find((_id, i) => topicRows[i]?.title === (row.topic_title || row.scene_title));
       if (topicId) {
         await this.prisma.trainingTopicSentencePattern.create({
-          data: { topicId, patternId: pattern.id, sortOrder: parseInt(row.sort_order || '0') },
+          data: { topicId, patternId: pattern.id, sortOrder: parseInt(row.sort_order) || 0 },
         }).catch(() => {});
       }
     }
@@ -759,12 +901,12 @@ export class PackageDataController {
           requiredOutputLevel: row.required_output_level || 'L1', requiredUserLevel: parseInt(row.required_user_level || '1'),
           requiredVocabularyCount: parseInt(row.vocab_required_count || '6'), totalVocabularyCount: parseInt(row.vocab_total_count || '10'),
           requiredChunkCount: parseInt(row.chunk_required_count || '6'), totalChunkCount: parseInt(row.chunk_total_count || '10'),
-          objectives: row.objectives_json ? JSON.parse(row.objectives_json) : [],
+          objectives: this.parseObjectives(row.objectives_json),
           requiredObjectiveCount: parseInt(row.pass_objective_count || '3'), requiredUsedChunkCount: parseInt(row.pass_chunk_count || '2'),
           requiresRetell: false, minimumTurnCount: parseInt(row.pass_min_dialogues || '3'),
           characterName: row.npc_name || '', characterRole: row.npc_role || '',
           isPreview: row.is_preview === 'true',
-          rewards: row.rewards_json ? JSON.parse(row.rewards_json) : undefined,
+          rewards: this.parseJsonSafe(row.rewards_json),
         },
       });
       const allVocabs = [...vocabIdMap.values()];
