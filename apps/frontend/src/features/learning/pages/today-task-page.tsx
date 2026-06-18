@@ -40,6 +40,8 @@ type PracticeItem = {
   type: string
   label: string
   topicTitle: string
+  /** 准确描述练习内容的标签，用于卡片和抽屉标题 */
+  displayLabel: string
   render: () => React.ReactNode
 }
 
@@ -177,10 +179,12 @@ export function TodayTaskPage() {
           if (!picked) continue
           const [sub, subIdx] = picked
           const sid = stepId(`${subIdx}`)
+          const isWord = (item.kind ?? 'chunk') === 'word'
           built.push({
             id: sid,
             type: 'chunk_substitution',
-            label: item.title || item.chunk || '句块替换',
+            label: item.title || item.chunk || (isWord ? '词汇替换' : '句块替换'),
+            displayLabel: isWord ? '词汇替换' : '句块替换',
             topicTitle: topic.title,
             render: () => (
               <ChunkOutputDrillCard
@@ -203,6 +207,7 @@ export function TodayTaskPage() {
             id: sid,
             type: 'vocab_drill',
             label: item.title || vocab.targetWords?.join(', ') || '词汇输出',
+            displayLabel: '词汇输出',
             topicTitle: topic.title,
             render: () => (
               <VocabOutputCard
@@ -224,6 +229,7 @@ export function TodayTaskPage() {
             id: sid,
             type: 'vocab_sentence_building',
             label: `${item.vocabWord || '词汇'} + ${pattern.chunk}`,
+            displayLabel: '词汇造句',
             topicTitle: topic.title,
             render: () => (
               <ChunkOutputDrillCard
@@ -245,6 +251,7 @@ export function TodayTaskPage() {
             id: sid,
             type: 'pattern_drill',
             label: item.title || item.pattern || '句型操练',
+            displayLabel: '句型操练',
             topicTitle: topic.title,
             render: () => (
               <PatternDrillCard
@@ -265,6 +272,7 @@ export function TodayTaskPage() {
             id: sid,
             type: 'sentence_decomposition',
             label: title,
+            displayLabel: '句子拆解',
             topicTitle: topic.title,
             render: () => (
               <SentenceDecompositionCard
@@ -403,7 +411,7 @@ export function TodayTaskPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className={cn('truncate text-sm font-medium', isDone ? 'text-muted-foreground line-through' : 'text-foreground')}>
-                    {meta.label}
+                    {step.displayLabel}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {step.topicTitle} · {step.label}
@@ -465,7 +473,7 @@ export function TodayTaskPage() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
             <div className="min-w-0">
-              <DrawerTitle className="truncate text-base">{currentMeta.label}</DrawerTitle>
+              <DrawerTitle className="truncate text-base">{currentStep?.displayLabel || currentMeta.label}</DrawerTitle>
               <p className="truncate text-xs text-muted-foreground">
                 {currentStep?.label} · {currentIdx + 1}/{steps.length}
               </p>
@@ -526,10 +534,7 @@ export function TodayTaskPage() {
             ) : (
               <div className="space-y-2 pt-4">
                 {todayRecords.map((record, idx) => {
-                  const stepMeta = TYPE_META[record.stepType] ?? {
-                    label: '知识点',
-                    color: 'bg-primary/10 text-primary',
-                  }
+                  const step = steps.find((s) => s.id === record.stepId)
                   const stepIndex = steps.findIndex((s) => s.id === record.stepId)
                   return (
                     <div key={record.stepId || idx} className="rounded-lg border bg-card p-3">
@@ -544,7 +549,7 @@ export function TodayTaskPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px]">{stepMeta.label}</Badge>
+                            <Badge variant="outline" className="text-[10px]">{step?.displayLabel || '练习'}</Badge>
                             {record.groupTitle && (
                               <span className="truncate text-xs font-medium text-foreground">{record.groupTitle}</span>
                             )}
