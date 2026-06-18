@@ -115,60 +115,58 @@ export function SentenceDecompositionCard({
   }
 
   return (
-    <Card className="border-0 bg-muted/30 shadow-none">
-      <CardContent className="space-y-2.5 p-3">
-        {/* Header */}
-        {!hideHeader && (
+    <div className="space-y-2.5">
+      {/* Header */}
+      {!hideHeader && (
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-[10px]">{t('practiceSession.sentenceDecomposition')}</Badge>
           <Badge variant="outline" className="text-[10px]">{title}</Badge>
           <span className="ml-auto text-[10px] text-muted-foreground">{current.level}/{totalLevels}</span>
         </div>
+      )}
+
+      {/* Progress */}
+      <Progress value={(current.level / totalLevels) * 100} className="h-1" />
+
+      {/* 当前层级标签 */}
+      <p className="text-xs font-medium text-foreground/70">
+        {t('practiceSession.currentLevel', { n: current.level, label: current.label })}
+      </p>
+
+      {/* 上一级 */}
+      {renderPreviousLine}
+
+      {/* 本级 — 高亮新增 */}
+      <div className="rounded-md bg-primary/[0.04] px-3 py-2">
+        {renderCurrentLine()}
+        <p className="mt-1.5 text-sm text-muted-foreground">{current.zh}</p>
+        {current.hint && (
+          <p className="mt-1 text-[11px] text-primary/70">{current.hint}</p>
         )}
+      </div>
 
-        {/* Progress */}
-        <Progress value={(current.level / totalLevels) * 100} className="h-1" />
-
-        {/* 当前层级标签 */}
-        <p className="text-xs font-medium text-foreground/70">
-          {t('practiceSession.currentLevel', { n: current.level, label: current.label })}
-        </p>
-
-        {/* 上一级 */}
-        {renderPreviousLine}
-
-        {/* 本级 — 高亮新增 */}
-        <div className="rounded-md bg-primary/[0.04] px-3 py-2">
-          {renderCurrentLine()}
-          <p className="mt-1.5 text-sm text-muted-foreground">{current.zh}</p>
-          {current.hint && (
-            <p className="mt-1 text-[11px] text-primary/70">{current.hint}</p>
-          )}
-        </div>
-
-        {/* Navigation: 上一级 / 下一级 */}
-        <div className="flex gap-2">
-          <Button
-            size="default"
-            variant="outline"
-            className="min-h-11 flex-1 gap-1.5 text-sm"
-            onClick={goBack}
-            disabled={isFirst}
-          >
-            <ChevronLeft className="size-4" />
-            上一级
-          </Button>
-          <Button
-            size="default"
-            variant="outline"
-            className="min-h-11 flex-1 gap-1.5 text-sm"
-            onClick={advance}
-          >
-            {isLast ? '完成' : '下一级'}
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Navigation: 上一级 / 下一级 */}
+      <div className="flex gap-2">
+        <Button
+          size="default"
+          variant="outline"
+          className="min-h-11 flex-1 gap-1.5 text-sm"
+          onClick={goBack}
+          disabled={isFirst}
+        >
+          <ChevronLeft className="size-4" />
+          上一级
+        </Button>
+        <Button
+          size="default"
+          variant="outline"
+          className="min-h-11 flex-1 gap-1.5 text-sm"
+          onClick={advance}
+        >
+          {isLast ? '完成' : '下一级'}
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+    </div>
   )
 }
