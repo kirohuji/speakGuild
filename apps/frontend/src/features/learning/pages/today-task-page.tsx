@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import type React from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowRight, BookOpen, BookText, ChevronDown, ChevronLeft, ChevronRight,
-  ClipboardList, ListMusic, MessageSquareText, Target,
+  ArrowRight, BookOpen, BookText, Braces, ChevronDown, ChevronLeft, ChevronRight,
+  ClipboardList, ListChecks, ListMusic, MessageSquareText, Target,
   CheckCircle2, RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -96,7 +96,7 @@ const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: s
   },
   pattern_drill: {
     label: '句型操练',
-    icon: MessageSquareText,
+    icon: Braces,
     color: 'bg-violet-500/10 text-violet-600 dark:text-violet-300',
   },
   sentence_decomposition: {
@@ -467,10 +467,10 @@ export function TodayTaskPage() {
       </div>
 
       {/* ── 进度条 ── */}
-      <div className="mb-4 rounded-lg bg-muted/30 p-3.5">
-        <div className="mb-2 flex items-center justify-between">
+      <div className="mb-5 rounded-lg bg-muted/30 p-3.5">
+        <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquareText className="size-4 text-primary" />
+            <ListChecks className="size-4 text-primary" />
             <p className="text-sm font-semibold text-foreground">今日进度</p>
           </div>
           <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
@@ -582,12 +582,12 @@ export function TodayTaskPage() {
                 <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   {(() => { const Icon = currentMeta.icon; return <Icon className="size-[18px]" /> })()}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="w-0 flex-1 overflow-hidden">
                   <Badge variant="secondary" className="mb-1.5">{currentMeta.label}</Badge>
                   <h2 className="truncate text-lg font-bold leading-tight text-foreground">
                     {currentStep?.headerContent || currentStep?.label}
                   </h2>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  <p className="truncate mt-1.5 text-sm leading-relaxed text-muted-foreground">
                     {currentStep?.topicTitle}
                   </p>
                 </div>
@@ -602,8 +602,8 @@ export function TodayTaskPage() {
             </div>
 
             {/* Body */}
-            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-6 pt-4 md:px-6">
-              <div key={currentStep?.id}>
+            <div className="min-h-0 flex-1 overflow-hidden px-5 pb-6 pt-4 md:px-6">
+              <div key={currentStep?.id} className="h-full overflow-y-auto">
                 {currentStep?.render()}
               </div>
             </div>
