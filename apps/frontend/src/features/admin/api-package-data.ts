@@ -1,4 +1,4 @@
-import { post, get } from '@/lib/request';
+import { post, get, del } from '@/lib/request';
 
 export interface ImportResult {
   sceneId: string;
@@ -35,4 +35,7 @@ export const packageDataAdminApi = {
       {},
       { timeout: 120_000 },
     ),
+
+  delete: (sceneId: string) =>
+    del(`/admin/content/packages/${sceneId}`),
 };

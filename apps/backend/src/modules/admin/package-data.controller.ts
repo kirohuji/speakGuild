@@ -9,7 +9,7 @@
  */
 
 import {
-  Controller, Get, Post, Param, Req, Res, ForbiddenException,
+  Controller, Get, Post, Delete, Param, Req, Res, ForbiddenException,
   UploadedFile, UseInterceptors, Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -175,7 +175,9 @@ export class PackageDataController {
       const readCsv = (filename: string): CsvRow[] => {
         const filePath = join(pkgDir, filename);
         if (!existsSync(filePath)) return [];
-        const content = readFileSync(filePath, 'utf-8').trim();
+        const raw = readFileSync(filePath, 'utf-8').trim();
+        // 去除 UTF-8 BOM
+        const content = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
         if (!content) return [];
         const lines = content.split('\n').filter(line => line.trim());
         if (lines.length < 2) return [];
@@ -219,6 +221,35 @@ export class PackageDataController {
       const pipelinePath = join(pkgDir, 'warmup_pipeline.json');
       if (existsSync(pipelinePath)) {
         warmupPipeline = JSON.parse(readFileSync(pipelinePath, 'utf-8'));
+      }
+
+      // 导入 Ink 脚本（从 ink-scripts/ 子目录）
+      const inkKeyToId = new Map<string, string>();
+      const inkDir = join(pkgDir, 'ink-scripts');
+      if (existsSync(inkDir)) {
+        try {
+          const inkFiles = readdirSync(inkDir).filter(f => f.endsWith('.ink'));
+          for (const file of inkFiles) {
+            const raw = readFileSync(join(inkDir, file), 'utf-8');
+            const frontMatch = raw.match(/^---\n([\s\S]*?)\n---/);
+            let key = file.replace(/\.ink$/, '');
+            let title = key;
+            if (frontMatch) {
+              const fm = frontMatch[1];
+              const km = fm.match(/^key:\s*(.+)$/m);
+              const tm = fm.match(/^title:\s*(.+)$/m);
+              if (km) key = km[1].trim();
+              if (tm) title = tm[1].trim();
+            }
+            const ink = await this.prisma.inkScript.upsert({
+              where: { key },
+              create: { key, title, scriptType: 'practice', inkSource: raw, inkJson: {} },
+              update: { inkSource: raw },
+            });
+            inkKeyToId.set(key, ink.id);
+          }
+          if (inkFiles.length > 0) console.log(`  ✓ ${inkFiles.length} 个 Ink 脚本`);
+        } catch { /* no ink dir or parse error */ }
       }
 
       // 4. 查找已有场景（按包目录名推断 packageType 和场景标题）
@@ -319,11 +350,17 @@ export class PackageDataController {
 
       // 10. 导入训练话题
       const topicIds: string[] = [];
+      const topicIdMap = new Map<string, string>(); // title → id
       for (const row of topicRows) {
+        // 查找绑定的 Ink 脚本
+        let inkScriptId: string | null = null;
+        if (row.ink_script_key?.trim()) {
+          inkScriptId = inkKeyToId.get(row.ink_script_key.trim()) ?? null;
+        }
         const topic = await this.prisma.trainingTopic.create({
           data: {
             sceneId: scene.id,
-            type: 'daily',
+            type: (row as any).type === 'ielts' ? 'ielts' : 'daily',
             title: row.title,
             promptEn: row.prompt_en || '',
             promptZh: row.prompt_zh || '',
@@ -331,6 +368,7 @@ export class PackageDataController {
             difficulty: row.difficulty || 'L2',
             description: row.description || null,
             knowledgePoints: row.knowledge_points || null,
+            inkScriptId,
             sortOrder: topicIds.length,
           },
         });
@@ -353,6 +391,7 @@ export class PackageDataController {
         }
 
         topicIds.push(topic.id);
+        topicIdMap.set(row.title, topic.id);
       }
 
       // 11. 导入句型
@@ -421,17 +460,26 @@ export class PackageDataController {
       }
 
       // 13. 导入 warmup_pipeline
+      let warmupMatched = 0;
       for (const [topicTitle, pipelineData] of Object.entries(warmupPipeline)) {
-        const topic = await this.prisma.trainingTopic.findFirst({
-          where: { sceneId: scene.id, title: topicTitle },
-        });
-        if (topic) {
+        let topicId = topicIdMap.get(topicTitle);
+        if (!topicId) {
+          for (const [title, id] of topicIdMap) {
+            if (title.includes(topicTitle) || topicTitle.includes(title)) {
+              topicId = id;
+              break;
+            }
+          }
+        }
+        if (topicId) {
           await this.prisma.trainingTopic.update({
-            where: { id: topic.id },
+            where: { id: topicId },
             data: { metadata: pipelineData as any },
           });
+          warmupMatched++;
         }
       }
+      if (warmupMatched > 0) console.log(`  ✓ ${warmupMatched}/${Object.keys(warmupPipeline).length} 个知识点练习 pipeline 已匹配`);
 
       return {
         code: 200,
@@ -444,7 +492,7 @@ export class PackageDataController {
           topicCount: topicRows.length,
           patternCount: patternRows.length,
           episodeCount: epRows.length,
-          warmupTopics: Object.keys(warmupPipeline).length,
+          warmupTopics: warmupMatched,
         },
       };
     } finally {
@@ -745,7 +793,8 @@ export class PackageDataController {
     const readCsv = (filename: string): CsvRow[] => {
       const filePath = pathJoin(pkgDir, filename);
       if (!existsSync(filePath)) return [];
-      const content = readFileSync(filePath, 'utf-8').trim();
+      const raw = readFileSync(filePath, 'utf-8').trim();
+      const content = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
       if (!content) return [];
       const lines = content.split('\n').filter(line => line.trim());
       if (lines.length < 2) return [];
@@ -862,6 +911,7 @@ export class PackageDataController {
     }
 
     const topicIds: string[] = [];
+    const topicIdMap = new Map<string, string>();
     for (const row of topicRows) {
       const topic = await this.prisma.trainingTopic.create({
         data: {
@@ -872,6 +922,7 @@ export class PackageDataController {
           sortOrder: topicIds.length,
         },
       });
+      topicIdMap.set(row.title, topic.id);
       const allVocabs = [...vocabIdMap.values()];
       if (allVocabs.length) await this.prisma.trainingTopicVocab.createMany({ data: allVocabs.map((v, i) => ({ topicId: topic.id, vocabId: v, sortOrder: i })), skipDuplicates: true });
       const allChunks = [...chunkIdMap.values()];
@@ -915,10 +966,17 @@ export class PackageDataController {
       if (allChunks.length) await this.prisma.storyEpisodeChunk.createMany({ data: allChunks.map((c, i) => ({ episodeId: episode.id, chunkId: c, sortOrder: i })), skipDuplicates: true });
     }
 
+    let warmupMatched = 0;
     for (const [topicTitle, pipelineData] of Object.entries(warmupPipeline)) {
-      const topic = await this.prisma.trainingTopic.findFirst({ where: { sceneId: scene.id, title: topicTitle } });
-      if (topic) await this.prisma.trainingTopic.update({ where: { id: topic.id }, data: { metadata: pipelineData as any } });
+      let tid = topicIdMap.get(topicTitle);
+      if (!tid) {
+        for (const [title, id] of topicIdMap) {
+          if (title.includes(topicTitle) || topicTitle.includes(title)) { tid = id; break; }
+        }
+      }
+      if (tid) { await this.prisma.trainingTopic.update({ where: { id: tid }, data: { metadata: pipelineData as any } }); warmupMatched++; }
     }
+    if (warmupMatched > 0) console.log(`  ✓ ${warmupMatched}/${Object.keys(warmupPipeline).length} 个知识点练习 pipeline 已匹配`);
 
     // 导入 Ink 脚本
     const inkDir = pathJoin(pkgDir, 'ink-scripts');
@@ -950,7 +1008,23 @@ export class PackageDataController {
       sceneId: scene.id, sceneTitle: scene.title,
       vocabCount: vocabRows.length, chunkCount: chunkRows.length,
       topicCount: topicRows.length, patternCount: patternRows.length,
-      episodeCount: epRows.length, warmupTopics: Object.keys(warmupPipeline).length,
+      episodeCount: epRows.length, warmupTopics: warmupMatched,
     };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // 删除场景（含级联清理）
+  // ════════════════════════════════════════════════════════════
+
+  @Delete(':sceneId')
+  async deleteScene(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+  ) {
+    await this.requireAdmin(req);
+    const scene = await this.prisma.scene.findUnique({ where: { id: sceneId } });
+    if (!scene) throw new ForbiddenException('场景不存在');
+    await this.cleanupScene(sceneId);
+    return { code: 200, message: `已删除 "${scene.title}"` };
   }
 }

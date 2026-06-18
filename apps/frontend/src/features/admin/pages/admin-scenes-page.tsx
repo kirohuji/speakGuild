@@ -1545,7 +1545,7 @@ export function AdminScenesPage() {
                             <Edit3 className="size-3.5" />
                           </Button>
                           <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                            onClick={async (e) => { e.stopPropagation(); await deleteScene(s.id); load() }}>
+                            onClick={async (e) => { e.stopPropagation(); if (!confirm('确认删除此学习包？关联数据将一并清除。')) return; setUpdatingId(s.id); try { await packageDataAdminApi.delete(s.id); toast.success('已删除'); load(); } catch (err: any) { toast.error(err?.response?.data?.message || err?.message || '删除失败'); } finally { setUpdatingId(null); } }}>
                             <Trash2 className="size-3.5" />
                           </Button>
                         </div>
