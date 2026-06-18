@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
-  Lightbulb, CheckCircle2, ChevronRight, ChevronLeft, Check, ListMusic,
+  Lightbulb, CheckCircle2, ChevronRight, ChevronLeft, ListMusic,
   BookText, Search, BookmarkPlus, History, Settings, ChevronDown, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -31,7 +31,7 @@ import { VocabOutputCard } from '../components/vocab-output-card'
 import { SentenceDecompositionCard } from '../components/sentence-decomposition-card'
 import { PatternDrillCard } from '../components/pattern-drill-card'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
-import { useWarmupSessionStore } from '@/stores/warmup-session.store'
+import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -315,6 +315,9 @@ function GuidedWarmupPhase({
   const [historyOpen, setHistoryOpen] = useState(false)
   const [assessing, setAssessing] = useState(false)
   const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
+  const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
+  const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
+  const [warmupRunSeed] = useState(() => Math.random())
 
   // Clear session on mount (only once)
   useEffect(() => { warmupStore.clearSession() }, [])
@@ -326,13 +329,32 @@ function GuidedWarmupPhase({
     label: string
     render: () => React.ReactNode
   }
+  type SimplePromptItem = { zh: string; answer?: string; hint?: string }
+  type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
+
+  const pickOne = useCallback(<T,>(items: T[] | undefined): [T, number] | null => {
+    if (!items?.length) return null
+    const idx = Math.floor(Math.random() * items.length)
+    return [items[idx], idx]
+  }, [])
+
+  const shuffleSteps = useCallback((steps: FlatStep[]) => {
+    const shuffled = [...steps]
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+  }, [])
 
   const flatSteps = useMemo<FlatStep[]>(() => {
     const steps: FlatStep[] = []
     for (const item of warmupItems) {
       if (item.type === 'chunk_substitution') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
-        for (const [subIdx, sub] of (item.items ?? []).entries()) {
+        const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
+        if (picked) {
+          const [sub, subIdx] = picked
           steps.push({
             id: `${item.id}_${subIdx}`,
             type: 'chunk_substitution',
@@ -347,14 +369,16 @@ function GuidedWarmupPhase({
                   direction={item.direction ?? 'zh_to_en'}
                   kind={item.kind ?? 'chunk'}
                   groupTitle={item.title}
-                  onComplete={(_subIdx, _passed) => markDone(stepId)}
+                  onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
                 />
               )
             },
           })
         }
       } else if (item.type === 'vocab_drill') {
-        for (const [vIdx, v] of (item.vocabs ?? []).entries()) {
+        const picked = pickOne<VocabPromptItem>((item.vocabs ?? []) as VocabPromptItem[])
+        if (picked) {
+          const [v, vIdx] = picked
           steps.push({
             id: `${item.id}_${vIdx}`,
             type: 'vocab_drill',
@@ -367,7 +391,7 @@ function GuidedWarmupPhase({
                   stepId={stepId}
                   direction={item.direction ?? 'zh_to_en'}
                   vocabs={[v]}
-                  onComplete={(_idx, _passed) => markDone(stepId)}
+                  onComplete={(_idx, _passed, score) => markDone(stepId, score)}
                 />
               )
             },
@@ -375,7 +399,9 @@ function GuidedWarmupPhase({
         }
       } else if (item.type === 'vocab_sentence_building') {
         for (const pattern of (item.patterns ?? [])) {
-          for (const [subIdx, sub] of (pattern.items ?? []).entries()) {
+          const picked = pickOne<SimplePromptItem>((pattern.items ?? []) as SimplePromptItem[])
+          if (picked) {
+            const [sub, subIdx] = picked
             const flatId = `${item.id}_${pattern.chunk}_${subIdx}`
             steps.push({
               id: flatId,
@@ -388,28 +414,32 @@ function GuidedWarmupPhase({
                   stepId={flatId}
                   direction={item.direction ?? 'zh_to_en'}
                   groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
-                  onComplete={(_subIdx, _passed) => markDone(flatId)}
+                  onComplete={(_subIdx, _passed, score) => markDone(flatId, score)}
                 />
               ),
             })
           }
         }
       } else if (item.type === 'sentence_decomposition') {
+        const title = item.title || '句子拆解'
         steps.push({
           id: item.id,
           type: 'sentence_decomposition',
-          label: item.title,
+          label: title,
           render: () => (
             <SentenceDecompositionCard
-              title={item.title}
+              title={title}
               levels={item.levels}
-              onComplete={(_passed) => markDone(item.id)}
+              stepId={item.id}
+              onComplete={(_passed, score) => markDone(item.id, score)}
             />
           ),
         })
       } else if (item.type === 'pattern_drill') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
-        for (const [subIdx, sub] of (item.items ?? []).entries()) {
+        const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
+        if (picked) {
+          const [sub, subIdx] = picked
           steps.push({
             id: `${item.id}_${subIdx}`,
             type: 'pattern_drill',
@@ -424,7 +454,7 @@ function GuidedWarmupPhase({
                   stepId={stepId}
                   direction={item.direction ?? 'zh_to_en'}
                   groupTitle={item.title}
-                  onComplete={(_subIdx, _passed) => markDone(stepId)}
+                  onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
                 />
               )
             },
@@ -432,8 +462,8 @@ function GuidedWarmupPhase({
         }
       }
     }
-    return steps
-  }, [warmupItems, warmupStore.stepStates])
+    return shuffleSteps(steps)
+  }, [pickOne, shuffleSteps, warmupItems, warmupRunSeed])
 
   const totalSteps = flatSteps.length
 
@@ -449,7 +479,7 @@ function GuidedWarmupPhase({
     try { localStorage.setItem(storageKey, JSON.stringify([...ids])) } catch {}
   }, [storageKey])
 
-  const markDone = useCallback((stepId: string) => {
+  const markDone = useCallback((stepId: string, _score: WarmupScore = 'strong') => {
     setDoneIds(prev => {
       const next = new Set(prev)
       next.add(stepId)
@@ -460,6 +490,10 @@ function GuidedWarmupPhase({
 
   const doneCount = doneIds.size
   const allDone = totalSteps > 0 && doneCount >= totalSteps
+  const latestRecords = warmupStore.records
+  const weakRecords = latestRecords.filter((record) => record.score === 'weak' || record.score === 'miss')
+  const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
+  const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundStarted && !reviewRoundFinished
 
   // ── Reset for re-practice ──
   const resetForRepractice = useCallback(() => {
@@ -467,11 +501,33 @@ function GuidedWarmupPhase({
     try { localStorage.removeItem(storageKey) } catch {}
     warmupStore.clearSession()
     setLastAssessment(null)
+    setReviewRoundStarted(false)
+    setReviewRoundFinished(false)
   }, [storageKey, warmupStore])
+
+  const startWeakReviewRound = useCallback(() => {
+    if (weakStepIds.size === 0) return
+    setReviewRoundStarted(true)
+    setReviewRoundFinished(false)
+    setDoneIds(prev => {
+      const next = new Set([...prev].filter((id) => !weakStepIds.has(id)))
+      persistDone(next)
+      return next
+    })
+    warmupStore.resetSteps([...weakStepIds])
+    const firstWeakIndex = flatSteps.findIndex((step) => weakStepIds.has(step.id))
+    setCurrentIdx(firstWeakIndex >= 0 ? firstWeakIndex : 0)
+  }, [flatSteps, persistDone, warmupStore, weakStepIds])
 
   // ── AI assess when all done ──
   useEffect(() => {
-    if (allDone && !assessing && !lastAssessment) {
+    if (allDone && reviewRoundStarted && !reviewRoundFinished) {
+      setReviewRoundFinished(true)
+    }
+  }, [allDone, reviewRoundFinished, reviewRoundStarted])
+
+  useEffect(() => {
+    if (allDone && !needsReviewRound && !assessing && !lastAssessment) {
       const records = warmupStore.getAssessmentRecords()
       if (records.length === 0) return
       setAssessing(true)
@@ -480,7 +536,7 @@ function GuidedWarmupPhase({
         .catch(() => setLastAssessment({ score: 0, feedback: '' }))
         .finally(() => setAssessing(false))
     }
-  }, [allDone, topicId, topicTitle, assessing, lastAssessment])
+  }, [allDone, needsReviewRound, topicId, topicTitle, assessing, lastAssessment, warmupStore])
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -500,6 +556,46 @@ function GuidedWarmupPhase({
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <p className="text-muted-foreground">{t('practiceSession.noWarmupHint')}</p>
           <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (needsReviewRound) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+        <div className="mb-4 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
+          <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
+        </div>
+        <div className="flex flex-col items-center gap-4 py-10 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-amber-500/12 text-amber-600">
+            <Lightbulb className="size-6" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-foreground">还有 {weakStepIds.size} 个表达需要再稳一下</p>
+            <p className="text-sm leading-6 text-muted-foreground">这些题刚才答错、跳过，或借助了完整答案。先集中再练一轮，再进入 VN 对话。</p>
+          </div>
+          <div className="w-full max-w-sm space-y-2 rounded-xl border bg-card p-3 text-left">
+            {weakRecords.slice(0, 5).map((record) => (
+              <div key={record.stepId} className="flex items-start gap-2 rounded-lg bg-muted/45 px-3 py-2">
+                <Badge variant={record.score === 'miss' ? 'destructive' : 'secondary'} className="mt-0.5 shrink-0 text-[10px]">
+                  {record.score}
+                </Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-foreground">{record.zh}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{record.answer}</p>
+                </div>
+              </div>
+            ))}
+            {weakRecords.length > 5 && (
+              <p className="px-1 text-[11px] text-muted-foreground">还有 {weakRecords.length - 5} 题会一起进入复练。</p>
+            )}
+          </div>
+          <div className="flex w-full max-w-sm gap-3">
+            <Button variant="outline" className="flex-1" onClick={resetForRepractice}>整组重练</Button>
+            <Button className="flex-1" onClick={startWeakReviewRound}>开始错题再练</Button>
+          </div>
         </div>
       </div>
     )
@@ -605,23 +701,55 @@ function GuidedWarmupPhase({
               {flatSteps.map((step, i) => {
                 const isDone = doneIds.has(step.id)
                 const isCurrent = i === currentIdx
+                const isPassiveStep = step.type === 'sentence_decomposition'
+                const score = warmupStore.stepStates[step.id]?.score
+                const statusLabel = isPassiveStep
+                  ? '阅读'
+                  : score === 'strong'
+                    ? '熟练'
+                    : score === 'ok'
+                      ? '通过'
+                      : score === 'weak'
+                        ? '待稳'
+                        : score === 'miss'
+                          ? '复练'
+                          : isDone
+                            ? '完成'
+                            : '未做'
                 return (
                   <button
                     key={step.id}
                     onClick={() => { setCurrentIdx(i); setPlaylistOpen(false) }}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                      'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
                       isCurrent ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
                     )}
                   >
                     <span className={cn(
-                      'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-medium',
-                      isDone ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary/20 text-primary' : 'bg-muted-foreground/10 text-muted-foreground',
+                      'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-medium',
+                      isCurrent ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground',
                     )}>
-                      {isDone ? <Check className="size-3.5" /> : i + 1}
+                      {isPassiveStep ? <BookOpen className="size-3" /> : i + 1}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{step.label}</span>
-                    {isDone && <CheckCircle2 className="size-3.5 shrink-0 text-green-500" />}
+                    <span className={cn(
+                      'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                      isPassiveStep
+                        ? 'bg-muted text-muted-foreground'
+                        : score === 'strong'
+                          ? 'bg-primary/10 text-primary'
+                          : score === 'ok'
+                            ? 'bg-primary/10 text-primary/80'
+                            : score === 'weak'
+                              ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                              : score === 'miss'
+                                ? 'bg-destructive/10 text-destructive'
+                                : isDone
+                                  ? 'bg-muted text-muted-foreground'
+                                  : 'bg-muted/60 text-muted-foreground',
+                    )}>
+                      {statusLabel}
+                    </span>
                   </button>
                 )
               })}
@@ -1610,7 +1738,7 @@ export function PracticeSessionPage() {
   if (phase === 'guided') {
     const metadataPipeline = detail?.topic?.metadata?.outputTraining?.pipeline ?? []
     const metadataItems = metadataPipeline.filter((item: any) =>
-      item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition'
+      item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition' || item.type === 'pattern_drill'
     )
 
     // Auto-generate warmup items from activeChunks with examples if no metadata pipeline

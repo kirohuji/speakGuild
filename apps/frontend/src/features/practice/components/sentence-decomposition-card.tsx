@@ -1,13 +1,11 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/cn'
-import { practiceAiApi } from '../api/english-practice-api'
+import type { WarmupScore } from '@/stores/warmup-session.store'
 
 interface DecompositionLevel {
   level: number
@@ -21,22 +19,20 @@ interface DecompositionLevel {
 interface SentenceDecompositionCardProps {
   title: string
   levels: DecompositionLevel[]
-  onComplete?: (passed: boolean) => void
+  stepId: string
+  onComplete?: (passed: boolean, score: WarmupScore) => void
 }
 
 /** 长句拆解 — 从简单句逐级扩展到复杂长句 */
 export function SentenceDecompositionCard({
   title,
   levels,
+  stepId,
   onComplete,
 }: SentenceDecompositionCardProps) {
   const { t } = useTranslation()
   const totalLevels = levels.length
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [userInput, setUserInput] = useState('')
-  const [status, setStatus] = useState<'idle' | 'judging' | 'passed' | 'failed'>('idle')
-  const [feedback, setFeedback] = useState('')
-  const [correction, setCorrection] = useState('')
 
   const current = levels[currentIdx]
   const previous = currentIdx > 0 ? levels[currentIdx - 1] : null
@@ -44,54 +40,18 @@ export function SentenceDecompositionCard({
   const isFirst = currentIdx === 0
   const isLast = currentIdx === totalLevels - 1
 
-  const submit = useCallback(async () => {
-    if (!userInput.trim() || !current || status === 'judging') return
-    setStatus('judging')
-    setFeedback('')
-    try {
-      const judgement = await practiceAiApi.judgeDialogueTurn({
-        topicId: '',
-        npcText: current.zh,
-        userText: userInput.trim(),
-        objectives: [`说出完整句子：${current.zh}`],
-        mode: 'targeted_output',
-        targetChunks: current.highlight ? [current.highlight] : [current.en],
-      })
-      if (judgement.passed) {
-        setStatus('passed')
-        setFeedback(judgement.feedback || t('practiceSession.passed'))
-        setTimeout(() => advance(), 1000)
-      } else {
-        setStatus('failed')
-        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
-        setCorrection(judgement.correction || current.en || '')
-      }
-    } catch (err: any) {
-      setStatus('failed')
-      setFeedback(err?.message || t('practiceVn.feedbackUnavailable'))
-    }
-  }, [userInput, current, status, t])
-
   const advance = useCallback(() => {
     if (currentIdx < totalLevels - 1) {
       setCurrentIdx(prev => prev + 1)
-      setStatus('idle')
-      setUserInput('')
-      setFeedback('')
-      setCorrection('')
     } else {
       setCurrentIdx(totalLevels)
-      onComplete?.(true)
+      onComplete?.(true, 'strong')
     }
   }, [currentIdx, totalLevels, onComplete])
 
   const goBack = useCallback(() => {
     if (currentIdx > 0) {
       setCurrentIdx(prev => prev - 1)
-      setStatus('idle')
-      setUserInput('')
-      setFeedback('')
-      setCorrection('')
     }
   }, [currentIdx])
 
@@ -153,7 +113,7 @@ export function SentenceDecompositionCard({
 
   return (
     <Card className="border-0 bg-muted/30 shadow-none">
-      <CardContent className="space-y-3 p-4">
+      <CardContent className="space-y-2.5 p-3">
         {/* Header */}
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-[10px]">{t('practiceSession.sentenceDecomposition')}</Badge>
@@ -173,7 +133,7 @@ export function SentenceDecompositionCard({
         {renderPreviousLine}
 
         {/* 本级 — 高亮新增 */}
-        <div className="rounded-md bg-primary/[0.04] px-3 py-2.5">
+        <div className="rounded-md bg-primary/[0.04] px-3 py-2">
           {renderCurrentLine()}
           <p className="mt-1.5 text-sm text-muted-foreground">{current.zh}</p>
           {current.hint && (
@@ -203,36 +163,6 @@ export function SentenceDecompositionCard({
             <ChevronRight className="size-4" />
           </Button>
         </div>
-
-        {/* Input */}
-        {/* <Textarea
-          value={userInput}
-          onChange={(e) => { setUserInput(e.target.value); setStatus('idle'); setFeedback('') }}
-          placeholder={current.zh}
-          className="min-h-[60px] resize-none rounded-xl border-0 bg-background/70 text-base"
-          disabled={status === 'judging' || status === 'passed'}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
-        /> */}
-
-        {/* Feedback */}
-        {feedback && (
-          <div className={cn('rounded-md px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
-            <div className="flex items-center gap-1.5">
-              {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
-              <p className="text-[11px] font-medium">{status === 'passed' ? t('practiceSession.passed') : t('practiceSession.tryAgain')}</p>
-            </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">{feedback}</p>
-            {correction && (
-              <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-400">{correction}</p>
-            )}
-          </div>
-        )}
-
-        {/* Submit */}
-        <Button className="w-full min-h-11" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
-          {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {status === 'judging' ? t('practiceVn.feedbackEvaluating') : status === 'passed' ? t('practiceSession.passed') : t('practiceSession.submit')}
-        </Button>
       </CardContent>
     </Card>
   )
