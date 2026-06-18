@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown } from 'lucide-react'
+import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -97,14 +97,17 @@ export function VocabOutputCard({
     setJudging(true)
     setResult(null)
     try {
+      const targetWords = current.targetWords ?? []
       const judgement = await practiceAiApi.judgeDialogueTurn({
         topicId: '',
         npcText: isZhToEn ? current.promptZh : (current.suggestedAnswer ?? current.promptZh),
         userText: userInput.trim(),
-        objectives: isZhToEn ? [current.promptZh] : [`理解英文：${current.suggestedAnswer ?? ''}`],
+        objectives: isZhToEn
+          ? [`自然使用目标词汇「${targetWords.join('、')}」表达：${current.promptZh}`]
+          : [`理解英文句子并说出中文：${current.suggestedAnswer ?? ''}`],
         mode: 'targeted_output',
         ...(isZhToEn
-          ? { targetWords: current.targetWords, targetChunks: current.suggestedAnswer ? [current.suggestedAnswer] : [] }
+          ? { targetWords }
           : {}),
       })
       const score = scoreFromHint(judgement.passed, hintLevel)
@@ -136,14 +139,17 @@ export function VocabOutputCard({
 
   if (!current) return null
 
-  const promptLabel = isZhToEn ? '用英文说出' : '用中文说出'
+  const promptLabel = isZhToEn ? '语境 / 中文意图' : '用中文说出'
   const displayText = isZhToEn ? current.promptZh : (current.suggestedAnswer ?? current.promptZh)
 
   return (
     <div className="space-y-2.5">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="text-[10px]">词汇</Badge>
+        <Badge variant="secondary" className="gap-1 text-[10px]">
+          <Layers3 className="size-3" />
+          一词多句
+        </Badge>
         <Badge variant="outline" className="text-[10px]">{title}</Badge>
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
       </div>
@@ -151,7 +157,7 @@ export function VocabOutputCard({
       {/* Target words */}
       {isZhToEn && current.targetWords?.length ? (
         <div className="rounded-lg bg-gradient-to-br from-blue-500/8 to-blue-500/3 px-3 py-2.5">
-          <p className="text-xs text-muted-foreground">目标词汇</p>
+          <p className="text-xs text-muted-foreground">这题要自然用到</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {current.targetWords.map((word) => (
               <span key={word} className="rounded-md bg-blue-500/15 px-2 py-1 text-sm font-medium text-blue-700 dark:text-blue-300">{word}</span>
@@ -164,6 +170,11 @@ export function VocabOutputCard({
       <div className="rounded-lg bg-muted/20 px-3 py-2.5">
         <p className="text-xs text-muted-foreground">{promptLabel}</p>
         <p className="text-base font-semibold text-foreground">{displayText}</p>
+        {isZhToEn && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            你可以写自己的句子，只要目标词用得自然、意思表达清楚。
+          </p>
+        )}
       </div>
 
       {/* Progressive hints */}
@@ -213,7 +224,7 @@ export function VocabOutputCard({
                 <summary className="flex cursor-pointer list-none items-center gap-1 hover:text-foreground">
                   <ChevronDown className="size-3" /> 学习说明
                 </summary>
-                <p className="mt-1">记住搭配，在不同场景复用这个表达。</p>
+                <p className="mt-1">目标是把同一个词放进不同语境里，而不是背这一句参考答案。</p>
               </details>
             )}
           </div>
@@ -224,7 +235,7 @@ export function VocabOutputCard({
       <Textarea
         value={userInput}
         onChange={(e) => { if (!result?.passed) { setUserInput(e.target.value); setResult(null) } }}
-        placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
+        placeholder={isZhToEn ? '用目标词写一句自然的英文...' : '输入中文...'}
         className="mx-2 min-h-[52px] w-[calc(100%-12px)] min-w-0 resize-none rounded-lg border-0 bg-background/70 px-4 text-base"
         disabled={judging || !!result?.passed}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}

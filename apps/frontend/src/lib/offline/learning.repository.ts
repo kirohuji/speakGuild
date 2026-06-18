@@ -44,6 +44,7 @@ async function aggregateUnitContent(unitDetail: any): Promise<any> {
         promptZh: detail.topic?.promptZh,
         difficulty: detail.topic?.difficulty,
         suggestedDurationSec: detail.topic?.suggestedDurationSec,
+        metadata: detail.topic?.metadata,
         activeChunks: (detail.activeChunks ?? []).slice(0, 3).map((c: any) => ({
           id: c.id,
           text: c.text,
@@ -122,6 +123,10 @@ export const learningRepository = {
     }
   },
 
+  async getCachedMyUnits(): Promise<MyUnit[]> {
+    return localDb.list<MyUnit>('my_learning_units')
+  },
+
   async refreshMyUnits(): Promise<MyUnit[]> {
     const remote = await learningApi.getMyUnits()
     await localDb.clear('my_learning_units')
@@ -143,6 +148,12 @@ export const learningRepository = {
       const cached = await localDb.get<any>('downloaded_unit_details', unitId)
       return cached ? aggregateUnitContent(cached) : null
     }
+  },
+
+  async getCachedUnitDetail(unitId: string): Promise<UnitDetail | null> {
+    if (!await isPackInstalled(unitId)) return null
+    const cached = await localDb.get<any>('downloaded_unit_details', unitId)
+    return cached ? aggregateUnitContent(cached) : null
   },
 
   async enrollUnit(unitId: string, unit?: LearningUnitSummary | UnitDetail | null): Promise<void> {

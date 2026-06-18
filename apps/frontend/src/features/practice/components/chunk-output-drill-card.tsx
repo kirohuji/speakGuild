@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Lightbulb, Eye, Loader2, CheckCircle2 } from 'lucide-react'
+import { Lightbulb, Eye, Loader2, CheckCircle2, Repeat2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -98,10 +98,12 @@ export function ChunkOutputDrillCard({
         topicId: '',
         npcText: isZhToEn ? current.zh : (current.answer ?? ''),
         userText: userInput.trim(),
-        objectives: isZhToEn ? [current.zh] : [`理解英文：${current.answer ?? ''}`],
+        objectives: isZhToEn
+          ? [`必须使用固定${kind === 'word' ? '词汇' : '句块'}「${chunk.text}」表达：${current.zh}`]
+          : [`理解并说出中文含义：${current.answer ?? ''}`],
         mode: 'targeted_output',
-        ...(isZhToEn && current.answer
-          ? { targetChunks: [current.answer], requiredChunks: [current.answer] }
+        ...(isZhToEn && chunk.text
+          ? { targetChunks: [chunk.text], requiredChunks: [chunk.text] }
           : {}),
       })
       const score = scoreFromHint(judgement.passed, hintLevel)
@@ -129,21 +131,24 @@ export function ChunkOutputDrillCard({
 
   if (!current) return null
 
-  const promptLabel = isZhToEn ? '用英文说出' : '用中文说出'
+  const promptLabel = isZhToEn ? '替换成完整英文句子' : '用中文说出'
   const displayText = isZhToEn ? current.zh : (current.answer ?? current.zh)
 
   return (
     <div className="space-y-2.5">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="text-[10px]">{kind === 'word' ? '单词' : '句块'}</Badge>
+        <Badge variant="secondary" className="gap-1 text-[10px]">
+          <Repeat2 className="size-3" />
+          {kind === 'word' ? '词汇替换' : '句块替换'}
+        </Badge>
         {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>}
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
       </div>
 
       {/* Chunk display  — highlighted target */}
       <div className="rounded-lg bg-gradient-to-br from-primary/8 to-primary/3 px-3 py-2.5">
-        <p className="text-xs text-muted-foreground">{kind === 'word' ? '核心词汇' : '核心句块'}</p>
+        <p className="text-xs text-muted-foreground">{kind === 'word' ? '必须使用这个词' : '必须使用这个句块'}</p>
         <p className="mt-0.5 text-base font-bold text-primary">{chunk.text}</p>
         {chunk.meaning && (
           <p className="mt-0.5 text-xs text-muted-foreground">{chunk.meaning}</p>
@@ -154,6 +159,11 @@ export function ChunkOutputDrillCard({
       <div className="rounded-lg bg-muted/20 px-3 py-2.5">
         <p className="text-xs text-muted-foreground">{promptLabel}</p>
         <p className="text-base font-semibold text-foreground">{displayText}</p>
+        {isZhToEn && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            重点不是背参考答案，而是把上面的固定表达套进新句子里。
+          </p>
+        )}
       </div>
 
       {/* Progressive hints */}
@@ -210,7 +220,7 @@ export function ChunkOutputDrillCard({
       <Textarea
         value={userInput}
         onChange={(e) => { if (status !== 'passed') { setUserInput(e.target.value); setStatus('idle'); setFeedback('') } }}
-        placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
+        placeholder={isZhToEn ? `写一句英文，必须包含「${chunk.text}」...` : '输入中文...'}
         className="mx-2 min-h-[52px] w-[calc(100%-12px)] min-w-0 resize-none rounded-lg border-0 bg-background/70 px-4 text-base"
         disabled={status === 'judging' || status === 'passed'}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}

@@ -28,6 +28,7 @@ interface Preferences {
   ttsBackend: TtsBackendSettings
   wifiOnlyMedia: boolean
   nativeSpeechRecognitionEnabled: boolean
+  dailyGoal: number
 }
 
 interface PreferencesStore extends Preferences {
@@ -40,6 +41,7 @@ interface PreferencesStore extends Preferences {
   setTtsBackend: (settings: Partial<TtsBackendSettings>) => void
   setWifiOnlyMedia: (value: boolean) => void
   setNativeSpeechRecognitionEnabled: (value: boolean) => void
+  setDailyGoal: (value: number) => void
 }
 
 export const DEFAULT_TTS: TtsSettings = {
@@ -68,6 +70,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       ttsBackend: DEFAULT_TTS_BACKEND,
       wifiOnlyMedia: true,
       nativeSpeechRecognitionEnabled: false,
+      dailyGoal: 20,
       setAutoPlay: (autoPlay) => set({ autoPlay }),
       setBgmEnabled: (bgmEnabled) => set({ bgmEnabled }),
       setBgmVolume: (bgmVolume) => set({ bgmVolume }),
@@ -82,6 +85,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
         set((state) => ({ ttsBackend: { ...state.ttsBackend, ...settings } })),
       setWifiOnlyMedia: (value) => set({ wifiOnlyMedia: value }),
       setNativeSpeechRecognitionEnabled: (value) => set({ nativeSpeechRecognitionEnabled: value }),
+      setDailyGoal: (value) => set({ dailyGoal: value }),
     }),
     { name: 'manyu-preferences' }
   )

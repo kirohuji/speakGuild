@@ -23,7 +23,6 @@ import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { compileInk } from '@/features/admin/components/ink-compiler'
 import { practiceApi, practiceAiApi, chunkApi, warmupRecordApi, type TopicDetail } from '../api/english-practice-api'
-import { WarmupHistoryDrawer } from '../components/warmup-history-drawer'
 import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { ChunkOutputDrillCard } from '../components/chunk-output-drill-card'
@@ -312,7 +311,6 @@ function GuidedWarmupPhase({
 
   // ── Store (must be before flatSteps) ──
   const warmupStore = useWarmupSessionStore()
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [assessing, setAssessing] = useState(false)
   const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
@@ -627,16 +625,12 @@ function GuidedWarmupPhase({
             </div>
           ) : null}
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setHistoryOpen(true)}>
-              <History className="size-4" /> 查看练习记录
-            </Button>
             <Button variant="outline" size="sm" onClick={resetForRepractice}>
               重新练习
             </Button>
             <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
           </div>
         </div>
-        <WarmupHistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} topicId={topicId} topicTitle={topicTitle} />
       </div>
     )
   }
@@ -784,7 +778,6 @@ export function PracticeSessionPage() {
   const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
   const [savingTexts, setSavingTexts] = useState<Set<string>>(new Set())
@@ -1714,11 +1707,6 @@ export function PracticeSessionPage() {
                 <Play className="mr-2 size-5" /> {t('practiceSession.startPractice')}
               </Button>
             )}
-            <div className="mt-3 text-center">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={() => setHistoryOpen(true)}>
-                <History className="size-3.5" /> 查看练习记录
-              </Button>
-            </div>
           </section>
         </div>
 
@@ -1729,7 +1717,6 @@ export function PracticeSessionPage() {
           onOpenChange={setInsightOpen}
           onIndexChange={setInsightIndex}
         />
-        <WarmupHistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} topicId={topicId} topicTitle={detail.topic.title} />
       </div>
     )
   }

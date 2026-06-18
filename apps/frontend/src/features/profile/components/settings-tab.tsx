@@ -30,12 +30,13 @@ export function SettingsTab() {
     setLanguage,
     nativeSpeechRecognitionEnabled,
     setNativeSpeechRecognitionEnabled,
+    dailyGoal,
+    setDailyGoal,
   } = usePreferencesStore()
   const { config } = useConfigStore()
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
   const [pronunciationType, setPronunciationType] = useState<'us' | 'uk'>('us')
   const [autoCopyWord, setAutoCopyWord] = useState(false)
-  const [dailyGoal, setDailyGoal] = useState('20')
   const [learningPreference, setLearningPreference] = useState('balanced')
   const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
   const handleLanguageChange = (lang: string) => {
@@ -146,12 +147,12 @@ export function SettingsTab() {
             <Label>{t('profile.dailyGoal')}</Label>
             <Select
               value={dailyGoal}
-              onChange={(e) => setDailyGoal(e.target.value)}
+              onChange={(e) => setDailyGoal(Number(e.target.value))}
               className="w-48"
             >
-              <SelectItem value="10">{t('profile.dailyGoal10')}</SelectItem>
-              <SelectItem value="20">{t('profile.dailyGoal20')}</SelectItem>
-              <SelectItem value="30">{t('profile.dailyGoal30')}</SelectItem>
+              <SelectItem value={10}>{t('profile.dailyGoal10')}</SelectItem>
+              <SelectItem value={20}>{t('profile.dailyGoal20')}</SelectItem>
+              <SelectItem value={30}>{t('profile.dailyGoal30')}</SelectItem>
             </Select>
           </div>
 

@@ -16,6 +16,7 @@ import { IosRow, IosSection } from '@/features/profile/components/ios-components
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { isNative, requestInAppReview } from '@/lib/native'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
+import { cn } from '@/lib/cn'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
 
 export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
@@ -29,6 +30,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setWifiOnlyMedia,
     nativeSpeechRecognitionEnabled,
     setNativeSpeechRecognitionEnabled,
+    dailyGoal,
+    setDailyGoal,
   } = usePreferencesStore()
   const { config } = useConfigStore()
   const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
@@ -176,6 +179,29 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   return (
     <div className="space-y-5">
       <IosSection>
+        <IosRow
+          label={t('profile.dailyGoal')}
+          subtitle={t(`profile.dailyGoal${dailyGoal}`)}
+          right={
+            <div className="flex rounded-full bg-muted p-0.5">
+              {[10, 20, 30].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDailyGoal(value)}
+                  className={cn(
+                    'h-7 min-w-9 rounded-full px-2 text-xs font-medium transition-colors',
+                    dailyGoal === value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          }
+        />
         {nativeSpeechRecognitionAvailable && (
           <IosRow
             label={t('profile.nativeSpeechRecognition')}
