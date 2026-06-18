@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, Braces } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
+import { useWarmupSessionStore } from '@/stores/warmup-session.store'
 
 type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 type HintLevel = 'none' | 'hint' | 'answer'
@@ -15,10 +15,10 @@ interface PatternDrillCardProps {
   pattern: string
   patternMeaning?: string
   items: { zh: string; answer?: string; hint?: string }[]
+  stepId: string
   groupTitle?: string
   direction?: DrillDirection
   onComplete?: (itemIndex: number, passed: boolean) => void
-  onRecord?: (data: { stepType: string; zh: string; answer: string; userAnswer: string; passed: boolean; feedback: string; groupTitle?: string }) => void
 }
 
 /** 高亮答案中的句型 key words */
@@ -39,18 +39,19 @@ export function PatternDrillCard({
   pattern,
   patternMeaning,
   items,
+  stepId,
   groupTitle,
   direction = 'zh_to_en',
   onComplete,
-  onRecord,
 }: PatternDrillCardProps) {
-  const { t } = useTranslation()
+  const store = useWarmupSessionStore()
+  const saved = store.stepStates[stepId]
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [userInput, setUserInput] = useState('')
-  const [status, setStatus] = useState<DrillStatus>('idle')
-  const [feedback, setFeedback] = useState('')
-  const [correction, setCorrection] = useState('')
-  const [hintLevel, setHintLevel] = useState<HintLevel>('none')
+  const [userInput, setUserInput] = useState(saved?.userAnswer ?? '')
+  const [status, setStatus] = useState<DrillStatus>(saved?.status ?? 'idle')
+  const [feedback, setFeedback] = useState(saved?.feedback ?? '')
+  const [correction, setCorrection] = useState(saved?.correction ?? '')
+  const [hintLevel, setHintLevel] = useState<HintLevel>(saved?.hintLevel ?? 'none')
 
   const current = items[currentIdx]
   const totalItems = items.length
@@ -82,12 +83,13 @@ export function PatternDrillCard({
         setFeedback(judgement.feedback || '正确！')
         setHintLevel('answer')
         onComplete?.(currentIdx, true)
-        onRecord?.({ stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '' })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
-        onRecord?.({ stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '' })
       }
     } catch (err: any) {
       setStatus('failed')
@@ -95,16 +97,6 @@ export function PatternDrillCard({
     }
   }, [userInput, current, status, currentIdx, isZhToEn, pattern, onComplete])
 
-  const advance = useCallback(() => {
-    setStatus('idle')
-    setUserInput('')
-    setFeedback('')
-    setCorrection('')
-    setHintLevel('none')
-    if (currentIdx < totalItems - 1) {
-      setCurrentIdx(prev => prev + 1)
-    }
-  }, [currentIdx, totalItems])
 
   if (!current) return null
 
@@ -190,17 +182,11 @@ export function PatternDrillCard({
         </div>
       )}
 
-      {/* Actions */}
-      {status === 'passed' ? (
-        <Button className="w-full min-h-11 rounded-xl" onClick={advance}>
-          {currentIdx < totalItems - 1 ? '下一题' : '完成'}
-        </Button>
-      ) : (
-        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || !userInput.trim()}>
-          {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {status === 'judging' ? '评判中...' : '提交'}
-        </Button>
-      )}
+      {/* Submit */}
+      <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
+        {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+        {status === 'judging' ? '评判中...' : status === 'passed' ? '已通过' : '提交'}
+      </Button>
     </div>
   )
 }

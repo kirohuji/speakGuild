@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
+import { useWarmupSessionStore, type WarmupStepState } from '@/stores/warmup-session.store'
 
 interface VocabDrillSubItem {
   vocabId: string
@@ -19,9 +19,9 @@ interface VocabDrillSubItem {
 interface VocabOutputCardProps {
   title: string
   vocabs: VocabDrillSubItem[]
+  stepId: string
   direction?: DrillDirection
   onComplete?: (index: number, passed: boolean) => void
-  onRecord?: (data: { stepType: string; zh: string; answer: string; userAnswer: string; passed: boolean; feedback: string; groupTitle?: string }) => void
 }
 
 /** 高亮目标词汇 */
@@ -42,16 +42,19 @@ function highlightWords(text: string, words: string[]) {
 export function VocabOutputCard({
   title,
   vocabs,
+  stepId,
   direction = 'zh_to_en',
   onComplete,
-  onRecord,
 }: VocabOutputCardProps) {
-  const { t } = useTranslation()
+  const store = useWarmupSessionStore()
+  const saved = store.stepStates[stepId]
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [userInput, setUserInput] = useState('')
+  const [userInput, setUserInput] = useState(saved?.userAnswer ?? '')
   const [judging, setJudging] = useState(false)
-  const [result, setResult] = useState<{ passed: boolean; feedback: string; correction?: string } | null>(null)
-  const [hintLevel, setHintLevel] = useState<'none' | 'hint' | 'answer'>('none')
+  const [result, setResult] = useState<{ passed: boolean; feedback: string; correction?: string } | null>(
+    saved ? { passed: saved.status === 'passed', feedback: saved.feedback, correction: saved.correction } : null
+  )
+  const [hintLevel, setHintLevel] = useState<'none' | 'hint' | 'answer'>((saved?.hintLevel as any) ?? 'none')
 
   const current = vocabs[currentIdx]
   const totalItems = vocabs.length
@@ -83,17 +86,18 @@ export function VocabOutputCard({
         setResult({ passed: true, feedback: judgement.feedback || '正确！' })
         setHintLevel('answer')
         onComplete?.(currentIdx, true)
-        onRecord?.({ stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle: title })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '' })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle: title })
       } else {
         setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || current.suggestedAnswer || '' })
-        onRecord?.({ stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle: title })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '' })
       }
     } catch (err: any) {
-      setResult({ passed: false, feedback: err?.message || t('practiceVn.feedbackUnavailable') })
+      setResult({ passed: false, feedback: err?.message || '反馈不可用' })
     } finally {
       setJudging(false)
     }
-  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, t])
+  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, stepId, store, title])
 
   const advance = useCallback(() => {
     setResult(null)
@@ -200,17 +204,11 @@ export function VocabOutputCard({
         </div>
       )}
 
-      {/* Actions */}
-      {result?.passed ? (
-        <Button className="w-full min-h-11 rounded-xl" onClick={advance}>
-          {currentIdx < totalItems - 1 ? '下一题' : '完成'}
-        </Button>
-      ) : (
-        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={judging || !userInput.trim()}>
-          {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {judging ? '评判中...' : '提交'}
-        </Button>
-      )}
+      {/* Submit */}
+      <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={judging || !!result?.passed || !userInput.trim()}>
+        {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+        {judging ? '评判中...' : result?.passed ? '已通过' : '提交'}
+      </Button>
     </div>
   )
 }

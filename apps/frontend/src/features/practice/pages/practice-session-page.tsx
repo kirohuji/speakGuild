@@ -31,6 +31,7 @@ import { VocabOutputCard } from '../components/vocab-output-card'
 import { SentenceDecompositionCard } from '../components/sentence-decomposition-card'
 import { PatternDrillCard } from '../components/pattern-drill-card'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
+import { useWarmupSessionStore } from '@/stores/warmup-session.store'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -309,6 +310,15 @@ function GuidedWarmupPhase({
   const { t } = useTranslation()
   const storageKey = `guided-progress:${topicId}`
 
+  // ── Store (must be before flatSteps) ──
+  const warmupStore = useWarmupSessionStore()
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [assessing, setAssessing] = useState(false)
+  const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
+
+  // Clear session on mount (only once)
+  useEffect(() => { warmupStore.clearSession() }, [])
+
   // ── Flatten all warmup items into individual steps ──
   interface FlatStep {
     id: string
@@ -327,17 +337,20 @@ function GuidedWarmupPhase({
             id: `${item.id}_${subIdx}`,
             type: 'chunk_substitution',
             label: `${item.title} (${dirLabel})`,
-            render: () => (
-              <ChunkOutputDrillCard
-                chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
-                items={[sub]}
-                direction={item.direction ?? 'zh_to_en'}
-                kind={item.kind ?? 'chunk'}
-                groupTitle={item.title}
-                onComplete={(_subIdx, _passed) => markDone(`${item.id}_${subIdx}`)}
-                onRecord={recordAnswer}
-              />
-            ),
+            render: () => {
+              const stepId = `${item.id}_${subIdx}`
+              return (
+                <ChunkOutputDrillCard
+                  chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
+                  items={[sub]}
+                  stepId={stepId}
+                  direction={item.direction ?? 'zh_to_en'}
+                  kind={item.kind ?? 'chunk'}
+                  groupTitle={item.title}
+                  onComplete={(_subIdx, _passed) => markDone(stepId)}
+                />
+              )
+            },
           })
         }
       } else if (item.type === 'vocab_drill') {
@@ -346,15 +359,18 @@ function GuidedWarmupPhase({
             id: `${item.id}_${vIdx}`,
             type: 'vocab_drill',
             label: `${item.title}: ${v.targetWords?.join(', ') || v.promptZh?.slice(0, 20)}`,
-            render: () => (
-              <VocabOutputCard
-                title={item.title}
-                direction={item.direction ?? 'zh_to_en'}
-                vocabs={[v]}
-                onComplete={(_idx, _passed) => markDone(`${item.id}_${vIdx}`)}
-                onRecord={recordAnswer}
-              />
-            ),
+            render: () => {
+              const stepId = `${item.id}_${vIdx}`
+              return (
+                <VocabOutputCard
+                  title={item.title}
+                  stepId={stepId}
+                  direction={item.direction ?? 'zh_to_en'}
+                  vocabs={[v]}
+                  onComplete={(_idx, _passed) => markDone(stepId)}
+                />
+              )
+            },
           })
         }
       } else if (item.type === 'vocab_sentence_building') {
@@ -369,10 +385,10 @@ function GuidedWarmupPhase({
                 <ChunkOutputDrillCard
                   chunk={{ text: pattern.chunk }}
                   items={[sub]}
+                  stepId={flatId}
                   direction={item.direction ?? 'zh_to_en'}
                   groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
                   onComplete={(_subIdx, _passed) => markDone(flatId)}
-                  onRecord={recordAnswer}
                 />
               ),
             })
@@ -398,23 +414,26 @@ function GuidedWarmupPhase({
             id: `${item.id}_${subIdx}`,
             type: 'pattern_drill',
             label: `${item.title} (${dirLabel})`,
-            render: () => (
-              <PatternDrillCard
-                pattern={item.pattern}
-                patternMeaning={item.patternMeaning}
-                items={[sub]}
-                direction={item.direction ?? 'zh_to_en'}
-                groupTitle={item.title}
-                onComplete={(_subIdx, _passed) => markDone(`${item.id}_${subIdx}`)}
-                onRecord={recordAnswer}
-              />
-            ),
+            render: () => {
+              const stepId = `${item.id}_${subIdx}`
+              return (
+                <PatternDrillCard
+                  pattern={item.pattern}
+                  patternMeaning={item.patternMeaning}
+                  items={[sub]}
+                  stepId={stepId}
+                  direction={item.direction ?? 'zh_to_en'}
+                  groupTitle={item.title}
+                  onComplete={(_subIdx, _passed) => markDone(stepId)}
+                />
+              )
+            },
           })
         }
       }
     }
     return steps
-  }, [warmupItems])
+  }, [warmupItems, warmupStore.stepStates])
 
   const totalSteps = flatSteps.length
 
@@ -425,16 +444,6 @@ function GuidedWarmupPhase({
       return new Set<string>()
     } catch { return new Set<string>() }
   })
-
-  // ── Answer recording for practice history ──
-  const answerLogRef = useRef<any[]>([])
-  const [historyOpen, setHistoryOpen] = useState(false)
-  const [assessing, setAssessing] = useState(false)
-  const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
-
-  const recordAnswer = useCallback((data: any) => {
-    answerLogRef.current.push(data)
-  }, [])
 
   const persistDone = useCallback((ids: Set<string>) => {
     try { localStorage.setItem(storageKey, JSON.stringify([...ids])) } catch {}
@@ -452,13 +461,23 @@ function GuidedWarmupPhase({
   const doneCount = doneIds.size
   const allDone = totalSteps > 0 && doneCount >= totalSteps
 
+  // ── Reset for re-practice ──
+  const resetForRepractice = useCallback(() => {
+    setDoneIds(new Set())
+    try { localStorage.removeItem(storageKey) } catch {}
+    warmupStore.clearSession()
+    setLastAssessment(null)
+  }, [storageKey, warmupStore])
+
   // ── AI assess when all done ──
   useEffect(() => {
-    if (allDone && answerLogRef.current.length > 0 && !assessing && !lastAssessment) {
+    if (allDone && !assessing && !lastAssessment) {
+      const records = warmupStore.getAssessmentRecords()
+      if (records.length === 0) return
       setAssessing(true)
-      warmupRecordApi.assess(topicId, topicTitle, [...answerLogRef.current])
+      warmupRecordApi.assess(topicId, topicTitle, records)
         .then((res) => setLastAssessment(res))
-        .catch(() => {})
+        .catch(() => setLastAssessment({ score: 0, feedback: '' }))
         .finally(() => setAssessing(false))
     }
   }, [allDone, topicId, topicTitle, assessing, lastAssessment])
@@ -515,6 +534,9 @@ function GuidedWarmupPhase({
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setHistoryOpen(true)}>
               <History className="size-4" /> 查看练习记录
             </Button>
+            <Button variant="outline" size="sm" onClick={resetForRepractice}>
+              重新练习
+            </Button>
             <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
           </div>
         </div>
@@ -538,7 +560,9 @@ function GuidedWarmupPhase({
 
       {/* Current card — scrollable */}
       <div className="min-h-0 flex-1 overflow-y-auto pb-4">
-        {flatSteps[currentIdx]?.render() ?? null}
+        <div key={flatSteps[currentIdx]?.id}>
+          {flatSteps[currentIdx]?.render() ?? null}
+        </div>
       </div>
 
       {/* Bottom nav — fixed at bottom like LearningInsightDialog */}

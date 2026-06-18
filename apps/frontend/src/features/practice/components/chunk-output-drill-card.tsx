@@ -1,12 +1,12 @@
 import { useState, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronRight } from 'lucide-react'
+import { Lightbulb, Eye, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
+import { useWarmupSessionStore } from '@/stores/warmup-session.store'
 
 type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 type HintLevel = 'none' | 'hint' | 'answer'
@@ -14,11 +14,11 @@ type HintLevel = 'none' | 'hint' | 'answer'
 interface ChunkOutputDrillCardProps {
   chunk: { text: string; meaning?: string; description?: string | null }
   items: { zh: string; answer?: string; hint?: string }[]
+  stepId: string
   groupTitle?: string
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
   onComplete?: (itemIndex: number, passed: boolean) => void
-  onRecord?: (data: { stepType: string; zh: string; answer: string; userAnswer: string; passed: boolean; feedback: string; groupTitle?: string }) => void
 }
 
 /** 在文本中高亮目标词/句块 */
@@ -36,19 +36,20 @@ function highlightChunk(text: string, target: string) {
 export function ChunkOutputDrillCard({
   chunk,
   items,
+  stepId,
   groupTitle,
   direction = 'zh_to_en',
   kind = 'chunk',
   onComplete,
-  onRecord,
 }: ChunkOutputDrillCardProps) {
-  const { t } = useTranslation()
+  const store = useWarmupSessionStore()
+  const saved = store.stepStates[stepId]
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [userInput, setUserInput] = useState('')
-  const [status, setStatus] = useState<DrillStatus>('idle')
-  const [feedback, setFeedback] = useState('')
-  const [correction, setCorrection] = useState('')
-  const [hintLevel, setHintLevel] = useState<HintLevel>('none')
+  const [userInput, setUserInput] = useState(saved?.userAnswer ?? '')
+  const [status, setStatus] = useState<DrillStatus>(saved?.status ?? 'idle')
+  const [feedback, setFeedback] = useState(saved?.feedback ?? '')
+  const [correction, setCorrection] = useState(saved?.correction ?? '')
+  const [hintLevel, setHintLevel] = useState<HintLevel>(saved?.hintLevel ?? 'none')
 
   const current = items[currentIdx]
   const totalItems = items.length
@@ -83,12 +84,13 @@ export function ChunkOutputDrillCard({
         setFeedback(judgement.feedback || '正确！')
         setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true)
-        onRecord?.({ stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '' })
+        store.recordEntry({ stepId, stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
-        onRecord?.({ stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '' })
       }
     } catch (err: any) {
       setStatus('failed')
@@ -96,17 +98,6 @@ export function ChunkOutputDrillCard({
     }
   }, [userInput, current, status, currentIdx, isZhToEn, onComplete])
 
-  // ── 前进（手动触发） ──
-  const advance = useCallback(() => {
-    setStatus('idle')
-    setUserInput('')
-    setFeedback('')
-    setCorrection('')
-    setHintLevel('none')
-    if (currentIdx < totalItems - 1) {
-      setCurrentIdx(prev => prev + 1)
-    }
-  }, [currentIdx, totalItems])
 
   if (!current) return null
 
@@ -212,19 +203,11 @@ export function ChunkOutputDrillCard({
         </div>
       )}
 
-      {/* Actions */}
-      {status === 'passed' ? (
-        <div className="flex gap-2">
-          <Button className="flex-1 min-h-11 rounded-xl" variant="default" onClick={advance}>
-            {currentIdx < totalItems - 1 ? '下一题' : '完成'}
-          </Button>
-        </div>
-      ) : (
-        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || !userInput.trim()}>
-          {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {status === 'judging' ? '评判中...' : '提交'}
-        </Button>
-      )}
+      {/* Submit */}
+      <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
+        {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+        {status === 'judging' ? '评判中...' : status === 'passed' ? '已通过' : '提交'}
+      </Button>
     </div>
   )
 }

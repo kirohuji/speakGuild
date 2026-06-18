@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { requireAuthSession } from '../auth/session.util';
 import { WarmupRecordService } from './warmup-record.service';
 
-@Controller('api/v1/manyu/practice/warmup-records')
+@Controller('practice/warmup-records')
 export class WarmupRecordController {
   constructor(private readonly service: WarmupRecordService) {}
 

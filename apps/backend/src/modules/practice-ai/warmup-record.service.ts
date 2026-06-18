@@ -26,9 +26,9 @@ export class WarmupRecordService {
     });
 
     // Fetch topic titles
-    const topicIds = [...new Set(records.map((r: any) => r.topicId))];
+    const topicIds = Array.from(new Set(records.map((r: any) => (r.topicId as string)))) as string[];
     const topics = await this.prisma.trainingTopic.findMany({
-      where: { id: { in: topicIds } },
+      where: { id: { in: topicIds as string[] } },
       select: { id: true, title: true },
     });
     const titleMap = new Map(topics.map(t => [t.id, t.title]));
