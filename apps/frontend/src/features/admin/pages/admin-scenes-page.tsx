@@ -4,7 +4,7 @@ import {
   ChevronRight, X, Code2, Type, BookOpen,
   Volume2, Sparkles, ExternalLink, Loader2,
   CheckCircle2, Link2, Clock3, FileText, Settings2,
-  Film, Target, Dumbbell,
+  Film, Target, Dumbbell, Upload, Download, FileArchive, RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +41,7 @@ import {
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
+import { packageDataAdminApi } from '../api-package-data'
 
 function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'exam') return '考试'
@@ -1277,6 +1278,11 @@ export function AdminScenesPage() {
   const [categories, setCategories] = useState<SceneCategory[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
   const [chunks, setChunks] = useState<Chunk[]>([])
+  // 数据包导入/导出
+  const uploadRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [exportingId, setExportingId] = useState<string | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [selectedPackageType, setSelectedPackageType] = useState<Scene['packageType']>('daily')
@@ -1393,9 +1399,40 @@ export function AdminScenesPage() {
           <CardTitle className="text-base flex items-center gap-2">
             <MapPin className="size-4" /> 学习包列表 ({scenes.length})
           </CardTitle>
-          <Button size="sm" variant="outline" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
-            <Plus className="size-3.5 mr-1" /> 新增学习包
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={uploadRef}
+              type="file"
+              accept=".zip"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setUploading(true)
+                // 从文件名推断包目录名：去掉 .zip 后缀
+                const pkgName = file.name.replace(/\.zip$/, '')
+                if (!pkgName) { toast.error('无法识别文件名'); setUploading(false); return }
+                try {
+                  const res = await packageDataAdminApi.import(file, pkgName)
+                  toast.success(`导入成功：${res.data?.sceneTitle ?? pkgName}（词汇${res.data?.vocabCount} 话题${res.data?.topicCount}）`)
+                  load()
+                } catch (err: any) {
+                  toast.error(err?.response?.data?.message || err?.message || '导入失败')
+                } finally {
+                  setUploading(false)
+                  if (uploadRef.current) uploadRef.current.value = ''
+                }
+              }}
+            />
+            <Button size="sm" variant="outline" disabled={uploading}
+              onClick={() => uploadRef.current?.click()}>
+              {uploading ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Upload className="size-3.5 mr-1" />}
+              上传数据包
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
+              <Plus className="size-3.5 mr-1" /> 新增学习包
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -1451,6 +1488,58 @@ export function AdminScenesPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="size-8" title="导出数据包"
+                            disabled={exportingId === s.id}
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              setExportingId(s.id)
+                              try {
+                                const buffer = await packageDataAdminApi.export(s.id)
+                                const blob = new Blob([buffer], { type: 'application/zip' })
+                                const url = URL.createObjectURL(blob)
+                                const link = document.createElement('a')
+                                link.href = url
+                                link.download = `${s.packageType || 'daily'}-${(s.title || s.id).replace(/[^a-z0-9]+/g, '-').substring(0, 40)}.zip`
+                                document.body.appendChild(link)
+                                link.click()
+                                link.remove()
+                                URL.revokeObjectURL(url)
+                                toast.success('导出成功')
+                              } catch (err: any) {
+                                toast.error(err?.message || '导出失败')
+                              } finally {
+                                setExportingId(null)
+                              }
+                            }}>
+                            {exportingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="size-8" title="重新上传覆盖数据"
+                            disabled={updatingId === s.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const titleSlug = s.title?.replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/-+$/g, '') || s.id
+                              const pkgName = `${s.packageType || 'daily'}-${titleSlug}`
+                              const input = document.createElement('input')
+                              input.type = 'file'
+                              input.accept = '.zip'
+                              input.onchange = async () => {
+                                const file = input.files?.[0]
+                                if (!file) return
+                                setUpdatingId(s.id)
+                                try {
+                                  const res = await packageDataAdminApi.import(file, pkgName)
+                                  toast.success(`已覆盖：${res.data?.sceneTitle ?? pkgName}`)
+                                  load()
+                                } catch (err: any) {
+                                  toast.error(err?.response?.data?.message || err?.message || '更新失败')
+                                } finally {
+                                  setUpdatingId(null)
+                                }
+                              }
+                              input.click()
+                            }}>
+                            {updatingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                          </Button>
                           <Button size="icon" variant="ghost" className="size-8"
                             onClick={(e) => { e.stopPropagation(); setEditScene(s); setSceneDialog(true) }}>
                             <Edit3 className="size-3.5" />

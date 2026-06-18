@@ -213,10 +213,14 @@ async function main() {
   await seedInit(prisma)
 
   // ══════════════════════════════════════════════════════
-  // 第三阶段：学习包（按场景分类组织的内容数据）
+  // 第三阶段：学习包（已改为后台管理页面上传 ZIP 导入）
   // ══════════════════════════════════════════════════════
-  console.log('\n🌱 第三阶段：学习包')
-  await seedLearningPackages(prisma, targetPackage)
+  // ⚠️ 以下代码已注释，改用后台 UI：
+  //    http://localhost:5173/#/admin/learning-content → 上传数据包
+  //    导出后修改 CSV → 再上传即可覆盖
+  //   如需命令行导入单个包，仍可使用 SEED_PACKAGE 环境变量
+  console.log('\n🌱 第三阶段：学习包（跳过，请通过后台管理页面上传 ZIP 导入）')
+  // await seedLearningPackages(prisma, targetPackage)
 
 
   console.log('\n🎉 Seed complete!')
