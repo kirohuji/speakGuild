@@ -2,11 +2,11 @@ import { useState, useCallback, useMemo } from 'react'
 import { Lightbulb, Eye, Loader2, CheckCircle2, Braces } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import { PracticeAnswerInput } from './practice-answer-input'
 
 type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 type HintLevel = 'none' | 'hint' | 'answer'
@@ -206,13 +206,12 @@ export function PatternDrillCard({
       </div>
 
       {/* Input area — persist on success */}
-      <Textarea
+      <PracticeAnswerInput
         value={userInput}
-        onChange={(e) => { if (status !== 'passed') { setUserInput(e.target.value); setStatus('idle'); setFeedback('') } }}
+        onChange={(nextValue) => { if (status !== 'passed') { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
-        className="mx-2 min-h-[52px] w-[calc(100%-12px)] min-w-0 resize-none rounded-lg border-0 bg-background/70 px-4 text-base"
         disabled={status === 'judging' || status === 'passed'}
-        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
+        onEnter={submit}
       />
 
       {/* Feedback */}

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, FileText, CheckCircle2, XCircle, Clock3, Target, History } from 'lucide-react'
+import { ChevronDown, FileText, CheckCircle2, XCircle, Clock3, Target, History, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Drawer, DrawerContent, DrawerTitle,
 } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { warmupRecordApi, type WarmupRecord } from '../api/english-practice-api'
 
@@ -28,6 +29,7 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
   const [records, setRecords] = useState<WarmupRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [replayItem, setReplayItem] = useState<any | null>(null)
 
   useEffect(() => {
     if (open && topicId) {
@@ -129,11 +131,29 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                                 <p className="text-xs">答案: <span className="text-green-600 dark:text-green-400">{item.answer || item.suggestedAnswer}</span></p>
                               ) : null}
                               {item.userAnswer && (
-                                <p className="text-xs">你的回答: <span className={cn(item.passed ? 'text-green-600' : 'text-red-500')}>{item.userAnswer}</span></p>
+                                <div>
+                                  <p className="mb-1 text-[10px] text-muted-foreground">你的回答</p>
+                                  <div className={cn(
+                                    'min-h-[52px] rounded-lg bg-muted/30 px-3 py-2 text-sm leading-6',
+                                    item.passed ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-300',
+                                  )}>
+                                    {item.userAnswer}
+                                  </div>
+                                </div>
                               )}
                               {item.feedback && (
                                 <p className="text-[10px] text-muted-foreground/70 italic">{item.feedback}</p>
                               )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-full justify-between rounded-lg px-2 text-xs"
+                                onClick={() => setReplayItem({ ...item, index: idx })}
+                              >
+                                回放此题
+                                <ChevronRight className="size-3.5" />
+                              </Button>
                             </div>
                           ))}
                         </div>
@@ -146,6 +166,62 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
           )}
         </ScrollArea>
       </DrawerContent>
+      <Dialog open={!!replayItem} onOpenChange={(nextOpen) => { if (!nextOpen) setReplayItem(null) }}>
+        <DialogContent className="!z-[10001] w-[calc(100vw-2rem)] max-w-md rounded-2xl p-0 [&>button]:hidden">
+          <DialogTitle className="sr-only">知识点练习回放</DialogTitle>
+          <DialogDescription className="sr-only">查看题目、用户回答与 AI 反馈</DialogDescription>
+          {replayItem && (
+            <div className="overflow-hidden rounded-2xl">
+              <div className="border-b border-border/60 bg-muted/20 px-5 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Badge variant="secondary" className="text-[10px]">{typeLabel(replayItem)}</Badge>
+                    <h2 className="mt-2 truncate text-base font-semibold text-foreground">
+                      {replayItem.groupTitle || topicTitle}
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplayItem(null)}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/70 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                  >
+                    <ChevronDown className="size-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-3 px-5 py-4">
+                <div className="rounded-lg bg-muted/20 px-3 py-2.5">
+                  <p className="text-xs text-muted-foreground">题目</p>
+                  <p className="mt-1 text-base font-semibold text-foreground">{replayItem.zh || replayItem.promptZh}</p>
+                </div>
+                {(replayItem.answer || replayItem.suggestedAnswer || replayItem.correction) && (
+                  <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
+                    <p className="text-[10px] text-muted-foreground">参考答案</p>
+                    <p className="mt-1 text-sm font-medium text-foreground">
+                      {replayItem.answer || replayItem.suggestedAnswer || replayItem.correction}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className="mb-1.5 text-xs text-muted-foreground">你的回答</p>
+                  <div className="min-h-[72px] rounded-lg bg-background/70 px-3 py-2 text-base leading-6 ring-1 ring-border/45">
+                    {replayItem.userAnswer || '未作答'}
+                  </div>
+                </div>
+                {replayItem.feedback && (
+                  <div className={cn('rounded-lg px-3 py-2.5', replayItem.passed ? 'bg-green-500/10' : 'bg-amber-500/10')}>
+                    <div className="flex items-center gap-1.5">
+                      {replayItem.passed ? <CheckCircle2 className="size-3.5 text-green-500" /> : <XCircle className="size-3.5 text-amber-500" />}
+                      <p className="text-xs font-medium">{replayItem.passed ? '正确！' : '反馈'}</p>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{replayItem.feedback}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Drawer>
   )
 }

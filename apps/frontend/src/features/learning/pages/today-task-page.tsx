@@ -48,6 +48,14 @@ export type PracticeItem = {
   render: () => React.ReactNode
 }
 
+type PracticeGroup = {
+  type: string
+  meta: { label: string; icon: typeof BookText; color: string }
+  steps: Array<{ step: PracticeItem; index: number }>
+  doneCount: number
+  totalCount: number
+}
+
 // ── 工具函数 ──
 function pickOne<T>(items: T[] | undefined): [T, number] | null {
   if (!items?.length) return null
@@ -401,6 +409,45 @@ export function TodayTaskPage() {
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
   const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
 
+  const groupedSteps = useMemo<PracticeGroup[]>(() => {
+    const order = new Map<string, PracticeGroup>()
+    steps.forEach((step, index) => {
+      const meta = TYPE_META[step.type] ?? {
+        label: step.displayLabel || '知识点',
+        icon: MessageSquareText,
+        color: 'bg-primary/10 text-primary',
+      }
+      const group = order.get(step.type) ?? {
+        type: step.type,
+        meta,
+        steps: [],
+        doneCount: 0,
+        totalCount: 0,
+      }
+      group.steps.push({ step, index })
+      group.totalCount += 1
+      if (doneIds.has(step.id)) group.doneCount += 1
+      order.set(step.type, group)
+    })
+    return Array.from(order.values())
+  }, [doneIds, steps])
+
+  const openStepAt = useCallback((index: number) => {
+    const step = steps[index]
+    if (!step) return
+    setCurrentIdx(index)
+    if (step.id.startsWith('placeholder:')) {
+      markDone(step.id, 'ok')
+    } else {
+      setDrawerOpen(true)
+    }
+  }, [markDone, steps])
+
+  const openGroup = useCallback((group: PracticeGroup) => {
+    const target = group.steps.find(({ step }) => !doneIds.has(step.id)) ?? group.steps[0]
+    if (target) openStepAt(target.index)
+  }, [doneIds, openStepAt])
+
   // ── 今日练习记录 ──
   const todayRecords = warmupStore.records
 
@@ -482,46 +529,63 @@ export function TodayTaskPage() {
 
       {/* ── 练习卡片列表 ── */}
       <div className="space-y-2.5">
-        {steps.map((step, index) => {
-          const meta = TYPE_META[step.type] ?? {
-            label: '知识点',
-            icon: MessageSquareText,
-            color: 'bg-primary/10 text-primary',
-          }
-          const Icon = meta.icon
-          const isDone = doneIds.has(step.id)
+        {groupedSteps.map((group) => {
+          const Icon = group.meta.icon
+          const isDone = group.doneCount === group.totalCount
+          const examples = group.steps
+            .map(({ step }) => step.headerContent || step.label)
+            .filter(Boolean)
+            .slice(0, 3)
 
           return (
             <Card
-              key={step.id}
+              key={group.type}
               className={cn(
                 'cursor-pointer border-0 bg-muted/30 shadow-none transition-all active:scale-[0.98]',
                 isDone && 'opacity-60',
               )}
-              onClick={() => {
-                setCurrentIdx(index)
-                if (step.id.startsWith('placeholder:')) {
-                  markDone(step.id, 'ok')
-                } else {
-                  setDrawerOpen(true)
-                }
-              }}
+              onClick={() => openGroup(group)}
             >
-              <CardContent className="flex items-center gap-3 p-3.5">
-                <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-lg', meta.color)}>
+              <CardContent className="flex items-start gap-3 p-3.5">
+                <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-lg', group.meta.color)}>
                   {isDone ? <CheckCircle2 className="size-5 text-green-500" /> : <Icon className="size-5" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={cn('truncate text-sm font-medium', isDone ? 'text-muted-foreground line-through' : 'text-foreground')}>
-                    {step.displayLabel}
-                  </p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className={cn('truncate text-sm font-semibold', isDone ? 'text-muted-foreground line-through' : 'text-foreground')}>
+                      {group.meta.label}
+                    </p>
+                    <Badge variant={isDone ? 'default' : 'secondary'} className="h-5 shrink-0 rounded-full px-2 text-[10px]">
+                      {group.doneCount}/{group.totalCount}
+                    </Badge>
+                  </div>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {step.topicTitle} · {step.label}
+                    {examples.join(' · ') || `${group.totalCount} 道练习`}
                   </p>
+                  {group.totalCount > 1 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {group.steps.slice(0, 4).map(({ step }, itemIndex) => (
+                        <span
+                          key={step.id}
+                          className={cn(
+                            'rounded-full px-2 py-0.5 text-[10px]',
+                            doneIds.has(step.id)
+                              ? 'bg-green-500/10 text-green-600 dark:text-green-300'
+                              : 'bg-background/70 text-muted-foreground',
+                          )}
+                        >
+                          {itemIndex + 1}
+                        </span>
+                      ))}
+                      {group.totalCount > 4 && (
+                        <span className="rounded-full bg-background/70 px-2 py-0.5 text-[10px] text-muted-foreground">
+                          +{group.totalCount - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {/* <Badge variant={isDone ? 'default' : 'outline'} className="shrink-0 text-[10px]">
-                  {isDone ? '✓' : index + 1}
-                </Badge> */}
+                <ChevronRight className="mt-3 size-4 shrink-0 text-muted-foreground/60" />
               </CardContent>
             </Card>
           )
@@ -651,16 +715,15 @@ export function TodayTaskPage() {
           </div>
           <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
             <div className="space-y-1">
-              {steps.map((step, i) => {
-                const isActive = i === currentIdx
-                const isDone = doneIds.has(step.id)
-                const meta = TYPE_META[step.type]
-                const Icon = meta?.icon ?? MessageSquareText
+              {groupedSteps.map((group) => {
+                const isActive = group.steps.some(({ index }) => index === currentIdx)
+                const isDone = group.doneCount === group.totalCount
+                const Icon = group.meta.icon
                 return (
                   <button
-                    key={step.id}
+                    key={group.type}
                     type="button"
-                    onClick={() => { setCurrentIdx(i); setPlaylistOpen(false) }}
+                    onClick={() => { openGroup(group); setPlaylistOpen(false) }}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
                       isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
@@ -668,8 +731,8 @@ export function TodayTaskPage() {
                   >
                     <Icon className="size-4 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{step.displayLabel}</p>
-                      <p className="truncate text-xs text-muted-foreground">{step.topicTitle} · {step.label}</p>
+                      <p className="truncate text-sm font-medium">{group.meta.label}</p>
+                      <p className="truncate text-xs text-muted-foreground">{group.doneCount}/{group.totalCount} 题完成</p>
                     </div>
                     {isDone && <CheckCircle2 className="size-4 shrink-0 text-green-500" />}
                     {isActive && <Badge variant="default" className="px-1.5 py-0 text-[10px]">当前</Badge>}

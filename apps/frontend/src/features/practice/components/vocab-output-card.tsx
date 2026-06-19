@@ -2,11 +2,11 @@ import { useState, useCallback, useMemo } from 'react'
 import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import { PracticeAnswerInput } from './practice-answer-input'
 
 interface VocabDrillSubItem {
   vocabId: string
@@ -237,13 +237,12 @@ export function VocabOutputCard({
       </div>
 
       {/* Input — persist on success */}
-      <Textarea
+      <PracticeAnswerInput
         value={userInput}
-        onChange={(e) => { if (!result?.passed) { setUserInput(e.target.value); setResult(null) } }}
+        onChange={(nextValue) => { if (!result?.passed) { setUserInput(nextValue); setResult(null) } }}
         placeholder={isZhToEn ? '用目标词写一句自然的英文...' : '输入中文...'}
-        className="mx-2 min-h-[52px] w-[calc(100%-12px)] min-w-0 resize-none rounded-lg border-0 bg-background/70 px-4 text-base"
         disabled={judging || !!result?.passed}
-        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
+        onEnter={submit}
       />
 
       {/* Result */}
