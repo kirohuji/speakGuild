@@ -10,6 +10,17 @@ export interface SystemConfigItem {
   description: string | null;
 }
 
+const BUILTIN_CONFIGS = [
+  {
+    key: 'learning_pack_free_downloads_enabled',
+    value: 'false',
+    group: 'feature',
+    label: '学习包免费下载',
+    type: 'boolean',
+    description: '开启后，所有用户都可以在商店免费下载学习包',
+  },
+];
+
 @Injectable()
 export class SystemConfigService {
   private cache: Map<string, string> | null = null;
@@ -22,6 +33,7 @@ export class SystemConfigService {
    * Get all configs grouped by their `group` field.
    */
   async getAllGrouped(): Promise<Record<string, SystemConfigItem[]>> {
+    await this.ensureBuiltinConfigs();
     const rows = await this.prisma.systemConfig.findMany({
       orderBy: { group: 'asc' },
     });
@@ -130,5 +142,17 @@ export class SystemConfigService {
   private invalidateCache(): void {
     this.cache = null;
     this.cacheTime = 0;
+  }
+
+  private async ensureBuiltinConfigs(): Promise<void> {
+    await this.prisma.$transaction(
+      BUILTIN_CONFIGS.map((config) =>
+        this.prisma.systemConfig.upsert({
+          where: { key: config.key },
+          create: config,
+          update: {},
+        }),
+      ),
+    );
   }
 }

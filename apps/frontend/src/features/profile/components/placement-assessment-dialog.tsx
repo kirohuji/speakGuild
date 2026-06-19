@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   ChevronLeft, Loader2, BarChart2, Compass, BookOpen, CheckCircle2,
-  Mic, Square, ClipboardList, GraduationCap, ChevronRight,
+  Mic, Play, Square, ClipboardList, GraduationCap, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -119,13 +119,15 @@ function AssessmentAnswerInput({
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const nativeVoiceSessionRef = useRef<NativeVoiceInputSession | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const recordedBlobRef = useRef<Blob | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const localAudioUrlRef = useRef<string | null>(null)
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -133,15 +135,13 @@ function AssessmentAnswerInput({
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     mediaRecorderRef.current = null
-    recordedBlobRef.current = null
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
+    audioRef.current?.pause()
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
+    if (localAudioUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(localAudioUrlRef.current)
+    localAudioUrlRef.current = null
   }, [])
 
   useEffect(() => () => cleanupRecording(), [cleanupRecording])
@@ -160,11 +160,34 @@ function AssessmentAnswerInput({
     }
   }, [voiceStatus])
 
-  const processAudioBlob = useCallback(async (blob: Blob, filename: string) => {
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onPlay = () => setIsPlaying(true)
+    const onPause = () => setIsPlaying(false)
+    const onEnded = () => setIsPlaying(false)
+    audio.addEventListener('play', onPlay)
+    audio.addEventListener('pause', onPause)
+    audio.addEventListener('ended', onEnded)
+    return () => {
+      audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('pause', onPause)
+      audio.removeEventListener('ended', onEnded)
+    }
+  }, [recordedAudioUrl])
+
+  const setLocalPlaybackUrl = useCallback((url: string | null) => {
+    if (localAudioUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(localAudioUrlRef.current)
+    localAudioUrlRef.current = url
+    setRecordedAudioUrl(url)
+  }, [])
+
+  const processAudioBlob = useCallback(async (blob: Blob, filename: string, fallbackAudioUrl: string | null) => {
     setVoiceStatus('processing')
     try {
       const result = await transcribeRecording(blob, filename)
       const text = normalizeAssessmentTranscript(result.text ?? '')
+      setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
       if (!text) {
         setVoiceError(t('profile.placement.voiceNoContent'))
         setVoiceStatus('idle')
@@ -184,6 +207,8 @@ function AssessmentAnswerInput({
     setVoiceError('')
     setElapsed(0)
     cleanupRecording()
+    setRecordedAudioUrl(null)
+    setIsPlaying(false)
 
     try {
       const nativeSession = await startBestNativeVoiceInput({
@@ -216,8 +241,9 @@ function AssessmentAnswerInput({
         streamRef.current = null
         const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm'
         const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || mimeType || 'audio/webm' })
-        recordedBlobRef.current = blob
-        await processAudioBlob(blob, `assessment.${ext}`)
+        const playbackUrl = URL.createObjectURL(blob)
+        setLocalPlaybackUrl(playbackUrl)
+        await processAudioBlob(blob, `assessment.${ext}`, playbackUrl)
       }
 
       mediaRecorderRef.current = mediaRecorder
@@ -227,7 +253,7 @@ function AssessmentAnswerInput({
       setVoiceError(t('profile.placement.micDenied'))
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, t, voiceStatus])
+  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setLocalPlaybackUrl, t, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current
@@ -248,8 +274,8 @@ function AssessmentAnswerInput({
           return
         }
         const result = await nativeSession.stop()
-        recordedBlobRef.current = result.blob
-        await processAudioBlob(result.blob, result.filename)
+        setLocalPlaybackUrl(result.playbackUrl)
+        await processAudioBlob(result.blob, result.filename, result.playbackUrl)
       } catch {
         setVoiceError(t('profile.placement.voiceFailed'))
         setVoiceStatus('idle')
@@ -261,30 +287,25 @@ function AssessmentAnswerInput({
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [onChange, processAudioBlob, t])
+  }, [onChange, processAudioBlob, setLocalPlaybackUrl, t])
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
-  const hasRecording = !isRecording && !isProcessing && recordedBlobRef.current !== null
+  const hasRecording = !isRecording && !isProcessing && recordedAudioUrl !== null
 
   const handlePlayback = () => {
-    if (!recordedBlobRef.current) return
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
+    const audio = audioRef.current
+    if (!audio) return
+    if (isPlaying) {
+      audio.pause()
+    } else {
+      audio.play().catch(() => setIsPlaying(false))
     }
-    const url = URL.createObjectURL(recordedBlobRef.current)
-    const audio = new Audio(url)
-    audioRef.current = audio
-    audio.onended = () => {
-      URL.revokeObjectURL(url)
-      audioRef.current = null
-    }
-    audio.play().catch(() => void 0)
   }
 
   return (
     <div className="rounded-lg bg-muted/30 p-2">
+      <audio ref={audioRef} src={recordedAudioUrl ?? undefined} preload="auto" className="hidden" />
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -312,9 +333,7 @@ function AssessmentAnswerInput({
               onClick={handlePlayback}
               className="h-9 shrink-0 rounded-full px-3"
             >
-              <svg className="mr-1.5 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
+              <Play className="mr-1.5 size-4" />
               回放
             </Button>
           )}
@@ -718,7 +737,10 @@ export function LearningAssessmentDialog({
           )}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border/50 p-4">
+        <DialogFooter className={cn(
+          'shrink-0 border-t border-border/50 p-4',
+          step === 0 && canSkipPlacement && 'flex-row gap-2 sm:justify-normal sm:space-x-0',
+        )}>
           <Button
             onClick={handlePrimary}
             disabled={saving || (step < resultStep && !canGoNext) || (step === resultStep && !canSubmit)}

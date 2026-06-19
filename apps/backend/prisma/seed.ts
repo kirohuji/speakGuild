@@ -16,6 +16,7 @@ const defaultConfigs = [
   { key: 'registration_open',   value: 'true',                 group: 'feature', label: '开放注册',     type: 'boolean',  description: '是否允许新用户注册' },
   { key: 'feature_leaderboard', value: 'false',                group: 'feature', label: '排行榜',       type: 'boolean',  description: '启用排行榜（用户量足够时开启）' },
   { key: 'maintenance_mode',    value: 'false',                group: 'feature', label: '维护模式',     type: 'boolean',  description: '开启后非管理员将看到维护提示' },
+  { key: 'learning_pack_free_downloads_enabled', value: 'false', group: 'feature', label: '学习包免费下载', type: 'boolean', description: '开启后，所有用户都可以在商店免费下载学习包' },
   { key: 'maintenance_message', value: '系统维护中，请稍后再试', group: 'feature', label: '维护提示文案', type: 'textarea', description: '维护模式下的提示信息' },
 
   // ── 邀请与推广 ──

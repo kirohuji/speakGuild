@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import AdmZip = require('adm-zip');
 import { createHash } from 'crypto';
@@ -50,6 +50,48 @@ export class LearningService {
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return;
     if (assets.some((asset) => asset.url === url)) return;
     assets.push({ url, role });
+  }
+
+  private async isLearningPackFreeDownloadsEnabled() {
+    const config = await this.prisma.systemConfig.findUnique({
+      where: { key: 'learning_pack_free_downloads_enabled' },
+      select: { value: true },
+    });
+    return config?.value === 'true' || config?.value === '1';
+  }
+
+  private async canAccessLearningPack(userId: string, unitId: string, options: { allowExistingProgress?: boolean } = {}) {
+    const [scene, user, membership, freeDownloadsEnabled, existingProgress] = await Promise.all([
+      this.prisma.scene.findUnique({
+        where: { id: unitId },
+        select: { id: true, isFree: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      }),
+      this.prisma.userMembership.findUnique({
+        where: { userId },
+      }),
+      this.isLearningPackFreeDownloadsEnabled(),
+      options.allowExistingProgress
+        ? this.prisma.userSceneProgress.findUnique({
+            where: { userId_sceneId: { userId, sceneId: unitId } },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (!scene) return false;
+    if (freeDownloadsEnabled || scene.isFree || user?.role === 'admin') return true;
+    if (membership?.status === 'active' && membership.expiredAt > new Date()) return true;
+    if (options.allowExistingProgress && existingProgress) return true;
+    return false;
+  }
+
+  async assertLearningPackAccess(userId: string, unitId: string, options: { allowExistingProgress?: boolean } = {}) {
+    if (await this.canAccessLearningPack(userId, unitId, options)) return;
+    throw new ForbiddenException('该学习包需要会员权限');
   }
 
   private async getPassedPracticeTopicIdsByScene(userId: string) {
@@ -114,6 +156,7 @@ export class LearningService {
     });
     const isMember =
       isAdmin || (membership?.status === 'active' && membership.expiredAt > new Date());
+    const freeDownloadsEnabled = await this.isLearningPackFreeDownloadsEnabled();
 
     // 查询条件
     const sceneWhere: any = {};
@@ -193,7 +236,7 @@ export class LearningService {
         completedPracticeCount;
 
       const isUnlocked =
-        (user?.userLevel ?? 1) >= scene.requiredUserLevel;
+        freeDownloadsEnabled || (user?.userLevel ?? 1) >= scene.requiredUserLevel;
 
       return {
         id: scene.id,
@@ -215,7 +258,7 @@ export class LearningService {
         requiredOutputLevel: scene.requiredOutputLevel,
         requiredUserLevel: scene.requiredUserLevel,
         isFree: scene.isFree,
-        isLocked: !isMember && !scene.isFree,
+        isLocked: !freeDownloadsEnabled && !isMember && !scene.isFree,
         isUnlocked,
         vocabCount,
         chunkCount,
@@ -347,6 +390,7 @@ export class LearningService {
    * 获取某个学习单元的完整顺序内容
    */
   async getLearningUnitDetail(userId: string, unitId: string) {
+    await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
       include: {
@@ -561,6 +605,7 @@ export class LearningService {
   }
 
   async getOfflineManifest(userId: string, unitId: string) {
+    await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const unitDetail = await this.getLearningUnitDetail(userId, unitId);
     if (!unitDetail) return null;
 
@@ -737,6 +782,7 @@ export class LearningService {
   }
 
   async buildLearningPackZip(userId: string, unitId: string, overrides?: { version?: number; title?: string }) {
+    await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const source = await this.getOfflineManifest(userId, unitId);
     if (!source) throw new NotFoundException('学习包不存在或已被删除，请刷新页面');
     const baseManifest = {
@@ -1271,6 +1317,7 @@ export class LearningService {
   private readonly MAX_CONCURRENT_UNITS = 3;
 
   async startUnit(userId: string, unitId: string) {
+    await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
       select: { id: true },

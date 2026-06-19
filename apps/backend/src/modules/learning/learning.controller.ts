@@ -54,6 +54,7 @@ export class LearningController {
   @Get('units/:id/pack-manifest')
   async getPackManifest(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);
+    await this.learningService.assertLearningPackAccess(session.user.id, id, { allowExistingProgress: true });
     const published = await this.learningService.getPublishedLearningPackage(id);
     if (published?.manifestSnapshot) {
       return {
@@ -78,6 +79,7 @@ export class LearningController {
   @Get('units/:id/download-pack')
   async downloadPack(@Req() req: Request, @Param('id') id: string, @Res() res: Response) {
     const session = await requireAuthSession(req);
+    await this.learningService.assertLearningPackAccess(session.user.id, id, { allowExistingProgress: true });
     const published = await this.learningService.getPublishedLearningPackageDownload(id);
     if (published) {
       // 后端代理下载：从 COS 拉取，pipe 给客户端，避免 COS 跨域 CORS 问题
@@ -122,6 +124,7 @@ export class LearningController {
     @Res() res: Response,
   ) {
     const session = await requireAuthSession(req);
+    await this.learningService.assertLearningPackAccess(session.user.id, id, { allowExistingProgress: true });
     const delta = await (this.learningService as any).getDeltaPackage(id, Number(fromVersion), Number(toVersion));
     if (!delta) {
       res.status(404).json({ code: 404, message: 'Delta not found', data: null });
