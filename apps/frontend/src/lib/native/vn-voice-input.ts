@@ -1,9 +1,17 @@
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
-import { CapacitorAudioRecorder } from '@capgo/capacitor-audio-recorder';
+import { Filesystem } from '@capacitor/filesystem';
+import {
+  AudioSessionMode,
+  CapacitorAudioRecorder,
+  type StartRecordingOptions,
+  type StopRecordingResult,
+} from '@capgo/capacitor-audio-recorder';
 import { SpeechRecognition } from '@capgo/capacitor-speech-recognition';
-import { isNative } from './platform';
+import { getPlatform, isNative } from './platform';
 
 const DEFAULT_LANGUAGE = 'en-US';
+const MIN_NATIVE_RECORDING_DURATION_MS = 300;
+const VOICE_LOG_PREFIX = '[VN voice]';
 
 export type NativeVoiceInputSession =
   | {
@@ -30,10 +38,17 @@ async function ensureSpeechPermission() {
 }
 
 async function ensureAudioRecorderPermission() {
+  console.log(`${VOICE_LOG_PREFIX} ensureAudioRecorderPermission: checking...`);
   const current = await CapacitorAudioRecorder.checkPermissions();
-  if (isGranted(current.recordAudio)) return true;
+  console.log(`${VOICE_LOG_PREFIX} ensureAudioRecorderPermission: current =`, current);
+  if (isGranted(current.recordAudio)) {
+    console.log(`${VOICE_LOG_PREFIX} ensureAudioRecorderPermission: already granted`);
+    return true;
+  }
 
+  console.log(`${VOICE_LOG_PREFIX} ensureAudioRecorderPermission: requesting...`);
   const requested = await CapacitorAudioRecorder.requestPermissions();
+  console.log(`${VOICE_LOG_PREFIX} ensureAudioRecorderPermission: requested =`, requested);
   return isGranted(requested.recordAudio);
 }
 
@@ -142,8 +157,24 @@ function filenameFromResult(uri: string | undefined, blob: Blob | undefined) {
   return 'recording.m4a';
 }
 
-async function blobFromRecordingResult(result: { blob?: Blob; uri?: string }) {
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const byteChars = atob(base64);
+  const bytes = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) {
+    bytes[i] = byteChars.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mimeType });
+}
+
+async function blobFromRecordingResult(result: StopRecordingResult) {
+  console.log(`${VOICE_LOG_PREFIX} blobFromRecordingResult: entering`, {
+    duration: result.duration,
+    hasUri: Boolean(result.uri),
+    hasBlob: Boolean(result.blob),
+  });
+
   if (result.blob) {
+    console.log(`${VOICE_LOG_PREFIX} blobFromRecordingResult: using result.blob directly`);
     return {
       blob: result.blob,
       playbackUrl: URL.createObjectURL(result.blob),
@@ -156,8 +187,15 @@ async function blobFromRecordingResult(result: { blob?: Blob; uri?: string }) {
   }
 
   const playbackUrl = Capacitor.convertFileSrc(result.uri);
-  const response = await fetch(playbackUrl);
-  const blob = await response.blob();
+  console.log(`${VOICE_LOG_PREFIX} blobFromRecordingResult: reading file via Filesystem`, {
+    uri: result.uri,
+    playbackUrl,
+  });
+
+  const { data } = await Filesystem.readFile({ path: result.uri });
+  const blob =
+    data instanceof Blob ? data : base64ToBlob(data as string, 'audio/m4a');
+  console.log(`${VOICE_LOG_PREFIX} blobFromRecordingResult: blob ready`, { blobSize: blob.size });
 
   return {
     blob,
@@ -166,30 +204,95 @@ async function blobFromRecordingResult(result: { blob?: Blob; uri?: string }) {
   };
 }
 
+function getNativeRecorderOptions(): StartRecordingOptions {
+  if (getPlatform() === 'ios') {
+    return {
+      audioSessionMode: AudioSessionMode.Default,
+    };
+  }
+
+  return {
+    sampleRate: 16000,
+    bitRate: 64000,
+  };
+}
+
+function describeNativeRecorderResult(result: StopRecordingResult) {
+  return {
+    duration: result.duration,
+    hasBlob: Boolean(result.blob),
+    blobSize: result.blob?.size,
+    blobType: result.blob?.type,
+    uri: result.uri,
+  };
+}
+
 export async function startNativeAudioRecorder(): Promise<NativeVoiceInputSession | null> {
-  if (!isNative()) return null;
+  console.log(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: entry`, {
+    isNative: isNative(),
+    platform: getPlatform(),
+  });
 
-  const hasPermission = await ensureAudioRecorderPermission().catch(() => false);
-  if (!hasPermission) return null;
-
-  try {
-    await CapacitorAudioRecorder.startRecording({
-      sampleRate: 16000,
-      bitRate: 64000,
-    });
-  } catch (error) {
-    console.warn('[VN voice] native audio recorder start failed:', error);
+  if (!isNative()) {
+    console.log(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: not native -> return null`);
     return null;
   }
+
+  const hasPermission = await ensureAudioRecorderPermission().catch((err) => {
+    console.error(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: permission check threw`, err);
+    return false;
+  });
+  console.log(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: hasPermission =`, hasPermission);
+  if (!hasPermission) return null;
+
+  const options = getNativeRecorderOptions();
+  try {
+    console.log(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: calling startRecording`, {
+      platform: getPlatform(),
+      options,
+    });
+    const startResult = await CapacitorAudioRecorder.startRecording(options);
+    console.log(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: startRecording returned`, startResult);
+  } catch (error) {
+    console.error(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: startRecording FAILED`, error);
+    return null;
+  }
+
+  const sessionStartTime = Date.now();
+  console.log(`${VOICE_LOG_PREFIX} startNativeAudioRecorder: session created at`, new Date(sessionStartTime).toISOString());
 
   return {
     kind: 'audio-recorder',
     async stop() {
+      const elapsed = Date.now() - sessionStartTime;
+      console.log(`${VOICE_LOG_PREFIX} stop() called, elapsed since start = ${elapsed}ms`);
+      console.log(`${VOICE_LOG_PREFIX} stop() calling CapacitorAudioRecorder.stopRecording...`);
       const result = await CapacitorAudioRecorder.stopRecording();
-      return blobFromRecordingResult(result);
+      console.log(`${VOICE_LOG_PREFIX} stop() stopRecording returned`, describeNativeRecorderResult(result));
+      try {
+        const recording = await blobFromRecordingResult(result);
+        console.log(`${VOICE_LOG_PREFIX} stop() blobFromRecordingResult SUCCESS`, {
+          filename: recording.filename,
+          playbackUrl: recording.playbackUrl,
+          blobSize: recording.blob.size,
+          blobType: recording.blob.type,
+        });
+        return recording;
+      } catch (error) {
+        console.error(`${VOICE_LOG_PREFIX} stop() blobFromRecordingResult FAILED`, {
+          result: describeNativeRecorderResult(result),
+          error: error instanceof Error ? error.message : error,
+        });
+        throw error;
+      }
     },
     async cancel() {
-      await CapacitorAudioRecorder.cancelRecording().catch(() => undefined);
+      const elapsed = Date.now() - sessionStartTime;
+      console.log(`${VOICE_LOG_PREFIX} cancel() called, elapsed since start = ${elapsed}ms`);
+      await CapacitorAudioRecorder.cancelRecording().catch((err) => {
+        console.warn(`${VOICE_LOG_PREFIX} cancel() cancelRecording error`, err);
+      });
+      console.log(`${VOICE_LOG_PREFIX} cancel() done`);
     },
   };
 }
@@ -199,10 +302,23 @@ export async function startBestNativeVoiceInput(options: {
   onPartial?: (text: string) => void;
   useNativeSpeechRecognition?: boolean;
 } = {}) {
+  console.log(`${VOICE_LOG_PREFIX} startBestNativeVoiceInput: entry`, {
+    useNativeSpeechRecognition: options.useNativeSpeechRecognition,
+    language: options.language,
+    platform: getPlatform(),
+    isNative: isNative(),
+  });
+
   if (options.useNativeSpeechRecognition) {
+    console.log(`${VOICE_LOG_PREFIX} startBestNativeVoiceInput: trying speech recognition path...`);
     const speechSession = await startNativeSpeechInput(options);
-    if (speechSession) return speechSession;
+    if (speechSession) {
+      console.log(`${VOICE_LOG_PREFIX} startBestNativeVoiceInput: speech recognition session created`);
+      return speechSession;
+    }
+    console.log(`${VOICE_LOG_PREFIX} startBestNativeVoiceInput: speech recognition unavailable, falling back to audio recorder`);
   }
 
+  console.log(`${VOICE_LOG_PREFIX} startBestNativeVoiceInput: starting audio recorder...`);
   return startNativeAudioRecorder();
 }

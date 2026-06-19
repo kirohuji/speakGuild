@@ -105,6 +105,26 @@ function normalizeAssessmentTranscript(value: string) {
   return value.replace(/\r\n?/g, '\n').trim()
 }
 
+function getAssessmentMicErrorMessage(error: unknown, t: ReturnType<typeof useTranslation>['t']) {
+  if (typeof window !== 'undefined' && window.isSecureContext === false) {
+    return t('profile.placement.micInsecureContext', {
+      defaultValue: '当前网页不是 HTTPS 或 localhost，浏览器会禁止麦克风。请用 HTTPS 或 localhost 打开。',
+    })
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return t('profile.placement.micUnavailable', {
+      defaultValue: '当前浏览器不支持麦克风录音，请更换浏览器或在 App 内使用。',
+    })
+  }
+  const name = error instanceof DOMException ? error.name : ''
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+    return t('profile.placement.micDenied')
+  }
+  return t('profile.placement.micFailed', {
+    defaultValue: '麦克风启动失败，请检查浏览器权限、系统权限或是否有其他应用占用麦克风。',
+  })
+}
+
 function AssessmentAnswerInput({
   value,
   onChange,
@@ -249,8 +269,9 @@ function AssessmentAnswerInput({
       mediaRecorderRef.current = mediaRecorder
       mediaRecorder.start(200)
       setVoiceStatus('recording')
-    } catch {
-      setVoiceError(t('profile.placement.micDenied'))
+    } catch (error) {
+      console.warn('[placement voice] microphone start failed:', error)
+      setVoiceError(getAssessmentMicErrorMessage(error, t))
       setVoiceStatus('idle')
     }
   }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setLocalPlaybackUrl, t, voiceStatus])

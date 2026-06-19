@@ -10,11 +10,29 @@ const TEXTAREA_MAX_HEIGHT = 108
 
 // ── 录音编码格式 ──
 function pickMimeType() {
+  if (typeof MediaRecorder === 'undefined') return ''
   return (
     ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find(
       (m) => MediaRecorder.isTypeSupported(m),
     ) ?? ''
   )
+}
+
+function getMicStartErrorMessage(error: unknown) {
+  if (typeof window !== 'undefined' && window.isSecureContext === false) {
+    return '当前页面不是安全环境，浏览器会禁止麦克风'
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return '当前 WebView 不支持麦克风录音'
+  }
+  if (typeof MediaRecorder === 'undefined') {
+    return '当前 WebView 不支持 MediaRecorder 录音'
+  }
+  const name = error instanceof DOMException ? error.name : ''
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+    return '无法访问麦克风，请检查权限设置'
+  }
+  return '麦克风启动失败，请稍后重试'
 }
 
 function formatElapsed(ms: number) {
@@ -193,8 +211,9 @@ export function VnInputPanel({
       mediaRecorderRef.current = mr
       mr.start(200)
       setVoiceStatus('recording')
-    } catch {
-      setVoiceError('无法访问麦克风，请检查权限设置')
+    } catch (error) {
+      console.warn('[VN voice] microphone start failed:', error)
+      setVoiceError(getMicStartErrorMessage(error))
     }
   }, [cleanupRecording, nativeSpeechRecognitionEnabled, processAudioBlob])
 
