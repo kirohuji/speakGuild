@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Mic, Square } from 'lucide-react'
+import { Loader2, Mic, Square, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeRecording } from '@/lib/practice-ai-api'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
@@ -45,11 +45,14 @@ export function PracticeAnswerInput({
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const nativeVoiceSessionRef = useRef<NativeVoiceInputSession | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -63,7 +66,11 @@ export function PracticeAnswerInput({
     }
   }, [])
 
-  useEffect(() => () => cleanupRecording(), [cleanupRecording])
+  useEffect(() => () => {
+    cleanupRecording()
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+  }, [cleanupRecording])
 
   useEffect(() => {
     if (voiceStatus !== 'recording') return
@@ -84,6 +91,12 @@ export function PracticeAnswerInput({
     try {
       const result = await transcribeRecording(blob, filename)
       const text = normalizeInputText(result.text ?? '')
+
+      // Save audio URL for playback
+      if (audioUrl) URL.revokeObjectURL(audioUrl)
+      const url = URL.createObjectURL(blob)
+      setAudioUrl(url)
+
       if (!text) {
         setVoiceError('未识别到语音内容，请重试')
         setVoiceStatus('idle')
@@ -96,13 +109,16 @@ export function PracticeAnswerInput({
       setVoiceError('语音识别失败，请重试')
       setVoiceStatus('idle')
     }
-  }, [onChange])
+  }, [onChange, audioUrl])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
     setVoiceError('')
     setElapsed(0)
     cleanupRecording()
+    // Revoke old audio when starting new recording
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null) }
+    if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
 
     try {
       const nativeSession = await startBestNativeVoiceInput({
@@ -188,6 +204,18 @@ export function PracticeAnswerInput({
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
 
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (audio.paused) {
+      audio.play().catch(() => {})
+      setIsPlaying(true)
+    } else {
+      audio.pause()
+      setIsPlaying(false)
+    }
+  }, [])
+
   return (
     <div className={cn(
       'mx-2 rounded-lg bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
@@ -232,6 +260,30 @@ export function PracticeAnswerInput({
           className="block min-h-[52px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
         />
       </div>
+
+      {/* Audio playback of last recording */}
+      {audioUrl && voiceStatus === 'idle' && (
+        <div className="flex items-center gap-2 border-t border-border/40 px-2.5 py-2">
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            aria-label={isPlaying ? '暂停回放' : '回放录音'}
+          >
+            {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5 ml-0.5" />}
+          </button>
+          <span className="text-[11px] text-muted-foreground">录音回放</span>
+          {/* biome-ignore lint/a11y/useMediaCaption: short self-recording replay */}
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onEnded={() => setIsPlaying(false)}
+            onPause={() => setIsPlaying(false)}
+            onPlay={() => setIsPlaying(true)}
+            preload="auto"
+          />
+        </div>
+      )}
     </div>
   )
 }

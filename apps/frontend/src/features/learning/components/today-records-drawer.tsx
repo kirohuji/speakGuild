@@ -18,7 +18,7 @@ interface TodayRecordsDrawerProps {
 export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onReplay }: TodayRecordsDrawerProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
+      <DialogContent className="!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-[env(safe-area-inset-top,0px)] md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
         <DialogTitle className="sr-only">今日练习记录</DialogTitle>
         <DialogDescription className="sr-only">查看已完成的练习题目与评分</DialogDescription>
 

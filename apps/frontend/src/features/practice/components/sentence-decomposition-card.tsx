@@ -1,10 +1,12 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle2, Mic, Square, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { cn } from '@/lib/cn'
+import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import type { WarmupScore } from '@/stores/warmup-session.store'
 
 interface DecompositionLevel {
@@ -57,6 +59,117 @@ export function SentenceDecompositionCard({
       setCurrentIdx(prev => prev - 1)
     }
   }, [currentIdx])
+
+  // ── 录音 & 回放（每级独立，暂不需要转写识别）──
+  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording'>('idle')
+  const [recordingElapsed, setRecordingElapsed] = useState(0)
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const levelRecordingsRef = useRef<Map<number, { audioUrl: string }>>(new Map())
+  const nativeSessionRef = useRef<NativeVoiceInputSession | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const streamRef = useRef<MediaStream | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // 切换 level 时恢复已保存的录音
+  const savedRecording = levelRecordingsRef.current.get(currentIdx) ?? null
+
+  const cleanupRecording = useCallback(() => {
+    nativeSessionRef.current?.cancel().catch(() => undefined)
+    nativeSessionRef.current = null
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+    mediaRecorderRef.current = null
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+  }, [])
+
+  const startRecording = useCallback(async () => {
+    if (recordingStatus !== 'idle') return
+    cleanupRecording()
+    if (currentAudioUrl) { URL.revokeObjectURL(currentAudioUrl); setCurrentAudioUrl(null) }
+    if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
+    setRecordingElapsed(0)
+
+    try {
+      // 原生录音（仅取音频 blob，不用 speech 识别）
+      const nativeSession = await startBestNativeVoiceInput({
+        language: 'en-US',
+        useNativeSpeechRecognition: false,
+      })
+      if (nativeSession) {
+        nativeSessionRef.current = nativeSession
+        setRecordingStatus('recording')
+        const startedAt = Date.now()
+        timerRef.current = setInterval(() => setRecordingElapsed(Date.now() - startedAt), 200)
+        return
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+        .find((m) => MediaRecorder.isTypeSupported(m)) ?? ''
+      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      chunksRef.current = []
+
+      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || mimeType || 'audio/webm' })
+        const url = URL.createObjectURL(blob)
+        setCurrentAudioUrl(url)
+        levelRecordingsRef.current.set(currentIdx, { audioUrl: url })
+        setRecordingStatus('idle')
+      }
+
+      mediaRecorderRef.current = mr
+      mr.start(200)
+      setRecordingStatus('recording')
+      const startedAt = Date.now()
+      timerRef.current = setInterval(() => setRecordingElapsed(Date.now() - startedAt), 200)
+    } catch {
+      setRecordingStatus('idle')
+    }
+  }, [recordingStatus, cleanupRecording, currentAudioUrl, currentIdx])
+
+  const stopRecording = useCallback(() => {
+    const ns = nativeSessionRef.current
+    if (ns) {
+      nativeSessionRef.current = null
+      // 原生录音：speech 类型无音频 blob，跳过；audio 类型获取 blob 保存
+      if (ns.kind !== 'speech') {
+        ns.stop().then((result) => {
+          const url = URL.createObjectURL(result.blob)
+          setCurrentAudioUrl(url)
+          levelRecordingsRef.current.set(currentIdx, { audioUrl: url })
+        }).catch(() => {})
+      }
+      setRecordingStatus('idle')
+      return
+    }
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+      mediaRecorderRef.current = null
+    }
+  }, [currentIdx])
+
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (audio.paused) { audio.play().catch(() => {}); setIsPlaying(true) }
+    else { audio.pause(); setIsPlaying(false) }
+  }, [])
+
+  const formatElapsed = (ms: number) => {
+    const s = Math.floor(ms / 1000)
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+  }
+
+  // 切换 level 时加载该级的录音
+  const displayAudioUrl = savedRecording?.audioUrl || currentAudioUrl
 
   // 全部完成
   if (isDone) {
@@ -145,6 +258,57 @@ export function SentenceDecompositionCard({
         )}
       </div>
 
+      {/* ── 录音 & 回放 ── */}
+      <div className="flex items-center gap-2">
+        {recordingStatus === 'idle' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={startRecording}
+            className="gap-1.5 rounded-full"
+          >
+            <Mic className="size-3.5" />
+            {displayAudioUrl ? '重录' : '录音'}
+          </Button>
+        )}
+        {recordingStatus === 'recording' && (
+          <>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={stopRecording}
+              className="gap-1.5 rounded-full"
+            >
+              <Square className="size-3.5 fill-current" />
+              停止
+            </Button>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
+              {formatElapsed(recordingElapsed)}
+            </span>
+          </>
+        )}
+        {displayAudioUrl && recordingStatus === 'idle' && (
+          <>
+            <button
+              type="button"
+              onClick={togglePlay}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5 ml-0.5" />}
+            </button>
+            {/* biome-ignore lint/a11y/useMediaCaption: short self-recording replay */}
+            <audio
+              ref={audioRef}
+              src={displayAudioUrl}
+              onEnded={() => setIsPlaying(false)}
+              onPause={() => setIsPlaying(false)}
+              onPlay={() => setIsPlaying(true)}
+              preload="auto"
+            />
+          </>
+        )}
+      </div>
       {/* Navigation: 上一级 / 下一级 */}
       <div className="flex gap-2">
         <Button

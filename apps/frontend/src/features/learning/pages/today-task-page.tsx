@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
+import { isIOS } from '@/lib/native'
 import type { UnitDetail } from '../api/learning-api'
 import { learningPackService, learningRepository } from '@/lib/offline'
 import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
@@ -673,7 +674,7 @@ export function TodayTaskPage() {
             </div>
 
             {/* Bottom nav */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
+            <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
               <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
                 <ChevronLeft className="size-4" />
                 <span className="ml-1">上一题</span>

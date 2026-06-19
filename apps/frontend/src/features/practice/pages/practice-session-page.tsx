@@ -636,7 +636,7 @@ function GuidedWarmupPhase({
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col px-4 pt-4">
+    <div className={cn('mx-auto flex h-full max-w-2xl flex-col px-4 pt-4', isIOS() && 'pt-safe')}>
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
@@ -656,7 +656,7 @@ function GuidedWarmupPhase({
       </div>
 
       {/* Bottom nav — fixed at bottom like LearningInsightDialog */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3">
+      <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
         <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
           <ChevronLeft className="size-4" /> 上一个
         </Button>
@@ -680,7 +680,7 @@ function GuidedWarmupPhase({
 
       {/* Playlist drawer */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className="h-[80dvh] rounded-t-2xl">
+        <DrawerContent className={cn('h-[80dvh] rounded-t-2xl', isIOS() && 'pt-safe')}>
           <div className="flex items-center justify-between px-5 py-3">
             <DrawerTitle className="text-lg">题目列表</DrawerTitle>
             <button
@@ -690,7 +690,7 @@ function GuidedWarmupPhase({
               <ChevronDown className="size-5" />
             </button>
           </div>
-          <ScrollArea className="flex-1 px-4 pb-8">
+          <ScrollArea className={cn('flex-1 px-4 pb-8', isIOS() && 'pb-safe')}>
             <div className="space-y-1">
               {flatSteps.map((step, i) => {
                 const isDone = doneIds.has(step.id)
