@@ -1,3 +1,5 @@
 category_name,title,location,required_output_level,required_user_level,description,package_type
-课程,副词·频率与程度副词,语法课堂,L2,1,学习always/usually/often/sometimes/never和very/quite/rather/extremely等副词用法。,course
-课程,副词·方式与评论副词,语法课堂,L2,1,学习carefully/quickly/happily和luckily/frankly/honestly等副词用法和位置。,course
+课程,副词·频率副词,语法课堂,L2,1,学习always/usually/often/sometimes/never等频率副词的用法和词序规则。,course
+课程,副词·程度副词,语法课堂,L2,1,学习very/quite/rather/extremely/too等程度副词的用法和程度强弱对比。,course
+课程,副词·方式副词,语法课堂,L2,1,学习carefully/quickly/happily/easily/well等方式副词的构成和在动词后的位置。,course
+课程,副词·评论副词,语法课堂,L2,1,学习luckily/frankly/honestly/surprisingly/obviously等评论副词放在句首的用法。,course

@@ -6,10 +6,10 @@ scriptType: practice
 Instructor: Let's talk about OFF 基础短语. What do you think about it?
 #objective: Practice talking about OFF 基础短语
 #chunks: The plane takes off at...,Please turn off...,Don't put off...
-#user_input
+#wait:input
 Instructor: That's interesting! Can you tell me more about that?
 #objective: Add more details and follow up
 #chunks: The plane takes off at...,Please turn off...,Don't put off...
-#user_input
+#wait:input
 Instructor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

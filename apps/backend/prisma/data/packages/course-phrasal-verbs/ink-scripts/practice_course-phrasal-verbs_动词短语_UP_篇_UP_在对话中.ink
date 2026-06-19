@@ -6,10 +6,10 @@ scriptType: practice
 Instructor: Let's talk about UP 在对话中. What do you think about it?
 #objective: Practice talking about UP 在对话中
 #chunks: Can you pick me up?,He didn't show up.
-#user_input
+#wait:input
 Instructor: That's interesting! Can you tell me more about that?
 #objective: Add more details and follow up
 #chunks: Can you pick me up?,He didn't show up.
-#user_input
+#wait:input
 Instructor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

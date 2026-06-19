@@ -6,10 +6,10 @@ scriptType: practice
 Tutor: Let's talk about 指路指令. What do you think about it?
 #objective: 用go straight表达直走
 #chunks: Go straight for two blocks.,Turn left at the traffic light.,Turn right after the bridge.,The pharmacy is at the corner.
-#user_input
+#wait:input
 Tutor: That's interesting! Can you tell me more about that?
 #objective: 用turn left/right转弯
 #chunks: Go straight for two blocks.,Turn left at the traffic light.,Turn right after the bridge.,The pharmacy is at the corner.
-#user_input
+#wait:input
 Tutor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

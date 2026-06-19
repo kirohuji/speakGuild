@@ -27,3 +27,4 @@ apps/frontend/ios/App/ManYuDing.xcodeproj/*
 kaikki.org-dictionary-English.jsonl
 android/
 etl/
+.venv/

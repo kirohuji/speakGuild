@@ -1,5 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_pinlv,频率与程度副词篇,1,频率副词,副词·频率与程度副词,L2,1,2,5,2,3,"[""用always表达总是"",""用usually表达通常"",""用never表达从不""]",2,2,2,Tutor,语法导师,true,practice_course-adverbs_副词_频率与程度副词_频率副词,"{""xp"":20}"
-ch_pinlv,频率与程度副词篇,2,程度副词,副词·频率与程度副词,L2,1,2,5,2,3,"[""用very加强程度"",""用quite/rather表达相当"",""用too表达过量""]",2,2,2,Tutor,语法导师,false,practice_course-adverbs_副词_频率与程度副词_程度副词,"{""xp"":20}"
-ch_fangshi,方式与评论副词篇,1,方式副词,副词·方式与评论副词,L2,1,2,5,2,3,"[""用carefully表达仔细"",""用quickly表达快速"",""用well表达好""]",2,2,2,Tutor,语法导师,true,practice_course-adverbs_副词_方式与评论副词_方式副词,"{""xp"":20}"
-ch_fangshi,方式与评论副词篇,2,评论副词,副词·方式与评论副词,L2,1,2,5,2,3,"[""用luckily表达幸运"",""用frankly/honestly表达坦诚"",""用obviously表达显然""]",2,2,2,Tutor,语法导师,false,practice_course-adverbs_副词_方式与评论副词_评论副词,"{""xp"":20}"
+ch_pinlv,频率副词篇,1,频率副词,副词·频率副词,L2,1,2,5,2,3,"[""用always表达总是"",""用usually表达通常"",""用never表达从不""]",2,2,2,Tutor,语法导师,true,practice_course-adverbs_副词_频率与程度副词_频率副词,"{""xp"":20}"
+ch_chengdu,程度副词篇,1,程度副词,副词·程度副词,L2,1,2,5,2,3,"[""用very加强程度"",""用quite/rather表达相当"",""用too表达过量""]",2,2,2,Tutor,语法导师,true,practice_course-adverbs_副词_频率与程度副词_程度副词,"{""xp"":20}"
+ch_fangshi,方式副词篇,1,方式副词,副词·方式副词,L2,1,2,5,2,3,"[""用carefully表达仔细"",""用quickly表达快速"",""用well表达好""]",2,2,2,Tutor,语法导师,true,practice_course-adverbs_副词_方式与评论副词_方式副词,"{""xp"":20}"
+ch_pinglun,评论副词篇,1,评论副词,副词·评论副词,L2,1,2,5,2,3,"[""用luckily表达幸运"",""用frankly/honestly表达坦诚"",""用obviously表达显然""]",2,2,2,Tutor,语法导师,true,practice_course-adverbs_副词_方式与评论副词_评论副词,"{""xp"":20}"

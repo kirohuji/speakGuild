@@ -6,10 +6,10 @@ scriptType: practice
 Tutor: Let's talk about 现在完成时. What do you think about it?
 #objective: 用完成时表达已做
 #chunks: I have already... (present perfect),I have never... (present perfect)
-#user_input
+#wait:input
 Tutor: That's interesting! Can you tell me more about that?
 #objective: 用完成时表达从未做
 #chunks: I have already... (present perfect),I have never... (present perfect)
-#user_input
+#wait:input
 Tutor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

@@ -126,6 +126,7 @@ const zhCN = {
         introAnswer: '再回答 3 个真实沟通任务',
         introResult: '最后获得等级和学习包推荐',
         start: '开始测评',
+        skipForAdmin: '跳过测评',
         goalTitle: '你想先练什么？',
         goalDesc: '选 1 到 3 个目标，AI 会据此推荐学习包。',
         maxGoals: '最多选择 3 个学习目标',

@@ -1,4 +1,174 @@
 {
+  "频率副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 always 造句",
+          "chunk": "always",
+          "chunkMeaning": "总是",
+          "items": [
+            { "zh": "我总是早起。", "answer": "I always get up early." },
+            { "zh": "她总是面带微笑。", "answer": "She always wears a smile." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "usually / often",
+          "chunkMeaning": "通常 / 经常",
+          "items": [
+            { "zh": "我通常8点吃早餐。", "answer": "I usually have breakfast at 8." },
+            { "zh": "我经常睡前看书。", "answer": "I often read before bed." }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "健康习惯副词搭配练习",
+          "vocabWord": "always / usually / often / never",
+          "vocabMeaning": "总是 / 通常 / 经常 / 从不",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I always ___ before bed.",
+              "items": [
+                { "zh": "我总是睡前阅读。", "answer": "I always read before bed." },
+                { "zh": "我总是在睡前写日记。", "answer": "I always write my journal before bed." }
+              ]
+            },
+            {
+              "chunk": "I never ___ breakfast.",
+              "items": [
+                { "zh": "我从不跳过早餐。", "answer": "I never skip breakfast." },
+                { "zh": "我从不匆匆吃早餐。", "answer": "I never rush breakfast." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "句子拆解：从简单到复杂",
+          "levels": [
+            { "level": 1, "label": "核心句", "en": "I read before bed.", "zh": "我睡前阅读。" },
+            { "level": 2, "label": "加频率", "en": "I always read before bed.", "zh": "我总是睡前阅读。", "highlight": "always", "hint": "试着加入频率副词" },
+            { "level": 3, "label": "加锻炼", "en": "I usually exercise in the morning too.", "zh": "我通常早上也锻炼。", "highlight": "usually exercise", "hint": "试着加入另一个频率副词" },
+            { "level": 4, "label": "加放松", "en": "I often relax on weekends after a long week.", "zh": "漫长一周后我经常在周末放松。", "highlight": "often relax", "hint": "试着加入放松的表达" },
+            { "level": 5, "label": "完整表达", "en": "I always read before bed, I usually exercise in the morning, I often relax on weekends, and I never skip breakfast!", "zh": "我总是睡前阅读，通常早上锻炼，经常在周末放松，从不跳过早餐！", "highlight": "always / usually / often / never", "hint": "试着用多个频率副词描述一天" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "How often do you... 句型操练",
+          "pattern": "How often do you [verb]?",
+          "patternMeaning": "你多久...一次？",
+          "slots": ["verb"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "你多久运动一次？", "answer": "How often do you exercise?", "slotValues": { "verb": "exercise" } },
+            { "zh": "你多久看书一次？", "answer": "How often do you read?", "slotValues": { "verb": "read" } },
+            { "zh": "你多久出去吃一次？", "answer": "How often do you eat out?", "slotValues": { "verb": "eat out" } },
+            { "zh": "你多久旅行一次？", "answer": "How often do you travel?", "slotValues": { "verb": "travel" } }
+          ]
+        }
+      ]
+    }
+  },
+  "程度副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 very / quite 造句",
+          "chunk": "very / quite",
+          "chunkMeaning": "非常 / 相当",
+          "items": [
+            { "zh": "她非常聪明。", "answer": "She is very smart." },
+            { "zh": "这部电影相当不错。", "answer": "The movie is quite good." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "rather / extremely",
+          "chunkMeaning": "颇 / 极其",
+          "items": [
+            { "zh": "今天挺冷的。", "answer": "It's rather cold today." },
+            { "zh": "你真是太善良了。", "answer": "That's extremely kind of you." }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "徒步场景词汇练习",
+          "vocabWord": "scenery / trail / summit / breathtaking",
+          "vocabMeaning": "景色 / 山路 / 山顶 / 叹为观止",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The scenery / The view...",
+              "items": [
+                { "zh": "景色非常美。", "answer": "The scenery is very beautiful." },
+                { "zh": "景色绝对令人叹为观止。", "answer": "The view is absolutely breathtaking." }
+              ]
+            },
+            {
+              "chunk": "The trail / The summit...",
+              "items": [
+                { "zh": "这条路挺陡的。", "answer": "The trail is quite steep." },
+                { "zh": "山顶挺冷的。", "answer": "The summit is rather cold." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "句子拆解：从简单到复杂",
+          "levels": [
+            { "level": 1, "label": "核心句", "en": "The scenery is beautiful.", "zh": "景色很美。" },
+            { "level": 2, "label": "加程度", "en": "The scenery is very beautiful.", "zh": "景色非常美。", "highlight": "very", "hint": "试着加入程度副词" },
+            { "level": 3, "label": "加路线", "en": "The scenery along the trail is very beautiful.", "zh": "山路沿途的景色非常美。", "highlight": "along the trail", "hint": "试着加入地点" },
+            { "level": 4, "label": "加山顶", "en": "The scenery along the trail is very beautiful, and the view from the summit is breathtaking.", "zh": "山路沿途景色很美，山顶的景色更是叹为观止。", "highlight": "summit / breathtaking", "hint": "试着加入山顶和更高程度的词" },
+            { "level": 5, "label": "完整表达", "en": "The trail is quite steep, but the scenery is extremely beautiful and the view from the summit is absolutely breathtaking.", "zh": "山路挺陡的，但景色极其美，山顶的景色绝对令人叹为观止。", "highlight": "quite steep / extremely beautiful / absolutely breathtaking", "hint": "试着用多个程度副词描述" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "The [noun] is [adv] [adj] 句型操练",
+          "pattern": "The [noun] is [degree_adv] [adj].",
+          "patternMeaning": "某物非常...",
+          "slots": ["noun", "degree_adv", "adj"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "这条山路非常陡。", "answer": "The trail is very steep.", "slotValues": { "noun": "trail", "degree_adv": "very", "adj": "steep" } },
+            { "zh": "山顶风极大。", "answer": "The summit is extremely windy.", "slotValues": { "noun": "summit", "degree_adv": "extremely", "adj": "windy" } },
+            { "zh": "这咖啡太烫了。", "answer": "This coffee is too hot.", "slotValues": { "noun": "coffee", "degree_adv": "too", "adj": "hot" } },
+            { "zh": "景色非常美。", "answer": "The scenery is very beautiful.", "slotValues": { "noun": "scenery", "degree_adv": "very", "adj": "beautiful" } }
+          ]
+        }
+      ]
+    }
+  },
   "方式副词": {
     "outputTraining": {
       "version": 1,
@@ -33,23 +203,23 @@
         {
           "id": "vsb_1",
           "type": "vocab_sentence_building",
-          "title": "easily 搭配练习",
-          "vocabWord": "easily",
-          "vocabMeaning": "容易地",
+          "title": "厨房场景词汇练习",
+          "vocabWord": "recipe / ingredient / chop / stir / flavor",
+          "vocabMeaning": "食谱 / 食材 / 切 / 搅拌 / 味道",
           "direction": "zh_to_en",
           "patterns": [
             {
-              "chunk": "She easily...",
+              "chunk": "I ___ read / I ___ prepare...",
               "items": [
-                { "zh": "她轻松解决了问题。", "answer": "She easily solved the problem." },
-                { "zh": "她轻松通过了考试。", "answer": "She easily passed the exam." }
+                { "zh": "我仔细地看食谱。", "answer": "I carefully read the recipe." },
+                { "zh": "我快速地准备食材。", "answer": "I quickly prepare the ingredients." }
               ]
             },
             {
-              "chunk": "He easily...",
+              "chunk": "She ___ helps / We work together...",
               "items": [
-                { "zh": "他轻松赢得了比赛。", "answer": "He easily won the game." },
-                { "zh": "他轻松地回答了所有问题。", "answer": "He easily answered all the questions." }
+                { "zh": "她快乐地在厨房帮我。", "answer": "She happily helps me in the kitchen." },
+                { "zh": "我们合作得很好。", "answer": "We work together well." }
               ]
             }
           ]
@@ -59,26 +229,111 @@
           "type": "sentence_decomposition",
           "title": "句子拆解：从简单到复杂",
           "levels": [
-            { "level": 1, "label": "核心句", "en": "She speaks well.", "zh": "她说得好。" },
-            { "level": 2, "label": "加对象", "en": "She speaks English well.", "zh": "她英语说得好。", "highlight": "English", "hint": "试着加入语言名称" },
-            { "level": 3, "label": "加程度", "en": "She speaks English very well.", "zh": "她英语说得非常好。", "highlight": "very", "hint": "试着加入程度副词" },
-            { "level": 4, "label": "加频率", "en": "She always speaks English very well.", "zh": "她总是英语说得非常好。", "highlight": "always", "hint": "试着加入频率副词" },
-            { "level": 5, "label": "完整表达", "en": "She always speaks English very well because she practices every day.", "zh": "她总是英语说得非常好，因为她每天练习。", "highlight": "because she practices every day", "hint": "试着加入原因" }
+            { "level": 1, "label": "核心句", "en": "I read the recipe.", "zh": "我看食谱。" },
+            { "level": 2, "label": "加方式", "en": "I carefully read the recipe.", "zh": "我仔细地看食谱。", "highlight": "carefully", "hint": "试着加入方式副词" },
+            { "level": 3, "label": "换副词", "en": "I quickly prepare the ingredients.", "zh": "我快速地准备食材。", "highlight": "quickly prepare", "hint": "试着换一个方式副词" },
+            { "level": 4, "label": "再加副词", "en": "I easily follow each step and she happily helps me in the kitchen.", "zh": "我轻松跟着每一步，她快乐地在厨房帮我。", "highlight": "easily / happily", "hint": "试着用两个方式副词" },
+            { "level": 5, "label": "完整表达", "en": "I carefully read the recipe, quickly prepare ingredients, easily follow each step, and she happily helps me in the kitchen. We work together well!", "zh": "我仔细看食谱，快速准备食材，轻松跟着每一步，她快乐地在厨房帮我。我们合作得很好！", "highlight": "carefully / quickly / easily / happily / well", "hint": "试着用多个方式副词描述整个过程" }
           ]
         },
         {
           "id": "pd_1",
           "type": "pattern_drill",
-          "title": "I'd like to 句型操练",
-          "pattern": "I'd like to [verb]...",
-          "patternMeaning": "我想要...",
-          "slots": ["verb"],
+          "title": "方式副词填空操练",
+          "pattern": "[subject] [adverb] [verb] [object].",
+          "patternMeaning": "主语 + 方式副词 + 动词 + 宾语",
+          "slots": ["subject", "adverb", "verb", "object"],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "我想点一杯咖啡。", "answer": "I'd like to order a coffee.", "slotValues": { "verb": "order" } },
-            { "zh": "我想预订一个房间。", "answer": "I'd like to book a room.", "slotValues": { "verb": "book" } },
-            { "zh": "我想换一些钱。", "answer": "I'd like to change some money.", "slotValues": { "verb": "change" } },
-            { "zh": "我想问一个问题。", "answer": "I'd like to ask a question.", "slotValues": { "verb": "ask" } }
+            { "zh": "我仔细地看了食谱。", "answer": "I carefully read the recipe.", "slotValues": { "subject": "I", "adverb": "carefully", "verb": "read", "object": "the recipe" } },
+            { "zh": "我快速地准备食材。", "answer": "I quickly prepare the ingredients.", "slotValues": { "subject": "I", "adverb": "quickly", "verb": "prepare", "object": "the ingredients" } },
+            { "zh": "她快乐地帮我做饭。", "answer": "She happily helps me cook.", "slotValues": { "subject": "She", "adverb": "happily", "verb": "helps", "object": "me cook" } },
+            { "zh": "我轻松地跟着每一步。", "answer": "I easily follow each step.", "slotValues": { "subject": "I", "adverb": "easily", "verb": "follow", "object": "each step" } }
+          ]
+        }
+      ]
+    }
+  },
+  "评论副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 luckily / frankly 造句",
+          "chunk": "luckily / frankly",
+          "chunkMeaning": "幸运的是 / 坦白说",
+          "items": [
+            { "zh": "幸运的是没人受伤。", "answer": "Luckily no one was hurt." },
+            { "zh": "坦白说我不在乎。", "answer": "Frankly I don't care." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "honestly / obviously",
+          "chunkMeaning": "老实说 / 显然",
+          "items": [
+            { "zh": "老实说那是最好的选择。", "answer": "Honestly that's the best option." },
+            { "zh": "显然她在撒谎。", "answer": "Obviously she was lying." }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "办公室八卦场景词汇练习",
+          "vocabWord": "innocent / accuse / leak / promote",
+          "vocabMeaning": "无辜 / 指责 / 泄露 / 升职",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ she proved / ___ the rumor...",
+              "items": [
+                { "zh": "幸运的是她证明了自己的清白。", "answer": "Luckily she proved her innocence." },
+                { "zh": "坦白说那个谣言是错的。", "answer": "Frankly the rumor was wrong." }
+              ]
+            },
+            {
+              "chunk": "___ they leaked / ___ she got...",
+              "items": [
+                { "zh": "显然他们泄露了数据。", "answer": "Obviously they leaked the data." },
+                { "zh": "令人惊讶的是她升职了。", "answer": "Surprisingly she got promoted." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "句子拆解：从简单到复杂",
+          "levels": [
+            { "level": 1, "label": "核心事件", "en": "Someone leaked the data.", "zh": "有人泄露了数据。" },
+            { "level": 2, "label": "加指责", "en": "Someone accused her of leaking the data.", "zh": "有人指责她泄露了数据。", "highlight": "accused her of", "hint": "试着加入 accuse 结构" },
+            { "level": 3, "label": "加评论副词", "en": "Obviously someone leaked the data. The accusation was unfair.", "zh": "显然有人泄露了数据。这个指责不公平。", "highlight": "Obviously / accusation", "hint": "试着在句首加评论副词" },
+            { "level": 4, "label": "加转折", "en": "Obviously someone leaked the data, but luckily she was proven innocent. She got promoted fast!", "zh": "显然有人泄露了数据，但幸运的是她被证明是无辜的。她很快升职了！", "highlight": "luckily / proven innocent / promoted fast", "hint": "试着加入幸运和无辜的表达" },
+            { "level": 5, "label": "完整表达", "en": "Frankly the accusation was unfair. Obviously someone else leaked the data, but luckily she was proven innocent and got promoted fast!", "zh": "坦白说这个指责不公平。显然是别人泄露了数据，但幸运的是她被证明是无辜的，很快升职了！", "highlight": "Frankly / Obviously / luckily / innocent / promoted", "hint": "试着把多个评论副词和场景词汇串起来" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "评论副词 + 场景句子 操练",
+          "pattern": "[comment_adverb] [sentence].",
+          "patternMeaning": "评论副词 + 句子",
+          "slots": ["comment_adverb", "sentence"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "幸运的是她证明了自己的清白。", "answer": "Luckily she proved her innocence.", "slotValues": { "comment_adverb": "Luckily", "sentence": "she proved her innocence" } },
+            { "zh": "坦白说那个谣言是错的。", "answer": "Frankly the rumor was wrong.", "slotValues": { "comment_adverb": "Frankly", "sentence": "the rumor was wrong" } },
+            { "zh": "显然他们泄露了数据。", "answer": "Obviously they leaked the data.", "slotValues": { "comment_adverb": "Obviously", "sentence": "they leaked the data" } },
+            { "zh": "令人惊讶的是她升职了。", "answer": "Surprisingly she got promoted.", "slotValues": { "comment_adverb": "Surprisingly", "sentence": "she got promoted" } }
           ]
         }
       ]

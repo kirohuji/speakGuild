@@ -6,10 +6,10 @@ scriptType: practice
 Instructor: Let's talk about OUT 在对话中. What do you think about it?
 #objective: Practice talking about OUT 在对话中
 #chunks: I can't figure it out.,Check this out!
-#user_input
+#wait:input
 Instructor: That's interesting! Can you tell me more about that?
 #objective: Add more details and follow up
 #chunks: I can't figure it out.,Check this out!
-#user_input
+#wait:input
 Instructor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

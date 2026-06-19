@@ -128,6 +128,7 @@ const ja = {
         introAnswer: '3つの実用コミュニケーション課題に回答',
         introResult: 'レベルとおすすめ学習パックを確認',
         start: '判定を開始',
+        skipForAdmin: '判定をスキップ',
         goalTitle: 'まず何を練習したいですか？',
         goalDesc: '1〜3個選んでください。AI が結果説明と学習パック推薦に使います。',
         maxGoals: '学習目標は最大3個まで選べます',

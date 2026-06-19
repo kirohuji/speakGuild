@@ -19,6 +19,7 @@ import {
   type UserProfile,
   type PlacementAssessmentResult,
 } from '@/features/profile/api'
+import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
@@ -354,6 +355,7 @@ export function LearningAssessmentDialog({
   onCompleted?: () => void
 }) {
   const { t } = useTranslation()
+  const { session } = useAuth()
   const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
@@ -372,6 +374,7 @@ export function LearningAssessmentDialog({
   const totalSteps = resultStep + 1
   const currentPrompt = step >= firstPromptStep && step < resultStep ? PLACEMENT_PROMPTS[step - firstPromptStep] : null
   const currentAnswer = currentPrompt ? answers[currentPrompt.id] ?? '' : ''
+  const canSkipPlacement = session?.user?.role === 'admin'
   const canGoNext = step === 0
     ? true
     : step === goalStep
@@ -456,6 +459,12 @@ export function LearningAssessmentDialog({
       void handleSubmit()
       return
     }
+    onCompleted?.()
+    onOpenChange(false)
+  }
+
+  const handleAdminSkip = () => {
+    if (!canSkipPlacement || saving) return
     onCompleted?.()
     onOpenChange(false)
   }
@@ -713,7 +722,10 @@ export function LearningAssessmentDialog({
           <Button
             onClick={handlePrimary}
             disabled={saving || (step < resultStep && !canGoNext) || (step === resultStep && !canSubmit)}
-            className="h-11 w-full rounded-full text-sm font-semibold"
+            className={cn(
+              'h-11 rounded-full text-sm font-semibold',
+              step === 0 && canSkipPlacement ? 'flex-1' : 'w-full',
+            )}
           >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {step === 0
@@ -724,6 +736,17 @@ export function LearningAssessmentDialog({
                 ? t('profile.placement.finish')
                 : t('profile.placement.submit')}
           </Button>
+          {step === 0 && canSkipPlacement && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAdminSkip}
+              disabled={saving}
+              className="h-11 flex-1 rounded-full text-sm font-semibold"
+            >
+              {t('profile.placement.skipForAdmin')}
+            </Button>
+          )}
         </DialogFooter>
 
         {pendingClose && (

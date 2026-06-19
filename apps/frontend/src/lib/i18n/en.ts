@@ -128,6 +128,7 @@ const en = {
         introAnswer: 'Answer 3 real communication tasks',
         introResult: 'Get your level and pack recommendations',
         start: 'Start placement',
+        skipForAdmin: 'Skip placement',
         goalTitle: 'What do you want to practice first?',
         goalDesc: 'Choose 1 to 3 goals. AI will use them to explain your result and recommend learning packs.',
         maxGoals: 'Choose up to 3 learning goals',

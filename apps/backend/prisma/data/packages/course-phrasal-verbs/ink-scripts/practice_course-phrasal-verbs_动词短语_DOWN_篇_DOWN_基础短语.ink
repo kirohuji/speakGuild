@@ -6,10 +6,10 @@ scriptType: practice
 Instructor: Let's talk about DOWN 基础短语. What do you think about it?
 #objective: Practice talking about DOWN 基础短语
 #chunks: Please sit down.,Calm down!,My car broke down.
-#user_input
+#wait:input
 Instructor: That's interesting! Can you tell me more about that?
 #objective: Add more details and follow up
 #chunks: Please sit down.,Calm down!,My car broke down.
-#user_input
+#wait:input
 Instructor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

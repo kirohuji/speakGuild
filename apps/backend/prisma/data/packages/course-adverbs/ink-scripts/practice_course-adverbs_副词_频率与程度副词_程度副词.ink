@@ -11,115 +11,95 @@ scriptType: practice
 #speaker: Emma
 #expression: happy
 #position: center
-#translation: 终于到山脚下了！我听说这条徒步路线的风景特别美。准备好了吗？
-Emma: We finally made it to the trailhead! I've heard this hiking route has incredibly beautiful scenery. Ready to go?
+#translation: 终于到山脚了！这景色非常美，景色绝对令人叹为观止！
+Emma: We finally made it to the trailhead! The scenery is very beautiful, and the view is extremely breathtaking!
 
 #speaker: Emma
 #expression: thinking
-#translation: 不过我刚看了下天气预报——今天山顶可能会有点热。你看看这条山路，觉得难度怎么样？
+#translation: 但天气挺热的——这条路挺陡的，这咖啡太烫了。你觉得怎么样？
+Emma: But it's rather hot today — the trail is quite steep, and this coffee is too hot. What do you think?
+#objective: 用程度副词评价山路和天气
+#hint: 用 "very/quite/rather/extremely/too" 描述
+#chunks: The view is very beautiful.,The trail is quite steep.,It's rather hot today.,This coffee is too hot.,The scenery is very beautiful.,The trail is quite steep.
 #wait:input
-#objective: 用程度副词评价眼前的山路和天气情况
-#hint: 用 "The trail looks very steep", "It's quite hot today", "The path seems rather rocky", "It's extremely beautiful here" 来描述
-#chunks: The view is very beautiful.,The trail looks quite steep.,It's rather hot today.,The path is extremely long.,This backpack is too heavy.
-Emma: But I checked the weather — it might get quite hot at the summit. Take a look at this trail — what do you think of the conditions?
-
-*   [The view is very beautiful! Let's go for it.] -> trail_scene
-*   [It's quite hot already. The trail looks rather steep.] -> trail_scene
-*   [The scenery is extremely stunning! A bit of heat won't stop us.] -> trail_scene
+-> trail_scene
 
 === trail_scene ===
 #speaker: Emma
 #expression: happy
-#translation: 走了二十分钟，回头看——哇，山下的景色太壮观了！你看那边那片树林，颜色真漂亮。
-Emma: Twenty minutes in and look back — wow, the view is breathtaking! Check out that forest down there, the colors are gorgeous.
+#translation: 看这片森林！景色非常美，景色极其令人叹为观止！
+Emma: Look at this forest! The scenery is very beautiful and the view is extremely breathtaking from here!
 
 #speaker: Emma
 #expression: thinking
-#translation: 还有那些野花，我从来没见过这种颜色！你觉得这片景色怎么样？用程度词帮我描述一下。
+#translation: 你看到什么了？用程度副词描述风景和山路。
+Emma: What do you see? Describe the scenery and the trail with degree adverbs.
+#objective: 用程度副词评价景色
+#hint: 用 "scenery", "trail", "breathtaking" 配合程度副词
+#chunks: The scenery is very beautiful.,The trail is quite steep.,The view is extremely breathtaking.
 #wait:input
-#objective: 用程度副词评价你看到的自然景色——山林、野花、天空
-#hint: 用 "The forest is very dense", "The flowers are quite colorful", "The sky is extremely clear", "The air is rather fresh" 等表达
-#chunks: The lake is very calm.,The flowers are quite colorful.,The forest looks rather mysterious.,The sky is extremely clear today.,The wind is too strong.
-Emma: And look at those wildflowers — I've never seen such colors! What do you think of this view? Use degree words to describe it!
-
-*   [The forest is very lush, and the air is extremely fresh!] -> weather_change
-*   [The flowers are quite beautiful, but the sun is rather strong.] -> weather_change
-*   [This place is too beautiful! The colors are extremely vibrant.] -> weather_change
+-> weather_change
 
 === weather_change ===
 #speaker: Emma
 #expression: surprised
-#translation: 等等，你看那边的云！刚才还晴空万里，现在天突然阴下来了。这山里的天气变得真快。
-Emma: Wait, look at those clouds! It was perfectly clear a moment ago, now it's getting dark. The weather in the mountains changes so fast.
+#translation: 等等——天气变了！天挺冷的，山顶挺冷的。风很大！
+Emma: Wait — the weather is changing! It's rather cold today and the summit is rather cold. The wind is quite strong!
 
 #speaker: Emma
 #expression: default
-#translation: 风也大起来了，我感觉有点凉。你觉得这天怎么样？咱们要不要找个地方避一避？
+#translation: 天气怎么样？用程度副词描述。
+Emma: How does the weather feel? Use degree adverbs to describe it.
+#objective: 用程度副词描述天气变化
+#hint: 用 "rather/very/extremely" 描述天气
+#chunks: It's rather cold today.,The wind is quite strong.,The summit is rather cold.
 #wait:input
-#objective: 用程度副词描述天气的突然变化和你的感受
-#hint: 用 "It's getting very cold", "The wind is quite strong now", "The temperature dropped rather quickly", "The clouds are extremely dark" 来描述
-#chunks: This coffee is too hot.,That's extremely dark.,It's rather cold today.,She is very smart.,The wind is quite strong.
-Emma: The wind is picking up too, I'm getting chilly. What do you think of this weather change? Should we find shelter?
-
-*   [It's getting very cold! Let's find shelter quickly.] -> picnic
-*   [The wind is quite strong, but I think it'll pass rather soon.] -> picnic
-*   [The clouds are extremely dark — we should head down now.] -> picnic
+-> picnic
 
 === picnic ===
 #bg: /assets/bg/mountain_cabin.png
 #speaker: Emma
 #expression: happy
-#translation: 呼，还好前面有个小木屋可以躲雨。雨来得快去得也快——看，天又快晴了！
-Emma: Phew, lucky there's a cabin here! The rain came and went fast — look, it's clearing up already!
+#translation: 有个木屋！山顶挺冷的。这咖啡太烫了——来点，味道挺好的！
+Emma: A cabin! The summit is rather cold outside. This coffee is too hot — have some, it's quite good!
 
 #speaker: Emma
 #expression: default
-#translation: 既然都在这里了，不如吃点东西？我带了自制三明治和水果。尝尝看怎么样？
+#translation: 食物怎么样？用程度副词评价。
+Emma: How's the food? Use degree adverbs to describe it.
+#objective: 用程度副词评价食物
+#hint: 用 "very/quite/rather/too" 描述食物
+#chunks: The sandwich is very tasty.,This fruit is quite sweet.,The bread is rather dry.,This salad is too salty.,The trail is quite steep.
 #wait:input
-#objective: 用程度副词评价 Emma 做的野餐食物——味道、口感、分量
-#hint: 用 "The sandwich is very tasty", "The fruit is quite sweet", "This is rather filling", "The bread is too dry", "It's extremely delicious!" 等表达
-#chunks: The sandwich is very tasty.,This fruit is quite sweet.,The bread is rather dry.,The juice is extremely refreshing.,This salad is too salty.
-Emma: Since we're here, how about a snack? I brought homemade sandwiches and fruit. Give them a try — what do you think?
-
-*   [The sandwich is very tasty! The fruit is quite sweet too.] -> sunset_view
-*   [The bread is rather dry, but the fruit is extremely refreshing.] -> sunset_view
-*   [Everything is very fresh! This is quite a nice picnic spot.] -> sunset_view
+-> sunset_view
 
 === sunset_view ===
 #bg: /assets/bg/mountain_sunset.png
 #speaker: Emma
 #expression: happy
-#translation: 雨停了，我们出来看看吧！天哪——你看那边的日落。整个天空都是橙红色的。太美了！
-Emma: Rain's gone, come outside! Oh wow — look at that sunset. The whole sky is orange and red. It's magnificent!
+#translation: 看——景色极其令人叹为观止，景色非常美！山顶挺冷的但值得！
+Emma: Look — the view is extremely breathtaking and the scenery is very beautiful from up here! The summit is rather cold but it's worth it.
 
 #speaker: Emma
 #expression: thinking
-#translation: 我真不知道该用什么词来形容了。你能用程度副词帮我描述一下这日落吗？我想记住这一刻。
+#translation: 描述这日落。你真是太善良了，跟我一起来。
+Emma: Describe this sunset. That's extremely kind of you to come with me.
+#objective: 用程度副词全面描述
+#hint: 用 "extremely/very/quite/rather" 全面描述
+#chunks: The view is extremely breathtaking.,The summit is rather cold.
 #wait:input
-#objective: 用程度副词全面评价日落的景象——颜色、氛围、感受
-#hint: 从色彩、氛围、心情等角度入手，用 "The colors are very warm", "The sky is quite dramatic", "It's rather peaceful here", "This is extremely romantic"
-#chunks: The sunset is very warm and golden.,The sky is quite dramatic tonight.,The view is rather peaceful.,This moment is extremely special.,The stars are too faint to see yet.
-Emma: I don't even have the words. Can you describe this sunset for me using degree adverbs? I want to remember this moment forever.
-
-*   [The colors are very warm! The whole sky looks quite dramatic.] -> ending
-*   [It's rather peaceful up here. This view is extremely special.] -> ending
-*   [The sunset is too beautiful for words. I'm very grateful we came.] -> ending
+-> ending
 
 === ending ===
 #speaker: Emma
 #expression: happy
-#translation: 你说得太好了！这一趟真的太值得了。有你在真是太好了——你总能发现事物的美好之处。
-Emma: Perfectly said! This hike was so worth it. I'm really glad you came — you always notice the beauty in everything.
-
-#speaker: Emma
-#expression: default
-#translation: 对了，下周末我奶奶要教我做一种新菜。上次那道红烧肉你做得特别棒——要不要一起来？
-Emma: Oh, my grandma is teaching me a new recipe next weekend. You were amazing with that braised pork last time — want to join?
+#translation: 太棒了！景色非常美，山路挺陡的，山顶挺冷的，景色极其令人叹为观止！
+Emma: That was amazing! The scenery is very beautiful, the trail is quite steep, the summit is rather cold, and the view is extremely breathtaking!
 
 #speaker: Emma
 #expression: thinking
-#translation: 不过先别急着答应……我是个相当糟糕的厨师，你可能会很"惊喜"哈哈。
-Emma: But don't say yes too quickly... I'm a rather terrible cook, so you might be extremely... surprised. Ha!
+#translation: 她非常聪明推荐了这条路！电影相当不错——下次一起看？
+Emma: She is very smart to recommend this trail! The movie is quite good too — want to watch next time?
 
 #wait
 

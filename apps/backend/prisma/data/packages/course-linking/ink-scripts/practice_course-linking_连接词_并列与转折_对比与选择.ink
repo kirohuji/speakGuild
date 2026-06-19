@@ -6,10 +6,10 @@ scriptType: practice
 Tutor: Let's talk about 对比与选择. What do you think about it?
 #objective: 用whereas对比
 #chunks: He is... whereas I am...
-#user_input
+#wait:input
 Tutor: That's interesting! Can you tell me more about that?
 #objective: 用however表达转折
 #chunks: He is... whereas I am...
-#user_input
+#wait:input
 Tutor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

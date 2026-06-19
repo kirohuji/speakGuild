@@ -6,10 +6,10 @@ scriptType: practice
 Instructor: Let's talk about 时态选择与对比. What do you think about it?
 #objective: Practice talking about 时态选择与对比
 #chunks: I usually... (present simple),I'm currently... (present continuous),I have already... (present perfect)
-#user_input
+#wait:input
 Instructor: That's interesting! Can you tell me more about that?
 #objective: Add more details and follow up
 #chunks: I usually... (present simple),I'm currently... (present continuous),I have already... (present perfect)
-#user_input
+#wait:input
 Instructor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END

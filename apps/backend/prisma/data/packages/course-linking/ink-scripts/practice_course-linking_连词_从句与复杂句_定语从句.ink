@@ -6,10 +6,10 @@ scriptType: practice
 Tutor: Let's talk about 定语从句. What do you think about it?
 #objective: 用who定语从句
 #chunks: The person who...,The book which I...
-#user_input
+#wait:input
 Tutor: That's interesting! Can you tell me more about that?
 #objective: 用which定语从句
 #chunks: The person who...,The book which I...
-#user_input
+#wait:input
 Tutor: Great conversation! I've learned a lot. Thanks for sharing with me.
 -> END
