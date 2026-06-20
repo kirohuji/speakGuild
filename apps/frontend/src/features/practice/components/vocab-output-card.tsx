@@ -294,7 +294,7 @@ export function VocabOutputCard({
 
       {/* Result */}
       {result && (
-        <div className={cn('rounded-lg px-3 py-2.5', result.passed ? 'bg-green-500/10' : 'bg-amber-500/10')}>
+        <div className={cn('rounded-lg px-3 py-2', result.passed ? 'bg-green-500/10' : 'bg-amber-500/10')}>
           <div className="flex items-center gap-1.5">
             {result.passed ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
             <p className="text-xs font-medium">{result.passed ? '正确！' : '再试一次'}</p>
@@ -309,7 +309,12 @@ export function VocabOutputCard({
       {/* Submit — 回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
-        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={judging || !!result?.passed || !userInput.trim()}>
+        <Button
+          className={cn('w-full rounded-xl', result?.passed ? 'min-h-9' : 'min-h-11')}
+          size={result?.passed ? 'sm' : 'default'}
+          onClick={submit}
+          disabled={judging || !!result?.passed || !userInput.trim()}
+        >
           {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
           {judging ? '评判中...' : result?.passed ? '已通过' : '提交'}
         </Button>

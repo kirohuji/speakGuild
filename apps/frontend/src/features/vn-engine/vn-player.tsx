@@ -882,7 +882,7 @@ export function VnPlayer({
           </div>
           <div className={cn(
             'flex min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-border/55 bg-background/90 text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-2xl',
-            inputFeedback ? 'max-h-[76dvh] sm:max-h-[64dvh]' : 'max-h-[34dvh]',
+            inputFeedback ? 'max-h-[58dvh] sm:max-h-[52dvh]' : 'max-h-[34dvh]',
           )}>
             <div className="min-h-0 flex-1 overflow-y-auto relative">
               {displayLine ? (

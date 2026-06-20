@@ -221,31 +221,31 @@ export function PracticeAnswerInput({
 
   return (
     <div className={cn(
-      'mx-2 rounded-lg bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
+      'mx-1 rounded-xl bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
       disabled && 'opacity-75',
     )}>
-      <div className="flex items-end gap-1.5 p-1.5">
+      <div className="flex items-end gap-2 p-1.5">
         <button
           type="button"
           disabled={disabled || isProcessing}
           onClick={isRecording ? stopRecording : startRecording}
           className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+            'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-45',
             isRecording
               ? 'bg-rose-500 text-white'
               : voiceError
-                ? 'bg-destructive/10 text-destructive'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ? 'bg-destructive/10 text-destructive ring-1 ring-destructive/25'
+                : 'bg-muted/75 text-muted-foreground hover:bg-muted hover:text-foreground',
           )}
           aria-label={isRecording ? '停止录音' : '语音输入'}
           title={voiceError || (isRecording ? `录音中 ${formatElapsed(elapsed)}` : '语音输入')}
         >
           {isProcessing ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className="size-5 animate-spin" />
           ) : isRecording ? (
-            <Square className="size-3.5 fill-current" />
+            <Square className="size-4 fill-current" />
           ) : (
-            <Mic className="size-4" />
+            <Mic className="size-5" />
           )}
         </button>
         <textarea
@@ -260,32 +260,32 @@ export function PracticeAnswerInput({
               onEnter?.()
             }
           }}
-          className="block min-h-[52px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+          className="block min-h-[52px] min-w-0 flex-1 resize-none bg-transparent py-2 pl-0 pr-1 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
         />
-      </div>
-
-      {/* Audio playback of last recording */}
-      {audioUrl && voiceStatus === 'idle' && (
-        <div className="flex items-center gap-2 border-t border-border/40 px-2.5 py-2">
+        {audioUrl && voiceStatus === 'idle' && (
           <button
             type="button"
             onClick={togglePlay}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            className="mb-1.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             aria-label={isPlaying ? '暂停回放' : '回放录音'}
+            title={isPlaying ? '暂停回放' : '回放录音'}
           >
-            {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5 ml-0.5" />}
+            {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
           </button>
-          <span className="text-[11px] text-muted-foreground">录音回放</span>
-          {/* biome-ignore lint/a11y/useMediaCaption: short self-recording replay */}
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            onEnded={() => setIsPlaying(false)}
-            onPause={() => setIsPlaying(false)}
-            onPlay={() => setIsPlaying(true)}
-            preload="auto"
-          />
-        </div>
+        )}
+      </div>
+
+      {audioUrl && voiceStatus === 'idle' && (
+        // biome-ignore lint/a11y/useMediaCaption: short self-recording replay
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onEnded={() => setIsPlaying(false)}
+          onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
+          preload="auto"
+          className="hidden"
+        />
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FileAudio, Keyboard, Loader2, Mic, Pause, Play, Send, Square } from 'lucide-react'
+import { FileAudio, Keyboard, Loader2, Mic, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeRecording } from '@/lib/practice-ai-api'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
@@ -393,7 +393,7 @@ export function VnInputPanel({
 
   return (
     <div className={cn(
-      variant === 'default' && 'border-t border-border/45 bg-background/55 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
+      variant === 'default' && 'border-t border-border/45 bg-background/55 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
       variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60 focus-within:ring-1 focus-within:ring-primary/25',
     )}>
       {/* 隐藏的回放 audio 元素 */}
@@ -401,7 +401,7 @@ export function VnInputPanel({
 
       <div className={cn(
         'flex',
-        isMultiline && (showTextMode || voiceDone) ? 'min-h-10 items-end' : 'h-10 items-center',
+        isMultiline && (showTextMode || voiceDone) ? 'min-h-12 items-end' : 'h-12 items-center',
         variant === 'default' ? 'gap-2' : 'gap-1',
       )}>
         {/* ═══════ 语音模式 ═══════ */}
@@ -414,13 +414,12 @@ export function VnInputPanel({
                   type="button"
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); switchToText() }}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
                   aria-label="切换到文字输入"
                 >
                   <Keyboard className="size-4" />
                 </button>
 
-                {/* 测试：上传音频文件 */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -428,33 +427,34 @@ export function VnInputPanel({
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-                <button
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
-                  aria-label="上传音频测试"
-                  title="上传音频测试 STT（临时）"
-                >
-                  <FileAudio className="size-4" />
-                </button>
 
                 <button
                   type="button"
                   disabled={isDisabled}
                   onClick={handleStartRecording}
                   className={cn(
-                    'flex flex-1 h-full items-center justify-center gap-2 rounded-lg select-none transition-all active:scale-[0.97]',
+                    'flex h-full flex-1 items-center justify-center gap-2 rounded-xl select-none transition-all active:scale-[0.97]',
                     voiceError
                       ? 'bg-destructive/10 ring-1 ring-destructive/30 text-destructive'
-                      : 'bg-muted/70 ring-1 ring-border/45 text-muted-foreground hover:bg-muted hover:text-foreground',
+                      : 'bg-muted/75 ring-1 ring-border/45 text-muted-foreground hover:bg-muted hover:text-foreground',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
                   )}
                 >
-                  <Mic className="size-4" />
+                  <Mic className="size-5" />
                   <span className="text-sm font-medium">
                     {voiceError || '点击录音'}
                   </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  aria-label="上传音频测试"
+                  title="上传音频测试 STT（临时）"
+                >
+                  <FileAudio className="size-4" />
                 </button>
               </>
             )}
@@ -465,13 +465,13 @@ export function VnInputPanel({
                 <button
                   type="button"
                   disabled
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground/30"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground/30"
                 >
                   <Keyboard className="size-4" />
                 </button>
                 <div
                   className={cn(
-                    'flex flex-1 h-full items-center justify-between gap-2 rounded-lg px-3 select-none',
+                    'flex h-full flex-1 items-center justify-between gap-2 rounded-xl px-3 select-none',
                     'bg-rose-50 dark:bg-rose-950/25 ring-1 ring-rose-200 dark:ring-rose-800/40',
                   )}
                 >
@@ -484,7 +484,7 @@ export function VnInputPanel({
                   <button
                     type="button"
                     onClick={handleStopRecording}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white transition-transform active:scale-90"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white transition-transform active:scale-90"
                     aria-label="停止录音"
                   >
                     <Square className="size-3.5 fill-current" />
@@ -499,11 +499,11 @@ export function VnInputPanel({
                 <button
                   type="button"
                   disabled
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground/30"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground/30"
                 >
                   <Keyboard className="size-4" />
                 </button>
-                <div className="flex flex-1 h-full items-center justify-center gap-2 rounded-lg bg-muted/70 ring-1 ring-border/45">
+                <div className="flex h-full flex-1 items-center justify-center gap-2 rounded-xl bg-muted/75 ring-1 ring-border/45">
                   <Loader2 className="size-4 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">识别中…</span>
                 </div>
@@ -517,7 +517,7 @@ export function VnInputPanel({
                   type="button"
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); switchToText() }}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
                   aria-label="切换到文字输入"
                 >
                   <Keyboard className="size-4" />
@@ -527,15 +527,15 @@ export function VnInputPanel({
                   type="button"
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); startRecording() }}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
                   aria-label="重新录音"
                 >
                   <Mic className="size-4" />
                 </button>
 
                 <div className={cn(
-                  'flex min-w-0 flex-1 items-end rounded-lg',
-                  variant === 'default' ? 'gap-2 px-3' : 'px-1.5',
+                  'flex min-w-0 flex-1 items-end rounded-xl',
+                  variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-1 pr-1.5',
                   variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
                 )}>
                   <textarea
@@ -554,7 +554,7 @@ export function VnInputPanel({
                         submit()
                       }
                     }}
-                    className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+                    className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 pl-0 pr-1 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -577,7 +577,7 @@ export function VnInputPanel({
                   type="button"
                   disabled={isDisabled || !text.trim()}
                   onClick={(e) => { e.stopPropagation(); submit() }}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
                   aria-label="发送"
                 >
                   <Send className="size-4" />
@@ -594,15 +594,15 @@ export function VnInputPanel({
               type="button"
               disabled={isDisabled}
               onClick={(e) => { e.stopPropagation(); switchToVoice() }}
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
               aria-label="切换到语音输入"
             >
               <Mic className="size-4" />
             </button>
 
             <div className={cn(
-              'flex min-w-0 flex-1 items-end rounded-lg',
-              variant === 'default' ? 'gap-2 px-3' : 'px-1.5',
+              'flex min-w-0 flex-1 items-end rounded-xl',
+              variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-1 pr-1.5',
               variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
             )}>
               <textarea
@@ -621,7 +621,7 @@ export function VnInputPanel({
                     submit()
                   }
                 }}
-                className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+                className="box-border block h-9 max-h-[108px] min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1.5 pl-0 pr-1 text-base font-medium leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
               />
             </div>
 
@@ -629,7 +629,7 @@ export function VnInputPanel({
               type="button"
               disabled={isDisabled || !text.trim()}
               onClick={(e) => { e.stopPropagation(); submit() }}
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
               aria-label="发送"
             >
               <Send className="size-4" />

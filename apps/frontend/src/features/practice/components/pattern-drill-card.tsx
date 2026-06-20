@@ -261,7 +261,7 @@ export function PatternDrillCard({
 
       {/* Feedback */}
       {feedback && (
-        <div className={cn('rounded-lg px-3 py-2.5', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
+        <div className={cn('rounded-lg px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
           <div className="flex items-center gap-1.5">
             {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
             <p className="text-xs font-medium">{status === 'passed' ? '正确！' : '再试一次'}</p>
@@ -274,7 +274,12 @@ export function PatternDrillCard({
       {/* Submit — 回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
-        <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
+        <Button
+          className={cn('w-full rounded-xl', status === 'passed' ? 'min-h-9' : 'min-h-11')}
+          size={status === 'passed' ? 'sm' : 'default'}
+          onClick={submit}
+          disabled={status === 'judging' || status === 'passed' || !userInput.trim()}
+        >
           {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
           {status === 'judging' ? '评判中...' : status === 'passed' ? '已通过' : '提交'}
         </Button>

@@ -273,11 +273,11 @@ function PracticeTurnFeedback({
   return (
     <div className={cn(
       isChat
-        ? 'rounded-lg bg-muted/65 px-3 py-2.5 text-foreground ring-1 ring-border/45'
-        : 'border-t border-border/45 bg-background/72 px-3 py-2 pb-safe text-foreground backdrop-blur-xl',
+        ? cn('rounded-lg bg-muted/65 text-foreground ring-1 ring-border/45', isPassed && !isRetry ? 'px-2.5 py-1.5' : 'px-3 py-2.5')
+        : cn('border-t border-border/45 bg-background/72 px-3 pb-safe text-foreground backdrop-blur-xl', isPassed && !isRetry ? 'py-1.5' : 'py-2'),
     )}>
-      <div className={cn('flex gap-2 mb-2', (isPassed && !isLoading) ? 'items-start' : 'items-center')}>
-        <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-muted/70')}>
+      <div className="mb-2 flex items-center gap-2">
+        <div className={cn('flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-muted/70')}>
           {icon}
         </div>
         <div className="min-w-0 flex-1">
