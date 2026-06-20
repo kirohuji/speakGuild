@@ -1,7 +1,16 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeService } from './english-practice.service';
-import { CreatePracticeSessionDto, SaveExpressionDto, SubmitPracticeDialogueDto, SubmitPracticeTurnDto, SubmitRecordingDto } from './dto/english-practice.dto';
+import {
+  CreatePracticeSessionDto,
+  SaveExpressionDto,
+  SubmitPracticeDialogueDto,
+  SubmitPracticeTurnDto,
+  SubmitRecordingDto,
+  SubmitWarmupRecordDto,
+  AssessWarmupDto,
+  GetWarmupRecordsQueryDto,
+} from './dto/english-practice.dto';
 import { requireAuthSession } from '../auth/session.util';
 
 /** 英语输出训练 — 练习模式 API */
@@ -102,5 +111,37 @@ export class EnglishPracticeController {
   ) {
     const session = await requireAuthSession(req);
     return this.practiceService.saveExpression(session.user.id, dto);
+  }
+
+  // ── Warmup Records ──
+
+  /** 获取热身练习记录列表 */
+  @Get('warmup-records')
+  async getWarmupRecords(
+    @Req() req: Request,
+    @Query() query: GetWarmupRecordsQueryDto,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.getWarmupRecords(session.user.id, query.topicId);
+  }
+
+  /** 保存热身练习记录 */
+  @Post('warmup-records')
+  async saveWarmupRecord(
+    @Req() req: Request,
+    @Body() dto: SubmitWarmupRecordDto,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.saveWarmupRecord(session.user.id, dto.topicId, dto.items);
+  }
+
+  /** AI 综合评估热身表现 */
+  @Post('warmup-records/assess')
+  async assessWarmup(
+    @Req() req: Request,
+    @Body() dto: AssessWarmupDto,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.practiceService.assessWarmup(session.user.id, dto.topicId, dto.topicTitle, dto.items);
   }
 }

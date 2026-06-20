@@ -138,3 +138,52 @@ export class SubmitPracticeTurnDto {
   @IsOptional()
   parentTurnId?: string;
 }
+
+// ── Warmup Record DTOs ──
+
+export class SubmitWarmupRecordDto {
+  @IsString()
+  topicId: string;
+
+  @IsArray()
+  items: Array<{
+    stepId: string;
+    stepType: string;
+    zh: string;
+    answer: string;
+    userAnswer: string;
+    audioUrl?: string | null;
+    passed: boolean;
+    feedback: string;
+    groupTitle?: string;
+    score?: string;
+    usedHintLevel?: number;
+    retryCount?: number;
+    correction?: string;
+  }>;
+}
+
+export class AssessWarmupDto {
+  @IsString()
+  topicId: string;
+
+  @IsString()
+  topicTitle: string;
+
+  @IsArray()
+  items: any[];
+}
+
+export class SaveWarmupRecordsDto {
+  @IsString()
+  topicId: string;
+
+  @IsArray()
+  items: any[];
+}
+
+export class GetWarmupRecordsQueryDto {
+  @IsString()
+  @IsOptional()
+  topicId?: string;
+}

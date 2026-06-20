@@ -583,4 +583,72 @@ export class EnglishPracticeService {
       objectiveCompleted: turn.objectivesCompleted,
     }));
   }
+
+  // ── Warmup Records ──
+
+  /** 获取用户的全部热身记录 */
+  async getWarmupRecords(userId: string, topicId?: string) {
+    const where: any = { userId };
+    if (topicId) where.topicId = topicId;
+    return this.prisma.practiceWarmupRecord.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        score: true,
+        feedback: true,
+        items: true,
+        topicId: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  /** 保存热身练习记录 */
+  async saveWarmupRecord(userId: string, topicId: string, items: any[]) {
+    const record = await this.prisma.practiceWarmupRecord.create({
+      data: {
+        userId,
+        topicId,
+        items,
+      },
+      select: { id: true },
+    });
+
+    // Track daily activity
+    await this.prisma.dailyActivity.upsert({
+      where: {
+        userId_date: { userId, date: new Date() },
+      },
+      create: { userId, date: new Date(), count: 1 },
+      update: { count: { increment: 1 } },
+    });
+
+    return record;
+  }
+
+  /** AI 综合评估热身表现 */
+  async assessWarmup(userId: string, topicId: string, topicTitle: string, items: any[]) {
+    const record = await this.prisma.practiceWarmupRecord.create({
+      data: {
+        userId,
+        topicId,
+        score: 0, // Placeholder — AI assessment would compute this
+        feedback: `已完成"${topicTitle}"的 ${items.length} 道热身练习`,
+        items,
+      },
+      select: { id: true, score: true, feedback: true },
+    });
+
+    // Track daily activity
+    await this.prisma.dailyActivity.upsert({
+      where: {
+        userId_date: { userId, date: new Date() },
+      },
+      create: { userId, date: new Date(), count: items.length },
+      update: { count: { increment: items.length } },
+    });
+
+    return record;
+  }
 }

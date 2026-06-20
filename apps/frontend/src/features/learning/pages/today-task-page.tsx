@@ -18,7 +18,7 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
 import type { UnitDetail } from '../api/learning-api'
-import { learningPackService, learningRepository } from '@/lib/offline'
+import { learningPackService, learningRepository, practiceRepository } from '@/lib/offline'
 import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
 import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
@@ -58,6 +58,16 @@ type PracticeGroup = {
 }
 
 // ── 工具函数 ──
+function hashStringToNumber(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
 function pickOne<T>(items: T[] | undefined): [T, number] | null {
   if (!items?.length) return null
   const idx = Math.floor(Math.random() * items.length)
@@ -131,13 +141,32 @@ export function TodayTaskPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
-  const [runSeed, setRunSeed] = useState(() => Math.random())
+  const [runSeed, setRunSeed] = useState(() => {
+    // 用今日日期作为种子，保证同一天看到相同的题目
+    const today = new Date().toISOString().slice(0, 10)
+    return hashStringToNumber(today)
+  })
 
   // 每次重新生成题目时重置
   useEffect(() => {
     warmupStore.clearSession()
     setDoneIds(new Set())
+    setHasSubmittedToday(false)
   }, [runSeed])
+
+  // ── 恢复今日进度（从 SQLite）──
+  useEffect(() => {
+    practiceRepository.getTodayProgress().then((progress) => {
+      if (progress && progress.doneIds.length > 0) {
+        setDoneIds(new Set(progress.doneIds))
+        // 如果全部完成，标记已提交
+        // steps 此时可能还未加载，在后续 effect 中判断
+        if (progress.doneIds.length > 0) {
+          console.log('[today-task] 📋 恢复今日进度:', progress.doneIds.length, '题已完成')
+        }
+      }
+    })
+  }, [])
 
   const markDone = useCallback((stepId: string, _score: WarmupScore = 'strong') => {
     setDoneIds((prev) => {
@@ -147,13 +176,58 @@ export function TodayTaskPage() {
     })
   }, [])
 
+  // ── 增量保存今日进度到 SQLite ──
+  useEffect(() => {
+    if (doneIds.size === 0) return
+    const currentPackId = unit?.id ?? null
+    practiceRepository.saveTodayProgress(currentPackId, [...doneIds]).catch(() => {})
+  }, [doneIds, unit?.id])
+
   const handleReshuffle = useCallback(() => {
     warmupStore.clearSession()
     setDoneIds(new Set())
+    setHasSubmittedToday(false)
     setCurrentIdx(0)
     setDrawerOpen(false)
     setRunSeed(Math.random())
   }, [warmupStore])
+
+  // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
+  const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (hasSubmittedToday || steps.length === 0) return
+    if (doneCount < steps.length) return
+    // 过滤占位卡片
+    const realSteps = steps.filter((s) => !s.id.startsWith('placeholder:'))
+    if (realSteps.length === 0) {
+      setHasSubmittedToday(true)
+      return
+    }
+
+    const submit = async () => {
+      setIsSubmitting(true)
+      try {
+        const topicTitle = unit?.trainingTopics?.[0]?.title || unit?.title || '今日练习'
+        const topicId = unit?.trainingTopics?.[0]?.id || unit?.id || 'today'
+        await practiceRepository.submitWarmupRecords(
+          topicId,
+          topicTitle,
+          warmupStore.records,
+        )
+        await practiceRepository.markTodayActivity(doneCount)
+        console.log('[today-task] ✅ 今日练习已提交 |', doneCount, '题')
+      } catch (err) {
+        console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
+      } finally {
+        setHasSubmittedToday(true)
+        setIsSubmitting(false)
+      }
+    }
+
+    submit()
+  }, [doneCount, steps.length, hasSubmittedToday, unit, warmupStore.records])
 
   // ── 加载数据 ──
   useEffect(() => {
@@ -506,6 +580,16 @@ export function TodayTaskPage() {
           <div className="flex items-center gap-2">
             <ListChecks className="size-4 text-primary" />
             <p className="text-sm font-semibold text-foreground">今日进度</p>
+            {hasSubmittedToday && donePercent >= 100 && (
+              <Badge variant="default" className="h-5 rounded-full px-2 text-[10px] bg-green-500/15 text-green-600">
+                <CheckCircle2 className="mr-0.5 size-3" /> 已打卡
+              </Badge>
+            )}
+            {isSubmitting && (
+              <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px] animate-pulse">
+                同步中...
+              </Badge>
+            )}
           </div>
           <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
             {doneCount}/{steps.length} 题

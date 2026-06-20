@@ -368,6 +368,7 @@ export class PackageDataController {
             difficulty: row.difficulty || 'L2',
             description: row.description || null,
             knowledgePoints: row.knowledge_points || null,
+            teachingMarkdown: row.teaching_markdown || null,
             inkScriptId,
             sortOrder: topicIds.length,
           },
@@ -610,7 +611,7 @@ export class PackageDataController {
     }
 
     // 4. training_topics.csv
-    let topicCsv = 'scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key\n';
+    let topicCsv = 'scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key\n';
     for (const topic of scene.trainingTopics) {
       topicCsv += toCsvLine([
         scene.title,
@@ -621,6 +622,7 @@ export class PackageDataController {
         topic.difficulty,
         topic.description || '',
         topic.knowledgePoints || '',
+        topic.teachingMarkdown || '',
         '',
       ]) + '\n';
     }
@@ -919,6 +921,7 @@ export class PackageDataController {
           title: row.title, promptEn: row.prompt_en || '', promptZh: row.prompt_zh || '',
           suggestedDurationSec: parseInt(row.duration_sec || '60'), difficulty: row.difficulty || 'L2',
           description: row.description || null, knowledgePoints: row.knowledge_points || null,
+          teachingMarkdown: row.teaching_markdown || null,
           sortOrder: topicIds.length,
         },
       });

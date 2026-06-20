@@ -1,12 +1,14 @@
 import {
   practiceApi,
   practiceAiApi,
+  warmupRecordApi,
   type PracticeSession,
   type TopicDetail,
 } from '@/features/practice/api/english-practice-api'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
+import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
 
 export type PracticeTurnPayload = {
   round?: number
@@ -389,5 +391,105 @@ export const practiceRepository = {
   async clearPracticeRecordsCache(): Promise<void> {
     await localDb.clear('practice_records')
     await localDb.delete('kv', PRACTICE_RECORDS_CACHE_KEY)
+  },
+
+  // ── Warmup Records (今日任务练习记录) ──
+
+  /**
+   * 保存今日任务的热身练习记录到本地 SQLite，并尝试同步到后端。
+   * 采用 offline-first：先写本地，后异步同步。
+   */
+  async submitWarmupRecords(topicId: string, topicTitle: string, items: WarmupRecordEntry[]) {
+    const recordId = `warmup:${Date.now()}:${topicId}`
+    const now = new Date().toISOString()
+
+    // 1. 本地持久化
+    await localDb.put('warmup_records', {
+      id: recordId,
+      topicId,
+      topicTitle,
+      items,
+      createdAt: now,
+      updatedAt: now,
+      syncStatus: 'pending',
+    })
+
+    // 2. 后台同步到后端
+    try {
+      await warmupRecordApi.save(topicId, items)
+      await warmupRecordApi.assess(topicId, topicTitle, items)
+      await localDb.put('warmup_records', {
+        id: recordId,
+        topicId,
+        topicTitle,
+        items,
+        createdAt: now,
+        updatedAt: new Date().toISOString(),
+        syncStatus: 'synced',
+      })
+    } catch (err) {
+      console.warn('[practiceRepo] Warmup sync failed, will retry later:', err)
+      // Outbox retry via sync-outbox
+      await syncOutbox.enqueue({
+        entityType: 'warmup_records',
+        entityId: recordId,
+        operation: 'create',
+        payload: { topicId, topicTitle, items },
+      })
+    }
+
+    // 3. 标记今日活动
+    await this.markTodayActivity(items.length)
+
+    return { id: recordId, synced: false }
+  },
+
+  /** 标记今日练习活跃（用于打卡统计） */
+  async markTodayActivity(count: number = 1): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10)
+    const id = `daily:${today}`
+    const existing = await localDb.get<{ count: number }>('daily_activity', id)
+    await localDb.put('daily_activity', {
+      id,
+      date: today,
+      count: (existing?.count ?? 0) + count,
+      updatedAt: new Date().toISOString(),
+    })
+  },
+
+  /** 获取本地已缓存的热身记录 */
+  async getCachedWarmupRecords(topicId?: string): Promise<any[]> {
+    const all = await localDb.list<any>('warmup_records')
+    let filtered = all.filter((r) => r?.items?.length)
+    if (topicId) filtered = filtered.filter((r) => r.topicId === topicId)
+    return filtered.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+  },
+
+  // ── Daily Progress (每日进度持久化) ──
+
+  /** 获取今日练习进度（已完成步骤 ID 集合） */
+  async getTodayProgress(): Promise<{ date: string; packId: string | null; doneIds: string[] } | null> {
+    const today = new Date().toISOString().slice(0, 10)
+    const record = await localDb.get<{ date: string; packId: string | null; doneIds: string[] }>('daily_progress', `daily:${today}`)
+    if (record?.date === today) return record
+    return null
+  },
+
+  /** 保存今日练习进度 */
+  async saveTodayProgress(packId: string | null, doneIds: string[]): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10)
+    await localDb.put('daily_progress', {
+      id: `daily:${today}`,
+      date: today,
+      packId,
+      doneIds,
+      updatedAt: new Date().toISOString(),
+    })
+  },
+
+  /** 获取今日是否已完成打卡 */
+  async isTodayCheckedIn(): Promise<boolean> {
+    const progress = await this.getTodayProgress()
+    return progress !== null && progress.doneIds.length > 0
   },
 }

@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 6
+export const DB_VERSION = 7
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -37,6 +37,9 @@ export const TABLE_NAMES = [
   'offline_content_refs',
   'user_progress',
   'practice_records',
+  'warmup_records',
+  'daily_activity',
+  'daily_progress',
   'local_assets',
   'asset_refs',
   'outbox',
@@ -172,6 +175,36 @@ export const DDL: Record<TableName, string> = {
       scene_id TEXT,
       status TEXT,
       sync_status TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  warmup_records: `
+    CREATE TABLE IF NOT EXISTS warmup_records (
+      id TEXT PRIMARY KEY NOT NULL,
+      topic_id TEXT,
+      topic_title TEXT,
+      sync_status TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  daily_activity: `
+    CREATE TABLE IF NOT EXISTS daily_activity (
+      id TEXT PRIMARY KEY NOT NULL,
+      date TEXT,
+      count INTEGER DEFAULT 0,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  daily_progress: `
+    CREATE TABLE IF NOT EXISTS daily_progress (
+      id TEXT PRIMARY KEY NOT NULL,
+      date TEXT,
+      pack_id TEXT,
+      done_ids TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
