@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { HardDrive, Database, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, HardDrive, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
-import { offlineStorageService, type OfflineCacheCategory, type OfflineStorageStats } from '@/lib/offline'
+import { offlineStorageService, type OfflineCacheCategory, type OfflineStorageDetails, type OfflineStorageStats } from '@/lib/offline'
 
 function formatBytes(bytes?: number) {
   const value = Number(bytes ?? 0)
@@ -18,13 +18,19 @@ function formatBytes(bytes?: number) {
 export function MobileStorageView() {
   const { t } = useTranslation()
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
+  const [details, setDetails] = useState<OfflineStorageDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
+  const [deletingPackId, setDeletingPackId] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<{ packs: boolean; sync: boolean }>({ packs: false, sync: false })
 
   const refresh = useCallback(() => {
     setLoading(true)
-    offlineStorageService.getStats()
-      .then(setStats)
+    Promise.all([offlineStorageService.getStats(), offlineStorageService.getDetails()])
+      .then(([nextStats, nextDetails]) => {
+        setStats(nextStats)
+        setDetails(nextDetails)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -37,13 +43,26 @@ export function MobileStorageView() {
     try {
       await offlineStorageService.clearCategory(category)
       toast.success(category === 'all' ? t('profile.cacheAllCleared', { defaultValue: '缓存已全部清除' }) : t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
-      await offlineStorageService.getStats().then(setStats)
+      refresh()
     } catch (error: any) {
       toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setClearing(null)
     }
-  }, [])
+  }, [refresh, t])
+
+  const handleClearPack = useCallback(async (packId: string) => {
+    setDeletingPackId(packId)
+    try {
+      await offlineStorageService.clearPack(packId)
+      toast.success(t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
+      refresh()
+    } catch (error: any) {
+      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+    } finally {
+      setDeletingPackId(null)
+    }
+  }, [refresh, t])
 
   const totalBytes = stats?.totalCacheBytes ?? 0
   const segments = [
@@ -69,6 +88,26 @@ export function MobileStorageView() {
       {clearing === category ? t('common.clearing', { defaultValue: '清除中' }) : t('common.clear', { defaultValue: '清除' })}
     </Button>
   )
+
+  const ToggleIcon = ({ open }: { open: boolean }) => (
+    open ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />
+  )
+
+  const outboxLabel = (type: string) => ({
+    my_unit: '学习计划',
+    word_entry: '生词本',
+    chunk_entry: '句块库',
+    pattern_entry: '句型库',
+    practice_session: '练习会话',
+    practice_turn: '练习回答',
+    learning_pack: '学习包',
+  } as Record<string, string>)[type] ?? type
+
+  const operationLabel = (operation: string) => ({
+    create: '新增',
+    update: '更新',
+    delete: '删除',
+  } as Record<string, string>)[operation] ?? operation
 
   return (
     <div className="space-y-5">
@@ -113,8 +152,60 @@ export function MobileStorageView() {
           iconBg="bg-blue-500"
           label={t('profile.downloadedPacks', { defaultValue: '已下载学习包' })}
           subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })}`}
-          right={<ClearButton category="packs" />}
+          right={(
+            <div className="flex items-center gap-1.5">
+              <ClearButton category="packs" />
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setExpanded((current) => ({ ...current, packs: !current.packs }))
+                }}
+                className="flex size-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted/60"
+              >
+                <ToggleIcon open={expanded.packs} />
+              </button>
+            </div>
+          )}
         />
+        {expanded.packs && (
+          <div className="border-b border-border/50 bg-background/35 px-4 py-2">
+            {loading ? (
+              <p className="py-3 text-xs text-muted-foreground">...</p>
+            ) : details?.packs.length ? (
+              <div className="space-y-2">
+                {details.packs.map((pack) => (
+                  <div key={pack.packId} className="rounded-lg border border-border/50 bg-background/65 px-3 py-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{pack.title}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          v{pack.version} · {pack.topicCount} 话题 · {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
+                        </p>
+                        {pack.lastError && <p className="mt-1 line-clamp-2 text-[11px] text-red-500">{pack.lastError}</p>}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={Boolean(deletingPackId)}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleClearPack(pack.packId)
+                        }}
+                        className="h-7 shrink-0 px-2 text-xs text-red-500 hover:text-red-600"
+                      >
+                        {deletingPackId === pack.packId ? '删除中' : '删除'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-3 text-xs text-muted-foreground">暂无已下载学习包</p>
+            )}
+          </div>
+        )}
         <IosRow
           icon={Database}
           iconBg="bg-emerald-500"
@@ -136,7 +227,38 @@ export function MobileStorageView() {
       </IosSection>
 
       <IosSection header={t('profile.syncStatus', { defaultValue: '同步状态' })}>
-        <IosRow label={t('profile.pendingSync', { defaultValue: '待同步操作' })} value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)} last />
+        <IosRow
+          label={t('profile.pendingSync', { defaultValue: '待同步操作' })}
+          value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)}
+          onTap={() => setExpanded((current) => ({ ...current, sync: !current.sync }))}
+          right={<div className="flex items-center gap-1 text-muted-foreground"><span className="text-sm">{loading ? '...' : String(stats?.pendingOutboxCount ?? 0)}</span><ToggleIcon open={expanded.sync} /></div>}
+          last={!expanded.sync}
+        />
+        {expanded.sync && (
+          <div className="bg-background/35 px-4 py-2">
+            {loading ? (
+              <p className="py-3 text-xs text-muted-foreground">...</p>
+            ) : details?.outbox.length ? (
+              <div className="space-y-2">
+                {details.outbox.map((item) => (
+                  <div key={item.id} className="rounded-lg border border-border/50 bg-background/65 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{outboxLabel(item.entityType)} · {operationLabel(item.operation)}</p>
+                      <span className={cn('rounded-full px-2 py-0.5 text-[10px]', item.status === 'failed' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600')}>
+                        {item.status === 'failed' ? '失败' : item.status === 'syncing' ? '同步中' : '待同步'}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.entityId}</p>
+                    {item.lastError && <p className="mt-1 line-clamp-2 text-[11px] text-red-500">{item.lastError}</p>}
+                    <p className="mt-1 text-[10px] text-muted-foreground">重试 {item.retryCount} 次 · {new Date(item.updatedAt).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-3 text-xs text-muted-foreground">没有待同步操作</p>
+            )}
+          </div>
+        )}
       </IosSection>
 
       <IosSection>

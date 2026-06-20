@@ -667,8 +667,8 @@ export function TodayTaskPage() {
             </div>
 
             {/* Body */}
-            <div className="min-h-0 flex-1 overflow-hidden px-5 pb-6 pt-4 md:px-6">
-              <div key={currentStep?.id} className="h-full overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 md:px-6">
+              <div key={currentStep?.id} className="min-h-full">
                 {currentStep?.render()}
               </div>
             </div>

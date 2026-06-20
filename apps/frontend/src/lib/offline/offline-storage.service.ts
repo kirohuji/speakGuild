@@ -2,10 +2,12 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
 import type { InstalledLearningPack } from './learning-pack.service'
+import { learningPackService } from './learning-pack.service'
 import type { LocalAsset } from './asset-cache.service'
 import type { TableName } from './sqlite/schema'
 import { learningContentRepository } from './learning-content.repository'
 import { practiceRepository } from './practice.repository'
+import type { SyncOutboxItem } from './sync-outbox'
 
 export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'all'
 
@@ -20,6 +22,22 @@ export interface OfflineStorageStats {
   expressionBytes: number
   pendingOutboxCount: number
   totalCacheBytes: number
+}
+
+export interface OfflineStorageDetails {
+  packs: Array<{
+    packId: string
+    title: string
+    version: number
+    status: InstalledLearningPack['status']
+    installedAt: string | null
+    updatedAt: string
+    bytes: number
+    topicCount: number
+    assetCount: number
+    lastError?: string
+  }>
+  outbox: SyncOutboxItem[]
 }
 
 function approximateJsonBytes(value: unknown): number {
@@ -89,6 +107,50 @@ export const offlineStorageService = {
       pendingOutboxCount: outbox.filter((item) => item.status === 'pending' || item.status === 'failed').length,
       totalCacheBytes: downloadedPackBytes + localAssetBytes + dictionaryBytes + expressionBytes,
     }
+  },
+
+  async getDetails(): Promise<OfflineStorageDetails> {
+    const [packs, unitDetails, inkScripts, outbox] = await Promise.all([
+      localDb.list<InstalledLearningPack>('downloaded_packs'),
+      localDb.list<any>('downloaded_unit_details'),
+      localDb.list<any>('ink_scripts'),
+      localDb.list<SyncOutboxItem>('outbox'),
+    ])
+
+    const packDetails = packs
+      .filter((pack) => pack.status === 'installed' || pack.status === 'failed' || pack.status === 'installing')
+      .map((pack) => {
+        const relatedUnitDetails = unitDetails.filter((item) => {
+          const id = String(item?.id ?? '')
+          const unitId = String(item?.unitId ?? '')
+          return id === pack.packId || unitId === pack.packId
+        })
+        const relatedInkScripts = inkScripts.filter((item) => String(item?.unitId ?? '') === pack.packId)
+        return {
+          packId: pack.packId,
+          title: pack.title,
+          version: pack.version,
+          status: pack.status,
+          installedAt: pack.installedAt,
+          updatedAt: pack.updatedAt,
+          bytes: sumJsonBytes([pack, ...relatedUnitDetails, ...relatedInkScripts]),
+          topicCount: pack.manifest?.topics?.length ?? relatedUnitDetails.filter((item) => item?.topicId).length,
+          assetCount: pack.manifest?.assets?.length ?? 0,
+          lastError: pack.lastError,
+        }
+      })
+      .sort((a, b) => (b.installedAt ?? b.updatedAt).localeCompare(a.installedAt ?? a.updatedAt))
+
+    return {
+      packs: packDetails,
+      outbox: outbox
+        .filter((item) => item.status === 'pending' || item.status === 'failed' || item.status === 'syncing')
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    }
+  },
+
+  async clearPack(packId: string): Promise<void> {
+    await learningPackService.uninstall(packId)
   },
 
   async clearCategory(category: OfflineCacheCategory): Promise<void> {

@@ -1,12 +1,27 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+
+function ignoreResetSocketErrors(): Plugin {
+  return {
+    name: 'ignore-reset-socket-errors',
+    configureServer(server) {
+      server.httpServer?.on('connection', (socket) => {
+        socket.on('error', (error: NodeJS.ErrnoException) => {
+          if (error.code === 'ECONNRESET' || error.code === 'EPIPE') return
+
+          server.config.logger.error(error.stack || error.message)
+        })
+      })
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
-    plugins: [react()],
+    plugins: [react(), ignoreResetSocketErrors()],
     resolve: {
       alias: { '@': path.resolve(__dirname, './src') },
     },
