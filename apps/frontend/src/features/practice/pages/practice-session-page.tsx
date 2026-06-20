@@ -991,6 +991,9 @@ export function PracticeSessionPage() {
 
   // ── History dialog visibility (hide drawer toggles when open) ──
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+
+  // ── Teaching drawer (controlled from prepare phase) ──
+  const [teachingOpen, setTeachingOpen] = useState(false)
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const syncedInkLineCountRef = useRef(0)
 
@@ -1745,8 +1748,20 @@ export function PracticeSessionPage() {
                   </div>
                 )}
               </div>
+              <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={() => setTeachingOpen(true)}>
+                <BookOpen className="size-4" />
+                {t('practiceVn.teaching')}
+              </Button>
             </section>
           )}
+
+          {/* Teaching drawer — controlled, trigger is the Button above */}
+          <PracticeVnDrawer
+            teachingMarkdown={detail.topic.teachingMarkdown || ''}
+            hideToggles
+            open={teachingOpen}
+            onOpenChange={setTeachingOpen}
+          />
 
           <section>
             <div className="mb-3 flex items-end justify-between gap-3 px-1">
@@ -2033,13 +2048,7 @@ export function PracticeSessionPage() {
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
           </Button>
 
-          <PracticeVnDrawer
-            teachingMarkdown={teachingMarkdown}
-            onOpen={refreshTeachingMarkdown}
-            hideToggles={isHistoryOpen}
-            plainTrigger
-            triggerClassName="mx-auto inline-flex h-7 min-w-[92px] flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-medium text-foreground/80 transition-colors hover:bg-primary/[0.16] active:bg-primary/[0.22]"
-          />
+          {/* Teaching button now in prepare phase — hidden here */}
 
           {canReview && (
             <Button
