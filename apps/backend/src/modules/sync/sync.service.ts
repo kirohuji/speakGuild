@@ -57,6 +57,14 @@ export class SyncService {
     // ---- 学习单元 ----
     if (entityType === 'my_unit') {
       if (operation === 'create') {
+        const scene = await this.prisma.scene.findUnique({
+          where: { id: entityId },
+          select: { id: true },
+        });
+        if (!scene) {
+          return { handled: true };
+        }
+
         await this.prisma.userSceneProgress.upsert({
           where: { userId_sceneId: { userId, sceneId: entityId } },
           create: {

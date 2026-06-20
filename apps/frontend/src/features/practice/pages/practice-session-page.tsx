@@ -39,6 +39,7 @@ import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 type Phase = 'prepare' | 'guided' | 'practice' | 'analysis'
 const PASSED_FEEDBACK_LINGER_MS = 1500
+const PREP_PAGE_SIZE = 8
 
 interface TurnFeedback {
   status: 'loading' | 'success' | 'error'
@@ -69,6 +70,67 @@ function compilePracticeInk(inkSource?: string | null, fallbackJson?: Record<str
     if (result.success && result.json) return result.json
   }
   return fallbackJson ?? null
+}
+
+function paginateItems<T>(items: T[], page: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const currentPage = Math.min(Math.max(page, 1), totalPages)
+  const startIndex = (currentPage - 1) * pageSize
+
+  return {
+    items: items.slice(startIndex, startIndex + pageSize),
+    currentPage,
+    startIndex,
+    totalPages,
+  }
+}
+
+function PrepPager({
+  currentPage,
+  totalPages,
+  totalItems,
+  onPageChange,
+}: {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  onPageChange: (page: number) => void
+}) {
+  const { t } = useTranslation()
+  if (totalPages <= 1) return null
+
+  return (
+    <div className="flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
+      <span className="text-[11px] text-muted-foreground">
+        {t('common.total')} {totalItems} {t('practiceSession.items')}
+      </span>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          {t('common.prevPage')}
+        </Button>
+        <span className="min-w-10 text-center text-[11px] text-muted-foreground">
+          {currentPage}/{totalPages}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          {t('common.nextPage')}
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 function readTagValue(tags: string[], prefix: string) {
@@ -776,6 +838,7 @@ export function PracticeSessionPage() {
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
   const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
   const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
+  const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
@@ -920,7 +983,7 @@ export function PracticeSessionPage() {
     }
   }, [detail, topicId])
 
-  // 句型表达式始终可见（不在 tab 内），mount 时加载
+  // 句型 tab 也需要展示收藏状态，mount 时加载
   useEffect(() => {
     learningContentRepository.listExpressionTexts('pattern').then((texts) => {
       setCollectedTexts((prev) => new Set([...prev, ...texts]))
@@ -1202,6 +1265,33 @@ export function PracticeSessionPage() {
       toast.success('已从学习库移除')
     } catch { toast.error('移除失败') }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+  }, [])
+
+  const vocabPageItems = useMemo(
+    () => paginateItems(detail?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
+    [detail?.vocabularies, prepPage.vocab],
+  )
+  const chunkPageItems = useMemo(
+    () => paginateItems(detail?.activeChunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
+    [detail?.activeChunks, prepPage.chunk],
+  )
+  const patternPageItems = useMemo(
+    () => paginateItems(detail?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
+    [detail?.sentencePatterns, prepPage.pattern],
+  )
+
+  const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
+    setPrepPage((current) => ({ ...current, [kind]: page }))
+    if (kind === 'vocab') setExpandedVocabId(null)
+    if (kind === 'chunk') setExpandedChunkId(null)
+    if (kind === 'pattern') setExpandedPatternIdx(null)
+  }, [])
+
+  const handlePrepTabChange = useCallback((value: string) => {
+    setPrepTab(value)
+    setExpandedVocabId(null)
+    setExpandedChunkId(null)
+    setExpandedPatternIdx(null)
   }, [])
 
   // ==================== Practice: Send Input ====================
@@ -1512,7 +1602,7 @@ export function PracticeSessionPage() {
         </div>
 
         <div className="space-y-5">
-          {(detail.topic.description || detail.topic.knowledgePoints || detail.sentencePatterns?.length) && (
+          {(detail.topic.description || detail.topic.knowledgePoints) && (
             <section className="rounded-lg bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Info className="size-4 text-primary" />
@@ -1536,50 +1626,6 @@ export function PracticeSessionPage() {
                     />
                   </div>
                 )}
-                {detail.sentencePatterns?.length ? (
-                  <div className="space-y-2">
-                    {detail.sentencePatterns.map((p, i) => {
-                      const isExpanded = expandedPatternIdx === i
-                      return (
-                        <Card key={i} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
-                          <CardContent className="p-0">
-                            <button
-                              type="button"
-                              onClick={() => setExpandedPatternIdx((prev) => (prev === i ? null : i))}
-                              className="flex w-full items-center gap-3 p-3 text-left"
-                            >
-                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                                <Search className="size-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
-                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
-                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
-                                </div>
-                                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
-                              </div>
-                              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
-                            </button>
-                            {isExpanded && (
-                              <div className="border-t border-border/50 px-3 pb-3 pt-2">
-                                {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
-                                <div className="flex gap-2 mt-2">
-                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${i}`)}>
-                                    <Search className="size-3.5" /> 查看
-                                  </Button>
-                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression('pattern', p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? '处理中...' : collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-                ) : null}
               </div>
             </section>
           )}
@@ -1591,20 +1637,21 @@ export function PracticeSessionPage() {
                 <p className="mt-0.5 text-xs text-muted-foreground">{t('practiceSession.preparationSubtitle')}</p>
               </div>
               <Badge variant="outline" className="rounded-full text-[11px]">
-                {detail.vocabularies.length + detail.activeChunks.length} {t('practiceSession.items')}
+                {detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0)} {t('practiceSession.items')}
               </Badge>
             </div>
 
-            <Tabs value={prepTab} onValueChange={setPrepTab} className="w-full">
-              <TabsList className="grid h-10 w-full grid-cols-2 rounded-lg bg-muted/70 p-1">
+            <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full">
+              <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
                 <TabsTrigger value="vocab" className="rounded-md text-xs">{t('practiceSession.sceneVocab')} ({detail.vocabularies.length})</TabsTrigger>
                 <TabsTrigger value="chunk" className="rounded-md text-xs">{t('practiceSession.coreExpressions')} ({detail.activeChunks.length})</TabsTrigger>
+                <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({detail.sentencePatterns?.length ?? 0})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="vocab" className="mt-3">
                 {detail.vocabularies.length > 0 ? (
                   <div className="space-y-2">
-                    {detail.vocabularies.map((v) => {
+                    {vocabPageItems.items.map((v) => {
                       const isExpanded = expandedVocabId === v.id
                       return (
                         <Card
@@ -1649,6 +1696,12 @@ export function PracticeSessionPage() {
                         </Card>
                       )
                     })}
+                    <PrepPager
+                      currentPage={vocabPageItems.currentPage}
+                      totalPages={vocabPageItems.totalPages}
+                      totalItems={detail.vocabularies.length}
+                      onPageChange={(page) => changePrepPage('vocab', page)}
+                    />
                   </div>
                 ) : (
                   <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('practiceSession.noVocab')}</p>
@@ -1657,7 +1710,9 @@ export function PracticeSessionPage() {
 
               <TabsContent value="chunk" className="mt-3">
                 <ChunkActivationPanel
-                  chunks={detail.activeChunks}
+                  chunks={chunkPageItems.items}
+                  totalCount={detail.activeChunks.length}
+                  collectedCount={detail.activeChunks.filter((chunk) => collectedTexts.has(chunk.text)).length}
                   activatedIds={activatedChunks}
                   collectedTexts={collectedTexts}
                   savingTexts={savingTexts}
@@ -1668,6 +1723,70 @@ export function PracticeSessionPage() {
                   onCollect={handleCollectChunk}
                   onRemove={(chunk) => handleRemoveExpression('chunk', chunk.text)}
                 />
+                <div className="mt-2">
+                  <PrepPager
+                    currentPage={chunkPageItems.currentPage}
+                    totalPages={chunkPageItems.totalPages}
+                    totalItems={detail.activeChunks.length}
+                    onPageChange={(page) => changePrepPage('chunk', page)}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="pattern" className="mt-3">
+                {detail.sentencePatterns?.length ? (
+                  <div className="space-y-2">
+                    {patternPageItems.items.map((p, index) => {
+                      const absoluteIndex = patternPageItems.startIndex + index
+                      const isExpanded = expandedPatternIdx === absoluteIndex
+                      return (
+                        <Card key={`${p.pattern}-${absoluteIndex}`} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
+                          <CardContent className="p-0">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedPatternIdx((prev) => (prev === absoluteIndex ? null : absoluteIndex))}
+                              className="flex w-full items-center gap-3 p-3 text-left"
+                            >
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                                <Search className="size-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
+                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
+                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                </div>
+                                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
+                              </div>
+                              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
+                            </button>
+                            {isExpanded && (
+                              <div className="border-t border-border/50 px-3 pb-3 pt-2">
+                                {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
+                                <div className="flex gap-2 mt-2">
+                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>
+                                    <Search className="size-3.5" /> 查看
+                                  </Button>
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression('pattern', p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? '处理中...' : collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                    <PrepPager
+                      currentPage={patternPageItems.currentPage}
+                      totalPages={patternPageItems.totalPages}
+                      totalItems={detail.sentencePatterns?.length ?? 0}
+                      onPageChange={(page) => changePrepPage('pattern', page)}
+                    />
+                  </div>
+                ) : (
+                  <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('learning.noPatterns')}</p>
+                )}
               </TabsContent>
             </Tabs>
           </section>

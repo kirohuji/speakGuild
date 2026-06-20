@@ -10,6 +10,8 @@ type ChunkItem = TopicDetail['activeChunks'][number]
 
 interface ChunkActivationPanelProps {
   chunks: ChunkItem[]
+  totalCount?: number
+  collectedCount?: number
   activatedIds: Set<string>
   collectedTexts: Set<string>
   savingTexts: Set<string>
@@ -23,6 +25,8 @@ interface ChunkActivationPanelProps {
 
 export function ChunkActivationPanel({
   chunks,
+  totalCount,
+  collectedCount,
   activatedIds,
   collectedTexts,
   savingTexts,
@@ -35,6 +39,8 @@ export function ChunkActivationPanel({
 }: ChunkActivationPanelProps) {
   const { t } = useTranslation()
   const hasChunks = chunks.length > 0
+  const displayTotal = totalCount ?? chunks.length
+  const displayCollected = collectedCount ?? chunks.filter((chunk) => collectedTexts.has(chunk.text)).length
 
   return (
     <div className="rounded-lg bg-muted/30 p-3">
@@ -44,7 +50,7 @@ export function ChunkActivationPanel({
           <p className="text-sm font-semibold text-foreground">{t('learning.chunks')}</p>
         </div>
         <Badge variant="secondary" className="rounded-full text-[10px]">
-          {collectedTexts.size}/{chunks.length}
+          {displayCollected}/{displayTotal}
         </Badge>
       </div>
       {hasChunks ? (

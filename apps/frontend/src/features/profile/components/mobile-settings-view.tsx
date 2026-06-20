@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -12,12 +12,30 @@ import {
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useConfigStore } from '@/stores/config.store'
+import { useOfflineSyncStore, type OfflineSyncLogEntry } from '@/stores/offline-sync.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { isNative, requestInAppReview } from '@/lib/native'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 import { cn } from '@/lib/cn'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
+
+function formatSyncLogTime(value?: string) {
+  if (!value) return ''
+  return new Date(value).toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatSyncLogDetail(log: OfflineSyncLogEntry) {
+  const detail = log.detail as { push?: { synced?: number; failed?: number; skipped?: number } } | null | undefined
+  if (!detail?.push) return null
+  const { synced = 0, failed = 0, skipped = 0 } = detail.push
+  return `上传 ${synced}，失败 ${failed}，跳过 ${skipped}`
+}
 
 export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
   const { t } = useTranslation()
@@ -34,7 +52,9 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setDailyGoal,
   } = usePreferencesStore()
   const { config } = useConfigStore()
+  const { logs: syncLogs, clearLogs: clearSyncLogs } = useOfflineSyncStore()
   const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
+  const [syncLogsExpanded, setSyncLogsExpanded] = useState(false)
   // 删除账户状态
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -175,6 +195,11 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     key,
     label: t(tKey),
   }))
+  const syncErrorLogs = useMemo(
+    () => syncLogs.filter((log) => log.status === 'failed' || log.status === 'running' || log.error).slice(0, 5),
+    [syncLogs],
+  )
+  const latestSyncError = syncErrorLogs.find((log) => log.status === 'failed' || log.error)
 
   return (
     <div className="space-y-5">
@@ -246,6 +271,68 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           subtitle={t('profile.storageManagementSubtitle')}
           onTap={() => onNavigate?.('storage')}
         />
+        <IosRow
+          label="报错日志"
+          subtitle={latestSyncError?.error ?? latestSyncError?.summary ?? '最近无同步报错'}
+          onTap={() => setSyncLogsExpanded((value) => !value)}
+          right={
+            <div className="flex items-center gap-2 text-muted-foreground">
+              {syncErrorLogs.length > 0 && (
+                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                  {syncErrorLogs.length}
+                </span>
+              )}
+              {syncLogsExpanded ? (
+                <ChevronDown className="h-4 w-4 flex-shrink-0" />
+              ) : (
+                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+              )}
+            </div>
+          }
+        />
+        {syncLogsExpanded && (
+          <div className="border-b border-border/50 px-4 py-3">
+            {syncErrorLogs.length > 0 ? (
+              <div className="space-y-3">
+                {syncErrorLogs.map((log) => {
+                  const detail = formatSyncLogDetail(log)
+                  return (
+                    <div key={log.id} className="flex gap-3">
+                      <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[10px] bg-destructive/10">
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 truncate text-sm font-medium">
+                            {log.status === 'running' ? '同步进行中' : log.summary}
+                          </p>
+                          <span className="flex-shrink-0 text-[11px] text-muted-foreground">
+                            {formatSyncLogTime(log.finishedAt ?? log.startedAt)}
+                          </span>
+                        </div>
+                        {(log.error || detail) && (
+                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            {log.error ?? detail}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={clearSyncLogs}
+                  className="flex h-9 items-center gap-2 text-sm font-medium text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  清空日志
+                </button>
+              </div>
+            ) : (
+              <p className="py-2 text-sm text-muted-foreground">暂无报错日志</p>
+            )}
+          </div>
+        )}
         <IosRow
           label={t('profile.appPermissions')}
           onTap={() => {}}

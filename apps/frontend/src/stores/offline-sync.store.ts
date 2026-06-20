@@ -10,6 +10,7 @@ export interface OfflineSyncLogEntry {
   status: OfflineSyncLogStatus
   summary: string
   detail?: unknown
+  error?: string | null
 }
 
 interface OfflineSyncState {
@@ -73,6 +74,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
                   status: input.status,
                   summary: input.summary,
                   detail: input.detail,
+                  error: lastError,
                 }
               : item,
           ).slice(0, 20),

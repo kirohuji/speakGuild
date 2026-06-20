@@ -15,6 +15,23 @@ import { createSqliteJsonStore } from './sqlite-json-store'
 let dbPromise: Promise<SQLiteDBConnection> | null = null
 let sqliteConnection: SQLiteConnection | null = null
 
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function isConnectionAlreadyExistsError(error: unknown): boolean {
+  return errorText(error).includes('already exists')
+}
+
+async function openConnection(db: SQLiteDBConnection): Promise<void> {
+  try {
+    await db.open()
+  } catch (error) {
+    const message = errorText(error).toLowerCase()
+    if (!message.includes('already open')) throw error
+  }
+}
+
 function getSqliteConnection(): SQLiteConnection {
   if (!sqliteConnection) {
     sqliteConnection = new SQLiteConnection(CapacitorSQLite)
@@ -28,20 +45,33 @@ async function openDb(): Promise<SQLiteDBConnection> {
   dbPromise = (async () => {
     const conn = getSqliteConnection()
 
-    const existsResult = await conn.isDatabase(DB_NAME)
-    const exists = existsResult.result
+    const existingConnection = await conn.isConnection(DB_NAME, false)
+    if (existingConnection.result) {
+      const db = await conn.retrieveConnection(DB_NAME, false)
+      await initializeSchema(db)
+      return db
+    }
 
-    const db = await conn.createConnection(
-      DB_NAME,
-      false,    // encrypted
-      'no-encryption',
-      DB_VERSION,
-      false,    // not readonly
-    )
-    await db.open()
+    let db: SQLiteDBConnection
+    try {
+      db = await conn.createConnection(
+        DB_NAME,
+        false,    // encrypted
+        'no-encryption',
+        DB_VERSION,
+        false,    // not readonly
+      )
+    } catch (error) {
+      if (!isConnectionAlreadyExistsError(error)) throw error
+      db = await conn.retrieveConnection(DB_NAME, false)
+    }
+    await openConnection(db)
     await initializeSchema(db)
     return db
-  })()
+  })().catch((error) => {
+    dbPromise = null
+    throw error
+  })
 
   return dbPromise
 }

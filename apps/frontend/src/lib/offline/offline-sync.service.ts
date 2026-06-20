@@ -429,6 +429,7 @@ export const offlineSyncService = {
           status: 'failed',
           summary: `同步失败：${push.failed} 条未上传`,
           detail,
+          error: `${push.failed} 条待同步操作上传失败，请展开存储管理查看具体队列项。`,
         })
         return detail
       }
@@ -606,6 +607,7 @@ export const offlineSyncService = {
             await syncOutbox.markSynced(batch[i].id)
             synced += 1
           } else if (result?.status === 'skipped') {
+            await syncOutbox.markSynced(batch[i].id)
             skipped += 1
           } else {
             await syncOutbox.markFailed(batch[i].id, result?.error)
@@ -644,6 +646,7 @@ export const offlineSyncService = {
         try {
           const handled = await replayItem(item, exprCtx)
           if (!handled) {
+            await syncOutbox.markSynced(item.id)
             skipped += 1
             continue
           }

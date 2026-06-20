@@ -109,6 +109,9 @@ export function MobileStorageView() {
     delete: '删除',
   } as Record<string, string>)[operation] ?? operation
 
+  const detailContainerClass = 'border-b border-border/50 bg-muted/10 pl-[4.5rem] pr-4'
+  const detailRowClass = 'border-b border-border/50 py-3 last:border-b-0'
+
   return (
     <div className="space-y-5">
       <IosSection header={t('profile.cacheDistribution', { defaultValue: '缓存分布' })}>
@@ -169,35 +172,28 @@ export function MobileStorageView() {
           )}
         />
         {expanded.packs && (
-          <div className="border-b border-border/50 bg-background/35 px-4 py-2">
+          <div className={detailContainerClass}>
             {loading ? (
               <p className="py-3 text-xs text-muted-foreground">...</p>
             ) : details?.packs.length ? (
-              <div className="space-y-2">
+              <div>
                 {details.packs.map((pack) => (
-                  <div key={pack.packId} className="rounded-lg border border-border/50 bg-background/65 px-3 py-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{pack.title}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          v{pack.version} · {pack.topicCount} 话题 · {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
-                        </p>
-                        {pack.lastError && <p className="mt-1 line-clamp-2 text-[11px] text-red-500">{pack.lastError}</p>}
-                      </div>
-                      <Button
+                  <div key={pack.packId} className={detailRowClass}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 truncate text-sm font-medium">{pack.title}</p>
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         disabled={Boolean(deletingPackId)}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          void handleClearPack(pack.packId)
-                        }}
-                        className="h-7 shrink-0 px-2 text-xs text-red-500 hover:text-red-600"
+                        onClick={() => void handleClearPack(pack.packId)}
+                        className="h-7 flex-shrink-0 rounded-full px-2 text-xs font-medium text-red-500 disabled:opacity-50 active:bg-red-500/10"
                       >
                         {deletingPackId === pack.packId ? '删除中' : '删除'}
-                      </Button>
+                      </button>
                     </div>
+                    <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
+                      v{pack.version} · {pack.topicCount} 话题 · {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
+                    </p>
+                    {pack.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{pack.lastError}</p>}
                   </div>
                 ))}
               </div>
@@ -235,22 +231,22 @@ export function MobileStorageView() {
           last={!expanded.sync}
         />
         {expanded.sync && (
-          <div className="bg-background/35 px-4 py-2">
+          <div className="bg-muted/10 pl-4 pr-4">
             {loading ? (
               <p className="py-3 text-xs text-muted-foreground">...</p>
             ) : details?.outbox.length ? (
-              <div className="space-y-2">
+              <div>
                 {details.outbox.map((item) => (
-                  <div key={item.id} className="rounded-lg border border-border/50 bg-background/65 px-3 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">{outboxLabel(item.entityType)} · {operationLabel(item.operation)}</p>
-                      <span className={cn('rounded-full px-2 py-0.5 text-[10px]', item.status === 'failed' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600')}>
+                  <div key={item.id} className={detailRowClass}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 truncate text-sm font-medium">{outboxLabel(item.entityType)} · {operationLabel(item.operation)}</p>
+                      <span className={cn('flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', item.status === 'failed' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600')}>
                         {item.status === 'failed' ? '失败' : item.status === 'syncing' ? '同步中' : '待同步'}
                       </span>
                     </div>
-                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.entityId}</p>
-                    {item.lastError && <p className="mt-1 line-clamp-2 text-[11px] text-red-500">{item.lastError}</p>}
-                    <p className="mt-1 text-[10px] text-muted-foreground">重试 {item.retryCount} 次 · {new Date(item.updatedAt).toLocaleString()}</p>
+                    <p className="mt-0.5 truncate text-[11px] leading-5 text-muted-foreground">{item.entityId}</p>
+                    {item.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{item.lastError}</p>}
+                    <p className="mt-1 text-[10px] leading-4 text-muted-foreground">重试 {item.retryCount} 次 · {new Date(item.updatedAt).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
