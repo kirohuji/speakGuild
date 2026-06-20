@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, CheckCircle2, Mic, Square, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/cn'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
-import type { WarmupScore } from '@/stores/warmup-session.store'
+import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
 
 interface DecompositionLevel {
   level: number
@@ -25,6 +25,11 @@ interface SentenceDecompositionCardProps {
   onComplete?: (passed: boolean, score: WarmupScore) => void
   /** Dialog 已提供题型标签时，隐藏内部 header badge */
   hideHeader?: boolean
+  /** 只读回顾模式 */
+  reviewData?: {
+    /** 每级的录音 URL，JSON 序列化的 Record<levelIndex, audioUrl> */
+    levelAudios?: Record<number, string> | null
+  } | null
 }
 
 /** 长句拆解 — 从简单句逐级扩展到复杂长句 */
@@ -34,8 +39,18 @@ export function SentenceDecompositionCard({
   stepId,
   onComplete,
   hideHeader = false,
+  reviewData,
 }: SentenceDecompositionCardProps) {
   const { t } = useTranslation()
+  const isReview = !!reviewData
+  const store = useWarmupSessionStore()
+
+  // 回顾模式：从 reviewData 恢复录音
+  const reviewAudios = useMemo(() => {
+    if (!reviewData?.levelAudios) return new Map<number, { audioUrl: string }>()
+    return new Map(Object.entries(reviewData.levelAudios).map(([k, v]) => [Number(k), { audioUrl: v }]))
+  }, [reviewData])
+
   const totalLevels = levels.length
   const [currentIdx, setCurrentIdx] = useState(0)
 
@@ -50,9 +65,18 @@ export function SentenceDecompositionCard({
       setCurrentIdx(prev => prev + 1)
     } else {
       setCurrentIdx(totalLevels)
+      // 保存记录到 warmup store（levels 数据存入 correction 字段）
+      if (!isReview) {
+        const finalSentence = levels[totalLevels - 1].en
+        const levelAudioObj: Record<number, string> = {}
+        levelRecordingsRef.current.forEach((v, k) => { levelAudioObj[k] = v.audioUrl })
+        const levelsData = JSON.stringify(levels)
+        store.recordStep(stepId, { userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
+        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
+      }
       onComplete?.(true, 'strong')
     }
-  }, [currentIdx, totalLevels, onComplete])
+  }, [currentIdx, totalLevels, onComplete, isReview, store, stepId, title, levels])
 
   const goBack = useCallback(() => {
     if (currentIdx > 0) {
@@ -168,8 +192,10 @@ export function SentenceDecompositionCard({
     return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
   }
 
-  // 切换 level 时加载该级的录音
-  const displayAudioUrl = savedRecording?.audioUrl || currentAudioUrl
+  // 切换 level 时加载该级的录音（回顾模式优先用 reviewData）
+  const displayAudioUrl = isReview
+    ? (reviewAudios.get(currentIdx)?.audioUrl ?? null)
+    : (savedRecording?.audioUrl || currentAudioUrl)
 
   // 全部完成
   if (isDone) {
@@ -258,9 +284,9 @@ export function SentenceDecompositionCard({
         )}
       </div>
 
-      {/* ── 录音 & 回放 ── */}
+      {/* ── 录音 & 回放（回顾模式只显示回放）── */}
       <div className="flex items-center gap-2">
-        {recordingStatus === 'idle' && (
+        {!isReview && recordingStatus === 'idle' && (
           <Button
             variant="outline"
             size="sm"
@@ -271,7 +297,7 @@ export function SentenceDecompositionCard({
             {displayAudioUrl ? '重录' : '录音'}
           </Button>
         )}
-        {recordingStatus === 'recording' && (
+        {!isReview && recordingStatus === 'recording' && (
           <>
             <Button
               variant="destructive"
@@ -306,6 +332,7 @@ export function SentenceDecompositionCard({
               onPlay={() => setIsPlaying(true)}
               preload="auto"
             />
+            <span className="text-[11px] text-muted-foreground">{isReview ? '录音回放' : ''}</span>
           </>
         )}
       </div>

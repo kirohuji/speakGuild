@@ -5,6 +5,7 @@ export type WarmupHintLevel = 'none' | 'hint' | 'answer'
 
 export interface WarmupStepState {
   userAnswer: string
+  audioUrl?: string | null
   status: 'idle' | 'passed' | 'failed'
   hintLevel: WarmupHintLevel
   feedback: string
@@ -19,6 +20,7 @@ export interface WarmupRecordEntry {
   zh: string
   answer: string
   userAnswer: string
+  audioUrl?: string | null
   passed: boolean
   feedback: string
   groupTitle?: string
@@ -41,6 +43,7 @@ interface WarmupSessionState {
     correction?: string
     hintLevel?: WarmupHintLevel
     score?: WarmupScore
+    audioUrl?: string | null
   }) => void
   /** Record a full entry for final assessment */
   recordEntry: (entry: WarmupRecordEntry) => void
@@ -62,6 +65,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
         ...prev.stepStates,
         [stepId]: {
           userAnswer: data.userAnswer,
+          audioUrl: data.audioUrl ?? prev.stepStates[stepId]?.audioUrl,
           status: data.passed ? 'passed' : 'failed',
           hintLevel: data.hintLevel ?? (data.passed ? 'answer' : 'none'),
           feedback: data.feedback,

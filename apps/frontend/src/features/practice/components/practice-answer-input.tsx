@@ -13,6 +13,7 @@ interface PracticeAnswerInputProps {
   placeholder?: string
   disabled?: boolean
   onEnter?: () => void
+  onAudioChange?: (audioUrl: string | null) => void
 }
 
 function pickMimeType() {
@@ -40,6 +41,7 @@ export function PracticeAnswerInput({
   placeholder = '输入回答...',
   disabled,
   onEnter,
+  onAudioChange,
 }: PracticeAnswerInputProps) {
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
@@ -96,6 +98,7 @@ export function PracticeAnswerInput({
       if (audioUrl) URL.revokeObjectURL(audioUrl)
       const url = URL.createObjectURL(blob)
       setAudioUrl(url)
+      onAudioChange?.(url)
 
       if (!text) {
         setVoiceError('未识别到语音内容，请重试')
@@ -109,7 +112,7 @@ export function PracticeAnswerInput({
       setVoiceError('语音识别失败，请重试')
       setVoiceStatus('idle')
     }
-  }, [onChange, audioUrl])
+  }, [onChange, audioUrl, onAudioChange])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
@@ -117,7 +120,7 @@ export function PracticeAnswerInput({
     setElapsed(0)
     cleanupRecording()
     // Revoke old audio when starting new recording
-    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null) }
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); onAudioChange?.(null) }
     if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
 
     try {

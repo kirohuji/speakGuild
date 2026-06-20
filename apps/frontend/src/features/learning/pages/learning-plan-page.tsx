@@ -3,17 +3,22 @@ import { useTranslation } from 'react-i18next'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
-  CheckCircle2, XCircle,
+  CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { type PracticeSession, type TopicDetail, warmupRecordApi, type WarmupRecord } from '@/features/practice/api/english-practice-api'
 import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
+import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
+import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
+import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
+import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
 import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
@@ -251,70 +256,154 @@ function WarmupRecordDetailDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { t } = useTranslation()
+  const [currentIdx, setCurrentIdx] = useState(0)
+
   if (!record) return null
 
-  const typeLabel = (item: any) => {
-    if (item?.stepType === 'chunk_substitution') return '句块'
-    if (item?.stepType === 'pattern_drill') return '句型'
-    if (item?.stepType === 'vocab_drill') return '词汇'
-    return '练习'
+  const items = record.items ?? []
+  const total = items.length
+  const current = items[currentIdx]
+  const hasPrev = currentIdx > 0
+  const hasNext = currentIdx < total - 1
+
+  const gotoPrev = () => setCurrentIdx((p) => Math.max(0, p - 1))
+  const gotoNext = () => setCurrentIdx((p) => Math.min(total - 1, p + 1))
+
+  // 根据 stepType 渲染对应的练习卡片
+  const renderCard = () => {
+    if (!current) return null
+    const rd = {
+      userAnswer: current.userAnswer || '',
+      passed: current.passed,
+      feedback: current.feedback || '',
+      correction: current.correction,
+      audioUrl: current.audioUrl,
+    }
+    if (current.stepType === 'chunk_substitution') {
+      return (
+        <ChunkOutputDrillCard
+          chunk={{ text: current.correction?.split(' ')?.slice(0, 3)?.join(' ') || current.answer || current.zh || '', meaning: '' }}
+          items={[{ zh: current.zh, answer: current.answer }]}
+          stepId={current.stepId || String(currentIdx)}
+          groupTitle={current.groupTitle}
+          reviewData={rd}
+        />
+      )
+    }
+    if (current.stepType === 'vocab_drill') {
+      return (
+        <VocabOutputCard
+          title={current.groupTitle || '词汇练习'}
+          vocabs={[{ vocabId: '', promptZh: current.zh, suggestedAnswer: current.answer }]}
+          stepId={current.stepId || String(currentIdx)}
+          reviewData={rd}
+        />
+      )
+    }
+    if (current.stepType === 'pattern_drill') {
+      return (
+        <PatternDrillCard
+          pattern={current.correction || current.answer || current.zh || ''}
+          items={[{ zh: current.zh, answer: current.answer }]}
+          stepId={current.stepId || String(currentIdx)}
+          groupTitle={current.groupTitle}
+          reviewData={rd}
+        />
+      )
+    }
+    if (current.stepType === 'sentence_decomposition') {
+      // 从 correction 反序列化 levels，从 userAnswer 反序列化录音
+      let levels: any[] = []
+      try { levels = JSON.parse(current.correction || '[]') } catch {}
+      let levelAudios: Record<number, string> | null = null
+      try { levelAudios = JSON.parse(current.userAnswer || '{}') } catch {}
+      return (
+        <SentenceDecompositionCard
+          title={current.zh || '句子拆解'}
+          levels={levels.length > 0 ? levels : [{ level: 1, label: '', en: current.answer || current.zh || '', zh: '' }]}
+          stepId={current.stepId || String(currentIdx)}
+          reviewData={{ levelAudios }}
+        />
+      )
+    }
+    // fallback
+    return (
+      <div className="rounded-lg border bg-card p-3">
+        <div className="flex items-start gap-3">
+          <div className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+            current.passed ? 'bg-green-500/15 text-green-600' : 'bg-red-500/15 text-red-500',
+          )}>
+            {current.passed ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">{current.zh}</p>
+            {current.userAnswer && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                你的回答：<span className={cn('font-medium', current.passed ? 'text-green-600' : 'text-red-500')}>{current.userAnswer}</span>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={cn('max-h-[85vh] rounded-t-2xl', isIOS() && 'pt-safe')}>
-        <DrawerHeader className="px-4 pb-2 pt-3">
-          <DrawerTitle className="text-base">
-            {record.topicTitle || '知识点练习'} · {record.score ?? '-'} 分
-          </DrawerTitle>
-        </DrawerHeader>
-        <div className={cn('overflow-y-auto px-4 space-y-3', isIOS() ? 'pb-safe' : 'pb-8')}>
-          {record.feedback && (
-            <div className="rounded-lg bg-muted/50 px-3 py-2.5">
-              <p className="text-sm text-foreground">{record.feedback}</p>
-            </div>
-          )}
-          <div className="space-y-2">
-            {record.items?.map((item: any, idx: number) => (
-              <div key={idx} className="rounded-lg border bg-card p-3">
-                <div className="flex items-start gap-3">
-                  <div className={cn(
-                    'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                    item.passed
-                      ? 'bg-green-500/15 text-green-600'
-                      : 'bg-red-500/15 text-red-500',
-                  )}>
-                    {item.passed ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-muted-foreground tabular-nums">#{idx + 1}</span>
-                      <Badge variant="outline" className="text-[10px]">{typeLabel(item)}</Badge>
-                      {item.groupTitle && <span className="truncate text-[10px] text-muted-foreground">{item.groupTitle}</span>}
-                    </div>
-                    <p className="mt-1 text-sm font-medium text-foreground">{item.zh}</p>
-                    {item.answer && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        答案：<span className="font-medium text-green-600">{item.answer}</span>
-                      </p>
-                    )}
-                    {item.userAnswer && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        你的回答：<span className={cn('font-medium', item.passed ? 'text-green-600' : 'text-red-500')}>{item.userAnswer}</span>
-                      </p>
-                    )}
-                    {item.feedback && (
-                      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground/70 italic">{item.feedback}</p>
-                    )}
-                  </div>
-                </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
+        <DialogTitle className="sr-only">知识点练习回顾</DialogTitle>
+        <DialogDescription className="sr-only">逐题查看练习记录、答案与录音回放</DialogDescription>
+
+        <div className="flex h-full flex-col">
+          {/* Header — 与练习 Dialog 一致 */}
+          <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <CheckCircle2 className="size-[18px]" />
               </div>
-            ))}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">
+                  {record.topicTitle || '知识点练习'} · 综合 {record.score ?? '-'} 分
+                </p>
+                <h2 className="truncate text-lg font-bold leading-tight text-foreground">
+                  {current?.zh || '练习回顾'}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              >
+                <ChevronDown className="size-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Body — 当前题目卡片 */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 md:px-6">
+            <div key={currentIdx} className="h-full">
+              {renderCard()}
+            </div>
+          </div>
+
+          {/* Footer — 与练习 Dialog 完全一致的导航栏 */}
+          <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
+            <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+              <ChevronLeft className="size-4" />
+              <span className="ml-1">上一题</span>
+            </Button>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {currentIdx + 1} / {total}
+            </span>
+            <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+              <span className="mr-1">下一题</span>
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
         </div>
-      </DrawerContent>
-    </Drawer>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react'
-import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3 } from 'lucide-react'
+import { useState, useCallback, useMemo, useRef } from 'react'
+import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -24,6 +24,14 @@ interface VocabOutputCardProps {
   onComplete?: (index: number, passed: boolean, score: WarmupScore) => void
   /** Dialog 已提供题型标签时，隐藏内部 header badge */
   hideHeader?: boolean
+  /** 只读回顾模式：传入已保存的练习数据 */
+  reviewData?: {
+    userAnswer: string
+    passed: boolean
+    feedback: string
+    correction?: string
+    audioUrl?: string | null
+  } | null
 }
 
 /** 高亮目标词汇 */
@@ -63,16 +71,23 @@ export function VocabOutputCard({
   direction = 'zh_to_en',
   onComplete,
   hideHeader = false,
+  reviewData,
 }: VocabOutputCardProps) {
+  // ── 只读回顾模式：走完全相同的渲染路径 ──
+  const isReview = !!reviewData
+
   const store = useWarmupSessionStore()
-  const saved = store.stepStates[stepId]
+  const saved = isReview ? undefined : store.stepStates[stepId]
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [userInput, setUserInput] = useState(saved?.userAnswer ?? '')
+  const [userInput, setUserInput] = useState(isReview ? (reviewData?.userAnswer ?? '') : (saved?.userAnswer ?? ''))
   const [judging, setJudging] = useState(false)
   const [result, setResult] = useState<{ passed: boolean; feedback: string; correction?: string } | null>(
-    saved ? { passed: saved.status === 'passed', feedback: saved.feedback, correction: saved.correction } : null
+    isReview ? { passed: reviewData?.passed ?? false, feedback: reviewData?.feedback ?? '', correction: reviewData?.correction } : (saved ? { passed: saved.status === 'passed', feedback: saved.feedback, correction: saved.correction } : null)
   )
-  const [hintLevel, setHintLevel] = useState<HintLevel>((saved?.hintLevel as HintLevel) ?? 'none')
+  const [hintLevel, setHintLevel] = useState<HintLevel>(isReview ? 'answer' : ((saved?.hintLevel as HintLevel) ?? 'none'))
+  const [audioUrl, setAudioUrl] = useState<string | null>(isReview ? (reviewData?.audioUrl ?? null) : (saved?.audioUrl ?? null))
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const current = vocabs[currentIdx]
   const totalItems = vocabs.length
@@ -91,8 +106,8 @@ export function VocabOutputCard({
     setHintLevel('answer')
     setResult({ passed: false, feedback: '已标记为需要复练。最后会集中再练一次。', correction: correctionText })
     onComplete?.(currentIdx, false, 'miss')
-    store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), passed: false, feedback: '我不会/跳过', groupTitle: title, score: 'miss', usedHintLevel: 3, correction: correctionText })
+    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
+    store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, title, userInput])
 
   const submit = useCallback(async () => {
@@ -118,13 +133,13 @@ export function VocabOutputCard({
         setResult({ passed: true, feedback: judgement.feedback || '正确！' })
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
-        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle: title, score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || current.suggestedAnswer || '' })
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.suggestedAnswer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle: title, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.suggestedAnswer || '' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.suggestedAnswer || '', hintLevel, score: 'miss' })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.suggestedAnswer || '' })
       }
     } catch (err: any) {
       setResult({ passed: false, feedback: err?.message || '反馈不可用' })
@@ -183,6 +198,7 @@ export function VocabOutputCard({
       </div>
 
       {/* Progressive hints */}
+      {!isReview && (
       <div className="space-y-2">
         <div className="flex items-center justify-between rounded-full bg-muted/35 px-2 py-1.5">
           <Button
@@ -235,15 +251,46 @@ export function VocabOutputCard({
           </div>
         )}
       </div>
+      )}
 
-      {/* Input — persist on success */}
+      {/* 回顾模式：直接展示参考答案 */}
+      {isReview && current.suggestedAnswer && (
+        <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
+          <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+          <p className="text-sm font-medium text-foreground">
+            {highlightWords(current.suggestedAnswer, current.targetWords ?? [])}
+          </p>
+        </div>
+      )}
+
+      {/* Input — persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
         onChange={(nextValue) => { if (!result?.passed) { setUserInput(nextValue); setResult(null) } }}
         placeholder={isZhToEn ? '用目标词写一句自然的英文...' : '输入中文...'}
-        disabled={judging || !!result?.passed}
-        onEnter={submit}
+        disabled={isReview || judging || !!result?.passed}
+        onEnter={isReview ? undefined : submit}
+        onAudioChange={isReview ? undefined : setAudioUrl}
       />
+
+      {/* 回顾模式：录音回放 */}
+      {isReview && audioUrl && (
+        <button
+          type="button"
+          onClick={() => {
+            if (playing) { audioRef.current?.pause(); setPlaying(false); return }
+            const a = new Audio(audioUrl!)
+            a.onended = () => setPlaying(false)
+            a.play().catch(() => {})
+            audioRef.current = a
+            setPlaying(true)
+          }}
+          className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+        >
+          {playing ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
+          录音回放
+        </button>
+      )}
 
       {/* Result */}
       {result && (
@@ -259,7 +306,8 @@ export function VocabOutputCard({
         </div>
       )}
 
-      {/* Submit */}
+      {/* Submit — 回顾模式隐藏 */}
+      {!isReview && (
       <div className="space-y-2">
         <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={judging || !!result?.passed || !userInput.trim()}>
           {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
@@ -269,6 +317,7 @@ export function VocabOutputCard({
           <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，最后会集中再练一次。</p>
         )}
       </div>
+      )}
     </div>
   )
 }

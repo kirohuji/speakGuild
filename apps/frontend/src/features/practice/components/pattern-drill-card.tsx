@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react'
-import { Lightbulb, Eye, Loader2, CheckCircle2, Braces } from 'lucide-react'
+import { useState, useCallback, useMemo, useRef } from 'react'
+import { Lightbulb, Eye, Loader2, CheckCircle2, Braces, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -21,6 +21,14 @@ interface PatternDrillCardProps {
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
   /** Dialog 已提供题型标签时，隐藏内部 header badge */
   hideHeader?: boolean
+  /** 只读回顾模式：传入已保存的练习数据 */
+  reviewData?: {
+    userAnswer: string
+    passed: boolean
+    feedback: string
+    correction?: string
+    audioUrl?: string | null
+  } | null
 }
 
 /** 高亮答案中的句型 key words */
@@ -59,15 +67,22 @@ export function PatternDrillCard({
   direction = 'zh_to_en',
   onComplete,
   hideHeader = false,
+  reviewData,
 }: PatternDrillCardProps) {
+  // ── 只读回顾模式：走完全相同的渲染路径 ──
+  const isReview = !!reviewData
+
   const store = useWarmupSessionStore()
-  const saved = store.stepStates[stepId]
+  const saved = isReview ? undefined : store.stepStates[stepId]
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [userInput, setUserInput] = useState(saved?.userAnswer ?? '')
-  const [status, setStatus] = useState<DrillStatus>(saved?.status ?? 'idle')
-  const [feedback, setFeedback] = useState(saved?.feedback ?? '')
-  const [correction, setCorrection] = useState(saved?.correction ?? '')
-  const [hintLevel, setHintLevel] = useState<HintLevel>(saved?.hintLevel ?? 'none')
+  const [userInput, setUserInput] = useState(isReview ? (reviewData?.userAnswer ?? '') : (saved?.userAnswer ?? ''))
+  const [status, setStatus] = useState<DrillStatus>(isReview ? (reviewData?.passed ? 'passed' : 'failed') : (saved?.status ?? 'idle'))
+  const [feedback, setFeedback] = useState(isReview ? (reviewData?.feedback ?? '') : (saved?.feedback ?? ''))
+  const [correction, setCorrection] = useState(isReview ? (reviewData?.correction ?? '') : (saved?.correction ?? ''))
+  const [hintLevel, setHintLevel] = useState<HintLevel>(isReview ? 'answer' : (saved?.hintLevel ?? 'none'))
+  const [audioUrl, setAudioUrl] = useState<string | null>(isReview ? (reviewData?.audioUrl ?? null) : (saved?.audioUrl ?? null))
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const current = items[currentIdx]
   const totalItems = items.length
@@ -87,8 +102,8 @@ export function PatternDrillCard({
     setFeedback('已标记为需要复练。最后会集中再练一次。')
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
-    store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), passed: false, feedback: '我不会/跳过', groupTitle, score: 'miss', usedHintLevel: 3, correction: correctionText })
+    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
+    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, groupTitle, onComplete, status, stepId, store, userInput])
 
   const submit = useCallback(async () => {
@@ -112,15 +127,15 @@ export function PatternDrillCard({
         setFeedback(judgement.feedback || '正确！')
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
-        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: true, feedback: judgement.feedback || '', groupTitle, score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.answer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.answer || '' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.answer || '', hintLevel, score: 'miss' })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.answer || '' })
       }
     } catch (err: any) {
       setStatus('failed')
@@ -161,6 +176,7 @@ export function PatternDrillCard({
       </div>
 
       {/* Progressive hints */}
+      {!isReview && (
       <div className="space-y-2">
         <div className="flex items-center justify-between rounded-full bg-muted/35 px-2 py-1.5">
           <Button
@@ -204,15 +220,44 @@ export function PatternDrillCard({
           </div>
         )}
       </div>
+      )}
 
-      {/* Input area — persist on success */}
+      {/* 回顾模式：直接展示参考答案 */}
+      {isReview && current.answer && (
+        <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
+          <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+          <p className="text-sm font-medium text-foreground">{highlightPattern(current.answer, pattern)}</p>
+        </div>
+      )}
+
+      {/* Input area — persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
         onChange={(nextValue) => { if (status !== 'passed') { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
-        disabled={status === 'judging' || status === 'passed'}
-        onEnter={submit}
+        disabled={isReview || status === 'judging' || status === 'passed'}
+        onEnter={isReview ? undefined : submit}
+        onAudioChange={isReview ? undefined : setAudioUrl}
       />
+
+      {/* 回顾模式：录音回放 */}
+      {isReview && audioUrl && (
+        <button
+          type="button"
+          onClick={() => {
+            if (playing) { audioRef.current?.pause(); setPlaying(false); return }
+            const a = new Audio(audioUrl!)
+            a.onended = () => setPlaying(false)
+            a.play().catch(() => {})
+            audioRef.current = a
+            setPlaying(true)
+          }}
+          className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+        >
+          {playing ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
+          录音回放
+        </button>
+      )}
 
       {/* Feedback */}
       {feedback && (
@@ -226,7 +271,8 @@ export function PatternDrillCard({
         </div>
       )}
 
-      {/* Submit */}
+      {/* Submit — 回顾模式隐藏 */}
+      {!isReview && (
       <div className="space-y-2">
         <Button className="w-full min-h-11 rounded-xl" size="default" onClick={submit} disabled={status === 'judging' || status === 'passed' || !userInput.trim()}>
           {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
@@ -236,6 +282,7 @@ export function PatternDrillCard({
           <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，最后会集中再练一次。</p>
         )}
       </div>
+      )}
     </div>
   )
 }
