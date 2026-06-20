@@ -249,68 +249,35 @@ export function TodayTaskPage() {
             ),
           })
         } else if (item.type === 'vocab_sentence_building') {
-          // 一词多句：参考单词 Dialog 的 ExampleBlock 样式，只读展示全部句型
-          const allPatterns = (item.patterns ?? []) as any[]
-          if (allPatterns.length === 0) continue
-
-          type PatternEntry = { chunk: string; zh: string; answer: string }
-          const entries: PatternEntry[] = []
-          for (const pat of allPatterns) {
-            const picked = pickOne<SimplePromptItem>((pat.items ?? []) as SimplePromptItem[])
+          for (const [patternIdx, pattern] of ((item.patterns ?? []) as any[]).entries()) {
+            const picked = pickOne<SimplePromptItem>((pattern.items ?? []) as SimplePromptItem[])
             if (!picked) continue
-            const [sub] = picked
-            entries.push({
-              chunk: pat.chunk || '',
-              zh: sub.zh,
-              answer: sub.answer || '',
+            const [sub, subIdx] = picked
+            const sid = stepId(`pattern_${patternIdx}_${subIdx}`)
+            const vocabWord = item.vocabWord || ''
+            const patternChunk = pattern.chunk || vocabWord
+            const targetWord = vocabWord || patternChunk
+            built.push({
+              id: sid,
+              type: 'vocab_sentence_building',
+              label: `${vocabWord || '词汇'} + ${patternChunk}`,
+              displayLabel: '一词多句',
+              headerContent: targetWord,
+              topicTitle: topic.title,
+              render: () => (
+                <ChunkOutputDrillCard
+                  chunk={{ text: targetWord, meaning: item.vocabMeaning || '', description: null }}
+                  items={[sub]}
+                  stepId={sid}
+                  stepType="vocab_sentence_building"
+                  direction={item.direction ?? 'zh_to_en'}
+                  kind="word"
+                  groupTitle={`${vocabWord || '一词多句'} · ${patternChunk}`}
+                  onComplete={(_idx, _passed, score) => markDone(sid, score)}
+                />
+              ),
             })
           }
-          if (entries.length === 0) continue
-
-          const sid = stepId(`vocab_${item.id}`)
-          const vocabWord = item.vocabWord || ''
-          built.push({
-            id: sid,
-            type: 'vocab_sentence_building',
-            label: `${vocabWord || '词汇'} · ${entries.length} 种用法`,
-            displayLabel: '一词多句',
-            headerContent: vocabWord,
-            topicTitle: topic.title,
-            render: () => (
-              <div className="space-y-4">
-
-                {/* Body：参考 ExampleBlock 的样式 */}
-                <div className="space-y-2.5">
-                  {entries.map((entry, ei) => {
-                    const displayText = entry.answer || entry.chunk
-                    return (
-                      <div key={ei} className="rounded-md bg-muted/60 p-3">
-                        <div className="flex items-start gap-2.5">
-                          <span className="mt-0.5 shrink-0 text-xs tabular-nums text-muted-foreground/40">{ei + 1}.</span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium leading-relaxed text-foreground">
-                              {highlightWord(displayText, vocabWord)}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">{entry.zh}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => markDone(sid, 'ok')}
-                >
-                  <CheckCircle2 className="mr-1.5 size-4" />
-                 完成
-                </Button>
-              </div>
-            ),
-          })
         } else if (item.type === 'pattern_drill') {
           const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
           if (!picked) continue
@@ -366,10 +333,29 @@ export function TodayTaskPage() {
     const presentTypes = new Set(built.map((b) => b.type))
     const missingTypes = allTypes.filter((t) => !presentTypes.has(t))
 
-    // 为缺失类型预留位置
+    // 为缺失类型预留位置；真实题目先保证题型多样性，再随机补足
     const placeholderCount = missingTypes.length
     const realLimit = Math.max(1, dailyGoal - placeholderCount)
-    const limited = shuffle(built).slice(0, realLimit)
+    const shuffledBuilt = shuffle(built)
+    const byType = new Map<string, PracticeItem[]>()
+    for (const step of shuffledBuilt) {
+      byType.set(step.type, [...(byType.get(step.type) ?? []), step])
+    }
+    const limited: PracticeItem[] = []
+    const selectedIds = new Set<string>()
+    for (const type of Object.keys(TYPE_META)) {
+      if (limited.length >= realLimit) break
+      const firstOfType = byType.get(type)?.[0]
+      if (!firstOfType) continue
+      limited.push(firstOfType)
+      selectedIds.add(firstOfType.id)
+    }
+    for (const step of shuffledBuilt) {
+      if (limited.length >= realLimit) break
+      if (selectedIds.has(step.id)) continue
+      limited.push(step)
+      selectedIds.add(step.id)
+    }
 
     // 添加占位卡片
     for (const mt of missingTypes) {

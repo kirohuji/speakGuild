@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, CheckCircle2, Mic, Square, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -60,6 +60,19 @@ export function SentenceDecompositionCard({
   const isFirst = currentIdx === 0
   const isLast = currentIdx === totalLevels - 1
 
+  // ── 录音 & 回放（每级独立，暂不需要转写识别）──
+  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording'>('idle')
+  const [recordingElapsed, setRecordingElapsed] = useState(0)
+  const [levelRecordings, setLevelRecordings] = useState<Map<number, { audioUrl: string }>>(() => new Map())
+  const [isPlaying, setIsPlaying] = useState(false)
+  const nativeSessionRef = useRef<NativeVoiceInputSession | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const streamRef = useRef<MediaStream | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const levelRecordingsRef = useRef(levelRecordings)
+
   const advance = useCallback(() => {
     if (currentIdx < totalLevels - 1) {
       setCurrentIdx(prev => prev + 1)
@@ -69,14 +82,14 @@ export function SentenceDecompositionCard({
       if (!isReview) {
         const finalSentence = levels[totalLevels - 1].en
         const levelAudioObj: Record<number, string> = {}
-        levelRecordingsRef.current.forEach((v, k) => { levelAudioObj[k] = v.audioUrl })
+        levelRecordings.forEach((v, k) => { levelAudioObj[k] = v.audioUrl })
         const levelsData = JSON.stringify(levels)
         store.recordStep(stepId, { userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
         store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
       }
       onComplete?.(true, 'strong')
     }
-  }, [currentIdx, totalLevels, onComplete, isReview, store, stepId, title, levels])
+  }, [currentIdx, totalLevels, onComplete, isReview, store, stepId, title, levels, levelRecordings])
 
   const goBack = useCallback(() => {
     if (currentIdx > 0) {
@@ -84,21 +97,15 @@ export function SentenceDecompositionCard({
     }
   }, [currentIdx])
 
-  // ── 录音 & 回放（每级独立，暂不需要转写识别）──
-  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording'>('idle')
-  const [recordingElapsed, setRecordingElapsed] = useState(0)
-  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const levelRecordingsRef = useRef<Map<number, { audioUrl: string }>>(new Map())
-  const nativeSessionRef = useRef<NativeVoiceInputSession | null>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const streamRef = useRef<MediaStream | null>(null)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  // 切换 level 时恢复已保存的录音
-  const savedRecording = levelRecordingsRef.current.get(currentIdx) ?? null
+  const saveLevelRecording = useCallback((levelIndex: number, audioUrl: string) => {
+    setLevelRecordings((prev) => {
+      const previous = prev.get(levelIndex)?.audioUrl
+      if (previous && previous !== audioUrl) URL.revokeObjectURL(previous)
+      const next = new Map(prev)
+      next.set(levelIndex, { audioUrl })
+      return next
+    })
+  }, [])
 
   const cleanupRecording = useCallback(() => {
     nativeSessionRef.current?.cancel().catch(() => undefined)
@@ -109,10 +116,18 @@ export function SentenceDecompositionCard({
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
   }, [])
 
+  useEffect(() => {
+    levelRecordingsRef.current = levelRecordings
+  }, [levelRecordings])
+
+  useEffect(() => () => {
+    cleanupRecording()
+    levelRecordingsRef.current.forEach((recording) => URL.revokeObjectURL(recording.audioUrl))
+  }, [cleanupRecording])
+
   const startRecording = useCallback(async () => {
     if (recordingStatus !== 'idle') return
     cleanupRecording()
-    if (currentAudioUrl) { URL.revokeObjectURL(currentAudioUrl); setCurrentAudioUrl(null) }
     if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
     setRecordingElapsed(0)
 
@@ -144,8 +159,7 @@ export function SentenceDecompositionCard({
         if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || mimeType || 'audio/webm' })
         const url = URL.createObjectURL(blob)
-        setCurrentAudioUrl(url)
-        levelRecordingsRef.current.set(currentIdx, { audioUrl: url })
+        saveLevelRecording(currentIdx, url)
         setRecordingStatus('idle')
       }
 
@@ -157,7 +171,7 @@ export function SentenceDecompositionCard({
     } catch {
       setRecordingStatus('idle')
     }
-  }, [recordingStatus, cleanupRecording, currentAudioUrl, currentIdx])
+  }, [recordingStatus, cleanupRecording, currentIdx, saveLevelRecording])
 
   const stopRecording = useCallback(() => {
     const ns = nativeSessionRef.current
@@ -167,8 +181,7 @@ export function SentenceDecompositionCard({
       if (ns.kind !== 'speech') {
         ns.stop().then((result) => {
           const url = URL.createObjectURL(result.blob)
-          setCurrentAudioUrl(url)
-          levelRecordingsRef.current.set(currentIdx, { audioUrl: url })
+          saveLevelRecording(currentIdx, url)
         }).catch(() => {})
       }
       setRecordingStatus('idle')
@@ -178,7 +191,7 @@ export function SentenceDecompositionCard({
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [currentIdx])
+  }, [currentIdx, saveLevelRecording])
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current
@@ -195,18 +208,45 @@ export function SentenceDecompositionCard({
   // 切换 level 时加载该级的录音（回顾模式优先用 reviewData）
   const displayAudioUrl = isReview
     ? (reviewAudios.get(currentIdx)?.audioUrl ?? null)
-    : (savedRecording?.audioUrl || currentAudioUrl)
+    : (levelRecordings.get(currentIdx)?.audioUrl ?? null)
+
+  const doneLevelAudios = isReview ? reviewAudios : levelRecordings
 
   // 全部完成
   if (isDone) {
     return (
       <Card className="border-0 bg-muted/30 shadow-none">
-        <CardContent className="flex flex-col items-center gap-3 py-8">
+        <CardContent className="flex flex-col items-center gap-3 py-6">
           <CheckCircle2 className="size-10 text-green-500" />
           <p className="text-sm font-semibold text-foreground">已掌握完整长句</p>
-          <div className="rounded-md bg-muted/50 px-4 py-2">
+          <div className="w-full rounded-md bg-muted/50 px-4 py-2">
             <p className="text-sm text-foreground">{levels[totalLevels - 1].en}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">{levels[totalLevels - 1].zh}</p>
+          </div>
+          <div className="w-full space-y-2">
+            {levels.map((level, idx) => {
+              const audioUrl = doneLevelAudios.get(idx)?.audioUrl ?? null
+              return (
+                <div key={`${level.level}-${idx}`} className="rounded-md border border-border/60 bg-background/65 px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium text-muted-foreground">
+                        第 {level.level} 级 · {level.label}
+                      </p>
+                      <p className="mt-0.5 text-sm font-medium leading-relaxed text-foreground">{level.en}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{level.zh}</p>
+                    </div>
+                    {audioUrl && (
+                      <Badge variant="secondary" className="shrink-0 text-[10px]">已录音</Badge>
+                    )}
+                  </div>
+                  {audioUrl && (
+                    // biome-ignore lint/a11y/useMediaCaption: short self-recording replay
+                    <audio src={audioUrl} controls preload="metadata" className="mt-2 h-8 w-full" />
+                  )}
+                </div>
+              )
+            })}
           </div>
           <Button
             size="default"

@@ -463,14 +463,16 @@ function GuidedWarmupPhase({
             const flatId = `${item.id}_${pattern.chunk}_${subIdx}`
             steps.push({
               id: flatId,
-              type: 'chunk_substitution',
+              type: 'vocab_sentence_building',
               label: `${item.vocabWord} + ${pattern.chunk}`,
               render: () => (
                 <ChunkOutputDrillCard
-                  chunk={{ text: pattern.chunk }}
+                  chunk={{ text: item.vocabWord || pattern.chunk, meaning: item.vocabMeaning || '' }}
                   items={[sub]}
                   stepId={flatId}
+                  stepType="vocab_sentence_building"
                   direction={item.direction ?? 'zh_to_en'}
+                  kind="word"
                   groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
                   onComplete={(_subIdx, _passed, score) => markDone(flatId, score)}
                 />

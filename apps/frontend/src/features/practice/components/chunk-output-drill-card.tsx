@@ -15,6 +15,7 @@ interface ChunkOutputDrillCardProps {
   chunk: { text: string; meaning?: string; description?: string | null }
   items: { zh: string; answer?: string; hint?: string }[]
   stepId: string
+  stepType?: 'chunk_substitution' | 'vocab_sentence_building'
   groupTitle?: string
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
@@ -58,6 +59,7 @@ export function ChunkOutputDrillCard({
   chunk,
   items,
   stepId,
+  stepType = 'chunk_substitution',
   groupTitle,
   direction = 'zh_to_en',
   kind = 'chunk',
@@ -82,6 +84,11 @@ export function ChunkOutputDrillCard({
   const current = items[currentIdx]
   const totalItems = items.length
   const isZhToEn = direction === 'zh_to_en'
+  const typeLabel = stepType === 'vocab_sentence_building'
+    ? '一词多句'
+    : kind === 'word'
+      ? '词汇替换'
+      : '句块替换'
 
   // ── 教学提示（优先使用题目配置的 hint） ──
   const teachingHint = useMemo(() => {
@@ -100,8 +107,8 @@ export function ChunkOutputDrillCard({
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'chunk_substitution', zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, groupTitle, onComplete, status, stepId, store, userInput])
+    store.recordEntry({ stepId, stepType, zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, score: 'miss', usedHintLevel: 3, correction: correctionText })
+  }, [current, currentIdx, groupTitle, onComplete, status, stepId, stepType, store, userInput])
 
   // ── 提交判断 ──
   const submit = useCallback(async () => {
@@ -128,20 +135,20 @@ export function ChunkOutputDrillCard({
         setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordEntry({ stepId, stepType, zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || current.answer || '')
         onComplete?.(currentIdx, false, 'miss')
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.answer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'chunk_substitution', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.answer || '' })
+        store.recordEntry({ stepId, stepType, zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.answer || '' })
       }
     } catch (err: any) {
       setStatus('failed')
       setFeedback(err?.message || '反馈不可用')
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, stepId, store, groupTitle, hintLevel])
+  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, stepId, stepType, store, groupTitle, hintLevel])
 
 
   if (!current) return null
@@ -155,7 +162,7 @@ export function ChunkOutputDrillCard({
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="gap-1 text-[10px]">
           <Repeat2 className="size-3" />
-          {kind === 'word' ? '词汇替换' : '句块替换'}
+          {typeLabel}
         </Badge>
         {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>}
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
