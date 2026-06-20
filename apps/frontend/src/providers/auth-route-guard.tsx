@@ -5,7 +5,7 @@ import { useAuth } from '@/providers/auth-provider'
 function GuardLoading() {
   return (
     <div
-      className="flex min-h-[100dvh] items-center justify-center bg-white"
+      className="flex min-h-[100dvh] items-center justify-center bg-[#0F172A]"
       role="status"
       aria-live="polite"
       aria-label="正在检查登录状态"

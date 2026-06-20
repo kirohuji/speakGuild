@@ -30,7 +30,7 @@ import { VocabOutputCard } from '../components/vocab-output-card'
 import { SentenceDecompositionCard } from '../components/sentence-decomposition-card'
 import { PatternDrillCard } from '../components/pattern-drill-card'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
-import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -359,14 +359,12 @@ function GuidedWarmupPhase({
   warmupItems,
   onBack,
   onComplete,
-  onStartPractice,
 }: {
   topicId: string
   topicTitle: string
   warmupItems: any[]
   onBack: () => void
   onComplete: () => void
-  onStartPractice: () => void
 }) {
   const { t } = useTranslation()
   const storageKey = `guided-progress:${topicId}`
@@ -552,6 +550,17 @@ function GuidedWarmupPhase({
   const allDone = totalSteps > 0 && doneCount >= totalSteps
   const latestRecords = warmupStore.records
   const weakRecords = latestRecords.filter((record) => record.score === 'weak' || record.score === 'miss')
+  const stableRecords = latestRecords.filter((record) => record.score === 'strong' || record.score === 'ok')
+  const scoreSummary = useMemo(() => ({
+    strong: latestRecords.filter((record) => record.score === 'strong').length,
+    ok: latestRecords.filter((record) => record.score === 'ok').length,
+    weak: latestRecords.filter((record) => record.score === 'weak').length,
+    miss: latestRecords.filter((record) => record.score === 'miss').length,
+  }), [latestRecords])
+  const carryIntoSceneRecords = useMemo(() => {
+    const candidates = stableRecords.length > 0 ? stableRecords : latestRecords
+    return candidates.slice(0, 3)
+  }, [latestRecords, stableRecords])
   const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
   const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundStarted && !reviewRoundFinished
 
@@ -668,15 +677,32 @@ function GuidedWarmupPhase({
           <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
           <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
         </div>
-        <div className="flex flex-col items-center gap-4 py-12 text-center">
-          <CheckCircle2 className="size-12 text-green-500" />
-          <p className="text-sm font-semibold text-foreground">{doneCount}/{totalSteps} 已完成</p>
+        <div className="space-y-4 py-4">
+          <div className="rounded-xl bg-primary/[0.06] p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-green-500/12 text-green-600">
+                <CheckCircle2 className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-semibold text-foreground">知识点热身完成</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  你已经把本场景会用到的表达过了一遍，可以回到准备页选择下一步。
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <WarmupSummaryMetric label="完成" value={`${doneCount}/${totalSteps}`} />
+              <WarmupSummaryMetric label="稳妥" value={`${scoreSummary.strong + scoreSummary.ok}`} />
+              <WarmupSummaryMetric label="待巩固" value={`${scoreSummary.weak + scoreSummary.miss}`} />
+            </div>
+          </div>
+
           {assessing ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> AI 综合评估中...
             </div>
           ) : lastAssessment ? (
-            <div className="w-full max-w-sm rounded-xl border bg-card px-4 py-3 text-left space-y-2">
+            <div className="rounded-xl border bg-card px-4 py-3 text-left space-y-2">
               <div className="flex items-center gap-2">
                 <Badge variant={lastAssessment.score >= 80 ? 'default' : 'secondary'} className="text-sm px-2">
                   {lastAssessment.score} 分
@@ -686,11 +712,54 @@ function GuidedWarmupPhase({
               <p className="text-sm text-foreground">{lastAssessment.feedback}</p>
             </div>
           ) : null}
-          <div className="flex gap-3">
-            <Button variant="outline" size="sm" onClick={resetForRepractice}>
-              重新练习
+
+          {carryIntoSceneRecords.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <BookOpen className="size-4 text-primary" />
+                <p className="text-sm font-semibold text-foreground">建议保留在脑中的表达</p>
+              </div>
+              <div className="space-y-2">
+                {carryIntoSceneRecords.map((record) => (
+                  <WarmupRecordRow key={record.stepId} record={record} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {weakRecords.length > 0 ? (
+            <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Lightbulb className="size-4 text-amber-600" />
+                <p className="text-sm font-semibold text-foreground">还不太稳的表达</p>
+              </div>
+              <div className="space-y-2">
+                {weakRecords.slice(0, 3).map((record) => (
+                  <WarmupRecordRow key={record.stepId} record={record} tone="weak" />
+                ))}
+                {weakRecords.length > 3 && (
+                  <p className="px-1 text-[11px] text-muted-foreground">还有 {weakRecords.length - 3} 题可以一起复练。</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
+              这一轮没有明显薄弱项。回到准备页后，你可以直接开始场景对话，或者整组再刷一遍加深熟悉度。
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            {weakStepIds.size > 0 && (
+              <Button className="min-h-11" onClick={startWeakReviewRound}>
+                只练薄弱项
+              </Button>
+            )}
+            <Button variant="outline" className="min-h-11" onClick={resetForRepractice}>
+              整组重练
             </Button>
-            <Button onClick={onComplete}>{t('practiceSession.startPractice')}</Button>
+            <Button variant="ghost" className="min-h-10 text-muted-foreground" onClick={onBack}>
+              返回准备页
+            </Button>
           </div>
         </div>
       </div>
@@ -813,6 +882,53 @@ function GuidedWarmupPhase({
           </ScrollArea>
         </DrawerContent>
       </Drawer>
+    </div>
+  )
+}
+
+function WarmupSummaryMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-background/70 px-3 py-2 text-center">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
+    </div>
+  )
+}
+
+function WarmupRecordRow({
+  record,
+  tone = 'default',
+}: {
+  record: WarmupRecordEntry
+  tone?: 'default' | 'weak'
+}) {
+  const score = record.score ?? (record.passed ? 'ok' : 'miss')
+  const scoreLabel: Record<WarmupScore, string> = {
+    strong: '熟练',
+    ok: '通过',
+    weak: '待稳',
+    miss: '漏掉',
+  }
+  const title = record.groupTitle || record.answer || record.zh
+  const subtitle = record.groupTitle ? record.answer || record.zh : record.zh
+
+  return (
+    <div className={cn(
+      'flex items-start gap-2 rounded-lg px-3 py-2 text-left',
+      tone === 'weak' ? 'bg-background/70' : 'bg-muted/45',
+    )}>
+      <Badge
+        variant={score === 'miss' ? 'destructive' : score === 'weak' ? 'secondary' : 'outline'}
+        className="mt-0.5 shrink-0 text-[10px]"
+      >
+        {scoreLabel[score]}
+      </Badge>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium text-foreground">{title}</p>
+        {subtitle && subtitle !== title && (
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{subtitle}</p>
+        )}
+      </div>
     </div>
   )
 }
@@ -1870,7 +1986,6 @@ export function PracticeSessionPage() {
         warmupItems={warmupItems}
         onBack={() => setPhase('prepare')}
         onComplete={handleGuidedComplete}
-        onStartPractice={handleStartPractice}
       />
     )
   }
