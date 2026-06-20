@@ -272,7 +272,7 @@ export function LearningUnitPage() {
           meta={`${allVocabCount + allChunkCount + patternDialogItems.length}${t('learning.items')}`}
         />
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3" data-mobile-route-swipe>
           <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
             <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
               <BookText className="size-3.5" /> {t('learning.vocab')} {allVocabCount}
@@ -285,7 +285,7 @@ export function LearningUnitPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="vocab" className="mt-0 space-y-2">
+          <TabsContent value="vocab" className="mt-0 space-y-2" data-mobile-gesture-allow>
             {unit.vocabularies.length > 0 ? (
               <>
                 {vocabPageItems.items.map((vocab, index) => (
@@ -313,7 +313,7 @@ export function LearningUnitPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="chunk" className="mt-0 space-y-2">
+          <TabsContent value="chunk" className="mt-0 space-y-2" data-mobile-gesture-allow>
             {unit.chunks.length > 0 ? (
               <>
                 {chunkPageItems.items.map((chunk, index) => (
@@ -340,7 +340,7 @@ export function LearningUnitPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="pattern" className="mt-0 space-y-2">
+          <TabsContent value="pattern" className="mt-0 space-y-2" data-mobile-gesture-allow>
             {unit.sentencePatterns.length > 0 ? (
               <>
                 {patternPageItems.items.map((pattern, index) => {

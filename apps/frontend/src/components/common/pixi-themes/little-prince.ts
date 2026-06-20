@@ -348,12 +348,12 @@ const drawFns: Record<PlanetType, (g: PIXI.Graphics, r: number, c: PlanetColors,
 
 export function setupLittlePrince(
   app: PIXI.Application,
-  _w: number,
-  _h: number,
+  w: number,
+  h: number,
   isDark: boolean,
 ): ThemeSetup {
-  const W = app.renderer.width
-  const H = app.renderer.height
+  const W = w
+  const H = h
   const isPortrait = H > W
 
   // 基准尺寸：短边的比例来缩放所有元素

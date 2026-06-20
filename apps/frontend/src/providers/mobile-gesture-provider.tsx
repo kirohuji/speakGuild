@@ -21,22 +21,31 @@ function isPrimaryRoute(pathname: string) {
 function isGestureBlockedTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
 
+  const explicitBlock = target.closest(
+    [
+      'input',
+      'textarea',
+      'select',
+      '[role="dialog"]',
+      '[data-mobile-gesture-block]',
+      '[data-horizontal-scroll]',
+      '.overflow-x-auto',
+      '.scrollbar-hide',
+    ].join(','),
+  )
+  if (explicitBlock) return true
+
+  if (target.closest('[data-mobile-gesture-allow]')) return false
+
   const interactive = target.closest(
     [
       'button',
       'a',
-      'input',
-      'textarea',
-      'select',
       '[role="button"]',
-      '[role="dialog"]',
-      '[data-mobile-gesture-block]',
     ].join(','),
   )
   if (interactive) return true
-
-  const scrollable = target.closest('[data-horizontal-scroll], .overflow-x-auto, .scrollbar-hide')
-  return Boolean(scrollable)
+  return false
 }
 
 function hasOpenOverlay() {

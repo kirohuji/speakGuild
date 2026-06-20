@@ -1641,14 +1641,14 @@ export function PracticeSessionPage() {
               </Badge>
             </div>
 
-            <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full">
+            <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
                 <TabsTrigger value="vocab" className="rounded-md text-xs">{t('practiceSession.sceneVocab')} ({detail.vocabularies.length})</TabsTrigger>
                 <TabsTrigger value="chunk" className="rounded-md text-xs">{t('practiceSession.coreExpressions')} ({detail.activeChunks.length})</TabsTrigger>
                 <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({detail.sentencePatterns?.length ?? 0})</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="vocab" className="mt-3">
+              <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
                 {detail.vocabularies.length > 0 ? (
                   <div className="space-y-2">
                     {vocabPageItems.items.map((v) => {
@@ -1708,7 +1708,7 @@ export function PracticeSessionPage() {
                 )}
               </TabsContent>
 
-              <TabsContent value="chunk" className="mt-3">
+              <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow>
                 <ChunkActivationPanel
                   chunks={chunkPageItems.items}
                   totalCount={detail.activeChunks.length}
@@ -1733,7 +1733,7 @@ export function PracticeSessionPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="pattern" className="mt-3">
+              <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow>
                 {detail.sentencePatterns?.length ? (
                   <div className="space-y-2">
                     {patternPageItems.items.map((p, index) => {
