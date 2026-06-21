@@ -532,7 +532,10 @@ export function TodayTaskPage() {
 
       {/* ── 练习 Dialog（与 LearningInsightDialog 完全统一）── */}
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DialogContent className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
+        <DialogContent
+          data-keyboard-overlay="practice"
+          className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
+        >
           <DialogTitle className="sr-only">
             {currentStep?.displayLabel || currentMeta.label} · {currentStep?.topicTitle}
           </DialogTitle>

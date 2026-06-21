@@ -10,6 +10,8 @@
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --keyboard-height: 0px;
+  --keyboard-offset: 0px;
 }
 
 @keyframes mobile-progress {
@@ -288,6 +290,42 @@
 
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='center'] {
+    max-height: calc(100dvh - var(--keyboard-height) - env(safe-area-inset-top, 0px) - 1rem) !important;
+    transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;
+    transition: max-height 220ms ease, transform 220ms ease;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='bottom'] {
+    bottom: var(--keyboard-height) !important;
+    max-height: calc(100dvh - var(--keyboard-height) - env(safe-area-inset-top, 0px) - 0.5rem) !important;
+    transition: bottom 220ms ease, max-height 220ms ease;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='panel'] {
+    max-height: calc(100dvh - var(--keyboard-height) - env(safe-area-inset-top, 0px)) !important;
+    transition: max-height 220ms ease;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] {
+    height: calc(100dvh - var(--keyboard-height)) !important;
+    max-height: calc(100dvh - var(--keyboard-height)) !important;
+    transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;
+    transition: height 220ms ease, max-height 220ms ease, transform 220ms ease;
+    overflow: hidden;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='page'] [data-keyboard-lift] {
+    transform: translateY(calc(var(--keyboard-height) * -1));
+    transition: transform 220ms ease;
   }
 
   /* ═══════════════════════════════════════════════════════

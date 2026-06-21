@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 const liveReloadUrl = process.env.CAP_LIVE_RELOAD_URL;
 
@@ -58,10 +59,8 @@ const config: CapacitorConfig = {
 
     // Keyboard — 键盘行为控制（减少键盘弹出时的卡顿和布局抖动）
     Keyboard: {
-      resize: 'native',              
+      resize: KeyboardResize.Body,
       resizeOnFullScreen: true,
-      // iOS 隐藏键盘辅助栏，减少输入区高度抖动
-      // style: 'dark',             // 可选：键盘样式
     },
 
     // CapacitorWechat: {

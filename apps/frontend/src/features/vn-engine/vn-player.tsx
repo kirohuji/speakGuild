@@ -842,7 +842,7 @@ export function VnPlayer({
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 z-20">
+        <div className="absolute inset-x-0 bottom-0 z-20" data-keyboard-lift>
           {canSubmitInput && (
             <TurnGuidanceCard guidance={inputGuidance} className="absolute right-4 bottom-full max-w-[min(88%,360px)]" />
           )}
