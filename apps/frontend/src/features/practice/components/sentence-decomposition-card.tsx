@@ -217,12 +217,12 @@ export function SentenceDecompositionCard({
     return (
       <Card className="border-0 bg-muted/30 shadow-none">
         <CardContent className="flex flex-col items-center gap-3 py-6">
-          <CheckCircle2 className="size-10 text-green-500" />
-          <p className="text-sm font-semibold text-foreground">已掌握完整长句</p>
+          {/* <CheckCircle2 className="size-10 text-green-500" /> */}
+          {/* <p className="text-sm font-semibold text-foreground">已掌握完整长句</p>
           <div className="w-full rounded-md bg-muted/50 px-4 py-2">
             <p className="text-sm text-foreground">{levels[totalLevels - 1].en}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">{levels[totalLevels - 1].zh}</p>
-          </div>
+          </div> */}
           <div className="w-full space-y-2">
             {levels.map((level, idx) => {
               const audioUrl = doneLevelAudios.get(idx)?.audioUrl ?? null
