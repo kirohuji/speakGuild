@@ -17,6 +17,8 @@ import { useConfigStore } from '@/stores/config.store'
 import { AuthSettingsPanel } from '@/features/profile/components/auth-settings-panel'
 import i18n from '@/lib/i18n'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
+import { isNative } from '@/lib/native'
+import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 
 export function SettingsTab() {
   const { t } = useTranslation()
@@ -32,6 +34,10 @@ export function SettingsTab() {
     setNativeSpeechRecognitionEnabled,
     dailyGoal,
     setDailyGoal,
+    learningReminderEnabled,
+    setLearningReminderEnabled,
+    learningReminderTime,
+    setLearningReminderTime,
   } = usePreferencesStore()
   const { config } = useConfigStore()
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
@@ -42,6 +48,21 @@ export function SettingsTab() {
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     i18n.changeLanguage(lang)
+  }
+
+  const refreshLearningReminder = async () => {
+    const { rescheduleLearningReminder } = await import('@/lib/native/learning-reminder')
+    await rescheduleLearningReminder()
+  }
+
+  const handleLearningReminderEnabledChange = (value: boolean) => {
+    setLearningReminderEnabled(value)
+    void refreshLearningReminder()
+  }
+
+  const handleLearningReminderTimeChange = (value: string) => {
+    setLearningReminderTime(value)
+    void refreshLearningReminder()
   }
 
   useEffect(() => {
@@ -107,6 +128,31 @@ export function SettingsTab() {
             </div>
             <Switch checked={autoCopyWord} onCheckedChange={setAutoCopyWord} />
           </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>学习提醒</Label>
+              <p className="text-xs text-muted-foreground">
+                {isNative() ? '到点后，如果今天还没有学习，会发送本地通知' : '仅 iOS / Android App 支持本地通知'}
+              </p>
+            </div>
+            <Switch checked={learningReminderEnabled} onCheckedChange={handleLearningReminderEnabledChange} />
+          </div>
+
+          {learningReminderEnabled && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <Label>提醒时间</Label>
+                <AlarmTimePicker
+                  value={learningReminderTime}
+                  onChange={handleLearningReminderTimeChange}
+                />
+              </div>
+            </>
+          )}
 
           <Separator />
 

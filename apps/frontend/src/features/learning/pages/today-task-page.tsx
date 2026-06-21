@@ -99,6 +99,7 @@ export function TodayTaskPage() {
   const warmupStore = useWarmupSessionStore()
   const [searchParams] = useSearchParams()
   const targetPackId = searchParams.get('packId') || null
+  const targetDate = searchParams.get('date') || null
   const plan = useDailyPracticeStore((s) => s.plan)
   const loading = useDailyPracticeStore((s) => s.loading)
   const error = useDailyPracticeStore((s) => s.error)
@@ -117,8 +118,8 @@ export function TodayTaskPage() {
   useEffect(() => {
     warmupStore.clearSession()
     setHasSubmittedToday(false)
-    loadToday(targetPackId)
-  }, [loadToday, targetPackId])
+    loadToday(targetPackId, targetDate)
+  }, [loadToday, targetPackId, targetDate])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))
@@ -140,8 +141,8 @@ export function TodayTaskPage() {
     setHasSubmittedToday(false)
     setCurrentIdx(0)
     setDrawerOpen(false)
-    loadToday(targetPackId)
-  }, [loadToday, targetPackId, warmupStore])
+    loadToday(targetPackId, targetDate)
+  }, [loadToday, targetPackId, targetDate, warmupStore])
 
   // ── 自动提交状态（effect 移至 doneCount/steps 声明之后）──
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
@@ -404,6 +405,11 @@ export function TodayTaskPage() {
             {submitting && (
               <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px] animate-pulse">
                 同步中...
+              </Badge>
+            )}
+            {targetDate && (
+              <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">
+                测试日期 {plan.date}
               </Badge>
             )}
           </div>

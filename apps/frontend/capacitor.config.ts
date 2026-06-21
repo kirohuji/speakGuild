@@ -51,6 +51,17 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
 
+    // Local Notifications — 本地学习提醒
+    LocalNotifications: {
+      presentationOptions: ['badge', 'sound', 'banner', 'list'],
+    },
+
+    // Badge — App 图标角标
+    Badge: {
+      persist: true,
+      autoClear: false,
+    },
+
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/CapacitorDatabase',
       iosIsEncryption: false,

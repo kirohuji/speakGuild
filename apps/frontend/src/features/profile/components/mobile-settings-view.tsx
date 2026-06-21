@@ -14,8 +14,10 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { useConfigStore } from '@/stores/config.store'
 import { useOfflineSyncStore, type OfflineSyncLogEntry } from '@/stores/offline-sync.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
+import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { isNative, requestInAppReview } from '@/lib/native'
+import { scheduleLearningReminderTestNotification } from '@/lib/native/learning-reminder'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 import { cn } from '@/lib/cn'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
@@ -98,6 +100,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setDailyGoal,
     dailyPracticeMixedPacks,
     setDailyPracticeMixedPacks,
+    learningReminderEnabled,
+    setLearningReminderEnabled,
+    learningReminderTime,
+    setLearningReminderTime,
   } = usePreferencesStore()
   const { config } = useConfigStore()
   const { logs: syncLogs, clearLogs: clearSyncLogs } = useOfflineSyncStore()
@@ -112,6 +118,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [deleteMessage, setDeleteMessage] = useState('')
+  const [testingLearningReminder, setTestingLearningReminder] = useState(false)
 
   // 处理账户删除
   const handleDeleteAccount = async () => {
@@ -203,6 +210,51 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     }
   }
 
+  const refreshLearningReminder = async () => {
+    try {
+      const { rescheduleLearningReminder } = await import('@/lib/native/learning-reminder')
+      const ok = await rescheduleLearningReminder()
+      if (!ok && isNative()) {
+        toast.error('需要允许通知权限后才能提醒学习')
+      }
+    } catch (error: any) {
+      toast.error(error?.message || '学习提醒设置失败')
+    }
+  }
+
+  const handleLearningReminderEnabledChange = (value: boolean) => {
+    setLearningReminderEnabled(value)
+    void refreshLearningReminder()
+  }
+
+  const handleLearningReminderTimeChange = (value: string) => {
+    setLearningReminderTime(value)
+    void refreshLearningReminder()
+  }
+
+  const handleTestLearningReminder = async () => {
+    if (testingLearningReminder) return
+    setTestingLearningReminder(true)
+    try {
+      toast.message('正在安排测试提醒...')
+      const result = await scheduleLearningReminderTestNotification(10)
+      if (result.scheduled) {
+        const time = result.scheduledAt
+          ? new Date(result.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          : '10 秒后'
+        toast.success(`测试提醒已安排：${time}，pending ${result.pendingIds?.length ?? 0} 条`)
+      } else {
+        toast.error(isNative()
+          ? `通知未安排，${result.error ?? `权限：${result.permissionAfter ?? result.permissionBefore ?? 'unknown'}`}`
+          : '本地通知仅支持 iOS / Android App')
+      }
+    } catch (error: any) {
+      toast.error(error?.message || '测试提醒发送失败')
+    } finally {
+      setTestingLearningReminder(false)
+    }
+  }
+
   const openLegalDoc = async (key: string, title: string) => {
     if (mdContents[key]) {
       setLegalDrawer({ title, content: mdContents[key] })
@@ -286,6 +338,39 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             />
           }
         />
+        <IosRow
+          label="学习提醒"
+          subtitle={learningReminderEnabled ? `每天 ${learningReminderTime} 提醒未完成学习` : '关闭后不会发送本地学习提醒'}
+          right={
+            <Switch
+              checked={learningReminderEnabled}
+              onCheckedChange={handleLearningReminderEnabledChange}
+            />
+          }
+        />
+        {learningReminderEnabled && (
+          <>
+            <IosRow
+              label="提醒时间"
+              right={
+                <AlarmTimePicker
+                  value={learningReminderTime}
+                  onChange={handleLearningReminderTimeChange}
+                />
+              }
+            />
+            {/* <IosRow
+              label="测试提醒"
+              subtitle="立即安排一条 5 秒后的本地通知"
+              onTap={handleTestLearningReminder}
+              right={
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  {testingLearningReminder ? '安排中' : '测试'}
+                </span>
+              }
+            /> */}
+          </>
+        )}
         {nativeSpeechRecognitionAvailable && (
           <IosRow
             label={t('profile.nativeSpeechRecognition')}

@@ -445,16 +445,21 @@ export const practiceRepository = {
   },
 
   /** 标记今日练习活跃（用于打卡统计） */
-  async markTodayActivity(count: number = 1): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10)
-    const id = `daily:${today}`
+  async markTodayActivity(count: number = 1, date?: string): Promise<void> {
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(date ?? '') ? date! : new Date().toISOString().slice(0, 10)
+    const id = `daily:${day}`
     const existing = await localDb.get<{ count: number }>('daily_activity', id)
     await localDb.put('daily_activity', {
       id,
-      date: today,
+      date: day,
       count: (existing?.count ?? 0) + count,
       updatedAt: new Date().toISOString(),
     })
+    void import('@/lib/native/learning-reminder')
+      .then(({ cancelTodayLearningReminder, rescheduleLearningReminder }) =>
+        cancelTodayLearningReminder().then(() => rescheduleLearningReminder()),
+      )
+      .catch(() => undefined)
   },
 
   /** 获取本地已缓存的热身记录 */

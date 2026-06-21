@@ -2,6 +2,7 @@ import type { UnitDetail } from '@/features/learning/api/learning-api'
 import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import type { WarmupRecordEntry, WarmupScore } from '@/stores/warmup-session.store'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { setLearningBadgeCount } from '@/lib/native/learning-reminder'
 import { learningPackService } from './learning-pack.service'
 import { learningRepository } from './learning.repository'
 import { practiceRepository } from './practice.repository'
@@ -98,7 +99,20 @@ export interface DailyPracticeAttempt {
 }
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function normalizePlanDate(date?: string | null) {
+  if (!date) return todayKey()
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayKey()
+}
+
+function practicedAtForDate(date: string) {
+  return `${date}T12:00:00.000Z`
 }
 
 function addDays(date: string, days: number) {
@@ -175,7 +189,7 @@ function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date:
     ...progress,
     status,
     dueDate: addDays(date, intervalDays),
-    lastPracticedAt: new Date().toISOString(),
+    lastPracticedAt: practicedAtForDate(date),
     bestScore: rank >= progress.bestScoreRank ? score : progress.bestScore,
     bestScoreRank: bestRank,
     lastScore: score,
@@ -320,8 +334,8 @@ function buildTopicStats(
 }
 
 export const dailyPracticeRepository = {
-  async buildTodayPlan(targetPackId?: string | null): Promise<DailyPracticePlan> {
-    const date = todayKey()
+  async buildTodayPlan(targetPackId?: string | null, targetDate?: string | null): Promise<DailyPracticePlan> {
+    const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
     const dailyGoal = preferences.dailyGoal
     const packScope: DailyPracticeScope = preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
@@ -368,6 +382,9 @@ export const dailyPracticeRepository = {
       },
     }
     await localDb.put('daily_practice_runs', run)
+    if (date === todayKey()) {
+      void setLearningBadgeCount(Math.max(0, run.scheduledItemIds.length - run.completedItemIds.length))
+    }
 
     return {
       date,
@@ -380,8 +397,9 @@ export const dailyPracticeRepository = {
     }
   },
 
-  async completeItem(step: ScheduledDailyPracticeItem, score: WarmupScore): Promise<DailyPracticeProgress> {
-    const date = todayKey()
+  async completeItem(step: ScheduledDailyPracticeItem, score: WarmupScore, targetDate?: string | null): Promise<DailyPracticeProgress> {
+    const date = normalizePlanDate(targetDate)
+    const practicedAt = practicedAtForDate(date)
     const updated = nextProgress(step.progress, score, date)
     await localDb.put('daily_practice_items', updated)
 
@@ -395,10 +413,18 @@ export const dailyPracticeRepository = {
       score,
       passed: scoreRank(score) >= 2,
       payload: { label: step.label, displayLabel: step.displayLabel },
-      practicedAt: new Date().toISOString(),
+      practicedAt,
       syncStatus: 'pending',
     }
     await localDb.put('daily_practice_attempts', attempt)
+    if (date === todayKey()) {
+      const run = await localDb.get<{ scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${date}`)
+      if (run) {
+        const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), step.itemId]))
+        await localDb.put('daily_practice_runs', { ...run, completedItemIds })
+        void setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length))
+      }
+    }
     return updated
   },
 
@@ -436,7 +462,7 @@ export const dailyPracticeRepository = {
       } : undefined,
     }
 
-    await practiceRepository.markTodayActivity(completedIds.length || records.length || 1)
+    await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date)
 
     try {
       const result = await dailyPracticeApi.complete(payload)

@@ -11,10 +11,10 @@ interface DailyPracticeState {
   loading: boolean
   error: string | null
   submitting: boolean
-  loadToday: (targetPackId?: string | null) => Promise<void>
+  loadToday: (targetPackId?: string | null, targetDate?: string | null) => Promise<void>
   completeStep: (step: ScheduledDailyPracticeItem, score: WarmupScore) => Promise<void>
   submitToday: (records: WarmupRecordEntry[]) => Promise<void>
-  reshuffle: (targetPackId?: string | null) => Promise<void>
+  reshuffle: (targetPackId?: string | null, targetDate?: string | null) => Promise<void>
 }
 
 export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
@@ -23,10 +23,10 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   error: null,
   submitting: false,
 
-  async loadToday(targetPackId) {
+  async loadToday(targetPackId, targetDate) {
     set({ loading: true, error: null })
     try {
-      const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId)
+      const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate)
       set({ plan, loading: false })
     } catch (error: any) {
       set({ error: error?.message || '加载失败', loading: false, plan: null })
@@ -34,7 +34,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   },
 
   async completeStep(step, score) {
-    const updated = await dailyPracticeRepository.completeItem(step, score)
+    const updated = await dailyPracticeRepository.completeItem(step, score, get().plan?.date)
     set((state) => {
       if (!state.plan) return state
       const alreadyCompleted = state.plan.completedItemIds.includes(step.itemId)
@@ -77,7 +77,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
     }
   },
 
-  async reshuffle(targetPackId) {
-    await get().loadToday(targetPackId)
+  async reshuffle(targetPackId, targetDate) {
+    await get().loadToday(targetPackId, targetDate)
   },
 }))

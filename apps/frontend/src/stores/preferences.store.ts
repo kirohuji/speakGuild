@@ -30,6 +30,8 @@ interface Preferences {
   nativeSpeechRecognitionEnabled: boolean
   dailyGoal: number
   dailyPracticeMixedPacks: boolean
+  learningReminderEnabled: boolean
+  learningReminderTime: string
 }
 
 interface PreferencesStore extends Preferences {
@@ -44,6 +46,8 @@ interface PreferencesStore extends Preferences {
   setNativeSpeechRecognitionEnabled: (value: boolean) => void
   setDailyGoal: (value: number) => void
   setDailyPracticeMixedPacks: (value: boolean) => void
+  setLearningReminderEnabled: (value: boolean) => void
+  setLearningReminderTime: (value: string) => void
 }
 
 export const DEFAULT_TTS: TtsSettings = {
@@ -74,6 +78,8 @@ export const usePreferencesStore = create<PreferencesStore>()(
       nativeSpeechRecognitionEnabled: false,
       dailyGoal: 20,
       dailyPracticeMixedPacks: false,
+      learningReminderEnabled: false,
+      learningReminderTime: '20:30',
       setAutoPlay: (autoPlay) => set({ autoPlay }),
       setBgmEnabled: (bgmEnabled) => set({ bgmEnabled }),
       setBgmVolume: (bgmVolume) => set({ bgmVolume }),
@@ -90,6 +96,8 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setNativeSpeechRecognitionEnabled: (value) => set({ nativeSpeechRecognitionEnabled: value }),
       setDailyGoal: (value) => set({ dailyGoal: value }),
       setDailyPracticeMixedPacks: (value) => set({ dailyPracticeMixedPacks: value }),
+      setLearningReminderEnabled: (value) => set({ learningReminderEnabled: value }),
+      setLearningReminderTime: (value) => set({ learningReminderTime: value }),
     }),
     { name: 'manyu-preferences' }
   )

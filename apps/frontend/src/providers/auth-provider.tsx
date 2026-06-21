@@ -4,6 +4,7 @@ import { useConfigStore } from '@/stores/config.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
+import { refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
 import { isNative, revenueCat } from '@/lib/native'
 
 /**
@@ -22,6 +23,10 @@ function useAppForegroundSync(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return
 
+    void registerLearningReminderActions().catch((error) => {
+      console.warn('[learning-reminder] action listener failed:', error)
+    })
+
     const doSync = () => {
       const now = Date.now()
       // 30 秒内不重复同步
@@ -30,6 +35,12 @@ function useAppForegroundSync(userId: string | undefined) {
 
       void offlineSyncService.sync(userId).catch((error) => {
         console.warn('[offline-sync] foreground sync failed:', error)
+      })
+      void rescheduleLearningReminder().catch((error) => {
+        console.warn('[learning-reminder] reschedule failed:', error)
+      })
+      void refreshLearningBadgeFromTodayRun().catch((error) => {
+        console.warn('[learning-badge] refresh failed:', error)
       })
     }
 
