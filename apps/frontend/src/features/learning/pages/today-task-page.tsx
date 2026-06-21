@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -258,6 +257,49 @@ export function TodayTaskPage() {
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
   const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
 
+  // ── 按状态分组统计（用于分段进度条）──
+  const statusCounts = useMemo(() => {
+    const counts = { overdue: 0, review: 0, new: 0, done: 0 }
+    for (const s of steps) {
+      if (doneIds.has(s.id)) { counts.done++ }
+      else if (s.scheduleStatus === 'overdue') { counts.overdue++ }
+      else if (s.scheduleStatus === 'review') { counts.review++ }
+      else { counts.new++ }
+    }
+    return counts
+  }, [steps, doneIds])
+
+  // ── 分段进度条颜色配置 ──
+  const SEGMENT_COLORS: Record<string, string> = {
+    overdue: 'bg-red-500',
+    review: 'bg-amber-500',
+    new: 'bg-blue-500',
+    done: 'bg-emerald-500',
+  }
+
+  const SegmentedBar = ({ segments, className }: { segments: Array<{ key: string; count: number; color: string }>; className?: string }) => {
+    const total = segments.reduce((s, seg) => s + seg.count, 0)
+    if (total === 0) return <div className={cn('h-1.5 w-full rounded-full bg-muted', className)} />
+    return (
+      <div className={cn('flex h-1.5 w-full overflow-hidden rounded-full bg-muted', className)}>
+        {segments.filter(s => s.count > 0).map((seg) => (
+          <div
+            key={seg.key}
+            className={cn('h-full transition-all', seg.color)}
+            style={{ width: `${(seg.count / total) * 100}%` }}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  const topSegments = useMemo(() => [
+    { key: 'overdue', count: statusCounts.overdue, color: SEGMENT_COLORS.overdue },
+    { key: 'review', count: statusCounts.review, color: SEGMENT_COLORS.review },
+    { key: 'new', count: statusCounts.new, color: SEGMENT_COLORS.new },
+    { key: 'done', count: statusCounts.done, color: SEGMENT_COLORS.done },
+  ], [statusCounts])
+
   // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
   useEffect(() => {
     if (hasSubmittedToday || steps.length === 0) return
@@ -417,7 +459,16 @@ export function TodayTaskPage() {
             {doneCount}/{steps.length} 题
           </Badge>
         </div>
-        <Progress value={donePercent} className="h-1.5" />
+        <SegmentedBar segments={topSegments} />
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+          {statusCounts.overdue > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500" />逾期 {statusCounts.overdue}</span>}
+          {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />复习 {statusCounts.review}</span>}
+          {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-blue-500" />新练 {statusCounts.new}</span>}
+          {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />完成 {statusCounts.done}</span>}
+          {statusCounts.overdue === 0 && statusCounts.review === 0 && statusCounts.new === 0 && statusCounts.done === 0 && (
+            <span className="text-muted-foreground/50">暂无练习</span>
+          )}
+        </div>
       </div>
 
       {/* ── 练习卡片列表 ── */}
@@ -521,9 +572,14 @@ export function TodayTaskPage() {
                         {topic.activeChunksCount} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟{detail ? ` · ${detail}` : ''}
                       </p>
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-background/70">
-                          <div className={cn('h-full rounded-full transition-all', statusMeta.bar)} style={{ width: `${Math.min(100, topic.topicWarmupProgress)}%` }} />
-                        </div>
+                        <SegmentedBar
+                          segments={[
+                            { key: 'overdue', count: topic.overdueCount, color: SEGMENT_COLORS.overdue },
+                            { key: 'review', count: topic.todayReviewCount, color: SEGMENT_COLORS.review },
+                            { key: 'new', count: topic.todayNewCount, color: SEGMENT_COLORS.new },
+                            { key: 'done', count: topic.doneTodayCount, color: SEGMENT_COLORS.done },
+                          ]}
+                        />
                         <span className="w-8 text-right text-[10px] tabular-nums text-muted-foreground">{topic.topicWarmupProgress}%</span>
                       </div>
                     </div>
