@@ -139,7 +139,6 @@ function InProgressUnitCard({
     if (!onDownloadPack || isPackInstalling) return
     try {
       await onDownloadPack()
-      toast.success(t('learning.packDownloadSuccess'))
     } catch {
       toast.error(t('learning.packDownloadFailed'))
     }

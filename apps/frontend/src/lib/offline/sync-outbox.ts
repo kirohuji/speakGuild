@@ -7,6 +7,7 @@ export type SyncEntityType =
   | 'pattern_entry'
   | 'practice_session'
   | 'practice_turn'
+  | 'warmup_records'
   | 'learning_pack'
   | 'daily_practice'
 
@@ -71,11 +72,21 @@ export const syncOutbox = {
     }
   },
 
+  async markDiscarded(id: string): Promise<void> {
+    // 永久失败项（例如服务端内容已删除）不应继续重试。
+    try {
+      await localDb.delete('outbox', id)
+    } catch (error) {
+      console.warn('[sync-outbox] markDiscarded delete failed:', error)
+    }
+  },
+
   /** 清理历史上残留的 synced 记录（兼容旧版本遗留数据） */
   async cleanup(): Promise<number> {
     try {
       // 删除状态为 synced 的记录（旧逻辑遗留）
       await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) => item.status === 'synced')
+      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) => isPermanentFailure(item.lastError))
       // 删除 7 天前失败的记录（重试无意义）
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) =>
@@ -95,7 +106,36 @@ export const syncOutbox = {
       status: 'failed',
       retryCount: item.retryCount + 1,
       updatedAt: new Date().toISOString(),
-      lastError: error instanceof Error ? error.message : String(error),
+      lastError: serializeError(error),
     })
   },
+}
+
+function serializeError(error: unknown): string {
+  if (!error) return 'Unknown error'
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  const value = error as any
+  const status = value?.response?.status
+  const message = value?.response?.data?.message ?? value?.message
+  if (status && message) return `${status}: ${message}`
+  if (message) return String(message)
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return String(error)
+  }
+}
+
+function isPermanentFailure(error?: string): boolean {
+  if (!error) return false
+  return [
+    '练习话题不存在',
+    '话题不存在',
+    '练习会话不存在',
+    'Topic not found',
+    'Session not found',
+    'Not Found',
+    '404',
+  ].some((marker) => error.includes(marker))
 }

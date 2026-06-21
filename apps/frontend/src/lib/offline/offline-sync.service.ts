@@ -1,5 +1,5 @@
 import { learningApi } from '@/features/learning/api/learning-api'
-import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practice/api/english-practice-api'
+import { practiceApi, expressionApi, dailyPracticeApi, warmupRecordApi } from '@/features/practice/api/english-practice-api'
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
@@ -18,6 +18,41 @@ async function resolveSessionId(sessionId: string): Promise<string | null> {
   if (!sessionId.startsWith('local_session_')) return sessionId
   const mapped = await localDb.get<{ value: string }>('kv', `session-map:${sessionId}`)
   return mapped?.value ?? null
+}
+
+function errorMessage(error: unknown): string {
+  if (!error) return ''
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  const maybe = error as any
+  return maybe?.response?.data?.message ?? maybe?.message ?? String(error)
+}
+
+function isPermanentSyncError(error: unknown): boolean {
+  const message = errorMessage(error)
+  const status = (error as any)?.response?.status
+  return status === 404 || [
+    '练习话题不存在',
+    '话题不存在',
+    '练习会话不存在',
+    'Topic not found',
+    'Session not found',
+    'Not Found',
+  ].some((marker) => message.includes(marker))
+}
+
+async function discardSessionDependents(sessionId: string): Promise<void> {
+  const items = await localDb.list<SyncOutboxItem>('outbox')
+  await Promise.all(items.map(async (item) => {
+    const payload = item.payload as any
+    const referencesSession =
+      item.entityId === sessionId ||
+      payload?.sessionId === sessionId ||
+      payload?.data?.sessionId === sessionId
+    if (referencesSession) {
+      await syncOutbox.markDiscarded(item.id)
+    }
+  }))
 }
 
 function toIsoString(value: unknown): string | null {
@@ -221,8 +256,24 @@ async function replayItem(
   if (item.entityType === 'practice_turn' && item.operation === 'create') {
     const payload = item.payload as any
     const remoteSessionId = await resolveSessionId(payload.sessionId)
-    if (!remoteSessionId) return false
+    if (!remoteSessionId) throw new Error('练习会话尚未同步')
     await practiceApi.submitTurn(remoteSessionId, payload.data)
+    return true
+  }
+
+  if (item.entityType === 'warmup_records' && item.operation === 'create') {
+    const payload = item.payload as any
+    await warmupRecordApi.save(payload.topicId, payload.items ?? [])
+    await warmupRecordApi.assess(payload.topicId, payload.topicTitle ?? '', payload.items ?? [])
+    await localDb.put('warmup_records', {
+      id: item.entityId,
+      topicId: payload.topicId,
+      topicTitle: payload.topicTitle,
+      items: payload.items ?? [],
+      createdAt: payload.createdAt ?? item.createdAt,
+      updatedAt: new Date().toISOString(),
+      syncStatus: 'synced',
+    })
     return true
   }
 
@@ -237,7 +288,7 @@ async function replayItem(
     await Promise.all((result.syncedAttempts ?? []).map(async (clientAttemptId: string) => {
       const attempt = attempts.find((entry) => entry.clientAttemptId === clientAttemptId)
       if (attempt?.id) {
-        await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' })
+        await localDb.put('daily_practice_attempts', { ...attempt, id: attempt.id, syncStatus: 'synced' })
       }
     }))
     return true
@@ -626,6 +677,9 @@ export const offlineSyncService = {
           } else if (result?.status === 'skipped') {
             await syncOutbox.markSynced(batch[i].id)
             skipped += 1
+          } else if (isPermanentSyncError(result?.error)) {
+            await syncOutbox.markDiscarded(batch[i].id)
+            skipped += 1
           } else {
             await syncOutbox.markFailed(batch[i].id, result?.error)
             failed += 1
@@ -640,11 +694,20 @@ export const offlineSyncService = {
               await syncOutbox.markSynced(item.id)
               synced += 1
             } else {
-              skipped += 1
+              await syncOutbox.markFailed(item.id, new Error('同步依赖尚未准备好'))
+              failed += 1
             }
           } catch (error) {
-            await syncOutbox.markFailed(item.id, error)
-            failed += 1
+            if (isPermanentSyncError(error)) {
+              await syncOutbox.markDiscarded(item.id)
+              if (item.entityType === 'practice_session') {
+                await discardSessionDependents(item.entityId)
+              }
+              skipped += 1
+            } else {
+              await syncOutbox.markFailed(item.id, error)
+              failed += 1
+            }
           }
         }
       }
@@ -663,16 +726,25 @@ export const offlineSyncService = {
         try {
           const handled = await replayItem(item, exprCtx)
           if (!handled) {
-            await syncOutbox.markSynced(item.id)
-            skipped += 1
+            await syncOutbox.markFailed(item.id, new Error('同步依赖尚未准备好'))
+            failed += 1
             continue
           }
           await syncOutbox.markSynced(item.id)
           synced += 1
           madeProgress = true
         } catch (error) {
-          await syncOutbox.markFailed(item.id, error)
-          failed += 1
+          if (isPermanentSyncError(error)) {
+            await syncOutbox.markDiscarded(item.id)
+            if (item.entityType === 'practice_session') {
+              await discardSessionDependents(item.entityId)
+            }
+            skipped += 1
+            madeProgress = true
+          } else {
+            await syncOutbox.markFailed(item.id, error)
+            failed += 1
+          }
         }
       }
     }

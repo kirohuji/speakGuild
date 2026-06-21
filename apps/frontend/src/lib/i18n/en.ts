@@ -952,7 +952,7 @@ const en = {
       packNeedsDownload: 'Local pack was cleared. Download it again.',
       downloadPack: 'Download pack',
       packDownloading: 'Downloading pack',
-      packDownloadSuccess: 'Pack downloaded',
+      packDownloadSuccess: '{{title}} downloaded',
       packDownloadFailed: 'Pack download failed, please try again',
       unitNotFound: 'Learning unit not found',
       backToPlan: 'Back to Plan',

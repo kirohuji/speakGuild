@@ -23,6 +23,11 @@ function isConnectionAlreadyExistsError(error: unknown): boolean {
   return errorText(error).includes('already exists')
 }
 
+function isConnectionDoesNotExistError(error: unknown): boolean {
+  const message = errorText(error).toLowerCase()
+  return message.includes('does not exist') || message.includes('no available connection')
+}
+
 async function openConnection(db: SQLiteDBConnection): Promise<void> {
   try {
     await db.open()
@@ -47,9 +52,14 @@ async function openDb(): Promise<SQLiteDBConnection> {
 
     const existingConnection = await conn.isConnection(DB_NAME, false)
     if (existingConnection.result) {
-      const db = await conn.retrieveConnection(DB_NAME, false)
-      await initializeSchema(db)
-      return db
+      try {
+        const db = await conn.retrieveConnection(DB_NAME, false)
+        await openConnection(db)
+        await initializeSchema(db)
+        return db
+      } catch (error) {
+        if (!isConnectionDoesNotExistError(error)) throw error
+      }
     }
 
     let db: SQLiteDBConnection
@@ -76,6 +86,11 @@ async function openDb(): Promise<SQLiteDBConnection> {
   return dbPromise
 }
 
+function resetConnectionState() {
+  dbPromise = null
+  sqliteConnection = null
+}
+
 async function initializeSchema(db: SQLiteDBConnection): Promise<void> {
   await db.execute(ALL_DDL)
   for (const idx of INDEXES) {
@@ -96,20 +111,42 @@ async function queryRows<T>(
   sql: string,
   values: any[] = [],
 ): Promise<T[]> {
-  const db = await ensureDb()
-  const result = await db.query(sql, values)
-  return (result.values ?? []) as T[]
+  try {
+    const db = await ensureDb()
+    const result = await db.query(sql, values)
+    return (result.values ?? []) as T[]
+  } catch (error) {
+    if (!isConnectionDoesNotExistError(error)) throw error
+    resetConnectionState()
+    const db = await ensureDb()
+    const result = await db.query(sql, values)
+    return (result.values ?? []) as T[]
+  }
 }
 
 /** Execute a write statement (INSERT/UPDATE/DELETE). */
 async function run(sql: string, values: any[] = [], transaction = true): Promise<void> {
-  const db = await ensureDb()
-  await db.run(sql, values, transaction)
+  try {
+    const db = await ensureDb()
+    await db.run(sql, values, transaction)
+  } catch (error) {
+    if (!isConnectionDoesNotExistError(error)) throw error
+    resetConnectionState()
+    const db = await ensureDb()
+    await db.run(sql, values, transaction)
+  }
 }
 
 async function execute(sql: string, transaction = true): Promise<void> {
-  const db = await ensureDb()
-  await db.execute(sql, transaction)
+  try {
+    const db = await ensureDb()
+    await db.execute(sql, transaction)
+  } catch (error) {
+    if (!isConnectionDoesNotExistError(error)) throw error
+    resetConnectionState()
+    const db = await ensureDb()
+    await db.execute(sql, transaction)
+  }
 }
 
 const jsonStore = createSqliteJsonStore({

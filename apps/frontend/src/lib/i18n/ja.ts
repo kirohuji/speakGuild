@@ -939,7 +939,7 @@ const ja = {
       packNeedsDownload: 'ローカル教材が削除されました。再ダウンロードしてください',
       downloadPack: '教材をダウンロード',
       packDownloading: '教材をダウンロード中',
-      packDownloadSuccess: '教材をダウンロードしました',
+      packDownloadSuccess: '「{{title}}」をダウンロードしました',
       packDownloadFailed: '教材のダウンロードに失敗しました',
       wordAdded: '単語帳に追加しました',
       unitNotFound: '学習ユニットが見つかりません',

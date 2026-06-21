@@ -527,7 +527,10 @@ async function processDownloadQueue() {
       packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
     console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
-    toast.success(i18n.t('learning.packDownloadSuccess', { defaultValue: `${next.title} 下载完成` }))
+    toast.success(i18n.t('learning.packDownloadSuccess', {
+      title: next.title,
+      defaultValue: `${next.title} 下载完成`,
+    }))
 
     const downloadedPacks = await learningPackService.listInstalled()
     const updates = useLearningStore.getState().availablePackUpdates

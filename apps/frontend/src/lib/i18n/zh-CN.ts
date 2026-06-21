@@ -948,7 +948,7 @@ const zhCN = {
       packNeedsDownload: '本地学习包已清除，需要重新下载',
       downloadPack: '下载学习包',
       packDownloading: '学习包下载中',
-      packDownloadSuccess: '学习包已下载',
+      packDownloadSuccess: '{{title}} 下载完成',
       packDownloadFailed: '学习包下载失败，请重试',
       wordAdded: '已加入生词本',
       unitNotFound: '学习单元不存在',

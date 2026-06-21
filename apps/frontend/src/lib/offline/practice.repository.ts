@@ -434,7 +434,7 @@ export const practiceRepository = {
         entityType: 'warmup_records',
         entityId: recordId,
         operation: 'create',
-        payload: { topicId, topicTitle, items },
+        payload: { topicId, topicTitle, items, createdAt: now },
       })
     }
 

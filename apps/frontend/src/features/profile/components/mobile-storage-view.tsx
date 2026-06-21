@@ -100,7 +100,9 @@ export function MobileStorageView() {
     pattern_entry: '句型库',
     practice_session: '练习会话',
     practice_turn: '练习回答',
+    warmup_records: '练习话题',
     learning_pack: '学习包',
+    daily_practice: '今日练习',
   } as Record<string, string>)[type] ?? type
 
   const operationLabel = (operation: string) => ({
