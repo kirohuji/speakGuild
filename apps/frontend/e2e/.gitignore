@@ -1,0 +1,9 @@
+# Playwright E2E 测试产物
+playwright-report/
+test-results/
+
+# 鉴权状态缓存
+e2e/.auth/
+
+# Playwright 截图/视频（失败时产生）
+e2e/screenshots/

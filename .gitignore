@@ -28,3 +28,5 @@ kaikki.org-dictionary-English.jsonl
 android/
 etl/
 .venv/
+test-results
+playwright-report
