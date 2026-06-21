@@ -29,6 +29,7 @@ interface Preferences {
   wifiOnlyMedia: boolean
   nativeSpeechRecognitionEnabled: boolean
   dailyGoal: number
+  dailyPracticeMixedPacks: boolean
 }
 
 interface PreferencesStore extends Preferences {
@@ -42,6 +43,7 @@ interface PreferencesStore extends Preferences {
   setWifiOnlyMedia: (value: boolean) => void
   setNativeSpeechRecognitionEnabled: (value: boolean) => void
   setDailyGoal: (value: number) => void
+  setDailyPracticeMixedPacks: (value: boolean) => void
 }
 
 export const DEFAULT_TTS: TtsSettings = {
@@ -71,6 +73,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       wifiOnlyMedia: true,
       nativeSpeechRecognitionEnabled: false,
       dailyGoal: 20,
+      dailyPracticeMixedPacks: false,
       setAutoPlay: (autoPlay) => set({ autoPlay }),
       setBgmEnabled: (bgmEnabled) => set({ bgmEnabled }),
       setBgmVolume: (bgmVolume) => set({ bgmVolume }),
@@ -86,6 +89,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setWifiOnlyMedia: (value) => set({ wifiOnlyMedia: value }),
       setNativeSpeechRecognitionEnabled: (value) => set({ nativeSpeechRecognitionEnabled: value }),
       setDailyGoal: (value) => set({ dailyGoal: value }),
+      setDailyPracticeMixedPacks: (value) => set({ dailyPracticeMixedPacks: value }),
     }),
     { name: 'manyu-preferences' }
   )

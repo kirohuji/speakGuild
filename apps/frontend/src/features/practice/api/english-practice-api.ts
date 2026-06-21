@@ -370,10 +370,6 @@ export const warmupRecordApi = {
     post<{ id: string; score: number; feedback: string }>('/practice/warmup-records/assess', { topicId, topicTitle, items }),
 }
 
-export interface DailyPracticeSettings {
-  packScope: 'single' | 'mixed'
-}
-
 export interface RemoteDailyPracticeProgress {
   itemId: string
   packId: string
@@ -395,10 +391,8 @@ export interface RemoteDailyPracticeProgress {
 }
 
 export const dailyPracticeApi = {
-  settings: () => get<DailyPracticeSettings>('/practice/daily-practice/settings'),
-
   progress: (itemIds: string[]) =>
-    post<{ settings: DailyPracticeSettings; items: RemoteDailyPracticeProgress[] }>('/practice/daily-practice/progress', { itemIds }),
+    post<{ items: RemoteDailyPracticeProgress[] }>('/practice/daily-practice/progress', { itemIds }),
 
   complete: (payload: any) =>
     post<{ runId: string; syncedAttempts: string[]; warmupRecordId: string | null }>('/practice/daily-practice/complete', payload),

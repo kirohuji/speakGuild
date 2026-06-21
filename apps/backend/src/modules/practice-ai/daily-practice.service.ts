@@ -72,26 +72,14 @@ function latestDate(a?: Date | null, b?: Date | null) {
 export class DailyPracticeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSettings() {
-    const row = await this.prisma.systemConfig.findUnique({
-      where: { key: 'daily_practice_pack_scope' },
-      select: { value: true },
-    });
-    const scope = row?.value === 'mixed' ? 'mixed' : 'single';
-    return { packScope: scope };
-  }
-
   async getProgress(userId: string, itemIds?: string[]) {
     const where: any = { userId };
     if (itemIds?.length) where.itemId = { in: itemIds };
-    const [settings, items] = await Promise.all([
-      this.getSettings(),
-      (this.prisma as any).userWarmupItemProgress.findMany({
-        where,
-        orderBy: { updatedAt: 'desc' },
-      }),
-    ]);
-    return { settings, items };
+    const items = await (this.prisma as any).userWarmupItemProgress.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+    });
+    return { items };
   }
 
   async complete(userId: string, body: {

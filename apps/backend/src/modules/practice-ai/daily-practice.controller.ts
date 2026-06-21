@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { requireAuthSession } from '../auth/session.util';
 import { DailyPracticeService } from './daily-practice.service';
@@ -6,11 +6,6 @@ import { DailyPracticeService } from './daily-practice.service';
 @Controller('practice/daily-practice')
 export class DailyPracticeController {
   constructor(private readonly service: DailyPracticeService) {}
-
-  @Get('settings')
-  async settings() {
-    return this.service.getSettings();
-  }
 
   @Post('progress')
   async progress(@Req() req: Request, @Body() body: { itemIds?: string[] }) {

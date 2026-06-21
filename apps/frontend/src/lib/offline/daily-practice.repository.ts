@@ -1,5 +1,5 @@
 import type { UnitDetail } from '@/features/learning/api/learning-api'
-import { dailyPracticeApi, type DailyPracticeSettings } from '@/features/practice/api/english-practice-api'
+import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import type { WarmupRecordEntry, WarmupScore } from '@/stores/warmup-session.store'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { learningPackService } from './learning-pack.service'
@@ -9,7 +9,7 @@ import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 
 export type DailyPracticeStatus = 'new' | 'review' | 'overdue' | 'done' | 'mastered'
-export type DailyPracticeScope = DailyPracticeSettings['packScope']
+export type DailyPracticeScope = 'single' | 'mixed'
 
 export interface DailyPracticeProgress {
   id: string
@@ -320,19 +320,12 @@ function buildTopicStats(
 }
 
 export const dailyPracticeRepository = {
-  async getSettings(): Promise<DailyPracticeSettings> {
-    try {
-      return await dailyPracticeApi.settings()
-    } catch {
-      return { packScope: 'single' }
-    }
-  },
-
   async buildTodayPlan(targetPackId?: string | null): Promise<DailyPracticePlan> {
     const date = todayKey()
-    const dailyGoal = usePreferencesStore.getState().dailyGoal
-    const settings = await this.getSettings()
-    const units = await loadCandidateUnits(settings.packScope, targetPackId)
+    const preferences = usePreferencesStore.getState()
+    const dailyGoal = preferences.dailyGoal
+    const packScope: DailyPracticeScope = preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
+    const units = await loadCandidateUnits(packScope, targetPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
 
@@ -363,7 +356,7 @@ export const dailyPracticeRepository = {
     const run = {
       id: `daily:${date}`,
       date,
-      scope: settings.packScope,
+      scope: packScope,
       packIds: units.map((unit) => unit.id),
       packIdsKey: units.map((unit) => unit.id).join(','),
       scheduledItemIds: scheduled.map((step) => step.itemId),
@@ -378,7 +371,7 @@ export const dailyPracticeRepository = {
 
     return {
       date,
-      scope: settings.packScope,
+      scope: packScope,
       units,
       steps: scheduled,
       topicStats: buildTopicStats(units, candidates, progressMap, scheduled, date),

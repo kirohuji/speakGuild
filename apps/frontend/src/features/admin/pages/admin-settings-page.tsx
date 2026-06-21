@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Settings, Loader2, CheckCircle2, AlertCircle,
-  ToggleLeft, Sliders, TrendingUp, Gauge, GraduationCap,
+  ToggleLeft, Sliders, TrendingUp, Gauge,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,7 +30,6 @@ interface GroupMeta {
 const groups: GroupMeta[] = [
   { key: 'feature',  label: '功能开关', icon: ToggleLeft,  desc: '控制注册、维护模式、排行榜等功能' },
   { key: 'growth',   label: '增长配置', icon: TrendingUp, desc: '邀请奖励天数、新人推广试用等增长参数' },
-  { key: 'learning', label: '学习策略', icon: GraduationCap, desc: '今日任务排程、复习策略和学习包范围' },
   { key: 'technical',label: '系统参数', icon: Sliders,    desc: 'API 限流、文件上传、会话超时等技术参数' },
   { key: 'quota',    label: 'AI 配额',  icon: Gauge,      desc: '免费用户 AI 纠错次数等配额控制' },
 ];
@@ -48,20 +46,6 @@ function ConfigField({
   onChange: (key: string, val: string) => void;
 }) {
   const t = item.type || 'string';
-
-  if (item.key === 'daily_practice_pack_scope') {
-    return (
-      <Select
-        id={item.key}
-        value={value || 'single'}
-        onChange={(e) => onChange(item.key, (e.target as HTMLSelectElement).value)}
-        className="max-w-[320px]"
-      >
-        <SelectItem value="single">只从一个学习包排程</SelectItem>
-        <SelectItem value="mixed">允许跨多个已安装学习包混合排程</SelectItem>
-      </Select>
-    );
-  }
 
   if (t === 'boolean') {
     return (

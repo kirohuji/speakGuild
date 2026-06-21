@@ -418,7 +418,7 @@ export const offlineSyncService = {
   },
 
   async sync(userId?: string | null): Promise<{
-    push: { synced: number; failed: number; skipped: number }
+    push: { synced: number; failed: number; skipped: number; operations?: Record<string, number> }
     pull: { cursor: string | null; changed: number; deleted: number } | null
     refreshedPacks: string[]
   }> {
@@ -570,16 +570,21 @@ export const offlineSyncService = {
     return refreshed
   },
 
-  async flush(): Promise<{ synced: number; failed: number; skipped: number }> {
+  async flush(): Promise<{ synced: number; failed: number; skipped: number; operations: Record<string, number> }> {
     let synced = 0
     let failed = 0
     let skipped = 0
 
     const items = await syncOutbox.listPending()
+    const operations = items.reduce<Record<string, number>>((acc, item) => {
+      const key = `${item.entityType}:${item.operation}`
+      acc[key] = (acc[key] ?? 0) + 1
+      return acc
+    }, {})
     if (items.length === 0) {
       // 清理历史上残留的 synced 记录
       await syncOutbox.cleanup()
-      return { synced, failed, skipped }
+      return { synced, failed, skipped, operations }
     }
 
     // 预取 expression 全量列表，供 replayItem 中 delete 操作复用（避免逐条 list()）
@@ -675,6 +680,6 @@ export const offlineSyncService = {
     // 清理 outbox 中已同步的旧记录
     await syncOutbox.cleanup()
 
-    return { synced, failed, skipped }
+    return { synced, failed, skipped, operations }
   },
 }

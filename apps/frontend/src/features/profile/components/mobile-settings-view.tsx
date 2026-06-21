@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AlertCircle, ChevronDown, ChevronRight, Loader2, Trash2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -31,10 +31,56 @@ function formatSyncLogTime(value?: string) {
 }
 
 function formatSyncLogDetail(log: OfflineSyncLogEntry) {
-  const detail = log.detail as { push?: { synced?: number; failed?: number; skipped?: number } } | null | undefined
-  if (!detail?.push) return null
-  const { synced = 0, failed = 0, skipped = 0 } = detail.push
-  return `上传 ${synced}，失败 ${failed}，跳过 ${skipped}`
+  const detail = log.detail as {
+    push?: { synced?: number; failed?: number; skipped?: number; operations?: Record<string, number> }
+    pull?: { changed?: number; deleted?: number } | null
+    refreshedPacks?: string[]
+  } | null | undefined
+  if (!detail) return null
+  const parts: string[] = []
+  if (detail.push) {
+    const { synced = 0, failed = 0, skipped = 0 } = detail.push
+    parts.push(`上传 ${synced}，失败 ${failed}，跳过 ${skipped}`)
+  }
+  if (detail.pull) {
+    parts.push(`拉取 ${(detail.pull.changed ?? 0) + (detail.pull.deleted ?? 0)}`)
+  }
+  if (detail.refreshedPacks?.length) {
+    parts.push(`学习包更新 ${detail.refreshedPacks.length}`)
+  }
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
+function formatSyncOperations(log: OfflineSyncLogEntry) {
+  const operations = (log.detail as { push?: { operations?: Record<string, number> } } | null | undefined)?.push?.operations
+  if (!operations || Object.keys(operations).length === 0) return []
+  const labels: Record<string, string> = {
+    my_unit: '学习包',
+    word_entry: '单词',
+    chunk_entry: '句块',
+    pattern_entry: '句型',
+    practice_session: 'VN 会话',
+    practice_turn: 'VN 回合',
+    learning_pack: '离线包',
+    daily_practice: '今日任务',
+  }
+  const opLabels: Record<string, string> = { create: '新增', update: '更新', delete: '删除' }
+  return Object.entries(operations).map(([key, count]) => {
+    const [entity, op] = key.split(':')
+    return `${labels[entity] ?? entity}${opLabels[op] ? `·${opLabels[op]}` : ''} ${count}`
+  })
+}
+
+function syncLogIcon(log: OfflineSyncLogEntry) {
+  if (log.status === 'running') return Loader2
+  if (log.status === 'failed' || log.error) return AlertCircle
+  return CheckCircle2
+}
+
+function syncLogTone(log: OfflineSyncLogEntry) {
+  if (log.status === 'running') return 'bg-primary/10 text-primary'
+  if (log.status === 'failed' || log.error) return 'bg-destructive/10 text-destructive'
+  return 'bg-emerald-500/10 text-emerald-600'
 }
 
 export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
@@ -50,6 +96,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setNativeSpeechRecognitionEnabled,
     dailyGoal,
     setDailyGoal,
+    dailyPracticeMixedPacks,
+    setDailyPracticeMixedPacks,
   } = usePreferencesStore()
   const { config } = useConfigStore()
   const { logs: syncLogs, clearLogs: clearSyncLogs } = useOfflineSyncStore()
@@ -195,11 +243,12 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     key,
     label: t(tKey),
   }))
-  const syncErrorLogs = useMemo(
-    () => syncLogs.filter((log) => log.status === 'failed' || log.status === 'running' || log.error).slice(0, 5),
+  const visibleSyncLogs = useMemo(
+    () => syncLogs.slice(0, 10),
     [syncLogs],
   )
-  const latestSyncError = syncErrorLogs.find((log) => log.status === 'failed' || log.error)
+  const latestFailedSyncLog = visibleSyncLogs.find((log) => log.status === 'failed' || log.error)
+  const latestSyncLog = visibleSyncLogs[0]
 
   return (
     <div className="space-y-5">
@@ -225,6 +274,16 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
                 </button>
               ))}
             </div>
+          }
+        />
+        <IosRow
+          label="跨学习包混合排程"
+          subtitle={dailyPracticeMixedPacks ? '今日任务可从多个已安装学习包混合安排' : '今日任务只从一个学习包安排'}
+          right={
+            <Switch
+              checked={dailyPracticeMixedPacks}
+              onCheckedChange={setDailyPracticeMixedPacks}
+            />
           }
         />
         {nativeSpeechRecognitionAvailable && (
@@ -272,14 +331,17 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           onTap={() => onNavigate?.('storage')}
         />
         <IosRow
-          label="报错日志"
-          subtitle={latestSyncError?.error ?? latestSyncError?.summary ?? '最近无同步报错'}
+          label="同步操作日志"
+          subtitle={latestFailedSyncLog?.error ?? latestSyncLog?.summary ?? '暂无同步记录'}
           onTap={() => setSyncLogsExpanded((value) => !value)}
           right={
             <div className="flex items-center gap-2 text-muted-foreground">
-              {syncErrorLogs.length > 0 && (
-                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                  {syncErrorLogs.length}
+              {visibleSyncLogs.length > 0 && (
+                <span className={cn(
+                  'rounded-full px-2 py-0.5 text-xs font-medium',
+                  latestFailedSyncLog ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary',
+                )}>
+                  {visibleSyncLogs.length}
                 </span>
               )}
               {syncLogsExpanded ? (
@@ -292,14 +354,16 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
         />
         {syncLogsExpanded && (
           <div className="border-b border-border/50 px-4 py-3">
-            {syncErrorLogs.length > 0 ? (
+            {visibleSyncLogs.length > 0 ? (
               <div className="space-y-3">
-                {syncErrorLogs.map((log) => {
+                {visibleSyncLogs.map((log) => {
                   const detail = formatSyncLogDetail(log)
+                  const operations = formatSyncOperations(log)
+                  const Icon = syncLogIcon(log)
                   return (
                     <div key={log.id} className="flex gap-3">
-                      <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[10px] bg-destructive/10">
-                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      <div className={cn('mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[10px]', syncLogTone(log))}>
+                        <Icon className={cn('h-4 w-4', log.status === 'running' && 'animate-spin')} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
@@ -315,6 +379,15 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
                             {log.error ?? detail}
                           </p>
                         )}
+                        {operations.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {operations.slice(0, 4).map((item) => (
+                              <span key={item} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -329,7 +402,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
                 </button>
               </div>
             ) : (
-              <p className="py-2 text-sm text-muted-foreground">暂无报错日志</p>
+              <p className="py-2 text-sm text-muted-foreground">暂无同步操作日志</p>
             )}
           </div>
         )}

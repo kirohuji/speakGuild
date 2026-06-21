@@ -19,14 +19,6 @@ const BUILTIN_CONFIGS = [
     type: 'boolean',
     description: '开启后，所有用户都可以在商店免费下载学习包',
   },
-  {
-    key: 'daily_practice_pack_scope',
-    value: 'single',
-    group: 'learning',
-    label: '今日任务学习包范围',
-    type: 'string',
-    description: 'single=只从一个学习包排程；mixed=允许跨多个已安装学习包混合排程',
-  },
 ];
 
 @Injectable()
