@@ -238,6 +238,7 @@ export function PatternDrillCard({
         disabled={isReview || status === 'judging' || status === 'passed'}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
+        lang={isZhToEn ? 'en-US' : 'zh-CN'}
       />
 
       {/* 回顾模式：录音回放 */}

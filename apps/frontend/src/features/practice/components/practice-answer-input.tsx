@@ -14,6 +14,8 @@ interface PracticeAnswerInputProps {
   disabled?: boolean
   onEnter?: () => void
   onAudioChange?: (audioUrl: string | null) => void
+  /** 语音识别语言，默认 en-US；中文输入时传 zh-CN */
+  lang?: string
 }
 
 function pickMimeType() {
@@ -42,6 +44,7 @@ export function PracticeAnswerInput({
   disabled,
   onEnter,
   onAudioChange,
+  lang = 'en-US',
 }: PracticeAnswerInputProps) {
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
@@ -125,7 +128,7 @@ export function PracticeAnswerInput({
 
     try {
       const nativeSession = await startBestNativeVoiceInput({
-        language: 'en-US',
+        language: lang,
         useNativeSpeechRecognition: nativeSpeechRecognitionEnabled,
         onPartial: (partialText) => {
           const text = normalizeInputText(partialText)
@@ -168,7 +171,7 @@ export function PracticeAnswerInput({
       setVoiceError('无法访问麦克风，请检查权限设置')
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
+  }, [cleanupRecording, disabled, lang, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current

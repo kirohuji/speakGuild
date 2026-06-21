@@ -271,6 +271,7 @@ export function VocabOutputCard({
         disabled={isReview || judging || !!result?.passed}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
+        lang={isZhToEn ? 'en-US' : 'zh-CN'}
       />
 
       {/* 回顾模式：录音回放 */}
