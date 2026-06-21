@@ -410,7 +410,17 @@ export interface StoryData {
   version: number
   createdAt: string
   updatedAt: string
-  trainingTopic?: { id: string; title: string; teachingMarkdown?: string | null } | null
+  trainingTopic?: {
+    id: string
+    title: string
+    teachingMarkdown?: string | null
+    scene?: {
+      id: string
+      title: string
+      packageType?: string
+      category?: { id: string; name: string } | null
+    } | null
+  } | null
   _count?: { trainingTopic: number }
 }
 
@@ -457,6 +467,10 @@ export async function updateStory(id: string, data: Partial<StoryData>): Promise
 
 export async function deleteStory(id: string): Promise<void> {
   return _delete(`/admin/content/stories/${id}`)
+}
+
+export async function deleteStoriesByScene(sceneId: string): Promise<{ success: boolean; count: number }> {
+  return _delete(`/admin/content/stories/by-scene/${sceneId}`)
 }
 
 // ─── Story AI Tools ──────────────────────────────────────────

@@ -470,9 +470,16 @@ export const practiceRepository = {
   /** 获取今日练习进度（已完成步骤 ID 集合） */
   async getTodayProgress(): Promise<{ date: string; packId: string | null; doneIds: string[] } | null> {
     const today = new Date().toISOString().slice(0, 10)
-    const record = await localDb.get<{ date: string; packId: string | null; doneIds: string[] }>('daily_progress', `daily:${today}`)
-    if (record?.date === today) return record
-    return null
+    const record = await localDb.get<any>('daily_progress', `daily:${today}`)
+    if (!record || record.date !== today) return null
+    // doneIds 可能以 JSON 字符串形式存储
+    let doneIds: string[] = []
+    if (Array.isArray(record.doneIds)) {
+      doneIds = record.doneIds
+    } else if (typeof record.doneIds === 'string') {
+      try { doneIds = JSON.parse(record.doneIds) } catch { doneIds = [] }
+    }
+    return { date: record.date, packId: record.packId || null, doneIds }
   },
 
   /** 保存今日练习进度 */
@@ -482,7 +489,7 @@ export const practiceRepository = {
       id: `daily:${today}`,
       date: today,
       packId,
-      doneIds,
+      doneIds: JSON.stringify(doneIds),
       updatedAt: new Date().toISOString(),
     })
   },

@@ -25,6 +25,7 @@ import {
 import { resolve as pathResolve, join as pathJoin } from 'path';
 import * as AdmZip from 'adm-zip';
 import { Readable } from 'stream';
+import { parse } from 'csv-parse/sync';
 
 // ── 类型定义 ──
 type CsvRow = Record<string, string>;
@@ -41,6 +42,51 @@ export class PackageDataController {
     return session;
   }
 
+  private readCsvFile(pkgDir: string, filename: string): CsvRow[] {
+    const filePath = join(pkgDir, filename);
+    if (!existsSync(filePath)) return [];
+    const raw = readFileSync(filePath, 'utf-8');
+    if (!raw.trim()) return [];
+    return parse(raw, {
+      bom: true,
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+      relax_column_count: true,
+    }) as CsvRow[];
+  }
+
+  private async findPackageInkScriptIds(sceneId: string) {
+    const topicRecords = await this.prisma.trainingTopic.findMany({
+      where: { sceneId },
+      select: { id: true, inkScriptId: true },
+    });
+    const topicIds = topicRecords.map(t => t.id);
+    const directInkScriptIds = topicRecords.map(t => t.inkScriptId).filter(Boolean) as string[];
+    const storyEpisodeIds = (await this.prisma.storyEpisode.findMany({
+      where: { sceneId },
+      select: { id: true, inkScriptId: true },
+    }));
+    const episodeIds = storyEpisodeIds.map(e => e.id);
+    const episodeInkScriptIds = storyEpisodeIds.map(e => e.inkScriptId).filter(Boolean) as string[];
+    const legacyInkScripts = topicIds.length || episodeIds.length
+      ? await this.prisma.inkScript.findMany({
+          where: {
+            OR: [
+              ...(topicIds.length ? [{ topicId: { in: topicIds } }] : []),
+              ...(episodeIds.length ? [{ episodeId: { in: episodeIds } }] : []),
+            ],
+          },
+          select: { id: true },
+        })
+      : [];
+    return Array.from(new Set([
+      ...directInkScriptIds,
+      ...episodeInkScriptIds,
+      ...legacyInkScripts.map(s => s.id),
+    ]));
+  }
+
   /** 按 FK 依赖顺序清理场景的所有关联数据，然后删除场景 */
   private async cleanupScene(sceneId: string) {
     // 1. 查找关联 ID
@@ -49,6 +95,7 @@ export class PackageDataController {
     });
     const plainTopicIds = topicRecords.map(t => t.id);
     const inkScriptIds = topicRecords.map(t => t.inkScriptId).filter(Boolean) as string[];
+    const packageInkScriptIds = await this.findPackageInkScriptIds(sceneId);
     const storyEpisodeIds = (await this.prisma.storyEpisode.findMany({
       where: { sceneId }, select: { id: true },
     })).map(e => e.id);
@@ -90,6 +137,11 @@ export class PackageDataController {
     await this.prisma.scenePrerequisite.deleteMany({
       where: { OR: [{ sceneId }, { prerequisiteId: sceneId }] },
     }).catch(() => {});
+
+    // 6. 删除本包关联的 InkScript。必须在 topic/episode 删除之后，避免 training_topic.inkScriptId FK 阻塞。
+    if (packageInkScriptIds.length > 0) {
+      await this.prisma.inkScript.deleteMany({ where: { id: { in: packageInkScriptIds } } }).catch(() => {});
+    }
 
     // 6. 删除场景
     await this.prisma.scene.delete({ where: { id: sceneId } });
@@ -171,50 +223,13 @@ export class PackageDataController {
         }
       }
 
-      // 3. 读取 CSV 数据（支持引号包裹的字段，如 JSON 值含逗号）
-      const readCsv = (filename: string): CsvRow[] => {
-        const filePath = join(pkgDir, filename);
-        if (!existsSync(filePath)) return [];
-        const raw = readFileSync(filePath, 'utf-8').trim();
-        // 去除 UTF-8 BOM
-        const content = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
-        if (!content) return [];
-        const lines = content.split('\n').filter(line => line.trim());
-        if (lines.length < 2) return [];
-        const parseLine = (line: string): string[] => {
-          const result: string[] = [];
-          let current = '';
-          let inQuotes = false;
-          for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (ch === '"') {
-              inQuotes = !inQuotes;
-            } else if (ch === ',' && !inQuotes) {
-              result.push(current.trim());
-              current = '';
-            } else {
-              current += ch;
-            }
-          }
-          result.push(current.trim());
-          return result;
-        };
-        const headers = parseLine(lines[0]);
-        return lines.slice(1).map(line => {
-          const values = parseLine(line);
-          const row: CsvRow = {};
-          headers.forEach((h, i) => { row[h] = (values[i] || ''); });
-          return row;
-        });
-      };
-
-      const sceneRows = readCsv('scenes.csv');
-      const vocabRows = readCsv('scene_vocabulary.csv');
-      const chunkRows = readCsv('chunks.csv');
-      const topicRows = readCsv('training_topics.csv');
-      const patternRows = readCsv('sentence_patterns.csv');
-      const epRows = readCsv('script_episodes.csv');
-      const epChunkRows = readCsv('episode_chunks.csv');
+      const sceneRows = this.readCsvFile(pkgDir, 'scenes.csv');
+      const vocabRows = this.readCsvFile(pkgDir, 'scene_vocabulary.csv');
+      const chunkRows = this.readCsvFile(pkgDir, 'chunks.csv');
+      const topicRows = this.readCsvFile(pkgDir, 'training_topics.csv');
+      const patternRows = this.readCsvFile(pkgDir, 'sentence_patterns.csv');
+      const epRows = this.readCsvFile(pkgDir, 'script_episodes.csv');
+      const epChunkRows = this.readCsvFile(pkgDir, 'episode_chunks.csv');
 
       // 读取 warmup_pipeline.json
       let warmupPipeline: Record<string, any> = {};
@@ -393,6 +408,12 @@ export class PackageDataController {
 
         topicIds.push(topic.id);
         topicIdMap.set(row.title, topic.id);
+        if (inkScriptId) {
+          await this.prisma.inkScript.update({
+            where: { id: inkScriptId },
+            data: { topicId: topic.id },
+          }).catch(() => {});
+        }
       }
 
       // 11. 导入句型
@@ -792,47 +813,12 @@ export class PackageDataController {
   // ════════════════════════════════════════════════════════════
 
   private async importFromDir(pkgDir: string, packageDirName: string) {
-    const readCsv = (filename: string): CsvRow[] => {
-      const filePath = pathJoin(pkgDir, filename);
-      if (!existsSync(filePath)) return [];
-      const raw = readFileSync(filePath, 'utf-8').trim();
-      const content = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
-      if (!content) return [];
-      const lines = content.split('\n').filter(line => line.trim());
-      if (lines.length < 2) return [];
-      const parseLine = (line: string): string[] => {
-        const result: string[] = [];
-        let current = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') {
-            inQuotes = !inQuotes;
-          } else if (ch === ',' && !inQuotes) {
-            result.push(current.trim());
-            current = '';
-          } else {
-            current += ch;
-          }
-        }
-        result.push(current.trim());
-        return result;
-      };
-      const headers = parseLine(lines[0]);
-      return lines.slice(1).map(line => {
-        const values = parseLine(line);
-        const row: CsvRow = {};
-        headers.forEach((h, i) => { row[h] = (values[i] || ''); });
-        return row;
-      });
-    };
-
-    const sceneRows = readCsv('scenes.csv');
-    const vocabRows = readCsv('scene_vocabulary.csv');
-    const chunkRows = readCsv('chunks.csv');
-    const topicRows = readCsv('training_topics.csv');
-    const patternRows = readCsv('sentence_patterns.csv');
-    const epRows = readCsv('script_episodes.csv');
+    const sceneRows = this.readCsvFile(pkgDir, 'scenes.csv');
+    const vocabRows = this.readCsvFile(pkgDir, 'scene_vocabulary.csv');
+    const chunkRows = this.readCsvFile(pkgDir, 'chunks.csv');
+    const topicRows = this.readCsvFile(pkgDir, 'training_topics.csv');
+    const patternRows = this.readCsvFile(pkgDir, 'sentence_patterns.csv');
+    const epRows = this.readCsvFile(pkgDir, 'script_episodes.csv');
 
     let warmupPipeline: Record<string, any> = {};
     const pipelinePath = pathJoin(pkgDir, 'warmup_pipeline.json');
@@ -914,7 +900,36 @@ export class PackageDataController {
 
     const topicIds: string[] = [];
     const topicIdMap = new Map<string, string>();
+    const inkKeyToId = new Map<string, string>();
+    const inkDir = pathJoin(pkgDir, 'ink-scripts');
+    if (existsSync(inkDir)) {
+      try {
+        const inkFiles = readdirSync(inkDir).filter((f: string) => f.endsWith('.ink'));
+        for (const file of inkFiles) {
+          const raw = readFileSync(pathJoin(inkDir, file), 'utf-8');
+          const frontMatch = raw.match(/^---\n([\s\S]*?)\n---/);
+          let key = file.replace(/\.ink$/, '');
+          let title = key;
+          if (frontMatch) {
+            const fm = frontMatch[1];
+            const km = fm.match(/^key:\s*(.+)$/m);
+            const tm = fm.match(/^title:\s*(.+)$/m);
+            if (km) key = km[1].trim();
+            if (tm) title = tm[1].trim();
+          }
+          const ink = await this.prisma.inkScript.upsert({
+            where: { key },
+            create: { key, title, scriptType: 'practice', inkSource: raw, inkJson: {} },
+            update: { title, scriptType: 'practice', inkSource: raw },
+          });
+          inkKeyToId.set(key, ink.id);
+        }
+      } catch { /* no ink dir or parse error */ }
+    }
     for (const row of topicRows) {
+      const inkScriptId = row.ink_script_key?.trim()
+        ? inkKeyToId.get(row.ink_script_key.trim()) ?? null
+        : null;
       const topic = await this.prisma.trainingTopic.create({
         data: {
           sceneId: scene.id, type: 'daily',
@@ -922,10 +937,17 @@ export class PackageDataController {
           suggestedDurationSec: parseInt(row.duration_sec || '60'), difficulty: row.difficulty || 'L2',
           description: row.description || null, knowledgePoints: row.knowledge_points || null,
           teachingMarkdown: row.teaching_markdown || null,
+          inkScriptId,
           sortOrder: topicIds.length,
         },
       });
       topicIdMap.set(row.title, topic.id);
+      if (inkScriptId) {
+        await this.prisma.inkScript.update({
+          where: { id: inkScriptId },
+          data: { topicId: topic.id },
+        }).catch(() => {});
+      }
       const allVocabs = [...vocabIdMap.values()];
       if (allVocabs.length) await this.prisma.trainingTopicVocab.createMany({ data: allVocabs.map((v, i) => ({ topicId: topic.id, vocabId: v, sortOrder: i })), skipDuplicates: true });
       const allChunks = [...chunkIdMap.values()];
@@ -980,32 +1002,6 @@ export class PackageDataController {
       if (tid) { await this.prisma.trainingTopic.update({ where: { id: tid }, data: { metadata: pipelineData as any } }); warmupMatched++; }
     }
     if (warmupMatched > 0) console.log(`  ✓ ${warmupMatched}/${Object.keys(warmupPipeline).length} 个知识点练习 pipeline 已匹配`);
-
-    // 导入 Ink 脚本
-    const inkDir = pathJoin(pkgDir, 'ink-scripts');
-    if (existsSync(inkDir)) {
-      try {
-        const inkFiles = readdirSync(inkDir).filter((f: string) => f.endsWith('.ink'));
-        for (const file of inkFiles) {
-          const raw = readFileSync(pathJoin(inkDir, file), 'utf-8');
-          const frontMatch = raw.match(/^---\n([\s\S]*?)\n---/);
-          let key = `ink_${Date.now()}_${file.replace(/\.ink$/, '')}`;
-          let title = file.replace(/\.ink$/, '');
-          if (frontMatch) {
-            const fm = frontMatch[1];
-            const km = fm.match(/^key:\s*(.+)$/m);
-            const tm = fm.match(/^title:\s*(.+)$/m);
-            if (km) key = km[1].trim();
-            if (tm) title = tm[1].trim();
-          }
-          await this.prisma.inkScript.upsert({
-            where: { key },
-            create: { key, title, scriptType: 'practice', inkSource: raw, inkJson: {} },
-            update: { inkSource: raw },
-          });
-        }
-      } catch { /* no ink dir or parse error */ }
-    }
 
     return {
       sceneId: scene.id, sceneTitle: scene.title,

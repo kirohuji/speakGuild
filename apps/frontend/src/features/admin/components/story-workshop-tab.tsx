@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Plus, Trash2, Edit3, MapPin, Users, BookOpen, Play,
-  ChevronRight, ScrollText, X, Search, ChevronLeft, PackageOpen,
+  ChevronRight, ScrollText, X, Search, ChevronLeft, PackageOpen, Layers3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,7 @@ import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import {
   listStories, createStory, updateStory, deleteStory, getStory, getStoryFilters,
+  deleteStoriesByScene,
   listSceneCategories, getTrainingTopic,
   listLocations, listCharacters, updateTrainingTopic,
   type StoryData, type StoryFilters, type GameLocationData, type GameCharacter, type SceneCategory,
@@ -18,7 +19,7 @@ import {
 import { InkStoryEditor } from './ink-story-editor'
 import { cn } from '@/lib/cn'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 50
 
 interface StoryWorkshopTabProps {
   locations: GameLocationData[]
@@ -44,6 +45,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
   const [filters, setFilters] = useState<StoryFilters>({ scriptTypes: [], packageTypes: [], categories: [] })
   // 二级分类 — 按一级分类过滤（与学习包内容管理一致，使用 listSceneCategories）
   const [categories, setCategories] = useState<SceneCategory[]>([])
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set())
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -167,6 +169,18 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
     } catch { toast.error('删除失败') }
   }, [selectedId, closeEditor, load])
 
+  const handleDeleteSceneStories = useCallback(async (sceneId: string, sceneTitle: string, count: number) => {
+    if (!confirm(`确定删除学习包「${sceneTitle}」下的 ${count} 个故事？此操作不可撤销。`)) return
+    try {
+      const result = await deleteStoriesByScene(sceneId)
+      toast.success(`已删除 ${result.count} 个故事`)
+      if (editingStory?.trainingTopic?.scene?.id === sceneId) closeEditor()
+      await load()
+    } catch {
+      toast.error('批量删除失败')
+    }
+  }, [closeEditor, editingStory?.trainingTopic?.scene?.id, load])
+
   const handleSaveTeachingMarkdown = useCallback(async (teachingMarkdown: string) => {
     const topic = editingStory?.trainingTopic
     if (!topic) throw new Error('当前故事尚未绑定训练话题')
@@ -202,6 +216,62 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
   // ─── packageType label helper ───
   const packageTypeLabel = (t: string) =>
     t === 'daily' ? '日常' : t === 'exam' ? '考试' : t === 'story' ? '故事' : t === 'course' ? '课程' : t === 'foundation' ? '零基础' : t
+
+  const storyGroups = useMemo(() => {
+    const map = new Map<string, {
+      key: string
+      sceneId?: string
+      sceneTitle: string
+      packageType?: string
+      categoryName?: string
+      stories: StoryData[]
+    }>()
+    for (const story of stories) {
+      const scene = story.trainingTopic?.scene
+      const key = scene?.id ?? 'unbound'
+      const current = map.get(key) ?? {
+        key,
+        sceneId: scene?.id,
+        sceneTitle: scene?.title ?? '未绑定学习包',
+        packageType: scene?.packageType,
+        categoryName: scene?.category?.name,
+        stories: [],
+      }
+      current.stories.push(story)
+      map.set(key, current)
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.key === 'unbound') return 1
+      if (b.key === 'unbound') return -1
+      return a.sceneTitle.localeCompare(b.sceneTitle, 'zh-CN')
+    })
+  }, [stories])
+
+  const allGroupsCollapsed = storyGroups.length > 0 && storyGroups.every((group) => collapsedGroups.has(group.key))
+
+  useEffect(() => {
+    setCollapsedGroups((current) => {
+      const validKeys = new Set(storyGroups.map((group) => group.key))
+      const next = new Set(Array.from(current).filter((key) => validKeys.has(key)))
+      return next.size === current.size ? current : next
+    })
+  }, [storyGroups])
+
+  const toggleGroup = useCallback((key: string) => {
+    setCollapsedGroups((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
+
+  const toggleAllGroups = useCallback(() => {
+    setCollapsedGroups((current) => {
+      if (storyGroups.length > 0 && storyGroups.every((group) => current.has(group.key))) return new Set()
+      return new Set(storyGroups.map((group) => group.key))
+    })
+  }, [storyGroups])
 
   // ─── Editor View ─────────────────────────────
 
@@ -287,13 +357,13 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
           />
         </div>
         <Select value={packageTypeFilter} onChange={(e) => setPackageTypeFilter((e.target as HTMLSelectElement).value)} className="w-[110px]">
-          <SelectItem value="all">一级分类</SelectItem>
+          <SelectItem value="all">全部一级分类</SelectItem>
           {filters.packageTypes.map((t) => (
             <SelectItem key={t} value={t}>{packageTypeLabel(t)}</SelectItem>
           ))}
         </Select>
         <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[140px]">
-          <SelectItem value="all">二级分类</SelectItem>
+          <SelectItem value="all">全部二级分类</SelectItem>
           {categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
@@ -301,6 +371,12 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>共 {total} 个</span>
         </div>
+        {storyGroups.length > 0 && (
+          <Button size="sm" variant="outline" className="gap-1" onClick={toggleAllGroups}>
+            <ChevronRight className={cn('size-3.5 transition-transform', allGroupsCollapsed ? '' : 'rotate-90')} />
+            {allGroupsCollapsed ? '全部展开' : '全部收起'}
+          </Button>
+        )}
         <Button size="sm" variant="outline" className="gap-1" onClick={() => {
           const params = new URLSearchParams()
           if (packageTypeFilter !== 'all') params.set('packageType', packageTypeFilter)
@@ -336,68 +412,118 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
         </div>
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {stories.map((story) => (
-              <Card
-                key={story.id}
-                className={cn(
-                  'cursor-pointer transition-all hover:border-primary/40 hover:shadow-sm',
-                  selectedId === story.id && 'border-primary ring-1 ring-primary/20',
-                )}
-                onClick={() => openEditor(story)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
-                        <ScrollText className="size-4 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">{story.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground font-mono">{story.key}</p>
-                      </div>
-                    </div>
+          <div className="space-y-4">
+            {storyGroups.map((group) => (
+              <section key={group.key} className="rounded-lg border border-border/70 bg-background">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-7 shrink-0"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(story) }}
+                      className="size-8 shrink-0"
+                      onClick={() => toggleGroup(group.key)}
                     >
-                      <Trash2 className="size-3.5 text-destructive" />
+                      <ChevronRight className={cn(
+                        'size-4 transition-transform',
+                        !collapsedGroups.has(group.key) && 'rotate-90',
+                      )} />
                     </Button>
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                      <Layers3 className="size-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-sm font-semibold">{group.sceneTitle}</h3>
+                        {group.packageType && (
+                          <Badge variant="outline" className="text-[10px]">{packageTypeLabel(group.packageType)}</Badge>
+                        )}
+                        {group.categoryName && (
+                          <Badge variant="secondary" className="text-[10px]">{group.categoryName}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{group.stories.length} 个故事脚本</p>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge variant="secondary" className="text-[10px]">
-                      {story.scriptType === 'practice' ? '练习' :
-                       story.scriptType === 'episode' ? '关卡' :
-                       story.scriptType === 'side_quest' ? '支线' : '自由'}
-                    </Badge>
-                    {story.trainingTopic && (
-                      <Badge className="text-[10px] bg-green-500/10 text-green-600">
-                        <BookOpen className="mr-0.5 size-2.5" />
-                        {story.trainingTopic.title}
-                      </Badge>
-                    )}
-                    {story.locationId && getLocationName(story.locationId) && (
-                      <Badge variant="outline" className="text-[10px]">
-                        <MapPin className="mr-0.5 size-2.5" />
-                        {getLocationName(story.locationId)}
-                      </Badge>
-                    )}
-                    {story.characterId && getCharacterName(story.characterId) && (
-                      <Badge variant="outline" className="text-[10px]">
-                        <Users className="mr-0.5 size-2.5" />
-                        {getCharacterName(story.characterId)}
-                      </Badge>
-                    )}
+                  {group.sceneId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-destructive hover:text-destructive"
+                      onClick={() => void handleDeleteSceneStories(group.sceneId!, group.sceneTitle, group.stories.length)}
+                    >
+                      <Trash2 className="size-3.5" />
+                      删除本组
+                    </Button>
+                  )}
+                </div>
+                {!collapsedGroups.has(group.key) && (
+                  <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.stories.map((story) => (
+                      <Card
+                        key={story.id}
+                        className={cn(
+                          'cursor-pointer transition-all hover:border-primary/40 hover:shadow-sm',
+                          selectedId === story.id && 'border-primary ring-1 ring-primary/20',
+                        )}
+                        onClick={() => openEditor(story)}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                                <ScrollText className="size-4 text-primary" />
+                              </div>
+                              <div className="min-w-0">
+                                <CardTitle className="truncate text-base">{story.title}</CardTitle>
+                                <p className="truncate font-mono text-xs text-muted-foreground">{story.key}</p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 shrink-0"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(story) }}
+                            >
+                              <Trash2 className="size-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex flex-wrap gap-1.5">
+                            <Badge variant="secondary" className="text-[10px]">
+                              {story.scriptType === 'practice' ? '练习' :
+                               story.scriptType === 'episode' ? '关卡' :
+                               story.scriptType === 'side_quest' ? '支线' : '自由'}
+                            </Badge>
+                            {story.trainingTopic && (
+                              <Badge className="max-w-full bg-green-500/10 text-[10px] text-green-600">
+                                <BookOpen className="mr-0.5 size-2.5 shrink-0" />
+                                <span className="truncate">{story.trainingTopic.title}</span>
+                              </Badge>
+                            )}
+                            {story.locationId && getLocationName(story.locationId) && (
+                              <Badge variant="outline" className="max-w-full text-[10px]">
+                                <MapPin className="mr-0.5 size-2.5 shrink-0" />
+                                <span className="truncate">{getLocationName(story.locationId)}</span>
+                              </Badge>
+                            )}
+                            {story.characterId && getCharacterName(story.characterId) && (
+                              <Badge variant="outline" className="max-w-full text-[10px]">
+                                <Users className="mr-0.5 size-2.5 shrink-0" />
+                                <span className="truncate">{getCharacterName(story.characterId)}</span>
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            版本 {story.version} · {new Date(story.updatedAt).toLocaleDateString('zh-CN')}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    版本 {story.version} · {new Date(story.updatedAt).toLocaleDateString('zh-CN')}
-                  </p>
-                </CardContent>
-              </Card>
+                )}
+              </section>
             ))}
           </div>
 

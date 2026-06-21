@@ -450,6 +450,31 @@ export class LearningPackAdminService {
   async remove(id: string) {
     const pack = await (this.prisma as any).learningPackage.findUnique({ where: { id } });
     if (!pack) return { success: true };
+    const topics = await (this.prisma as any).trainingTopic.findMany({
+      where: { sceneId: pack.sceneId },
+      select: { id: true, inkScriptId: true },
+    });
+    const topicIds = topics.map((topic: any) => topic.id);
+    const directInkIds = topics.map((topic: any) => topic.inkScriptId).filter(Boolean);
+    const legacyInkScripts = topicIds.length
+      ? await (this.prisma as any).inkScript.findMany({
+          where: { topicId: { in: topicIds } },
+          select: { id: true },
+        })
+      : [];
+    const inkScriptIds = Array.from(new Set([
+      ...directInkIds,
+      ...legacyInkScripts.map((script: any) => script.id),
+    ]));
+    if (inkScriptIds.length) {
+      await (this.prisma as any).trainingTopic.updateMany({
+        where: { inkScriptId: { in: inkScriptIds } },
+        data: { inkScriptId: null },
+      });
+      await (this.prisma as any).inkScript.deleteMany({
+        where: { id: { in: inkScriptIds } },
+      });
+    }
     if (pack.fileAssetId) {
       await this.fileAssets.deleteSystemReference(pack.fileAssetId, 'learning_pack', id);
     }

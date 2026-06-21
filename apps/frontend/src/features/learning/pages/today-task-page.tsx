@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import type React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight, BookOpen, BookText, Braces, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, ListChecks, ListMusic, MessageSquareText, Target,
@@ -129,6 +129,8 @@ const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: s
 export function TodayTaskPage() {
   const dailyGoal = usePreferencesStore((s) => s.dailyGoal)
   const warmupStore = useWarmupSessionStore()
+  const [searchParams] = useSearchParams()
+  const targetPackId = searchParams.get('packId') || null
 
   // 数据
   const [unit, setUnit] = useState<UnitDetail | null>(null)
@@ -154,19 +156,20 @@ export function TodayTaskPage() {
     setHasSubmittedToday(false)
   }, [runSeed])
 
-  // ── 恢复今日进度（从 SQLite）──
+  // ── 恢复今日进度（从 SQLite，匹配当前 pack）──
   useEffect(() => {
     practiceRepository.getTodayProgress().then((progress) => {
       if (progress && progress.doneIds.length > 0) {
-        setDoneIds(new Set(progress.doneIds))
-        // 如果全部完成，标记已提交
-        // steps 此时可能还未加载，在后续 effect 中判断
-        if (progress.doneIds.length > 0) {
-          console.log('[today-task] 📋 恢复今日进度:', progress.doneIds.length, '题已完成')
+        // 检查是否匹配当前 pack（如果指定了 packId 但进度属于其他 pack，则不恢复）
+        if (targetPackId && progress.packId && progress.packId !== targetPackId) {
+          console.log('[today-task] 进度属于其他包，跳过恢复')
+          return
         }
+        setDoneIds(new Set(progress.doneIds))
+        console.log('[today-task] 📋 恢复今日进度:', progress.doneIds.length, '题已完成')
       }
     })
-  }, [])
+  }, [targetPackId])
 
   const markDone = useCallback((stepId: string, _score: WarmupScore = 'strong') => {
     setDoneIds((prev) => {
@@ -192,62 +195,39 @@ export function TodayTaskPage() {
     setRunSeed(Math.random())
   }, [warmupStore])
 
-  // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
+  // ── 自动提交状态（effect 移至 doneCount/steps 声明之后）──
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (hasSubmittedToday || steps.length === 0) return
-    if (doneCount < steps.length) return
-    // 过滤占位卡片
-    const realSteps = steps.filter((s) => !s.id.startsWith('placeholder:'))
-    if (realSteps.length === 0) {
-      setHasSubmittedToday(true)
-      return
-    }
-
-    const submit = async () => {
-      setIsSubmitting(true)
-      try {
-        const topicTitle = unit?.trainingTopics?.[0]?.title || unit?.title || '今日练习'
-        const topicId = unit?.trainingTopics?.[0]?.id || unit?.id || 'today'
-        await practiceRepository.submitWarmupRecords(
-          topicId,
-          topicTitle,
-          warmupStore.records,
-        )
-        await practiceRepository.markTodayActivity(doneCount)
-        console.log('[today-task] ✅ 今日练习已提交 |', doneCount, '题')
-      } catch (err) {
-        console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
-      } finally {
-        setHasSubmittedToday(true)
-        setIsSubmitting(false)
-      }
-    }
-
-    submit()
-  }, [doneCount, steps.length, hasSubmittedToday, unit, warmupStore.records])
 
   // ── 加载数据 ──
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    Promise.all([
-      learningPackService.listInstalled(),
-      learningRepository.getCachedMyUnits().catch(() => []),
-    ])
-      .then(async ([packs, units]) => {
-        if (cancelled) return
 
-        const installedPacks = packs.filter((pack) => pack.status === 'installed')
-        const currentPackId =
-          units.find((u) => installedPacks.some((pack) => pack.packId === u.id))?.id ??
-          installedPacks[0]?.packId
+    const loadPack = async () => {
+      // 优先使用 URL 参数指定的 packId
+      if (targetPackId) {
+        const detail = await learningRepository.getCachedUnitDetail(targetPackId)
+        if (detail) return detail
+        // 如果缓存未命中，尝试从已安装列表加载
+      }
 
-        if (!currentPackId) return null
-        return learningRepository.getCachedUnitDetail(currentPackId)
-      })
+      // 回退：第一个已安装且有进度的学习包
+      const [packs, units] = await Promise.all([
+        learningPackService.listInstalled(),
+        learningRepository.getCachedMyUnits().catch(() => []),
+      ])
+
+      const installedPacks = packs.filter((pack) => pack.status === 'installed')
+      const currentPackId =
+        units.find((u) => installedPacks.some((pack) => pack.packId === u.id))?.id ??
+        installedPacks[0]?.packId
+
+      if (!currentPackId) return null
+      return learningRepository.getCachedUnitDetail(currentPackId)
+    }
+
+    loadPack()
       .then((detail) => {
         if (!cancelled && detail) setUnit(detail)
       })
@@ -260,7 +240,7 @@ export function TodayTaskPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [targetPackId])
 
   // ── 构建练习列表 ──
   const steps = useMemo<PracticeItem[]>(() => {
@@ -470,6 +450,40 @@ export function TodayTaskPage() {
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
   const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
 
+  // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
+  useEffect(() => {
+    if (hasSubmittedToday || steps.length === 0) return
+    if (doneCount < steps.length) return
+    // 过滤占位卡片
+    const realSteps = steps.filter((s) => !s.id.startsWith('placeholder:'))
+    if (realSteps.length === 0) {
+      setHasSubmittedToday(true)
+      return
+    }
+
+    const submit = async () => {
+      setIsSubmitting(true)
+      try {
+        const topicTitle = unit?.trainingTopics?.[0]?.title || unit?.title || '今日练习'
+        const topicId = unit?.trainingTopics?.[0]?.id || unit?.id || 'today'
+        await practiceRepository.submitWarmupRecords(
+          topicId,
+          topicTitle,
+          warmupStore.records,
+        )
+        await practiceRepository.markTodayActivity(doneCount)
+        console.log('[today-task] ✅ 今日练习已提交 |', doneCount, '题')
+      } catch (err) {
+        console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
+      } finally {
+        setHasSubmittedToday(true)
+        setIsSubmitting(false)
+      }
+    }
+
+    submit()
+  }, [doneCount, steps.length, hasSubmittedToday, unit, warmupStore.records])
+
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
     steps.forEach((step, index) => {
@@ -553,7 +567,17 @@ export function TodayTaskPage() {
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
       {/* ── Header ── */}
       <div className="mb-3 flex items-center justify-between">
-        <div />
+        <div className="min-w-0 flex-1">
+          {targetPackId && unit && (
+            <Link
+              to="/learning"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="size-3.5" />
+              <span className="truncate">{unit.title}</span>
+            </Link>
+          )}
+        </div>
         <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
           <button
             type="button"

@@ -342,13 +342,13 @@ export function AdminLearningPacksPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <Select value={packageTypeFilter} onChange={(e) => setPackageTypeFilter((e.target as HTMLSelectElement).value)} className="w-[130px]">
-          <SelectItem value="all">一级分类</SelectItem>
+          <SelectItem value="all">全部一级分类</SelectItem>
           {filterOptions.packageTypes.map((t) => (
             <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
           ))}
         </Select>
         <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[150px]">
-          <SelectItem value="all">二级分类</SelectItem>
+          <SelectItem value="all">全部二级分类</SelectItem>
           {categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
@@ -495,7 +495,7 @@ export function AdminLearningPacksPage() {
               <div className="space-y-2">
                 <Label>一级分类</Label>
                 <Select value={dialogPackageType} onChange={(e) => setDialogPackageType((e.target as HTMLSelectElement).value)}>
-                  <SelectItem value="all">全部</SelectItem>
+                  <SelectItem value="all">全部一级分类</SelectItem>
                   {filterOptions.packageTypes.map((t) => (
                     <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
                   ))}
@@ -504,7 +504,7 @@ export function AdminLearningPacksPage() {
               <div className="space-y-2">
                 <Label>二级分类</Label>
                 <Select value={dialogCategoryId} onChange={(e) => setDialogCategoryId((e.target as HTMLSelectElement).value)}>
-                  <SelectItem value="all">全部</SelectItem>
+                  <SelectItem value="all">全部二级分类</SelectItem>
                   {dialogCategories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}

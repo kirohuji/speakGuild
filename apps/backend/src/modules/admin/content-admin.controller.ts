@@ -46,6 +46,17 @@ export class ContentAdminController {
     return session;
   }
 
+  private async detachInkScript(id: string) {
+    await this.prisma.trainingTopic.updateMany({
+      where: { inkScriptId: id },
+      data: { inkScriptId: null },
+    });
+    await this.prisma.inkScript.updateMany({
+      where: { id },
+      data: { topicId: null, episodeId: null },
+    });
+  }
+
   @Post('preview/dialogue-turn')
   async judgePreviewDialogueTurn(@Req() req: Request, @Body() dto: DialogueTurnJudgeDto) {
     await this.requireAdmin(req);
@@ -798,6 +809,7 @@ export class ContentAdminController {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { key: { contains: search, mode: 'insensitive' } },
+        { trainingTopic: { title: { contains: search, mode: 'insensitive' } } },
       ]
     }
     if (scriptType && scriptType !== 'all') where.scriptType = scriptType
@@ -822,7 +834,20 @@ export class ContentAdminController {
           id: true, key: true, title: true, scriptType: true,
           episodeId: true, locationId: true, topicId: true,
           version: true, createdAt: true, updatedAt: true,
-          trainingTopic: { select: { id: true, title: true } },
+          trainingTopic: {
+            select: {
+              id: true,
+              title: true,
+              scene: {
+                select: {
+                  id: true,
+                  title: true,
+                  packageType: true,
+                  category: { select: { id: true, name: true } },
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.inkScript.count({ where }),
@@ -858,13 +883,39 @@ export class ContentAdminController {
     const story = await this.prisma.inkScript.findUnique({
       where: { id },
       include: {
-        trainingTopic: { select: { id: true, title: true, teachingMarkdown: true } },
+        trainingTopic: {
+          select: {
+            id: true,
+            title: true,
+            teachingMarkdown: true,
+            scene: {
+              select: {
+                id: true,
+                title: true,
+                packageType: true,
+                category: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
       },
     });
     if (!story || story.trainingTopic || !story.topicId) return story;
     const legacyTopic = await this.prisma.trainingTopic.findUnique({
       where: { id: story.topicId },
-      select: { id: true, title: true, teachingMarkdown: true },
+      select: {
+        id: true,
+        title: true,
+        teachingMarkdown: true,
+        scene: {
+          select: {
+            id: true,
+            title: true,
+            packageType: true,
+            category: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
     return { ...story, trainingTopic: legacyTopic };
   }
@@ -875,7 +926,21 @@ export class ContentAdminController {
     return this.prisma.inkScript.create({
       data: dto,
       include: {
-        trainingTopic: { select: { id: true, title: true, teachingMarkdown: true } },
+        trainingTopic: {
+          select: {
+            id: true,
+            title: true,
+            teachingMarkdown: true,
+            scene: {
+              select: {
+                id: true,
+                title: true,
+                packageType: true,
+                category: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -887,14 +952,54 @@ export class ContentAdminController {
       where: { id },
       data: dto,
       include: {
-        trainingTopic: { select: { id: true, title: true, teachingMarkdown: true } },
+        trainingTopic: {
+          select: {
+            id: true,
+            title: true,
+            teachingMarkdown: true,
+            scene: {
+              select: {
+                id: true,
+                title: true,
+                packageType: true,
+                category: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
       },
     });
+  }
+
+  @Delete('stories/by-scene/:sceneId')
+  async deleteStoriesByScene(@Req() req: Request, @Param('sceneId') sceneId: string) {
+    await this.requireAdmin(req);
+    const topics = await this.prisma.trainingTopic.findMany({
+      where: { sceneId },
+      select: { id: true, inkScriptId: true },
+    });
+    const topicIds = topics.map(t => t.id);
+    const directInkIds = topics.map(t => t.inkScriptId).filter(Boolean) as string[];
+    const legacyInk = topicIds.length
+      ? await this.prisma.inkScript.findMany({
+          where: { topicId: { in: topicIds } },
+          select: { id: true },
+        })
+      : [];
+    const inkIds = Array.from(new Set([...directInkIds, ...legacyInk.map(s => s.id)]));
+    if (inkIds.length === 0) return { success: true, count: 0 };
+    await this.prisma.trainingTopic.updateMany({
+      where: { inkScriptId: { in: inkIds } },
+      data: { inkScriptId: null },
+    });
+    await this.prisma.inkScript.deleteMany({ where: { id: { in: inkIds } } });
+    return { success: true, count: inkIds.length };
   }
 
   @Delete('stories/:id')
   async deleteStory(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
+    await this.detachInkScript(id);
     return this.prisma.inkScript.delete({ where: { id } });
   }
 

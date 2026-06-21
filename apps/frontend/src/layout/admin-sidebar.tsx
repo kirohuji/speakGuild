@@ -51,12 +51,12 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
     ]},
     { key: 'content', label: t('admin.contentManagement', { defaultValue: '内容管理' }), icon: FileText, items: [
       { key: 'learning-content', label: t('admin.learningContentManagement', { defaultValue: '学习包内容' }), icon: Archive, path: '/admin/learning-content' },
+      { key: 'nqtr', label: t('admin.nqtrWorkshop', { defaultValue: 'NQTR 内容工坊' }), icon: Palette, path: '/admin/nqtr' },
       { key: 'achievements', label: t('admin.achievementManagement', { defaultValue: '成就管理' }), icon: Award, path: '/admin/achievements' },
       { key: 'daily-sentences', label: t('admin.dailySentences', { defaultValue: '每日一句' }), icon: Quote, path: '/admin/daily-sentences' },
       { key: 'content-library', label: t('admin.contentLibrary', { defaultValue: '内容语料库' }), icon: Library, path: '/admin/content-library' },
       { key: 'dictionary', label: t('admin.dictionaryManagement', { defaultValue: '词典管理' }), icon: BookOpen, path: '/admin/dictionary' },
-      { key: 'learning-packs', label: t('admin.learningPackManagement', { defaultValue: '学习包管理' }), icon: Archive, path: '/admin/learning-packs' },
-      { key: 'nqtr', label: t('admin.nqtrWorkshop', { defaultValue: 'NQTR 内容工坊' }), icon: Palette, path: '/admin/nqtr' },
+      { key: 'learning-packs', label: t('admin.learningPackManagement', { defaultValue: '学习包发布管理' }), icon: Archive, path: '/admin/learning-packs' },
     ]},
     { key: 'system', label: t('admin.systemSettings', { defaultValue: '系统设置' }), icon: Wrench, items: [
       { key: 'themes', label: t('admin.themeManagement', { defaultValue: '主题管理' }), icon: Palette, path: '/admin/themes' },
