@@ -90,6 +90,14 @@ export class LearningService {
   }
 
   async assertLearningPackAccess(userId: string, unitId: string, options: { allowExistingProgress?: boolean } = {}) {
+    // 先检查学习单元是否存在（避免将"不存在"误报为"权限不足"）
+    const sceneExists = await this.prisma.scene.findUnique({
+      where: { id: unitId },
+      select: { id: true },
+    });
+    if (!sceneExists) {
+      throw new NotFoundException('学习单元不存在');
+    }
     if (await this.canAccessLearningPack(userId, unitId, options)) return;
     throw new ForbiddenException('该学习包需要会员权限');
   }

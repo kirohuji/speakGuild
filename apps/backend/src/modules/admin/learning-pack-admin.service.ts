@@ -85,7 +85,7 @@ export class LearningPackAdminService {
     const version = input?.version ?? Number(latest?.version ?? 0) + 1;
     if (version <= 0) throw new BadRequestException('版本号必须大于 0');
 
-    const title = input?.title?.trim() || `${scene.title} v${version}`;
+    const title = input?.title?.trim() || scene.title;
     const record = await (this.prisma as any).learningPackage.upsert({
       where: { sceneId_version: { sceneId, version } },
       create: {
@@ -186,7 +186,7 @@ export class LearningPackAdminService {
       throw new BadRequestException('zip 内 manifest.packId 与所选学习单元不一致');
     }
 
-    const title = input.title?.trim() || manifestSnapshot?.title || `${scene.title} v${version}`;
+    const title = input.title?.trim() || manifestSnapshot?.title || scene.title;
     const existing = await (this.prisma as any).learningPackage.findUnique({
       where: { sceneId_version: { sceneId: input.sceneId, version } },
       select: { id: true, fileAssetId: true },

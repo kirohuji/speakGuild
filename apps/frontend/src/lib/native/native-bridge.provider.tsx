@@ -29,6 +29,8 @@ import { Style } from '@capacitor/status-bar';
 import { App } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { useLearningStore } from '@/stores/learning.store';
+import { isDevHost } from '@/lib/dev-host';
+import { localDb } from '@/lib/offline/unified-storage';
 
 const capabilities: NativeCapabilities = {
   splashScreen,
@@ -80,6 +82,29 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
     void (async () => {
       resumeHandle = await App.addListener('resume', () => {
         const now = Date.now();
+
+        // ── dev:host: force SQLite reset + sync (no throttle) ──
+        if (isDevHost) {
+          console.log('[NativeBridge] dev:host resume — reset SQLite + sync...')
+          // Drop all cached connection state so the next DB access
+          // creates a fresh native connection.
+          localDb.reset()
+          // Sync checks on short timers so developers can verify the
+          // offline/data pipeline without waiting 5 minutes.
+          setTimeout(() => {
+            void capabilities.updater.checkUpdate().catch((err) => {
+              console.warn('[NativeBridge] dev:host checkUpdate failed:', err)
+            })
+          }, 2_000)
+          setTimeout(() => {
+            void useLearningStore.getState().checkPackUpdates(true).catch((err) => {
+              console.warn('[NativeBridge] dev:host learning pack check failed:', err)
+            })
+          }, 4_000)
+          lastResumeCheckRef.current = now
+          return
+        }
+
         if (now - lastResumeCheckRef.current < RESUME_THROTTLE_MS) {
           console.log('[NativeBridge] App resumed — skipped (throttled, last check was',
             Math.round((now - lastResumeCheckRef.current) / 1000), 's ago)');

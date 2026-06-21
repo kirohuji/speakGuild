@@ -29,6 +29,8 @@ export interface ILocalDb {
   clear(storeName: TableName): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
   close(): Promise<void>
+  /** Drop cached backend/connection. Next access re-initializes from scratch. */
+  reset(): void
   isAvailable(): boolean
 }
 
@@ -123,6 +125,11 @@ export const localDb: ILocalDb = {
 
   async close(): Promise<void> {
     return (await getBackend()).close()
+  },
+
+  reset(): void {
+    resolvedBackend = null
+    backendPromise = null
   },
 
   isAvailable(): boolean {

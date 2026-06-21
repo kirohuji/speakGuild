@@ -15,6 +15,16 @@ function formatBytes(bytes?: number) {
   return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`
 }
 
+function formatDateTime(value?: string | null) {
+  if (!value) return '未知时间'
+  return new Date(value).toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export function MobileStorageView() {
   const { t } = useTranslation()
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
@@ -28,6 +38,15 @@ export function MobileStorageView() {
     setLoading(true)
     Promise.all([offlineStorageService.getStats(), offlineStorageService.getDetails()])
       .then(([nextStats, nextDetails]) => {
+        console.log('[learning-pack] mobile storage view packs', nextDetails.packs.map((pack) => ({
+          packId: pack.packId,
+          title: pack.title,
+          storedVersion: pack.version,
+          manifestVersion: pack.manifestVersion,
+          status: pack.status,
+          installedAt: pack.installedAt,
+          updatedAt: pack.updatedAt,
+        })))
         setStats(nextStats)
         setDetails(nextDetails)
       })
@@ -182,7 +201,12 @@ export function MobileStorageView() {
                 {details.packs.map((pack) => (
                   <div key={pack.packId} className={detailRowClass}>
                     <div className="flex items-center justify-between gap-3">
-                      <p className="min-w-0 truncate text-sm font-medium">{pack.title}</p>
+                      <div className="min-w-0 flex flex-1 items-center gap-2">
+                        <p className="min-w-0 truncate text-sm font-medium">{pack.title}</p>
+                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          v{pack.version}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         disabled={Boolean(deletingPackId)}
@@ -193,7 +217,10 @@ export function MobileStorageView() {
                       </button>
                     </div>
                     <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
-                      v{pack.version} · {pack.topicCount} 话题 · {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
+                      {pack.topicCount} 话题 · {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
+                    </p>
+                    <p className="text-[10px] leading-4 text-muted-foreground/80">
+                      安装 {formatDateTime(pack.installedAt)} · 更新 {formatDateTime(pack.updatedAt)}
                     </p>
                     {pack.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{pack.lastError}</p>}
                   </div>

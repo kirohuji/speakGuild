@@ -50,18 +50,26 @@ async function openDb(): Promise<SQLiteDBConnection> {
   dbPromise = (async () => {
     const conn = getSqliteConnection()
 
-    const existingConnection = await conn.isConnection(DB_NAME, false)
-    if (existingConnection.result) {
+    // Check if a connection with our name already exists on the native side.
+    const existing = await conn.isConnection(DB_NAME, false)
+    if (existing.result) {
       try {
         const db = await conn.retrieveConnection(DB_NAME, false)
         await openConnection(db)
         await initializeSchema(db)
         return db
       } catch (error) {
-        if (!isConnectionDoesNotExistError(error)) throw error
+        // Connection exists in native registry but the handle is dead
+        // (typical in dev:host after background/foreground cycles).
+        // Clean up native side AND JS side, then retry from scratch.
+        console.warn('[sqlite-storage] retrieveConnection failed, restarting:', errorText(error))
+        try { await conn.closeConnection(DB_NAME, false) } catch { /* ignore */ }
+        resetConnectionState()
+        return openDb()
       }
     }
 
+    // No existing connection — create a fresh one.
     let db: SQLiteDBConnection
     try {
       db = await conn.createConnection(
@@ -72,8 +80,14 @@ async function openDb(): Promise<SQLiteDBConnection> {
         false,    // not readonly
       )
     } catch (error) {
-      if (!isConnectionAlreadyExistsError(error)) throw error
-      db = await conn.retrieveConnection(DB_NAME, false)
+      // "already exists" means a stale registration survived — clean up and retry.
+      if (isConnectionAlreadyExistsError(error)) {
+        console.warn('[sqlite-storage] createConnection failed (already exists), restarting:', errorText(error))
+        try { await conn.closeConnection(DB_NAME, false) } catch { /* ignore */ }
+        resetConnectionState()
+        return openDb()
+      }
+      throw error
     }
     await openConnection(db)
     await initializeSchema(db)
@@ -173,6 +187,11 @@ export const sqliteStorage = {
       dbPromise = null
       sqliteConnection = null
     }
+  },
+
+  /** Drop cached connection handle. Next access will open a fresh one. */
+  reset(): void {
+    resetConnectionState()
   },
 
   isAvailable(): boolean {

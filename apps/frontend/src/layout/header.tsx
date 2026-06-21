@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from 'next-themes'
-import { Loader2, Monitor, Moon, Shield, Sun } from 'lucide-react'
+import { Loader2, Monitor, Moon, Shield, Sun, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { isDevHost } from '@/lib/dev-host'
 
 export function Header() {
   const { t } = useTranslation()
@@ -155,6 +156,14 @@ export function Header() {
                 {isSyncing && (
                   <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
                     <Loader2 className="size-3 animate-spin text-primary" />
+                  </span>
+                )}
+                {isDevHost && (
+                  <span
+                    className="absolute -left-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
+                    title="dev:host 模式"
+                  >
+                    <Wrench className="size-2.5" />
                   </span>
                 )}
               </Link>

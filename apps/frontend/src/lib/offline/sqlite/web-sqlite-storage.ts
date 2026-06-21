@@ -86,15 +86,18 @@ async function openDb(): Promise<SQLiteDBConnection> {
     await ensureWebStore()
     const conn = getSqliteConnection()
 
-    const existingConnection = await conn.isConnection(DB_NAME, false)
-    if (existingConnection.result) {
+    const existing = await conn.isConnection(DB_NAME, false)
+    if (existing.result) {
       try {
         const db = await conn.retrieveConnection(DB_NAME, false)
         await openConnection(db)
         await initializeSchema(db)
         return db
       } catch (error) {
-        if (!isConnectionDoesNotExistError(error)) throw error
+        console.warn('[web-sqlite] retrieveConnection failed, restarting:', errorText(error))
+        try { await conn.closeConnection(DB_NAME, false) } catch { /* ignore */ }
+        resetConnectionState()
+        return openDb()
       }
     }
 
@@ -108,8 +111,13 @@ async function openDb(): Promise<SQLiteDBConnection> {
         false,
       )
     } catch (error) {
-      if (!isConnectionAlreadyExistsError(error)) throw error
-      db = await conn.retrieveConnection(DB_NAME, false)
+      if (isConnectionAlreadyExistsError(error)) {
+        console.warn('[web-sqlite] createConnection failed (already exists), restarting:', errorText(error))
+        try { await conn.closeConnection(DB_NAME, false) } catch { /* ignore */ }
+        resetConnectionState()
+        return openDb()
+      }
+      throw error
     }
     await openConnection(db)
     await initializeSchema(db)

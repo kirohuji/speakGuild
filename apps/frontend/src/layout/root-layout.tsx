@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
-import { Bell, Loader2 } from 'lucide-react'
+import { Bell, Loader2, Wrench } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
@@ -16,6 +16,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { isDevHost } from '@/lib/dev-host'
 
 export function RootLayout() {
   const { t } = useTranslation()
@@ -154,6 +155,14 @@ function MobileTopBar({
         {isSyncing && (
           <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
             <Loader2 className="size-3 animate-spin text-primary" />
+          </span>
+        )}
+        {isDevHost && (
+          <span
+            className="absolute -left-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
+            title="dev:host 模式"
+          >
+            <Wrench className="size-2.5" />
           </span>
         )}
       </button>

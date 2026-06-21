@@ -418,7 +418,7 @@ export const dailyPracticeRepository = {
     }
     await localDb.put('daily_practice_attempts', attempt)
     if (date === todayKey()) {
-      const run = await localDb.get<{ scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${date}`)
+      const run = await localDb.get<{ id: string; scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${date}`)
       if (run) {
         const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), step.itemId]))
         await localDb.put('daily_practice_runs', { ...run, completedItemIds })

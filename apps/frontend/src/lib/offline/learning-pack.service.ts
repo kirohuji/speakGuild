@@ -6,6 +6,8 @@ import { practiceRepository } from './practice.repository'
 import { syncOutbox } from './sync-outbox'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
+import { Capacitor } from '@capacitor/core'
+import { isCryptoSubtleUnavailable } from '@/lib/dev-host'
 
 export interface LearningPackManifest {
   packId: string
@@ -77,6 +79,31 @@ function mergeTopicDetail(topicDetail: any, unitDetail: any) {
   }
 }
 
+function debugError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    }
+  }
+  return error
+}
+
+function summarizeZipEntries(entries: Map<string, Entry>) {
+  const paths = [...entries.keys()]
+  return {
+    count: paths.length,
+    hasPackManifest: entries.has('pack-manifest.json'),
+    hasChecksums: entries.has('checksums.json'),
+    hasScene: entries.has('content/scene.json'),
+    topicCount: paths.filter((path) => path.startsWith('content/topics/') && path.endsWith('.json')).length,
+    inkCount: paths.filter((path) => path.startsWith('content/inks/') && path.endsWith('.json')).length,
+    assetCount: paths.filter(isAssetPath).length,
+    firstPaths: paths.slice(0, 30),
+  }
+}
+
 async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
   await localDb.put('downloaded_unit_details', {
     id: unitDetail.id,
@@ -110,9 +137,45 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
   console.log(`[learning-pack]   SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script`)
 }
 
+/**
+ * Compute SHA-256 digest of a buffer.
+ *
+ * In dev:host live-reload mode the page may be served from a non-secure origin
+ * (http://192.168.x.x) where `crypto.subtle` is undefined. We use a pure-JS
+ * fallback in that case so that zip verification doesn't crash.
+ */
 async function digest(buffer: ArrayBuffer, algorithm = 'SHA-256'): Promise<string> {
-  const hash = await crypto.subtle.digest(algorithm, buffer)
-  return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  if (!isCryptoSubtleUnavailable) {
+    const hash = await crypto.subtle.digest(algorithm, buffer)
+    return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  }
+
+  // Fallback: 32-bit xorshift + FNV-1a hybrid, good enough for dev integrity checks.
+  // This is NOT cryptographically secure — it only exists so dev:host doesn't crash.
+  const view = new Uint8Array(buffer)
+  let h0 = 0x67452301
+  let h1 = 0xefcdab89
+  let h2 = 0x98badcfe
+  let h3 = 0x10325476
+  let h4 = 0xc3d2e1f0
+  let h5 = 0x1f2e3d4c
+  let h6 = 0x5b6a7f8e
+  let h7 = 0x9d0e1f2a
+
+  for (let i = 0; i < view.length; i++) {
+    const b = view[i]
+    h0 = ((h0 << 5) + h0 + b) | 0
+    h1 = ((h1 << 7) + h1 + b + (i & 0xff)) | 0
+    h2 = ((h2 << 11) + h2 + b + ((i >> 8) & 0xff)) | 0
+    h3 = ((h3 << 13) + h3 + b) | 0
+    h4 = ((h4 << 17) + h4 + b + (i & 0xff)) | 0
+    h5 = ((h5 << 19) + h5 + b + ((i >> 8) & 0xff)) | 0
+    h6 = ((h6 << 23) + h6 + b) | 0
+    h7 = ((h7 << 29) + h7 + b + (i & 0xff)) | 0
+  }
+
+  const toHex = (v: number) => (v >>> 0).toString(16).padStart(8, '0')
+  return toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4) + toHex(h5) + toHex(h6) + toHex(h7)
 }
 
 function normalizeZipPath(path: string) {
@@ -160,6 +223,14 @@ async function readJsonEntry<T = any>(entries: Map<string, Entry>, path: string)
 async function verifyEntry(path: string, buffer: ArrayBuffer, checksums?: Record<string, string>) {
   const expected = checksums?.[path]
   if (!expected) return
+
+  // In dev:host the fallback hash won't match the server-generated SHA-256.
+  // Skip verification gracefully — content comes from our own dev server.
+  if (isCryptoSubtleUnavailable) {
+    console.warn('[learning-pack] ⚠️ crypto.subtle unavailable, skipping checksum for', path)
+    return
+  }
+
   const actual = await digest(buffer)
   if (actual.toLowerCase() !== expected.toLowerCase()) {
     throw new Error(`Pack file checksum mismatch: ${path}`)
@@ -214,7 +285,25 @@ async function persistInstalledRecord(manifest: LearningPackManifest): Promise<I
     installedAt: now,
     updatedAt: now,
   }
+  console.log('[learning-pack] persist installed downloaded_packs input', {
+    packId: installed.packId,
+    version: installed.version,
+    manifestVersion: installed.manifest?.version,
+    title: installed.title,
+    status: installed.status,
+    installedAt: installed.installedAt,
+  })
   await localDb.put('downloaded_packs', installed)
+  const saved = await localDb.get<InstalledLearningPack>('downloaded_packs', manifest.packId)
+  console.log('[learning-pack] persist installed downloaded_packs saved', {
+    packId: saved?.packId,
+    version: saved?.version,
+    manifestVersion: saved?.manifest?.version,
+    title: saved?.title,
+    status: saved?.status,
+    installedAt: saved?.installedAt,
+    updatedAt: saved?.updatedAt,
+  })
   const outboxItem = await syncOutbox.enqueue({
     entityType: 'learning_pack',
     entityId: manifest.packId,
@@ -290,16 +379,16 @@ export const learningPackService = {
 
   async installUnit(unitId: string): Promise<InstalledLearningPack> {
     try {
-      console.log('[learning-pack] 📦 开始安装学习包 (zip 模式)...', { unitId })
+      console.log('[learning-pack] installUnit start zip-only mode', {
+        unitId,
+        platform: Capacitor.getPlatform(),
+        isNative: Capacitor.isNativePlatform(),
+      })
       return await this.installUnitFromZip(unitId)
     } catch (error) {
-      console.warn('[learning-pack] ⚠️ zip 安装失败，回退到 manifest 模式:', error)
+      console.error('[learning-pack] zip install failed', debugError(error))
+      throw error
     }
-
-    const { manifest, unitDetail, topicDetails } = await this.buildManifestFromUnit(unitId)
-    await persistUnitContent(unitDetail, topicDetails)
-    await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? manifest.packId, unitDetail, topicDetails)
-    return this.install(manifest)
   },
 
   async installUnitFromZip(unitId: string): Promise<InstalledLearningPack> {
@@ -322,33 +411,72 @@ export const learningPackService = {
         entries.set(normalizeZipPath(entry.filename), entry)
       }
       console.log(`[learning-pack] ✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
+      console.log('[learning-pack] zip entries summary', summarizeZipEntries(entries))
 
       console.log('[learning-pack] ⏳ ③ 读取 manifest + checksums...')
       const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
       const checksums = await readJsonEntry<Record<string, string>>(entries, 'checksums.json').catch(() => manifest.files ?? {})
-      console.log(`[learning-pack] ✅ ③ manifest: v${manifest.version}, ${manifest.assets?.length ?? 0} 个资源, checksums: ${Object.keys(checksums).length} 项`)
+      console.log('[learning-pack] zip pack-manifest.json parsed', {
+        packId: manifest.packId,
+        version: manifest.version,
+        title: manifest.title,
+        updatedAt: manifest.updatedAt,
+        topicCount: manifest.topics?.length,
+        assetCount: manifest.assets?.length,
+        checksumCount: Object.keys(checksums).length,
+      })
 
       console.log('[learning-pack] ⏳ ④ 读取场景数据...')
       const sceneEntry = entries.get('content/scene.json')
-      if (!sceneEntry) throw new Error('Pack is missing content/scene.json')
-      const sceneText = await readEntryText(sceneEntry)
-      await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
-      const unitDetail = JSON.parse(sceneText)
+      if (!sceneEntry) {
+        console.error('[learning-pack] missing content/scene.json', summarizeZipEntries(entries))
+        throw new Error('Pack is missing content/scene.json')
+      }
+      let sceneText = ''
+      let unitDetail: any
+      try {
+        sceneText = await readEntryText(sceneEntry)
+        console.log('[learning-pack] scene entry read', { chars: sceneText.length })
+        await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
+        console.log('[learning-pack] scene checksum ok')
+        unitDetail = JSON.parse(sceneText)
+        console.log('[learning-pack] scene json parsed', {
+          id: unitDetail?.id,
+          title: unitDetail?.title,
+          topicCount: unitDetail?.trainingTopics?.length,
+          vocabularyCount: unitDetail?.vocabularies?.length,
+        })
+      } catch (error) {
+        console.error('[learning-pack] scene read/verify/parse failed', debugError(error))
+        throw error
+      }
       console.log(`[learning-pack] ✅ ④ scene.json: ${sceneText.length} 字符, SHA256 校验通过`)
 
       console.log('[learning-pack] ⏳ ⑤ 读取话题数据...')
       const topicDetails: any[] = []
       for (const [path, entry] of entries) {
         if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
-        const text = await readEntryText(entry)
-        await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
-        topicDetails.push(JSON.parse(text))
+        try {
+          const text = await readEntryText(entry)
+          await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
+          const detail = JSON.parse(text)
+          topicDetails.push(detail)
+          console.log('[learning-pack] topic json parsed', {
+            path,
+            topicId: detail?.topic?.id,
+            title: detail?.topic?.title,
+            chars: text.length,
+          })
+        } catch (error) {
+          console.error('[learning-pack] topic read/verify/parse failed', { path, error: debugError(error) })
+          throw error
+        }
       }
       console.log(`[learning-pack] ✅ ⑤ 话题: ${topicDetails.length} 个`)
 
       const now = new Date().toISOString()
       console.log('[learning-pack] ⏳ ⑥ 写入 downloaded_packs 记录...')
-      await localDb.put<InstalledLearningPack>('downloaded_packs', {
+      const installingRecord: InstalledLearningPack = {
         id: manifest.packId,
         packId: manifest.packId,
         version: manifest.version,
@@ -357,14 +485,52 @@ export const learningPackService = {
         status: 'installing',
         installedAt: null,
         updatedAt: now,
+      }
+      console.log('[learning-pack] persist installing downloaded_packs input', {
+        packId: installingRecord.packId,
+        version: installingRecord.version,
+        manifestVersion: installingRecord.manifest?.version,
+        title: installingRecord.title,
+        status: installingRecord.status,
+        installedAt: installingRecord.installedAt,
+      })
+      await localDb.put<InstalledLearningPack>('downloaded_packs', installingRecord)
+      const savedInstalling = await localDb.get<InstalledLearningPack>('downloaded_packs', manifest.packId)
+      console.log('[learning-pack] persist installing downloaded_packs saved', {
+        packId: savedInstalling?.packId,
+        version: savedInstalling?.version,
+        manifestVersion: savedInstalling?.manifest?.version,
+        title: savedInstalling?.title,
+        status: savedInstalling?.status,
+        installedAt: savedInstalling?.installedAt,
+        updatedAt: savedInstalling?.updatedAt,
       })
 
       console.log('[learning-pack] ⏳ ⑦ 持久化单元内容到 SQLite...')
-      await persistUnitContent(unitDetail, topicDetails)
+      try {
+        await persistUnitContent(unitDetail, topicDetails)
+      } catch (error) {
+        console.error('[learning-pack] persist unit content failed', {
+          unitId: unitDetail?.id,
+          topicCount: topicDetails.length,
+          error: debugError(error),
+        })
+        throw error
+      }
       console.log('[learning-pack] ✅ ⑦ 单元内容写入完成')
 
       console.log('[learning-pack] ⏳ ⑧ 写入内容索引表...')
-      await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails)
+      try {
+        await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails)
+      } catch (error) {
+        console.error('[learning-pack] save content index failed', {
+          packId: manifest.packId,
+          unitId: unitDetail?.id ?? unitId,
+          topicCount: topicDetails.length,
+          error: debugError(error),
+        })
+        throw error
+      }
       console.log('[learning-pack] ✅ ⑧ 索引表写入完成')
 
       console.log(`[learning-pack] ⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
@@ -377,6 +543,12 @@ export const learningPackService = {
         const entry = entries.get(normalizeZipPath(asset.path))
         if (!entry) { assetSkip++; continue }
         try {
+          console.log('[learning-pack] extracting asset', {
+            path: asset.path,
+            url: asset.url,
+            sha256: asset.sha256,
+            size: asset.size,
+          })
           const buffer = await readEntryBuffer(entry)
           await verifyEntry(normalizeZipPath(asset.path), buffer, checksums)
           const actualSha256 = await digest(buffer)
@@ -407,7 +579,7 @@ export const learningPackService = {
           assetOk++
         } catch (e) {
           assetFail++
-          console.warn(`[learning-pack] ⚠️ 资源失败: ${asset.path}`, e)
+          console.warn('[learning-pack] asset extract failed', { path: asset.path, error: debugError(e) })
         }
       }
       console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
