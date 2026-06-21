@@ -70,6 +70,26 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['status', 'status', (value) => value?.status ?? null],
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
   ],
+  daily_practice_items: [
+    ['item_id', 'itemId', (value) => value?.itemId ?? value?.id ?? null],
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['item_type', 'type', (value) => value?.type ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['due_date', 'dueDate', (value) => value?.dueDate ?? null],
+  ],
+  daily_practice_runs: [
+    ['date', 'date', (value) => value?.date ?? null],
+    ['scope', 'scope', (value) => value?.scope ?? null],
+    ['pack_ids', 'packIdsKey', (value) => Array.isArray(value?.packIds) ? value.packIds.join(',') : null],
+  ],
+  daily_practice_attempts: [
+    ['item_id', 'itemId', (value) => value?.itemId ?? null],
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+    ['practiced_at', 'practicedAt', (value) => value?.practicedAt ?? null],
+  ],
   local_assets: [
     ['asset_id', 'assetId', (value) => value?.assetId ?? value?.id ?? null],
     ['remote_url', 'remoteUrl', (value) => value?.remoteUrl ?? null],

@@ -14,10 +14,12 @@ import { Select } from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/cn';
 import {
-  listUsers, updateUserRole, getUserDetail, getUserAiUsage,
-  type AdminUser, type AdminUserDetail, type AdminUsersResult, type UserAiUsage,
+  listUsers, updateUserRole, getUserDetail, getUserAiUsage, getUserLearningOverview,
+  type AdminUser, type AdminUserDetail, type AdminUsersResult, type UserAiUsage, type AdminUserLearningOverview,
 } from '@/features/admin/api';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -101,6 +103,68 @@ function StatDot({
         <p className="text-[11px] text-muted-foreground">{label}</p>
       </div>
     </div>
+  );
+}
+
+function UserLearningTabs({ overview }: { overview: AdminUserLearningOverview | null }) {
+  if (!overview) {
+    return (
+      <div className="rounded-xl border p-4 text-sm text-muted-foreground">
+        学习数据暂未加载或暂无记录
+      </div>
+    );
+  }
+
+  const warmupPct = overview.warmup.totalItems > 0
+    ? Math.round((overview.warmup.masteredItems / overview.warmup.totalItems) * 100)
+    : 0;
+
+  return (
+    <Tabs defaultValue="packages" className="rounded-xl border p-3">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="packages" className="text-xs">学习包</TabsTrigger>
+        <TabsTrigger value="warmup" className="text-xs">知识点</TabsTrigger>
+        <TabsTrigger value="vn" className="text-xs">VN</TabsTrigger>
+        <TabsTrigger value="story" className="text-xs">剧本</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="packages" className="mt-3 space-y-2">
+        {overview.packages.length ? overview.packages.slice(0, 5).map((pack) => (
+          <div key={pack.sceneId} className="rounded-lg bg-muted/35 px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{pack.title}</p>
+                <p className="text-[11px] text-muted-foreground">{pack.topicCount} 话题 · 知识点 {pack.warmup.mastered}/{pack.warmup.total}</p>
+              </div>
+              <Badge variant="outline" className="shrink-0 text-[10px]">{pack.mastery}%</Badge>
+            </div>
+            <Progress value={pack.mastery} className="mt-2 h-1" />
+          </div>
+        )) : <p className="py-4 text-center text-xs text-muted-foreground">暂无学习包</p>}
+      </TabsContent>
+
+      <TabsContent value="warmup" className="mt-3 space-y-3">
+        <div className="grid grid-cols-4 gap-2 text-center">
+          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold">{overview.warmup.totalItems}</p><p className="text-[10px] text-muted-foreground">题目</p></div>
+          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-emerald-600">{overview.warmup.masteredItems}</p><p className="text-[10px] text-muted-foreground">掌握</p></div>
+          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-amber-600">{overview.warmup.dueItems}</p><p className="text-[10px] text-muted-foreground">待复习</p></div>
+          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-red-600">{overview.warmup.overdueItems}</p><p className="text-[10px] text-muted-foreground">逾期</p></div>
+        </div>
+        <Progress value={warmupPct} className="h-1.5" />
+      </TabsContent>
+
+      <TabsContent value="vn" className="mt-3 grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-lg bg-muted/35 py-3"><p className="text-lg font-bold">{overview.practice.sessionCount}</p><p className="text-[10px] text-muted-foreground">会话</p></div>
+        <div className="rounded-lg bg-muted/35 py-3"><p className="text-lg font-bold">{overview.practice.analyzedCount}</p><p className="text-[10px] text-muted-foreground">已分析</p></div>
+        <div className="rounded-lg bg-muted/35 py-3"><p className="text-lg font-bold">{overview.practice.avgScore ?? '—'}</p><p className="text-[10px] text-muted-foreground">均分</p></div>
+      </TabsContent>
+
+      <TabsContent value="story" className="mt-3 grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-lg bg-muted/35 py-3"><p className="text-lg font-bold">{overview.story.recordCount}</p><p className="text-[10px] text-muted-foreground">记录</p></div>
+        <div className="rounded-lg bg-muted/35 py-3"><p className="text-lg font-bold text-emerald-600">{overview.story.passedCount}</p><p className="text-[10px] text-muted-foreground">通过</p></div>
+        <div className="rounded-lg bg-muted/35 py-3"><p className="text-lg font-bold text-amber-600">{overview.story.xpEarned}</p><p className="text-[10px] text-muted-foreground">XP</p></div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -382,15 +446,21 @@ function UserRow({
   const [updating, setUpdating] = useState(false);
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [learningOverview, setLearningOverview] = useState<AdminUserLearningOverview | null>(null);
   const [aiUsage, setAiUsage] = useState<UserAiUsage | null>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(false);
 
   const openDetail = async () => {
     setDetailOpen(true);
     setDetailLoading(true);
+    setLearningOverview(null);
     try {
-      const d = await getUserDetail(user.id);
+      const [d, overview] = await Promise.all([
+        getUserDetail(user.id),
+        getUserLearningOverview(user.id).catch(() => null),
+      ]);
       setDetail(d);
+      setLearningOverview(overview);
     } catch {
       setDetail(null);
     } finally {
@@ -578,6 +648,8 @@ function UserRow({
                   )}
                 </div>
               </div>
+
+              <UserLearningTabs overview={learningOverview} />
 
               {/* ── 登录会话 ────────────────────────────── */}
               <div className="rounded-xl border p-4 space-y-3">

@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Body, Query, Req, Res } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Body, Query, Req, Res, GoneException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { LearningService } from './learning.service';
 import { requireAuthSession } from '../auth/session.util';
@@ -144,9 +144,8 @@ export class LearningController {
 
   /** 获取今日任务 */
   @Get('today')
-  async getTodayTasks(@Req() req: Request) {
-    const session = await requireAuthSession(req);
-    return this.learningService.getTodayTasks(session.user.id);
+  async getTodayTasks() {
+    throw new GoneException('GET /learning/today 已废弃；今日任务由离线 daily-practice planner 生成，并通过 /practice/daily-practice 同步进度');
   }
 
   /** 更新学习单元进度 */

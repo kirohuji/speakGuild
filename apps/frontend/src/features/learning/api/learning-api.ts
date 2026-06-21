@@ -137,47 +137,6 @@ export interface UnitDetail {
   scriptCount: number
 }
 
-export interface TodayTask {
-  id: string
-  type: 'vocab' | 'chunk' | 'pattern' | 'practice' | 'script'
-  title: string
-  description: string
-  unitId: string
-  unitTitle: string
-  // vocab/chunk-specific
-  count?: number       // 总待学数
-  dayCount?: number    // 今日限额展示数
-  done?: number        // 已完成数
-  total?: number       // 总数量
-  hasMore?: boolean    // 今日是否只展示了部分
-  data?: { id?: string; word?: string; text?: string; meaning?: string }[]
-  // practice-specific
-  durationSec?: number
-  topicId?: string
-  topicTitle?: string
-  promptZh?: string
-  // script-specific
-  episodeId?: string
-  episodeTitle?: string
-}
-
-export interface TodayPlan {
-  currentUnit: {
-    id: string
-    title: string
-    location: string
-    progress: {
-      vocabLearned: number
-      vocabTotal: number
-      chunkMastered: number
-      chunkTotal: number
-      completedPractice: number
-      practiceTotal: number
-    } | null
-  } | null
-  tasks: TodayTask[]
-}
-
 /** 用户正在学习的单元（从 my-units 接口返回） */
 export interface MyUnit {
   id: string
@@ -304,9 +263,6 @@ export const learningApi = {
       responseType: 'arraybuffer',
       timeout: 120_000,
     }),
-
-  /** 获取今日任务 */
-  getTodayTasks: () => get<TodayPlan>('/learning/today'),
 
   /** 更新学习单元进度 */
   updateProgress: (unitId: string, data: {

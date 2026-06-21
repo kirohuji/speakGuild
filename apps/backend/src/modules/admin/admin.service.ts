@@ -158,6 +158,116 @@ export class AdminService {
     };
   }
 
+  async getUserLearningOverview(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('用户不存在');
+
+    const [sceneProgresses, warmupProgresses, warmupAttempts, practiceSessions, storyRecords] = await Promise.all([
+      this.prisma.userSceneProgress.findMany({
+        where: { userId },
+        include: {
+          scene: {
+            select: {
+              id: true,
+              title: true,
+              packageType: true,
+              location: true,
+              _count: { select: { trainingTopics: true, storyEpisodes: true } },
+            },
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      (this.prisma as any).userWarmupItemProgress.findMany({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      (this.prisma as any).userDailyPracticeAttempt.findMany({
+        where: { userId },
+        orderBy: { practicedAt: 'desc' },
+        take: 100,
+      }),
+      this.prisma.practiceSession.findMany({
+        where: { userId },
+        select: { id: true, sceneId: true, topicId: true, status: true, analysisResult: true, startedAt: true, analyzedAt: true },
+        orderBy: { startedAt: 'desc' },
+        take: 100,
+      }),
+      this.prisma.storyRecord.findMany({
+        where: { userId },
+        select: { id: true, episodeId: true, passed: true, turnCount: true, xpEarned: true, completedAt: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+    ]);
+
+    const warmupByPack = new Map<string, any>();
+    for (const item of warmupProgresses) {
+      const row = warmupByPack.get(item.packId) ?? {
+        packId: item.packId,
+        total: 0,
+        mastered: 0,
+        due: 0,
+        overdue: 0,
+        attempts: 0,
+      };
+      row.total += 1;
+      if (item.status === 'mastered') row.mastered += 1;
+      const due = item.dueDate ? new Date(item.dueDate) : null;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (due && due <= today) row.due += 1;
+      if (due && due < today) row.overdue += 1;
+      row.attempts += item.attempts ?? 0;
+      warmupByPack.set(item.packId, row);
+    }
+
+    const analyzed = practiceSessions.filter((session) => session.status === 'analyzed');
+    const avgPracticeScore = analyzed.length
+      ? Math.round(analyzed.reduce((sum, session) => sum + Number((session.analysisResult as any)?.overallScore ?? 0), 0) / analyzed.length)
+      : null;
+
+    return {
+      packages: sceneProgresses.map((progress) => {
+        const warmup = warmupByPack.get(progress.sceneId);
+        return {
+          sceneId: progress.sceneId,
+          title: progress.scene.title,
+          packageType: progress.scene.packageType,
+          location: progress.scene.location,
+          readiness: progress.readiness,
+          mastery: progress.mastery,
+          updatedAt: progress.updatedAt,
+          topicCount: progress.scene._count.trainingTopics,
+          storyCount: progress.scene._count.storyEpisodes,
+          warmup: warmup ?? { total: 0, mastered: 0, due: 0, overdue: 0, attempts: 0 },
+        };
+      }),
+      warmup: {
+        totalItems: warmupProgresses.length,
+        masteredItems: warmupProgresses.filter((item: any) => item.status === 'mastered').length,
+        dueItems: Array.from(warmupByPack.values()).reduce((sum, row) => sum + row.due, 0),
+        overdueItems: Array.from(warmupByPack.values()).reduce((sum, row) => sum + row.overdue, 0),
+        attemptCount: warmupAttempts.length,
+        recentAttempts: warmupAttempts.slice(0, 10),
+      },
+      practice: {
+        sessionCount: practiceSessions.length,
+        analyzedCount: analyzed.length,
+        avgScore: avgPracticeScore,
+        recentSessions: practiceSessions.slice(0, 10),
+      },
+      story: {
+        recordCount: storyRecords.length,
+        passedCount: storyRecords.filter((record) => record.passed).length,
+        xpEarned: storyRecords.reduce((sum, record) => sum + (record.xpEarned ?? 0), 0),
+        recentRecords: storyRecords.slice(0, 10),
+      },
+    };
+  }
+
   async updateUserRole(userId: string, dto: UpdateUserRoleDto, currentUserId: string) {
     if (userId === currentUserId) {
       throw new ForbiddenException('不能修改自己的角色');

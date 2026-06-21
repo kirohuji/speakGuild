@@ -41,6 +41,12 @@ export class AdminController {
     return this.adminService.getUserDetail(id);
   }
 
+  @Get('users/:id/learning-overview')
+  async getUserLearningOverview(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.adminService.getUserLearningOverview(id);
+  }
+
   @Patch('users/:id/role')
   async updateUserRole(
     @Req() req: Request,

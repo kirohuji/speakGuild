@@ -17,14 +17,13 @@ import { Separator } from '@/components/ui/separator'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
-import type { UnitDetail } from '../api/learning-api'
-import { learningPackService, learningRepository, practiceRepository } from '@/lib/offline'
 import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
 import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
 import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
-import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+import type { DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
 
 // ── 类型 ──
@@ -42,6 +41,7 @@ export type PracticeItem = {
   type: string
   label: string
   topicTitle: string
+  scheduleStatus?: DailyPracticeStatus
   /** 准确描述练习内容的标签，用于卡片和抽屉标题 */
   displayLabel: string
   /** Dialog header 大字展示的原始练习数据（单词/句型/句块） */
@@ -55,45 +55,6 @@ type PracticeGroup = {
   steps: Array<{ step: PracticeItem; index: number }>
   doneCount: number
   totalCount: number
-}
-
-// ── 工具函数 ──
-function hashStringToNumber(str: string): number {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash |= 0
-  }
-  return Math.abs(hash)
-}
-
-function pickOne<T>(items: T[] | undefined): [T, number] | null {
-  if (!items?.length) return null
-  const idx = Math.floor(Math.random() * items.length)
-  return [items[idx], idx]
-}
-
-function shuffle<T>(items: T[]) {
-  const result = [...items]
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[result[i], result[j]] = [result[j], result[i]]
-  }
-  return result
-}
-
-/** 在文本中高亮目标词（不区分大小写） */
-function highlightWord(text: string, word: string): React.ReactNode {
-  if (!word || !text) return text
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const regex = new RegExp(`(${escaped})`, 'gi')
-  const parts = text.split(regex)
-  return parts.map((part, i) =>
-    regex.test(part)
-      ? <mark key={i} className="rounded bg-blue-500/20 px-0.5 text-blue-600 dark:text-blue-400 font-semibold">{part}</mark>
-      : part,
-  )
 }
 
 // ── 类型显示映射 ──
@@ -125,17 +86,26 @@ const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: s
   },
 }
 
+const TOPIC_STATUS_META: Record<DailyPracticeStatus, { label: string; badge: string; bar: string }> = {
+  overdue: { label: '逾期累积', badge: 'border-red-300 text-red-600 bg-red-500/10', bar: 'bg-red-500' },
+  review: { label: '今日复习', badge: 'border-amber-300 text-amber-700 bg-amber-500/10', bar: 'bg-amber-500' },
+  new: { label: '今日待练', badge: 'border-blue-300 text-blue-600 bg-blue-500/10', bar: 'bg-blue-500' },
+  done: { label: '今日完成', badge: 'border-emerald-300 text-emerald-600 bg-emerald-500/10', bar: 'bg-emerald-500' },
+  mastered: { label: '短期掌握', badge: 'border-violet-300 text-violet-600 bg-violet-500/10', bar: 'bg-violet-500' },
+}
+
 // ── 组件 ──
 export function TodayTaskPage() {
-  const dailyGoal = usePreferencesStore((s) => s.dailyGoal)
   const warmupStore = useWarmupSessionStore()
   const [searchParams] = useSearchParams()
   const targetPackId = searchParams.get('packId') || null
-
-  // 数据
-  const [unit, setUnit] = useState<UnitDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const plan = useDailyPracticeStore((s) => s.plan)
+  const loading = useDailyPracticeStore((s) => s.loading)
+  const error = useDailyPracticeStore((s) => s.error)
+  const submitting = useDailyPracticeStore((s) => s.submitting)
+  const loadToday = useDailyPracticeStore((s) => s.loadToday)
+  const completeStep = useDailyPracticeStore((s) => s.completeStep)
+  const submitToday = useDailyPracticeStore((s) => s.submitToday)
 
   // 练习状态
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -143,48 +113,26 @@ export function TodayTaskPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
-  const [runSeed, setRunSeed] = useState(() => {
-    // 用今日日期作为种子，保证同一天看到相同的题目
-    const today = new Date().toISOString().slice(0, 10)
-    return hashStringToNumber(today)
-  })
 
-  // 每次重新生成题目时重置
   useEffect(() => {
     warmupStore.clearSession()
-    setDoneIds(new Set())
     setHasSubmittedToday(false)
-  }, [runSeed])
+    loadToday(targetPackId)
+  }, [loadToday, targetPackId])
 
-  // ── 恢复今日进度（从 SQLite，匹配当前 pack）──
   useEffect(() => {
-    practiceRepository.getTodayProgress().then((progress) => {
-      if (progress && progress.doneIds.length > 0) {
-        // 检查是否匹配当前 pack（如果指定了 packId 但进度属于其他 pack，则不恢复）
-        if (targetPackId && progress.packId && progress.packId !== targetPackId) {
-          console.log('[today-task] 进度属于其他包，跳过恢复')
-          return
-        }
-        setDoneIds(new Set(progress.doneIds))
-        console.log('[today-task] 📋 恢复今日进度:', progress.doneIds.length, '题已完成')
-      }
-    })
-  }, [targetPackId])
+    setDoneIds(new Set(plan?.completedItemIds ?? []))
+  }, [plan?.completedItemIds])
 
-  const markDone = useCallback((stepId: string, _score: WarmupScore = 'strong') => {
+  const markDone = useCallback(async (stepId: string, score: WarmupScore = 'strong') => {
+    const source = plan?.steps.find((step) => step.itemId === stepId)
+    if (source) await completeStep(source, score)
     setDoneIds((prev) => {
       const next = new Set(prev)
       next.add(stepId)
       return next
     })
-  }, [])
-
-  // ── 增量保存今日进度到 SQLite ──
-  useEffect(() => {
-    if (doneIds.size === 0) return
-    const currentPackId = unit?.id ?? null
-    practiceRepository.saveTodayProgress(currentPackId, [...doneIds]).catch(() => {})
-  }, [doneIds, unit?.id])
+  }, [completeStep, plan?.steps])
 
   const handleReshuffle = useCallback(() => {
     warmupStore.clearSession()
@@ -192,259 +140,118 @@ export function TodayTaskPage() {
     setHasSubmittedToday(false)
     setCurrentIdx(0)
     setDrawerOpen(false)
-    setRunSeed(Math.random())
-  }, [warmupStore])
+    loadToday(targetPackId)
+  }, [loadToday, targetPackId, warmupStore])
 
   // ── 自动提交状态（effect 移至 doneCount/steps 声明之后）──
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // ── 加载数据 ──
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-
-    const loadPack = async () => {
-      // 优先使用 URL 参数指定的 packId
-      if (targetPackId) {
-        const detail = await learningRepository.getCachedUnitDetail(targetPackId)
-        if (detail) return detail
-        // 如果缓存未命中，尝试从已安装列表加载
-      }
-
-      // 回退：第一个已安装且有进度的学习包
-      const [packs, units] = await Promise.all([
-        learningPackService.listInstalled(),
-        learningRepository.getCachedMyUnits().catch(() => []),
-      ])
-
-      const installedPacks = packs.filter((pack) => pack.status === 'installed')
-      const currentPackId =
-        units.find((u) => installedPacks.some((pack) => pack.packId === u.id))?.id ??
-        installedPacks[0]?.packId
-
-      if (!currentPackId) return null
-      return learningRepository.getCachedUnitDetail(currentPackId)
-    }
-
-    loadPack()
-      .then((detail) => {
-        if (!cancelled && detail) setUnit(detail)
-      })
-      .catch((err: any) => {
-        if (!cancelled) setError(err?.message || '加载失败')
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [targetPackId])
 
   // ── 构建练习列表 ──
   const steps = useMemo<PracticeItem[]>(() => {
-    if (!unit) return []
+    return (plan?.steps ?? []).map((source) => {
+      const item = source.item
+      const prompt = source.prompt
+      const sid = source.itemId
+      const common = {
+        id: sid,
+        type: source.type,
+        label: source.label,
+        displayLabel: source.displayLabel,
+        headerContent: source.headerContent,
+        topicTitle: source.topicTitle,
+        scheduleStatus: source.scheduleStatus,
+      }
 
-    const built: PracticeItem[] = []
-    for (const topic of unit.trainingTopics ?? []) {
-      const pipeline = topic.metadata?.outputTraining?.enabled
-        ? (topic.metadata.outputTraining.pipeline ?? [])
-        : []
-      for (const item of pipeline) {
-        const stepId = (suffix: string) => `today:${topic.id}:${item.id}:${suffix}`
-
-        if (item.type === 'chunk_substitution') {
-          const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
-          if (!picked) continue
-          const [sub, subIdx] = picked
-          const sid = stepId(`${subIdx}`)
+      if (source.type === 'chunk_substitution') {
           const isWord = (item.kind ?? 'chunk') === 'word'
-          built.push({
-            id: sid,
-            type: 'chunk_substitution',
-            label: item.title || item.chunk || sub.zh || '短语练习',
+          return {
+            ...common,
             displayLabel: isWord ? '词汇替换' : '句块替换',
-            headerContent: item.chunk || '',
-            topicTitle: topic.title,
             render: () => (
               <ChunkOutputDrillCard
                 chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
-                items={[sub]}
+                items={[prompt as SimplePromptItem]}
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 kind={item.kind ?? 'chunk'}
                 groupTitle={item.title}
-                onComplete={(_idx, _passed, score) => markDone(sid, score)}
+                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
               />
             ),
-          })
-        } else if (item.type === 'vocab_drill') {
-          const picked = pickOne<VocabPromptItem>((item.vocabs ?? []) as VocabPromptItem[])
-          if (!picked) continue
-          const [vocab, vocabIdx] = picked
-          const sid = stepId(`${vocabIdx}`)
-          built.push({
-            id: sid,
-            type: 'vocab_drill',
-            label: item.title || vocab.targetWords?.join(', ') || '词汇练习',
-            displayLabel: '词汇输出',
-            headerContent: vocab.targetWords?.join(', ') || vocab.promptZh || '',
-            topicTitle: topic.title,
+          }
+        }
+
+        if (source.type === 'vocab_drill') {
+          return {
+            ...common,
             render: () => (
               <VocabOutputCard
                 title={item.title || '词汇输出'}
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
-                vocabs={[vocab]}
-                onComplete={(_idx, _passed, score) => markDone(sid, score)}
+                vocabs={[prompt as VocabPromptItem]}
+                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
                 hideHeader
               />
             ),
-          })
-        } else if (item.type === 'vocab_sentence_building') {
-          for (const [patternIdx, pattern] of ((item.patterns ?? []) as any[]).entries()) {
-            const picked = pickOne<SimplePromptItem>((pattern.items ?? []) as SimplePromptItem[])
-            if (!picked) continue
-            const [sub, subIdx] = picked
-            const sid = stepId(`pattern_${patternIdx}_${subIdx}`)
-            const vocabWord = item.vocabWord || ''
-            const patternChunk = pattern.chunk || vocabWord
-            const targetWord = vocabWord || patternChunk
-            built.push({
-              id: sid,
-              type: 'vocab_sentence_building',
-              label: `${vocabWord || '词汇'} + ${patternChunk}`,
-              displayLabel: '一词多句',
-              headerContent: targetWord,
-              topicTitle: topic.title,
-              render: () => (
-                <ChunkOutputDrillCard
-                  chunk={{ text: targetWord, meaning: item.vocabMeaning || '', description: null }}
-                  items={[sub]}
-                  stepId={sid}
-                  stepType="vocab_sentence_building"
-                  direction={item.direction ?? 'zh_to_en'}
-                  kind="word"
-                  groupTitle={`${vocabWord || '一词多句'} · ${patternChunk}`}
-                  onComplete={(_idx, _passed, score) => markDone(sid, score)}
-                />
-              ),
-            })
           }
-        } else if (item.type === 'pattern_drill') {
-          const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
-          if (!picked) continue
-          const [sub, subIdx] = picked
-          const sid = stepId(`${subIdx}`)
-          built.push({
-            id: sid,
-            type: 'pattern_drill',
-            label: item.title || item.pattern || '句型练习',
-            displayLabel: '句型操练',
-            headerContent: item.pattern || '',
-            topicTitle: topic.title,
+        }
+
+        if (source.type === 'vocab_sentence_building') {
+          const pattern = prompt.pattern ?? {}
+          const vocabWord = item.vocabWord || ''
+          const patternChunk = pattern.chunk || vocabWord
+          const targetWord = vocabWord || patternChunk
+          return {
+            ...common,
+            headerContent: targetWord,
+            render: () => (
+              <ChunkOutputDrillCard
+                chunk={{ text: targetWord, meaning: item.vocabMeaning || '', description: null }}
+                items={[prompt as SimplePromptItem]}
+                stepId={sid}
+                stepType="vocab_sentence_building"
+                direction={item.direction ?? 'zh_to_en'}
+                kind="word"
+                groupTitle={`${vocabWord || '一词多句'} · ${patternChunk}`}
+                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
+              />
+            ),
+          }
+        }
+
+        if (source.type === 'pattern_drill') {
+          return {
+            ...common,
             render: () => (
               <PatternDrillCard
                 pattern={item.pattern}
                 patternMeaning={item.patternMeaning}
-                items={[sub]}
+                items={[prompt as SimplePromptItem]}
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
-                onComplete={(_idx, _passed, score) => markDone(sid, score)}
+                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
                 hideHeader
               />
             ),
-          })
-        } else if (item.type === 'sentence_decomposition') {
-          const sid = stepId('decomp')
-          const title = item.title || '长句拆解'
-          const headerContent = item.levels?.[0]?.en || item.fullSentence || title
-          built.push({
-            id: sid,
-            type: 'sentence_decomposition',
-            label: title,
-            displayLabel: '句子拆解',
-            headerContent,
-            topicTitle: topic.title,
+          }
+        }
+
+        return {
+          ...common,
             render: () => (
               <SentenceDecompositionCard
-                title={title}
+                title={item.title || '长句拆解'}
                 levels={item.levels}
                 stepId={sid}
-                onComplete={(_passed, score) => markDone(sid, score)}
+                onComplete={(_passed, score) => { void markDone(sid, score) }}
                 hideHeader
               />
             ),
-          })
         }
-      }
-    }
-
-    // 检查缺失的题型，为每种缺失类型添加占位卡片
-    const allTypes = Object.keys(TYPE_META)
-    const presentTypes = new Set(built.map((b) => b.type))
-    const missingTypes = allTypes.filter((t) => !presentTypes.has(t))
-
-    // 为缺失类型预留位置；真实题目先保证题型多样性，再随机补足
-    const placeholderCount = missingTypes.length
-    const realLimit = Math.max(1, dailyGoal - placeholderCount)
-    const shuffledBuilt = shuffle(built)
-    const byType = new Map<string, PracticeItem[]>()
-    for (const step of shuffledBuilt) {
-      byType.set(step.type, [...(byType.get(step.type) ?? []), step])
-    }
-    const limited: PracticeItem[] = []
-    const selectedIds = new Set<string>()
-    for (const type of Object.keys(TYPE_META)) {
-      if (limited.length >= realLimit) break
-      const firstOfType = byType.get(type)?.[0]
-      if (!firstOfType) continue
-      limited.push(firstOfType)
-      selectedIds.add(firstOfType.id)
-    }
-    for (const step of shuffledBuilt) {
-      if (limited.length >= realLimit) break
-      if (selectedIds.has(step.id)) continue
-      limited.push(step)
-      selectedIds.add(step.id)
-    }
-
-    // 添加占位卡片
-    for (const mt of missingTypes) {
-      const meta = TYPE_META[mt]
-      const Icon = meta?.icon ?? BookOpen
-      limited.push({
-        id: `placeholder:${mt}`,
-        type: mt,
-        label: '暂无题目',
-        displayLabel: meta?.label ?? mt,
-        headerContent: meta?.label ?? mt,
-        topicTitle: '该题型未配置练习数据',
-        render: () => (
-          <div className="flex flex-col items-center gap-2 py-12 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <Icon className="size-6 text-muted-foreground/40" />
-            </div>
-            <p className="text-sm text-muted-foreground">暂无{meta?.label ?? mt}练习题目</p>
-            <p className="text-xs text-muted-foreground/60">请联系管理员在后台添加该题型</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => markDone(`placeholder:${mt}`, 'ok')}
-            >
-              <CheckCircle2 className="mr-1.5 size-4" />
-              跳过，标记完成
-            </Button>
-          </div>
-        ),
       })
-    }
-
-    return limited
-  }, [dailyGoal, markDone, runSeed, unit])
+  }, [markDone, plan?.steps])
 
   // ── 进度统计 ──
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
@@ -454,35 +261,20 @@ export function TodayTaskPage() {
   useEffect(() => {
     if (hasSubmittedToday || steps.length === 0) return
     if (doneCount < steps.length) return
-    // 过滤占位卡片
-    const realSteps = steps.filter((s) => !s.id.startsWith('placeholder:'))
-    if (realSteps.length === 0) {
-      setHasSubmittedToday(true)
-      return
-    }
 
     const submit = async () => {
-      setIsSubmitting(true)
       try {
-        const topicTitle = unit?.trainingTopics?.[0]?.title || unit?.title || '今日练习'
-        const topicId = unit?.trainingTopics?.[0]?.id || unit?.id || 'today'
-        await practiceRepository.submitWarmupRecords(
-          topicId,
-          topicTitle,
-          warmupStore.records,
-        )
-        await practiceRepository.markTodayActivity(doneCount)
+        await submitToday(warmupStore.records)
         console.log('[today-task] ✅ 今日练习已提交 |', doneCount, '题')
       } catch (err) {
         console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
       } finally {
         setHasSubmittedToday(true)
-        setIsSubmitting(false)
       }
     }
 
     submit()
-  }, [doneCount, steps.length, hasSubmittedToday, unit, warmupStore.records])
+  }, [doneCount, steps.length, hasSubmittedToday, warmupStore.records, submitToday])
 
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
@@ -537,7 +329,7 @@ export function TodayTaskPage() {
   if (loading) return <MobilePageLoading rows={4} />
 
   // ── 空态 ──
-  if (error || !unit || steps.length === 0) {
+  if (error || !plan || steps.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -568,13 +360,13 @@ export function TodayTaskPage() {
       {/* ── Header ── */}
       <div className="mb-3 flex items-center justify-between">
         <div className="min-w-0 flex-1">
-          {targetPackId && unit && (
+          {targetPackId && plan.units[0] && (
             <Link
               to="/learning"
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="size-3.5" />
-              <span className="truncate">{unit.title}</span>
+              <span className="truncate">{plan.units[0].title}</span>
             </Link>
           )}
         </div>
@@ -609,7 +401,7 @@ export function TodayTaskPage() {
                 <CheckCircle2 className="mr-0.5 size-3" /> 已打卡
               </Badge>
             )}
-            {isSubmitting && (
+            {submitting && (
               <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px] animate-pulse">
                 同步中...
               </Badge>
@@ -688,7 +480,7 @@ export function TodayTaskPage() {
       </div>
 
       {/* ── 今日话题快捷入口 ── */}
-      {unit && (unit.trainingTopics ?? []).length > 0 && (
+      {plan.topicStats.length > 0 && (
         <>
           <Separator className="my-6" />
           <section>
@@ -698,27 +490,41 @@ export function TodayTaskPage() {
               <span className="text-xs text-muted-foreground">快捷练习入口</span>
             </div> */}
             <div className="space-y-1.5">
-              {(unit.trainingTopics ?? []).map((topic, index) => (
-                <Link
-                  key={topic.id}
-                  to={`/practice/session/${topic.id}`}
-                  className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3 transition-colors hover:bg-muted/50 active:scale-[0.98]"
-                >
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                    {index + 1}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {topic.activeChunks?.length ?? 0} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟
-                    </p>
-                    <div className="mt-1">
-                      <Badge variant="secondary" className="rounded-full text-[10px]">{unit.title}</Badge>
+              {plan.topicStats.map((topic, index) => {
+                const statusMeta = TOPIC_STATUS_META[topic.status]
+                const detail = [
+                  topic.overdueCount > 0 ? `逾期 ${topic.overdueCount}` : null,
+                  topic.todayReviewCount > 0 ? `复习 ${topic.todayReviewCount}` : null,
+                  topic.todayNewCount > 0 ? `新练 ${topic.todayNewCount}` : null,
+                ].filter(Boolean).join(' · ')
+                return (
+                  <Link
+                    key={topic.topicId}
+                    to={`/practice/session/${topic.topicId}`}
+                    className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3 transition-colors hover:bg-muted/50 active:scale-[0.98]"
+                  >
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                      {index + 1}
                     </div>
-                  </div>
-                  <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
-                </Link>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="line-clamp-1 flex-1 text-sm font-medium text-foreground">{topic.topicTitle}</p>
+                        <Badge variant="outline" className={cn('shrink-0 rounded-full text-[10px]', statusMeta.badge)}>{statusMeta.label}</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {topic.activeChunksCount} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟{detail ? ` · ${detail}` : ''}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-background/70">
+                          <div className={cn('h-full rounded-full transition-all', statusMeta.bar)} style={{ width: `${Math.min(100, topic.topicWarmupProgress)}%` }} />
+                        </div>
+                        <span className="w-8 text-right text-[10px] tabular-nums text-muted-foreground">{topic.topicWarmupProgress}%</span>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
+                  </Link>
+                )
+              })}
             </div>
           </section>
         </>

@@ -68,6 +68,41 @@ export interface AdminUserDetail extends AdminUser {
   };
 }
 
+export interface AdminUserLearningOverview {
+  packages: Array<{
+    sceneId: string
+    title: string
+    packageType: string
+    location: string
+    readiness: number
+    mastery: number
+    updatedAt: string
+    topicCount: number
+    storyCount: number
+    warmup: { total: number; mastered: number; due: number; overdue: number; attempts: number }
+  }>
+  warmup: {
+    totalItems: number
+    masteredItems: number
+    dueItems: number
+    overdueItems: number
+    attemptCount: number
+    recentAttempts: any[]
+  }
+  practice: {
+    sessionCount: number
+    analyzedCount: number
+    avgScore: number | null
+    recentSessions: any[]
+  }
+  story: {
+    recordCount: number
+    passedCount: number
+    xpEarned: number
+    recentRecords: any[]
+  }
+}
+
 export interface AdminUsersResult {
   list: AdminUser[];
   total: number;
@@ -138,6 +173,10 @@ export async function listUsers(params: {
 
 export async function getUserDetail(id: string) {
   return get<AdminUserDetail>(`/admin/users/${id}`);
+}
+
+export async function getUserLearningOverview(id: string) {
+  return get<AdminUserLearningOverview>(`/admin/users/${id}/learning-overview`);
 }
 
 export async function updateUserRole(id: string, role: 'user' | 'admin') {

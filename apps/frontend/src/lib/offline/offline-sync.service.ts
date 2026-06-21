@@ -1,5 +1,5 @@
 import { learningApi } from '@/features/learning/api/learning-api'
-import { practiceApi, expressionApi } from '@/features/practice/api/english-practice-api'
+import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
@@ -228,6 +228,18 @@ async function replayItem(
 
   // 学习包：本地概念，不推服务端，直接标记完成
   if (item.entityType === 'learning_pack') {
+    return true
+  }
+
+  if (item.entityType === 'daily_practice') {
+    const result = await dailyPracticeApi.complete(item.payload)
+    const attempts = ((item.payload as any)?.attempts ?? []) as Array<{ id?: string; clientAttemptId?: string }>
+    await Promise.all((result.syncedAttempts ?? []).map(async (clientAttemptId: string) => {
+      const attempt = attempts.find((entry) => entry.clientAttemptId === clientAttemptId)
+      if (attempt?.id) {
+        await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' })
+      }
+    }))
     return true
   }
 

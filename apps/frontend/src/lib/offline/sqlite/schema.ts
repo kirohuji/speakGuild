@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 7
+export const DB_VERSION = 8
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -40,6 +40,9 @@ export const TABLE_NAMES = [
   'warmup_records',
   'daily_activity',
   'daily_progress',
+  'daily_practice_items',
+  'daily_practice_runs',
+  'daily_practice_attempts',
   'local_assets',
   'asset_refs',
   'outbox',
@@ -209,6 +212,41 @@ export const DDL: Record<TableName, string> = {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `,
+  daily_practice_items: `
+    CREATE TABLE IF NOT EXISTS daily_practice_items (
+      id TEXT PRIMARY KEY NOT NULL,
+      item_id TEXT,
+      pack_id TEXT,
+      topic_id TEXT,
+      item_type TEXT,
+      status TEXT,
+      due_date TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  daily_practice_runs: `
+    CREATE TABLE IF NOT EXISTS daily_practice_runs (
+      id TEXT PRIMARY KEY NOT NULL,
+      date TEXT,
+      scope TEXT,
+      pack_ids TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  daily_practice_attempts: `
+    CREATE TABLE IF NOT EXISTS daily_practice_attempts (
+      id TEXT PRIMARY KEY NOT NULL,
+      item_id TEXT,
+      pack_id TEXT,
+      topic_id TEXT,
+      sync_status TEXT,
+      practiced_at TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
   local_assets: `
     CREATE TABLE IF NOT EXISTS local_assets (
       id TEXT PRIMARY KEY NOT NULL,
@@ -281,6 +319,13 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_practice_records_type ON practice_records (record_type)`,
   `CREATE INDEX IF NOT EXISTS idx_practice_records_status ON practice_records (status)`,
   `CREATE INDEX IF NOT EXISTS idx_practice_records_sync_status ON practice_records (sync_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_items_item_id ON daily_practice_items (item_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_items_pack_id ON daily_practice_items (pack_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_items_topic_id ON daily_practice_items (topic_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_items_due_date ON daily_practice_items (due_date)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_runs_date ON daily_practice_runs (date)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_item_id ON daily_practice_attempts (item_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_sync_status ON daily_practice_attempts (sync_status)`,
   // outbox: filter by status
   `CREATE INDEX IF NOT EXISTS idx_outbox_status ON outbox (status)`,
   `CREATE INDEX IF NOT EXISTS idx_outbox_entity ON outbox (entity_type, entity_id)`,
