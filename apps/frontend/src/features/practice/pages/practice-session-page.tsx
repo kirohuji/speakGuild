@@ -353,6 +353,27 @@ function PracticeTurnFeedback({
 }
 
 /** Interactive guided warmup — uses ChunkOutputDrillCard and VocabOutputCard */
+function getWarmupStepStatusLabel(params: {
+  isPassiveStep: boolean
+  score?: WarmupScore
+  isDone: boolean
+}) {
+  if (params.isPassiveStep) return '阅读'
+
+  switch (params.score) {
+    case 'strong':
+      return '熟练'
+    case 'ok':
+      return '通过'
+    case 'weak':
+      return '待稳'
+    case 'miss':
+      return '复练'
+    default:
+      return params.isDone ? '完成' : '未做'
+  }
+}
+
 function GuidedWarmupPhase({
   topicId,
   topicTitle,
@@ -375,6 +396,7 @@ function GuidedWarmupPhase({
   const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
+  const [reviewRunNonce, setReviewRunNonce] = useState(0)
   const [warmupRunSeed] = useState(() => Math.random())
 
   // Clear session on mount (only once)
@@ -387,8 +409,8 @@ function GuidedWarmupPhase({
     label: string
     render: () => React.ReactNode
   }
-  type SimplePromptItem = { zh: string; answer?: string; hint?: string }
-  type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
+type SimplePromptItem = { zh: string; answer?: string; hint?: string }
+type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
 
   const pickOne = useCallback(<T,>(items: T[] | undefined): [T, number] | null => {
     if (!items?.length) return null
@@ -574,12 +596,14 @@ function GuidedWarmupPhase({
     setLastAssessment(null)
     setReviewRoundStarted(false)
     setReviewRoundFinished(false)
+    setReviewRunNonce(0)
   }, [storageKey, warmupStore])
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
     setReviewRoundStarted(true)
     setReviewRoundFinished(false)
+    setReviewRunNonce((value) => value + 1)
     setDoneIds(prev => {
       const next = new Set([...prev].filter((id) => !weakStepIds.has(id)))
       persistDone(next)
@@ -769,9 +793,9 @@ function GuidedWarmupPhase({
   }
 
   return (
-    <div className={cn('flex h-full flex-col pt-4', isIOS() && 'pt-safe')}>
+    <div className={cn('flex h-full min-h-0 flex-col overflow-hidden pt-4', isIOS() && 'pt-safe')}>
       {/* Header */}
-      <div className="mb-4 flex items-center gap-3 px-4">
+      <div className="mb-4 flex shrink-0 items-center gap-3 px-4">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
@@ -779,11 +803,11 @@ function GuidedWarmupPhase({
           <p className="line-clamp-2 text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
       </div>
-      <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 px-4" />
+      <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 shrink-0 px-4" />
 
       {/* Current card — scrollable */}
-      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4">
-        <div key={flatSteps[currentIdx]?.id}>
+      <div className="min-h-0 min-w-0 flex-1 overscroll-contain overflow-x-hidden overflow-y-auto px-4 pb-4">
+        <div key={`${flatSteps[currentIdx]?.id}:${reviewRunNonce}`}>
           {flatSteps[currentIdx]?.render() ?? null}
         </div>
       </div>
@@ -803,7 +827,10 @@ function GuidedWarmupPhase({
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => setPlaylistOpen(true)}
+            onClick={(event) => {
+              event.currentTarget.blur()
+              setPlaylistOpen(true)
+            }}
             title="列表"
           >
             <ListMusic className="size-4" />
@@ -813,42 +840,30 @@ function GuidedWarmupPhase({
 
       {/* Playlist drawer */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className={cn('h-[80dvh] rounded-t-2xl', isIOS() && 'pt-safe')}>
-          <div className="flex items-center justify-between px-5 py-3">
-            <DrawerTitle className="text-lg">题目列表</DrawerTitle>
+        <DrawerContent className={cn('h-[80dvh] w-full max-w-full overflow-hidden rounded-t-2xl !z-[10001]', isIOS() && 'pt-safe')} overlayClassName="!z-[10001]">
+          <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
+            <DrawerTitle className="min-w-0 truncate text-lg">题目列表</DrawerTitle>
             <button
               onClick={() => setPlaylistOpen(false)}
-              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
             >
               <ChevronDown className="size-5" />
             </button>
           </div>
-          <ScrollArea className={cn('flex-1 px-4 pb-8', isIOS() && 'pb-safe')}>
-            <div className="space-y-1">
+          <ScrollArea className={cn('min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8', isIOS() && 'pb-safe')}>
+            <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
               {flatSteps.map((step, i) => {
                 const isDone = doneIds.has(step.id)
                 const isCurrent = i === currentIdx
                 const isPassiveStep = step.type === 'sentence_decomposition'
                 const score = warmupStore.stepStates[step.id]?.score
-                const statusLabel = isPassiveStep
-                  ? '阅读'
-                  : score === 'strong'
-                    ? '熟练'
-                    : score === 'ok'
-                      ? '通过'
-                      : score === 'weak'
-                        ? '待稳'
-                        : score === 'miss'
-                          ? '复练'
-                          : isDone
-                            ? '完成'
-                            : '未做'
+                const statusLabel = getWarmupStepStatusLabel({ isPassiveStep, score, isDone })
                 return (
                   <button
                     key={step.id}
                     onClick={() => { setCurrentIdx(i); setPlaylistOpen(false) }}
                     className={cn(
-                      'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
+                      'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
                       isCurrent ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
                     )}
                   >
@@ -858,9 +873,11 @@ function GuidedWarmupPhase({
                     )}>
                       {isPassiveStep ? <BookOpen className="size-3" /> : i + 1}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{step.label}</span>
+                    <span className="line-clamp-2 min-w-0 max-w-full overflow-hidden break-all leading-5 [overflow-wrap:anywhere]">
+                      {step.label}
+                    </span>
                     <span className={cn(
-                      'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                      'max-w-[4.5rem] shrink-0 truncate rounded-full px-2 py-0.5 text-[10px] font-medium',
                       isPassiveStep
                         ? 'bg-muted text-muted-foreground'
                         : score === 'strong'
@@ -2023,7 +2040,7 @@ export function PracticeSessionPage() {
         <Dialog open={guidedOpen} onOpenChange={(open) => { setGuidedOpen(open); if (!open) setImmersiveMode(false) }}>
           <DialogContent
             data-keyboard-overlay="practice"
-            className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden"
+            className="!z-[10000] flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden"
           >
             <DialogTitle className="sr-only">知识点练习</DialogTitle>
             <DialogDescription className="sr-only">输出热身练习</DialogDescription>

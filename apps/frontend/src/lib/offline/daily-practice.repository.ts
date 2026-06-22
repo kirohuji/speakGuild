@@ -11,6 +11,7 @@ import { syncOutbox } from './sync-outbox'
 
 export type DailyPracticeStatus = 'new' | 'review' | 'overdue' | 'done' | 'mastered'
 export type DailyPracticeScope = 'single' | 'mixed'
+export type DailyPracticePlanMode = 'review' | 'practice'
 
 export interface DailyPracticeProgress {
   id: string
@@ -77,6 +78,10 @@ export interface TopicDailyPracticeStats {
 export interface DailyPracticePlan {
   date: string
   scope: DailyPracticeScope
+  mode: DailyPracticePlanMode
+  dailyGoal: number
+  availableReviewCount: number
+  practicePoolCount: number
   units: UnitDetail[]
   steps: ScheduledDailyPracticeItem[]
   topicStats: TopicDailyPracticeStats[]
@@ -333,12 +338,26 @@ function buildTopicStats(
   }))
 }
 
+function shuffleItems<T>(items: T[]) {
+  const shuffled = [...items]
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export const dailyPracticeRepository = {
-  async buildTodayPlan(targetPackId?: string | null, targetDate?: string | null): Promise<DailyPracticePlan> {
+  async buildTodayPlan(
+    targetPackId?: string | null,
+    targetDate?: string | null,
+    mode: DailyPracticePlanMode = 'review',
+  ): Promise<DailyPracticePlan> {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
     const dailyGoal = preferences.dailyGoal
     const packScope: DailyPracticeScope = preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
+    const practiceOrderPool = preferences.dailyPracticeRandomOrder ? shuffleItems : <T,>(items: T[]) => items
     const units = await loadCandidateUnits(packScope, targetPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
@@ -358,10 +377,12 @@ export const dailyPracticeRepository = {
 
     const overdue = withStatus.filter((x) => x.status === 'overdue')
     const review = withStatus.filter((x) => x.status === 'review')
-    const fresh = withStatus
-      .filter((x) => x.status === 'new')
-      .slice(0, dailyGoal)
-    const scheduled = [...overdue, ...review, ...fresh].map(({ candidate, progress, status }) => ({
+    const reviewBacklog = [...overdue, ...review]
+    const practicePool = withStatus.filter((x) => x.status !== 'mastered' && x.status !== 'done')
+    const scheduledSource = mode === 'review'
+      ? reviewBacklog
+      : practiceOrderPool(practicePool).slice(0, dailyGoal)
+    const scheduled = scheduledSource.map(({ candidate, progress, status }) => ({
       ...candidate,
       progress,
       scheduleStatus: status,
@@ -371,6 +392,7 @@ export const dailyPracticeRepository = {
       id: `daily:${date}`,
       date,
       scope: packScope,
+      mode,
       packIds: units.map((unit) => unit.id),
       packIdsKey: units.map((unit) => unit.id).join(','),
       scheduledItemIds: scheduled.map((step) => step.itemId),
@@ -378,7 +400,7 @@ export const dailyPracticeRepository = {
       stats: {
         overdue: overdue.length,
         review: review.length,
-        new: fresh.length,
+        new: scheduled.filter((step) => step.scheduleStatus === 'new').length,
       },
     }
     await localDb.put('daily_practice_runs', run)
@@ -389,6 +411,10 @@ export const dailyPracticeRepository = {
     return {
       date,
       scope: packScope,
+      mode,
+      dailyGoal,
+      availableReviewCount: reviewBacklog.length,
+      practicePoolCount: practicePool.length,
       units,
       steps: scheduled,
       topicStats: buildTopicStats(units, candidates, progressMap, scheduled, date),

@@ -38,6 +38,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setDailyGoal,
     dailyPracticeMixedPacks,
     setDailyPracticeMixedPacks,
+    dailyPracticeRandomOrder,
+    setDailyPracticeRandomOrder,
     learningReminderEnabled,
     setLearningReminderEnabled,
     learningReminderTime,
@@ -269,6 +271,16 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             <Switch
               checked={dailyPracticeMixedPacks}
               onCheckedChange={setDailyPracticeMixedPacks}
+            />
+          }
+        />
+        <IosRow
+          label="今日练习随机出题"
+          subtitle={dailyPracticeRandomOrder ? '今日练习会从题池随机抽一组' : '今日练习会按内容顺序取下一组'}
+          right={
+            <Switch
+              checked={dailyPracticeRandomOrder}
+              onCheckedChange={setDailyPracticeRandomOrder}
             />
           }
         />

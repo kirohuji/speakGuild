@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import {
   dailyPracticeRepository,
   type DailyPracticePlan,
+  type DailyPracticePlanMode,
   type ScheduledDailyPracticeItem,
 } from '@/lib/offline/daily-practice.repository'
 import type { WarmupRecordEntry, WarmupScore } from '@/stores/warmup-session.store'
@@ -11,10 +12,10 @@ interface DailyPracticeState {
   loading: boolean
   error: string | null
   submitting: boolean
-  loadToday: (targetPackId?: string | null, targetDate?: string | null) => Promise<void>
+  loadToday: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode) => Promise<void>
   completeStep: (step: ScheduledDailyPracticeItem, score: WarmupScore) => Promise<void>
   submitToday: (records: WarmupRecordEntry[]) => Promise<void>
-  reshuffle: (targetPackId?: string | null, targetDate?: string | null) => Promise<void>
+  reshuffle: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode) => Promise<void>
 }
 
 export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
@@ -23,10 +24,10 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   error: null,
   submitting: false,
 
-  async loadToday(targetPackId, targetDate) {
+  async loadToday(targetPackId, targetDate, mode = 'review') {
     set({ loading: true, error: null })
     try {
-      const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate)
+      const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate, mode)
       set({ plan, loading: false })
     } catch (error: any) {
       set({ error: error?.message || '加载失败', loading: false, plan: null })
@@ -77,7 +78,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
     }
   },
 
-  async reshuffle(targetPackId, targetDate) {
-    await get().loadToday(targetPackId, targetDate)
+  async reshuffle(targetPackId, targetDate, mode) {
+    await get().loadToday(targetPackId, targetDate, mode)
   },
 }))

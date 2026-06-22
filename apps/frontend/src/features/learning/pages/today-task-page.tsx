@@ -22,8 +22,9 @@ import { PatternDrillCard } from '@/features/practice/components/pattern-drill-c
 import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
-import type { DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
+import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
+import { usePreferencesStore } from '@/stores/preferences.store'
 
 // ── 类型 ──
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
@@ -86,9 +87,9 @@ const TYPE_META: Record<string, { label: string; icon: typeof PenLine; color: st
 }
 
 const TOPIC_STATUS_META: Record<DailyPracticeStatus, { label: string; badge: string; bar: string }> = {
-  overdue: { label: '逾期累积', badge: 'border-red-300 text-red-600 bg-red-500/10', bar: 'bg-red-500' },
+  overdue: { label: '超期未复', badge: 'border-red-300 text-red-600 bg-red-500/10', bar: 'bg-red-500' },
   review: { label: '今日复习', badge: 'border-amber-300 text-amber-700 bg-amber-500/10', bar: 'bg-amber-500' },
-  new: { label: '今日待练', badge: 'border-blue-300 text-blue-600 bg-blue-500/10', bar: 'bg-blue-500' },
+  new: { label: '今日待练', badge: 'border-blue-300 text-blue-600 bg-blue-500/10', bar: 'bg-muted-foreground/45' },
   done: { label: '今日完成', badge: 'border-emerald-300 text-emerald-600 bg-emerald-500/10', bar: 'bg-emerald-500' },
   mastered: { label: '短期掌握', badge: 'border-violet-300 text-violet-600 bg-violet-500/10', bar: 'bg-violet-500' },
 }
@@ -96,7 +97,7 @@ const TOPIC_STATUS_META: Record<DailyPracticeStatus, { label: string; badge: str
 // ── 组件 ──
 export function TodayTaskPage() {
   const warmupStore = useWarmupSessionStore()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const targetPackId = searchParams.get('packId') || null
   const targetDate = searchParams.get('date') || null
   const plan = useDailyPracticeStore((s) => s.plan)
@@ -106,6 +107,7 @@ export function TodayTaskPage() {
   const loadToday = useDailyPracticeStore((s) => s.loadToday)
   const completeStep = useDailyPracticeStore((s) => s.completeStep)
   const submitToday = useDailyPracticeStore((s) => s.submitToday)
+  const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
 
   // 练习状态
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -113,12 +115,20 @@ export function TodayTaskPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
+  const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
+  const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
+  const [reviewRunNonce, setReviewRunNonce] = useState(0)
+  const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || 'review'
+  const [planRunSeed, setPlanRunSeed] = useState(0)
 
   useEffect(() => {
     warmupStore.clearSession()
     setHasSubmittedToday(false)
-    loadToday(targetPackId, targetDate)
-  }, [loadToday, targetPackId, targetDate])
+    setReviewRoundStarted(false)
+    setReviewRoundFinished(false)
+    setReviewRunNonce(0)
+    loadToday(targetPackId, targetDate, planMode)
+  }, [loadToday, targetPackId, targetDate, planMode, planRunSeed])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))
@@ -136,6 +146,25 @@ export function TodayTaskPage() {
 
   // ── 自动提交状态（effect 移至 doneCount/steps 声明之后）──
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
+
+  const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('mode', nextMode)
+      return next
+    })
+    setPlanRunSeed(Date.now())
+    setCurrentIdx(0)
+    setDoneIds(new Set())
+    setDrawerOpen(false)
+    setPlaylistOpen(false)
+    setRecordsOpen(false)
+    setReviewRoundStarted(false)
+    setReviewRoundFinished(false)
+    setReviewRunNonce(0)
+    setHasSubmittedToday(false)
+    warmupStore.clearSession()
+  }, [warmupStore])
 
   // ── 构建练习列表 ──
   const steps = useMemo<PracticeItem[]>(() => {
@@ -247,6 +276,33 @@ export function TodayTaskPage() {
   // ── 进度统计 ──
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
   const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
+  const allDone = steps.length > 0 && doneCount >= steps.length
+  const weakRecords = useMemo(
+    () => warmupStore.records.filter((record) => record.score === 'weak' || record.score === 'miss'),
+    [warmupStore.records],
+  )
+  const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
+  const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundStarted && !reviewRoundFinished
+
+  const startWeakReviewRound = useCallback(() => {
+    if (weakStepIds.size === 0) return
+    setReviewRoundStarted(true)
+    setReviewRoundFinished(false)
+    setReviewRunNonce((value) => value + 1)
+    setDoneIds((prev) => new Set([...prev].filter((id) => !weakStepIds.has(id))))
+    warmupStore.resetSteps([...weakStepIds])
+    const firstWeakIndex = steps.findIndex((step) => weakStepIds.has(step.id))
+    if (firstWeakIndex >= 0) {
+      setCurrentIdx(firstWeakIndex)
+      setDrawerOpen(true)
+    }
+  }, [steps, warmupStore, weakStepIds])
+
+  useEffect(() => {
+    if (allDone && reviewRoundStarted && !reviewRoundFinished) {
+      setReviewRoundFinished(true)
+    }
+  }, [allDone, reviewRoundFinished, reviewRoundStarted])
 
   // ── 按状态分组统计（用于分段进度条）──
   const statusCounts = useMemo(() => {
@@ -264,7 +320,7 @@ export function TodayTaskPage() {
   const SEGMENT_COLORS: Record<string, string> = {
     overdue: 'bg-red-500',
     review: 'bg-amber-500',
-    new: 'bg-blue-500',
+    new: 'bg-muted-foreground/45',
     done: 'bg-emerald-500',
   }
 
@@ -284,22 +340,33 @@ export function TodayTaskPage() {
     )
   }
 
-  const topSegments = useMemo(() => [
-    { key: 'overdue', count: statusCounts.overdue, color: SEGMENT_COLORS.overdue },
-    { key: 'review', count: statusCounts.review, color: SEGMENT_COLORS.review },
-    { key: 'new', count: statusCounts.new, color: SEGMENT_COLORS.new },
-    { key: 'done', count: statusCounts.done, color: SEGMENT_COLORS.done },
-  ], [statusCounts])
+  const topSegments = useMemo(() => {
+    if (plan?.mode === 'practice') {
+      const pending = steps.length - statusCounts.done
+      return [
+        { key: 'done', count: statusCounts.done, color: 'bg-emerald-500' },
+        { key: 'pending', count: pending, color: 'bg-muted-foreground/30' },
+      ]
+    }
+    return [
+      { key: 'overdue', count: statusCounts.overdue, color: SEGMENT_COLORS.overdue },
+      { key: 'review', count: statusCounts.review, color: SEGMENT_COLORS.review },
+      { key: 'new', count: statusCounts.new, color: SEGMENT_COLORS.new },
+      { key: 'done', count: statusCounts.done, color: SEGMENT_COLORS.done },
+    ]
+  }, [statusCounts, steps.length, plan?.mode])
+  const practiceOrderLabel = dailyPracticeRandomOrder ? '随机抽题' : '顺序出题'
+  const activeModeLabel = plan?.mode === 'review' ? '复习清单' : '练习组'
 
   // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
   useEffect(() => {
     if (hasSubmittedToday || steps.length === 0) return
-    if (doneCount < steps.length) return
+    if (!allDone || needsReviewRound) return
 
     const submit = async () => {
       try {
         await submitToday(warmupStore.records)
-        console.log('[today-task] ✅ 今日练习已提交 |', doneCount, '题')
+        console.log('[today-task] ✅ 本组练习已提交 |', doneCount, '题')
       } catch (err) {
         console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
       } finally {
@@ -308,7 +375,7 @@ export function TodayTaskPage() {
     }
 
     submit()
-  }, [doneCount, steps.length, hasSubmittedToday, warmupStore.records, submitToday])
+  }, [allDone, needsReviewRound, steps.length, hasSubmittedToday, warmupStore.records, submitToday])
 
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
@@ -363,7 +430,7 @@ export function TodayTaskPage() {
   if (loading && !plan) return <MobilePageLoading rows={4} />
 
   // ── 空态 ──
-  if (error || (!loading && (!plan || steps.length === 0))) {
+  if (error || (!loading && !plan)) {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -418,14 +485,43 @@ export function TodayTaskPage() {
       </div>
 
       {/* ── 进度条 ── */}
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => switchPlanMode('review')}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-left transition-colors active:scale-[0.98]',
+            plan.mode === 'review'
+              ? 'border-amber-400 bg-amber-500/10 text-foreground'
+              : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/35',
+          )}
+        >
+          <span className="block text-sm font-semibold">今日复习</span>
+          <span className="mt-0.5 block text-[11px]">到期/超期 {plan.availableReviewCount} 题</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => switchPlanMode('practice')}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-left transition-colors active:scale-[0.98]',
+            plan.mode === 'practice'
+              ? 'border-blue-400 bg-blue-500/10 text-foreground'
+              : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/35',
+          )}
+        >
+          <span className="block text-sm font-semibold">今日练习</span>
+          <span className="mt-0.5 block text-[11px]">{practiceOrderLabel} {Math.min(plan.dailyGoal, plan.practicePoolCount)} / {plan.practicePoolCount}</span>
+        </button>
+      </div>
+
       <div className="mb-5 rounded-lg bg-muted/30 p-3.5">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ListChecks className="size-4 text-primary" />
-            <p className="text-sm font-semibold text-foreground">今日进度</p>
+            <p className="text-sm font-semibold text-foreground">{activeModeLabel}进度</p>
             {hasSubmittedToday && donePercent >= 100 && (
               <Badge variant="default" className="h-5 rounded-full px-2 text-[10px] bg-green-500/15 text-green-600">
-                <CheckCircle2 className="mr-0.5 size-3" /> 已打卡
+                <CheckCircle2 className="mr-0.5 size-3" /> 已完成
               </Badge>
             )}
             {submitting && (
@@ -444,11 +540,35 @@ export function TodayTaskPage() {
           </Badge>
         </div>
         <SegmentedBar segments={topSegments} />
+        {plan.mode === 'practice' && (
+          <button
+            type="button"
+            disabled={!allDone || needsReviewRound}
+            onClick={() => switchPlanMode('practice')}
+            className={cn(
+              'mt-3 flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
+              (!allDone || needsReviewRound)
+                ? 'cursor-not-allowed border-muted-foreground/20 bg-muted/30 text-muted-foreground'
+                : 'border-blue-300/60 bg-blue-500/10 text-blue-700 hover:bg-blue-500/15 dark:text-blue-300',
+            )}
+          >
+            {dailyPracticeRandomOrder ? '再随机一组' : '再练下一组'}
+          </button>
+        )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-          {statusCounts.overdue > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500" />逾期 {statusCounts.overdue}</span>}
-          {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />复习 {statusCounts.review}</span>}
-          {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-blue-500" />新练 {statusCounts.new}</span>}
-          {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />完成 {statusCounts.done}</span>}
+          {plan.mode === 'practice' ? (
+            <>
+              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />完成 {statusCounts.done}</span>}
+              {steps.length - statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />待练 {steps.length - statusCounts.done}</span>}
+            </>
+          ) : (
+            <>
+              {statusCounts.overdue > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500" />超期 {statusCounts.overdue}</span>}
+              {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />复习 {statusCounts.review}</span>}
+              {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />新练 {statusCounts.new}</span>}
+              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />完成 {statusCounts.done}</span>}
+            </>
+          )}
           {statusCounts.overdue === 0 && statusCounts.review === 0 && statusCounts.new === 0 && statusCounts.done === 0 && (
             <span className="text-muted-foreground/50">暂无练习</span>
           )}
@@ -456,6 +576,20 @@ export function TodayTaskPage() {
       </div>
 
       {/* ── 练习卡片列表 ── */}
+      {steps.length === 0 && (
+        <div className="mb-5 rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
+          <Target className="mx-auto size-9 text-muted-foreground/35" />
+          <p className="mt-3 text-sm font-medium text-foreground">
+            {plan.mode === 'review' ? '今天没有到期复习题' : '暂无可随机练习的题目'}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {plan.mode === 'review'
+              ? `可以切到「今日练习」${dailyPracticeRandomOrder ? '随机抽一组' : '按顺序取一组'}继续练。`
+              : '先下载或选择包含知识点练习的学习包。'}
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2.5">
         {groupedSteps.map((group) => {
           const Icon = group.meta.icon
@@ -520,61 +654,93 @@ export function TodayTaskPage() {
         })}
       </div>
 
-      {/* ── 今日话题快捷入口 ── */}
-      {plan.topicStats.length > 0 && (
-        <>
-          <Separator className="my-6" />
-          <section>
-            {/* <div className="mb-3 flex items-center gap-2">
-              <Package className="size-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">今日话题</h2>
-              <span className="text-xs text-muted-foreground">快捷练习入口</span>
-            </div> */}
-            <div className="space-y-1.5">
-              {plan.topicStats.map((topic, index) => {
-                const statusMeta = TOPIC_STATUS_META[topic.status]
-                const detail = [
-                  topic.overdueCount > 0 ? `逾期 ${topic.overdueCount}` : null,
-                  topic.todayReviewCount > 0 ? `复习 ${topic.todayReviewCount}` : null,
-                  topic.todayNewCount > 0 ? `新练 ${topic.todayNewCount}` : null,
-                ].filter(Boolean).join(' · ')
-                return (
-                  <Link
-                    key={topic.topicId}
-                    to={`/practice/session/${topic.topicId}`}
-                    className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3 transition-colors hover:bg-muted/50 active:scale-[0.98]"
-                  >
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                      {index + 1}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <p className="line-clamp-1 flex-1 text-sm font-medium text-foreground">{topic.topicTitle}</p>
-                        <Badge variant="outline" className={cn('shrink-0 rounded-full text-[10px]', statusMeta.badge)}>{statusMeta.label}</Badge>
+      {/* ── 今日话题快捷入口（按当前模式过滤）── */}
+      {plan.topicStats.length > 0 && (() => {
+        const isReviewMode = plan.mode === 'review'
+        const filteredTopics = isReviewMode
+          ? plan.topicStats.filter((t) => t.overdueCount > 0 || t.todayReviewCount > 0)
+          : plan.topicStats
+
+        if (filteredTopics.length === 0) return null
+
+        return (
+          <>
+            <Separator className="my-6" />
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {isReviewMode ? '待复习话题' : '当前学习话题'}
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {isReviewMode ? `${filteredTopics.length} 个话题有待复习项` : `${filteredTopics.length} 个话题`}
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {filteredTopics.map((topic, index) => {
+                  const statusMeta = TOPIC_STATUS_META[topic.status]
+                  const detail = isReviewMode
+                    ? [
+                        topic.overdueCount > 0 ? `超期 ${topic.overdueCount}` : null,
+                        topic.todayReviewCount > 0 ? `复习 ${topic.todayReviewCount}` : null,
+                        topic.todayNewCount > 0 ? `新练 ${topic.todayNewCount}` : null,
+                      ].filter(Boolean).join(' · ')
+                    : null
+                  const unPracticed = topic.totalCount - topic.doneTodayCount - topic.masteredCount
+                  return (
+                    <Link
+                      key={topic.topicId}
+                      to={`/practice/session/${topic.topicId}?mode=${plan.mode}`}
+                      className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3 transition-colors hover:bg-muted/50 active:scale-[0.98]"
+                    >
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                        {index + 1}
                       </div>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {topic.activeChunksCount} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟{detail ? ` · ${detail}` : ''}
-                      </p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <SegmentedBar
-                          segments={[
-                            { key: 'overdue', count: topic.overdueCount, color: SEGMENT_COLORS.overdue },
-                            { key: 'review', count: topic.todayReviewCount, color: SEGMENT_COLORS.review },
-                            { key: 'new', count: topic.todayNewCount, color: SEGMENT_COLORS.new },
-                            { key: 'done', count: topic.doneTodayCount, color: SEGMENT_COLORS.done },
-                          ]}
-                        />
-                        <span className="w-8 text-right text-[10px] tabular-nums text-muted-foreground">{topic.topicWarmupProgress}%</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="line-clamp-1 flex-1 text-sm font-medium text-foreground">{topic.topicTitle}</p>
+                          <Badge variant="outline" className={cn('shrink-0 rounded-full text-[10px]', isReviewMode ? statusMeta.badge : 'border-muted-foreground/30 text-muted-foreground')}>
+                            {isReviewMode
+                              ? statusMeta.label
+                              : unPracticed > 0
+                                ? `${unPracticed} 待练`
+                                : '已完成'}
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {topic.activeChunksCount} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟{detail ? ` · ${detail}` : ''}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <SegmentedBar
+                            segments={isReviewMode
+                              ? [
+                                  { key: 'overdue', count: topic.overdueCount, color: SEGMENT_COLORS.overdue },
+                                  { key: 'review', count: topic.todayReviewCount, color: SEGMENT_COLORS.review },
+                                  { key: 'new', count: topic.todayNewCount, color: SEGMENT_COLORS.new },
+                                  { key: 'done', count: topic.doneTodayCount, color: SEGMENT_COLORS.done },
+                                ]
+                              : [
+                                  { key: 'done', count: topic.doneTodayCount + topic.masteredCount, color: 'bg-emerald-500' },
+                                  { key: 'pending', count: unPracticed, color: 'bg-muted-foreground/30' },
+                                ]
+                            }
+                          />
+                          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                            {isReviewMode
+                              ? `未复习 ${topic.overdueCount + topic.todayReviewCount}`
+                              : `已练 ${topic.doneTodayCount + topic.masteredCount}/${topic.totalCount}`
+                            }
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        </>
-      )}
+                      <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
+                    </Link>
+                  )
+                })}
+              </div>
+            </section>
+          </>
+        )
+      })()}
 
       {/* ── 练习 Dialog（与 LearningInsightDialog 完全统一）── */}
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -617,7 +783,7 @@ export function TodayTaskPage() {
 
             {/* Body */}
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 md:px-6">
-              <div key={currentStep?.id}>
+              <div key={`${currentStep?.id}:${reviewRunNonce}`}>
                 {currentStep?.render()}
               </div>
             </div>
@@ -639,7 +805,10 @@ export function TodayTaskPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => setPlaylistOpen(true)}
+                  onClick={(event) => {
+                    event.currentTarget.blur()
+                    setPlaylistOpen(true)
+                  }}
                   title="题目列表"
                 >
                   <ListMusic className="size-4" />
@@ -652,9 +821,9 @@ export function TodayTaskPage() {
 
       {/* ── 题目列表 Drawer ── */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className="h-[100dvh] rounded-none pt-safe">
+        <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
           <div className="flex items-center justify-between px-5 py-3">
-            <DrawerTitle className="text-lg">今日练习</DrawerTitle>
+            <DrawerTitle className="text-lg">{plan.mode === 'review' ? '今日复习题目' : '今日练习题目'}</DrawerTitle>
             <button
               type="button"
               onClick={() => setPlaylistOpen(false)}
@@ -695,6 +864,44 @@ export function TodayTaskPage() {
       </Drawer>
 
       {/* ── 练习记录 Drawer ── */}
+      <Dialog
+        open={needsReviewRound}
+        onOpenChange={(open) => {
+          if (!open) startWeakReviewRound()
+        }}
+      >
+        <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
+          <DialogTitle className="text-base">还有 {weakStepIds.size} 题需要再稳一下</DialogTitle>
+          <DialogDescription className="text-sm leading-6">
+            刚才答错、跳过，或者看了答案才完成的题，会先集中复练一轮。复练完成后再自动提交本组记录。
+          </DialogDescription>
+          <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-2">
+            {weakRecords.slice(0, 5).map((record) => {
+              const step = steps.find((item) => item.id === record.stepId)
+              return (
+                <div key={record.stepId} className="rounded-lg bg-background px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={record.score === 'miss' ? 'destructive' : 'secondary'} className="shrink-0 text-[10px]">
+                      {record.score === 'miss' ? '不会' : '待稳'}
+                    </Badge>
+                    <span className="truncate text-xs font-medium text-muted-foreground">
+                      {step?.displayLabel || '练习'}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-1 text-sm text-foreground">{record.zh}</p>
+                </div>
+              )
+            })}
+            {weakRecords.length > 5 && (
+              <p className="px-1 text-[11px] text-muted-foreground">还有 {weakRecords.length - 5} 题会一起复练。</p>
+            )}
+          </div>
+          <Button className="w-full" onClick={startWeakReviewRound}>
+            开始错题再练
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       <TodayRecordsDrawer
         open={recordsOpen}
         onOpenChange={setRecordsOpen}

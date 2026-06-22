@@ -34,6 +34,10 @@ export function SettingsTab() {
     setNativeSpeechRecognitionEnabled,
     dailyGoal,
     setDailyGoal,
+    dailyPracticeMixedPacks,
+    setDailyPracticeMixedPacks,
+    dailyPracticeRandomOrder,
+    setDailyPracticeRandomOrder,
     learningReminderEnabled,
     setLearningReminderEnabled,
     learningReminderTime,
@@ -200,6 +204,30 @@ export function SettingsTab() {
               <SelectItem value={20}>{t('profile.dailyGoal20')}</SelectItem>
               <SelectItem value={30}>{t('profile.dailyGoal30')}</SelectItem>
             </Select>
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>跨学习包混合排程</Label>
+              <p className="text-xs text-muted-foreground">
+                {dailyPracticeMixedPacks ? '今日任务可从多个已安装学习包混合安排' : '今日任务只从一个学习包安排'}
+              </p>
+            </div>
+            <Switch checked={dailyPracticeMixedPacks} onCheckedChange={setDailyPracticeMixedPacks} />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>今日练习随机出题</Label>
+              <p className="text-xs text-muted-foreground">
+                {dailyPracticeRandomOrder ? '今日练习会从题池随机抽一组' : '今日练习会按内容顺序取下一组'}
+              </p>
+            </div>
+            <Switch checked={dailyPracticeRandomOrder} onCheckedChange={setDailyPracticeRandomOrder} />
           </div>
 
           <Separator />
