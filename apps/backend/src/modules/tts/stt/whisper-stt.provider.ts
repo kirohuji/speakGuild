@@ -25,21 +25,22 @@ export class WhisperSttProvider extends SttProvider {
     await fs.writeFile(tempFile, input.audioBuffer);
 
     try {
-      return await this.callWhisper(whisperUrl, tempFile, input.fileName);
+      return await this.callWhisper(whisperUrl, tempFile, input.fileName, input.language);
     } finally {
       await fs.unlink(tempFile).catch(() => undefined);
     }
   }
 
-  private async callWhisper(url: string, audioPath: string, fileName: string): Promise<SttTranscribeResult> {
+  private async callWhisper(url: string, audioPath: string, fileName: string, language?: string): Promise<SttTranscribeResult> {
     try {
       const buf = await fs.readFile(audioPath);
       const form = new FormData();
       form.append('file', new Blob([new Uint8Array(buf)]), fileName);
       form.append('response_format', 'verbose_json');
       form.append('temperature', '0.2');
-      const language = process.env.WHISPER_LANGUAGE?.trim();
-      if (language) form.append('language', language);
+      // 优先使用请求传入的 language，否则回退到环境变量
+      const lang = language?.trim() || process.env.WHISPER_LANGUAGE?.trim();
+      if (lang) form.append('language', lang);
 
       const { default: axios } = await import('axios');
       const { data } = await axios.post<any>(url, form, {

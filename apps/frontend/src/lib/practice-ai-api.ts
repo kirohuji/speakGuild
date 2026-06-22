@@ -28,9 +28,14 @@ export interface WordEnrichmentResult {
 }
 
 /** 上传录音 → Whisper 转写 */
-export const transcribeRecording = (audioBlob: Blob, filename = 'recording.webm'): Promise<TranscribeRecordingResult> => {
+export const transcribeRecording = (
+  audioBlob: Blob,
+  filename = 'recording.webm',
+  language?: string,
+): Promise<TranscribeRecordingResult> => {
   const form = new FormData()
   form.append('audio', audioBlob, filename)
+  if (language) form.append('language', language)
   return instance.post('/tts/transcribe-recording', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 120_000,

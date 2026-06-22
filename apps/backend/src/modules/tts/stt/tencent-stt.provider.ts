@@ -146,9 +146,9 @@ export class TencentSttProvider extends SttProvider {
     const voiceFormat = VOICE_FORMAT_MAP[ext] ?? VOICE_FORMAT_MAP[input.mimeType.split('/')[1]] ?? 'ogg-opus';
     const audioBase64 = input.audioBuffer.toString('base64');
 
-    // 推断引擎类型（根据语言设置）
-    const language = (process.env.WHISPER_LANGUAGE?.trim() || process.env.STT_LANGUAGE?.trim() || 'en').toLowerCase();
-    const engSerViceType = language === 'zh' || language === 'zh-cn' ? '16k_zh' : '16k_en';
+    // 推断引擎类型（优先使用请求传入的语言，否则回退到环境变量）
+    const lang = (input.language?.trim() || process.env.STT_LANGUAGE?.trim() || process.env.WHISPER_LANGUAGE?.trim() || 'en').toLowerCase();
+    const engSerViceType = lang === 'zh' || lang === 'zh-cn' ? '16k_zh' : '16k_en';
 
     const payload = {
       ProjectId: 0,

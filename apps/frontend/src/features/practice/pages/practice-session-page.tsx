@@ -4,7 +4,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight, ChevronLeft, ListMusic,
-  BookText, Search, BookmarkPlus, History, Settings, ChevronDown, Loader2,
+  BookText, Search, BookmarkPlus, History, Settings, ChevronDown, Loader2, MessageSquareText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -1113,6 +1113,7 @@ export function PracticeSessionPage() {
 
   // 按 tab 懒加载：vocab → word, chunk → chunk
   const [prepTab, setPrepTab] = useState('vocab')
+  const [prepCollapsed, setPrepCollapsed] = useState(true)
   const loadedPrepTabs = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (loadedPrepTabs.current.has(prepTab)) return
@@ -1767,11 +1768,23 @@ export function PracticeSessionPage() {
             <div className="mb-3 flex items-end justify-between gap-3 px-1">
               <div>
                 <h2 className="text-base font-semibold text-foreground">{t('practiceSession.preparationTitle')}</h2>
+                {!prepCollapsed && (
                 <p className="mt-0.5 text-xs text-muted-foreground">{t('practiceSession.preparationSubtitle')}</p>
+                )}
               </div>
-              <Badge variant="outline" className="rounded-full text-[11px]">
-                {detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0)} {t('practiceSession.items')}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="rounded-full text-[11px]">
+                  {detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0)} {t('practiceSession.items')}
+                </Badge>
+                <button
+                  type="button"
+                  onClick={() => setPrepCollapsed((prev) => !prev)}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                  aria-label={prepCollapsed ? '展开本题准备' : '收起本题准备'}
+                >
+                  <ChevronDown className={cn('size-4 transition-transform duration-200', prepCollapsed && '-rotate-90')} />
+                </button>
+              </div>
             </div>
 
             <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
@@ -1784,7 +1797,7 @@ export function PracticeSessionPage() {
               <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
                 {detail.vocabularies.length > 0 ? (
                   <div className="space-y-2">
-                    {vocabPageItems.items.map((v) => {
+                    {(prepCollapsed ? detail.vocabularies.slice(0, 2) : vocabPageItems.items).map((v) => {
                       const isExpanded = expandedVocabId === v.id
                       return (
                         <Card
@@ -1829,12 +1842,14 @@ export function PracticeSessionPage() {
                         </Card>
                       )
                     })}
+                    {!prepCollapsed && (
                     <PrepPager
                       currentPage={vocabPageItems.currentPage}
                       totalPages={vocabPageItems.totalPages}
                       totalItems={detail.vocabularies.length}
                       onPageChange={(page) => changePrepPage('vocab', page)}
                     />
+                    )}
                   </div>
                 ) : (
                   <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('practiceSession.noVocab')}</p>
@@ -1843,7 +1858,7 @@ export function PracticeSessionPage() {
 
               <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow>
                 <ChunkActivationPanel
-                  chunks={chunkPageItems.items}
+                  chunks={prepCollapsed ? detail.activeChunks.slice(0, 2) : chunkPageItems.items}
                   totalCount={detail.activeChunks.length}
                   collectedCount={detail.activeChunks.filter((chunk) => collectedTexts.has(chunk.text)).length}
                   activatedIds={activatedChunks}
@@ -1856,6 +1871,7 @@ export function PracticeSessionPage() {
                   onCollect={handleCollectChunk}
                   onRemove={(chunk) => handleRemoveExpression('chunk', chunk.text)}
                 />
+                {!prepCollapsed && (
                 <div className="mt-2">
                   <PrepPager
                     currentPage={chunkPageItems.currentPage}
@@ -1864,13 +1880,14 @@ export function PracticeSessionPage() {
                     onPageChange={(page) => changePrepPage('chunk', page)}
                   />
                 </div>
+                )}
               </TabsContent>
 
               <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow>
                 {detail.sentencePatterns?.length ? (
                   <div className="space-y-2">
-                    {patternPageItems.items.map((p, index) => {
-                      const absoluteIndex = patternPageItems.startIndex + index
+                    {(prepCollapsed ? (detail.sentencePatterns ?? []).slice(0, 2) : patternPageItems.items).map((p, index) => {
+                      const absoluteIndex = prepCollapsed ? (detail.sentencePatterns ?? []).indexOf(p) : patternPageItems.startIndex + index
                       const isExpanded = expandedPatternIdx === absoluteIndex
                       return (
                         <Card key={`${p.pattern}-${absoluteIndex}`} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
@@ -1910,18 +1927,31 @@ export function PracticeSessionPage() {
                         </Card>
                       )
                     })}
+                    {!prepCollapsed && (
                     <PrepPager
                       currentPage={patternPageItems.currentPage}
                       totalPages={patternPageItems.totalPages}
                       totalItems={detail.sentencePatterns?.length ?? 0}
                       onPageChange={(page) => changePrepPage('pattern', page)}
                     />
+                    )}
                   </div>
                 ) : (
                   <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('learning.noPatterns')}</p>
                 )}
               </TabsContent>
             </Tabs>
+
+            {prepCollapsed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-3 w-full gap-1.5 text-xs text-muted-foreground"
+              onClick={() => setPrepCollapsed(false)}
+            >
+              <ChevronDown className="size-3.5" /> 展开全部（{detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0)} 项）
+            </Button>
+            )}
           </section>
 
           <section className="rounded-lg bg-accent/[0.06] p-4">

@@ -26,7 +26,7 @@ export class TtsService {
   }
 
   /** 用户录音 → STT 转写，返回文本 + 词时间戳 + 音频 COS URL */
-  async transcribeRecording(audioBuffer: Buffer, originalname: string): Promise<{
+  async transcribeRecording(audioBuffer: Buffer, originalname: string, language?: string): Promise<{
     audioBase64: string;
     mimeType: string;
     text: string | null;
@@ -49,6 +49,7 @@ export class TtsService {
       audioBuffer,
       mimeType,
       fileName: originalname,
+      language,
     });
 
     // 转写成功后，将用户录音保存到 COS，方便后续回放

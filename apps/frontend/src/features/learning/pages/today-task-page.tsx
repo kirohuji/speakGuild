@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight, BookOpen, BookText, Braces, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, ListChecks, ListMusic, MessageSquareText, Target,
-  CheckCircle2, RefreshCw,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -133,15 +133,6 @@ export function TodayTaskPage() {
       return next
     })
   }, [completeStep, plan?.steps])
-
-  const handleReshuffle = useCallback(() => {
-    warmupStore.clearSession()
-    setDoneIds(new Set())
-    setHasSubmittedToday(false)
-    setCurrentIdx(0)
-    setDrawerOpen(false)
-    loadToday(targetPackId, targetDate)
-  }, [loadToday, targetPackId, targetDate, warmupStore])
 
   // ── 自动提交状态（effect 移至 doneCount/steps 声明之后）──
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
@@ -368,11 +359,11 @@ export function TodayTaskPage() {
   const gotoPrev = useCallback(() => setCurrentIdx((p) => Math.max(0, p - 1)), [])
   const gotoNext = useCallback(() => setCurrentIdx((p) => Math.min(steps.length - 1, p + 1)), [steps.length])
 
-  // ── 加载态 ──
-  if (loading) return <MobilePageLoading rows={4} />
+  // ── 加载态：仅在无缓存数据时展示 ──
+  if (loading && !plan) return <MobilePageLoading rows={4} />
 
   // ── 空态 ──
-  if (error || !plan || steps.length === 0) {
+  if (error || (!loading && (!plan || steps.length === 0))) {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -414,14 +405,7 @@ export function TodayTaskPage() {
           )}
         </div>
         <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
-          <button
-            type="button"
-            onClick={(e) => { e.currentTarget.blur(); handleReshuffle() }}
-            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label="换一批题目"
-          >
-            <RefreshCw className="size-[18px]" />
-          </button>
+          {/* 换一批：暂时隐藏，随机逻辑后续统一在 buildTodayPlan 内调整 */}
           <button
             type="button"
             onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
@@ -633,7 +617,7 @@ export function TodayTaskPage() {
 
             {/* Body */}
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 md:px-6">
-              <div key={currentStep?.id} className="min-h-full">
+              <div key={currentStep?.id}>
                 {currentStep?.render()}
               </div>
             </div>

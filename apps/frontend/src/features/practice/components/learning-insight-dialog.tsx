@@ -452,8 +452,8 @@ export function LearningInsightDialog({
             {/* Header - 固定在顶部，关闭按钮在右侧 */}
             <InsightHeader item={current} onClose={() => onOpenChange(false)} />
 
-            {/* Content - 中间弹性区域 */}
-            <div className="flex-1 min-h-0">
+            {/* Content - 中间弹性区域，可滚动 */}
+            <div className="min-h-0 flex-1 overflow-y-auto">
               {current.kind === 'word' && <WordInsight item={current} hideSave={hideSaveActions} />}
               {current.kind === 'chunk' && <ChunkInsightView item={current} hideSave={hideSaveActions} />}
               {current.kind === 'pattern' && <PatternInsightView item={current} hideSave={hideSaveActions} />}

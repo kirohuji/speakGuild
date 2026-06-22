@@ -11,6 +11,8 @@ export interface SttTranscribeInput {
   mimeType: string
   /** 原始文件名（含扩展名） */
   fileName: string
+  /** 可选：指定识别语言（如 zh-CN, en-US），不传则由供应商自行检测 */
+  language?: string
 }
 
 /** 词级别时间戳 */

@@ -19,7 +19,7 @@ interface DailyPracticeState {
 
 export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   plan: null,
-  loading: true,
+  loading: false,
   error: null,
   submitting: false,
 

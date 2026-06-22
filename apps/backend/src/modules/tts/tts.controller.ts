@@ -43,8 +43,11 @@ export class TtsController {
     storage: memoryStorage(),
     limits: { fileSize: 1024 * 1024 * 50 }, // 50 MB
   }))
-  async transcribeRecording(@UploadedFile() file: Express.Multer.File) {
+  async transcribeRecording(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('language') language?: string,
+  ) {
     if (!file) throw new BadRequestException('未收到音频文件');
-    return this.ttsService.transcribeRecording(file.buffer, file.originalname || 'recording.webm');
+    return this.ttsService.transcribeRecording(file.buffer, file.originalname || 'recording.webm', language);
   }
 }

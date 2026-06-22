@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, BookText, MessageSquareText,
   Target,
-  BookmarkPlus, Search,
+  BookmarkPlus, Search, ChevronDown,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +44,17 @@ export function LearningUnitPage() {
 
   // 展开的列表项（点击高亮 + 展开显示详情）
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
+
+  // 知识点区域折叠状态（默认折叠，显示前两行预览）
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set(['prep', 'knowledge']))
+  const toggleSection = useCallback((key: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
 
   // 已收集文本（按需加载，各 tab 独立）
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
@@ -247,20 +258,26 @@ export function LearningUnitPage() {
         <SectionHeader
           eyebrow="1"
           title={t('learning.preparationTitle')}
-          subtitle={t('learning.prepSubtitle')}
+          subtitle={collapsedSections.has('prep') ? undefined : t('learning.prepSubtitle')}
+          collapsible
+          collapsed={collapsedSections.has('prep')}
+          onToggle={() => toggleSection('prep')}
         />
+        {collapsedSections.has('prep') ? (
+        <div className="rounded-lg bg-muted/30 px-4 py-3">
+          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
+            {unit.description || t('learning.prepFallback')}
+          </p>
+        </div>
+        ) : (
         <div className="rounded-lg bg-muted/30 p-4">
           {unit.description ? (
             <p className="text-sm leading-6 text-muted-foreground">{unit.description}</p>
           ) : (
             <p className="text-sm leading-6 text-muted-foreground">{t('learning.prepFallback')}</p>
           )}
-          {/* <div className="mt-4 grid grid-cols-3 gap-2">
-            <UnitMetric label={t('learning.readiness')} value={`${unit.progress?.readiness ?? 0}%`} />
-            <UnitMetric label={t('learning.vocab')} value={`${unit.progress?.vocabLearned ?? 0}/${unit.vocabCount}`} />
-            <UnitMetric label={t('learning.chunks')} value={`${unit.progress?.chunkMastered ?? 0}/${unit.chunkCount}`} />
-          </div> */}
         </div>
+        )}
       </section>
 
       {/* ===== 知识点 ===== */}
@@ -268,8 +285,11 @@ export function LearningUnitPage() {
         <SectionHeader
           eyebrow="2"
           title={t('learning.knowledgePoints')}
-          subtitle={t('learning.knowledgeSubtitle')}
+          subtitle={collapsedSections.has('knowledge') ? undefined : t('learning.knowledgeSubtitle')}
           meta={`${allVocabCount + allChunkCount + patternDialogItems.length}${t('learning.items')}`}
+          collapsible
+          collapsed={collapsedSections.has('knowledge')}
+          onToggle={() => toggleSection('knowledge')}
         />
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3" data-mobile-route-swipe>
@@ -288,25 +308,27 @@ export function LearningUnitPage() {
           <TabsContent value="vocab" className="mt-0 space-y-2" data-mobile-gesture-allow>
             {unit.vocabularies.length > 0 ? (
               <>
-                {vocabPageItems.items.map((vocab, index) => (
+                {(collapsedSections.has('knowledge') ? unit.vocabularies.slice(0, 2) : vocabPageItems.items).map((vocab, index) => (
                   <VocabPrepCard
                     key={vocab.id}
                     vocab={vocab}
                     collected={collectedTexts.has(vocab.word)}
                     expanded={expandedItemId === vocab.id}
                     onToggle={() => handleItemClick(vocab.id)}
-                    onOpen={() => openDialog('vocab', vocabPageItems.startIndex + index)}
+                    onOpen={() => openDialog('vocab', collapsedSections.has('knowledge') ? unit.vocabularies.indexOf(vocab) : vocabPageItems.startIndex + index)}
                     onCollect={() => handleCollectWord(vocab)}
                     onRemove={() => handleRemoveExpression('word', vocab.word)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
                 ))}
+                {!collapsedSections.has('knowledge') && (
                 <PrepPager
                   currentPage={prepPage.vocab}
                   totalPages={vocabPageItems.totalPages}
                   totalItems={unit.vocabularies.length}
                   onPageChange={(page) => changePrepPage('vocab', page)}
                 />
+                )}
               </>
             ) : (
               <EmptyPrepState label={t('learning.noVocab')} />
@@ -316,24 +338,26 @@ export function LearningUnitPage() {
           <TabsContent value="chunk" className="mt-0 space-y-2" data-mobile-gesture-allow>
             {unit.chunks.length > 0 ? (
               <>
-                {chunkPageItems.items.map((chunk, index) => (
+                {(collapsedSections.has('knowledge') ? unit.chunks.slice(0, 2) : chunkPageItems.items).map((chunk, index) => (
                   <ChunkPrepCard
                     key={chunk.id}
                     chunk={chunk}
                     collected={collectedTexts.has(chunk.text)}
                     expanded={expandedItemId === chunk.id}
                     onToggle={() => handleItemClick(chunk.id)}
-                    onOpen={() => openDialog('chunk', chunkPageItems.startIndex + index)}
+                    onOpen={() => openDialog('chunk', collapsedSections.has('knowledge') ? unit.chunks.indexOf(chunk) : chunkPageItems.startIndex + index)}
                     onCollect={() => handleCollectChunk(chunk)}
                     onRemove={() => handleRemoveExpression('chunk', chunk.text)}
                   />
                 ))}
+                {!collapsedSections.has('knowledge') && (
                 <PrepPager
                   currentPage={prepPage.chunk}
                   totalPages={chunkPageItems.totalPages}
                   totalItems={unit.chunks.length}
                   onPageChange={(page) => changePrepPage('chunk', page)}
                 />
+                )}
               </>
             ) : (
               <EmptyPrepState label={t('learning.noChunks')} />
@@ -343,8 +367,8 @@ export function LearningUnitPage() {
           <TabsContent value="pattern" className="mt-0 space-y-2" data-mobile-gesture-allow>
             {unit.sentencePatterns.length > 0 ? (
               <>
-                {patternPageItems.items.map((pattern, index) => {
-                  const absoluteIndex = patternPageItems.startIndex + index
+                {(collapsedSections.has('knowledge') ? unit.sentencePatterns.slice(0, 2) : patternPageItems.items).map((pattern, index) => {
+                  const absoluteIndex = collapsedSections.has('knowledge') ? unit.sentencePatterns!.indexOf(pattern) : patternPageItems.startIndex + index
                   const key = `${pattern.topicId}-${absoluteIndex}`
                   return (
                     <PatternPrepCard
@@ -359,18 +383,31 @@ export function LearningUnitPage() {
                     />
                   )
                 })}
+                {!collapsedSections.has('knowledge') && (
                 <PrepPager
                   currentPage={prepPage.pattern}
                   totalPages={patternPageItems.totalPages}
                   totalItems={unit.sentencePatterns.length}
                   onPageChange={(page) => changePrepPage('pattern', page)}
                 />
+                )}
               </>
             ) : (
               <EmptyPrepState label={t('learning.noPatterns')} />
             )}
           </TabsContent>
         </Tabs>
+
+        {collapsedSections.has('knowledge') && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-3 w-full gap-1.5 text-xs text-muted-foreground"
+          onClick={() => toggleSection('knowledge')}
+        >
+          <ChevronDown className="size-3.5" /> 展开全部（{allVocabCount + allChunkCount + patternDialogItems.length} 项）
+        </Button>
+        )}
       </section>
 
       {/* ===== 题目 ===== */}
@@ -413,11 +450,17 @@ function SectionHeader({
   title,
   subtitle,
   meta,
+  collapsible = false,
+  collapsed = false,
+  onToggle,
 }: {
   eyebrow: string
   title: string
   subtitle?: string
   meta?: string
+  collapsible?: boolean
+  collapsed?: boolean
+  onToggle?: () => void
 }) {
   return (
     <div className="mb-3 flex items-end justify-between gap-3 px-1">
@@ -430,11 +473,23 @@ function SectionHeader({
           {subtitle && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
-      {meta && (
-        <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">
-          {meta}
-        </Badge>
-      )}
+      <div className="flex items-center gap-2">
+        {meta && (
+          <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">
+            {meta}
+          </Badge>
+        )}
+        {collapsible && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+            aria-label={collapsed ? '展开' : '收起'}
+          >
+            <ChevronDown className={cn('size-4 transition-transform duration-200', collapsed && '-rotate-90')} />
+          </button>
+        )}
+      </div>
     </div>
   )
 }

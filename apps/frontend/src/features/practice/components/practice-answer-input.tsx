@@ -94,7 +94,7 @@ export function PracticeAnswerInput({
   const processAudioBlob = useCallback(async (blob: Blob, filename: string) => {
     setVoiceStatus('processing')
     try {
-      const result = await transcribeRecording(blob, filename)
+      const result = await transcribeRecording(blob, filename, lang)
       const text = normalizeInputText(result.text ?? '')
 
       // Save audio URL for playback
