@@ -79,6 +79,14 @@ function expressionEntryToExpression(entry: ExpressionEntry): Expression {
   const snapshot = entry.contentSnapshot ?? {}
   if (entry.kind === 'word') {
     const word = snapshot.word ?? entry.original ?? ''
+    console.log(
+      '[expressionEntryToExpression]',
+      `word=${word}`,
+      `hasSnapshot=${!!entry.contentSnapshot}`,
+      `snapDesc=${!!snapshot.description}`,
+      `snapExamples=${Array.isArray(snapshot.examples) ? snapshot.examples.length : 0}`,
+      `snapMeaning=${!!snapshot.meaning}`,
+    )
     return {
       id: entry.id,
       type: 'word',

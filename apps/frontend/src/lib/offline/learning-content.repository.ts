@@ -162,12 +162,17 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     ? String(item.original ?? item.word ?? '').trim()
     : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
   if (!text) return null
-  return makeEntry({
+
+  // 保留远程返回的完整 vocabulary 对象，确保 description/examples 等不丢失
+  const vocabSnapshot = item.vocabulary ?? item.contentSnapshot
+
+  const entry = makeEntry({
     kind,
     text,
     meaning: kind === 'word' ? item.chunkText : item.original,
     corrected: item.corrected,
     sceneName: item.sceneName,
+    contentSnapshot: vocabSnapshot,
     remoteId: item.id,
     masteryStatus: item.masteryStatus ?? 'learning',
     reviewCount: item.reviewCount ?? 0,
@@ -180,6 +185,19 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     updatedAt: item.updatedAt ?? item.createdAt,
     syncStatus: 'synced',
   })
+
+  if (kind === 'word') {
+    console.log(
+      '[remoteExpressionToEntry]',
+      `word=${text}`,
+      `hasVocab=${!!item.vocabulary}`,
+      `snapshotKeys=${vocabSnapshot ? Object.keys(vocabSnapshot).join(',') : 'none'}`,
+      `hasDescription=${!!vocabSnapshot?.description}`,
+      `hasExamples=${Array.isArray(vocabSnapshot?.examples) ? vocabSnapshot.examples.length : 0}`,
+    )
+  }
+
+  return entry
 }
 
 function createPayload(entry: ExpressionEntry) {
@@ -481,14 +499,21 @@ export const learningContentRepository = {
     const next = remoteExpressionToEntry(item)
     if (!next) return null
     const existing = await localDb.get<ExpressionEntry>('expression_entries', next.id)
+    // 远程数据优先（尤其是 contentSnapshot），本地只作为兜底
     const entry: ExpressionEntry = {
       ...existing,
       ...next,
-      contentSnapshot: existing?.contentSnapshot ?? next.contentSnapshot,
+      contentSnapshot: next.contentSnapshot ?? existing?.contentSnapshot,
       createdAt: existing?.createdAt ?? next.createdAt,
       updatedAt: next.updatedAt,
       syncStatus: 'synced',
     }
+    console.log(
+      '[saveRemoteExpressionEntry]',
+      `id=${entry.id}`,
+      `hasContentSnapshot=${!!entry.contentSnapshot}`,
+      `snapshotKeys=${entry.contentSnapshot ? Object.keys(entry.contentSnapshot).join(',') : 'none'}`,
+    )
     await localDb.put('expression_entries', entry)
     return entry
   },

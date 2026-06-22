@@ -580,7 +580,7 @@ export function TodayTaskPage() {
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DialogContent
           data-keyboard-overlay="practice"
-          className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
+          className="!z-[10000] flex flex-col h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
         >
           <DialogTitle className="sr-only">
             {currentStep?.displayLabel || currentMeta.label} · {currentStep?.topicTitle}
@@ -589,7 +589,7 @@ export function TodayTaskPage() {
             {currentStep?.label}
           </DialogDescription>
 
-          <div className="flex h-full flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             {/* Header：Badge 标识题型，大字展示练习内容 */}
             <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
               <div className="flex items-start gap-3">

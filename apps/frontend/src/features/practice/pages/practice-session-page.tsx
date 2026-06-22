@@ -769,20 +769,20 @@ function GuidedWarmupPhase({
   }
 
   return (
-    <div className={cn('mx-auto flex h-full max-w-2xl flex-col px-4 pt-4', isIOS() && 'pt-safe')}>
+    <div className={cn('flex h-full flex-col pt-4', isIOS() && 'pt-safe')}>
       {/* Header */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex items-center gap-3 px-4">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
           <h1 className="truncate text-lg font-bold text-foreground">{topicTitle}</h1>
-          <p className="truncate text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
+          <p className="line-clamp-2 text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
       </div>
-      <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5" />
+      <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 px-4" />
 
       {/* Current card — scrollable */}
-      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pb-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4">
         <div key={flatSteps[currentIdx]?.id}>
           {flatSteps[currentIdx]?.render() ?? null}
         </div>
@@ -1018,14 +1018,15 @@ export function PracticeSessionPage() {
 
   // ── Immersive mode (hide layout chrome during practice) ──
   const setImmersiveMode = useLayoutStore((s) => s.setImmersiveMode)
+  const [guidedOpen, setGuidedOpen] = useState(false)
   useEffect(() => {
-    if (phase === 'practice' || phase === 'guided') {
+    if (phase === 'practice' || guidedOpen) {
       setImmersiveMode(true)
     } else {
       setImmersiveMode(false)
     }
     return () => { setImmersiveMode(false) }
-  }, [phase, setImmersiveMode])
+  }, [phase, guidedOpen, setImmersiveMode])
 
   // Switch to immersive mode BEFORE mounting PixiVnStage, so layout is stable
   const handleStartPractice = useCallback(async () => {
@@ -1045,11 +1046,12 @@ export function PracticeSessionPage() {
   // Switch to guided warmup phase before practice
   const handleStartGuided = useCallback(() => {
     setImmersiveMode(true)
-    setPhase('guided')
+    setGuidedOpen(true)
   }, [setImmersiveMode])
 
   // Complete guided and go to practice
   const handleGuidedComplete = useCallback(async () => {
+    setGuidedOpen(false)
     setPhase('practice')
     if (!topicId) return
     try {
@@ -1074,6 +1076,24 @@ export function PracticeSessionPage() {
 
   const coreChunkTexts = useMemo(() => {
     return (detail?.activeChunks ?? []).map((c) => ({ text: c.text, meaning: c.meaning }))
+  }, [detail])
+
+  const warmupItems = useMemo(() => {
+    const pipeline = detail?.topic?.metadata?.outputTraining?.pipeline ?? []
+    const metadataItems = pipeline.filter((item: any) =>
+      item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition' || item.type === 'pattern_drill'
+    )
+    if (metadataItems.length > 0) return metadataItems
+    return (detail?.activeChunks ?? [])
+      .filter(c => c.examples?.length)
+      .map(c => ({
+        id: c.id,
+        type: 'chunk_substitution' as const,
+        title: c.text,
+        chunk: c.text,
+        chunkMeaning: c.meaning || '',
+        items: (c.examples ?? []).map((e: any) => ({ zh: e.zh, answer: e.en })),
+      }))
   }, [detail])
 
   // ==================== Load Data ====================
@@ -1999,41 +2019,24 @@ export function PracticeSessionPage() {
           onOpenChange={setInsightOpen}
           onIndexChange={setInsightIndex}
         />
+
+        <Dialog open={guidedOpen} onOpenChange={(open) => { setGuidedOpen(open); if (!open) setImmersiveMode(false) }}>
+          <DialogContent
+            data-keyboard-overlay="practice"
+            className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden"
+          >
+            <DialogTitle className="sr-only">知识点练习</DialogTitle>
+            <DialogDescription className="sr-only">输出热身练习</DialogDescription>
+            <GuidedWarmupPhase
+              topicId={topicId || ''}
+              topicTitle={detail?.topic.title || ''}
+              warmupItems={warmupItems}
+              onBack={() => { setGuidedOpen(false); setImmersiveMode(false) }}
+              onComplete={handleGuidedComplete}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
-    )
-  }
-
-  // ==================== Phase: Guided (输出热身) ====================
-  if (phase === 'guided') {
-    const metadataPipeline = detail?.topic?.metadata?.outputTraining?.pipeline ?? []
-    const metadataItems = metadataPipeline.filter((item: any) =>
-      item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition' || item.type === 'pattern_drill'
-    )
-
-    // Auto-generate warmup items from activeChunks with examples if no metadata pipeline
-    const autoItems = metadataItems.length === 0
-      ? (detail?.activeChunks ?? [])
-          .filter(c => c.examples?.length)
-          .map(c => ({
-            id: c.id,
-            type: 'chunk_substitution' as const,
-            title: c.text,
-            chunk: c.text,
-            chunkMeaning: c.meaning || '',
-            items: (c.examples ?? []).map((e: any) => ({ zh: e.zh, answer: e.en })),
-          }))
-      : []
-
-    const warmupItems = metadataItems.length > 0 ? metadataItems : autoItems
-
-    return (
-      <GuidedWarmupPhase
-        topicId={topicId || ''}
-        topicTitle={detail?.topic.title || ''}
-        warmupItems={warmupItems}
-        onBack={() => setPhase('prepare')}
-        onComplete={handleGuidedComplete}
-      />
     )
   }
 
