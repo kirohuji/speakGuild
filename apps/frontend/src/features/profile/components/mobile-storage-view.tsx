@@ -42,7 +42,6 @@ export function MobileStorageView() {
           packId: pack.packId,
           title: pack.title,
           storedVersion: pack.version,
-          manifestVersion: pack.manifestVersion,
           status: pack.status,
           installedAt: pack.installedAt,
           updatedAt: pack.updatedAt,

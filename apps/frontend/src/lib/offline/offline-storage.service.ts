@@ -29,6 +29,7 @@ export interface OfflineStorageDetails {
     packId: string
     title: string
     version: number
+    manifestVersion: number
     status: InstalledLearningPack['status']
     installedAt: string | null
     updatedAt: string
@@ -130,6 +131,7 @@ export const offlineStorageService = {
           packId: pack.packId,
           title: pack.title,
           version: pack.version,
+          manifestVersion: pack.manifest?.version ?? pack.version,
           status: pack.status,
           installedAt: pack.installedAt,
           updatedAt: pack.updatedAt,
