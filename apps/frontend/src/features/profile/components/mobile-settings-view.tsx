@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Loader2, Trash2 } from 'lucide-react'
+import { ChevronRight, Loader2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,7 @@ import {
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useConfigStore } from '@/stores/config.store'
-import { useOfflineSyncStore, type OfflineSyncLogEntry } from '@/stores/offline-sync.store'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
@@ -21,69 +21,7 @@ import { scheduleLearningReminderTestNotification } from '@/lib/native/learning-
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 import { cn } from '@/lib/cn'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
-
-function formatSyncLogTime(value?: string) {
-  if (!value) return ''
-  return new Date(value).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function formatSyncLogDetail(log: OfflineSyncLogEntry) {
-  const detail = log.detail as {
-    push?: { synced?: number; failed?: number; skipped?: number; operations?: Record<string, number> }
-    pull?: { changed?: number; deleted?: number } | null
-    refreshedPacks?: string[]
-  } | null | undefined
-  if (!detail) return null
-  const parts: string[] = []
-  if (detail.push) {
-    const { synced = 0, failed = 0, skipped = 0 } = detail.push
-    parts.push(`上传 ${synced}，失败 ${failed}，跳过 ${skipped}`)
-  }
-  if (detail.pull) {
-    parts.push(`拉取 ${(detail.pull.changed ?? 0) + (detail.pull.deleted ?? 0)}`)
-  }
-  if (detail.refreshedPacks?.length) {
-    parts.push(`学习包更新 ${detail.refreshedPacks.length}`)
-  }
-  return parts.length > 0 ? parts.join(' · ') : null
-}
-
-function formatSyncOperations(log: OfflineSyncLogEntry) {
-  const operations = (log.detail as { push?: { operations?: Record<string, number> } } | null | undefined)?.push?.operations
-  if (!operations || Object.keys(operations).length === 0) return []
-  const labels: Record<string, string> = {
-    my_unit: '学习包',
-    word_entry: '单词',
-    chunk_entry: '句块',
-    pattern_entry: '句型',
-    practice_session: 'VN 会话',
-    practice_turn: 'VN 回合',
-    learning_pack: '离线包',
-    daily_practice: '今日任务',
-  }
-  const opLabels: Record<string, string> = { create: '新增', update: '更新', delete: '删除' }
-  return Object.entries(operations).map(([key, count]) => {
-    const [entity, op] = key.split(':')
-    return `${labels[entity] ?? entity}${opLabels[op] ? `·${opLabels[op]}` : ''} ${count}`
-  })
-}
-
-function syncLogIcon(log: OfflineSyncLogEntry) {
-  if (log.status === 'running') return Loader2
-  if (log.status === 'failed' || log.error) return AlertCircle
-  return CheckCircle2
-}
-
-function syncLogTone(log: OfflineSyncLogEntry) {
-  if (log.status === 'running') return 'bg-primary/10 text-primary'
-  if (log.status === 'failed' || log.error) return 'bg-destructive/10 text-destructive'
-  return 'bg-emerald-500/10 text-emerald-600'
-}
+import { SyncLogDialog } from './sync-log-dialog'
 
 export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
   const { t } = useTranslation()
@@ -106,9 +44,9 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setLearningReminderTime,
   } = usePreferencesStore()
   const { config } = useConfigStore()
-  const { logs: syncLogs, clearLogs: clearSyncLogs } = useOfflineSyncStore()
+  const { logs: syncLogs } = useOfflineSyncStore()
   const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
-  const [syncLogsExpanded, setSyncLogsExpanded] = useState(false)
+  const [syncLogsOpen, setSyncLogsOpen] = useState(false)
   // 删除账户状态
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -295,12 +233,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     key,
     label: t(tKey),
   }))
-  const visibleSyncLogs = useMemo(
-    () => syncLogs.slice(0, 10),
-    [syncLogs],
-  )
-  const latestFailedSyncLog = visibleSyncLogs.find((log) => log.status === 'failed' || log.error)
-  const latestSyncLog = visibleSyncLogs[0]
+  const latestFailedSyncLog = syncLogs.find((log) => log.status === 'failed' || log.error)
+  const latestSyncLog = syncLogs[0]
 
   return (
     <div className="space-y-5">
@@ -418,79 +352,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
         <IosRow
           label="同步操作日志"
           subtitle={latestFailedSyncLog?.error ?? latestSyncLog?.summary ?? '暂无同步记录'}
-          onTap={() => setSyncLogsExpanded((value) => !value)}
-          right={
-            <div className="flex items-center gap-2 text-muted-foreground">
-              {visibleSyncLogs.length > 0 && (
-                <span className={cn(
-                  'rounded-full px-2 py-0.5 text-xs font-medium',
-                  latestFailedSyncLog ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary',
-                )}>
-                  {visibleSyncLogs.length}
-                </span>
-              )}
-              {syncLogsExpanded ? (
-                <ChevronDown className="h-4 w-4 flex-shrink-0" />
-              ) : (
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
-              )}
-            </div>
-          }
+          onTap={() => setSyncLogsOpen(true)}
         />
-        {syncLogsExpanded && (
-          <div className="border-b border-border/50 px-4 py-3">
-            {visibleSyncLogs.length > 0 ? (
-              <div className="space-y-3">
-                {visibleSyncLogs.map((log) => {
-                  const detail = formatSyncLogDetail(log)
-                  const operations = formatSyncOperations(log)
-                  const Icon = syncLogIcon(log)
-                  return (
-                    <div key={log.id} className="flex gap-3">
-                      <div className={cn('mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[10px]', syncLogTone(log))}>
-                        <Icon className={cn('h-4 w-4', log.status === 'running' && 'animate-spin')} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 truncate text-sm font-medium">
-                            {log.status === 'running' ? '同步进行中' : log.summary}
-                          </p>
-                          <span className="flex-shrink-0 text-[11px] text-muted-foreground">
-                            {formatSyncLogTime(log.finishedAt ?? log.startedAt)}
-                          </span>
-                        </div>
-                        {(log.error || detail) && (
-                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                            {log.error ?? detail}
-                          </p>
-                        )}
-                        {operations.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {operations.slice(0, 4).map((item) => (
-                              <span key={item} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-                <button
-                  type="button"
-                  onClick={clearSyncLogs}
-                  className="flex h-9 items-center gap-2 text-sm font-medium text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  清空日志
-                </button>
-              </div>
-            ) : (
-              <p className="py-2 text-sm text-muted-foreground">暂无同步操作日志</p>
-            )}
-          </div>
-        )}
         <IosRow
           label={t('profile.appPermissions')}
           onTap={() => {}}
@@ -602,6 +465,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SyncLogDialog open={syncLogsOpen} onOpenChange={setSyncLogsOpen} />
     </div>
   )
 }

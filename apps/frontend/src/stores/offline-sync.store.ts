@@ -34,6 +34,18 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error)
 }
 
+/** 自动清理：保留最近 50 条 + 全部错误日志，其余定期删除 */
+function autoCleanLogs(logs: OfflineSyncLogEntry[]): OfflineSyncLogEntry[] {
+  const maxKeep = 50
+  if (logs.length <= maxKeep) return logs
+  const errors = logs.filter((l) => l.status === 'failed' || l.error)
+  const nonErrors = logs.filter((l) => l.status !== 'failed' && !l.error)
+  const keptNonErrors = nonErrors.slice(0, maxKeep - errors.length)
+  return [...errors, ...keptNonErrors].sort(
+    (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+  )
+}
+
 export const useOfflineSyncStore = create<OfflineSyncState>()(
   persist(
     (set) => ({
@@ -50,10 +62,10 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
           isSyncing: true,
           currentLogId: id,
           lastError: null,
-          logs: [
+          logs: autoCleanLogs([
             { id, startedAt, status: 'running' as const, summary },
             ...state.logs.filter((item) => item.status !== 'running'),
-          ].slice(0, 20),
+          ]),
         }))
         return id
       },
@@ -66,7 +78,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
           currentLogId: state.currentLogId === id ? null : state.currentLogId,
           lastSyncedAt: input.status === 'success' ? finishedAt : state.lastSyncedAt,
           lastError,
-          logs: state.logs.map((item) =>
+          logs: autoCleanLogs(state.logs.map((item) =>
             item.id === id
               ? {
                   ...item,
@@ -77,7 +89,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
                   error: lastError,
                 }
               : item,
-          ).slice(0, 20),
+          )),
         }))
       },
 
