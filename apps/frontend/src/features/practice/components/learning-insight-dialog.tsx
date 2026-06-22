@@ -70,6 +70,8 @@ type PatternInsight = {
   meaning?: string
   slots?: string[]
   example?: string
+  description?: string | null
+  examples?: unknown
   difficulty?: string
   sceneName?: string
   /** 是否已保存到学习库 */
@@ -438,7 +440,7 @@ export function LearningInsightDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           data-keyboard-overlay="practice"
-          className="!z-[10000] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
+          className="!z-[10000] flex flex-col h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -448,7 +450,7 @@ export function LearningInsightDialog({
           <DialogDescription className="sr-only">
             {current.kind === 'word' ? current.meaning : current.kind === 'chunk' ? current.meaning : ''}
           </DialogDescription>
-          <div className="flex h-full flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             {/* Header - 固定在顶部，关闭按钮在右侧 */}
             <InsightHeader item={current} onClose={() => onOpenChange(false)} />
 
@@ -1066,6 +1068,7 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
+  const [activeTab, setActiveTab] = useState('description')
 
   const saveChunk = async () => {
     if (saved) return
@@ -1084,45 +1087,40 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-5 px-5 py-5 md:px-6">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
+      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto px-5 pt-3 md:px-6">
+        <TabsList>
+          <TabsTrigger value="description">讲解</TabsTrigger>
+          <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
+        </TabsList>
         {!hideSave && (
-        <Button
-          onClick={saveChunk}
-          disabled={saved || saving}
-          variant={saved ? 'secondary' : 'default'}
-          className="gap-1.5"
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saved ? t('insight.savedToLibrary') : t('insight.saveToLibrary')}
-        </Button>
+          <Button onClick={saveChunk} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto gap-1.5">
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+            {saved ? t('insight.alreadyAdded') : t('insight.saveToLibrary')}
+          </Button>
         )}
-
-        {item.description && (
-          <section className="rounded-xl bg-muted p-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground">{t('insight.usageGuide')}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-          </section>
-        )}
-
-        <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">{t('insight.examples')}</h3>
-          {item.examples?.length ? (
-            item.examples.map((example, index) => (
-              <ExampleBlock
-                key={index}
-                en={example.en}
-                zh={example.zh}
-                note={example.note ?? undefined}
-                level={example.level}
-              />
-            ))
-          ) : (
-            <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
-          )}
-        </section>
       </div>
-    </ScrollArea>
+      <div className="relative min-h-0 flex-1">
+        <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="py-4">
+              {item.description ? <RichText text={item.description} /> : <p className="text-sm text-muted-foreground">暂无讲解</p>}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="examples" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-3 py-4">
+              {item.examples?.length ? (
+                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} />)
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </div>
+    </Tabs>
   )
 }
 
@@ -1131,53 +1129,75 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
   const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
+  const examples = useMemo(() => normalizeVocabExamples(item.examples), [item.examples])
+  const [activeTab, setActiveTab] = useState('structure')
 
   const savePattern = async () => {
     if (saved) return
     setSaving(true)
     setSaved(true)
     await learningContentRepository.saveExpressionEntryAndSync({
-      kind: 'pattern',
-      text: item.pattern,
-      meaning: item.meaning,
-      sceneName: item.sceneName,
-      corrected: item.example,
-      contentSnapshot: item,
-      sourceType: 'learning-library',
+      kind: 'pattern', text: item.pattern, meaning: item.meaning,
+      sceneName: item.sceneName, corrected: item.example,
+      contentSnapshot: item, sourceType: 'learning-library',
     })
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-5 px-5 py-5 md:px-6">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
+      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto px-5 pt-3 md:px-6">
+        <TabsList>
+          <TabsTrigger value="structure">结构</TabsTrigger>
+          <TabsTrigger value="description">讲解</TabsTrigger>
+          <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
+        </TabsList>
         {!hideSave && (
-        <Button
-          onClick={savePattern}
-          disabled={saved || saving}
-          variant={saved ? 'secondary' : 'default'}
-          className="gap-1.5"
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saved ? t('insight.savedToLibrary') : t('insight.saveToLibrary')}
-        </Button>
-        )}
-
-        <section className="rounded-xl border border-border p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('insight.structure')}</h3>
-          <p className="font-mono text-sm leading-relaxed text-foreground">{item.pattern}</p>
-          {slotText && <p className="mt-2 text-xs text-muted-foreground">{t('insight.replaceableSlots')}{slotText}</p>}
-        </section>
-
-        {item.example && (
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">{t('insight.exampleSentence')}</h3>
-            <ExampleBlock en={item.example} zh={item.meaning ?? ''} level={item.difficulty} />
-          </section>
+          <Button onClick={savePattern} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto gap-1.5">
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+            {saved ? t('insight.alreadyAdded') : t('insight.saveToLibrary')}
+          </Button>
         )}
       </div>
-    </ScrollArea>
+      <div className="relative min-h-0 flex-1">
+        <TabsContent value="structure" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4">
+              <section className="rounded-xl border border-border p-4">
+                <p className="font-mono text-sm leading-relaxed text-foreground">{item.pattern}</p>
+                {slotText && <p className="mt-2 text-xs text-muted-foreground">可替换部分：{slotText}</p>}
+                {item.meaning && <p className="mt-1.5 text-sm text-muted-foreground">{item.meaning}</p>}
+              </section>
+              {item.example && (
+                <section className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">{t('insight.exampleSentence')}</h3>
+                  <ExampleBlock en={item.example} zh={item.meaning ?? ''} level={item.difficulty} />
+                </section>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="py-4">
+              {item.description ? <RichText text={item.description} /> : <p className="text-sm text-muted-foreground">暂无讲解</p>}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="examples" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-3 py-4">
+              {examples.length > 0 ? (
+                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} />)
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </div>
+    </Tabs>
   )
 }
 

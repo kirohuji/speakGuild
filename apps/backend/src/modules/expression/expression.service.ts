@@ -42,23 +42,59 @@ export class ExpressionService {
       this.prisma.expressionItem.count({ where }),
     ]);
 
+    // ── 补全内容库数据：word → Vocabulary, chunk → Chunk, scene_phrase → SentencePattern ──
     const wordItems = type === 'word' ? items.filter((item) => item.original?.trim()) : [];
-    const vocabularies = wordItems.length
-      ? await this.prisma.vocabulary.findMany({
-          where: {
-            OR: wordItems.map((item) => ({
-              word: { equals: item.original!.trim(), mode: 'insensitive' },
-            })),
-          },
-        })
-      : [];
-    const vocabularyByWord = new Map(vocabularies.map((vocab) => [vocab.word.toLowerCase(), vocab]));
-    const mergedItems = wordItems.length
-      ? items.map((item) => ({
-          ...item,
-          vocabulary: item.original ? vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null : null,
-        }))
-      : items;
+    const chunkItems = type === 'chunk' ? items.filter((item) => item.chunkText?.trim()) : [];
+    const phraseItems = type === 'scene_phrase' ? items.filter((item) => item.chunkText?.trim()) : [];
+
+    const [vocabularies, chunks, patterns] = await Promise.all([
+      wordItems.length
+        ? this.prisma.vocabulary.findMany({
+            where: {
+              OR: wordItems.map((item) => ({
+                word: { equals: item.original!.trim(), mode: 'insensitive' },
+              })),
+            },
+          })
+        : [],
+      chunkItems.length
+        ? this.prisma.chunk.findMany({
+            where: {
+              OR: chunkItems.map((item) => ({
+                text: { equals: item.chunkText!.trim(), mode: 'insensitive' },
+              })),
+            },
+            include: { examples: true },
+          })
+        : [],
+      phraseItems.length
+        ? this.prisma.sentencePattern.findMany({
+            where: {
+              OR: phraseItems.map((item) => ({
+                pattern: { equals: item.chunkText!.trim(), mode: 'insensitive' },
+              })),
+            },
+          })
+        : [],
+    ]);
+
+    const vocabularyByWord = new Map<string, typeof vocabularies[number]>(vocabularies.map(v => [v.word.toLowerCase(), v] as const));
+    const chunkByText = new Map<string, typeof chunks[number]>(chunks.map(c => [c.text.toLowerCase(), c] as const));
+    const patternByText = new Map<string, typeof patterns[number]>(patterns.map(p => [p.pattern.toLowerCase(), p] as const));
+
+    const mergedItems = items.map((item) => {
+      const base = { ...item } as any;
+      if (item.type === 'word' && item.original) {
+        base.vocabulary = vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null;
+      } else if (item.type === 'chunk' && item.chunkText) {
+        const chunk = chunkByText.get(item.chunkText.trim().toLowerCase());
+        if (chunk) base.contentData = chunk;
+      } else if (item.type === 'scene_phrase' && item.chunkText) {
+        const pattern = patternByText.get(item.chunkText.trim().toLowerCase());
+        if (pattern) base.contentData = pattern;
+      }
+      return base;
+    });
 
     return {
       items: mergedItems,

@@ -318,25 +318,29 @@ export function ExpressionLibraryPage() {
     }
     if (apiType === 'scene_phrase') {
       const cacheEntry = expr.localEntry?.contentSnapshot
+      const remoteData = (expr as any).contentData
       return {
         kind: 'pattern' as const,
         id: expr.id,
         pattern: expr.chunkText ?? expr.corrected ?? '',
         meaning: expr.original ?? '',
-        slots: cacheEntry?.slots,
-        example: cacheEntry?.example,
-        difficulty: cacheEntry?.difficulty,
+        slots: cacheEntry?.slots ?? remoteData?.slots,
+        example: cacheEntry?.example ?? remoteData?.example,
+        description: cacheEntry?.description ?? remoteData?.description,
+        examples: cacheEntry?.examples ?? remoteData?.examples,
+        difficulty: cacheEntry?.difficulty ?? remoteData?.difficulty,
         sceneName: expr.sceneName ?? undefined,
       }
     }
     const cacheEntry = expr.localEntry?.contentSnapshot
+    const remoteData = (expr as any).contentData
     return {
       kind: 'chunk' as const,
       id: expr.id,
       text: expr.chunkText ?? expr.corrected ?? '',
       meaning: expr.original ?? '',
-      description: cacheEntry?.description,
-      examples: cacheEntry?.examples as any,
+      description: cacheEntry?.description ?? remoteData?.description,
+      examples: cacheEntry?.examples ?? remoteData?.examples as any,
       sceneName: expr.sceneName ?? undefined,
       saved: true, // 已在学习库中
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ArrowRightLeft, Zap } from 'lucide-react'
+import { Plus, Trash2, ArrowRightLeft, Zap, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -106,6 +106,29 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     } catch { toast.error('AI 生成提示失败') }
   }
 
+  // AI 润色：改进现有题目的中文提示和英文答案
+  const aiPolish = async () => {
+    const source = local.chunk
+    if (!source) { toast.error('请先输入核心词/句块'); return }
+    if (!local.items.length) { toast.error('请先添加题目'); return }
+    try {
+      const { post } = await import('@/lib/request')
+      const res: any = await post('/practice-ai/generate-drills', {
+        type: 'chunk_substitution',
+        keyword: source,
+        meaning: local.chunkMeaning || '',
+        direction: local.direction ?? 'zh_to_en',
+        kind: local.kind ?? 'chunk',
+        polish: true,
+        items: local.items.map(it => ({ zh: it.zh, answer: it.answer })),
+      })
+      if (res?.items?.length) {
+        commit({ items: local.items.map((it, i) => ({ ...it, zh: res.items[i]?.zh ?? it.zh, answer: res.items[i]?.answer ?? it.answer })) })
+        toast.success(`已润色 ${res.items.length} 道题目`)
+      }
+    } catch { toast.error('AI 润色失败') }
+  }
+
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -168,6 +191,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
           <div className="flex gap-2">
             <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 生成</Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints}><Zap className="size-3" />AI 提示</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiPolish} disabled={!local.items.length}><Sparkles className="size-3" />AI 润色</Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addItem}><Plus className="size-3" />添加</Button>
           </div>
         </div>

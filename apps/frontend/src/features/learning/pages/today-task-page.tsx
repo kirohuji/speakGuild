@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  ArrowRight, BookOpen, BookText, Braces, ChevronDown, ChevronLeft, ChevronRight,
-  ClipboardList, ListChecks, ListMusic, MessageSquareText, Target,
+  ArrowRight, Blocks, Braces, ChevronDown, ChevronLeft, ChevronRight,
+  ClipboardList, ListChecks, ListMusic, PenLine, Replace, Split, Target,
   CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -50,28 +50,28 @@ export type PracticeItem = {
 
 type PracticeGroup = {
   type: string
-  meta: { label: string; icon: typeof BookText; color: string }
+  meta: { label: string; icon: typeof PenLine; color: string }
   steps: Array<{ step: PracticeItem; index: number }>
   doneCount: number
   totalCount: number
 }
 
 // ── 类型显示映射 ──
-const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: string }> = {
+const TYPE_META: Record<string, { label: string; icon: typeof PenLine; color: string }> = {
   chunk_substitution: {
     label: '句块替换',
-    icon: MessageSquareText,
+    icon: Replace,
     color: 'bg-purple-500/10 text-purple-600 dark:text-purple-300',
   },
   vocab_drill: {
     label: '词汇输出',
-    icon: BookText,
-    color: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
+    icon: PenLine,
+    color: 'bg-sky-500/10 text-sky-600 dark:text-sky-300',
   },
   vocab_sentence_building: {
     label: '一词多句',
-    icon: BookText,
-    color: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
+    icon: Blocks,
+    color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300',
   },
   pattern_drill: {
     label: '句型操练',
@@ -80,7 +80,7 @@ const TYPE_META: Record<string, { label: string; icon: typeof BookText; color: s
   },
   sentence_decomposition: {
     label: '句子拆解',
-    icon: BookOpen,
+    icon: Split,
     color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
   },
 }
@@ -315,7 +315,7 @@ export function TodayTaskPage() {
     steps.forEach((step, index) => {
       const meta = TYPE_META[step.type] ?? {
         label: step.displayLabel || '知识点',
-        icon: MessageSquareText,
+        icon: PenLine,
         color: 'bg-primary/10 text-primary',
       }
       const group = order.get(step.type) ?? {
@@ -385,7 +385,7 @@ export function TodayTaskPage() {
   // ── 当前练习类型信息 ──
   const currentMeta = TYPE_META[currentStep?.type] ?? {
     label: '知识点练习',
-    icon: MessageSquareText,
+    icon: PenLine,
     color: 'bg-primary/10 text-primary',
   }
 

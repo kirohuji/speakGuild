@@ -163,8 +163,8 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
   if (!text) return null
 
-  // 保留远程返回的完整 vocabulary 对象，确保 description/examples 等不丢失
-  const vocabSnapshot = item.vocabulary ?? item.contentSnapshot
+  // 保留远程返回的完整内容数据：word→vocabulary, chunk→contentData, pattern→contentData
+  const vocabSnapshot = item.vocabulary ?? item.contentData ?? item.contentSnapshot
 
   const entry = makeEntry({
     kind,

@@ -900,8 +900,9 @@ Rules:
     zh?: string;
     generateSentence?: boolean;
     generateHints?: boolean;
+    polish?: boolean;
     itemCount?: number;
-    items?: Array<{ zh: string; answer: string }>;
+    items?: Array<{ zh: string; answer: string; hint?: string }>;
   }) {
     const provider = this.getProvider();
     const count = Math.min(dto.count ?? 4, 8);
@@ -936,6 +937,42 @@ Return ONLY a JSON object: { "hints": ["hint1", "hint2", ...] }`;
         return JSON.parse(cleaned);
       } catch {
         return { hints: [] };
+      }
+    }
+
+    // ── Polish existing items: improve Chinese prompts and English answers ──
+    if (dto.polish && dto.items?.length) {
+      const system = `You are an ESL content editor for Chinese learners of English.
+Polish the following exercise items to make them more natural, idiomatic, and pedagogically effective.
+
+Rules:
+- Improve the Chinese prompts (zh) to sound more natural and conversational.
+- Refine the English answers (answer) to be more idiomatic while keeping the target keyword "${dto.keyword}".
+- Keep the original meaning and difficulty level.
+- For en_to_zh direction, the "zh" field contains the English sentence and "answer" is Chinese — polish both accordingly.
+- Fix any grammar issues, awkward phrasing, or unnatural collocations.
+- Each answer MUST still naturally include the target chunk/pattern: "${dto.keyword}".
+
+Return ONLY a JSON object (no markdown):
+{ "items": [{ "zh": "polished Chinese", "answer": "polished English" }, ...] }`;
+
+      const itemsJson = dto.items.map((it, i) =>
+        `[${i + 1}] ZH: ${it.zh} | Answer: ${it.answer}`
+      ).join('\n')
+      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}\nItems to polish:\n${itemsJson}`;
+
+      try {
+        const { text } = await generateText({
+          model: provider('deepseek-chat'),
+          system,
+          prompt: user,
+          temperature: 0.5,
+          maxOutputTokens: 1500,
+        });
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      } catch {
+        return { items: dto.items };
       }
     }
 
