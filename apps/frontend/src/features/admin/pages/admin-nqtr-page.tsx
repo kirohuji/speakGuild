@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   UserCircle, Map, ScrollText, Palette,
@@ -13,6 +14,12 @@ import { listCharacters, listLocations, type GameCharacter, type GameLocationDat
  *
  * NQTR = Narrative (叙事) + Quest (任务) + Training (训练) + Role (角色)
  *
+ * Tab 与 URL 查询参数联动：
+ *   ?tab=characters       — 角色管理
+ *   ?tab=maps             — 地图管理
+ *   ?tab=stories          — 故事工坊
+ *   ?tab=stories&storyId= — 故事工坊（直接打开指定故事）
+ *
  * 工作流：
  * 1. 角色管理：创建 NPC 角色（名称、性格、立绘等）
  * 2. 地图管理：创建地图和地点（位置、NPC 关联等）
@@ -20,14 +27,13 @@ import { listCharacters, listLocations, type GameCharacter, type GameLocationDat
  * 4. 场景管理：在训练话题中绑定故事，用户即可练习
  */
 export function AdminNqtrPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [characters, setCharacters] = useState<GameCharacter[]>([])
   const [locations, setLocations] = useState<GameLocationData[]>([])
-  // Read URL params for cross-page navigation (parse from hash for HashRouter)
-  const hashQuery = location.hash.includes('?') ? location.hash.split('?')[1] : ''
-  const urlParams = new URLSearchParams(hashQuery)
-  const initialTab = urlParams.get('tab') || 'stories'
-  const initialStoryId = urlParams.get('storyId') || undefined
-  const [activeTab, setActiveTab] = useState(initialTab)
+
+  // 从 URL 查询参数读取当前 tab 和 storyId
+  const activeTab = searchParams.get('tab') || 'stories'
+  const storyId = searchParams.get('storyId') || undefined
 
   useEffect(() => {
     let cancelled = false
@@ -50,6 +56,16 @@ export function AdminNqtrPage() {
     setLocations(locs)
   }, [])
 
+  // Tab 切换 → 更新 URL 查询参数（保留 storyId 仅在 stories tab 有效）
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams()
+    next.set('tab', value)
+    if (value === 'stories' && storyId) {
+      next.set('storyId', storyId)
+    }
+    setSearchParams(next, { replace: true })
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       {/* Header */}
@@ -65,8 +81,8 @@ export function AdminNqtrPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      {/* Tabs — value 与 URL ?tab= 双向同步 */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="h-10 w-full justify-start gap-0 rounded-lg bg-muted/50 p-1 sm:w-auto">
           <TabsTrigger
             value="characters"
@@ -105,7 +121,7 @@ export function AdminNqtrPage() {
           <StoryWorkshopTab
             locations={locations}
             characters={characters}
-            initialStoryId={initialStoryId}
+            initialStoryId={storyId}
           />
         </TabsContent>
 
