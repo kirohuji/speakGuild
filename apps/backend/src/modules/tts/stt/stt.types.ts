@@ -17,6 +17,16 @@ export interface SttTranscribeInput {
   temperature?: number
   /** 可选：是否返回词级别时间戳，默认 true。关闭可提速 */
   enableTimestamps?: boolean
+  /** 可选：Whisper 本地推理服务地址，优先级高于环境变量 */
+  inferenceUrl?: string
+  /** 可选：Whisper 请求超时时间，单位毫秒 */
+  timeoutMs?: number
+  /** 可选：腾讯云 SecretId，优先级高于环境变量 */
+  tencentSecretId?: string
+  /** 可选：腾讯云 SecretKey，优先级高于环境变量 */
+  tencentSecretKey?: string
+  /** 可选：腾讯云地域，优先级高于环境变量 */
+  tencentRegion?: string
 }
 
 /** 词级别时间戳 */

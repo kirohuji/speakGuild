@@ -34,6 +34,12 @@ export class TtsService {
     language?: string,
     temperature?: number,
     enableTimestamps?: boolean,
+    providerOverride?: string,
+    inferenceUrlOverride?: string,
+    timeoutMsOverride?: number,
+    tencentSecretIdOverride?: string,
+    tencentSecretKeyOverride?: string,
+    tencentRegionOverride?: string,
   ): Promise<{
     audioBase64: string;
     mimeType: string;
@@ -51,7 +57,7 @@ export class TtsService {
 
     // 通过工厂获取 STT 供应商（优先 DB ai_provider 表，其次环境变量，默认 whisper）
     const sttConfig = await this.aiModel.getSttConfig();
-    const sttProvider = this.sttFactory.getProvider(sttConfig.provider);
+    const sttProvider = this.sttFactory.getProvider(providerOverride || sttConfig.provider);
 
     const result = await sttProvider.transcribe({
       audioBuffer,
@@ -60,6 +66,11 @@ export class TtsService {
       language,
       temperature: temperature ?? sttConfig.temperature,
       enableTimestamps: enableTimestamps ?? sttConfig.enableTimestamps,
+      inferenceUrl: inferenceUrlOverride || sttConfig.inferenceUrl,
+      timeoutMs: timeoutMsOverride ?? sttConfig.timeoutMs,
+      tencentSecretId: tencentSecretIdOverride || sttConfig.tencentSecretId,
+      tencentSecretKey: tencentSecretKeyOverride || sttConfig.tencentSecretKey,
+      tencentRegion: tencentRegionOverride || sttConfig.tencentRegion,
     });
 
     // 转写成功后，将用户录音保存到 COS，方便后续回放

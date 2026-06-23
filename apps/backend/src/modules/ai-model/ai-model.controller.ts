@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Body, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Param, Body, Req, ForbiddenException } from '@nestjs/common';
 import type { Request } from 'express';
 import { AiModelService, type UpdateAiProviderDto } from './ai-model.service';
 import { requireAuthSession } from '../auth/session.util';
@@ -38,5 +38,15 @@ export class AiModelController {
   async activate(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.aiModelService.activate(id);
+  }
+
+  @Post(':id/test-llm')
+  async testLlm(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body('prompt') prompt?: string,
+  ) {
+    await this.requireAdmin(req);
+    return this.aiModelService.testLlmProvider(id, prompt ?? '');
   }
 }

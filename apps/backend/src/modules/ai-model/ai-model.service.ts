@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { generateText } from 'ai';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { AiProvider } from '@prisma/client';
+import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
 
 export type AiProviderType = 'stt' | 'tts' | 'llm';
 
@@ -17,7 +19,10 @@ export interface UpdateAiProviderDto {
 export class AiModelService {
   private readonly logger = new Logger(AiModelService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly llmFactory: LlmProviderFactory,
+  ) {}
 
   /** 获取所有供应商 */
   async list(): Promise<AiProvider[]> {
@@ -75,19 +80,68 @@ export class AiModelService {
     return {
       provider: active?.provider ?? 'deepseek',
       apiKey: active?.apiKey || process.env.DEEPSEEK_API_KEY?.trim() || '',
-      model: active?.model || 'deepseek-chat',
-      baseUrl: active?.baseUrl || 'https://api.deepseek.com/v1',
+      model: active?.model || 'deepseek-v4-pro',
+      baseUrl: active?.baseUrl || 'https://api.deepseek.com',
+    };
+  }
+
+  async testLlmProvider(id: string, prompt: string) {
+    const provider = await this.getById(id);
+    if (!provider) throw new NotFoundException('Provider not found');
+    if (provider.type !== 'llm') throw new BadRequestException('Only LLM providers can use this test');
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) throw new BadRequestException('Prompt is required');
+
+    const startedAt = Date.now();
+    const fallbackApiKey =
+      provider.provider === 'deepseek'
+        ? process.env.DEEPSEEK_API_KEY?.trim()
+        : provider.provider === 'openai'
+          ? process.env.OPENAI_API_KEY?.trim()
+          : undefined;
+    const model = this.llmFactory.create({
+      provider: provider.provider,
+      apiKey: provider.apiKey || fallbackApiKey || '',
+      model: provider.model,
+      baseUrl: provider.baseUrl,
+    });
+    const { text, usage } = await generateText({
+      model,
+      prompt: trimmedPrompt,
+      maxOutputTokens: 500,
+    });
+
+    return {
+      text,
+      usage,
+      elapsedMs: Date.now() - startedAt,
+      provider: provider.provider,
+      model: provider.model,
     };
   }
 
   /** 获取 STT 配置（含 provider 级默认参数） */
-  async getSttConfig(): Promise<{ provider: string; temperature?: number; enableTimestamps?: boolean }> {
+  async getSttConfig(): Promise<{
+    provider: string;
+    temperature?: number;
+    enableTimestamps?: boolean;
+    inferenceUrl?: string;
+    timeoutMs?: number;
+    tencentSecretId?: string;
+    tencentSecretKey?: string;
+    tencentRegion?: string;
+  }> {
     const active = await this.getActive('stt');
     const config = (active?.config as any) ?? {};
     return {
       provider: active?.provider || process.env.STT_PROVIDER?.trim() || 'whisper',
       temperature: typeof config.temperature === 'number' ? config.temperature : undefined,
       enableTimestamps: typeof config.enableTimestamps === 'boolean' ? config.enableTimestamps : undefined,
+      inferenceUrl: active?.provider === 'whisper' && active.baseUrl ? active.baseUrl : undefined,
+      timeoutMs: typeof config.timeoutMs === 'number' ? config.timeoutMs : undefined,
+      tencentSecretId: active?.provider === 'tencent' && active.baseUrl ? active.baseUrl : undefined,
+      tencentSecretKey: active?.provider === 'tencent' && active.apiKey ? active.apiKey : undefined,
+      tencentRegion: active?.provider === 'tencent' && typeof config.region === 'string' ? config.region : undefined,
     };
   }
 
@@ -98,7 +152,7 @@ export class AiModelService {
       { type: 'stt', provider: 'tencent', label: '腾讯云 ASR', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: '', sortOrder: 0 },
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
-      { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-chat', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com/v1', sortOrder: 0 },
+      { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4-pro', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },
     ];
 

@@ -12,7 +12,7 @@ export class WhisperSttProvider extends SttProvider {
   private readonly NS = 1_000_000_000;
 
   async transcribe(input: SttTranscribeInput): Promise<SttTranscribeResult> {
-    const whisperUrl = process.env.WHISPER_INFERENCE_URL?.trim();
+    const whisperUrl = input.inferenceUrl?.trim() || process.env.WHISPER_INFERENCE_URL?.trim();
     if (!whisperUrl) {
       this.logger.warn('WHISPER_INFERENCE_URL not configured, skipping transcription');
       return { text: null, wordTimestamps: null };
@@ -46,7 +46,7 @@ export class WhisperSttProvider extends SttProvider {
 
       const { default: axios } = await import('axios');
       const { data } = await axios.post<any>(url, form, {
-        timeout: Number(process.env.WHISPER_TIMEOUT_MS ?? 300_000),
+        timeout: input.timeoutMs ?? Number(process.env.WHISPER_TIMEOUT_MS ?? 300_000),
         validateStatus: (s) => s >= 200 && s < 300,
       });
 

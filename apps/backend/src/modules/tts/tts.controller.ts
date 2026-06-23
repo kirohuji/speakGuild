@@ -48,16 +48,29 @@ export class TtsController {
     @Body('language') language?: string,
     @Body('temperature') temperatureRaw?: string,
     @Body('enableTimestamps') enableTimestampsRaw?: string,
+    @Body('provider') provider?: string,
+    @Body('inferenceUrl') inferenceUrl?: string,
+    @Body('timeoutMs') timeoutMsRaw?: string,
+    @Body('tencentSecretId') tencentSecretId?: string,
+    @Body('tencentSecretKey') tencentSecretKey?: string,
+    @Body('tencentRegion') tencentRegion?: string,
   ) {
     if (!file) throw new BadRequestException('未收到音频文件');
     const temperature = temperatureRaw ? Number(temperatureRaw) : undefined;
     const enableTimestamps = enableTimestampsRaw === undefined ? undefined : enableTimestampsRaw === 'true';
+    const timeoutMs = timeoutMsRaw ? Number(timeoutMsRaw) : undefined;
     return this.ttsService.transcribeRecording(
       file.buffer,
       file.originalname || 'recording.webm',
       language,
       temperature,
       enableTimestamps,
+      provider,
+      inferenceUrl,
+      Number.isFinite(timeoutMs) ? timeoutMs : undefined,
+      tencentSecretId,
+      tencentSecretKey,
+      tencentRegion,
     );
   }
 }

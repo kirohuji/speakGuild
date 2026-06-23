@@ -133,8 +133,8 @@ export class TencentSttProvider extends SttProvider {
   private readonly logger = new Logger(TencentSttProvider.name);
 
   async transcribe(input: SttTranscribeInput): Promise<SttTranscribeResult> {
-    const secretId = process.env.TENCENT_SECRET_ID?.trim();
-    const secretKey = process.env.TENCENT_SECRET_KEY?.trim();
+    const secretId = input.tencentSecretId?.trim() || process.env.TENCENT_SECRET_ID?.trim();
+    const secretKey = input.tencentSecretKey?.trim() || process.env.TENCENT_SECRET_KEY?.trim();
 
     if (!secretId || !secretKey) {
       this.logger.warn('TENCENT_SECRET_ID or TENCENT_SECRET_KEY not configured');
@@ -168,7 +168,7 @@ export class TencentSttProvider extends SttProvider {
         service: 'asr',
         action: 'SentenceRecognition',
         version: '2019-06-14',
-        region: process.env.TENCENT_REGION?.trim() || 'ap-guangzhou',
+        region: input.tencentRegion?.trim() || process.env.TENCENT_REGION?.trim() || 'ap-guangzhou',
         payload,
       }) as TencentAsrResponse;
 
