@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
-import { Bell, Loader2, Wrench } from 'lucide-react'
+import { Bell, Loader2, WifiOff, Wrench } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
@@ -17,6 +17,7 @@ import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { isDevHost } from '@/lib/dev-host'
+import { useOnlineStatus } from '@/hooks/use-online-status'
 
 export function RootLayout() {
   const { t } = useTranslation()
@@ -113,6 +114,7 @@ function MobileTopBar({
   const avatarLoaded = useProfileCacheStore((s) => s.avatarLoaded)
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
+  const isOnline = useOnlineStatus()
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
@@ -158,10 +160,20 @@ function MobileTopBar({
         )}
         {isDevHost && (
           <span
-            className="absolute -left-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
+            className="absolute  flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
             title="dev:host 模式"
+            style={{ bottom: 0 }}
           >
             <Wrench className="size-2.5" />
+          </span>
+        )}
+        {!isOnline && (
+          <span
+            className="absolute flex size-4 items-center justify-center rounded-full bg-muted-foreground/70 text-background shadow-sm ring-1 ring-border"
+            title="离线"
+            style={{ bottom: 0 }}
+          >
+            <WifiOff className="size-2.5" />
           </span>
         )}
       </button>

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 import { toNodeHandler } from 'better-auth/node';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -21,6 +22,10 @@ async function bootstrap() {
     : ['https://hope.lourd.top:2605', 'capacitor://localhost', 'ionic://localhost', 'http://localhost'];
 
   const expressApp = app.getHttpAdapter().getInstance();
+
+  // ── 安全头 ──
+  expressApp.use(helmet());
+
   expressApp.use('/api/auth', (req, res, next) => {
     const origin = req.headers.origin as string | undefined;
     const isAllowed = origin && allowedOrigins.includes(origin);
