@@ -29,8 +29,7 @@ export function RootLayout() {
   const isHomePage = pathname === '/'
   const isLearningSubPage =
     pathname.startsWith('/learning/units/') ||
-    pathname.startsWith('/practice/session/') ||
-    pathname.startsWith('/script/')
+    pathname.startsWith('/practice/session/')
   const isLoggedIn = !!session
   const showBottomNav = bottomNavVisible && !immersiveMode && !isLearningSubPage
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode

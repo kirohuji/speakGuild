@@ -12,6 +12,7 @@ import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { OnboardingProvider } from '@/providers/onboarding-provider'
 import { MobileGestureProvider } from '@/providers/mobile-gesture-provider'
 import { RootLayout } from '@/layout/root-layout'
+import { ErrorBoundary } from '@/components/common/error-boundary'
 // ── 首屏必需：静态导入 ──
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
@@ -65,6 +66,7 @@ export default function App() {
               <MobileGestureProvider>
               <OnboardingProvider>
               <Suspense fallback={<PageLoader />}>
+              <ErrorBoundary>
               <Routes>
               {/* ── Web 独有：后台管理 — Capacitor 端不注册 ── */}
               {!isNative() && <Route path="/admin/*" element={<AdminRoutes />} />}
@@ -115,6 +117,7 @@ export default function App() {
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
+            </ErrorBoundary>
             </Suspense>
             </OnboardingProvider>
             </MobileGestureProvider>

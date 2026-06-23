@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { PracticeModule } from './modules/practice/practice.module';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -35,6 +37,10 @@ import { HealthModule } from './modules/health/health.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     OpsModule,
     LlmModule,
     AiModelModule,
@@ -64,6 +70,12 @@ import { HealthModule } from './modules/health/health.module';
     DictionaryModule,
     SyncModule,
     HealthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

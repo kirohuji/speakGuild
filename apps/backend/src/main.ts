@@ -108,6 +108,17 @@ async function bootstrap() {
   const host = process.env.HOST || '0.0.0.0';
   await app.listen(port, host);
   console.log(`Backend running on http://${host}:${port}/api/v1/manyu`);
+
+  // ── 优雅关闭：捕获 SIGTERM / SIGINT，等待活动请求完成后再退出 ──
+  const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT'];
+  for (const signal of signals) {
+    process.on(signal, async () => {
+      console.log(`收到 ${signal} 信号，开始优雅关闭...`);
+      await app.close();
+      console.log('应用已安全关闭');
+      process.exit(0);
+    });
+  }
 }
 
 bootstrap();
