@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
+import { AiModelService } from '../ai-model/ai-model.service';
 
 @Injectable()
 export class WarmupRecordService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly llmFactory: LlmProviderFactory,
+    private readonly aiModel: AiModelService,
+  ) {}
 
   async list(userId: string, topicId?: string) {
     const where: any = { userId };
@@ -71,8 +76,10 @@ export class WarmupRecordService {
 
 Return ONLY a JSON object: { "score": number, "feedback": "Chinese text" }`;
 
+      const config = await this.aiModel.getLlmConfig();
+      const model = this.llmFactory.create(config);
       const { text } = await generateText({
-        model: createOpenAI({ apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseURL: 'https://api.deepseek.com/v1' })('deepseek-chat'),
+        model,
         system,
         prompt: `Topic: ${topicTitle}\nPassed: ${passedItems}/${totalItems} (${passedRatio}%)\n\n${summary}`,
         temperature: 0.5,

@@ -19,6 +19,57 @@ const BUILTIN_CONFIGS = [
     type: 'boolean',
     description: '开启后，所有用户都可以在商店免费下载学习包',
   },
+  // ── STT 语音识别 ──
+  {
+    key: 'stt_provider',
+    value: process.env.STT_PROVIDER?.trim() || 'whisper',
+    group: 'ai',
+    label: 'STT 供应商',
+    type: 'select',
+    description: '语音转文字服务：whisper | tencent',
+  },
+  // ── TTS 语音合成 ──
+  {
+    key: 'tts_provider',
+    value: 'minimax',
+    group: 'ai',
+    label: 'TTS 供应商',
+    type: 'select',
+    description: '语音合成服务：minimax | cartesia',
+  },
+  // ── LLM 大语言模型 ──
+  {
+    key: 'llm_provider',
+    value: 'deepseek',
+    group: 'ai',
+    label: 'LLM 供应商',
+    type: 'select',
+    description: '大语言模型服务：deepseek | openai',
+  },
+  {
+    key: 'llm_api_key',
+    value: process.env.DEEPSEEK_API_KEY?.trim() || '',
+    group: 'ai',
+    label: 'LLM API Key',
+    type: 'secret',
+    description: 'LLM 的 API 密钥（DeepSeek 或 OpenAI 等）',
+  },
+  {
+    key: 'llm_model',
+    value: 'deepseek-chat',
+    group: 'ai',
+    label: 'LLM 模型',
+    type: 'string',
+    description: '使用的模型名称，如 deepseek-chat、gpt-4o 等',
+  },
+  {
+    key: 'llm_base_url',
+    value: 'https://api.deepseek.com/v1',
+    group: 'ai',
+    label: 'LLM Base URL',
+    type: 'string',
+    description: 'LLM API 的基础地址',
+  },
 ];
 
 @Injectable()

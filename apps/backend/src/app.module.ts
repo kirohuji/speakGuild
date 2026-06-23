@@ -29,12 +29,16 @@ import { MobileUpdatesModule } from './modules/mobile-updates/mobile-updates.mod
 import { DictionaryModule } from './modules/dictionary/dictionary.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { OpsModule } from './common/ops/ops.module';
+import { LlmModule } from './common/llm/llm.module';
+import { AiModelModule } from './modules/ai-model/ai-model.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     OpsModule,
+    LlmModule,
+    AiModelModule,
     PrismaModule,
     PracticeModule,
     ProfileModule,

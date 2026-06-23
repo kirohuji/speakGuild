@@ -10,9 +10,10 @@ import { CartesiaTtsProvider } from './providers/cartesia-tts.provider';
 import { WhisperSttProvider } from './stt/whisper-stt.provider';
 import { TencentSttProvider } from './stt/tencent-stt.provider';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
+import { AiModelModule } from '../ai-model/ai-model.module';
 
 @Module({
-  imports: [PrismaModule, MulterModule.register(), FileAssetsModule],
+  imports: [PrismaModule, MulterModule.register(), FileAssetsModule, AiModelModule],
   controllers: [TtsController],
   providers: [
     TtsService,

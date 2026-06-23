@@ -192,6 +192,24 @@ model SystemConfig {
   @@map("system_config")
 }
 
+/// AI 供应商配置：管理 STT / TTS / LLM 各类模型供应商的参数
+model AiProvider {
+  id        String   @id @default(cuid())
+  type      String   /// stt | tts | llm
+  provider  String   /// 供应商标识: whisper | tencent | minimax | cartesia | deepseek | openai
+  label     String   /// 显示名称
+  model     String   @default("") /// 默认模型名
+  apiKey    String   @default("") /// API 密钥
+  baseUrl   String   @default("") /// API 基础地址
+  isActive  Boolean  @default(false) /// 是否为该类型当前激活的供应商
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, provider])
+  @@map("ai_provider")
+}
+
 /// 每日一句：按日期管理的每日句子（首页展示）
 model DailySentence {
   id          String   @id @default(cuid())

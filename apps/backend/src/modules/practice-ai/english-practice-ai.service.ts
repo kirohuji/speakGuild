@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { DialogueTurnJudgeDto } from './dto/english-feedback.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
+import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
+import { AiModelService } from '../ai-model/ai-model.service';
 
 @Injectable()
 export class EnglishPracticeAiService {
@@ -12,13 +13,15 @@ export class EnglishPracticeAiService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly quotaService: AiQuotaService,
+    private readonly llmFactory: LlmProviderFactory,
+    private readonly aiModel: AiModelService,
   ) {}
 
-  private getProvider() {
-    const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-    if (!apiKey) throw new BadRequestException('未配置 DEEPSEEK_API_KEY');
-    const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
-    return (model: string) => client.chat(model);
+  private async getProvider() {
+    const config = await this.aiModel.getLlmConfig();
+    if (!config.apiKey) throw new BadRequestException('未配置 LLM API Key');
+    const model = this.llmFactory.create(config);
+    return () => model;
   }
 
   private parseLevel(value: unknown) {
@@ -53,7 +56,7 @@ export class EnglishPracticeAiService {
     },
     userId: string,
   ) {
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
     const cleanGoals = this.normalizeLearningGoals(dto.learningGoals);
     const cleanAnswers = (dto.answers ?? [])
       .map((answer) => ({
@@ -149,7 +152,7 @@ Return this exact JSON shape:
 }`;
 
     const result = await generateText({
-      model: provider('deepseek-chat'),
+      model: provider(),
       system,
       prompt: user,
       temperature: 0.25,
@@ -248,7 +251,7 @@ Return this exact JSON shape:
 
   /** 单轮 NPC 对话输入判定：把开放式用户输入转换为 Ink 可消费的变量 */
   async judgeDialogueTurn(dto: DialogueTurnJudgeDto, userId?: string) {
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
     const objectives = dto.objectives?.length ? dto.objectives : ['respond_to_npc'];
     const targetChunks = dto.targetChunks ?? [];
     const mode = dto.mode ?? 'communicative';
@@ -352,7 +355,7 @@ Before returning JSON, check that "passed" reflects communicative success rather
 For correction/upgraded/retryRequired: only populate these when the response is understandable but unnatural. Omit or set to null when not applicable.`;
 
     const result = await generateText({
-      model: provider('deepseek-chat'),
+      model: provider(),
       system,
       prompt: user,
       temperature: 0.2,
@@ -539,7 +542,7 @@ ${dialogueText}
       this.logger.log(`  → round=${t.round} | userText="${t.userText?.slice(0, 50)}..."`);
     });
 
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
     const { system, user } = this.buildPracticeSessionAnalysisPrompt(session);
 
     // 打印发送给 AI 的对话片段（截取关键部分）
@@ -547,7 +550,7 @@ ${dialogueText}
     this.logger.log(`[summarize] 对话预览: ${dialoguePreview || '无对话'}`);
 
     const result = await generateText({
-      model: provider('deepseek-chat'),
+      model: provider(),
       system,
       prompt: user,
       temperature: 0.45,
@@ -715,10 +718,10 @@ ${dialogueText}
     examples: Array<{ en: string }>,
   ): Promise<{ wordZh: string; examplesZh: string[] }> {
     try {
-      const provider = this.getProvider()
+      const provider = await this.getProvider()
       const exampleLines = examples.map((ex, i) => `${i + 1}. ${ex.en}`).join('\n')
       const { text } = await generateText({
-        model: provider('deepseek-chat'),
+        model: provider(),
         prompt: `Translate the following English word and sentences to Simplified Chinese.
 
 Word: "${word}"
@@ -847,7 +850,7 @@ Return ONLY a JSON object (no markdown):
 
   /** DeepSeek AI 完整回退（罕见词/短语） */
   private async enrichFromAI(word: string) {
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
 
     const prompt = `请为英语单词/短语"${word}"提供学习辅助信息。
 
@@ -873,7 +876,7 @@ Rules:
 - memoryTip must be practical and memorable for Chinese learners`;
 
     const { text } = await generateText({
-      model: provider('deepseek-chat'),
+      model: provider(),
       prompt,
       temperature: 0.3,
       maxOutputTokens: 900,
@@ -904,7 +907,7 @@ Rules:
     itemCount?: number;
     items?: Array<{ zh: string; answer: string; hint?: string }>;
   }) {
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
     const count = Math.min(dto.count ?? 4, 8);
     const direction = dto.direction ?? 'zh_to_en';
     const kind = dto.kind ?? 'chunk';
@@ -927,7 +930,7 @@ Return ONLY a JSON object: { "hints": ["hint1", "hint2", ...] }`;
 
       try {
         const { text } = await generateText({
-          model: provider('deepseek-chat'),
+          model: provider(),
           system,
           prompt: user,
           temperature: 0.6,
@@ -963,7 +966,7 @@ Return ONLY a JSON object (no markdown):
 
       try {
         const { text } = await generateText({
-          model: provider('deepseek-chat'),
+          model: provider(),
           system,
           prompt: user,
           temperature: 0.5,
@@ -996,7 +999,7 @@ Kind: ${kind}
 Count: ${count}`;
 
       const { text } = await generateText({
-        model: provider('deepseek-chat'),
+        model: provider(),
         system,
         prompt: user,
         temperature: 0.7,
@@ -1030,7 +1033,7 @@ Return ONLY a JSON object (no markdown):
 Create 3 patterns with 2-3 items each.`;
 
       const { text } = await generateText({
-        model: provider('deepseek-chat'),
+        model: provider(),
         system,
         prompt: user,
         temperature: 0.7,
@@ -1063,7 +1066,7 @@ Return ONLY a JSON object (no markdown):
         const user = `Chunk: "${chunk}"${dto.meaning ? `\nMeaning: ${dto.meaning}` : ''}`;
 
         const { text } = await generateText({
-          model: provider('deepseek-chat'),
+          model: provider(),
           system,
           prompt: user,
           temperature: 0.7,
@@ -1104,7 +1107,7 @@ Return ONLY a JSON object (no markdown):
       const user = `Full sentence: "${fullSentence}"${fullZh ? `\nChinese: ${fullZh}` : ''}`;
 
       const { text } = await generateText({
-        model: provider('deepseek-chat'),
+        model: provider(),
         system,
         prompt: user,
         temperature: 0.5,
@@ -1140,7 +1143,7 @@ Count: ${count}
 Create exercises where the learner practices this pattern with different content.`;
 
       const { text } = await generateText({
-        model: provider('deepseek-chat'),
+        model: provider(),
         system,
         prompt: user,
         temperature: 0.7,

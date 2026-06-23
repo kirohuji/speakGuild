@@ -9,6 +9,7 @@ import { SttProviderFactory } from './stt/stt-provider.factory';
 import { TTS_PARAMS_SCHEMA, sanitizeTtsParams } from './tts-params.schema';
 import { SynthesizeAssetDto, SynthesizeTextDto } from './dto/synthesize.dto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
+import { AiModelService } from '../ai-model/ai-model.service';
 
 @Injectable()
 export class TtsService {
@@ -19,6 +20,7 @@ export class TtsService {
     private readonly factory: TtsProviderFactory,
     private readonly sttFactory: SttProviderFactory,
     private readonly fileAssetsService: FileAssetsService,
+    private readonly aiModel: AiModelService,
   ) {}
 
   getParamsSchema() {
@@ -41,8 +43,8 @@ export class TtsService {
     const mimeType = mimeMap[ext] ?? 'audio/webm';
     const audioBase64 = audioBuffer.toString('base64');
 
-    // 通过工厂获取 STT 供应商（由 STT_PROVIDER 环境变量控制，默认 whisper）
-    const sttName = process.env.STT_PROVIDER?.trim() || 'whisper';
+    // 通过工厂获取 STT 供应商（优先 DB ai_provider 表，其次环境变量，默认 whisper）
+    const sttName = await this.aiModel.getSttProviderName();
     const sttProvider = this.sttFactory.getProvider(sttName);
 
     const result = await sttProvider.transcribe({
