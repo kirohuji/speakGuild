@@ -1,6 +1,6 @@
-import { Controller, Get, Put, Post, Param, Body, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Delete, Get, Put, Post, Param, Body, Req, ForbiddenException } from '@nestjs/common';
 import type { Request } from 'express';
-import { AiModelService, type UpdateAiProviderDto } from './ai-model.service';
+import { AiModelService, type CreateAiProviderDto, type UpdateAiProviderDto } from './ai-model.service';
 import { requireAuthSession } from '../auth/session.util';
 
 @Controller('admin/ai-models')
@@ -23,6 +23,12 @@ export class AiModelController {
   }
 
   /** 更新某个供应商配置 */
+  @Post()
+  async create(@Req() req: Request, @Body() dto: CreateAiProviderDto) {
+    await this.requireAdmin(req);
+    return this.aiModelService.create(dto);
+  }
+
   @Put(':id')
   async update(
     @Req() req: Request,
@@ -34,6 +40,12 @@ export class AiModelController {
   }
 
   /** 激活某个供应商 */
+  @Delete(':id')
+  async remove(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.aiModelService.remove(id);
+  }
+
   @Put(':id/activate')
   async activate(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);

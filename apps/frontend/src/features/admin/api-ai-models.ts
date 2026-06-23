@@ -1,4 +1,4 @@
-import { get, post, put } from '@/lib/request';
+import { del, get, post, put } from '@/lib/request';
 
 export interface AiProviderItem {
   id: string;
@@ -22,6 +22,16 @@ export interface UpdateAiProviderDto {
   isActive?: boolean;
 }
 
+export interface CreateAiProviderDto {
+  type?: 'stt' | 'tts' | 'llm';
+  provider: string;
+  label: string;
+  model?: string;
+  apiKey?: string;
+  baseUrl?: string;
+  config?: Record<string, unknown>;
+}
+
 /** 获取按类型分组的所有供应商 */
 export async function listAiProviders(): Promise<Record<string, AiProviderItem[]>> {
   return get('/admin/ai-models');
@@ -30,6 +40,14 @@ export async function listAiProviders(): Promise<Record<string, AiProviderItem[]
 /** 更新供应商配置 */
 export async function updateAiProvider(id: string, dto: UpdateAiProviderDto): Promise<AiProviderItem> {
   return put(`/admin/ai-models/${id}`, dto);
+}
+
+export async function createAiProvider(dto: CreateAiProviderDto): Promise<AiProviderItem> {
+  return post('/admin/ai-models', dto);
+}
+
+export async function deleteAiProvider(id: string): Promise<{ success: true }> {
+  return del(`/admin/ai-models/${id}`);
 }
 
 /** 激活某个供应商 */
@@ -101,6 +119,8 @@ export async function testTtsProvider(
     model: item.model,
     voiceId: payload.voiceId || undefined,
     params: payload.params,
+    apiKey: item.apiKey || undefined,
+    baseUrl: item.baseUrl || undefined,
   }, { timeout: 300000 });
 }
 

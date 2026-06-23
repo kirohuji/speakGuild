@@ -10,11 +10,13 @@ export type TtsGenerateInput = {
   model: string;
   voiceId?: string | null;
   params?: Record<string, unknown>;
+  apiKey?: string | null;
+  baseUrl?: string | null;
 };
 
 export type TtsGenerateResult = {
   audioBuffer: Buffer;
-  fileExtension: 'mp3' | 'wav';
+  fileExtension: 'mp3' | 'wav' | 'flac';
   mimeType: string;
   wordTimestamps: TtsWordTimestamp[] | null;
 };

@@ -15,6 +15,16 @@ export interface UpdateAiProviderDto {
   isActive?: boolean;
 }
 
+export interface CreateAiProviderDto {
+  type?: AiProviderType;
+  provider: string;
+  label: string;
+  model?: string;
+  apiKey?: string;
+  baseUrl?: string;
+  config?: any;
+}
+
 @Injectable()
 export class AiModelService {
   private readonly logger = new Logger(AiModelService.name);
@@ -57,6 +67,50 @@ export class AiModelService {
   }
 
   /** 激活某个供应商（同一 type 下取消其他激活） */
+  async create(dto: CreateAiProviderDto): Promise<AiProvider> {
+    const type = dto.type ?? 'llm';
+    if (!['stt', 'tts', 'llm'].includes(type)) {
+      throw new BadRequestException('Unsupported provider type');
+    }
+
+    const provider = dto.provider.trim().toLowerCase();
+    const label = dto.label.trim();
+    if (!provider) throw new BadRequestException('Provider is required');
+    if (!label) throw new BadRequestException('Label is required');
+
+    const last = await this.prisma.aiProvider.findFirst({
+      where: { type },
+      orderBy: { sortOrder: 'desc' },
+    });
+
+    return this.prisma.aiProvider.create({
+      data: {
+        type,
+        provider,
+        label,
+        model: dto.model?.trim() ?? '',
+        apiKey: dto.apiKey?.trim() ?? '',
+        baseUrl: dto.baseUrl?.trim() ?? '',
+        config: dto.config,
+        sortOrder: (last?.sortOrder ?? -1) + 1,
+      },
+    });
+  }
+
+  async remove(id: string): Promise<{ success: true }> {
+    const provider = await this.prisma.aiProvider.findUnique({ where: { id } });
+    if (!provider) throw new NotFoundException('Provider not found');
+    if (['whisper', 'tencent', 'minimax', 'cartesia', 'deepseek', 'openai'].includes(provider.provider)) {
+      throw new BadRequestException('Built-in providers cannot be deleted');
+    }
+    if (provider.isActive) {
+      throw new BadRequestException('Active provider cannot be deleted');
+    }
+
+    await this.prisma.aiProvider.delete({ where: { id } });
+    return { success: true };
+  }
+
   async activate(id: string): Promise<AiProvider> {
     const provider = await this.prisma.aiProvider.findUnique({ where: { id } });
     if (!provider) throw new Error('Provider not found');
@@ -150,7 +204,7 @@ export class AiModelService {
     const defaults = [
       { type: 'stt', provider: 'whisper', label: 'Whisper', model: '', apiKey: '', baseUrl: '', sortOrder: 0 },
       { type: 'stt', provider: 'tencent', label: '腾讯云 ASR', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
-      { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: '', sortOrder: 0 },
+      { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: 'https://api.minimax.io', sortOrder: 0 },
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4-pro', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },

@@ -102,6 +102,8 @@ export class TtsService {
       model: dto.model,
       voiceId: dto.voiceId,
       params: sanitizedParams,
+      apiKey: dto.apiKey,
+      baseUrl: dto.baseUrl,
     });
     return {
       mimeType: result.mimeType,
@@ -125,6 +127,8 @@ export class TtsService {
       model: dto.model,
       voiceId: dto.voiceId,
       params: sanitizedParams,
+      apiKey: dto.apiKey,
+      baseUrl: dto.baseUrl,
     });
 
     const asset = await this.fileAssetsService.createAssetFromBuffer({

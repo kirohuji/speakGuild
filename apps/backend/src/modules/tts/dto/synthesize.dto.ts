@@ -45,6 +45,14 @@ export class SynthesizeTextDto {
 
   @IsOptional()
   params?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  apiKey?: string;
+
+  @IsOptional()
+  @IsString()
+  baseUrl?: string;
 }
 
 export class SynthesizeAssetDto extends SynthesizeTextDto {
