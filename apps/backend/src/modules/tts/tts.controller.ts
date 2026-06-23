@@ -46,8 +46,18 @@ export class TtsController {
   async transcribeRecording(
     @UploadedFile() file: Express.Multer.File,
     @Body('language') language?: string,
+    @Body('temperature') temperatureRaw?: string,
+    @Body('enableTimestamps') enableTimestampsRaw?: string,
   ) {
     if (!file) throw new BadRequestException('未收到音频文件');
-    return this.ttsService.transcribeRecording(file.buffer, file.originalname || 'recording.webm', language);
+    const temperature = temperatureRaw ? Number(temperatureRaw) : undefined;
+    const enableTimestamps = enableTimestampsRaw === undefined ? undefined : enableTimestampsRaw === 'true';
+    return this.ttsService.transcribeRecording(
+      file.buffer,
+      file.originalname || 'recording.webm',
+      language,
+      temperature,
+      enableTimestamps,
+    );
   }
 }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -103,6 +104,8 @@ function ConfigDialog({
   const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
+  const [temperature, setTemperature] = useState('0.2');
+  const [enableTimestamps, setEnableTimestamps] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -111,15 +114,31 @@ function ConfigDialog({
       setModel(item.model ?? '');
       setApiKey(item.apiKey ?? '');
       setBaseUrl(item.baseUrl ?? '');
+      const cfg = (item as any).config ?? {};
+      setTemperature(String(cfg.temperature ?? 0.2));
+      setEnableTimestamps(cfg.enableTimestamps !== false);
     }
   }, [item]);
 
   if (!item) return null;
 
+  const isStt = item.type === 'stt';
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateAiProvider(item.id, { model, apiKey, baseUrl });
+      const config: any = {};
+      if (isStt) {
+        const t = Number(temperature);
+        if (!isNaN(t)) config.temperature = t;
+        config.enableTimestamps = enableTimestamps;
+      }
+      await updateAiProvider(item.id, {
+        model,
+        apiKey,
+        baseUrl,
+        ...(Object.keys(config).length ? { config: JSON.stringify(config) } : {}),
+      });
       setToast('配置已保存');
       setTimeout(() => {
         setToast(null);
@@ -185,6 +204,33 @@ function ConfigDialog({
             />
             <p className="text-[11px] text-muted-foreground">留空则回退到环境变量中的对应密钥</p>
           </div>
+
+          {isStt && (
+            <>
+              <div className="space-y-2">
+                <Label>Temperature ({temperature})</Label>
+                <Input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={temperature}
+                  onChange={(e) => setTemperature(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">越高越随机，默认 0.2。仅 Whisper 生效</p>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+                <div>
+                  <Label className="text-sm">词时间戳</Label>
+                  <p className="text-[11px] text-muted-foreground">开启返回词级别时间，关闭可提速</p>
+                </div>
+                <Switch
+                  checked={enableTimestamps}
+                  onCheckedChange={setEnableTimestamps}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter>

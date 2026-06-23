@@ -9,6 +9,7 @@ export interface UpdateAiProviderDto {
   model?: string;
   apiKey?: string;
   baseUrl?: string;
+  config?: any;
   isActive?: boolean;
 }
 
@@ -79,10 +80,15 @@ export class AiModelService {
     };
   }
 
-  /** 获取 STT 配置 */
-  async getSttProviderName(): Promise<string> {
+  /** 获取 STT 配置（含 provider 级默认参数） */
+  async getSttConfig(): Promise<{ provider: string; temperature?: number; enableTimestamps?: boolean }> {
     const active = await this.getActive('stt');
-    return active?.provider || process.env.STT_PROVIDER?.trim() || 'whisper';
+    const config = (active?.config as any) ?? {};
+    return {
+      provider: active?.provider || process.env.STT_PROVIDER?.trim() || 'whisper',
+      temperature: typeof config.temperature === 'number' ? config.temperature : undefined,
+      enableTimestamps: typeof config.enableTimestamps === 'boolean' ? config.enableTimestamps : undefined,
+    };
   }
 
   /** 初始化内置供应商（幂等，仅在不存在时插入） */

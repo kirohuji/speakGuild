@@ -25,21 +25,23 @@ export class WhisperSttProvider extends SttProvider {
     await fs.writeFile(tempFile, input.audioBuffer);
 
     try {
-      return await this.callWhisper(whisperUrl, tempFile, input.fileName, input.language);
+      return await this.callWhisper(whisperUrl, tempFile, input);
     } finally {
       await fs.unlink(tempFile).catch(() => undefined);
     }
   }
 
-  private async callWhisper(url: string, audioPath: string, fileName: string, language?: string): Promise<SttTranscribeResult> {
+  private async callWhisper(url: string, audioPath: string, input: SttTranscribeInput): Promise<SttTranscribeResult> {
     try {
       const buf = await fs.readFile(audioPath);
       const form = new FormData();
-      form.append('file', new Blob([new Uint8Array(buf)]), fileName);
-      form.append('response_format', 'verbose_json');
-      form.append('temperature', '0.2');
+      form.append('file', new Blob([new Uint8Array(buf)]), input.fileName);
+      // 时间戳控制：enableTimestamps 默认 true，关闭时用 json 格式更快
+      const enableTimestamps = input.enableTimestamps !== false;
+      form.append('response_format', enableTimestamps ? 'verbose_json' : 'json');
+      form.append('temperature', String(input.temperature ?? 0.2));
       // 优先使用请求传入的 language，否则回退到环境变量
-      const lang = language?.trim() || process.env.WHISPER_LANGUAGE?.trim();
+      const lang = input.language?.trim() || process.env.WHISPER_LANGUAGE?.trim();
       if (lang) form.append('language', lang);
 
       const { default: axios } = await import('axios');

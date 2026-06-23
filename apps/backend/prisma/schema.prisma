@@ -201,6 +201,7 @@ model AiProvider {
   model     String   @default("") /// 默认模型名
   apiKey    String   @default("") /// API 密钥
   baseUrl   String   @default("") /// API 基础地址
+  config    Json?    /// 供应商特定配置: { temperature?, enableTimestamps?, ... }
   isActive  Boolean  @default(false) /// 是否为该类型当前激活的供应商
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())

@@ -28,7 +28,13 @@ export class TtsService {
   }
 
   /** 用户录音 → STT 转写，返回文本 + 词时间戳 + 音频 COS URL */
-  async transcribeRecording(audioBuffer: Buffer, originalname: string, language?: string): Promise<{
+  async transcribeRecording(
+    audioBuffer: Buffer,
+    originalname: string,
+    language?: string,
+    temperature?: number,
+    enableTimestamps?: boolean,
+  ): Promise<{
     audioBase64: string;
     mimeType: string;
     text: string | null;
@@ -44,14 +50,16 @@ export class TtsService {
     const audioBase64 = audioBuffer.toString('base64');
 
     // 通过工厂获取 STT 供应商（优先 DB ai_provider 表，其次环境变量，默认 whisper）
-    const sttName = await this.aiModel.getSttProviderName();
-    const sttProvider = this.sttFactory.getProvider(sttName);
+    const sttConfig = await this.aiModel.getSttConfig();
+    const sttProvider = this.sttFactory.getProvider(sttConfig.provider);
 
     const result = await sttProvider.transcribe({
       audioBuffer,
       mimeType,
       fileName: originalname,
       language,
+      temperature: temperature ?? sttConfig.temperature,
+      enableTimestamps: enableTimestamps ?? sttConfig.enableTimestamps,
     });
 
     // 转写成功后，将用户录音保存到 COS，方便后续回放

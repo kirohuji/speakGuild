@@ -13,6 +13,10 @@ export interface SttTranscribeInput {
   fileName: string
   /** 可选：指定识别语言（如 zh-CN, en-US），不传则由供应商自行检测 */
   language?: string
+  /** 可选：采样温度 0-1，默认 0.2。越高越随机 */
+  temperature?: number
+  /** 可选：是否返回词级别时间戳，默认 true。关闭可提速 */
+  enableTimestamps?: boolean
 }
 
 /** 词级别时间戳 */

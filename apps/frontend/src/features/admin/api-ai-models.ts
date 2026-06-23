@@ -8,6 +8,7 @@ export interface AiProviderItem {
   model: string;
   apiKey: string;
   baseUrl: string;
+  config?: Record<string, unknown>;
   isActive: boolean;
   sortOrder: number;
 }
@@ -17,6 +18,7 @@ export interface UpdateAiProviderDto {
   model?: string;
   apiKey?: string;
   baseUrl?: string;
+  config?: string;
   isActive?: boolean;
 }
 
