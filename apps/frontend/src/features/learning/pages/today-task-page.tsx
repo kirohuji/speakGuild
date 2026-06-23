@@ -108,6 +108,8 @@ export function TodayTaskPage() {
   const completeStep = useDailyPracticeStore((s) => s.completeStep)
   const submitToday = useDailyPracticeStore((s) => s.submitToday)
   const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
+  const dailyPracticeLastMode = usePreferencesStore((s) => s.dailyPracticeLastMode)
+  const setDailyPracticeLastMode = usePreferencesStore((s) => s.setDailyPracticeLastMode)
 
   // 练习状态
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -118,7 +120,7 @@ export function TodayTaskPage() {
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
-  const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || 'review'
+  const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || (dailyPracticeLastMode as DailyPracticePlanMode) || 'review'
   const [planRunSeed, setPlanRunSeed] = useState(0)
 
   useEffect(() => {
@@ -148,6 +150,7 @@ export function TodayTaskPage() {
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
+    setDailyPracticeLastMode(nextMode)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       next.set('mode', nextMode)

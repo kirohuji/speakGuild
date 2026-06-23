@@ -31,6 +31,7 @@ interface Preferences {
   dailyGoal: number
   dailyPracticeMixedPacks: boolean
   dailyPracticeRandomOrder: boolean
+  dailyPracticeLastMode: string
   learningReminderEnabled: boolean
   learningReminderTime: string
 }
@@ -48,6 +49,7 @@ interface PreferencesStore extends Preferences {
   setDailyGoal: (value: number) => void
   setDailyPracticeMixedPacks: (value: boolean) => void
   setDailyPracticeRandomOrder: (value: boolean) => void
+  setDailyPracticeLastMode: (value: string) => void
   setLearningReminderEnabled: (value: boolean) => void
   setLearningReminderTime: (value: string) => void
 }
@@ -81,6 +83,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       dailyGoal: 20,
       dailyPracticeMixedPacks: false,
       dailyPracticeRandomOrder: true,
+      dailyPracticeLastMode: 'review',
       learningReminderEnabled: false,
       learningReminderTime: '20:30',
       setAutoPlay: (autoPlay) => set({ autoPlay }),
@@ -100,6 +103,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setDailyGoal: (value) => set({ dailyGoal: value }),
       setDailyPracticeMixedPacks: (value) => set({ dailyPracticeMixedPacks: value }),
       setDailyPracticeRandomOrder: (value) => set({ dailyPracticeRandomOrder: value }),
+      setDailyPracticeLastMode: (value) => set({ dailyPracticeLastMode: value }),
       setLearningReminderEnabled: (value) => set({ learningReminderEnabled: value }),
       setLearningReminderTime: (value) => set({ learningReminderTime: value }),
     }),
