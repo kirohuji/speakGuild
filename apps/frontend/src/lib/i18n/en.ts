@@ -758,21 +758,6 @@ const en = {
       emptyPatternsMastered: 'No mastered patterns',
       hintCollectPatterns: 'Click + on pattern cards during practice to collect',
     },
-    scriptHub: {
-      title: 'Script Mode',
-      subtitle: 'Use English in story-driven tasks',
-      comingSoon: 'Scripts coming soon',
-    },
-    exploreMap: {
-      title: 'Exploration Mode',
-      subtitle: 'Choose locations and interact with NPCs in English',
-      preview: 'Preview',
-      locations: 'Available Locations',
-      subtitleNoMap: 'Freely explore locations and NPCs on the minimap',
-      comingSoon: 'Map content coming soon',
-      unlockHint: 'Complete Script Chapter 0 to unlock exploration',
-      locked: 'Locked',
-    },
     auth: {
       login: 'Login',
       register: 'Register',

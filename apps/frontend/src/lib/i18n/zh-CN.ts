@@ -755,21 +755,6 @@ const zhCN = {
       emptyPatternsMastered: '暂无已标熟的句型',
       hintCollectPatterns: '在练习页点击 + 收藏句型骨架',
     },
-    scriptHub: {
-      title: '剧本模式',
-      subtitle: '在剧情任务中使用英语，推动故事发展',
-      comingSoon: '剧本内容即将上线',
-    },
-    exploreMap: {
-      title: '探索模式',
-      subtitle: '选择地点，与 NPC 自由英语互动',
-      preview: '预览',
-      locations: '可前往的地点',
-      subtitleNoMap: '在小地图中自由选择地点和 NPC',
-      comingSoon: '地图内容即将开放',
-      unlockHint: '请先完成剧本 Chapter 0 解锁探索区域',
-      locked: '未解锁',
-    },
     auth: {
       login: '登录',
       register: '注册',

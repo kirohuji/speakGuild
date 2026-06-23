@@ -253,8 +253,11 @@ export class PayService {
     };
   }
 
-  /** Mock 支付确认 - 开发环境用 */
+  /** Mock 支付确认 - 仅非生产环境可用 */
   async mockPayConfirm(orderNo: string) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new BadRequestException('Mock 支付在生产环境不可用');
+    }
     const order = await this.prisma.order.findUnique({
       where: { orderNo },
       include: { plan: true },

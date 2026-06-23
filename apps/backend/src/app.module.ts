@@ -29,6 +29,7 @@ import { SyncModule } from './modules/sync/sync.module';
 import { OpsModule } from './common/ops/ops.module';
 import { LlmModule } from './common/llm/llm.module';
 import { AiModelModule } from './modules/ai-model/ai-model.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AiModelModule } from './modules/ai-model/ai-model.module';
     MobileUpdatesModule,
     DictionaryModule,
     SyncModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

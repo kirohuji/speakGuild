@@ -746,21 +746,6 @@ const ja = {
       emptyPatternsMastered: '習得済みの文型はありません',
       hintCollectPatterns: '練習ページで + をクリックして文型を収集',
     },
-    scriptHub: {
-      title: 'スクリプトモード',
-      subtitle: 'ストーリー仕立てのタスクで英語を使う',
-      comingSoon: 'スクリプト準備中',
-    },
-    exploreMap: {
-      title: '探索モード',
-      subtitle: '場所を選んでNPCと英語で交流',
-      preview: 'プレビュー',
-      locations: '行ける場所',
-      subtitleNoMap: 'ミニマップで場所とNPCを自由に選択',
-      comingSoon: 'マップコンテンツ準備中',
-      unlockHint: 'スクリプトChapter 0を完了して探索を解放',
-      locked: 'ロック中',
-    },
     auth: {
       login: 'ログイン',
       register: '登録',

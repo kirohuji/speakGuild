@@ -7,6 +7,7 @@ import {
   Query,
   Req,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { PayService } from './pay.service';
@@ -85,9 +86,12 @@ export class PayController {
     }
   }
 
-  /** Mock: 模拟支付成功（开发环境用） */
+  /** Mock: 模拟支付成功（仅非生产环境可用） */
   @Post('mock-confirm/:orderNo')
   async mockPayConfirm(@Req() req: Request, @Param('orderNo') orderNo: string) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new BadRequestException('该接口在生产环境不可用');
+    }
     await requireAuthSession(req);
     return this.payService.mockPayConfirm(orderNo);
   }
