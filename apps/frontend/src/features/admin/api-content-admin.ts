@@ -308,7 +308,7 @@ export interface GameCharacter {
   ttsVoice?: string | null
   ttsModel?: string | null
   ttsParams?: Record<string, number> | null
-  locationNpcs?: { location: { id: string; displayName: string } }[]
+  roomNpcs?: { room: { id: string; displayName: string; location: { id: string; displayName: string } } }[]
 }
 
 export async function listCharacters(): Promise<GameCharacter[]> {
@@ -335,8 +335,11 @@ export interface GameMapData {
   displayName: string
   backgroundUrl?: string | null
   thumbnailUrl?: string | null
+  icon?: string | null
   requiredOutputLevel: string
   requiredChapterId?: string | null
+  disabled: boolean
+  hidden: boolean
   isPreview: boolean
   sortOrder: number
   locations?: GameLocationData[]
@@ -355,11 +358,32 @@ export interface GameLocationData {
   locationType: string
   sceneId?: string | null
   requiredOutputLevel: string
+  disabled: boolean
+  hidden: boolean
   isPreview: boolean
   sortOrder: number
   map?: { id: string; displayName: string }
-  npcs?: { character: GameCharacter }[]
-  exits?: { to: { id: string; displayName: string }; label: string }[]
+  rooms?: GameRoomData[]
+}
+
+export interface GameRoomData {
+  id: string
+  locationId: string
+  name: string
+  displayName: string
+  description?: string | null
+  backgroundUrl?: string | null
+  inkScriptId?: string | null
+  icon?: string | null
+  roomType: string
+  isEntrance: boolean
+  disabled: boolean
+  hidden: boolean
+  requiredOutputLevel: string
+  isPreview: boolean
+  sortOrder: number
+  location?: { id: string; displayName: string; map?: { id: string; displayName: string } }
+  npcs?: { id: string; character: GameCharacter; sortOrder: number }[]
 }
 
 export async function listMaps(): Promise<GameMapData[]> {
@@ -393,6 +417,35 @@ export async function updateLocation(id: string, data: Partial<GameLocationData>
 export async function deleteLocation(id: string): Promise<void> {
   return _delete(`/admin/content/locations/${id}`)
 }
+
+// ─── Game Rooms (房间管理 — NQTR Navigation: Map→Location→Room) ──
+
+export async function listRooms(locationId?: string): Promise<GameRoomData[]> {
+  return get('/admin/content/rooms', locationId ? { locationId } : undefined)
+}
+
+export async function createRoom(data: Partial<GameRoomData>): Promise<GameRoomData> {
+  return post('/admin/content/rooms', data)
+}
+
+export async function updateRoom(id: string, data: Partial<GameRoomData>): Promise<GameRoomData> {
+  return patch(`/admin/content/rooms/${id}`, data)
+}
+
+export async function deleteRoom(id: string): Promise<void> {
+  return _delete(`/admin/content/rooms/${id}`)
+}
+
+// ─── Room NPCs ──────────────────────────────────────────────
+
+export async function addRoomNpc(data: { roomId: string; characterId: string; sortOrder?: number }): Promise<any> {
+  return post('/admin/content/room-npcs', data)
+}
+
+export async function removeRoomNpc(id: string): Promise<void> {
+  return _delete(`/admin/content/room-npcs/${id}`)
+}
+
 
 // ─── Stories / Ink Scripts (故事管理) ──────────────────────────
 

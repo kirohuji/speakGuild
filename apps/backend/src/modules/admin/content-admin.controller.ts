@@ -702,7 +702,7 @@ export class ContentAdminController {
     await this.requireAdmin(req);
     return this.prisma.gameCharacter.findMany({
       orderBy: { createdAt: 'asc' },
-      include: { locationNpcs: { include: { location: { select: { id: true, displayName: true } } } } },
+      include: { roomNpcs: { include: { room: { select: { id: true, displayName: true, location: { select: { id: true, displayName: true } } } } } } },
     });
   }
 
@@ -725,7 +725,7 @@ export class ContentAdminController {
   }
 
   // ════════════════════════════════════════════════════════════
-  // GAME MAPS + LOCATIONS (地图/地点管理)
+  // GAME MAPS + LOCATIONS + ROOMS（NQTR Navigation: Map→Location→Room）
   // ════════════════════════════════════════════════════════════
 
   @Get('maps')
@@ -733,7 +733,19 @@ export class ContentAdminController {
     await this.requireAdmin(req);
     return this.prisma.gameMap.findMany({
       orderBy: { sortOrder: 'asc' },
-      include: { locations: { orderBy: { sortOrder: 'asc' }, include: { npcs: { include: { character: true } } } } },
+      include: {
+        locations: {
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            rooms: {
+              orderBy: { sortOrder: 'asc' },
+              include: {
+                npcs: { include: { character: true } },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -765,8 +777,12 @@ export class ContentAdminController {
       orderBy: { sortOrder: 'asc' },
       include: {
         map: { select: { id: true, displayName: true } },
-        npcs: { include: { character: true } },
-        exits: { include: { to: { select: { id: true, displayName: true } } } },
+        rooms: {
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            npcs: { include: { character: true } },
+          },
+        },
       },
     });
   }
@@ -787,6 +803,55 @@ export class ContentAdminController {
   async deleteLocation(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.prisma.gameLocation.delete({ where: { id } });
+  }
+
+  // ─── Rooms CRUD ─────────────────────────────────────────────
+
+  @Get('rooms')
+  async listRooms(@Req() req: Request, @Query('locationId') locationId?: string) {
+    await this.requireAdmin(req);
+    const where: any = {};
+    if (locationId) where.locationId = locationId;
+    return this.prisma.gameRoom.findMany({
+      where,
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        location: { select: { id: true, displayName: true, map: { select: { id: true, displayName: true } } } },
+        npcs: { include: { character: true } },
+      },
+    });
+  }
+
+  @Post('rooms')
+  async createRoom(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameRoom.create({ data: dto });
+  }
+
+  @Patch('rooms/:id')
+  async updateRoom(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameRoom.update({ where: { id }, data: dto });
+  }
+
+  @Delete('rooms/:id')
+  async deleteRoom(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameRoom.delete({ where: { id } });
+  }
+
+  // ─── Room NPCs ──────────────────────────────────────────────
+
+  @Post('room-npcs')
+  async addRoomNpc(@Req() req: Request, @Body() dto: { roomId: string; characterId: string; sortOrder?: number }) {
+    await this.requireAdmin(req);
+    return this.prisma.gameRoomNpc.create({ data: dto, include: { character: true } });
+  }
+
+  @Delete('room-npcs/:id')
+  async removeRoomNpc(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameRoomNpc.delete({ where: { id } });
   }
 
   // ════════════════════════════════════════════════════════════

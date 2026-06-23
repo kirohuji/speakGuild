@@ -1161,7 +1161,7 @@ model GameCharacter {
   ttsVoice           String? // TTS 音色 ID（如 MiniMax/Cartesia voice ID）
   ttsModel           String? // TTS 模型（如 speech-2.8-hd）
   ttsParams          Json? // TTS 参数（如 { speed, pitch, vol }）
-  locationNpcs       GameLocationNpc[]
+  roomNpcs           GameRoomNpc[]
   explorationRecords ExplorationRecord[]
   createdAt          DateTime            @default(now())
 
@@ -1174,11 +1174,14 @@ model GameMap {
   displayName         String
   backgroundUrl       String?
   thumbnailUrl        String?
+  icon                String?
   width               Int            @default(1920)
   height              Int            @default(1080)
   locations           GameLocation[]
   requiredOutputLevel String         @default("L1")
   requiredChapterId   String?
+  disabled            Boolean        @default(false)
+  hidden              Boolean        @default(false)
   isPreview           Boolean        @default(false)
   sortOrder           Int            @default(0)
   createdAt           DateTime       @default(now())
@@ -1186,54 +1189,71 @@ model GameMap {
   @@map("game_map")
 }
 
+// ──── NQTR Navigation: Map → Location → Room（Pixi-VN 三级层级）────
+
 model GameLocation {
-  id                  String              @id @default(cuid())
-  map                 GameMap             @relation(fields: [mapId], references: [id])
+  id                  String         @id @default(cuid())
+  map                 GameMap        @relation(fields: [mapId], references: [id])
   mapId               String
   name                String
   displayName         String
   description         String?
-  posX                Float               @default(0)
-  posY                Float               @default(0)
+  posX                Float          @default(0)
+  posY                Float          @default(0)
   icon                String?
   backgroundUrl       String?
   bgmUrl              String?
   ambientUrl          String?
-  locationType        String              @default("vn_scene")
+  locationType        String         @default("building")
   sceneId             String?
-  scene               Scene?              @relation(fields: [sceneId], references: [id])
-  inkScriptId         String?
-  npcs                GameLocationNpc[]
-  exits               GameLocationExit[]  @relation("FromLocation")
-  incomingExits       GameLocationExit[]  @relation("ToLocation")
+  scene               Scene?         @relation(fields: [sceneId], references: [id])
+  rooms               GameRoom[]
   explorationRecords  ExplorationRecord[]
+  requiredOutputLevel String         @default("L1")
+  requiredSceneIds    String[]       @default([])
+  requiredFlags       Json?
+  disabled            Boolean        @default(false)
+  hidden              Boolean        @default(false)
+  isPreview           Boolean        @default(false)
+  sortOrder           Int            @default(0)
+  createdAt           DateTime       @default(now())
+
+  @@map("game_location")
+}
+
+model GameRoom {
+  id                  String              @id @default(cuid())
+  location            GameLocation        @relation(fields: [locationId], references: [id])
+  locationId          String
+  name                String
+  displayName         String
+  description         String?
+  backgroundUrl       String?
+  bgmUrl              String?
+  ambientUrl          String?
+  icon                String?
+  roomType            String              @default("vn_scene")
+  isEntrance          Boolean             @default(false)
+  disabled            Boolean             @default(false)
+  hidden              Boolean             @default(false)
+  npcs                GameRoomNpc[]
+  explorationRecords  ExplorationRecord[]
+  inkScriptId         String?
   requiredOutputLevel String              @default("L1")
-  requiredSceneIds    String[]            @default([])
   requiredFlags       Json?
   isPreview           Boolean             @default(false)
   sortOrder           Int                 @default(0)
   createdAt           DateTime            @default(now())
 
-  @@map("game_location")
+  @@map("game_room")
 }
 
-model GameLocationExit {
-  id            String       @id @default(cuid())
-  from          GameLocation @relation("FromLocation", fields: [fromId], references: [id])
-  fromId        String
-  to            GameLocation @relation("ToLocation", fields: [toId], references: [id])
-  toId          String
-  label         String
-  requiredFlags Json?
+// ──── NQTR Routine: NPC 绑定到 Room ────
 
-  @@unique([fromId, toId])
-  @@map("game_location_exit")
-}
-
-model GameLocationNpc {
+model GameRoomNpc {
   id              String        @id @default(cuid())
-  location        GameLocation  @relation(fields: [locationId], references: [id])
-  locationId      String
+  room            GameRoom      @relation(fields: [roomId], references: [id])
+  roomId          String
   character       GameCharacter @relation(fields: [characterId], references: [id])
   characterId     String
   schedule        Json?
@@ -1241,8 +1261,8 @@ model GameLocationNpc {
   inkTalkScriptId String?
   sortOrder       Int           @default(0)
 
-  @@unique([locationId, characterId])
-  @@map("game_location_npc")
+  @@unique([roomId, characterId])
+  @@map("game_room_npc")
 }
 
 // ──── Ink 叙事脚本 & 游戏存档 ────
@@ -1256,6 +1276,7 @@ model InkScript {
   inkSource         String?        @db.Text
   episodeId         String?
   locationId        String?
+  roomId            String?
   characterId       String?
   topicId           String?
   trainingTopic     TrainingTopic? @relation("TopicInkScript")
@@ -1268,6 +1289,7 @@ model InkScript {
   @@index([scriptType])
   @@index([episodeId])
   @@index([locationId])
+  @@index([roomId])
   @@map("ink_script")
 }
 
@@ -1278,7 +1300,8 @@ model GameSave {
   inkState           Json?
   currentMapId       String?
   currentLocationId  String?
-  visitedLocationIds String[] @default([])
+  currentRoomId      String?
+  visitedRoomIds     String[] @default([])
   flags              Json?
   saveName           String   @default("自动存档")
   playTimeSeconds    Int      @default(0)
@@ -1299,6 +1322,8 @@ model ExplorationRecord {
   characterId String
   location    GameLocation  @relation(fields: [locationId], references: [id])
   locationId  String
+  room        GameRoom?     @relation(fields: [roomId], references: [id])
+  roomId      String?
   userText    String        @db.Text
   npcReply    String?       @db.Text
   feedback    Json?
@@ -1307,6 +1332,7 @@ model ExplorationRecord {
   createdAt   DateTime      @default(now())
 
   @@index([userId, createdAt(sort: Desc)])
+  @@index([roomId])
   @@map("exploration_record")
 }
 

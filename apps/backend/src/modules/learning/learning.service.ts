@@ -642,22 +642,27 @@ export class LearningService {
         backgroundUrl: true,
         bgmUrl: true,
         ambientUrl: true,
-        npcs: {
-          include: {
-            character: {
-              select: {
-                id: true, name: true, displayName: true,
-                avatarUrl: true, spriteBaseUrl: true,
-                expressions: true, defaultPosition: true,
+        rooms: {
+          select: {
+            npcs: {
+              include: {
+                character: {
+                  select: {
+                    id: true, name: true, displayName: true,
+                    avatarUrl: true, spriteBaseUrl: true,
+                    expressions: true, defaultPosition: true,
+                  },
+                },
               },
+              orderBy: { sortOrder: 'asc' },
             },
           },
-          orderBy: { sortOrder: 'asc' },
         },
       },
     });
 
-    const fallbackCharacters = gameLocation?.npcs.length
+    const allNpcs = gameLocation?.rooms.flatMap((r) => r.npcs) ?? [];
+    const fallbackCharacters = allNpcs.length
       ? []
       : await this.prisma.gameCharacter.findMany({
           select: {
@@ -667,8 +672,8 @@ export class LearningService {
           },
           orderBy: { name: 'asc' },
         });
-    const sceneCharacters = gameLocation?.npcs.length
-      ? gameLocation.npcs.map((npc) => npc.character)
+    const sceneCharacters = allNpcs.length
+      ? allNpcs.map((npc) => npc.character)
       : fallbackCharacters;
 
     // Attach scene to unitDetail (one copy, not repeated per topic)

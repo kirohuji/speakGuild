@@ -282,10 +282,10 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                       {Object.keys(item.expressions as object).length} 个表情
                     </Badge>
                   )}
-                  {item.locationNpcs?.length ? (
+                  {item.roomNpcs?.length ? (
                     <Badge variant="outline" className="text-[10px]">
                       <MapPin className="mr-0.5 size-2.5" />
-                      {item.locationNpcs.length} 个地点
+                      {item.roomNpcs.length} 个房间
                     </Badge>
                   ) : null}
                 </div>

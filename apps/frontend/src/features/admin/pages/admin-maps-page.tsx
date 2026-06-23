@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit3, Map, MapPin, Users, DoorOpen } from 'lucide-react'
+import { Plus, Trash2, Edit3, Map, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,14 +25,14 @@ export function AdminMapsPage() {
   // Map dialog
   const [mapDialogOpen, setMapDialogOpen] = useState(false)
   const [editMap, setEditMap] = useState<GameMapData | null>(null)
-  const [mapForm, setMapForm] = useState({ name: '', displayName: '', requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0 })
+  const [mapForm, setMapForm] = useState({ name: '', displayName: '', requiredOutputLevel: 'L1', sortOrder: 0 })
 
   // Location dialog
   const [locDialogOpen, setLocDialogOpen] = useState(false)
   const [editLoc, setEditLoc] = useState<GameLocationData | null>(null)
   const [locForm, setLocForm] = useState({
     mapId: '', name: '', displayName: '', description: '', posX: 50, posY: 50,
-    locationType: 'vn_scene', requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0,
+    locationType: 'vn_scene', requiredOutputLevel: 'L1', sortOrder: 0,
   })
 
   const [saving, setSaving] = useState(false)
@@ -56,12 +56,12 @@ export function AdminMapsPage() {
 
   // Map CRUD
   const openCreateMap = () => {
-    setEditMap(null); setMapForm({ name: '', displayName: '', requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0 })
+    setEditMap(null); setMapForm({ name: '', displayName: '', requiredOutputLevel: 'L1', sortOrder: 0 })
     setMapDialogOpen(true)
   }
   const openEditMap = (m: GameMapData) => {
     setEditMap(m)
-    setMapForm({ name: m.name, displayName: m.displayName, requiredOutputLevel: m.requiredOutputLevel, isPreview: m.isPreview ?? false, sortOrder: m.sortOrder ?? 0 })
+    setMapForm({ name: m.name, displayName: m.displayName, requiredOutputLevel: m.requiredOutputLevel, sortOrder: m.sortOrder ?? 0 })
     setMapDialogOpen(true)
   }
   const saveMap = async () => {
@@ -82,7 +82,7 @@ export function AdminMapsPage() {
   // Location CRUD
   const openCreateLoc = (mapId: string) => {
     setEditLoc(null)
-    setLocForm({ mapId, name: '', displayName: '', description: '', posX: 50, posY: 50, locationType: 'vn_scene', requiredOutputLevel: 'L1', isPreview: false, sortOrder: 0 })
+    setLocForm({ mapId, name: '', displayName: '', description: '', posX: 50, posY: 50, locationType: 'vn_scene', requiredOutputLevel: 'L1', sortOrder: 0 })
     setLocDialogOpen(true)
   }
   const openEditLoc = (loc: GameLocationData) => {
@@ -91,7 +91,7 @@ export function AdminMapsPage() {
       mapId: loc.mapId, name: loc.name, displayName: loc.displayName,
       description: loc.description ?? '', posX: loc.posX, posY: loc.posY,
       locationType: loc.locationType, requiredOutputLevel: loc.requiredOutputLevel,
-      isPreview: loc.isPreview ?? false, sortOrder: loc.sortOrder ?? 0,
+      sortOrder: loc.sortOrder ?? 0,
     })
     setLocDialogOpen(true)
   }
@@ -133,7 +133,6 @@ export function AdminMapsPage() {
                   <CardDescription className="font-mono text-xs">{map.name}</CardDescription>
                 </div>
                 <Badge variant="outline" className="text-xs">需 {map.requiredOutputLevel}</Badge>
-                {map.isPreview && <Badge className="text-xs bg-amber-500/10 text-amber-600">预览</Badge>}
               </div>
               <div className="flex gap-1">
                 <Button variant="outline" size="sm" onClick={() => openCreateLoc(map.id)}>
@@ -159,17 +158,9 @@ export function AdminMapsPage() {
                       </div>
                       <Badge variant="outline" className="text-xs">({loc.posX}, {loc.posY})</Badge>
                       <Badge variant="secondary" className="text-xs">{loc.locationType}</Badge>
-                      {loc.isPreview && <Badge className="text-xs bg-amber-500/10 text-amber-600">预览</Badge>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Users className="size-3" />
-                        {loc.npcs?.length ?? 0}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <DoorOpen className="size-3" />
-                        {loc.exits?.length ?? 0}
-                      </div>
+
                       <Button variant="ghost" size="icon" onClick={() => openEditLoc(loc)}><Edit3 className="size-3" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => removeLoc(loc)}><Trash2 className="size-3 text-destructive" /></Button>
                     </div>
@@ -199,10 +190,6 @@ export function AdminMapsPage() {
               </div>
               <div><Label>排序</Label><Input type="number" value={mapForm.sortOrder} onChange={e => setMapForm(p => ({ ...p, sortOrder: +e.target.value }))} /></div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={mapForm.isPreview} onChange={e => setMapForm(p => ({ ...p, isPreview: e.target.checked }))} />
-              预览地图
-            </label>
             <Button className="w-full" onClick={saveMap} disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
           </div>
         </DialogContent>
@@ -237,10 +224,6 @@ export function AdminMapsPage() {
               </div>
               <div><Label>排序</Label><Input type="number" value={locForm.sortOrder} onChange={e => setLocForm(p => ({ ...p, sortOrder: +e.target.value }))} /></div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={locForm.isPreview} onChange={e => setLocForm(p => ({ ...p, isPreview: e.target.checked }))} />
-              预览地点
-            </label>
             <Button className="w-full" onClick={saveLoc} disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
           </div>
         </DialogContent>

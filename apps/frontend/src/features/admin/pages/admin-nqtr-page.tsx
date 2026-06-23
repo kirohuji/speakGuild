@@ -12,7 +12,7 @@ import { listCharacters, listLocations, type GameCharacter, type GameLocationDat
 /**
  * NQTR 内容工坊 — 统一管理角色、地图、故事
  *
- * NQTR = Narrative (叙事) + Quest (任务) + Training (训练) + Role (角色)
+ * NQTR = Navigation (导航) + Quest (任务) + Time (时间系统) + Routine (日常)
  *
  * Tab 与 URL 查询参数联动：
  *   ?tab=characters       — 角色管理
@@ -67,7 +67,7 @@ export function AdminNqtrPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="flex min-h-0 flex-col gap-4">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20">
@@ -76,7 +76,7 @@ export function AdminNqtrPage() {
         <div>
           <h1 className="text-xl font-bold text-foreground">NQTR 内容工坊</h1>
           <p className="text-sm text-muted-foreground">
-            叙事 · 探索 · 训练 · 角色 — 一站式内容创作平台
+            叙事 · 探索 · 时间 · 角色 — 一站式内容创作平台
           </p>
         </div>
       </div>
@@ -113,7 +113,7 @@ export function AdminNqtrPage() {
           <CharactersTab onCharactersChange={handleCharactersChange} />
         </TabsContent>
 
-        <TabsContent value="maps" className="mt-4">
+        <TabsContent value="maps" className="mt-3">
           <MapsTab onLocationsChange={handleLocationsChange} />
         </TabsContent>
 

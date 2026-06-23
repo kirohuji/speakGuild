@@ -34,8 +34,6 @@ type CsvChunk = { scene_title: string; category: string; text: string; meaning: 
 type CsvChar = { name: string; display_name: string; role: string; personality: string; default_position: string; avatar_url: string; sprite_base_url: string }
 type CsvMap = { name: string; display_name: string; required_output_level: string; is_preview: string; sort_order: string }
 type CsvLocation = { map_name: string; name: string; display_name: string; description: string; pos_x: string; pos_y: string; location_type: string; is_preview: string; required_output_level: string; background_url: string }
-type CsvLocNpc = { location_name: string; character_name: string; default_greeting: string; sort_order: string }
-type CsvLocExit = { from_location: string; to_location: string; label: string }
 type CsvAchievement = { key: string; title: string; description: string; category: string; rarity: string; sort_order: string; is_hidden: string; hint_text: string; condition_json: string; reward_xp: string }
 
 export async function seedInit(prisma: PrismaClient) {
@@ -183,34 +181,9 @@ export async function seedInit(prisma: PrismaClient) {
   }
   console.log(`  ✓ ${mapRows.length} 个地图 + ${locRows.length} 个地点${existingMapCount > 0 ? '（已存在，跳过创建）' : ''}`)
 
-  // ═══ 6. 地点↔NPC 关联（仅首次创建） ═══
-  const locNpcRows = readCsv<CsvLocNpc>('location_npcs.csv', INIT_DIR)
-  const existingNpcCount = await prisma.gameLocationNpc.count()
-  if (existingNpcCount === 0) {
-    for (const row of locNpcRows) {
-      const locId = locNameToId.get(row.location_name)
-      const charId = charNameToId.get(row.character_name)
-      if (!locId || !charId) continue
-      await prisma.gameLocationNpc.create({
-        data: { locationId: locId, characterId: charId, defaultGreeting: row.default_greeting || null, sortOrder: parseInt(row.sort_order) || 0 },
-      })
-    }
-  }
-
-  // ═══ 7. 地点出口（仅首次创建） ═══
-  const exitRows = readCsv<CsvLocExit>('location_exits.csv', INIT_DIR)
-  const existingExitCount = await prisma.gameLocationExit.count()
-  if (existingExitCount === 0) {
-    for (const row of exitRows) {
-      const fromId = locNameToId.get(row.from_location)
-      const toId = locNameToId.get(row.to_location)
-      if (!fromId || !toId) continue
-      await prisma.gameLocationExit.create({
-        data: { fromId, toId, label: row.label || '→' },
-      })
-    }
-  }
-  console.log(`  ✓ ${locNpcRows.length} 个地点↔NPC + ${exitRows.length} 个出口${existingNpcCount > 0 ? '（已存在，跳过创建）' : ''}`)
+  // ═══ 6. 地点↔NPC 关联 — 已迁移至 GameRoomNpc 模型，请使用 seed-rooms 等新种子脚本 ═══
+  // ═══ 7. 地点出口 — 已移除独立模型，后续通过 GameRoom 层级导航 ═══
+  console.log(`  ⚠️  地点↔NPC 关联与出口已迁移至 Room 层级，此种子不再处理`)
 
   // ═══ 8. 成就定义 ═══
   const achRows = readCsv<CsvAchievement>('achievement_defs.csv', INIT_DIR)
