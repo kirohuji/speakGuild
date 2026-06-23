@@ -270,7 +270,6 @@ function ProviderCard({
 
   return (
     <div className={cn('group relative min-w-0 overflow-hidden rounded-md bg-muted/35 p-3 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/55 hover:shadow-md', item.isActive && 'bg-primary/5 ring-2', item.isActive && tabMeta?.ring)}>
-      <div className={cn('absolute inset-x-0 top-0 h-1', item.isActive ? 'bg-primary' : 'bg-transparent')} />
       <div className="flex min-w-0 items-start gap-3">
         <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-md bg-background/80', item.isActive && tabMeta?.tint)}>
           <Icon className={cn('size-4', tabMeta?.accent)} />
@@ -339,6 +338,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
+  const [groupId, setGroupId] = useState('');
   const [timeoutMs, setTimeoutMs] = useState('300000');
   const [region, setRegion] = useState('ap-guangzhou');
   const [temperature, setTemperature] = useState('0.2');
@@ -351,7 +351,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
     const cfg = item.config ?? {};
     setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : (item.model ?? ''));
     setApiKey(item.apiKey ?? '');
-    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : item.provider === 'minimax' ? (item.baseUrl || 'https://api.minimax.io') : (item.baseUrl ?? ''));
+    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : (item.baseUrl ?? ''));
+    setGroupId(String((cfg as Record<string, unknown>).groupId ?? ''));
     setTimeoutMs(String((cfg as Record<string, unknown>).timeoutMs ?? 300000));
     setRegion(String((cfg as Record<string, unknown>).region ?? 'ap-guangzhou'));
     setTemperature(String((cfg as Record<string, unknown>).temperature ?? 0.2));
@@ -381,6 +382,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
         const t = Number(temperature);
         if (Number.isFinite(t)) config.temperature = t;
         config.enableTimestamps = enableTimestamps;
+      } else if (isMiniMax) {
+        config.groupId = groupId.trim();
       }
       await updateAiProvider(item.id, { model, apiKey, baseUrl, ...(Object.keys(config).length ? { config } : {}) });
       setMessage('Saved');
@@ -415,8 +418,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
           ) : isMiniMax ? (
             <>
               <div className="space-y-2"><Label>MiniMax model</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{MINIMAX_MODELS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</Select></div>
-              <div className="space-y-2"><Label>MINIMAX_BASE_URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.minimax.io" /><p className="text-[11px] text-muted-foreground">You can also enter the full endpoint, e.g. https://api.minimax.io/v1/t2a_v2</p></div>
               <div className="space-y-2"><Label>MINIMAX_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
+              <div className="space-y-2"><Label>MINIMAX_GROUP_ID</Label><Input value={groupId} onChange={(event) => setGroupId(event.target.value)} className="font-mono text-sm" placeholder="1943473439796896389" /></div>
             </>
           ) : isDeepSeek ? (
             <>
@@ -785,7 +788,7 @@ export function AdminAiModelsPage() {
         {TABS.map((tab) => (
           <TabsContent key={tab.key} value={tab.key} className="mt-3">
             {(grouped[tab.key] ?? []).length ? (
-              <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))]">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
                 {(grouped[tab.key] ?? []).map((item) => (
                   <ProviderCard key={item.id} item={item} activating={activatingId === item.id} onActivate={handleActivate} onConfigure={setConfigItem} onTest={setTestItem} onDelete={setDeleteItem} />
                 ))}

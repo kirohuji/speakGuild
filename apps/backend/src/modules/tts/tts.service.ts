@@ -104,6 +104,7 @@ export class TtsService {
       params: sanitizedParams,
       apiKey: dto.apiKey,
       baseUrl: dto.baseUrl,
+      groupId: dto.groupId,
     });
     return {
       mimeType: result.mimeType,
@@ -129,6 +130,7 @@ export class TtsService {
       params: sanitizedParams,
       apiKey: dto.apiKey,
       baseUrl: dto.baseUrl,
+      groupId: dto.groupId,
     });
 
     const asset = await this.fileAssetsService.createAssetFromBuffer({

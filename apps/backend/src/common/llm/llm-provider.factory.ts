@@ -38,7 +38,12 @@ export class LlmProviderFactory {
     const client = createOpenAI({
       apiKey,
       baseURL: baseUrl || undefined,
+      name: config.provider,
     });
+
+    if (config.provider !== 'openai') {
+      return client.chat(model as any);
+    }
 
     return client(model);
   }

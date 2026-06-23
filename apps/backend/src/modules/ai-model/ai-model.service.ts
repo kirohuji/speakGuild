@@ -204,7 +204,7 @@ export class AiModelService {
     const defaults = [
       { type: 'stt', provider: 'whisper', label: 'Whisper', model: '', apiKey: '', baseUrl: '', sortOrder: 0 },
       { type: 'stt', provider: 'tencent', label: '腾讯云 ASR', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
-      { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: 'https://api.minimax.io', sortOrder: 0 },
+      { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: '', config: { groupId: process.env.MINIMAX_GROUP_ID?.trim() || '' }, sortOrder: 0 },
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4-pro', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },

@@ -12,6 +12,7 @@ export type TtsGenerateInput = {
   params?: Record<string, unknown>;
   apiKey?: string | null;
   baseUrl?: string | null;
+  groupId?: string | null;
 };
 
 export type TtsGenerateResult = {

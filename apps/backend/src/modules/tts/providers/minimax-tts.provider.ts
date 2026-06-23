@@ -12,11 +12,14 @@ export class MinimaxTtsProvider extends TtsProvider {
     return hasCJK ? 'female-chengshu' : 'English_Trustworthy_Man';
   }
 
-  private buildEndpoint(baseUrl?: string | null): string {
+  private buildEndpoint(baseUrl?: string | null, groupId?: string | null): string {
     const raw = baseUrl?.trim() || process.env.MINIMAX_BASE_URL?.trim() || 'https://api.minimax.io';
     const trimmed = raw.replace(/\/$/, '');
-    if (trimmed.endsWith('/v1/t2a_v2')) return trimmed;
-    return `${trimmed}/v1/t2a_v2`;
+    const endpoint = trimmed.endsWith('/v1/t2a_v2') ? trimmed : `${trimmed}/v1/t2a_v2`;
+    const resolvedGroupId = groupId?.trim() || process.env.MINIMAX_GROUP_ID?.trim();
+    if (!resolvedGroupId) return endpoint;
+    const separator = endpoint.includes('?') ? '&' : '?';
+    return `${endpoint}${separator}GroupId=${encodeURIComponent(resolvedGroupId)}`;
   }
 
   async generateAudio(input: TtsGenerateInput): Promise<TtsGenerateResult> {
@@ -41,7 +44,7 @@ export class MinimaxTtsProvider extends TtsProvider {
     const subtitleType = typeof input.params?.subtitle_type === 'string' ? input.params.subtitle_type : 'sentence';
 
     const res = await axios.post(
-      this.buildEndpoint(input.baseUrl),
+      this.buildEndpoint(input.baseUrl, input.groupId),
       {
         model: input.model,
         text: transcript,

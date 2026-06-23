@@ -53,6 +53,10 @@ export class SynthesizeTextDto {
   @IsOptional()
   @IsString()
   baseUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  groupId?: string;
 }
 
 export class SynthesizeAssetDto extends SynthesizeTextDto {
