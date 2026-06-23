@@ -19,9 +19,7 @@ import { AchievementModule } from './modules/achievement/achievement.module';
 // --- English Output Training ---
 import { SceneModule } from './modules/scene/scene.module';
 import { ChunkModule } from './modules/chunk/chunk.module';
-import { ScriptModule } from './modules/script/script.module';
 import { ExpressionModule } from './modules/expression/expression.module';
-import { ExplorationModule } from './modules/exploration/exploration.module';
 import { LearningModule } from './modules/learning/learning.module';
 import { PointsModule } from './modules/points/points.module';
 import { AiQuotaModule } from './common/ai-quota/ai-quota.module';
@@ -57,9 +55,7 @@ import { AiModelModule } from './modules/ai-model/ai-model.module';
     // --- English Output Training ---
     SceneModule,
     ChunkModule,
-    ScriptModule,
     ExpressionModule,
-    ExplorationModule,
     LearningModule,
     PointsModule,
     AiQuotaModule,

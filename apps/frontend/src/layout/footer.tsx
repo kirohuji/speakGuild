@@ -15,7 +15,6 @@ export function Footer() {
 
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">{t('nav.library')}</Link>
-            <Link to="/mock" className="hover:text-foreground transition-colors">{t('nav.mock')}</Link>
             <Link to="/member" className="hover:text-foreground transition-colors">{t('nav.member')}</Link>
             <Link to="/profile" className="hover:text-foreground transition-colors">{t('nav.profile')}</Link>
           </nav>

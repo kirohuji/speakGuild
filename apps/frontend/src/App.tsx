@@ -30,10 +30,6 @@ import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
 // ── 非首屏页面：懒加载 ──
 const AdminRoutes = lazy(() => import('@/routes/admin-routes'))
 const PracticeSessionPage = lazy(() => import('@/features/practice/pages/practice-session-page').then(m => ({ default: m.PracticeSessionPage })))
-const ScriptHubPage = lazy(() => import('@/features/script/pages/script-hub-page').then(m => ({ default: m.ScriptHubPage })))
-const ScriptPlayPage = lazy(() => import('@/features/script/pages/script-play-page').then(m => ({ default: m.ScriptPlayPage })))
-const ExploreMapPage = lazy(() => import('@/features/explore/pages/explore-map-page').then(m => ({ default: m.ExploreMapPage })))
-const ExploreLocationPage = lazy(() => import('@/features/explore/pages/explore-location-page').then(m => ({ default: m.ExploreLocationPage })))
 const ExpressionLibraryPage = lazy(() => import('@/features/expression/pages/expression-library-page').then(m => ({ default: m.ExpressionLibraryPage })))
 const AchievementHallPage = lazy(() => import('@/features/achievement/pages/achievement-hall-page').then(m => ({ default: m.AchievementHallPage })))
 const LeaderboardPage = lazy(() => import('@/features/leaderboard/pages/leaderboard-page').then(m => ({ default: m.LeaderboardPage })))
@@ -89,10 +85,6 @@ export default function App() {
 
                 {/* 重页面懒加载 */}
                 <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
-                <Route path="/script" element={<ScriptHubPage />} />
-                <Route path="/script/:episodeId" element={<ScriptPlayPage />} />
-                <Route path="/explore" element={<ExploreMapPage />} />
-                <Route path="/explore/:locationId" element={<ExploreLocationPage />} />
                 <Route path="/expressions" element={<ExpressionLibraryPage />} />
                 <Route path="/growth" element={<AchievementHallPage />} />
                 <Route path="/achievements" element={<AchievementHallPage />} />
