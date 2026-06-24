@@ -1,0 +1,19 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+个人·阅读与学习,阅读习惯,Talk about your reading habits and preferences.,聊聊你的阅读习惯和偏好。,35,L1~L2,表达阅读喜好、在读什么书、阅读频率。,阅读习惯 读书偏好,practice_daily-personal_阅读与学习_阅读习惯
+个人·阅读与学习,学习新技能,Describe a new skill you are learning.,描述你正在学的一项新技能。,40,L1~L2,表达学习愿望、学习方式和练习规律。,学习 技能 自学,practice_daily-personal_阅读与学习_学习新技能
+个人·阅读与学习,书店与图书馆,Talk about buying or borrowing books.,聊买书或借书的经历。,35,L1~L2,在书店找书、图书馆借书、求推荐。,书店 图书馆 买书,practice_daily-personal_阅读与学习_书店与图书馆
+个人·独处与放松,享受独处,Express your need for alone time and its benefits.,表达你需要独处时光和它的好处。,35,L1~L2,说喜欢独处、需要 me-time、独处的价值。,独处 me-time 内向,practice_daily-personal_独处与放松_享受独处
+个人·独处与放松,放松方式,Describe how you like to relax and unwind.,描述你喜欢的放松方式。,35,L1~L2,表达各自放松方式：音乐/泡澡/冥想/烹饪。,放松 冥想 减压,practice_daily-personal_独处与放松_放松方式
+个人·独处与放松,居家时光,Talk about spending time at home alone.,聊一个人在家度过的时光。,35,L1~L2,描述居家活动：看电影/读书/什么都不做。,宅家 cozy 休息,practice_daily-personal_独处与放松_居家时光
+个人·反省与思考,写日记与记录,Discuss journaling and how it helps you reflect.,讨论写日记如何帮助你反思。,40,L1~L2,表达写日记习惯、感恩日记、情绪记录。,日记 反思 感恩,practice_daily-personal_反省与思考_写日记与记录
+个人·反省与思考,人生思考,Talk about your thoughts on life and the future.,聊聊你的人生和未来思考。,40,L2~L3,表达对未来、人生方向、职业道路的思考。,人生思考 未来 方向,practice_daily-personal_反省与思考_人生思考
+个人·反省与思考,正念与觉察,Discuss mindfulness and being present in the moment.,讨论正念和活在当下的练习。,40,L2~L3,表达正念练习、深呼吸、自我觉察。,正念 觉察 当下,practice_daily-personal_反省与思考_正念与觉察
+个人·兴趣与爱好,创意爱好,Talk about your creative hobbies like art or music.,聊聊你的创意爱好如艺术或音乐。,35,L1~L2,表达绘画/乐器/摄影等创意兴趣。,创意 绘画 音乐 摄影,practice_daily-personal_兴趣与爱好_创意爱好
+个人·兴趣与爱好,手作与手工,Describe your handcraft and DIY projects.,描述你的手作和 DIY 项目。,35,L1~L2,表达编织/木工/DIY 等手工爱好。,手作 DIY 手工 编织,practice_daily-personal_兴趣与爱好_手作与手工
+个人·兴趣与爱好,收藏与兴趣,Talk about your collections or special interests.,聊聊你的收藏或特别的兴趣爱好。,35,L1~L2,表达收藏爱好和深度兴趣领域。,收藏 兴趣 热爱,practice_daily-personal_兴趣与爱好_收藏与兴趣
+个人·成长与目标,目标设定,Discuss your personal goals and how you set them.,讨论你的个人目标和设定方式。,40,L1~L2,表达新年目标、周目标、长期目标。,目标 计划 成长,practice_daily-personal_成长与目标_目标设定
+个人·成长与目标,习惯养成,Talk about building new habits and routines.,聊养成新习惯和日常惯例。,40,L1~L2,表达晨间惯例、习惯追踪、坚持。,习惯 自律 坚持,practice_daily-personal_成长与目标_习惯养成
+个人·成长与目标,自我激励,Share how you motivate yourself and stay positive.,分享你如何激励自己保持积极。,35,L1~L2,表达自我鼓励、庆祝小胜利、接纳自己。,激励 积极 自信,practice_daily-personal_成长与目标_自我激励
+个人·居家娱乐,音乐与播客,Talk about your music taste and podcasts you enjoy.,聊聊你喜欢的音乐和播客。,35,L1~L2,表达音乐偏好、播客收听习惯。,音乐 播客 歌单,practice_daily-personal_居家娱乐_音乐与播客
+个人·居家娱乐,影视与游戏,Discuss movies, series, or video games you enjoy.,讨论你喜欢看的影视剧或玩的游戏。,35,L1~L2,表达刷剧、游戏放松、纪录片偏好。,电影 剧集 游戏 纪录片,practice_daily-personal_居家娱乐_影视与游戏
+个人·居家娱乐,烹饪与烘焙,Talk about cooking or baking as a hobby.,聊烹饪或烘焙作为爱好的体验。,35,L1~L2,表达做菜、烘焙、尝试新食谱的乐趣。,烹饪 烘焙 食谱,practice_daily-personal_居家娱乐_烹饪与烘焙

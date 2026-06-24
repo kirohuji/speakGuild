@@ -1,5 +1,25 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-职场·面试自我介绍,1分钟自我介绍,Introduce yourself in a job interview in 1 minute.,在面试中做1分钟自我介绍。,60,L3,,,practice_workplace_面试自我介绍_1分钟自我介绍
-职场·面试自我介绍,描述过往经历,Describe your previous work or internship experience.,描述你之前的工作或实习经历。,60,L3,,,practice_workplace_面试自我介绍_描述过往经历
-职场·面试自我介绍,回答优缺点,Answer the classic interview question: what are your strengths and weaknesses?,回答面试经典问题：你的优缺点是什么？,50,L3,,,practice_workplace_面试自我介绍_回答优缺点
-,,,,,,,,practice_workplace__
+职场·面试求职,自我介绍,Do a 1-minute self-introduction in a job interview.,在面试中做1分钟自我介绍。,60,L1~L2,介绍姓名、学历、经验、求职意向。,自我介绍 学历 经验 求职意向,practice_workplace_面试求职_自我介绍
+职场·面试求职,描述经历,Describe your previous work or internship experience in detail.,详细描述之前的工作或实习经历。,55,L2~L3,描述职责、协作经验、量化成果、反思成长。,经历描述 职责 成果,practice_workplace_面试求职_描述经历
+职场·面试求职,优缺点与反问,Answer strengths and weaknesses and ask questions to the interviewer.,回答优缺点问题并向面试官提问。,50,L2~L3,说明优势、诚恳说弱点、反问面试官了解职位。,优缺点 反问 面试,practice_workplace_面试求职_优缺点与反问
+职场·入职与融入,第一天报到,Start your first day at a new job and introduce yourself.,入职第一天报到并自我介绍。,40,L1~L2,向团队自我介绍、表达期待、了解入职材料。,入职 第一天 自我介绍,practice_workplace_入职与融入_第一天报到
+职场·入职与融入,认识团队与工具,Get to know the team and learn about the tools they use.,认识团队成员并了解团队使用的工具流程。,40,L1~L2,了解同事角色、沟通工具、任务追踪流程。,认识团队 工具 流程,practice_workplace_入职与融入_认识团队与工具
+职场·入职与融入,新人求助,Ask for help as a new team member.,作为新同事向团队求助。,40,L1~L2,礼貌求助、请求引导、确认工作方向。,新人求助 引导 确认方向,practice_workplace_入职与融入_新人求助
+职场·会议与汇报,进度更新,Give a progress update in a team meeting.,在团队会议上做进度更新。,45,L1~L2,汇报本周工作进展、确认按计划推进。,进度更新 工作汇报,practice_workplace_会议与汇报_进度更新
+职场·会议与汇报,提出问题与阻塞,Flag a problem or blocker in a meeting.,在会议上提出遇到的问题或阻塞。,45,L2~L3,说明阻塞原因、提出挑战、提供解决方案建议。,问题提出 阻塞 解决方案,practice_workplace_会议与汇报_提出问题与阻塞
+职场·会议与汇报,方案讨论与行动项,Discuss solutions and confirm action items.,讨论解决方案并确认行动项。,45,L2~L3,提议方案、征询意见、明确分工和跟进计划。,方案讨论 行动项 分工,practice_workplace_会议与汇报_方案讨论与行动项
+职场·同事协作,请求帮助,Ask a colleague for help or a review.,向同事请求帮助或审阅。,40,L1~L2,礼貌请求帮助、请教方向、请求审阅。,请求帮助 审阅 方向,practice_workplace_同事协作_请求帮助
+职场·同事协作,提供反馈,Give and receive feedback from colleagues.,向同事提供和接收反馈。,40,L2~L3,表达认可、建设性反馈、感谢反馈。,反馈 认可 建设性意见,practice_workplace_同事协作_提供反馈
+职场·同事协作,同步与讨论,Sync with colleagues and discuss next steps.,与同事同步信息并讨论下一步。,40,L2~L3,提议同步、确认理解、表达顾虑。,同步 讨论 对齐,practice_workplace_同事协作_同步与讨论
+职场·客户沟通,需求确认,Confirm project requirements with a client.,与客户确认项目需求。,50,L2~L3,确认需求细节、总结共识、管理期望。,需求确认 客户 期望管理,practice_workplace_客户沟通_需求确认
+职场·客户沟通,进度同步,Share project progress with a client.,向客户分享项目进展。,45,L2~L3,报告进度、阶段汇报、安排中期评审。,进度同步 阶段汇报 评审,practice_workplace_客户沟通_进度同步
+职场·客户沟通,处理反馈与协商,Handle client feedback and negotiate solutions.,处理客户反馈并协商解决方案。,50,L2~L3,接受反馈、解释方案、提议替代方案。,客户反馈 协商 方案调整,practice_workplace_客户沟通_处理反馈与协商
+职场·邮件与书面,日常邮件,Write a professional daily work email.,撰写专业的工作日常邮件。,40,L1~L2,写跟进邮件、发送附件、请求审阅。,邮件 书面 跟进,practice_workplace_邮件与书面_日常邮件
+职场·邮件与书面,跟进与确认,Write a follow-up or confirmation email.,撰写跟进或确认邮件。,40,L2~L3,跟进会议行动项、确认安排、二次跟进。,跟进 确认 提醒,practice_workplace_邮件与书面_跟进与确认
+职场·邮件与书面,报告与总结,Write a progress report or meeting summary.,撰写进展报告或会议总结。,45,L2~L3,发送周报、写会议纪要、总结下一步。,报告 会议纪要 总结,practice_workplace_邮件与书面_报告与总结
+职场·职场社交,午餐与闲聊,Make small talk with colleagues during lunch.,在午餐时与同事闲聊。,35,L1~L2,邀请午餐、聊周末、推荐好去处。,午餐 闲聊 周末,practice_workplace_职场社交_午餐与闲聊
+职场·职场社交,茶水间对话,Have casual conversations with colleagues in the break room.,在茶水间与同事进行轻松对话。,35,L1~L2,日常问候、聊工作进展、请教经验。,茶水间 日常问候 经验分享,practice_workplace_职场社交_茶水间对话
+职场·职场社交,表达感谢与认可,Express gratitude and recognize colleagues' contributions.,表达感谢并认可同事的贡献。,35,L1~L2,感谢帮助、公开表扬、认可工作。,感谢 认可 表扬,practice_workplace_职场社交_表达感谢与认可
+职场·职业发展,1-on-1面谈,Have a one-on-one meeting with your manager.,与上级进行一对一沟通。,50,L2~L3,讨论进展、寻求反馈、对齐目标。,1-on-1 面谈 反馈 目标,practice_workplace_职业发展_1-on-1面谈
+职场·职业发展,绩效反馈,Discuss performance feedback and improvement areas.,讨论绩效反馈和改进方向。,50,L2~L3,接受反馈、寻求改进建议、总结成就。,绩效 反馈 改进,practice_workplace_职业发展_绩效反馈
+职场·职业发展,晋升与发展,Discuss career advancement and growth opportunities.,讨论职业晋升和发展机会。,50,L3,表达晋升意向、了解晋升条件、规划职业路径。,晋升 职业发展 成长,practice_workplace_职业发展_晋升与发展

@@ -1,0 +1,19 @@
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
+媒体·新闻与时事,阅读新闻,Talk about your news reading habits and share an interesting article.,聊聊你的新闻阅读习惯并分享一篇有趣的文章。,40,L1~L2,表达新闻阅读习惯、分享文章内容、讨论头条。,新闻阅读 文章分享,practice_daily-media_新闻与时事_阅读新闻
+媒体·新闻与时事,讨论时事,Discuss a current event and share your opinion.,讨论一个时事话题并分享你的看法。,50,L2~L3,表达对新闻事件的看法、讨论政策影响、关注国际局势。,时事讨论 观点表达,practice_daily-media_新闻与时事_讨论时事
+媒体·新闻与时事,新闻来源与真实性,Talk about where you get your news and how you verify information.,聊聊你的新闻来源以及如何核实信息。,45,L2~L3,讨论新闻来源可靠性、社交媒体信息甄别、假新闻问题。,新闻来源 假新闻 信息核实,practice_daily-media_新闻与时事_新闻来源与真实性
+媒体·书籍与文学,聊书交流,Talk about what you're reading and share your thoughts.,聊聊你最近在读什么书并分享感受。,40,L1~L2,表达阅读喜好、分享在读内容、交流阅读体验。,读书交流 阅读分享,practice_daily-media_书籍与文学_聊书交流
+媒体·书籍与文学,文学讨论,Discuss themes, characters, and writing style of a book.,讨论一本书的主题、人物和写作风格。,50,L2~L3,分析书籍主题、讨论人物塑造、评价写作手法。,文学分析 主题讨论 人物塑造,practice_daily-media_书籍与文学_文学讨论
+媒体·书籍与文学,荐书与书单,Recommend a book and create a reading list.,推荐一本书并制定阅读清单。,40,L1~L2,按类型推荐书籍、按需求推荐、参与读书会。,荐书 书单 读书会,practice_daily-media_书籍与文学_荐书与书单
+媒体·影视与剧集,聊电影电视剧,Talk about movies and TV shows you've watched recently.,聊聊你最近看的电影和电视剧。,40,L1~L2,分享观影体验、讨论剧情、推荐热门剧集。,影视讨论 剧情分享,practice_daily-media_影视与剧集_聊电影电视剧
+媒体·影视与剧集,影评与打分,Review a movie or show and give it a rating.,评论一部电影或剧集并打分。,45,L2~L3,分析优缺点、评价演技/摄影/剧情、给出评分。,影评 打分 优缺点分析,practice_daily-media_影视与剧集_影评与打分
+媒体·影视与剧集,追剧与期待,Talk about upcoming releases and what you're excited about.,聊聊即将上映的作品和你的期待。,35,L1~L2,表达对新季/续集的期待、讨论预告片、追踪导演作品。,追剧 期待 预告片,practice_daily-media_影视与剧集_追剧与期待
+媒体·音乐与艺术,聊音乐,Talk about your music taste and concert experiences.,聊聊你的音乐品味和演唱会经历。,40,L1~L2,表达音乐偏好、讨论歌词、分享演唱会体验。,音乐品味 演唱会 歌词,practice_daily-media_音乐与艺术_聊音乐
+媒体·音乐与艺术,艺术展览,Talk about visiting museums and art exhibitions.,聊聊参观博物馆和艺术展览的经历。,40,L1~L2,讨论展览内容、表达对艺术的感受、评价策展。,艺术展览 博物馆 策展,practice_daily-media_音乐与艺术_艺术展览
+媒体·音乐与艺术,表演艺术,Discuss theater, dance, or other performing arts.,讨论话剧、舞蹈或其他表演艺术。,40,L2~L3,表达对表演艺术的兴趣、评价演出、讨论票价。,表演艺术 话剧 舞蹈 歌剧,practice_daily-media_音乐与艺术_表演艺术
+媒体·播客与自媒体,听播客,Talk about podcasts you listen to and recommend.,聊聊你听的播客并推荐给别人。,35,L2~L3,讨论播客类型、推荐播客节目、交流收听体验。,播客 推荐 收听习惯,practice_daily-media_播客与自媒体_听播客
+媒体·播客与自媒体,内容创作者,Talk about YouTubers or content creators you follow.,聊聊你关注的 YouTuber 或内容创作者。,35,L1~L2,表达对创作者的喜爱、讨论内容质量、关注创作独立性。,内容创作者 YouTube 自媒体,practice_daily-media_播客与自媒体_内容创作者
+媒体·播客与自媒体,社交媒体,Discuss social media habits and digital wellness.,讨论社交媒体习惯和数字健康。,40,L2~L3,表达社交媒体使用习惯、讨论算法影响、关注数字健康。,社交媒体 数字健康 算法,practice_daily-media_播客与自媒体_社交媒体
+媒体·观点与讨论,表达观点,Express your opinion on a topic and support it with reasons.,就一个话题表达观点并用理由支撑。,45,L2~L3,练习 I think/In my opinion/From my perspective 等观点表达句式。,观点表达 论述 理由,practice_daily-media_观点与讨论_表达观点
+媒体·观点与讨论,赞同与反驳,Agree and disagree politely in a discussion.,在讨论中礼貌地表示赞同和反驳。,45,L2~L3,练习赞同、部分赞同、礼貌反驳的表达方式。,赞同 反驳 礼貌讨论,practice_daily-media_观点与讨论_赞同与反驳
+媒体·观点与讨论,推荐与评价,Recommend something and give a detailed review.,推荐某样东西并给出详细评价。,40,L1~L2,按口味推荐内容、评分、写推荐理由。,推荐 评价 评分 推荐理由,practice_daily-media_观点与讨论_推荐与评价
