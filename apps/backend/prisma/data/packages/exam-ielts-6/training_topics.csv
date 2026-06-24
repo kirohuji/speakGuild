@@ -1,3 +1,10 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-雅思·IELTS Band 6 基础,家乡与住所,Answer simple questions about your hometown and home.,回答关于家乡和住所的简单问题。,45,L2,6分基础题：用简单句描述家乡和住所，掌握基本词汇。,P1 家乡 住所 基础词汇,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_家乡与住所
-雅思·IELTS Band 6 基础,学习与工作,Answer basic questions about your study or job.,回答关于学习或工作的基本问题。,45,L2,6分基础题：能说专业/职业、日常工作内容，使用简单连接词。,P1 学习 工作 日常,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_学习与工作
+雅思·IELTS Band 6 基础,家乡与住所,Answer Part 1 questions about your hometown and accommodation.,回答关于家乡和住所的 Part 1 问题。,45,L2,Band 6基础：用简单句描述家乡类型、特色、居住环境和喜好。,P1 家乡 住所 形容词 方位,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_家乡与住所
+雅思·IELTS Band 6 基础,学习与工作,Answer Part 1 questions about your studies or job.,回答关于学习或工作的 Part 1 问题。,45,L2,Band 6基础：能说专业/职业、选择原因、日常工作内容。,P1 学习 工作 专业 职业,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_学习与工作
+雅思·IELTS Band 6 基础,家人与朋友,Answer Part 1 questions about your family and friends.,回答关于家人和朋友的 Part 1 问题。,45,L2,Band 6基础：描述家庭成员、朋友关系、相处活动。,P1 家人 朋友 关系 描述,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_家人与朋友
+雅思·IELTS Band 6 基础,天气与季节,Answer Part 1 questions about weather and seasons.,回答关于天气和季节的 Part 1 问题。,40,L2,Band 6基础：描述天气特征、表达季节喜好和原因。,P1 天气 季节 喜好,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_天气与季节
+雅思·IELTS Band 6 基础,兴趣爱好,Answer Part 1 questions about your hobbies and free time.,回答关于爱好和空闲时间的 Part 1 问题。,45,L2,Band 6基础：说爱好类型、开始时间、活动频率和感受。,P1 爱好 空闲 放松 频率,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_兴趣爱好
+雅思·IELTS Band 6 基础,食物与烹饪,Answer Part 1 questions about food and cooking.,回答关于食物和烹饪的 Part 1 问题。,45,L2,Band 6基础：描述喜欢的食物、口味偏好、烹饪能力。,P1 食物 烹饪 口味 偏好,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_食物与烹饪
+雅思·IELTS Band 6 基础,交通出行,Answer Part 1 questions about transport and commuting.,回答关于交通和通勤的 Part 1 问题。,45,L2,Band 6基础：描述交通方式、通勤时间、偏好和理由。,P1 交通 通勤 出行 偏好,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_交通出行
+雅思·IELTS Band 6 基础,购物与时尚,Answer Part 1 questions about shopping and fashion.,回答关于购物和时尚的 Part 1 问题。,45,L2,Band 6基础：谈购物习惯、网购偏好、时尚态度、性价比。,P1 购物 时尚 网购 消费,practice_exam-ielts-6_雅思_IELTS_Band_6_基础_购物与时尚
+

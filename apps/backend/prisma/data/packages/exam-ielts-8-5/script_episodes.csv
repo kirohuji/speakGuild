@@ -1,3 +1,8 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ielts_8_5,Band 8.5 卓越,1,理想的改变,雅思·IELTS Band 8.5 卓越,L4,1,2,4,2,2,"[""学习理想的改变相关表达""]",2,2,2,Tutor,口语考官,true,practice_exam-ielts-8-5_雅思_IELTS_Band_85_卓越_理想的改变,"{""xp"":20}"
-ielts_8_5,Band 8.5 卓越,2,全球化与文化,雅思·IELTS Band 8.5 卓越,L4,1,2,4,2,2,"[""学习全球化与文化相关表达""]",2,2,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_卓越_全球化与文化,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,1,开怀大笑的经历,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,7,7,"[""学会用自然节奏讲述有趣故事""]",2,4,2,Tutor,口语考官,true,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_开怀大笑的经历,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,2,如释重负的时刻,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,7,7,"[""学会细腻描述情感层次和个人反思""]",2,4,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_如释重负的时刻,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,3,成功与幸福,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,5,5,"[""学会个人化视角讨论抽象概念""]",2,3,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_成功与幸福,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,4,社交媒体与人际关系,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,5,5,"[""学会超越二元论的社会现象分析""]",2,3,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_社交媒体与人际关系,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,5,代际差异,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,5,5,"[""学会平衡视角和共情理解分析代际话题""]",2,3,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_代际差异,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,6,信息与智慧,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,5,5,"[""学会三层递进式的哲学思辨""]",2,3,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_信息与智慧,"{""xp"":20}"
+ielts_8_5,Band 8.5 游刃有余,7,竞争与合作,雅思·IELTS Band 8.5 游刃有余,L4,1,4,8,5,5,"[""学会挑战假设并提出最优平衡观点""]",2,3,2,Tutor,口语考官,false,practice_exam-ielts-8-5_雅思_IELTS_Band_85_游刃有余_竞争与合作,"{""xp"":20}"
