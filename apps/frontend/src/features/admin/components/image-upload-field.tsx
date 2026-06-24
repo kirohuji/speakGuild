@@ -89,7 +89,7 @@ export function ImageUploadField({
         {/* Preview */}
         <div
           className={cn(
-            'relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/30',
+            'relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted/30',
             sizeClass,
           )}
         >

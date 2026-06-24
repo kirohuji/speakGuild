@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ArrowDown, ArrowUp, Box, CopyPlus, Eye, EyeOff, Lock,
-  MapPin, Plus, Trash2, Unlock,
+  ArrowDown, ArrowUp, Box, CopyPlus, Eye, EyeOff, Hand, Lock,
+  MapPin, MousePointer2, Plus, RotateCcw, Trash2, Unlock,
 } from 'lucide-react'
 import { Application, extend, useApplication, useTick } from '@pixi/react'
 import {
   Assets, Container, Graphics, Sprite, Texture,
   type FederatedPointerEvent,
-  type FederatedWheelEvent,
+type FederatedWheelEvent,
   type Graphics as PixiGraphics,
 } from 'pixi.js'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +30,8 @@ import {
 } from './map-management-shared'
 
 extend({ Container, Graphics, Sprite })
+
+type EditViewTool = 'select' | 'pan'
 
 export function MapPixiCanvas({
   map,
@@ -91,6 +93,11 @@ export function MapPixiCanvas({
   onResizeLocationIcon?: (locId: string, width: number, height: number) => void
 }) {
   const hostRef = useRef<HTMLDivElement>(null)
+  const isPreview = mode === 'preview'
+  const previewSize = { width: 390, height: 844 }
+  const [editViewTool, setEditViewTool] = useState<EditViewTool>('select')
+  const [viewportVersion, setViewportVersion] = useState(0)
+  const [zoomLabel, setZoomLabel] = useState('100%')
   const [size, setSize] = useState({ width: 960, height })
   const [hoveredLocationId, setHoveredLocationId] = useState('')
   const hoveredLocation = useMemo(
@@ -105,30 +112,35 @@ export function MapPixiCanvas({
     () => document.objects.find((object) => object.id === selectedObjectId) ?? null,
     [document.objects, selectedObjectId],
   )
+  const selectedLocation = useMemo(
+    () => locations.find((location) => location.id === selectedLocationId) ?? null,
+    [locations, selectedLocationId],
+  )
 
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
     const update = () => {
       setSize({
-        width: Math.max(320, Math.round(host.clientWidth)),
-        height: Math.max(320, Math.round(host.clientHeight)),
+        width: isPreview ? previewSize.width : Math.max(320, Math.round(host.clientWidth)),
+        height: isPreview ? previewSize.height : Math.max(320, Math.round(host.clientHeight)),
       })
     }
     update()
     const observer = new ResizeObserver(update)
     observer.observe(host)
     return () => observer.disconnect()
-  }, [height])
+  }, [height, isPreview])
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[300px_minmax(0,1fr)]">
-      <ScrollArea className="border border-border bg-card" style={{ height }}>
-        <div className="flex flex-col gap-4 p-3">
+    <div className={cn('grid gap-3', isPreview ? 'justify-center' : 'xl:grid-cols-[220px_minmax(0,1fr)_260px]')}>
+      <ScrollArea className={cn('rounded-xl bg-card', isPreview && 'hidden')} style={{ height }}>
+        <div className="p-2">
           <LayerPanel
             map={map}
             mode={mode}
             layers={document.layers}
+            objects={document.objects}
             selectedLayer={selectedLayer}
             onAddLayer={onAddLayer}
             onDeleteLayer={onDeleteLayer}
@@ -140,27 +152,17 @@ export function MapPixiCanvas({
             onUpdateLayerBackground={onUpdateLayerBackground}
             onUpdateMapBackground={onUpdateMapBackground}
           />
-          <PrefabPanel prefabs={document.prefabs} onAddObjectFromPrefab={onAddObjectFromPrefab} />
-          <ObjectPanel
-            document={document}
-            locations={locations}
-            roomsForLoc={roomsForLoc}
-            selectedObject={selectedObject}
-            onSelectLayer={onSelectLayer}
-            onSelectObject={onSelectObject}
-            onUpdateObject={onUpdateObject}
-            onDeleteObject={onDeleteObject}
-          />
         </div>
       </ScrollArea>
 
       <div
         ref={hostRef}
         className={cn(
-          'relative overflow-hidden border border-border bg-muted [overflow-anchor:none]',
+          'relative overflow-hidden rounded-xl bg-muted [overflow-anchor:none]',
+          isPreview && 'mx-auto',
           mode === 'edit' ? 'cursor-crosshair' : 'cursor-default',
         )}
-        style={{ height }}
+        style={isPreview ? previewSize : { height }}
         onContextMenu={(event) => event.preventDefault()}
       >
         <Application
@@ -181,26 +183,64 @@ export function MapPixiCanvas({
             height={size.height}
             backgroundScale={backgroundScale}
             backgroundRotation={backgroundRotation}
+            editViewTool={editViewTool}
+            viewportVersion={viewportVersion}
             onSelectLocation={onSelectLocation}
             onMoveLocation={onMoveLocation}
             onResizeLocationIcon={onResizeLocationIcon}
             onSelectObject={onSelectObject}
             onUpdateObject={onUpdateObject}
+            onZoomChange={setZoomLabel}
             onHoverLocation={setHoveredLocationId}
             onLeaveLocation={() => setHoveredLocationId('')}
           />
         </Application>
+        {!isPreview && (
+          <div className="absolute right-2 top-2 z-10 flex items-center rounded-lg bg-background/90 backdrop-blur">
+            <Button
+              variant={editViewTool === 'select' ? 'default' : 'ghost'}
+              size="icon"
+              className="size-7"
+              title="选择/拖动对象"
+              onClick={() => setEditViewTool('select')}
+            >
+              <MousePointer2 className="size-3.5" />
+            </Button>
+            <Button
+              variant={editViewTool === 'pan' ? 'default' : 'ghost'}
+              size="icon"
+              className="size-7"
+              title="拖动画布"
+              onClick={() => setEditViewTool('pan')}
+            >
+              <Hand className="size-3.5" />
+            </Button>
+            <span className="min-w-12 px-2 text-center font-mono text-[10px] text-muted-foreground">
+              {zoomLabel}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              title="重置视图"
+              onClick={() => setViewportVersion((value) => value + 1)}
+            >
+              <RotateCcw className="size-3.5" />
+            </Button>
+          </div>
+        )}
         {hoveredLocation && (
           <LocationPreviewPopover
             location={hoveredLocation}
             document={document}
             viewportWidth={size.width}
             viewportHeight={size.height}
+            mode={mode}
           />
         )}
         {locations.length === 0 && document.objects.length === 0 && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="pointer-events-auto flex flex-col items-center gap-3 border border-border bg-background/95 px-5 py-4 shadow-sm">
+            <div className="pointer-events-auto flex flex-col items-center gap-3 rounded-xl bg-background/95 px-5 py-4">
               <MapPin className="size-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">这张地图还没有地点或地图对象</p>
               <Button size="sm" onClick={onCreateLocation}>
@@ -210,7 +250,33 @@ export function MapPixiCanvas({
             </div>
           </div>
         )}
+        {isPreview && (
+          <div className="pointer-events-none absolute left-3 top-3 bg-black/45 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur">
+            iPhone 12 · 390 x 844
+          </div>
+        )}
       </div>
+      <ScrollArea className={cn('rounded-xl bg-card', isPreview && 'hidden')} style={{ height }}>
+        <div className="flex flex-col gap-3 p-2">
+          <PrefabPanel
+            prefabs={document.prefabs}
+            selectedLocationName={selectedLocation?.displayName}
+            onAddObjectFromPrefab={onAddObjectFromPrefab}
+          />
+          <ObjectPanel
+            document={document}
+            locations={locations}
+            roomsForLoc={roomsForLoc}
+            selectedLocationId={selectedLocationId}
+            selectedLocationName={selectedLocation?.displayName}
+            selectedObject={selectedObject}
+            onSelectLayer={onSelectLayer}
+            onSelectObject={onSelectObject}
+            onUpdateObject={onUpdateObject}
+            onDeleteObject={onDeleteObject}
+          />
+        </div>
+      </ScrollArea>
     </div>
   )
 }
@@ -219,6 +285,7 @@ function LayerPanel({
   map,
   mode,
   layers,
+  objects,
   selectedLayer,
   onAddLayer,
   onDeleteLayer,
@@ -233,6 +300,7 @@ function LayerPanel({
   map: GameMapData
   mode: CanvasMode
   layers: MapLayer[]
+  objects: MapObject[]
   selectedLayer: MapLayer | null
   onAddLayer: () => void
   onDeleteLayer: (layerId: string) => void
@@ -244,72 +312,81 @@ function LayerPanel({
   onUpdateLayerBackground: (layerId: string, backgroundUrl: string) => void
   onUpdateMapBackground: (backgroundUrl: string) => void
 }) {
+  const layerObjectCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    objects.forEach((object) => counts.set(object.layerId, (counts.get(object.layerId) ?? 0) + 1))
+    return counts
+  }, [objects])
+
   return (
-    <section className="space-y-3">
+    <section className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold">图层</p>
-        <Badge variant="outline" className="text-[10px]">{mode === 'edit' ? '编辑' : '预览'}</Badge>
+        <p className="text-[11px] font-semibold">图层</p>
+        <Button size="icon" variant="outline" className="size-6" title="添加图层" onClick={onAddLayer}>
+          <Plus className="size-3" />
+        </Button>
       </div>
-      <Button size="sm" variant="outline" className="h-8 w-full justify-start" onClick={onAddLayer}>
-        <Plus data-icon="inline-start" />
-        添加图层
-      </Button>
       <div className="flex flex-col gap-1">
-        {layers.map((layer) => (
+        {layers.map((layer) => {
+          const objectCount = layerObjectCounts.get(layer.id) ?? 0
+          const isSystemLayer = layer.kind === 'background' || layer.kind === 'locations'
+          const canDeleteLayer = !isSystemLayer && objectCount === 0
+          return (
           <div
             key={layer.id}
             role="button"
             tabIndex={0}
             className={cn(
-              'flex items-center gap-1 border border-border bg-background px-2 py-1.5 text-left',
-              selectedLayer?.id === layer.id && 'border-primary bg-primary/5',
+              'flex items-center gap-0.5 bg-background px-1.5 py-1 text-left',
+              selectedLayer?.id === layer.id && 'bg-primary/5',
             )}
             onClick={() => onSelectLayer(layer.id)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') onSelectLayer(layer.id)
             }}
           >
-            <Button variant="ghost" size="icon" className="size-6" onClick={(event) => { event.stopPropagation(); onToggleLayerVisible(layer.id) }}>
-              {layer.visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+            <Button variant="ghost" size="icon" className="size-5" onClick={(event) => { event.stopPropagation(); onToggleLayerVisible(layer.id) }}>
+              {layer.visible ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
             </Button>
-            <Button variant="ghost" size="icon" className="size-6" onClick={(event) => { event.stopPropagation(); onToggleLayerLocked(layer.id) }}>
-              {layer.locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+            <Button variant="ghost" size="icon" className="size-5" onClick={(event) => { event.stopPropagation(); onToggleLayerLocked(layer.id) }}>
+              {layer.locked ? <Lock className="size-3" /> : <Unlock className="size-3" />}
             </Button>
-            <span className="min-w-0 flex-1 truncate text-xs">{layer.name}</span>
-            <Button variant="ghost" size="icon" className="size-6" onClick={(event) => { event.stopPropagation(); onMoveLayer(layer.id, -1) }}>
-              <ArrowUp className="size-3.5" />
+            <span className="min-w-0 flex-1 truncate text-[11px]">{layer.name}</span>
+            {objectCount > 0 && <span className="px-1 font-mono text-[9px] text-muted-foreground">{objectCount}</span>}
+            <Button variant="ghost" size="icon" className="size-5" onClick={(event) => { event.stopPropagation(); onMoveLayer(layer.id, -1) }}>
+              <ArrowUp className="size-3" />
             </Button>
-            <Button variant="ghost" size="icon" className="size-6" onClick={(event) => { event.stopPropagation(); onMoveLayer(layer.id, 1) }}>
-              <ArrowDown className="size-3.5" />
+            <Button variant="ghost" size="icon" className="size-5" onClick={(event) => { event.stopPropagation(); onMoveLayer(layer.id, 1) }}>
+              <ArrowDown className="size-3" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="size-6"
-              disabled={layer.kind !== 'custom'}
-              title={layer.kind === 'custom' ? '删除图层' : '内置图层可隐藏，不能删除'}
+              className="size-5"
+              disabled={!canDeleteLayer}
+              title={isSystemLayer ? '系统图层不能删除' : objectCount > 0 ? '图层里还有对象，先移动或删除对象' : '删除图层'}
               onClick={(event) => { event.stopPropagation(); onDeleteLayer(layer.id) }}
             >
-              <Trash2 className="size-3.5 text-destructive" />
+              <Trash2 className="size-3 text-destructive" />
             </Button>
           </div>
-        ))}
+        )})}
       </div>
       {selectedLayer && (
-        <div className="space-y-3 border border-border bg-background/60 p-3">
-          <div className="grid gap-2">
-            <Label className="text-xs">图层名称</Label>
+        <div className="space-y-2 rounded-lg bg-background/60 p-2">
+          <div className="grid gap-1.5">
+            <Label className="text-[10px]">图层名称</Label>
             <Input
-              className="h-8"
+              className="h-7 text-xs"
               value={selectedLayer.name}
               disabled={selectedLayer.kind !== 'custom'}
               onChange={(event) => onUpdateLayer(selectedLayer.id, { name: event.target.value })}
             />
           </div>
-          <div className="grid gap-2">
-            <Label className="text-xs">透明度</Label>
+          <div className="grid gap-1.5">
+            <Label className="text-[10px]">透明度</Label>
             <Input
-              className="h-8"
+              className="h-7 text-xs"
               type="number"
               min={0}
               max={1}
@@ -337,7 +414,7 @@ function LayerPanel({
               disabled={selectedLayer.locked}
             />
           ) : (
-            <p className="border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+            <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
               该图层由地图对象或系统节点组成。
             </p>
           )}
@@ -349,30 +426,37 @@ function LayerPanel({
 
 function PrefabPanel({
   prefabs,
+  selectedLocationName,
   onAddObjectFromPrefab,
 }: {
   prefabs: MapPrefab[]
+  selectedLocationName?: string
   onAddObjectFromPrefab: (prefab: MapPrefab) => void
 }) {
+  const disabled = !selectedLocationName
   return (
-    <section className="space-y-3">
+    <section className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold">Prefab</p>
-        <Badge variant="secondary" className="text-[10px]">{prefabs.length}</Badge>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold">Prefab</p>
+          <p className="truncate text-[10px] text-muted-foreground">
+            {selectedLocationName ?? '先选择地点'}
+          </p>
+        </div>
+        <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">{prefabs.length}</Badge>
       </div>
-      <div className="grid gap-2">
+      <div className="grid gap-1">
         {prefabs.map((prefab) => (
           <button
             key={prefab.id}
             type="button"
-            className="border border-border bg-background px-3 py-2 text-left hover:border-primary hover:bg-primary/5"
+            title={prefab.description}
+            disabled={disabled}
+            className="flex items-center gap-1.5 bg-background px-2 py-1.5 text-left hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-45"
             onClick={() => onAddObjectFromPrefab(prefab)}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs font-medium">{prefab.name}</span>
-              <CopyPlus className="size-3.5 text-muted-foreground" />
-            </div>
-            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">{prefab.description}</p>
+            <CopyPlus className="size-3 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate text-[11px] font-medium">{prefab.name}</span>
           </button>
         ))}
       </div>
@@ -384,6 +468,8 @@ function ObjectPanel({
   document,
   locations,
   roomsForLoc,
+  selectedLocationId,
+  selectedLocationName,
   selectedObject,
   onSelectLayer,
   onSelectObject,
@@ -393,33 +479,46 @@ function ObjectPanel({
   document: MapDocument
   locations: GameLocationData[]
   roomsForLoc: (locId: string) => GameRoomData[]
+  selectedLocationId: string
+  selectedLocationName?: string
   selectedObject: MapObject | null
   onSelectLayer: (layerId: string) => void
   onSelectObject: (objectId: string) => void
   onUpdateObject: (objectId: string, patch: Partial<MapObject>) => void
   onDeleteObject: (objectId: string) => void
 }) {
-  const selectedLayer = selectedObject ? document.layers.find((layer) => layer.id === selectedObject.layerId) : null
   const rooms = locations.flatMap((loc) => roomsForLoc(loc.id).map((room) => ({ ...room, locationName: loc.displayName })))
-  const objectScale = selectedObject
-    ? Math.round((Math.max(selectedObject.width, selectedObject.height) / 120) * 100)
+  const scopedObjects = selectedLocationId
+    ? document.objects.filter((object) => object.targetLocationId === selectedLocationId)
+    : document.objects.filter((object) => !object.targetLocationId)
+  const scopedSelectedObject = selectedObject && scopedObjects.some((object) => object.id === selectedObject.id)
+    ? selectedObject
+    : null
+  const selectedLayer = scopedSelectedObject ? document.layers.find((layer) => layer.id === scopedSelectedObject.layerId) : null
+  const objectScale = scopedSelectedObject
+    ? Math.round((Math.max(scopedSelectedObject.width, scopedSelectedObject.height) / 120) * 100)
     : 100
 
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold">对象</p>
-        <Badge variant="secondary" className="text-[10px]">{document.objects.length}</Badge>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold">对象</p>
+          <p className="truncate text-[10px] text-muted-foreground">{selectedLocationName ?? '全局对象'}</p>
+        </div>
+        <Badge variant="secondary" className="text-[10px]">{scopedObjects.length}</Badge>
       </div>
       <div className="grid gap-1">
-        {document.objects.length === 0 ? (
-          <p className="border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">从 Prefab 添加建筑、机关或触发区。</p>
-        ) : document.objects.map((object) => (
+        {scopedObjects.length === 0 ? (
+          <p className="px-3 py-2 text-xs text-muted-foreground">
+            {selectedLocationName ? '从 Prefab 给当前地点添加视觉对象。' : '未绑定地点的全局对象会显示在这里。'}
+          </p>
+        ) : scopedObjects.map((object) => (
           <div
             key={object.id}
             className={cn(
-              'flex items-center gap-1 border border-border bg-background px-2 py-1.5',
-              selectedObject?.id === object.id && 'border-primary bg-primary/5',
+              'flex items-center gap-1 bg-background px-2 py-1.5',
+              selectedObject?.id === object.id && 'bg-primary/5',
             )}
           >
             <button
@@ -446,36 +545,49 @@ function ObjectPanel({
           </div>
         ))}
       </div>
-      {selectedObject && (
-        <div className="space-y-3 border border-border bg-background/60 p-3">
+      {scopedSelectedObject && (
+        <div className="space-y-3 rounded-lg bg-background/60 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-xs font-semibold">{selectedObject.name}</p>
+              <p className="truncate text-xs font-semibold">{scopedSelectedObject.name}</p>
               <p className="text-[11px] text-muted-foreground">{selectedLayer?.name ?? '未知图层'}</p>
             </div>
-            <Button variant="ghost" size="icon" className="size-7" onClick={() => onDeleteObject(selectedObject.id)}>
+            <Button variant="ghost" size="icon" className="size-7" onClick={() => onDeleteObject(scopedSelectedObject.id)}>
               <Trash2 className="size-3.5 text-destructive" />
             </Button>
           </div>
 
           <div className="grid gap-2">
             <Label className="text-xs">名称</Label>
-            <Input className="h-8" value={selectedObject.name} onChange={(event) => onUpdateObject(selectedObject.id, { name: event.target.value })} />
+            <Input className="h-8" value={scopedSelectedObject.name} onChange={(event) => onUpdateObject(scopedSelectedObject.id, { name: event.target.value })} />
           </div>
           <ImageUploadField
-            value={selectedObject.imageUrl ?? ''}
-            onChange={(url) => onUpdateObject(selectedObject.id, { imageUrl: url })}
+            value={scopedSelectedObject.imageUrl ?? ''}
+            onChange={(url) => onUpdateObject(scopedSelectedObject.id, { imageUrl: url })}
             placeholder="替换 prefab 皮肤"
             previewSize="sm"
             group="library"
           />
+          <div className="grid gap-2">
+            <Label className="text-xs">图层</Label>
+            <select
+              className="h-8 border border-input bg-background px-2 text-xs"
+              value={scopedSelectedObject.layerId}
+              onChange={(event) => {
+                onUpdateObject(scopedSelectedObject.id, { layerId: event.target.value })
+                onSelectLayer(event.target.value)
+              }}
+            >
+              {document.layers.map((layer) => <option key={layer.id} value={layer.id}>{layer.name}</option>)}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            <NumberField label="X" value={selectedObject.x} onChange={(value) => onUpdateObject(selectedObject.id, { x: value })} />
-            <NumberField label="Y" value={selectedObject.y} onChange={(value) => onUpdateObject(selectedObject.id, { y: value })} />
-            <NumberField label="宽" value={selectedObject.width} onChange={(value) => onUpdateObject(selectedObject.id, { width: Math.max(4, value) })} />
-            <NumberField label="高" value={selectedObject.height} onChange={(value) => onUpdateObject(selectedObject.id, { height: Math.max(4, value) })} />
-            <NumberField label="旋转" value={selectedObject.rotation} onChange={(value) => onUpdateObject(selectedObject.id, { rotation: value })} />
-            <NumberField label="透明" value={selectedObject.opacity} step={0.05} onChange={(value) => onUpdateObject(selectedObject.id, { opacity: clamp01(value) })} />
+            <NumberField label="X" value={scopedSelectedObject.x} onChange={(value) => onUpdateObject(scopedSelectedObject.id, { x: value })} />
+            <NumberField label="Y" value={scopedSelectedObject.y} onChange={(value) => onUpdateObject(scopedSelectedObject.id, { y: value })} />
+            <NumberField label="宽" value={scopedSelectedObject.width} onChange={(value) => onUpdateObject(scopedSelectedObject.id, { width: Math.max(4, value) })} />
+            <NumberField label="高" value={scopedSelectedObject.height} onChange={(value) => onUpdateObject(scopedSelectedObject.id, { height: Math.max(4, value) })} />
+            <NumberField label="旋转" value={scopedSelectedObject.rotation} onChange={(value) => onUpdateObject(scopedSelectedObject.id, { rotation: value })} />
+            <NumberField label="透明" value={scopedSelectedObject.opacity} step={0.05} onChange={(value) => onUpdateObject(scopedSelectedObject.id, { opacity: clamp01(value) })} />
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between gap-2">
@@ -488,12 +600,12 @@ function ObjectPanel({
               step={5}
               value={[objectScale]}
               onValueChange={([value]) => {
-                const currentMax = Math.max(selectedObject.width, selectedObject.height) || 120
+                const currentMax = Math.max(scopedSelectedObject.width, scopedSelectedObject.height) || 120
                 const nextMax = (value / 100) * 120
                 const ratio = nextMax / currentMax
-                onUpdateObject(selectedObject.id, {
-                  width: Math.max(4, Math.round(selectedObject.width * ratio)),
-                  height: Math.max(4, Math.round(selectedObject.height * ratio)),
+                onUpdateObject(scopedSelectedObject.id, {
+                  width: Math.max(4, Math.round(scopedSelectedObject.width * ratio)),
+                  height: Math.max(4, Math.round(scopedSelectedObject.height * ratio)),
                 })
               }}
             />
@@ -502,8 +614,8 @@ function ObjectPanel({
             <Label className="text-xs">绑定地点</Label>
             <select
               className="h-8 border border-input bg-background px-2 text-xs"
-              value={selectedObject.targetLocationId ?? ''}
-              onChange={(event) => onUpdateObject(selectedObject.id, { targetLocationId: event.target.value || undefined })}
+              value={scopedSelectedObject.targetLocationId ?? ''}
+              onChange={(event) => onUpdateObject(scopedSelectedObject.id, { targetLocationId: event.target.value || undefined })}
             >
               <option value="">不绑定</option>
               {locations.map((loc) => <option key={loc.id} value={loc.id}>{loc.displayName}</option>)}
@@ -513,8 +625,8 @@ function ObjectPanel({
             <Label className="text-xs">绑定房间</Label>
             <select
               className="h-8 border border-input bg-background px-2 text-xs"
-              value={selectedObject.targetRoomId ?? ''}
-              onChange={(event) => onUpdateObject(selectedObject.id, { targetRoomId: event.target.value || undefined })}
+              value={scopedSelectedObject.targetRoomId ?? ''}
+              onChange={(event) => onUpdateObject(scopedSelectedObject.id, { targetRoomId: event.target.value || undefined })}
             >
               <option value="">不绑定</option>
               {rooms.map((room) => <option key={room.id} value={room.id}>{room.locationName} / {room.displayName}</option>)}
@@ -524,8 +636,8 @@ function ObjectPanel({
             <Label className="text-xs">行为</Label>
             <select
               className="h-8 border border-input bg-background px-2 text-xs"
-              value={selectedObject.behavior?.kind ?? 'none'}
-              onChange={(event) => onUpdateObject(selectedObject.id, { behavior: { ...selectedObject.behavior, kind: event.target.value as MapObject['behavior']['kind'] } })}
+              value={scopedSelectedObject.behavior?.kind ?? 'none'}
+              onChange={(event) => onUpdateObject(scopedSelectedObject.id, { behavior: { ...scopedSelectedObject.behavior, kind: event.target.value as MapObject['behavior']['kind'] } })}
             >
               <option value="none">无</option>
               <option value="rotate">持续旋转</option>
@@ -535,12 +647,12 @@ function ObjectPanel({
               <option value="ambient">氛围效果</option>
             </select>
           </div>
-          {selectedObject.behavior?.kind === 'rotate' && (
+          {scopedSelectedObject.behavior?.kind === 'rotate' && (
             <NumberField
               label="旋转速度"
-              value={selectedObject.behavior.speed ?? 1}
+              value={scopedSelectedObject.behavior.speed ?? 1}
               step={0.1}
-              onChange={(value) => onUpdateObject(selectedObject.id, { behavior: { ...selectedObject.behavior, speed: value } })}
+              onChange={(value) => onUpdateObject(scopedSelectedObject.id, { behavior: { ...scopedSelectedObject.behavior, speed: value } })}
             />
           )}
         </div>
@@ -579,11 +691,14 @@ function MapPixiStage({
   height,
   backgroundScale,
   backgroundRotation,
+  editViewTool,
+  viewportVersion,
   onSelectLocation,
   onMoveLocation,
   onResizeLocationIcon,
   onSelectObject,
   onUpdateObject,
+  onZoomChange,
   onHoverLocation,
   onLeaveLocation,
 }: {
@@ -597,11 +712,14 @@ function MapPixiStage({
   height: number
   backgroundScale: number
   backgroundRotation: number
+  editViewTool: EditViewTool
+  viewportVersion: number
   onSelectLocation: (id: string) => void
   onMoveLocation: (loc: GameLocationData, posX: number, posY: number) => void
   onResizeLocationIcon?: (locId: string, width: number, height: number) => void
   onSelectObject: (id: string) => void
   onUpdateObject: (objectId: string, patch: Partial<MapObject>) => void
+  onZoomChange: (label: string) => void
   onHoverLocation?: (locId: string) => void
   onLeaveLocation?: () => void
 }) {
@@ -613,12 +731,28 @@ function MapPixiStage({
   const [draftObjectPositions, setDraftObjectPositions] = useState<Record<string, { x: number; y: number }>>({})
   const activeLocationDragIdRef = useRef('')
   const activeObjectDragIdRef = useRef('')
-  const viewport = useMemo(() => getViewportTransform(document, width, height), [document, height, width])
+  const [viewportPan, setViewportPan] = useState({ x: 0, y: 0 })
+  const [zoomScale, setZoomScale] = useState(1)
+  const [panning, setPanning] = useState(false)
+  const panStartRef = useRef({ pointerX: 0, pointerY: 0, panX: 0, panY: 0 })
+  const baseViewport = useMemo(() => getViewportTransform(document, width, height, mode), [document, height, mode, width])
+  const viewport = useMemo(() => ({
+    ...baseViewport,
+    scale: baseViewport.scale * zoomScale,
+    x: baseViewport.x + viewportPan.x,
+    y: baseViewport.y + viewportPan.y,
+  }), [baseViewport, viewportPan, zoomScale])
 
   useEffect(() => {
     if (!isInitialised || !app.stage) return
     app.stage.eventMode = 'static'
   }, [app, isInitialised])
+
+  // Sync Pixi renderer size to container dimensions (side-effect free resize)
+  useEffect(() => {
+    if (!isInitialised) return
+    app.renderer.resize(width, height)
+  }, [app, isInitialised, width, height])
 
   useEffect(() => {
     setDraftLocationPositions({})
@@ -628,7 +762,20 @@ function MapPixiStage({
     activeLocationDragIdRef.current = ''
     activeObjectDragIdRef.current = ''
     setHoveredId('')
+    setViewportPan({ x: 0, y: 0 })
+    setZoomScale(1)
+    setPanning(false)
   }, [map.id])
+
+  useEffect(() => {
+    setViewportPan({ x: 0, y: 0 })
+    setZoomScale(1)
+    setPanning(false)
+  }, [document.height, document.width, height, mode, viewportVersion, width])
+
+  useEffect(() => {
+    onZoomChange(`${Math.round(zoomScale * 100)}%`)
+  }, [onZoomChange, zoomScale])
 
   const [bgTexture, setBgTexture] = useState(Texture.EMPTY)
   const [layerTextures, setLayerTextures] = useState<Record<string, Texture>>({})
@@ -709,6 +856,58 @@ function MapPixiStage({
     }
     graphics.stroke({ color: 0xffffff, alpha: mode === 'edit' ? 0.07 : 0.025, width: 1 / viewport.scale })
   }, [document.height, document.width, mode, viewport.scale])
+
+  const clampViewportPan = useCallback((pan: { x: number; y: number }, scale = viewport.scale) => {
+    const scaledWidth = document.width * scale
+    const scaledHeight = document.height * scale
+    const slackX = Math.max(0, (scaledWidth - width) / 2)
+    const slackY = Math.max(0, (scaledHeight - height) / 2)
+    return {
+      x: Math.max(-slackX, Math.min(slackX, pan.x)),
+      y: Math.max(-slackY, Math.min(slackY, pan.y)),
+    }
+  }, [document.height, document.width, height, viewport.scale, width])
+
+  const handleViewportWheel = (event: FederatedWheelEvent) => {
+    if (mode !== 'edit') return
+    event.preventDefault()
+    const nextZoom = Math.max(1, Math.min(5, zoomScale * (event.deltaY < 0 ? 1.12 : 0.88)))
+    if (nextZoom === zoomScale) return
+    const worldX = (event.global.x - viewport.x) / viewport.scale
+    const worldY = (event.global.y - viewport.y) / viewport.scale
+    const nextScale = baseViewport.scale * nextZoom
+    const nextPan = clampViewportPan({
+      x: event.global.x - baseViewport.x - worldX * nextScale,
+      y: event.global.y - baseViewport.y - worldY * nextScale,
+    }, nextScale)
+    setZoomScale(nextZoom)
+    setViewportPan(nextPan)
+  }
+
+  const startViewportPan = (event: FederatedPointerEvent) => {
+    if (event.button !== 0) return
+    if (mode !== 'preview' && editViewTool !== 'pan') return
+    panStartRef.current = {
+      pointerX: event.global.x,
+      pointerY: event.global.y,
+      panX: viewportPan.x,
+      panY: viewportPan.y,
+    }
+    setPanning(true)
+  }
+
+  const moveViewportPan = (event: FederatedPointerEvent) => {
+    if (!panning) return
+    const start = panStartRef.current
+    setViewportPan(clampViewportPan({
+      x: start.panX + event.global.x - start.pointerX,
+      y: start.panY + event.global.y - start.pointerY,
+    }))
+  }
+
+  const finishViewportPan = () => {
+    setPanning(false)
+  }
 
   const handleLocationMove = (event: FederatedPointerEvent) => {
     const activeDragId = activeLocationDragIdRef.current || draggingLocationId
@@ -824,7 +1023,7 @@ function MapPixiStage({
           selected={selected}
           hovered={hovered}
           dragging={draggingLocationId === loc.id}
-          locked={layer.locked}
+          locked={layer.locked || editViewTool === 'pan'}
           iconTexture={iconTexture}
           onResizeIcon={onResizeLocationIcon ? (w: number, h: number) => onResizeLocationIcon(loc.id, w, h) : undefined}
           onSelect={() => {
@@ -837,7 +1036,7 @@ function MapPixiStage({
             else onLeaveLocation?.()
           }}
           onDragStart={() => {
-            if (layer.locked) return
+              if (layer.locked || editViewTool === 'pan') return
             activeLocationDragIdRef.current = loc.id
             setDraggingLocationId(loc.id)
             onSelectLocation(loc.id)
@@ -864,11 +1063,12 @@ function MapPixiStage({
             y={draft?.y ?? object.y}
             selected={selectedObjectId === object.id}
             mode={mode}
-            layerLocked={layer.locked}
+            layerLocked={layer.locked || editViewTool === 'pan'}
             viewportScale={viewport.scale}
             onSelect={() => {
               onSelectObject(object.id)
-              if (mode === 'preview' && object.targetLocationId && (
+              if (object.targetLocationId && (
+                mode === 'edit' ||
                 object.behavior?.kind === 'location_entry' ||
                 object.behavior?.kind === 'room_entry' ||
                 object.behavior?.kind === 'click_trigger'
@@ -877,7 +1077,7 @@ function MapPixiStage({
               }
             }}
             onDragStart={() => {
-              if (object.locked || layer.locked) return
+              if (object.locked || layer.locked || editViewTool === 'pan') return
               activeObjectDragIdRef.current = object.id
               setDraggingObjectId(object.id)
               onSelectObject(object.id)
@@ -903,25 +1103,31 @@ function MapPixiStage({
         <pixiGraphics draw={drawWorldFrame} />
         <pixiGraphics
           eventMode="static"
-          cursor={mode === 'edit' && (draggingObjectId || draggingLocationId) ? 'grabbing' : 'default'}
+          cursor={mode === 'preview' || editViewTool === 'pan' ? (panning ? 'grabbing' : 'grab') : mode === 'edit' && (draggingObjectId || draggingLocationId) ? 'grabbing' : 'default'}
           draw={(graphics) => {
             graphics.clear()
             graphics.rect(0, 0, document.width, document.height)
             graphics.fill({ color: 0x000000, alpha: 0.001 })
           }}
+          onPointerDown={startViewportPan}
+          onWheel={handleViewportWheel}
           onPointerMove={(event) => {
+            moveViewportPan(event)
             handleLocationMove(event)
             handleObjectMove(event)
           }}
           onPointerUp={(event) => {
+            finishViewportPan()
             finishLocationDrag(event)
             finishObjectDrag(event)
           }}
           onPointerUpOutside={(event) => {
+            finishViewportPan()
             finishLocationDrag(event)
             finishObjectDrag(event)
           }}
           onPointerCancel={(event) => {
+            finishViewportPan()
             finishLocationDrag(event)
             finishObjectDrag(event)
           }}
@@ -1113,7 +1319,8 @@ function MapLocationNode({
       onPointerOver={() => onHover(true)}
       onPointerOut={() => onHover(false)}
       onWheel={(event: FederatedWheelEvent) => {
-        if (!hasIcon || !onResizeIcon) return
+        if (!event.altKey || !hasIcon || !onResizeIcon) return
+        event.stopPropagation()
         const factor = event.deltaY < 0 ? 1.1 : 0.9
         const w = Math.round(Math.min(240, Math.max(8, (location.iconWidth ?? 26) * factor)))
         const h = Math.round(Math.min(240, Math.max(8, (location.iconHeight ?? 26) * factor)))
@@ -1139,13 +1346,15 @@ function LocationPreviewPopover({
   document,
   viewportWidth,
   viewportHeight,
+  mode,
 }: {
   location: GameLocationData
   document: MapDocument
   viewportWidth: number
   viewportHeight: number
+  mode: CanvasMode
 }) {
-  const viewport = getViewportTransform(document, viewportWidth, viewportHeight)
+  const viewport = getViewportTransform(document, viewportWidth, viewportHeight, mode)
   const x = viewport.x + (clampPercent(location.posX) / 100) * document.width * viewport.scale
   const y = viewport.y + (clampPercent(location.posY) / 100) * document.height * viewport.scale
 
@@ -1159,8 +1368,11 @@ function LocationPreviewPopover({
   )
 }
 
-function getViewportTransform(document: MapDocument, width: number, height: number) {
-  const scale = Math.min(width / document.width, height / document.height)
+function getViewportTransform(document: MapDocument, width: number, height: number, mode: CanvasMode = 'edit') {
+  const fitScale = mode === 'preview'
+    ? Math.max(width / document.width, height / document.height) * 1.2
+    : Math.min(width / document.width, height / document.height)
+  const scale = Number.isFinite(fitScale) ? fitScale : 1
   return {
     scale,
     x: (width - document.width * scale) / 2,

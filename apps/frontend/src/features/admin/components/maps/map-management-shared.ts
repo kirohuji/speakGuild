@@ -224,7 +224,11 @@ export function normalizeMapDocument(editorData: unknown, fallback?: { width?: n
   return { version: 1, width, height, layers, objects, prefabs }
 }
 
-export function createObjectFromPrefab(prefab: MapPrefab, document: MapDocument): MapObject {
+export function createObjectFromPrefab(
+  prefab: MapPrefab,
+  document: MapDocument,
+  binding?: { locationId?: string; x?: number; y?: number },
+): MapObject {
   const layer = document.layers.find((item) => item.kind === prefab.layerKind) ?? document.layers.find((item) => item.kind === 'decor') ?? document.layers[0]
   return {
     id: uid('object'),
@@ -233,8 +237,8 @@ export function createObjectFromPrefab(prefab: MapPrefab, document: MapDocument)
     kind: prefab.kind,
     name: prefab.name,
     imageUrl: prefab.imageUrl,
-    x: Math.round(document.width / 2),
-    y: Math.round(document.height / 2),
+    x: Math.round(binding?.x ?? document.width / 2),
+    y: Math.round(binding?.y ?? document.height / 2),
     width: prefab.width,
     height: prefab.height,
     rotation: 0,
@@ -242,6 +246,7 @@ export function createObjectFromPrefab(prefab: MapPrefab, document: MapDocument)
     visible: true,
     locked: false,
     tint: prefab.tint,
+    targetLocationId: binding?.locationId,
     animation: prefab.kind === 'animated_sprite' ? { autoplay: true, loop: true, fps: 12 } : undefined,
     behavior: prefab.behavior,
   }

@@ -22,7 +22,7 @@ export function LocationDetailsPanel({
   onRemoveNpc: (id: string) => void
 }) {
   return (
-    <Card className="rounded-none">
+    <Card className="shadow-none">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <MapPin className="size-4" />
@@ -36,10 +36,10 @@ export function LocationDetailsPanel({
         {selectedLocation ? (
           <>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="rounded-none">{locationTypeLabel[selectedLocation.locationType] ?? selectedLocation.locationType}</Badge>
-              <Badge variant="outline" className="rounded-none">需 {selectedLocation.requiredOutputLevel}</Badge>
-              {selectedLocation.hidden && <Badge variant="outline" className="rounded-none"><EyeOff className="mr-1 size-3" />隐藏</Badge>}
-              {selectedLocation.disabled && <Badge variant="outline" className="rounded-none"><Lock className="mr-1 size-3" />禁用</Badge>}
+              <Badge variant="secondary">{locationTypeLabel[selectedLocation.locationType] ?? selectedLocation.locationType}</Badge>
+              <Badge variant="outline">需 {selectedLocation.requiredOutputLevel}</Badge>
+              {selectedLocation.hidden && <Badge variant="outline"><EyeOff className="mr-1 size-3" />隐藏</Badge>}
+              {selectedLocation.disabled && <Badge variant="outline"><Lock className="mr-1 size-3" />禁用</Badge>}
             </div>
             {selectedLocation.description && (
               <p className="text-sm text-muted-foreground">{selectedLocation.description}</p>
@@ -59,7 +59,7 @@ export function LocationDetailsPanel({
               {selectedLocationRooms.length === 0 ? (
                 <p className="text-sm text-muted-foreground">这个地点还没有房间。</p>
               ) : selectedLocationRooms.map((room) => (
-                <div key={room.id} className="border border-border p-3">
+                <div key={room.id} className="p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">{room.displayName}</p>
@@ -70,10 +70,10 @@ export function LocationDetailsPanel({
                     </Button>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="rounded-none">{roomTypeLabel[room.roomType] ?? room.roomType}</Badge>
-                    {room.isEntrance && <Badge className="rounded-none">入口</Badge>}
-                    {hasAsset(room.inkScriptId) ? <Badge variant="outline" className="rounded-none"><ScrollText className="mr-1 size-3" />脚本</Badge> : <Badge variant="outline" className="rounded-none">未绑脚本</Badge>}
-                    <Badge variant="outline" className="rounded-none"><Users className="mr-1 size-3" />{room.npcs?.length ?? 0}</Badge>
+                    <Badge variant="secondary">{roomTypeLabel[room.roomType] ?? room.roomType}</Badge>
+                    {room.isEntrance && <Badge>入口</Badge>}
+                    {hasAsset(room.inkScriptId) ? <Badge variant="outline"><ScrollText className="mr-1 size-3" />脚本</Badge> : <Badge variant="outline">未绑脚本</Badge>}
+                    <Badge variant="outline"><Users className="mr-1 size-3" />{room.npcs?.length ?? 0}</Badge>
                   </div>
                   {(room.npcs?.length ?? 0) > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">

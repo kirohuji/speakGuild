@@ -17,7 +17,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
@@ -66,11 +65,11 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const [selectedMapId, setSelectedMapId] = useState<string>('')
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [view, setView] = useState<MapView>('canvas')
-  const [canvasMode, setCanvasMode] = useState<CanvasMode>('preview')
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>('edit')
   const [selectedCanvasLayerId, setSelectedCanvasLayerId] = useState('background')
   const [selectedMapObjectId, setSelectedMapObjectId] = useState('')
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
   const backgroundScale = 1
   const backgroundRotation = 0
   const canvasHeight = 620
@@ -274,16 +273,25 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   }, [saveMapDocument])
 
   const deleteCanvasLayer = useCallback((layerId: string) => {
+    let deleted = false
     saveMapDocument((document) => {
       const layer = document.layers.find((item) => item.id === layerId)
-      if (!layer || layer.kind !== 'custom') return document
+      if (!layer) return document
+      if (layer.kind === 'background' || layer.kind === 'locations') {
+        toast.error('系统图层不能删除')
+        return document
+      }
+      if (document.objects.some((object) => object.layerId === layerId)) {
+        toast.error('图层里还有对象，先移动或删除对象')
+        return document
+      }
+      deleted = true
       return {
         ...document,
         layers: document.layers.filter((item) => item.id !== layerId),
-        objects: document.objects.filter((object) => object.layerId !== layerId),
       }
     })
-    setSelectedCanvasLayerId((current) => (current === layerId ? 'background' : current))
+    if (deleted) setSelectedCanvasLayerId((current) => (current === layerId ? 'background' : current))
   }, [saveMapDocument])
 
   const updateCanvasLayerBackground = useCallback((layerId: string, backgroundUrl: string) => {
@@ -291,14 +299,19 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   }, [updateMapLayer])
 
   const addMapObjectFromPrefab = useCallback((prefab: MapPrefab) => {
-    const object = createObjectFromPrefab(prefab, selectedMapDocument)
+    const object = createObjectFromPrefab(prefab, selectedMapDocument, selectedLocation ? {
+      locationId: selectedLocation.id,
+      x: (selectedLocation.posX / 100) * selectedMapDocument.width,
+      y: (selectedLocation.posY / 100) * selectedMapDocument.height,
+    } : undefined)
     saveMapDocument((document) => ({
       ...document,
       objects: [...document.objects, object],
     }))
+    if (selectedLocation) setSelectedLocationId(selectedLocation.id)
     setSelectedMapObjectId(object.id)
     setSelectedCanvasLayerId(object.layerId)
-  }, [saveMapDocument, selectedMapDocument])
+  }, [saveMapDocument, selectedLocation, selectedMapDocument])
 
   const updateMapObject = useCallback((objectId: string, patch: Partial<MapObject>) => {
     saveMapDocument((document) => ({
@@ -650,7 +663,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const roomCount = rooms.length
 
   return (
-    <div className="flex flex-col gap-4 [&_*]:rounded-none">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-1">
           <p className="text-sm text-muted-foreground">
@@ -667,7 +680,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
       </div>
 
       {maps.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 border border-dashed border-border py-16">
+        <div className="flex flex-col items-center justify-center gap-2 py-16">
           <Map className="size-10 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">暂无地图</p>
           <p className="text-xs text-muted-foreground/60">点击「新建地图」开始创建</p>
@@ -675,7 +688,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
       ) : (
         <div
           className={cn(
-            'grid min-h-0 gap-3 transition-[grid-template-columns] duration-200',
+            'grid min-h-0 gap-3',
             leftSidebarOpen && rightSidebarOpen && 'xl:grid-cols-[300px_minmax(0,1fr)_320px]',
             leftSidebarOpen && !rightSidebarOpen && 'xl:grid-cols-[300px_minmax(0,1fr)_44px]',
             !leftSidebarOpen && rightSidebarOpen && 'xl:grid-cols-[44px_minmax(0,1fr)_320px]',
@@ -706,6 +719,8 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                   setSelectedLocationId(firstLocationId)
                 }}
                 onSelectLocation={setSelectedLocationId}
+                onEditLocation={openEditLoc}
+                onDeleteLocation={removeLoc}
               />
             </aside>
           ) : (
@@ -717,15 +732,62 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
             />
           )}
 
-          <Card className="overflow-hidden rounded-none">
-            <CardHeader className="border-b border-border pb-3">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <Card className="overflow-hidden shadow-none">
+            <CardHeader className="pb-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
-                  <CardTitle className="truncate text-lg">{selectedMap?.displayName}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CardTitle className="truncate text-lg">{selectedMap?.displayName}</CardTitle>
+                    <Badge variant="outline" className="h-6 px-2 text-[11px]">
+                      {selectedLocations.length} 地点 / {selectedMapRooms.length} 房间
+                    </Badge>
+                  </div>
                   <CardDescription className="font-mono">{selectedMap?.name}</CardDescription>
                 </div>
                 {selectedMap && (
                   <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center">
+                      <Button
+                        variant={view === 'canvas' ? 'default' : 'ghost'}
+                        size="icon"
+                        className="size-8"
+                        title="空间视图"
+                        onClick={() => setView('canvas')}
+                      >
+                        <MapPin className="size-4" />
+                      </Button>
+                      <Button
+                        variant={view === 'structure' ? 'default' : 'ghost'}
+                        size="icon"
+                        className="size-8"
+                        title="结构视图"
+                        onClick={() => setView('structure')}
+                      >
+                        <Route className="size-4" />
+                      </Button>
+                    </div>
+                    {view === 'canvas' && (
+                      <div className="flex items-center">
+                        <Button
+                          variant={canvasMode === 'preview' ? 'default' : 'ghost'}
+                          size="icon"
+                          className="size-8"
+                          title="预览模式"
+                          onClick={() => setCanvasMode('preview')}
+                        >
+                          <MousePointer2 className="size-4" />
+                        </Button>
+                        <Button
+                          variant={canvasMode === 'edit' ? 'default' : 'ghost'}
+                          size="icon"
+                          className="size-8"
+                          title="编辑模式"
+                          onClick={() => setCanvasMode('edit')}
+                        >
+                          <Move className="size-4" />
+                        </Button>
+                      </div>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => openCreateLoc(selectedMap.id)}>
                       <Plus data-icon="inline-start" />
                       添加地点
@@ -739,45 +801,6 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                   </div>
                 )}
               </div>
-              <Tabs value={view} onValueChange={(value) => setView(value as MapView)}>
-                <TabsList className="mt-3">
-                  <TabsTrigger value="canvas">
-                    <MapPin className="size-4" />
-                    空间视图
-                  </TabsTrigger>
-                  <TabsTrigger value="structure">
-                    <Route className="size-4" />
-                    结构视图
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-              {view === 'canvas' && (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      variant={canvasMode === 'preview' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8"
-                      onClick={() => setCanvasMode('preview')}
-                    >
-                      <MousePointer2 data-icon="inline-start" />
-                      预览
-                    </Button>
-                    <Button
-                      variant={canvasMode === 'edit' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8"
-                      onClick={() => setCanvasMode('edit')}
-                    >
-                      <Move data-icon="inline-start" />
-                      编辑
-                    </Button>
-                  </div>
-                  <Badge variant="outline" className="h-8 rounded-none px-3">
-                    {selectedLocations.length} 地点 · {selectedMapRooms.length} 房间
-                  </Badge>
-                </div>
-              )}
             </CardHeader>
             <CardContent className="p-0">
               {selectedMap && view === 'canvas' && (
@@ -812,16 +835,8 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                     onDeleteObject={deleteMapObject}
                     onResizeLocationIcon={handleResizeLocationIcon}
                   />
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant={canvasMode === 'edit' ? 'default' : 'secondary'}>
-                      {canvasMode === 'edit' ? '编辑模式' : '预览模式'}
-                    </Badge>
-                    <span>
-                      {canvasMode === 'edit'
-                        ? '左键按住地点拖拽，松开后保存坐标。'
-                        : '点击地点会高亮并显示标题，不能拖拽。'}
-                    </span>
-                    {canvasMode === 'edit' && (
+                  {canvasMode === 'edit' && (
+                    <div className="mt-2 flex justify-end">
                       <Button
                         variant="outline"
                         size="sm"
@@ -847,14 +862,14 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                       >
                         {autoAligning ? '匹配中...' : '自动定位'}
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {selectedMap && view === 'structure' && (
                 <ScrollArea className="h-[520px]">
-                  <div className="divide-y">
+                  <div>
                     {selectedLocations.length === 0 ? (
                       <p className="p-4 text-sm text-muted-foreground">暂无地点，点击「添加地点」创建。</p>
                     ) : selectedLocations.map((loc) => {
@@ -883,6 +898,12 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                             <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <Badge variant="secondary">{locationTypeLabel[loc.locationType] ?? loc.locationType}</Badge>
                               <Badge variant="outline">{locRooms.length} 房间</Badge>
+                              <Button variant="ghost" size="icon" className="size-7" onClick={() => openEditLoc(loc)}>
+                                <Edit3 className="size-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="size-7" onClick={() => removeLoc(loc)}>
+                                <Trash2 className="size-3.5 text-destructive" />
+                              </Button>
                               <Button variant="outline" size="sm" onClick={() => openCreateRoom(loc.id)}>
                                 <Plus data-icon="inline-start" />
                                 房间
@@ -894,7 +915,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                               {locRooms.length === 0 ? (
                                 <p className="px-10 py-3 text-xs text-muted-foreground">暂无房间。</p>
                               ) : (
-                                <div className="divide-y divide-border/50">
+                                <div>
                                   {locRooms.map((rm) => (
                                     <RoomRow
                                       key={rm.id}
@@ -1226,7 +1247,7 @@ function SidebarDock({
     <button
       type="button"
       title={title}
-      className="flex h-full min-h-[760px] w-full flex-col items-center gap-3 border border-border bg-card px-2 py-3 text-muted-foreground transition hover:border-primary hover:bg-primary/5 hover:text-foreground"
+      className="flex h-full min-h-[760px] w-full flex-col items-center gap-3 rounded-xl bg-card px-2 py-3 text-muted-foreground transition hover:bg-primary/5 hover:text-foreground"
       onClick={onClick}
     >
       <Icon className="size-4 shrink-0" />

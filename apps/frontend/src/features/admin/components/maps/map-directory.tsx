@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, Layers3, MapPin } from 'lucide-react'
+import { ChevronDown, ChevronRight, Edit3, Layers3, MapPin, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
@@ -14,6 +15,8 @@ export function MapDirectory({
   roomsForLoc,
   onSelectMap,
   onSelectLocation,
+  onEditLocation,
+  onDeleteLocation,
 }: {
   maps: GameMapData[]
   selectedMap: GameMapData | null
@@ -22,6 +25,8 @@ export function MapDirectory({
   roomsForLoc: (locId: string) => GameRoomData[]
   onSelectMap: (mapId: string, firstLocationId: string) => void
   onSelectLocation: (locationId: string) => void
+  onEditLocation: (location: GameLocationData) => void
+  onDeleteLocation: (location: GameLocationData) => void
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(selectedMap?.id ? [selectedMap.id] : []))
 
@@ -41,8 +46,8 @@ export function MapDirectory({
   }
 
   return (
-    <Card className="overflow-hidden rounded-none">
-      <CardHeader className="border-b border-border pb-3">
+    <Card className="overflow-hidden shadow-none">
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Layers3 className="size-4" />
           地图目录
@@ -51,7 +56,7 @@ export function MapDirectory({
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[720px]">
-          <div className="divide-y divide-border/70">
+          <div>
             {maps.map((map) => {
               const mapLocs = locsForMap(map.id)
               const mapRooms = mapLocs.flatMap((loc) => roomsForLoc(loc.id))
@@ -71,7 +76,7 @@ export function MapDirectory({
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
                         <p className="min-w-0 flex-1 truncate text-sm font-semibold">{map.displayName}</p>
-                        <Badge variant="outline" className="shrink-0 rounded-none">需 {map.requiredOutputLevel}</Badge>
+                        <Badge variant="outline" className="shrink-0">需 {map.requiredOutputLevel}</Badge>
                       </div>
                       <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{map.name}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
@@ -82,29 +87,41 @@ export function MapDirectory({
                     </div>
                   </button>
                   {isExpanded && (
-                    <div className="border-t border-border/60 bg-muted/15 py-1">
+                    <div className="bg-muted/15 py-1">
                       {mapLocs.length === 0 ? (
                         <p className="px-9 py-2 text-xs text-muted-foreground">暂无地点</p>
                       ) : mapLocs.map((loc) => {
                         const locRooms = roomsForLoc(loc.id)
                         const isLocationActive = selectedLocationId === loc.id
                         return (
-                          <button
+                          <div
                             key={loc.id}
-                            type="button"
                             className={cn(
                               'flex w-full items-center gap-2 px-9 py-2 text-left text-sm transition hover:bg-background/70',
                               isLocationActive && 'bg-background font-medium',
                             )}
-                            onClick={() => {
-                              if (selectedMap?.id !== map.id) onSelectMap(map.id, loc.id)
-                              onSelectLocation(loc.id)
-                            }}
                           >
-                            <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                            <span className="min-w-0 flex-1 truncate">{loc.displayName}</span>
-                            <span className="shrink-0 text-xs text-muted-foreground">{locRooms.length} 房间</span>
-                          </button>
+                            <button
+                              type="button"
+                              className="flex min-w-0 flex-1 items-center gap-2"
+                              onClick={() => {
+                                if (selectedMap?.id !== map.id) onSelectMap(map.id, loc.id)
+                                onSelectLocation(loc.id)
+                              }}
+                            >
+                              <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                              <span className="min-w-0 flex-1 truncate">{loc.displayName}</span>
+                              <span className="shrink-0 text-xs text-muted-foreground">{locRooms.length} 房间</span>
+                            </button>
+                            <div className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="size-6" onClick={() => onEditLocation(loc)}>
+                                <Edit3 className="size-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="size-6" onClick={() => onDeleteLocation(loc)}>
+                                <Trash2 className="size-3 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
                         )
                       })}
                     </div>

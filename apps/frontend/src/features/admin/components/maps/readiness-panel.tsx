@@ -16,7 +16,7 @@ export function ReadinessPanel({
   issues: ReadinessItem[]
 }) {
   return (
-    <Card className="overflow-hidden rounded-none">
+    <Card className="overflow-hidden shadow-none">
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-muted/30"
@@ -34,16 +34,16 @@ export function ReadinessPanel({
         {open ? <ChevronDown className="size-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
       </button>
       {open && (
-        <div className="border-t border-border px-5 py-4">
+        <div className="px-5 py-4">
           {issues.length === 0 ? (
-            <div className="flex items-center gap-2 border border-border bg-muted/30 px-3 py-2 text-sm">
+            <div className="flex items-center gap-2 bg-muted/30 px-3 py-2 text-sm">
               <CheckCircle2 className="size-4 text-primary" />
               当前地图结构完整，可以进入预览联调。
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {issues.slice(0, 6).map((item) => (
-                <div key={item.key} className="flex items-center gap-2 border border-border px-3 py-2 text-sm">
+                <div key={item.key} className="flex items-center gap-2 px-3 py-2 text-sm">
                   <AlertTriangle className="size-4 text-muted-foreground" />
                   <span>{item.label}</span>
                 </div>
