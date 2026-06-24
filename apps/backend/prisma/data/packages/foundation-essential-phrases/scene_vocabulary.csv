@@ -1,13 +1,22 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·日常高频短语",常用动词短语,matter,事情,noun,/ˈmætər/,/ˈmætə/,L1,事情、问题。,"[{""en"":""What's the matter?"",""zh"":""怎么了？""}]",0
-"基础·日常高频短语",常用动词短语,congratulations,恭喜,noun,/kənˌɡrætʃuˈleɪʃənz/,/kənˌɡrætʃuˈleɪʃənz/,L1,祝贺。,"[{""en"":""Congratulations on your success!"",""zh"":""祝贺你的成功！""}]",1
-"基础·日常高频短语",常用动词短语,cheers,干杯,noun,/tʃɪrz/,/tʃɪəz/,L1,干杯/谢谢。,"[{""en"":""Cheers!"",""zh"":""干杯！""}]",2
-"基础·日常高频短语",情景常用语,matter,事情,noun,/ˈmætər/,/ˈmætə/,L1,事情、问题。,"[{""en"":""What's the matter?"",""zh"":""怎么了？""}]",3
-"基础·日常高频短语",情景常用语,congratulations,恭喜,noun,/kənˌɡrætʃuˈleɪʃənz/,/kənˌɡrætʃuˈleɪʃənz/,L1,祝贺。,"[{""en"":""Congratulations on your success!"",""zh"":""祝贺你的成功！""}]",4
-"基础·日常高频短语",情景常用语,cheers,干杯,noun,/tʃɪrz/,/tʃɪəz/,L1,干杯/谢谢。,"[{""en"":""Cheers!"",""zh"":""干杯！""}]",5
-"基础·电话与应急",电话用语,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,"[{""en"":""Call me in an emergency."",""zh"":""紧急情况给我打电话。""}]",6
-"基础·电话与应急",电话用语,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,"[{""en"":""Please call an ambulance!"",""zh"":""请叫救护车！""}]",7
-"基础·电话与应急",电话用语,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,"[{""en"":""I lost my passport."",""zh"":""我丢了护照。""}]",8
+基础④·Yes/No问句,一般疑问句,question,问题,noun,/ˈkwestʃən/,/ˈkwestʃən/,L1,问题。ask a question = 问问题。,"[{""en"":""Do you have a question?"",""zh"":""你有问题吗？""}]",0
+基础④·Yes/No问句,一般疑问句,answer,回答,noun/verb,/ˈænsər/,/ˈɑːnsə/,L1,回答。answer the question。,"[{""en"":""Please answer my question."",""zh"":""请回答我的问题。""}]",1
+基础④·Yes/No问句,一般疑问句,yes,是,adv,/jes/,/jes/,L1,肯定回答。,"[{""en"":""Yes, I am."",""zh"":""是的，我是。""}]",2
+基础④·Yes/No问句,一般疑问句,no,不/不是,adv,/noʊ/,/nəʊ/,L1,否定回答。,"[{""en"":""No, I'm not."",""zh"":""不，我不是。""}]",3
+基础④·Yes/No问句,过去疑问句,did,做(过去助动词),verb,/dɪd/,/dɪd/,L1,do的过去式。构成过去疑问句。,"[{""en"":""Did you eat?"",""zh"":""你吃了吗？""}]",0
+基础④·Yes/No问句,过去疑问句,yesterday,昨天,adv,/ˈjestərdeɪ/,/ˈjestədeɪ/,L1,昨天。过去时间表达。,"[{""en"":""Did you go to school yesterday?"",""zh"":""你昨天上学了吗？""}]",1
+基础④·Wh-问句,6W问句,what,什么,pron,/wʌt/,/wɒt/,L1,疑问词。What is this?,"[{""en"":""What is your name?"",""zh"":""你叫什么名字？""}]",0
+基础④·Wh-问句,6W问句,where,哪里,adv,/wer/,/weə/,L1,疑问词。Where is...?,"[{""en"":""Where is the bathroom?"",""zh"":""洗手间在哪里？""}]",1
+基础④·Wh-问句,6W问句,when,什么时候,adv,/wen/,/wen/,L1,疑问词。When do you...?,"[{""en"":""When do you get up?"",""zh"":""你几点起床？""}]",2
+基础④·Wh-问句,6W问句,why,为什么,adv,/waɪ/,/waɪ/,L1,疑问词。Why are you...?,"[{""en"":""Why are you late?"",""zh"":""你为什么迟到？""}]",3
+基础④·Wh-问句,6W问句,which,哪个,pron,/wɪtʃ/,/wɪtʃ/,L1,疑问词。Which one?,"[{""en"":""Which one is yours?"",""zh"":""哪个是你的？""}]",4
+基础④·Wh-问句,What与Who详细问,whose,谁的,pron,/huːz/,/huːz/,L1,所有格疑问词。Whose...?,"[{""en"":""Whose book is this?"",""zh"":""这是谁的书？""}]",0
+基础④·Wh-问句,What与Who详细问,because,因为,conj,/bɪˈkɔːz/,/bɪˈkɒz/,L1,因果关系连接词。,"[{""en"":""Because I was sick."",""zh"":""因为我生病了。""}]",1
+基础④·How问句,数量与价格,how,如何/多么,adv,/haʊ/,/haʊ/,L1,疑问副词。How + 形容词/副词。,"[{""en"":""How are you?"",""zh"":""你好吗？""}]",0
+基础④·How问句,数量与价格,many,许多(可数),adj,/ˈmeni/,/ˈmeni/,L1,与可数名词连用。How many...?,"[{""en"":""How many books?"",""zh"":""多少本书？""}]",1
+基础④·How问句,数量与价格,much,许多(不可数),adj,/mʌtʃ/,/mʌtʃ/,L1,与不可数名词连用。How much...?,"[{""en"":""How much is it?"",""zh"":""多少钱？""}]",2
+基础④·How问句,频率与方式,often,经常,adv,/ˈɔːfən/,/ˈɒfən/,L1,频率副词。How often = 多久一次。,"[{""en"":""How often do you exercise?"",""zh"":""你多久锻炼一次？""}]",0
+基础④·How问句,频率与方式,about,关于/大约,prep/adv,/əˈbaʊt/,/əˈbaʊt/,L1,How about...? = ...怎么样？,"[{""en"":""How about some coffee?"",""zh"":""来点咖啡怎么样？""}]",1
 "基础·电话与应急",紧急求助,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,"[{""en"":""Call me in an emergency."",""zh"":""紧急情况给我打电话。""}]",9
 "基础·电话与应急",紧急求助,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,"[{""en"":""Please call an ambulance!"",""zh"":""请叫救护车！""}]",10
 "基础·电话与应急",紧急求助,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,"[{""en"":""I lost my passport."",""zh"":""我丢了护照。""}]",11

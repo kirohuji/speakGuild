@@ -1,5 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础·日常高频短语,常用动词短语,undefined,undefined,30,L1,学习最常用的动词短语搭配。,动词短语 搭配 常用,practice_foundation-essential-phrases_基础_日常高频短语_常用动词短语
-基础·日常高频短语,情景常用语,undefined,undefined,30,L1,学习各种常见情景下的短语表达。,情景 常用 短语,practice_foundation-essential-phrases_基础_日常高频短语_情景常用语
-基础·电话与应急,电话用语,undefined,undefined,35,L1,学习打电话的基本表达。,电话 通话 留言,practice_foundation-essential-phrases_基础_电话与应急_电话用语
-基础·电话与应急,紧急求助,undefined,undefined,30,L1,学习紧急情况下的求助表达。,紧急 求助 安全,practice_foundation-essential-phrases_基础_电话与应急_紧急求助
+基础④·Yes/No问句,一般疑问句,Practice Yes/No questions with be do and can.,练习be/do/can构成的一般疑问句。,35,L1,掌握Are you? / Do you? / Can you? 疑问句及简短回答。,疑问句 Yes/No be do can 简短回答,practice_foundation-essential-phrases_YesNo问句_一般疑问句
+基础④·Yes/No问句,过去疑问句,Practice past tense questions with did and were.,练习过去式疑问句：Did you? / Were you?。,35,L1,掌握Did you? / Were you? 过去疑问句。,过去 疑问句 did were 过去时,practice_foundation-essential-phrases_YesNo问句_过去疑问句
+基础④·Wh-问句,6W问句,Practice Wh- questions: What Who Where When Why Which.,练习6W问句：What/Who/Where/When/Why/Which。,35,L1,掌握6W疑问词的用法和疑问句语序。,Wh- 疑问句 6W 特殊疑问句,practice_foundation-essential-phrases_Wh问句_6W问句
+基础④·Wh-问句,What与Who详细问,Practice detailed questions with What and Who.,练习What和Who的详细问法。,35,L1,掌握What time/color/kind of 和 Who is/Whose 问句。,What Who Whose 详细 疑问,practice_foundation-essential-phrases_Wh问句_What与Who详细问
+基础④·How问句,数量与价格,Practice How many/much/far/long questions.,练习How many/much/far/long问句。,35,L1,掌握How搭配数量/价格/距离/时长的问法。,How many much far long 疑问,practice_foundation-essential-phrases_How问句_数量与价格
+基础④·How问句,频率与方式,Practice How often/do/about questions.,练习How often/do/about/how was问句。,35,L1,掌握How often/do/about/how was的交流用法。,How often about 频率 方式 感受,practice_foundation-essential-phrases_How问句_频率与方式

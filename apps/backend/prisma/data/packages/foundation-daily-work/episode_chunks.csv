@@ -1,13 +1,44 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_daily_work_0,1,Good morning, everyone!,0
-found_foundation_daily_work_0,1,How was your weekend?,1
-found_foundation_daily_work_0,1,Let's start the meeting.,2
-found_foundation_daily_work_0,1,I have a question.,3
-found_foundation_daily_work_0,1,What do you think about this?,4
-found_foundation_daily_work_0,1,I agree with your idea.,5
-found_foundation_daily_work_0,1,Let me check my schedule.,6
-found_foundation_daily_work_0,1,I'm available on Monday.,7
-found_foundation_daily_work_0,1,Can we reschedule?,8
+ch_third_01,1,He is my father. She is my mother.,0
+ch_third_01,1,He is a doctor. She is a teacher.,1
+ch_third_01,1,He is very tall. She is very kind.,2
+ch_third_01,1,He has a car. She has a cat.,3
+ch_third_01,1,He has two brothers.,4
+ch_third_01,1,His name is Tom. Her name is Anna.,5
+ch_third_01,2,He likes coffee. She likes tea.,0
+ch_third_01,2,He likes to read books.,1
+ch_third_01,2,He doesn't like meat.,2
+ch_third_01,2,She doesn't like to watch TV.,3
+ch_third_01,2,Does he like sports? — Yes, he does.,4
+ch_third_01,2,What does she like? — She likes music.,5
+ch_third_02,1,He gets up at 7 every morning.,0
+ch_third_02,1,She goes to school by bus.,1
+ch_third_02,1,He eats breakfast at home.,2
+ch_third_02,1,She drinks coffee in the morning.,3
+ch_third_02,1,He comes home at 6 pm.,4
+ch_third_02,1,She watches TV after dinner.,5
+ch_third_02,1,He studies English every day.,6
+ch_third_02,1,He doesn't eat breakfast.,7
+ch_third_02,2,He works in a hospital.,0
+ch_third_02,2,She teaches English at a school.,1
+ch_third_02,2,He drives a taxi.,2
+ch_third_02,2,She does her homework after school.,3
+ch_third_02,2,He says hello to everyone.,4
+ch_third_02,2,Does he work on weekends? — No, he doesn't.,5
+ch_third_03,1,I eat breakfast, and he eats breakfast too.,0
+ch_third_03,1,I like coffee, but she doesn't like coffee.,1
+ch_third_03,1,I have a cat, and she has a dog.,2
+ch_third_03,1,I don't have a car, but he has a car.,3
+ch_third_03,1,I get up at 6, but he gets up at 8.,4
+ch_third_03,1,My name is Tom. His name is Jack.,5
+ch_third_03,2,They live in Beijing.,0
+ch_third_03,2,They have two children.,1
+ch_third_03,2,People here speak Chinese.,2
+ch_third_03,2,My parents work very hard.,3
+ch_third_03,2,The children play in the park.,4
+ch_third_03,2,Their house is very big.,5
+ch_third_03,2,Tom's mother is a nurse.,6
+ch_third_03,2,Everyone likes him.,7
 found_foundation_daily_work_0,1,I'll send you an email.,9
 found_foundation_daily_work_0,1,Please review this document.,10
 found_foundation_daily_work_0,1,Thank you for your help.,11

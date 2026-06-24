@@ -1,13 +1,41 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_essential_phrases_0,1,I get up at 7.,0
-found_foundation_essential_phrases_0,1,Please sit down.,1
-found_foundation_essential_phrases_0,1,I'm looking for my keys.,2
-found_foundation_essential_phrases_0,1,Can you pick me up?,3
-found_foundation_essential_phrases_0,1,Let's turn on the TV.,4
-found_foundation_essential_phrases_0,1,Please turn off the lights.,5
-found_foundation_essential_phrases_0,1,I need to find out.,6
-found_foundation_essential_phrases_0,1,Don't give up!,7
-found_foundation_essential_phrases_0,1,Calm down, please.,8
+ch_q_01,1,Are you a student? — Yes, I am.,0
+ch_q_01,1,Do you like coffee? — Yes, I do.,1
+ch_q_01,1,Does she speak English? — Yes, she does.,2
+ch_q_01,1,Can you swim? — Yes, I can.,3
+ch_q_01,1,Is it big? — No, it isn't.,4
+ch_q_01,1,Is there a bank near here? — Yes, there is.,5
+ch_q_01,2,Did you eat breakfast? — Yes, I did.,0
+ch_q_01,2,Did she go to school yesterday? — No, she didn't.,1
+ch_q_01,2,Were you at home last night? — Yes, I was.,2
+ch_q_01,2,Was it expensive? — No, it wasn't.,3
+ch_q_01,2,Did you have a good weekend? — Yes, I did.,4
+ch_q_01,2,Was she at the party? — No, she wasn't.,5
+ch_q_02,1,What is your name? — My name is Tom.,0
+ch_q_02,1,What do you do? — I am a teacher.,1
+ch_q_02,1,Who is she? — She is my sister.,2
+ch_q_02,1,Where is the bathroom? — It's over there.,3
+ch_q_02,1,Where do you live? — I live in Beijing.,4
+ch_q_02,1,When do you get up? — I get up at 7.,5
+ch_q_02,1,Why are you late? — Because I missed the bus.,6
+ch_q_02,1,Which one is yours? — The blue one.,7
+ch_q_02,2,What time is it? — It's 3 o'clock.,0
+ch_q_02,2,What kind of music do you like? — Pop.,1
+ch_q_02,2,What color is your car? — It's red.,2
+ch_q_02,2,Who is your best friend? — Li Ming.,3
+ch_q_02,2,Whose book is this? — It's mine.,4
+ch_q_03,1,How many books do you have? — I have ten.,0
+ch_q_03,1,How much is this? — It's 20 dollars.,1
+ch_q_03,1,How much water do you drink? — About 2 liters.,2
+ch_q_03,1,How far is it from here? — About 2 km.,3
+ch_q_03,1,How long does it take? — About 30 minutes.,4
+ch_q_03,1,How old are you? — I'm 25.,5
+ch_q_03,2,How often do you exercise? — Every day.,0
+ch_q_03,2,How do you go to work? — By bus.,1
+ch_q_03,2,How was your day? — It was good.,2
+ch_q_03,2,How does it taste? — It's delicious.,3
+ch_q_03,2,How about some coffee? — Sure, thanks.,4
+ch_q_03,2,How do you like your job? — I like it.,5
 found_foundation_essential_phrases_0,1,I'll call you back.,9
 found_foundation_essential_phrases_0,1,Come over to my place.,10
 found_foundation_essential_phrases_0,1,I'm running out of time.,11

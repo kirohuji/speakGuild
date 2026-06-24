@@ -1,33 +1,36 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-ch_greet,1,Hello! How are you?,0
-ch_greet,1,Nice to meet you.,1
-ch_greet,1,Good morning! / Good afternoon! / Good evening!,2
-ch_greet,2,My name is...,0
-ch_greet,2,I'm from...,1
-ch_greet,2,I'm a...,2
-ch_num,1,How many...?,0
-ch_num,1,I have... books.,1
-ch_num,2,What time is it?,0
-ch_num,2,It's... o'clock.,1
-ch_num,2,What day is it today?,2
-ch_daily,1,Thank you very much.,0
-ch_daily,1,You're welcome.,1
-ch_daily,1,I'm sorry.,2
-ch_daily,2,I need...,0
-ch_daily,2,Can I have..., please?,1
-ch_daily,2,I want...,2
-ch_qa,1,What is this?,0
-ch_qa,1,Who is that?,1
-ch_qa,2,Where is the...,0
-ch_qa,2,It's over there.,1
-ch_verb,1,I am a...,0
-ch_verb,1,You are very...,1
-ch_verb,1,It is...,2
-ch_verb,2,I go to...,0
-ch_verb,2,I eat... for breakfast.,1
-ch_verb,2,I like to...,2
-ch_desc,1,It is very big.,0
-ch_desc,1,What color is it?,1
-ch_desc,2,I feel... / I am...,0
-ch_desc,2,It's very good.,1
-ch_desc,2,It's too hot / cold.,2
+ch_be_01,1,Hello! I am Li Ming. / Hi! I'm Sarah.,0
+ch_be_01,1,My name is Zhang Wei.,1
+ch_be_01,1,I am from China. / I'm from the US.,2
+ch_be_01,1,Nice to meet you.,3
+ch_be_01,1,I am a student. / I'm a teacher.,4
+ch_be_01,1,I am 20 years old. / I'm 25.,5
+ch_be_01,2,I am happy today. / I'm so happy!,0
+ch_be_01,2,I am tired. / I'm hungry. / I'm thirsty.,1
+ch_be_01,2,Are you happy? — Yes, I am. / No, I'm not.,2
+ch_be_01,2,I am not tired. / I'm not hungry.,3
+ch_be_01,2,How are you? — I'm fine, thank you.,4
+ch_be_02,1,It is a book. / It's a pen.,0
+ch_be_02,1,It is big. / It's very big.,1
+ch_be_02,1,It is good. / It's very good!,2
+ch_be_02,1,It is hot. / It's cold. / It's warm.,3
+ch_be_02,1,It is red. / It's blue.,4
+ch_be_02,1,What color is it? — It is red.,5
+ch_be_02,2,Is it big? — Yes, it is. / No, it isn't.,0
+ch_be_02,2,Is it a dog? — Yes, it is. / No, it isn't.,1
+ch_be_02,2,Where is my book? — It is here. / It's there.,2
+ch_be_02,2,How is the weather? — It is sunny.,3
+ch_be_02,2,What is this? — This is a phone.,4
+ch_be_02,2,What is that? — That is a car.,5
+ch_be_03,1,He is a doctor. / She is a teacher.,0
+ch_be_03,1,He is tall. / She is very kind.,1
+ch_be_03,1,We are students. / They are friends.,2
+ch_be_03,1,You are very nice! / You are right.,3
+ch_be_03,1,This is my mother. She is a nurse.,4
+ch_be_03,1,He is my brother. He is 15 years old.,5
+ch_be_03,2,She is not a teacher. / She isn't a teacher.,0
+ch_be_03,2,They are not from Japan. / They aren't from Japan.,1
+ch_be_03,2,I am not a student. / I'm not a student.,2
+ch_be_03,2,It is not big. / It isn't big.,3
+ch_be_03,2,We are not late. / We aren't late.,4
+ch_be_03,2,He is not tall. / He isn't tall.,5

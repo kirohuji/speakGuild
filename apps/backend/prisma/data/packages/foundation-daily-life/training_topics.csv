@@ -1,5 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础·起床与洗漱,起床与洗漱,undefined,undefined,30,L1,学习起床到洗漱的常用英语表达。,起床 洗漱 早晨,practice_foundation-daily-life_基础_起床与洗漱_起床与洗漱
-基础·起床与洗漱,早餐与出门,undefined,undefined,30,L1,学习早餐和出门前的常用表达。,早餐 出门 准备,practice_foundation-daily-life_基础_起床与洗漱_早餐与出门
-基础·家务与居家,家务劳动,undefined,undefined,35,L1,学习做家务的常用表达。,家务 打扫 整理,practice_foundation-daily-life_基础_家务与居家_家务劳动
-基础·家务与居家,居家休息,undefined,undefined,30,L1,学习在家休息放松的表达。,休息 放松 居家,practice_foundation-daily-life_基础_家务与居家_居家休息
+基础②·日常习惯,我每天做什么,Practice daily habits with action verbs like eat drink and go to school.,练习用一般动词描述日常习惯：吃、喝、去上学。,35,L1,掌握I eat/drink/go的肯定句和don't否定句。,一般动词 习惯 肯定句 否定句,practice_foundation-daily-life_日常习惯_我每天做什么
+基础②·日常习惯,我的日常动作,Practice common daily actions like read watch play and study.,练习日常动作：看书、看电视、玩、学习。,35,L1,掌握read/watch/play/study等常用动词用法。,日常动作 动词 时间表达,practice_foundation-daily-life_日常习惯_我的日常动作
+基础②·喜好需求,我喜欢/我想要,Practice expressing likes wants and needs with like want and need.,练习表达喜好、想要和需求。,35,L1,掌握like/want/need的用法和搭配。,喜好 需求 like want need,practice_foundation-daily-life_喜好需求_我喜欢我想要
+基础②·喜好需求,我有什么,Practice talking about possession with have and has.,练习用have谈论拥有什么。,35,L1,掌握have的肯定/否定/疑问形式。,拥有 have 疑问句 否定句,practice_foundation-daily-life_喜好需求_我有什么
+基础②·日程安排,我几点做...,Practice talking about daily schedule with time expressions.,练习用时间表达描述日程。,40,L1,掌握at + 时间 / in the morning等时间表达。,日程 时间 at in on 日常,practice_foundation-daily-life_日程安排_我几点做
+基础②·日程安排,去...做...,Practice verbs with prepositions like go to come to wait for and talk to.,练习动词+介词搭配：go to / wait for / talk to。,35,L1,掌握动词+介词的固定搭配用法。,动词 介词 go to look for help with,practice_foundation-daily-life_日程安排_去做什么

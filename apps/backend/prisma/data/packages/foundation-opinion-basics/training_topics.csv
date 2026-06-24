@@ -1,5 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础·喜好与感受,表达喜好,undefined,undefined,30,L1,学习表达喜欢和不喜欢的表达。,喜好 喜欢 不喜欢,practice_foundation-opinion-basics_基础_喜好与感受_表达喜好
-基础·喜好与感受,表达感受,undefined,undefined,30,L1,学习表达各种感受和情绪。,感受 情绪 状态,practice_foundation-opinion-basics_基础_喜好与感受_表达感受
-基础·简单观点,同意与不同意,undefined,undefined,30,L1,学习表达同意和不同意。,同意 不同意 观点,practice_foundation-opinion-basics_基础_简单观点_同意与不同意
-基础·简单观点,提建议,undefined,undefined,30,L1,学习提建议和回应的表达。,建议 提议 回应,practice_foundation-opinion-basics_基础_简单观点_提建议
+基础⑤·此刻正在做,我正在...,Practice present continuous for actions happening right now.,练习现在进行时表达此刻正在做的动作。,35,L1,掌握am/is/are + doing结构，与一般现在时对比。,现在进行时 am doing is doing 此刻,practice_foundation-opinion-basics_此刻正在做_我正在
+基础⑤·此刻正在做,他/她正在...,Practice third person present continuous.,练习第三人称现在进行时：He's / She's doing。,35,L1,掌握第三人称现在进行时否定和疑问形式。,正在进行 he is she is 进行时,practice_foundation-opinion-basics_此刻正在做_他她正在
+基础⑤·临时vs习惯,平时vs今天,Practice contrast between simple present and present continuous.,练习一般现在时vs现在进行时的对比表达。,40,L1~L2,掌握习惯和临时情况的时态区分。,时态对比 现在时 进行时 习惯 临时,practice_foundation-opinion-basics_临时vs习惯_平时vs今天
+基础⑤·临时vs习惯,此刻状态,Practice describing current situations with present continuous.,练习用现在进行时描述当前场景和状态。,35,L1,掌握进行时描述天气/人群/当下情况。,描述 进行时 此刻 场景,practice_foundation-opinion-basics_临时vs习惯_此刻状态
+基础⑤·频率副词,频率表达,Practice frequency adverbs with simple present.,练习频率副词与一般现在时搭配。,35,L1,掌握always/usually/often/sometimes/rarely/never的用法。,频率副词 always usually sometimes never,practice_foundation-opinion-basics_频率副词_频率表达
+基础⑤·频率副词,综合运用,Practice switching between present simple and continuous.,练习在叙述中自然切换现在时和进行时。,40,L1~L2,掌握两种时态在真实交流中的切换。,时态切换 综合 叙事 描述,practice_foundation-opinion-basics_频率副词_综合运用

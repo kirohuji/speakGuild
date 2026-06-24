@@ -1,4 +1,44 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
+ch_action_01,1,I eat breakfast every morning.,0
+ch_action_01,1,I drink coffee in the morning.,1
+ch_action_01,1,I go to school every day.,2
+ch_action_01,1,I read books at night.,3
+ch_action_01,1,I watch TV after dinner.,4
+ch_action_01,1,I don't eat meat.,5
+ch_action_01,2,I study English every day.,0
+ch_action_01,2,I play football on weekends.,1
+ch_action_01,2,I listen to music in the car.,2
+ch_action_01,2,I write emails at work.,3
+ch_action_01,2,I work from 9 to 5.,4
+ch_action_01,2,I do my homework after school.,5
+ch_action_02,1,I like coffee.,0
+ch_action_02,1,I like to read books.,1
+ch_action_02,1,I want a new phone.,2
+ch_action_02,1,I want to learn Spanish.,3
+ch_action_02,1,I need some help.,4
+ch_action_02,1,I need to go now.,5
+ch_action_02,2,I have a brother.,0
+ch_action_02,2,I have two cats.,1
+ch_action_02,2,Do you have a pen? — Yes, I do.,2
+ch_action_02,2,I don't have a car.,3
+ch_action_02,2,I have breakfast at 7.,4
+ch_action_02,2,I have a question.,5
+ch_action_03,1,I get up at 7 o'clock.,0
+ch_action_03,1,I go to bed at 11 pm.,1
+ch_action_03,1,I have lunch at 12.,2
+ch_action_03,1,I come home at 6 pm.,3
+ch_action_03,1,I take a shower in the morning.,4
+ch_action_03,1,I leave for work at 8.,5
+ch_action_03,2,I go to work by bus.,0
+ch_action_03,2,I come to school early.,1
+ch_action_03,2,I stay at home on Sundays.,2
+ch_action_03,2,I wait for the bus at the stop.,3
+ch_action_03,2,I look for my keys.,4
+ch_action_03,2,I talk to my friend every day.,5
+ch_action_03,2,I ask a question in class.,6
+ch_action_03,2,I answer the phone.,7
+ch_action_03,2,I help my mom with housework.,8
+ch_action_03,2,I thank my teacher.,9
 found_foundation_daily_life_0,1,Time to wake up!,0
 found_foundation_daily_life_0,1,I'm still sleepy.,1
 found_foundation_daily_life_0,1,Did you sleep well?,2

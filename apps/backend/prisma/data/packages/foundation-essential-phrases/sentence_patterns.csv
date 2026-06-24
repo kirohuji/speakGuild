@@ -1,9 +1,23 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-"基础·日常高频短语",常用动词短语,"I'm looking for ___.",我在找...,my keys, my phone, the station,I'm looking for my keys.,L1,0
-"基础·日常高频短语",常用动词短语,"Don't give up on ___.",不要放弃...,your dreams, your goal, hope,Don't give up on your dreams.,L1,1
-"基础·日常高频短语",情景常用语,"What's the ___?",...怎么了？,matter, problem, time,What's the matter?,L1,2
-"基础·日常高频短语",情景常用语,"Take your ___.",慢慢...,time, seat, turn,Take your time.,L1,3
-"基础·电话与应急",电话用语,"Can I speak to ___?",我能和...通话吗？,Mary, the manager, Mr. Smith,Can I speak to Mary?,L1,4
-"基础·电话与应急",电话用语,"I'll call you ___.",我...打给你,back later, tomorrow, tonight,I'll call you back later.,L1,5
-"基础·电话与应急",紧急求助,"I need a ___.",我需要一个...,doctor, police, lawyer,I need a doctor!,L1,6
-"基础·电话与应急",紧急求助,"I lost my ___.",我丢了...,passport, wallet, phone, keys,I lost my passport.,L1,7
+基础④·Yes/No问句,一般疑问句,Are you ___?,你是...吗？,"a student, happy, ready, tired",Are you a student?,L1,0
+基础④·Yes/No问句,一般疑问句,Do you ___?,你...吗？,"like coffee, eat meat, speak English",Do you like coffee?,L1,1
+基础④·Yes/No问句,一般疑问句,Does he/she ___?,他/她...吗？,"speak English, work here, like music",Does she speak English?,L1,2
+基础④·Yes/No问句,一般疑问句,Can you ___?,你能...吗？,"swim, drive, cook, help me",Can you swim?,L1,3
+基础④·Yes/No问句,过去疑问句,Did you ___?,你...了吗？,"eat breakfast, watch TV, call her",Did you eat breakfast?,L1,0
+基础④·Yes/No问句,过去疑问句,Were you ___?,你当时...吗？,"at home, tired, happy, late",Were you at home?,L1,1
+基础④·Wh-问句,6W问句,What is ___?,什么是？/叫什么？,"your name, this, that, your phone number",What is your name?,L1,0
+基础④·Wh-问句,6W问句,Where is ___?,在哪里？,"the bathroom, my phone, the bus stop",Where is the bathroom?,L1,1
+基础④·Wh-问句,6W问句,When do you ___?,你什么时候？,"get up, eat lunch, go home",When do you get up?,L1,2
+基础④·Wh-问句,6W问句,Why are you ___?,你为什么？,"late, tired, sad, happy",Why are you late?,L1,3
+基础④·Wh-问句,6W问句,Which ___ is ___?,哪个...是？,"one, yours, book, his",Which one is yours?,L1,4
+基础④·Wh-问句,What与Who详细问,What time is ___?,几点？,"it, the meeting, lunch",What time is it?,L1,0
+基础④·Wh-问句,What与Who详细问,What kind of ___ do you like?,你喜欢什么类型...？,"music, movies, food, books",What kind of music do you like?,L1,1
+基础④·Wh-问句,What与Who详细问,Whose ___ is this?,这是谁的...？,"book, phone, bag, coat",Whose book is this?,L1,2
+基础④·How问句,数量与价格,How many ___ do you have?,你有多少...？,"books, pens, friends, cats",How many books do you have?,L1,0
+基础④·How问句,数量与价格,How much is ___?,多少钱？,"this, the ticket, your phone",How much is this?,L1,1
+基础④·How问句,数量与价格,How far is ___?,多远？,"it, the airport, your home",How far is it?,L1,2
+基础④·How问句,数量与价格,How long does it take?,需要多久？,（固定句型）,How long does it take?,L1,3
+基础④·How问句,频率与方式,How often do you ___?,你多久一次？,"exercise, read, travel",How often do you exercise?,L1,0
+基础④·How问句,频率与方式,How do you ___?,你怎么？,"go to work, learn English, cook this",How do you go to work?,L1,1
+基础④·How问句,频率与方式,How was ___?,怎么样？,"your day, your weekend, the movie",How was your day?,L1,2
+基础④·How问句,频率与方式,How about ___?,怎么样？建议,"some coffee, a break, going out",How about some coffee?,L1,3

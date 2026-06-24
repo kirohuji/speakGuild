@@ -1,7 +1,18 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·办公室日常",办公室交流,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程安排。,"[{""en"":""Check my schedule."",""zh"":""查一下我的日程。""}]",0
-"基础·办公室日常",办公室交流,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L1,截止日期。,"[{""en"":""The deadline is Friday."",""zh"":""截止日期是周五。""}]",1
-"基础·办公室日常",办公室交流,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L1,预约。,"[{""en"":""I have a doctor's appointment."",""zh"":""我有个医生的预约。""}]",2
-"基础·办公室日常",日程与安排,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程安排。,"[{""en"":""Check my schedule."",""zh"":""查一下我的日程。""}]",3
-"基础·办公室日常",日程与安排,deadline,截止日期,noun,/ˈdedlaɪn/,/ˈdedlaɪn/,L1,截止日期。,"[{""en"":""The deadline is Friday."",""zh"":""截止日期是周五。""}]",4
-"基础·办公室日常",日程与安排,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L1,预约。,"[{""en"":""I have a doctor's appointment."",""zh"":""我有个医生的预约。""}]",5
+基础③·描述家人,他/她是谁,father,父亲,noun,/ˈfɑːðər/,/ˈfɑːðə/,L1,爸爸。口语常称dad。,"[{""en"":""My father is a doctor."",""zh"":""我爸爸是医生。""}]",0
+基础③·描述家人,他/她是谁,mother,母亲,noun,/ˈmʌðər/,/ˈmʌðə/,L1,妈妈。口语常称mom。,"[{""en"":""Her mother is a teacher."",""zh"":""她妈妈是老师。""}]",1
+基础③·描述家人,他/她是谁,has,有(三单),verb,/hæz/,/hæz/,L1,have的第三人称单数形式。,"[{""en"":""He has a car."",""zh"":""他有一辆车。""}]",2
+基础③·描述家人,他/她是谁,his,他的,pron,/hɪz/,/hɪz/,L1,he的所有格。,"[{""en"":""His name is Tom."",""zh"":""他的名字是Tom。""}]",3
+基础③·描述家人,他/她是谁,her,她的,pron,/hɜːr/,/hɜː/,L1,she的所有格。,"[{""en"":""Her phone is new."",""zh"":""她的手机是新的。""}]",4
+基础③·描述家人,他/她喜欢什么,likes,喜欢(三单),verb,/laɪks/,/laɪks/,L1,like的第三人称单数形式。,"[{""en"":""He likes coffee."",""zh"":""他喜欢咖啡。""}]",0
+基础③·描述家人,他/她喜欢什么,doesn't,不(三单助动词),aux,/ˈdʌznt/,/ˈdʌznt/,L1,does not缩写。第三人称否定助动词。,"[{""en"":""She doesn't like meat."",""zh"":""她不喜欢肉。""}]",1
+基础③·描述家人,他/她喜欢什么,does,做(三单)/助动词,verb,/dʌz/,/dʌz/,L1,do的第三人称单数形式。也用作疑问句助动词。,"[{""en"":""Does he like sports?"",""zh"":""他喜欢运动吗？""}]",2
+基础③·他/她的日常,他每天做什么,gets up,起床,phrase,/ɡets ʌp/,/ɡets ʌp/,L1,get up的第三人称形式。,"[{""en"":""He gets up at 7."",""zh"":""他7点起床。""}]",0
+基础③·他/她的日常,他每天做什么,goes,去(三单),verb,/ɡoʊz/,/ɡəʊz/,L1,go的第三人称单数形式。,"[{""en"":""She goes to school by bus."",""zh"":""她坐公交上学。""}]",1
+基础③·他/她的日常,他每天做什么,watches,看(三单),verb,/ˈwɒtʃɪz/,/ˈwɒtʃɪz/,L1,watch的第三人称单数(加es)。,"[{""en"":""He watches TV after dinner."",""zh"":""他晚饭后看电视。""}]",2
+基础③·他/她的日常,他每天做什么,studies,学习(三单),verb,/ˈstʌdiz/,/ˈstʌdiz/,L1,study的第三人称单数(y→ies)。,"[{""en"":""She studies English."",""zh"":""她学英语。""}]",3
+基础③·他/她的日常,他/她做什么工作,works,工作(三单),verb,/wɜːrks/,/wɜːks/,L1,work的第三人称单数形式。,"[{""en"":""He works in a hospital."",""zh"":""他在医院工作。""}]",0
+基础③·他/她的日常,他/她做什么工作,teaches,教(三单),verb,/ˈtiːtʃɪz/,/ˈtiːtʃɪz/,L1,teach的第三人称单数(加es)。,"[{""en"":""She teaches English."",""zh"":""她教英语。""}]",1
+基础③·对比你我他,我和你 vs 他/她,but,但是,conj,/bʌt/,/bʌt/,L1,表示转折对比。,"[{""en"":""I like coffee but she likes tea."",""zh"":""我喜欢咖啡但是她喜欢茶。""}]",0
+基础③·对比你我他,他们的生活,their,他们的,pron,/ðer/,/ðeə/,L1,they的所有格。,"[{""en"":""Their house is big."",""zh"":""他们的房子很大。""}]",0
+基础③·对比你我他,他们的生活,everyone,每个人,pron,/ˈevriwʌn/,/ˈevriwʌn/,L1,everyone = everybody 不定代词。,"[{""en"":""Everyone likes him."",""zh"":""大家都喜欢他。""}]",1

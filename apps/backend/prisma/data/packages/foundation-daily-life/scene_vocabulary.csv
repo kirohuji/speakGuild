@@ -1,4 +1,23 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+基础②·日常习惯,我每天做什么,eat,吃,verb,/iːt/,/iːt/,L1,吃。三餐搭配：eat breakfast/lunch/dinner。,"[{""en"":""I eat breakfast every morning."",""zh"":""我每天早上吃早餐。""}]",0
+基础②·日常习惯,我每天做什么,drink,喝,verb,/drɪŋk/,/drɪŋk/,L1,喝。搭配：drink water/tea/coffee。,"[{""en"":""I drink tea in the morning."",""zh"":""我早上喝茶。""}]",1
+基础②·日常习惯,我每天做什么,every,每,det,/ˈevri/,/ˈevri/,L1,每一个。every day/morning/week。,"[{""en"":""I go to school every day."",""zh"":""我每天上学。""}]",2
+基础②·日常习惯,我的日常动作,read,读,verb,/riːd/,/riːd/,L1,阅读。read books/news/stories。,"[{""en"":""I read books at night."",""zh"":""我晚上看书。""}]",0
+基础②·日常习惯,我的日常动作,watch,看,verb,/wɒtʃ/,/wɒtʃ/,L1,观看。watch TV/movies/shows。,"[{""en"":""I watch TV after dinner."",""zh"":""我晚饭后看电视。""}]",1
+基础②·日常习惯,我的日常动作,study,学习,verb,/ˈstʌdi/,/ˈstʌdi/,L1,学习/研究。study English/math。,"[{""en"":""I study English every day."",""zh"":""我每天学英语。""}]",2
+基础②·日常习惯,我的日常动作,play,玩/打,verb,/pleɪ/,/pleɪ/,L1,玩/打(球)。play football/games/guitar。,"[{""en"":""I play football on weekends."",""zh"":""我周末踢足球。""}]",3
+基础②·喜好需求,我喜欢/我想要,like,喜欢,verb,/laɪk/,/laɪk/,L1,喜欢。like + 名词 / like + to do。,"[{""en"":""I like coffee."",""zh"":""我喜欢咖啡。""}]",0
+基础②·喜好需求,我喜欢/我想要,want,想要,verb,/wɒnt/,/wɒnt/,L1,想要。want + 名词 / want + to do。,"[{""en"":""I want a new phone."",""zh"":""我想要新手机。""}]",1
+基础②·喜好需求,我喜欢/我想要,need,需要,verb,/niːd/,/niːd/,L1,需要。need + 名词 / need + to do。,"[{""en"":""I need help."",""zh"":""我需要帮助。""}]",2
+基础②·喜好需求,我有什么,have,有,verb,/hæv/,/hæv/,L1,有/拥有。have + 名词。第三人称用has。,"[{""en"":""I have a brother."",""zh"":""我有一个兄弟。""}]",0
+基础②·喜好需求,我有什么,do,做/助动词,verb,/duː/,/duː/,L1,做/干。也用作疑问句助动词：Do you...?,"[{""en"":""Do you have a pen?"",""zh"":""你有笔吗？""}]",1
+基础②·喜好需求,我有什么,don't,不,aux,/doʊnt/,/dəʊnt/,L1,do not缩写。构成否定：I don't...。,"[{""en"":""I don't have a car."",""zh"":""我没有车。""}]",2
+基础②·日程安排,我几点做...,get up,起床,phrase,/ɡet ʌp/,/ɡet ʌp/,L1,起床。日常最常用动词短语。,"[{""en"":""I get up at 7."",""zh"":""我7点起床。""}]",0
+基础②·日程安排,我几点做...,go to bed,上床睡觉,phrase,/ɡoʊ tuː bed/,/ɡəʊ tuː bed/,L1,上床睡觉。,"[{""en"":""I go to bed at 11."",""zh"":""我11点睡觉。""}]",1
+基础②·日程安排,我几点做...,take a shower,洗澡,phrase,/teɪk ə ˈʃaʊər/,/teɪk ə ˈʃaʊə/,L1,淋浴/洗澡。,"[{""en"":""I take a shower in the morning."",""zh"":""我早上洗澡。""}]",2
+基础②·日程安排,去...做...,go to,去...,phrase,/ɡoʊ tuː/,/ɡəʊ tuː/,L1,去(某地)。go to work/school/the park。,"[{""en"":""I go to work by bus."",""zh"":""我坐公交上班。""}]",0
+基础②·日程安排,去...做...,wait for,等待,phrase,/weɪt fɔːr/,/weɪt fɔː/,L1,等待(某人/物)。,"[{""en"":""I wait for the bus."",""zh"":""我等公交。""}]",1
+基础②·日程安排,去...做...,help...with,帮助做,phrase,/help wɪð/,/help wɪð/,L1,帮助某人做某事。,"[{""en"":""I help my mom with housework."",""zh"":""我帮妈妈做家务。""}]",2
 "基础·起床与洗漱",起床与洗漱,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",0
 "基础·起床与洗漱",起床与洗漱,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",1
 "基础·起床与洗漱",起床与洗漱,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",2
