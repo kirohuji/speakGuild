@@ -1,8 +1,4 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-"表达·副词精练",频率与程度,I ___ (freq) ___ (verb).,频率副词,"always / have breakfast, never / smoke, often / read",I always have breakfast.,L1,0
-"表达·副词精练",频率与程度,It's ___ (degree) ___.,程度副词,"quite / good, very / expensive, extremely / hot",It's quite good.,L1,1
-"表达·副词精练",方式与评论,Please ___ (adv of manner).,方式副词,"drive carefully, speak clearly, write neatly",Please drive carefully.,L1,0
-"表达·副词精练",方式与评论,"___ (comment adv), ___.",评论副词句首,"Luckily / I made it, Frankly / I don't care",Luckily I made it.,L2,1
 "表达·时间表达",时间介词,The ___ is on ___.,on+具体日期,"meeting / Monday, party / Friday",The meeting is on Monday.,L1,0
 "表达·时间表达",时间介词,I was born in ___.,in+月份,"March, June, October",I was born in March.,L1,1
 "表达·时间表达",时间介词,___ starts at ___.,at+时间,"The class / 9 AM, The movie / 7 PM",The class starts at 9 AM.,L1,2

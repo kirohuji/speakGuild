@@ -1,38 +1,62 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-"副词·频率副词",频率副词,I ___ get up early.,总是,always,I always get up early.,L1,0
-"副词·频率副词",频率副词,She ___ walks to school.,通常,usually,She usually walks to school.,L1,1
-"副词·频率副词",频率副词,They ___ visit their grandparents.,经常,often,They often visit their grandparents.,L1,2
-"副词·频率副词",频率副词,___ we eat out.,有时,Sometimes,Sometimes we eat out.,L1,3
-"副词·频率副词",频率副词,I ___ eat fast food.,从不,never,I never eat fast food.,L1,4
-"副词·频率副词",频率副词,I always ___ in bed.,阅读,read,I always read in bed.,L2,5
-"副词·频率副词",频率副词,I usually ___ at dawn.,跑步,run,I usually run at dawn.,L2,6
-"副词·频率副词",频率副词,I often ___ at home.,放松,relax,I often relax at home.,L1,7
-"副词·频率副词",频率副词,I never ___ a workout.,跳过,skip,I never skip a workout.,L1,8
-"副词·程度副词",程度副词,It is ___ hot outside.,非常,very,It is very hot outside.,L1,0
-"副词·程度副词",程度副词,I am ___ tired.,相当,quite,I am quite tired.,L1,1
-"副词·程度副词",程度副词,She is ___ shy.,颇/挺,rather,She is rather shy.,L2,2
-"副词·程度副词",程度副词,The view is ___ beautiful.,极其,extremely,The view is extremely beautiful.,L2,3
-"副词·程度副词",程度副词,It is ___ late to go out.,太/过分,too,It is too late to go out.,L1,4
-"副词·程度副词",程度副词,The sunset is ___ beautiful.,非常,very,The sunset is very beautiful.,L2,5
-"副词·程度副词",程度副词,The mountain is ___ steep.,相当,quite,The mountain is quite steep.,L2,6
-"副词·程度副词",程度副词,The weather is ___ cold.,颇,rather,The weather is rather cold.,L2,7
-"副词·程度副词",程度副词,The landscape is ___ breathtaking.,极其,extremely,The landscape is extremely breathtaking.,L3,8
-"副词·方式副词",方式副词,Drive ___ on the highway.,仔细地,carefully,Drive carefully on the highway.,L2,0
-"副词·方式副词",方式副词,She ___ answered the question.,快速地,quickly,She quickly answered the question.,L1,1
-"副词·方式副词",方式副词,The dog wagged its tail ___.,快乐地,happily,The dog wagged its tail happily.,L1,2
-"副词·方式副词",方式副词,He ___ won the race.,容易地,easily,He easily won the race.,L2,3
-"副词·方式副词",方式副词,He plays the guitar ___.,好地,well,He plays the guitar well.,L1,4
-"副词·方式副词",方式副词,I ___ follow the recipe.,仔细地,carefully,I carefully follow the recipe.,L2,5
-"副词·方式副词",方式副词,I ___ wash the dishes.,快速地,quickly,I quickly wash the dishes.,L2,6
-"副词·方式副词",方式副词,She ___ cooks dinner.,快乐地,happily,She happily cooks dinner.,L1,7
-"副词·方式副词",方式副词,I ___ memorize the steps.,容易地,easily,I easily memorize the steps.,L2,8
-"副词·方式副词",方式副词,We get along ___.,好地,well,We get along well.,L1,9
-"副词·评论副词",评论副词,___ I brought an umbrella.,幸运的是,Luckily,Luckily I brought an umbrella.,L2,0
-"副词·评论副词",评论副词,___ it's not my problem.,坦白说,Frankly,Frankly it's not my problem.,L2,1
-"副词·评论副词",评论副词,___ I don't know.,老实地,Honestly,Honestly I don't know.,L2,2
-"副词·评论副词",评论副词,___ the test was easy.,令人惊讶地,Surprisingly,Surprisingly the test was easy.,L3,3
-"副词·评论副词",评论副词,___ he forgot the appointment.,显然,Obviously,Obviously he forgot the appointment.,L3,4
-"副词·评论副词",评论副词,___ she found her keys.,幸运的是,Luckily,Luckily she found her keys.,L2,5
-"副词·评论副词",评论副词,___ this tastes terrible.,坦白说,Frankly,Frankly this tastes terrible.,L2,6
-"副词·评论副词",评论副词,___ he made a mistake.,显然,Obviously,Obviously he made a mistake.,L3,7
-"副词·评论副词",评论副词,___ he won the race.,令人惊讶地,Surprisingly,Surprisingly he won the race.,L3,8
+"副词·频率副词",频率副词,He ___ travels abroad for work.,频繁地,frequently,He frequently travels abroad for work.,L2,0
+"副词·频率副词",频率副词,I ___ go to the gym after work.,定期地,regularly,I regularly go to the gym after work.,L2,1
+"副词·频率副词",频率副词,We ___ grab coffee together.,偶尔,occasionally,We occasionally grab coffee together.,L2,2
+"副词·频率副词",频率副词,She ___ complains about anything.,很少,rarely,She rarely complains about anything.,L2,3
+"副词·频率副词",频率副词,He ___ watches TV these days.,不常,seldom,He seldom watches TV these days.,L2,4
+"副词·频率副词",频率副词,I ___ ever drink soda.,几乎不,hardly,I hardly ever drink soda.,L2,5
+"副词·频率副词",频率副词,They've ___ started learning Chinese.,最近,recently,They've recently started learning Chinese.,L2,6
+"副词·程度副词",程度副词,The scenery here is ___ beautiful.,极其,extremely,The scenery here is extremely beautiful.,L2,0
+"副词·程度副词",程度副词,It's ___ cold today.,颇/挺,rather,It's rather cold today.,L2,1
+"副词·程度副词",程度副词,That's a ___ good idea!,相当(口语),pretty,That's a pretty good idea!,L2,2
+"副词·程度副词",程度副词,The test was ___ easy.,还算,fairly,The test was fairly easy.,L2,3
+"副词·程度副词",程度副词,I'm ___ done with the project.,几乎,almost,I'm almost done with the project.,L2,4
+"副词·程度副词",程度副词,It's ___ midnight.,几乎,nearly,It's nearly midnight.,L2,5
+"副词·程度副词",程度副词,I ___ agree with your point.,完全地,completely,I completely agree with your point.,L2,6
+"副词·程度副词",程度副词,That's ___ different.,完全地,totally,That's totally different.,L2,7
+"副词·程度副词",程度副词,I ___ recommend this restaurant.,高度地,highly,I highly recommend this restaurant.,L2,8
+"副词·程度副词",程度副词,I'm ___ grateful for your help.,深深地,deeply,I'm deeply grateful for your help.,L2,9
+"副词·方式副词",方式副词,Please read the instructions ___.,仔细地,carefully,Please read the instructions carefully.,L2,0
+"副词·方式副词",方式副词,She solved the problem ___.,容易地,easily,She solved the problem easily.,L2,1
+"副词·方式副词",方式副词,He spoke ___ to avoid waking the baby.,轻柔地,softly,He spoke softly to avoid waking the baby.,L2,2
+"副词·方式副词",方式副词,You should ask ___ if you need help.,礼貌地,politely,You should ask politely if you need help.,L2,3
+"副词·方式副词",方式副词,Please wait ___ for your turn.,耐心地,patiently,Please wait patiently for your turn.,L2,4
+"副词·方式副词",方式副词,Write your name ___ on the form.,工整地,neatly,Write your name neatly on the form.,L2,5
+"副词·方式副词",方式副词,Make sure you do the job ___.,恰当地,properly,Make sure you do the job properly.,L2,6
+"副词·方式副词",方式副词,The dress fits you ___.,完美地,perfectly,The dress fits you perfectly.,L2,7
+"副词·方式副词",方式副词,You should hold the baby ___.,温柔地,gently,You should hold the baby gently.,L2,8
+"副词·方式副词",方式副词,I passed the driving test ___.,成功地,successfully,I passed the driving test successfully.,L2,9
+"副词·方式副词",方式副词,Everything went ___ during the event.,顺利地,smoothly,Everything went smoothly during the event.,L2,10
+"副词·评论副词",评论副词,___ no one was hurt.,幸运的是,Luckily,Luckily no one was hurt.,L2,0
+"副词·评论副词",评论副词,___ the store was closed.,不幸的是,Unfortunately,Unfortunately the store was closed.,L2,1
+"副词·评论副词",评论副词,___ I had an extra key.,幸好,Fortunately,Fortunately I had an extra key.,L2,2
+"副词·评论副词",评论副词,___ the weather will be nice.,希望的是,Hopefully,Hopefully the weather will be nice.,L2,3
+"副词·评论副词",评论副词,___ I don't care about the details.,坦白说,Frankly,Frankly I don't care about the details.,L2,4
+"副词·评论副词",评论副词,___ that's the best meal I've had.,老实说,Honestly,Honestly that's the best meal I've had.,L2,5
+"副词·评论副词",评论副词,___ you should consider his advice.,说真的,Seriously,Seriously you should consider his advice.,L2,6
+"副词·评论副词",评论副词,___ he made a mistake.,显然,Clearly,Clearly he made a mistake.,L2,7
+"副词·评论副词",评论副词,___ she was lying.,显然,Obviously,Obviously she was lying.,L2,8
+"副词·评论副词",评论副词,___ I said yes to the invitation.,自然地,Naturally,Naturally I said yes to the invitation.,L2,9
+"副词·评论副词",评论副词,___ the team lost the game.,令人惊讶地,Surprisingly,Surprisingly the team lost the game.,L2,10
+"副词·评论副词",评论副词,More ___ we need to stay safe.,重要的是,importantly,More importantly we need to stay safe.,L2,11
+"副词·评论副词",评论副词,___ she didn't get the job.,遗憾的是,Sadly,Sadly she didn't get the job.,L2,12
+"副词·地点副词",地点副词,I've been looking ___ for my keys.,到处,everywhere,I've been looking everywhere for my keys.,L2,0
+"副词·地点副词",地点副词,There's ___ to park around here.,无处,nowhere,There's nowhere to park around here.,L2,1
+"副词·地点副词",地点副词,The meeting is ___ on the third floor.,楼上,upstairs,The meeting is upstairs on the third floor.,L2,2
+"副词·地点副词",地点副词,She's waiting ___ in the lobby.,楼下,downstairs,She's waiting downstairs in the lobby.,L2,3
+"副词·地点副词",地点副词,It's raining let's go ___.,里面,inside,It's raining let's go inside.,L2,4
+"副词·地点副词",地点副词,The kids are playing ___ in the yard.,外面,outside,The kids are playing outside in the yard.,L2,5
+"副词·地点副词",地点副词,She's always wanted to study ___.,国外,abroad,She's always wanted to study abroad.,L2,6
+"副词·地点副词",地点副词,I can't find my phone ___.,任何地方,anywhere,I can't find my phone anywhere.,L2,7
+"副词·地点副词",地点副词,Let's go ___ quiet to talk.,某个地方,somewhere,Let's go somewhere quiet to talk.,L2,8
+"副词·地点副词",地点副词,Is there a grocery store ___?,附近,nearby,Is there a grocery store nearby?,L2,9
+"副词·时间副词",时间副词,I'll be there ___.,很快,soon,I'll be there soon.,L2,0
+"副词·时间副词",时间副词,I ___ started learning Spanish.,最近,recently,I recently started learning Spanish.,L2,1
+"副词·时间副词",时间副词,Please come ___ it's urgent.,立刻,immediately,Please come immediately it's urgent.,L2,2
+"副词·时间副词",时间副词,She ___ passed the driving test.,终于,finally,She finally passed the driving test.,L2,3
+"副词·时间副词",时间副词,I haven't been feeling well ___.,近来,lately,I haven't been feeling well lately.,L2,4
+"副词·时间副词",时间副词,I'm ___ working on a new project.,目前,currently,I'm currently working on a new project.,L2,5
+"副词·时间副词",时间副词,I ___ worked at a marketing firm.,之前,previously,I previously worked at a marketing firm.,L2,6
+"副词·时间副词",时间副词,___ let's focus on what we can do.,与此同时,Meanwhile,Meanwhile let's focus on what we can do.,L2,7
+"副词·时间副词",时间副词,The message was sent ___.,瞬间,instantly,The message was sent instantly.,L2,8
+"副词·时间副词",时间副词,I'll get around to it ___.,最终,eventually,I'll get around to it eventually.,L2,9

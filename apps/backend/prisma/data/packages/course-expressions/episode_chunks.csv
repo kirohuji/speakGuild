@@ -1,8 +1,4 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-ch_e1,1,I always... / I never...,0
-ch_e1,1,It's quite... / It's very...,1
-ch_e1,2,Please... carefully.,0
-ch_e1,2,Luckily... / Frankly...,1
 ch_e2,1,The meeting is on...,0
 ch_e2,1,I was born in...,1
 ch_e2,1,The class starts at...,2

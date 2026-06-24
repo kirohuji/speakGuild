@@ -36,3 +36,29 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 "副词·评论副词",评论副词,innocent,无辜的,adjective,/ˈɪnəsənt/,/ˈɪnəsənt/,L2,清白的/无罪的。,"[{""en"":""Obviously she is innocent."",""zh"":""显然她是无辜的。""}]",6
 "副词·评论副词",评论副词,leak,泄露,verb,/liːk/,/liːk/,L2,泄露秘密或信息。,"[{""en"":""Someone leaked the data."",""zh"":""有人泄露了数据。""}]",7
 "副词·评论副词",评论副词,promote,升职,verb,/prəˈmoʊt/,/prəˈməʊt/,L2,晋升到更高职位。,"[{""en"":""Luckily she got promoted."",""zh"":""幸运的是她升职了。""}]",8
+"副词·地点副词",地点副词,everywhere,到处,adverb,/ˈevriwer/,/ˈevriweə/,L2,所有地方。,"[{""en"":""I've been looking everywhere for my keys."",""zh"":""我到处找我的钥匙。""}]",0
+"副词·地点副词",地点副词,nowhere,无处,adverb,/ˈnoʊwer/,/ˈnəʊweə/,L2,没有地方。,"[{""en"":""There's nowhere to park."",""zh"":""没地方停车。""}]",1
+"副词·地点副词",地点副词,anywhere,任何地方,adverb,/ˈeniwer/,/ˈeniweə/,L2,无论何处。,"[{""en"":""I can't find my phone anywhere."",""zh"":""我哪儿都找不到手机。""}]",2
+"副词·地点副词",地点副词,somewhere,某个地方,adverb,/ˈsʌmwer/,/ˈsʌmweə/,L2,某处。,"[{""en"":""Let's go somewhere quiet."",""zh"":""我们去个安静的地方。""}]",3
+"副词·地点副词",地点副词,upstairs,楼上,adverb,/ˌʌpˈsterz/,/ˌʌpˈsteəz/,L2,向楼上/在楼上。,"[{""en"":""The meeting is upstairs."",""zh"":""会议在楼上。""}]",4
+"副词·地点副词",地点副词,downstairs,楼下,adverb,/ˌdaʊnˈsterz/,/ˌdaʊnˈsteəz/,L2,向楼下/在楼下。,"[{""en"":""She's waiting downstairs."",""zh"":""她在楼下等着。""}]",5
+"副词·地点副词",地点副词,inside,里面,adverb,/ˌɪnˈsaɪd/,/ˌɪnˈsaɪd/,L2,在/向里面。,"[{""en"":""Let's go inside."",""zh"":""我们进去吧。""}]",6
+"副词·地点副词",地点副词,outside,外面,adverb,/ˌaʊtˈsaɪd/,/ˌaʊtˈsaɪd/,L2,在/向外面。,"[{""en"":""The kids are playing outside."",""zh"":""孩子们在外面玩。""}]",7
+"副词·地点副词",地点副词,abroad,国外,adverb,/əˈbrɔːd/,/əˈbrɔːd/,L2,到/在国外。,"[{""en"":""She wants to study abroad."",""zh"":""她想出国留学。""}]",8
+"副词·地点副词",地点副词,nearby,附近,adverb,/ˌnɪrˈbaɪ/,/ˌnɪəˈbaɪ/,L2,在附近。,"[{""en"":""Is there a store nearby?"",""zh"":""附近有商店吗？""}]",9
+"副词·地点副词",地点副词,lobby,大厅,noun,/ˈlɑːbi/,/ˈlɒbi/,L2,酒店/办公楼大堂。,"[{""en"":""She's waiting in the lobby."",""zh"":""她在大厅等着。""}]",10
+"副词·地点副词",地点副词,park,停车,verb,/pɑːrk/,/pɑːk/,L1,停放车辆。,"[{""en"":""There's nowhere to park."",""zh"":""没地方停车。""}]",11
+"副词·地点副词",地点副词,keys,钥匙,noun,/kiːz/,/kiːz/,L1,开锁的工具。,"[{""en"":""I lost my keys."",""zh"":""我丢钥匙了。""}]",12
+"副词·时间副词",时间副词,soon,很快,adverb,/suːn/,/suːn/,L1,不久之后。,"[{""en"":""I'll be there soon."",""zh"":""我马上到。""}]",0
+"副词·时间副词",时间副词,recently,最近,adverb,/ˈriːsntli/,/ˈriːsntli/,L2,不久前。,"[{""en"":""I recently started learning Spanish."",""zh"":""我最近开始学西班牙语了。""}]",1
+"副词·时间副词",时间副词,lately,近来,adverb,/ˈleɪtli/,/ˈleɪtli/,L2,最近一段时间。,"[{""en"":""I haven't been feeling well lately."",""zh"":""我最近一直不舒服。""}]",2
+"副词·时间副词",时间副词,immediately,立刻,adverb,/ɪˈmiːdiətli/,/ɪˈmiːdiətli/,L2,马上。,"[{""en"":""Please come immediately."",""zh"":""请立刻过来。""}]",3
+"副词·时间副词",时间副词,instantly,瞬间,adverb,/ˈɪnstəntli/,/ˈɪnstəntli/,L3,立即地。,"[{""en"":""The message was sent instantly."",""zh"":""消息瞬间发出去了。""}]",4
+"副词·时间副词",时间副词,finally,终于,adverb,/ˈfaɪnəli/,/ˈfaɪnəli/,L2,经过努力后。,"[{""en"":""She finally passed the test."",""zh"":""她终于通过了考试。""}]",5
+"副词·时间副词",时间副词,eventually,最终,adverb,/ɪˈventʃuəli/,/ɪˈventʃuəli/,L3,最终地。,"[{""en"":""I'll get to it eventually."",""zh"":""我最终会处理的。""}]",6
+"副词·时间副词",时间副词,currently,目前,adverb,/ˈkɜːrəntli/,/ˈkʌrəntli/,L2,现在。,"[{""en"":""I'm currently working on a new project."",""zh"":""我目前在做一个新项目。""}]",7
+"副词·时间副词",时间副词,previously,之前,adverb,/ˈpriːviəsli/,/ˈpriːviəsli/,L3,先前。,"[{""en"":""I previously worked at a marketing firm."",""zh"":""我之前在一家营销公司工作。""}]",8
+"副词·时间副词",时间副词,meanwhile,与此同时,adverb,/ˈmiːnwaɪl/,/ˈmiːnwaɪl/,L3,在此期间。,"[{""en"":""Meanwhile, let's focus on what we can do."",""zh"":""与此同时，我们先关注能做什么。""}]",9
+"副词·时间副词",时间副词,urgent,紧急的,adjective,/ˈɜːrdʒənt/,/ˈɜːdʒənt/,L2,需要立即处理。,"[{""en"":""It's urgent."",""zh"":""很紧急。""}]",10
+"副词·时间副词",时间副词,project,项目,noun,/ˈprɑːdʒekt/,/ˈprɒdʒekt/,L2,工作任务。,"[{""en"":""I'm working on a project."",""zh"":""我在做一个项目。""}]",11
+"副词·时间副词",时间副词,marketing,市场营销,noun,/ˈmɑːrkɪtɪŋ/,/ˈmɑːkɪtɪŋ/,L2,市场推广。,"[{""en"":""I work in marketing."",""zh"":""我做市场营销。""}]",12

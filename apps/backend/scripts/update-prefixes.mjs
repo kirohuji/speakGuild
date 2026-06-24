@@ -10,8 +10,10 @@ const PRE = {
   workplace:'职场',travel:'旅行',healthcare:'健康',academic:'雅思',
   campus:'校园','daily-social':'日常','study-abroad':'留学',
   'foundation-beginner':'基础','course-grammar':'语法','course-tenses':'时态',
-  'course-linking':'连词','course-expressions':'表达','course-phrasal-verbs':'动词短语',
-  'course-connectors':'连接词','course-adverbs':'副词','course-time':'时间','course-location':'方位',
+  'course-pronouns':'代词','course-expressions':'表达','course-phrasal-verbs':'动词短语',
+  'course-connectors':'连接词','course-adverbs':'副词','course-modal-verbs':'情态动词','course-irregular-verbs':'不规则动词',
+  'course-collocations-daily':'固定搭配','course-collocations-advanced':'进阶搭配',
+  'course-phrasal-verbs-daily':'动词短语','course-phrasal-verbs-advanced':'进阶短语',
 };
 
 function pc(l) {

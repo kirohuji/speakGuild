@@ -338,5 +338,176 @@
         }
       ]
     }
+  },
+  "地点副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 everywhere / nowhere 造句",
+          "chunk": "everywhere / nowhere",
+          "chunkMeaning": "到处 / 无处",
+          "items": [
+            { "zh": "我到处找钥匙。", "answer": "I've been looking everywhere for my keys." },
+            { "zh": "这儿附近没地方停车。", "answer": "There's nowhere to park around here." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "upstairs / downstairs / inside / outside",
+          "chunkMeaning": "楼上 / 楼下 / 里面 / 外面",
+          "items": [
+            { "zh": "会议在楼上三层。", "answer": "The meeting is upstairs on the third floor." },
+            { "zh": "她在楼下大厅等着。", "answer": "She's waiting downstairs in the lobby." },
+            { "zh": "下雨了，我们进去吧。", "answer": "It's raining, let's go inside." },
+            { "zh": "孩子们在院子里玩。", "answer": "The kids are playing outside in the yard." }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "空间方位词汇练习",
+          "vocabWord": "lobby / yard / floor / grocery",
+          "vocabMeaning": "大厅 / 院子 / 楼层 / 杂货",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ in the lobby / on the floor",
+              "items": [
+                { "zh": "她在楼下大厅等着。", "answer": "She's waiting downstairs in the lobby." },
+                { "zh": "会议在楼上三层。", "answer": "The meeting is upstairs on the third floor." }
+              ]
+            },
+            {
+              "chunk": "play outside / go inside",
+              "items": [
+                { "zh": "孩子们在院子里玩。", "answer": "The kids are playing outside in the yard." },
+                { "zh": "下雨了，我们进去吧。", "answer": "It's raining, let's go inside." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "句子拆解：从简单到复杂",
+          "levels": [
+            { "level": 1, "label": "核心句", "en": "I'm looking for my keys.", "zh": "我在找钥匙。" },
+            { "level": 2, "label": "加范围", "en": "I'm looking everywhere for my keys.", "zh": "我到处在找钥匙。", "highlight": "everywhere", "hint": "试着加入 everywhere" },
+            { "level": 3, "label": "加否定", "en": "I've been looking everywhere for my keys, but I can't find them anywhere.", "zh": "我到处找了钥匙，但哪儿都找不到。", "highlight": "everywhere / anywhere", "hint": "试着用 anywhere 表达否定" },
+            { "level": 4, "label": "加地点", "en": "I've been looking everywhere for my keys — in the lobby, upstairs, everywhere.", "zh": "我到处找了钥匙——大厅、楼上，到处。", "highlight": "lobby / upstairs / everywhere", "hint": "试着加入具体地点" },
+            { "level": 5, "label": "完整表达", "en": "I've been looking everywhere for my keys. I checked upstairs and downstairs, but they're nowhere. Let's go somewhere quiet and think.", "zh": "我到处找了钥匙。我查了楼上楼下，但哪儿都没有。我们去个安静的地方想想。", "highlight": "everywhere / upstairs / downstairs / nowhere / somewhere", "hint": "试着用多个地点副词描述" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "地点副词 + 方位句型操练",
+          "pattern": "[subject] [verb] [place_adverb] [prepositional_phrase].",
+          "patternMeaning": "某人在某处做某事",
+          "slots": ["subject", "verb", "place_adverb", "prepositional_phrase"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "孩子们在外面院子里玩。", "answer": "The kids are playing outside in the yard.", "slotValues": { "subject": "The kids", "verb": "are playing", "place_adverb": "outside", "prepositional_phrase": "in the yard" } },
+            { "zh": "她在楼下大厅等着。", "answer": "She's waiting downstairs in the lobby.", "slotValues": { "subject": "She", "verb": "'s waiting", "place_adverb": "downstairs", "prepositional_phrase": "in the lobby" } },
+            { "zh": "会议在楼上三层。", "answer": "The meeting is upstairs on the third floor.", "slotValues": { "subject": "The meeting", "verb": "is", "place_adverb": "upstairs", "prepositional_phrase": "on the third floor" } }
+          ]
+        }
+      ]
+    }
+  },
+  "时间副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 recently / lately 造句",
+          "chunk": "recently / lately",
+          "chunkMeaning": "最近 / 近来",
+          "items": [
+            { "zh": "我最近开始学西班牙语了。", "answer": "I recently started learning Spanish." },
+            { "zh": "我最近一直不太舒服。", "answer": "I haven't been feeling well lately." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "finally / eventually",
+          "chunkMeaning": "终于 / 最终",
+          "items": [
+            { "zh": "她终于通过了驾照考试。", "answer": "She finally passed the driving test." },
+            { "zh": "我最终会处理的。", "answer": "I'll get around to it eventually." }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "职业经历场景词汇练习",
+          "vocabWord": "currently / previously / project",
+          "vocabMeaning": "目前 / 之前 / 项目",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I'm currently working on...",
+              "items": [
+                { "zh": "我目前在做一个新项目。", "answer": "I'm currently working on a new project." },
+                { "zh": "我目前在学日语。", "answer": "I'm currently learning Japanese." }
+              ]
+            },
+            {
+              "chunk": "I previously worked at...",
+              "items": [
+                { "zh": "我之前在一家营销公司工作。", "answer": "I previously worked at a marketing firm." },
+                { "zh": "我之前在一所学校教书。", "answer": "I previously taught at a school." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "句子拆解：从简单到复杂",
+          "levels": [
+            { "level": 1, "label": "核心句", "en": "I started learning Spanish.", "zh": "我开始学西班牙语。" },
+            { "level": 2, "label": "加时间", "en": "I recently started learning Spanish.", "zh": "我最近开始学西班牙语。", "highlight": "recently", "hint": "试着加入 recently" },
+            { "level": 3, "label": "加之前", "en": "I previously worked at a marketing firm, but I recently started learning Spanish.", "zh": "我之前在一家营销公司工作，但最近开始学西班牙语。", "highlight": "previously / recently", "hint": "试着用 previously 对比过去" },
+            { "level": 4, "label": "加同时", "en": "Meanwhile, I'm currently working on a project and studying Spanish.", "zh": "与此同时，我目前在做项目同时学西班牙语。", "highlight": "Meanwhile / currently", "hint": "试着加入 meanwhile" },
+            { "level": 5, "label": "完整表达", "en": "I previously worked at a marketing firm, but I recently started learning Spanish. I'm currently working on a project and I'll eventually study abroad!", "zh": "我之前在一家营销公司工作，但最近开始学西班牙语。我目前在做一个项目，最终要出国留学！", "highlight": "previously / recently / currently / eventually", "hint": "试着用多个时间副词描述经历" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "时间副词位置操练",
+          "pattern": "[time_adverb] [sentence].",
+          "patternMeaning": "时间副词 + 句子",
+          "slots": ["time_adverb", "sentence"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我最终会处理的。", "answer": "I'll get around to it eventually.", "slotValues": { "time_adverb": "eventually", "sentence": "I'll get around to it" } },
+            { "zh": "我最近开始学西班牙语了。", "answer": "I recently started learning Spanish.", "slotValues": { "time_adverb": "recently", "sentence": "I started learning Spanish" } },
+            { "zh": "她终于通过了考试。", "answer": "She finally passed the exam.", "slotValues": { "time_adverb": "finally", "sentence": "she passed the exam" } },
+            { "zh": "我目前在做一个新项目。", "answer": "I'm currently working on a new project.", "slotValues": { "time_adverb": "currently", "sentence": "I'm working on a new project" } }
+          ]
+        }
+      ]
+    }
   }
 }

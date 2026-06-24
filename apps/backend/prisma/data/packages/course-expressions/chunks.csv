@@ -1,8 +1,4 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-"表达·副词精练",频率与程度,频率与程度,I always... / I never...,我总是.../我从不...,L1,频率副词的基本句式。,"[{""en"":""I always have breakfast."",""zh"":""我总是吃早餐。""}]"
-"表达·副词精练",频率与程度,频率与程度,It's quite... / It's very...,它相当.../它很...,L1,程度副词+形容词。,"[{""en"":""It's quite cold today."",""zh"":""今天相当冷。""}]"
-"表达·副词精练",方式与评论,方式与评论,Please... carefully.,请仔细地...,L1,方式副词修饰动作。,"[{""en"":""Please drive carefully."",""zh"":""请小心驾驶。""}]"
-"表达·副词精练",方式与评论,方式与评论,Luckily... / Frankly...,幸运的是.../坦诚说...,L2,评论副词修饰全句。,"[{""en"":""Luckily I brought my umbrella."",""zh"":""幸运的是我带了伞。""}]"
 "表达·时间表达",时间介词,时间介词,The meeting is on...,会议在(某天),L1,on+具体日期/星期。,"[{""en"":""The meeting is on Monday."",""zh"":""会议在周一。""}]"
 "表达·时间表达",时间介词,时间介词,I was born in...,我出生在(年月),L1,in+月份/年份。,"[{""en"":""I was born in March."",""zh"":""我出生在三月。""}]"
 "表达·时间表达",时间介词,时间介词,The class starts at...,课程在(时间)开始,L1,at+具体钟表时间。,"[{""en"":""The class starts at 9."",""zh"":""课程在9点开始。""}]"

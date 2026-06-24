@@ -1,38 +1,62 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-ch_pinlv,1,I always brush my teeth.,0
-ch_pinlv,1,I usually have breakfast at 8.,1
-ch_pinlv,1,I often read before bed.,2
-ch_pinlv,1,Sometimes I go jogging.,3
-ch_pinlv,1,I never smoke.,4
-ch_pinlv,1,I always read before bed.,5
-ch_pinlv,1,I usually exercise in the morning.,6
-ch_pinlv,1,I often relax on weekends.,7
-ch_pinlv,1,I never skip breakfast.,8
-ch_chengdu,1,She is very smart.,0
-ch_chengdu,1,The movie is quite good.,1
-ch_chengdu,1,It's rather cold today.,2
-ch_chengdu,1,That's extremely kind.,3
-ch_chengdu,1,This coffee is too hot.,4
-ch_chengdu,1,The scenery is very beautiful.,5
-ch_chengdu,1,The trail is quite steep.,6
-ch_chengdu,1,The summit is rather cold.,7
-ch_chengdu,1,The view is extremely breathtaking.,8
-ch_fangshi,1,Please read carefully.,0
-ch_fangshi,1,He quickly finished his homework.,1
-ch_fangshi,1,The children played happily.,2
-ch_fangshi,1,She easily solved the problem.,3
-ch_fangshi,1,She speaks English well.,4
-ch_fangshi,1,I carefully read the recipe.,5
-ch_fangshi,1,I quickly prepare the ingredients.,6
-ch_fangshi,1,She happily helps me in the kitchen.,7
-ch_fangshi,1,I easily follow each step.,8
-ch_fangshi,1,We work together well.,9
-ch_pinglun,1,Luckily no one was hurt.,0
-ch_pinglun,1,Frankly I don't care.,1
-ch_pinglun,1,Honestly that's the best option.,2
-ch_pinglun,1,Surprisingly he agreed with us.,3
-ch_pinglun,1,Obviously she was lying.,4
-ch_pinglun,1,Luckily she proved her innocence.,5
-ch_pinglun,1,Frankly the rumor was wrong.,6
-ch_pinglun,1,Obviously they leaked the data.,7
-ch_pinglun,1,Surprisingly she got promoted.,8
+ch_pinlv,1,He frequently travels abroad for work.,0
+ch_pinlv,1,I regularly go to the gym after work.,1
+ch_pinlv,1,We occasionally grab coffee together.,2
+ch_pinlv,1,She rarely complains about anything.,3
+ch_pinlv,1,He seldom watches TV these days.,4
+ch_pinlv,1,I hardly ever drink soda.,5
+ch_pinlv,1,They've recently started learning Chinese.,6
+ch_chengdu,1,The scenery here is extremely beautiful.,0
+ch_chengdu,1,It's rather cold today,1
+ch_chengdu,1,That's a pretty good idea!,2
+ch_chengdu,1,The test was fairly easy.,3
+ch_chengdu,1,I'm almost done with the project.,4
+ch_chengdu,1,It's nearly midnight,5
+ch_chengdu,1,I completely agree with your point.,6
+ch_chengdu,1,That's totally different from what I thought.,7
+ch_chengdu,1,I highly recommend this restaurant.,8
+ch_chengdu,1,I'm deeply grateful for your help.,9
+ch_fangshi,1,Please read the instructions carefully.,0
+ch_fangshi,1,She solved the problem easily.,1
+ch_fangshi,1,He spoke softly to avoid waking the baby.,2
+ch_fangshi,1,You should ask politely if you need help.,3
+ch_fangshi,1,Please wait patiently for your turn.,4
+ch_fangshi,1,Write your name neatly on the form.,5
+ch_fangshi,1,Make sure you do the job properly.,6
+ch_fangshi,1,The dress fits you perfectly.,7
+ch_fangshi,1,You should hold the baby gently.,8
+ch_fangshi,1,I passed the driving test successfully.,9
+ch_fangshi,1,Everything went smoothly during the event.,10
+ch_pinglun,1,Luckily no one was hurt in the accident.,0
+ch_pinglun,1,Unfortunately the store was already closed.,1
+ch_pinglun,1,Fortunately I had an extra key.,2
+ch_pinglun,1,Hopefully the weather will be nice tomorrow.,3
+ch_pinglun,1,Frankly I don't really care about the details.,4
+ch_pinglun,1,Honestly that's the best meal I've had all week.,5
+ch_pinglun,1,Seriously you should consider his advice.,6
+ch_pinglun,1,Clearly he made a mistake somewhere.,7
+ch_pinglun,1,Obviously she was lying about her age.,8
+ch_pinglun,1,Naturally I said yes to the invitation.,9
+ch_pinglun,1,Surprisingly the team lost the game.,10
+ch_pinglun,1,More importantly we need to stay safe.,11
+ch_pinglun,1,Sadly she didn't get the job.,12
+ch_didian,1,I've been looking everywhere for my keys.,0
+ch_didian,1,There's nowhere to park around here.,1
+ch_didian,1,The meeting is upstairs on the third floor.,2
+ch_didian,1,She's waiting downstairs in the lobby.,3
+ch_didian,1,It's raining let's go inside.,4
+ch_didian,1,The kids are playing outside in the yard.,5
+ch_didian,1,She's always wanted to study abroad.,6
+ch_didian,1,I can't find my phone anywhere.,7
+ch_didian,1,Let's go somewhere quiet to talk.,8
+ch_didian,1,Is there a grocery store nearby?,9
+ch_shijian,1,I'll be there soon just wait a moment.,0
+ch_shijian,1,I recently started learning Spanish.,1
+ch_shijian,1,Please come immediately it's urgent.,2
+ch_shijian,1,She finally passed the driving test.,3
+ch_shijian,1,I haven't been feeling well lately.,4
+ch_shijian,1,I'm currently working on a new project.,5
+ch_shijian,1,I previously worked at a marketing firm.,6
+ch_shijian,1,Meanwhile let's focus on what we can do.,7
+ch_shijian,1,The message was sent instantly.,8
+ch_shijian,1,I'll get around to it eventually.,9
