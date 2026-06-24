@@ -1177,6 +1177,7 @@ model GameMap {
   icon                String?
   width               Int            @default(1920)
   height              Int            @default(1080)
+  editorData          Json?
   locations           GameLocation[]
   requiredOutputLevel String         @default("L1")
   requiredChapterId   String?
@@ -1201,6 +1202,8 @@ model GameLocation {
   posX                Float          @default(0)
   posY                Float          @default(0)
   icon                String?
+  iconWidth           Int            @default(26)
+  iconHeight          Int            @default(26)
   backgroundUrl       String?
   bgmUrl              String?
   ambientUrl          String?

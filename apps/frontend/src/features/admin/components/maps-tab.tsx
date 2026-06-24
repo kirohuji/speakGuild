@@ -3,6 +3,7 @@ import {
   ChevronDown, ChevronRight,
   Edit3, Home, Map, MapPin,
   MousePointer2, Move, Plus, Route,
+  PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen,
   Trash2, Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -33,16 +34,22 @@ import { LocationDetailsPanel } from './maps/location-details-panel'
 import { MapDirectory } from './maps/map-directory'
 import { MapPixiCanvas } from './maps/map-pixi-canvas'
 import { ReadinessPanel } from './maps/readiness-panel'
+import { matchTemplate } from './maps/match-template'
 import {
-  defaultCanvasLayers,
+  createObjectFromPrefab,
   hasAsset,
   locationTypeLabel,
   makeLocationKey,
+  normalizeMapDocument,
   roomTypeLabel,
-  type CanvasLayer,
   type CanvasMode,
+  type MapDocument,
+  type MapLayer,
+  type MapObject,
+  type MapPrefab,
   type MapView,
   type ReadinessItem,
+  uid,
 } from './maps/map-management-shared'
 
 interface MapsTabProps {
@@ -60,17 +67,10 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [view, setView] = useState<MapView>('canvas')
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('preview')
-  const [canvasLayers, setCanvasLayers] = useState<CanvasLayer[]>(() => defaultCanvasLayers())
-  const [layerVisible, setLayerVisible] = useState<Record<string, boolean>>({
-    background: true,
-    locations: true,
-    labels: false,
-  })
-  const [layerLocked, setLayerLocked] = useState<Record<string, boolean>>({
-    background: false,
-    locations: false,
-    labels: true,
-  })
+  const [selectedCanvasLayerId, setSelectedCanvasLayerId] = useState('background')
+  const [selectedMapObjectId, setSelectedMapObjectId] = useState('')
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
   const backgroundScale = 1
   const backgroundRotation = 0
   const canvasHeight = 620
@@ -112,6 +112,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const [addNpcCharId, setAddNpcCharId] = useState('')
 
   const [saving, setSaving] = useState(false)
+  const [autoAligning, setAutoAligning] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -140,6 +141,14 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const selectedMap = useMemo(
     () => maps.find((m) => m.id === selectedMapId) ?? maps[0] ?? null,
     [maps, selectedMapId],
+  )
+
+  const selectedMapDocument = useMemo(
+    () => normalizeMapDocument(selectedMap?.editorData, {
+      width: selectedMap?.width,
+      height: selectedMap?.height,
+    }),
+    [selectedMap?.editorData, selectedMap?.height, selectedMap?.width],
   )
 
   const locsForMap = useCallback(
@@ -189,46 +198,152 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
     preserveScroll(() => setSelectedLocationId(id))
   }, [preserveScroll])
 
+  const saveMapDocument = useCallback(async (
+    updater: (document: MapDocument) => MapDocument,
+    errorMessage = '地图编辑数据保存失败',
+  ) => {
+    if (!selectedMap) return
+    const previousData = selectedMap.editorData
+    const current = normalizeMapDocument(previousData, { width: selectedMap.width, height: selectedMap.height })
+    const next = updater(current)
+    setMaps((prev) => prev.map((item) => (
+      item.id === selectedMap.id ? { ...item, editorData: next, width: next.width, height: next.height } : item
+    )))
+    try {
+      await updateMap(selectedMap.id, { editorData: next, width: next.width, height: next.height })
+    } catch {
+      setMaps((prev) => prev.map((item) => (
+        item.id === selectedMap.id ? { ...item, editorData: previousData } : item
+      )))
+      toast.error(errorMessage)
+    }
+  }, [selectedMap])
+
+  const updateMapLayer = useCallback((layerId: string, patch: Partial<MapLayer>) => {
+    saveMapDocument((document) => ({
+      ...document,
+      layers: document.layers.map((layer) => (
+        layer.id === layerId ? { ...layer, ...patch } : layer
+      )),
+    }))
+  }, [saveMapDocument])
+
   const toggleLayerVisible = useCallback((layerId: string) => {
-    setLayerVisible((prev) => ({ ...prev, [layerId]: !(prev[layerId] ?? true) }))
-  }, [])
+    const layer = selectedMapDocument.layers.find((item) => item.id === layerId)
+    updateMapLayer(layerId, { visible: !(layer?.visible ?? true) })
+  }, [selectedMapDocument.layers, updateMapLayer])
 
   const toggleLayerLocked = useCallback((layerId: string) => {
-    setLayerLocked((prev) => ({ ...prev, [layerId]: !(prev[layerId] ?? false) }))
-  }, [])
+    const layer = selectedMapDocument.layers.find((item) => item.id === layerId)
+    updateMapLayer(layerId, { locked: !(layer?.locked ?? false) })
+  }, [selectedMapDocument.layers, updateMapLayer])
 
   const moveLayer = useCallback((layerId: string, direction: -1 | 1) => {
-    setCanvasLayers((prev) => {
-      const index = prev.findIndex((layer) => layer.id === layerId)
+    saveMapDocument((document) => {
+      const layers = [...document.layers].sort((a, b) => a.order - b.order)
+      const index = layers.findIndex((layer) => layer.id === layerId)
       const nextIndex = index + direction
-      if (index < 0 || nextIndex < 0 || nextIndex >= prev.length) return prev
-      const next = [...prev]
-      const [item] = next.splice(index, 1)
-      next.splice(nextIndex, 0, item)
-      return next
+      if (index < 0 || nextIndex < 0 || nextIndex >= layers.length) return document
+      const [item] = layers.splice(index, 1)
+      layers.splice(nextIndex, 0, item)
+      return {
+        ...document,
+        layers: layers.map((layer, order) => ({ ...layer, order: order * 10 })),
+      }
     })
-  }, [])
+  }, [saveMapDocument])
 
   const addCanvasLayer = useCallback(() => {
-    const id = `custom_${Date.now().toString(36)}`
-    setCanvasLayers((prev) => [...prev, { id, kind: 'custom', name: `新图层 ${prev.filter((layer) => layer.kind === 'custom').length + 1}` }])
-    setLayerVisible((prev) => ({ ...prev, [id]: true }))
-    setLayerLocked((prev) => ({ ...prev, [id]: false }))
-  }, [])
+    const id = uid('layer')
+    saveMapDocument((document) => ({
+      ...document,
+      layers: [
+        ...document.layers,
+        {
+          id,
+          kind: 'custom',
+          name: `新图层 ${document.layers.filter((layer) => layer.kind === 'custom').length + 1}`,
+          visible: true,
+          locked: false,
+          opacity: 1,
+          order: document.layers.length * 10,
+        },
+      ],
+    }))
+    setSelectedCanvasLayerId(id)
+  }, [saveMapDocument])
 
   const deleteCanvasLayer = useCallback((layerId: string) => {
-    setCanvasLayers((prev) => prev.filter((layer) => layer.id !== layerId))
-    setLayerVisible((prev) => {
-      const next = { ...prev }
-      delete next[layerId]
-      return next
+    saveMapDocument((document) => {
+      const layer = document.layers.find((item) => item.id === layerId)
+      if (!layer || layer.kind !== 'custom') return document
+      return {
+        ...document,
+        layers: document.layers.filter((item) => item.id !== layerId),
+        objects: document.objects.filter((object) => object.layerId !== layerId),
+      }
     })
-    setLayerLocked((prev) => {
-      const next = { ...prev }
-      delete next[layerId]
-      return next
-    })
-  }, [])
+    setSelectedCanvasLayerId((current) => (current === layerId ? 'background' : current))
+  }, [saveMapDocument])
+
+  const updateCanvasLayerBackground = useCallback((layerId: string, backgroundUrl: string) => {
+    updateMapLayer(layerId, { backgroundUrl })
+  }, [updateMapLayer])
+
+  const addMapObjectFromPrefab = useCallback((prefab: MapPrefab) => {
+    const object = createObjectFromPrefab(prefab, selectedMapDocument)
+    saveMapDocument((document) => ({
+      ...document,
+      objects: [...document.objects, object],
+    }))
+    setSelectedMapObjectId(object.id)
+    setSelectedCanvasLayerId(object.layerId)
+  }, [saveMapDocument, selectedMapDocument])
+
+  const updateMapObject = useCallback((objectId: string, patch: Partial<MapObject>) => {
+    saveMapDocument((document) => ({
+      ...document,
+      objects: document.objects.map((object) => (
+        object.id === objectId ? { ...object, ...patch } : object
+      )),
+    }))
+  }, [saveMapDocument])
+
+  const deleteMapObject = useCallback((objectId: string) => {
+    saveMapDocument((document) => ({
+      ...document,
+      objects: document.objects.filter((object) => object.id !== objectId),
+    }))
+    setSelectedMapObjectId((current) => (current === objectId ? '' : current))
+  }, [saveMapDocument])
+
+  const updateMapBackgroundFromLayer = useCallback(async (backgroundUrl: string) => {
+    if (!selectedMap) return
+    const previousUrl = selectedMap.backgroundUrl ?? ''
+    setMaps((prev) => prev.map((item) => (
+      item.id === selectedMap.id ? { ...item, backgroundUrl } : item
+    )))
+    try {
+      await updateMap(selectedMap.id, { backgroundUrl })
+    } catch {
+      setMaps((prev) => prev.map((item) => (
+        item.id === selectedMap.id ? { ...item, backgroundUrl: previousUrl } : item
+      )))
+      toast.error('底图背景保存失败')
+    }
+  }, [selectedMap])
+
+  const handleResizeLocationIcon = useCallback(async (locId: string, width: number, height: number) => {
+    setLocations((prev) => prev.map((l) => (
+      l.id === locId ? { ...l, iconWidth: width, iconHeight: height } : l
+    )))
+    try {
+      await updateLocation(locId, { iconWidth: width, iconHeight: height })
+    } catch {
+      toast.error('地点图标尺寸保存失败')
+      load()
+    }
+  }, [load])
 
   const readinessItems = useMemo(() => {
     if (!selectedMap) return []
@@ -558,21 +673,50 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
           <p className="text-xs text-muted-foreground/60">点击「新建地图」开始创建</p>
         </div>
       ) : (
-        <div className="grid min-h-0 gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
-          <MapDirectory
-            maps={maps}
-            selectedMap={selectedMap}
-            selectedLocationId={selectedLocation?.id ?? ''}
-            locsForMap={locsForMap}
-            roomsForLoc={roomsForLoc}
-            onSelectMap={(mapId, firstLocationId) => {
-              setSelectedMapId(mapId)
-              setSelectedLocationId(firstLocationId)
-            }}
-            onSelectLocation={setSelectedLocationId}
-          />
+        <div
+          className={cn(
+            'grid min-h-0 gap-3 transition-[grid-template-columns] duration-200',
+            leftSidebarOpen && rightSidebarOpen && 'xl:grid-cols-[300px_minmax(0,1fr)_320px]',
+            leftSidebarOpen && !rightSidebarOpen && 'xl:grid-cols-[300px_minmax(0,1fr)_44px]',
+            !leftSidebarOpen && rightSidebarOpen && 'xl:grid-cols-[44px_minmax(0,1fr)_320px]',
+            !leftSidebarOpen && !rightSidebarOpen && 'xl:grid-cols-[44px_minmax(0,1fr)_44px]',
+          )}
+        >
+          {leftSidebarOpen ? (
+            <aside className="min-w-0">
+              <div className="mb-2 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  title="收起地图目录"
+                  onClick={() => setLeftSidebarOpen(false)}
+                >
+                  <PanelLeftClose className="size-4" />
+                </Button>
+              </div>
+              <MapDirectory
+                maps={maps}
+                selectedMap={selectedMap}
+                selectedLocationId={selectedLocation?.id ?? ''}
+                locsForMap={locsForMap}
+                roomsForLoc={roomsForLoc}
+                onSelectMap={(mapId, firstLocationId) => {
+                  setSelectedMapId(mapId)
+                  setSelectedLocationId(firstLocationId)
+                }}
+                onSelectLocation={setSelectedLocationId}
+              />
+            </aside>
+          ) : (
+            <SidebarDock
+              side="left"
+              label="地图目录"
+              title="展开地图目录"
+              onClick={() => setLeftSidebarOpen(true)}
+            />
+          )}
 
-          <div className="grid min-h-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
           <Card className="overflow-hidden rounded-none">
             <CardHeader className="border-b border-border pb-3">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -645,19 +789,28 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                     selectedLocationId={selectedLocation?.id ?? ''}
                     mode={canvasMode}
                     height={canvasHeight}
-                    layers={canvasLayers}
-                    layerVisible={layerVisible}
-                    layerLocked={layerLocked}
+                    document={selectedMapDocument}
+                    selectedLayerId={selectedCanvasLayerId}
+                    selectedObjectId={selectedMapObjectId}
                     backgroundScale={backgroundScale}
                     backgroundRotation={backgroundRotation}
                     onSelectLocation={selectLocationFromCanvas}
                     onMoveLocation={saveLocationPosition}
                     onCreateLocation={() => openCreateLoc(selectedMap.id)}
+                    onSelectObject={setSelectedMapObjectId}
                     onToggleLayerVisible={toggleLayerVisible}
                     onToggleLayerLocked={toggleLayerLocked}
+                    onSelectLayer={setSelectedCanvasLayerId}
                     onMoveLayer={moveLayer}
                     onAddLayer={addCanvasLayer}
                     onDeleteLayer={deleteCanvasLayer}
+                    onUpdateLayerBackground={updateCanvasLayerBackground}
+                    onUpdateLayer={updateMapLayer}
+                    onUpdateMapBackground={updateMapBackgroundFromLayer}
+                    onAddObjectFromPrefab={addMapObjectFromPrefab}
+                    onUpdateObject={updateMapObject}
+                    onDeleteObject={deleteMapObject}
+                    onResizeLocationIcon={handleResizeLocationIcon}
                   />
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant={canvasMode === 'edit' ? 'default' : 'secondary'}>
@@ -668,6 +821,33 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                         ? '左键按住地点拖拽，松开后保存坐标。'
                         : '点击地点会高亮并显示标题，不能拖拽。'}
                     </span>
+                    {canvasMode === 'edit' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={autoAligning}
+                        onClick={async () => {
+                          setAutoAligning(true)
+                          try {
+                            const result = await matchTemplate(selectedMap.backgroundUrl!, selectedLocation.icon!)
+                            if (result) {
+                              setLocations((prev) => prev.map((l) =>
+                                l.id === selectedLocation.id ? { ...l, posX: result.x, posY: result.y } : l
+                              ))
+                              saveLocationPosition({ ...selectedLocation, posX: result.x, posY: result.y }, result.x, result.y)
+                              toast.success(`已定位，置信度 ${Math.round(result.confidence * 100)}%`)
+                            } else {
+                              toast.error('匹配失败，请手动拖拽')
+                            }
+                          } finally {
+                            setAutoAligning(false)
+                          }
+                        }}
+                      >
+                        {autoAligning ? '匹配中...' : '自动定位'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -741,24 +921,45 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
             </CardContent>
           </Card>
 
-          <div className="flex flex-col gap-4">
-            <ReadinessPanel
-              open={readinessOpen}
-              onOpenChange={setReadinessOpen}
-              okCount={readinessOk}
-              totalCount={readinessTotal}
-              issues={readinessIssues}
+          {rightSidebarOpen ? (
+            <aside className="min-w-0">
+              <div className="mb-2 flex justify-start">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  title="收起地点详情"
+                  onClick={() => setRightSidebarOpen(false)}
+                >
+                  <PanelRightClose className="size-4" />
+                </Button>
+              </div>
+              <div className="flex flex-col gap-4">
+                <ReadinessPanel
+                  open={readinessOpen}
+                  onOpenChange={setReadinessOpen}
+                  okCount={readinessOk}
+                  totalCount={readinessTotal}
+                  issues={readinessIssues}
+                />
+                <LocationDetailsPanel
+                  selectedLocation={selectedLocation}
+                  selectedLocationRooms={selectedLocationRooms}
+                  onEditLocation={openEditLoc}
+                  onCreateRoom={openCreateRoom}
+                  onEditRoom={openEditRoom}
+                  onRemoveNpc={handleRemoveNpc}
+                />
+              </div>
+            </aside>
+          ) : (
+            <SidebarDock
+              side="right"
+              label="地点详情"
+              title="展开地点详情"
+              onClick={() => setRightSidebarOpen(true)}
             />
-            <LocationDetailsPanel
-              selectedLocation={selectedLocation}
-              selectedLocationRooms={selectedLocationRooms}
-              onEditLocation={openEditLoc}
-              onCreateRoom={openCreateRoom}
-              onEditRoom={openEditRoom}
-              onRemoveNpc={handleRemoveNpc}
-            />
-          </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -1006,6 +1207,31 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function SidebarDock({
+  side,
+  label,
+  title,
+  onClick,
+}: {
+  side: 'left' | 'right'
+  label: string
+  title: string
+  onClick: () => void
+}) {
+  const Icon = side === 'left' ? PanelLeftOpen : PanelRightOpen
+  return (
+    <button
+      type="button"
+      title={title}
+      className="flex h-full min-h-[760px] w-full flex-col items-center gap-3 border border-border bg-card px-2 py-3 text-muted-foreground transition hover:border-primary hover:bg-primary/5 hover:text-foreground"
+      onClick={onClick}
+    >
+      <Icon className="size-4 shrink-0" />
+      <span className="[writing-mode:vertical-rl] text-xs font-medium tracking-normal">{label}</span>
+    </button>
   )
 }
 

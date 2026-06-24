@@ -146,9 +146,9 @@ export function ImageUploadField({
               />
             </div>
           )}
-          {previewUrl && (
+          {/* {previewUrl && (
             <p className="text-[11px] text-muted-foreground truncate max-w-[200px]">{previewUrl}</p>
-          )}
+          )} */}
         </div>
       </div>
     </div>

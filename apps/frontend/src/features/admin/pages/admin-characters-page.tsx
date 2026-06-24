@@ -118,8 +118,8 @@ export function AdminCharactersPage() {
               )}
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                 <span>位置: {item.defaultPosition ?? 'left'}</span>
-                {item.locationNpcs?.length ? (
-                  <span className="flex items-center gap-1"><MapPin className="size-3" />{item.locationNpcs.length} 个地点</span>
+                {item.roomNpcs?.length ? (
+                  <span className="flex items-center gap-1"><MapPin className="size-3" />{item.roomNpcs.length} 个房间</span>
                 ) : null}
               </div>
             </CardContent>

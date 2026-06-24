@@ -336,6 +336,9 @@ export interface GameMapData {
   backgroundUrl?: string | null
   thumbnailUrl?: string | null
   icon?: string | null
+  width: number
+  height: number
+  editorData?: any
   requiredOutputLevel: string
   requiredChapterId?: string | null
   disabled: boolean
@@ -354,6 +357,8 @@ export interface GameLocationData {
   posX: number
   posY: number
   icon?: string | null
+  iconWidth?: number
+  iconHeight?: number
   backgroundUrl?: string | null
   locationType: string
   sceneId?: string | null
