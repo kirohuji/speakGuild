@@ -1,7 +1,0 @@
-scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-中世纪·骑士与城堡,骑士精神与受封,"Let me tell you about ___.",引入话题,"骑士精神与受封","Let me tell you about 骑士精神与受封.",L2,0
-中世纪·骑士与城堡,城堡攻防战,"Let me tell you about ___.",引入话题,"城堡攻防战","Let me tell you about 城堡攻防战.",L2,1
-中世纪·骑士与城堡,亚瑟王与圆桌骑士,"Let me tell you about ___.",引入话题,"亚瑟王与圆桌骑士","Let me tell you about 亚瑟王与圆桌骑士.",L2,2
-中世纪·探险与传奇,马可·波罗的东方之旅,"Let me tell you about ___.",引入话题,"马可·波罗的东方之旅","Let me tell you about 马可·波罗的东方之旅.",L2,3
-中世纪·探险与传奇,维京航海家,"Let me tell you about ___.",引入话题,"维京航海家","Let me tell you about 维京航海家.",L2,4
-中世纪·探险与传奇,中世纪的世界,"Let me tell you about ___.",引入话题,"中世纪的世界","Let me tell you about 中世纪的世界.",L2,5

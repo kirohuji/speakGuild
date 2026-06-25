@@ -1,8 +1,0 @@
-scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-希腊神话·诸神与英雄,奥林匹斯众神,"Let me tell you about ___.",引入话题,"奥林匹斯众神","Let me tell you about 奥林匹斯众神.",L2,0
-希腊神话·诸神与英雄,普罗米修斯与潘多拉,"Let me tell you about ___.",引入话题,"普罗米修斯与潘多拉","Let me tell you about 普罗米修斯与潘多拉.",L2,1
-希腊神话·诸神与英雄,赫拉克勒斯十二任务,"Let me tell you about ___.",引入话题,"赫拉克勒斯十二任务","Let me tell you about 赫拉克勒斯十二任务.",L2,2
-希腊神话·特洛伊与奥德赛,特洛伊战争,"Let me tell you about ___.",引入话题,"特洛伊战争","Let me tell you about 特洛伊战争.",L2,3
-希腊神话·特洛伊与奥德赛,奥德赛历险,"Let me tell you about ___.",引入话题,"奥德赛历险","Let me tell you about 奥德赛历险.",L2,4
-北欧神话·诸神黄昏,北欧诸神与创世,"Let me tell you about ___.",引入话题,"北欧诸神与创世","Let me tell you about 北欧诸神与创世.",L2,5
-北欧神话·诸神黄昏,诸神黄昏与重生,"Let me tell you about ___.",引入话题,"诸神黄昏与重生","Let me tell you about 诸神黄昏与重生.",L2,6

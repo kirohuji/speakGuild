@@ -1,6 +1,0 @@
-scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-科技·改变世界的发明,印刷术与知识传播,"Let me tell you about ___.",引入话题,"印刷术与知识传播","Let me tell you about 印刷术与知识传播.",L2,0
-科技·改变世界的发明,蒸汽机与工业革命,"Let me tell you about ___.",引入话题,"蒸汽机与工业革命","Let me tell you about 蒸汽机与工业革命.",L2,1
-科技·改变世界的发明,电力与通信革命,"Let me tell you about ___.",引入话题,"电力与通信革命","Let me tell you about 电力与通信革命.",L2,2
-科技·数字革命与未来,计算机与互联网,"Let me tell you about ___.",引入话题,"计算机与互联网","Let me tell you about 计算机与互联网.",L2,3
-科技·数字革命与未来,人工智能与未来科技,"Let me tell you about ___.",引入话题,"人工智能与未来科技","Let me tell you about 人工智能与未来科技.",L2,4
