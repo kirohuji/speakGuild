@@ -227,6 +227,66 @@ export const TTS_PARAMS_SCHEMA: TtsSchema[] = [
       },
     ],
   },
+  {
+    provider: 'elevenlabs',
+    models: [
+      'eleven_multilingual_v2',
+      'eleven_turbo_v2_5',
+      'eleven_flash_v2_5',
+      'eleven_v3',
+    ].map((model) => ({
+      model,
+      label: model,
+      requiresVoiceId: true,
+      fields: [
+        { key: 'stability', label: 'Stability', type: 'number' as const, min: 0, max: 1, step: 0.05, defaultValue: 0.5 },
+        { key: 'similarity_boost', label: 'Similarity', type: 'number' as const, min: 0, max: 1, step: 0.05, defaultValue: 0.75 },
+        { key: 'style', label: 'Style', type: 'number' as const, min: 0, max: 1, step: 0.05, defaultValue: 0 },
+        { key: 'speed', label: 'Speed', type: 'number' as const, min: 0.7, max: 1.2, step: 0.05, defaultValue: 1 },
+        {
+          key: 'output_format',
+          label: 'Output format',
+          type: 'select' as const,
+          defaultValue: 'mp3_44100_128',
+          options: [
+            { label: 'MP3 44.1k 128kbps', value: 'mp3_44100_128' },
+            { label: 'MP3 22.05k 32kbps', value: 'mp3_22050_32' },
+            { label: 'MP3 44.1k 192kbps', value: 'mp3_44100_192' },
+            { label: 'WAV 44.1k', value: 'wav_44100' },
+          ],
+        },
+        {
+          key: 'language_code',
+          label: 'Language',
+          type: 'select' as const,
+          defaultValue: 'auto',
+          options: [
+            { label: 'Auto', value: 'auto' },
+            { label: 'English', value: 'en' },
+            { label: 'Chinese', value: 'zh' },
+            { label: 'Japanese', value: 'ja' },
+            { label: 'Korean', value: 'ko' },
+            { label: 'Spanish', value: 'es' },
+            { label: 'French', value: 'fr' },
+            { label: 'German', value: 'de' },
+          ],
+        },
+        {
+          key: 'apply_text_normalization',
+          label: 'Text norm',
+          type: 'select' as const,
+          defaultValue: 'auto',
+          options: [
+            { label: 'Auto', value: 'auto' },
+            { label: 'On', value: 'on' },
+            { label: 'Off', value: 'off' },
+          ],
+        },
+        { key: 'use_speaker_boost', label: 'Speaker boost', type: 'boolean' as const, defaultValue: true },
+        { key: 'enable_logging', label: 'Logging', type: 'boolean' as const, defaultValue: true },
+      ],
+    })),
+  },
 ];
 
 export function sanitizeTtsParams(

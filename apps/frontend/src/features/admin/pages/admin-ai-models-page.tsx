@@ -52,7 +52,7 @@ const TABS = [
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = { stt: 'STT', tts: 'TTS', llm: 'LLM' };
-const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'deepseek', 'openai']);
+const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai']);
 
 const DEEPSEEK_MODELS = [
   { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', hint: 'Flagship model for higher-quality reasoning and complex tasks.' },
@@ -75,6 +75,13 @@ const MINIMAX_MODELS = [
 const HUME_MODELS = [
   { value: '2', label: 'Octave 2' },
   { value: '1', label: 'Octave 1' },
+];
+
+const ELEVENLABS_MODELS = [
+  'eleven_multilingual_v2',
+  'eleven_turbo_v2_5',
+  'eleven_flash_v2_5',
+  'eleven_v3',
 ];
 
 const SAMPLE_TEXT = 'Please read this sentence clearly and naturally for a language-learning exercise.';
@@ -204,6 +211,19 @@ function getTtsFields(item: AiProviderItem): TtsTestField[] {
       { key: 'format', label: 'Format', type: 'select', value: 'mp3', options: ['mp3', 'wav'] },
       { key: 'voice_provider', label: 'Voice provider', type: 'select', value: 'HUME_AI', options: ['HUME_AI', 'CUSTOM_VOICE'] },
       { key: 'voice_kind', label: 'Voice kind', type: 'select', value: 'name', options: ['name', 'id'] },
+    ];
+  }
+  if (item.provider === 'elevenlabs') {
+    return [
+      { key: 'stability', label: 'Stability', type: 'number', min: 0, max: 1, step: 0.05, value: '0.5' },
+      { key: 'similarity_boost', label: 'Similarity', type: 'number', min: 0, max: 1, step: 0.05, value: '0.75' },
+      { key: 'style', label: 'Style', type: 'number', min: 0, max: 1, step: 0.05, value: '0' },
+      { key: 'speed', label: 'Speed', type: 'number', min: 0.7, max: 1.2, step: 0.05, value: '1' },
+      { key: 'output_format', label: 'Format', type: 'select', value: 'mp3_44100_128', options: ['mp3_44100_128', 'mp3_22050_32', 'mp3_44100_192', 'wav_44100'] },
+      { key: 'language_code', label: 'Language', type: 'select', value: 'auto', options: ['auto', 'en', 'zh', 'ja', 'ko', 'es', 'fr', 'de'] },
+      { key: 'apply_text_normalization', label: 'Text norm', type: 'select', value: 'auto', options: ['auto', 'on', 'off'] },
+      { key: 'use_speaker_boost', label: 'Speaker boost', type: 'boolean', value: 'true' },
+      { key: 'enable_logging', label: 'Logging', type: 'boolean', value: 'true' },
     ];
   }
   return [
@@ -356,6 +376,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const [groupId, setGroupId] = useState('');
   const [voiceName, setVoiceName] = useState('Ava Song');
   const [voiceProvider, setVoiceProvider] = useState('HUME_AI');
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('JBFqnCBsd6RMkjVDRZzb');
   const [timeoutMs, setTimeoutMs] = useState('300000');
   const [region, setRegion] = useState('ap-guangzhou');
   const [temperature, setTemperature] = useState('0.2');
@@ -366,12 +387,13 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   useEffect(() => {
     if (!item) return;
     const cfg = item.config ?? {};
-    setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : item.provider === 'hume' ? (item.model || '2') : (item.model ?? ''));
+    setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : item.provider === 'hume' ? (item.model || '2') : item.provider === 'elevenlabs' ? (item.model || 'eleven_multilingual_v2') : (item.model ?? ''));
     setApiKey(item.apiKey ?? '');
-    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : (item.baseUrl ?? ''));
+    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : item.provider === 'elevenlabs' ? (item.baseUrl || 'https://api.elevenlabs.io') : (item.baseUrl ?? ''));
     setGroupId(String((cfg as Record<string, unknown>).groupId ?? ''));
     setVoiceName(String((cfg as Record<string, unknown>).voiceName ?? 'Ava Song'));
     setVoiceProvider(String((cfg as Record<string, unknown>).voiceProvider ?? 'HUME_AI'));
+    setElevenLabsVoiceId(String((cfg as Record<string, unknown>).voiceId ?? 'JBFqnCBsd6RMkjVDRZzb'));
     setTimeoutMs(String((cfg as Record<string, unknown>).timeoutMs ?? 300000));
     setRegion(String((cfg as Record<string, unknown>).region ?? 'ap-guangzhou'));
     setTemperature(String((cfg as Record<string, unknown>).temperature ?? 0.2));
@@ -387,6 +409,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const isDeepSeek = item.type === 'llm' && item.provider === 'deepseek';
   const isMiniMax = item.type === 'tts' && item.provider === 'minimax';
   const isHume = item.type === 'tts' && item.provider === 'hume';
+  const isElevenLabs = item.type === 'tts' && item.provider === 'elevenlabs';
 
   const handleSave = async () => {
     setSaving(true);
@@ -407,6 +430,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
       } else if (isHume) {
         config.voiceName = voiceName.trim() || 'Ava Song';
         config.voiceProvider = voiceProvider === 'CUSTOM_VOICE' ? 'CUSTOM_VOICE' : 'HUME_AI';
+      } else if (isElevenLabs) {
+        config.voiceId = elevenLabsVoiceId.trim() || 'JBFqnCBsd6RMkjVDRZzb';
       }
       await updateAiProvider(item.id, { model, apiKey, baseUrl, ...(Object.keys(config).length ? { config } : {}) });
       setMessage('Saved');
@@ -452,6 +477,13 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
                 <div className="space-y-2"><Label>Default voice</Label><Input value={voiceName} onChange={(event) => setVoiceName(event.target.value)} className="font-mono text-sm" placeholder="Ava Song" /></div>
                 <div className="space-y-2"><Label>Provider</Label><Select value={voiceProvider} onChange={(event) => setVoiceProvider(event.target.value)}><SelectItem value="HUME_AI">Hume</SelectItem><SelectItem value="CUSTOM_VOICE">Custom</SelectItem></Select></div>
               </div>
+            </>
+          ) : isElevenLabs ? (
+            <>
+              <div className="space-y-2"><Label>ElevenLabs model</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{ELEVENLABS_MODELS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</Select></div>
+              <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.elevenlabs.io" /></div>
+              <div className="space-y-2"><Label>ELEVENLABS_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
+              <div className="space-y-2"><Label>Default voice ID</Label><Input value={elevenLabsVoiceId} onChange={(event) => setElevenLabsVoiceId(event.target.value)} className="font-mono text-sm" placeholder="JBFqnCBsd6RMkjVDRZzb" /></div>
             </>
           ) : isDeepSeek ? (
             <>
@@ -591,7 +623,11 @@ function TestDialog({ item, open, onOpenChange }: { item: AiProviderItem | null;
     const config = item.config as Record<string, unknown> | undefined;
     setState({
       ...DEFAULT_TEST_STATE,
-      voiceId: item.provider === 'hume' && typeof config?.voiceName === 'string' ? config.voiceName : '',
+      voiceId: item.provider === 'hume' && typeof config?.voiceName === 'string'
+        ? config.voiceName
+        : item.provider === 'elevenlabs' && typeof config?.voiceId === 'string'
+          ? config.voiceId
+          : '',
       params: {
         ...ttsDefaults,
         ...(item.provider === 'hume' && typeof config?.voiceProvider === 'string' ? { voice_provider: config.voiceProvider } : {}),
@@ -695,7 +731,7 @@ function TestDialog({ item, open, onOpenChange }: { item: AiProviderItem | null;
               {item.type === 'tts' && (
                 <div className="space-y-3">
                   <div className="space-y-2"><Label>Text</Label><Textarea value={state.text} onChange={(event) => setState((prev) => ({ ...prev, text: event.target.value }))} className="min-h-28" /></div>
-                  <div className="space-y-2"><Label>{item.provider === 'hume' ? 'Voice name / ID' : 'Voice ID'}</Label><Input value={state.voiceId} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))} placeholder={item.provider === 'cartesia' ? 'Required by Cartesia' : item.provider === 'hume' ? 'Ava Song' : 'Leave empty to use default voice'} /></div>
+                  <div className="space-y-2"><Label>{item.provider === 'hume' ? 'Voice name / ID' : 'Voice ID'}</Label><Input value={state.voiceId} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))} placeholder={item.provider === 'cartesia' ? 'Required by Cartesia' : item.provider === 'hume' ? 'Ava Song' : item.provider === 'elevenlabs' ? 'JBFqnCBsd6RMkjVDRZzb' : 'Leave empty to use default voice'} /></div>
                   <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                     {getTtsFields(item).map((field) => (
                       <div key={field.key} className="space-y-2">

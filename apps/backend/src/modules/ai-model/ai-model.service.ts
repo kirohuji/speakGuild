@@ -100,7 +100,7 @@ export class AiModelService {
   async remove(id: string): Promise<{ success: true }> {
     const provider = await this.prisma.aiProvider.findUnique({ where: { id } });
     if (!provider) throw new NotFoundException('Provider not found');
-    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'deepseek', 'openai'].includes(provider.provider)) {
+    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai'].includes(provider.provider)) {
       throw new BadRequestException('Built-in providers cannot be deleted');
     }
     if (provider.isActive) {
@@ -207,6 +207,7 @@ export class AiModelService {
       { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: '', config: { groupId: process.env.MINIMAX_GROUP_ID?.trim() || '' }, sortOrder: 0 },
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'tts', provider: 'hume', label: 'Hume AI', model: '2', apiKey: process.env.HUME_API_KEY?.trim() || '', baseUrl: '', config: { voiceName: 'Ava Song', voiceProvider: 'HUME_AI' }, sortOrder: 2 },
+      { type: 'tts', provider: 'elevenlabs', label: 'ElevenLabs', model: 'eleven_multilingual_v2', apiKey: process.env.ELEVENLABS_API_KEY?.trim() || '', baseUrl: 'https://api.elevenlabs.io', config: { voiceId: process.env.ELEVENLABS_VOICE_ID?.trim() || 'JBFqnCBsd6RMkjVDRZzb' }, sortOrder: 3 },
       { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4-pro', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },
     ];
