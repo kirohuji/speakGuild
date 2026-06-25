@@ -1,0 +1,7 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+ch_int_01,喜好与活动,1,我喜欢做...,基础⑩·喜好与活动,L2,1,2,3,6,6,"[""学会like/enjoy/hate+doing"",""学会动名词用法""]",2,3,2,Tutor,英语导师,true,practice_foundation-integrated-express_喜好与活动_我喜欢做,"{""xp"":15}"
+ch_int_01,喜好与活动,2,我想做/需要做,基础⑩·喜好与活动,L2,1,2,4,6,6,"[""学会want/need/hope+to do"",""学会would like委婉表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-integrated-express_喜好与活动_我想做需要做,"{""xp"":15}"
+ch_int_02,礼貌与请求,1,请你帮我...,基础⑩·礼貌与请求,L2,1,2,3,6,6,"[""学会Could/Would/May请求"",""学会Would you mind""]",2,3,2,Tutor,英语导师,false,practice_foundation-integrated-express_礼貌与请求_请你帮我,"{""xp"":15}"
+ch_int_02,礼貌与请求,2,你想要...吗？,基础⑩·礼貌与请求,L2,1,1,2,6,6,"[""学会Would you like邀请"",""学会How about提议""]",2,2,2,Tutor,英语导师,false,practice_foundation-integrated-express_礼貌与请求_你想要吗,"{""xp"":15}"
+ch_int_03,经历与持续,1,我去过/做过,基础⑩·经历与持续,L2,1,3,3,6,6,"[""学会have been to"",""学会Have you ever"",""学会never""]",2,3,2,Tutor,英语导师,false,practice_foundation-integrated-express_经历与持续_我去过做过,"{""xp"":15}"
+ch_int_03,经历与持续,2,已经多久了,基础⑩·经历与持续,L2,1,4,4,6,6,"[""学会for/since"",""学会already/yet""]",2,3,2,Tutor,英语导师,false,practice_foundation-integrated-express_经历与持续_已经多久了,"{""xp"":15}"

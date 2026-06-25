@@ -1,0 +1,18 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+条件·真实条件,零条件,if,如果,conj,/ɪf/,/ɪf/,L2,条件句引导词。,"[{""en"":""If it rains, I'll stay home."",""zh"":""如果下雨，我就呆在家。""}]",0
+条件·真实条件,零条件,melt,融化,verb,/melt/,/melt/,L2,固体变液体。,"[{""en"":""Ice melts when it's warm."",""zh"":""冰在温暖时融化。""}]",1
+条件·真实条件,零条件,mix,混合,verb,/mɪks/,/mɪks/,L2,把不同东西混合。,"[{""en"":""Mix red and blue to get purple."",""zh"":""混合红色和蓝色得到紫色。""}]",2
+条件·真实条件,第一条件,will,将会,modal,/wɪl/,/wɪl/,L2~L3,第一条件句主句用will。,"[{""en"":""If you study, you will pass."",""zh"":""如果你学习，你会通过的。""}]",0
+条件·真实条件,第一条件,pass,通过,verb,/pæs/,/pɑːs/,L2~L3,考试/测试通过。,"[{""en"":""She passed the exam."",""zh"":""她通过了考试。""}]",1
+条件·真实条件,第一条件,hurry,赶快,verb,/ˈhɜːri/,/ˈhʌri/,L2~L3,加快速度。,"[{""en"":""Hurry up or we'll be late."",""zh"":""快点，不然我们要迟到了。""}]",2
+条件·虚拟条件,第二条件,would,会(虚拟),modal,/wʊd/,/wʊd/,L3,第二条件句主句助动词。,"[{""en"":""If I had money, I would travel."",""zh"":""如果我有钱，我会旅行。""}]",0
+条件·虚拟条件,第二条件,could,可以/能(虚拟),modal,/kʊd/,/kʊd/,L3,第二条件句中表可能。,"[{""en"":""If he lived closer, he could visit."",""zh"":""如果他住得近，他可以来拜访。""}]",1
+条件·虚拟条件,第二条件,might,可能(虚拟),modal,/maɪt/,/maɪt/,L3,第二条件句中表可能性较低。,"[{""en"":""If I had time, I might go."",""zh"":""如果我有时间，我可能会去。""}]",2
+条件·虚拟条件,第三条件,had,已经(过去完成),verb,/hæd/,/hæd/,L3~L4,第三条件句if从句用had+过去分词。,"[{""en"":""If I had known, I would have come."",""zh"":""如果我知道，我就来了。""}]",0
+条件·虚拟条件,第三条件,would have,本来会(虚拟),phrase,/ˈwʊd hæv/,/ˈwʊd hæv/,L3~L4,第三条件句主句。,"[{""en"":""I would have passed if I had studied."",""zh"":""如果我学了，我本来会通过的。""}]",1
+条件·wish与unless,wish愿望句,wish,希望(不可能),verb,/wɪʃ/,/wɪʃ/,L3,表达与事实相反的愿望。,"[{""en"":""I wish I were taller."",""zh"":""我希望我更高。""}]",0
+条件·wish与unless,wish愿望句,if only,要是...就好了,phrase,/ɪf ˈoʊnli/,/ɪf ˈəʊnli/,L3~L4,比wish更强烈。,"[{""en"":""If only I had known!"",""zh"":""要是我早知道就好了！""}]",1
+条件·wish与unless,unless与替代,unless,除非,conj,/ənˈles/,/ənˈles/,L2~L3,if not的替代。,"[{""en"":""I won't go unless you come."",""zh"":""除非你来，否则我不去。""}]",0
+条件·wish与unless,unless与替代,as long as,只要,conj,/æz lɔːŋ æz/,/æz lɒŋ æz/,L2~L3,条件连词。,"[{""en"":""You can stay as long as you're quiet."",""zh"":""只要你安静，就可以留下。""}]",1
+条件·wish与unless,unless与替代,otherwise,否则,adv,/ˈʌðərwaɪz/,/ˈʌðəwaɪz/,L3,否则/不然。,"[{""en"":""Hurry up, otherwise we'll be late."",""zh"":""快点，否则我们要迟到了。""}]",2
+条件·wish与unless,unless与替代,provided,假如/只要,conj,/prəˈvaɪdɪd/,/prəˈvaɪdɪd/,L3,provided that = 只要。,"[{""en"":""I'll go provided that he agrees."",""zh"":""只要他同意，我就去。""}]",3

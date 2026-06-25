@@ -1,0 +1,16 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+条件·真实条件,零条件,If you ___, it ___.,如果你...它就...,"heat ice, melts","If you heat ice, it melts.",L2,0
+条件·真实条件,零条件,If I ___, I ___.,如果我...我就...,"am late, get tired","If I am late, my boss gets angry.",L2,1
+条件·真实条件,第一条件,If it ___, I will ___.,如果...我会...,"rains, stay home","If it rains, I will stay home.",L2~L3,0
+条件·真实条件,第一条件,If you ___, you will ___.,如果你...你就会...,"study hard, pass the exam","If you study hard, you will pass.",L2~L3,1
+条件·真实条件,第一条件,I will ___ if I ___.,我会...如果...,"call you, need help","I will call you if I need help.",L2~L3,2
+条件·虚拟条件,第二条件,If I ___, I would ___.,如果我...我会...,"had money, travel","If I had money, I would travel.",L3,0
+条件·虚拟条件,第二条件,If I were you, I would ___.,如果我是你，我会...,"accept, take the job, say yes",If I were you, I would accept.,L3,1
+条件·虚拟条件,第二条件,I would ___ if I ___.,我会...如果...,"buy a house, had money","I would buy a house if I had money.",L3,2
+条件·虚拟条件,第三条件,If I had ___, I would have ___.,如果我...了，我就...了,"studied harder, passed","If I had studied harder, I would have passed.",L3~L4,0
+条件·虚拟条件,第三条件,I would have ___ if I had ___.,我本来会...如果...,"called, known","I would have called if I had known.",L3~L4,1
+条件·wish与unless,wish愿望句,I wish I ___.,我希望我...,"were taller, lived there, had a car","I wish I were taller.",L3,0
+条件·wish与unless,wish愿望句,I wish I had ___.,我希望我...了,"studied harder, listened, saved more","I wish I had studied harder.",L3~L4,1
+条件·wish与unless,unless与替代,I won't ___ unless you ___.,我不会...除非你...,"go, come","I won't go unless you come.",L2~L3,0
+条件·wish与unless,unless与替代,You can ___ as long as you ___.,你可以...只要你...,"borrow my car, drive carefully","You can borrow my car as long as you drive carefully.",L2~L3,1
+条件·wish与unless,unless与替代,___, otherwise ___.,...否则...,"Hurry up, we'll be late","Hurry up, otherwise we'll be late.",L3,2

@@ -1,3 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础·天气与季节,谈论天气,Practice 谈论天气 in English.,学习谈论天气的表达。。,25,L1,学习谈论天气的表达。,天气 温度 预报,practice_foundation-weather-nature_基础_天气与季节_谈论天气
-基础·天气与季节,季节与自然,Practice 季节与自然 in English.,学习表达季节和自然现象。。,25,L1,学习表达季节和自然现象。,季节 自然 环境,practice_foundation-weather-nature_基础_天气与季节_季节与自然
+基础⑧·并列与转折,和/或者/但是,Practice connecting ideas with and but or because so.,练习用and/but/or/because/so连接想法。,35,L1~L2,掌握并列连词和转折连词的基本用法。,并列 转折 and but because so,practice_foundation-weather-nature_并列与转折_和或者但是
+基础⑧·并列与转折,因为/所以,Practice cause and effect with because and so.,练习用because和so表达因果。,35,L1~L2,掌握因果连接词和复杂句表达。,因果 because so 原因 结果,practice_foundation-weather-nature_并列与转折_因为所以
+基础⑧·时间与条件,当...时/之前/之后,Practice time clauses with when while before after until.,练习时间从句：when/while/before/after/until。,40,L1~L2,掌握时间连接词引导的状语从句。,时间从句 when while before after,practice_foundation-weather-nature_时间与条件_当之前之后
+基础⑧·时间与条件,如果/除非,Practice conditional clauses with if and unless.,练习条件从句：if和unless。,35,L1~L2,掌握条件句的基本结构(零条件/第一条件)。,条件句 if unless 假设 条件,practice_foundation-weather-nature_时间与条件_如果除非
+基础⑧·让步与定语,虽然/尽管,Practice concession with although even though though.,练习让步从句：although/even though/though。,35,L1~L2,掌握让步连接词的句首和句中用法。,让步 although even though 对比,practice_foundation-weather-nature_让步与定语_虽然尽管
+基础⑧·让步与定语,定语从句入门,Practice relative clauses with who which that where.,练习定语从句：who/which/that/where。,40,L1~L2,掌握关系代词引导的定语从句(修饰人/物/地点)。,定语从句 who which that where 修饰,practice_foundation-weather-nature_让步与定语_定语从句入门

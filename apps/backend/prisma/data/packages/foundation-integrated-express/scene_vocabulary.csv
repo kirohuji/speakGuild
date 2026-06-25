@@ -1,0 +1,15 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+基础⑩·喜好与活动,我喜欢做...,doing,做(动名词形式),noun,/ˈduːɪŋ/,/ˈduːɪŋ/,L2,动词+ing变成名词。,"[{""en"":""I like swimming."",""zh"":""我喜欢游泳。""}]",0
+基础⑩·喜好与活动,我喜欢做...,enjoy,享受/喜欢,verb,/ɪnˈdʒɔɪ/,/ɪnˈdʒɔɪ/,L2,enjoy+doing。,"[{""en"":""She enjoys cooking."",""zh"":""她喜欢做饭。""}]",1
+基础⑩·喜好与活动,我想做/需要做,hope,希望,verb,/hoʊp/,/həʊp/,L2,hope+to do。,"[{""en"":""I hope to see you."",""zh"":""我希望能见到你。""}]",0
+基础⑩·喜好与活动,我想做/需要做,would like,想要(委婉),phrase,/wʊd laɪk/,/wʊd laɪk/,L2,比want更礼貌。,"[{""en"":""I would like a coffee."",""zh"":""我想要杯咖啡。""}]",1
+基础⑩·礼貌与请求,请你帮我...,could,可以(委婉),modal,/kʊd/,/kʊd/,L2,can的过去式/委婉用法。,"[{""en"":""Could you help me?"",""zh"":""你能帮我吗？""}]",0
+基础⑩·礼貌与请求,请你帮我...,mind,介意,verb,/maɪnd/,/maɪnd/,L2,Would you mind+doing?,"[{""en"":""Would you mind waiting?"",""zh"":""你介意等一下吗？""}]",1
+基础⑩·礼貌与请求,你想要...吗？,would you like,你想要...,phrase,/wʊd juː laɪk/,/wʊd juː laɪk/,L2,邀请/提议。,"[{""en"":""Would you like some tea?"",""zh"":""你想喝茶吗？""}]",0
+基础⑩·经历与持续,我去过/做过,have been,去过,phrase,/hæv biːn/,/hæv biːn/,L2,现在完成时表经历。,"[{""en"":""I have been to London."",""zh"":""我去过伦敦。""}]",0
+基础⑩·经历与持续,我去过/做过,ever,曾经,adv,/ˈevər/,/ˈevə/,L2,完成时疑问句标志。,"[{""en"":""Have you ever tried it?"",""zh"":""你试过吗？""}]",1
+基础⑩·经历与持续,我去过/做过,never,从未,adv,/ˈnevər/,/ˈnevə/,L2,完成时否定。,"[{""en"":""I have never seen that."",""zh"":""我从未见过。""}]",2
+基础⑩·经历与持续,已经多久了,for,持续(时间段),prep,/fɔːr/,/fɔː/,L2,for+时间段。,"[{""en"":""I waited for 2 hours."",""zh"":""我等了2小时。""}]",0
+基础⑩·经历与持续,已经多久了,since,自从(时间点),prep,/sɪns/,/sɪns/,L2,since+具体时间。,"[{""en"":""I have studied since 2020."",""zh"":""我从2020年开始学。""}]",1
+基础⑩·经历与持续,已经多久了,already,已经,adv,/ɔːlˈredi/,/ɔːlˈredi/,L2,already用于肯定句。,"[{""en"":""I already ate."",""zh"":""我已经吃了。""}]",2
+基础⑩·经历与持续,已经多久了,yet,还(没),adv,/jet/,/jet/,L2,yet用于否定和疑问。,"[{""en"":""Have you finished yet?"",""zh"":""你完成了吗？""}]",3

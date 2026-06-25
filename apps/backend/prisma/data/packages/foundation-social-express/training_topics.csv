@@ -1,5 +1,7 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础·问候与介绍,见面问候,undefined,undefined,30,L1,学习各种见面问候语。,问候 打招呼 礼貌,practice_foundation-social-express_基础_问候与介绍_见面问候
-基础·问候与介绍,自我介绍,undefined,undefined,35,L1,学习自我介绍的基本表达。,介绍 姓名 来自,practice_foundation-social-express_基础_问候与介绍_自我介绍
-基础·礼貌与请求,礼貌用语,undefined,undefined,30,L1,学习最基本的礼貌用语。,礼貌 感谢 道歉,practice_foundation-social-express_基础_礼貌与请求_礼貌用语
-基础·礼貌与请求,请求与帮助,undefined,undefined,35,L1,学习请求帮助和提供帮助的表达。,请求 帮助 允许,practice_foundation-social-express_基础_礼貌与请求_请求与帮助
+基础⑥·过去的状态,我以前是/有,Practice talking about past states with was/were and had.,练习用was/were/had描述过去的状态和拥有。,35,L1~L2,掌握was/were的肯定否定疑问和have→had过去式。,过去时 was were had 状态 过去,practice_foundation-social-express_过去的状态_我以前是有
+基础⑥·过去的状态,昨天在哪里,Practice asking and answering about past locations and feelings.,练习询问和回答过去的位置和感受。,35,L1~L2,掌握Where were you? / Were you...? 过去疑问句。,过去 位置 感受 疑问 回答,practice_foundation-social-express_过去的状态_昨天在哪里
+基础⑥·过去的动作,昨天做了什么,Practice describing past actions with regular -ed verbs.,练习用规则动词过去式描述过去的动作。,35,L1~L2,掌握规则动词加ed的读音和拼写。,过去时 ed 发音 规则动词,practice_foundation-social-express_过去的动作_昨天做了什么
+基础⑥·过去的动作,不规则动词,Practice 30 common irregular past tense verbs.,练习30个核心不规则动词过去式。,40,L1~L2,掌握went/ate/had/did/saw/said/got等不规则变化。,不规则动词 过去式 核心动词,practice_foundation-social-express_过去的动作_不规则动词
+基础⑥·讲述经历,上个周末/去年,Practice telling stories about last weekend and last year.,练习讲述上周末和去年的经历。,40,L1~L2,掌握用过去时叙述完整经历的能力。,叙事 过去时 经历 时间表达,practice_foundation-social-express_讲述经历_上个周末去年
+基础⑥·讲述经历,否定和疑问,Practice past tense negatives and questions with didn't and Did.,练习过去时的否定句和疑问句。,35,L1~L2,掌握didn't和Did的用法，以及Wh-过去疑问句。,否定 疑问 didn't Did 过去疑问,practice_foundation-social-express_讲述经历_否定和疑问

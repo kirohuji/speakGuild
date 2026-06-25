@@ -1,0 +1,20 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_int_01,1,I like swimming in the summer.,0
+ch_int_01,1,She enjoys cooking for her family.,1
+ch_int_01,1,I hate waiting in long lines.,2
+ch_int_01,2,I want to learn Chinese.,0
+ch_int_01,2,I need to finish my homework.,1
+ch_int_01,2,I hope to see you again.,2
+ch_int_01,2,I would like to order some food.,3
+ch_int_02,1,Could you help me with this?,0
+ch_int_02,1,Would you mind opening the window?,1
+ch_int_02,1,May I come in?,2
+ch_int_02,2,Would you like some coffee?,0
+ch_int_02,2,How about going for a walk?,1
+ch_int_03,1,I have been to Beijing twice.,0
+ch_int_03,1,Have you ever tried sushi? — Yes, I have.,1
+ch_int_03,1,I have never seen a ghost.,2
+ch_int_03,2,He has lived here for 10 years.,0
+ch_int_03,2,She has studied English since 2020.,1
+ch_int_03,2,I have already finished my homework.,2
+ch_int_03,2,I haven't finished yet.,3

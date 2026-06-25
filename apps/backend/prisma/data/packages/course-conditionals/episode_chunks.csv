@@ -1,0 +1,41 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+cond_01,1,If you heat ice, it melts.,0
+cond_01,1,If I don't sleep well, I feel tired the next day.,1
+cond_01,1,If you mix red and blue, you get purple.,2
+cond_01,1,If it rains, the ground gets wet.,3
+cond_01,1,If I am late, my boss gets angry.,4
+cond_01,1,If you don't water plants, they die.,5
+cond_01,2,If it rains tomorrow, I will stay home.,0
+cond_01,2,If you study hard, you will pass the exam.,1
+cond_01,2,I will call you if I need help.,2
+cond_01,2,If you don't hurry, you will miss the bus.,3
+cond_01,2,She won't get the job if she doesn't prepare well.,4
+cond_01,2,If he arrives early, we can start the meeting sooner.,5
+cond_02,1,If I had more money, I would travel around the world.,0
+cond_02,1,If I were you, I would accept the offer.,1
+cond_02,1,If she knew the truth, she would be very sad.,2
+cond_02,1,I would buy a house if I had enough money.,3
+cond_02,1,If he lived closer, he could visit us more often.,4
+cond_02,1,If I had a better job, I might move to a bigger city.,5
+cond_02,2,If I had studied harder, I would have passed the exam.,0
+cond_02,2,If she had left earlier, she wouldn't have missed the train.,1
+cond_02,2,If we had saved more money, we could have bought a house.,2
+cond_02,2,I would have called you if I had known you were sick.,3
+cond_02,2,If he had taken the medicine, he might have recovered sooner.,4
+cond_02,2,If they had asked for help, I would have been happy to assist.,5
+cond_03,1,I wish I were taller.,0
+cond_03,1,I wish I lived near the beach.,1
+cond_03,1,She wishes she had more time to travel.,2
+cond_03,1,I wish it would stop raining.,3
+cond_03,1,I wish I had studied harder in school.,4
+cond_03,1,She wishes she hadn't said that.,5
+cond_03,1,I wish I could go with you, but I can't.,6
+cond_03,1,If only I had known the truth earlier!,7
+cond_03,2,I won't go unless you come with me.,0
+cond_03,2,You can't enter unless you have a ticket.,1
+cond_03,2,You can borrow my car as long as you drive carefully.,2
+cond_03,2,I'll go provided that everyone else agrees.,3
+cond_03,2,I'll still love you even if you make mistakes.,4
+cond_03,2,Hurry up, otherwise we'll be late.,5
+cond_03,2,I'd better leave now, otherwise I'll miss the train.,6
+cond_03,2,Whether you like it or not, we have to do it.,7

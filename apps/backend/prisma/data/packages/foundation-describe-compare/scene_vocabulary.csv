@@ -1,0 +1,12 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+基础⑨·比较事物,比...更,bigger,更大的,adj,/ˈbɪɡər/,/ˈbɪɡə/,L2,big的比较级。,"[{""en"":""My house is bigger than yours."",""zh"":""我的房子比你的大。""}]",0
+基础⑨·比较事物,比...更,than,比,conj,/ðæn/,/ðən/,L2,比较级后接比较对象。,"[{""en"":""She is taller than me."",""zh"":""她比我高。""}]",1
+基础⑨·比较事物,最...的,best,最好的,adj,/best/,/best/,L2,good的最高级。,"[{""en"":""This is the best day ever!"",""zh"":""这是最好的一天！""}]",0
+基础⑨·描述位置,有...在...,there,那里（存在句引导词）,adv,/ðer/,/ðeə/,L1,There is/are 存在句开头。,"[{""en"":""There is a book on the desk."",""zh"":""桌上有本书。""}]",0
+基础⑨·描述位置,有...在...,some,一些,det,/sʌm/,/sʌm/,L1,肯定句中的"一些"。,"[{""en"":""There are some apples."",""zh"":""有一些苹果。""}]",1
+基础⑨·描述位置,在...里/上/旁边,under,在...下面,prep,/ˈʌndər/,/ˈʌndə/,L1,位置介词。,"[{""en"":""The cat is under the chair."",""zh"":""猫在椅子下。""}]",0
+基础⑨·描述位置,在...里/上/旁边,next to,在...旁边,phrase,/nekst tuː/,/nekst tə/,L1,位置短语。,"[{""en"":""The school is next to the park."",""zh"":""学校在公园旁边。""}]",1
+基础⑨·程度表达,和...一样,as,一样地,adv,/æz/,/əz/,L2,as...as结构。,"[{""en"":""He is as tall as me."",""zh"":""他和我一样高。""}]",0
+基础⑨·程度表达,和...一样,enough,足够,adv,/ɪˈnʌf/,/ɪˈnʌf/,L2,放在形容词后。,"[{""en"":""It's big enough."",""zh"":""够大了。""}]",1
+基础⑨·程度表达,怎么做的,well,好地,adv,/wel/,/wel/,L2,good的副词形式。,"[{""en"":""She sings well."",""zh"":""她唱得好。""}]",0
+基础⑨·程度表达,怎么做的,quickly,快速地,adv,/ˈkwɪkli/,/ˈkwɪkli/,L2,quick + ly。,"[{""en"":""He ran quickly."",""zh"":""他跑得很快。""}]",1

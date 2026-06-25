@@ -1,0 +1,7 @@
+chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
+ch_desc_01,比较事物,1,比...更,基础⑨·比较事物,L2,1,2,3,4,4,"[""学会比较级-er和more"",""学会不规则better""]",2,3,2,Tutor,英语导师,true,practice_foundation-describe-compare_比较事物_比更,"{""xp"":15}"
+ch_desc_01,比较事物,2,最...的,基础⑨·比较事物,L2,1,2,2,4,4,"[""学会最高级the -est"",""学会the most""]",2,3,2,Tutor,英语导师,false,practice_foundation-describe-compare_比较事物_最的,"{""xp"":15}"
+ch_desc_02,描述位置,1,有...在...,基础⑨·描述位置,L1,1,2,4,6,6,"[""学会There is/are"",""学会there is否定疑问""]",2,3,2,Tutor,英语导师,false,practice_foundation-describe-compare_描述位置_有在,"{""xp"":15}"
+ch_desc_02,描述位置,2,在...里/上/旁边,基础⑨·描述位置,L1,1,2,2,6,6,"[""学会位置介词""]",2,2,2,Tutor,英语导师,false,practice_foundation-describe-compare_描述位置_在里上旁边,"{""xp"":15}"
+ch_desc_03,程度表达,1,和...一样,基础⑨·程度表达,L2,1,2,4,6,6,"[""学会as...as同级比较"",""学会too/enough""]",2,3,2,Tutor,英语导师,false,practice_foundation-describe-compare_程度表达_和一样,"{""xp"":15}"
+ch_desc_03,程度表达,2,怎么做的,基础⑨·程度表达,L2,1,2,2,6,6,"[""学会方式副词构成和用法""]",2,2,2,Tutor,英语导师,false,practice_foundation-describe-compare_程度表达_怎么做的,"{""xp"":15}"

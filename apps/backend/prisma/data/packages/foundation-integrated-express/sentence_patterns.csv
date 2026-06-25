@@ -1,0 +1,12 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+基础⑩·喜好与活动,我喜欢做...,I like/enjoy/hate ___ing.,我喜欢/讨厌做...,"swimming, cooking, waiting",I like swimming.,L2,0
+基础⑩·喜好与活动,我想做/需要做,I want/need/hope to ___.,我想/需要/希望做...,"learn Chinese, finish, see you",I want to learn Chinese.,L2,0
+基础⑩·喜好与活动,我想做/需要做,I would like to ___.,我想要做...,"order food, book a room",I would like to order.,L2,1
+基础⑩·礼貌与请求,请你帮我...,Could you ___?,你能...吗？,"help me, open the door, wait",Could you help me?,L2,0
+基础⑩·礼貌与请求,请你帮我...,May I ___?,我可以...吗？,"come in, use your phone, sit here",May I come in?,L2,1
+基础⑩·礼貌与请求,你想要...吗？,Would you like ___?,你想要...吗？,"some coffee, some tea, to join us",Would you like some coffee?,L2,0
+基础⑩·礼貌与请求,你想要...吗？,How about ___ing?,...怎么样？,"going for a walk, eating out",How about going for a walk?,L2,1
+基础⑩·经历与持续,我去过/做过,I have been to ___.,我去过...,"Beijing, Japan, the US",I have been to Beijing.,L2,0
+基础⑩·经历与持续,我去过/做过,Have you ever ___?,你曾经...过吗？,"tried sushi, been to Japan",Have you ever tried sushi?,L2,1
+基础⑩·经历与持续,已经多久了,I have ___ for/since ___.,我已经...多久了,"lived here, 10 years",I have lived here for 10 years.,L2,0
+基础⑩·经历与持续,已经多久了,I have already ___.,我已经...了,"finished, left, seen it",I have already finished.,L2,1

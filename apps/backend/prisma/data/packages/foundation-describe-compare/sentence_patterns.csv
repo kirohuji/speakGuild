@@ -1,0 +1,10 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+基础⑨·比较事物,比...更,___ is ___er than ___.,...比...更,"My bag, bigger, yours",My bag is bigger than yours.,L2,0
+基础⑨·比较事物,比...更,___ is more ___ than ___.,...比...更...,"This book, interesting, that one",This book is more interesting than that one.,L2,1
+基础⑨·比较事物,最...的,___ is the ___est.,...是最...的,"She, kind, in our class",She is the kindest in our class.,L2,0
+基础⑨·比较事物,最...的,___ is the most ___.,...是最...的,"This, beautiful place, I've seen",This is the most beautiful place.,L2,1
+基础⑨·描述位置,有...在...,There is/are ___.,有...（存在）,"a bank, two cats, a park",There is a bank near here.,L1,0
+基础⑨·描述位置,在...里/上/旁边,The ___ is/are ___ the ___.,...在......,cat,under,table,The cat is under the table.,L1,0
+基础⑨·程度表达,和...一样,___ as ___ as ___.,...和...一样...,"She, tall, her brother","She is as tall as her brother.",L2,0
+基础⑨·程度表达,和...一样,too ___ to ___,太...而不能...,"hot, drink",This coffee is too hot to drink.,L2,1
+基础⑨·程度表达,怎么做的,___ ___s ___.,...(动作)得...（副词）,"She, speak, well","She speaks well.",L2,0

@@ -1,0 +1,17 @@
+episode_chapter,episode_order,chunk_text_match,sort_order
+ch_desc_01,1,My bag is bigger than yours.,0
+ch_desc_01,1,This book is more interesting than that one.,1
+ch_desc_01,1,She is a better student than me.,2
+ch_desc_01,2,She is the best student in our class.,0
+ch_desc_01,2,This is the most beautiful place I've seen.,1
+ch_desc_02,1,There is a bank near my house.,0
+ch_desc_02,1,There are two cats in the garden.,1
+ch_desc_02,1,Is there a bank near here? — Yes, there is.,2
+ch_desc_02,1,There isn't any milk in the fridge.,3
+ch_desc_02,2,The cat is under the table.,0
+ch_desc_02,2,The school is next to the library.,1
+ch_desc_03,1,She is as tall as her brother.,0
+ch_desc_03,1,He is not as tall as his father.,1
+ch_desc_03,1,This coffee is too hot to drink.,2
+ch_desc_03,1,This room is big enough for us.,3
+ch_desc_03,2,She speaks English very well.,0
