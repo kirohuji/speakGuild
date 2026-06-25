@@ -52,7 +52,7 @@ const TABS = [
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = { stt: 'STT', tts: 'TTS', llm: 'LLM' };
-const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'deepseek', 'openai']);
+const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'deepseek', 'openai']);
 
 const DEEPSEEK_MODELS = [
   { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', hint: 'Flagship model for higher-quality reasoning and complex tasks.' },
@@ -70,6 +70,11 @@ const MINIMAX_MODELS = [
   'speech-02-turbo',
   'speech-01-hd',
   'speech-01-turbo',
+];
+
+const HUME_MODELS = [
+  { value: '2', label: 'Octave 2' },
+  { value: '1', label: 'Octave 1' },
 ];
 
 const SAMPLE_TEXT = 'Please read this sentence clearly and naturally for a language-learning exercise.';
@@ -189,6 +194,16 @@ function getTtsFields(item: AiProviderItem): TtsTestField[] {
       { key: 'output_format', label: 'Response', type: 'select', value: 'hex', options: ['hex', 'url'] },
       { key: 'subtitle_enable', label: 'Subtitle', type: 'boolean', value: 'false' },
       { key: 'subtitle_type', label: 'Subtitle type', type: 'select', value: 'sentence', options: ['sentence', 'word'] },
+    ];
+  }
+  if (item.provider === 'hume') {
+    return [
+      { key: 'speed', label: 'Speed', type: 'number', min: 0.75, max: 1.5, step: 0.05, value: '1' },
+      { key: 'temperature', label: 'Temperature', type: 'number', min: 0, max: 1, step: 0.05, value: item.model === '1' ? '0.8' : '0.75' },
+      { key: 'trailing_silence', label: 'Silence', type: 'number', min: 0, max: 5, step: 0.1, value: '0' },
+      { key: 'format', label: 'Format', type: 'select', value: 'mp3', options: ['mp3', 'wav'] },
+      { key: 'voice_provider', label: 'Voice provider', type: 'select', value: 'HUME_AI', options: ['HUME_AI', 'CUSTOM_VOICE'] },
+      { key: 'voice_kind', label: 'Voice kind', type: 'select', value: 'name', options: ['name', 'id'] },
     ];
   }
   return [
@@ -339,6 +354,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const [apiKey, setApiKey] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [groupId, setGroupId] = useState('');
+  const [voiceName, setVoiceName] = useState('Ava Song');
+  const [voiceProvider, setVoiceProvider] = useState('HUME_AI');
   const [timeoutMs, setTimeoutMs] = useState('300000');
   const [region, setRegion] = useState('ap-guangzhou');
   const [temperature, setTemperature] = useState('0.2');
@@ -349,10 +366,12 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   useEffect(() => {
     if (!item) return;
     const cfg = item.config ?? {};
-    setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : (item.model ?? ''));
+    setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : item.provider === 'hume' ? (item.model || '2') : (item.model ?? ''));
     setApiKey(item.apiKey ?? '');
     setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : (item.baseUrl ?? ''));
     setGroupId(String((cfg as Record<string, unknown>).groupId ?? ''));
+    setVoiceName(String((cfg as Record<string, unknown>).voiceName ?? 'Ava Song'));
+    setVoiceProvider(String((cfg as Record<string, unknown>).voiceProvider ?? 'HUME_AI'));
     setTimeoutMs(String((cfg as Record<string, unknown>).timeoutMs ?? 300000));
     setRegion(String((cfg as Record<string, unknown>).region ?? 'ap-guangzhou'));
     setTemperature(String((cfg as Record<string, unknown>).temperature ?? 0.2));
@@ -367,6 +386,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const isTencentAsr = item.type === 'stt' && item.provider === 'tencent';
   const isDeepSeek = item.type === 'llm' && item.provider === 'deepseek';
   const isMiniMax = item.type === 'tts' && item.provider === 'minimax';
+  const isHume = item.type === 'tts' && item.provider === 'hume';
 
   const handleSave = async () => {
     setSaving(true);
@@ -384,6 +404,9 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
         config.enableTimestamps = enableTimestamps;
       } else if (isMiniMax) {
         config.groupId = groupId.trim();
+      } else if (isHume) {
+        config.voiceName = voiceName.trim() || 'Ava Song';
+        config.voiceProvider = voiceProvider === 'CUSTOM_VOICE' ? 'CUSTOM_VOICE' : 'HUME_AI';
       }
       await updateAiProvider(item.id, { model, apiKey, baseUrl, ...(Object.keys(config).length ? { config } : {}) });
       setMessage('Saved');
@@ -420,6 +443,15 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
               <div className="space-y-2"><Label>MiniMax model</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{MINIMAX_MODELS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</Select></div>
               <div className="space-y-2"><Label>MINIMAX_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
               <div className="space-y-2"><Label>MINIMAX_GROUP_ID</Label><Input value={groupId} onChange={(event) => setGroupId(event.target.value)} className="font-mono text-sm" placeholder="1943473439796896389" /></div>
+            </>
+          ) : isHume ? (
+            <>
+              <div className="space-y-2"><Label>Hume Octave version</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{HUME_MODELS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</Select></div>
+              <div className="space-y-2"><Label>HUME_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
+              <div className="grid grid-cols-[minmax(0,1fr)_9rem] gap-2">
+                <div className="space-y-2"><Label>Default voice</Label><Input value={voiceName} onChange={(event) => setVoiceName(event.target.value)} className="font-mono text-sm" placeholder="Ava Song" /></div>
+                <div className="space-y-2"><Label>Provider</Label><Select value={voiceProvider} onChange={(event) => setVoiceProvider(event.target.value)}><SelectItem value="HUME_AI">Hume</SelectItem><SelectItem value="CUSTOM_VOICE">Custom</SelectItem></Select></div>
+              </div>
             </>
           ) : isDeepSeek ? (
             <>
@@ -556,7 +588,17 @@ function TestDialog({ item, open, onOpenChange }: { item: AiProviderItem | null;
   useEffect(() => {
     if (!item || !open) return;
     const ttsDefaults = Object.fromEntries(getTtsFields(item).map((field) => [field.key, field.value]));
-    setState({ ...DEFAULT_TEST_STATE, params: ttsDefaults, temperature: String((item.config as Record<string, unknown> | undefined)?.temperature ?? '0.2'), enableTimestamps: (item.config as Record<string, unknown> | undefined)?.enableTimestamps !== false });
+    const config = item.config as Record<string, unknown> | undefined;
+    setState({
+      ...DEFAULT_TEST_STATE,
+      voiceId: item.provider === 'hume' && typeof config?.voiceName === 'string' ? config.voiceName : '',
+      params: {
+        ...ttsDefaults,
+        ...(item.provider === 'hume' && typeof config?.voiceProvider === 'string' ? { voice_provider: config.voiceProvider } : {}),
+      },
+      temperature: String(config?.temperature ?? '0.2'),
+      enableTimestamps: config?.enableTimestamps !== false,
+    });
     setError(null);
     setSttResult(null);
     setTtsResult(null);
@@ -653,7 +695,7 @@ function TestDialog({ item, open, onOpenChange }: { item: AiProviderItem | null;
               {item.type === 'tts' && (
                 <div className="space-y-3">
                   <div className="space-y-2"><Label>Text</Label><Textarea value={state.text} onChange={(event) => setState((prev) => ({ ...prev, text: event.target.value }))} className="min-h-28" /></div>
-                  <div className="space-y-2"><Label>Voice ID</Label><Input value={state.voiceId} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))} placeholder={item.provider === 'cartesia' ? 'Required by Cartesia' : 'Leave empty to use default voice'} /></div>
+                  <div className="space-y-2"><Label>{item.provider === 'hume' ? 'Voice name / ID' : 'Voice ID'}</Label><Input value={state.voiceId} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))} placeholder={item.provider === 'cartesia' ? 'Required by Cartesia' : item.provider === 'hume' ? 'Ava Song' : 'Leave empty to use default voice'} /></div>
                   <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                     {getTtsFields(item).map((field) => (
                       <div key={field.key} className="space-y-2">

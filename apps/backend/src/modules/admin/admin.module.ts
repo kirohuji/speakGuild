@@ -6,7 +6,7 @@ import { ContentAdminController } from './content-admin.controller';
 import { LearningPackAdminController } from './learning-pack-admin.controller';
 import { LearningPackAdminService } from './learning-pack-admin.service';
 import { PackageDataController } from './package-data.controller';
-import { SystemConfigController } from './system-config/system-config.controller';
+import { PublicSystemConfigController, SystemConfigController } from './system-config/system-config.controller';
 import { SystemConfigService } from './system-config/system-config.service';
 import { ThemeManageModule } from './theme-manage/theme-manage.module';
 import { DailySentenceModule } from './daily-sentence/daily-sentence.module';
@@ -20,7 +20,7 @@ import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule],
-  controllers: [AdminController, ContentAdminController, SystemConfigController, LearningPackAdminController, PackageDataController],
+  controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController],
   providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService],
   exports: [SystemConfigService],
 })

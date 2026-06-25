@@ -51,3 +51,14 @@ export class SystemConfigController {
     return this.systemConfigService.setConfig(key, value);
   }
 }
+
+@Controller('system-config')
+export class PublicSystemConfigController {
+  constructor(private readonly systemConfigService: SystemConfigService) {}
+
+  /** Public feature flags consumed by app clients. */
+  @Get('public-flags')
+  async getPublicFlags() {
+    return this.systemConfigService.getPublicFlags();
+  }
+}

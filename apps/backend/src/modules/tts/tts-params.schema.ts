@@ -142,6 +142,91 @@ export const TTS_PARAMS_SCHEMA: TtsSchema[] = [
       },
     ],
   },
+  {
+    provider: 'hume',
+    models: [
+      {
+        model: '2',
+        label: 'Octave 2',
+        requiresVoiceId: false,
+        fields: [
+          { key: 'speed', label: 'Speed', type: 'number' as const, min: 0.75, max: 1.5, step: 0.05, defaultValue: 1 },
+          { key: 'temperature', label: 'Temperature', type: 'number' as const, min: 0, max: 1, step: 0.05, defaultValue: 0.75 },
+          { key: 'trailing_silence', label: 'Trailing silence', type: 'number' as const, min: 0, max: 5, step: 0.1, defaultValue: 0 },
+          {
+            key: 'format',
+            label: 'Audio format',
+            type: 'select' as const,
+            defaultValue: 'mp3',
+            options: [
+              { label: 'MP3', value: 'mp3' },
+              { label: 'WAV', value: 'wav' },
+            ],
+          },
+          {
+            key: 'voice_provider',
+            label: 'Voice provider',
+            type: 'select' as const,
+            defaultValue: 'HUME_AI',
+            options: [
+              { label: 'Hume library', value: 'HUME_AI' },
+              { label: 'Custom voice', value: 'CUSTOM_VOICE' },
+            ],
+          },
+          {
+            key: 'voice_kind',
+            label: 'Voice kind',
+            type: 'select' as const,
+            defaultValue: 'name',
+            options: [
+              { label: 'Name', value: 'name' },
+              { label: 'ID', value: 'id' },
+            ],
+          },
+        ],
+      },
+      {
+        model: '1',
+        label: 'Octave 1',
+        requiresVoiceId: false,
+        fields: [
+          { key: 'speed', label: 'Speed', type: 'number' as const, min: 0.75, max: 1.5, step: 0.05, defaultValue: 1 },
+          { key: 'temperature', label: 'Temperature', type: 'number' as const, min: 0, max: 1, step: 0.05, defaultValue: 0.8 },
+          { key: 'trailing_silence', label: 'Trailing silence', type: 'number' as const, min: 0, max: 5, step: 0.1, defaultValue: 0 },
+          {
+            key: 'format',
+            label: 'Audio format',
+            type: 'select' as const,
+            defaultValue: 'mp3',
+            options: [
+              { label: 'MP3', value: 'mp3' },
+              { label: 'WAV', value: 'wav' },
+            ],
+          },
+          {
+            key: 'voice_provider',
+            label: 'Voice provider',
+            type: 'select' as const,
+            defaultValue: 'HUME_AI',
+            options: [
+              { label: 'Hume library', value: 'HUME_AI' },
+              { label: 'Custom voice', value: 'CUSTOM_VOICE' },
+            ],
+          },
+          {
+            key: 'voice_kind',
+            label: 'Voice kind',
+            type: 'select' as const,
+            defaultValue: 'name',
+            options: [
+              { label: 'Name', value: 'name' },
+              { label: 'ID', value: 'id' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export function sanitizeTtsParams(

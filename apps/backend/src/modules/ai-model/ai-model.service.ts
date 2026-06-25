@@ -100,7 +100,7 @@ export class AiModelService {
   async remove(id: string): Promise<{ success: true }> {
     const provider = await this.prisma.aiProvider.findUnique({ where: { id } });
     if (!provider) throw new NotFoundException('Provider not found');
-    if (['whisper', 'tencent', 'minimax', 'cartesia', 'deepseek', 'openai'].includes(provider.provider)) {
+    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'deepseek', 'openai'].includes(provider.provider)) {
       throw new BadRequestException('Built-in providers cannot be deleted');
     }
     if (provider.isActive) {
@@ -206,6 +206,7 @@ export class AiModelService {
       { type: 'stt', provider: 'tencent', label: '腾讯云 ASR', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'tts', provider: 'minimax', label: 'MiniMax', model: 'speech-2.8-hd', apiKey: process.env.MINIMAX_API_KEY?.trim() || '', baseUrl: '', config: { groupId: process.env.MINIMAX_GROUP_ID?.trim() || '' }, sortOrder: 0 },
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
+      { type: 'tts', provider: 'hume', label: 'Hume AI', model: '2', apiKey: process.env.HUME_API_KEY?.trim() || '', baseUrl: '', config: { voiceName: 'Ava Song', voiceProvider: 'HUME_AI' }, sortOrder: 2 },
       { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4-pro', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },
     ];

@@ -19,6 +19,14 @@ const BUILTIN_CONFIGS = [
     type: 'boolean',
     description: '开启后，所有用户都可以在商店免费下载学习包',
   },
+  {
+    key: 'script_practice_enabled',
+    value: 'false',
+    group: 'feature',
+    label: '剧本练习开放',
+    type: 'boolean',
+    description: '开启后，用户端展示并允许进入剧本练习；关闭时学习包仍会正常下载，仅隐藏前端入口',
+  },
   // ── STT 语音识别 ──
   {
     key: 'stt_provider',
@@ -126,6 +134,16 @@ export class SystemConfigService {
     const val = await this.getValue(key);
     if (val === null) return fallback;
     return val === 'true' || val === '1';
+  }
+
+  /**
+   * Public, non-sensitive feature flags for app clients.
+   */
+  async getPublicFlags(): Promise<Record<string, boolean>> {
+    await this.ensureBuiltinConfigs();
+    return {
+      scriptPracticeEnabled: await this.getBool('script_practice_enabled', false),
+    };
   }
 
   /**

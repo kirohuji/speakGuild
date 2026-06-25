@@ -35,6 +35,7 @@ import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { useLayoutStore } from '@/stores/layout.store'
 import { usePracticeStore } from '@/stores/practice.store'
+import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 type Phase = 'prepare' | 'guided' | 'practice' | 'analysis'
@@ -958,6 +959,11 @@ export function PracticeSessionPage() {
   const [searchParams] = useSearchParams()
   const unitId = searchParams.get('unitId')
   const navigate = useNavigate()
+
+  // ── Feature flag guard ──
+  const flagsLoading = useFeatureFlagsStore((s) => s.loading)
+  const flagsLoaded = useFeatureFlagsStore((s) => s.loaded)
+  const scriptPracticeEnabled = useFeatureFlagsStore((s) => s.scriptPracticeEnabled)
 
   // ── Data ──
   const detail = usePracticeStore((s) => s.topicDetail)
@@ -2003,7 +2009,13 @@ export function PracticeSessionPage() {
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>
-            {detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0 ? (
+            {flagsLoaded && !scriptPracticeEnabled ? (
+              <div className="mt-4 rounded-lg bg-muted/30 px-4 py-6 text-center">
+                <BookOpen className="mx-auto mb-2 size-8 text-muted-foreground/40" />
+                <p className="text-sm font-medium text-foreground">剧本练习暂未开放</p>
+                <p className="mt-1 text-xs text-muted-foreground">该功能正在准备中，敬请期待</p>
+              </div>
+            ) : detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0 ? (
               <div className="mt-4 flex gap-3">
                 <Button className="flex-1 min-h-11" variant="outline" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
                   {t('practiceSession.startWarmup')}

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { authClient, clearBearerToken } from '@/features/auth/client'
 import { useConfigStore } from '@/stores/config.store'
+import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
@@ -158,6 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null
     } finally {
       setIsLoading(false)
+      // 拉取公开功能开关（无鉴权，失败不影响主流程）
+      void useFeatureFlagsStore.getState().fetchFlags()
     }
   }
 

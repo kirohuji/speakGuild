@@ -7,6 +7,7 @@ import { TtsProviderFactory } from './tts-provider.factory';
 import { SttProviderFactory } from './stt/stt-provider.factory';
 import { MinimaxTtsProvider } from './providers/minimax-tts.provider';
 import { CartesiaTtsProvider } from './providers/cartesia-tts.provider';
+import { HumeTtsProvider } from './providers/hume-tts.provider';
 import { WhisperSttProvider } from './stt/whisper-stt.provider';
 import { TencentSttProvider } from './stt/tencent-stt.provider';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
@@ -21,6 +22,7 @@ import { AiModelModule } from '../ai-model/ai-model.module';
     SttProviderFactory,
     MinimaxTtsProvider,
     CartesiaTtsProvider,
+    HumeTtsProvider,
     WhisperSttProvider,
     TencentSttProvider,
   ],

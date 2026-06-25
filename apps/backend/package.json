@@ -38,6 +38,7 @@
     "csv-parse": "^6.2.1",
     "express": "^4.22.1",
     "helmet": "^8.2.0",
+    "hume": "^0.16.0",
     "jose": "^6.2.3",
     "multer": "^2.1.1",
     "reflect-metadata": "^0.2.0",
