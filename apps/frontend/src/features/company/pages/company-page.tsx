@@ -7,6 +7,11 @@ import {
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+} from '@/components/ui/dialog'
 
 /* ═══════════════════════════════════════════════════════════════
    Hero 背景装饰（与 Portal 对齐）
@@ -152,7 +157,7 @@ export function CompanyPage() {
 
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* ── 漫语町 ── */}
-                <div className="rounded-2xl border border-border/60 bg-card shadow-[0_4px_32px_rgba(0,0,0,0.04)] p-8 flex flex-col">
+                <div className="rounded-lg bg-muted/30 p-8 flex flex-col transition-colors duration-200 hover:bg-muted/50">
                   <div className="flex items-center gap-4 mb-5">
                     <div className="size-14 rounded-2xl bg-primary/[0.07] flex items-center justify-center shrink-0">
                       <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
@@ -185,7 +190,7 @@ export function CompanyPage() {
                 </div>
 
                 {/* ── Hope / 佳麦 ── */}
-                <div className="rounded-2xl border border-border/60 bg-card shadow-[0_4px_32px_rgba(0,0,0,0.04)] p-8 flex flex-col">
+                <div className="rounded-lg bg-muted/30 p-8 flex flex-col transition-colors duration-200 hover:bg-muted/50">
                   <div className="flex items-center gap-4 mb-5">
                     <div className="size-14 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                       <span className="text-lg font-extrabold text-amber-600 dark:text-amber-400">H</span>
@@ -342,8 +347,8 @@ export function CompanyPage() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> 我</span>
               </h2>
 
-              <div className="max-w-md">
-                <div className="rounded-2xl border border-border/60 bg-card shadow-[0_4px_32px_rgba(0,0,0,0.04)] p-6 flex items-start gap-5">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+                <div className="rounded-lg bg-muted/30 p-6 flex items-start gap-5 flex-1 transition-colors duration-200 hover:bg-muted/50">
                   <div className="size-16 rounded-full bg-primary/[0.08] flex items-center justify-center shrink-0">
                     <User className="size-7 text-primary" />
                   </div>
@@ -356,6 +361,35 @@ export function CompanyPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* 营业执照 — 点击放大 */}
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="group cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="查看营业执照"
+                    >
+                      <img
+                        src="/yyzz.png"
+                        alt="营业执照"
+                        className="block w-28 sm:w-36 object-contain transition-transform duration-200 group-hover:scale-105"
+                      />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent
+                    overlayClassName="bg-black/70"
+                    className="max-w-[90vw] sm:max-w-[640px] border-0 bg-transparent p-0 shadow-none"
+                  >
+                    <div className="flex items-center justify-center">
+                      <img
+                        src="/yyzz.png"
+                        alt="营业执照"
+                        className="max-h-[85vh] w-auto rounded-lg object-contain"
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </Reveal>
