@@ -21,3 +21,18 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础①·描述他人,我们/他们,we,我们,pron,/wiː/,/wiː/,L1,第一人称复数主格。,"[{""en"":""We are good friends."",""zh"":""我们是好朋友。""}]",0
 基础①·描述他人,我们/他们,they,他们,pron,/ðeɪ/,/ðeɪ/,L1,第三人称复数主格。,"[{""en"":""They are from China."",""zh"":""他们来自中国。""}]",1
 "基础·描述事物",感受与评价,happy,开心的,adj,/ˈhæpi/,/ˈhæpi/,L1,开心的/快乐的。I'm happy = 我很开心。,"[{""en"":""I'm happy to see you."",""zh"":""我很高兴见到你。""}]",2
+基础①·日常寒暄,打招呼与告别,hello,你好,intj,/həˈloʊ/,/həˈləʊ/,L1,最常用的打招呼用语。,"[{""en"":""Hello! How are you?"",""zh"":""你好！你怎么样？""}]",0
+基础①·日常寒暄,打招呼与告别,goodbye,再见,intj,/ɡʊdˈbaɪ/,/ɡʊdˈbaɪ/,L1,告别用语。,"[{""en"":""Goodbye! See you later!"",""zh"":""再见！回头见！""}]",1
+基础①·日常寒暄,打招呼与告别,good morning,早上好,phrase,/ɡʊd ˈmɔːrnɪŋ/,/ɡʊd ˈmɔːnɪŋ/,L1,上午见面问候。,"[{""en"":""Good morning! How are you today?"",""zh"":""早上好！你今天怎么样？""}]",2
+基础①·日常寒暄,打招呼与告别,good afternoon,下午好,phrase,/ɡʊd æftərˈnuːn/,/ɡʊd ɑːftəˈnuːn/,L1,下午见面问候。,"[{""en"":""Good afternoon! Nice to see you."",""zh"":""下午好！很高兴见到你。""}]",3
+基础①·日常寒暄,打招呼与告别,good evening,晚上好,phrase,/ɡʊd ˈiːvnɪŋ/,/ɡʊd ˈiːvnɪŋ/,L1,晚上见面问候。,"[{""en"":""Good evening! How was your day?"",""zh"":""晚上好！你今天过得怎么样？""}]",4
+基础①·日常寒暄,打招呼与告别,nice to meet you,很高兴认识你,phrase,/naɪs tuː miːt juː/,/naɪs tuː miːt juː/,L1,初次见面问候语。,"[{""en"":""Nice to meet you! — Nice to meet you too."",""zh"":""很高兴认识你！——我也是。""}]",5
+基础①·日常寒暄,打招呼与告别,see you later,回头见,phrase,/siː juː ˈleɪtər/,/siː juː ˈleɪtə/,L1,随意告别。,"[{""en"":""See you later! — See you!"",""zh"":""回头见！——再见！""}]",6
+基础①·日常寒暄,打招呼与告别,take care,保重,phrase,/teɪk keər/,/teɪk keə/,L1,关心告别用语。,"[{""en"":""Take care! — I will. Bye!"",""zh"":""保重！——我会的。拜！""}]",7
+基础①·日常寒暄,打招呼与告别,welcome,欢迎,intj,/ˈwelkəm/,/ˈwelkəm/,L1,迎接客人用语。,"[{""en"":""Welcome! Please come in."",""zh"":""欢迎！请进。""}]",8
+基础①·日常寒暄,简单闲聊,how's it going,最近怎么样,phrase,/haʊz ɪt ˈɡoʊɪŋ/,/haʊz ɪt ˈɡəʊɪŋ/,L1,随意问候"How's it going?"。,"[{""en"":""How's it going? — Pretty good."",""zh"":""最近怎么样？——还不错。""}]",0
+基础①·日常寒暄,简单闲聊,what's up,怎么样,phrase,/wɒts ʌp/,/wɒts ʌp/,L1,超随意问候"What's up?"。,"[{""en"":""What's up? — Not much."",""zh"":""怎么样？——没什么。""}]",1
+基础①·日常寒暄,简单闲聊,weather,天气,noun,/ˈweðər/,/ˈweðə/,L1,天气。闲聊常用话题。,"[{""en"":""Nice weather today!"",""zh"":""今天天气真好！""}]",2
+基础①·日常寒暄,简单闲聊,weekend,周末,noun,/ˈwiːkend/,/ˈwiːkˈend/,L1,周末。常用来问候："How was your weekend?"。,"[{""en"":""How was your weekend? — It was great!"",""zh"":""你周末过得怎么样？——很棒！""}]",3
+基础①·日常寒暄,简单闲聊,long time no see,好久不见,phrase,/lɒŋ taɪm nəʊ siː/,/lɒŋ taɪm nəʊ siː/,L1,久别重逢问候。,"[{""en"":""Long time no see! How are you?"",""zh"":""好久不见！你怎么样？""}]",4
+基础①·日常寒暄,简单闲聊,again,再次,adv,/əˈɡen/,/əˈɡen/,L1,又/再。It's nice to see you again。,"[{""en"":""It's nice to see you again!"",""zh"":""很高兴再次见到你！""}]",5

@@ -1,0 +1,511 @@
+{
+  "我是谁": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 I am 介绍自己",
+          "chunk": "I am",
+          "chunkMeaning": "我是",
+          "items": [
+            { "zh": "我是李明。", "answer": "I am Li Ming." },
+            { "zh": "我是一名学生。", "answer": "I am a student." },
+            { "zh": "我来自中国。", "answer": "I am from China." },
+            { "zh": "我 20 岁。", "answer": "I am 20 years old." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "I am not",
+          "chunkMeaning": "我不是",
+          "items": [
+            { "zh": "我不是老师。", "answer": "I am not a teacher." },
+            { "zh": "我不是医生。", "answer": "I am not a doctor." },
+            { "zh": "我迟到了吗？", "answer": "Am I late?" }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "自我介绍逐步扩展",
+          "levels": [
+            { "level": 1, "label": "打招呼", "en": "Hello!", "zh": "你好！" },
+            { "level": 2, "label": "加名字", "en": "Hello! I am Li Ming.", "zh": "你好！我是李明。", "highlight": "I am", "hint": "说出你的名字" },
+            { "level": 3, "label": "加身份", "en": "Hello! I am Li Ming. I am a student.", "zh": "你好！我是李明。我是一名学生。", "highlight": "a student", "hint": "说出你的身份" },
+            { "level": 4, "label": "加来源", "en": "Hello! I am Li Ming. I am a student from China.", "zh": "你好！我是李明。我是一名来自中国的学生。", "highlight": "from China", "hint": "说出你来自哪里" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "I am ___ 填空操练",
+          "pattern": "I am [noun/phrase].",
+          "patternMeaning": "我是...",
+          "slots": ["noun/phrase"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我是汤姆。", "answer": "I am Tom.", "slotValues": { "noun/phrase": "Tom" } },
+            { "zh": "我是一名老师。", "answer": "I am a teacher.", "slotValues": { "noun/phrase": "a teacher" } },
+            { "zh": "我来自日本。", "answer": "I am from Japan.", "slotValues": { "noun/phrase": "from Japan" } },
+            { "zh": "我 25 岁。", "answer": "I am 25 years old.", "slotValues": { "noun/phrase": "25 years old" } }
+          ]
+        }
+      ]
+    }
+  },
+  "你是谁": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 You are 夸人",
+          "chunk": "You are",
+          "chunkMeaning": "你是",
+          "items": [
+            { "zh": "你很善良。", "answer": "You are very kind." },
+            { "zh": "你是对的。", "answer": "You are right." },
+            { "zh": "你很聪明。", "answer": "You are very smart." },
+            { "zh": "你很有趣。", "answer": "You are very funny." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "Are you? / How are you?",
+          "chunkMeaning": "你是...吗？/ 你好吗？",
+          "items": [
+            { "zh": "你是学生吗？", "answer": "Are you a student?" },
+            { "zh": "你是老师吗？", "answer": "Are you a teacher?" },
+            { "zh": "你好吗？", "answer": "How are you?" },
+            { "zh": "你准备好了吗？", "answer": "Are you ready?" }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "问候对话逐步扩展",
+          "levels": [
+            { "level": 1, "label": "问候", "en": "Hello! How are you?", "zh": "你好！你好吗？" },
+            { "level": 2, "label": "加回应", "en": "Hello! How are you? I am fine, thank you.", "zh": "你好！你好吗？我很好，谢谢。", "highlight": "I am fine", "hint": "回应问候" },
+            { "level": 3, "label": "加赞美", "en": "Hello! How are you? I am fine, thank you. You are very kind.", "zh": "你好！你好吗？我很好，谢谢。你很善良。", "highlight": "You are very kind", "hint": "赞美对方" },
+            { "level": 4, "label": "加确认", "en": "Hello! How are you? I am fine, thank you. You are very kind. Are you a student?", "zh": "你好！你好吗？我很好，谢谢。你很善良。你是学生吗？", "highlight": "Are you a student?", "hint": "询问对方身份" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Are you...? 问句操练",
+          "pattern": "Are you [noun/adjective]?",
+          "patternMeaning": "你是...吗？",
+          "slots": ["noun/adjective"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "你是学生吗？", "answer": "Are you a student?", "slotValues": { "noun/adjective": "a student" } },
+            { "zh": "你是医生吗？", "answer": "Are you a doctor?", "slotValues": { "noun/adjective": "a doctor" } },
+            { "zh": "你准备好了吗？", "answer": "Are you ready?", "slotValues": { "noun/adjective": "ready" } },
+            { "zh": "你开心吗？", "answer": "Are you happy?", "slotValues": { "noun/adjective": "happy" } }
+          ]
+        }
+      ]
+    }
+  },
+  "它是什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 It is 描述事物",
+          "chunk": "It is",
+          "chunkMeaning": "它是",
+          "items": [
+            { "zh": "这是一本书。", "answer": "It is a book." },
+            { "zh": "它很大。", "answer": "It is very big." },
+            { "zh": "它是红色的。", "answer": "It is red." },
+            { "zh": "今天很热。", "answer": "It is hot today." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "What is this? / Is it?",
+          "chunkMeaning": "这是什么？/ 它是...吗？",
+          "items": [
+            { "zh": "这是什么？", "answer": "What is this?" },
+            { "zh": "它好吗？", "answer": "Is it good?" },
+            { "zh": "它是新的吗？", "answer": "Is it new?" },
+            { "zh": "它不贵。", "answer": "It is not expensive." }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述事物逐步扩展",
+          "levels": [
+            { "level": 1, "label": "说是什么", "en": "It is a phone.", "zh": "这是一部手机。" },
+            { "level": 2, "label": "加颜色", "en": "It is a phone. It is red.", "zh": "这是一部手机。它是红色的。", "highlight": "red", "hint": "加上颜色" },
+            { "level": 3, "label": "加评价", "en": "It is a phone. It is red. It is very good.", "zh": "这是一部手机。它是红色的。非常好。", "highlight": "very good", "hint": "加上评价" },
+            { "level": 4, "label": "加否定对比", "en": "It is a phone. It is red. It is very good. It is not expensive.", "zh": "这是一部手机。它是红色的。非常好。它不贵。", "highlight": "not expensive", "hint": "加上否定" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Is it ___? 问句操练",
+          "pattern": "Is it [adjective]?",
+          "patternMeaning": "它是...吗？",
+          "slots": ["adjective"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "它大吗？", "answer": "Is it big?", "slotValues": { "adjective": "big" } },
+            { "zh": "它好吗？", "answer": "Is it good?", "slotValues": { "adjective": "good" } },
+            { "zh": "它是新的吗？", "answer": "Is it new?", "slotValues": { "adjective": "new" } },
+            { "zh": "今天热吗？", "answer": "Is it hot today?", "slotValues": { "adjective": "hot today" } }
+          ]
+        }
+      ]
+    }
+  },
+  "他们在哪里": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 on / in / at 说位置",
+          "chunk": "on / in / at",
+          "chunkMeaning": "在...上 / 在...里 / 在...",
+          "items": [
+            { "zh": "它在桌子上。", "answer": "It is on the table." },
+            { "zh": "它在包里。", "answer": "It is in the bag." },
+            { "zh": "他们在家里。", "answer": "They are at home." },
+            { "zh": "我们在教室里。", "answer": "We are in the classroom." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "Where is?",
+          "chunkMeaning": "...在哪里？",
+          "items": [
+            { "zh": "我的手机在哪里？", "answer": "Where is my phone?" },
+            { "zh": "我的钥匙在哪里？", "answer": "Where is my key?" },
+            { "zh": "书在桌子上。", "answer": "The book is on the desk." },
+            { "zh": "猫在床下面。", "answer": "The cat is under the bed." }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述位置逐步扩展",
+          "levels": [
+            { "level": 1, "label": "说物品位置", "en": "My phone is on the table.", "zh": "我的手机在桌子上。" },
+            { "level": 2, "label": "加问句", "en": "Where is my phone? It is on the table.", "zh": "我的手机在哪里？在桌子上。", "highlight": "Where is", "hint": "询问位置" },
+            { "level": 3, "label": "换地点", "en": "Where is my phone? It is in my bag.", "zh": "我的手机在哪里？在我的包里。", "highlight": "in my bag", "hint": "换一个位置介词" },
+            { "level": 4, "label": "加否定", "en": "He is not at home. He is at work.", "zh": "他不在家。他在上班。", "highlight": "not at home / at work", "hint": "用否定描述不在某处" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Where is ___? 问句操练",
+          "pattern": "Where is [object]? It is [preposition] [place].",
+          "patternMeaning": "...在哪里？它在...",
+          "slots": ["object", "preposition", "place"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我的手机在哪里？在桌子上。", "answer": "Where is my phone? It is on the table.", "slotValues": { "object": "my phone", "preposition": "on", "place": "the table" } },
+            { "zh": "我的钥匙在哪里？在包里。", "answer": "Where is my key? It is in the bag.", "slotValues": { "object": "my key", "preposition": "in", "place": "the bag" } },
+            { "zh": "猫在哪里？在床下面。", "answer": "Where is the cat? It is under the bed.", "slotValues": { "object": "the cat", "preposition": "under", "place": "the bed" } }
+          ]
+        }
+      ]
+    }
+  },
+  "他/她是谁": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 He / She is 描述他人",
+          "chunk": "He is / She is",
+          "chunkMeaning": "他是 / 她是",
+          "items": [
+            { "zh": "她是我的朋友。", "answer": "She is my friend." },
+            { "zh": "他是一名医生。", "answer": "He is a doctor." },
+            { "zh": "他很高。", "answer": "He is very tall." },
+            { "zh": "她来自日本。", "answer": "She is from Japan." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "Is he/she? / Who is?",
+          "chunkMeaning": "他/她是...吗？/ 谁是？",
+          "items": [
+            { "zh": "她是你的妹妹吗？", "answer": "Is she your sister?" },
+            { "zh": "他是你的老师吗？", "answer": "Is he your teacher?" },
+            { "zh": "她是你的朋友吗？", "answer": "Is she your friend?" },
+            { "zh": "他善良又聪明。", "answer": "He is kind and smart." }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述他人逐步扩展",
+          "levels": [
+            { "level": 1, "label": "说关系", "en": "She is my friend.", "zh": "她是我的朋友。" },
+            { "level": 2, "label": "加职业", "en": "She is my friend. She is a doctor.", "zh": "她是我的朋友。她是一名医生。", "highlight": "a doctor", "hint": "说出她的职业" },
+            { "level": 3, "label": "加外表", "en": "She is my friend. She is a doctor. She is very kind.", "zh": "她是我的朋友。她是一名医生。她很善良。", "highlight": "very kind", "hint": "描述她的性格" },
+            { "level": 4, "label": "加国籍", "en": "She is my friend. She is a doctor. She is very kind. She is from Japan.", "zh": "她是我的朋友。她是一名医生。她很善良。她来自日本。", "highlight": "from Japan", "hint": "说出她来自哪里" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Is he/she ___? 问句操练",
+          "pattern": "Is [subject] your [relationship]?",
+          "patternMeaning": "...是你的...吗？",
+          "slots": ["subject", "relationship"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "她是你的妹妹吗？", "answer": "Is she your sister?", "slotValues": { "subject": "she", "relationship": "sister" } },
+            { "zh": "他是你的兄弟吗？", "answer": "Is he your brother?", "slotValues": { "subject": "he", "relationship": "brother" } },
+            { "zh": "她是你的老师吗？", "answer": "Is she your teacher?", "slotValues": { "subject": "she", "relationship": "teacher" } },
+            { "zh": "他是你的朋友吗？", "answer": "Is he your friend?", "slotValues": { "subject": "he", "relationship": "friend" } }
+          ]
+        }
+      ]
+    }
+  },
+  "我们/他们": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 We / They are 说复数",
+          "chunk": "We are / They are",
+          "chunkMeaning": "我们是 / 他们是",
+          "items": [
+            { "zh": "我们是好朋友。", "answer": "We are good friends." },
+            { "zh": "我们今天很开心。", "answer": "We are very happy today." },
+            { "zh": "他们来自同一个城市。", "answer": "They are from the same city." },
+            { "zh": "他们现在不在这里。", "answer": "They are not here right now." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "Are they? / We are not",
+          "chunkMeaning": "他们是...吗？/ 我们不",
+          "items": [
+            { "zh": "他们是你的朋友吗？", "answer": "Are they your friends?" },
+            { "zh": "他们是学生吗？", "answer": "Are they students?" },
+            { "zh": "我们没有迟到。", "answer": "We are not late." },
+            { "zh": "我们是同学。", "answer": "We are classmates." }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "复数描述逐步扩展",
+          "levels": [
+            { "level": 1, "label": "说关系", "en": "We are good friends.", "zh": "我们是好朋友。" },
+            { "level": 2, "label": "加来源", "en": "We are good friends from China.", "zh": "我们是来自中国的好朋友。", "highlight": "from China", "hint": "加上来源" },
+            { "level": 3, "label": "加感受", "en": "We are good friends from China. We are very happy.", "zh": "我们是来自中国的好朋友。我们很开心。", "highlight": "very happy", "hint": "加上感受" },
+            { "level": 4, "label": "加否定确认", "en": "We are good friends from China. We are very happy. We are not late.", "zh": "我们是来自中国的好朋友。我们很开心。我们没有迟到。", "highlight": "not late", "hint": "加上否定" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Are they ___? 问句操练",
+          "pattern": "Are they [noun/adjective]?",
+          "patternMeaning": "他们是...吗？",
+          "slots": ["noun/adjective"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "他们是你的朋友吗？", "answer": "Are they your friends?", "slotValues": { "noun/adjective": "your friends" } },
+            { "zh": "他们是学生吗？", "answer": "Are they students?", "slotValues": { "noun/adjective": "students" } },
+            { "zh": "他们准备好了吗？", "answer": "Are they ready?", "slotValues": { "noun/adjective": "ready" } },
+            { "zh": "他们在家吗？", "answer": "Are they at home?", "slotValues": { "noun/adjective": "at home" } }
+          ]
+        }
+      ]
+    }
+  },
+  "打招呼与告别": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用英语打招呼",
+          "chunk": "Good morning / Hello / Hi",
+          "chunkMeaning": "早上好 / 你好 / 嗨",
+          "items": [
+            { "zh": "早上好！", "answer": "Good morning!" },
+            { "zh": "你好！", "answer": "Hello!" },
+            { "zh": "下午好！", "answer": "Good afternoon!" },
+            { "zh": "晚上好！", "answer": "Good evening!" }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用英语告别和回应",
+          "chunk": "Goodbye / See you",
+          "chunkMeaning": "再见 / 回头见",
+          "items": [
+            { "zh": "很高兴认识你。", "answer": "Nice to meet you." },
+            { "zh": "回头见！", "answer": "See you later!" },
+            { "zh": "祝你愉快！", "answer": "Have a nice day!" },
+            { "zh": "保重！", "answer": "Take care!" },
+            { "zh": "欢迎！请进。", "answer": "Welcome! Please come in." }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "问候对话逐步扩展",
+          "levels": [
+            { "level": 1, "label": "打招呼", "en": "Good morning!", "zh": "早上好！" },
+            { "level": 2, "label": "问候", "en": "Good morning! How are you?", "zh": "早上好！你好吗？", "highlight": "How are you?", "hint": "加上问候" },
+            { "level": 3, "label": "告别", "en": "Good morning! How are you? I am fine. See you later!", "zh": "早上好！你好吗？我很好。回头见！", "highlight": "See you later!", "hint": "加告别" },
+            { "level": 4, "label": "加祝福", "en": "Good morning! How are you? I am fine. See you later! Have a nice day!", "zh": "早上好！你好吗？我很好。回头见！祝你愉快！", "highlight": "Have a nice day!", "hint": "加上祝福" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "问候时间替换操练",
+          "pattern": "Good [time_of_day]!",
+          "patternMeaning": "...好！",
+          "slots": ["time_of_day"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "早上好！", "answer": "Good morning!", "slotValues": { "time_of_day": "morning" } },
+            { "zh": "下午好！", "answer": "Good afternoon!", "slotValues": { "time_of_day": "afternoon" } },
+            { "zh": "晚上好！", "answer": "Good evening!", "slotValues": { "time_of_day": "evening" } }
+          ]
+        }
+      ]
+    }
+  },
+  "简单闲聊": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "随意问候",
+          "chunk": "How's it going? / What's up?",
+          "chunkMeaning": "最近怎么样？/ 怎么样？",
+          "items": [
+            { "zh": "最近怎么样？——还不错。", "answer": "How's it going? — Pretty good." },
+            { "zh": "怎么样？——没什么。", "answer": "What's up? — Not much." }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "英译中理解",
+          "chunk": "Small talk phrases",
+          "chunkMeaning": "闲聊短语",
+          "items": [
+            { "zh": "今天天气真好！", "answer": "Nice weather today!" },
+            { "zh": "你周末过得怎么样？", "answer": "How was your weekend?" },
+            { "zh": "你来自哪里？", "answer": "Where are you from?" },
+            { "zh": "你是做什么的？", "answer": "What do you do?" },
+            { "zh": "很高兴再次见到你！", "answer": "It's nice to see you again!" }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "闲聊对话逐步扩展",
+          "levels": [
+            { "level": 1, "label": "随意问候", "en": "How's it going? — Pretty good.", "zh": "最近怎么样？——还不错。" },
+            { "level": 2, "label": "加天气", "en": "How's it going? — Pretty good. Nice weather today!", "zh": "最近怎么样？——还不错。今天天气真好！", "highlight": "Nice weather today!", "hint": "聊聊天气" },
+            { "level": 3, "label": "加来源", "en": "How's it going? — Pretty good. Nice weather today! Where are you from?", "zh": "最近怎么样？——还不错。今天天气真好！你来自哪里？", "highlight": "Where are you from?", "hint": "问对方来自哪里" },
+            { "level": 4, "label": "加职业", "en": "How's it going? — Pretty good. Nice weather today! Where are you from? What do you do?", "zh": "最近怎么样？——还不错。今天天气真好！你来自哪里？你是做什么的？", "highlight": "What do you do?", "hint": "问对方的职业" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Where / What 问句操练",
+          "pattern": "[question]? — I'm [answer].",
+          "patternMeaning": "...？——我...",
+          "slots": ["question", "answer"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "你来自哪里？——我来自中国。", "answer": "Where are you from? — I'm from China.", "slotValues": { "question": "Where are you from", "answer": "from China" } },
+            { "zh": "你是做什么的？——我是学生。", "answer": "What do you do? — I'm a student.", "slotValues": { "question": "What do you do", "answer": "a student" } },
+            { "zh": "你来自哪里？——我来自日本。", "answer": "Where are you from? — I'm from Japan.", "slotValues": { "question": "Where are you from", "answer": "from Japan" } },
+            { "zh": "你是做什么的？——我是老师。", "answer": "What do you do? — I'm a teacher.", "slotValues": { "question": "What do you do", "answer": "a teacher" } }
+          ]
+        }
+      ]
+    }
+  }
+}

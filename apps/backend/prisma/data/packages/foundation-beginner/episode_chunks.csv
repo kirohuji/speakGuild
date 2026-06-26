@@ -34,3 +34,17 @@ ch_be_03,2,I am not a student. / I'm not a student.,2
 ch_be_03,2,It is not big. / It isn't big.,3
 ch_be_03,2,We are not late. / We aren't late.,4
 ch_be_03,2,He is not tall. / He isn't tall.,5
+ch_be_04,1,Good morning! How are you today?,0
+ch_be_04,1,Nice to meet you. — Nice to meet you too.,1
+ch_be_04,1,See you later! — See you!,2
+ch_be_04,1,Have a nice day! — You too!,3
+ch_be_04,1,Take care! — I will. Bye!,4
+ch_be_04,1,Long time no see! How are you?,5
+ch_be_04,1,Welcome! Please come in.,6
+ch_be_04,2,How's it going? — Pretty good.,0
+ch_be_04,2,What's up? — Not much.,1
+ch_be_04,2,Nice weather today!,2
+ch_be_04,2,How was your weekend? — It was great!,3
+ch_be_04,2,Where are you from? — I'm from China.,4
+ch_be_04,2,What do you do? — I'm a student.,5
+ch_be_04,2,It's nice to see you again!,6

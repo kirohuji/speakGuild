@@ -18,3 +18,9 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础①·描述他人,我们/他们,We are ___.,我们是...,"good friends, classmates, happy",We are good friends.,L1,0
 基础①·描述他人,我们/他们,They are not ___. They are ___.,他们不是... 他们是...,"here, there","ready, busy","late, on time",They are not here. They are there.,L1,1
 基础①·描述他人,我们/他们,Are they ___? Yes, they are. / No, they are not.,他们是...吗？,"your friends, students, teachers, ready",Are they your friends? Yes, they are.,L1,2
+基础①·日常寒暄,打招呼与告别,Good ___! / See you ___! / Have a ___!,早上好！/回头见！/祝你愉快！,"morning, later, nice day, good weekend","Good morning! / Good afternoon! / Good evening!",Good morning!,L1,0
+基础①·日常寒暄,打招呼与告别,Nice to ___ you. / Take ___! / Welcome to ___!,很高兴认识你/保重/欢迎...,"meet, see, care, my home, our school",Nice to meet you.,L1,1
+基础①·日常寒暄,简单闲聊,How's it going? — ___.,最近怎么样？—...,"Pretty good, Not bad, Great, Same as usual",How's it going? — Pretty good.,L1,0
+基础①·日常寒暄,简单闲聊,Where are you from? — I'm from ___.,你来自哪里？—我来自...,"China, Japan, the US, Korea, England",Where are you from? — I'm from China.,L1,1
+基础①·日常寒暄,简单闲聊,What do you do? — I'm a ___.,你是做什么的？—我是...,"student, teacher, doctor, engineer",What do you do? — I'm a student.,L1,2
+基础①·日常寒暄,简单闲聊,How was your ___? — It was great!,你的...怎么样？—很棒！,"weekend, day, trip, holiday, vacation",How was your weekend? — It was great!,L1,3
