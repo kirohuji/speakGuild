@@ -7,17 +7,17 @@ ch_be_01,1,I am a student. / I'm a teacher.,4
 ch_be_01,1,I am 20 years old. / I'm 25.,5
 ch_be_01,2,I am happy today. / I'm so happy!,0
 ch_be_01,2,I am tired. / I'm hungry. / I'm thirsty.,1
-ch_be_01,2,Are you happy? — Yes, I am. / No, I'm not.,2
+ch_be_01,2,Are you happy? — Yes,I am. / No
 ch_be_01,2,I am not tired. / I'm not hungry.,3
-ch_be_01,2,How are you? — I'm fine, thank you.,4
+ch_be_01,2,How are you? — I'm fine,thank you.
 ch_be_02,1,It is a book. / It's a pen.,0
 ch_be_02,1,It is big. / It's very big.,1
 ch_be_02,1,It is good. / It's very good!,2
 ch_be_02,1,It is hot. / It's cold. / It's warm.,3
 ch_be_02,1,It is red. / It's blue.,4
 ch_be_02,1,What color is it? — It is red.,5
-ch_be_02,2,Is it big? — Yes, it is. / No, it isn't.,0
-ch_be_02,2,Is it a dog? — Yes, it is. / No, it isn't.,1
+ch_be_02,2,Is it big? — Yes,it is. / No
+ch_be_02,2,Is it a dog? — Yes,it is. / No
 ch_be_02,2,Where is my book? — It is here. / It's there.,2
 ch_be_02,2,How is the weather? — It is sunny.,3
 ch_be_02,2,What is this? — This is a phone.,4

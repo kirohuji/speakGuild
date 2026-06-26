@@ -1,7 +1,70 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础②·日常习惯,我每天做什么,Practice daily habits with action verbs like eat drink and go to school.,练习用一般动词描述日常习惯：吃、喝、去上学。,35,L1,掌握I eat/drink/go的肯定句和don't否定句。,一般动词 习惯 肯定句 否定句,practice_foundation-daily-life_日常习惯_我每天做什么
-基础②·日常习惯,我的日常动作,Practice common daily actions like read watch play and study.,练习日常动作：看书、看电视、玩、学习。,35,L1,掌握read/watch/play/study等常用动词用法。,日常动作 动词 时间表达,practice_foundation-daily-life_日常习惯_我的日常动作
-基础②·喜好需求,我喜欢/我想要,Practice expressing likes wants and needs with like want and need.,练习表达喜好、想要和需求。,35,L1,掌握like/want/need的用法和搭配。,喜好 需求 like want need,practice_foundation-daily-life_喜好需求_我喜欢我想要
-基础②·喜好需求,我有什么,Practice talking about possession with have and has.,练习用have谈论拥有什么。,35,L1,掌握have的肯定/否定/疑问形式。,拥有 have 疑问句 否定句,practice_foundation-daily-life_喜好需求_我有什么
-基础②·日程安排,我几点做...,Practice talking about daily schedule with time expressions.,练习用时间表达描述日程。,40,L1,掌握at + 时间 / in the morning等时间表达。,日程 时间 at in on 日常,practice_foundation-daily-life_日程安排_我几点做
-基础②·日程安排,去...做...,Practice verbs with prepositions like go to come to wait for and talk to.,练习动词+介词搭配：go to / wait for / talk to。,35,L1,掌握动词+介词的固定搭配用法。,动词 介词 go to look for help with,practice_foundation-daily-life_日程安排_去做什么
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础②·日常习惯,我每天做什么,Practice daily habits with action verbs like eat drink and go to school.,练习用一般动词描述日常习惯：吃、喝、去上学。,35,L1,掌握I eat/drink/go的肯定句和don't否定句。,一般动词 习惯 肯定句 否定句,"## 核心句型
+- I eat breakfast every morning. (我每天早上吃早餐)
+- I drink coffee in the morning. (我早上喝咖啡)
+- I go to school every day. (我每天去上学)
+
+## 否定句
+I don't + 动词原形：I don't eat meat.
+注意：don't 后面用动词原形，不加s。",practice_foundation-daily-life_日常习惯_我每天做什么
+基础②·日常习惯,我的日常动作,Practice common daily actions like read watch play and study.,练习日常动作：看书、看电视、玩、学习。,35,L1,掌握read/watch/play/study等常用动词用法。,日常动作 动词 时间表达,"## 常用动作动词
+- read (读)：I read books at night.
+- watch (看)：I watch TV after dinner.
+- play (玩/打)：I play football on weekends.
+- study (学习)：I study English every day.
+
+## 注意
+play + 球类/游戏不加 the：play football / play games",practice_foundation-daily-life_日常习惯_我的日常动作
+基础②·喜好需求,我喜欢/我想要,Practice expressing likes wants and needs with like want and need.,练习表达喜好、想要和需求。,35,L1,掌握like/want/need的用法和搭配。,喜好 需求 like want need,"## 三个核心动词
+- like + 名词：I like coffee.
+- like + to do：I like to read.
+- want + 名词：I want a new phone.
+- want + to do：I want to travel.
+- need + 名词：I need help.
+- need + to do：I need to go.
+like/want/need 后可接名词或 to do。",practice_foundation-daily-life_喜好需求_我喜欢我想要
+基础②·喜好需求,我有什么,Practice talking about possession with have and has.,练习用have谈论拥有什么。,35,L1,掌握have的肯定/否定/疑问形式。,拥有 have 疑问句 否定句,"## have 的三种形式
+- 肯定：I have a brother. / I have two cats.
+- 否定：I don't have a car.
+- 疑问：Do you have a pen? — Yes, I do.
+have + 餐食 = 吃：I have breakfast at 7.",practice_foundation-daily-life_喜好需求_我有什么
+基础②·日程安排,我几点做...,Practice talking about daily schedule with time expressions.,练习用时间表达描述日程。,40,L1,掌握at + 时间 / in the morning等时间表达。,日程 时间 at in on 日常,"## 时间表达
+- at + 具体时间：I get up at 7 o'clock.
+- in + 时间段：I take a shower in the morning.
+- on + 天：I play football on weekends.
+
+## 常用动词短语
+get up / go to bed / have lunch / come home / leave for
+这些是固定搭配，整体记忆。",practice_foundation-daily-life_日程安排_我几点做
+基础②·日程安排,去...做...,Practice verbs with prepositions like go to come to wait for and talk to.,练习动词+介词搭配：go to / wait for / talk to。,35,L1,掌握动词+介词的固定搭配用法。,动词 介词 go to look for help with,"## 动词+介词搭配
+- go to + 地点：I go to work by bus.
+- wait for + 人/物：I wait for the bus.
+- look for + 物：I look for my keys.
+- help + 人 + with + 事：I help my mom with housework.
+- talk to + 人：I talk to my friend.
+这些是固定搭配，整体记忆即可。",practice_foundation-daily-life_日程安排_去做什么
+基础②·购物与出行,购物消费,Practice shopping conversations: buying things asking prices and trying on clothes.,练习购物对话：买东西、问价格、试穿。,40,L1,掌握购物相关表达：How much? / Can I try on? / I want to buy。,购物 价格 试穿 消费,"## 购物常用
+- 问价格：How much is this? — It's 50 yuan.
+- 试穿：Can I try this on? — Sure.
+- 想买：I want to buy a new shirt.
+- 评价：This is too expensive.
+- 尺码：Do you have this in a smaller size?",practice_foundation-daily-life_购物与出行_购物消费
+基础②·购物与出行,天气与出行,Practice talking about weather and transportation for going out.,练习谈论天气和出行交通方式。,35,L1,掌握天气描述和交通方式表达：It's sunny / I take the bus。,天气 出行 交通 建议,"## 天气描述
+- It's sunny today. Let's go out!
+- What's the weather like? — It's warm.
+
+## 交通方式
+- I take the bus to work.
+- I walk to school. It's not far.
+- I go to work by bus.",practice_foundation-daily-life_购物与出行_天气与出行
+基础②·餐饮与社交,在外就餐,Practice ordering food at a restaurant and talking about dining experiences.,练习在餐厅点餐和评价食物。,40,L1,掌握餐厅用语：Can I have the menu? / I'd like to order / The food is delicious。,餐厅 点餐 评价 外出就餐,"## 餐厅流程
+- 要菜单：Can I have the menu, please?
+- 点餐：I'd like to order a pizza.
+- 推荐：What do you recommend?
+- 评价：The food is delicious!
+- 结账：Can I have the bill, please?",practice_foundation-daily-life_餐饮与社交_在外就餐
+基础②·餐饮与社交,通讯与联络,Practice making phone calls sending messages and making plans to meet up.,练习打电话、发消息和约定见面。,35,L1,掌握通讯表达：call / send messages / Let's meet at。,通讯 电话 短信 见面,"## 通讯表达
+- 打电话：I call my mom every day.
+- 发消息：I send messages to my friends.
+- 约定：Let's meet at the coffee shop at 3 pm.
+- 迟到：Sorry, I'm late. The traffic was bad.",practice_foundation-daily-life_餐饮与社交_通讯与联络

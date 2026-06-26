@@ -1,24 +1,24 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础①·自我介绍,我是谁,I am ___.,我是...,"Li Ming, a student, from China",I am Li Ming.,L1,0
-基础①·自我介绍,我是谁,I am ___ years old.,我___岁。,18,20,25,30,I am 20 years old.,L1,1
-基础①·自我介绍,我是谁,I am very ___ to meet you.,很高兴...见到你.,happy,glad,excited,I am very happy to meet you.,L1,2
-基础①·自我介绍,我是谁,I am not ___. I am ___.,我不是... 我是...,"a teacher, a student","a doctor, a nurse",I am not a teacher. I am a student.,L1,3
+基础①·自我介绍,我是谁,I am ___ years old.,我___岁。,18,20,25,30
+基础①·自我介绍,我是谁,I am very ___ to meet you.,很高兴...见到你.,happy,glad,excited,I am very happy to meet you.
+基础①·自我介绍,我是谁,I am not ___. I am ___.,我不是... 我是...,"a teacher, a student","a doctor, a nurse",I am not a teacher. I am a student.,L1
 基础①·自我介绍,你是谁,You are very ___.,你很...,"kind, smart, funny, helpful",You are very kind.,L1,0
-基础①·自我介绍,你是谁,Are you ___? Yes, I am. / No, I am not.,你是...吗？,"a student, a teacher, ready",Are you a student? Yes, I am.,L1,1
+基础①·自我介绍,你是谁,Are you ___? Yes,I am. / No,I am not.,你是...吗？,"a student, a teacher, ready",Are you a student? Yes
 基础①·自我介绍,你是谁,How are you? I am ___.,你好吗？我...,"fine, great, tired, okay",How are you? I am fine.,L1,2
 基础①·描述事物,它是什么,It is ___.,它是...,"a book, red, very big, hot today",It is a book.,L1,0
 基础①·描述事物,它是什么,What is this? It is ___.,这是什么？...,"a phone, a pen, a key",What is this? It is a phone.,L1,1
-基础①·描述事物,它是什么,It is not ___. It is ___.,它不是... 它是...,"expensive, cheap","big, small","good, bad",It is not expensive. It is cheap.,L1,2
-基础①·描述事物,他们在哪里,___ is/are ___ the ___.,...在......,The book,on,desk; The cat,under,bed,The book is on the desk.,L1,0
-基础①·描述事物,他们在哪里,Where is ___? It is ___.,...在哪里？...,"my phone, here","my key, on the table","your bag, in the room",Where is my phone? It is here.,L1,1
-基础①·描述事物,他们在哪里,___ are at ___.,...在...,"We, home","They, work",They are at home.,L1,2
-基础①·描述他人,他/她是谁,___ is my ___.,...是我的...,"She, friend","He, teacher","She, boss",She is my friend.,L1,0
-基础①·描述他人,他/她是谁,___ is from ___.,...来自...,"He, China","She, Japan","He, the US",He is from China.,L1,1
-基础①·描述他人,他/她是谁,Is ___ your ___? Yes, ___ is. / No, ___ is not.,...是你的...吗？,"she, sister","he, brother","she, friend",Is she your sister? No, she is my friend.,L1,2
+基础①·描述事物,它是什么,It is not ___. It is ___.,它不是... 它是...,"expensive, cheap","big, small","good, bad",It is not expensive. It is cheap.
+基础①·描述事物,他们在哪里,___ is/are ___ the ___.,...在......,The book,on,desk; The cat,under
+基础①·描述事物,他们在哪里,Where is ___? It is ___.,...在哪里？...,"my phone, here","my key, on the table","your bag, in the room",Where is my phone? It is here.
+基础①·描述事物,他们在哪里,___ are at ___.,...在...,"We, home","They, work",They are at home.,L1
+基础①·描述他人,他/她是谁,___ is my ___.,...是我的...,"She, friend","He, teacher","She, boss",She is my friend.
+基础①·描述他人,他/她是谁,___ is from ___.,...来自...,"He, China","She, Japan","He, the US",He is from China.
+基础①·描述他人,他/她是谁,Is ___ your ___? Yes,___ is. / No,___ is not.,...是你的...吗？,"she, sister","he, brother"
 基础①·描述他人,我们/他们,We are ___.,我们是...,"good friends, classmates, happy",We are good friends.,L1,0
-基础①·描述他人,我们/他们,They are not ___. They are ___.,他们不是... 他们是...,"here, there","ready, busy","late, on time",They are not here. They are there.,L1,1
-基础①·描述他人,我们/他们,Are they ___? Yes, they are. / No, they are not.,他们是...吗？,"your friends, students, teachers, ready",Are they your friends? Yes, they are.,L1,2
-基础①·日常寒暄,打招呼与告别,Good ___! / See you ___! / Have a ___!,早上好！/回头见！/祝你愉快！,"morning, later, nice day, good weekend","Good morning! / Good afternoon! / Good evening!",Good morning!,L1,0
+基础①·描述他人,我们/他们,They are not ___. They are ___.,他们不是... 他们是...,"here, there","ready, busy","late, on time",They are not here. They are there.
+基础①·描述他人,我们/他们,Are they ___? Yes,they are. / No,they are not.,他们是...吗？,"your friends, students, teachers, ready",Are they your friends? Yes
+基础①·日常寒暄,打招呼与告别,Good ___! / See you ___! / Have a ___!,早上好！/回头见！/祝你愉快！,"morning, later, nice day, good weekend",Good morning! / Good afternoon! / Good evening!,Good morning!,L1
 基础①·日常寒暄,打招呼与告别,Nice to ___ you. / Take ___! / Welcome to ___!,很高兴认识你/保重/欢迎...,"meet, see, care, my home, our school",Nice to meet you.,L1,1
 基础①·日常寒暄,简单闲聊,How's it going? — ___.,最近怎么样？—...,"Pretty good, Not bad, Great, Same as usual",How's it going? — Pretty good.,L1,0
 基础①·日常寒暄,简单闲聊,Where are you from? — I'm from ___.,你来自哪里？—我来自...,"China, Japan, the US, Korea, England",Where are you from? — I'm from China.,L1,1

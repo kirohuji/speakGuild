@@ -8,15 +8,15 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础①·自我介绍,你是谁,how,如何,adv,/haʊ/,/haʊ/,L1,疑问副词。How are you? = 你好吗。,"[{""en"":""How are you? I'm fine."",""zh"":""你好吗？我很好。""}]",2
 基础①·描述事物,它是什么,it,它,pron,/ɪt/,/ɪt/,L1,第三人称单数中性。指代事物/动物。,"[{""en"":""It is a book."",""zh"":""它是一本书。""}]",0
 基础①·描述事物,它是什么,is,是(第三人称),verb,/ɪz/,/ɪz/,L1,be动词第三人称单数。He/She/It is。,"[{""en"":""She is a teacher."",""zh"":""她是一名老师。""}]",1
-基础①·描述事物,它是什么,what,什么,pron,/wɒt/,/wɒt/,L1,疑问词"什么"。What is this?,"[{""en"":""What is your name?"",""zh"":""你叫什么名字？""}]",2
+基础①·描述事物,它是什么,what,什么,pron,/wɒt/,/wɒt/,L1,疑问词「什么」。What is this?,"[{""en"":""What is your name?"",""zh"":""你叫什么名字？""}]",2
 基础①·描述事物,它是什么,color,颜色,noun,/ˈkʌlər/,/ˈkʌlə/,L1,颜色。What color is it?,"[{""en"":""The sky is blue."",""zh"":""天空是蓝色的。""}]",3
-基础①·描述事物,他们在哪里,where,哪里,adv,/weər/,/weə/,L1,疑问词"哪里"。Where is...?,"[{""en"":""Where is my phone?"",""zh"":""我的手机在哪里？""}]",0
-基础①·描述事物,他们在哪里,in,在...里,prep,/ɪn/,/ɪn/,L1,介词"在...里面"。,"[{""en"":""It is in the bag."",""zh"":""它在包里。""}]",1
-基础①·描述事物,他们在哪里,on,在...上,prep,/ɒn/,/ɒn/,L1,介词"在...上面"。,"[{""en"":""The book is on the desk."",""zh"":""书在桌子上。""}]",2
-基础①·描述事物,他们在哪里,at,在(某点),prep,/æt/,/æt/,L1,介词"在... (具体地点/时间)"。,"[{""en"":""They are at home."",""zh"":""他们在家。""}]",3
+基础①·描述事物,他们在哪里,where,哪里,adv,/weər/,/weə/,L1,疑问词「哪里」。Where is...?,"[{""en"":""Where is my phone?"",""zh"":""我的手机在哪里？""}]",0
+基础①·描述事物,他们在哪里,in,在...里,prep,/ɪn/,/ɪn/,L1,介词「在...里面」。,"[{""en"":""It is in the bag."",""zh"":""它在包里。""}]",1
+基础①·描述事物,他们在哪里,on,在...上,prep,/ɒn/,/ɒn/,L1,介词「在...上面」。,"[{""en"":""The book is on the desk."",""zh"":""书在桌子上。""}]",2
+基础①·描述事物,他们在哪里,at,在(某点),prep,/æt/,/æt/,L1,介词「在...(具体地点/时间)」。,"[{""en"":""They are at home."",""zh"":""他们在家。""}]",3
 基础①·描述他人,他/她是谁,he,他,pron,/hiː/,/hiː/,L1,第三人称阳性主格。,"[{""en"":""He is my brother."",""zh"":""他是我的兄弟。""}]",0
 基础①·描述他人,他/她是谁,she,她,pron,/ʃiː/,/ʃiː/,L1,第三人称阴性主格。,"[{""en"":""She is a doctor."",""zh"":""她是一名医生。""}]",1
-基础①·描述他人,他/她是谁,who,谁,pron,/huː/,/huː/,L1,疑问词"谁"。Who is he?,"[{""en"":""Who is that girl?"",""zh"":""那个女孩是谁？""}]",2
+基础①·描述他人,他/她是谁,who,谁,pron,/huː/,/huː/,L1,疑问词「谁」。Who is he?,"[{""en"":""Who is that girl?"",""zh"":""那个女孩是谁？""}]",2
 基础①·描述他人,他/她是谁,not,不,adv,/nɒt/,/nɒt/,L1,否定词。isn't = is not, aren't = are not。,"[{""en"":""He is not a teacher."",""zh"":""他不是老师。""}]",3
 基础①·描述他人,我们/他们,we,我们,pron,/wiː/,/wiː/,L1,第一人称复数主格。,"[{""en"":""We are good friends."",""zh"":""我们是好朋友。""}]",0
 基础①·描述他人,我们/他们,they,他们,pron,/ðeɪ/,/ðeɪ/,L1,第三人称复数主格。,"[{""en"":""They are from China."",""zh"":""他们来自中国。""}]",1
@@ -30,9 +30,9 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础①·日常寒暄,打招呼与告别,see you later,回头见,phrase,/siː juː ˈleɪtər/,/siː juː ˈleɪtə/,L1,随意告别。,"[{""en"":""See you later! — See you!"",""zh"":""回头见！——再见！""}]",6
 基础①·日常寒暄,打招呼与告别,take care,保重,phrase,/teɪk keər/,/teɪk keə/,L1,关心告别用语。,"[{""en"":""Take care! — I will. Bye!"",""zh"":""保重！——我会的。拜！""}]",7
 基础①·日常寒暄,打招呼与告别,welcome,欢迎,intj,/ˈwelkəm/,/ˈwelkəm/,L1,迎接客人用语。,"[{""en"":""Welcome! Please come in."",""zh"":""欢迎！请进。""}]",8
-基础①·日常寒暄,简单闲聊,how's it going,最近怎么样,phrase,/haʊz ɪt ˈɡoʊɪŋ/,/haʊz ɪt ˈɡəʊɪŋ/,L1,随意问候"How's it going?"。,"[{""en"":""How's it going? — Pretty good."",""zh"":""最近怎么样？——还不错。""}]",0
-基础①·日常寒暄,简单闲聊,what's up,怎么样,phrase,/wɒts ʌp/,/wɒts ʌp/,L1,超随意问候"What's up?"。,"[{""en"":""What's up? — Not much."",""zh"":""怎么样？——没什么。""}]",1
+基础①·日常寒暄,简单闲聊,how's it going,最近怎么样,phrase,/haʊz ɪt ˈɡoʊɪŋ/,/haʊz ɪt ˈɡəʊɪŋ/,L1,随意问候「How's it going?」。,"[{""en"":""How's it going? — Pretty good."",""zh"":""最近怎么样？——还不错。""}]",0
+基础①·日常寒暄,简单闲聊,what's up,怎么样,phrase,/wɒts ʌp/,/wɒts ʌp/,L1,超随意问候「What's up?」。,"[{""en"":""What's up? — Not much."",""zh"":""怎么样？——没什么。""}]",1
 基础①·日常寒暄,简单闲聊,weather,天气,noun,/ˈweðər/,/ˈweðə/,L1,天气。闲聊常用话题。,"[{""en"":""Nice weather today!"",""zh"":""今天天气真好！""}]",2
-基础①·日常寒暄,简单闲聊,weekend,周末,noun,/ˈwiːkend/,/ˈwiːkˈend/,L1,周末。常用来问候："How was your weekend?"。,"[{""en"":""How was your weekend? — It was great!"",""zh"":""你周末过得怎么样？——很棒！""}]",3
+基础①·日常寒暄,简单闲聊,weekend,周末,noun,/ˈwiːkend/,/ˈwiːkˈend/,L1,周末。常用来问候「How was your weekend?」.,"[{""en"":""How was your weekend? — It was great!"",""zh"":""你周末过得怎么样？——很棒！""}]",3
 基础①·日常寒暄,简单闲聊,long time no see,好久不见,phrase,/lɒŋ taɪm nəʊ siː/,/lɒŋ taɪm nəʊ siː/,L1,久别重逢问候。,"[{""en"":""Long time no see! How are you?"",""zh"":""好久不见！你怎么样？""}]",4
 基础①·日常寒暄,简单闲聊,again,再次,adv,/əˈɡen/,/əˈɡen/,L1,又/再。It's nice to see you again。,"[{""en"":""It's nice to see you again!"",""zh"":""很高兴再次见到你！""}]",5

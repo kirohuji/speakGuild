@@ -28,3 +28,15 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 "基础·家务与居家",家务劳动,"Please ___ the ___.",请...,take out / trash, fold / clothes, water / plants,Please take out the trash.,L1,7
 "基础·家务与居家",居家休息,"Let's ___ a ___.",我们...吧,watch / movie, listen to / song, play / game,Let's watch a movie.,L1,8
 "基础·家务与居家",居家休息,"I'm going to ___.",我去...,take a nap, cook dinner, read a book,I'm going to take a nap.,L1,9
+基础②·购物与出行,购物消费,I want to buy ___.,我想买...,a new shirt, shoes, a gift, some food, a book,I want to buy a new shirt.,L1,10
+基础②·购物与出行,购物消费,How much is ___? — It's ___.,...多少钱？,this / 50 yuan, that / 100 yuan, the red one / 200 yuan,How much is this? — It's 50 yuan.,L1,11
+基础②·购物与出行,购物消费,Can I try ___ on? — Sure.,我可以试穿...吗？,this jacket, these shoes, that dress, those pants,Can I try this on? — Sure.,L1,12
+基础②·购物与出行,购物消费,This is too ___.,这个太...,expensive, big, small, tight, long, short,This is too expensive.,L1,13
+基础②·购物与出行,天气与出行,It's ___ today. Let's ___!,今天...我们...吧！,"sunny, go out","rainy, stay in","windy, fly a kite",It's sunny today. Let's go out!,L1,14
+基础②·购物与出行,天气与出行,What's the weather like? — It's ___.,天气怎么样？——...,"warm, sunny","hot, humid","cold, cloudy",What's the weather like? — It's warm and sunny.,L1,15
+基础②·购物与出行,天气与出行,I take the ___ to ___.,我坐...去...,"bus, work","subway, school","train, the airport","taxi, downtown",I take the bus to work.,L1,16
+基础②·餐饮与社交,在外就餐,Can I have ___ please? — Sure.,请给我...好吗？,"the menu,","a glass of water,","the bill,",Can I have the menu please?,L1,17
+基础②·餐饮与社交,在外就餐,I'd like to order ___.,我想点...,"a pizza and a salad","a burger and fries","noodles and soup",I'd like to order a pizza and a salad.,L1,18
+基础②·餐饮与社交,在外就餐,The ___ is ___! — I love it.,...真是...！,"food, delicious","soup, hot","cake, sweet","coffee, strong",The food is delicious! I love it.,L1,19
+基础②·餐饮与社交,通讯与联络,I call ___ every ___.,我每...给...打电话。,"my mom, day","my friend, weekend","my parents, evening",I call my mom every day.,L1,20
+基础②·餐饮与社交,通讯与联络,Let's meet at ___ at ___.,我们...在...见面。,,"the coffee shop, 3 pm","the station, 5 pm","the park, noon",Let's meet at the coffee shop at 3 pm.,L1,21

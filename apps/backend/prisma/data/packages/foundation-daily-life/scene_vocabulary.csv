@@ -32,3 +32,20 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 "基础·家务与居家",居家休息,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",11
 "基础·家务与居家",居家休息,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",12
 "基础·家务与居家",居家休息,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",13
+基础②·购物与出行,购物消费,buy,买,verb,/baɪ/,/baɪ/,L1,购买。buy + 名词。,"[{""en"":""I want to buy a new shirt."",""zh"":""我想买一件新衬衫。""}]",14
+基础②·购物与出行,购物消费,price,价格,noun,/praɪs/,/praɪs/,L1,价格。How much is the price?,"[{""en"":""The price is too high."",""zh"":""价格太高了。""}]",15
+基础②·购物与出行,购物消费,size,尺码,noun,/saɪz/,/saɪz/,L1,尺寸/尺码。Do you have this in...size?,"[{""en"":""Do you have this in a smaller size?"",""zh"":""这个有小一号的吗？""}]",16
+基础②·购物与出行,购物消费,cheap,便宜的,adj,/tʃiːp/,/tʃiːp/,L1,便宜的。反义词：expensive。,"[{""en"":""This is cheap."",""zh"":""这个便宜。""}]",17
+基础②·购物与出行,购物消费,expensive,贵的,adj,/ɪkˈspensɪv/,/ɪkˈspensɪv/,L1,昂贵的。This is too expensive。,"[{""en"":""This is too expensive."",""zh"":""这个太贵了。""}]",18
+基础②·购物与出行,天气与出行,weather,天气,noun,/ˈweðər/,/ˈweðə/,L1,天气。What's the weather like?,"[{""en"":""What's the weather like today?"",""zh"":""今天天气怎么样？""}]",19
+基础②·购物与出行,天气与出行,sunny,晴朗的,adj,/ˈsʌni/,/ˈsʌni/,L1,晴朗的。It's sunny today。,"[{""en"":""It's sunny today. Let's go out!"",""zh"":""今天天晴。我们出去吧！""}]",20
+基础②·购物与出行,天气与出行,rainy,下雨的,adj,/ˈreɪni/,/ˈreɪni/,L1,下雨的。It's raining outside。,"[{""en"":""It's rainy today."",""zh"":""今天下雨。""}]",21
+基础②·购物与出行,天气与出行,bus,公交车,noun,/bʌs/,/bʌs/,L1,公交车。I take the bus to work。,"[{""en"":""I take the bus to work."",""zh"":""我坐公交上班。""}]",22
+基础②·餐饮与社交,在外就餐,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。Can I have the menu?,"[{""en"":""Can I have the menu, please?"",""zh"":""请给我菜单好吗？""}]",23
+基础②·餐饮与社交,在外就餐,order,点餐,verb,/ˈɔːrdər/,/ˈɔːdə/,L1,点菜/订购。I'd like to order...。,"[{""en"":""I'd like to order a pizza."",""zh"":""我想点一个披萨。""}]",24
+基础②·餐饮与社交,在外就餐,delicious,美味的,adj,/dɪˈlɪʃəs/,/dɪˈlɪʃəs/,L1,好吃的/美味的。The food is delicious。,"[{""en"":""The food is delicious!"",""zh"":""食物很好吃！""}]",25
+基础②·餐饮与社交,在外就餐,bill,账单,noun,/bɪl/,/bɪl/,L1,账单。Can I have the bill?,"[{""en"":""Can I have the bill, please?"",""zh"":""请给我账单好吗？""}]",26
+基础②·餐饮与社交,通讯与联络,call,打电话,verb,/kɔːl/,/kɔːl/,L1,打电话。call + 人。,"[{""en"":""I call my mom every day."",""zh"":""我每天给妈妈打电话。""}]",27
+基础②·餐饮与社交,通讯与联络,message,消息,noun,/ˈmesɪdʒ/,/ˈmesɪdʒ/,L1,消息/信息。send a message。,"[{""en"":""I send messages to my friends."",""zh"":""我给朋友发消息。""}]",28
+基础②·餐饮与社交,通讯与联络,meet,见面,verb,/miːt/,/miːt/,L1,见面/会面。Let's meet at...。,"[{""en"":""Let's meet at the coffee shop."",""zh"":""我们在咖啡店见面吧。""}]",29
+基础②·餐饮与社交,通讯与联络,traffic,交通,noun,/ˈtræfɪk/,/ˈtræfɪk/,L1,交通/路况。The traffic was bad。,"[{""en"":""The traffic was bad."",""zh"":""路上很堵。""}]",30

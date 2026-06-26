@@ -1,0 +1,553 @@
+{
+  "我每天做什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用一般动词描述日常习惯",
+          "chunk": "I eat / I drink / I go",
+          "chunkMeaning": "我吃/我喝/我去",
+          "items": [
+            { "zh": "我每天早上吃早餐。", "answer": "I eat breakfast every morning." },
+            { "zh": "我中午吃午饭。", "answer": "I eat lunch at noon." },
+            { "zh": "我晚上吃晚饭。", "answer": "I eat dinner in the evening." },
+            { "zh": "我早上喝咖啡。", "answer": "I drink coffee in the morning." },
+            { "zh": "我晚上喝茶。", "answer": "I drink tea at night." },
+            { "zh": "我每天去上学。", "answer": "I go to school every day." },
+            { "zh": "我每天去上班。", "answer": "I go to work every day." },
+            { "zh": "我晚饭后看电视。", "answer": "I watch TV after dinner." },
+            { "zh": "我晚上看书。", "answer": "I read books at night." },
+            { "zh": "我每天早上喝水。", "answer": "I drink water every morning." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "I ___ every morning/day 句式操练",
+          "pattern": "I [verb] [time].",
+          "patternMeaning": "我(时间)(做)...",
+          "slots": ["verb", "time"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我每天早上吃早餐。", "answer": "I eat breakfast every morning.", "slotValues": { "verb": "eat breakfast", "time": "every morning" } },
+            { "zh": "我每天去上学。", "answer": "I go to school every day.", "slotValues": { "verb": "go to school", "time": "every day" } },
+            { "zh": "我晚上看电视。", "answer": "I watch TV at night.", "slotValues": { "verb": "watch TV", "time": "at night" } },
+            { "zh": "我晚上看书。", "answer": "I read books at night.", "slotValues": { "verb": "read books", "time": "at night" } },
+            { "zh": "我晚饭后看电视。", "answer": "I watch TV after dinner.", "slotValues": { "verb": "watch TV", "time": "after dinner" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述一天的习惯",
+          "levels": [
+            { "level": 1, "label": "早起", "en": "I get up at 7.", "zh": "我7点起床。" },
+            { "level": 2, "label": "吃早餐", "en": "I get up at 7 and eat breakfast.", "zh": "我7点起床然后吃早餐。", "highlight": "eat breakfast", "hint": "加上吃早餐" },
+            { "level": 3, "label": "去上学", "en": "I get up at 7, eat breakfast, and go to school.", "zh": "我7点起床，吃早餐，然后去上学。", "highlight": "go to school", "hint": "加上去上学" }
+          ]
+        }
+      ]
+    }
+  },
+  "我的日常动作": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用日常动作动词造句",
+          "chunk": "I read / I play / I study",
+          "chunkMeaning": "我读/我玩/我学习",
+          "items": [
+            { "zh": "我每天学英语。", "answer": "I study English every day." },
+            { "zh": "我每天学数学。", "answer": "I study math every day." },
+            { "zh": "我周末踢足球。", "answer": "I play football on weekends." },
+            { "zh": "我周末打篮球。", "answer": "I play basketball on weekends." },
+            { "zh": "我晚上看书。", "answer": "I read books at night." },
+            { "zh": "我上班时写邮件。", "answer": "I write emails at work." },
+            { "zh": "我朝九晚五工作。", "answer": "I work from 9 to 5." },
+            { "zh": "我放学后做作业。", "answer": "I do my homework after school." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "时间搭配操练",
+          "pattern": "I [verb] [object] [time].",
+          "patternMeaning": "我(时间)(做)(什么)",
+          "slots": ["verb", "object", "time"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我每天学英语。", "answer": "I study English every day.", "slotValues": { "verb": "study", "object": "English", "time": "every day" } },
+            { "zh": "我周末踢足球。", "answer": "I play football on weekends.", "slotValues": { "verb": "play", "object": "football", "time": "on weekends" } },
+            { "zh": "我晚上看书。", "answer": "I read books at night.", "slotValues": { "verb": "read", "object": "books", "time": "at night" } },
+            { "zh": "我上班时写邮件。", "answer": "I write emails at work.", "slotValues": { "verb": "write", "object": "emails", "time": "at work" } },
+            { "zh": "我放学后做作业。", "answer": "I do my homework after school.", "slotValues": { "verb": "do", "object": "my homework", "time": "after school" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述放学后的活动",
+          "levels": [
+            { "level": 1, "label": "做作业", "en": "I do my homework.", "zh": "我做作业。" },
+            { "level": 2, "label": "休息", "en": "I do my homework and watch TV.", "zh": "我做作业然后看电视。", "highlight": "watch TV", "hint": "加上看电视" },
+            { "level": 3, "label": "运动", "en": "I do my homework, watch TV, and play football.", "zh": "我做作业，看电视，然后踢足球。", "highlight": "play football", "hint": "加上运动" }
+          ]
+        }
+      ]
+    }
+  },
+  "我喜欢/我想要": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 like / want / need 表达",
+          "chunk": "I like / I want / I need",
+          "chunkMeaning": "我喜欢/我想要/我需要",
+          "items": [
+            { "zh": "我喜欢咖啡。", "answer": "I like coffee." },
+            { "zh": "我喜欢猫。", "answer": "I like cats." },
+            { "zh": "我喜欢音乐。", "answer": "I like music." },
+            { "zh": "我想要一部新手机。", "answer": "I want a new phone." },
+            { "zh": "我想要一份新工作。", "answer": "I want a new job." },
+            { "zh": "我想要一只宠物。", "answer": "I want a pet." },
+            { "zh": "我需要一些帮助。", "answer": "I need some help." },
+            { "zh": "我需要水。", "answer": "I need water." },
+            { "zh": "我需要休息一下。", "answer": "I need a break." },
+            { "zh": "我喜欢游泳。", "answer": "I like to swim." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "like/want/need + to do 操练",
+          "pattern": "I [modal] to [action].",
+          "patternMeaning": "我(想要/喜欢/需要)做...",
+          "slots": ["modal", "action"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我喜欢读书。", "answer": "I like to read.", "slotValues": { "modal": "like", "action": "read" } },
+            { "zh": "我喜欢游泳。", "answer": "I like to swim.", "slotValues": { "modal": "like", "action": "swim" } },
+            { "zh": "我喜欢做饭。", "answer": "I like to cook.", "slotValues": { "modal": "like", "action": "cook" } },
+            { "zh": "我想旅游。", "answer": "I want to travel.", "slotValues": { "modal": "want", "action": "travel" } },
+            { "zh": "我想学西班牙语。", "answer": "I want to learn Spanish.", "slotValues": { "modal": "want", "action": "learn Spanish" } },
+            { "zh": "我需要睡觉。", "answer": "I need to sleep.", "slotValues": { "modal": "need", "action": "sleep" } },
+            { "zh": "我需要学习。", "answer": "I need to study.", "slotValues": { "modal": "need", "action": "study" } },
+            { "zh": "我需要走了。", "answer": "I need to go.", "slotValues": { "modal": "need", "action": "go" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "表达喜好和需求",
+          "levels": [
+            { "level": 1, "label": "喜欢", "en": "I like coffee.", "zh": "我喜欢咖啡。" },
+            { "level": 2, "label": "想做", "en": "I like coffee and I want to drink it.", "zh": "我喜欢咖啡，我想喝。", "highlight": "want to drink", "hint": "加上想要做什么" },
+            { "level": 3, "label": "需要", "en": "I like coffee and I want to drink it. I need a break.", "zh": "我喜欢咖啡，我想喝，我需要休息一下。", "highlight": "need a break", "hint": "加上需要什么" }
+          ]
+        }
+      ]
+    }
+  },
+  "我有什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 have 表达拥有",
+          "chunk": "I have / I don't have",
+          "chunkMeaning": "我有/我没有",
+          "items": [
+            { "zh": "我有一个兄弟。", "answer": "I have a brother." },
+            { "zh": "我有一个妹妹。", "answer": "I have a sister." },
+            { "zh": "我有一辆车。", "answer": "I have a car." },
+            { "zh": "我有一只狗。", "answer": "I have a dog." },
+            { "zh": "我有两只猫。", "answer": "I have two cats." },
+            { "zh": "我有三个朋友。", "answer": "I have three friends." },
+            { "zh": "我没有车。", "answer": "I don't have a car." },
+            { "zh": "我没有手机。", "answer": "I don't have a phone." },
+            { "zh": "我7点吃早餐。", "answer": "I have breakfast at 7." },
+            { "zh": "我有个问题。", "answer": "I have a question." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Do you have...? 问句操练",
+          "pattern": "Do you have [noun]?",
+          "patternMeaning": "你有...吗？",
+          "slots": ["noun"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "你有笔吗？", "answer": "Do you have a pen?", "slotValues": { "noun": "a pen" } },
+            { "zh": "你有时间吗？", "answer": "Do you have a minute?", "slotValues": { "noun": "a minute" } },
+            { "zh": "你有问题吗？", "answer": "Do you have any questions?", "slotValues": { "noun": "any questions" } },
+            { "zh": "你有车吗？", "answer": "Do you have a car?", "slotValues": { "noun": "a car" } },
+            { "zh": "你有兄弟吗？", "answer": "Do you have a brother?", "slotValues": { "noun": "a brother" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述拥有什么",
+          "levels": [
+            { "level": 1, "label": "有宠物", "en": "I have a cat.", "zh": "我有一只猫。" },
+            { "level": 2, "label": "加数量", "en": "I have two cats.", "zh": "我有两只猫。", "highlight": "two cats", "hint": "加上数量" },
+            { "level": 3, "label": "加否定", "en": "I have two cats, but I don't have a dog.", "zh": "我有两只猫，但没有狗。", "highlight": "don't have a dog", "hint": "加上没有的东西" }
+          ]
+        }
+      ]
+    }
+  },
+  "我几点做...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 at + 时间表达日程",
+          "chunk": "I ... at ...",
+          "chunkMeaning": "我(时间)(做)...",
+          "items": [
+            { "zh": "我7点起床。", "answer": "I get up at 7 o'clock." },
+            { "zh": "我6点半起床。", "answer": "I get up at 6:30." },
+            { "zh": "我11点睡觉。", "answer": "I go to bed at 11 pm." },
+            { "zh": "我10点睡觉。", "answer": "I go to bed at 10." },
+            { "zh": "我12点吃午饭。", "answer": "I have lunch at 12." },
+            { "zh": "我6点吃晚饭。", "answer": "I have dinner at 6." },
+            { "zh": "我下午6点到家。", "answer": "I come home at 6 pm." },
+            { "zh": "我8点去上班。", "answer": "I leave for work at 8." },
+            { "zh": "我早上洗澡。", "answer": "I take a shower in the morning." },
+            { "zh": "我晚上洗澡。", "answer": "I take a shower in the evening." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "at / in / on 时间操练",
+          "pattern": "I [verb] [time_phrase].",
+          "patternMeaning": "我(时间)(做)...",
+          "slots": ["verb", "time_phrase"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我7点起床。", "answer": "I get up at 7.", "slotValues": { "verb": "get up", "time_phrase": "at 7" } },
+            { "zh": "我11点睡觉。", "answer": "I go to bed at 11.", "slotValues": { "verb": "go to bed", "time_phrase": "at 11" } },
+            { "zh": "我早上洗澡。", "answer": "I take a shower in the morning.", "slotValues": { "verb": "take a shower", "time_phrase": "in the morning" } },
+            { "zh": "我晚上看书。", "answer": "I read books in the evening.", "slotValues": { "verb": "read books", "time_phrase": "in the evening" } },
+            { "zh": "我周末踢足球。", "answer": "I play football on weekends.", "slotValues": { "verb": "play football", "time_phrase": "on weekends" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述一天的日程",
+          "levels": [
+            { "level": 1, "label": "起床", "en": "I get up at 7.", "zh": "我7点起床。" },
+            { "level": 2, "label": "上班", "en": "I get up at 7 and leave for work at 8.", "zh": "我7点起床，8点去上班。", "highlight": "leave for work", "hint": "加上上班时间" },
+            { "level": 3, "label": "回家", "en": "I get up at 7, leave for work at 8, and come home at 6.", "zh": "我7点起床，8点上班，6点到家。", "highlight": "come home at 6", "hint": "加上回家时间" }
+          ]
+        }
+      ]
+    }
+  },
+  "去...做...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "动词+介词搭配",
+          "chunk": "go to / wait for / help with",
+          "chunkMeaning": "去/等待/帮助",
+          "items": [
+            { "zh": "我乘公交去上班。", "answer": "I go to work by bus." },
+            { "zh": "我骑车上学。", "answer": "I go to school by bike." },
+            { "zh": "我在车站等公交。", "answer": "I wait for the bus at the stop." },
+            { "zh": "我在等我的朋友。", "answer": "I wait for my friend." },
+            { "zh": "我在找我的钥匙。", "answer": "I look for my keys." },
+            { "zh": "我在找我的手机。", "answer": "I look for my phone." },
+            { "zh": "我每天和朋友聊天。", "answer": "I talk to my friend every day." },
+            { "zh": "我帮妈妈做家务。", "answer": "I help my mom with housework." },
+            { "zh": "我帮朋友做作业。", "answer": "I help my friend with homework." },
+            { "zh": "我周日待在家。", "answer": "I stay at home on Sundays." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "go to + 地点 + by + 交通 操练",
+          "pattern": "I go to [place] by [transport].",
+          "patternMeaning": "我乘...去...",
+          "slots": ["place", "transport"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我骑车上学。", "answer": "I go to school by bike.", "slotValues": { "place": "school", "transport": "bike" } },
+            { "zh": "我坐公交上班。", "answer": "I go to work by bus.", "slotValues": { "place": "work", "transport": "bus" } },
+            { "zh": "我坐地铁上学。", "answer": "I go to school by subway.", "slotValues": { "place": "school", "transport": "subway" } },
+            { "zh": "我走路去公园。", "answer": "I go to the park on foot.", "slotValues": { "place": "the park", "transport": "on foot" } },
+            { "zh": "我打车去机场。", "answer": "I go to the airport by taxi.", "slotValues": { "place": "the airport", "transport": "taxi" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述出行方式",
+          "levels": [
+            { "level": 1, "label": "目的地", "en": "I go to work.", "zh": "我去上班。" },
+            { "level": 2, "label": "交通方式", "en": "I go to work by bus.", "zh": "我坐公交上班。", "highlight": "by bus", "hint": "加上交通方式" },
+            { "level": 3, "label": "加时间", "en": "I go to work by bus every day.", "zh": "我每天坐公交上班。", "highlight": "every day", "hint": "加上频率" }
+          ]
+        }
+      ]
+    }
+  },
+  "购物消费": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "购物常用表达",
+          "chunk": "How much / Can I try / I want to buy",
+          "chunkMeaning": "多少钱/我可以试/我想买",
+          "items": [
+            { "zh": "这个多少钱？——50块。", "answer": "How much is this? — It's 50 yuan." },
+            { "zh": "那个多少钱？——100块。", "answer": "How much is that? — It's 100 yuan." },
+            { "zh": "我可以试穿吗？——当然。", "answer": "Can I try this on? — Sure." },
+            { "zh": "我可以试穿这件夹克吗？", "answer": "Can I try this jacket on?" },
+            { "zh": "我想买一件新衬衫。", "answer": "I want to buy a new shirt." },
+            { "zh": "我想买一个礼物。", "answer": "I want to buy a gift." },
+            { "zh": "这个有小一号的吗？", "answer": "Do you have this in a smaller size?" },
+            { "zh": "这个有蓝色的吗？", "answer": "Do you have this in blue?" },
+            { "zh": "我要这个。给你钱。", "answer": "I'll take this one. Here's the money." },
+            { "zh": "这个太贵了。有便宜一点的吗？", "answer": "This is too expensive. Do you have a cheaper one?" }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "购物评价操练",
+          "pattern": "This is too [adjective].",
+          "patternMeaning": "这个太...了",
+          "slots": ["adjective"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "这个太贵了。", "answer": "This is too expensive.", "slotValues": { "adjective": "expensive" } },
+            { "zh": "这个太大了。", "answer": "This is too big.", "slotValues": { "adjective": "big" } },
+            { "zh": "这个太小了。", "answer": "This is too small.", "slotValues": { "adjective": "small" } },
+            { "zh": "这个太紧了。", "answer": "This is too tight.", "slotValues": { "adjective": "tight" } },
+            { "zh": "这个太长了。", "answer": "This is too long.", "slotValues": { "adjective": "long" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述购物过程",
+          "levels": [
+            { "level": 1, "label": "想买", "en": "I want to buy a shirt.", "zh": "我想买一件衬衫。" },
+            { "level": 2, "label": "试穿", "en": "I want to buy a shirt. Can I try this on?", "zh": "我想买一件衬衫。我可以试穿这件吗？", "highlight": "Can I try this on?", "hint": "请求试穿" },
+            { "level": 3, "label": "购买", "en": "I want to buy a shirt. Can I try this on? I'll take it.", "zh": "我想买一件衬衫。我可以试穿这件吗？我要了。", "highlight": "I'll take it", "hint": "决定购买" }
+          ]
+        }
+      ]
+    }
+  },
+  "天气与出行": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "天气和出行表达",
+          "chunk": "It's sunny / I take the bus",
+          "chunkMeaning": "天晴/我坐公交",
+          "items": [
+            { "zh": "今天天晴。我们出去吧！", "answer": "It's sunny today. Let's go out!" },
+            { "zh": "今天下雨。我们待在家吧。", "answer": "It's rainy today. Let's stay in." },
+            { "zh": "我需要一把伞。外面在下雨。", "answer": "I need an umbrella. It's raining outside." },
+            { "zh": "我需要一件外套。外面冷。", "answer": "I need a coat. It's cold outside." },
+            { "zh": "今天天气怎么样？——暖和晴朗。", "answer": "What's the weather like? — It's warm and sunny." },
+            { "zh": "天气怎么样？——阴冷。", "answer": "What's the weather like? — It's cold and cloudy." },
+            { "zh": "我每天坐公交上班。", "answer": "I take the bus to work every day." },
+            { "zh": "我每天坐地铁上学。", "answer": "I take the subway to school every day." },
+            { "zh": "我走路去学校。离我家不远。", "answer": "I walk to school. It's not far from my home." },
+            { "zh": "我每天晚上出去散步。", "answer": "I go out for a walk every evening." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Let's 提议操练",
+          "pattern": "Let's [action] [place/time].",
+          "patternMeaning": "我们...吧",
+          "slots": ["action", "place/time"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我们今天下午去公园吧。", "answer": "Let's go to the park this afternoon.", "slotValues": { "action": "go to", "place/time": "the park this afternoon" } },
+            { "zh": "我们这周末去海滩吧。", "answer": "Let's go to the beach this weekend.", "slotValues": { "action": "go to", "place/time": "the beach this weekend" } },
+            { "zh": "我们出去吧。", "answer": "Let's go out.", "slotValues": { "action": "go", "place/time": "out" } },
+            { "zh": "我们待在家吧。", "answer": "Let's stay in.", "slotValues": { "action": "stay", "place/time": "in" } },
+            { "zh": "我们看电影吧。", "answer": "Let's watch a movie.", "slotValues": { "action": "watch", "place/time": "a movie" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述天气和出行",
+          "levels": [
+            { "level": 1, "label": "天气", "en": "It's sunny today.", "zh": "今天天晴。" },
+            { "level": 2, "label": "提议", "en": "It's sunny today. Let's go out!", "zh": "今天天晴。我们出去吧！", "highlight": "Let's go out", "hint": "加上提议" },
+            { "level": 3, "label": "交通", "en": "It's sunny today. Let's go out! I walk to the park.", "zh": "今天天晴。我们出去吧！我走路去公园。", "highlight": "walk to the park", "hint": "加上出行方式" }
+          ]
+        }
+      ]
+    }
+  },
+  "在外就餐": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "餐厅常用表达",
+          "chunk": "Can I have / I'd like to order",
+          "chunkMeaning": "我可以要/我想点",
+          "items": [
+            { "zh": "请给我菜单好吗？", "answer": "Can I have the menu, please?" },
+            { "zh": "请给我账单好吗？", "answer": "Can I have the bill, please?" },
+            { "zh": "请给我一杯水好吗？", "answer": "Can I have a glass of water, please?" },
+            { "zh": "我想点一个披萨和一份沙拉。", "answer": "I'd like to order a pizza and a salad." },
+            { "zh": "我想点一个汉堡和薯条。", "answer": "I'd like to order a burger and fries." },
+            { "zh": "我想点面条和汤。", "answer": "I'd like to order noodles and soup." },
+            { "zh": "你有什么推荐的？——意面很不错。", "answer": "What do you recommend? — The pasta is very good." },
+            { "zh": "食物很好吃！我很喜欢。", "answer": "The food is delicious! I love it." },
+            { "zh": "我饿了。我们今晚出去吃吧。", "answer": "I'm hungry. Let's eat out tonight." },
+            { "zh": "我通常在家做饭，但今天出去吃。", "answer": "I usually cook at home, but today I eat out." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "Can I have...? 请求操练",
+          "pattern": "Can I have [item], please?",
+          "patternMeaning": "请给我...好吗？",
+          "slots": ["item"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "请给我菜单好吗？", "answer": "Can I have the menu, please?", "slotValues": { "item": "the menu" } },
+            { "zh": "请给我账单好吗？", "answer": "Can I have the bill, please?", "slotValues": { "item": "the bill" } },
+            { "zh": "请给我一杯水好吗？", "answer": "Can I have a glass of water, please?", "slotValues": { "item": "a glass of water" } },
+            { "zh": "请给我一些纸巾好吗？", "answer": "Can I have some napkins, please?", "slotValues": { "item": "some napkins" } },
+            { "zh": "请给我一个叉子好吗？", "answer": "Can I have a fork, please?", "slotValues": { "item": "a fork" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述去餐厅吃饭",
+          "levels": [
+            { "level": 1, "label": "要菜单", "en": "Can I have the menu, please?", "zh": "请给我菜单。" },
+            { "level": 2, "label": "点餐", "en": "Can I have the menu, please? I'd like to order a pizza.", "zh": "请给我菜单。我想点一个披萨。", "highlight": "I'd like to order", "hint": "点餐" },
+            { "level": 3, "label": "结账", "en": "Can I have the menu, please? I'd like to order a pizza. Can I have the bill, please?", "zh": "请给我菜单。我想点一个披萨。请给我账单。", "highlight": "Can I have the bill", "hint": "结账" }
+          ]
+        }
+      ]
+    }
+  },
+  "通讯与联络": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "通讯常用表达",
+          "chunk": "I call / I send / Let's meet",
+          "chunkMeaning": "我打电话/我发/我们见面",
+          "items": [
+            { "zh": "我每天给我妈妈打电话。", "answer": "I call my mom every day." },
+            { "zh": "我每周末给朋友打电话。", "answer": "I call my friend every weekend." },
+            { "zh": "我在微信上给朋友发消息。", "answer": "I send messages to my friends on WeChat." },
+            { "zh": "我给家人发照片。", "answer": "I send photos to my family." },
+            { "zh": "你能晚点回我电话吗？我现在在忙。", "answer": "Can you call me back later? I'm busy right now." },
+            { "zh": "你能晚点发短信给我吗？", "answer": "Can you text me later?" },
+            { "zh": "我们下午3点在咖啡店见面吧。", "answer": "Let's meet at the coffee shop at 3 pm." },
+            { "zh": "我们5点在车站见面吧。", "answer": "Let's meet at the station at 5 pm." },
+            { "zh": "我在路上了。我10分钟后到。", "answer": "I'm on my way. I'll be there in 10 minutes." },
+            { "zh": "抱歉，我迟到了。路上很堵。", "answer": "Sorry, I'm late. The traffic was bad." }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "约定见面操练",
+          "pattern": "Let's meet at [place] at [time].",
+          "patternMeaning": "我们(时间)在(地点)见面",
+          "slots": ["place", "time"],
+          "direction": "zh_to_en",
+          "items": [
+            { "zh": "我们下午3点在咖啡店见面吧。", "answer": "Let's meet at the coffee shop at 3 pm.", "slotValues": { "place": "the coffee shop", "time": "3 pm" } },
+            { "zh": "我们5点在车站见面吧。", "answer": "Let's meet at the station at 5 pm.", "slotValues": { "place": "the station", "time": "5 pm" } },
+            { "zh": "我们中午在公园见面吧。", "answer": "Let's meet at the park at noon.", "slotValues": { "place": "the park", "time": "noon" } },
+            { "zh": "我们7点半在餐厅见面吧。", "answer": "Let's meet at the restaurant at 7:30.", "slotValues": { "place": "the restaurant", "time": "7:30" } },
+            { "zh": "我们6点在我家见面吧。", "answer": "Let's meet at my place at 6.", "slotValues": { "place": "my place", "time": "6" } }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述约定见面",
+          "levels": [
+            { "level": 1, "label": "打电话", "en": "I call my friend.", "zh": "我给朋友打电话。" },
+            { "level": 2, "label": "约定", "en": "I call my friend. Let's meet at 3 pm.", "zh": "我给朋友打电话。我们下午3点见。", "highlight": "Let's meet at 3 pm", "hint": "约定时间" },
+            { "level": 3, "label": "加地点", "en": "I call my friend. Let's meet at the coffee shop at 3 pm.", "zh": "我给朋友打电话。我们下午3点在咖啡店见。", "highlight": "at the coffee shop", "hint": "加上见面地点" }
+          ]
+        }
+      ]
+    }
+  }
+}

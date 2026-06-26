@@ -1,78 +1,9 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
-基础①·自我介绍,我是谁,Practice introducing yourself with I am. Say your name age nationality and identity.,练习用I am自我介绍：姓名、年龄、国籍、身份。,35,L1,掌握I am + 名字/年龄/国籍/身份的基本句型，以及否定句I am not。,be动词 自我介绍 I am 否定句,"## 开口顺序
-
-先说 Hello/Hi，再说 I am + 名字。可以说 I am a student / I am from China / I am 20 years old。
-
-**注意**：中文说""我学生""，英语必须说 I am a student，am 不能少。",practice_foundation-beginner_基础①_自我介绍_我是谁
-基础①·自我介绍,你是谁,Practice asking about others with You are. Learn to greet compliment and confirm.,练习用You are询问他人：问候、赞美、确认。,35,L1,掌握You are + 形容词/身份的用法，以及Are you?疑问句。,be动词 You are 问候 疑问句,"## 核心句型
-
-You are + 形容词 用来夸别人：You are kind / You are smart。
-
-Are you a student? 是问句，回答 Yes, I am. 或 No, I'm not.
-
-**对比**：I am 说自己，You are 说对方。",practice_foundation-beginner_基础①_自我介绍_你是谁
-基础①·描述事物,它是什么,Practice describing things with It is. Learn size color temperature and evaluation.,练习用It is描述事物：大小、颜色、温度、评价。,35,L1,掌握It is + 形容词/名词的描述句型，以及否定和疑问式。,be动词 It is 描述 颜色 大小,"## 描述三步
-
-1. 说是什么：It is a book.
-2. 说怎么样：It is big / It is red.
-3. 说天气：It is hot today.
-
-否定句：It is not big. It is small.（不是大的，是小的）
-疑问句：Is it good? Yes, it is. / No, it isn't.",practice_foundation-beginner_基础①_描述事物_它是什么
-基础①·描述事物,他们在哪里,Practice talking about locations with is/are. Learn prepositions and Where questions.,练习用be动词谈论位置：介词和Where问句。,40,L1,掌握物品位置和人物所在位置的表达，以及否定句。,be动词 位置 Where 地点 介词,"## 位置表达
-
-用 on（在……上）/ in（在……里）/ at（在……点）描述位置：
-- The book is on the desk.
-- It is in the bag.
-- They are at home.
-
-问位置：Where is my phone? — It is here.
-否定：He is not at home. He is at work.",practice_foundation-beginner_基础①_描述事物_他们在哪里
-基础①·描述他人,他/她是谁,Practice describing others with He/She is. Learn relationships occupations and appearance.,练习用He/She is描述他人：关系、职业、外表。,35,L1,掌握第三人称be动词的用法，以及否定和疑问句。,be动词 He is She is 描述 他人,"## 描述他人
-
-He / She 代替男生/女生：
-- She is my friend. / He is a doctor.
-- He is from Japan. / She is 25 years old.
-
-并列描述：He is kind and smart.（他又善良又聪明）
-
-否定：He is not my brother. He is my cousin.
-疑问：Is she your sister? — No, she is my friend.",practice_foundation-beginner_基础①_描述他人_他她是谁
-基础①·描述他人,我们/他们,Practice using We are and They are to describe groups. Learn plural forms.,练习用We are和They are描述群体：复数和集体表达。,35,L1,掌握复数be动词We are/They are的用法，以及否定句。,be动词 We are They are 复数 群体,"## 复数表达
-
-We = 我们，They = 他们/它们。后面用 are，不用 is：
-- We are good friends.
-- They are from the same city.
-
-否定：We are not late. We are on time.
-疑问：Are they your friends? — Yes, they are.
-
-**规律**：I → am / He/She/It → is / You/We/They → are",practice_foundation-beginner_基础①_描述他人_我们他们
-基础①·日常寒暄,打招呼与告别,Practice greetings and farewells in English. Learn how to say hello goodbye and basic polite expressions.,练习英语打招呼和告别：问候、再见、礼貌用语。,35,L1,掌握Good morning/afternoon/evening问候、告别用语和礼貌表达。,打招呼 告别 问候 礼貌用语,"## 问候与告别
-
-**打招呼**：
-- Good morning!（早上好）
-- Nice to meet you!（很高兴认识你）
-- Long time no see!（好久不见）
-
-**告别**：
-- See you later!（回头见）
-- Have a nice day!（祝你愉快）
-- Take care!（保重）
-- Welcome!（欢迎！）
-
-这些是固定短语，直接整体记忆即可。",practice_foundation-beginner_基础①_日常寒暄_打招呼告别
-基础①·日常寒暄,简单闲聊,Practice small talk conversations. Learn how to chat about weather weekend and daily life.,练习简单闲聊：天气、周末、日常生活话题。,40,L1,掌握How's it going? Where are you from? 等闲聊表达。,闲聊 日常对话 社交 问候,"## 闲聊四句
-
-**随意问候**：
-- How's it going? — Pretty good.
-- What's up? — Not much.
-
-**常用话题**：
-- Nice weather today!（天气真好）
-- How was your weekend? — It was great!（周末过得怎么样？）
-- Where are you from? — I'm from China.（你来自哪里？）
-- What do you do? — I'm a student.（你是做什么的？）
-- It's nice to see you again!（再次见到你很高兴！）
-
-先记住这些固定问句和回答，以后慢慢学语法。",practice_foundation-beginner_基础①_日常寒暄_简单闲聊
+基础①·自我介绍,我是谁,Practice introducing yourself with I am. Say your name age nationality and identity.,练习用I am自我介绍：姓名、年龄、国籍、身份。,35,L1,掌握I am + 名字/年龄/国籍/身份的基本句型，以及否定句I am not。,be动词 自我介绍 I am 否定句,"## 开口顺序 | | 先说 Hello/Hi，再说 I am + 名字。可以说 I am a student / I am from China / I am 20 years old。 | | **注意**：中文说""我学生""，英语必须说 I am a student，am 不能少。",practice_foundation-beginner_基础①_自我介绍_我是谁
+基础①·自我介绍,你是谁,Practice asking about others with You are. Learn to greet compliment and confirm.,练习用You are询问他人：问候、赞美、确认。,35,L1,掌握You are + 形容词/身份的用法，以及Are you?疑问句。,be动词 You are 问候 疑问句,"## 核心句型 | | You are + 形容词 用来夸别人：You are kind / You are smart。 | | Are you a student? 是问句，回答 Yes, I am. 或 No, I'm not. | | **对比**：I am 说自己，You are 说对方。",practice_foundation-beginner_基础①_自我介绍_你是谁
+基础①·描述事物,它是什么,Practice describing things with It is. Learn size color temperature and evaluation.,练习用It is描述事物：大小、颜色、温度、评价。,35,L1,掌握It is + 形容词/名词的描述句型，以及否定和疑问式。,be动词 It is 描述 颜色 大小,"## 描述三步 | | 1. 说是什么：It is a book. | 2. 说怎么样：It is big / It is red. | 3. 说天气：It is hot today. | | 否定句：It is not big. It is small.（不是大的，是小的） | 疑问句：Is it good? Yes, it is. / No, it isn't.",practice_foundation-beginner_基础①_描述事物_它是什么
+基础①·描述事物,他们在哪里,Practice talking about locations with is/are. Learn prepositions and Where questions.,练习用be动词谈论位置：介词和Where问句。,40,L1,掌握物品位置和人物所在位置的表达，以及否定句。,be动词 位置 Where 地点 介词,## 位置表达 | | 用 on（在……上）/ in（在……里）/ at（在……点）描述位置： | - The book is on the desk. | - It is in the bag. | - They are at home. | | 问位置：Where is my phone? — It is here. | 否定：He is not at home. He is at work.,practice_foundation-beginner_基础①_描述事物_他们在哪里
+基础①·描述他人,他/她是谁,Practice describing others with He/She is. Learn relationships occupations and appearance.,练习用He/She is描述他人：关系、职业、外表。,35,L1,掌握第三人称be动词的用法，以及否定和疑问句。,be动词 He is She is 描述 他人,"## 描述他人 | | He / She 代替男生/女生： | - She is my friend. / He is a doctor. | - He is from Japan. / She is 25 years old. | | 并列描述：He is kind and smart.（他又善良又聪明） | | 否定：He is not my brother. He is my cousin. | 疑问：Is she your sister? — No, she is my friend.",practice_foundation-beginner_基础①_描述他人_他她是谁
+基础①·描述他人,我们/他们,Practice using We are and They are to describe groups. Learn plural forms.,练习用We are和They are描述群体：复数和集体表达。,35,L1,掌握复数be动词We are/They are的用法，以及否定句。,be动词 We are They are 复数 群体,"## 复数表达 | | We = 我们，They = 他们/它们。后面用 are，不用 is： | - We are good friends. | - They are from the same city. | | 否定：We are not late. We are on time. | 疑问：Are they your friends? — Yes, they are. | | **规律**：I → am / He/She/It → is / You/We/They → are",practice_foundation-beginner_基础①_描述他人_我们他们
+基础①·日常寒暄,打招呼与告别,Practice greetings and farewells in English. Learn how to say hello goodbye and basic polite expressions.,练习英语打招呼和告别：问候、再见、礼貌用语。,35,L1,掌握Good morning/afternoon/evening问候、告别用语和礼貌表达。,打招呼 告别 问候 礼貌用语,## 问候与告别 | | **打招呼**： | - Good morning!（早上好） | - Nice to meet you!（很高兴认识你） | - Long time no see!（好久不见） | | **告别**： | - See you later!（回头见） | - Have a nice day!（祝你愉快） | - Take care!（保重） | - Welcome!（欢迎！） | | 这些是固定短语，直接整体记忆即可。,practice_foundation-beginner_基础①_日常寒暄_打招呼告别
+基础①·日常寒暄,简单闲聊,Practice small talk conversations. Learn how to chat about weather weekend and daily life.,练习简单闲聊：天气、周末、日常生活话题。,40,L1,掌握How's it going? Where are you from? 等闲聊表达。,闲聊 日常对话 社交 问候,## 闲聊四句 | | **随意问候**： | - How's it going? — Pretty good. | - What's up? — Not much. | | **常用话题**： | - Nice weather today!（天气真好） | - How was your weekend? — It was great!（周末过得怎么样？） | - Where are you from? — I'm from China.（你来自哪里？） | - What do you do? — I'm a student.（你是做什么的？） | - It's nice to see you again!（再次见到你很高兴！） | | 先记住这些固定问句和回答，以后慢慢学语法。,practice_foundation-beginner_基础①_日常寒暄_简单闲聊
