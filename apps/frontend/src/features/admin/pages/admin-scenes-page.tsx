@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
   ChevronRight, X, Code2, Type, BookOpen,
@@ -42,7 +43,6 @@ import {
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
 import { packageDataAdminApi } from '../api-package-data'
-import { prepareImportedPackageContent } from '../package-import-enrichment'
 
 function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'exam') return '考试'
@@ -1276,6 +1276,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
 // ─── Main Page ──────────────────────────────────────────────
 
 export function AdminScenesPage() {
+  const navigate = useNavigate()
   const [categories, setCategories] = useState<SceneCategory[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
   const [chunks, setChunks] = useState<Chunk[]>([])
@@ -1309,23 +1310,9 @@ export function AdminScenesPage() {
     finally { setLoading(false) }
   }
 
-  const preparePackageContent = async (sceneId: string) => {
-    const preparingToast = toast.loading('正在准备词典和 AI 数据...')
-    try {
-      const summary = await prepareImportedPackageContent(sceneId)
-      const total =
-        summary.vocabEnriched +
-        summary.chunkEnriched +
-        summary.patternEnriched
-      const errorText = summary.errors.length ? `，失败 ${summary.errors.length} 项` : ''
-      toast.success(
-        `内容准备完成：词汇 ${summary.vocabEnriched}/${summary.vocabChecked}，Chunk ${summary.chunkEnriched}/${summary.chunkChecked}，句式 ${summary.patternEnriched}/${summary.patternChecked}${errorText}`,
-        { id: preparingToast },
-      )
-      if (total > 0) void load()
-    } catch (err: any) {
-      toast.error(err?.message || '内容准备失败', { id: preparingToast })
-    }
+  const notifyContentTask = (taskId?: string) => {
+    if (!taskId) return
+    toast.success('学习包已导入，内容准备任务已开始')
   }
 
   useEffect(() => { load() }, [selectedCat, selectedPackageType])
@@ -1434,7 +1421,7 @@ export function AdminScenesPage() {
                 if (!pkgName) { toast.error('无法识别文件名'); setUploading(false); return }
                 try {
                   const res = await packageDataAdminApi.import(file, pkgName)
-                  if ((res as any).sceneId) await preparePackageContent((res as any).sceneId)
+                  notifyContentTask((res as any).contentPrepareTaskId)
                   toast.success(`导入成功：${(res as any).sceneTitle ?? pkgName}（词汇${(res as any).vocabCount ?? 0} 话题${(res as any).topicCount ?? 0}）`)
                   load()
                 } catch (err: any) {
@@ -1449,6 +1436,9 @@ export function AdminScenesPage() {
               onClick={() => uploadRef.current?.click()}>
               {uploading ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Upload className="size-3.5 mr-1" />}
               上传数据包
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => navigate('/admin/tasks')}>
+              <Clock3 className="size-3.5 mr-1" /> 任务中心
             </Button>
             <Button size="sm" variant="outline" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
               <Plus className="size-3.5 mr-1" /> 新增学习包
@@ -1534,6 +1524,23 @@ export function AdminScenesPage() {
                             }}>
                             {exportingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
                           </Button>
+                          <Button size="icon" variant="ghost" className="size-8" title="后台准备内容"
+                            disabled={updatingId === s.id}
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              setUpdatingId(s.id)
+                              try {
+                                const result = await packageDataAdminApi.prepareContent(s.id)
+                                notifyContentTask(result.taskId)
+                                navigate('/admin/tasks')
+                              } catch (err: any) {
+                                toast.error(err?.response?.data?.message || err?.message || '任务创建失败')
+                              } finally {
+                                setUpdatingId(null)
+                              }
+                            }}>
+                            {updatingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                          </Button>
                           <Button size="icon" variant="ghost" className="size-8" title="重新上传覆盖数据"
                             disabled={updatingId === s.id}
                             onClick={(e) => {
@@ -1549,7 +1556,7 @@ export function AdminScenesPage() {
                                 setUpdatingId(s.id)
                                 try {
                                   const res = await packageDataAdminApi.import(file, pkgName)
-                                  if ((res as any).sceneId) await preparePackageContent((res as any).sceneId)
+                                  notifyContentTask((res as any).contentPrepareTaskId)
                                   toast.success(`已覆盖：${(res as any).sceneTitle ?? pkgName}`)
                                   load()
                                 } catch (err: any) {

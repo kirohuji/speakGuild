@@ -26,13 +26,17 @@ import { resolve as pathResolve, join as pathJoin } from 'path';
 import * as AdmZip from 'adm-zip';
 import { Readable } from 'stream';
 import { parse } from 'csv-parse/sync';
+import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 
 // ── 类型定义 ──
 type CsvRow = Record<string, string>;
 
 @Controller('admin/content/packages')
 export class PackageDataController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly adminTasksService: AdminTasksService,
+  ) {}
 
   private async requireAdmin(req: Request) {
     const session = await requireAuthSession(req);
@@ -193,7 +197,7 @@ export class PackageDataController {
     @UploadedFile() file: Express.Multer.File,
     @Body('packageDirName') packageDirName?: string,
   ) {
-    await this.requireAdmin(req);
+    const session = await this.requireAdmin(req);
 
     if (!file) throw new ForbiddenException('请上传 ZIP 文件');
     if (!packageDirName?.trim()) throw new ForbiddenException('请指定包目录名（如 course-adverbs）');
@@ -503,6 +507,8 @@ export class PackageDataController {
       }
       if (warmupMatched > 0) console.log(`  ✓ ${warmupMatched}/${Object.keys(warmupPipeline).length} 个知识点练习 pipeline 已匹配`);
 
+      const contentPrepareTask = await this.adminTasksService.enqueueContentPrepare(scene.id, session.user.id);
+
       return {
         code: 200,
         message: `数据包 "${packageDirName}" 导入成功`,
@@ -515,6 +521,7 @@ export class PackageDataController {
           patternCount: patternRows.length,
           episodeCount: epRows.length,
           warmupTopics: warmupMatched,
+          contentPrepareTaskId: contentPrepareTask.id,
         },
       };
     } finally {
@@ -522,6 +529,16 @@ export class PackageDataController {
       try { if (existsSync(zipPath)) rmSync(zipPath); } catch {}
       try { if (existsSync(tmpDir)) rmSync(tmpDir, { recursive: true }); } catch {}
     }
+  }
+
+  @Post(':sceneId/prepare-content')
+  async prepareContent(@Req() req: Request, @Param('sceneId') sceneId: string) {
+    const session = await this.requireAdmin(req);
+    const task = await this.adminTasksService.enqueueContentPrepare(sceneId, session.user.id);
+    return {
+      taskId: task.id,
+      status: task.status,
+    };
   }
 
   // ════════════════════════════════════════════════════════════

@@ -22,6 +22,7 @@ import { AdminLearningPacksPage } from '@/features/admin/pages/admin-learning-pa
 import { AdminContentLibraryPage } from '@/features/admin/pages/admin-content-library-page'
 import { AdminDictionaryPage } from '@/features/admin/pages/admin-dictionary-page'
 import { AdminAiModelsPage } from '@/features/admin/pages/admin-ai-models-page'
+import { AdminTasksPage } from '@/features/admin/pages/admin-tasks-page'
 
 /** 后台所有路由 — 自包含 Routes，整体懒加载 */
 export default function AdminRoutes() {
@@ -50,6 +51,7 @@ export default function AdminRoutes() {
         <Route path="content-library" element={<AdminContentLibraryPage />} />
         <Route path="dictionary" element={<AdminDictionaryPage />} />
         <Route path="ai-models" element={<AdminAiModelsPage />} />
+        <Route path="tasks" element={<AdminTasksPage />} />
       </Route>
     </Routes>
   )

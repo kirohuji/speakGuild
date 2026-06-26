@@ -28,6 +28,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { TtsService } from '../tts/tts.service';
 import { TtsProvider } from '@prisma/client';
+import { AdminContentAiService } from './admin-content-ai.service';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -36,6 +37,7 @@ export class ContentAdminController {
     private readonly practiceAiService: EnglishPracticeAiService,
     private readonly dictionaryService: DictionaryService,
     private readonly ttsService: TtsService,
+    private readonly adminContentAiService: AdminContentAiService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -1849,6 +1851,15 @@ ${contextBlock}
   }) {
     await this.requireAdmin(req);
     try {
+      return {
+        code: 200,
+        message: 'success',
+        data: await this.adminContentAiService.enrichVocabulary(dto),
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+    try {
       const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
       if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
       const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
@@ -1999,6 +2010,15 @@ If input is non-IPA (e.g., respelling "in-truh-DOOS"), generate correct IPA from
   }) {
     await this.requireAdmin(req);
     try {
+      return {
+        code: 200,
+        message: 'success',
+        data: await this.adminContentAiService.enrichChunk(dto),
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+    try {
       const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
       if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
       const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
@@ -2070,6 +2090,15 @@ Return exactly a JSON object — no markdown, no code fences:
     meaning: string;
   }) {
     await this.requireAdmin(req);
+    try {
+      return {
+        code: 200,
+        message: 'success',
+        data: await this.adminContentAiService.enrichPattern(dto),
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
     try {
       const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
       if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');

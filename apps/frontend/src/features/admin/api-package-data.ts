@@ -9,6 +9,7 @@ export interface ImportResult {
   patternCount: number;
   episodeCount: number;
   warmupTopics: number;
+  contentPrepareTaskId?: string;
 }
 
 export const packageDataAdminApi = {
@@ -35,6 +36,9 @@ export const packageDataAdminApi = {
       {},
       { timeout: 120_000 },
     ),
+
+  prepareContent: (sceneId: string) =>
+    post<{ taskId: string; status: string }>(`/admin/content/packages/${sceneId}/prepare-content`),
 
   delete: (sceneId: string) =>
     del(`/admin/content/packages/${sceneId}`),

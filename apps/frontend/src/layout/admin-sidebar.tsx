@@ -5,7 +5,7 @@ import {
   Users, Settings, BarChart3, Bell,
   ChevronRight, ChevronDown, CreditCard, Receipt,
   MessageSquare, Award, Palette, Quote,
-  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain,
+  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -64,6 +64,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'mobile-bundles', label: t('admin.otaBundles', { defaultValue: 'OTA 安装包' }), icon: Smartphone, path: '/admin/mobile-bundles' },
       { key: 'settings', label: t('admin.settings', { defaultValue: '系统设置' }), icon: Settings, path: '/admin/settings' },
       { key: 'ai-models', label: '大模型管理', icon: Brain, path: '/admin/ai-models' },
+      { key: 'tasks', label: '任务中心', icon: ListChecks, path: '/admin/tasks' },
     ]},
   ]
 

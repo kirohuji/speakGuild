@@ -12,6 +12,63 @@ enum UserRole {
   admin
 }
 
+enum AdminTaskStatus {
+  queued
+  running
+  completed
+  failed
+  canceled
+}
+
+enum AdminTaskLogLevel {
+  info
+  warn
+  error
+}
+
+model AdminTask {
+  id             String          @id @default(cuid())
+  type           String
+  status         AdminTaskStatus @default(queued)
+  title          String
+  targetType     String?
+  targetId       String?
+  bullJobId      String?
+  progress       Int             @default(0)
+  currentStep    String?
+  totalItems     Int             @default(0)
+  processedItems Int             @default(0)
+  successItems   Int             @default(0)
+  failedItems    Int             @default(0)
+  payload        Json?
+  summary        Json?
+  errorMessage   String?
+  createdById    String?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  logs           AdminTaskLog[]
+
+  @@index([type, status, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@map("admin_task")
+}
+
+model AdminTaskLog {
+  id        String            @id @default(cuid())
+  task      AdminTask         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String
+  level     AdminTaskLogLevel @default(info)
+  step      String?
+  message   String
+  meta      Json?
+  createdAt DateTime          @default(now())
+
+  @@index([taskId, createdAt])
+  @@map("admin_task_log")
+}
+
 model User {
   id                     String               @id
   name                   String

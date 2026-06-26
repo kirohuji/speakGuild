@@ -17,11 +17,13 @@ import { TtsModule } from '../tts/tts.module';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { LearningModule } from '../learning/learning.module';
 import { NotificationModule } from '../notification/notification.module';
+import { AdminTasksModule } from '../admin-tasks/admin-tasks.module';
+import { AdminContentAiService } from './admin-content-ai.service';
 
 @Module({
-  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule],
+  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule, AdminTasksModule],
   controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController],
-  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService],
+  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService, AdminContentAiService],
   exports: [SystemConfigService],
 })
 export class AdminModule {}
