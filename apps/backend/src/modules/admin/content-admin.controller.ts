@@ -219,7 +219,7 @@ export class ContentAdminController {
         topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
         topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
         activeChunks: {
-          include: { chunk: { select: { id: true, text: true } } },
+          include: { chunk: { include: { examples: { orderBy: { sortOrder: 'asc' } } } } },
           orderBy: { sortOrder: 'asc' },
         },
       },

@@ -42,6 +42,7 @@ import {
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
 import { packageDataAdminApi } from '../api-package-data'
+import { prepareImportedPackageContent } from '../package-import-enrichment'
 
 function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'exam') return '考试'
@@ -1308,6 +1309,25 @@ export function AdminScenesPage() {
     finally { setLoading(false) }
   }
 
+  const preparePackageContent = async (sceneId: string) => {
+    const preparingToast = toast.loading('正在准备词典和 AI 数据...')
+    try {
+      const summary = await prepareImportedPackageContent(sceneId)
+      const total =
+        summary.vocabEnriched +
+        summary.chunkEnriched +
+        summary.patternEnriched
+      const errorText = summary.errors.length ? `，失败 ${summary.errors.length} 项` : ''
+      toast.success(
+        `内容准备完成：词汇 ${summary.vocabEnriched}/${summary.vocabChecked}，Chunk ${summary.chunkEnriched}/${summary.chunkChecked}，句式 ${summary.patternEnriched}/${summary.patternChecked}${errorText}`,
+        { id: preparingToast },
+      )
+      if (total > 0) void load()
+    } catch (err: any) {
+      toast.error(err?.message || '内容准备失败', { id: preparingToast })
+    }
+  }
+
   useEffect(() => { load() }, [selectedCat, selectedPackageType])
   useEffect(() => { setPage(1) }, [selectedCat, selectedPackageType])
   useEffect(() => {
@@ -1414,6 +1434,7 @@ export function AdminScenesPage() {
                 if (!pkgName) { toast.error('无法识别文件名'); setUploading(false); return }
                 try {
                   const res = await packageDataAdminApi.import(file, pkgName)
+                  if ((res as any).sceneId) await preparePackageContent((res as any).sceneId)
                   toast.success(`导入成功：${(res as any).sceneTitle ?? pkgName}（词汇${(res as any).vocabCount ?? 0} 话题${(res as any).topicCount ?? 0}）`)
                   load()
                 } catch (err: any) {
@@ -1528,6 +1549,7 @@ export function AdminScenesPage() {
                                 setUpdatingId(s.id)
                                 try {
                                   const res = await packageDataAdminApi.import(file, pkgName)
+                                  if ((res as any).sceneId) await preparePackageContent((res as any).sceneId)
                                   toast.success(`已覆盖：${(res as any).sceneTitle ?? pkgName}`)
                                   load()
                                 } catch (err: any) {
