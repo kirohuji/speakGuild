@@ -68,24 +68,28 @@ export const DEFAULT_TTS_BACKEND: TtsBackendSettings = {
   params: { speed: 1, vol: 1, pitch: 0 },
 }
 
+const DEFAULT_PREFERENCES: Preferences = {
+  autoPlay: false,
+  bgmEnabled: false,
+  bgmVolume: null,
+  theme: 'system',
+  language: 'zh-CN',
+  tts: DEFAULT_TTS,
+  ttsBackend: DEFAULT_TTS_BACKEND,
+  wifiOnlyMedia: true,
+  nativeSpeechRecognitionEnabled: false,
+  dailyGoal: 20,
+  dailyPracticeMixedPacks: false,
+  dailyPracticeRandomOrder: true,
+  dailyPracticeLastMode: 'review',
+  learningReminderEnabled: true,
+  learningReminderTime: '20:00',
+}
+
 export const usePreferencesStore = create<PreferencesStore>()(
   persist(
     (set) => ({
-      autoPlay: false,
-      bgmEnabled: false,
-      bgmVolume: null,
-      theme: 'system',
-      language: 'zh-CN',
-      tts: DEFAULT_TTS,
-      ttsBackend: DEFAULT_TTS_BACKEND,
-      wifiOnlyMedia: true,
-      nativeSpeechRecognitionEnabled: false,
-      dailyGoal: 20,
-      dailyPracticeMixedPacks: false,
-      dailyPracticeRandomOrder: true,
-      dailyPracticeLastMode: 'review',
-      learningReminderEnabled: false,
-      learningReminderTime: '20:30',
+      ...DEFAULT_PREFERENCES,
       setAutoPlay: (autoPlay) => set({ autoPlay }),
       setBgmEnabled: (bgmEnabled) => set({ bgmEnabled }),
       setBgmVolume: (bgmVolume) => set({ bgmVolume }),
@@ -107,6 +111,22 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setLearningReminderEnabled: (value) => set({ learningReminderEnabled: value }),
       setLearningReminderTime: (value) => set({ learningReminderTime: value }),
     }),
-    { name: 'manyu-preferences' }
+    {
+      name: 'manyu-preferences',
+      version: 1,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<PreferencesStore>
+        if (version >= 1) return state
+        return {
+          ...state,
+          dailyGoal: state.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
+          dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
+          learningReminderEnabled: DEFAULT_PREFERENCES.learningReminderEnabled,
+          learningReminderTime: !state.learningReminderTime || state.learningReminderTime === '20:30'
+            ? DEFAULT_PREFERENCES.learningReminderTime
+            : state.learningReminderTime,
+        }
+      },
+    }
   )
 )

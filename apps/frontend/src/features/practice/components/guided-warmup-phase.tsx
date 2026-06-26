@@ -75,12 +75,6 @@ export function GuidedWarmupPhase({
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
 type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
 
-  const pickOne = useCallback(<T,>(items: T[] | undefined): [T, number] | null => {
-    if (!items?.length) return null
-    const idx = Math.floor(Math.random() * items.length)
-    return [items[idx], idx]
-  }, [])
-
   const shuffleSteps = useCallback((steps: FlatStep[]) => {
     const shuffled = [...steps]
     for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -95,9 +89,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
     for (const item of warmupItems) {
       if (item.type === 'chunk_substitution') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
-        const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
-        if (picked) {
-          const [sub, subIdx] = picked
+        ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
           steps.push({
             id: `${item.id}_${subIdx}`,
             type: 'chunk_substitution',
@@ -117,11 +109,9 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
               )
             },
           })
-        }
+        })
       } else if (item.type === 'vocab_drill') {
-        const picked = pickOne<VocabPromptItem>((item.vocabs ?? []) as VocabPromptItem[])
-        if (picked) {
-          const [v, vIdx] = picked
+        ;((item.vocabs ?? []) as VocabPromptItem[]).forEach((v, vIdx) => {
           steps.push({
             id: `${item.id}_${vIdx}`,
             type: 'vocab_drill',
@@ -139,12 +129,10 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
               )
             },
           })
-        }
+        })
       } else if (item.type === 'vocab_sentence_building') {
         for (const pattern of (item.patterns ?? [])) {
-          const picked = pickOne<SimplePromptItem>((pattern.items ?? []) as SimplePromptItem[])
-          if (picked) {
-            const [sub, subIdx] = picked
+          ;((pattern.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
             const flatId = `${item.id}_${pattern.chunk}_${subIdx}`
             steps.push({
               id: flatId,
@@ -163,7 +151,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
                 />
               ),
             })
-          }
+          })
         }
       } else if (item.type === 'sentence_decomposition') {
         const title = item.title || '句子拆解'
@@ -182,9 +170,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         })
       } else if (item.type === 'pattern_drill') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
-        const picked = pickOne<SimplePromptItem>((item.items ?? []) as SimplePromptItem[])
-        if (picked) {
-          const [sub, subIdx] = picked
+        ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
           steps.push({
             id: `${item.id}_${subIdx}`,
             type: 'pattern_drill',
@@ -204,11 +190,11 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
               )
             },
           })
-        }
+        })
       }
     }
     return shuffleSteps(steps)
-  }, [pickOne, shuffleSteps, warmupItems, warmupRunSeed])
+  }, [shuffleSteps, warmupItems, warmupRunSeed])
 
   const totalSteps = flatSteps.length
 

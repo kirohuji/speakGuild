@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn'
 
 function parseTime(value: string) {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value)
-  if (!match) return { hour: 20, minute: 30 }
+  if (!match) return { hour: 20, minute: 0 }
   return { hour: Number(match[1]), minute: Number(match[2]) }
 }
 
