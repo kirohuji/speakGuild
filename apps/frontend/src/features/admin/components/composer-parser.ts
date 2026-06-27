@@ -201,7 +201,7 @@ export function serializeComposer(
         if (item.hint) lines.push(`#hint:${item.hint}`)
         if (item.chunks?.length) lines.push(`#chunks:${item.chunks.join(', ')}`)
         if (item.requiresInput && item.defaultAnswer) {
-          lines.push(`# defaultAnswer:${encodeURIComponent(item.defaultAnswer.replace(/\s+/g, ' ').trim())}`)
+          lines.push(`# defaultAnswer:${encodeURIComponent(item.defaultAnswer)}`)
         }
         if (item.requiresInput && item.defaultAnswerAudioUrl) {
           lines.push(`# defaultAnswerAudio:${encodeURIComponent(item.defaultAnswerAudioUrl)}`)

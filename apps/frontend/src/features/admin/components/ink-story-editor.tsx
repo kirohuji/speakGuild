@@ -243,6 +243,15 @@ export function InkStoryEditor({
     () => characters.find((character) => character.id === characterId),
     [characterId, characters],
   )
+  const selectedLineCharacter = useMemo(() => {
+    if (selectedItem?.type !== 'line' || !selectedItem.speaker) return null
+    const speaker = selectedItem.speaker.trim().toLowerCase()
+    return characters.find((character) => {
+      const name = character.name.trim().toLowerCase()
+      const displayName = character.displayName.trim().toLowerCase()
+      return name === speaker || displayName === speaker
+    }) ?? null
+  }, [characters, selectedItem])
   const defaultCharacter = selectedCharacter || characters[0]
   const previewBackgroundUrl = useMemo(
     () => locations.find((location) => location.id === locationId)?.backgroundUrl,
@@ -968,6 +977,10 @@ export function InkStoryEditor({
                     <VnLineAudioGenerator
                       text={selectedItem.text}
                       audioUrl={selectedItem.audioUrl}
+                      speaker={selectedItem.speaker}
+                      characterTtsVoice={selectedLineCharacter?.ttsVoice}
+                      characterTtsModel={selectedLineCharacter?.ttsModel}
+                      characterTtsParams={selectedLineCharacter?.ttsParams}
                       storyKey={key}
                       sceneName={selectedScene?.name}
                       lineIndex={selection.type === 'item' ? selection.itemIndex : undefined}

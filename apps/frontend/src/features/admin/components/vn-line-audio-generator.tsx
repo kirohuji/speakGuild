@@ -38,15 +38,30 @@ type ParamValues = Record<string, string | number | boolean>
 interface VnLineAudioGeneratorProps {
   text: string
   audioUrl?: string
+  speaker?: string
+  characterTtsVoice?: string | null
+  characterTtsModel?: string | null
+  characterTtsParams?: Record<string, number> | null
   storyKey?: string
   sceneName?: string
   lineIndex?: number
   onChange: (audioUrl: string) => void
 }
 
+function providerFromVoiceId(voiceId?: string | null): TtsProviderKey | null {
+  if (!voiceId) return null
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(voiceId)
+    ? 'cartesia'
+    : 'minimax'
+}
+
 export function VnLineAudioGenerator({
   text,
   audioUrl,
+  speaker,
+  characterTtsVoice,
+  characterTtsModel,
+  characterTtsParams,
   storyKey,
   sceneName,
   lineIndex,
@@ -67,13 +82,36 @@ export function VnLineAudioGenerator({
     getTtsParamsSchema().then(setSchemas).catch(() => undefined)
   }, [])
 
+  useEffect(() => {
+    const characterProvider = providerFromVoiceId(characterTtsVoice)
+    const hasCharacterConfig = Boolean(characterProvider || characterTtsModel || characterTtsParams)
+
+    const nextProvider = hasCharacterConfig ? (characterProvider ?? ttsBackend.provider) : ttsBackend.provider
+    setProvider(nextProvider)
+    setModel(hasCharacterConfig
+      ? characterTtsModel || (nextProvider === 'cartesia' ? 'sonic-english' : 'speech-2.8-hd')
+      : ttsBackend.model)
+    setVoiceId(hasCharacterConfig ? characterTtsVoice || '' : ttsBackend.voiceId ?? '')
+    setParams(hasCharacterConfig ? characterTtsParams ?? {} : ttsBackend.params ?? {})
+    setError('')
+  }, [
+    characterTtsModel,
+    characterTtsParams,
+    characterTtsVoice,
+    speaker,
+    ttsBackend.model,
+    ttsBackend.params,
+    ttsBackend.provider,
+    ttsBackend.voiceId,
+  ])
+
   const currentSchema = schemas.find((schema) => schema.provider === provider)
   const currentModelSchema = currentSchema?.models.find((item) => item.model === model)
   const voiceOptions = provider === 'cartesia' ? CARTESIA_VOICES : MINIMAX_VOICES
   const configLabel = useMemo(() => {
     const voiceLabel = voiceOptions.find((voice) => voice.id === voiceId)?.label || voiceId || '默认声音'
-    return `${provider} · ${model} · ${voiceLabel}`
-  }, [model, provider, voiceId, voiceOptions])
+    return `${speaker ? `${speaker} · ` : ''}${provider} · ${model} · ${voiceLabel}`
+  }, [model, provider, speaker, voiceId, voiceOptions])
 
   useEffect(() => {
     if (!currentSchema) return
