@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -59,6 +60,8 @@ const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> =
   { id: 'course', label: '课程' },
   { id: 'foundation', label: '零基础' },
 ]
+
+type PackageTypeFilter = Scene['packageType'] | 'all'
 
 // ─── Category Dialog ────────────────────────────────────────
 
@@ -1287,7 +1290,7 @@ export function AdminScenesPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
-  const [selectedPackageType, setSelectedPackageType] = useState<Scene['packageType']>('daily')
+  const [selectedPackageType, setSelectedPackageType] = useState<PackageTypeFilter>('all')
   const [detailSceneId, setDetailSceneId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -1301,8 +1304,8 @@ export function AdminScenesPage() {
     setLoading(true)
     try {
       const [cats, scns, chks] = await Promise.all([
-        listSceneCategories(selectedPackageType),
-        listScenes(selectedCat ?? undefined, selectedPackageType),
+        listSceneCategories(selectedPackageType === 'all' ? undefined : selectedPackageType),
+        listScenes(selectedCat ?? undefined, selectedPackageType === 'all' ? undefined : selectedPackageType),
         listAllChunks(),
       ])
       setCategories(cats); setScenes(scns); setChunks(chks)
@@ -1313,6 +1316,22 @@ export function AdminScenesPage() {
   const notifyContentTask = (taskId?: string) => {
     if (!taskId) return
     toast.success('学习包已导入，内容准备任务已开始')
+  }
+
+  const handlePaidChange = async (scene: Scene, paid: boolean) => {
+    setUpdatingId(scene.id)
+    try {
+      const nextIsFree = !paid
+      await updateScene(scene.id, { isFree: nextIsFree })
+      setScenes((items) => items.map((item) => (
+        item.id === scene.id ? { ...item, isFree: nextIsFree } : item
+      )))
+      toast.success(paid ? '已设为付费学习包' : '已设为免费学习包')
+    } catch {
+      toast.error('付费状态更新失败')
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
   useEffect(() => { load() }, [selectedCat, selectedPackageType])
@@ -1355,7 +1374,7 @@ export function AdminScenesPage() {
           <div>
             <p className="mb-2 text-xs font-medium text-muted-foreground">一级类型</p>
             <div className="flex flex-wrap gap-2">
-              {PACKAGE_TYPE_FILTERS.map((item) => (
+              {[{ id: 'all' as const, label: '全部' }, ...PACKAGE_TYPE_FILTERS].map((item) => (
                 <Badge
                   key={item.id}
                   variant={selectedPackageType === item.id ? 'default' : 'outline'}
@@ -1465,6 +1484,7 @@ export function AdminScenesPage() {
                   <tr className="border-b border-border bg-muted/40">
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">学习包</th>
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">要求</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">付费</th>
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">内容量</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">操作</th>
                   </tr>
@@ -1492,6 +1512,16 @@ export function AdminScenesPage() {
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">{s.requiredOutputLevel}</Badge>
                           <span className="text-xs text-muted-foreground">Lv.{s.requiredUserLevel}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Switch
+                            checked={!s.isFree}
+                            disabled={updatingId === s.id}
+                            onCheckedChange={(checked) => handlePaidChange(s, checked)}
+                          />
+                          <span className="text-xs text-muted-foreground">{s.isFree ? '免费' : '付费'}</span>
                         </div>
                       </td>
                       <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">

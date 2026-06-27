@@ -1,5 +1,5 @@
 import {
-  IsString, IsOptional, IsInt, IsArray, Min, Max, IsIn,
+  IsString, IsOptional, IsInt, IsArray, Min, Max, IsIn, IsBoolean,
 } from 'class-validator';
 
 export class CreateSceneCategoryDto {
@@ -55,6 +55,10 @@ export class CreateSceneDto {
   @IsInt()
   @Min(1)
   requiredUserLevel?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isFree?: boolean;
 }
 
 export class UpdateSceneDto {
@@ -86,6 +90,10 @@ export class UpdateSceneDto {
   @IsInt()
   @Min(1)
   requiredUserLevel?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isFree?: boolean;
 }
 
 export class CreateVocabularyDto {

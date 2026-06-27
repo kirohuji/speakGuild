@@ -59,6 +59,7 @@ export interface Scene {
   description: string | null
   requiredOutputLevel: string
   requiredUserLevel: number
+  isFree: boolean
   category?: { id: string; name: string }
   _count?: { trainingTopics: number; storyEpisodes?: number }
   trainingTopics?: TrainingTopic[]

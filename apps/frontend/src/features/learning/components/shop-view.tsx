@@ -11,6 +11,7 @@ import { ShopCard } from './shop-card'
 import type { LearningPackageType } from '../api/learning-api'
 
 interface Props {
+  isOpen?: boolean
   onMemberOpen: () => void
   onEnrollUnit?: (id: string) => Promise<void>
   onRefreshShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
@@ -25,7 +26,9 @@ const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; label: string }> = [
   { id: 'foundation', label: '零基础' },
 ]
 
-export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore }: Props) {
+type PackageTypeFilter = LearningPackageType | 'all'
+
+export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore }: Props) {
   const { t } = useTranslation()
   const tags = useLearningStore((s) => s.tags)
   const fetchTags = useLearningStore((s) => s.fetchTags)
@@ -33,20 +36,28 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
   const loading = useLearningStore((s) => s.shopLoading)
   const shopTotal = useLearningStore((s) => s.shopTotal)
   const shopHasMore = useLearningStore((s) => s.shopHasMore)
-  const [activeType, setActiveType] = useState<LearningPackageType>('daily')
+  const [activeType, setActiveType] = useState<PackageTypeFilter>('all')
   const [activeTag, setActiveTag] = useState('all')
   const [keyword, setKeyword] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const doSearch = useCallback((kw: string, tag: string, packageType: LearningPackageType) => {
-    const params: { tag?: string; packageType?: LearningPackageType; search?: string } = { packageType }
+  const doSearch = useCallback((kw: string, tag: string, packageType: PackageTypeFilter) => {
+    const params: { tag?: string; packageType?: LearningPackageType; search?: string } = {}
+    if (packageType !== 'all') params.packageType = packageType
     if (tag !== 'all') params.tag = tag
     if (kw.trim()) params.search = kw.trim()
     onRefreshShop(params)
   }, [onRefreshShop])
 
   useEffect(() => {
-    fetchTags(activeType)
+    if (!isOpen) return
+    setActiveType('all')
+    setActiveTag('all')
+    setKeyword('')
+  }, [isOpen])
+
+  useEffect(() => {
+    fetchTags(activeType === 'all' ? undefined : activeType)
   }, [activeType, fetchTags])
 
   useEffect(() => {
@@ -62,7 +73,7 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
     debounceRef.current = setTimeout(() => doSearch(value, activeTag, activeType), 300)
   }
 
-  const handleTypeChange = (type: LearningPackageType) => {
+  const handleTypeChange = (type: PackageTypeFilter) => {
     setActiveType(type)
     setActiveTag('all')
     doSearch(keyword, 'all', type)
@@ -75,7 +86,8 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
 
   const handleEndReached = () => {
     if (shopHasMore && !loading) {
-      const params: { tag?: string; packageType?: LearningPackageType; search?: string } = { packageType: activeType }
+      const params: { tag?: string; packageType?: LearningPackageType; search?: string } = {}
+      if (activeType !== 'all') params.packageType = activeType
       if (activeTag !== 'all') params.tag = activeTag
       if (keyword.trim()) params.search = keyword.trim()
       onLoadMore(params)
@@ -85,11 +97,13 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
   const categoryTabs = useMemo(
     () => [
       { id: 'all', label: t('learning.all') },
-      ...tags.map((tag) => ({ id: tag.name, label: tag.name })),
+      ...tags
+        .filter((tag) => tag.name !== 'all' && tag.name !== t('learning.all'))
+        .map((tag) => ({ id: tag.name, label: tag.name })),
     ],
     [tags, t],
   )
-  const showCategoryTabs = tags.length > 0
+  const showCategoryTabs = categoryTabs.length > 0
 
   const headerEl = (
     <div className="space-y-3 pb-2">
@@ -104,7 +118,7 @@ export function ShopView({ onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore
       </div>
       <div className="scrollbar-hide mx-4 overflow-x-auto">
         <div className="flex w-max gap-2 pb-1">
-          {PACKAGE_TYPE_TABS.map((tab) => (
+          {[{ id: 'all' as const, label: t('learning.all') }, ...PACKAGE_TYPE_TABS].map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTypeChange(tab.id)}
