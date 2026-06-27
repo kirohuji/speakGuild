@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Player, type PlayerRef } from '@remotion/player'
+import html2canvas from 'html2canvas'
 import { Film, Maximize2, Mic, Pause, Play, Settings, ArrowLeft, Clapperboard, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
@@ -29,41 +30,19 @@ function canFollowFrame(frame?: MixedTimelineFrame | null) {
   return Boolean(frame && frame.kind !== 'missingInput' && frame.text)
 }
 
-function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
-  const numChannels = buffer.numberOfChannels
-  const sampleRate = buffer.sampleRate
-  const length = buffer.length * numChannels * 2 + 44
-  const arrayBuffer = new ArrayBuffer(length)
-  const view = new DataView(arrayBuffer)
+const MP4_MIME_TYPES = [
+  'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+  'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+  'video/mp4',
+]
 
-  const writeString = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
-  }
+function pickMp4MimeType() {
+  if (typeof MediaRecorder === 'undefined') return ''
+  return MP4_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
+}
 
-  writeString(0, 'RIFF')
-  view.setUint32(4, length - 8, true)
-  writeString(8, 'WAVE')
-  writeString(12, 'fmt ')
-  view.setUint32(16, 16, true)
-  view.setUint16(20, 1, true)
-  view.setUint16(22, numChannels, true)
-  view.setUint32(24, sampleRate, true)
-  view.setUint32(28, sampleRate * numChannels * 2, true)
-  view.setUint16(32, numChannels * 2, true)
-  view.setUint16(34, 16, true)
-  writeString(36, 'data')
-  view.setUint32(40, length - 44, true)
-
-  let offset = 44
-  for (let i = 0; i < buffer.length; i++) {
-    for (let ch = 0; ch < numChannels; ch++) {
-      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]))
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true)
-      offset += 2
-    }
-  }
-
-  return arrayBuffer
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
 export function NqtrVideoPreviewPlayer({
@@ -73,6 +52,7 @@ export function NqtrVideoPreviewPlayer({
   className,
 }: NqtrVideoPreviewPlayerProps) {
   const playerRef = useRef<PlayerRef>(null)
+  const videoSurfaceRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const recordingAudioRef = useRef<HTMLAudioElement | null>(null)
   const recordingUrlsRef = useRef<Record<number, string>>({})
@@ -96,43 +76,90 @@ export function NqtrVideoPreviewPlayer({
   )
 
   const generateWork = useCallback(async () => {
+    const surface = videoSurfaceRef.current
+    const player = playerRef.current
+    if (!surface || !player) return
+
+    const mimeType = pickMp4MimeType()
+    if (!mimeType) {
+      toast.error('当前浏览器不支持直接导出 MP4，请后续使用服务端 Remotion 导出')
+      return
+    }
+
     setIsGenerating(true)
+    player.pause()
+    setPlaying(false)
     try {
-      const audioFrames = timeline.frames.filter((f) => f.resolvedAudioUrl)
-      if (!audioFrames.length) {
-        toast.error('没有可用的音频')
-        return
-      }
+      const canvas = document.createElement('canvas')
+      canvas.width = timeline.width
+      canvas.height = timeline.height
+      const canvasCtx = canvas.getContext('2d')
+      if (!canvasCtx) throw new Error('Canvas unavailable')
 
-      const totalDuration = timeline.durationInFrames / timeline.fps
-      const sampleRate = 44100
-      const offlineCtx = new OfflineAudioContext(2, Math.ceil(sampleRate * totalDuration), sampleRate)
-
+      const audioCtx = new AudioContext()
+      const audioDestination = audioCtx.createMediaStreamDestination()
+      const audioBuffers: Array<{ frame: typeof timeline.frames[number]; buffer: AudioBuffer }> = []
+      const audioFrames = timeline.frames.filter((frame) => frame.resolvedAudioUrl)
       for (const frame of audioFrames) {
         if (!frame.resolvedAudioUrl) continue
         try {
           const response = await fetch(frame.resolvedAudioUrl)
           const arrayBuffer = await response.arrayBuffer()
-          const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
-          const source = offlineCtx.createBufferSource()
-          source.buffer = audioBuffer
-          source.connect(offlineCtx.destination)
-          source.start(frame.startSeconds)
+          const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+          audioBuffers.push({ frame, buffer: audioBuffer })
         } catch {
           console.warn('Failed to load audio for frame', frame.index)
         }
       }
 
-      const renderedBuffer = await offlineCtx.startRendering()
-      const wav = audioBufferToWav(renderedBuffer)
-      const blob = new Blob([wav], { type: 'audio/wav' })
+      const videoStream = canvas.captureStream(timeline.fps)
+      const stream = new MediaStream([
+        ...videoStream.getVideoTracks(),
+        ...audioDestination.stream.getAudioTracks(),
+      ])
+      const chunks: BlobPart[] = []
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 })
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data)
+      }
+
+      const stopped = new Promise<void>((resolve, reject) => {
+        recorder.onstop = () => resolve()
+        recorder.onerror = (event) => reject(('error' in event && event.error instanceof Error) ? event.error : new Error('MediaRecorder failed'))
+      })
+
+      recorder.start()
+      const audioStartTime = audioCtx.currentTime
+      for (const item of audioBuffers) {
+        const source = audioCtx.createBufferSource()
+        source.buffer = item.buffer
+        source.connect(audioDestination)
+        source.start(audioStartTime + item.frame.startSeconds)
+      }
+      for (let frame = 0; frame < timeline.durationInFrames; frame += 1) {
+        player.seekTo(frame)
+        await wait(1000 / timeline.fps)
+        const snapshot = await html2canvas(surface, {
+          backgroundColor: '#090b10',
+          scale: 1,
+          useCORS: true,
+          logging: false,
+        })
+        canvasCtx.drawImage(snapshot, 0, 0, canvas.width, canvas.height)
+      }
+      recorder.stop()
+      await stopped
+      stream.getTracks().forEach((track) => track.stop())
+      await audioCtx.close()
+
+      const blob = new Blob(chunks, { type: mimeType })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `nqtr-work-${Date.now()}.wav`
+      a.download = `nqtr-work-${Date.now()}.mp4`
       a.click()
       URL.revokeObjectURL(url)
-      toast.success('作品已生成')
+      toast.success('MP4 已生成')
     } catch (err) {
       console.error('Generate work failed', err)
       toast.error('生成失败')
@@ -354,7 +381,7 @@ export function NqtrVideoPreviewPlayer({
 
   return (
     <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-border bg-[#080b11] text-white shadow-sm', className)}>
-      <div className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
+      <div ref={videoSurfaceRef} className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
         <Player
           ref={playerRef}
           component={NqtrVideoComposition}

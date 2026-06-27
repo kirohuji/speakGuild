@@ -166,17 +166,15 @@ export function flattenComposerToTimeline(scenes: ComposerScene[], options: Flat
       if (item.type === 'wait') {
         if (item.requiresInput) {
           if (item.defaultAnswer?.trim()) {
+            const userSprite = resolveSprite('You', 'default', options.characterPositions?.You || 'center', options)
+            const fallbackSprite = resolveSprite(ctx.speaker, ctx.expression, ctx.position, options)
             frames.push({
               ...toFrameBase(frames, 'userInput', scene.name, itemIndex, ctx, options),
               speaker: 'You',
               text: item.defaultAnswer.trim(),
               audioUrl: item.defaultAnswerAudioUrl,
               source: 'defaultAnswer',
-              sprite: {
-                speaker: 'You',
-                expression: 'default',
-                position: 'center',
-              },
+              sprite: userSprite.url ? userSprite : fallbackSprite,
             })
           } else {
             frames.push({
