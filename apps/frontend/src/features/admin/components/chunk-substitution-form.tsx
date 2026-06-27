@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ArrowRightLeft, Zap, Sparkles } from 'lucide-react'
+import { Plus, Trash2, ArrowRightLeft, Zap, Sparkles, Volume2, Play, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
+import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
 
 export interface ChunkSubstitutionItem {
   id: string
@@ -17,7 +18,7 @@ export interface ChunkSubstitutionItem {
   chunkMeaning?: string
   direction?: 'zh_to_en' | 'en_to_zh'
   kind?: 'chunk' | 'word'
-  items: Array<{ zh: string; answer: string; hint?: string }>
+  items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string }>
 }
 
 interface Props {
@@ -36,6 +37,7 @@ const computeChunkSubTitle = (item: { chunk: string; kind?: string }) => {
 
 export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
   const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
 
   useEffect(() => { setLocal(value) }, [value])
 
@@ -58,6 +60,24 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
 
   const removeItem = (idx: number) => {
     commit({ items: local.items.filter((_, i) => i !== idx) })
+  }
+
+  const generateItemAudio = async (idx: number) => {
+    const text = local.items[idx]?.answer?.trim()
+    if (!text) return
+    const key = `item-${idx}`
+    setTtsGenerating(key)
+    try {
+      const url = await synthesizeAdminAudio(text, 'warmup_chunk_sub', `${local.id}-${idx}`)
+      const next = [...local.items]
+      next[idx] = { ...next[idx], audioUrl: url }
+      commit({ items: next })
+      toast.success('题目音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
   }
 
   // AI 生成：根据选中的词汇和方向批量生成题目
@@ -201,8 +221,21 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
             <div className="flex-1 space-y-1.5">
               <Input className="h-7 text-xs" value={item.zh} onChange={e => updateItem(idx, 'zh', e.target.value)}
                 placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '中文提示...'} />
-              <Input className="h-7 text-xs" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
-                placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+              <div className="flex gap-1">
+                <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
+                  placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+                {item.audioUrl && (
+                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
+                    onClick={() => playAudioUrl(item.audioUrl)}>
+                    <Play className="size-3" />
+                  </Button>
+                )}
+                <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
+                  disabled={!item.answer?.trim() || ttsGenerating === `item-${idx}`}
+                  onClick={() => generateItemAudio(idx)}>
+                  {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                </Button>
+              </div>
               <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
                 placeholder="教学提示（选填）" />
             </div>

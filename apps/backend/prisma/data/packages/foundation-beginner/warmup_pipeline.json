@@ -30,7 +30,8 @@
           "items": [
             { "zh": "我不是老师。", "answer": "I am not a teacher." },
             { "zh": "我不是医生。", "answer": "I am not a doctor." },
-            { "zh": "我迟到了吗？", "answer": "Am I late?" }
+            { "zh": "我不累。", "answer": "I am not tired." },
+            { "zh": "我不饿。", "answer": "I am not hungry." }
           ]
         },
         {
@@ -158,7 +159,7 @@
             { "zh": "这是什么？", "answer": "What is this?" },
             { "zh": "它好吗？", "answer": "Is it good?" },
             { "zh": "它是新的吗？", "answer": "Is it new?" },
-            { "zh": "它不贵。", "answer": "It is not expensive." }
+            { "zh": "它是蓝色的吗？", "answer": "Is it blue?" }
           ]
         },
         {
@@ -221,8 +222,8 @@
           "items": [
             { "zh": "我的手机在哪里？", "answer": "Where is my phone?" },
             { "zh": "我的钥匙在哪里？", "answer": "Where is my key?" },
-            { "zh": "书在桌子上。", "answer": "The book is on the desk." },
-            { "zh": "猫在床下面。", "answer": "The cat is under the bed." }
+            { "zh": "你的包在哪里？", "answer": "Where is your bag?" },
+            { "zh": "车站在哪里？", "answer": "Where is the station?" }
           ]
         },
         {
@@ -285,7 +286,7 @@
             { "zh": "她是你的妹妹吗？", "answer": "Is she your sister?" },
             { "zh": "他是你的老师吗？", "answer": "Is he your teacher?" },
             { "zh": "她是你的朋友吗？", "answer": "Is she your friend?" },
-            { "zh": "他善良又聪明。", "answer": "He is kind and smart." }
+            { "zh": "他是谁？", "answer": "Who is he?" }
           ]
         },
         {
@@ -349,7 +350,7 @@
             { "zh": "他们是你的朋友吗？", "answer": "Are they your friends?" },
             { "zh": "他们是学生吗？", "answer": "Are they students?" },
             { "zh": "我们没有迟到。", "answer": "We are not late." },
-            { "zh": "我们是同学。", "answer": "We are classmates." }
+            { "zh": "我们不是陌生人。", "answer": "We are not strangers." }
           ]
         },
         {
@@ -410,11 +411,11 @@
           "chunk": "Goodbye / See you",
           "chunkMeaning": "再见 / 回头见",
           "items": [
-            { "zh": "很高兴认识你。", "answer": "Nice to meet you." },
+            { "zh": "明天见！", "answer": "See you tomorrow!" },
             { "zh": "回头见！", "answer": "See you later!" },
             { "zh": "祝你愉快！", "answer": "Have a nice day!" },
             { "zh": "保重！", "answer": "Take care!" },
-            { "zh": "欢迎！请进。", "answer": "Welcome! Please come in." }
+            { "zh": "晚安！", "answer": "Good night!" }
           ]
         },
         {

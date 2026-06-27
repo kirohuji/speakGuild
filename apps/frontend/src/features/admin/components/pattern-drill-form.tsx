@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Zap, Sparkles } from 'lucide-react'
+import { Plus, Trash2, Zap, Sparkles, Volume2, Play, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
+import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
 
 export interface PatternDrillItem {
   id: string
@@ -15,7 +16,7 @@ export interface PatternDrillItem {
   pattern: string
   patternMeaning?: string
   direction?: 'zh_to_en' | 'en_to_zh'
-  items: Array<{ zh: string; answer: string; hint?: string }>
+  items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string }>
 }
 
 interface Props {
@@ -32,6 +33,7 @@ const computePatternDrillTitle = (item: { pattern: string }) => {
 
 export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: Props) {
   const [local, setLocal] = useState<PatternDrillItem>(value)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
 
   useEffect(() => { setLocal(value) }, [value])
 
@@ -53,6 +55,24 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
 
   const removeItem = (idx: number) => {
     commit({ items: local.items.filter((_, i) => i !== idx) })
+  }
+
+  const generateItemAudio = async (idx: number) => {
+    const text = local.items[idx]?.answer?.trim()
+    if (!text) return
+    const key = `item-${idx}`
+    setTtsGenerating(key)
+    try {
+      const url = await synthesizeAdminAudio(text, 'warmup_pattern_drill', `${local.id}-${idx}`)
+      const next = [...local.items]
+      next[idx] = { ...next[idx], audioUrl: url }
+      commit({ items: next })
+      toast.success('题目音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
   }
 
   const aiGenerate = async () => {
@@ -168,8 +188,21 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
             <div className="flex-1 space-y-1.5">
               <Input className="h-7 text-xs" value={item.zh} onChange={e => updateItem(idx, 'zh', e.target.value)}
                 placeholder={local.direction === 'en_to_zh' ? '中文答案...' : `用「${local.pattern || '句型'}」表达...`} />
-              <Input className="h-7 text-xs" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
-                placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+              <div className="flex gap-1">
+                <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
+                  placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+                {item.audioUrl && (
+                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
+                    onClick={() => playAudioUrl(item.audioUrl)}>
+                    <Play className="size-3" />
+                  </Button>
+                )}
+                <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
+                  disabled={!item.answer?.trim() || ttsGenerating === `item-${idx}`}
+                  onClick={() => generateItemAudio(idx)}>
+                  {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                </Button>
+              </div>
               <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
                 placeholder="教学提示（选填）" />
             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Zap } from 'lucide-react'
+import { Plus, Trash2, Zap, Volume2, Play, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
+import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
 
 export interface VocabSentenceBuildingItem {
   id: string
@@ -17,7 +18,7 @@ export interface VocabSentenceBuildingItem {
   direction?: 'zh_to_en' | 'en_to_zh'
   patterns: Array<{
     chunk: string
-    items: Array<{ zh: string; answer: string; hint?: string }>
+    items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string }>
   }>
 }
 
@@ -36,6 +37,7 @@ const computeVocabSubTitle = (item: { vocabWord: string }) => {
 
 export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
   const [local, setLocal] = useState<VocabSentenceBuildingItem>(value)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
 
   useEffect(() => { setLocal(value) }, [value])
 
@@ -76,6 +78,26 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
       commit({ patterns: next.filter((_, i) => i !== pIdx) })
     } else {
       commit({ patterns: next })
+    }
+  }
+
+  const generateItemAudio = async (pIdx: number, iIdx: number) => {
+    const text = local.patterns[pIdx]?.items[iIdx]?.answer?.trim()
+    if (!text) return
+    const key = `item-${pIdx}-${iIdx}`
+    setTtsGenerating(key)
+    try {
+      const url = await synthesizeAdminAudio(text, 'warmup_vocab_build', `${local.id}-${pIdx}-${iIdx}`)
+      const next = [...local.patterns]
+      const items = [...next[pIdx].items]
+      items[iIdx] = { ...items[iIdx], audioUrl: url }
+      next[pIdx] = { ...next[pIdx], items }
+      commit({ patterns: next })
+      toast.success('题目音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
     }
   }
 
@@ -186,7 +208,20 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                 <span className="mt-2 text-[10px] text-muted-foreground w-4 text-right">{iIdx + 1}</span>
                 <div className="flex-1 space-y-1.5">
                   <Input className="h-7 text-xs" value={item.zh} onChange={e => updatePatternItem(pIdx, iIdx, 'zh', e.target.value)} placeholder="中文提示..." />
-                  <Input className="h-7 text-xs" value={item.answer} onChange={e => updatePatternItem(pIdx, iIdx, 'answer', e.target.value)} placeholder="英文答案..." />
+                  <div className="flex gap-1">
+                    <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updatePatternItem(pIdx, iIdx, 'answer', e.target.value)} placeholder="英文答案..." />
+                    {item.audioUrl && (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
+                        onClick={() => playAudioUrl(item.audioUrl)}>
+                        <Play className="size-3" />
+                      </Button>
+                    )}
+                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
+                      disabled={!item.answer?.trim() || ttsGenerating === `item-${pIdx}-${iIdx}`}
+                      onClick={() => generateItemAudio(pIdx, iIdx)}>
+                      {ttsGenerating === `item-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                    </Button>
+                  </div>
                   <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updatePatternItem(pIdx, iIdx, 'hint', e.target.value)} placeholder="教学提示（选填）" />
                 </div>
                 <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removePatternItem(pIdx, iIdx)}><Trash2 className="size-3" /></Button>

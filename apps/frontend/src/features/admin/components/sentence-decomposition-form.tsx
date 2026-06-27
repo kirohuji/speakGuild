@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Zap } from 'lucide-react'
+import { Plus, Trash2, Zap, Volume2, Play, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
+import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
 
 export interface SentenceDecompositionItem {
   id: string
@@ -20,6 +21,7 @@ export interface SentenceDecompositionItem {
     zh: string
     highlight?: string
     hint?: string
+    audioUrl?: string
   }>
 }
 
@@ -42,6 +44,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
   // Local state for source chunk (not persisted, used for AI generation)
   const [sourceChunk, setSourceChunk] = useState('')
   const [generatingLong, setGeneratingLong] = useState(false)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
 
   useEffect(() => {
     // Backward compat: migrate old data (levels[last].en → fullSentence)
@@ -87,6 +90,24 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
     // Re-number remaining levels
     const next = local.levels.filter((_, i) => i !== idx).map((l, i) => ({ ...l, level: i + 1 }))
     commit({ levels: next })
+  }
+
+  const generateLevelAudio = async (idx: number) => {
+    const text = local.levels[idx]?.en?.trim()
+    if (!text) return
+    const key = `level-${idx}`
+    setTtsGenerating(key)
+    try {
+      const url = await synthesizeAdminAudio(text, 'warmup_sent_decomp', `${local.id}-${idx}`)
+      const next = [...local.levels]
+      next[idx] = { ...next[idx], audioUrl: url }
+      commit({ levels: next })
+      toast.success('层级音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
   }
 
   const aiGenerateLongSentence = async () => {
@@ -245,8 +266,21 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-[10px] text-muted-foreground">英文</Label>
-                <Input className="h-7 text-xs" value={level.en}
-                  onChange={e => updateLevel(idx, { en: e.target.value })} placeholder="She speaks well." />
+                <div className="flex gap-1">
+                  <Input className="h-7 text-xs flex-1" value={level.en}
+                    onChange={e => updateLevel(idx, { en: e.target.value })} placeholder="She speaks well." />
+                  {level.audioUrl && (
+                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听层级音频"
+                      onClick={() => playAudioUrl(level.audioUrl)}>
+                      <Play className="size-3" />
+                    </Button>
+                  )}
+                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成层级 TTS"
+                    disabled={!level.en?.trim() || ttsGenerating === `level-${idx}`}
+                    onClick={() => generateLevelAudio(idx)}>
+                    {ttsGenerating === `level-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] text-muted-foreground">中文</Label>
