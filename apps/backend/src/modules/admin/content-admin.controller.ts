@@ -29,6 +29,7 @@ import { generateText } from 'ai';
 import { TtsService } from '../tts/tts.service';
 import { TtsProvider } from '@prisma/client';
 import { AdminContentAiService } from './admin-content-ai.service';
+import { AiModelService } from '../ai-model/ai-model.service';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -38,6 +39,7 @@ export class ContentAdminController {
     private readonly dictionaryService: DictionaryService,
     private readonly ttsService: TtsService,
     private readonly adminContentAiService: AdminContentAiService,
+    private readonly aiModelService: AiModelService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -1504,17 +1506,21 @@ ${dialogueTexts}
         where: { ttsVoice: { not: null } },
       });
 
+      const activeTtsConfig = await this.aiModelService.getTtsConfig();
+      const activeTtsProvider = Object.values(TtsProvider).includes(activeTtsConfig.provider as TtsProvider)
+        ? activeTtsConfig.provider as TtsProvider
+        : TtsProvider.minimax;
+
       // 构建角色名 -> TTS 配置的映射
-      // 同时根据 voice ID 格式自动检测 TTS provider
+      // 优先使用 AI Models 里当前激活的 TTS provider；Cartesia UUID 音色保留自动识别。
       const charTtsMap = new Map<string, { voice: string; model: string | null; params: any; provider: TtsProvider }>();
       for (const char of characters) {
         const c = char as any;
         const key = c.name.toLowerCase();
         const displayKey = c.displayName.toLowerCase();
-        // 根据 voice ID 判断 provider: UUID 格式 → cartesia, 其他 → minimax
         const isCartesiaVoice = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.ttsVoice || '');
-        const provider = isCartesiaVoice ? TtsProvider.cartesia : TtsProvider.minimax;
-        const model = c.ttsModel || (isCartesiaVoice ? 'sonic-english' : 'speech-2.8-hd');
+        const provider = isCartesiaVoice ? TtsProvider.cartesia : activeTtsProvider;
+        const model = c.ttsModel || (isCartesiaVoice ? 'sonic-english' : activeTtsConfig.model || 'speech-2.8-hd');
         const config = {
           voice: c.ttsVoice!,
           model,

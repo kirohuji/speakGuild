@@ -33,12 +33,14 @@ export class CartesiaTtsProvider extends TtsProvider {
   readonly provider = 'cartesia';
 
   async generateAudio(input: TtsGenerateInput): Promise<TtsGenerateResult> {
-    const apiKey = process.env.CARTESIA_API_KEY?.trim();
+    const apiKey = input.apiKey?.trim() || process.env.CARTESIA_API_KEY?.trim();
     if (!apiKey) throw new Error('CARTESIA_API_KEY is not set');
     if (!input.voiceId) throw new Error('Cartesia requires voiceId');
 
     const sampleRate = 44100;
-    const url = `wss://api.cartesia.ai/tts/websocket?api_key=${encodeURIComponent(apiKey)}&cartesia_version=${encodeURIComponent(CARTESIA_VERSION)}`;
+    const baseUrl = input.baseUrl?.trim() || 'wss://api.cartesia.ai';
+    const wsBaseUrl = baseUrl.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://').replace(/\/$/, '');
+    const url = `${wsBaseUrl}/tts/websocket?api_key=${encodeURIComponent(apiKey)}&cartesia_version=${encodeURIComponent(CARTESIA_VERSION)}`;
 
     return new Promise<TtsGenerateResult>((resolve, reject) => {
       const ws = new WebSocket(url, {

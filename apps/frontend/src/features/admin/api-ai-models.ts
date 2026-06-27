@@ -120,7 +120,7 @@ export async function testTtsProvider(
     voiceId: payload.voiceId || undefined,
     params: payload.params,
     apiKey: item.apiKey || undefined,
-    baseUrl: item.provider === 'minimax' ? undefined : item.baseUrl || undefined,
+    baseUrl: item.baseUrl || undefined,
     groupId: typeof item.config?.groupId === 'string' ? item.config.groupId : undefined,
   }, { timeout: 300000 });
 }

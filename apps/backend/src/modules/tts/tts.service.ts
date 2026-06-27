@@ -94,17 +94,22 @@ export class TtsService {
     return { audioBase64, mimeType, audioUrl, ...result };
   }
   async synthesizeText(dto: SynthesizeTextDto) {
-    const sanitizedParams = sanitizeTtsParams(dto.provider, dto.model, dto.params);
+    const providerConfig = await this.aiModel.getTtsConfig(dto.provider);
+    const model = dto.model?.trim() || providerConfig.model;
+    const apiKey = dto.apiKey?.trim() || providerConfig.apiKey;
+    const baseUrl = dto.baseUrl?.trim() || providerConfig.baseUrl;
+    const groupId = dto.groupId?.trim() || providerConfig.groupId;
+    const sanitizedParams = sanitizeTtsParams(dto.provider, model, dto.params);
     const provider = this.factory.getProvider(dto.provider);
     const result = await provider.generateAudio({
       id: `ephemeral-${randomUUID()}`,
       text: dto.text.trim(),
-      model: dto.model,
+      model,
       voiceId: dto.voiceId,
       params: sanitizedParams,
-      apiKey: dto.apiKey,
-      baseUrl: dto.baseUrl,
-      groupId: dto.groupId,
+      apiKey,
+      baseUrl,
+      groupId,
     });
     return {
       mimeType: result.mimeType,
@@ -117,20 +122,25 @@ export class TtsService {
     const text = dto.text.trim();
     if (!text) throw new BadRequestException('合成文本不能为空');
 
-    const sanitizedParams = sanitizeTtsParams(dto.provider, dto.model, dto.params);
+    const providerConfig = await this.aiModel.getTtsConfig(dto.provider);
+    const model = dto.model?.trim() || providerConfig.model;
+    const apiKey = dto.apiKey?.trim() || providerConfig.apiKey;
+    const baseUrl = dto.baseUrl?.trim() || providerConfig.baseUrl;
+    const groupId = dto.groupId?.trim() || providerConfig.groupId;
+    const sanitizedParams = sanitizeTtsParams(dto.provider, model, dto.params);
     const provider = this.factory.getProvider(dto.provider);
-    const configHash = this.buildConfigHash(dto.provider, dto.model, dto.voiceId, sanitizedParams, text);
+    const configHash = this.buildConfigHash(dto.provider, model, dto.voiceId, sanitizedParams, text);
     const generatedId = `story-line-${configHash}-${randomUUID()}`;
 
     const result = await provider.generateAudio({
       id: generatedId,
       text,
-      model: dto.model,
+      model,
       voiceId: dto.voiceId,
       params: sanitizedParams,
-      apiKey: dto.apiKey,
-      baseUrl: dto.baseUrl,
-      groupId: dto.groupId,
+      apiKey,
+      baseUrl,
+      groupId,
     });
 
     const asset = await this.fileAssetsService.createAssetFromBuffer({
@@ -152,7 +162,7 @@ export class TtsService {
       mimeType: result.mimeType,
       wordTimestamps: result.wordTimestamps,
       provider: dto.provider,
-      model: dto.model,
+      model,
       voiceId: dto.voiceId ?? null,
       configHash,
     };

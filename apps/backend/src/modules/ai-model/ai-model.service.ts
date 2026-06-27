@@ -199,6 +199,52 @@ export class AiModelService {
     };
   }
 
+  /** 获取 TTS 配置（优先 AI Models 表，缺省再回退到环境变量） */
+  async getTtsConfig(providerName?: string): Promise<{
+    provider: string;
+    model: string;
+    apiKey: string;
+    baseUrl: string;
+    groupId?: string;
+    config: Record<string, unknown>;
+  }> {
+    const normalizedProvider = providerName?.trim().toLowerCase();
+    const provider = normalizedProvider
+      ? await this.prisma.aiProvider.findFirst({ where: { type: 'tts', provider: normalizedProvider } })
+      : await this.getActive('tts');
+    const selectedProvider = provider?.provider || normalizedProvider || process.env.TTS_PROVIDER?.trim() || 'minimax';
+    const config = ((provider?.config as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+
+    const envApiKey =
+      selectedProvider === 'minimax'
+        ? process.env.MINIMAX_API_KEY?.trim()
+        : selectedProvider === 'cartesia'
+          ? process.env.CARTESIA_API_KEY?.trim()
+          : selectedProvider === 'hume'
+            ? process.env.HUME_API_KEY?.trim()
+            : selectedProvider === 'elevenlabs'
+              ? process.env.ELEVENLABS_API_KEY?.trim()
+              : '';
+
+    const defaultModel =
+      selectedProvider === 'cartesia'
+        ? 'sonic-english'
+        : selectedProvider === 'hume'
+          ? '2'
+          : selectedProvider === 'elevenlabs'
+            ? 'eleven_multilingual_v2'
+            : 'speech-2.8-hd';
+
+    return {
+      provider: selectedProvider,
+      model: provider?.model || defaultModel,
+      apiKey: provider?.apiKey || envApiKey || '',
+      baseUrl: provider?.baseUrl || '',
+      groupId: typeof config.groupId === 'string' ? config.groupId : undefined,
+      config,
+    };
+  }
+
   /** 初始化内置供应商（幂等，仅在不存在时插入） */
   async seedDefaults() {
     const defaults = [

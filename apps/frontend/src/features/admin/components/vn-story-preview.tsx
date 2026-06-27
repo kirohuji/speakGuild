@@ -13,9 +13,13 @@ import {
 import { cn } from '@/lib/cn'
 import { compileInk, type CompileResult } from './ink-compiler'
 import { judgePreviewDialogueTurn, type PreviewDialogueTurnResult } from '../api-content-admin'
+import { parseComposer } from './composer-parser'
+import { flattenComposerToTimeline } from './vn-mixed-timeline'
+import { VnMixedPreviewPlayer } from './vn-mixed-preview-player'
 
 /** 角色立绘数据：expression name → sprite URL */
 export type CharacterSpriteMap = Record<string, string>
+export type PreviewLayout = 'portrait' | 'landscape' | 'mixed'
 
 interface VnStoryPreviewProps {
   /** Ink 源码 */
@@ -29,6 +33,7 @@ interface VnStoryPreviewProps {
   /** 角色名 → 立绘位置 */
   characterPositions?: Record<string, 'left' | 'center' | 'right'>
   defaultBackgroundUrl?: string
+  previewLayout?: PreviewLayout
   aiEvaluationEnabled?: boolean
   className?: string
   onDebugChange?: (state: {
@@ -41,6 +46,10 @@ interface VnStoryPreviewProps {
     activeBackground: { url?: string; fit?: string }
     aiPayload: Record<string, any>
     aiEvaluations: PreviewAiEvaluation[]
+    previewLayout: PreviewLayout
+    timelineLength?: number
+    activeFrameIndex?: number
+    missingDefaultAnswerCount?: number
   }) => void
 }
 
@@ -99,6 +108,7 @@ export function VnStoryPreview({
   characterAvatars = {},
   characterPositions = {},
   defaultBackgroundUrl,
+  previewLayout = 'portrait',
   aiEvaluationEnabled = false,
   className,
   onDebugChange,
@@ -119,6 +129,7 @@ export function VnStoryPreview({
   const [completionOpen, setCompletionOpen] = useState(false)
   const [aiEvaluations, setAiEvaluations] = useState<PreviewAiEvaluation[]>([])
   const [activeEvaluation, setActiveEvaluation] = useState<PreviewAiEvaluation | null>(null)
+  const [activeFrameIndex, setActiveFrameIndex] = useState(0)
 
   // Compile Ink source
   useEffect(() => {
@@ -133,6 +144,20 @@ export function VnStoryPreview({
       setCompileResult(null)
     }
   }, [inkSource, inkJson])
+
+  const mixedFrames = useMemo(() => {
+    if (previewLayout !== 'mixed' || !inkSource) return []
+    return flattenComposerToTimeline(parseComposer(inkSource), {
+      characterSprites,
+      characterAvatars,
+      characterPositions,
+      defaultBackgroundUrl,
+    })
+  }, [characterAvatars, characterPositions, characterSprites, defaultBackgroundUrl, inkSource, previewLayout])
+
+  useEffect(() => {
+    setActiveFrameIndex(0)
+  }, [mixedFrames.length, previewLayout])
 
   /** 从 tags 中提取 speaker/expression/bg */
   const parseTags = useCallback((tags: string[]) => {
@@ -256,6 +281,11 @@ export function VnStoryPreview({
     setActiveEvaluation(null)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
+    if (previewLayout === 'mixed') {
+      setIsReady(Boolean(compileResult?.success))
+      return
+    }
+
     if (!compileResult?.success || !compileResult.json) return
 
     try {
@@ -273,7 +303,7 @@ export function VnStoryPreview({
     } catch (err) {
       console.warn('[VnPreview] Init failed:', err)
     }
-  }, [appendResult, compileResult, continueUntilContent, defaultBackgroundUrl])
+  }, [appendResult, compileResult, continueUntilContent, defaultBackgroundUrl, previewLayout])
 
   const advanceStory = useCallback(() => {
     const engine = engineRef.current
@@ -441,8 +471,12 @@ export function VnStoryPreview({
       activeBackground,
       aiPayload,
       aiEvaluations,
+      previewLayout,
+      timelineLength: previewLayout === 'mixed' ? mixedFrames.length : undefined,
+      activeFrameIndex: previewLayout === 'mixed' ? activeFrameIndex : undefined,
+      missingDefaultAnswerCount: previewLayout === 'mixed' ? mixedFrames.filter((frame) => frame.kind === 'missingInput').length : undefined,
     })
-  }, [activeBackground, aiEvaluations, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, onDebugChange])
+  }, [activeBackground, activeFrameIndex, aiEvaluations, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, mixedFrames, onDebugChange, previewLayout])
 
   // ─── Render ────────────────────────────────────────────────
 
@@ -471,8 +505,17 @@ export function VnStoryPreview({
 
   return (
     <>
+      {previewLayout === 'mixed' ? (
+        <VnMixedPreviewPlayer
+          className={className}
+          frames={mixedFrames}
+          activeIndex={Math.min(activeFrameIndex, Math.max(mixedFrames.length - 1, 0))}
+          onJumpTo={setActiveFrameIndex}
+        />
+      ) : (
       <VnPlayer
         className={className}
+        frameVariant={previewLayout === 'landscape' ? 'landscape' : 'portrait'}
         backgroundUrl={backgroundUrl}
         backgroundFit={(activeBackground.fit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
         currentLine={!isEnded ? lastLine : null}
@@ -495,6 +538,7 @@ export function VnStoryPreview({
         inputDisabled={activeEvaluation?.status === 'loading'}
         onReset={resetPreview}
       />
+      )}
       <Dialog open={completionOpen} onOpenChange={setCompletionOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

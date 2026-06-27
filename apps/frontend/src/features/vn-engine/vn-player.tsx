@@ -1,8 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
 import { History, RotateCcw, Settings, SkipBack, Volume2, X } from 'lucide-react'
-import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
-import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import {
   Dialog,
   DialogContent,
@@ -21,6 +19,9 @@ import { VnInputPanel } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
 import { TappableText } from './dialogue-list-view'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
+import { PixiVnStage, type BackgroundFit, type StageVariant } from './pixi-vn-stage'
+
+export type { BackgroundFit } from './pixi-vn-stage'
 
 export interface VnPlayerLine {
   speaker?: string
@@ -65,6 +66,7 @@ interface VnPlayerProps {
   onHistoryOpenChange?: (open: boolean) => void
   className?: string
   stageClassName?: string
+  frameVariant?: Extract<StageVariant, 'portrait' | 'landscape'>
   showHistoryButton?: boolean
   /** Hide the top bar in chat-list mode (e.g. when parent provides its own header) */
   hideChatTopBar?: boolean
@@ -136,359 +138,6 @@ function loadVnPlayerSettings(): VnPlayerSettings {
   }
 }
 
-export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
-
-interface PixiVnStageProps {
-  backgroundUrl?: string
-  backgroundFit: BackgroundFit
-  spriteUrl?: string
-  spritePosition: 'left' | 'center' | 'right'
-}
-
-function fitCover(sprite: Sprite, width: number, height: number) {
-  const scale = Math.max(width / (sprite.texture.width || 1), height / (sprite.texture.height || 1))
-  sprite.scale.set(scale)
-  sprite.anchor.set(0.5)
-  sprite.position.set(width / 2, height / 2)
-}
-
-function fitBackground(sprite: Sprite | TilingSprite, width: number, height: number, fit: BackgroundFit) {
-  if (sprite instanceof TilingSprite) {
-    sprite.position.set(0, 0)
-    sprite.width = width
-    sprite.height = height
-    sprite.tileScale.set(1)
-    return
-  }
-
-  const textureWidth = sprite.texture.width || 1
-  const textureHeight = sprite.texture.height || 1
-
-  if (fit === 'stretch') {
-    sprite.anchor.set(0)
-    sprite.position.set(0, 0)
-    sprite.width = width
-    sprite.height = height
-    return
-  }
-
-  const scale = fit === 'contain'
-    ? Math.min(width / textureWidth, height / textureHeight)
-    : Math.max(width / textureWidth, height / textureHeight)
-  sprite.scale.set(scale)
-  sprite.anchor.set(0.5)
-  sprite.position.set(width / 2, height / 2)
-}
-
-function getDialogueHeight(height: number) {
-  return Math.min(Math.max(height * 0.24, 148), 196)
-}
-
-function layoutSprite(sprite: Sprite, width: number, height: number, position: 'left' | 'center' | 'right') {
-  const dialogueHeight = getDialogueHeight(height)
-  const stageTopInset = 58
-  const spriteOverlap = 32
-  const availableHeight = Math.max(height - stageTopInset - dialogueHeight + spriteOverlap, height * 0.5)
-  const scale = Math.min(availableHeight / (sprite.texture.height || 1), (width * 0.82) / (sprite.texture.width || 1))
-  sprite.scale.set(scale)
-  sprite.anchor.set(0.5, 1)
-  sprite.y = height - dialogueHeight + spriteOverlap
-  sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
-}
-
-const BgFitStyle: Record<BackgroundFit, string> = {
-  cover: 'cover',
-  contain: 'contain',
-  stretch: '100% 100%',
-  repeat: 'auto',
-}
-
-/** CSS-only fallback when PixiJS fails to initialize */
-function CssFallbackStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
-  const { resolvedTheme } = useTheme()
-
-  console.log('[vn-player] 🎨 CSS Fallback - 背景:', backgroundUrl, '立绘:', spriteUrl)
-
-  return (
-    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
-          backgroundSize: BgFitStyle[backgroundFit],
-          backgroundPosition: 'center',
-          backgroundRepeat: backgroundFit === 'repeat' ? 'repeat' : 'no-repeat',
-        }}
-      />
-      {spriteUrl && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(148px,24dvh,196px)-32px)] top-[58px]">
-          <img
-            src={spriteUrl}
-            alt=""
-            className="absolute bottom-0 max-h-full max-w-[82%] select-none object-contain"
-            style={{
-              left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
-              transform: 'translateX(-50%)',
-            }}
-          />
-        </div>
-      )}
-      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
-    </div>
-  )
-}
-
-function PixiVnStage({ backgroundUrl, backgroundFit, spriteUrl, spritePosition }: PixiVnStageProps) {
-  const { resolvedTheme } = useTheme()
-  const hostRef = useRef<HTMLDivElement | null>(null)
-  const appRef = useRef<Application | null>(null)
-  const rootRef = useRef<Container | null>(null)
-  const fallbackRef = useRef<Graphics | null>(null)
-  const bgRef = useRef<Sprite | TilingSprite | null>(null)
-  const spriteRef = useRef<Sprite | null>(null)
-  const spritePositionRef = useRef(spritePosition)
-  const [ready, setReady] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const layoutRafRef = useRef<number | null>(null)
-
-  const layout = () => {
-    const app = appRef.current
-    if (!app || !app.renderer) return
-    const width = app.renderer.width
-    const height = app.renderer.height
-
-    if (fallbackRef.current) {
-      fallbackRef.current.clear()
-      fallbackRef.current.rect(0, 0, width, height).fill(0x1a1a2e)
-    }
-    if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
-    if (spriteRef.current) layoutSprite(spriteRef.current, width, height, spritePositionRef.current)
-  }
-
-  // ★ Debounced layout: batch rapid ResizeObserver callbacks into one rAF
-  const scheduleLayout = () => {
-    if (layoutRafRef.current !== null) return
-    layoutRafRef.current = window.requestAnimationFrame(() => {
-      layoutRafRef.current = null
-      layout()
-    })
-  }
-
-  useEffect(() => {
-    const host = hostRef.current
-    if (!host) return
-
-    let cancelled = false
-    const root = new Container()
-    const fallback = new Graphics()
-    let resizeObserver: ResizeObserver | null = null
-
-    async function init() {
-      // Ensure host has non-zero dimensions before creating WebGL context
-      if (host.clientWidth === 0 || host.clientHeight === 0) {
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-        if (cancelled) return
-      }
-
-      // ★ Native mobile: use resolution 1 to reduce GPU load
-      const native = isNative()
-      const pixiResolution = native ? 1 : Math.min(window.devicePixelRatio || 1, 2)
-
-      let app: Application
-      let initOk = false
-
-      // Attempt 1: WebGL (default)
-      app = new Application()
-      try {
-        await app.init({
-          resizeTo: host,
-          backgroundAlpha: 0,
-          antialias: !native, // ★ Native: disable antialias for perf
-          autoDensity: true,
-          resolution: pixiResolution,
-        })
-        initOk = true
-      } catch {
-        try { app.destroy(true) } catch { /* ignore */ }
-      }
-
-      // Attempt 2: Canvas2D fallback
-      if (!initOk) {
-        app = new Application()
-        try {
-          await app.init({
-            resizeTo: host,
-            backgroundAlpha: 0,
-            antialias: true,
-            autoDensity: true,
-            resolution: pixiResolution,
-            preference: 'canvas',
-          })
-          initOk = true
-        } catch {
-          try { app.destroy(true) } catch { /* ignore */ }
-        }
-      }
-
-      if (!initOk) {
-        setFailed(true)
-        return
-      }
-
-      if (cancelled) {
-        try { app.destroy(true) } catch { /* ignore */ }
-        return
-      }
-
-      appRef.current = app
-      rootRef.current = root
-      fallbackRef.current = fallback
-      app.stage.addChild(root)
-      root.addChild(fallback)
-      app.canvas.className = 'absolute inset-0 h-full w-full pointer-events-none'
-      host.appendChild(app.canvas)
-      resizeObserver = new ResizeObserver(() => scheduleLayout()) // ★ Debounced
-      resizeObserver.observe(host)
-      layout()
-      setReady(true)
-    }
-
-    void init()
-
-    return () => {
-      cancelled = true
-      resizeObserver?.disconnect()
-      if (layoutRafRef.current !== null) {
-        window.cancelAnimationFrame(layoutRafRef.current)
-        layoutRafRef.current = null
-      }
-      const app = appRef.current
-      if (app) {
-        try {
-          if (app.canvas && app.canvas.parentElement === host) {
-            host.removeChild(app.canvas)
-          }
-        } catch { /* ignore */ }
-        try { app.destroy(true) } catch { /* ignore */ }
-      }
-      appRef.current = null
-      rootRef.current = null
-      fallbackRef.current = null
-      bgRef.current = null
-      spriteRef.current = null
-      setReady(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!ready) return
-    let cancelled = false
-
-    async function loadBackground() {
-      const root = rootRef.current
-      if (!root) return
-      if (!backgroundUrl) {
-        if (bgRef.current) {
-          root.removeChild(bgRef.current)
-          bgRef.current.destroy()
-          bgRef.current = null
-        }
-        layout()
-        return
-      }
-
-      try {
-        console.log('[vn-player] 🖼️ PixiJS 加载背景:', backgroundUrl)
-        // 先加载新纹理，再替换旧精灵，避免闪烁
-        const texture = await Assets.load<Texture>(backgroundUrl)
-        if (cancelled || !rootRef.current) return
-        const newSprite = backgroundFit === 'repeat'
-          ? new TilingSprite({ texture, width: 1, height: 1 })
-          : new Sprite(texture)
-        // 新纹理就绪后再移除旧精灵
-        if (bgRef.current) {
-          root.removeChild(bgRef.current)
-          bgRef.current.destroy()
-        }
-        bgRef.current = newSprite
-        rootRef.current.addChildAt(newSprite, 1)
-        layout()
-      } catch (err) {
-        console.warn('[vn-player] ❌ 背景加载失败:', backgroundUrl, err)
-        layout()
-      }
-    }
-
-    void loadBackground()
-    return () => {
-      cancelled = true
-    }
-  }, [backgroundFit, backgroundUrl, ready])
-
-  useEffect(() => {
-    if (!ready) return
-    let cancelled = false
-
-    async function loadSprite() {
-      const root = rootRef.current
-      if (!root) return
-      if (!spriteUrl) {
-        if (spriteRef.current) {
-          root.removeChild(spriteRef.current)
-          spriteRef.current.destroy()
-          spriteRef.current = null
-        }
-        layout()
-        return
-      }
-
-      try {
-        console.log('[vn-player] 🎭 PixiJS 加载立绘:', spriteUrl)
-        // 先加载新纹理，再替换旧精灵，避免闪烁
-        const texture = await Assets.load<Texture>(spriteUrl)
-        if (cancelled || !rootRef.current) return
-        const newSprite = new Sprite(texture)
-        newSprite.alpha = 0
-        // 新纹理就绪后再移除旧精灵
-        if (spriteRef.current) {
-          root.removeChild(spriteRef.current)
-          spriteRef.current.destroy()
-        }
-        spriteRef.current = newSprite
-        rootRef.current.addChild(newSprite)
-        layout()
-        appRef.current?.ticker.addOnce(() => {
-          if (spriteRef.current === newSprite) newSprite.alpha = 1
-        })
-      } catch (err) {
-        console.warn('[vn-player] ❌ 立绘加载失败:', spriteUrl, err)
-        layout()
-      }
-    }
-
-    void loadSprite()
-    return () => {
-      cancelled = true
-    }
-  }, [spriteUrl, ready])
-
-  useEffect(() => {
-    spritePositionRef.current = spritePosition
-    layout()
-  }, [spritePosition])
-
-  if (failed) {
-    return <CssFallbackStage backgroundUrl={backgroundUrl} backgroundFit={backgroundFit} spriteUrl={spriteUrl} spritePosition={spritePosition} />
-  }
-
-  return (
-    <>
-      <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
-      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
-    </>
-  )
-}
-
 export function VnPlayer({
   backgroundUrl,
   backgroundFit = 'cover',
@@ -513,6 +162,7 @@ export function VnPlayer({
   onHistoryOpenChange,
   className,
   stageClassName,
+  frameVariant = 'portrait',
   showHistoryButton = true,
   hideChatTopBar = false,
   onDisplayModeChange,
@@ -717,12 +367,23 @@ export function VnPlayer({
   }
 
   return (
-    <div className={cn('relative mx-auto flex h-full w-full max-w-[520px] flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border', className)}>
+    <div className={cn(
+      'relative mx-auto flex w-full flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border',
+      frameVariant === 'landscape'
+        ? 'aspect-[852/393] h-auto max-h-[393px] max-w-[852px]'
+        : 'h-full max-w-[520px]',
+      className,
+    )}>
       <div
         role="button"
         tabIndex={canInteract || reviewLineIndex !== null ? 0 : -1}
         aria-label="推进对话"
-        className={cn('relative min-h-[620px] flex-1 overflow-hidden text-left outline-none', (canInteract || reviewLineIndex !== null) && 'cursor-pointer', stageClassName)}
+        className={cn(
+          'relative flex-1 overflow-hidden text-left outline-none',
+          frameVariant === 'landscape' ? 'min-h-0' : 'min-h-[620px]',
+          (canInteract || reviewLineIndex !== null) && 'cursor-pointer',
+          stageClassName,
+        )}
         onClick={() => {
           // 回顾模式：每点一次前进一行，走到最新行才退出回顾
           if (reviewLineIndex !== null) {
@@ -768,7 +429,7 @@ export function VnPlayer({
           }
         }}
       >
-        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} />
+        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} stageVariant={frameVariant} />
         {onReset && (
           <div className="absolute right-3 top-3 z-30 flex gap-2">
             <span
@@ -881,8 +542,12 @@ export function VnPlayer({
             </VnIconButton>
           </div>
           <div className={cn(
-            'flex min-h-[clamp(148px,24dvh,196px)] flex-col border-t border-border/55 bg-background/90 text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-2xl',
-            inputFeedback ? 'max-h-[58dvh] sm:max-h-[52dvh]' : 'max-h-[34dvh]',
+            'flex flex-col border-t border-border/55 bg-background/90 text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-2xl',
+            frameVariant === 'landscape'
+              ? 'min-h-[88px] max-h-[126px]'
+              : inputFeedback
+                ? 'min-h-[clamp(148px,24dvh,196px)] max-h-[58dvh] sm:max-h-[52dvh]'
+                : 'min-h-[clamp(148px,24dvh,196px)] max-h-[34dvh]',
           )}>
             <div className="min-h-0 flex-1 overflow-y-auto relative">
               {displayLine ? (

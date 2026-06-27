@@ -7,6 +7,8 @@ import {
   Clock3,
   Cpu,
   FileAudio,
+  Eye,
+  EyeOff,
   Loader2,
   Mic,
   Play,
@@ -369,6 +371,38 @@ function ProviderCard({
   );
 }
 
+function SecretInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        type={visible ? 'text' : 'password'}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="pr-10 font-mono text-sm"
+        placeholder={placeholder}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((current) => !current)}
+        className="absolute right-1.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        aria-label={visible ? 'Hide API key' : 'Show API key'}
+        title={visible ? 'Hide API key' : 'Show API key'}
+      >
+        {visible ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+      </button>
+    </div>
+  );
+}
+
 function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; onOpenChange: (open: boolean) => void; item: AiProviderItem | null; onSaved: () => void }) {
   const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -389,7 +423,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
     const cfg = item.config ?? {};
     setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : item.provider === 'hume' ? (item.model || '2') : item.provider === 'elevenlabs' ? (item.model || 'eleven_multilingual_v2') : (item.model ?? ''));
     setApiKey(item.apiKey ?? '');
-    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : item.provider === 'elevenlabs' ? (item.baseUrl || 'https://api.elevenlabs.io') : (item.baseUrl ?? ''));
+    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : item.provider === 'elevenlabs' ? (item.baseUrl || 'https://api.elevenlabs.io') : item.provider === 'minimax' ? (item.baseUrl || 'https://api.minimax.io') : (item.baseUrl ?? ''));
     setGroupId(String((cfg as Record<string, unknown>).groupId ?? ''));
     setVoiceName(String((cfg as Record<string, unknown>).voiceName ?? 'Ava Song'));
     setVoiceProvider(String((cfg as Record<string, unknown>).voiceProvider ?? 'HUME_AI'));
@@ -466,7 +500,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
           ) : isMiniMax ? (
             <>
               <div className="space-y-2"><Label>MiniMax model</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{MINIMAX_MODELS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</Select></div>
-              <div className="space-y-2"><Label>MINIMAX_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
+              <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.minimax.io" /></div>
+              <div className="space-y-2"><Label>MINIMAX_API_KEY</Label><SecretInput value={apiKey} onChange={setApiKey} placeholder="Use env var when empty" /></div>
               <div className="space-y-2"><Label>MINIMAX_GROUP_ID</Label><Input value={groupId} onChange={(event) => setGroupId(event.target.value)} className="font-mono text-sm" placeholder="1943473439796896389" /></div>
             </>
           ) : isHume ? (

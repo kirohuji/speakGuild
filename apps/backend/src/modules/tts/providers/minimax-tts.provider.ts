@@ -3,13 +3,19 @@ import axios from 'axios';
 import { TtsProvider } from './tts-provider';
 import { TtsGenerateInput, TtsGenerateResult } from '../tts.types';
 
+function normalizeApiKey(value?: string | null): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  return trimmed.replace(/^Bearer\s+/i, '').trim();
+}
+
 @Injectable()
 export class MinimaxTtsProvider extends TtsProvider {
   readonly provider = 'minimax';
 
   private guessVoiceId(text: string): string {
     const hasCJK = /[\u4E00-\u9FFF]/.test(text);
-    return hasCJK ? 'female-chengshu' : 'English_Trustworthy_Man';
+    return hasCJK ? 'female-chengshu' : 'English_expressive_narrator';
   }
 
   private buildEndpoint(baseUrl?: string | null, groupId?: string | null): string {
@@ -23,7 +29,7 @@ export class MinimaxTtsProvider extends TtsProvider {
   }
 
   async generateAudio(input: TtsGenerateInput): Promise<TtsGenerateResult> {
-    const apiKey = input.apiKey?.trim() || process.env.MINIMAX_API_KEY?.trim();
+    const apiKey = normalizeApiKey(input.apiKey) || normalizeApiKey(process.env.MINIMAX_API_KEY);
     if (!apiKey) throw new Error('MINIMAX_API_KEY is not set');
 
     const transcript = input.text.length > 10000 ? input.text.slice(0, 10000) : input.text;

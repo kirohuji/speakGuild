@@ -20,8 +20,12 @@ import {
   Languages,
   Volume2,
   Loader2,
+  Play,
   X,
   UserCircle,
+  Smartphone,
+  Monitor,
+  PanelTop,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,27 +39,33 @@ import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { ImageUploadField } from './image-upload-field'
 import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
+import { cloneScenes, parseComposer, serializeComposer, serializeSourceForSave, type ComposerItem, type ComposerScene } from './composer-parser'
 import { toast } from 'sonner'
-import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation } from './vn-story-preview'
+import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation, type PreviewLayout } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown } from '../api-content-admin'
-
-type ComposerItem =
-  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string }
-  | { type: 'choice'; text: string; target: string; showCharacter: boolean }
-  | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
-  | { type: 'wait'; requiresInput: boolean; objective?: string; hint?: string; chunks?: string[] }
-  | { type: 'divert'; target: string }
-  | { type: 'tag'; value: string }
-
-type ComposerScene = {
-  name: string
-  items: ComposerItem[]
-}
+import { synthesizeAsset } from '@/lib/tts-api'
 
 type Selection =
   | { type: 'scene'; sceneIndex: number }
   | { type: 'item'; sceneIndex: number; itemIndex: number }
+
+const DEFAULT_ANSWER_TTS = {
+  provider: 'minimax' as const,
+  model: 'speech-2.8-hd',
+  voiceId: 'English_expressive_narrator',
+  params: {
+    speed: 1,
+    vol: 1,
+    pitch: 0,
+    language_boost: 'English',
+    format: 'mp3',
+    output_format: 'hex',
+    sample_rate: 32000,
+    bitrate: 128000,
+    channel: 1,
+  },
+}
 
 interface VnPreviewDebugState {
   isReady: boolean
@@ -67,6 +77,10 @@ interface VnPreviewDebugState {
   activeBackground: { url?: string; fit?: string }
   aiPayload: Record<string, any>
   aiEvaluations: PreviewAiEvaluation[]
+  previewLayout: PreviewLayout
+  timelineLength?: number
+  activeFrameIndex?: number
+  missingDefaultAnswerCount?: number
 }
 
 interface InkStoryEditorProps {
@@ -95,6 +109,14 @@ interface InkStoryEditorProps {
 
 const syntaxHint =
   'Ink: === scene === defines a scene, # speaker / # expression control the VN sprite, * [choice] -> target creates a choice, # wait pauses for input, -> END ends the story.'
+
+const PREVIEW_LAYOUT_STORAGE_KEY = 'manyu-admin-vn-preview-layout'
+
+function loadPreviewLayout(): PreviewLayout {
+  if (typeof window === 'undefined') return 'portrait'
+  const saved = window.localStorage.getItem(PREVIEW_LAYOUT_STORAGE_KEY)
+  return saved === 'portrait' || saved === 'landscape' || saved === 'mixed' ? saved : 'portrait'
+}
 
 function buildCharacterSpriteData(characters: GameCharacter[]): {
   sprites: Record<string, CharacterSpriteMap>
@@ -131,211 +153,6 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
   return { sprites, positions, avatars }
 }
 
-function cleanChoiceText(text: string) {
-  return text.trim().replace(/^\[(.*)\]$/, '$1')
-}
-
-function parseComposer(source: string): ComposerScene[] {
-  const { remainingSource } = extractInkMeta(source)
-  const scenes: ComposerScene[] = []
-  let current: ComposerScene | null = null
-  let pendingSpeaker = ''
-  let pendingExpression = 'default'
-  let pendingPosition: 'left' | 'center' | 'right' = 'center'
-  let pendingTranslation = ''
-  let pendingAudioUrl = ''
-  let pendingChoiceShowCharacter = true
-
-  const ensureScene = () => {
-    if (!current) {
-      current = { name: 'start', items: [] }
-      scenes.push(current)
-    }
-    return current
-  }
-
-  for (const rawLine of remainingSource.split('\n')) {
-    const line = rawLine.trim()
-    if (!line || line.startsWith('//')) continue
-
-    const knot = line.match(/^={3,}\s*([^=]+?)\s*={3,}$/)
-    if (knot) {
-      current = { name: knot[1].trim() || `scene_${scenes.length + 1}`, items: [] }
-      scenes.push(current)
-      pendingSpeaker = ''
-      pendingExpression = 'default'
-      pendingPosition = 'center'
-      pendingTranslation = ''
-      continue
-    }
-
-    if (!current && line === '-> start') continue
-    const scene = ensureScene()
-
-    if (line.startsWith('#')) {
-      const tag = line.slice(1).trim()
-      if (tag.startsWith('speaker:')) {
-        pendingSpeaker = tag.replace(/^speaker:/, '').trim()
-      } else if (tag.startsWith('expression:')) {
-        pendingExpression = tag.replace(/^expression:/, '').trim() || 'default'
-      } else if (tag.startsWith('position:')) {
-        const position = tag.replace(/^position:/, '').trim()
-        pendingPosition = position === 'left' || position === 'right' ? position : 'center'
-      } else if (tag.startsWith('audio:')) {
-        pendingAudioUrl = decodeURIComponent(tag.replace(/^audio:/, '').trim())
-      } else if (tag.startsWith('translation:')) {
-        pendingTranslation = decodeURIComponent(tag.replace(/^translation:/, '').trim())
-      } else if (tag.startsWith('choiceCharacter:')) {
-        pendingChoiceShowCharacter = tag.replace(/^choiceCharacter:/, '').trim() !== 'hide'
-      } else if (tag.startsWith('bg:')) {
-        scene.items.push({ type: 'background', url: tag.replace(/^bg:/, '').trim(), fit: 'cover' })
-      } else if (tag.startsWith('bgFit:')) {
-        const last = scene.items[scene.items.length - 1]
-        const fit = tag.replace(/^bgFit:/, '').trim()
-        if (last?.type === 'background') {
-          last.fit = fit === 'contain' || fit === 'stretch' || fit === 'repeat' ? fit : 'cover'
-        } else {
-          scene.items.push({ type: 'tag', value: tag })
-        }
-      } else if (tag === 'wait' || tag.startsWith('wait:')) {
-        const waitMode = tag.replace(/^wait:?/, '').trim()
-        const requiresInput = waitMode === 'input' || waitMode === 'user_input'
-        const last = scene.items[scene.items.length - 1]
-        if (last?.type === 'wait') {
-          last.requiresInput = requiresInput
-        } else {
-          scene.items.push({ type: 'wait', requiresInput })
-        }
-      } else if (tag === 'input' || tag === 'user_input') {
-        const last = scene.items[scene.items.length - 1]
-        if (last?.type === 'wait') {
-          last.requiresInput = true
-        } else {
-          scene.items.push({ type: 'wait', requiresInput: true })
-        }
-      } else if (tag.startsWith('objective:')) {
-        const val = tag.replace(/^objective:/, '').trim()
-        const last = scene.items[scene.items.length - 1]
-        if (last?.type === 'wait') { last.objective = val }
-        else { scene.items.push({ type: 'wait', requiresInput: false, objective: val }) }
-      } else if (tag.startsWith('hint:')) {
-        const val = tag.replace(/^hint:/, '').trim()
-        const last = scene.items[scene.items.length - 1]
-        if (last?.type === 'wait') { last.hint = val }
-        else { scene.items.push({ type: 'wait', requiresInput: false, hint: val }) }
-      } else if (tag.startsWith('chunks:')) {
-        const val = tag.replace(/^chunks:/, '').trim().split(/[;,]/).map((s) => s.trim()).filter(Boolean)
-        const last = scene.items[scene.items.length - 1]
-        if (last?.type === 'wait') { last.chunks = val }
-        else { scene.items.push({ type: 'wait', requiresInput: false, chunks: val }) }
-      } else {
-        scene.items.push({ type: 'tag', value: tag })
-      }
-      continue
-    }
-
-    const choice = line.match(/^\*\s*(.+?)(?:\s*->\s*(.+))?$/)
-    if (choice) {
-      scene.items.push({
-        type: 'choice',
-        text: cleanChoiceText(choice[1]),
-        target: choice[2]?.trim() || 'END',
-        showCharacter: pendingChoiceShowCharacter,
-      })
-      pendingChoiceShowCharacter = true
-      continue
-    }
-
-    if (line.startsWith('->')) {
-      scene.items.push({ type: 'divert', target: line.replace(/^->\s*/, '').trim() || 'END' })
-      continue
-    }
-
-    const spoken = line.match(/^([^:：]{1,32})[:：]\s*(.+)$/)
-    scene.items.push({
-      type: 'line',
-      speaker: pendingSpeaker || spoken?.[1]?.trim() || '',
-      expression: pendingExpression || 'default',
-      position: pendingPosition,
-      text: spoken?.[2]?.trim() ?? line,
-      translation: pendingTranslation,
-      audioUrl: pendingAudioUrl,
-    })
-    pendingSpeaker = ''
-    pendingExpression = 'default'
-    pendingPosition = 'center'
-    pendingTranslation = ''
-    pendingAudioUrl = ''
-  }
-
-  if (scenes.length === 0) {
-    scenes.push({
-      name: 'start',
-      items: [
-        { type: 'line', speaker: 'Alex', expression: 'default', position: 'center', text: '你好，欢迎来到这里。' },
-        { type: 'choice', text: '继续', target: 'END', showCharacter: true },
-      ],
-    })
-  }
-
-  return scenes
-}
-
-function serializeComposer(
-  meta: { key: string; title: string; locationId?: string; characterId?: string },
-  scenes: ComposerScene[],
-) {
-  const lines: string[] = ['---']
-  if (meta.key) lines.push(`key: ${meta.key}`)
-  if (meta.title) lines.push(`title: ${meta.title}`)
-  if (meta.locationId) lines.push(`locationId: ${meta.locationId}`)
-  if (meta.characterId) lines.push(`characterId: ${meta.characterId}`)
-  lines.push('---', '', '-> start', '')
-
-  for (const scene of scenes) {
-    lines.push(`=== ${scene.name || 'scene'} ===`)
-    for (const item of scene.items) {
-      if (item.type === 'line') {
-        if (item.speaker) lines.push(`# speaker:${item.speaker}`)
-        if (item.expression) lines.push(`# expression:${item.expression}`)
-        if (item.position) lines.push(`# position:${item.position}`)
-        if (item.translation) lines.push(`# translation:${encodeURIComponent(item.translation)}`)
-        if (item.audioUrl) lines.push(`# audio:${encodeURIComponent(item.audioUrl)}`)
-        lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
-      } else if (item.type === 'choice') {
-        lines.push(`# choiceCharacter:${item.showCharacter ? 'show' : 'hide'}`)
-        lines.push(`*   [${item.text || '选项'}] -> ${item.target || 'END'}`)
-      } else if (item.type === 'background') {
-        lines.push(`# bg:${item.url}`)
-        lines.push(`# bgFit:${item.fit || 'cover'}`)
-      } else if (item.type === 'wait') {
-        if (item.objective) lines.push(`#objective:${item.objective}`)
-        if (item.hint) lines.push(`#hint:${item.hint}`)
-        if (item.chunks?.length) lines.push(`#chunks:${item.chunks.join(', ')}`)
-        lines.push(item.requiresInput ? '# wait:input' : '# wait')
-      } else if (item.type === 'divert') {
-        lines.push(`-> ${item.target || 'END'}`)
-      } else {
-        lines.push(`# ${item.value}`)
-      }
-    }
-    lines.push('')
-  }
-
-  return `${lines.join('\n').trimEnd()}\n`
-}
-
-function cloneScenes(scenes: ComposerScene[]) {
-  return scenes.map((scene) => ({
-    ...scene,
-    items: scene.items.map((item) => ({ ...item })),
-  }))
-}
-
-function serializeSourceForSave(source: string, key: string, title: string) {
-  return serializeComposer({ key, title }, parseComposer(source))
-}
-
 function itemTitle(item: ComposerItem) {
   if (item.type === 'line') return item.speaker || '旁白'
   if (item.type === 'choice') return '选项'
@@ -353,6 +170,7 @@ function itemSummary(item: ComposerItem) {
     const parts = [item.requiresInput ? '等待用户输入' : '暂停']
     if (item.objective) parts.push(`目标: ${item.objective}`)
     if (item.chunks?.length) parts.push(`句块: ${item.chunks.join(', ')}`)
+    if (item.defaultAnswer) parts.push(`默认回答: ${item.defaultAnswer}`)
     return parts.join(' · ')
   }
   if (item.type === 'divert') return `-> ${item.target || 'END'}`
@@ -393,17 +211,20 @@ export function InkStoryEditor({
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [previewDebug, setPreviewDebug] = useState<VnPreviewDebugState | null>(null)
   const [previewAiEnabled, setPreviewAiEnabled] = useState(false)
+  const [previewLayout, setPreviewLayout] = useState<PreviewLayout>(() => loadPreviewLayout())
   const [teachingMarkdown, setTeachingMarkdown] = useState(trainingTopic?.teachingMarkdown ?? '')
   const [teachingSaving, setTeachingSaving] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiTranslating, setAiTranslating] = useState(false)
   const [aiAudioGenerating, setAiAudioGenerating] = useState(false)
+  const [defaultAnswerAudioGenerating, setDefaultAnswerAudioGenerating] = useState(false)
   const [aiGoalPrompt, setAiGoalPrompt] = useState('')
   const [aiSelectedCharacterId, setAiSelectedCharacterId] = useState('')
   const [aiSelectedLocationId, setAiSelectedLocationId] = useState('')
   const [showAiGoalDialog, setShowAiGoalDialog] = useState(false)
   const lastAutoSavedSourceRef = useRef('')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const defaultAnswerAudioRef = useRef<HTMLAudioElement | null>(null)
 
   const [key, setKey] = useState(initialKey)
   const [title, setTitle] = useState(initialTitle)
@@ -422,6 +243,10 @@ export function InkStoryEditor({
     [characterId, characters],
   )
   const defaultCharacter = selectedCharacter || characters[0]
+  const previewBackgroundUrl = useMemo(
+    () => locations.find((location) => location.id === locationId)?.backgroundUrl,
+    [locationId, locations],
+  )
   const defaultSpeaker = defaultCharacter?.name || defaultCharacter?.displayName || 'Alex'
   const expressionOptions = useMemo(() => {
     const names = new Set<string>(['default'])
@@ -480,6 +305,15 @@ export function InkStoryEditor({
     setCompileResult(compileInk(sourceWithMeta()))
   }, [source, sourceWithMeta])
 
+  useEffect(() => {
+    window.localStorage.setItem(PREVIEW_LAYOUT_STORAGE_KEY, previewLayout)
+  }, [previewLayout])
+
+  useEffect(() => () => {
+    defaultAnswerAudioRef.current?.pause()
+    defaultAnswerAudioRef.current = null
+  }, [])
+
   const checkFormat = useCallback(() => {
     setCompileResult(compileInk(sourceWithMeta()))
   }, [sourceWithMeta])
@@ -530,6 +364,42 @@ export function InkStoryEditor({
       if (item) Object.assign(item, patch)
     })
   }, [selection, updateScenes])
+
+  const playDefaultAnswerAudio = useCallback((url?: string) => {
+    if (!url) return
+    defaultAnswerAudioRef.current?.pause()
+    const audio = new Audio(url)
+    defaultAnswerAudioRef.current = audio
+    void audio.play()
+  }, [])
+
+  const generateDefaultAnswerAudio = useCallback(async () => {
+    if (selection.type !== 'item') return
+    const item = selectedItem
+    if (!item || item.type !== 'wait' || !item.defaultAnswer?.trim()) {
+      toast.error('请先填写默认回答')
+      return
+    }
+    setDefaultAnswerAudioGenerating(true)
+    try {
+      const text = item.defaultAnswer.replace(/\s+/g, ' ').trim()
+      const result = await synthesizeAsset({
+        text,
+        provider: DEFAULT_ANSWER_TTS.provider,
+        model: DEFAULT_ANSWER_TTS.model,
+        voiceId: DEFAULT_ANSWER_TTS.voiceId,
+        params: DEFAULT_ANSWER_TTS.params,
+        bizType: 'tts_default_answer',
+        bizId: [key, selectedScene?.name, selection.itemIndex, text].filter(Boolean).join(':'),
+      })
+      updateSelectedItem({ defaultAnswerAudioUrl: result.url })
+      toast.success('默认回答音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || '默认回答音频生成失败')
+    } finally {
+      setDefaultAnswerAudioGenerating(false)
+    }
+  }, [key, selectedItem, selectedScene?.name, selection, updateSelectedItem])
 
   const moveItem = useCallback((sceneIndex: number, fromIndex: number, toIndex: number) => {
     if (readOnly || fromIndex === toIndex) return
@@ -1226,6 +1096,68 @@ export function InkStoryEditor({
                             用逗号或分号分隔，这些句块会出现在练习助手中提示用户
                           </p>
                         </div>
+                        <div>
+                          <Label className="text-xs">默认回答 (mixed preview)</Label>
+                          <Input
+                            value={selectedItem.defaultAnswer || ''}
+                            onChange={(event) => updateSelectedItem({ defaultAnswer: event.target.value })}
+                            disabled={readOnly}
+                            className="mt-1"
+                            placeholder="例如：Hi, I'm Alex. I'm here to check in."
+                          />
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            仅用于混合预览自动生成 You 台词，不进入正式练习。
+                          </p>
+                          <div className="mt-2 space-y-2 rounded-md border border-border bg-muted/20 p-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-medium text-foreground">默认回答音频</p>
+                                <p className="truncate text-[10px] text-muted-foreground">
+                                  MiniMax · speech-2.8-hd · English_expressive_narrator
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 gap-1.5">
+                                {selectedItem.defaultAnswerAudioUrl && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => playDefaultAnswerAudio(selectedItem.defaultAnswerAudioUrl)}
+                                  >
+                                    <Play className="size-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-8 gap-1.5"
+                                  disabled={readOnly || defaultAnswerAudioGenerating || !selectedItem.defaultAnswer?.trim()}
+                                  onClick={generateDefaultAnswerAudio}
+                                >
+                                  {defaultAnswerAudioGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
+                                  生成音频
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                value={selectedItem.defaultAnswerAudioUrl ?? ''}
+                                onChange={(event) => updateSelectedItem({ defaultAnswerAudioUrl: event.target.value })}
+                                disabled={readOnly}
+                                placeholder="生成后自动写入音频 URL，也可粘贴已有 URL"
+                                className="h-8 text-xs"
+                              />
+                              {selectedItem.defaultAnswerAudioUrl && (
+                                <Button type="button" variant="ghost" size="icon-sm" disabled={readOnly} onClick={() => updateSelectedItem({ defaultAnswerAudioUrl: '' })}>
+                                  <X className="size-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                            {selectedItem.defaultAnswerAudioUrl && (
+                              <audio controls src={selectedItem.defaultAnswerAudioUrl} className="h-9 w-full" />
+                            )}
+                          </div>
+                        </div>
                       </>
                     )}
 
@@ -1234,6 +1166,8 @@ export function InkStoryEditor({
                       {selectedItem.objective && <><br /><code>#objective:{selectedItem.objective}</code></>}
                       {selectedItem.hint && <><br /><code>#hint:{selectedItem.hint}</code></>}
                       {selectedItem.chunks?.length ? <><br /><code>#chunks:{selectedItem.chunks.join(', ')}</code></> : null}
+                      {selectedItem.requiresInput && selectedItem.defaultAnswer && <><br /><code># defaultAnswer:{encodeURIComponent(selectedItem.defaultAnswer)}</code></>}
+                      {selectedItem.requiresInput && selectedItem.defaultAnswerAudioUrl && <><br /><code># defaultAnswerAudio:{encodeURIComponent(selectedItem.defaultAnswerAudioUrl)}</code></>}
                       <br /><code>{selectedItem.requiresInput ? '# wait:input' : '# wait'}</code>
                     </div>
                   </div>
@@ -1265,15 +1199,57 @@ export function InkStoryEditor({
         </TabsContent>
 
         <TabsContent value="preview" className="mt-0">
-          <div className="grid gap-4 rounded-lg border border-border bg-card p-4 xl:grid-cols-[minmax(360px,460px)_minmax(0,1fr)]">
-            <div className="min-w-0">
+          <div className={cn(
+            'grid gap-4 rounded-lg border border-border bg-card p-4',
+            previewLayout === 'landscape'
+              ? 'xl:grid-cols-[minmax(520px,760px)_minmax(0,1fr)]'
+              : 'xl:grid-cols-[minmax(360px,460px)_minmax(0,1fr)]',
+          )}>
+            <div className="min-w-0 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="inline-flex rounded-md border border-border bg-muted/30 p-0.5">
+                  {([
+                    { value: 'portrait', label: '竖屏', icon: Smartphone },
+                    { value: 'landscape', label: '横屏', icon: Monitor },
+                    { value: 'mixed', label: '混合', icon: PanelTop },
+                  ] as const).map((item) => {
+                    const Icon = item.icon
+                    const active = previewLayout === item.value
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => setPreviewLayout(item.value)}
+                        className={cn(
+                          'inline-flex h-8 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors',
+                          active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
+                        title={item.label}
+                      >
+                        <Icon className="size-3.5" />
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                {previewLayout === 'mixed' && (
+                  <span className="text-[11px] text-muted-foreground">静态 timeline，不触发 AI</span>
+                )}
+              </div>
               <VnStoryPreview
                 inkSource={sourceWithMeta()}
                 characterSprites={charSprites}
                 characterAvatars={charAvatars}
                 characterPositions={charPositions}
+                defaultBackgroundUrl={previewBackgroundUrl}
+                previewLayout={previewLayout}
                 aiEvaluationEnabled={previewAiEnabled}
-                className="mx-auto h-[78vh] max-h-[760px] max-w-[420px]"
+                className={cn(
+                  'mx-auto',
+                  previewLayout === 'landscape'
+                    ? 'w-full max-w-[700px]'
+                    : 'h-[78vh] max-h-[760px] max-w-[420px]',
+                )}
                 onDebugChange={setPreviewDebug}
               />
             </div>
@@ -1358,10 +1334,12 @@ function PreviewDebugPanel({
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-px border-b border-border bg-border">
+      <div className="grid grid-cols-5 gap-px border-b border-border bg-border">
         <DebugMetric label="状态" value={debug?.isEnded ? '已完成' : debug?.isWaiting ? '等待输入' : debug?.isReady ? '播放中' : '未开始'} />
         <DebugMetric label="对话" value={`${debug?.history.length ?? 0} 条`} />
         <DebugMetric label="选项" value={`${debug?.choices.length ?? 0} 个`} />
+        <DebugMetric label="布局" value={debug?.previewLayout ?? '-'} />
+        <DebugMetric label="Timeline" value={debug?.timelineLength !== undefined ? `${debug.timelineLength} 条` : '-'} />
       </div>
 
       <Tabs defaultValue="practice">
