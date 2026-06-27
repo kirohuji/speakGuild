@@ -595,8 +595,9 @@ export interface VocabularyFull {
 
 export interface ChunkFull {
   id: string; text: string; meaning: string; description?: string | null;
+  audioUrl?: string | null;
   category: string; difficulty: string;
-  examples: { id: string; en: string; zh: string; note?: string | null; level: string; sortOrder: number }[];
+  examples: { id: string; en: string; zh: string; note?: string | null; audioUrl?: string | null; level: string; sortOrder: number }[];
   createdAt: string;
 }
 

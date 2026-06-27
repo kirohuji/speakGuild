@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
-  Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe,
+  Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,15 +18,79 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { AdminPagination } from '../components/admin-pagination'
 import * as api from '../api-content-admin'
+import { listAiProviders, type AiProviderItem } from '../api-ai-models'
 import { DictionaryPreview } from '../components/dictionary-preview'
 import { getDictionaryEntry } from '../api-dictionary'
 import type { DictionaryEntry } from '../api-dictionary'
+import { synthesizeAsset } from '@/lib/tts-api'
 
 const DIFFICULTIES = ['L1', 'L2', 'L3', 'L4', 'L5']
 const DIFFICULTY_COLORS: Record<string, string> = {
   L1: 'bg-emerald-100 text-emerald-700', L2: 'bg-blue-100 text-blue-700',
   L3: 'bg-amber-100 text-amber-700', L4: 'bg-orange-100 text-orange-700',
   L5: 'bg-red-100 text-red-700',
+}
+
+type TtsAccent = 'us' | 'uk' | 'neutral'
+
+async function getActiveTtsProvider() {
+  const providers = await listAiProviders()
+  const ttsProviders = providers.tts ?? []
+  const active = ttsProviders.find((item) => item.isActive) ?? ttsProviders[0]
+  if (!active) throw new Error('请先在大模型管理中配置 TTS')
+  if (!['minimax', 'cartesia'].includes(active.provider)) {
+    throw new Error(`当前 TTS Provider (${active.provider}) 暂不支持内容语料库生成`)
+  }
+  return active
+}
+
+function getTtsVoiceId(item: AiProviderItem, accent: TtsAccent) {
+  const config = item.config ?? {}
+  const accentKeys = accent === 'us'
+    ? ['usVoiceId', 'americanVoiceId', 'voiceIdUs', 'voiceUs']
+    : accent === 'uk'
+      ? ['ukVoiceId', 'britishVoiceId', 'voiceIdUk', 'voiceUk']
+      : []
+  for (const key of accentKeys) {
+    const value = config[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  const fallback = typeof config.voiceId === 'string'
+    ? config.voiceId
+    : typeof config.voiceName === 'string'
+      ? config.voiceName
+      : ''
+  return fallback.trim() || undefined
+}
+
+function getTtsParams(item: AiProviderItem) {
+  const config = item.config ?? {}
+  const params = typeof config.params === 'object' && config.params
+    ? { ...(config.params as Record<string, string | number | boolean>) }
+    : {}
+  if (typeof config.voiceProvider === 'string') params.voice_provider = config.voiceProvider
+  if (typeof config.voiceKind === 'string') params.voice_kind = config.voiceKind
+  return params
+}
+
+async function generateLibraryAudio(text: string, accent: TtsAccent, bizType: string, bizId: string) {
+  const active = await getActiveTtsProvider()
+  const result = await synthesizeAsset({
+    text,
+    provider: active.provider as any,
+    model: active.model,
+    voiceId: getTtsVoiceId(active, accent),
+    params: getTtsParams(active),
+    bizType,
+    bizId,
+  } as any)
+  return result.url
+}
+
+function playAudioUrl(url?: string | null) {
+  if (!url) return
+  const audio = new Audio(url)
+  audio.play().catch(() => toast.error('音频播放失败'))
 }
 
 /** Simple Markdown → HTML for description field */
@@ -413,6 +477,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const [xfdLoading, setXfdLoading] = useState(false)
   const [wikiLoading, setWikiLoading] = useState(false)
   const [mwLoading, setMwLoading] = useState(false)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [usAudioPlaying, setUsAudioPlaying] = useState(false)
   const [ukAudioPlaying, setUkAudioPlaying] = useState(false)
@@ -816,10 +881,42 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   }
   const addEx = () => setForm({ ...form, examples: [...exs, { en: '', zh: '', level: 'basic' }] })
   const delEx = (idx: number) => setForm({ ...form, examples: exs.filter((_: any, i: number) => i !== idx) })
+  const generatePronunciation = async (side: 'us' | 'uk') => {
+    const text = form.word?.trim()
+    if (!text) return
+    const key = `pron-${side}`
+    setTtsGenerating(key)
+    try {
+      const url = await generateLibraryAudio(text, side, `library_vocab_${side}`, edit?.id ?? text)
+      setForm((prev: any) => ({ ...prev, [side === 'us' ? 'audioUsUrl' : 'audioUkUrl']: url }))
+      toast.success(`${side === 'us' ? '美式' : '英式'}发音已生成`)
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
+  }
+  const generateExampleAudio = async (idx: number) => {
+    const text = exs[idx]?.en?.trim()
+    if (!text) return
+    const key = `ex-${idx}`
+    setTtsGenerating(key)
+    try {
+      const url = await generateLibraryAudio(text, 'neutral', 'library_vocab_example', `${edit?.id ?? form.word ?? 'new'}-${idx}`)
+      const arr = [...exs]
+      arr[idx] = { ...arr[idx], audioUrl: url }
+      setForm({ ...form, examples: arr })
+      toast.success('例句音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? `编辑词汇 (${currentIdx + 1}/${items.length})` : '新增词汇'}</DialogTitle>
           <DialogDescription>词典+AI（一键查词+翻译）| XF · Wiki · MW 补充查询</DialogDescription>
@@ -848,6 +945,11 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             <div className="space-y-1.5">
               <Label>美式发音</Label>
               <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={!form.word?.trim() || ttsGenerating === 'pron-us'}
+                  onClick={() => generatePronunciation('us')}>
+                  {ttsGenerating === 'pron-us' ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Volume2 className="size-3.5 mr-1" />}
+                  TTS
+                </Button>
                 {form.audioUsUrl ? (
                   <>
                     <Button size="sm" variant="outline"
@@ -861,7 +963,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 ) : (
                   <label className="cursor-pointer flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                     <Upload className="size-3.5" />
-                    上传 mp3
+                    上传
                     <input type="file" accept="audio/mp3,audio/mpeg,.mp3" className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload('us', f) }} />
                   </label>
@@ -871,6 +973,11 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             <div className="space-y-1.5">
               <Label>英式发音</Label>
               <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={!form.word?.trim() || ttsGenerating === 'pron-uk'}
+                  onClick={() => generatePronunciation('uk')}>
+                  {ttsGenerating === 'pron-uk' ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Volume2 className="size-3.5 mr-1" />}
+                  TTS
+                </Button>
                 {form.audioUkUrl ? (
                   <>
                     <Button size="sm" variant="outline"
@@ -884,7 +991,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 ) : (
                   <label className="cursor-pointer flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                     <Upload className="size-3.5" />
-                    上传 mp3
+                    上传
                     <input type="file" accept="audio/mp3,audio/mpeg,.mp3" className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload('uk', f) }} />
                   </label>
@@ -1036,6 +1143,17 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                       <p className="text-sm text-muted-foreground/80 italic leading-relaxed">{ex.en || '(空)'}</p>
                       {ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{ex.zh}</p>}
                     </div>
+                    {ex.audioUrl && (
+                      <Button size="icon" variant="ghost" className="size-7 shrink-0" title="试听例句"
+                        onClick={() => playAudioUrl(ex.audioUrl)}>
+                        <Play className="size-3.5" />
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="生成例句 TTS"
+                      disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
+                      onClick={() => generateExampleAudio(i)}>
+                      {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
+                    </Button>
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/50 flex-shrink-0 ml-auto">
                       {ex.level === 'basic' ? '基础' : ex.level === 'advanced' ? '高级' : '中级'}
                     </Badge>
@@ -1053,6 +1171,17 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                     <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
                       <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
                     </Select>
+                    {ex.audioUrl && (
+                      <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="试听例句"
+                        onClick={() => playAudioUrl(ex.audioUrl)}>
+                        <Play className="size-3" />
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="生成例句 TTS"
+                      disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
+                      onClick={() => generateExampleAudio(i)}>
+                      {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                    </Button>
                     <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
                   </div>
                 ))}
@@ -1169,6 +1298,7 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
   const [editDesc, setEditDesc] = useState(false)
   const [editExamples, setEditExamples] = useState(false)
   const [enriching, setEnriching] = useState(false)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
@@ -1231,6 +1361,37 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
   }
   const addEx = () => setForm({ ...form, examples: [...exs, { en: '', zh: '', level: 'basic' }] })
   const delEx = (idx: number) => setForm({ ...form, examples: exs.filter((_: any, i: number) => i !== idx) })
+  const generateChunkAudio = async () => {
+    const text = form.text?.trim()
+    if (!text) return
+    setTtsGenerating('chunk')
+    try {
+      const url = await generateLibraryAudio(text, 'neutral', 'library_chunk', edit?.id ?? text)
+      setForm((prev: any) => ({ ...prev, audioUrl: url }))
+      toast.success('句块音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
+  }
+  const generateExampleAudio = async (idx: number) => {
+    const text = exs[idx]?.en?.trim()
+    if (!text) return
+    const key = `ex-${idx}`
+    setTtsGenerating(key)
+    try {
+      const url = await generateLibraryAudio(text, 'neutral', 'library_chunk_example', `${edit?.id ?? form.text ?? 'new'}-${idx}`)
+      const arr = [...exs]
+      arr[idx] = { ...arr[idx], audioUrl: url }
+      setForm({ ...form, examples: arr })
+      toast.success('例句音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
+  }
 
   // 从句块文本中提取单词（用于关联词汇展示）
   const chunkWords = (form.text ?? '')
@@ -1241,7 +1402,7 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑句块' : '新增句块'}</DialogTitle>
           <DialogDescription>句块是可迁移的表达单元，如 "I'm here to check in"</DialogDescription>
@@ -1256,6 +1417,26 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
             <div className="flex-1">
               <Label htmlFor="c-meaning">中文释义 *</Label>
               <Input id="c-meaning" value={form.meaning ?? ''} onChange={e => setForm({ ...form, meaning: e.target.value })} placeholder="我来办理入住" />
+            </div>
+          </div>
+
+          <div className="rounded-md border bg-muted/20 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="mr-1 text-xs text-muted-foreground">句块音频</Label>
+              <Button size="sm" variant="outline" disabled={!form.text?.trim() || ttsGenerating === 'chunk'}
+                onClick={generateChunkAudio}>
+                {ttsGenerating === 'chunk' ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Volume2 className="mr-1 size-3.5" />}
+                生成 TTS
+              </Button>
+              {form.audioUrl && (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => playAudioUrl(form.audioUrl)}>
+                    <Play className="mr-1 size-3.5" />试听
+                  </Button>
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">已生成</span>
+                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => setForm({ ...form, audioUrl: '' })}>清除</Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -1351,6 +1532,17 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
                       <p className="text-sm text-muted-foreground/80 italic leading-relaxed">{ex.en || '(空)'}</p>
                       {ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{ex.zh}</p>}
                     </div>
+                    {ex.audioUrl && (
+                      <Button size="icon" variant="ghost" className="size-7 shrink-0" title="试听例句"
+                        onClick={() => playAudioUrl(ex.audioUrl)}>
+                        <Play className="size-3.5" />
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="生成例句 TTS"
+                      disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
+                      onClick={() => generateExampleAudio(i)}>
+                      {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
+                    </Button>
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/50 flex-shrink-0 ml-auto">
                       {ex.level === 'basic' ? '基础' : ex.level === 'advanced' ? '高级' : '中级'}
                     </Badge>
@@ -1368,6 +1560,17 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
                     <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
                       <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
                     </Select>
+                    {ex.audioUrl && (
+                      <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="试听例句"
+                        onClick={() => playAudioUrl(ex.audioUrl)}>
+                        <Play className="size-3" />
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="生成例句 TTS"
+                      disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
+                      onClick={() => generateExampleAudio(i)}>
+                      {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                    </Button>
                     <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
                   </div>
                 ))}
@@ -1399,6 +1602,7 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
   const [enriching, setEnriching] = useState(false)
   const [editDesc, setEditDesc] = useState(false)
   const [editExamples, setEditExamples] = useState(false)
+  const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
@@ -1459,6 +1663,23 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
   }
   const addEx = () => setForm({ ...form, examples: [...exs, { en: '', zh: '', level: 'basic' }] })
   const delEx = (idx: number) => setForm({ ...form, examples: exs.filter((_: any, i: number) => i !== idx) })
+  const generateExampleAudio = async (idx: number) => {
+    const text = exs[idx]?.en?.trim()
+    if (!text) return
+    const key = `ex-${idx}`
+    setTtsGenerating(key)
+    try {
+      const url = await generateLibraryAudio(text, 'neutral', 'library_pattern_example', `${edit?.id ?? form.pattern ?? 'new'}-${idx}`)
+      const arr = [...exs]
+      arr[idx] = { ...arr[idx], audioUrl: url }
+      setForm({ ...form, examples: arr })
+      toast.success('例句音频已生成')
+    } catch (err: any) {
+      toast.error(err?.message || 'TTS 生成失败')
+    } finally {
+      setTtsGenerating(null)
+    }
+  }
 
   // 从句式中提取关键词（用于关联词汇展示）
   const patternWords = (form.pattern ?? '')
@@ -1470,7 +1691,7 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑句式' : '新增句式'}</DialogTitle>
           <DialogDescription>句式如 "__ is the __ I have ever __"，用 __ 表示可替换槽位</DialogDescription>
@@ -1580,6 +1801,17 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
                       <p className="text-sm text-muted-foreground/80 italic leading-relaxed">{ex.en || '(空)'}</p>
                       {ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{ex.zh}</p>}
                     </div>
+                    {ex.audioUrl && (
+                      <Button size="icon" variant="ghost" className="size-7 shrink-0" title="试听例句"
+                        onClick={() => playAudioUrl(ex.audioUrl)}>
+                        <Play className="size-3.5" />
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="生成例句 TTS"
+                      disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
+                      onClick={() => generateExampleAudio(i)}>
+                      {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
+                    </Button>
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/50 flex-shrink-0 ml-auto">
                       {ex.level === 'basic' ? '基础' : ex.level === 'advanced' ? '高级' : '中级'}
                     </Badge>
@@ -1597,6 +1829,17 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
                     <Select value={ex.level ?? 'basic'} onChange={e => setEx(i, 'level', e.target.value)} className="w-24 text-xs">
                       <option value="basic">基础</option><option value="intermediate">中级</option><option value="advanced">高级</option>
                     </Select>
+                    {ex.audioUrl && (
+                      <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="试听例句"
+                        onClick={() => playAudioUrl(ex.audioUrl)}>
+                        <Play className="size-3" />
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="生成例句 TTS"
+                      disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
+                      onClick={() => generateExampleAudio(i)}>
+                      {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                    </Button>
                     <Button size="icon" variant="ghost" className="size-8 text-destructive flex-shrink-0" onClick={() => delEx(i)}><Trash2 className="size-3" /></Button>
                   </div>
                 ))}

@@ -734,6 +734,7 @@ model Chunk {
   text               String
   meaning            String
   description        String?              @db.Text
+  audioUrl           String?
   category           String
   difficulty         String               @default("L2")
   examples           ChunkExample[]
@@ -792,6 +793,7 @@ model ChunkExample {
   en        String   @db.Text
   zh        String   @db.Text
   note      String?  @db.Text
+  audioUrl  String?
   level     String   @default("basic")
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())

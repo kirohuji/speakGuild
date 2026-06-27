@@ -4,6 +4,7 @@ class ExampleDto {
   @IsString() en: string;
   @IsString() zh: string;
   @IsOptional() @IsString() note?: string;
+  @IsOptional() @IsString() audioUrl?: string;
   @IsOptional() @IsString() level?: string;
 }
 
@@ -47,6 +48,7 @@ export class CreateFullChunkDto {
   @IsString() text: string;
   @IsString() meaning: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() audioUrl?: string;
   @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() difficulty?: string;
   @IsOptional() @IsArray() examples?: ExampleDto[];
@@ -56,6 +58,7 @@ export class UpdateFullChunkDto {
   @IsOptional() @IsString() text?: string;
   @IsOptional() @IsString() meaning?: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() audioUrl?: string;
   @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() difficulty?: string;
   @IsOptional() @IsArray() examples?: ExampleDto[];
