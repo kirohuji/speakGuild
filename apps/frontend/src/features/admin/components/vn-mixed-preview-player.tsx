@@ -16,14 +16,14 @@ interface VnMixedPreviewPlayerProps {
   className?: string
 }
 
-function frameLabel(frame: MixedTimelineFrame) {
+export function mixedFrameLabel(frame: MixedTimelineFrame) {
   if (frame.kind === 'choice') return '默认分支'
   if (frame.kind === 'userInput') return 'You'
   if (frame.kind === 'missingInput') return '待补充'
   return frame.speaker || '旁白'
 }
 
-type LoopMode = '1' | '2' | 'infinite'
+export type LoopMode = '1' | '2' | 'infinite'
 
 const gapOptions = [
   { value: 0.5, label: '0.5s' },
@@ -38,7 +38,7 @@ const loopOptions: Array<{ value: LoopMode; label: string }> = [
   { value: 'infinite', label: '循环' },
 ]
 
-function estimateFrameDuration(frame: MixedTimelineFrame) {
+export function estimateMixedFrameDuration(frame: MixedTimelineFrame) {
   if (frame.kind === 'choice') return 1000
   if (frame.kind === 'missingInput') return 0
   return Math.max(1200, Math.min(5200, frame.text.length * 80))
@@ -49,7 +49,7 @@ function pickMimeType() {
   return ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
 }
 
-function frameDisplayText(frame: MixedTimelineFrame) {
+export function mixedFrameDisplayText(frame: MixedTimelineFrame) {
   if (frame.kind === 'choice') return frame.choices?.map((choice, index) => `${index === 0 ? '-> ' : '   '}${choice.text}`).join('\n') || frame.text
   return frame.text
 }
@@ -160,10 +160,10 @@ export function VnMixedPreviewPlayer({
       const audio = new Audio(activeFrame.audioUrl)
       audioRef.current = audio
       audio.onended = () => scheduleNext()
-      audio.onerror = () => scheduleNext(estimateFrameDuration(activeFrame))
-      audio.play().catch(() => scheduleNext(estimateFrameDuration(activeFrame)))
+      audio.onerror = () => scheduleNext(estimateMixedFrameDuration(activeFrame))
+      audio.play().catch(() => scheduleNext(estimateMixedFrameDuration(activeFrame)))
     } else {
-      scheduleNext(estimateFrameDuration(activeFrame))
+      scheduleNext(estimateMixedFrameDuration(activeFrame))
     }
 
     return () => clearPlayback()
@@ -248,9 +248,9 @@ export function VnMixedPreviewPlayer({
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-[11px] font-semibold text-white/55">
-                {activeFrame.speaker || frameLabel(activeFrame)}
+                {activeFrame.speaker || mixedFrameLabel(activeFrame)}
               </p>
-              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white">{frameDisplayText(activeFrame)}</p>
+              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white">{mixedFrameDisplayText(activeFrame)}</p>
             </div>
             {missingCount > 0 && (
               <span className="rounded border border-amber-300/30 bg-amber-300/12 px-2 py-1 text-[11px] text-amber-100">
@@ -261,7 +261,7 @@ export function VnMixedPreviewPlayer({
         </div>
       </div>
 
-      <div className="border-b border-white/10 bg-[#0d1118] px-3 py-2">
+      <div className="border-b border-white/10 bg-[#0d1118] px-2 py-1">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -331,7 +331,7 @@ export function VnMixedPreviewPlayer({
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className={cn('truncate text-[11px] font-semibold', active ? 'text-cyan-100' : 'text-white/42')}>
-                      {frameLabel(frame)}
+                      {mixedFrameLabel(frame)}
                     </span>
                     {frame.onDefaultBranch && frame.kind !== 'choice' && (
                       <span className="shrink-0 text-[10px] text-white/30">默认线</span>
@@ -341,7 +341,7 @@ export function VnMixedPreviewPlayer({
                     'mt-1 block whitespace-pre-wrap text-sm leading-5',
                     active ? 'font-semibold text-cyan-50' : isMissing ? 'text-amber-100' : 'text-white/70',
                   )}>
-                    {frameDisplayText(frame)}
+                    {mixedFrameDisplayText(frame)}
                   </span>
                   {frame.translation && (
                     <span className={cn('mt-1 block text-xs leading-5', active ? 'text-cyan-100/55' : 'text-white/35')}>{frame.translation}</span>
@@ -401,7 +401,7 @@ export function VnMixedPreviewPlayer({
   )
 }
 
-function MixedPlaybackSettingsDialog({
+export function MixedPlaybackSettingsDialog({
   open,
   onOpenChange,
   gapSeconds,
@@ -474,7 +474,7 @@ function MixedPlaybackSettingsDialog({
   )
 }
 
-function FollowReadDrawer({
+export function FollowReadDrawer({
   open,
   onOpenChange,
   frame,
@@ -609,33 +609,33 @@ function FollowReadDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent showHandle={false} className="mx-auto max-h-[72dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl border-white/10 bg-[#10131a] px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-white">
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/18" />
+      <DrawerContent showHandle={false} className="mx-auto max-h-[72dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl border-border bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground">
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-muted-foreground/25" />
         <DrawerHeader className="px-4 pb-2 pt-3 text-left">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <DrawerTitle className="text-sm font-semibold text-white">跟读检查</DrawerTitle>
-              <p className="mt-1 truncate text-xs text-white/45">{frame?.speaker || '旁白'}</p>
+              <DrawerTitle className="text-sm font-semibold text-foreground">跟读检查</DrawerTitle>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{frame?.speaker || '旁白'}</p>
             </div>
-            <span className={cn('rounded px-2 py-1 text-[11px]', recording ? 'bg-rose-400/15 text-rose-100' : 'bg-white/8 text-white/50')}>
+            <span className={cn('rounded px-2 py-1 text-[11px]', recording ? 'bg-rose-500/10 text-rose-700' : 'bg-muted text-muted-foreground')}>
               {recording ? formatElapsed(elapsed) : recordedUrl ? '已录音' : '待录音'}
             </span>
           </div>
         </DrawerHeader>
 
         <div className="space-y-3 px-4">
-          <div className="rounded-lg border border-white/10 bg-white/[0.045] p-3">
-            <p className="text-sm font-medium leading-6 text-white">{frame?.text}</p>
-            {frame?.translation && <p className="mt-2 text-xs leading-5 text-white/45">{frame.translation}</p>}
+          <div className="rounded-lg border border-border bg-muted/35 p-3">
+            <p className="text-sm font-medium leading-6 text-foreground">{frame?.text}</p>
+            {frame?.translation && <p className="mt-2 text-xs leading-5 text-muted-foreground">{frame.translation}</p>}
           </div>
 
-          {error && <div className="rounded-md border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-xs text-rose-100">{error}</div>}
+          {error && <div className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>}
 
           <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               variant="secondary"
-              className="h-10 gap-1.5 bg-white/8 text-white hover:bg-white/12"
+              className="h-10 gap-1.5"
               disabled={!frame?.audioUrl || recording}
               onClick={playTts}
             >
@@ -653,7 +653,7 @@ function FollowReadDrawer({
             <Button
               type="button"
               variant="secondary"
-              className="h-10 gap-1.5 bg-white/8 text-white hover:bg-white/12"
+              className="h-10 gap-1.5"
               disabled={!recordedUrl || recording}
               onClick={playRecording}
             >
@@ -667,7 +667,7 @@ function FollowReadDrawer({
             variant="ghost"
             disabled={!recordedUrl || recording}
             onClick={resetRecording}
-            className="h-9 w-full gap-1.5 text-white/58 hover:bg-white/8 hover:text-white"
+            className="h-9 w-full gap-1.5 text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="size-3.5" />
             重录

@@ -26,6 +26,7 @@ import {
   Smartphone,
   Monitor,
   PanelTop,
+  Film,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -115,7 +116,7 @@ const PREVIEW_LAYOUT_STORAGE_KEY = 'manyu-admin-vn-preview-layout'
 function loadPreviewLayout(): PreviewLayout {
   if (typeof window === 'undefined') return 'portrait'
   const saved = window.localStorage.getItem(PREVIEW_LAYOUT_STORAGE_KEY)
-  return saved === 'portrait' || saved === 'landscape' || saved === 'mixed' ? saved : 'portrait'
+  return saved === 'portrait' || saved === 'landscape' || saved === 'mixed' || saved === 'video' ? saved : 'portrait'
 }
 
 function buildCharacterSpriteData(characters: GameCharacter[]): {
@@ -1212,6 +1213,7 @@ export function InkStoryEditor({
                     { value: 'portrait', label: '竖屏', icon: Smartphone },
                     { value: 'landscape', label: '横屏', icon: Monitor },
                     { value: 'mixed', label: '混合', icon: PanelTop },
+                    { value: 'video', label: '视频', icon: Film },
                   ] as const).map((item) => {
                     const Icon = item.icon
                     const active = previewLayout === item.value
@@ -1232,8 +1234,10 @@ export function InkStoryEditor({
                     )
                   })}
                 </div>
-                {previewLayout === 'mixed' && (
-                  <span className="text-[11px] text-muted-foreground">静态 timeline，不触发 AI</span>
+                {(previewLayout === 'mixed' || previewLayout === 'video') && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {previewLayout === 'video' ? 'Remotion timeline' : '静态 timeline，不触发 AI'}
+                  </span>
                 )}
               </div>
               <VnStoryPreview

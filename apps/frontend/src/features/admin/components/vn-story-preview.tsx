@@ -16,10 +16,11 @@ import { judgePreviewDialogueTurn, type PreviewDialogueTurnResult } from '../api
 import { parseComposer } from './composer-parser'
 import { flattenComposerToTimeline } from './vn-mixed-timeline'
 import { VnMixedPreviewPlayer } from './vn-mixed-preview-player'
+import { NqtrVideoPreviewPlayer } from './nqtr-video-preview-player'
 
 /** 角色立绘数据：expression name → sprite URL */
 export type CharacterSpriteMap = Record<string, string>
-export type PreviewLayout = 'portrait' | 'landscape' | 'mixed'
+export type PreviewLayout = 'portrait' | 'landscape' | 'mixed' | 'video'
 
 interface VnStoryPreviewProps {
   /** Ink 源码 */
@@ -146,7 +147,7 @@ export function VnStoryPreview({
   }, [inkSource, inkJson])
 
   const mixedFrames = useMemo(() => {
-    if (previewLayout !== 'mixed' || !inkSource) return []
+    if ((previewLayout !== 'mixed' && previewLayout !== 'video') || !inkSource) return []
     return flattenComposerToTimeline(parseComposer(inkSource), {
       characterSprites,
       characterAvatars,
@@ -281,7 +282,7 @@ export function VnStoryPreview({
     setActiveEvaluation(null)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
 
-    if (previewLayout === 'mixed') {
+    if (previewLayout === 'mixed' || previewLayout === 'video') {
       setIsReady(Boolean(compileResult?.success))
       return
     }
@@ -472,9 +473,9 @@ export function VnStoryPreview({
       aiPayload,
       aiEvaluations,
       previewLayout,
-      timelineLength: previewLayout === 'mixed' ? mixedFrames.length : undefined,
-      activeFrameIndex: previewLayout === 'mixed' ? activeFrameIndex : undefined,
-      missingDefaultAnswerCount: previewLayout === 'mixed' ? mixedFrames.filter((frame) => frame.kind === 'missingInput').length : undefined,
+      timelineLength: previewLayout === 'mixed' || previewLayout === 'video' ? mixedFrames.length : undefined,
+      activeFrameIndex: previewLayout === 'mixed' || previewLayout === 'video' ? activeFrameIndex : undefined,
+      missingDefaultAnswerCount: previewLayout === 'mixed' || previewLayout === 'video' ? mixedFrames.filter((frame) => frame.kind === 'missingInput').length : undefined,
     })
   }, [activeBackground, activeFrameIndex, aiEvaluations, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, mixedFrames, onDebugChange, previewLayout])
 
@@ -507,6 +508,13 @@ export function VnStoryPreview({
     <>
       {previewLayout === 'mixed' ? (
         <VnMixedPreviewPlayer
+          className={className}
+          frames={mixedFrames}
+          activeIndex={Math.min(activeFrameIndex, Math.max(mixedFrames.length - 1, 0))}
+          onJumpTo={setActiveFrameIndex}
+        />
+      ) : previewLayout === 'video' ? (
+        <NqtrVideoPreviewPlayer
           className={className}
           frames={mixedFrames}
           activeIndex={Math.min(activeFrameIndex, Math.max(mixedFrames.length - 1, 0))}
