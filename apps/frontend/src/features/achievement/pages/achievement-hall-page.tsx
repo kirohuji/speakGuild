@@ -9,19 +9,31 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { achievementApi, type AchievementItem } from '../api/achievement-api'
 import { cn } from '@/lib/cn'
 
-const RARITY_STYLES: Record<string, { border: string; bg: string; text: string; icon: string; label: string }> = {
-  common:    { border: 'border-border',          bg: 'bg-muted',               text: 'text-muted-foreground', icon: 'text-muted-foreground', label: '普通' },
-  rare:      { border: 'border-blue-500/30',     bg: 'bg-blue-50 dark:bg-blue-950',   text: 'text-blue-600 dark:text-blue-400',   icon: 'text-blue-500',   label: '稀有' },
-  epic:      { border: 'border-purple-500/30',   bg: 'bg-purple-50 dark:bg-purple-950', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500', label: '史诗' },
-  legendary: { border: 'border-amber-400/50',    bg: 'bg-amber-50 dark:bg-amber-950',  text: 'text-amber-600 dark:text-amber-400',  icon: 'text-amber-400',  label: '传说' },
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  milestone: '里程碑', streak: '连续打卡', challenge: '挑战', mastery: '掌握', hidden: '隐藏', first_time: '初次体验',
+const RARITY_STYLES_BASE: Record<string, { border: string; bg: string; text: string; icon: string }> = {
+  common:    { border: 'border-border',          bg: 'bg-muted',               text: 'text-muted-foreground', icon: 'text-muted-foreground' },
+  rare:      { border: 'border-blue-500/30',     bg: 'bg-blue-50 dark:bg-blue-950',   text: 'text-blue-600 dark:text-blue-400',   icon: 'text-blue-500' },
+  epic:      { border: 'border-purple-500/30',   bg: 'bg-purple-50 dark:bg-purple-950', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500' },
+  legendary: { border: 'border-amber-400/50',    bg: 'bg-amber-50 dark:bg-amber-950',  text: 'text-amber-600 dark:text-amber-400',  icon: 'text-amber-400' },
 }
 
 const RARITY_ICONS: Record<string, typeof Star> = {
   common: Star, rare: Award, epic: Trophy, legendary: Sparkles,
+}
+
+const CATEGORY_I18N_KEYS: Record<string, string> = {
+  milestone: 'achievementHall.categories.milestone',
+  streak: 'achievementHall.categories.streak',
+  challenge: 'achievementHall.categories.challenge',
+  mastery: 'achievementHall.categories.mastery',
+  hidden: 'achievementHall.categories.hidden',
+  first_time: 'achievementHall.categories.firstTime',
+}
+
+const RARITY_I18N_KEYS: Record<string, string> = {
+  common: 'achievementHall.rarities.common',
+  rare: 'achievementHall.rarities.rare',
+  epic: 'achievementHall.rarities.epic',
+  legendary: 'achievementHall.rarities.legendary',
 }
 
 export function AchievementHallPage() {
@@ -65,7 +77,7 @@ export function AchievementHallPage() {
               <TabsTrigger value="all" className="text-xs">{t('achievementHall.all')}</TabsTrigger>
               {categories.map((cat) => (
                 <TabsTrigger key={cat} value={cat} className="text-xs">
-                  {CATEGORY_LABELS[cat] ?? cat}
+                  {t(CATEGORY_I18N_KEYS[cat], { defaultValue: cat })}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -99,7 +111,7 @@ export function AchievementHallPage() {
 }
 
 function AchievementBadge({ achievement: a }: { achievement: AchievementItem }) {
-  const style = RARITY_STYLES[a.rarity] ?? RARITY_STYLES.common
+  const style = RARITY_STYLES_BASE[a.rarity] ?? RARITY_STYLES_BASE.common
   const isLocked = a.userStatus === 'locked'
   const isHidden = a.isHidden && isLocked
   const Icon = RARITY_ICONS[a.rarity] ?? Star
@@ -137,7 +149,7 @@ function AchievementBadge({ achievement: a }: { achievement: AchievementItem }) 
             )}
             {!isLocked && (
               <Badge variant="outline" className={cn('text-[10px]', style.text)}>
-                {style.label}
+                {t(RARITY_I18N_KEYS[a.rarity], { defaultValue: a.rarity })}
               </Badge>
             )}
           </>

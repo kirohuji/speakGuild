@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowRight, Blocks, Braces, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, ListChecks, ListMusic, PenLine, Replace, Split, Target,
@@ -57,45 +58,52 @@ type PracticeGroup = {
   totalCount: number
 }
 
-// ── 类型显示映射 ──
-const TYPE_META: Record<string, { label: string; icon: typeof PenLine; color: string }> = {
-  chunk_substitution: {
-    label: '句块替换',
-    icon: Replace,
-    color: 'bg-purple-500/10 text-purple-600 dark:text-purple-300',
-  },
-  vocab_drill: {
-    label: '词汇输出',
-    icon: PenLine,
-    color: 'bg-sky-500/10 text-sky-600 dark:text-sky-300',
-  },
-  vocab_sentence_building: {
-    label: '一词多句',
-    icon: Blocks,
-    color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300',
-  },
-  pattern_drill: {
-    label: '句型操练',
-    icon: Braces,
-    color: 'bg-violet-500/10 text-violet-600 dark:text-violet-300',
-  },
-  sentence_decomposition: {
-    label: '句子拆解',
-    icon: Split,
-    color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
-  },
+// ── 类型显示映射（在组件内用 useMemo 获取 i18n）──
+function useTypeMeta(t: (key: string) => string): Record<string, { label: string; icon: typeof PenLine; color: string }> {
+  return useMemo(() => ({
+    chunk_substitution: {
+      label: t('todayTask.chunkSubstitution'),
+      icon: Replace,
+      color: 'bg-purple-500/10 text-purple-600 dark:text-purple-300',
+    },
+    vocab_drill: {
+      label: t('todayTask.vocabDrill'),
+      icon: PenLine,
+      color: 'bg-sky-500/10 text-sky-600 dark:text-sky-300',
+    },
+    vocab_sentence_building: {
+      label: t('todayTask.vocabSentenceBuilding'),
+      icon: Blocks,
+      color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300',
+    },
+    pattern_drill: {
+      label: t('todayTask.patternDrill'),
+      icon: Braces,
+      color: 'bg-violet-500/10 text-violet-600 dark:text-violet-300',
+    },
+    sentence_decomposition: {
+      label: t('todayTask.sentenceDecomposition'),
+      icon: Split,
+      color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
+    },
+  }), [t])
 }
 
-const TOPIC_STATUS_META: Record<DailyPracticeStatus, { label: string; badge: string; bar: string }> = {
-  overdue: { label: '超期未复', badge: 'border-red-300 text-red-600 bg-red-500/10', bar: 'bg-red-500' },
-  review: { label: '今日复习', badge: 'border-amber-300 text-amber-700 bg-amber-500/10', bar: 'bg-amber-500' },
-  new: { label: '今日待练', badge: 'border-blue-300 text-blue-600 bg-blue-500/10', bar: 'bg-muted-foreground/45' },
-  done: { label: '今日完成', badge: 'border-emerald-300 text-emerald-600 bg-emerald-500/10', bar: 'bg-emerald-500' },
-  mastered: { label: '短期掌握', badge: 'border-violet-300 text-violet-600 bg-violet-500/10', bar: 'bg-violet-500' },
+function useTopicStatusMeta(t: (key: string) => string): Record<DailyPracticeStatus, { label: string; badge: string; bar: string }> {
+  return useMemo(() => ({
+    overdue: { label: t('todayTask.statusOverdue'), badge: 'border-red-300 text-red-600 bg-red-500/10', bar: 'bg-red-500' },
+    review: { label: t('todayTask.statusReview'), badge: 'border-amber-300 text-amber-700 bg-amber-500/10', bar: 'bg-amber-500' },
+    new: { label: t('todayTask.statusNew'), badge: 'border-blue-300 text-blue-600 bg-blue-500/10', bar: 'bg-muted-foreground/45' },
+    done: { label: t('todayTask.statusDone'), badge: 'border-emerald-300 text-emerald-600 bg-emerald-500/10', bar: 'bg-emerald-500' },
+    mastered: { label: t('todayTask.statusMastered'), badge: 'border-violet-300 text-violet-600 bg-violet-500/10', bar: 'bg-violet-500' },
+  }), [t])
 }
 
 // ── 组件 ──
 export function TodayTaskPage() {
+  const { t } = useTranslation()
+  const TYPE_META = useTypeMeta(t)
+  const TOPIC_STATUS_META = useTopicStatusMeta(t)
   const warmupStore = useWarmupSessionStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const targetPackId = searchParams.get('packId') || null
@@ -189,7 +197,7 @@ export function TodayTaskPage() {
           const isWord = (item.kind ?? 'chunk') === 'word'
           return {
             ...common,
-            displayLabel: isWord ? '词汇替换' : '句块替换',
+            displayLabel: isWord ? t('todayTask.wordSubstitution') : t('todayTask.chunkSubstitution'),
             render: () => (
               <ChunkOutputDrillCard
                 chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
@@ -209,7 +217,7 @@ export function TodayTaskPage() {
             ...common,
             render: () => (
               <VocabOutputCard
-                title={item.title || '词汇输出'}
+                title={item.title || t('todayTask.vocabDrill')}
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 vocabs={[prompt as VocabPromptItem]}
@@ -236,7 +244,7 @@ export function TodayTaskPage() {
                 stepType="vocab_sentence_building"
                 direction={item.direction ?? 'zh_to_en'}
                 kind="word"
-                groupTitle={`${vocabWord || '一词多句'} · ${patternChunk}`}
+                groupTitle={`${vocabWord || t('todayTask.vocabSentenceBuilding')} · ${patternChunk}`}
                 onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
               />
             ),
@@ -265,7 +273,7 @@ export function TodayTaskPage() {
           ...common,
             render: () => (
               <SentenceDecompositionCard
-                title={item.title || '长句拆解'}
+                title={item.title || t('todayTask.longSentenceDecomposition')}
                 levels={item.levels}
                 stepId={sid}
                 onComplete={(_passed, score) => { void markDone(sid, score) }}
@@ -358,8 +366,8 @@ export function TodayTaskPage() {
       { key: 'done', count: statusCounts.done, color: SEGMENT_COLORS.done },
     ]
   }, [statusCounts, steps.length, plan?.mode])
-  const practiceOrderLabel = dailyPracticeRandomOrder ? '随机抽题' : '顺序出题'
-  const activeModeLabel = plan?.mode === 'review' ? '复习清单' : '练习组'
+  const practiceOrderLabel = dailyPracticeRandomOrder ? t('todayTask.randomPick') : t('todayTask.sequentialPick')
+  const activeModeLabel = plan?.mode === 'review' ? t('todayTask.reviewList') : t('todayTask.practiceGroup')
 
   // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
   useEffect(() => {
@@ -384,7 +392,7 @@ export function TodayTaskPage() {
     const order = new Map<string, PracticeGroup>()
     steps.forEach((step, index) => {
       const meta = TYPE_META[step.type] ?? {
-        label: step.displayLabel || '知识点',
+        label: step.displayLabel || t('todayTask.knowledgePoint'),
         icon: PenLine,
         color: 'bg-primary/10 text-primary',
       }
@@ -439,11 +447,11 @@ export function TodayTaskPage() {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Target className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-muted-foreground">
-            {error || '今日要练习的学习包暂无可练习内容'}
+            {error || t('todayTask.noContent')}
           </p>
           <Button className="mt-4" asChild>
             <Link to="/learning">
-              选择学习包
+              {t('todayTask.choosePack')}
               <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
@@ -454,7 +462,7 @@ export function TodayTaskPage() {
 
   // ── 当前练习类型信息 ──
   const currentMeta = TYPE_META[currentStep?.type] ?? {
-    label: '知识点练习',
+    label: t('todayTask.practiceItem'),
     icon: PenLine,
     color: 'bg-primary/10 text-primary',
   }
@@ -480,7 +488,7 @@ export function TodayTaskPage() {
             type="button"
             onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label="练习记录"
+            aria-label={t('todayTask.practiceRecords')}
           >
             <ClipboardList className="size-[18px]" />
           </button>
@@ -499,8 +507,8 @@ export function TodayTaskPage() {
               : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/35',
           )}
         >
-          <span className="block text-sm font-semibold">今日复习</span>
-          <span className="mt-0.5 block text-[11px]">到期/超期 {plan.availableReviewCount} 题</span>
+          <span className="block text-sm font-semibold">{t('todayTask.todayReview')}</span>
+          <span className="mt-0.5 block text-[11px]">{t('todayTask.expireOverdue', { count: plan.availableReviewCount })}</span>
         </button>
         <button
           type="button"
@@ -512,7 +520,7 @@ export function TodayTaskPage() {
               : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/35',
           )}
         >
-          <span className="block text-sm font-semibold">今日练习</span>
+          <span className="block text-sm font-semibold">{t('todayTask.todayPractice')}</span>
           <span className="mt-0.5 block text-[11px]">{practiceOrderLabel} {Math.min(plan.dailyGoal, plan.practicePoolCount)} / {plan.practicePoolCount}</span>
         </button>
       </div>
@@ -521,25 +529,25 @@ export function TodayTaskPage() {
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ListChecks className="size-4 text-primary" />
-            <p className="text-sm font-semibold text-foreground">{activeModeLabel}进度</p>
+            <p className="text-sm font-semibold text-foreground">{activeModeLabel}{t('todayTask.progress')}</p>
             {hasSubmittedToday && donePercent >= 100 && (
               <Badge variant="default" className="h-5 rounded-full px-2 text-[10px] bg-green-500/15 text-green-600">
-                <CheckCircle2 className="mr-0.5 size-3" /> 已完成
+                <CheckCircle2 className="mr-0.5 size-3" /> {t('todayTask.completed')}
               </Badge>
             )}
             {submitting && (
               <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px] animate-pulse">
-                同步中...
+                {t('todayTask.syncing')}
               </Badge>
             )}
             {targetDate && (
               <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">
-                测试日期 {plan.date}
+                {t('todayTask.testDate')} {plan.date}
               </Badge>
             )}
           </div>
           <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
-            {doneCount}/{steps.length} 题
+            {doneCount}/{steps.length} {t('todayTask.questions')}
           </Badge>
         </div>
         <SegmentedBar segments={topSegments} />
@@ -555,25 +563,25 @@ export function TodayTaskPage() {
                 : 'border-blue-300/60 bg-blue-500/10 text-blue-700 hover:bg-blue-500/15 dark:text-blue-300',
             )}
           >
-            {dailyPracticeRandomOrder ? '再随机一组' : '再练下一组'}
+            {dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain')}
           </button>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
           {plan.mode === 'practice' ? (
             <>
-              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />完成 {statusCounts.done}</span>}
-              {steps.length - statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />待练 {steps.length - statusCounts.done}</span>}
+              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
+              {steps.length - statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.pending', { count: steps.length - statusCounts.done })}</span>}
             </>
           ) : (
             <>
-              {statusCounts.overdue > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500" />超期 {statusCounts.overdue}</span>}
-              {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />复习 {statusCounts.review}</span>}
-              {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />新练 {statusCounts.new}</span>}
-              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />完成 {statusCounts.done}</span>}
+              {statusCounts.overdue > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500" />{t('todayTask.overdue', { count: statusCounts.overdue })}</span>}
+              {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />{t('todayTask.review', { count: statusCounts.review })}</span>}
+              {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.newPractice', { count: statusCounts.new })}</span>}
+              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
             </>
           )}
           {statusCounts.overdue === 0 && statusCounts.review === 0 && statusCounts.new === 0 && statusCounts.done === 0 && (
-            <span className="text-muted-foreground/50">暂无练习</span>
+            <span className="text-muted-foreground/50">{t('todayTask.noPractice')}</span>
           )}
         </div>
       </div>
@@ -583,12 +591,12 @@ export function TodayTaskPage() {
         <div className="mb-5 rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
           <Target className="mx-auto size-9 text-muted-foreground/35" />
           <p className="mt-3 text-sm font-medium text-foreground">
-            {plan.mode === 'review' ? '今天没有到期复习题' : '暂无可随机练习的题目'}
+            {plan.mode === 'review' ? t('todayTask.noReviewToday') : t('todayTask.noRandomContent')}
           </p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {plan.mode === 'review'
-              ? `可以切到「今日练习」${dailyPracticeRandomOrder ? '随机抽一组' : '按顺序取一组'}继续练。`
-              : '先下载或选择包含知识点练习的学习包。'}
+              ? t('todayTask.switchToPractice', { modeName: dailyPracticeRandomOrder ? t('todayTask.randomPick') : t('todayTask.sequentialPick') })
+              : t('todayTask.downloadOrSelect')}
           </p>
         </div>
       )}
@@ -625,7 +633,7 @@ export function TodayTaskPage() {
                     </Badge>
                   </div>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {examples.join(' · ') || `${group.totalCount} 道练习`}
+                    {examples.join(' · ') || `${group.totalCount} ${t('todayTask.exercises')}`}
                   </p>
                   {group.totalCount > 1 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -672,10 +680,10 @@ export function TodayTaskPage() {
             <section>
               <div className="mb-3 flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-foreground">
-                  {isReviewMode ? '待复习话题' : '当前学习话题'}
+                  {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
                 </h2>
                 <span className="text-xs text-muted-foreground">
-                  {isReviewMode ? `${filteredTopics.length} 个话题有待复习项` : `${filteredTopics.length} 个话题`}
+                  {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
                 </span>
               </div>
               <div className="space-y-1.5">
@@ -683,9 +691,9 @@ export function TodayTaskPage() {
                   const statusMeta = TOPIC_STATUS_META[topic.status]
                   const detail = isReviewMode
                     ? [
-                        topic.overdueCount > 0 ? `超期 ${topic.overdueCount}` : null,
-                        topic.todayReviewCount > 0 ? `复习 ${topic.todayReviewCount}` : null,
-                        topic.todayNewCount > 0 ? `新练 ${topic.todayNewCount}` : null,
+                        topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
+                        topic.todayReviewCount > 0 ? `${t('todayTask.statusReview')} ${topic.todayReviewCount}` : null,
+                        topic.todayNewCount > 0 ? `${t('todayTask.statusNew')} ${topic.todayNewCount}` : null,
                       ].filter(Boolean).join(' · ')
                     : null
                   const unPracticed = topic.totalCount - topic.doneTodayCount - topic.masteredCount
@@ -705,12 +713,12 @@ export function TodayTaskPage() {
                             {isReviewMode
                               ? statusMeta.label
                               : unPracticed > 0
-                                ? `${unPracticed} 待练`
-                                : '已完成'}
+                                ? `${unPracticed} ${t('todayTask.pendingItems')}`
+                                : t('todayTask.completed')}
                           </Badge>
                         </div>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {topic.activeChunksCount} 表达 · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟{detail ? ` · ${detail}` : ''}
+                          {topic.activeChunksCount} {t('todayTask.expressions')} · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} {t('todayTask.minutes')}{detail ? ` · ${detail}` : ''}
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           <SegmentedBar
@@ -729,8 +737,8 @@ export function TodayTaskPage() {
                           />
                           <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
                             {isReviewMode
-                              ? `未复习 ${topic.overdueCount + topic.todayReviewCount}`
-                              : `已练 ${topic.doneTodayCount + topic.masteredCount}/${topic.totalCount}`
+                              ? t('todayTask.notReviewed', { count: topic.overdueCount + topic.todayReviewCount })
+                              : t('todayTask.practiced', { done: topic.doneTodayCount + topic.masteredCount, total: topic.totalCount })
                             }
                           </span>
                         </div>
@@ -795,14 +803,14 @@ export function TodayTaskPage() {
             <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
               <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
                 <ChevronLeft className="size-4" />
-                <span className="ml-1">上一题</span>
+                <span className="ml-1">{t('todayTask.prevQuestion')}</span>
               </Button>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {currentIdx + 1} / {steps.length}
               </span>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-                  <span className="mr-1">下一题</span>
+                  <span className="mr-1">{t('todayTask.nextQuestion')}</span>
                   <ChevronRight className="size-4" />
                 </Button>
                 <Button
@@ -812,7 +820,7 @@ export function TodayTaskPage() {
                     event.currentTarget.blur()
                     setPlaylistOpen(true)
                   }}
-                  title="题目列表"
+                  title={t('todayTask.questionList')}
                 >
                   <ListMusic className="size-4" />
                 </Button>
@@ -826,7 +834,7 @@ export function TodayTaskPage() {
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
         <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
           <div className="flex items-center justify-between px-5 py-3">
-            <DrawerTitle className="text-lg">{plan.mode === 'review' ? '今日复习题目' : '今日练习题目'}</DrawerTitle>
+            <DrawerTitle className="text-lg">{plan.mode === 'review' ? t('todayTask.todayReviewQuestions') : t('todayTask.todayPracticeQuestions')}</DrawerTitle>
             <button
               type="button"
               onClick={() => setPlaylistOpen(false)}
@@ -854,10 +862,10 @@ export function TodayTaskPage() {
                     <Icon className="size-4 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{group.meta.label}</p>
-                      <p className="truncate text-xs text-muted-foreground">{group.doneCount}/{group.totalCount} 题完成</p>
+                      <p className="truncate text-xs text-muted-foreground">{group.doneCount}/{group.totalCount} {t('todayTask.questionsCompleted')}</p>
                     </div>
                     {isDone && <CheckCircle2 className="size-4 shrink-0 text-green-500" />}
-                    {isActive && <Badge variant="default" className="px-1.5 py-0 text-[10px]">当前</Badge>}
+                    {isActive && <Badge variant="default" className="px-1.5 py-0 text-[10px]">{t('todayTask.current')}</Badge>}
                   </button>
                 )
               })}
@@ -874,9 +882,9 @@ export function TodayTaskPage() {
         }}
       >
         <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
-          <DialogTitle className="text-base">还有 {weakStepIds.size} 题需要再稳一下</DialogTitle>
+          <DialogTitle className="text-base">{t('todayTask.needReviewTitle', { count: weakStepIds.size })}</DialogTitle>
           <DialogDescription className="text-sm leading-6">
-            刚才答错、跳过，或者看了答案才完成的题，会先集中复练一轮。复练完成后再自动提交本组记录。
+            {t('todayTask.needReviewDesc')}
           </DialogDescription>
           <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-2">
             {weakRecords.slice(0, 5).map((record) => {
@@ -885,10 +893,10 @@ export function TodayTaskPage() {
                 <div key={record.stepId} className="rounded-lg bg-background px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Badge variant={record.score === 'miss' ? 'destructive' : 'secondary'} className="shrink-0 text-[10px]">
-                      {record.score === 'miss' ? '不会' : '待稳'}
+                      {record.score === 'miss' ? t('todayTask.unknownWord') : t('todayTask.pendingStable')}
                     </Badge>
                     <span className="truncate text-xs font-medium text-muted-foreground">
-                      {step?.displayLabel || '练习'}
+                      {step?.displayLabel || t('todayTask.practice')}
                     </span>
                   </div>
                   <p className="mt-1 line-clamp-1 text-sm text-foreground">{record.zh}</p>
@@ -896,11 +904,11 @@ export function TodayTaskPage() {
               )
             })}
             {weakRecords.length > 5 && (
-              <p className="px-1 text-[11px] text-muted-foreground">还有 {weakRecords.length - 5} 题会一起复练。</p>
+              <p className="px-1 text-[11px] text-muted-foreground">{t('todayTask.willReviewTogether', { count: weakRecords.length - 5 })}</p>
             )}
           </div>
           <Button className="w-full" onClick={startWeakReviewRound}>
-            开始错题再练
+            {t('todayTask.startWrongReview')}
           </Button>
         </DialogContent>
       </Dialog>

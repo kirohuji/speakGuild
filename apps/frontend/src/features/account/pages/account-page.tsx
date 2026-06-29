@@ -167,9 +167,9 @@ function NicknameEditDrawer({
         <DrawerFooter>
           <Button onClick={handleSave} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            保存
+            {t('common.save')}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
@@ -252,32 +252,32 @@ function ChangePasswordDrawer({
         </DrawerHeader>
         <div className="px-4 space-y-3 pb-4">
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">当前密码</Label>
+            <Label className="text-xs text-muted-foreground">{t('profile.auth.currentPassword')}</Label>
             <Input
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               type="password"
-              placeholder="输入当前密码"
+              placeholder={t('profile.auth.currentPasswordPlaceholder')}
               autoComplete="current-password"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">新密码</Label>
+            <Label className="text-xs text-muted-foreground">{t('profile.auth.newPassword')}</Label>
             <Input
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               type="password"
-              placeholder="至少8位字符"
+              placeholder={t('profile.auth.newPasswordPlaceholder')}
               autoComplete="new-password"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">确认新密码</Label>
+            <Label className="text-xs text-muted-foreground">{t('profile.auth.confirmPassword')}</Label>
             <Input
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               type="password"
-              placeholder="再次输入新密码"
+              placeholder={t('profile.auth.confirmPasswordPlaceholder')}
               autoComplete="new-password"
             />
           </div>
@@ -293,9 +293,9 @@ function ChangePasswordDrawer({
         <DrawerFooter>
           <Button onClick={handleChange} disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            确认修改
+            {t('common.confirm')}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
@@ -548,7 +548,7 @@ export function AccountPage() {
                     {unlinkingId === wechatAccount?.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      '解绑'
+                      t('profile.unbind')
                     )}
                   </button>
                 ) : (
@@ -566,7 +566,7 @@ export function AccountPage() {
                     ) : (
                       <ExternalLink className="h-3 w-3" />
                     )}
-                    绑定
+                    {t('profile.bind')}
                   </button>
                 )
               }
@@ -592,7 +592,7 @@ export function AccountPage() {
                     {unlinkingId === appleAccount?.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      '解绑'
+                      t('profile.unbind')
                     )}
                   </button>
                 ) : (
@@ -610,7 +610,7 @@ export function AccountPage() {
                     ) : (
                       <ExternalLink className="h-3 w-3" />
                     )}
-                    绑定
+                    {t('profile.bind')}
                   </button>
                 )
               }

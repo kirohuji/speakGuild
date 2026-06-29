@@ -139,7 +139,7 @@ function PracticeRecordsWithTabs() {
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="mb-3 w-full">
         <TabsTrigger value="vn" className="flex-1 text-xs">{t('profile.records')}</TabsTrigger>
-        <TabsTrigger value="warmup" className="flex-1 text-xs">知识点练习</TabsTrigger>
+        <TabsTrigger value="warmup" className="flex-1 text-xs">{t('learning.warmupPractice')}</TabsTrigger>
       </TabsList>
       <TabsContent value="vn" className="mt-0">
         <PracticeRecordsContent />
@@ -177,16 +177,16 @@ function WarmupRecordsContent() {
   const columns: ColumnConfig<WarmupRecord>[] = [
     {
       key: 'topicTitle',
-      header: '话题',
+      header: t('learning.topicHeader'),
       cell: (v, row) => {
         const passedItems = row.items?.filter((i: any) => i.passed).length ?? 0
         const totalItems = row.items?.length ?? 0
         return (
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <span className="text-sm font-medium">{v || '知识点练习'}</span>
+              <span className="text-sm font-medium">{v || t('learning.warmupPractice')}</span>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {passedItems}/{totalItems} 通过
+                {passedItems}/{totalItems} {t('learning.passedSuffix')}
               </p>
               {row.feedback && (
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.feedback}</p>
@@ -199,7 +199,7 @@ function WarmupRecordsContent() {
     },
     {
       key: 'score',
-      header: '评分',
+      header: t('learning.scoreHeader'),
       width: 70,
       cell: (v) => (
         <span className={cn(
@@ -213,7 +213,7 @@ function WarmupRecordsContent() {
     },
     {
       key: 'createdAt',
-      header: '日期',
+      header: t('learning.dateHeader'),
       cell: (v) => (
         <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
           {new Date(v).toLocaleDateString()}
@@ -226,7 +226,7 @@ function WarmupRecordsContent() {
   return (
     <div className="space-y-4">
       <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
-        仅记录全部完成的练习，中途退出不会计入。
+        {t('learning.recordsHint')}
       </p>
       <ConfigDataTable
         data={pagedRecords}
@@ -236,7 +236,7 @@ function WarmupRecordsContent() {
         pageSize={pageSize}
         onPageChange={setPage}
         isLoading={loading}
-        emptyMessage="暂无知识点练习记录"
+        emptyMessage={t('learning.noWarmupRecords')}
         onRowClick={setSelectedRecord}
       />
       <WarmupRecordDetailDrawer
@@ -294,7 +294,7 @@ function WarmupRecordDetailDrawer({
     if (current.stepType === 'vocab_drill') {
       return (
         <VocabOutputCard
-          title={current.groupTitle || '词汇练习'}
+          title={current.groupTitle || t('learning.wordDrill')}
           vocabs={[{ vocabId: '', promptZh: current.zh, suggestedAnswer: current.answer }]}
           stepId={current.stepId || String(currentIdx)}
           reviewData={rd}
@@ -320,7 +320,7 @@ function WarmupRecordDetailDrawer({
       try { levelAudios = JSON.parse(current.userAnswer || '{}') } catch {}
       return (
         <SentenceDecompositionCard
-          title={current.zh || '句子拆解'}
+          title={current.zh || t('learning.sentenceBreakdown')}
           levels={levels.length > 0 ? levels : [{ level: 1, label: '', en: current.answer || current.zh || '', zh: '' }]}
           stepId={current.stepId || String(currentIdx)}
           reviewData={{ levelAudios }}
@@ -341,7 +341,7 @@ function WarmupRecordDetailDrawer({
             <p className="text-sm font-medium text-foreground">{current.zh}</p>
             {current.userAnswer && (
               <p className="mt-0.5 text-xs text-muted-foreground">
-                你的回答：<span className={cn('font-medium', current.passed ? 'text-green-600' : 'text-red-500')}>{current.userAnswer}</span>
+                {t('learning.yourAnswer')}<span className={cn('font-medium', current.passed ? 'text-green-600' : 'text-red-500')}>{current.userAnswer}</span>
               </p>
             )}
           </div>
@@ -353,8 +353,8 @@ function WarmupRecordDetailDrawer({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
-        <DialogTitle className="sr-only">知识点练习回顾</DialogTitle>
-        <DialogDescription className="sr-only">逐题查看练习记录、答案与录音回放</DialogDescription>
+        <DialogTitle className="sr-only">{t('learning.reviewTitle')}</DialogTitle>
+        <DialogDescription className="sr-only">{t('learning.reviewSubtitle')}</DialogDescription>
 
         <div className="flex h-full flex-col">
           {/* Header — 与练习 Dialog 一致 */}
@@ -365,10 +365,10 @@ function WarmupRecordDetailDrawer({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">
-                  {record.topicTitle || '知识点练习'} · 综合 {record.score ?? '-'} 分
+                  {record.topicTitle || t('learning.warmupPractice')} · {t('common.total')} {record.score ?? '-'} {t('learning.scoreUnit')}
                 </p>
                 <h2 className="truncate text-lg font-bold leading-tight text-foreground">
-                  {current?.zh || '练习回顾'}
+                  {current?.zh || t('learning.practiceReview')}
                 </h2>
               </div>
               <button
@@ -392,13 +392,13 @@ function WarmupRecordDetailDrawer({
           <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
             <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
               <ChevronLeft className="size-4" />
-              <span className="ml-1">上一题</span>
+              <span className="ml-1">{t('todayTask.prevQuestion')}</span>
             </Button>
             <span className="text-xs text-muted-foreground tabular-nums">
               {currentIdx + 1} / {total}
             </span>
             <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-              <span className="mr-1">下一题</span>
+              <span className="mr-1">{t('todayTask.nextQuestion')}</span>
               <ChevronRight className="size-4" />
             </Button>
           </div>
@@ -546,7 +546,7 @@ function PracticeRecordReadonlyReviewDrawer({
 
   const replayLines = useMemo(() => (session?.turns ?? []).flatMap((turn) => [
     { line: { speaker: topicDetail?.scene.title || 'NPC', text: turn.npcText } satisfies VnPlayerLine },
-    { line: { speaker: '我', text: turn.userText, isUser: true } satisfies VnPlayerLine, turn },
+    { line: { speaker: t('learning.speakerMe'), text: turn.userText, isUser: true } satisfies VnPlayerLine, turn },
   ]), [session?.turns, topicDetail?.scene.title])
   const currentReplayLine = replayLines[lineIndex]
   const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length

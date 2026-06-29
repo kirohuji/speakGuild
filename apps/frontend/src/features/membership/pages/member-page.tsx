@@ -138,9 +138,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     try {
       await revenueCatState.restorePurchases()
       await refreshMembership(true).catch(() => null)
-      toast.success('购买记录已恢复')
+      toast.success(t('member.purchaseRestored'))
     } catch (err: any) {
-      toast.error(err?.message || '恢复购买失败')
+      toast.error(err?.message || t('member.restoreFailed'))
     } finally {
       setSubscriptionAction(null)
     }
@@ -152,7 +152,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       await revenueCatState.presentCustomerCenter()
       await refreshMembership().catch(() => null)
     } catch (err: any) {
-      toast.error(err?.message || '暂时无法打开订阅管理')
+      toast.error(err?.message || t('member.manageSubUnavailable'))
     } finally {
       setSubscriptionAction(null)
     }
@@ -237,7 +237,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     <div className="overflow-hidden rounded-lg border border-border/40">
       <div className="grid grid-cols-2 items-center gap-1 bg-muted/40 px-3 py-1.5">
         <span className="text-[10px] font-semibold text-muted-foreground">{t('member.compactBenefit')}</span>
-        <span className="text-center text-[10px] font-semibold text-muted-foreground">会员</span>
+        <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.benefitItem')}</span>
       </div>
       {benefits.map((item, idx) => (
         <div
@@ -257,7 +257,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
         <span className="text-xs font-semibold text-muted-foreground">{t('member.columns.benefit')}</span>
         <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.columns.free')}</span>
-        <span className="text-center text-xs font-semibold text-muted-foreground">会员</span>
+        <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.memberTitle')}</span>
       </div>
       {benefits.map((item, idx) => (
         <div
@@ -316,13 +316,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-semibold truncate">{isAdmin ? '管理员' : current?.planName || t('member.freeUser')}</p>
+                <p className="text-sm font-semibold truncate">{isAdmin ? t('member.admin') : current?.planName || t('member.freeUser')}</p>
                 <Badge variant={isAdmin ? 'default' : hasActiveMembership ? 'default' : 'secondary'} className={cn('h-4.5 px-1.5 text-[10px] leading-none', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
-                  {isAdmin ? '全部权限' : hasActiveMembership ? t('member.badgeActive') : t('member.badgeFree')}
+                  {isAdmin ? t('member.adminAllPermissions') : hasActiveMembership ? t('member.badgeActive') : t('member.badgeFree')}
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {isAdmin ? '所有功能已解锁，AI 无限畅用' : current?.expiredAt
+                {isAdmin ? t('member.adminAllFeaturesUnlocked') : current?.expiredAt
                   ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
                   : t('member.upgradeExperience')}
               </p>
@@ -340,10 +340,10 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             <div>
               <p className="text-xs font-medium text-muted-foreground">{t('member.center')}</p>
               <h2 className="mt-1 text-xl font-semibold tracking-normal text-foreground">
-                {isAdmin ? '管理员模式' : t('member.unlockExperience')}
+                {isAdmin ? t('member.adminMode') : t('member.unlockExperience')}
               </h2>
               <p className="mt-2 max-w-[260px] text-xs leading-5 text-muted-foreground">
-                {isAdmin ? '你拥有全部功能的访问权限，无需购买任何套餐。' : t('member.subtitle')}
+                {isAdmin ? t('member.adminAccessAll') : t('member.subtitle')}
               </p>
             </div>
             <div className={cn(
@@ -379,13 +379,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold">{isAdmin ? '管理员' : current?.planName || t('member.freeUser')}</p>
+                      <p className="font-semibold">{isAdmin ? t('member.admin') : current?.planName || t('member.freeUser')}</p>
                       <Badge variant={isAdmin ? 'default' : hasActiveMembership ? 'default' : 'secondary'} className={cn('text-xs', isAdmin && 'bg-purple-500 hover:bg-purple-500')}>
-                        {isAdmin ? '全部权限' : hasActiveMembership ? t('member.badgeActive') : t('member.badgeFree')}
+                        {isAdmin ? t('member.adminAllPermissions') : hasActiveMembership ? t('member.badgeActive') : t('member.badgeFree')}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {isAdmin ? '所有功能已解锁，AI 无限畅用' : current?.expiredAt
+                      {isAdmin ? t('member.adminAllFeaturesUnlocked') : current?.expiredAt
                         ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
                         : t('member.upgradeMore')}
                     </p>
@@ -413,7 +413,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" />
               )}
-              恢复购买
+              {t('member.restorePurchase')}
             </Button>
             <Button
               type="button"
@@ -428,16 +428,16 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               ) : (
                 <Settings className="h-3.5 w-3.5" />
               )}
-              管理订阅
+              {t('member.manageSubscription')}
             </Button>
           </div>
         ) : (
           <Card className="rounded-lg border-border/70 shadow-sm">
             <CardContent className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold">Apple 订阅</p>
+                <p className="text-sm font-semibold">{t('member.appleSubscription')}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  恢复已购买的会员权益，或打开系统订阅中心管理续费。
+                  {t('member.appleSubDesc')}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
@@ -454,7 +454,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   ) : (
                     <RefreshCw className="h-4 w-4" />
                   )}
-                  恢复购买
+                  {t('member.restorePurchase')}
                 </Button>
                 <Button
                   type="button"
@@ -469,7 +469,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   ) : (
                     <Settings className="h-4 w-4" />
                   )}
-                  管理订阅
+                  {t('member.manageSubscription')}
                 </Button>
               </div>
             </CardContent>
@@ -586,8 +586,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               <Zap className="size-6 text-purple-500" />
             </div>
             <div>
-              <p className="font-semibold">全部功能已解锁</p>
-              <p className="text-sm text-muted-foreground">作为管理员，你拥有所有套餐的全部功能权限，包括无限 AI 调用。</p>
+              <p className="font-semibold">{t('member.adminAllUnlocked')}</p>
+              <p className="text-sm text-muted-foreground">{t('member.adminUnlockedDesc')}</p>
             </div>
           </CardContent>
         </Card>
@@ -595,7 +595,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       {isAdmin && compact && (
         <div className="rounded-xl bg-purple-500/[0.06] px-3 py-3 flex items-center gap-2.5">
           <Zap className="size-4 shrink-0 text-purple-500" />
-          <p className="text-xs text-muted-foreground">管理员 · 全部功能已解锁 · AI 无限畅用</p>
+          <p className="text-xs text-muted-foreground">{t('member.adminAllUnlockedShort')}</p>
         </div>
       )}
 
@@ -605,14 +605,14 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           {!compact && (
             <Card className="rounded-lg border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-base">权益说明</CardTitle>
+                <CardTitle className="text-base">{t('member.benefitTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-hidden rounded-lg bg-muted/30">
                   <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
-                    <span className="text-xs font-semibold text-muted-foreground">权益项</span>
-                    <span className="text-center text-xs font-semibold text-muted-foreground">普通用户</span>
-                    <span className="text-center text-xs font-semibold text-purple-500">管理员</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{t('member.benefitColItem')}</span>
+                    <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.benefitColUser')}</span>
+                    <span className="text-center text-xs font-semibold text-purple-500">{t('member.benefitColAdmin')}</span>
                   </div>
                   {benefits.map((item, idx) => (
                     <div
@@ -635,10 +635,10 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           )}
           {compact && (
             <div className="rounded-xl bg-muted/30 px-3 py-3">
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">管理权益</p>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.adminBenefits')}</p>
               <div className="flex items-center gap-2 rounded-lg bg-purple-500/[0.06] px-3 py-2.5">
                 <Check className="size-3.5 shrink-0 text-purple-500" />
-                <p className="text-xs text-muted-foreground">全部功能已解锁，所有套餐权益均享有</p>
+                <p className="text-xs text-muted-foreground">{t('member.adminBenefitsDesc')}</p>
               </div>
             </div>
           )}
@@ -863,7 +863,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
                   ) : (
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-base font-bold text-white">
-                      支
+                      {t('member.alipayShort')}
                     </div>
                   )}
                   <span className="min-w-0 flex-1">
@@ -883,7 +883,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
                   ) : (
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-green-500 text-base font-bold text-white">
-                      微
+                      {t('member.wechatShort')}
                     </div>
                   )}
                   <span className="min-w-0 flex-1">

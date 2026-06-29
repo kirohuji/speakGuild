@@ -405,7 +405,7 @@ export function LearningUnitPage() {
           className="mt-3 w-full gap-1.5 text-xs text-muted-foreground"
           onClick={() => toggleSection('knowledge')}
         >
-          <ChevronDown className="size-3.5" /> 展开全部（{allVocabCount + allChunkCount + patternDialogItems.length} 项）
+          <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: allVocabCount + allChunkCount + patternDialogItems.length })}
         </Button>
         )}
       </section>
@@ -484,7 +484,7 @@ function SectionHeader({
             type="button"
             onClick={onToggle}
             className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-            aria-label={collapsed ? '展开' : '收起'}
+            aria-label={collapsed ? t('common.expand') : t('common.collapse')}
           >
             <ChevronDown className={cn('size-4 transition-transform duration-200', collapsed && '-rotate-90')} />
           </button>

@@ -12,7 +12,14 @@ export class AdminTasksService {
     @InjectQueue(ADMIN_CONTENT_QUEUE) private readonly contentQueue: Queue,
   ) {}
 
-  async enqueueContentPrepare(sceneId: string, createdById?: string) {
+  async enqueueContentPrepare(sceneId: string, createdById?: string, options?: {
+    retryOfTaskId?: string;
+    retryItems?: {
+      vocabulary?: string[];
+      chunk?: string[];
+      pattern?: string[];
+    };
+  }) {
     const scene = await this.prisma.scene.findUnique({
       where: { id: sceneId },
       select: { id: true, title: true },
@@ -26,13 +33,18 @@ export class AdminTasksService {
         targetType: 'scene',
         targetId: scene.id,
         createdById,
-        payload: { sceneId: scene.id },
+        payload: {
+          sceneId: scene.id,
+          retryOfTaskId: options?.retryOfTaskId,
+          retryItems: options?.retryItems,
+        },
       },
     });
 
     const job = await this.contentQueue.add(CONTENT_PREPARE_JOB, {
       taskId: task.id,
       sceneId: scene.id,
+      retryItems: options?.retryItems,
     });
 
     await this.prisma.adminTask.update({
@@ -88,7 +100,11 @@ export class AdminTasksService {
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
     }
-    return this.enqueueContentPrepare(task.targetId, createdById);
+    const retryItems = this.extractRetryItems(task.summary);
+    return this.enqueueContentPrepare(task.targetId, createdById, {
+      retryOfTaskId: task.id,
+      retryItems: retryItems.total > 0 ? retryItems.items : undefined,
+    });
   }
 
   async cancel(id: string) {
@@ -178,6 +194,28 @@ export class AdminTasksService {
       },
     });
     await this.log(taskId, 'error', message, { step: 'failed' });
+  }
+
+  private extractRetryItems(summary: unknown) {
+    const items = {
+      vocabulary: [] as string[],
+      chunk: [] as string[],
+      pattern: [] as string[],
+    };
+    const errors = (summary as any)?.errors;
+    if (!Array.isArray(errors)) return { items, total: 0 };
+
+    for (const error of errors) {
+      if (!error?.id || typeof error.id !== 'string') continue;
+      if (error.type === 'vocabulary') items.vocabulary.push(error.id);
+      if (error.type === 'chunk') items.chunk.push(error.id);
+      if (error.type === 'pattern') items.pattern.push(error.id);
+    }
+
+    return {
+      items,
+      total: items.vocabulary.length + items.chunk.length + items.pattern.length,
+    };
   }
 
   async log(

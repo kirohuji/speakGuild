@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bell, Clock, CheckCircle2, User, Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 export function NotificationDetailPage() {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
@@ -25,9 +27,9 @@ export function NotificationDetailPage() {
     return (
       <div className="flex flex-col items-center py-20 text-center">
         <Bell className="h-12 w-12 text-muted-foreground/20" />
-        <p className="mt-4 text-sm font-medium text-muted-foreground">通知不存在或已过期</p>
+        <p className="mt-4 text-sm font-medium text-muted-foreground">{t('notification.notFoundOrExpired')}</p>
         <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/notifications')}>
-          返回列表
+          {t('notification.backToList')}
         </Button>
       </div>
     )
@@ -49,8 +51,8 @@ export function NotificationDetailPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold">通知详情</h1>
-          <p className="text-xs text-muted-foreground">查看完整的通知内容</p>
+          <h1 className="text-lg font-bold">{t('notification.detailTitle')}</h1>
+          <p className="text-xs text-muted-foreground">{t('notification.detailSubtitle')}</p>
         </div>
       </div>
 
@@ -73,7 +75,7 @@ export function NotificationDetailPage() {
                 ) : (
                   <User className="h-3 w-3" />
                 )}
-                {item.type === 'broadcast' ? '系统广播' : '定向通知'}
+                {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
               </Badge>
               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60">
                 <Clock className="h-3 w-3" />
@@ -82,7 +84,7 @@ export function NotificationDetailPage() {
               {item.isRead && (
                 <span className="inline-flex items-center gap-1 text-[11px] text-primary/70">
                   <CheckCircle2 className="h-3 w-3" />
-                  已读
+                  {t('notification.read')}
                 </span>
               )}
             </div>
@@ -101,10 +103,10 @@ export function NotificationDetailPage() {
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/[0.03] px-3.5 py-2.5">
               <CheckCircle2 className="h-4 w-4 text-primary/60" />
               <span className="text-xs text-muted-foreground/70">
-                已于 {new Date(item.readAt).toLocaleTimeString('zh-CN', {
+                {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString('zh-CN', {
                   hour: '2-digit',
                   minute: '2-digit',
-                })} 阅读
+                }) })}
               </span>
             </div>
           )}

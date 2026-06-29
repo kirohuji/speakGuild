@@ -13,11 +13,20 @@ export class ContentPrepareProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ taskId: string; sceneId: string }>): Promise<unknown> {
+  async process(job: Job<{
+    taskId: string;
+    sceneId: string;
+    retryItems?: {
+      vocabulary?: string[];
+      chunk?: string[];
+      pattern?: string[];
+    };
+  }>): Promise<unknown> {
     if (job.name !== CONTENT_PREPARE_JOB) return null;
     try {
       return await this.contentPrepareService.run(job.data.taskId, job.data.sceneId, {
         reportProgress: (progress) => job.updateProgress(progress),
+        retryItems: job.data.retryItems,
       });
     } catch (error) {
       await this.adminTasksService.markFailed(job.data.taskId, error);

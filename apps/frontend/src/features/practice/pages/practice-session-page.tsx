@@ -478,8 +478,8 @@ export function PracticeSessionPage() {
         sourceType: 'learning-library',
       })
       setCollectedTexts((prev) => new Set([...prev, word]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(word); return s })
   }, [detail])
 
@@ -495,8 +495,8 @@ export function PracticeSessionPage() {
         sourceType: 'learning-library',
       })
       setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(pattern.pattern); return s })
   }, [])
 
@@ -512,8 +512,8 @@ export function PracticeSessionPage() {
         sourceType: 'learning-library',
       })
       setCollectedTexts((prev) => new Set([...prev, chunk.text]))
-      toast.success('已加入学习库')
-    } catch { toast.error('加入失败') }
+      toast.success(t('learning.addedToLibrary'))
+    } catch { toast.error(t('learning.addFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(chunk.text); return s })
   }, [detail])
 
@@ -522,8 +522,8 @@ export function PracticeSessionPage() {
     try {
       await learningContentRepository.deleteExpressionByTextAndSync(kind, text)
       setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-      toast.success('已从学习库移除')
-    } catch { toast.error('移除失败') }
+      toast.success(t('learning.removedFromLibrary'))
+    } catch { toast.error(t('learning.removeFailed')) }
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
   }, [])
 
@@ -656,7 +656,7 @@ export function PracticeSessionPage() {
           objective: objectiveForRound.join('；'),
           hint: hintForRound,
           targetChunks: targetChunksForRound,
-          error: error?.response?.data?.message || error?.message || 'AI 评估暂时不可用',
+          error: error?.response?.data?.message || error?.message || t('practiceSession.aiEvalUnavailable'),
         })
         return
       }
@@ -683,7 +683,7 @@ export function PracticeSessionPage() {
       }
 
       if (passed) {
-        setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false, audioUrl }])
+        setDialogueRounds((prev) => [...prev, { speaker: t('practiceSession.speakerYou'), text: userMsg, isNpc: false, audioUrl }])
         practiceApi.submitDialogue(topicId!, {
           round,
           npcText,
@@ -697,7 +697,7 @@ export function PracticeSessionPage() {
       return
     }
 
-    setDialogueRounds((prev) => [...prev, { speaker: '你', text: userMsg, isNpc: false, audioUrl }])
+    setDialogueRounds((prev) => [...prev, { speaker: t('practiceSession.speakerYou'), text: userMsg, isNpc: false, audioUrl }])
     targetChunksForRound.forEach((chunkText) => {
       if (userMsg.toLowerCase().includes(chunkText.toLowerCase())) {
         setUsedChunks((prev) => new Set([...prev, chunkText]))
@@ -741,7 +741,7 @@ export function PracticeSessionPage() {
         const hint = unusedChunks[Math.floor(Math.random() * unusedChunks.length)]
         setAiHints((prev) => [...prev, {
           type: 'chunk',
-          text: `试试使用: "${hint.text}"`,
+          text: `${t('practiceSession.tryUsing')}: "${hint.text}"`,
           meaning: hint.meaning,
         }])
       }
@@ -784,7 +784,7 @@ export function PracticeSessionPage() {
     try {
       if (!practiceSessionId) {
         console.warn('[practice-session] ⚠️ startAnalysis 时 practiceSessionId 为 null，无法分析')
-        setAnalysisResult({ summary: '缺少练习会话记录，无法进行分析' })
+        setAnalysisResult({ summary: t('practiceSession.noSessionRecords') })
         setAnalysisLoading(false)
         return
       }
@@ -793,7 +793,7 @@ export function PracticeSessionPage() {
       console.log(`[practice-session] 🔍 分析返回:`, res?.analysis ? `有结果 (summary=${res.analysis.summary?.slice(0, 50)}...)` : '无结果')
       setAnalysisResult(res.analysis ?? res)
     } catch (e: any) {
-      setAnalysisResult({ summary: `分析失败: ${e.message}` })
+      setAnalysisResult({ summary: `${t('practiceSession.analysisFailedMsg')}: ${e.message}` })
     } finally {
       setAnalysisLoading(false)
     }
@@ -955,7 +955,7 @@ export function PracticeSessionPage() {
                   type="button"
                   onClick={() => setPrepCollapsed((prev) => !prev)}
                   className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-                  aria-label={prepCollapsed ? '展开本题准备' : '收起本题准备'}
+                  aria-label={prepCollapsed ? t('practiceSession.expandPrep') : t('practiceSession.collapsePrep')}
                 >
                   <ChevronDown className={cn('size-4 transition-transform duration-200', prepCollapsed && '-rotate-90')} />
                 </button>
@@ -994,7 +994,7 @@ export function PracticeSessionPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p className="truncate text-sm font-semibold text-foreground">{v.word}</p>
-                                  {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                  {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
                                 </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{v.meaning}</p>
                               </div>
@@ -1005,10 +1005,10 @@ export function PracticeSessionPage() {
                                 {/* <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p> */}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
-                                    <Search className="size-3.5" /> 查看
+                                    <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
                                   <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={collectedTexts.has(v.word) ? () => handleRemoveExpression('word', v.word) : () => handleCollectWord(v.word, v.meaning)}>
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? '处理中...' : collectedTexts.has(v.word) ? '已加入' : '加入学习库'}
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? t('learning.processing') : collectedTexts.has(v.word) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
                                   </Button>
                                 </div>
                               </div>
@@ -1078,8 +1078,8 @@ export function PracticeSessionPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
-                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? '句型'}</Badge>
-                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">已收录</Badge>}
+                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? t('practiceSession.sentencePattern')}</Badge>
+                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
                                 </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
                               </div>
@@ -1090,10 +1090,10 @@ export function PracticeSessionPage() {
                                 {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>
-                                    <Search className="size-3.5" /> 查看
+                                    <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
                                   <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression('pattern', p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? '处理中...' : collectedTexts.has(p.pattern) ? '已加入' : '加入学习库'}
+                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? t('learning.processing') : collectedTexts.has(p.pattern) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
                                   </Button>
                                 </div>
                               </div>
@@ -1124,7 +1124,7 @@ export function PracticeSessionPage() {
               className="mt-3 w-full gap-1.5 text-xs text-muted-foreground"
               onClick={() => setPrepCollapsed(false)}
             >
-              <ChevronDown className="size-3.5" /> 展开全部（{detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0)} 项）
+              <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0) })}
             </Button>
             )}
           </section>
@@ -1158,8 +1158,8 @@ export function PracticeSessionPage() {
             data-keyboard-overlay="practice"
             className="!z-[10000] flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 md:h-[88vh] md:max-w-3xl md:rounded-2xl [&>button]:hidden"
           >
-            <DialogTitle className="sr-only">知识点练习</DialogTitle>
-            <DialogDescription className="sr-only">输出热身练习</DialogDescription>
+            <DialogTitle className="sr-only">{t('todayTask.practiceItem')}</DialogTitle>
+            <DialogDescription className="sr-only">{t('practiceSession.warmupOutput')}</DialogDescription>
             <GuidedWarmupPhase
               topicId={topicId || ''}
               topicTitle={detail?.topic.title || ''}
@@ -1319,11 +1319,11 @@ export function PracticeSessionPage() {
       <Dialog open={confirmAbandonOpen} onOpenChange={setConfirmAbandonOpen}>
         <DialogContent className="max-w-sm rounded-2xl w-[90vw]">
           <DialogHeader>
-            <DialogTitle>放弃本次练习？</DialogTitle>
-            <DialogDescription>中途退出不会计入记录，当前进度将丢失。</DialogDescription>
+            <DialogTitle>{t('practiceSession.abandonTitle')}</DialogTitle>
+            <DialogDescription>{t('practiceSession.abandonDesc')}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="!flex-row justify-center gap-2">
-            <Button variant="outline" onClick={() => setConfirmAbandonOpen(false)}>继续练习</Button>
+            <Button variant="outline" onClick={() => setConfirmAbandonOpen(false)}>{t('practiceSession.continuePractice')}</Button>
             <Button
               onClick={() => {
                 setConfirmAbandonOpen(false)
@@ -1331,7 +1331,7 @@ export function PracticeSessionPage() {
                 resetPractice()
               }}
             >
-              放弃
+              {t('practiceSession.abandon')}
             </Button>
           </DialogFooter>
         </DialogContent>

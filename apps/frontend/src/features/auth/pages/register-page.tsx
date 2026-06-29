@@ -46,12 +46,12 @@ export function RegisterPage() {
       const grants: string[] = []
       const promoResult = await claimPromoTrial().catch(() => null)
       if (promoResult?.granted && promoResult.days) {
-        grants.push(`新人 ${promoResult.days} 天会员`)
+        grants.push(t('auth.newUserDays', { days: promoResult.days }))
       }
       if (referralCode) {
         await applyReferral(referralCode).catch(() => null)
       }
-      setMessage(grants.length > 0 ? `注册成功，已获得${grants.join('、')}` : t('auth.registerSuccess'))
+      setMessage(grants.length > 0 ? t('auth.registerSuccessWithGrant', { grants: grants.join('、') }) : t('auth.registerSuccess'))
       setTimeout(() => navigate('/profile'), 1200)
     } catch (error: any) {
       setMessage(error?.response?.data?.message || error?.message || t('auth.registerFailed'))
@@ -95,16 +95,16 @@ export function RegisterPage() {
               >
                 <span className="inline-flex items-center gap-1.5">
                   <Gift className="h-3.5 w-3.5" />
-                  {referralCode ? `邀请码 ${referralCode}` : '输入邀请码'}
+                  {referralCode ? `${t('auth.inviteCode')} ${referralCode}` : t('auth.inviteCodePlaceholder')}
                 </span>
-                <span>{showReferralInput ? '收起' : '填写'}</span>
+                <span>{showReferralInput ? t('auth.collapse') : t('auth.fill')}</span>
               </button>
               {showReferralInput && (
                 <>
                   <Input
                     value={referralInput}
                     onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-                    placeholder="好友邀请码"
+                    placeholder={t('auth.friendInviteCode')}
                     className={cn(authInputClassName, 'h-10 bg-background/80 text-sm uppercase')}
                     autoCapitalize="characters"
                     autoCorrect="off"
@@ -112,7 +112,7 @@ export function RegisterPage() {
                     maxLength={16}
                   />
                   <p className="text-xs leading-5 text-muted-foreground">
-                    注册成功后会自动绑定邀请关系，邀请人将获得会员奖励。
+                    {t('auth.inviteHint')}
                   </p>
                 </>
               )}

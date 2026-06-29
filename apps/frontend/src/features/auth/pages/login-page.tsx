@@ -119,10 +119,10 @@ export function LoginPage() {
     <AuthPageShell
       footer={(
         <>
-          登录即表示同意
-          <Link to="/system/terms" className="mx-1 font-medium text-primary hover:underline">服务条款</Link>
-          和
-          <Link to="/system/privacy" className="mx-1 font-medium text-primary hover:underline">隐私政策</Link>
+          {t('auth.loginAgreement')}
+          <Link to="/system/terms" className="mx-1 font-medium text-primary hover:underline">{t('auth.termsOfService')}</Link>
+          {t('auth.and')}
+          <Link to="/system/privacy" className="mx-1 font-medium text-primary hover:underline">{t('auth.privacyPolicy')}</Link>
         </>
       )}
     >
@@ -262,15 +262,15 @@ export function LoginPage() {
           >
             <span className="inline-flex items-center gap-1.5">
               <Gift className="h-3.5 w-3.5" />
-              {referralCode ? `邀请码 ${referralCode}` : '输入邀请码'}
+              {referralCode ? `${t('auth.inviteCode')} ${referralCode}` : t('auth.inviteCodePlaceholder')}
             </span>
-            <span>{showReferralInput ? '收起' : '填写'}</span>
+            <span>{showReferralInput ? t('auth.collapse') : t('auth.fill')}</span>
           </button>
           {showReferralInput && (
             <Input
               value={referralInput}
               onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-              placeholder="好友邀请码"
+              placeholder={t('auth.friendInviteCode')}
               className={cn(authInputClassName, 'h-10 bg-background/80 text-sm uppercase')}
               autoCapitalize="characters"
               autoCorrect="off"
@@ -329,7 +329,7 @@ export function LoginPage() {
                     await navigateAfterLogin()
                   }
                 },
-                '正在跳转 Apple 登录',
+                t('auth.appleRedirecting'),
               )
             }
           >

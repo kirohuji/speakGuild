@@ -17,11 +17,20 @@ interface FreeDictionaryEntry {
 interface PrepareSummary {
   vocabChecked: number;
   vocabEnriched: number;
+  vocabSkipped: number;
   chunkChecked: number;
   chunkEnriched: number;
+  chunkSkipped: number;
   patternChecked: number;
   patternEnriched: number;
-  errors: Array<{ type: 'vocabulary' | 'chunk' | 'pattern'; key: string; message: string }>;
+  patternSkipped: number;
+  errors: Array<{ type: 'vocabulary' | 'chunk' | 'pattern'; id: string; key: string; message: string }>;
+}
+
+interface RetryItems {
+  vocabulary?: string[];
+  chunk?: string[];
+  pattern?: string[];
 }
 
 @Injectable()
@@ -32,19 +41,26 @@ export class ContentPrepareService {
     private readonly adminContentAiService: AdminContentAiService,
   ) {}
 
-  async run(taskId: string, sceneId: string, options?: { reportProgress?: (progress: number) => Promise<void> | void }) {
+  async run(taskId: string, sceneId: string, options?: {
+    reportProgress?: (progress: number) => Promise<void> | void;
+    retryItems?: RetryItems;
+  }) {
     await this.adminTasksService.markRunning(taskId, 'scan');
     await this.adminTasksService.log(taskId, 'info', '开始扫描学习包内容', { step: 'scan', meta: { sceneId } });
 
-    const { vocabs, chunks, patterns } = await this.collectSceneContent(sceneId);
+    const collected = await this.collectSceneContent(sceneId);
+    const { vocabs, chunks, patterns } = this.applyRetryFilter(collected, options?.retryItems);
     const totalItems = vocabs.length + chunks.length + patterns.length;
     const summary: PrepareSummary = {
       vocabChecked: 0,
       vocabEnriched: 0,
+      vocabSkipped: 0,
       chunkChecked: 0,
       chunkEnriched: 0,
+      chunkSkipped: 0,
       patternChecked: 0,
       patternEnriched: 0,
+      patternSkipped: 0,
       errors: [],
     };
 
@@ -65,18 +81,36 @@ export class ContentPrepareService {
     };
 
     await updateProgress('scan');
+    await this.adminTasksService.log(taskId, 'info', '扫描完成，开始逐项准备内容', {
+      step: 'scan',
+      meta: {
+        vocabulary: vocabs.length,
+        chunk: chunks.length,
+        pattern: patterns.length,
+        totalItems,
+        retryItems: options?.retryItems ?? null,
+      },
+    });
 
     for (const vocab of vocabs) {
       summary.vocabChecked++;
       try {
         const result = await this.prepareVocabulary(vocab.id);
-        if (result === 'updated') summary.vocabEnriched++;
+        if (result === 'updated') {
+          summary.vocabEnriched++;
+          await this.adminTasksService.log(taskId, 'info', `词汇 "${vocab.word}" 已补全`, {
+            step: 'vocabulary',
+            meta: { vocabId: vocab.id, word: vocab.word, result },
+          });
+        } else {
+          summary.vocabSkipped++;
+        }
         successItems++;
       } catch (error: any) {
         failedItems++;
         const message = error?.message ?? 'unknown error';
-        summary.errors.push({ type: 'vocabulary', key: vocab.word ?? vocab.id, message });
-        await this.adminTasksService.log(taskId, 'error', `词汇 "${vocab.word}" 准备失败：${message}`, {
+        summary.errors.push({ type: 'vocabulary', id: vocab.id, key: vocab.word ?? vocab.id, message });
+        await this.adminTasksService.log(taskId, 'error', `词汇 "${vocab.word}" 准备失败，已跳过：${message}`, {
           step: 'vocabulary',
           meta: { vocabId: vocab.id, word: vocab.word },
         });
@@ -90,13 +124,21 @@ export class ContentPrepareService {
       summary.chunkChecked++;
       try {
         const result = await this.prepareChunk(chunk.id);
-        if (result === 'updated') summary.chunkEnriched++;
+        if (result === 'updated') {
+          summary.chunkEnriched++;
+          await this.adminTasksService.log(taskId, 'info', `句块 "${chunk.text}" 已补全`, {
+            step: 'chunk',
+            meta: { chunkId: chunk.id, text: chunk.text, result },
+          });
+        } else {
+          summary.chunkSkipped++;
+        }
         successItems++;
       } catch (error: any) {
         failedItems++;
         const message = error?.message ?? 'unknown error';
-        summary.errors.push({ type: 'chunk', key: chunk.text ?? chunk.id, message });
-        await this.adminTasksService.log(taskId, 'error', `句块 "${chunk.text}" 准备失败：${message}`, {
+        summary.errors.push({ type: 'chunk', id: chunk.id, key: chunk.text ?? chunk.id, message });
+        await this.adminTasksService.log(taskId, 'error', `句块 "${chunk.text}" 准备失败，已跳过：${message}`, {
           step: 'chunk',
           meta: { chunkId: chunk.id, text: chunk.text },
         });
@@ -110,13 +152,21 @@ export class ContentPrepareService {
       summary.patternChecked++;
       try {
         const result = await this.preparePattern(pattern.id);
-        if (result === 'updated') summary.patternEnriched++;
+        if (result === 'updated') {
+          summary.patternEnriched++;
+          await this.adminTasksService.log(taskId, 'info', `句型 "${pattern.pattern}" 已补全`, {
+            step: 'pattern',
+            meta: { patternId: pattern.id, pattern: pattern.pattern, result },
+          });
+        } else {
+          summary.patternSkipped++;
+        }
         successItems++;
       } catch (error: any) {
         failedItems++;
         const message = error?.message ?? 'unknown error';
-        summary.errors.push({ type: 'pattern', key: pattern.pattern ?? pattern.id, message });
-        await this.adminTasksService.log(taskId, 'error', `句型 "${pattern.pattern}" 准备失败：${message}`, {
+        summary.errors.push({ type: 'pattern', id: pattern.id, key: pattern.pattern ?? pattern.id, message });
+        await this.adminTasksService.log(taskId, 'error', `句型 "${pattern.pattern}" 准备失败，已跳过：${message}`, {
           step: 'pattern',
           meta: { patternId: pattern.id, pattern: pattern.pattern },
         });
@@ -163,6 +213,18 @@ export class ContentPrepareService {
       vocabs: [...vocabById.values()],
       chunks: [...chunkById.values()],
       patterns: [...patternById.values()],
+    };
+  }
+
+  private applyRetryFilter<T extends { vocabs: any[]; chunks: any[]; patterns: any[] }>(collected: T, retryItems?: RetryItems) {
+    if (!retryItems) return collected;
+    const vocabIds = new Set(retryItems.vocabulary ?? []);
+    const chunkIds = new Set(retryItems.chunk ?? []);
+    const patternIds = new Set(retryItems.pattern ?? []);
+    return {
+      vocabs: vocabIds.size ? collected.vocabs.filter((item) => vocabIds.has(item.id)) : [],
+      chunks: chunkIds.size ? collected.chunks.filter((item) => chunkIds.has(item.id)) : [],
+      patterns: patternIds.size ? collected.patterns.filter((item) => patternIds.has(item.id)) : [],
     };
   }
 

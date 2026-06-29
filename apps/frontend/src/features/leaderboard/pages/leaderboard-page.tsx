@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, PenLine, Flame, Crown } from 'lucide-react'
@@ -14,17 +14,17 @@ import { cn } from '@/lib/cn'
 
 type Tab = 'practice' | 'streak'
 
-const TABS: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: 'practice', label: '练习达人', icon: PenLine },
-  { key: 'streak', label: '连续打卡', icon: Flame },
-]
-
 export function LeaderboardPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('practice')
   const [items, setItems] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
+
+  const TABS = useMemo(() => [
+    { key: 'practice' as Tab, label: t('leaderboard.tabPractice'), icon: PenLine },
+    { key: 'streak' as Tab, label: t('leaderboard.tabStreak'), icon: Flame },
+  ], [t])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -51,17 +51,17 @@ export function LeaderboardPage() {
       </div>
 
       <div className="flex gap-1.5 rounded-lg bg-muted p-1">
-        {TABS.map((t) => (
+        {TABS.map((tabItem) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tabItem.key}
+            onClick={() => setTab(tabItem.key)}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium transition-all',
-              tab === t.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              tab === tabItem.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            <t.icon className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.label}</span>
+            <tabItem.icon className="h-4 w-4" />
+            <span className="hidden sm:inline">{tabItem.label}</span>
           </button>
         ))}
       </div>
@@ -95,7 +95,7 @@ export function LeaderboardPage() {
               <div className="flex-shrink-0 text-right">
                 <p className="text-sm font-bold text-primary">{item.score.toLocaleString()}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {tab === 'practice' ? '题' : '天'}
+                  {tab === 'practice' ? t('leaderboard.unitQuestions') : t('leaderboard.unitDays')}
                 </p>
               </div>
             </div>

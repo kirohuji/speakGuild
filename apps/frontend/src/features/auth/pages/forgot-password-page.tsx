@@ -122,7 +122,7 @@ export function ForgotPasswordPage() {
                 onClick={() => setSent(false)}
                 className="w-full rounded-xl py-1 text-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
-                重新发送验证码
+                {t('auth.resendOtp')}
               </button>
 
               {message && (
@@ -145,7 +145,7 @@ export function ForgotPasswordPage() {
       onBack={() => navigate('/auth/login')}
       footer={(
         <div>
-          记起密码了？
+          {t('auth.rememberPassword')}
           <Link to="/auth/login" className="ml-1 font-semibold text-primary hover:underline">
             {t('auth.goLogin')}
           </Link>
