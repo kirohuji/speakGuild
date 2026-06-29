@@ -466,7 +466,7 @@ function WordDetailDialog({
                 {allSynonyms.length > 0 && (
                   <div>
                     <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />近义词
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />{t('words.synonyms')}
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {allSynonyms.slice(0, 20).map(s => (
@@ -478,7 +478,7 @@ function WordDetailDialog({
                 {allAntonyms.length > 0 && (
                   <div>
                     <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                      <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />反义词
+                      <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />{t('words.antonyms')}
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {allAntonyms.slice(0, 20).map(a => (

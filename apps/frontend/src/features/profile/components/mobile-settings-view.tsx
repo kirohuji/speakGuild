@@ -120,7 +120,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
       const result = await deleteAccount(deleteRequiresPassword ? deletePassword : undefined)
       setDeletePassword('')
       setDeleteScheduledAt(result.deletionScheduledAt)
-      setDeleteMessage(`注销申请已提交。账号将在 ${new Date(result.deletionScheduledAt).toLocaleString('zh-CN')} 后删除，期间可取消。`)
+      setDeleteMessage(t('settings.deleteSubmitted', { date: new Date(result.deletionScheduledAt).toLocaleString('zh-CN') }))
     } catch (error: any) {
       setDeleteError(error?.response?.data?.message || error?.message || t('profile.auth.deleteFailed'))
     } finally {
@@ -136,9 +136,9 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
       const { cancelDeleteAccount } = await import('@/features/auth/api')
       await cancelDeleteAccount()
       setDeleteScheduledAt(null)
-      setDeleteMessage('注销申请已取消。')
+      setDeleteMessage(t('settings.deleteCancelledMsg'))
     } catch (error: any) {
-      setDeleteError(error?.response?.data?.message || error?.message || '取消注销失败')
+      setDeleteError(error?.response?.data?.message || error?.message || t('settings.deleteCancelFailed'))
     } finally {
       setDeleteLoading(false)
     }
@@ -201,10 +201,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
       const { rescheduleLearningReminder } = await import('@/lib/native/learning-reminder')
       const ok = await rescheduleLearningReminder()
       if (!ok && isNative()) {
-        toast.error('需要允许通知权限后才能提醒学习')
+        toast.error(t('settings.reminderPermission'))
       }
     } catch (error: any) {
-      toast.error(error?.message || '学习提醒设置失败')
+      toast.error(error?.message || t('settings.reminderFailed'))
     }
   }
 
@@ -222,20 +222,20 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     if (testingLearningReminder) return
     setTestingLearningReminder(true)
     try {
-      toast.message('正在安排测试提醒...')
+      toast.message(t('settings.testReminder'))
       const result = await scheduleLearningReminderTestNotification(10)
       if (result.scheduled) {
         const time = result.scheduledAt
           ? new Date(result.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-          : '10 秒后'
-        toast.success(`测试提醒已安排：${time}，pending ${result.pendingIds?.length ?? 0} 条`)
+          : t('common.notSet')
+        toast.success(t('settings.testReminderScheduled', { time, count: result.pendingIds?.length ?? 0 }))
       } else {
         toast.error(isNative()
-          ? `通知未安排，${result.error ?? `权限：${result.permissionAfter ?? result.permissionBefore ?? 'unknown'}`}`
-          : '本地通知仅支持 iOS / Android App')
+          ? t('settings.testReminderFailed', { error: result.error ?? `权限：${result.permissionAfter ?? result.permissionBefore ?? 'unknown'}` })
+          : t('settings.testReminderNativeOnly'))
       }
     } catch (error: any) {
-      toast.error(error?.message || '测试提醒发送失败')
+      toast.error(error?.message || t('settings.testReminderSendFailed'))
     } finally {
       setTestingLearningReminder(false)
     }
@@ -294,10 +294,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     try {
       const result = await updater.checkUpdate()
       if (!result.newVersion) {
-        toast.success('已是最新版本')
+        toast.success(t('settings.alreadyLatest'))
       }
     } catch {
-      toast.error('检查更新失败')
+      toast.error(t('settings.checkUpdateFailed'))
     } finally {
       setChecking(false)
     }
@@ -355,8 +355,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           }
         />
         <IosRow
-          label="跨学习包混合排程"
-          subtitle={dailyPracticeMixedPacks ? '今日任务可从多个已安装学习包混合安排' : '今日任务只从一个学习包安排'}
+          label={t('settings.mixedPacks')}
+          subtitle={dailyPracticeMixedPacks ? t('settings.mixedPacksOn') : t('settings.mixedPacksOff')}
           right={
             <Switch
               checked={dailyPracticeMixedPacks}
@@ -365,8 +365,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           }
         />
         <IosRow
-          label="今日练习随机出题"
-          subtitle={dailyPracticeRandomOrder ? '今日练习会从题池随机抽一组' : '今日练习会按内容顺序取下一组'}
+          label={t('settings.randomOrder')}
+          subtitle={dailyPracticeRandomOrder ? t('settings.randomOrderOn') : t('settings.randomOrderOff')}
           right={
             <Switch
               checked={dailyPracticeRandomOrder}
@@ -375,8 +375,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           }
         />
         <IosRow
-          label="学习提醒"
-          subtitle={learningReminderEnabled ? `每天 ${learningReminderTime} 提醒未完成学习` : '关闭后不会发送本地学习提醒'}
+          label={t('settings.learningReminder')}
+          subtitle={learningReminderEnabled ? t('settings.reminderOn', { time: learningReminderTime }) : t('settings.reminderOff')}
           right={
             <Switch
               checked={learningReminderEnabled}
@@ -387,7 +387,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
         {learningReminderEnabled && (
           <>
             <IosRow
-              label="提醒时间"
+              label={t('settings.reminderTime')}
               right={
                 <AlarmTimePicker
                   value={learningReminderTime}
@@ -442,7 +442,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
         {isNative() && (
           <>
             <IosRow
-              label="检查版本"
+              label={t('settings.checkVersion')}
               // subtitle={versionLoading ? '加载中...' : appVersion || 'web'}
               right={
                 <div className="flex items-center gap-1 text-muted-foreground">
@@ -461,9 +461,9 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
         )}
         {!isNative() && (
           <IosRow
-            label="版本"
+            label={t('settings.version')}
             value={appVersion || 'web'}
-            subtitle="Web 端无需检查更新，刷新页面即可获取最新版本"
+            subtitle={t('settings.versionWeb')}
             last
           />
         )}
@@ -473,8 +473,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           onTap={() => onNavigate?.('storage')}
         />
         <IosRow
-          label="同步操作日志"
-          subtitle={latestFailedSyncLog?.error ?? latestSyncLog?.summary ?? '暂无同步记录'}
+          label={t('settings.syncLog')}
+          subtitle={latestFailedSyncLog?.error ?? latestSyncLog?.summary ?? t('settings.noSyncRecords')}
           onTap={() => setSyncLogsOpen(true)}
         />
         <IosRow
@@ -519,17 +519,17 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {downloaded ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <Download className="h-5 w-5 text-primary" />}
-              {downloaded ? '更新就绪' : '发现新版本'}
+              {downloaded ? t('settings.updateReady') : t('settings.newVersion')}
             </DialogTitle>
             <DialogDescription className="text-sm">
-              版本 {updateDialog?.version}{downloaded ? ' 已下载完成' : ' 正在下载...'}
+              {t('settings.versionInfo', { version: updateDialog?.version, downloaded: downloaded ? t('settings.downloadedDone') : t('settings.downloading') })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span>{downloaded ? '下载完成' : '下载中'}</span>
+                <span>{downloaded ? t('settings.downloadComplete') : t('settings.downloading2')}</span>
                 <span className="text-muted-foreground">{downloaded ? 100 : downloadPercent}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -541,7 +541,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             </div>
             {downloaded && (
               <p className="text-xs text-muted-foreground">
-                更新将在下次启动 App 时生效。现在重启即可立即体验新版本。
+                {t('settings.updateDesc')}
               </p>
             )}
           </div>
@@ -552,12 +552,12 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
               className="flex-1 sm:flex-none"
               onClick={() => { setUpdateDialog(null); setDownloading(false); }}
             >
-              {downloaded ? '稍后重启' : '后台下载'}
+              {downloaded ? t('settings.restartLater') : t('settings.backgroundDownload')}
             </Button>
             {downloaded && (
               <Button className="flex-1 sm:flex-none gap-1.5" onClick={handleRestartApp}>
                 <RefreshCw className="h-4 w-4" />
-                重启应用
+                {t('settings.restartApp')}
               </Button>
             )}
           </DialogFooter>
@@ -574,10 +574,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             <DialogTitle className="text-destructive">{t('profile.deleteAccount')}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               {deleteScheduledAt
-                ? `账号已进入 7 天注销缓冲期，将于 ${new Date(deleteScheduledAt).toLocaleString('zh-CN')} 后自动删除。期间你可以取消注销申请。`
+                ? t('settings.deleteScheduledHint', { date: new Date(deleteScheduledAt).toLocaleString('zh-CN') })
                 : deleteRequiresPassword === false
-                  ? '此账号通过第三方登录创建。确认后将进入 7 天注销缓冲期，到期后账户及学习数据将被删除。'
-                  : '确认后账号将进入 7 天注销缓冲期。期间可取消；到期后账户及学习数据将被删除。请输入密码以确认。'}
+                  ? t('settings.deleteThirdParty')
+                  : t('settings.deleteConfirmHint')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
@@ -588,7 +588,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
               </div>
             ) : deleteScheduledAt ? (
               <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
-                你现在仍可正常使用账号。若不再希望注销，请点击下方“取消注销申请”。
+                {t('settings.deleteStillUsable')}
               </div>
             ) : deleteRequiresPassword ? (
               <Input
@@ -600,7 +600,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
               />
             ) : (
               <div className="rounded-xl bg-destructive/5 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
-                请再次确认：账号将进入 7 天注销缓冲期，到期后账户、学习进度和同步数据将无法恢复。
+                {t('settings.deleteFinalConfirm')}
               </div>
             )}
             {deleteMessage && (
@@ -626,7 +626,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
                 disabled={deleteLoading || deleteRequirementsLoading}
               >
                 {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                取消注销申请
+                {t('settings.cancelDeleteBtn')}
               </Button>
             ) : (
               <Button

@@ -16,7 +16,7 @@ function formatBytes(bytes?: number) {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return '未知时间'
+  if (!value) return '' // will be handled by caller with i18n
   return new Date(value).toLocaleString('zh-CN', {
     month: '2-digit',
     day: '2-digit',
@@ -121,21 +121,21 @@ export function MobileStorageView() {
   )
 
   const outboxLabel = (type: string) => ({
-    my_unit: '学习计划',
-    word_entry: '生词本',
-    chunk_entry: '句块库',
-    pattern_entry: '句型库',
-    practice_session: '练习会话',
-    practice_turn: '练习回答',
-    warmup_records: '练习话题',
-    learning_pack: '学习包',
-    daily_practice: '今日练习',
+    my_unit: t('settings.storage.outboxLearningPlan'),
+    word_entry: t('settings.storage.outboxWordEntry'),
+    chunk_entry: t('settings.storage.outboxChunkEntry'),
+    pattern_entry: t('settings.storage.outboxPatternEntry'),
+    practice_session: t('settings.storage.outboxPracticeSession'),
+    practice_turn: t('settings.storage.outboxPracticeTurn'),
+    warmup_records: t('settings.storage.outboxWarmupRecords'),
+    learning_pack: t('settings.storage.outboxLearningPack'),
+    daily_practice: t('settings.storage.outboxDailyPractice'),
   } as Record<string, string>)[type] ?? type
 
   const operationLabel = (operation: string) => ({
-    create: '新增',
-    update: '更新',
-    delete: '删除',
+    create: t('settings.storage.opCreate'),
+    update: t('settings.storage.opUpdate'),
+    delete: t('settings.storage.opDelete'),
   } as Record<string, string>)[operation] ?? operation
 
   const detailContainerClass = 'border-b border-border/50 bg-muted/10 pl-[4.5rem] pr-4'
@@ -183,7 +183,7 @@ export function MobileStorageView() {
           icon={HardDrive}
           iconBg="bg-blue-500"
           label={t('profile.downloadedPacks', { defaultValue: '已下载学习包' })}
-          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })} · ${stats?.offlineVocabularyCount ?? 0} 单词`}
+          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })} · ${stats?.offlineVocabularyCount ?? 0} ${t('settings.storage.words')}`}
           right={(
             <div className="flex items-center gap-1.5">
               <ClearButton category="packs" />
@@ -221,24 +221,24 @@ export function MobileStorageView() {
                         onClick={() => void handleClearPack(pack.packId)}
                         className="h-7 flex-shrink-0 rounded-full px-2 text-xs font-medium text-red-500 disabled:opacity-50 active:bg-red-500/10"
                       >
-                        {deletingPackId === pack.packId ? '删除中' : '删除'}
+                        {deletingPackId === pack.packId ? t('settings.storage.deleting') : t('settings.storage.deleteText')}
                       </button>
                     </div>
                     <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
-                      {pack.topicCount} 话题 · {pack.vocabularyCount} 单词 · {pack.chunkCount} 句块 · {pack.patternCount} 句型
+                      {pack.topicCount} {t('settings.storage.topicsUnit')} · {pack.vocabularyCount} {t('settings.storage.words')} · {pack.chunkCount} {t('settings.storage.chunksUnit')} · {pack.patternCount} {t('settings.storage.patternsUnit')}
                     </p>
                     <p className="text-[11px] leading-5 text-muted-foreground">
-                      {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
+                      {pack.assetCount} {t('settings.storage.resources')} · {formatBytes(pack.bytes)}
                     </p>
                     <p className="text-[10px] leading-4 text-muted-foreground/80">
-                      安装 {formatDateTime(pack.installedAt)} · 更新 {formatDateTime(pack.updatedAt)}
+                      {t('settings.storage.installed', { installed: formatDateTime(pack.installedAt) || t('settings.storage.unknownTime') })} · {t('settings.storage.updated', { updated: formatDateTime(pack.updatedAt) || t('settings.storage.unknownTime') })}
                     </p>
                     {pack.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{pack.lastError}</p>}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="py-3 text-xs text-muted-foreground">暂无已下载学习包</p>
+              <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPacks')}</p>
             )}
           </div>
         )}
@@ -246,7 +246,7 @@ export function MobileStorageView() {
           icon={Database}
           iconBg="bg-emerald-500"
           label={t('profile.localAssets', { defaultValue: '本地资源文件' })}
-          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)} · ${stats?.audioAssetCount ?? 0} 音频 · ${stats?.imageAssetCount ?? 0} 图片`}
+          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)} · ${stats?.audioAssetCount ?? 0} ${t('settings.storage.audio')} · ${stats?.imageAssetCount ?? 0} ${t('settings.storage.images')}`}
           right={(
             <div className="flex items-center gap-1.5">
               <ClearButton category="assets" />
@@ -265,11 +265,11 @@ export function MobileStorageView() {
         />
         {expanded.assets && (
           <div className={detailContainerClass}>
-            <AssetStatRow label="音频资源" count={details?.assets.audio.count} bytes={details?.assets.audio.bytes} />
-            <AssetStatRow label="图片资源" count={details?.assets.image.count} bytes={details?.assets.image.bytes} />
-            <AssetStatRow label="其它资源" count={details?.assets.other.count} bytes={details?.assets.other.bytes} />
+            <AssetStatRow label={t('settings.storage.audioAssets')} count={details?.assets.audio.count} bytes={details?.assets.audio.bytes} />
+            <AssetStatRow label={t('settings.storage.imageAssets')} count={details?.assets.image.count} bytes={details?.assets.image.bytes} />
+            <AssetStatRow label={t('settings.storage.otherAssets')} count={details?.assets.other.count} bytes={details?.assets.other.bytes} />
             {(details?.assets.failed.count ?? 0) > 0 && (
-              <AssetStatRow label="失败资源" count={details?.assets.failed.count} bytes={details?.assets.failed.bytes} />
+              <AssetStatRow label={t('settings.storage.failedAssets')} count={details?.assets.failed.count} bytes={details?.assets.failed.bytes} />
             )}
           </div>
         )}
@@ -305,17 +305,17 @@ export function MobileStorageView() {
                     <div className="flex items-center justify-between gap-3">
                       <p className="min-w-0 truncate text-sm font-medium">{outboxLabel(item.entityType)} · {operationLabel(item.operation)}</p>
                       <span className={cn('flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', item.status === 'failed' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600')}>
-                        {item.status === 'failed' ? '失败' : item.status === 'syncing' ? '同步中' : '待同步'}
+                        {item.status === 'failed' ? t('settings.storage.statusFailed') : item.status === 'syncing' ? t('settings.storage.statusSyncing') : t('settings.storage.statusPending')}
                       </span>
                     </div>
                     <p className="mt-0.5 truncate text-[11px] leading-5 text-muted-foreground">{item.entityId}</p>
                     {item.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{item.lastError}</p>}
-                    <p className="mt-1 text-[10px] leading-4 text-muted-foreground">重试 {item.retryCount} 次 · {new Date(item.updatedAt).toLocaleString()}</p>
+                    <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{t('settings.storage.retryCount', { count: item.retryCount })} · {new Date(item.updatedAt).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="py-3 text-xs text-muted-foreground">没有待同步操作</p>
+              <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPendingOps')}</p>
             )}
           </div>
         )}

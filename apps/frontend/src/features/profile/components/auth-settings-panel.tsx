@@ -125,7 +125,7 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       const result = await deleteAccount(deleteRequiresPassword ? deletePassword : undefined)
       setDeletePassword('')
       setDeleteScheduledAt(result.deletionScheduledAt)
-      setDeleteMessage(`注销申请已提交。账号将在 ${new Date(result.deletionScheduledAt).toLocaleString('zh-CN')} 后删除，期间可取消。`)
+      setDeleteMessage(t('settings.deleteSubmitted', { date: new Date(result.deletionScheduledAt).toLocaleString('zh-CN') }))
     } catch (error: any) {
       setDeleteError(error?.response?.data?.message || error?.message || t('profile.auth.deleteFailed'))
     } finally {
@@ -141,9 +141,9 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
       const { cancelDeleteAccount } = await import('@/features/auth/api')
       await cancelDeleteAccount()
       setDeleteScheduledAt(null)
-      setDeleteMessage('注销申请已取消。')
+      setDeleteMessage(t('settings.deleteCancelledMsg'))
     } catch (error: any) {
-      setDeleteError(error?.response?.data?.message || error?.message || '取消注销失败')
+      setDeleteError(error?.response?.data?.message || error?.message || t('settings.deleteCancelFailed'))
     } finally {
       setDeleteLoading(false)
     }
@@ -313,21 +313,21 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
             <DialogTitle className="text-destructive">{t('profile.deleteAccount')}</DialogTitle>
             <DialogDescription>
               {deleteScheduledAt
-                ? `账号已进入 7 天注销缓冲期，将于 ${new Date(deleteScheduledAt).toLocaleString('zh-CN')} 后自动删除。期间你可以取消注销申请。`
+                ? t('settings.deleteScheduledHint', { date: new Date(deleteScheduledAt).toLocaleString('zh-CN') })
                 : deleteRequiresPassword === false
-                  ? '此账号通过第三方登录创建。确认后将进入 7 天注销缓冲期，到期后账户及学习数据将被删除。'
-                  : '确认后账号将进入 7 天注销缓冲期。期间可取消；到期后账户及学习数据将被删除。请输入密码以确认。'}
+                  ? t('settings.deleteThirdParty')
+                  : t('settings.deleteConfirmHint')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             {deleteRequirementsLoading ? (
               <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                正在确认账号类型...
+                {t('profile.deleteConfirmingAccountType')}
               </div>
             ) : deleteScheduledAt ? (
               <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
-                你现在仍可正常使用账号。若不再希望注销，请点击下方“取消注销申请”。
+                {t('settings.deleteStillUsable')}
               </div>
             ) : deleteRequiresPassword ? (
               <Input
@@ -339,7 +339,7 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
               />
             ) : (
               <div className="rounded-xl bg-destructive/5 px-3 py-2.5 text-sm leading-6 text-muted-foreground">
-                请再次确认：账号将进入 7 天注销缓冲期，到期后账户、学习进度和同步数据将无法恢复。
+                {t('settings.deleteFinalConfirm')}
               </div>
             )}
             {deleteMessage && <p className="text-sm text-success">{deleteMessage}</p>}
@@ -361,7 +361,7 @@ export function AuthSettingsPanel({ compact: _compact }: { compact: boolean }) {
                 disabled={deleteLoading || deleteRequirementsLoading}
               >
                 {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                取消注销申请
+                {t('settings.cancelDeleteBtn')}
               </Button>
             ) : (
               <Button

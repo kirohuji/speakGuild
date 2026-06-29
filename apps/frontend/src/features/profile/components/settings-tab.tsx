@@ -137,9 +137,9 @@ export function SettingsTab() {
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label>学习提醒</Label>
+              <Label>{t('settings.learningReminder')}</Label>
               <p className="text-xs text-muted-foreground">
-                {isNative() ? '到点后，如果今天还没有学习，会发送本地通知' : '仅 iOS / Android App 支持本地通知'}
+                {isNative() ? t('settings.reminderOn', { time: learningReminderTime }) : t('settings.reminderOff')}
               </p>
             </div>
             <Switch checked={learningReminderEnabled} onCheckedChange={handleLearningReminderEnabledChange} />
@@ -149,7 +149,7 @@ export function SettingsTab() {
             <>
               <Separator />
               <div className="space-y-2">
-                <Label>提醒时间</Label>
+                <Label>{t('settings.reminderTime')}</Label>
                 <AlarmTimePicker
                   value={learningReminderTime}
                   onChange={handleLearningReminderTimeChange}
@@ -164,8 +164,8 @@ export function SettingsTab() {
             <>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <Label>原生语音识别</Label>
-                  <p className="text-xs text-muted-foreground">录音时优先使用系统 STT，关闭后使用录音上传转写</p>
+                  <Label>{t('profile.nativeSpeechRecognition')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('profile.nativeSpeechRecognitionSubtitle')}</p>
                 </div>
                 <Switch
                   checked={nativeSpeechRecognitionEnabled}
@@ -210,9 +210,9 @@ export function SettingsTab() {
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label>跨学习包混合排程</Label>
+              <Label>{t('settings.mixedPacks')}</Label>
               <p className="text-xs text-muted-foreground">
-                {dailyPracticeMixedPacks ? '今日任务可从多个已安装学习包混合安排' : '今日任务只从一个学习包安排'}
+                {dailyPracticeMixedPacks ? t('settings.mixedPacksOn') : t('settings.mixedPacksOff')}
               </p>
             </div>
             <Switch checked={dailyPracticeMixedPacks} onCheckedChange={setDailyPracticeMixedPacks} />
@@ -222,9 +222,9 @@ export function SettingsTab() {
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label>今日练习随机出题</Label>
+              <Label>{t('settings.randomOrder')}</Label>
               <p className="text-xs text-muted-foreground">
-                {dailyPracticeRandomOrder ? '今日练习会从题池随机抽一组' : '今日练习会按内容顺序取下一组'}
+                {dailyPracticeRandomOrder ? t('settings.randomOrderOn') : t('settings.randomOrderOff')}
               </p>
             </div>
             <Switch checked={dailyPracticeRandomOrder} onCheckedChange={setDailyPracticeRandomOrder} />
