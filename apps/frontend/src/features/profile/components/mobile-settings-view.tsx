@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -74,6 +74,36 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     updater.getCurrent().then((current) => {
       setAppVersion(current.version || current.builtinVersion || '')
     }).finally(() => setVersionLoading(false))
+  }, [])
+
+  // ─── 监听 updater 事件（组件卸载后不再更新状态）──
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  useEffect(() => {
+    updater.onUpdateAvailable((info) => {
+      if (!mountedRef.current) return
+      if (info.version) {
+        setDownloading(true)
+        setUpdateDialog({ version: info.version, url: info.url || '', releaseNotes: '' })
+      }
+    })
+    updater.onDownload((percent) => {
+      if (!mountedRef.current) return
+      setDownloadPercent(Math.round(percent))
+    })
+    updater.onDownloadComplete(() => {
+      if (!mountedRef.current) return
+      setDownloaded(true)
+    })
+    updater.onFailed(() => {
+      if (!mountedRef.current) return
+      setDownloading(false)
+      setDownloadPercent(0)
+    })
   }, [])
 
   // 处理账户删除
