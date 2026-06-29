@@ -19,6 +19,12 @@ export interface OfflineStorageStats {
   offlinePatternCount: number
   localAssetCount: number
   localAssetBytes: number
+  audioAssetCount: number
+  audioAssetBytes: number
+  imageAssetCount: number
+  imageAssetBytes: number
+  otherAssetCount: number
+  otherAssetBytes: number
   dictionaryEntryCount: number
   dictionaryBytes: number
   expressionEntryCount: number
@@ -28,6 +34,12 @@ export interface OfflineStorageStats {
 }
 
 export interface OfflineStorageDetails {
+  assets: {
+    audio: { count: number; bytes: number }
+    image: { count: number; bytes: number }
+    other: { count: number; bytes: number }
+    failed: { count: number; bytes: number }
+  }
   packs: Array<{
     packId: string
     title: string
@@ -57,6 +69,45 @@ function approximateJsonBytes(value: unknown): number {
 
 function sumJsonBytes(values: unknown[]): number {
   return values.reduce<number>((sum, value) => sum + approximateJsonBytes(value), 0)
+}
+
+function assetExtension(asset: LocalAsset) {
+  const source = `${asset.localPath ?? ''} ${asset.remoteUrl ?? ''}`.toLowerCase()
+  const match = source.match(/\.([a-z0-9]{2,5})(?:$|[?#\s])/i)
+  return match?.[1]?.toLowerCase() ?? ''
+}
+
+function assetKind(asset: LocalAsset): 'audio' | 'image' | 'other' {
+  const mimeType = asset.mimeType?.toLowerCase() ?? ''
+  const ext = assetExtension(asset)
+  if (mimeType.startsWith('audio/') || ['mp3', 'm4a', 'aac', 'ogg', 'opus', 'wav', 'webm', 'mp4'].includes(ext)) return 'audio'
+  if (mimeType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'avif'].includes(ext)) return 'image'
+  return 'other'
+}
+
+function summarizeAssets(assets: LocalAsset[]) {
+  const summary = {
+    audio: { count: 0, bytes: 0 },
+    image: { count: 0, bytes: 0 },
+    other: { count: 0, bytes: 0 },
+    failed: { count: 0, bytes: 0 },
+  }
+
+  for (const asset of assets) {
+    const bytes = Number(asset.size ?? 0)
+    if (asset.status !== 'ready') {
+      if (asset.status === 'failed') {
+        summary.failed.count += 1
+        summary.failed.bytes += bytes
+      }
+      continue
+    }
+    const kind = assetKind(asset)
+    summary[kind].count += 1
+    summary[kind].bytes += bytes
+  }
+
+  return summary
 }
 
 async function clearTables(tableNames: TableName[]): Promise<void> {
@@ -121,6 +172,7 @@ export const offlineStorageService = {
     const downloadedVocabularies = offlineVocabularies.filter((item) => downloadedContentIds.vocab.has(String(item.id)))
     const downloadedChunks = offlineChunks.filter((item) => downloadedContentIds.chunk.has(String(item.id)))
     const downloadedPatterns = offlinePatterns.filter((item) => downloadedContentIds.pattern.has(String(item.id)))
+    const assetSummary = summarizeAssets(assets)
 
     const downloadedPackBytes = sumJsonBytes([
       ...installedPacks,
@@ -142,6 +194,12 @@ export const offlineStorageService = {
       offlinePatternCount: downloadedPatterns.length,
       localAssetCount: readyAssets.length,
       localAssetBytes,
+      audioAssetCount: assetSummary.audio.count,
+      audioAssetBytes: assetSummary.audio.bytes,
+      imageAssetCount: assetSummary.image.count,
+      imageAssetBytes: assetSummary.image.bytes,
+      otherAssetCount: assetSummary.other.count,
+      otherAssetBytes: assetSummary.other.bytes,
       downloadedPackBytes,
       dictionaryEntryCount: dictionaries.length,
       dictionaryBytes,
@@ -153,7 +211,7 @@ export const offlineStorageService = {
   },
 
   async getDetails(): Promise<OfflineStorageDetails> {
-    const [packs, unitDetails, inkScripts, offlineVocabularies, offlineChunks, offlinePatterns, offlineContentRefs, outbox] = await Promise.all([
+    const [packs, unitDetails, inkScripts, offlineVocabularies, offlineChunks, offlinePatterns, offlineContentRefs, assets, outbox] = await Promise.all([
       localDb.list<InstalledLearningPack>('downloaded_packs'),
       localDb.list<any>('downloaded_unit_details'),
       localDb.list<any>('ink_scripts'),
@@ -161,6 +219,7 @@ export const offlineStorageService = {
       localDb.list<any>('offline_chunks'),
       localDb.list<any>('offline_patterns'),
       localDb.list<any>('offline_content_refs'),
+      localDb.list<LocalAsset>('local_assets'),
       localDb.list<SyncOutboxItem>('outbox'),
     ])
 
@@ -208,6 +267,7 @@ export const offlineStorageService = {
       .sort((a, b) => (b.installedAt ?? b.updatedAt).localeCompare(a.installedAt ?? a.updatedAt))
 
     return {
+      assets: summarizeAssets(assets),
       packs: packDetails,
       outbox: outbox
         .filter((item) => item.status === 'pending' || item.status === 'failed' || item.status === 'syncing')

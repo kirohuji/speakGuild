@@ -340,16 +340,32 @@ export const learningContentRepository = {
   },
 
   async removePackContentIndex(packId: string): Promise<void> {
-    const refs = await localDb.findByIndex<{ id: string; kind: 'vocab' | 'chunk' | 'pattern'; contentId: string }>('offline_content_refs', 'pack_id', packId)
-    await localDb.deleteWhere<any>('offline_content_refs', (ref) => ref.packId === packId)
+    const allRefs = await localDb.list<{ id: string; kind: 'vocab' | 'chunk' | 'pattern'; contentId: string; packId: string }>('offline_content_refs')
+    const refs = allRefs.filter((ref) => ref.packId === packId)
+    if (refs.length === 0) return
+
+    const keyOf = (ref: { kind: string; contentId: string }) => `${ref.kind}\u0000${ref.contentId}`
+    const remainingKeys = new Set(
+      allRefs
+        .filter((ref) => ref.packId !== packId)
+        .map(keyOf),
+    )
+    const orphanIds = {
+      vocab: new Set<string>(),
+      chunk: new Set<string>(),
+      pattern: new Set<string>(),
+    }
 
     for (const ref of refs) {
-      const remaining = await localDb.findByIndex<any>('offline_content_refs', 'content_id', ref.contentId)
-      if (remaining.some((item) => item.kind === ref.kind)) continue
-      if (ref.kind === 'vocab') await localDb.delete('offline_vocabularies', ref.contentId)
-      if (ref.kind === 'chunk') await localDb.delete('offline_chunks', ref.contentId)
-      if (ref.kind === 'pattern') await localDb.delete('offline_patterns', ref.contentId)
+      if (!remainingKeys.has(keyOf(ref))) {
+        orphanIds[ref.kind].add(ref.contentId)
+      }
     }
+
+    await localDb.deleteWhere<any>('offline_content_refs', (ref) => ref.packId === packId)
+    await localDb.deleteWhere<any>('offline_vocabularies', (item) => orphanIds.vocab.has(String(item.id)))
+    await localDb.deleteWhere<any>('offline_chunks', (item) => orphanIds.chunk.has(String(item.id)))
+    await localDb.deleteWhere<any>('offline_patterns', (item) => orphanIds.pattern.has(String(item.id)))
   },
 
   /** 从已下载的学习包中提取词汇数据 */

@@ -353,16 +353,30 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async quitUnit(unitId) {
+    const startedAt = performance.now()
+    let lastAt = startedAt
+    const lap = (label: string, extra?: Record<string, unknown>) => {
+      const now = performance.now()
+      console.log(`[learning-store:quit:${unitId}] ${label}: ${(now - lastAt).toFixed(1)}ms (total ${(now - startedAt).toFixed(1)}ms)`, extra ?? '')
+      lastAt = now
+    }
+    console.log(`[learning-store:quit:${unitId}] start`)
     try {
       await learningRepository.quitUnit(unitId)
+      lap('remote/local learning repository quit')
       await learningPackService.uninstall(unitId)
+      lap('local pack uninstall')
       const downloadedPacks = await learningPackService.listInstalled()
+      lap('list installed packs', { installedCount: downloadedPacks.length })
       set((current) => ({
         downloadedPacks,
         availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
       }))
       await getState().refreshMyUnits()
-    } catch {
+      lap('refresh my units')
+      console.log(`[learning-store:quit:${unitId}] done: ${(performance.now() - startedAt).toFixed(1)}ms`)
+    } catch (error) {
+      console.warn(`[learning-store:quit:${unitId}] failed after ${(performance.now() - startedAt).toFixed(1)}ms`, error)
       // ignore
     }
   },

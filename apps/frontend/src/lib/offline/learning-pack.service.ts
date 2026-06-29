@@ -95,6 +95,24 @@ function debugErrorMessage(error: unknown) {
   return typeof detail === 'string' ? detail : JSON.stringify(detail)
 }
 
+function createTimer(scope: string) {
+  const startedAt = performance.now()
+  let lastAt = startedAt
+  return {
+    lap(label: string, extra?: Record<string, unknown>) {
+      const now = performance.now()
+      const elapsed = now - lastAt
+      const total = now - startedAt
+      lastAt = now
+      console.log(`[${scope}] ${label}: ${elapsed.toFixed(1)}ms (total ${total.toFixed(1)}ms)`, extra ?? '')
+    },
+    done(extra?: Record<string, unknown>) {
+      const total = performance.now() - startedAt
+      console.log(`[${scope}] done: ${total.toFixed(1)}ms`, extra ?? '')
+    },
+  }
+}
+
 function summarizeZipEntries(entries: Map<string, Entry>) {
   const paths = [...entries.keys()]
   return {
@@ -875,12 +893,16 @@ export const learningPackService = {
   },
 
   async uninstall(packId: string): Promise<void> {
+    const timer = createTimer(`learning-pack:uninstall:${packId}`)
+    console.log(`[learning-pack:uninstall:${packId}] start`)
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
+    timer.lap('load pack record', { found: Boolean(pack) })
     if (!pack) return
 
     // 清理 asset_refs（引用计数保护）
     const allRefs = await localDb.list<any>('asset_refs')
     const myRefs = allRefs.filter((r) => r.packId === packId)
+    timer.lap('load asset refs', { totalRefs: allRefs.length, packRefs: myRefs.length })
 
     // 预计算每个 sha256 的总引用数（排除当前包，O(n) 一次扫描）
     const refCountBySha = new Map<string, number>()
@@ -889,9 +911,11 @@ export const learningPackService = {
         refCountBySha.set(r.sha256, (refCountBySha.get(r.sha256) ?? 0) + 1)
       }
     }
+    timer.lap('compute shared asset refs', { sharedAssetCount: refCountBySha.size })
 
     // 批量删除 asset_refs 记录
-    await Promise.all(myRefs.map((ref) => localDb.delete('asset_refs', ref.id)))
+    await localDb.deleteWhere<any>('asset_refs', (ref) => ref.packId === packId)
+    timer.lap('delete asset refs', { deletedRefs: myRefs.length })
 
     // 并行删除未被其他包引用的文件
     let deletedFiles = 0
@@ -905,18 +929,28 @@ export const learningPackService = {
         keptFiles++
       }
     }
-    await Promise.all(filesToRemove.map((sha256) => assetCacheService.remove(sha256)))
+    if (Capacitor.isNativePlatform()) {
+      await Promise.all(filesToRemove.map((sha256) => assetCacheService.remove(sha256)))
+    } else {
+      const removeSet = new Set(filesToRemove)
+      await localDb.deleteWhere<any>('local_assets', (asset) => removeSet.has(String(asset.id)))
+    }
+    timer.lap('delete asset files', { deletedFiles, keptFiles })
     console.log(`[learning-pack] 🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
 
-    // 并行清理所有关联数据（每个操作内部已有错误处理，外层再加一层保护防止 Promise.all 挂起）
+    // Keep SQLite cleanup sequential. The web adapter is much happier when
+    // large deletes do not compete on the same connection.
     try {
-      await Promise.all([
-        localDb.delete('downloaded_packs', packId),
-        localDb.delete('downloaded_unit_details', packId),
-        localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId),
-        localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId),
-        learningContentRepository.removePackContentIndex(packId),
-      ])
+      await learningContentRepository.removePackContentIndex(packId)
+      timer.lap('remove content index')
+      await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
+      timer.lap('delete ink scripts')
+      await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
+      timer.lap('delete topic unit details')
+      await localDb.delete('downloaded_unit_details', packId)
+      timer.lap('delete root unit detail')
+      await localDb.delete('downloaded_packs', packId)
+      timer.lap('delete downloaded pack record')
     } catch (error) {
       console.warn(`[learning-pack] ⚠️ 关联数据清理异常: ${packId}`, error)
     }
@@ -929,10 +963,13 @@ export const learningPackService = {
         operation: 'delete',
         payload: { packId },
       })
+      timer.lap('enqueue uninstall sync', { outboxId: outboxItem.id })
       await syncOutbox.markSynced(outboxItem.id)
+      timer.lap('mark uninstall sync synced')
     } catch (error) {
       console.warn(`[learning-pack] ⚠️ 同步出队异常: ${packId}`, error)
     }
+    timer.done({ packId, title: pack.title, version: pack.version })
   },
 
   listInstalled(): Promise<InstalledLearningPack[]> {

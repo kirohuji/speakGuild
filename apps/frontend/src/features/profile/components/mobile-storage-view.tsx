@@ -32,7 +32,7 @@ export function MobileStorageView() {
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
   const [deletingPackId, setDeletingPackId] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<{ packs: boolean; sync: boolean }>({ packs: false, sync: false })
+  const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean }>({ packs: false, assets: false, sync: false })
 
   const refresh = useCallback(() => {
     setLoading(true)
@@ -109,6 +109,15 @@ export function MobileStorageView() {
 
   const ToggleIcon = ({ open }: { open: boolean }) => (
     open ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />
+  )
+
+  const AssetStatRow = ({ label, count, bytes }: { label: string; count?: number; bytes?: number }) => (
+    <div className="flex items-center justify-between border-b border-border/50 py-2.5 last:border-b-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium">
+        {loading ? '...' : `${count ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(bytes)}`}
+      </span>
+    </div>
   )
 
   const outboxLabel = (type: string) => ({
@@ -237,9 +246,33 @@ export function MobileStorageView() {
           icon={Database}
           iconBg="bg-emerald-500"
           label={t('profile.localAssets', { defaultValue: '本地资源文件' })}
-          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)}`}
-          right={<ClearButton category="assets" />}
+          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)} · ${stats?.audioAssetCount ?? 0} 音频 · ${stats?.imageAssetCount ?? 0} 图片`}
+          right={(
+            <div className="flex items-center gap-1.5">
+              <ClearButton category="assets" />
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setExpanded((current) => ({ ...current, assets: !current.assets }))
+                }}
+                className="flex size-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted/60"
+              >
+                <ToggleIcon open={expanded.assets} />
+              </button>
+            </div>
+          )}
         />
+        {expanded.assets && (
+          <div className={detailContainerClass}>
+            <AssetStatRow label="音频资源" count={details?.assets.audio.count} bytes={details?.assets.audio.bytes} />
+            <AssetStatRow label="图片资源" count={details?.assets.image.count} bytes={details?.assets.image.bytes} />
+            <AssetStatRow label="其它资源" count={details?.assets.other.count} bytes={details?.assets.other.bytes} />
+            {(details?.assets.failed.count ?? 0) > 0 && (
+              <AssetStatRow label="失败资源" count={details?.assets.failed.count} bytes={details?.assets.failed.bytes} />
+            )}
+          </div>
+        )}
         <IosRow
           label={t('profile.offlineDictionary', { defaultValue: '离线词典缓存' })}
           subtitle={loading ? undefined : `${stats?.dictionaryEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.dictionaryBytes)}`}

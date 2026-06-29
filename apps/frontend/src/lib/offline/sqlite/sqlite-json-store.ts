@@ -11,6 +11,8 @@ export interface SqliteJsonExecutor {
 
 type ColumnExtractor = [columnName: string, jsonKey: string, extract: (value: any) => any]
 
+const SQL_BATCH_SIZE = 250
+
 const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
   downloaded_packs: [
     ['pack_id', 'packId', (value) => value?.packId ?? value?.id ?? null],
@@ -231,9 +233,8 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
           })
 
           if (executor.runMany && statements.length > 1) {
-            const chunkSize = 250
-            for (let i = 0; i < statements.length; i += chunkSize) {
-              await executor.runMany(statements.slice(i, i + chunkSize), true)
+            for (let i = 0; i < statements.length; i += SQL_BATCH_SIZE) {
+              await executor.runMany(statements.slice(i, i + SQL_BATCH_SIZE), true)
             }
           } else {
             for (const statement of statements) {
@@ -322,8 +323,12 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         if (ids.length === 0) return
 
         await enqueueWrite(async () => {
-          for (const id of ids) {
-            await executor.run(`DELETE FROM "${storeName}" WHERE id = ?`, [id])
+          for (let i = 0; i < ids.length; i += SQL_BATCH_SIZE) {
+            const chunk = ids.slice(i, i + SQL_BATCH_SIZE)
+            await executor.run(
+              `DELETE FROM "${storeName}" WHERE id IN (${chunk.map(() => '?').join(', ')})`,
+              chunk,
+            )
           }
           await executor.afterWrite?.()
         })

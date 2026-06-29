@@ -177,7 +177,7 @@ export function PatternDrillCard({
           <img
             src={cachedImageUrl}
             alt="题目配图"
-            className="w-full h-41 object-contain bg-muted/10"
+            className="w-full h-41 object-cover bg-muted/10"
             loading="lazy"
           />
         </div>

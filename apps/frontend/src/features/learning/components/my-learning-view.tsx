@@ -217,7 +217,7 @@ function InProgressUnitCard({
                 {t('common.cancel')}
               </Button>
               <Button variant="destructive" className="flex-1 rounded-xl" disabled={quitting} onClick={handleQuit}>
-                {quitting ? t('common.loading') : t('learning.quitConfirm')}
+                {quitting ? t('learning.uninstalling', { defaultValue: '卸载中' }) : t('learning.quitConfirm')}
               </Button>
             </div>
           </DialogContent>
