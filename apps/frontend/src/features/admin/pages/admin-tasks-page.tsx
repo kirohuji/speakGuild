@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, CheckCircle2, Clock3, ListChecks, Loader2, RefreshCw, RotateCcw, Search } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Clock3, ListChecks, Loader2, RefreshCw, RotateCcw, Search, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -126,6 +126,17 @@ export function AdminTasksPage() {
     }
   };
 
+  const cancelTask = async (task: AdminTask) => {
+    try {
+      await adminTasksApi.cancel(task.id);
+      toast.success('任务已取消');
+      void load();
+      if (selectedId === task.id) void loadDetail(task.id);
+    } catch (error: any) {
+      toast.error(error?.message || '取消失败');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -244,6 +255,13 @@ export function AdminTasksPage() {
                   <Button variant="outline" size="sm" onClick={() => void retry(selected)}>
                     <RotateCcw className="mr-1 size-4" />
                     重试任务
+                  </Button>
+                )}
+
+                {(selected.status === 'queued' || selected.status === 'running') && (
+                  <Button variant="outline" size="sm" onClick={() => void cancelTask(selected)}>
+                    <XCircle className="mr-1 size-4" />
+                    取消任务
                   </Button>
                 )}
 

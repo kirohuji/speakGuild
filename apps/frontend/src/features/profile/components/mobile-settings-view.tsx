@@ -443,7 +443,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           <>
             <IosRow
               label="检查版本"
-              subtitle={versionLoading ? '加载中...' : appVersion || 'web'}
+              // subtitle={versionLoading ? '加载中...' : appVersion || 'web'}
               right={
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <span className="text-sm">{versionLoading ? '...' : `v${appVersion || '—'}`}</span>

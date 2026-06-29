@@ -91,6 +91,38 @@ export class AdminTasksService {
     return this.enqueueContentPrepare(task.targetId, createdById);
   }
 
+  async cancel(id: string) {
+    const task = await this.prisma.adminTask.findUnique({ where: { id } });
+    if (!task) throw new NotFoundException('任务不存在');
+    if (task.status !== 'queued' && task.status !== 'running') {
+      throw new NotFoundException('只能取消排队中或执行中的任务');
+    }
+
+    // 从 BullMQ 队列中移除任务
+    if (task.bullJobId) {
+      try {
+        const job = await this.contentQueue.getJob(task.bullJobId);
+        if (job) {
+          await job.remove();
+        }
+      } catch {
+        // 任务可能已经不存在于队列中，忽略错误
+      }
+    }
+
+    await this.prisma.adminTask.update({
+      where: { id },
+      data: {
+        status: AdminTaskStatus.canceled,
+        finishedAt: new Date(),
+        errorMessage: '任务已被管理员取消',
+      },
+    });
+    await this.log(id, 'warn', '任务已被管理员取消', { step: 'canceled' });
+
+    return this.get(id);
+  }
+
   async markRunning(taskId: string, currentStep = 'scan') {
     await this.prisma.adminTask.update({
       where: { id: taskId },

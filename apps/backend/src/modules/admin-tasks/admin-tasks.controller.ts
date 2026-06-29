@@ -44,4 +44,10 @@ export class AdminTasksController {
     const session = await this.requireAdmin(req);
     return this.adminTasksService.retry(id, session.user.id);
   }
+
+  @Post(':id/cancel')
+  async cancel(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.adminTasksService.cancel(id);
+  }
 }

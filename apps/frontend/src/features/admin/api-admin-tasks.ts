@@ -58,4 +58,6 @@ export const adminTasksApi = {
   get: (id: string) => get<AdminTaskDetail>(`/admin/tasks/${id}`, undefined, { dedupe: false }),
 
   retry: (id: string) => post<AdminTask>(`/admin/tasks/${id}/retry`),
+
+  cancel: (id: string) => post<AdminTaskDetail>(`/admin/tasks/${id}/cancel`),
 };
