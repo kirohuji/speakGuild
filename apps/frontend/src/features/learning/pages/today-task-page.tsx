@@ -26,6 +26,7 @@ import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { preloadWarmupLocalJudge } from '@/lib/local-ai/warmup-local-judge'
 
 // ── 类型 ──
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
@@ -118,6 +119,7 @@ export function TodayTaskPage() {
   const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
   const dailyPracticeLastMode = usePreferencesStore((s) => s.dailyPracticeLastMode)
   const setDailyPracticeLastMode = usePreferencesStore((s) => s.setDailyPracticeLastMode)
+  const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // 练习状态
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -139,6 +141,13 @@ export function TodayTaskPage() {
     setReviewRunNonce(0)
     loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
   }, [loadToday, targetPackId, targetDate, planMode, planRunSeed])
+
+  useEffect(() => {
+    if (!localAiWarmupJudgeEnabled) return
+    void preloadWarmupLocalJudge().catch((error) => {
+      console.warn('[warmup-local-judge] preload failed:', error)
+    })
+  }, [localAiWarmupJudgeEnabled])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))

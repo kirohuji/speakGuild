@@ -32,6 +32,7 @@ interface Preferences {
   dailyPracticeMixedPacks: boolean
   dailyPracticeRandomOrder: boolean
   dailyPracticeLastMode: string
+  localAiWarmupJudgeEnabled: boolean
   learningReminderEnabled: boolean
   learningReminderTime: string
 }
@@ -50,6 +51,7 @@ interface PreferencesStore extends Preferences {
   setDailyPracticeMixedPacks: (value: boolean) => void
   setDailyPracticeRandomOrder: (value: boolean) => void
   setDailyPracticeLastMode: (value: string) => void
+  setLocalAiWarmupJudgeEnabled: (value: boolean) => void
   setLearningReminderEnabled: (value: boolean) => void
   setLearningReminderTime: (value: string) => void
 }
@@ -82,6 +84,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   dailyPracticeMixedPacks: false,
   dailyPracticeRandomOrder: true,
   dailyPracticeLastMode: 'review',
+  localAiWarmupJudgeEnabled: false,
   learningReminderEnabled: true,
   learningReminderTime: '20:00',
 }
@@ -108,6 +111,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setDailyPracticeMixedPacks: (value) => set({ dailyPracticeMixedPacks: value }),
       setDailyPracticeRandomOrder: (value) => set({ dailyPracticeRandomOrder: value }),
       setDailyPracticeLastMode: (value) => set({ dailyPracticeLastMode: value }),
+      setLocalAiWarmupJudgeEnabled: (value) => set({ localAiWarmupJudgeEnabled: value }),
       setLearningReminderEnabled: (value) => set({ learningReminderEnabled: value }),
       setLearningReminderTime: (value) => set({ learningReminderTime: value }),
     }),
@@ -121,6 +125,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
           ...state,
           dailyGoal: state.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
           dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
+          localAiWarmupJudgeEnabled: state.localAiWarmupJudgeEnabled ?? DEFAULT_PREFERENCES.localAiWarmupJudgeEnabled,
           learningReminderEnabled: DEFAULT_PREFERENCES.learningReminderEnabled,
           learningReminderTime: !state.learningReminderTime || state.learningReminderTime === '20:30'
             ? DEFAULT_PREFERENCES.learningReminderTime

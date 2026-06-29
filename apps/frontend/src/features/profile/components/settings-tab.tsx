@@ -19,9 +19,11 @@ import i18n from '@/lib/i18n'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 import { isNative } from '@/lib/native'
 import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
+import { useAuth } from '@/providers/auth-provider'
 
 export function SettingsTab() {
   const { t } = useTranslation()
+  const { session } = useAuth()
   const { theme, setTheme } = useTheme()
   const {
     autoPlay,
@@ -38,12 +40,15 @@ export function SettingsTab() {
     setDailyPracticeMixedPacks,
     dailyPracticeRandomOrder,
     setDailyPracticeRandomOrder,
+    localAiWarmupJudgeEnabled,
+    setLocalAiWarmupJudgeEnabled,
     learningReminderEnabled,
     setLearningReminderEnabled,
     learningReminderTime,
     setLearningReminderTime,
   } = usePreferencesStore()
   const { config } = useConfigStore()
+  const isAdmin = session?.user?.role === 'admin'
   const [autoSpeakOnLookup, setAutoSpeakOnLookup] = useState(true)
   const [pronunciationType, setPronunciationType] = useState<'us' | 'uk'>('us')
   const [autoCopyWord, setAutoCopyWord] = useState(false)
@@ -229,6 +234,22 @@ export function SettingsTab() {
             </div>
             <Switch checked={dailyPracticeRandomOrder} onCheckedChange={setDailyPracticeRandomOrder} />
           </div>
+
+          {isAdmin && (
+            <>
+              <Separator />
+
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label>{t('settings.localAiWarmupJudge')}</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {localAiWarmupJudgeEnabled ? t('settings.localAiWarmupJudgeOn') : t('settings.localAiWarmupJudgeOff')}
+                  </p>
+                </div>
+                <Switch checked={localAiWarmupJudgeEnabled} onCheckedChange={setLocalAiWarmupJudgeEnabled} />
+              </div>
+            </>
+          )}
 
           <Separator />
 

@@ -94,6 +94,16 @@ interface Session {
 
 type SessionPayload = Session | null
 
+let currentSessionSnapshot: SessionPayload = null
+
+export function getCurrentSessionSnapshot() {
+  return currentSessionSnapshot
+}
+
+function setCurrentSessionSnapshot(session: SessionPayload) {
+  currentSessionSnapshot = session
+}
+
 function normalizeSessionResponse(raw: unknown): SessionPayload {
   if (!raw || typeof raw !== 'object') return null
 
@@ -133,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // so we can clear session and let AuthRouteGate redirect to login
   useEffect(() => {
     const handleUnauthorized = () => {
+      setCurrentSessionSnapshot(null)
       setSession(null)
     }
     window.addEventListener('auth:unauthorized', handleUnauthorized)
@@ -145,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const raw = await authClient.getSession()
       const nextSession = normalizeSessionResponse(raw)
+      setCurrentSessionSnapshot(nextSession)
       setSession(nextSession)
 
       if (nextSession?.user?.id) {
@@ -156,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return nextSession
     } catch {
+      setCurrentSessionSnapshot(null)
       setSession(null)
       localStorage.removeItem(OTA_USER_ID_KEY)
       useConfigStore.getState().clearConfig()
@@ -257,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useProfileCacheStore.getState().reset()
     localStorage.removeItem(OTA_USER_ID_KEY)
     setSession(null)
+    setCurrentSessionSnapshot(null)
   }
 
   return (

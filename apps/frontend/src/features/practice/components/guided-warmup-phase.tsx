@@ -7,8 +7,10 @@ import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
+import { preloadWarmupLocalJudge } from '@/lib/local-ai/warmup-local-judge'
 import { isIOS } from '@/lib/native'
 import { dailyPracticeRepository, type DailyPracticeCandidate } from '@/lib/offline/daily-practice.repository'
+import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
 import { warmupRecordApi } from '../api/english-practice-api'
 import { ChunkOutputDrillCard } from './chunk-output-drill-card'
@@ -55,6 +57,7 @@ export function GuidedWarmupPhase({
 }) {
   const { t } = useTranslation()
   const storageKey = `guided-progress:${topicId}`
+  const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // ── Store (must be before flatSteps) ──
   const warmupStore = useWarmupSessionStore()
@@ -67,6 +70,13 @@ export function GuidedWarmupPhase({
 
   // Clear session on mount (only once)
   useEffect(() => { warmupStore.clearSession() }, [])
+
+  useEffect(() => {
+    if (!localAiWarmupJudgeEnabled) return
+    void preloadWarmupLocalJudge().catch((error) => {
+      console.warn('[warmup-local-judge] preload failed:', error)
+    })
+  }, [localAiWarmupJudgeEnabled])
 
   // ── Flatten all warmup items into individual steps ──
   interface FlatStep {

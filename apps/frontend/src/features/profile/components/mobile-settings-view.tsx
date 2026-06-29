@@ -27,7 +27,7 @@ import { SyncLogDialog } from './sync-log-dialog'
 export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { signOut } = useAuth()
+  const { session, signOut } = useAuth()
   const {
     autoPlay,
     setAutoPlay,
@@ -41,12 +41,15 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setDailyPracticeMixedPacks,
     dailyPracticeRandomOrder,
     setDailyPracticeRandomOrder,
+    localAiWarmupJudgeEnabled,
+    setLocalAiWarmupJudgeEnabled,
     learningReminderEnabled,
     setLearningReminderEnabled,
     learningReminderTime,
     setLearningReminderTime,
   } = usePreferencesStore()
   const { config } = useConfigStore()
+  const isAdmin = session?.user?.role === 'admin'
   const { logs: syncLogs } = useOfflineSyncStore()
   const [nativeSpeechRecognitionAvailable, setNativeSpeechRecognitionAvailable] = useState(false)
   const [syncLogsOpen, setSyncLogsOpen] = useState(false)
@@ -374,6 +377,18 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             />
           }
         />
+        {isAdmin && (
+          <IosRow
+            label={t('settings.localAiWarmupJudge')}
+            subtitle={localAiWarmupJudgeEnabled ? t('settings.localAiWarmupJudgeOn') : t('settings.localAiWarmupJudgeOff')}
+            right={
+              <Switch
+                checked={localAiWarmupJudgeEnabled}
+                onCheckedChange={setLocalAiWarmupJudgeEnabled}
+              />
+            }
+          />
+        )}
         <IosRow
           label={t('settings.learningReminder')}
           subtitle={learningReminderEnabled ? t('settings.reminderOn', { time: learningReminderTime }) : t('settings.reminderOff')}

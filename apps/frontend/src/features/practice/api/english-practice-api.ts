@@ -1,4 +1,8 @@
 import { del, get, patch, post } from '@/lib/request'
+import { judgeWarmupTurnLocally, type WarmupTurnJudgeInput } from '@/lib/local-ai/warmup-local-judge'
+import { usePreferencesStore } from '@/stores/preferences.store'
+import { getCurrentSessionSnapshot } from '@/providers/auth-provider'
+import { toast } from 'sonner'
 
 // ---- 练习模式 ----
 export interface TrainingTopic {
@@ -316,20 +320,33 @@ export const practiceAiApi = {
     grammarIssues?: Array<{ type: string; original: string; correction: string }>
   }>('/practice-ai/dialogue-turn', dto),
 
-  judgeWarmupTurn: (dto: {
-    stepType: 'chunk_substitution' | 'vocab_drill' | 'vocab_sentence_building' | 'pattern_drill' | 'sentence_decomposition'
-    direction?: DrillDirection
-    prompt: string
-    expectedAnswer?: string
-    userAnswer: string
-    targetText?: string
-    targetMeaning?: string
-  }) => post<{
+  judgeWarmupTurn: async (dto: WarmupTurnJudgeInput) => {
+    if (usePreferencesStore.getState().localAiWarmupJudgeEnabled) {
+      try {
+        const local = await judgeWarmupTurnLocally(dto)
+        if (!local.fallback) {
+          if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
+            toast.info(`本地 AI 已判断：${local.passed ? '通过' : '未通过'} · ${local.score}`)
+          }
+          return {
+            passed: local.passed,
+            score: local.score,
+            feedback: local.feedback,
+            correction: local.correction,
+          }
+        }
+      } catch (error) {
+        console.warn('[warmup-local-judge] fallback to server:', error)
+      }
+    }
+
+    return post<{
     passed: boolean
     score: 'strong' | 'ok' | 'weak' | 'miss'
     feedback: string
     correction?: string | null
-  }>('/practice-ai/warmup-turn', dto),
+    }>('/practice-ai/warmup-turn', dto)
+  },
 
   analyzeSession: (sessionId: string) =>
     post<{ analysis: any; raw: string }>(`/practice-ai/sessions/${sessionId}/analyze`, {}),
