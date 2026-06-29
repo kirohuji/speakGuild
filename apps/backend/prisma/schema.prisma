@@ -1505,9 +1505,8 @@ model MobileBundle {
   id               String    @id @default(cuid())
   version          String // 语义化版本号，如 "1.2.3"
   platform         String // ios | android
-  channel          String    @default("production") // production | staging
+  channel          String    @default("production") // production | staging（正式版 / 预发布）
   releaseLine      String?
-  audience         String    @default("all") // all | internal
   notifyPolicy     String    @default("auto") // auto | silent | force
   allowMajorUpgrade Boolean  @default(false)
   assetId          String // 关联 FileAsset（COS 上的 zip 文件）
@@ -1523,7 +1522,6 @@ model MobileBundle {
 
   @@unique([version, platform, channel])
   @@index([platform, channel, enabled])
-  @@index([platform, channel, audience, enabled])
   @@index([releaseLine])
   @@index([assetId])
   @@map("mobile_bundle")

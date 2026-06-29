@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -369,6 +370,9 @@ export function AdminUsersPage() {
                     <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:table-cell">
                       注册时间
                     </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[60px]">
+                      内测
+                    </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       操作
                     </th>
@@ -435,6 +439,48 @@ export function AdminUsersPage() {
 
 // ─── 单行用户组件 ──────────────────────────────────────────────────────────
 
+function OtaToggle({
+  userId,
+  enabled,
+  onToggled,
+}: {
+  userId: string;
+  enabled: boolean;
+  onToggled: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState(enabled);
+
+  useEffect(() => {
+    setChecked(enabled);
+  }, [enabled]);
+
+  const handleToggle = async (next: boolean) => {
+    setChecked(next);
+    setLoading(true);
+    try {
+      // 打开内测 = staging 通道，关闭 = 恢复普通用户
+      await updateUserOtaTest(userId, {
+        enabled: next,
+        channel: next ? 'staging' : 'production',
+      });
+      onToggled();
+    } catch {
+      setChecked(!next);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Switch
+      checked={checked}
+      onCheckedChange={handleToggle}
+      disabled={loading}
+    />
+  );
+}
+
 function UserRow({
   user,
   onRoleUpdated,
@@ -486,8 +532,9 @@ function UserRow({
   const handleSaveOtaTest = async () => {
     setOtaSaving(true);
     try {
+      // enabled 由列表 Switch 控制，这里只保存高级配置
       const next = await updateUserOtaTest(user.id, {
-        enabled: otaEnabled,
+        enabled: true, // 能打开详情说明 Switch 已开，保持 enabled
         channel: otaChannel,
         platform: otaPlatform || undefined,
         targetReleaseLine: otaReleaseLine || undefined,
@@ -590,6 +637,13 @@ function UserRow({
         <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
           {new Date(user.createdAt).toLocaleDateString('zh-CN')}
         </td>
+        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+          <OtaToggle
+            userId={user.id}
+            enabled={user.mobileOtaTester?.enabled ?? false}
+            onToggled={onRoleUpdated}
+          />
+        </td>
         <td className="px-4 py-3 text-right">
           <Button
             variant="ghost"
@@ -686,33 +740,22 @@ function UserRow({
 
               <UserLearningTabs overview={learningOverview} />
 
+              {otaEnabled && (
               <div className="rounded-xl border p-4 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <TestTube2 className="h-4 w-4 text-cyan-500" />
-                    OTA 测试配置
-                  </p>
-                  <Badge
-                    variant={otaEnabled ? 'default' : 'outline'}
-                    className={cn('text-xs', otaEnabled && 'bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/15')}
-                  >
-                    {otaEnabled ? '内测中' : '未启用'}
+                <div className="flex items-center gap-2">
+                  <TestTube2 className="h-4 w-4 text-cyan-500" />
+                  <p className="text-sm font-medium">OTA 测试配置</p>
+                  <Badge variant="outline" className="text-xs text-muted-foreground">
+                    {otaChannel === 'staging' ? '预发布通道' : '正式通道'}
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-muted-foreground">状态</span>
-                    <Select value={otaEnabled ? 'on' : 'off'} onChange={(e) => setOtaEnabled(e.target.value === 'on')}>
-                      <option value="off">不参与内测</option>
-                      <option value="on">参与内测</option>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
                     <span className="text-xs text-muted-foreground">通道</span>
                     <Select value={otaChannel} onChange={(e) => setOtaChannel(e.target.value)}>
-                      <option value="production">production</option>
-                      <option value="staging">staging</option>
+                      <option value="production">正式版 (production)</option>
+                      <option value="staging">预发布 (staging)</option>
                     </Select>
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -753,6 +796,7 @@ function UserRow({
                   </Button>
                 </div>
               </div>
+              )}
 
               {/* ── 登录会话 ────────────────────────────── */}
               <div className="rounded-xl border p-4 space-y-3">

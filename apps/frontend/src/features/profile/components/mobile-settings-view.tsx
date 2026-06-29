@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronRight, Loader2, Download, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ import { IosRow, IosSection } from '@/features/profile/components/ios-components
 import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
 import { isNative, requestInAppReview } from '@/lib/native'
+import { updater } from '@/lib/native'
 import { scheduleLearningReminderTestNotification } from '@/lib/native/learning-reminder'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 import { cn } from '@/lib/cn'
@@ -59,6 +60,21 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   const [deleteError, setDeleteError] = useState('')
   const [deleteMessage, setDeleteMessage] = useState('')
   const [testingLearningReminder, setTestingLearningReminder] = useState(false)
+
+  // ─── 版本更新 ──────────────────────────────────────
+  const [appVersion, setAppVersion] = useState('')
+  const [versionLoading, setVersionLoading] = useState(true)
+  const [checking, setChecking] = useState(false)
+  const [updateDialog, setUpdateDialog] = useState<{ version: string; url: string; releaseNotes: string } | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [downloadPercent, setDownloadPercent] = useState(0)
+  const [downloaded, setDownloaded] = useState(false)
+
+  useEffect(() => {
+    updater.getCurrent().then((current) => {
+      setAppVersion(current.version || current.builtinVersion || '')
+    }).finally(() => setVersionLoading(false))
+  }, [])
 
   // 处理账户删除
   const handleDeleteAccount = async () => {
@@ -238,6 +254,50 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   const latestFailedSyncLog = syncLogs.find((log) => log.status === 'failed' || log.error)
   const latestSyncLog = syncLogs[0]
 
+  // ─── 版本检查 ──────────────────────────────────────
+  const handleCheckUpdate = async () => {
+    setChecking(true)
+    setUpdateDialog(null)
+    setDownloading(false)
+    setDownloaded(false)
+    setDownloadPercent(0)
+    try {
+      const result = await updater.checkUpdate()
+      if (!result.newVersion) {
+        toast.success('已是最新版本')
+      }
+    } catch {
+      toast.error('检查更新失败')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  useEffect(() => {
+    updater.onUpdateAvailable((info) => {
+      if (info.version) {
+        setDownloading(true)
+        setUpdateDialog({ version: info.version, url: info.url || '', releaseNotes: '' })
+      }
+    })
+    updater.onDownload((percent) => {
+      setDownloadPercent(Math.round(percent))
+    })
+    updater.onDownloadComplete(() => {
+      setDownloaded(true)
+    })
+    updater.onFailed(() => {
+      setDownloading(false)
+      setDownloadPercent(0)
+    })
+  }, [])
+
+  const handleRestartApp = () => {
+    setUpdateDialog(null)
+    setDownloading(false)
+    window.location.reload()
+  }
+
   return (
     <div className="space-y-5">
       <IosSection>
@@ -350,10 +410,31 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
 
       <IosSection>
         {isNative() && (
+          <>
+            <IosRow
+              label="检查版本"
+              subtitle={versionLoading ? '加载中...' : appVersion || 'web'}
+              right={
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <span className="text-sm">{versionLoading ? '...' : `v${appVersion || '—'}`}</span>
+                  {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4 flex-shrink-0" />}
+                </div>
+              }
+              onTap={checking || versionLoading ? undefined : handleCheckUpdate}
+            />
+            <IosRow
+              label={t('profile.rateUs')}
+              subtitle={t('profile.rateUsSubtitle')}
+              onTap={handleRequestReview}
+            />
+          </>
+        )}
+        {!isNative() && (
           <IosRow
-            label={t('profile.rateUs')}
-            subtitle={t('profile.rateUsSubtitle')}
-            onTap={handleRequestReview}
+            label="版本"
+            value={appVersion || 'web'}
+            subtitle="Web 端无需检查更新，刷新页面即可获取最新版本"
+            last
           />
         )}
         <IosRow
@@ -398,6 +479,60 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           content={legalDrawer.content}
         />
       )}
+
+      {/* 版本更新弹窗 */}
+      <Dialog open={updateDialog !== null} onOpenChange={() => { setUpdateDialog(null); setDownloading(false); }}>
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {downloaded ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <Download className="h-5 w-5 text-primary" />}
+              {downloaded ? '更新就绪' : '发现新版本'}
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              版本 {updateDialog?.version}{downloaded ? ' 已下载完成' : ' 正在下载...'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>{downloaded ? '下载完成' : '下载中'}</span>
+                <span className="text-muted-foreground">{downloaded ? 100 : downloadPercent}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${downloaded ? 100 : downloadPercent}%` }}
+                />
+              </div>
+            </div>
+            {downloaded && (
+              <p className="text-xs text-muted-foreground">
+                更新将在下次启动 App 时生效。现在重启即可立即体验新版本。
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              onClick={() => { setUpdateDialog(null); setDownloading(false); }}
+            >
+              {downloaded ? '稍后重启' : '后台下载'}
+            </Button>
+            {downloaded && (
+              <Button className="flex-1 sm:flex-none gap-1.5" onClick={handleRestartApp}>
+                <RefreshCw className="h-4 w-4" />
+                重启应用
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 删除账户确认弹窗 */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

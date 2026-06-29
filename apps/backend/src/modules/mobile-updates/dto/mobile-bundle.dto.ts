@@ -14,10 +14,6 @@ export class CreateMobileBundleDto {
 
   @IsOptional()
   @IsString()
-  audience?: string;
-
-  @IsOptional()
-  @IsString()
   notifyPolicy?: string;
 
   @IsOptional()
@@ -62,10 +58,6 @@ export class UpdateMobileBundleDto {
   @IsOptional()
   @IsString()
   checksum?: string;
-
-  @IsOptional()
-  @IsString()
-  audience?: string;
 
   @IsOptional()
   @IsString()

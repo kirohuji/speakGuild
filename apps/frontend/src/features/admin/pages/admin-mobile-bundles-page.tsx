@@ -4,7 +4,7 @@ import {
   Smartphone, Search, Plus, Trash2, Power, PowerOff,
   ChevronLeft, ChevronRight, Loader2, ArrowLeft, ShieldAlert,
   Upload, FileArchive, Globe, CheckCircle2, XCircle, RefreshCw,
-  Bell, BellOff, GitBranch, TestTube2,
+  Bell, BellOff, GitBranch,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,6 @@ interface MobileBundle {
   platform: string;
   channel: string;
   releaseLine: string | null;
-  audience: string;
   notifyPolicy: string;
   allowMajorUpgrade: boolean;
   assetId: string;
@@ -66,7 +65,6 @@ const platformColor = (p: string): 'default' | 'secondary' | 'outline' =>
 
 const channelLabel = (c: string) => c === 'production' ? '正式版' : c === 'staging' ? '预发布' : c;
 const channelColor = (c: string) => c === 'production' ? 'default' : 'outline';
-const audienceLabel = (value: string) => value === 'internal' ? '内测用户' : '所有用户';
 const notifyPolicyLabel = (value: string) => value === 'silent' ? '静默' : value === 'force' ? '通知' : '自动';
 const releaseLineOf = (version: string) => {
   const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version.trim());
@@ -104,7 +102,6 @@ function BundleFormDialog({
   const [version, setVersion] = useState('');
   const [platform, setPlatform] = useState('ios');
   const [channel, setChannel] = useState('production');
-  const [audience, setAudience] = useState('all');
   const [notifyPolicy, setNotifyPolicy] = useState('auto');
   const [allowMajorUpgrade, setAllowMajorUpgrade] = useState(false);
   const [assetId, setAssetId] = useState('');
@@ -121,7 +118,6 @@ function BundleFormDialog({
       setVersion(bundle.version);
       setPlatform(bundle.platform);
       setChannel(bundle.channel);
-      setAudience(bundle.audience || 'all');
       setNotifyPolicy(bundle.notifyPolicy || 'auto');
       setAllowMajorUpgrade(Boolean(bundle.allowMajorUpgrade));
       setAssetId(bundle.assetId);
@@ -135,7 +131,6 @@ function BundleFormDialog({
       setVersion('');
       setPlatform('ios');
       setChannel('production');
-      setAudience('all');
       setNotifyPolicy('auto');
       setAllowMajorUpgrade(false);
       setAssetId('');
@@ -156,7 +151,6 @@ function BundleFormDialog({
         await patch(`/admin/mobile-bundles/${bundle!.id}`, {
           assetId: assetId || undefined,
           checksum: checksum || undefined,
-          audience,
           notifyPolicy,
           allowMajorUpgrade,
           minNativeVersion: minNativeVersion || undefined,
@@ -170,7 +164,6 @@ function BundleFormDialog({
           version,
           platform,
           channel,
-          audience,
           notifyPolicy,
           allowMajorUpgrade,
           assetId,
@@ -310,32 +303,18 @@ function BundleFormDialog({
 
           {/* ── 右栏：发布设置 ── */}
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="bundle-audience">发布受众</Label>
-                <select
-                  id="bundle-audience"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                  value={audience}
-                  onChange={(e) => setAudience(e.target.value)}
-                >
-                  <option value="all">所有用户</option>
-                  <option value="internal">内测用户</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="bundle-notify-policy">通知策略</Label>
-                <select
-                  id="bundle-notify-policy"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                  value={notifyPolicy}
-                  onChange={(e) => setNotifyPolicy(e.target.value)}
-                >
-                  <option value="auto">自动</option>
-                  <option value="silent">静默</option>
-                  <option value="force">通知</option>
-                </select>
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bundle-notify-policy">通知策略</Label>
+              <select
+                id="bundle-notify-policy"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                value={notifyPolicy}
+                onChange={(e) => setNotifyPolicy(e.target.value)}
+              >
+                <option value="auto">自动</option>
+                <option value="silent">静默</option>
+                <option value="force">通知</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -588,10 +567,6 @@ export function AdminMobileBundlesPage() {
                         </td>
                         <td className="py-3 pr-3">
                           <div className="flex items-center gap-1.5">
-                            <Badge variant={bundle.audience === 'internal' ? 'outline' : 'secondary'} className="gap-1 text-xs">
-                              {bundle.audience === 'internal' && <TestTube2 className="h-3 w-3" />}
-                              {audienceLabel(bundle.audience)}
-                            </Badge>
                             <Badge variant="outline" className="gap-1 text-xs">
                               {bundle.notifyPolicy === 'silent' ? <BellOff className="h-3 w-3" /> : <Bell className="h-3 w-3" />}
                               {notifyPolicyLabel(bundle.notifyPolicy)}

@@ -37,18 +37,15 @@ export class MobileUpdatesService {
     const tester = userId
       ? await this.prisma.mobileOtaTester.findUnique({ where: { userId } })
       : null;
-    const testerEnabled = Boolean(
-      tester?.enabled &&
-      tester.channel === channel &&
-      (!tester.platform || tester.platform === platform),
-    );
+
+    // 内测用户使用 tester 表里指定的 channel，否则用客户端传来的 channel（默认 production）
+    const effectiveChannel = (tester?.enabled && tester.channel) ? tester.channel : channel;
 
     const bundles = await this.prisma.mobileBundle.findMany({
       where: {
         platform,
-        channel,
+        channel: effectiveChannel,
         enabled: true,
-        audience: testerEnabled ? { in: ['all', 'internal'] } : 'all',
       },
     });
 
@@ -62,7 +59,7 @@ export class MobileUpdatesService {
       const next = this.parseVersion(bundle.version);
       if (!next) return false;
 
-      if (testerEnabled) {
+      if (tester?.enabled) {
         if (tester?.targetVersion && bundle.version !== tester.targetVersion) {
           return false;
         }
@@ -111,9 +108,9 @@ export class MobileUpdatesService {
       checksum: candidate.checksum,
       isMandatory: candidate.isMandatory,
       shouldNotify: this.shouldNotify(candidate, currentBundleVersion),
-      audience: candidate.audience,
       releaseLine: this.getReleaseLine(candidate),
       notifyPolicy: candidate.notifyPolicy,
+      channel: candidate.channel,
     };
   }
 
@@ -230,9 +227,6 @@ export class MobileUpdatesService {
     const data: any = { ...dto };
     if ('version' in dto && dto.version) {
       data.releaseLine = this.releaseLineOf(dto.version);
-    }
-    if (data.audience && !['all', 'internal'].includes(data.audience)) {
-      data.audience = 'all';
     }
     if (data.notifyPolicy && !['auto', 'silent', 'force'].includes(data.notifyPolicy)) {
       data.notifyPolicy = 'auto';
