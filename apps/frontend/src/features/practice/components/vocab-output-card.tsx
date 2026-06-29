@@ -115,20 +115,15 @@ export function VocabOutputCard({
     setJudging(true)
     setResult(null)
     try {
-      const targetWords = current.targetWords ?? []
-      const judgement = await practiceAiApi.judgeDialogueTurn({
-        topicId: '',
-        npcText: isZhToEn ? current.promptZh : (current.suggestedAnswer ?? current.promptZh),
-        userText: userInput.trim(),
-        objectives: isZhToEn
-          ? [`自然使用目标词汇「${targetWords.join('、')}」表达：${current.promptZh}`]
-          : [`理解英文句子并说出中文：${current.suggestedAnswer ?? ''}`],
-        mode: 'targeted_output',
-        ...(isZhToEn
-          ? { targetWords }
-          : {}),
+      const judgement = await practiceAiApi.judgeWarmupTurn({
+        stepType: 'vocab_drill',
+        direction,
+        prompt: isZhToEn ? current.promptZh : (current.suggestedAnswer ?? current.promptZh),
+        expectedAnswer: current.suggestedAnswer,
+        userAnswer: userInput.trim(),
+        targetText: isZhToEn ? current.targetWords?.join(', ') : undefined,
       })
-      const score = scoreFromHint(judgement.passed, hintLevel)
+      const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
         setResult({ passed: true, feedback: judgement.feedback || '正确！' })
         setHintLevel('answer')

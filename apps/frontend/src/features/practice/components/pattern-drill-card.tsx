@@ -113,17 +113,16 @@ export function PatternDrillCard({
     setStatus('judging')
     setFeedback('')
     try {
-      const judgement = await practiceAiApi.judgeDialogueTurn({
-        topicId: '',
-        npcText: isZhToEn ? current.zh : (current.answer ?? ''),
-        userText: userInput.trim(),
-        objectives: isZhToEn ? [`用「${pattern}」表达：${current.zh}`] : [`理解句型：${pattern}`],
-        mode: 'targeted_output',
-        ...(isZhToEn && current.answer
-          ? { targetChunks: [current.answer], requiredChunks: [current.answer] }
-          : {}),
+      const judgement = await practiceAiApi.judgeWarmupTurn({
+        stepType: 'pattern_drill',
+        direction,
+        prompt: isZhToEn ? current.zh : (current.answer ?? current.zh),
+        expectedAnswer: current.answer,
+        userAnswer: userInput.trim(),
+        targetText: pattern,
+        targetMeaning: patternMeaning,
       })
-      const score = scoreFromHint(judgement.passed, hintLevel)
+      const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
         setStatus('passed')
         setFeedback(judgement.feedback || '正确！')

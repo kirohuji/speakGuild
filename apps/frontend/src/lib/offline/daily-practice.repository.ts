@@ -103,6 +103,18 @@ export interface DailyPracticeAttempt {
   syncStatus: 'pending' | 'synced'
 }
 
+type StoredDailyPracticeRun = {
+  id: string
+  date: string
+  scope: DailyPracticeScope
+  mode: DailyPracticePlanMode
+  packIds?: string[]
+  packIdsKey?: string
+  scheduledItemIds?: string[]
+  completedItemIds?: string[]
+  stats?: Record<string, unknown>
+}
+
 function todayKey() {
   const now = new Date()
   const year = now.getFullYear()
@@ -352,6 +364,7 @@ export const dailyPracticeRepository = {
     targetPackId?: string | null,
     targetDate?: string | null,
     mode: DailyPracticePlanMode = 'review',
+    options: { forceNew?: boolean } = {},
   ): Promise<DailyPracticePlan> {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
@@ -379,7 +392,18 @@ export const dailyPracticeRepository = {
     const review = withStatus.filter((x) => x.status === 'review')
     const reviewBacklog = [...overdue, ...review]
     const practicePool = withStatus.filter((x) => x.status !== 'mastered' && x.status !== 'done')
-    const scheduledSource = mode === 'review'
+    const cachedRun = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', `daily:${date}`).catch(() => null)
+    const candidateById = new Map(withStatus.map((item) => [item.candidate.itemId, item]))
+    const canReuseCachedRun = !options.forceNew
+      && cachedRun?.date === date
+      && cachedRun.mode === mode
+      && cachedRun.scope === packScope
+      && cachedRun.packIdsKey === units.map((unit) => unit.id).join(',')
+      && (cachedRun.scheduledItemIds?.length ?? 0) > 0
+      && cachedRun.scheduledItemIds?.every((itemId) => candidateById.has(itemId))
+    const scheduledSource = canReuseCachedRun
+      ? cachedRun.scheduledItemIds!.map((itemId) => candidateById.get(itemId)!)
+      : mode === 'review'
       ? reviewBacklog
       : practiceOrderPool(practicePool).slice(0, dailyGoal)
     const scheduled = scheduledSource.map(({ candidate, progress, status }) => ({

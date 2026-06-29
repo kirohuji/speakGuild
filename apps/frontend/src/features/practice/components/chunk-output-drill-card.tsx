@@ -118,19 +118,16 @@ export function ChunkOutputDrillCard({
     setStatus('judging')
     setFeedback('')
     try {
-      const judgement = await practiceAiApi.judgeDialogueTurn({
-        topicId: '',
-        npcText: isZhToEn ? current.zh : (current.answer ?? ''),
-        userText: userInput.trim(),
-        objectives: isZhToEn
-          ? [`必须使用固定${kind === 'word' ? '词汇' : '句块'}「${chunk.text}」表达：${current.zh}`]
-          : [`理解并说出中文含义：${current.answer ?? ''}`],
-        mode: 'targeted_output',
-        ...(isZhToEn && chunk.text
-          ? { targetChunks: [chunk.text], requiredChunks: [chunk.text] }
-          : {}),
+      const judgement = await practiceAiApi.judgeWarmupTurn({
+        stepType,
+        direction,
+        prompt: isZhToEn ? current.zh : (current.answer ?? current.zh),
+        expectedAnswer: current.answer,
+        userAnswer: userInput.trim(),
+        targetText: isZhToEn ? chunk.text : undefined,
+        targetMeaning: chunk.meaning,
       })
-      const score = scoreFromHint(judgement.passed, hintLevel)
+      const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
         setStatus('passed')
         setFeedback(judgement.feedback || '正确！')

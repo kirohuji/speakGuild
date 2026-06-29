@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { generateText } from 'ai';
-import { DialogueTurnJudgeDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
@@ -501,6 +501,64 @@ For correction/upgraded/retryRequired: only populate these when the response is 
         retryPrompt: null,
         focusChunk: null,
         grammarIssues: [],
+        raw: result.text,
+      };
+    }
+  }
+
+  /** 知识点热身单题快速判定：短 prompt、短 JSON、只返回当前题需要的反馈 */
+  async judgeWarmupTurn(dto: WarmupTurnJudgeDto, userId?: string) {
+    const provider = await this.getProvider();
+    const system = `You are a fast ESL warmup judge.
+Return ONLY compact JSON: {"passed":boolean,"score":"strong|ok|weak|miss","feedback":"中文短反馈，最多18字","correction":string|null}
+
+Rules:
+- Judge only this single warmup item.
+- Be tolerant of minor grammar, spelling, casing, or speech-to-text errors.
+- For zh_to_en, pass when the user's English expresses the prompt and uses the target naturally when targetText is provided.
+- For en_to_zh, pass when the user's Chinese captures the core meaning.
+- "strong": natural and correct; "ok": understandable with minor issues; "weak": meaning partly right or needed target is awkward; "miss": wrong/off-topic/empty.
+- Give correction only for weak or miss, using expectedAnswer when useful.`;
+
+    const prompt = [
+      `stepType: ${dto.stepType}`,
+      `direction: ${dto.direction ?? 'zh_to_en'}`,
+      `prompt: ${dto.prompt}`,
+      dto.expectedAnswer ? `expectedAnswer: ${dto.expectedAnswer}` : null,
+      dto.targetText ? `targetText: ${dto.targetText}` : null,
+      dto.targetMeaning ? `targetMeaning: ${dto.targetMeaning}` : null,
+      `userAnswer: ${dto.userAnswer}`,
+    ].filter(Boolean).join('\n');
+
+    const result = await generateText({
+      model: provider(),
+      system,
+      prompt,
+      temperature: 0.1,
+      maxOutputTokens: 220,
+    });
+
+    if (userId && result.usage) {
+      this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0);
+    }
+
+    const jsonText = result.text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? result.text;
+    try {
+      const parsed = JSON.parse(jsonText);
+      const score = ['strong', 'ok', 'weak', 'miss'].includes(parsed.score) ? parsed.score : (parsed.passed ? 'ok' : 'miss');
+      return {
+        passed: Boolean(parsed.passed),
+        score,
+        feedback: String(parsed.feedback || (parsed.passed ? '表达可以，继续。' : '再调整一下表达。')),
+        correction: parsed.correction ? String(parsed.correction) : null,
+        raw: result.text,
+      };
+    } catch {
+      return {
+        passed: false,
+        score: 'miss',
+        feedback: '暂时无法判断，请再试一次。',
+        correction: dto.expectedAnswer ?? null,
         raw: result.text,
       };
     }

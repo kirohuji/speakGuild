@@ -316,6 +316,21 @@ export const practiceAiApi = {
     grammarIssues?: Array<{ type: string; original: string; correction: string }>
   }>('/practice-ai/dialogue-turn', dto),
 
+  judgeWarmupTurn: (dto: {
+    stepType: 'chunk_substitution' | 'vocab_drill' | 'vocab_sentence_building' | 'pattern_drill' | 'sentence_decomposition'
+    direction?: DrillDirection
+    prompt: string
+    expectedAnswer?: string
+    userAnswer: string
+    targetText?: string
+    targetMeaning?: string
+  }) => post<{
+    passed: boolean
+    score: 'strong' | 'ok' | 'weak' | 'miss'
+    feedback: string
+    correction?: string | null
+  }>('/practice-ai/warmup-turn', dto),
+
   analyzeSession: (sessionId: string) =>
     post<{ analysis: any; raw: string }>(`/practice-ai/sessions/${sessionId}/analyze`, {}),
 }

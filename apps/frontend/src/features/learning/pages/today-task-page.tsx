@@ -137,7 +137,7 @@ export function TodayTaskPage() {
     setReviewRoundStarted(false)
     setReviewRoundFinished(false)
     setReviewRunNonce(0)
-    loadToday(targetPackId, targetDate, planMode)
+    loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
   }, [loadToday, targetPackId, targetDate, planMode, planRunSeed])
 
   useEffect(() => {

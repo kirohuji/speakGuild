@@ -70,6 +70,38 @@ export class DialogueTurnJudgeResultDto {
   confidence: number;
 }
 
+export class WarmupTurnJudgeDto {
+  @IsString()
+  stepType:
+    | 'chunk_substitution'
+    | 'vocab_drill'
+    | 'vocab_sentence_building'
+    | 'pattern_drill'
+    | 'sentence_decomposition';
+
+  @IsString()
+  @IsOptional()
+  direction?: 'zh_to_en' | 'en_to_zh';
+
+  @IsString()
+  prompt: string;
+
+  @IsString()
+  @IsOptional()
+  expectedAnswer?: string;
+
+  @IsString()
+  userAnswer: string;
+
+  @IsString()
+  @IsOptional()
+  targetText?: string;
+
+  @IsString()
+  @IsOptional()
+  targetMeaning?: string;
+}
+
 export class PlacementAssessmentAnswerDto {
   @IsString()
   promptId: string;
