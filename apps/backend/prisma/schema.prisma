@@ -649,6 +649,7 @@ model Scene {
   learningPackages    LearningPackage[]
   createdAt           DateTime            @default(now())
 
+  @@index([createdAt])
   @@map("scene")
 }
 
@@ -742,9 +743,11 @@ model Chunk {
   storyEpisodeChunks StoryEpisodeChunk[]
   topicChunks        TrainingTopicChunk[]
   createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   @@unique([text])
   @@index([difficulty])
+  @@index([updatedAt])
   @@map("chunk")
 }
 
@@ -771,6 +774,7 @@ model Vocabulary {
   topicVocabs              TrainingTopicVocab[]
 
   @@unique([word])
+  @@index([updatedAt])
   @@map("vocabulary")
 }
 
@@ -797,8 +801,10 @@ model ChunkExample {
   level     String   @default("basic")
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([chunkId, sortOrder])
+  @@index([updatedAt])
   @@map("chunk_example")
 }
 
@@ -819,6 +825,7 @@ model UserChunkProgress {
   updatedAt       DateTime           @updatedAt
 
   @@unique([userId, chunkId])
+  @@index([userId, updatedAt])
   @@map("user_chunk_progress")
 }
 
@@ -849,6 +856,7 @@ model TrainingTopic {
   createdAt                  DateTime                       @default(now())
 
   @@index([sceneId, difficulty])
+  @@index([createdAt])
   @@map("training_topic")
 }
 
@@ -868,6 +876,7 @@ model SentencePattern {
   storyEpisodePatterns StoryEpisodeSentencePattern[]
 
   @@unique([pattern])
+  @@index([updatedAt])
   @@map("sentence_pattern")
 }
 
@@ -912,6 +921,7 @@ model PracticeSession {
   @@index([userId, startedAt(sort: Desc)])
   @@index([topicId, startedAt(sort: Desc)])
   @@index([status])
+  @@index([userId, updatedAt])
   @@map("practice_session")
 }
 
@@ -1069,6 +1079,7 @@ model StoryEpisode {
   createdAt               DateTime                      @default(now())
 
   @@index([chapterKey, sortOrder], map: "script_episode_chapterId_episodeOrder_idx")
+  @@index([createdAt])
   @@map("script_episode")
 }
 
@@ -1202,6 +1213,7 @@ model UserSceneProgress {
   updatedAt              DateTime @updatedAt
 
   @@unique([userId, sceneId])
+  @@index([userId, updatedAt])
   @@map("user_scene_progress")
 }
 
@@ -1529,5 +1541,6 @@ model DictionaryEntry {
   updatedAt       DateTime @updatedAt
 
   @@index([language])
+  @@index([updatedAt])
   @@map("dictionary_entry")
 }

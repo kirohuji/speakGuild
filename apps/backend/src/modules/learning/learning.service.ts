@@ -896,39 +896,68 @@ export class LearningService {
     const failedAssets: Array<{ url: string; reason: string }> = [];
     const assetPathBySha = new Map<string, string>();
 
-    for (const asset of source.manifest.assets ?? []) {
-      if (!asset?.url) continue;
-      try {
-        const response = await fetch(asset.url);
-        if (!response.ok) {
-          failedAssets.push({ url: asset.url, reason: `HTTP ${response.status}` });
+    const assetList = (source.manifest.assets ?? []).filter((a: any) => a?.url);
+    const CONCURRENCY = 10;
+
+    for (let i = 0; i < assetList.length; i += CONCURRENCY) {
+      const batch = assetList.slice(i, i + CONCURRENCY);
+      const results = await Promise.allSettled(
+        batch.map(async (asset: any) => {
+          const response = await fetch(asset.url);
+          if (!response.ok) {
+            return { asset, ok: false as const, reason: `HTTP ${response.status}` };
+          }
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const sha256 = sha256Buffer(buffer);
+          const mimeType = response.headers.get('content-type')?.split(';')[0] ?? asset.mimeType ?? null;
+          const ext = extensionFromUrl(asset.url) ?? extensionFromMime(mimeType) ?? 'bin';
+          const role = safeFilePart(asset.role ?? 'misc');
+          const path = `assets/${role}/${sha256}.${ext}`;
+
+          return {
+            asset,
+            ok: true as const,
+            buffer,
+            sha256,
+            mimeType,
+            ext,
+            role,
+            path,
+            size: buffer.byteLength,
+          };
+        }),
+      );
+
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          const err = result.reason;
+          failedAssets.push({
+            url: '',
+            reason: err instanceof Error ? err.message : String(err),
+          });
           continue;
         }
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const sha256 = sha256Buffer(buffer);
-        const mimeType = response.headers.get('content-type')?.split(';')[0] ?? asset.mimeType ?? null;
-        const ext = extensionFromUrl(asset.url) ?? extensionFromMime(mimeType) ?? 'bin';
-        const role = safeFilePart(asset.role ?? 'misc');
-        const path = assetPathBySha.get(sha256) ?? `assets/${role}/${sha256}.${ext}`;
 
-        if (!assetPathBySha.has(sha256)) {
-          zip.addFile(path, buffer);
-          checksums[path] = sha256;
-          assetPathBySha.set(sha256, path);
+        const r = result.value;
+        if (!r.ok) {
+          failedAssets.push({ url: r.asset.url, reason: r.reason });
+          continue;
+        }
+
+        const dedupPath = assetPathBySha.get(r.sha256) ?? r.path;
+        if (!assetPathBySha.has(r.sha256)) {
+          zip.addFile(dedupPath, r.buffer);
+          checksums[dedupPath] = r.sha256;
+          assetPathBySha.set(r.sha256, dedupPath);
         }
 
         packagedAssets.push({
-          ...asset,
-          path,
-          sha256,
-          mimeType,
-          size: buffer.byteLength,
-        });
-      } catch (error) {
-        failedAssets.push({
-          url: asset.url,
-          reason: error instanceof Error ? error.message : String(error),
+          ...r.asset,
+          path: dedupPath,
+          sha256: r.sha256,
+          mimeType: r.mimeType,
+          size: r.size,
         });
       }
     }

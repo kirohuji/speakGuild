@@ -220,13 +220,28 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       if (values.length === 0) return
       try {
         await enqueueWrite(async () => {
-          for (const value of values) {
-            const metadata = metadataFor(storeName, value)
-            const data = jsonDataFor(storeName, value)
-            await executor.run(
-              upsertSql(storeName, metadata.columns),
-              [value.id, ...metadata.values, JSON.stringify(data), new Date().toISOString()],
-            )
+          // 批量写入用显式事务包裹，避免每个 INSERT 自动提交
+          if (values.length > 10) {
+            await executor.execute('BEGIN TRANSACTION', false)
+          }
+          try {
+            for (const value of values) {
+              const metadata = metadataFor(storeName, value)
+              const data = jsonDataFor(storeName, value)
+              await executor.run(
+                upsertSql(storeName, metadata.columns),
+                [value.id, ...metadata.values, JSON.stringify(data), new Date().toISOString()],
+                values.length > 10 ? false : undefined, // 小批量保持默认事务行为
+              )
+            }
+            if (values.length > 10) {
+              await executor.execute('COMMIT', false)
+            }
+          } catch (error) {
+            if (values.length > 10) {
+              await executor.execute('ROLLBACK', false).catch(() => {})
+            }
+            throw error
           }
           await executor.afterWrite?.()
         })

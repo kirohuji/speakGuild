@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
 import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface ChunkSubstitutionItem {
   id: string
@@ -40,7 +41,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
   const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => { setLocal(value) }, [value])
 
@@ -263,7 +264,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                 </Button>
                 {/* Image upload */}
                 <input
-                  ref={fileInputRef}
+                  ref={(el) => { fileInputRefs.current[idx] = el }}
                   type="file"
                   accept="image/*"
                   className="hidden"
@@ -283,13 +284,24 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                 ) : (
                   <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
                     disabled={imageUploading === `img-${idx}`}
-                    onClick={() => fileInputRef.current?.click()}>
+                    onClick={() => fileInputRefs.current[idx]?.click()}>
                     {imageUploading === `img-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
                   </Button>
                 )}
               </div>
               <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
                 placeholder="教学提示（选填）" />
+              {/* Mobile preview for this item */}
+              <WarmupItemPreview
+                type="chunk_substitution"
+                displayText={local.chunk}
+                displayMeaning={local.chunkMeaning}
+                promptZh={item.zh}
+                answer={item.answer}
+                imageUrl={item.imageUrl}
+                direction={local.direction}
+                kind={local.kind}
+              />
             </div>
             <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removeItem(idx)}><Trash2 className="size-3" /></Button>
           </div>

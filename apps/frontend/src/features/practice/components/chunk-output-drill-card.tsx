@@ -172,7 +172,7 @@ export function ChunkOutputDrillCard({
 
       {/* Chunk display  — highlighted target */}
       <div className="rounded-lg bg-gradient-to-br from-primary/8 to-primary/3 px-3 py-2.5">
-        <p className="text-xs text-muted-foreground">{kind === 'word' ? '必须使用这个词' : '必须使用这个句块'}</p>
+        {/* <p className="text-xs text-muted-foreground">{kind === 'word' ? '必须使用这个词' : '必须使用这个句块'}</p> */}
         <p className="mt-0.5 text-base font-bold text-primary">{chunk.text}</p>
         {chunk.meaning && (
           <p className="mt-0.5 text-xs text-muted-foreground">{chunk.meaning}</p>
@@ -195,11 +195,11 @@ export function ChunkOutputDrillCard({
       <div className="rounded-lg bg-muted/20 px-3 py-2.5">
         <p className="text-xs text-muted-foreground">{promptLabel}</p>
         <p className="text-base font-semibold text-foreground">{displayText}</p>
-        {isZhToEn && (
+        {/* {isZhToEn && (
           <p className="mt-1 text-[11px] text-muted-foreground">
             重点不是背参考答案，而是把上面的固定表达套进新句子里。
           </p>
-        )}
+        )} */}
       </div>
 
       {/* Progressive hints */}

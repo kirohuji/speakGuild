@@ -495,12 +495,13 @@ export class SyncService {
     const version = Date.now();
 
     // 各模型时间戳情况不同：
-    // - DictionaryEntry/SentencePattern/Vocabulary 有 updatedAt → 用 updatedAt
-    // - Scene/Chunk/TrainingTopic/StoryEpisode 只有 createdAt → 用 createdAt
+    // - Chunk/ChunkExample/DictionaryEntry/SentencePattern/Vocabulary 有 updatedAt → 用 updatedAt
+    // - Scene/TrainingTopic/StoryEpisode 只有 createdAt → 用 createdAt
     const [
       dictionaries,
       vocabularies,
       chunks,
+      chunkExamples,
       sentencePatterns,
       scenes,
       topics,
@@ -518,9 +519,15 @@ export class SyncService {
         orderBy: { updatedAt: 'asc' },
       }),
       this.prisma.chunk.findMany({
-        where: { createdAt: { gt: sinceDate } },
-        select: { id: true, createdAt: true },
-        orderBy: { createdAt: 'asc' },
+        where: { updatedAt: { gt: sinceDate } },
+        select: { id: true, updatedAt: true },
+        orderBy: { updatedAt: 'asc' },
+      }),
+      // ChunkExample 变更 → 合并到父 Chunk，前端按 chunkId 交叉比对
+      this.prisma.chunkExample.findMany({
+        where: { updatedAt: { gt: sinceDate } },
+        select: { id: true, chunkId: true, updatedAt: true },
+        orderBy: { updatedAt: 'asc' },
       }),
       this.prisma.sentencePattern.findMany({
         where: { updatedAt: { gt: sinceDate } },
@@ -544,6 +551,26 @@ export class SyncService {
       }),
     ]);
 
+    // ChunkExample 变更合并到父 Chunk：前端按 chunkId 交叉比对，
+    // ChunkExample ID 不在 pack manifest 中，所以映射为父 chunkId
+    if (chunkExamples.length > 0) {
+      const chunkTsMap = new Map(chunks.map((c) => [c.id, c.updatedAt.getTime()]));
+      for (const ce of chunkExamples) {
+        const ceTs = ce.updatedAt.getTime();
+        const existing = chunkTsMap.get(ce.chunkId);
+        if (existing === undefined || ceTs > existing) {
+          chunkTsMap.set(ce.chunkId, ceTs);
+        }
+      }
+      // Rebuild chunks array from map, preserving only entries not already in chunks
+      const origIds = new Set(chunks.map((c) => c.id));
+      for (const [id, ts] of chunkTsMap) {
+        if (!origIds.has(id)) {
+          chunks.push({ id, updatedAt: new Date(ts) } as any);
+        }
+      }
+    }
+
     // 统一输出格式：{ id, updatedAt }
     return {
       version,
@@ -551,7 +578,7 @@ export class SyncService {
       changed: {
         dictionaries: dictionaries.map((d) => ({ id: d.word, updatedAt: d.updatedAt.toISOString() })),
         vocabularies: vocabularies.map((v) => ({ id: v.id, updatedAt: v.updatedAt.toISOString() })),
-        chunks: chunks.map((c) => ({ id: c.id, updatedAt: c.createdAt.toISOString() })),
+        chunks: chunks.map((c) => ({ id: c.id, updatedAt: c.updatedAt.toISOString() })),
         sentencePatterns: sentencePatterns.map((s) => ({ id: s.id, updatedAt: s.updatedAt.toISOString() })),
         scenes: scenes.map((s) => ({ id: s.id, updatedAt: s.createdAt.toISOString() })),
         topics: topics.map((t) => ({ id: t.id, updatedAt: t.createdAt.toISOString() })),

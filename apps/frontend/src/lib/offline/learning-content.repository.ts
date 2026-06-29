@@ -309,32 +309,31 @@ export const learningContentRepository = {
 
     console.log(`[content-index] 📊 索引统计: ${vocabById.size} 词汇, ${chunkById.size} 语块, ${patternById.size} 句型, ${refs.length} 引用记录`)
 
-    await localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => ({
-      id: item.id,
-      word: item.word ?? item.text ?? '',
-      normalizedText: normalizeIndexText(item.word ?? item.text ?? item.id),
-      data: item,
-      updatedAt: now,
-    })))
-    console.log(`[content-index] ✅ offline_vocabularies: ${vocabById.size} 条`)
-
-    await localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => ({
-      id: item.id,
-      text: item.text ?? '',
-      normalizedText: normalizeIndexText(item.text ?? item.id),
-      data: item,
-      updatedAt: now,
-    })))
-    console.log(`[content-index] ✅ offline_chunks: ${chunkById.size} 条`)
-
-    await localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => ({
-      id: item.id,
-      pattern: item.pattern ?? item.text ?? '',
-      normalizedText: normalizeIndexText(item.pattern ?? item.text ?? item.id),
-      data: item,
-      updatedAt: now,
-    })))
-    console.log(`[content-index] ✅ offline_patterns: ${patternById.size} 条`)
+    // 并行写入三个内容表，refs 量最大放在最后
+    await Promise.all([
+      localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => ({
+        id: item.id,
+        word: item.word ?? item.text ?? '',
+        normalizedText: normalizeIndexText(item.word ?? item.text ?? item.id),
+        data: item,
+        updatedAt: now,
+      }))),
+      localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => ({
+        id: item.id,
+        text: item.text ?? '',
+        normalizedText: normalizeIndexText(item.text ?? item.id),
+        data: item,
+        updatedAt: now,
+      }))),
+      localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => ({
+        id: item.id,
+        pattern: item.pattern ?? item.text ?? '',
+        normalizedText: normalizeIndexText(item.pattern ?? item.text ?? item.id),
+        data: item,
+        updatedAt: now,
+      }))),
+    ])
+    console.log(`[content-index] ✅ offline_vocabularies: ${vocabById.size} 条, offline_chunks: ${chunkById.size} 条, offline_patterns: ${patternById.size} 条`)
 
     await localDb.putMany('offline_content_refs', refs)
     console.log(`[content-index] ✅ offline_content_refs: ${refs.length} 条`)

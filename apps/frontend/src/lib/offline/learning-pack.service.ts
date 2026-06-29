@@ -544,10 +544,6 @@ export const learningPackService = {
       report('extracting_assets', 40)
 
       console.log(`[learning-pack] ⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
-      let assetOk = 0
-      let assetSkip = 0
-      let assetFail = 0
-      let assetDeduped = 0
       const totalAssets = manifest.assets?.length ?? 0
 
       // 一次性加载所有 asset_refs 到内存 Map，避免每个资产全表扫描
@@ -558,60 +554,99 @@ export const learningPackService = {
       }
       console.log(`[learning-pack] asset_refs 预加载: ${refsBySha256.size} 条`)
 
+      // ── 阶段 A：并行读取 ZIP + 计算 SHA-256（CPU 密集型，可并行）──
+      const ASSET_CONCURRENCY = 8
+      const assetTasks: Array<{
+        asset: any
+        entry: ReturnType<typeof entries.get>
+        index: number
+      }> = []
+
       for (let i = 0; i < totalAssets; i++) {
         const asset = manifest.assets![i]
-        if (!asset.path) { assetSkip++; continue }
+        if (!asset.path) continue
         const entry = entries.get(normalizeZipPath(asset.path))
-        if (!entry) { assetSkip++; continue }
-        try {
-          const buffer = await readEntryBuffer(entry)
-
-          // SHA-256 只算一次，同时完成校验和去重
-          const actualSha256 = await digest(buffer)
-          if (asset.sha256 && actualSha256 !== asset.sha256) {
-            throw new Error(`SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`)
-          }
-
-          // 内存查重（不再全表扫描）
-          const existingRef = refsBySha256.get(actualSha256)
-          const alreadyInPool = !!existingRef
-
-          if (!alreadyInPool) {
-            await assetCacheService.saveFromBufferWithSha256(
-              { ...asset, sha256: actualSha256 },
-              buffer,
-              actualSha256, // 复用已计算的 SHA-256
-            )
-          } else {
-            assetDeduped++
-          }
-
-          // 写入引用记录
-          const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
-          const nowIso = new Date().toISOString()
-          await localDb.put('asset_refs', {
-            id: `${manifest.packId}:${actualSha256}`,
-            sha256: actualSha256,
-            packId: manifest.packId,
-            logicalPath: asset.path ?? asset.url ?? '',
-            ext,
-            updatedAt: nowIso,
-            data: JSON.stringify({ role: asset.role }),
-          })
-          // 更新内存 Map，后续资产可复用
-          if (!alreadyInPool) {
-            refsBySha256.set(actualSha256, { sha256: actualSha256, ext })
-          }
-          assetOk++
-
-          // 实时进度：资产提取从 40% 到 95%
-          const assetProgress = 40 + Math.round((i / totalAssets) * 55)
-          report('extracting_assets', assetProgress)
-        } catch (e) {
-          assetFail++
-          console.warn('[learning-pack] asset extract failed', { path: asset.path, error: debugError(e) })
-        }
+        if (!entry) continue
+        assetTasks.push({ asset, entry, index: i })
       }
+
+      type AssetResult =
+        | { ok: true; asset: any; sha256: string; buffer: Uint8Array; index: number }
+        | { ok: false; asset: any; error: string; index: number }
+
+      const assetResults: AssetResult[] = []
+      for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
+        const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
+        const batchResults = await Promise.all(
+          batch.map(async ({ asset, entry, index }): Promise<AssetResult> => {
+            try {
+              const buffer = await readEntryBuffer(entry!)
+              const actualSha256 = await digest(buffer)
+              if (asset.sha256 && actualSha256 !== asset.sha256) {
+                return { ok: false, asset, error: `SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`, index }
+              }
+              return { ok: true, asset, sha256: actualSha256, buffer, index }
+            } catch (e) {
+              return { ok: false, asset, error: debugError(e), index }
+            }
+          }),
+        )
+        assetResults.push(...batchResults)
+      }
+
+      // ── 阶段 B：批量写入文件系统 + SQLite ──
+      const assetRefsToWrite: any[] = []
+      const filesToSave: Array<{ asset: any; sha256: string; buffer: Uint8Array }> = []
+      let assetOk = 0
+      let assetDeduped = 0
+      let assetFail = 0
+
+      for (const result of assetResults) {
+        if (!result.ok) {
+          assetFail++
+          console.warn('[learning-pack] asset extract failed', { path: result.asset.path, error: result.error })
+          continue
+        }
+
+        const { asset, sha256: actualSha256, buffer } = result
+        const existingRef = refsBySha256.get(actualSha256)
+        const alreadyInPool = !!existingRef
+
+        if (!alreadyInPool) {
+          filesToSave.push({ asset, sha256: actualSha256, buffer })
+        } else {
+          assetDeduped++
+        }
+
+        const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
+        const nowIso = new Date().toISOString()
+        assetRefsToWrite.push({
+          id: `${manifest.packId}:${actualSha256}`,
+          sha256: actualSha256,
+          packId: manifest.packId,
+          logicalPath: asset.path ?? asset.url ?? '',
+          ext,
+          updatedAt: nowIso,
+          data: JSON.stringify({ role: asset.role }),
+        })
+
+        if (!alreadyInPool) {
+          refsBySha256.set(actualSha256, { sha256: actualSha256, ext })
+        }
+        assetOk++
+      }
+
+      // 并行写文件 + 批量写 SQLite 引用
+      await Promise.all([
+        ...filesToSave.map(({ asset, sha256, buffer }) =>
+          assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256),
+        ),
+        assetRefsToWrite.length > 0
+          ? localDb.putMany('asset_refs', assetRefsToWrite)
+          : Promise.resolve(),
+      ])
+
+      const assetSkip = totalAssets - assetTasks.length
       console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
 
       const result = await persistInstalledRecord(manifest)
@@ -841,28 +876,42 @@ export const learningPackService = {
     // 清理 asset_refs（引用计数保护）
     const allRefs = await localDb.list<any>('asset_refs')
     const myRefs = allRefs.filter((r) => r.packId === packId)
+
+    // 预计算每个 sha256 的总引用数（排除当前包，O(n) 一次扫描）
+    const refCountBySha = new Map<string, number>()
+    for (const r of allRefs) {
+      if (r.packId !== packId) {
+        refCountBySha.set(r.sha256, (refCountBySha.get(r.sha256) ?? 0) + 1)
+      }
+    }
+
+    // 批量删除 asset_refs 记录
+    await Promise.all(myRefs.map((ref) => localDb.delete('asset_refs', ref.id)))
+
+    // 并行删除未被其他包引用的文件
     let deletedFiles = 0
     let keptFiles = 0
+    const filesToRemove: string[] = []
     for (const ref of myRefs) {
-      await localDb.delete('asset_refs', ref.id)
-      // 检查是否还有其他包引用此 SHA256（排除刚删除的）
-      const remainingRefs = allRefs.filter(
-        (r) => r.sha256 === ref.sha256 && r.packId !== packId,
-      )
-      if (remainingRefs.length === 0) {
-        await assetCacheService.remove(ref.sha256)
+      if (!refCountBySha.has(ref.sha256)) {
+        filesToRemove.push(ref.sha256)
         deletedFiles++
       } else {
         keptFiles++
       }
     }
+    await Promise.all(filesToRemove.map((sha256) => assetCacheService.remove(sha256)))
     console.log(`[learning-pack] 🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
 
-    await localDb.delete('downloaded_packs', packId)
-    await localDb.delete('downloaded_unit_details', packId)
-    await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
-    await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
-    await learningContentRepository.removePackContentIndex(packId)
+    // 并行清理所有关联数据
+    await Promise.all([
+      localDb.delete('downloaded_packs', packId),
+      localDb.delete('downloaded_unit_details', packId),
+      localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId),
+      localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId),
+      learningContentRepository.removePackContentIndex(packId),
+    ])
+
     console.log(`[learning-pack] 🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'learning_pack',
