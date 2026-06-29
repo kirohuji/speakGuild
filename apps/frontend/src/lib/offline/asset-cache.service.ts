@@ -186,16 +186,26 @@ export const assetCacheService = {
   },
 
   async saveFromBuffer(ref: AssetRef, buffer: ArrayBuffer): Promise<string> {
+    return this.saveFromBufferWithSha256(ref, buffer, null)
+  },
+
+  /**
+   * 与 saveFromBuffer 相同，但接受调用方预先计算好的 SHA-256，
+   * 避免重复哈希计算。传入 null 则内部自动计算。
+   *
+   * 用于 pack 安装场景：zip 提取循环中已计算过 SHA-256，
+   * 此处直接复用，省去一次 crypto.subtle.digest 调用。
+   */
+  async saveFromBufferWithSha256(ref: AssetRef, buffer: ArrayBuffer, precomputedSha256: string | null): Promise<string> {
     const url = normalizeUrl(ref.url)
     const key = await assetKey({ ...ref, url })
     const ext = extensionFrom(ref.path ?? url, ref.mimeType)
     const path = `offline-assets/${key}.${ext}`
 
-    if (ref.sha256) {
-      const actual = await digest(buffer)
-      if (actual.toLowerCase() !== ref.sha256.toLowerCase()) {
-        throw new Error('Pack asset hash mismatch')
-      }
+    const effectiveSha256 = precomputedSha256 ?? await digest(buffer)
+
+    if (ref.sha256 && effectiveSha256.toLowerCase() !== ref.sha256.toLowerCase()) {
+      throw new Error('Pack asset hash mismatch')
     }
 
     if (!isNative()) {
@@ -207,7 +217,7 @@ export const assetCacheService = {
         id: key,
         assetId: key,
         remoteUrl: url,
-        sha256: ref.sha256,
+        sha256: effectiveSha256,
         mimeType: ref.mimeType,
         size: ref.size ?? buffer.byteLength,
         localPath: path,
@@ -234,7 +244,7 @@ export const assetCacheService = {
       id: key,
       assetId: key,
       remoteUrl: url,
-      sha256: ref.sha256,
+      sha256: effectiveSha256,
       mimeType: ref.mimeType,
       size: ref.size ?? buffer.byteLength,
       localPath: path,

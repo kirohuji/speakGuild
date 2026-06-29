@@ -159,7 +159,7 @@ export interface TopicDetail {
     audioUkUrl?: string | null
     definitionEn?: string | null
     synonyms?: string[]
-    examples?: Array<{ en: string; zh?: string; note?: string | null; level?: string }>
+    examples?: Array<{ en: string; zh?: string; note?: string | null; level?: string; audioUrl?: string | null }>
     description?: string | null
     difficulty?: string
     outputPriority?: 'low' | 'medium' | 'high'
@@ -170,7 +170,7 @@ export interface TopicDetail {
     text: string
     meaning: string
     description?: string | null
-    examples?: Array<{ en: string; zh: string; note?: string | null; level?: string }>
+    examples?: Array<{ en: string; zh: string; note?: string | null; level?: string; audioUrl?: string | null }>
     masteryStatus: string
   }[]
   sentencePatterns?: Array<{

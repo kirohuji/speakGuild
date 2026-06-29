@@ -47,8 +47,8 @@ async function bootstrap() {
   });
   expressApp.all('/api/auth/*', toNodeHandler(auth));
 
-  expressApp.use(json());
-  expressApp.use(urlencoded({ extended: true }));
+  expressApp.use(json({ limit: '10mb' }));
+  expressApp.use(urlencoded({ extended: true, limit: '10mb' }));
 
   // ── 全局 CORS（必须在业务路由注册之前）──
   app.enableCors({

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, ArrowRightLeft, Zap, Sparkles, Volume2, Play, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Trash2, ArrowRightLeft, Zap, Sparkles, Volume2, Play, Loader2, ImageIcon, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
+import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 
 export interface ChunkSubstitutionItem {
   id: string
@@ -18,7 +19,7 @@ export interface ChunkSubstitutionItem {
   chunkMeaning?: string
   direction?: 'zh_to_en' | 'en_to_zh'
   kind?: 'chunk' | 'word'
-  items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string }>
+  items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
 }
 
 interface Props {
@@ -38,6 +39,8 @@ const computeChunkSubTitle = (item: { chunk: string; kind?: string }) => {
 export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
   const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setLocal(value) }, [value])
 
@@ -60,6 +63,29 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
 
   const removeItem = (idx: number) => {
     commit({ items: local.items.filter((_, i) => i !== idx) })
+  }
+
+  const handleItemImageUpload = async (idx: number, file: File) => {
+    if (!file.type.startsWith('image/')) return
+    const key = `img-${idx}`
+    setImageUploading(key)
+    try {
+      const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
+      const resolved = await getFileAssetLongLivedUrl(asset.id)
+      const next = [...local.items]
+      next[idx] = { ...next[idx], imageUrl: resolved.url }
+      commit({ items: next })
+    } catch (err: any) {
+      toast.error(err?.message || '图片上传失败')
+    } finally {
+      setImageUploading(null)
+    }
+  }
+
+  const removeItemImage = (idx: number) => {
+    const next = [...local.items]
+    next[idx] = { ...next[idx], imageUrl: undefined }
+    commit({ items: next })
   }
 
   const generateItemAudio = async (idx: number) => {
@@ -235,6 +261,32 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                   onClick={() => generateItemAudio(idx)}>
                   {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
                 </Button>
+                {/* Image upload */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleItemImageUpload(idx, f); e.target.value = '' }}
+                />
+                {item.imageUrl ? (
+                  <div className="relative shrink-0">
+                    <img src={item.imageUrl} alt="题目配图" className="size-7 rounded object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeItemImage(idx)}
+                      className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                    >
+                      <X className="size-2" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
+                    disabled={imageUploading === `img-${idx}`}
+                    onClick={() => fileInputRef.current?.click()}>
+                    {imageUploading === `img-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
+                  </Button>
+                )}
               </div>
               <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
                 placeholder="教学提示（选填）" />

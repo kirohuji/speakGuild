@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Zap, Volume2, Play, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Trash2, Zap, Volume2, Play, Loader2, ImageIcon, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
+import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 
 export interface VocabSentenceBuildingItem {
   id: string
@@ -18,7 +19,7 @@ export interface VocabSentenceBuildingItem {
   direction?: 'zh_to_en' | 'en_to_zh'
   patterns: Array<{
     chunk: string
-    items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string }>
+    items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
   }>
 }
 
@@ -38,6 +39,8 @@ const computeVocabSubTitle = (item: { vocabWord: string }) => {
 export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
   const [local, setLocal] = useState<VocabSentenceBuildingItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setLocal(value) }, [value])
 
@@ -79,6 +82,33 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     } else {
       commit({ patterns: next })
     }
+  }
+
+  const handleItemImageUpload = async (pIdx: number, iIdx: number, file: File) => {
+    if (!file.type.startsWith('image/')) return
+    const key = `img-${pIdx}-${iIdx}`
+    setImageUploading(key)
+    try {
+      const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
+      const resolved = await getFileAssetLongLivedUrl(asset.id)
+      const next = [...local.patterns]
+      const items = [...next[pIdx].items]
+      items[iIdx] = { ...items[iIdx], imageUrl: resolved.url }
+      next[pIdx] = { ...next[pIdx], items }
+      commit({ patterns: next })
+    } catch (err: any) {
+      toast.error(err?.message || '图片上传失败')
+    } finally {
+      setImageUploading(null)
+    }
+  }
+
+  const removeItemImage = (pIdx: number, iIdx: number) => {
+    const next = [...local.patterns]
+    const items = [...next[pIdx].items]
+    items[iIdx] = { ...items[iIdx], imageUrl: undefined }
+    next[pIdx] = { ...next[pIdx], items }
+    commit({ patterns: next })
   }
 
   const generateItemAudio = async (pIdx: number, iIdx: number) => {
@@ -221,6 +251,32 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                       onClick={() => generateItemAudio(pIdx, iIdx)}>
                       {ttsGenerating === `item-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
                     </Button>
+                    {/* Image upload */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleItemImageUpload(pIdx, iIdx, f); e.target.value = '' }}
+                    />
+                    {item.imageUrl ? (
+                      <div className="relative shrink-0">
+                        <img src={item.imageUrl} alt="题目配图" className="size-7 rounded object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeItemImage(pIdx, iIdx)}
+                          className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                        >
+                          <X className="size-2" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
+                        disabled={imageUploading === `img-${pIdx}-${iIdx}`}
+                        onClick={() => fileInputRef.current?.click()}>
+                        {imageUploading === `img-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
+                      </Button>
+                    )}
                   </div>
                   <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updatePatternItem(pIdx, iIdx, 'hint', e.target.value)} placeholder="教学提示（选填）" />
                 </div>

@@ -21,6 +21,7 @@ export interface DownloadTask {
   packId: string
   title: string
   progress: number        // 0-100
+  step?: string           // 当前步骤标识（如 'downloading', 'extracting_assets'）
   status: 'queued' | 'downloading' | 'extracting' | 'done' | 'error'
   error?: string
 }
@@ -480,7 +481,6 @@ async function processDownloadQueue() {
     ),
   }))
 
-  let progressTimer: ReturnType<typeof setInterval> | null = null
   try {
     if (!await checkNetworkBeforeDownload()) {
       useLearningStore.setState((s) => ({
@@ -493,24 +493,24 @@ async function processDownloadQueue() {
 
     console.log(`[learning-store] ⏳ 开始下载: ${next.title}`)
 
-    progressTimer = setInterval(() => {
+    // 真实进度回调：安装流程每步上报
+    const onProgress = (step: string, progress: number) => {
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
           t.packId === next.packId && t.status === 'downloading'
-            ? { ...t, progress: Math.min(80, t.progress + 5) }
+            ? { ...t, progress, step }
             : t,
         ),
       }))
-    }, 500)
+    }
 
     const update = useLearningStore.getState().availablePackUpdates.find((u) => u.packId === next.packId)
     if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
       console.log(`[learning-store] 🔄 delta 更新: v${update.fromVersion} → v${update.toVersion}`)
       await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion)
     } else {
-      await learningPackService.installUnit(next.packId)
+      await learningPackService.installUnit(next.packId, onProgress)
     }
-    if (progressTimer) clearInterval(progressTimer)
 
     // 先跳到 100% 进度，短暂停留让用户感知完成
     useLearningStore.setState((s) => ({
@@ -548,7 +548,6 @@ async function processDownloadQueue() {
       }))
     }, 3000)
   } catch (error: any) {
-    if (progressTimer) clearInterval(progressTimer)
     console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
     useLearningStore.setState((s) => ({
       downloadTasks: s.downloadTasks.map((t) =>

@@ -715,6 +715,54 @@ export class LearningService {
       for (const tv of topic.topicVocabs) {
         this.pushAsset(assets, tv.vocab.audioUsUrl, 'voice');
         this.pushAsset(assets, tv.vocab.audioUkUrl, 'voice');
+        // Collect per-example audio URLs from vocabulary examples (JSON field)
+        const vocabExamples = tv.vocab.examples;
+        if (Array.isArray(vocabExamples)) {
+          for (const ex of vocabExamples) {
+            const audio = (ex as any)?.audioUrl;
+            if (typeof audio === 'string') this.pushAsset(assets, audio, 'voice');
+          }
+        }
+      }
+      // Collect per-example audio URLs from chunk examples
+      for (const tc of topic.activeChunks) {
+        const chunkExamples = (tc.chunk as any)?.examples;
+        if (Array.isArray(chunkExamples)) {
+          for (const ex of chunkExamples) {
+            const audio = (ex as any)?.audioUrl;
+            if (typeof audio === 'string') this.pushAsset(assets, audio, 'voice');
+          }
+        }
+      }
+      // ── Collect warmup pipeline assets (audio + images) ──
+      const outputTraining = (topic.metadata as any)?.outputTraining;
+      if (outputTraining?.pipeline && Array.isArray(outputTraining.pipeline)) {
+        for (const step of outputTraining.pipeline) {
+          // Collect per-item audioUrl + imageUrl from chunk_substitution / pattern_drill
+          if (step.items && Array.isArray(step.items)) {
+            for (const item of step.items) {
+              if (typeof item.audioUrl === 'string') this.pushAsset(assets, item.audioUrl, 'voice');
+              if (typeof item.imageUrl === 'string') this.pushAsset(assets, item.imageUrl, 'warmup_image');
+            }
+          }
+          // Collect per-pattern-item audioUrl + imageUrl from vocab_sentence_building
+          if (step.patterns && Array.isArray(step.patterns)) {
+            for (const pattern of step.patterns) {
+              if (pattern.items && Array.isArray(pattern.items)) {
+                for (const item of pattern.items) {
+                  if (typeof item.audioUrl === 'string') this.pushAsset(assets, item.audioUrl, 'voice');
+                  if (typeof item.imageUrl === 'string') this.pushAsset(assets, item.imageUrl, 'warmup_image');
+                }
+              }
+            }
+          }
+          // Collect per-level audioUrl from sentence_decomposition
+          if (step.levels && Array.isArray(step.levels)) {
+            for (const level of step.levels) {
+              if (typeof level.audioUrl === 'string') this.pushAsset(assets, level.audioUrl, 'voice');
+            }
+          }
+        }
       }
       return {
         topic: {

@@ -377,26 +377,31 @@ export const learningPackService = {
     }
   },
 
-  async installUnit(unitId: string): Promise<InstalledLearningPack> {
+  async installUnit(unitId: string, onProgress?: (step: string, progress: number) => void): Promise<InstalledLearningPack> {
     try {
       console.log('[learning-pack] installUnit start zip-only mode', {
         unitId,
         platform: Capacitor.getPlatform(),
         isNative: Capacitor.isNativePlatform(),
       })
-      return await this.installUnitFromZip(unitId)
+      return await this.installUnitFromZip(unitId, onProgress)
     } catch (error) {
       console.error('[learning-pack] zip install failed', debugError(error))
       throw error
     }
   },
 
-  async installUnitFromZip(unitId: string): Promise<InstalledLearningPack> {
+  async installUnitFromZip(unitId: string, onProgress?: (step: string, progress: number) => void): Promise<InstalledLearningPack> {
+    const report = (step: string, progress: number) => {
+      onProgress?.(step, Math.min(99, Math.round(progress)))
+    }
     const startTime = performance.now()
     console.log('[learning-pack] ⏳ ① 下载 zip...')
+    report('downloading', 5)
     const zipBuffer = await learningApi.downloadPack(unitId)
     const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
     console.log(`[learning-pack] ✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
+    report('parsing', 15)
 
     console.log('[learning-pack] ⏳ ② 解析 zip 条目...')
     const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
@@ -412,6 +417,7 @@ export const learningPackService = {
       }
       console.log(`[learning-pack] ✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
       console.log('[learning-pack] zip entries summary', summarizeZipEntries(entries))
+      report('reading_manifest', 20)
 
       console.log('[learning-pack] ⏳ ③ 读取 manifest + checksums...')
       const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
@@ -451,6 +457,7 @@ export const learningPackService = {
         throw error
       }
       console.log(`[learning-pack] ✅ ④ scene.json: ${sceneText.length} 字符, SHA256 校验通过`)
+      report('reading_topics', 25)
 
       console.log('[learning-pack] ⏳ ⑤ 读取话题数据...')
       const topicDetails: any[] = []
@@ -473,6 +480,7 @@ export const learningPackService = {
         }
       }
       console.log(`[learning-pack] ✅ ⑤ 话题: ${topicDetails.length} 个`)
+      report('persisting_content', 30)
 
       const now = new Date().toISOString()
       console.log('[learning-pack] ⏳ ⑥ 写入 downloaded_packs 记录...')
@@ -518,6 +526,7 @@ export const learningPackService = {
         throw error
       }
       console.log('[learning-pack] ✅ ⑦ 单元内容写入完成')
+      report('indexing', 35)
 
       console.log('[learning-pack] ⏳ ⑧ 写入内容索引表...')
       try {
@@ -532,40 +541,53 @@ export const learningPackService = {
         throw error
       }
       console.log('[learning-pack] ✅ ⑧ 索引表写入完成')
+      report('extracting_assets', 40)
 
       console.log(`[learning-pack] ⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
       let assetOk = 0
       let assetSkip = 0
       let assetFail = 0
-      let assetDeduped = 0  // SHA256 已存在，跳过移动
-      for (const asset of manifest.assets ?? []) {
+      let assetDeduped = 0
+      const totalAssets = manifest.assets?.length ?? 0
+
+      // 一次性加载所有 asset_refs 到内存 Map，避免每个资产全表扫描
+      const allRefsList = await localDb.list<any>('asset_refs')
+      const refsBySha256 = new Map<string, any>()
+      for (const ref of allRefsList) {
+        if (ref.sha256) refsBySha256.set(ref.sha256, ref)
+      }
+      console.log(`[learning-pack] asset_refs 预加载: ${refsBySha256.size} 条`)
+
+      for (let i = 0; i < totalAssets; i++) {
+        const asset = manifest.assets![i]
         if (!asset.path) { assetSkip++; continue }
         const entry = entries.get(normalizeZipPath(asset.path))
         if (!entry) { assetSkip++; continue }
         try {
-          console.log('[learning-pack] extracting asset', {
-            path: asset.path,
-            url: asset.url,
-            sha256: asset.sha256,
-            size: asset.size,
-          })
           const buffer = await readEntryBuffer(entry)
-          await verifyEntry(normalizeZipPath(asset.path), buffer, checksums)
-          const actualSha256 = await digest(buffer)
 
-          // 检查全局资产池是否已有此 SHA256
-          const allRefs = await localDb.list<any>('asset_refs')
-          const existingRefs = allRefs.filter((r) => r.sha256 === actualSha256)
-          const alreadyInPool = existingRefs.length > 0
+          // SHA-256 只算一次，同时完成校验和去重
+          const actualSha256 = await digest(buffer)
+          if (asset.sha256 && actualSha256 !== asset.sha256) {
+            throw new Error(`SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`)
+          }
+
+          // 内存查重（不再全表扫描）
+          const existingRef = refsBySha256.get(actualSha256)
+          const alreadyInPool = !!existingRef
 
           if (!alreadyInPool) {
-            await assetCacheService.saveFromBuffer({ ...asset, sha256: actualSha256 }, buffer)
+            await assetCacheService.saveFromBufferWithSha256(
+              { ...asset, sha256: actualSha256 },
+              buffer,
+              actualSha256, // 复用已计算的 SHA-256
+            )
           } else {
             assetDeduped++
           }
 
-          // 写入引用记录（无论文件是否已存在都要记）
-          const ext = existingRefs[0]?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
+          // 写入引用记录
+          const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
           const nowIso = new Date().toISOString()
           await localDb.put('asset_refs', {
             id: `${manifest.packId}:${actualSha256}`,
@@ -576,7 +598,15 @@ export const learningPackService = {
             updatedAt: nowIso,
             data: JSON.stringify({ role: asset.role }),
           })
+          // 更新内存 Map，后续资产可复用
+          if (!alreadyInPool) {
+            refsBySha256.set(actualSha256, { sha256: actualSha256, ext })
+          }
           assetOk++
+
+          // 实时进度：资产提取从 40% 到 95%
+          const assetProgress = 40 + Math.round((i / totalAssets) * 55)
+          report('extracting_assets', assetProgress)
         } catch (e) {
           assetFail++
           console.warn('[learning-pack] asset extract failed', { path: asset.path, error: debugError(e) })

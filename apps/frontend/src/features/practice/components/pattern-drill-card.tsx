@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
 import { PracticeAnswerInput } from './practice-answer-input'
+import { useCachedImage } from '@/hooks/use-cached-image'
 
 type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 type HintLevel = 'none' | 'hint' | 'answer'
@@ -14,7 +15,7 @@ type HintLevel = 'none' | 'hint' | 'answer'
 interface PatternDrillCardProps {
   pattern: string
   patternMeaning?: string
-  items: { zh: string; answer?: string; hint?: string }[]
+  items: { zh: string; answer?: string; hint?: string; imageUrl?: string }[]
   stepId: string
   groupTitle?: string
   direction?: DrillDirection
@@ -85,6 +86,7 @@ export function PatternDrillCard({
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const current = items[currentIdx]
+  const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)
   const totalItems = items.length
   const isZhToEn = direction === 'zh_to_en'
 
@@ -168,6 +170,18 @@ export function PatternDrillCard({
         <p className="mt-0.5 font-mono text-base font-bold text-violet-600 dark:text-violet-400">{pattern}</p>
         {patternMeaning && <p className="mt-0.5 text-xs text-muted-foreground">{patternMeaning}</p>}
       </div>
+
+      {/* Item image */}
+      {cachedImageUrl && (
+        <div className="overflow-hidden rounded-lg">
+          <img
+            src={cachedImageUrl}
+            alt="题目配图"
+            className="w-full h-40 object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       {/* Task prompt */}
       <div className="rounded-lg bg-muted/20 px-3 py-2.5">

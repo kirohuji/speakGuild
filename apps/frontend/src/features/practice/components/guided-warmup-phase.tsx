@@ -72,7 +72,7 @@ export function GuidedWarmupPhase({
     label: string
     render: () => React.ReactNode
   }
-type SimplePromptItem = { zh: string; answer?: string; hint?: string }
+type SimplePromptItem = { zh: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string }
 type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
 
   const shuffleSteps = useCallback((steps: FlatStep[]) => {

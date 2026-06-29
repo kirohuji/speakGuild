@@ -7,13 +7,14 @@ import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
 import { PracticeAnswerInput } from './practice-answer-input'
+import { useCachedImage } from '@/hooks/use-cached-image'
 
 type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 type HintLevel = 'none' | 'hint' | 'answer'
 
 interface ChunkOutputDrillCardProps {
   chunk: { text: string; meaning?: string; description?: string | null }
-  items: { zh: string; answer?: string; hint?: string }[]
+  items: { zh: string; answer?: string; hint?: string; imageUrl?: string }[]
   stepId: string
   stepType?: 'chunk_substitution' | 'vocab_sentence_building'
   groupTitle?: string
@@ -82,6 +83,7 @@ export function ChunkOutputDrillCard({
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const current = items[currentIdx]
+  const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)
   const totalItems = items.length
   const isZhToEn = direction === 'zh_to_en'
   const typeLabel = stepType === 'vocab_sentence_building'
@@ -176,6 +178,18 @@ export function ChunkOutputDrillCard({
           <p className="mt-0.5 text-xs text-muted-foreground">{chunk.meaning}</p>
         )}
       </div>
+
+      {/* Item image */}
+      {cachedImageUrl && (
+        <div className="overflow-hidden rounded-lg">
+          <img
+            src={cachedImageUrl}
+            alt="题目配图"
+            className="w-full h-40 object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       {/* Task prompt */}
       <div className="rounded-lg bg-muted/20 px-3 py-2.5">

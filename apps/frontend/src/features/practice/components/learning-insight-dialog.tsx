@@ -30,6 +30,7 @@ import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { learningContentRepository } from '@/lib/offline'
 import { useAttemptedRequest } from '@/hooks/use-attempted-request'
+import { useCachedAudio } from '@/hooks/use-cached-audio'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { type TopicDetail } from '../api/english-practice-api'
 
@@ -159,7 +160,7 @@ function textOrEmpty(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-function normalizeVocabExamples(value: unknown): Array<{ en: string; zh?: string; note?: string | null; level?: string }> {
+function normalizeVocabExamples(value: unknown): Array<{ en: string; zh?: string; note?: string | null; level?: string; audioUrl?: string | null }> {
   let raw = value
   if (typeof raw === 'string') {
     const text = raw.trim()
@@ -179,9 +180,10 @@ function normalizeVocabExamples(value: unknown): Array<{ en: string; zh?: string
       const zh = textOrEmpty(record.zh) || textOrEmpty(record.cn) || textOrEmpty(record.chinese) || textOrEmpty(record.translation)
       const note = textOrEmpty(record.note) || null
       const level = textOrEmpty(record.level)
-      return en ? { en, ...(zh ? { zh } : {}), ...(note ? { note } : {}), ...(level ? { level } : {}) } : null
+      const audioUrl = textOrEmpty(record.audioUrl) || null
+      return en ? { en, ...(zh ? { zh } : {}), ...(note ? { note } : {}), ...(level ? { level } : {}), ...(audioUrl ? { audioUrl } : {}) } : null
     })
-    .filter(Boolean) as Array<{ en: string; zh?: string; note?: string | null; level?: string }>
+    .filter(Boolean) as Array<{ en: string; zh?: string; note?: string | null; level?: string; audioUrl?: string | null }>
 }
 
 function parseZhQualifiers(zh: string): { qualifiers: string[]; text: string } {
@@ -549,10 +551,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const label = item.kind === 'word' ? t('insight.vocabulary') : item.kind === 'chunk' ? t('insight.chunk') : t('insight.pattern')
   const isWord = item.kind === 'word'
 
-  const playAudio = useCallback((url: string) => {
-    const audio = new Audio(url.startsWith('//') ? `https:${url}` : url)
-    audio.play().catch(() => {})
-  }, [])
+  const { play: playAudio } = useCachedAudio()
 
   return (
     <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
@@ -597,7 +596,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const [showUncommon, setShowUncommon] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const { play: playAudio } = useCachedAudio()
   const { hasAttempted, resetAttempted, runOnce } = useAttemptedRequest()
 
   useEffect(() => {
@@ -653,13 +652,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
     || textOrEmpty(enriched?.chineseTranslation)
   const descriptionText = textOrEmpty(item.description)
   const dictEntry = dictData !== 'loading' ? dictData : null
-
-  const playAudio = useCallback((url: string) => {
-    audioRef.current?.pause()
-    const audio = new Audio(url.startsWith('//') ? `https:${url}` : url)
-    audioRef.current = audio
-    audio.play().catch(() => {})
-  }, [])
 
   const saveWord = async () => {
     if (saved) return
@@ -829,7 +821,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                 </div>
               ) : examples.length ? (
                 examples.slice(0, 6).map((example, index) => (
-                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} />
+                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} audioUrl={example.audioUrl} onPlayAudio={playAudio} />
                 ))
               ) : (
                 <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">{t('insight.noExamples')}</p>
@@ -1069,6 +1061,7 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
   const [activeTab, setActiveTab] = useState('description')
+  const { play: playAudio } = useCachedAudio()
 
   const saveChunk = async () => {
     if (saved) return
@@ -1112,7 +1105,7 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
               {item.examples?.length ? (
-                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} />)
+                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={(ex as any).audioUrl} onPlayAudio={playAudio} />)
               ) : (
                 <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
               )}
@@ -1131,6 +1124,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
   const examples = useMemo(() => normalizeVocabExamples(item.examples), [item.examples])
   const [activeTab, setActiveTab] = useState('structure')
+  const { play: playAudio } = useCachedAudio()
 
   const savePattern = async () => {
     if (saved) return
@@ -1189,7 +1183,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
               {examples.length > 0 ? (
-                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} />)
+                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={ex.audioUrl} onPlayAudio={playAudio} />)
               ) : (
                 <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
               )}
@@ -1201,10 +1195,29 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   )
 }
 
-function ExampleBlock({ en, zh, note, level }: { en: string; zh?: string; note?: string; level?: string }) {
+function ExampleBlock({ en, zh, note, level, audioUrl, onPlayAudio }: {
+  en: string
+  zh?: string
+  note?: string
+  level?: string
+  audioUrl?: string | null
+  onPlayAudio?: (url: string) => void
+}) {
   return (
     <div className="rounded-md bg-muted/60 p-3">
-      <p className="text-sm font-medium leading-relaxed text-foreground">{en}</p>
+      <div className="flex items-start gap-2">
+        <p className="min-w-0 flex-1 text-sm font-medium leading-relaxed text-foreground">{en}</p>
+        {audioUrl && onPlayAudio && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onPlayAudio(audioUrl) }}
+            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            aria-label="播放例句发音"
+          >
+            <Volume2 className="size-3.5" />
+          </button>
+        )}
+      </div>
       {zh && <p className="mt-1 text-xs text-muted-foreground">{zh}</p>}
       {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
     </div>
