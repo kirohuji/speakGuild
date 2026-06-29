@@ -177,6 +177,30 @@ async function run(sql: string, values: any[] = [], transaction = true): Promise
   }
 }
 
+async function runMany(statements: Array<{ sql: string; values: any[] }>, transaction = true): Promise<void> {
+  try {
+    const db = await ensureDb()
+    await db.executeSet(
+      statements.map((statement) => ({
+        statement: statement.sql,
+        values: statement.values,
+      })),
+      transaction,
+    )
+  } catch (error) {
+    if (!isConnectionDoesNotExistError(error)) throw error
+    resetConnectionState()
+    const db = await ensureDb()
+    await db.executeSet(
+      statements.map((statement) => ({
+        statement: statement.sql,
+        values: statement.values,
+      })),
+      transaction,
+    )
+  }
+}
+
 async function execute(sql: string, transaction = true): Promise<void> {
   try {
     const db = await ensureDb()
@@ -197,6 +221,7 @@ const jsonStore = createSqliteJsonStore({
   label: 'web-sqlite',
   queryRows,
   run,
+  runMany,
   execute,
   afterWrite: saveToStore,
 })

@@ -14,6 +14,9 @@ export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressi
 export interface OfflineStorageStats {
   downloadedPackCount: number
   downloadedPackBytes: number
+  offlineVocabularyCount: number
+  offlineChunkCount: number
+  offlinePatternCount: number
   localAssetCount: number
   localAssetBytes: number
   dictionaryEntryCount: number
@@ -35,6 +38,9 @@ export interface OfflineStorageDetails {
     updatedAt: string
     bytes: number
     topicCount: number
+    vocabularyCount: number
+    chunkCount: number
+    patternCount: number
     assetCount: number
     lastError?: string
   }>
@@ -71,10 +77,26 @@ async function clearAssetFiles(): Promise<void> {
 
 export const offlineStorageService = {
   async getStats(): Promise<OfflineStorageStats> {
-    const [packs, unitDetails, inkScripts, assets, dictionaries, expressions, outbox] = await Promise.all([
+    const [
+      packs,
+      unitDetails,
+      inkScripts,
+      offlineVocabularies,
+      offlineChunks,
+      offlinePatterns,
+      offlineContentRefs,
+      assets,
+      dictionaries,
+      expressions,
+      outbox,
+    ] = await Promise.all([
       localDb.list<InstalledLearningPack>('downloaded_packs'),
       localDb.list<any>('downloaded_unit_details'),
       localDb.list<any>('ink_scripts'),
+      localDb.list<any>('offline_vocabularies'),
+      localDb.list<any>('offline_chunks'),
+      localDb.list<any>('offline_patterns'),
+      localDb.list<any>('offline_content_refs'),
       localDb.list<LocalAsset>('local_assets'),
       localDb.list<any>('dictionary_entries'),
       localDb.list<any>('expression_entries'),
@@ -90,14 +112,34 @@ export const offlineStorageService = {
     })
     const downloadedInkScripts = inkScripts.filter((item) => installedPackIds.has(String(item?.unitId ?? '')))
     const readyAssets = assets.filter((asset) => asset.status === 'ready')
+    const downloadedContentRefs = offlineContentRefs.filter((item) => installedPackIds.has(String(item?.packId ?? '')))
+    const downloadedContentIds = {
+      vocab: new Set(downloadedContentRefs.filter((item) => item.kind === 'vocab').map((item) => String(item.contentId))),
+      chunk: new Set(downloadedContentRefs.filter((item) => item.kind === 'chunk').map((item) => String(item.contentId))),
+      pattern: new Set(downloadedContentRefs.filter((item) => item.kind === 'pattern').map((item) => String(item.contentId))),
+    }
+    const downloadedVocabularies = offlineVocabularies.filter((item) => downloadedContentIds.vocab.has(String(item.id)))
+    const downloadedChunks = offlineChunks.filter((item) => downloadedContentIds.chunk.has(String(item.id)))
+    const downloadedPatterns = offlinePatterns.filter((item) => downloadedContentIds.pattern.has(String(item.id)))
 
-    const downloadedPackBytes = sumJsonBytes([...installedPacks, ...downloadedUnitDetails, ...downloadedInkScripts])
+    const downloadedPackBytes = sumJsonBytes([
+      ...installedPacks,
+      ...downloadedUnitDetails,
+      ...downloadedInkScripts,
+      ...downloadedVocabularies,
+      ...downloadedChunks,
+      ...downloadedPatterns,
+      ...downloadedContentRefs,
+    ])
     const dictionaryBytes = sumJsonBytes(dictionaries)
     const expressionBytes = sumJsonBytes(expressions)
     const localAssetBytes = readyAssets.reduce((sum, asset) => sum + Number(asset.size ?? 0), 0)
 
     return {
       downloadedPackCount: installedPacks.length,
+      offlineVocabularyCount: downloadedVocabularies.length,
+      offlineChunkCount: downloadedChunks.length,
+      offlinePatternCount: downloadedPatterns.length,
       localAssetCount: readyAssets.length,
       localAssetBytes,
       downloadedPackBytes,
@@ -111,10 +153,14 @@ export const offlineStorageService = {
   },
 
   async getDetails(): Promise<OfflineStorageDetails> {
-    const [packs, unitDetails, inkScripts, outbox] = await Promise.all([
+    const [packs, unitDetails, inkScripts, offlineVocabularies, offlineChunks, offlinePatterns, offlineContentRefs, outbox] = await Promise.all([
       localDb.list<InstalledLearningPack>('downloaded_packs'),
       localDb.list<any>('downloaded_unit_details'),
       localDb.list<any>('ink_scripts'),
+      localDb.list<any>('offline_vocabularies'),
+      localDb.list<any>('offline_chunks'),
+      localDb.list<any>('offline_patterns'),
+      localDb.list<any>('offline_content_refs'),
       localDb.list<SyncOutboxItem>('outbox'),
     ])
 
@@ -127,6 +173,13 @@ export const offlineStorageService = {
           return id === pack.packId || unitId === pack.packId
         })
         const relatedInkScripts = inkScripts.filter((item) => String(item?.unitId ?? '') === pack.packId)
+        const relatedRefs = offlineContentRefs.filter((item) => String(item?.packId ?? '') === pack.packId)
+        const vocabIds = new Set(relatedRefs.filter((item) => item.kind === 'vocab').map((item) => String(item.contentId)))
+        const chunkIds = new Set(relatedRefs.filter((item) => item.kind === 'chunk').map((item) => String(item.contentId)))
+        const patternIds = new Set(relatedRefs.filter((item) => item.kind === 'pattern').map((item) => String(item.contentId)))
+        const relatedVocabularies = offlineVocabularies.filter((item) => vocabIds.has(String(item.id)))
+        const relatedChunks = offlineChunks.filter((item) => chunkIds.has(String(item.id)))
+        const relatedPatterns = offlinePatterns.filter((item) => patternIds.has(String(item.id)))
         return {
           packId: pack.packId,
           title: pack.title,
@@ -135,8 +188,19 @@ export const offlineStorageService = {
           status: pack.status,
           installedAt: pack.installedAt,
           updatedAt: pack.updatedAt,
-          bytes: sumJsonBytes([pack, ...relatedUnitDetails, ...relatedInkScripts]),
+          bytes: sumJsonBytes([
+            pack,
+            ...relatedUnitDetails,
+            ...relatedInkScripts,
+            ...relatedVocabularies,
+            ...relatedChunks,
+            ...relatedPatterns,
+            ...relatedRefs,
+          ]),
           topicCount: pack.manifest?.topics?.length ?? relatedUnitDetails.filter((item) => item?.topicId).length,
+          vocabularyCount: vocabIds.size || pack.manifest?.vocabularies?.length || 0,
+          chunkCount: chunkIds.size || pack.manifest?.chunks?.length || 0,
+          patternCount: patternIds.size || pack.manifest?.sentencePatterns?.length || 0,
           assetCount: pack.manifest?.assets?.length ?? 0,
           lastError: pack.lastError,
         }

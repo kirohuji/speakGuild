@@ -4,6 +4,7 @@ export interface SqliteJsonExecutor {
   label: string
   queryRows<T>(sql: string, values?: any[]): Promise<T[]>
   run(sql: string, values?: any[], transaction?: boolean): Promise<void>
+  runMany?(statements: Array<{ sql: string; values: any[] }>, transaction?: boolean): Promise<void>
   execute(sql: string, transaction?: boolean): Promise<void>
   afterWrite?(): Promise<void>
 }
@@ -220,29 +221,26 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       if (values.length === 0) return
       try {
         await enqueueWrite(async () => {
-          // 批量写入用显式事务包裹，避免每个 INSERT 自动提交
-          if (values.length > 10) {
-            await executor.execute('BEGIN TRANSACTION', false)
+          const statements = values.map((value) => {
+            const metadata = metadataFor(storeName, value)
+            const data = jsonDataFor(storeName, value)
+            return {
+              sql: upsertSql(storeName, metadata.columns),
+              values: [value.id, ...metadata.values, JSON.stringify(data), new Date().toISOString()],
+            }
+          })
+
+          if (executor.runMany && statements.length > 1) {
+            const chunkSize = 250
+            for (let i = 0; i < statements.length; i += chunkSize) {
+              await executor.runMany(statements.slice(i, i + chunkSize), true)
+            }
+          } else {
+            for (const statement of statements) {
+              await executor.run(statement.sql, statement.values)
+            }
           }
-          try {
-            for (const value of values) {
-              const metadata = metadataFor(storeName, value)
-              const data = jsonDataFor(storeName, value)
-              await executor.run(
-                upsertSql(storeName, metadata.columns),
-                [value.id, ...metadata.values, JSON.stringify(data), new Date().toISOString()],
-                values.length > 10 ? false : undefined, // 小批量保持默认事务行为
-              )
-            }
-            if (values.length > 10) {
-              await executor.execute('COMMIT', false)
-            }
-          } catch (error) {
-            if (values.length > 10) {
-              await executor.execute('ROLLBACK', false).catch(() => {})
-            }
-            throw error
-          }
+
           await executor.afterWrite?.()
         })
       } catch (error) {

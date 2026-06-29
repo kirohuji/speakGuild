@@ -90,6 +90,11 @@ function debugError(error: unknown) {
   return error
 }
 
+function debugErrorMessage(error: unknown) {
+  const detail = debugError(error)
+  return typeof detail === 'string' ? detail : JSON.stringify(detail)
+}
+
 function summarizeZipEntries(entries: Map<string, Entry>) {
   const paths = [...entries.keys()]
   return {
@@ -571,7 +576,7 @@ export const learningPackService = {
       }
 
       type AssetResult =
-        | { ok: true; asset: any; sha256: string; buffer: Uint8Array; index: number }
+        | { ok: true; asset: any; sha256: string; buffer: ArrayBuffer; index: number }
         | { ok: false; asset: any; error: string; index: number }
 
       const assetResults: AssetResult[] = []
@@ -587,7 +592,7 @@ export const learningPackService = {
               }
               return { ok: true, asset, sha256: actualSha256, buffer, index }
             } catch (e) {
-              return { ok: false, asset, error: debugError(e), index }
+              return { ok: false, asset, error: debugErrorMessage(e), index }
             }
           }),
         )
@@ -596,13 +601,13 @@ export const learningPackService = {
 
       // ── 阶段 B：批量写入文件系统 + SQLite ──
       const assetRefsToWrite: any[] = []
-      const filesToSave: Array<{ asset: any; sha256: string; buffer: Uint8Array }> = []
+      const filesToSave: Array<{ asset: any; sha256: string; buffer: ArrayBuffer }> = []
       let assetOk = 0
       let assetDeduped = 0
       let assetFail = 0
 
       for (const result of assetResults) {
-        if (!result.ok) {
+        if (result.ok === false) {
           assetFail++
           console.warn('[learning-pack] asset extract failed', { path: result.asset.path, error: result.error })
           continue
@@ -903,23 +908,31 @@ export const learningPackService = {
     await Promise.all(filesToRemove.map((sha256) => assetCacheService.remove(sha256)))
     console.log(`[learning-pack] 🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
 
-    // 并行清理所有关联数据
-    await Promise.all([
-      localDb.delete('downloaded_packs', packId),
-      localDb.delete('downloaded_unit_details', packId),
-      localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId),
-      localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId),
-      learningContentRepository.removePackContentIndex(packId),
-    ])
+    // 并行清理所有关联数据（每个操作内部已有错误处理，外层再加一层保护防止 Promise.all 挂起）
+    try {
+      await Promise.all([
+        localDb.delete('downloaded_packs', packId),
+        localDb.delete('downloaded_unit_details', packId),
+        localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId),
+        localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId),
+        learningContentRepository.removePackContentIndex(packId),
+      ])
+    } catch (error) {
+      console.warn(`[learning-pack] ⚠️ 关联数据清理异常: ${packId}`, error)
+    }
 
     console.log(`[learning-pack] 🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: 'learning_pack',
-      entityId: packId,
-      operation: 'delete',
-      payload: { packId },
-    })
-    await syncOutbox.markSynced(outboxItem.id)
+    try {
+      const outboxItem = await syncOutbox.enqueue({
+        entityType: 'learning_pack',
+        entityId: packId,
+        operation: 'delete',
+        payload: { packId },
+      })
+      await syncOutbox.markSynced(outboxItem.id)
+    } catch (error) {
+      console.warn(`[learning-pack] ⚠️ 同步出队异常: ${packId}`, error)
+    }
   },
 
   listInstalled(): Promise<InstalledLearningPack[]> {

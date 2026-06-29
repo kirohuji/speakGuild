@@ -254,7 +254,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                     </Button>
                     {/* Image upload */}
                     <input
-                    ref={(el) => { fileInputRefs.current[idx] = el }}
+                    ref={(el) => { fileInputRefs.current[pIdx * 1000 + iIdx] = el }}
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -274,7 +274,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                     ) : (
                       <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
                         disabled={imageUploading === `img-${pIdx}-${iIdx}`}
-                        onClick={() => fileInputRefs.current[idx]?.click()}>
+                        onClick={() => fileInputRefs.current[pIdx * 1000 + iIdx]?.click()}>
                         {imageUploading === `img-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
                       </Button>
                     )}
@@ -283,7 +283,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                   {/* Mobile preview for this item */}
                   <WarmupItemPreview
                     type="vocab_sentence_building"
-                    displayText={pat.chunk}
+                    displayText={pattern.chunk}
                     displayMeaning={local.vocabMeaning}
                     promptZh={item.zh}
                     answer={item.answer}

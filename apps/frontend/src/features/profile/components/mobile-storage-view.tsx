@@ -174,7 +174,7 @@ export function MobileStorageView() {
           icon={HardDrive}
           iconBg="bg-blue-500"
           label={t('profile.downloadedPacks', { defaultValue: '已下载学习包' })}
-          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })}`}
+          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })} · ${stats?.offlineVocabularyCount ?? 0} 单词`}
           right={(
             <div className="flex items-center gap-1.5">
               <ClearButton category="packs" />
@@ -216,7 +216,10 @@ export function MobileStorageView() {
                       </button>
                     </div>
                     <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
-                      {pack.topicCount} 话题 · {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
+                      {pack.topicCount} 话题 · {pack.vocabularyCount} 单词 · {pack.chunkCount} 句块 · {pack.patternCount} 句型
+                    </p>
+                    <p className="text-[11px] leading-5 text-muted-foreground">
+                      {pack.assetCount} 资源 · {formatBytes(pack.bytes)}
                     </p>
                     <p className="text-[10px] leading-4 text-muted-foreground/80">
                       安装 {formatDateTime(pack.installedAt)} · 更新 {formatDateTime(pack.updatedAt)}
