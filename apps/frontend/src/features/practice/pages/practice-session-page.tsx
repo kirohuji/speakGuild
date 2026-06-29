@@ -1161,6 +1161,7 @@ export function PracticeSessionPage() {
             <DialogTitle className="sr-only">{t('todayTask.practiceItem')}</DialogTitle>
             <DialogDescription className="sr-only">{t('practiceSession.warmupOutput')}</DialogDescription>
             <GuidedWarmupPhase
+              packId={detail?.scene.id}
               topicId={topicId || ''}
               topicTitle={detail?.topic.title || ''}
               warmupItems={warmupItems}

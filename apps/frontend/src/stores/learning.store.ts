@@ -164,7 +164,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       const units = await learningRepository.refreshMyUnits()
       set({ myUnits: units })
     } catch {
-      // ignore
+      const units = await learningRepository.getMyUnits().catch(() => [] as MyUnit[])
+      if (units.length > 0) set({ myUnits: units })
     }
   },
 

@@ -7,6 +7,12 @@ import {
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 
+type LocalDailyPracticeProgress = {
+  itemId: string
+  packId: string
+  bestScoreRank?: number | null
+}
+
 async function isPackInstalled(unitId: string) {
   const pack = await localDb.get<{ status?: string }>('downloaded_packs', unitId)
   return pack?.status === 'installed'
@@ -109,17 +115,82 @@ function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
   }
 }
 
+function countWarmupPracticeItems(unit: MyUnit): number {
+  let count = 0
+  for (const topic of unit.topics ?? []) {
+    const pipeline = topic.metadata?.outputTraining?.enabled
+      ? (topic.metadata.outputTraining.pipeline ?? [])
+      : []
+    for (const item of pipeline) {
+      const type = item.type
+      if (type === 'chunk_substitution' || type === 'pattern_drill') {
+        count += Array.isArray(item.items) ? item.items.length : 0
+      } else if (type === 'vocab_drill') {
+        count += Array.isArray(item.vocabs) ? item.vocabs.length : 0
+      } else if (type === 'vocab_sentence_building') {
+        count += (Array.isArray(item.patterns) ? item.patterns : []).reduce(
+          (sum: number, pattern: any) => sum + (Array.isArray(pattern?.items) ? pattern.items.length : 0),
+          0,
+        )
+      } else if (type === 'sentence_decomposition') {
+        count += 1
+      }
+    }
+  }
+  return count
+}
+
+async function mergeLocalPracticeProgress(units: MyUnit[]): Promise<MyUnit[]> {
+  if (units.length === 0) return units
+
+  const progresses = await localDb.list<LocalDailyPracticeProgress>('daily_practice_items').catch(() => [])
+  if (progresses.length === 0) return units
+
+  const completedByPack = new Map<string, Set<string>>()
+  for (const progress of progresses) {
+    if ((progress.bestScoreRank ?? 0) < 2) continue
+    const itemIds = completedByPack.get(progress.packId) ?? new Set<string>()
+    itemIds.add(progress.itemId)
+    completedByPack.set(progress.packId, itemIds)
+  }
+
+  return units.map((unit) => {
+    const localCompletedCount = completedByPack.get(unit.id)?.size ?? 0
+    const remoteCompletedCount = unit.progress?.completedPracticeCount ?? 0
+    if (localCompletedCount <= remoteCompletedCount) return unit
+
+    const computedTotal = countWarmupPracticeItems(unit)
+    const totalPracticeCount = unit.progress?.totalPracticeCount ?? computedTotal ?? unit.topicCount ?? 0
+    const completedPracticeCount = totalPracticeCount > 0
+      ? Math.min(localCompletedCount, totalPracticeCount)
+      : localCompletedCount
+    const completionPercent = totalPracticeCount > 0
+      ? Math.round((completedPracticeCount / totalPracticeCount) * 100)
+      : unit.completionPercent
+
+    return {
+      ...unit,
+      progress: {
+        ...unit.progress,
+        completedPracticeCount,
+        totalPracticeCount,
+      },
+      completionPercent: Math.max(unit.completionPercent ?? 0, completionPercent),
+    }
+  })
+}
+
 export const learningRepository = {
   async getMyUnits(): Promise<MyUnit[]> {
     const cached = await localDb.list<MyUnit>('my_learning_units')
-    if (cached.length > 0) return cached
+    if (cached.length > 0) return mergeLocalPracticeProgress(cached)
 
     try {
       const remote = await learningApi.getMyUnits()
       await localDb.putMany('my_learning_units', remote)
-      return remote
+      return mergeLocalPracticeProgress(remote)
     } catch {
-      return localDb.list<MyUnit>('my_learning_units')
+      return mergeLocalPracticeProgress(await localDb.list<MyUnit>('my_learning_units'))
     }
   },
 
@@ -129,9 +200,10 @@ export const learningRepository = {
 
   async refreshMyUnits(): Promise<MyUnit[]> {
     const remote = await learningApi.getMyUnits()
+    const merged = await mergeLocalPracticeProgress(remote)
     await localDb.clear('my_learning_units')
-    await localDb.putMany('my_learning_units', remote)
-    return remote
+    await localDb.putMany('my_learning_units', merged)
+    return merged
   },
 
   async getUnitDetail(unitId: string): Promise<UnitDetail | null> {

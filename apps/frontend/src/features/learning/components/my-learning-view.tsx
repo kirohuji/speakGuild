@@ -248,11 +248,17 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-lg p-3 transition-colors',
+        'relative flex items-center gap-3 rounded-lg p-3 transition-colors',
         isCompleted ? 'bg-muted/25 text-muted-foreground' : 'bg-muted/30',
       )}
     >
-      <Link to={`/learning/units/${unit.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+      <Link
+        to={`/learning/units/${unit.id}`}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-3',
+          isCompleted && 'opacity-65',
+        )}
+      >
         <div className={cn(
           'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
           isCompleted && 'from-slate-100 via-emerald-50 to-slate-100 text-emerald-600 opacity-80 dark:from-slate-900/70 dark:via-emerald-950/30 dark:to-slate-950/40',
@@ -290,9 +296,9 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
       {isCompleted ? (
         <Link
           to={`/learning/units/${unit.id}`}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border/70 bg-background/70 px-3 text-xs font-medium text-foreground shadow-sm active:bg-muted"
+          className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full border border-border/70 bg-background/85 px-2.5 text-[11px] font-medium text-foreground shadow-sm backdrop-blur active:bg-muted"
         >
-          <RotateCcw className="size-3.5" />
+          <RotateCcw className="size-3" />
           {t('learning.learnAgain')}
         </Link>
       ) : (

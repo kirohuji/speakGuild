@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
+import { dailyPracticeRepository, type DailyPracticeCandidate } from '@/lib/offline/daily-practice.repository'
 import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
 import { warmupRecordApi } from '../api/english-practice-api'
 import { ChunkOutputDrillCard } from './chunk-output-drill-card'
@@ -38,12 +39,14 @@ function getWarmupStepStatusLabel(params: {
 }
 
 export function GuidedWarmupPhase({
+  packId,
   topicId,
   topicTitle,
   warmupItems,
   onBack,
   onComplete,
 }: {
+  packId?: string
   topicId: string
   topicTitle: string
   warmupItems: any[]
@@ -68,8 +71,10 @@ export function GuidedWarmupPhase({
   // ── Flatten all warmup items into individual steps ──
   interface FlatStep {
     id: string
+    itemId: string
     type: string
     label: string
+    candidate: DailyPracticeCandidate | null
     render: () => React.ReactNode
   }
 type SimplePromptItem = { zh: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string }
@@ -86,59 +91,112 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   const flatSteps = useMemo<FlatStep[]>(() => {
     const steps: FlatStep[] = []
-    for (const item of warmupItems) {
+    const makeStep = (params: {
+      item: any
+      pipelineIndex: number
+      type: string
+      prompt: any
+      promptIndex: number
+      patternIndex?: number
+      label: string
+      displayLabel: string
+      headerContent: string
+      render: (localStepId: string) => ReactNode
+    }) => {
+      const localStepId = params.patternIndex != null
+        ? `${params.item.id}_${params.patternIndex}_${params.promptIndex}`
+        : `${params.item.id}_${params.promptIndex}`
+      const base = `${packId || 'unknown-pack'}:${topicId}:${params.item.id ?? params.pipelineIndex}:${params.type}`
+      const patternPart = params.patternIndex != null ? `:p${params.patternIndex}` : ''
+      const itemId = `${base}${patternPart}:i${params.promptIndex}`
+      const candidate: DailyPracticeCandidate | null = packId ? {
+        itemId,
+        packId,
+        packTitle: '',
+        topicId,
+        topicTitle,
+        type: params.type,
+        item: params.item,
+        prompt: params.prompt,
+        promptIndex: params.promptIndex,
+        patternIndex: params.patternIndex,
+        label: params.label,
+        displayLabel: params.displayLabel,
+        headerContent: params.headerContent,
+      } : null
+
+      steps.push({
+        id: localStepId,
+        itemId,
+        type: params.type,
+        label: params.label,
+        candidate,
+        render: () => params.render(localStepId),
+      })
+    }
+
+    for (const [pipelineIndex, item] of warmupItems.entries()) {
       if (item.type === 'chunk_substitution') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
-          steps.push({
-            id: `${item.id}_${subIdx}`,
+          makeStep({
+            item,
+            pipelineIndex,
             type: 'chunk_substitution',
+            prompt: sub,
+            promptIndex: subIdx,
             label: `${item.title} (${dirLabel})`,
-            render: () => {
-              const stepId = `${item.id}_${subIdx}`
-              return (
-                <ChunkOutputDrillCard
-                  chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
-                  items={[sub]}
-                  stepId={stepId}
-                  direction={item.direction ?? 'zh_to_en'}
-                  kind={item.kind ?? 'chunk'}
-                  groupTitle={item.title}
-                  onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
-                />
-              )
-            },
+            displayLabel: item.kind === 'word' ? '词汇替换' : '句块替换',
+            headerContent: item.chunk || sub.zh || item.title || '',
+            render: (stepId) => (
+              <ChunkOutputDrillCard
+                chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
+                items={[sub]}
+                stepId={stepId}
+                direction={item.direction ?? 'zh_to_en'}
+                kind={item.kind ?? 'chunk'}
+                groupTitle={item.title}
+                onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
+              />
+            ),
           })
         })
       } else if (item.type === 'vocab_drill') {
         ;((item.vocabs ?? []) as VocabPromptItem[]).forEach((v, vIdx) => {
-          steps.push({
-            id: `${item.id}_${vIdx}`,
+          makeStep({
+            item,
+            pipelineIndex,
             type: 'vocab_drill',
+            prompt: v,
+            promptIndex: vIdx,
             label: `${item.title}: ${v.targetWords?.join(', ') || v.promptZh?.slice(0, 20)}`,
-            render: () => {
-              const stepId = `${item.id}_${vIdx}`
-              return (
-                <VocabOutputCard
-                  title={item.title}
-                  stepId={stepId}
-                  direction={item.direction ?? 'zh_to_en'}
-                  vocabs={[v]}
-                  onComplete={(_idx, _passed, score) => markDone(stepId, score)}
-                />
-              )
-            },
+            displayLabel: '词汇输出',
+            headerContent: v.targetWords?.join(', ') || v.promptZh || item.title || '',
+            render: (stepId) => (
+              <VocabOutputCard
+                title={item.title}
+                stepId={stepId}
+                direction={item.direction ?? 'zh_to_en'}
+                vocabs={[v]}
+                onComplete={(_idx, _passed, score) => markDone(stepId, score)}
+              />
+            ),
           })
         })
       } else if (item.type === 'vocab_sentence_building') {
-        for (const pattern of (item.patterns ?? [])) {
+        for (const [patternIndex, pattern] of (item.patterns ?? []).entries()) {
           ;((pattern.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
-            const flatId = `${item.id}_${pattern.chunk}_${subIdx}`
-            steps.push({
-              id: flatId,
+            makeStep({
+              item,
+              pipelineIndex,
               type: 'vocab_sentence_building',
+              prompt: { ...sub, pattern },
+              promptIndex: subIdx,
+              patternIndex,
               label: `${item.vocabWord} + ${pattern.chunk}`,
-              render: () => (
+              displayLabel: '一词多句',
+              headerContent: item.vocabWord || pattern.chunk || sub.zh || '',
+              render: (flatId) => (
                 <ChunkOutputDrillCard
                   chunk={{ text: item.vocabWord || pattern.chunk, meaning: item.vocabMeaning || '' }}
                   items={[sub]}
@@ -155,46 +213,53 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         }
       } else if (item.type === 'sentence_decomposition') {
         const title = item.title || '句子拆解'
-        steps.push({
-          id: item.id,
+        makeStep({
+          item,
+          pipelineIndex,
           type: 'sentence_decomposition',
+          prompt: { levels: item.levels, fullSentence: item.fullSentence },
+          promptIndex: 0,
           label: title,
-          render: () => (
+          displayLabel: '句子拆解',
+          headerContent: item.levels?.[0]?.en || item.fullSentence || title,
+          render: (stepId) => (
             <SentenceDecompositionCard
               title={title}
               levels={item.levels}
-              stepId={item.id}
-              onComplete={(_passed, score) => markDone(item.id, score)}
+              stepId={stepId}
+              onComplete={(_passed, score) => markDone(stepId, score)}
             />
           ),
         })
       } else if (item.type === 'pattern_drill') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
-          steps.push({
-            id: `${item.id}_${subIdx}`,
+          makeStep({
+            item,
+            pipelineIndex,
             type: 'pattern_drill',
+            prompt: sub,
+            promptIndex: subIdx,
             label: `${item.title} (${dirLabel})`,
-            render: () => {
-              const stepId = `${item.id}_${subIdx}`
-              return (
-                <PatternDrillCard
-                  pattern={item.pattern}
-                  patternMeaning={item.patternMeaning}
-                  items={[sub]}
-                  stepId={stepId}
-                  direction={item.direction ?? 'zh_to_en'}
-                  groupTitle={item.title}
-                  onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
-                />
-              )
-            },
+            displayLabel: '句型操练',
+            headerContent: item.pattern || sub.zh || item.title || '',
+            render: (stepId) => (
+              <PatternDrillCard
+                pattern={item.pattern}
+                patternMeaning={item.patternMeaning}
+                items={[sub]}
+                stepId={stepId}
+                direction={item.direction ?? 'zh_to_en'}
+                groupTitle={item.title}
+                onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
+              />
+            ),
           })
         })
       }
     }
     return shuffleSteps(steps)
-  }, [shuffleSteps, warmupItems, warmupRunSeed])
+  }, [packId, shuffleSteps, topicId, topicTitle, warmupItems, warmupRunSeed])
 
   const totalSteps = flatSteps.length
 
@@ -210,14 +275,16 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
     try { localStorage.setItem(storageKey, JSON.stringify([...ids])) } catch {}
   }, [storageKey])
 
-  const markDone = useCallback((stepId: string, _score: WarmupScore = 'strong') => {
+  const markDone = useCallback((stepId: string, score: WarmupScore = 'strong') => {
+    const candidate = flatSteps.find((step) => step.id === stepId)?.candidate
+    if (candidate) void dailyPracticeRepository.completeAdHocItem(candidate, score)
     setDoneIds(prev => {
       const next = new Set(prev)
       next.add(stepId)
       persistDone(next)
       return next
     })
-  }, [persistDone])
+  }, [flatSteps, persistDone])
 
   const doneCount = doneIds.size
   const allDone = totalSteps > 0 && doneCount >= totalSteps
@@ -275,12 +342,20 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       const records = warmupStore.getAssessmentRecords()
       if (records.length === 0) return
       setAssessing(true)
+      const itemIds = flatSteps
+        .map((step) => step.candidate?.itemId)
+        .filter((itemId): itemId is string => Boolean(itemId))
+      const syncProgress = packId && itemIds.length
+        ? dailyPracticeRepository.syncAdHocRun({ packId, topicId, topicTitle, itemIds, records }).catch(() => undefined)
+        : Promise.resolve()
       warmupRecordApi.assess(topicId, topicTitle, records)
         .then((res) => setLastAssessment(res))
         .catch(() => setLastAssessment({ score: 0, feedback: '' }))
-        .finally(() => setAssessing(false))
+        .finally(() => {
+          void syncProgress.finally(() => setAssessing(false))
+        })
     }
-  }, [allDone, needsReviewRound, topicId, topicTitle, assessing, lastAssessment, warmupStore])
+  }, [allDone, flatSteps, needsReviewRound, packId, topicId, topicTitle, assessing, lastAssessment, warmupStore])
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -292,7 +367,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   if (totalSteps === 0) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
         <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
           <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
@@ -307,7 +382,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   if (needsReviewRound) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
         <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
           <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
@@ -347,7 +422,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   if (allDone) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-4">
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
         <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
           <div className="flex-1"><p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')}</p><h1 className="text-lg font-bold text-foreground">{topicTitle}</h1></div>
@@ -442,7 +517,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
   }
 
   return (
-    <div className={cn('flex h-full min-h-0 flex-col overflow-hidden pt-4', isIOS() && 'pt-safe')}>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden pt-[calc(1rem+env(safe-area-inset-top,0px))]">
       {/* Header */}
       <div className="mb-4 flex shrink-0 items-center gap-3 px-4">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>

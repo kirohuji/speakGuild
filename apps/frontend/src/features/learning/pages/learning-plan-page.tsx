@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
@@ -30,6 +31,7 @@ import { ShopView } from '../components/shop-view'
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
+  const location = useLocation()
   const [shopOpen, setShopOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [memberOpen, setMemberOpen] = useState(false)
@@ -53,6 +55,24 @@ export function LearningPlanPage() {
     fetchMyLearning()
     fetchDownloadedPacks()
   }, [fetchMyLearning, fetchDownloadedPacks])
+
+  useEffect(() => {
+    void refreshMyUnits()
+
+    const refreshVisibleLearning = () => {
+      if (document.visibilityState === 'visible') void refreshMyUnits()
+    }
+    const refreshFocusedLearning = () => {
+      void refreshMyUnits()
+    }
+
+    document.addEventListener('visibilitychange', refreshVisibleLearning)
+    window.addEventListener('focus', refreshFocusedLearning)
+    return () => {
+      document.removeEventListener('visibilitychange', refreshVisibleLearning)
+      window.removeEventListener('focus', refreshFocusedLearning)
+    }
+  }, [location.key, refreshMyUnits])
 
   const inProgress = myUnits.filter((u) => u.completionPercent < 100)
   const completed = myUnits.filter((u) => u.completionPercent >= 100)

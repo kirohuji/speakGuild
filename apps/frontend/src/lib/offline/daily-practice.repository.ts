@@ -454,6 +454,94 @@ export const dailyPracticeRepository = {
     return updated
   },
 
+  async completeAdHocItem(candidate: DailyPracticeCandidate, score: WarmupScore, targetDate?: string | null): Promise<DailyPracticeProgress> {
+    const date = normalizePlanDate(targetDate)
+    const practicedAt = practicedAtForDate(date)
+    const existing = await localDb.get<DailyPracticeProgress>('daily_practice_items', candidate.itemId)
+    const updated = nextProgress(existing ?? emptyProgress(candidate, date), score, date)
+    await localDb.put('daily_practice_items', updated)
+
+    const attempt: DailyPracticeAttempt = {
+      id: createId('attempt'),
+      clientAttemptId: createId('client_attempt'),
+      itemId: candidate.itemId,
+      packId: candidate.packId,
+      topicId: candidate.topicId,
+      type: candidate.type,
+      score,
+      passed: scoreRank(score) >= 2,
+      payload: { label: candidate.label, displayLabel: candidate.displayLabel },
+      practicedAt,
+      syncStatus: 'pending',
+    }
+    await localDb.put('daily_practice_attempts', attempt)
+
+    if (date === todayKey()) {
+      const run = await localDb.get<{ id: string; scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${date}`)
+      if (run?.scheduledItemIds?.includes(candidate.itemId)) {
+        const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), candidate.itemId]))
+        await localDb.put('daily_practice_runs', { ...run, completedItemIds })
+        void setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length))
+      }
+    }
+
+    return updated
+  },
+
+  async syncAdHocRun(params: {
+    packId: string
+    topicId: string
+    topicTitle: string
+    itemIds: string[]
+    records: WarmupRecordEntry[]
+    date?: string | null
+  }) {
+    const date = normalizePlanDate(params.date)
+    const itemIdSet = new Set(params.itemIds)
+    const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && itemIdSet.has(attempt.itemId))
+    const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
+    const itemProgresses = progresses.filter((progress) => itemIdSet.has(progress.itemId))
+    const completedIds = itemProgresses
+      .filter((progress) => progress.lastPracticedAt?.slice(0, 10) === date || progress.bestScoreRank >= 2)
+      .map((progress) => progress.itemId)
+    const payload = {
+      run: {
+        date,
+        scope: 'single',
+        packIds: [params.packId],
+        scheduledItemIds: params.itemIds,
+        completedItemIds: completedIds,
+        stats: {
+          records: params.records.length,
+          completed: completedIds.length,
+          source: 'guided_warmup',
+        },
+      },
+      attempts: pending,
+      itemProgresses,
+    }
+
+    await practiceRepository.markTodayActivity(completedIds.length || params.records.length || 1, date)
+
+    try {
+      const result = await dailyPracticeApi.complete(payload)
+      await Promise.all(result.syncedAttempts.map(async (clientAttemptId) => {
+        const attempt = pending.find((item) => item.clientAttemptId === clientAttemptId)
+        if (attempt) await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' as const })
+      }))
+      return result
+    } catch (error) {
+      await syncOutbox.enqueue({
+        entityType: 'daily_practice',
+        entityId: `guided:${params.topicId}:${date}`,
+        operation: 'create',
+        payload,
+      })
+      throw error
+    }
+  },
+
   async completeRun(plan: DailyPracticePlan, records: WarmupRecordEntry[]) {
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && plan.scheduledItemIds.includes(attempt.itemId))
