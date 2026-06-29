@@ -38,6 +38,7 @@ export interface LearningUnitSummary {
     chunkMastered: number
     chunkTotal: number
     completedPracticeCount: number
+    totalPracticeCount?: number
     completedScriptCount: number
   } | null
   completionPercent: number
@@ -124,6 +125,7 @@ export interface UnitDetail {
     chunkMastered: number
     chunkTotal: number
     completedPracticeCount: number
+    totalPracticeCount?: number
     completedScriptCount: number
   } | null
   vocabularies: VocabItem[]
@@ -158,6 +160,7 @@ export interface MyUnit {
     chunkMastered: number
     chunkTotal: number
     completedPracticeCount: number
+    totalPracticeCount?: number
     completedScriptCount: number
   }
   completionPercent: number

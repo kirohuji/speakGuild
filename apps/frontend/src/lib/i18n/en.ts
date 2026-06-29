@@ -921,6 +921,8 @@ const en = {
       vocab: 'Vocab',
       chunks: 'Chunks',
       topics: 'Topics',
+      practiceProgress: 'Practiced {{done}}/{{total}}',
+      learnAgain: 'Learn again',
       todayStudy: "Today's Study",
       noTasks: 'No tasks scheduled today',
       collapse: 'Collapse',

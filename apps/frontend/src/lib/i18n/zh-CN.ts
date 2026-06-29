@@ -923,6 +923,8 @@ const zhCN = {
       vocab: '词汇',
       chunks: '句块',
       topics: '话题',
+      practiceProgress: '已练 {{done}}/{{total}}',
+      learnAgain: '重新学习',
       todayStudy: '今日学习',
       noTasks: '今天还没有安排任务',
       collapse: '收起',

@@ -39,6 +39,11 @@ function extensionFromMime(mime?: string | null) {
   return null;
 }
 
+type WarmupTopicForProgress = {
+  id: string;
+  metadata: any;
+};
+
 @Injectable()
 export class LearningService {
   constructor(
@@ -116,6 +121,67 @@ export class LearningService {
       passedByScene.set(session.sceneId, topicIds);
     }
     return passedByScene;
+  }
+
+  private getWarmupPipeline(topic: WarmupTopicForProgress) {
+    const metadata = topic.metadata ?? {};
+    if (metadata.outputTraining?.enabled === false) return [];
+    if (Array.isArray(metadata.outputTraining?.pipeline)) return metadata.outputTraining.pipeline;
+    if (metadata.enabled === false) return [];
+    if (Array.isArray(metadata.pipeline)) return metadata.pipeline;
+    return [];
+  }
+
+  private buildWarmupPracticeItemIds(sceneId: string, topics: WarmupTopicForProgress[]) {
+    const itemIds: string[] = [];
+    for (const topic of topics) {
+      const pipeline = this.getWarmupPipeline(topic);
+      for (const [pipelineIndex, item] of pipeline.entries()) {
+        const type = item?.type;
+        if (!type) continue;
+        const base = `${sceneId}:${topic.id}:${item.id ?? pipelineIndex}:${type}`;
+        const push = (promptIndex: number, patternIndex?: number) => {
+          const patternPart = patternIndex != null ? `:p${patternIndex}` : '';
+          itemIds.push(`${base}${patternPart}:i${promptIndex}`);
+        };
+
+        if (type === 'chunk_substitution' || type === 'pattern_drill') {
+          (Array.isArray(item.items) ? item.items : []).forEach((_: unknown, index: number) => push(index));
+        } else if (type === 'vocab_drill') {
+          (Array.isArray(item.vocabs) ? item.vocabs : []).forEach((_: unknown, index: number) => push(index));
+        } else if (type === 'vocab_sentence_building') {
+          (Array.isArray(item.patterns) ? item.patterns : []).forEach((pattern: any, patternIndex: number) => {
+            (Array.isArray(pattern?.items) ? pattern.items : []).forEach((_: unknown, index: number) => push(index, patternIndex));
+          });
+        } else if (type === 'sentence_decomposition') {
+          push(0);
+        }
+      }
+    }
+    return itemIds;
+  }
+
+  private async getCompletedWarmupItemIdsByScene(userId: string, sceneIds: string[]) {
+    if (!sceneIds.length) return new Map<string, Set<string>>();
+    const progresses = await (this.prisma as any).userWarmupItemProgress.findMany({
+      where: {
+        userId,
+        packId: { in: sceneIds },
+        bestScoreRank: { gte: 2 },
+      },
+      select: {
+        packId: true,
+        itemId: true,
+      },
+    });
+
+    const byScene = new Map<string, Set<string>>();
+    for (const progress of progresses) {
+      const itemIds = byScene.get(progress.packId) ?? new Set<string>();
+      itemIds.add(progress.itemId);
+      byScene.set(progress.packId, itemIds);
+    }
+    return byScene;
   }
 
   /**
@@ -218,7 +284,7 @@ export class LearningService {
       where: { userId, sceneId: { in: sceneIds } },
     });
     const progressMap = new Map(progresses.map((p) => [p.sceneId, p]));
-    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
+    const completedWarmupItemIdsByScene = await this.getCompletedWarmupItemIdsByScene(userId, sceneIds);
 
     // 查询用户等级/输出级别
     const user = await this.prisma.user.findUnique({
@@ -228,7 +294,6 @@ export class LearningService {
 
     const fullList = allScenes.map((scene) => {
       const prog = progressMap.get(scene.id);
-      const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
       // Compute totals from topics
       let vocabCount = 0;
       let chunkCount = 0;
@@ -236,12 +301,10 @@ export class LearningService {
         vocabCount += (t as any)._count?.topicVocabs ?? 0;
         chunkCount += (t as any)._count?.activeChunks ?? 0;
       }
-      const totalItems =
-        vocabCount + chunkCount + scene._count.trainingTopics;
-      const completedItems =
-        (prog?.vocabLearned ?? 0) +
-        (prog?.chunkMastered ?? 0) +
-        completedPracticeCount;
+      const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
+      const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
+      const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
+      const totalPracticeItems = warmupItemIds.length;
 
       const isUnlocked =
         freeDownloadsEnabled || (user?.userLevel ?? 1) >= scene.requiredUserLevel;
@@ -281,12 +344,13 @@ export class LearningService {
               chunkMastered: prog.chunkMastered,
               chunkTotal: chunkCount,
               completedPracticeCount,
+              totalPracticeCount: totalPracticeItems,
               completedScriptCount: prog.completedScriptCount,
             }
           : null,
         completionPercent:
-          totalItems > 0
-            ? Math.round((completedItems / totalItems) * 100)
+          totalPracticeItems > 0
+            ? Math.round((completedPracticeCount / totalPracticeItems) * 100)
             : 0,
       };
     });
@@ -319,7 +383,6 @@ export class LearningService {
    * 获取用户正在学习/已完成的单元列表（有进度记录的）
    */
   async getMyLearningUnits(userId: string) {
-    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
     const progresses = await this.prisma.userSceneProgress.findMany({
       where: { userId },
       include: {
@@ -344,10 +407,11 @@ export class LearningService {
       },
       orderBy: { updatedAt: 'desc' },
     });
+    const sceneIds = progresses.map((progress) => progress.sceneId);
+    const completedWarmupItemIdsByScene = await this.getCompletedWarmupItemIdsByScene(userId, sceneIds);
 
     return progresses.map((p) => {
       const scene = p.scene;
-      const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
       // Compute totals from topics
       let vocabCount = 0;
       let chunkCount = 0;
@@ -355,10 +419,11 @@ export class LearningService {
         vocabCount += (t as any)._count?.topicVocabs ?? 0;
         chunkCount += (t as any)._count?.activeChunks ?? 0;
       }
-      const totalItems =
-        vocabCount + chunkCount + scene._count.trainingTopics;
-      const completedItems = p.vocabLearned + p.chunkMastered + completedPracticeCount;
-      const completionPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+      const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
+      const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
+      const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
+      const totalPracticeItems = warmupItemIds.length;
+      const completionPercent = totalPracticeItems > 0 ? Math.round((completedPracticeCount / totalPracticeItems) * 100) : 0;
 
       return {
         id: scene.id,
@@ -387,6 +452,7 @@ export class LearningService {
           chunkMastered: p.chunkMastered,
           chunkTotal: chunkCount,
           completedPracticeCount,
+          totalPracticeCount: totalPracticeItems,
           completedScriptCount: p.completedScriptCount,
         },
         completionPercent,
@@ -511,8 +577,11 @@ export class LearningService {
 
     // 场景掌握度
     const progress = scene.userProgresses[0] ?? null;
-    const passedPracticeTopicIdsByScene = await this.getPassedPracticeTopicIdsByScene(userId);
-    const completedPracticeCount = passedPracticeTopicIdsByScene.get(scene.id)?.size ?? 0;
+    const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
+    const completedWarmupItemIdsByScene = await this.getCompletedWarmupItemIdsByScene(userId, [scene.id]);
+    const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
+    const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
+    const totalPracticeCount = warmupItemIds.length;
 
     return {
       id: scene.id,
@@ -537,6 +606,7 @@ export class LearningService {
             chunkMastered: progress.chunkMastered,
             chunkTotal: progress.chunkTotal,
             completedPracticeCount,
+            totalPracticeCount,
             completedScriptCount: progress.completedScriptCount,
           }
         : null,

@@ -921,6 +921,8 @@ const ja = {
       vocab: '語彙',
       chunks: 'チャンク',
       topics: 'トピック',
+      practiceProgress: '練習済み {{done}}/{{total}}',
+      learnAgain: 'もう一度学習',
       todayStudy: '今日の学習',
       noTasks: '今日はタスクがありません',
       collapse: '折りたたむ',

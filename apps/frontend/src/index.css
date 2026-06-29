@@ -12,6 +12,7 @@
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
   --keyboard-height: 0px;
   --keyboard-offset: 0px;
+  --keyboard-available-height: 100dvh;
 }
 
 @keyframes mobile-progress {
@@ -296,6 +297,14 @@
     max-height: calc(100dvh - var(--keyboard-height) - env(safe-area-inset-top, 0px) - 1rem) !important;
     transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;
     transition: max-height 220ms ease, transform 220ms ease;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='assessment'] {
+    max-height: calc(var(--keyboard-available-height) - env(safe-area-inset-top, 0px) - 1rem) !important;
+    transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;
+    transition: height 220ms ease, max-height 220ms ease, transform 220ms ease;
     overflow-y: auto;
     overscroll-behavior: contain;
   }

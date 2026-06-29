@@ -462,6 +462,8 @@ function SectionHeader({
   collapsed?: boolean
   onToggle?: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="mb-3 flex items-end justify-between gap-3 px-1">
       <div className="flex min-w-0 items-start gap-2">

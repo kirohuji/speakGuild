@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { BookOpen, CheckCircle2, ChevronRight, Download, Loader2, X } from 'lucide-react'
+import { BookOpen, CheckCircle2, ChevronRight, Download, Loader2, RotateCcw, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -121,6 +121,9 @@ function InProgressUnitCard({
   const Icon = getCategoryIcon(unit.categoryName)
   const needsDownload = !isPackDownloaded
   const showPackAction = needsDownload || hasPackUpdate
+  const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
+  const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
+  const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
 
   const handleQuit = useCallback(async () => {
     setQuitting(true)
@@ -179,6 +182,13 @@ function InProgressUnitCard({
               <span>{unit.chunkCount} {t('learning.chunks')}</span>
               <span>{unit.topicCount} {t('learning.topics')}</span>
             </div>
+            <div className="mt-2 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>{t('learning.practiceProgress', { done: completedPracticeCount, total: totalPracticeCount })}</span>
+                <span className="font-semibold tabular-nums text-foreground/75">{pct}%</span>
+              </div>
+              <Progress value={pct} className="h-1" />
+            </div>
           </div>
         </Link>
 
@@ -229,48 +239,65 @@ function InProgressUnitCard({
 
 function MyUnitCard({ unit }: { unit: MyUnit }) {
   const { t } = useTranslation()
-  const pct = unit.completionPercent
+  const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
   const isCompleted = pct >= 100
   const Icon = isCompleted ? CheckCircle2 : getCategoryIcon(unit.categoryName)
+  const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
+  const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
 
   return (
-    <Link
-      to={`/learning/units/${unit.id}`}
+    <div
       className={cn(
-        'flex items-center gap-3 rounded-lg bg-muted/30 p-3 transition-colors',
-        isCompleted ? 'hover:bg-emerald-500/[0.06]' : 'hover:bg-muted/50',
+        'flex items-center gap-3 rounded-lg p-3 transition-colors',
+        isCompleted ? 'bg-muted/25 text-muted-foreground' : 'bg-muted/30',
       )}
     >
-      <div className={cn(
-        'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
-        isCompleted && 'from-emerald-100 via-emerald-50 to-slate-100 text-emerald-600 dark:from-emerald-950/50 dark:via-emerald-950/30 dark:to-slate-950/40',
-      )}>
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-        <Icon className="relative size-7" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <p className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</p>
-          <Badge variant={isCompleted ? 'secondary' : 'outline'} className="h-5 shrink-0 rounded-full px-2 text-[10px]">
-            {isCompleted ? t('learning.done') : `${pct}%`}
-          </Badge>
+      <Link to={`/learning/units/${unit.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+        <div className={cn(
+          'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
+          isCompleted && 'from-slate-100 via-emerald-50 to-slate-100 text-emerald-600 opacity-80 dark:from-slate-900/70 dark:via-emerald-950/30 dark:to-slate-950/40',
+        )}>
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+          <Icon className="relative size-7" />
         </div>
-        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
-        <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
-          <span>{unit.vocabCount} {t('learning.vocab')}</span>
-          <span>{unit.chunkCount} {t('learning.chunks')}</span>
-          <span>{unit.topicCount} {t('learning.topics')}</span>
-        </div>
-        {!isCompleted && unit.topics && unit.topics.length > 0 && (
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="size-1 rounded-full bg-primary/40" />
-            <span className="line-clamp-1">{unit.topics[0]?.title}</span>
-            {unit.topics.length > 1 && <span className="shrink-0 text-muted-foreground/70">+{unit.topics.length - 1}</span>}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-2">
+            <p className={cn('line-clamp-1 flex-1 text-sm font-semibold leading-5', isCompleted ? 'text-muted-foreground' : 'text-foreground')}>{unit.title}</p>
+            <Badge variant={isCompleted ? 'secondary' : 'outline'} className="h-5 shrink-0 rounded-full px-2 text-[10px]">
+              {isCompleted ? t('learning.done') : `${pct}%`}
+            </Badge>
           </div>
-        )}
-        {!isCompleted && <Progress value={pct} className="mt-2 h-1" />}
-      </div>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground/70" />
-    </Link>
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+          <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
+            <span>{unit.vocabCount} {t('learning.vocab')}</span>
+            <span>{unit.chunkCount} {t('learning.chunks')}</span>
+            <span>{unit.topicCount} {t('learning.topics')}</span>
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            {isCompleted && <CheckCircle2 className="size-3.5 text-emerald-600" />}
+            <span>{t('learning.practiceProgress', { done: completedPracticeCount, total: totalPracticeCount })}</span>
+          </div>
+          {!isCompleted && unit.topics && unit.topics.length > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="size-1 rounded-full bg-primary/40" />
+              <span className="line-clamp-1">{unit.topics[0]?.title}</span>
+              {unit.topics.length > 1 && <span className="shrink-0 text-muted-foreground/70">+{unit.topics.length - 1}</span>}
+            </div>
+          )}
+          {!isCompleted && <Progress value={pct} className="mt-2 h-1" />}
+        </div>
+      </Link>
+      {isCompleted ? (
+        <Link
+          to={`/learning/units/${unit.id}`}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border/70 bg-background/70 px-3 text-xs font-medium text-foreground shadow-sm active:bg-muted"
+        >
+          <RotateCcw className="size-3.5" />
+          {t('learning.learnAgain')}
+        </Link>
+      ) : (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground/70" />
+      )}
+    </div>
   )
 }

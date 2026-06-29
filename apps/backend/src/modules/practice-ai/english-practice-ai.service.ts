@@ -6,6 +6,21 @@ import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
 
+const PLACEMENT_GOAL_PACKAGE_TYPES: Record<string, string> = {
+  foundation_start: 'foundation',
+  daily_scenes: 'daily',
+  exam_ielts: 'exam',
+  story_roleplay: 'story',
+  course_system: 'course',
+};
+
+type PlacementSceneBase = {
+  id: string;
+  packageType: unknown;
+  requiredOutputLevel: string;
+  _count: { trainingTopics: number; storyEpisodes: number };
+};
+
 @Injectable()
 export class EnglishPracticeAiService {
   private readonly logger = new Logger(EnglishPracticeAiService.name);
@@ -49,6 +64,84 @@ export class EnglishPracticeAiService {
       .slice(0, 3);
   }
 
+  private levelToNumber(level: unknown) {
+    const parsed = Number.parseInt(this.parseLevel(level).slice(1), 10);
+    return Number.isFinite(parsed) ? parsed : 1;
+  }
+
+  private hashString(value: string) {
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) {
+      hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash);
+  }
+
+  private buildGoalPackageWeights(goals: string[]) {
+    const weights = new Map<string, number>();
+    goals.forEach((goal, index) => {
+      const packageType = PLACEMENT_GOAL_PACKAGE_TYPES[goal];
+      if (!packageType) return;
+      weights.set(packageType, (weights.get(packageType) ?? 0) + (index === 0 ? 4 : index === 1 ? 2 : 1));
+    });
+    return weights;
+  }
+
+  private rankPlacementScenes<T extends PlacementSceneBase>(params: {
+    scenes: T[];
+    goals: string[];
+    outputLevel: string;
+    aiRecommendedIds: Set<string>;
+    userId: string;
+  }) {
+    const packageWeights = this.buildGoalPackageWeights(params.goals);
+    const targetLevel = this.levelToNumber(params.outputLevel);
+
+    return [...params.scenes].sort((a, b) => {
+      const score = (scene: T) => {
+        const packageType = String(scene.packageType);
+        const goalScore = packageWeights.size ? packageWeights.get(packageType) ?? 0 : 1;
+        const levelDistance = Math.abs(this.levelToNumber(scene.requiredOutputLevel) - targetLevel);
+        const levelScore = Math.max(0, 3 - levelDistance);
+        const contentScore = Math.min(scene._count.trainingTopics + scene._count.storyEpisodes, 8) * 0.15;
+        const aiScore = params.aiRecommendedIds.has(scene.id) ? 0.75 : 0;
+        const tieBreaker = (this.hashString(`${params.userId}:${params.goals.join(',')}:${scene.id}`) % 1000) / 10000;
+        return goalScore * 3 + levelScore + contentScore + aiScore + tieBreaker;
+      };
+      return score(b) - score(a);
+    });
+  }
+
+  private selectPlacementRecommendations<T extends PlacementSceneBase>(params: {
+    scenes: T[];
+    goals: string[];
+    outputLevel: string;
+    aiRecommendedIds: Set<string>;
+    userId: string;
+  }) {
+    const rankedScenes = this.rankPlacementScenes(params);
+    const preferredPackageTypes = [...new Set(params.goals.map((goal) => PLACEMENT_GOAL_PACKAGE_TYPES[goal]).filter(Boolean))];
+    const selected: typeof rankedScenes = [];
+    const selectedIds = new Set<string>();
+
+    for (const packageType of preferredPackageTypes) {
+      if (selected.length >= 3) break;
+      const scene = rankedScenes.find((item) => String(item.packageType) === packageType && !selectedIds.has(item.id));
+      if (!scene) continue;
+      selected.push(scene);
+      selectedIds.add(scene.id);
+    }
+
+    for (const scene of rankedScenes) {
+      if (selected.length >= 3) break;
+      if (selectedIds.has(scene.id)) continue;
+      selected.push(scene);
+      selectedIds.add(scene.id);
+    }
+
+    return selected;
+  }
+
   async assessPlacement(
     dto: {
       learningGoals: string[];
@@ -85,23 +178,10 @@ export class EnglishPracticeAiService {
         },
       },
       orderBy: { createdAt: 'asc' },
-      take: 30,
+      take: 80,
     });
 
-    const goalTypeHints: Record<string, string> = {
-      foundation_start: 'foundation',
-      daily_scenes: 'daily',
-      exam_ielts: 'exam',
-      story_roleplay: 'story',
-      course_system: 'course',
-      arrival_roots: 'daily',
-      daily_hustle: 'daily',
-      people: 'daily',
-      work_study: 'course',
-      crisis_mode: 'daily',
-      out_about: 'daily',
-    };
-    const preferredPackageTypes = [...new Set(cleanGoals.map((goal) => goalTypeHints[goal]).filter(Boolean))];
+    const preferredPackageTypes = [...new Set(cleanGoals.map((goal) => PLACEMENT_GOAL_PACKAGE_TYPES[goal]).filter(Boolean))];
 
     const candidateText = scenes.map((scene, index) => [
       `${index + 1}. id=${scene.id}`,
@@ -124,6 +204,10 @@ Level rubric:
 - L3: can explain reasons, preferences, simple conflicts, and keep a short conversation coherent.
 - L4: can negotiate, persuade, describe tradeoffs, and express more complex opinions.
 - L5: can discuss open-ended topics naturally with nuance and strong control.
+
+Important separation:
+- Decide outputLevel from the learner's answer quality only. Do not raise or lower the level because of selected goals.
+- Use selected goals only for recommendationReason, nextStep, and suggested unit ids.
 
 Recommend learning units from the provided candidate list only. Use exact candidate ids.`;
 
@@ -170,25 +254,22 @@ Return this exact JSON shape:
       parsed = null;
     }
 
-    const recommendedIds = new Set(
-      Array.isArray(parsed?.recommendedUnitIds)
-        ? parsed.recommendedUnitIds.map((id: unknown) => String(id))
-        : [],
-    );
+    const recommendedIdValues: string[] = Array.isArray(parsed?.recommendedUnitIds)
+      ? parsed.recommendedUnitIds.map((id: unknown) => String(id))
+      : [];
+    const recommendedIds = new Set<string>(recommendedIdValues);
     const fallbackLevel = cleanAnswers.some((answer) => answer.answer.length > 120) ? 'L3' : cleanAnswers.some((answer) => answer.answer.length > 50) ? 'L2' : 'L1';
     const outputLevel = this.parseLevel(parsed?.outputLevel ?? fallbackLevel);
-    const recommendedUnits = scenes
-      .filter((scene) => recommendedIds.has(scene.id))
-      .slice(0, 3);
-    const fallbackScenes = preferredPackageTypes.length
-      ? [
-          ...scenes.filter((scene) => preferredPackageTypes.includes(scene.packageType)),
-          ...scenes.filter((scene) => !preferredPackageTypes.includes(scene.packageType)),
-        ]
-      : scenes;
-    const finalRecommendedUnits = (recommendedUnits.length ? recommendedUnits : fallbackScenes.slice(0, 3)).map((scene) => ({
+    const recommendedScenes = this.selectPlacementRecommendations({
+      scenes,
+      goals: cleanGoals,
+      outputLevel,
+      aiRecommendedIds: recommendedIds,
+      userId,
+    });
+    const finalRecommendedUnits = recommendedScenes.map((scene) => ({
       id: scene.id,
-      packageType: scene.packageType,
+      packageType: String(scene.packageType),
       title: scene.title,
       categoryName: scene.category.name,
       location: scene.location,
@@ -225,6 +306,9 @@ Return this exact JSON shape:
         title: unit.title,
         requiredOutputLevel: unit.requiredOutputLevel,
       })),
+      primaryGoal: cleanGoals[0] ?? null,
+      preferredPackageTypes,
+      recommendationStrategy: 'answer_level_plus_weighted_goal_mix',
       answers: cleanAnswers.map((answer) => ({
         promptId: answer.promptId,
         prompt: answer.prompt,

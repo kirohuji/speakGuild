@@ -21,6 +21,7 @@ function useNativeKeyboard() {
     let disposed = false;
     let listeners: { remove: () => Promise<void> | void }[] = [];
     let focusScrollTimer: number | undefined;
+    let stableViewportHeight = window.innerHeight;
 
     const getKeyboardContext = () => {
       const activeElement = document.activeElement;
@@ -78,16 +79,25 @@ function useNativeKeyboard() {
     };
 
     const setKeyboardOpen = (height: number) => {
+      const currentViewportHeight = window.innerHeight;
+      const expectedAvailableHeight = stableViewportHeight - height;
+      const availableHeight = Math.max(
+        240,
+        Math.min(currentViewportHeight, expectedAvailableHeight > 0 ? expectedAvailableHeight : currentViewportHeight),
+      );
       document.documentElement.style.setProperty('--keyboard-height', `${height}px`);
       document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(height / -2)}px`);
+      document.documentElement.style.setProperty('--keyboard-available-height', `${Math.round(availableHeight)}px`);
       document.body.dataset.keyboardOpen = 'true';
       document.body.dataset.keyboardContext = getKeyboardContext();
       scheduleFocusedInputScroll();
     };
 
     const setKeyboardClosed = () => {
+      stableViewportHeight = window.innerHeight;
       document.documentElement.style.setProperty('--keyboard-height', '0px');
       document.documentElement.style.setProperty('--keyboard-offset', '0px');
+      document.documentElement.style.setProperty('--keyboard-available-height', '100dvh');
       delete document.body.dataset.keyboardOpen;
       delete document.body.dataset.keyboardContext;
     };

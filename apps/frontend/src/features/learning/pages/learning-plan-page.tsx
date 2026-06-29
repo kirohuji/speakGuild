@@ -257,6 +257,7 @@ function WarmupRecordDetailDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation()
   const [currentIdx, setCurrentIdx] = useState(0)
 
   if (!record) return null

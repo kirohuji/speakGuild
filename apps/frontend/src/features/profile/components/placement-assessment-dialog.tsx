@@ -539,10 +539,11 @@ export function LearningAssessmentDialog({
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
+        data-keyboard-overlay="assessment"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         className={cn(
-          'flex h-[min(640px,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-lg border border-border/70 bg-background p-0 shadow-lg',
+          'flex h-[min(640px,calc(var(--keyboard-available-height)-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-lg border border-border/70 bg-background p-0 shadow-lg',
           required && '[&>button:last-child]:hidden',
         )}
       >
