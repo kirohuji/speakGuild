@@ -591,6 +591,13 @@ function UserRow({
                 )}
               </p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              {(user.mobileOtaTester?.lastBundleVersion || user.mobileOtaTester?.lastNativeVersion) && (
+                <p className="text-[10px] text-muted-foreground/60 truncate">
+                  {user.mobileOtaTester?.lastNativeVersion && `原生 v${user.mobileOtaTester.lastNativeVersion}`}
+                  {user.mobileOtaTester?.lastNativeVersion && user.mobileOtaTester?.lastBundleVersion && ' · '}
+                  {user.mobileOtaTester?.lastBundleVersion && `OTA v${user.mobileOtaTester.lastBundleVersion}`}
+                </p>
+              )}
               {user.online && (
                 <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-emerald-600">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -749,6 +756,31 @@ function UserRow({
                     {otaChannel === 'staging' ? '预发布通道' : '正式通道'}
                   </Badge>
                 </div>
+
+                {/* 最近一次检查的版本信息 */}
+                {(detail.mobileOtaTester?.lastBundleVersion || detail.mobileOtaTester?.lastNativeVersion) && (
+                  <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                    {detail.mobileOtaTester?.lastNativeVersion && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">原生版本</p>
+                        <p className="text-sm font-mono font-medium">v{detail.mobileOtaTester.lastNativeVersion}</p>
+                      </div>
+                    )}
+                    {detail.mobileOtaTester?.lastBundleVersion && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">热更包版本</p>
+                        <p className="text-sm font-mono font-medium">v{detail.mobileOtaTester.lastBundleVersion}</p>
+                      </div>
+                    )}
+                    {detail.mobileOtaTester?.lastCheckAt && (
+                      <div className="col-span-2">
+                        <p className="text-[10px] text-muted-foreground">
+                          最近检查 {new Date(detail.mobileOtaTester.lastCheckAt).toLocaleString('zh-CN')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">

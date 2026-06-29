@@ -36,6 +36,9 @@ export interface MobileOtaTester {
   targetReleaseLine: string | null;
   targetVersion: string | null;
   notes: string | null;
+  lastBundleVersion: string | null;
+  lastNativeVersion: string | null;
+  lastCheckAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -38,6 +38,26 @@ export class MobileUpdatesService {
       ? await this.prisma.mobileOtaTester.findUnique({ where: { userId } })
       : null;
 
+    // 记录用户最近一次检查时的版本信息（所有用户都记录，方便管理端查看）
+    if (userId) {
+      await this.prisma.mobileOtaTester.upsert({
+        where: { userId },
+        create: {
+          userId,
+          enabled: tester?.enabled ?? false,
+          channel: tester?.channel ?? 'production',
+          lastBundleVersion: currentBundleVersion || null,
+          lastNativeVersion: params.nativeVersion || null,
+          lastCheckAt: new Date(),
+        },
+        update: {
+          lastBundleVersion: currentBundleVersion || null,
+          lastNativeVersion: params.nativeVersion || null,
+          lastCheckAt: new Date(),
+        },
+      }).catch(() => { /* 静默失败，不影响 check 主流程 */ })
+    }
+
     // 内测用户使用 tester 表里指定的 channel，否则用客户端传来的 channel（默认 production）
     const effectiveChannel = (tester?.enabled && tester.channel) ? tester.channel : channel;
 

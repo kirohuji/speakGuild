@@ -1539,6 +1539,9 @@ model MobileOtaTester {
   targetReleaseLine String?
   targetVersion     String?
   notes             String?  @db.Text
+  lastBundleVersion String?
+  lastNativeVersion String?
+  lastCheckAt       DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

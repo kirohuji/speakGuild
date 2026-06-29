@@ -29,6 +29,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://${POSTGRES_USER:-manyu}:${POSTGRES_PASSWORD:-manyu}@db:5432/${POSTGRES_DB:-manyu}
+      REDIS_URL: ${REDIS_URL:-redis://127.0.0.1:6379}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost,capacitor://localhost,ionic://localhost}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
