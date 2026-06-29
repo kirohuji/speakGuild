@@ -4,6 +4,7 @@ import {
   Smartphone, Search, Plus, Trash2, Power, PowerOff,
   ChevronLeft, ChevronRight, Loader2, ArrowLeft, ShieldAlert,
   Upload, FileArchive, Globe, CheckCircle2, XCircle, RefreshCw,
+  Bell, BellOff, GitBranch, TestTube2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,10 @@ interface MobileBundle {
   version: string;
   platform: string;
   channel: string;
+  releaseLine: string | null;
+  audience: string;
+  notifyPolicy: string;
+  allowMajorUpgrade: boolean;
   assetId: string;
   checksum: string;
   minNativeVersion: string | null;
@@ -61,6 +66,12 @@ const platformColor = (p: string): 'default' | 'secondary' | 'outline' =>
 
 const channelLabel = (c: string) => c === 'production' ? '正式版' : c === 'staging' ? '预发布' : c;
 const channelColor = (c: string) => c === 'production' ? 'default' : 'outline';
+const audienceLabel = (value: string) => value === 'internal' ? '内测用户' : '所有用户';
+const notifyPolicyLabel = (value: string) => value === 'silent' ? '静默' : value === 'force' ? '通知' : '自动';
+const releaseLineOf = (version: string) => {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version.trim());
+  return match ? `${match[1]}.${match[2]}` : '';
+};
 
 const fmtSize = (bytes: number | undefined) => {
   if (!bytes) return '—';
@@ -93,6 +104,9 @@ function BundleFormDialog({
   const [version, setVersion] = useState('');
   const [platform, setPlatform] = useState('ios');
   const [channel, setChannel] = useState('production');
+  const [audience, setAudience] = useState('all');
+  const [notifyPolicy, setNotifyPolicy] = useState('auto');
+  const [allowMajorUpgrade, setAllowMajorUpgrade] = useState(false);
   const [assetId, setAssetId] = useState('');
   const [checksum, setChecksum] = useState('');
   const [minNativeVersion, setMinNativeVersion] = useState('');
@@ -107,6 +121,9 @@ function BundleFormDialog({
       setVersion(bundle.version);
       setPlatform(bundle.platform);
       setChannel(bundle.channel);
+      setAudience(bundle.audience || 'all');
+      setNotifyPolicy(bundle.notifyPolicy || 'auto');
+      setAllowMajorUpgrade(Boolean(bundle.allowMajorUpgrade));
       setAssetId(bundle.assetId);
       setChecksum(bundle.checksum);
       setMinNativeVersion(bundle.minNativeVersion || '');
@@ -118,6 +135,9 @@ function BundleFormDialog({
       setVersion('');
       setPlatform('ios');
       setChannel('production');
+      setAudience('all');
+      setNotifyPolicy('auto');
+      setAllowMajorUpgrade(false);
       setAssetId('');
       setChecksum('');
       setMinNativeVersion('');
@@ -136,6 +156,9 @@ function BundleFormDialog({
         await patch(`/admin/mobile-bundles/${bundle!.id}`, {
           assetId: assetId || undefined,
           checksum: checksum || undefined,
+          audience,
+          notifyPolicy,
+          allowMajorUpgrade,
           minNativeVersion: minNativeVersion || undefined,
           rolloutPercent,
           enabled,
@@ -147,6 +170,9 @@ function BundleFormDialog({
           version,
           platform,
           channel,
+          audience,
+          notifyPolicy,
+          allowMajorUpgrade,
           assetId,
           checksum,
           minNativeVersion: minNativeVersion || undefined,
@@ -167,7 +193,7 @@ function BundleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? '编辑安装包' : '新增安装包'}</DialogTitle>
           <DialogDescription>
@@ -175,138 +201,183 @@ function BundleFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
-          {!isEdit && (
-            <>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="bundle-version">版本号 *</Label>
-                <Input
-                  id="bundle-version"
-                  placeholder="如 1.2.3"
-                  value={version}
-                  onChange={(e) => setVersion(e.target.value)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          {/* ── 左栏：基本信息 ── */}
+          <div className="flex flex-col gap-4">
+            {!isEdit && (
+              <>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="bundle-platform">平台 *</Label>
-                  <select
-                    id="bundle-platform"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                    value={platform}
-                    onChange={(e) => setPlatform(e.target.value)}
-                  >
-                    <option value="ios">iOS</option>
-                    <option value="android">Android</option>
-                  </select>
+                  <Label htmlFor="bundle-version">版本号 *</Label>
+                  <Input
+                    id="bundle-version"
+                    placeholder="如 1.2.3"
+                    value={version}
+                    onChange={(e) => setVersion(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    发布线: {releaseLineOf(version) || '请输入 x.y.z'}
+                  </p>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="bundle-channel">渠道</Label>
-                  <select
-                    id="bundle-channel"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                    value={channel}
-                    onChange={(e) => setChannel(e.target.value)}
-                  >
-                    <option value="production">正式版</option>
-                    <option value="staging">预发布</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="bundle-platform">平台 *</Label>
+                    <select
+                      id="bundle-platform"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                      value={platform}
+                      onChange={(e) => setPlatform(e.target.value)}
+                    >
+                      <option value="ios">iOS</option>
+                      <option value="android">Android</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="bundle-channel">渠道</Label>
+                    <select
+                      id="bundle-channel"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                      value={channel}
+                      onChange={(e) => setChannel(e.target.value)}
+                    >
+                      <option value="production">正式版</option>
+                      <option value="staging">预发布</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
-
-          <div className="flex flex-col gap-1.5">
-            <Label>安装包文件 (zip) *</Label>
-            <FileUploadField
-              accept=".zip"
-              group="mobile_bundle"
-              uploadLabel="上传 zip"
-              placeholder="点击上传或拖拽 .zip 文件到 COS"
-              onUploaded={(_cosUrl, id) => setAssetId(id)}
-              className={assetId ? 'border-emerald-500/50' : ''}
-            />
-            {assetId ? (
-              <p className="text-xs text-emerald-600">已上传: {assetId}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                或手动输入已存在的
-                <button
-                  type="button"
-                  className="ml-1 underline hover:text-foreground"
-                  onClick={() => {
-                    const id = prompt('请输入 FileAsset ID:');
-                    if (id) setAssetId(id.trim());
-                  }}
-                >
-                  FileAsset ID
-                </button>
-              </p>
+              </>
             )}
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="bundle-checksum">SHA256 校验值 *</Label>
-            <Input
-              id="bundle-checksum"
-              placeholder="sha256..."
-              value={checksum}
-              onChange={(e) => setChecksum(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="bundle-minNative">最低原生版本</Label>
-            <Input
-              id="bundle-minNative"
-              placeholder="如 1.0.0（留空表示不限制）"
-              value={minNativeVersion}
-              onChange={(e) => setMinNativeVersion(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label>灰度比例: {rolloutPercent}%</Label>
-            <div className="flex items-center gap-3 pt-1">
-              <Slider
-                value={[rolloutPercent]}
-                onValueChange={([v]) => setRolloutPercent(v)}
-                min={0}
-                max={100}
-                step={5}
-                className="flex-1"
+            <div className="flex flex-col gap-1.5">
+              <Label>安装包文件 (zip) *</Label>
+              <FileUploadField
+                accept=".zip"
+                group="mobile_bundle"
+                uploadLabel="上传 zip"
+                placeholder="点击上传或拖拽 .zip 文件到 COS"
+                onUploaded={(_cosUrl, id) => setAssetId(id)}
+                className={assetId ? 'border-emerald-500/50' : ''}
               />
-              <span className="w-10 text-right text-sm text-muted-foreground">{rolloutPercent}%</span>
+              {assetId ? (
+                <p className="text-xs text-emerald-600">已上传: {truncate(assetId, 32)}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  或手动输入
+                  <button
+                    type="button"
+                    className="ml-1 underline hover:text-foreground"
+                    onClick={() => {
+                      const id = prompt('请输入 FileAsset ID:');
+                      if (id) setAssetId(id.trim());
+                    }}
+                  >
+                    FileAsset ID
+                  </button>
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bundle-checksum">SHA256 校验值 *</Label>
+              <Input
+                id="bundle-checksum"
+                placeholder="sha256..."
+                value={checksum}
+                onChange={(e) => setChecksum(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bundle-minNative">最低原生版本</Label>
+              <Input
+                id="bundle-minNative"
+                placeholder="如 1.0.0（留空表示不限制）"
+                value={minNativeVersion}
+                onChange={(e) => setMinNativeVersion(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bundle-notes">更新日志</Label>
+              <textarea
+                id="bundle-notes"
+                className="flex min-h-[88px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
+                placeholder="此版本的更新内容..."
+                value={releaseNotes}
+                onChange={(e) => setReleaseNotes(e.target.value)}
+              />
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
-            <div>
-              <Label className="text-sm">启用状态</Label>
-              <p className="text-xs text-muted-foreground">关闭后客户端将不再收到此版本更新</p>
+          {/* ── 右栏：发布设置 ── */}
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="bundle-audience">发布受众</Label>
+                <select
+                  id="bundle-audience"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                >
+                  <option value="all">所有用户</option>
+                  <option value="internal">内测用户</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="bundle-notify-policy">通知策略</Label>
+                <select
+                  id="bundle-notify-policy"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                  value={notifyPolicy}
+                  onChange={(e) => setNotifyPolicy(e.target.value)}
+                >
+                  <option value="auto">自动</option>
+                  <option value="silent">静默</option>
+                  <option value="force">通知</option>
+                </select>
+              </div>
             </div>
-            <Switch checked={enabled} onCheckedChange={setEnabled} />
-          </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-            <div>
-              <Label className="text-sm text-red-600 dark:text-red-400">强制更新</Label>
-              <p className="text-xs text-muted-foreground">
-                开启后跳过灰度，下载完成后立即提示用户重启 App
-              </p>
+            <div className="flex flex-col gap-1.5">
+              <Label>灰度比例: {rolloutPercent}%</Label>
+              <div className="flex items-center gap-3 pt-1">
+                <Slider
+                  value={[rolloutPercent]}
+                  onValueChange={([v]) => setRolloutPercent(v)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="flex-1"
+                />
+                <span className="w-10 text-right text-sm text-muted-foreground">{rolloutPercent}%</span>
+              </div>
             </div>
-            <Switch checked={isMandatory} onCheckedChange={setIsMandatory} />
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="bundle-notes">更新日志</Label>
-            <textarea
-              id="bundle-notes"
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
-              placeholder="此版本的更新内容..."
-              value={releaseNotes}
-              onChange={(e) => setReleaseNotes(e.target.value)}
-            />
+            <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+              <div>
+                <Label className="text-sm">允许跨主版本</Label>
+                <p className="text-xs text-muted-foreground">关闭时 1.x 用户不会收到 2.x 包</p>
+              </div>
+              <Switch checked={allowMajorUpgrade} onCheckedChange={setAllowMajorUpgrade} />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+              <div>
+                <Label className="text-sm">启用状态</Label>
+                <p className="text-xs text-muted-foreground">关闭后客户端将不再收到此版本更新</p>
+              </div>
+              <Switch checked={enabled} onCheckedChange={setEnabled} />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+              <div>
+                <Label className="text-sm text-red-600 dark:text-red-400">强制更新</Label>
+                <p className="text-xs text-muted-foreground">
+                  开启后跳过灰度，下载完成后立即提示用户重启
+                </p>
+              </div>
+              <Switch checked={isMandatory} onCheckedChange={setIsMandatory} />
+            </div>
           </div>
         </div>
 
@@ -486,6 +557,10 @@ export function AdminMobileBundlesPage() {
                             <FileArchive className="h-4 w-4 text-muted-foreground" />
                             <span className="font-mono font-medium">v{bundle.version}</span>
                           </div>
+                          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <GitBranch className="h-3 w-3" />
+                            {bundle.releaseLine || releaseLineOf(bundle.version) || '--'}
+                          </div>
                         </td>
                         <td className="py-3 pr-3">
                           <Badge variant={platformColor(bundle.platform)}>
@@ -513,6 +588,14 @@ export function AdminMobileBundlesPage() {
                         </td>
                         <td className="py-3 pr-3">
                           <div className="flex items-center gap-1.5">
+                            <Badge variant={bundle.audience === 'internal' ? 'outline' : 'secondary'} className="gap-1 text-xs">
+                              {bundle.audience === 'internal' && <TestTube2 className="h-3 w-3" />}
+                              {audienceLabel(bundle.audience)}
+                            </Badge>
+                            <Badge variant="outline" className="gap-1 text-xs">
+                              {bundle.notifyPolicy === 'silent' ? <BellOff className="h-3 w-3" /> : <Bell className="h-3 w-3" />}
+                              {notifyPolicyLabel(bundle.notifyPolicy)}
+                            </Badge>
                             {bundle.enabled ? (
                               <Badge variant="default" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                                 <CheckCircle2 className="h-3 w-3" />启用

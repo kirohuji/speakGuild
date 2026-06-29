@@ -19,10 +19,11 @@
 // ──────────────────────────────────────────────
 
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { App } from '@capacitor/app';
 import { isNative, getPlatform } from './platform';
 import type { UpdaterAPI } from './types';
 
-type UpdateInfo = { version: string; url?: string; isMandatory?: boolean };
+type UpdateInfo = { version: string; url?: string; isMandatory?: boolean; shouldNotify?: boolean };
 type UpdateListener = (info: UpdateInfo) => void;
 type DownloadCompleteListener = (info: { bundleId: string; version: string }) => void;
 type DownloadListener = (percent: number) => void;
@@ -32,6 +33,29 @@ const updateListeners: UpdateListener[] = [];
 const downloadCompleteListeners: DownloadCompleteListener[] = [];
 const downloadListeners: DownloadListener[] = [];
 const failedListeners: FailedListener[] = [];
+const OTA_DEVICE_ID_KEY = 'manyu-ota-device-id';
+
+function getOrCreateOtaDeviceId() {
+  const existing = localStorage.getItem(OTA_DEVICE_ID_KEY);
+  if (existing) return existing;
+  const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  localStorage.setItem(OTA_DEVICE_ID_KEY, id);
+  return id;
+}
+
+async function getNativeAppInfo() {
+  try {
+    const info = await App.getInfo();
+    return {
+      nativeVersion: info.version || undefined,
+      nativeBuild: info.build || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
 
 class UpdaterService implements UpdaterAPI {
   private _readyNotified = false;
@@ -128,7 +152,7 @@ class UpdaterService implements UpdaterAPI {
    *
    * @returns 更新信息，无更新时返回空对象
    */
-  async checkUpdate(): Promise<{ newVersion?: string; url?: string; isMandatory?: boolean }> {
+  async checkUpdate(): Promise<{ newVersion?: string; url?: string; isMandatory?: boolean; shouldNotify?: boolean }> {
     if (!isNative()) return {};
     if (this._checking) {
       console.log('[Updater] ⏳ Already checking, skip duplicate call');
@@ -141,9 +165,12 @@ class UpdaterService implements UpdaterAPI {
     try {
       const current = await this.getCurrent();
       const platform = getPlatform();
+      const userId = localStorage.getItem('manyu-ota-user-id') || undefined;
+      const deviceId = getOrCreateOtaDeviceId();
+      const nativeInfo = await getNativeAppInfo();
 
       const checkUrl = 'https://hope.lourd.top:3605/api/mobile-updates/check';
-      console.log(`[Updater] 📡 Checking update: platform=${platform}, current=${current.version}, url=${checkUrl}`);
+      console.log(`[Updater] 📡 Checking update: platform=${platform}, native=${nativeInfo.nativeVersion || '-'}, current=${current.version}, url=${checkUrl}`);
 
       // 1. 请求后端检查接口
       const res = await fetch(checkUrl, {
@@ -151,6 +178,10 @@ class UpdaterService implements UpdaterAPI {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           platform,
+          userId,
+          deviceId,
+          nativeVersion: nativeInfo.nativeVersion,
+          nativeBuild: nativeInfo.nativeBuild,
           currentBundleVersion: current.version,
           channel: 'production',
         }),
@@ -165,10 +196,13 @@ class UpdaterService implements UpdaterAPI {
       }
 
       const isMandatory: boolean = data.isMandatory ?? false;
-      console.log(`[Updater] 📡 Update found: v${data.version} (mandatory=${isMandatory})`);
+      const shouldNotify: boolean = data.shouldNotify ?? true;
+      console.log(`[Updater] 📡 Update found: v${data.version} (mandatory=${isMandatory}, notify=${shouldNotify})`);
 
       // 3. 通知监听器：发现新版本
-      updateListeners.forEach((cb) => cb({ version: data.version, url: data.url, isMandatory }));
+      if (shouldNotify || isMandatory) {
+        updateListeners.forEach((cb) => cb({ version: data.version, url: data.url, isMandatory, shouldNotify }));
+      }
 
       // 4. 下载 bundle
       console.log(`[Updater] ⬇️ Downloading v${data.version}...`);
@@ -193,6 +227,7 @@ class UpdaterService implements UpdaterAPI {
         newVersion: data.version,
         url: data.url,
         isMandatory,
+        shouldNotify,
       };
     } catch (err) {
       console.error('[Updater] checkUpdate failed:', err);

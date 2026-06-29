@@ -136,6 +136,10 @@ export async function signOutAuth() {
   clearBearerToken()
 }
 
+export async function revokeOtherSessions(): Promise<{ revoked: number }> {
+  return post('/auth/sessions/revoke-others')
+}
+
 // ─── 忘记密码 ──────────────────────────────────────────────────
 
 export async function sendForgotPasswordOtp(email: string) {

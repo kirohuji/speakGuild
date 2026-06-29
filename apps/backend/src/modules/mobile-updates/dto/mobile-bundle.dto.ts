@@ -12,6 +12,18 @@ export class CreateMobileBundleDto {
   @IsString()
   channel?: string;
 
+  @IsOptional()
+  @IsString()
+  audience?: string;
+
+  @IsOptional()
+  @IsString()
+  notifyPolicy?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowMajorUpgrade?: boolean;
+
   @IsString()
   assetId: string;
 
@@ -50,6 +62,18 @@ export class UpdateMobileBundleDto {
   @IsOptional()
   @IsString()
   checksum?: string;
+
+  @IsOptional()
+  @IsString()
+  audience?: string;
+
+  @IsOptional()
+  @IsString()
+  notifyPolicy?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowMajorUpgrade?: boolean;
 
   @IsOptional()
   @IsString()

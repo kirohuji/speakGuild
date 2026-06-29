@@ -226,7 +226,7 @@ export function LoginPage() {
                     if (!phoneNumber.trim()) throw new Error(t('auth.enterPhone'))
                     if (!phoneOtp.trim()) throw new Error(t('auth.enterOtp'))
                     await verifyPhoneOtp(phoneNumber, phoneOtp)
-                    const nextSession = await refreshSession()
+                    const nextSession = await refreshSession({ revokeOtherSessions: true })
                     if (!nextSession?.user?.id) {
                       throw new Error(t('auth.loginFailedOtp'))
                     }
@@ -300,7 +300,7 @@ export function LoginPage() {
               runAction(
                 async () => {
                   await signInWithWechat()
-                  const nextSession = await refreshSession()
+                  const nextSession = await refreshSession({ revokeOtherSessions: true })
                   if (nextSession?.user?.id) {
                     await navigateAfterLogin()
                   }
@@ -324,7 +324,7 @@ export function LoginPage() {
               runAction(
                 async () => {
                   await signInWithApple()
-                  const nextSession = await refreshSession()
+                  const nextSession = await refreshSession({ revokeOtherSessions: true })
                   if (nextSession?.user?.id) {
                     await navigateAfterLogin()
                   }

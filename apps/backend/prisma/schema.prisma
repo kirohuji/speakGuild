@@ -97,6 +97,7 @@ model User {
   referralCode           ReferralCode?
   referredBy             Referral?
   feedbacks              Feedback[]
+  mobileOtaTester        MobileOtaTester?
 
   // --- English Output Training: 用户画像扩展 ---
   learningGoals      String[]            @default([])
@@ -1505,6 +1506,10 @@ model MobileBundle {
   version          String // 语义化版本号，如 "1.2.3"
   platform         String // ios | android
   channel          String    @default("production") // production | staging
+  releaseLine      String?
+  audience         String    @default("all") // all | internal
+  notifyPolicy     String    @default("auto") // auto | silent | force
+  allowMajorUpgrade Boolean  @default(false)
   assetId          String // 关联 FileAsset（COS 上的 zip 文件）
   asset            FileAsset @relation(fields: [assetId], references: [id])
   checksum         String // SHA256 校验值
@@ -1518,11 +1523,31 @@ model MobileBundle {
 
   @@unique([version, platform, channel])
   @@index([platform, channel, enabled])
+  @@index([platform, channel, audience, enabled])
+  @@index([releaseLine])
   @@index([assetId])
   @@map("mobile_bundle")
 }
 
 // ──── 词典条目（FreeDictionaryAPI 清洗后数据）────
+
+model MobileOtaTester {
+  id                String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String   @unique
+  enabled           Boolean  @default(true)
+  channel           String   @default("production")
+  platform          String?
+  targetReleaseLine String?
+  targetVersion     String?
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([enabled, channel])
+  @@index([targetReleaseLine])
+  @@map("mobile_ota_tester")
+}
 
 model DictionaryEntry {
   word            String   @id /// 小写单词，作为主键

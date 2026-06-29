@@ -42,6 +42,28 @@ export class AuthController {
     return session;
   }
 
+  @Post('sessions/revoke-others')
+  async revokeOtherSessions(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    const currentToken =
+      (session as any)?.session?.token ||
+      (session as any)?.token ||
+      this.extractBearerSessionToken(req);
+
+    if (!currentToken) {
+      return { revoked: 0 };
+    }
+
+    const result = await this.prisma.session.deleteMany({
+      where: {
+        userId: session.user.id,
+        token: { not: currentToken },
+      },
+    });
+
+    return { revoked: result.count };
+  }
+
   @Post('wechat/native')
   async signInWithNativeWechat(@Req() req: Request, @Body() dto: NativeWechatSignInDto) {
     return this.nativeWechatAuthService.signIn(
@@ -49,6 +71,14 @@ export class AuthController {
       req.ip,
       req.headers['user-agent'],
     );
+  }
+
+  private extractBearerSessionToken(req: Request) {
+    const authorization = req.headers.authorization;
+    if (!authorization?.startsWith('Bearer ')) return null;
+    const bearer = authorization.slice('Bearer '.length).trim();
+    const decoded = decodeURIComponent(bearer);
+    return decoded.split('.')[0] || null;
   }
 
   // ─── 忘记密码 ──────────────────────────────────────────────

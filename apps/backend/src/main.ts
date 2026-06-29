@@ -84,6 +84,7 @@ async function bootstrap() {
       const result = await mobileUpdatesService.checkUpdate({
         platform: req.body?.platform || 'ios',
         deviceId: req.body?.device_id || req.body?.deviceId,
+        userId: req.body?.user_id || req.body?.userId,
         nativeVersion: req.body?.native_version || req.body?.nativeVersion,
         currentBundleVersion: req.body?.current_bundle_version || req.body?.currentBundleVersion,
         channel: req.body?.channel || 'production',

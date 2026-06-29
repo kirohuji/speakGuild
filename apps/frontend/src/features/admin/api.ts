@@ -24,6 +24,20 @@ export interface AdminUser {
     expiredAt: string | null;
     plan: { name: string; level: string } | null;
   } | null;
+  mobileOtaTester?: MobileOtaTester | null;
+}
+
+export interface MobileOtaTester {
+  id: string;
+  userId: string;
+  enabled: boolean;
+  channel: string;
+  platform: string | null;
+  targetReleaseLine: string | null;
+  targetVersion: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AdminUserDetail extends AdminUser {
@@ -181,6 +195,17 @@ export async function getUserLearningOverview(id: string) {
 
 export async function updateUserRole(id: string, role: 'user' | 'admin') {
   return patch<AdminUser>(`/admin/users/${id}/role`, { role });
+}
+
+export async function updateUserOtaTest(id: string, data: {
+  enabled: boolean;
+  channel?: string;
+  platform?: string;
+  targetReleaseLine?: string;
+  targetVersion?: string;
+  notes?: string;
+}) {
+  return patch<MobileOtaTester>(`/admin/users/${id}/ota-test`, data);
 }
 
 // ─── 会员管理 ──────────────────────────────────────────────

@@ -99,15 +99,18 @@ export class NativeWechatAuthService {
     const sessionToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await this.prisma.session.create({
-      data: {
-        id: randomUUID(),
-        token: sessionToken,
-        userId: user.id,
-        expiresAt,
-        ipAddress,
-        userAgent,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.session.deleteMany({ where: { userId: user.id } });
+      await tx.session.create({
+        data: {
+          id: randomUUID(),
+          token: sessionToken,
+          userId: user.id,
+          expiresAt,
+          ipAddress,
+          userAgent,
+        },
+      });
     });
 
     return {

@@ -4,6 +4,7 @@ import {
   Users, Search, Shield, ShieldAlert, ChevronLeft, ChevronRight,
   Mail, Phone, Calendar, Loader2, ArrowLeft, CheckCircle2, XCircle,
   MessageSquare, Clapperboard, Star, Target, BarChart3, MonitorSmartphone, Link2,
+  GitBranch, TestTube2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/cn';
 import {
   listUsers, updateUserRole, getUserDetail, getUserAiUsage, getUserLearningOverview,
+  updateUserOtaTest,
   type AdminUser, type AdminUserDetail, type AdminUsersResult, type UserAiUsage, type AdminUserLearningOverview,
 } from '@/features/admin/api';
 import { useAuth } from '@/providers/auth-provider';
@@ -449,6 +451,13 @@ function UserRow({
   const [learningOverview, setLearningOverview] = useState<AdminUserLearningOverview | null>(null);
   const [aiUsage, setAiUsage] = useState<UserAiUsage | null>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(false);
+  const [otaSaving, setOtaSaving] = useState(false);
+  const [otaEnabled, setOtaEnabled] = useState(false);
+  const [otaChannel, setOtaChannel] = useState('production');
+  const [otaPlatform, setOtaPlatform] = useState('');
+  const [otaReleaseLine, setOtaReleaseLine] = useState('');
+  const [otaTargetVersion, setOtaTargetVersion] = useState('');
+  const [otaNotes, setOtaNotes] = useState('');
 
   const openDetail = async () => {
     setDetailOpen(true);
@@ -460,11 +469,37 @@ function UserRow({
         getUserLearningOverview(user.id).catch(() => null),
       ]);
       setDetail(d);
+      setOtaEnabled(Boolean(d.mobileOtaTester?.enabled));
+      setOtaChannel(d.mobileOtaTester?.channel || 'production');
+      setOtaPlatform(d.mobileOtaTester?.platform || '');
+      setOtaReleaseLine(d.mobileOtaTester?.targetReleaseLine || '');
+      setOtaTargetVersion(d.mobileOtaTester?.targetVersion || '');
+      setOtaNotes(d.mobileOtaTester?.notes || '');
       setLearningOverview(overview);
     } catch {
       setDetail(null);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleSaveOtaTest = async () => {
+    setOtaSaving(true);
+    try {
+      const next = await updateUserOtaTest(user.id, {
+        enabled: otaEnabled,
+        channel: otaChannel,
+        platform: otaPlatform || undefined,
+        targetReleaseLine: otaReleaseLine || undefined,
+        targetVersion: otaTargetVersion || undefined,
+        notes: otaNotes || undefined,
+      });
+      setDetail((prev) => prev ? { ...prev, mobileOtaTester: next } : prev);
+      onRoleUpdated();
+    } catch {
+      // ignore
+    } finally {
+      setOtaSaving(false);
     }
   };
 
@@ -650,6 +685,74 @@ function UserRow({
               </div>
 
               <UserLearningTabs overview={learningOverview} />
+
+              <div className="rounded-xl border p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <TestTube2 className="h-4 w-4 text-cyan-500" />
+                    OTA 测试配置
+                  </p>
+                  <Badge
+                    variant={otaEnabled ? 'default' : 'outline'}
+                    className={cn('text-xs', otaEnabled && 'bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/15')}
+                  >
+                    {otaEnabled ? '内测中' : '未启用'}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">状态</span>
+                    <Select value={otaEnabled ? 'on' : 'off'} onChange={(e) => setOtaEnabled(e.target.value === 'on')}>
+                      <option value="off">不参与内测</option>
+                      <option value="on">参与内测</option>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">通道</span>
+                    <Select value={otaChannel} onChange={(e) => setOtaChannel(e.target.value)}>
+                      <option value="production">production</option>
+                      <option value="staging">staging</option>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">平台限制</span>
+                    <Select value={otaPlatform} onChange={(e) => setOtaPlatform(e.target.value)}>
+                      <option value="">不限平台</option>
+                      <option value="ios">iOS</option>
+                      <option value="android">Android</option>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">目标发布线</span>
+                    <div className="relative">
+                      <GitBranch className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input className="pl-8" placeholder="1.2" value={otaReleaseLine} onChange={(e) => setOtaReleaseLine(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">精确版本</span>
+                    <Input placeholder="1.2.3，可留空" value={otaTargetVersion} onChange={(e) => setOtaTargetVersion(e.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">备注</span>
+                    <Input placeholder="测试说明" value={otaNotes} onChange={(e) => setOtaNotes(e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    开启后会优先匹配内测包；未指定发布线时，仅按当前主版本找最新可用包。
+                  </p>
+                  <Button size="sm" className="shrink-0" onClick={handleSaveOtaTest} disabled={otaSaving}>
+                    {otaSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    保存
+                  </Button>
+                </div>
+              </div>
 
               {/* ── 登录会话 ────────────────────────────── */}
               <div className="rounded-xl border p-4 space-y-3">

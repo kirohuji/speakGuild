@@ -3,6 +3,13 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import type { CreateMobileBundleDto, UpdateMobileBundleDto } from './dto/mobile-bundle.dto';
 
+type SemverParts = { major: number; minor: number; patch: number };
+type BundleLike = {
+  version: string;
+  releaseLine?: string | null;
+  notifyPolicy?: string | null;
+};
+
 @Injectable()
 export class MobileUpdatesService {
   constructor(
@@ -10,25 +17,38 @@ export class MobileUpdatesService {
     private readonly fileAssets: FileAssetsService,
   ) {}
 
-  /**
-   * 公开接口：检查是否有可用更新。
-   * 插件会提交 platform、deviceId、nativeVersion、currentBundleVersion 等信息。
-   */
   async checkUpdate(params: {
     platform: string;
     deviceId?: string;
+    userId?: string;
     nativeVersion?: string;
     currentBundleVersion?: string;
     channel?: string;
   }) {
-    const { platform, nativeVersion, currentBundleVersion, channel = 'production' } = params;
+    const {
+      platform,
+      nativeVersion,
+      currentBundleVersion,
+      channel = 'production',
+      userId,
+    } = params;
 
-    // 1. 查找该平台 + 渠道下所有启用的 bundle
+    const current = currentBundleVersion ? this.parseVersion(currentBundleVersion) : null;
+    const tester = userId
+      ? await this.prisma.mobileOtaTester.findUnique({ where: { userId } })
+      : null;
+    const testerEnabled = Boolean(
+      tester?.enabled &&
+      tester.channel === channel &&
+      (!tester.platform || tester.platform === platform),
+    );
+
     const bundles = await this.prisma.mobileBundle.findMany({
       where: {
         platform,
         channel,
         enabled: true,
+        audience: testerEnabled ? { in: ['all', 'internal'] } : 'all',
       },
     });
 
@@ -36,23 +56,34 @@ export class MobileUpdatesService {
       return { message: 'No update available' };
     }
 
-    // 2. 按语义化版本倒序排列（最高版本优先）
     bundles.sort((a, b) => this.compareVersions(b.version, a.version));
 
-    // 3. 筛选：版本号高于当前版本
-    const candidate = bundles.find((b) => {
-      // 如果 currentBundleVersion 不存在（首次安装），直接返回最新
-      if (!currentBundleVersion) return true;
+    const candidate = bundles.find((bundle) => {
+      const next = this.parseVersion(bundle.version);
+      if (!next) return false;
 
-      // 简单语义化版本比较
-      if (this.compareVersions(b.version, currentBundleVersion) <= 0) {
-        return false;
+      if (testerEnabled) {
+        if (tester?.targetVersion && bundle.version !== tester.targetVersion) {
+          return false;
+        }
+        if (tester?.targetReleaseLine && this.getReleaseLine(bundle) !== tester.targetReleaseLine) {
+          return false;
+        }
       }
 
-      // 检查最低原生版本
-      if (b.minNativeVersion && nativeVersion) {
-        if (this.compareVersions(nativeVersion, b.minNativeVersion) < 0) {
-          return false; // 原生版本过低，不推送
+      if (currentBundleVersion) {
+        if (this.compareVersions(bundle.version, currentBundleVersion) <= 0) {
+          return false;
+        }
+
+        if (current && next.major !== current.major && !bundle.allowMajorUpgrade) {
+          return false;
+        }
+      }
+
+      if (bundle.minNativeVersion && nativeVersion) {
+        if (this.compareVersions(nativeVersion, bundle.minNativeVersion) < 0) {
+          return false;
         }
       }
 
@@ -63,9 +94,7 @@ export class MobileUpdatesService {
       return { message: 'No update available' };
     }
 
-    // 4. 强制更新跳过灰度判断
     if (!candidate.isMandatory) {
-      // 灰度判断：基于 deviceId 哈希决定是否在灰度范围内
       if (candidate.rolloutPercent < 100 && params.deviceId) {
         const hash = this.hashDeviceId(params.deviceId);
         if (hash % 100 >= candidate.rolloutPercent) {
@@ -74,7 +103,6 @@ export class MobileUpdatesService {
       }
     }
 
-    // 5. 通过 FileAssetsService 生成 COS 签名下载链接（1 小时有效）
     const { url } = await this.fileAssets.getPrivateUrlByAssetId(candidate.assetId);
 
     return {
@@ -82,10 +110,12 @@ export class MobileUpdatesService {
       url,
       checksum: candidate.checksum,
       isMandatory: candidate.isMandatory,
+      shouldNotify: this.shouldNotify(candidate, currentBundleVersion),
+      audience: candidate.audience,
+      releaseLine: this.getReleaseLine(candidate),
+      notifyPolicy: candidate.notifyPolicy,
     };
   }
-
-  // ── 管理接口 ──
 
   async listBundles(params: {
     page?: number;
@@ -121,11 +151,16 @@ export class MobileUpdatesService {
   }
 
   async createBundle(dto: CreateMobileBundleDto) {
-    return this.prisma.mobileBundle.create({ data: dto });
+    return this.prisma.mobileBundle.create({
+      data: this.normalizeBundleInput(dto),
+    });
   }
 
   async updateBundle(id: string, dto: UpdateMobileBundleDto) {
-    return this.prisma.mobileBundle.update({ where: { id }, data: dto });
+    return this.prisma.mobileBundle.update({
+      where: { id },
+      data: this.normalizeBundleInput(dto),
+    });
   }
 
   async deleteBundle(id: string) {
@@ -141,9 +176,6 @@ export class MobileUpdatesService {
     });
   }
 
-  // ── 工具方法 ──
-
-  /** 简单的语义化版本比较：返回 1 (a > b), -1 (a < b), 0 (相等) */
   private compareVersions(a: string, b: string): number {
     const pa = a.split('.').map(Number);
     const pb = b.split('.').map(Number);
@@ -156,12 +188,55 @@ export class MobileUpdatesService {
     return 0;
   }
 
-  /** 简单哈希 deviceId 到 0-99 */
   private hashDeviceId(deviceId: string): number {
     let hash = 0;
     for (let i = 0; i < deviceId.length; i++) {
       hash = ((hash << 5) - hash + deviceId.charCodeAt(i)) | 0;
     }
     return Math.abs(hash) % 100;
+  }
+
+  private parseVersion(version: string): SemverParts | null {
+    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+    if (!match) return null;
+    return {
+      major: Number(match[1]),
+      minor: Number(match[2]),
+      patch: Number(match[3]),
+    };
+  }
+
+  private releaseLineOf(version: string): string | null {
+    const parsed = this.parseVersion(version);
+    return parsed ? `${parsed.major}.${parsed.minor}` : null;
+  }
+
+  private getReleaseLine(bundle: BundleLike) {
+    return bundle.releaseLine || this.releaseLineOf(bundle.version);
+  }
+
+  private shouldNotify(bundle: BundleLike, currentBundleVersion?: string) {
+    if (bundle.notifyPolicy === 'force') return true;
+    if (bundle.notifyPolicy === 'silent') return false;
+    if (!currentBundleVersion) return true;
+
+    const current = this.parseVersion(currentBundleVersion);
+    const next = this.parseVersion(bundle.version);
+    if (!current || !next) return true;
+    return current.major !== next.major || current.minor !== next.minor;
+  }
+
+  private normalizeBundleInput<T extends CreateMobileBundleDto | UpdateMobileBundleDto>(dto: T) {
+    const data: any = { ...dto };
+    if ('version' in dto && dto.version) {
+      data.releaseLine = this.releaseLineOf(dto.version);
+    }
+    if (data.audience && !['all', 'internal'].includes(data.audience)) {
+      data.audience = 'all';
+    }
+    if (data.notifyPolicy && !['auto', 'silent', 'force'].includes(data.notifyPolicy)) {
+      data.notifyPolicy = 'auto';
+    }
+    return data;
   }
 }

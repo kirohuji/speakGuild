@@ -30,9 +30,9 @@ export interface UpdaterAPI {
   /** 获取当前包版本信息 */
   getCurrent(): Promise<{ version: string; downloaded: string; builtinVersion: string }>;
   /** 手动检查更新（由插件自动处理的补充入口） */
-  checkUpdate(): Promise<{ newVersion?: string; url?: string; isMandatory?: boolean }>;
+  checkUpdate(): Promise<{ newVersion?: string; url?: string; isMandatory?: boolean; shouldNotify?: boolean }>;
   /** 注册更新可用回调（含强制更新标记） */
-  onUpdateAvailable(callback: (info: { version: string; url?: string; isMandatory?: boolean }) => void): void;
+  onUpdateAvailable(callback: (info: { version: string; url?: string; isMandatory?: boolean; shouldNotify?: boolean }) => void): void;
   /** 注册下载进度回调 */
   onDownload(callback: (percent: number) => void): void;
   /** 注册下载完成回调 */

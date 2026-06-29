@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { UpdateUserOtaTestDto } from './dto/update-user-ota-test.dto';
 import { NotificationGateway } from '../notification/notification.gateway';
 import { RevenueCatService } from '../pay/revenuecat/revenuecat.service';
 
@@ -50,6 +51,7 @@ export class AdminService {
               plan: { select: { name: true, level: true } },
             },
           },
+          mobileOtaTester: true,
           sessions: {
             select: {
               updatedAt: true,
@@ -117,6 +119,7 @@ export class AdminService {
             plan: { select: { id: true, name: true, level: true } },
           },
         },
+        mobileOtaTester: true,
         sessions: {
           select: {
             id: true,
@@ -287,6 +290,28 @@ export class AdminService {
         name: true,
         role: true,
       },
+    });
+  }
+
+  async updateUserOtaTest(userId: string, dto: UpdateUserOtaTestDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    const data = {
+      enabled: dto.enabled ?? false,
+      channel: dto.channel || 'production',
+      platform: dto.platform || null,
+      targetReleaseLine: dto.targetReleaseLine?.trim() || null,
+      targetVersion: dto.targetVersion?.trim() || null,
+      notes: dto.notes?.trim() || null,
+    };
+
+    return this.prisma.mobileOtaTester.upsert({
+      where: { userId },
+      create: { userId, ...data },
+      update: data,
     });
   }
 

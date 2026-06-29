@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { authClient, clearBearerToken } from '@/features/auth/client'
+import { revokeOtherSessions } from '@/features/auth/api'
 import { useConfigStore } from '@/stores/config.store'
 import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useNotificationStore } from '@/features/notification/store'
@@ -7,6 +8,8 @@ import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { offlineSyncService } from '@/lib/offline'
 import { refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
 import { isNative, revenueCat } from '@/lib/native'
+
+const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 
 /**
  * App 前台同步 Hook
@@ -114,7 +117,7 @@ interface AuthContextValue {
   session: Session | null
   isLoading: boolean
   isAuthenticated: boolean
-  refreshSession: () => Promise<Session | null>
+  refreshSession: (options?: { revokeOtherSessions?: boolean }) => Promise<Session | null>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
@@ -145,15 +148,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession)
 
       if (nextSession?.user?.id) {
-        // Session loaded successfully
+        localStorage.setItem(OTA_USER_ID_KEY, nextSession.user.id)
       } else {
-        // no session
+        localStorage.removeItem(OTA_USER_ID_KEY)
         useProfileCacheStore.getState().reset()
       }
 
       return nextSession
     } catch {
       setSession(null)
+      localStorage.removeItem(OTA_USER_ID_KEY)
       useConfigStore.getState().clearConfig()
       useProfileCacheStore.getState().reset()
       return null
@@ -204,16 +208,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user?.id])
 
-  const refreshSession = async () => {
+  const refreshSession = async (options?: { revokeOtherSessions?: boolean }) => {
     setIsLoading(true)
-    return fetchSession()
+    const nextSession = await fetchSession()
+    if (options?.revokeOtherSessions && nextSession?.user?.id) {
+      await revokeOtherSessions().catch((error) => {
+        console.warn('[auth] revoke other sessions failed:', error)
+      })
+    }
+    return nextSession
   }
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true)
     try {
       await authClient.signIn.email({ email, password })
-      const nextSession = await refreshSession()
+      const nextSession = await refreshSession({ revokeOtherSessions: true })
       if (!nextSession?.user?.id) {
         throw new Error('登录失败，请检查账号或密码')
       }
@@ -245,6 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     clearBearerToken()
     useProfileCacheStore.getState().reset()
+    localStorage.removeItem(OTA_USER_ID_KEY)
     setSession(null)
   }
 

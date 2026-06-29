@@ -7,6 +7,7 @@ import { AdminStatsService } from './admin-stats.service';
 import { PayService } from '../pay/pay.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { UpdateUserOtaTestDto } from './dto/update-user-ota-test.dto';
 import { requireAuthSession } from '../auth/session.util';
 
 @Controller('admin')
@@ -55,6 +56,16 @@ export class AdminController {
   ) {
     const session = await this.requireAdmin(req);
     return this.adminService.updateUserRole(id, dto, session.user.id);
+  }
+
+  @Patch('users/:id/ota-test')
+  async updateUserOtaTest(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserOtaTestDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.adminService.updateUserOtaTest(id, dto);
   }
 
   // ─── 会员管理 ──────────────────────────────────────────────
