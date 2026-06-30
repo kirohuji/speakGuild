@@ -16,6 +16,11 @@ import {
   type LocalWarmupModelStatus,
   type LocalWarmupModelVariantId,
 } from '@/lib/local-ai/warmup-model-manager'
+import { getCurrentWarmupLocalJudgeModelKey } from '@/lib/local-ai/warmup-local-judge'
+import {
+  warmupEmbeddingCacheRepository,
+  type WarmupEmbeddingCacheStats,
+} from '@/lib/local-ai/warmup-embedding-cache.repository'
 
 function formatBytes(bytes?: number) {
   const value = Number(bytes ?? 0)
@@ -42,9 +47,12 @@ export function MobileStorageView() {
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
   const [details, setDetails] = useState<OfflineStorageDetails | null>(null)
   const [modelStatus, setModelStatus] = useState<LocalWarmupModelStatus | null>(null)
+  const [embeddingStats, setEmbeddingStats] = useState<WarmupEmbeddingCacheStats | null>(null)
+  const [embeddingModelKey, setEmbeddingModelKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [modelLoading, setModelLoading] = useState(true)
   const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
+  const [embeddingClearing, setEmbeddingClearing] = useState(false)
   const [deletingPackId, setDeletingPackId] = useState<string | null>(null)
   const [modelDeleting, setModelDeleting] = useState(false)
   const [modelDownload, setModelDownload] = useState<{ active: boolean; percent: number; file?: string }>({ active: false, percent: 0 })
@@ -76,8 +84,15 @@ export function MobileStorageView() {
 
   const refreshModelStatus = useCallback((variantId: LocalWarmupModelVariantId = localAiWarmupModelVariant) => {
     setModelLoading(true)
-    warmupModelManager.getStatus(variantId)
-      .then(setModelStatus)
+    Promise.all([
+      warmupModelManager.getStatus(variantId),
+      getCurrentWarmupLocalJudgeModelKey().catch(() => null),
+    ])
+      .then(async ([status, currentModelKey]) => {
+        setModelStatus(status)
+        setEmbeddingModelKey(currentModelKey)
+        setEmbeddingStats(await warmupEmbeddingCacheRepository.getStats(currentModelKey ?? undefined))
+      })
       .finally(() => setModelLoading(false))
   }, [localAiWarmupModelVariant])
 
@@ -133,16 +148,33 @@ export function MobileStorageView() {
   const handleDeleteModel = useCallback(async () => {
     setModelDeleting(true)
     try {
+      const currentModelKey = await getCurrentWarmupLocalJudgeModelKey().catch(() => null)
       await warmupModelManager.remove()
+      if (currentModelKey) await warmupEmbeddingCacheRepository.clear(currentModelKey)
       setLocalAiWarmupJudgeEnabled(false)
       toast.success(t('settings.storage.localModelDeleted', { defaultValue: '本地 AI 模型已删除' }))
+      refresh()
       refreshModelStatus(localAiWarmupModelVariant)
     } catch (error: any) {
       toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setModelDeleting(false)
     }
-  }, [localAiWarmupModelVariant, refreshModelStatus, setLocalAiWarmupJudgeEnabled, t])
+  }, [localAiWarmupModelVariant, refresh, refreshModelStatus, setLocalAiWarmupJudgeEnabled, t])
+
+  const handleClearEmbeddingCache = useCallback(async () => {
+    setEmbeddingClearing(true)
+    try {
+      await warmupEmbeddingCacheRepository.clear(embeddingModelKey ?? undefined)
+      toast.success(t('settings.storage.embeddingCacheCleared', { defaultValue: '判题向量缓存已清除' }))
+      refresh()
+      refreshModelStatus(localAiWarmupModelVariant)
+    } catch (error: any) {
+      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+    } finally {
+      setEmbeddingClearing(false)
+    }
+  }, [embeddingModelKey, localAiWarmupModelVariant, refresh, refreshModelStatus, t])
 
   const totalBytes = stats?.totalCacheBytes ?? 0
   const segments = [
@@ -150,6 +182,7 @@ export function MobileStorageView() {
     { key: 'assets' as const, label: t('profile.cacheAssets', { defaultValue: '资源文件' }), value: stats?.localAssetBytes ?? 0, color: 'bg-emerald-500' },
     { key: 'dictionary' as const, label: t('profile.cacheDictionary', { defaultValue: '词典缓存' }), value: stats?.dictionaryBytes ?? 0, color: 'bg-violet-500' },
     { key: 'expressions' as const, label: t('profile.cacheExpressions', { defaultValue: '学习库缓存' }), value: stats?.expressionBytes ?? 0, color: 'bg-amber-500' },
+    { key: 'embeddings' as const, label: t('settings.storage.embeddingCache', { defaultValue: '判题向量缓存' }), value: stats?.embeddingCacheBytes ?? 0, color: 'bg-cyan-500' },
   ]
   const activeSegments = segments.filter((segment) => segment.value > 0)
   const selectedVariant = LOCAL_WARMUP_MODEL_VARIANTS.find((variant) => variant.id === localAiWarmupModelVariant) ?? LOCAL_WARMUP_MODEL_VARIANTS[0]
@@ -172,6 +205,8 @@ export function MobileStorageView() {
           : modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch'
             ? `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(modelStatus?.bytes)}`
           : `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedVariant.estimatedBytes)}`
+  const embeddingCacheCount = embeddingModelKey ? embeddingStats?.currentModelCount ?? 0 : embeddingStats?.count ?? 0
+  const embeddingCacheBytes = embeddingModelKey ? embeddingStats?.currentModelBytes ?? 0 : embeddingStats?.bytes ?? 0
 
   const ClearButton = ({ category }: { category: OfflineCacheCategory }) => (
     <Button
@@ -391,6 +426,38 @@ export function MobileStorageView() {
                 {modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch' ? (
                   <p className="text-amber-600">{t('settings.storage.localModelNeedsRedownloadHint', { defaultValue: '模型记录不完整，请重新下载后再启用本地判断' })}</p>
                 ) : null}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold">{t('settings.storage.embeddingCache', { defaultValue: '判题向量缓存' })}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+                    {modelLoading
+                      ? '...'
+                      : `${embeddingCacheCount} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(embeddingCacheBytes)}`}
+                  </p>
+                  {(embeddingStats?.count ?? 0) > embeddingCacheCount && (
+                    <p className="mt-0.5 text-[10px] leading-4 text-muted-foreground/75">
+                      {t('settings.storage.embeddingCacheOtherModels', {
+                        count: (embeddingStats?.count ?? 0) - embeddingCacheCount,
+                        defaultValue: `其他模型 ${(embeddingStats?.count ?? 0) - embeddingCacheCount} 条`,
+                      })}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={modelLoading || embeddingClearing || embeddingCacheCount === 0}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void handleClearEmbeddingCache()
+                  }}
+                  className="h-8 px-2 text-xs text-red-500 hover:text-red-600"
+                >
+                  {embeddingClearing ? t('common.clearing', { defaultValue: '清除中' }) : t('common.clear', { defaultValue: '清除' })}
+                </Button>
               </div>
 
               {isAdmin && (

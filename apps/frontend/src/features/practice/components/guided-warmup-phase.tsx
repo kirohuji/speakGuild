@@ -329,15 +329,19 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       .join('|')
     if (localAiPreloadKeyRef.current === preloadKey) return
     localAiPreloadKeyRef.current = preloadKey
-    void preloadWarmupLocalJudge(warmupReferencePreloads)
-      .then(() => {
-        if (isAdmin && warmupReferencePreloads.length > 0) toast.success(`本地 AI 预加载成功 · ${warmupReferencePreloads.length} 题`)
+    void preloadWarmupLocalJudge(warmupReferencePreloads, {
+      source: 'guided_warmup',
+      packId: packId ?? null,
+      topicId,
+    })
+      .then((result) => {
+        if (isAdmin && (result?.computedCount ?? 0) > 0) toast.success(`本地 AI 预加载成功 · ${result?.computedCount ?? warmupReferencePreloads.length} 题`)
       })
       .catch((error) => {
         console.warn('[warmup-local-judge] preload failed:', error)
         if (isAdmin) toast.warning(`本地 AI 预加载失败：${error instanceof Error ? error.message : String(error)}`)
       })
-  }, [isAdmin, localAiWarmupJudgeEnabled, warmupReferencePreloads])
+  }, [isAdmin, localAiWarmupJudgeEnabled, packId, topicId, warmupReferencePreloads])
 
   const [doneIds, setDoneIds] = useState<Set<string>>(() => {
     try {

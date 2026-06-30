@@ -8,6 +8,7 @@ import type { TableName } from './sqlite/schema'
 import { learningContentRepository } from './learning-content.repository'
 import { practiceRepository } from './practice.repository'
 import type { SyncOutboxItem } from './sync-outbox'
+import { warmupEmbeddingCacheRepository } from '@/lib/local-ai/warmup-embedding-cache.repository'
 
 export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'all'
 
@@ -29,6 +30,8 @@ export interface OfflineStorageStats {
   dictionaryBytes: number
   expressionEntryCount: number
   expressionBytes: number
+  embeddingCacheCount: number
+  embeddingCacheBytes: number
   pendingOutboxCount: number
   totalCacheBytes: number
 }
@@ -140,6 +143,7 @@ export const offlineStorageService = {
       dictionaries,
       expressions,
       outbox,
+      embeddingStats,
     ] = await Promise.all([
       localDb.list<InstalledLearningPack>('downloaded_packs'),
       localDb.list<any>('downloaded_unit_details'),
@@ -152,6 +156,7 @@ export const offlineStorageService = {
       localDb.list<any>('dictionary_entries'),
       localDb.list<any>('expression_entries'),
       localDb.list<any>('outbox'),
+      warmupEmbeddingCacheRepository.getStats(),
     ])
 
     const installedPacks = packs.filter((pack) => pack.status === 'installed')
@@ -205,8 +210,10 @@ export const offlineStorageService = {
       dictionaryBytes,
       expressionEntryCount: expressions.length,
       expressionBytes,
+      embeddingCacheCount: embeddingStats.count,
+      embeddingCacheBytes: embeddingStats.bytes,
       pendingOutboxCount: outbox.filter((item) => item.status === 'pending' || item.status === 'failed').length,
-      totalCacheBytes: downloadedPackBytes + localAssetBytes + dictionaryBytes + expressionBytes,
+      totalCacheBytes: downloadedPackBytes + localAssetBytes + dictionaryBytes + expressionBytes + embeddingStats.bytes,
     }
   },
 
@@ -285,6 +292,7 @@ export const offlineStorageService = {
       await this.clearCategory('assets')
       await this.clearCategory('dictionary')
       await this.clearCategory('expressions')
+      await warmupEmbeddingCacheRepository.clear()
       await practiceRepository.clearPracticeRecordsCache()
       return
     }

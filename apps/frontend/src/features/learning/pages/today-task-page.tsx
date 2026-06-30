@@ -191,21 +191,25 @@ export function TodayTaskPage() {
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return
+    if (!drawerOpen) return
     const references = buildTodayReferencePreloads(plan?.steps ?? [])
     const preloadKey = references
       .map((item) => `${item.stepType}:${item.direction ?? ''}:${item.prompt}:${item.expectedAnswer ?? ''}`)
       .join('|')
     if (localAiPreloadKeyRef.current === preloadKey) return
     localAiPreloadKeyRef.current = preloadKey
-    void preloadWarmupLocalJudge(references)
-      .then(() => {
-        if (isAdmin && references.length > 0) toast.success(`本地 AI 预加载成功 · ${references.length} 题`)
+    void preloadWarmupLocalJudge(references, {
+      source: 'today',
+      packId: targetPackId ?? plan?.units?.[0]?.id ?? null,
+    })
+      .then((result) => {
+        if (isAdmin && (result?.computedCount ?? 0) > 0) toast.success(`本地 AI 预加载成功 · ${result?.computedCount ?? references.length} 题`)
       })
       .catch((error) => {
         console.warn('[warmup-local-judge] preload failed:', error)
         if (isAdmin) toast.warning(`本地 AI 预加载失败：${error instanceof Error ? error.message : String(error)}`)
       })
-  }, [isAdmin, localAiWarmupJudgeEnabled, plan?.steps])
+  }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, targetPackId])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))

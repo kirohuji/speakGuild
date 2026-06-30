@@ -3,12 +3,19 @@ import type { LocalWarmupModelLoadConfig } from './warmup-model-manager'
 
 type WorkerRequest =
   | { id: number; type: 'preload'; config: LocalWarmupModelLoadConfig; references?: WarmupReferenceEmbeddingInput[] }
+  | { id: number; type: 'restore'; config: LocalWarmupModelLoadConfig; references: WarmupReferenceEmbeddingRestore[] }
   | { id: number; type: 'judge-embeddings'; userAnswer: string; reference: WarmupReferenceEmbeddingInput; config: LocalWarmupModelLoadConfig }
 
 type WarmupReferenceEmbeddingInput = {
   key: string
   expectedText: string
   promptText: string
+}
+
+type WarmupReferenceEmbeddingRestore = {
+  key: string
+  expected: number[]
+  prompt: number[]
 }
 
 let extractorPromise: Promise<any> | null = null
@@ -67,12 +74,32 @@ async function embedReference(reference: WarmupReferenceEmbeddingInput, config: 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const message = event.data
   try {
-    if (message.type === 'preload') {
+    if (message.type === 'restore') {
       await getExtractor(message.config)
-      if (message.references?.length) {
-        await Promise.all(message.references.map((reference) => embedReference(reference, message.config)))
+      for (const reference of message.references) {
+        referenceCache.set(reference.key, {
+          expected: reference.expected,
+          prompt: reference.prompt,
+        })
       }
       self.postMessage({ id: message.id, ok: true })
+      return
+    }
+
+    if (message.type === 'preload') {
+      await getExtractor(message.config)
+      const references: WarmupReferenceEmbeddingRestore[] = []
+      if (message.references?.length) {
+        await Promise.all(message.references.map(async (reference) => {
+          const embeddings = await embedReference(reference, message.config)
+          references.push({
+            key: reference.key,
+            expected: embeddings.expected,
+            prompt: embeddings.prompt,
+          })
+        }))
+      }
+      self.postMessage({ id: message.id, ok: true, references })
       return
     }
 

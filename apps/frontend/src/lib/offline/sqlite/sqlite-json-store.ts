@@ -93,6 +93,14 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
     ['practiced_at', 'practicedAt', (value) => value?.practicedAt ?? null],
   ],
+  warmup_embedding_refs: [
+    ['model_key', 'modelKey', (value) => value?.modelKey ?? null],
+    ['reference_key', 'referenceKey', (value) => value?.referenceKey ?? null],
+    ['source', 'source', (value) => value?.source ?? null],
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['last_used_at', 'lastUsedAt', (value) => value?.lastUsedAt ?? null],
+  ],
   local_assets: [
     ['asset_id', 'assetId', (value) => value?.assetId ?? value?.id ?? null],
     ['remote_url', 'remoteUrl', (value) => value?.remoteUrl ?? null],

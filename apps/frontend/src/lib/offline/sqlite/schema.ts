@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 8
+export const DB_VERSION = 9
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -43,6 +43,7 @@ export const TABLE_NAMES = [
   'daily_practice_items',
   'daily_practice_runs',
   'daily_practice_attempts',
+  'warmup_embedding_refs',
   'local_assets',
   'asset_refs',
   'outbox',
@@ -247,6 +248,19 @@ export const DDL: Record<TableName, string> = {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `,
+  warmup_embedding_refs: `
+    CREATE TABLE IF NOT EXISTS warmup_embedding_refs (
+      id TEXT PRIMARY KEY NOT NULL,
+      model_key TEXT NOT NULL,
+      reference_key TEXT NOT NULL,
+      source TEXT,
+      pack_id TEXT,
+      topic_id TEXT,
+      last_used_at TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
   local_assets: `
     CREATE TABLE IF NOT EXISTS local_assets (
       id TEXT PRIMARY KEY NOT NULL,
@@ -326,6 +340,9 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_runs_date ON daily_practice_runs (date)`,
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_item_id ON daily_practice_attempts (item_id)`,
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_sync_status ON daily_practice_attempts (sync_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_warmup_embedding_model_key ON warmup_embedding_refs (model_key)`,
+  `CREATE INDEX IF NOT EXISTS idx_warmup_embedding_reference_key ON warmup_embedding_refs (reference_key)`,
+  `CREATE INDEX IF NOT EXISTS idx_warmup_embedding_topic_id ON warmup_embedding_refs (topic_id)`,
   // outbox: filter by status
   `CREATE INDEX IF NOT EXISTS idx_outbox_status ON outbox (status)`,
   `CREATE INDEX IF NOT EXISTS idx_outbox_entity ON outbox (entity_type, entity_id)`,

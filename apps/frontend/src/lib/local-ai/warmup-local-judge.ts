@@ -1,6 +1,10 @@
 import type { DrillDirection } from '@/features/practice/api/english-practice-api'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { warmupModelManager, type LocalWarmupModelLoadConfig } from './warmup-model-manager'
+import {
+  warmupEmbeddingCacheRepository,
+  type WarmupEmbeddingCacheSource,
+} from './warmup-embedding-cache.repository'
 
 export type WarmupJudgeScore = 'strong' | 'ok' | 'weak' | 'miss'
 
@@ -28,6 +32,17 @@ export interface WarmupReferencePreloadInput {
   expectedAnswer?: string
 }
 
+export interface WarmupReferencePreloadOptions {
+  source?: WarmupEmbeddingCacheSource
+  packId?: string | null
+  topicId?: string | null
+}
+
+export interface WarmupLocalJudgePreloadResult {
+  restoredCount: number
+  computedCount: number
+}
+
 interface LocalJudgeOutput extends WarmupTurnJudgeOutput {
   confidence: number
   fallback: boolean
@@ -37,13 +52,14 @@ type WorkerResponse = {
   id: number
   ok: boolean
   embeddings?: number[][]
+  references?: WarmupReferenceEmbeddingRestore[]
   error?: string
 }
 
 type WorkerMessage = Omit<{
   id: number
-  type: 'preload' | 'judge-embeddings'
-  references?: WarmupReferenceEmbeddingInput[]
+  type: 'preload' | 'restore' | 'judge-embeddings'
+  references?: WarmupReferenceEmbeddingInput[] | WarmupReferenceEmbeddingRestore[]
   reference?: WarmupReferenceEmbeddingInput
   userAnswer?: string
   config: LocalWarmupModelLoadConfig
@@ -53,6 +69,12 @@ type WarmupReferenceEmbeddingInput = {
   key: string
   expectedText: string
   promptText: string
+}
+
+type WarmupReferenceEmbeddingRestore = {
+  key: string
+  expected: number[]
+  prompt: number[]
 }
 
 let worker: Worker | null = null
@@ -110,6 +132,18 @@ function referenceKey(input: WarmupReferencePreloadInput) {
   ].join('|')
 }
 
+function modelKey(config: LocalWarmupModelLoadConfig) {
+  const localModelPath = config.localModelPath?.trim()
+  const allowRemoteModels = config.allowRemoteModels ?? !localModelPath
+  return `${config.modelId}:${config.dtype}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
+}
+
+export async function getCurrentWarmupLocalJudgeModelKey() {
+  const variantId = usePreferencesStore.getState().localAiWarmupModelVariant
+  const config = await warmupModelManager.getLoadConfig(variantId)
+  return config ? modelKey(config) : null
+}
+
 function makeReference(input: WarmupReferencePreloadInput): WarmupReferenceEmbeddingInput {
   const promptText = normalizeReferenceText(input.prompt)
   return {
@@ -119,17 +153,65 @@ function makeReference(input: WarmupReferencePreloadInput): WarmupReferenceEmbed
   }
 }
 
-export function preloadWarmupLocalJudge(references: WarmupReferencePreloadInput[] = []) {
+export function preloadWarmupLocalJudge(
+  references: WarmupReferencePreloadInput[] = [],
+  options: WarmupReferencePreloadOptions = {},
+) {
   const variantId = usePreferencesStore.getState().localAiWarmupModelVariant
-  return warmupModelManager.getLoadConfig(variantId).then((config) => {
-    if (!config) return undefined
+  return warmupModelManager.getLoadConfig(variantId).then(async (config) => {
+    if (!config) return { restoredCount: 0, computedCount: 0 }
     const dedupedReferences = Array.from(
       new Map(references.map((reference) => {
         const prepared = makeReference(reference)
         return [prepared.key, prepared]
       })).values(),
     )
-    return requestWorker({ type: 'preload', config, references: dedupedReferences }, 30_000).then(() => undefined)
+    const activeModelKey = modelKey(config)
+    const cachedReferences = await warmupEmbeddingCacheRepository
+      .getForReferences(activeModelKey, dedupedReferences.map((reference) => reference.key))
+      .catch((error) => {
+        console.warn('[warmup-embedding-cache] restore lookup failed:', error)
+        return []
+      })
+
+    if (cachedReferences.length > 0) {
+      const restoreResponse = await requestWorker({
+        type: 'restore',
+        config,
+        references: cachedReferences.map((reference) => ({
+          key: reference.referenceKey,
+          expected: reference.expected,
+          prompt: reference.prompt,
+        })),
+      }, 30_000)
+      if (!restoreResponse.ok) throw new Error(restoreResponse.error || 'local model cache restore failed')
+    }
+
+    const cachedKeys = new Set(cachedReferences.map((reference) => reference.referenceKey))
+    const missingReferences = dedupedReferences.filter((reference) => !cachedKeys.has(reference.key))
+    if (missingReferences.length === 0) {
+      return { restoredCount: cachedReferences.length, computedCount: 0 }
+    }
+
+    const response = await requestWorker({ type: 'preload', config, references: missingReferences }, 30_000)
+    if (!response.ok) throw new Error(response.error || 'local model preload failed')
+    if (response.references?.length) {
+      void warmupEmbeddingCacheRepository.putMany(response.references.map((reference) => ({
+        modelKey: activeModelKey,
+        referenceKey: reference.key,
+        expected: reference.expected,
+        prompt: reference.prompt,
+        source: options.source ?? 'unknown',
+        packId: options.packId,
+        topicId: options.topicId,
+      }))).catch((error) => {
+        console.warn('[warmup-embedding-cache] persist failed:', error)
+      })
+    }
+    return {
+      restoredCount: cachedReferences.length,
+      computedCount: response.references?.length ?? missingReferences.length,
+    }
   })
 }
 
