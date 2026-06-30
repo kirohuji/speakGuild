@@ -159,6 +159,75 @@ function typeLabel(type: string, item: any) {
   return '知识点练习'
 }
 
+function stableStringify(value: any): string {
+  if (value == null || typeof value !== 'object') return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`
+}
+
+function stableHash(value: any): string {
+  const input = stableStringify(value)
+  let hash = 5381
+  for (let i = 0; i < input.length; i += 1) {
+    hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
+  }
+  return (hash >>> 0).toString(36)
+}
+
+function compactKey(value: any, fallback: string) {
+  if (value == null) return fallback
+  return String(value).trim() || fallback
+}
+
+function warmupItemIdentity(item: any) {
+  return {
+    type: item?.type,
+    title: item?.title,
+    kind: item?.kind,
+    direction: item?.direction,
+    chunk: item?.chunk,
+    chunkMeaning: item?.chunkMeaning,
+    pattern: item?.pattern,
+    patternMeaning: item?.patternMeaning,
+    vocabWord: item?.vocabWord,
+    vocabMeaning: item?.vocabMeaning,
+    fullSentence: item?.fullSentence,
+    levels: item?.levels,
+  }
+}
+
+export function createWarmupPracticeItemId(params: {
+  packId: string
+  topicId: string
+  type: string
+  item: any
+  prompt: any
+  pattern?: any
+}) {
+  const itemKey = compactKey(params.item?.id, `item-${stableHash(warmupItemIdentity(params.item))}`)
+  const patternPart = params.pattern
+    ? `:p-${compactKey(params.pattern.id, stableHash({
+      chunk: params.pattern.chunk,
+      meaning: params.pattern.meaning,
+      chunkMeaning: params.pattern.chunkMeaning,
+      pattern: params.pattern.pattern,
+    }))}`
+    : ''
+  const promptKey = compactKey(
+    params.prompt?.id ?? params.prompt?.vocabId,
+    `prompt-${stableHash({
+      zh: params.prompt?.zh,
+      answer: params.prompt?.answer,
+      promptZh: params.prompt?.promptZh,
+      suggestedAnswer: params.prompt?.suggestedAnswer,
+      targetWords: params.prompt?.targetWords,
+      fullSentence: params.prompt?.fullSentence,
+      levels: params.prompt?.levels,
+    })}`,
+  )
+  return `${params.packId}:${params.topicId}:${itemKey}:${params.type}${patternPart}:i-${promptKey}`
+}
+
 function emptyProgress(candidate: DailyPracticeCandidate, date: string): DailyPracticeProgress {
   return {
     id: candidate.itemId,
@@ -227,12 +296,17 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
     const pipeline = topic.metadata?.outputTraining?.enabled
       ? (topic.metadata.outputTraining.pipeline ?? [])
       : []
-    for (const [pipelineIndex, item] of pipeline.entries()) {
+    for (const item of pipeline) {
       const type = item.type
-      const base = `${unit.id}:${topic.id}:${item.id ?? pipelineIndex}:${type}`
-      const push = (prompt: any, promptIndex: number, extra: Partial<DailyPracticeCandidate> = {}) => {
-        const patternPart = extra.patternIndex != null ? `:p${extra.patternIndex}` : ''
-        const itemId = `${base}${patternPart}:i${promptIndex}`
+      const push = (prompt: any, promptIndex: number, extra: Partial<DailyPracticeCandidate> & { pattern?: any } = {}) => {
+        const itemId = createWarmupPracticeItemId({
+          packId: unit.id,
+          topicId: topic.id,
+          type,
+          item,
+          prompt,
+          pattern: (extra as any).pattern,
+        })
         candidates.push({
           itemId,
           packId: unit.id,
@@ -257,6 +331,7 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
       } else if (type === 'vocab_sentence_building') {
         ;((item.patterns ?? []) as any[]).forEach((pattern, patternIndex) => {
           ;((pattern.items ?? []) as any[]).forEach((prompt, idx) => push({ ...prompt, pattern }, idx, {
+            pattern,
             patternIndex,
             label: `${item.vocabWord || '词汇'} + ${pattern.chunk || item.vocabWord || ''}`,
             headerContent: item.vocabWord || pattern.chunk || prompt.zh || '',
@@ -519,6 +594,7 @@ export const dailyPracticeRepository = {
     itemIds: string[]
     records: WarmupRecordEntry[]
     date?: string | null
+    localWarmupRecordId?: string | null
   }) {
     const date = normalizePlanDate(params.date)
     const itemIdSet = new Set(params.itemIds)
@@ -547,9 +623,21 @@ export const dailyPracticeRepository = {
     }
 
     await practiceRepository.markTodayActivity(completedIds.length || params.records.length || 1, date)
+    if (params.localWarmupRecordId && params.records.length > 0) {
+      await practiceRepository.upsertLocalWarmupRecord({
+        id: params.localWarmupRecordId,
+        topicId: params.topicId,
+        topicTitle: params.topicTitle,
+        items: params.records,
+        syncStatus: 'pending',
+      })
+    }
 
     try {
       const result = await dailyPracticeApi.complete(payload)
+      if (params.localWarmupRecordId && params.records.length > 0) {
+        await practiceRepository.markWarmupRecordSynced(params.localWarmupRecordId, result.warmupRecordId)
+      }
       await Promise.all(result.syncedAttempts.map(async (clientAttemptId) => {
         const attempt = pending.find((item) => item.clientAttemptId === clientAttemptId)
         if (attempt) await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' as const })
@@ -566,7 +654,7 @@ export const dailyPracticeRepository = {
     }
   },
 
-  async completeRun(plan: DailyPracticePlan, records: WarmupRecordEntry[]) {
+  async completeRun(plan: DailyPracticePlan, records: WarmupRecordEntry[], localWarmupRecordId?: string | null) {
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && plan.scheduledItemIds.includes(attempt.itemId))
     const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
@@ -601,9 +689,21 @@ export const dailyPracticeRepository = {
     }
 
     await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date)
+    if (localWarmupRecordId && records.length > 0 && firstTopic) {
+      await practiceRepository.upsertLocalWarmupRecord({
+        id: localWarmupRecordId,
+        topicId: firstTopic.topicId,
+        topicTitle: firstTopic.topicTitle,
+        items: records,
+        syncStatus: 'pending',
+      })
+    }
 
     try {
       const result = await dailyPracticeApi.complete(payload)
+      if (localWarmupRecordId && records.length > 0) {
+        await practiceRepository.markWarmupRecordSynced(localWarmupRecordId, result.warmupRecordId)
+      }
       await Promise.all(result.syncedAttempts.map(async (clientAttemptId) => {
         const attempt = pending.find((item) => item.clientAttemptId === clientAttemptId)
         if (attempt) await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' as const })

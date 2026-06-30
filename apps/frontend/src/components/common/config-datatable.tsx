@@ -94,8 +94,8 @@ export function ConfigDataTable<T extends Record<string, any>>({
   })
 
   return (
-    <div className={cn('space-y-3', className)}>
-      <div className="rounded-md border overflow-hidden">
+    <div className={cn('flex min-h-0 flex-col gap-3', className)}>
+      <div className="min-h-0 flex-1 overflow-auto rounded-md border">
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -165,7 +165,7 @@ export function ConfigDataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="flex shrink-0 items-center justify-between text-sm text-muted-foreground">
         <span>
           {t('common.paginationInfo', { total, page, totalPages })}
         </span>

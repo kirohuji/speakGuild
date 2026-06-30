@@ -73,6 +73,12 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['status', 'status', (value) => value?.status ?? null],
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
   ],
+  warmup_records: [
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['topic_title', 'topicTitle', (value) => value?.topicTitle ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+    ['created_at', 'createdAt', (value) => value?.createdAt ?? null],
+  ],
   daily_practice_items: [
     ['item_id', 'itemId', (value) => value?.itemId ?? value?.id ?? null],
     ['pack_id', 'packId', (value) => value?.packId ?? null],

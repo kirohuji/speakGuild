@@ -1,5 +1,5 @@
 import { learningApi } from '@/features/learning/api/learning-api'
-import { practiceApi, expressionApi, dailyPracticeApi, warmupRecordApi } from '@/features/practice/api/english-practice-api'
+import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
@@ -144,6 +144,22 @@ async function applyPracticeSessionItem(item: any, localSessionId?: string | nul
   })
 }
 
+async function applyWarmupRecordItem(item: any): Promise<void> {
+  if (!item?.id || !Array.isArray(item.items) || item.items.length === 0) return
+  await localDb.put('warmup_records', {
+    id: `remote-warmup:${item.id}`,
+    remoteId: item.id,
+    topicId: item.topicId,
+    topicTitle: item.topicTitle ?? '',
+    score: item.score ?? null,
+    feedback: item.feedback ?? null,
+    items: item.items,
+    createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
+    updatedAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
+    syncStatus: 'synced',
+  })
+}
+
 async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
   for (const item of changed?.expressionItems ?? []) {
     await applyExpressionItem(item)
@@ -190,6 +206,10 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
 
   for (const item of changed?.practiceSessions ?? []) {
     await applyPracticeSessionItem(item)
+  }
+
+  for (const item of changed?.practiceWarmupRecords ?? []) {
+    await applyWarmupRecordItem(item)
   }
 
   for (const id of deleted?.expressionItems ?? []) {
@@ -263,12 +283,24 @@ async function replayItem(
 
   if (item.entityType === 'warmup_records' && item.operation === 'create') {
     const payload = item.payload as any
-    await warmupRecordApi.save(payload.topicId, payload.items ?? [])
-    await warmupRecordApi.assess(payload.topicId, payload.topicTitle ?? '', payload.items ?? [])
+    const { results } = await syncApi.push([{
+      entityType: item.entityType,
+      entityId: item.entityId,
+      operation: item.operation,
+      payload: item.payload,
+      clientMutationId: item.clientMutationId,
+    }])
+    const result = results[0]
+    if (!result || result.status !== 'synced') {
+      throw new Error(result?.error ?? 'warmup record sync failed')
+    }
     await localDb.put('warmup_records', {
       id: item.entityId,
+      remoteId: result.remoteId,
       topicId: payload.topicId,
       topicTitle: payload.topicTitle,
+      score: payload.score ?? result.remoteItem?.score ?? null,
+      feedback: payload.feedback ?? result.remoteItem?.feedback ?? null,
       items: payload.items ?? [],
       createdAt: payload.createdAt ?? item.createdAt,
       updatedAt: new Date().toISOString(),
@@ -441,7 +473,8 @@ export const offlineSyncService = {
         (result.changed.sceneProgresses?.length ?? 0) +
         (result.changed.chunkProgresses?.length ?? 0) +
         (result.changed.practiceSessions?.length ?? 0) +
-        (result.changed.practiceTurns?.length ?? 0)
+        (result.changed.practiceTurns?.length ?? 0) +
+        (result.changed.practiceWarmupRecords?.length ?? 0)
       totalDeleted +=
         (result.deleted.expressionItems?.length ?? 0) +
         (result.deleted.sceneProgresses?.length ?? 0) +

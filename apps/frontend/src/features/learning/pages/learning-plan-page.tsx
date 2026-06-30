@@ -108,11 +108,11 @@ export function LearningPlanPage() {
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
-          <DrawerContent className="max-h-[95vh] rounded-t-[28px] border-border/70 bg-background drawer-surface">
+          <DrawerContent className="flex h-[95vh] max-h-[95vh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
               <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>
-            <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
               <PracticeRecordsWithTabs />
             </div>
           </DrawerContent>
@@ -156,15 +156,15 @@ function PracticeRecordsWithTabs() {
   const [activeTab, setActiveTab] = useState('vn')
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="mb-3 w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full min-h-0 flex-col">
+      <TabsList className="mb-3 w-full shrink-0">
         <TabsTrigger value="vn" className="flex-1 text-xs">{t('profile.records')}</TabsTrigger>
         <TabsTrigger value="warmup" className="flex-1 text-xs">{t('learning.warmupPractice')}</TabsTrigger>
       </TabsList>
-      <TabsContent value="vn" className="mt-0">
+      <TabsContent value="vn" className="mt-0 min-h-0 flex-1 overflow-hidden">
         <PracticeRecordsContent />
       </TabsContent>
-      <TabsContent value="warmup" className="mt-0">
+      <TabsContent value="warmup" className="mt-0 min-h-0 flex-1 overflow-hidden">
         <WarmupRecordsContent />
       </TabsContent>
     </Tabs>
@@ -173,6 +173,53 @@ function PracticeRecordsWithTabs() {
 
 
 // ─── 知识点练习记录 ────────────────────────────────────────────────────────
+function warmupRecordFingerprint(record: WarmupRecord) {
+  const items = Array.isArray(record.items) ? record.items : []
+  return items
+    .map((item: any) => `${item.stepId ?? ''}|${item.userAnswer ?? ''}|${item.answer ?? item.suggestedAnswer ?? ''}`)
+    .join('::')
+}
+
+function warmupRecordKeys(record: WarmupRecord) {
+  const keys = new Set<string>()
+  const remoteId = (record as any).remoteId
+  if (remoteId) keys.add(`remote:${remoteId}`)
+  if (!String(record.id).startsWith('guided-warmup:') && !String(record.id).startsWith('today-warmup:') && !String(record.id).startsWith('warmup:')) {
+    keys.add(`remote:${record.id}`)
+  }
+  const fingerprint = warmupRecordFingerprint(record)
+  if (fingerprint) keys.add(`fp:${fingerprint}`)
+  keys.add(`id:${record.id}`)
+  return [...keys]
+}
+
+function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string) {
+  const items = Array.isArray(record.items) ? record.items : []
+  const first = items[0] as any
+  if (!first) return record.topicTitle || fallback
+  const title = first.groupTitle || first.displayLabel || record.topicTitle || fallback
+  const prompt = first.zh || first.promptZh || first.answer || first.suggestedAnswer
+  if (items.length === 1 && prompt && prompt !== title) return `${title} · ${String(prompt).slice(0, 28)}`
+  return items.length > 1 ? `${title} · ${items.length} 题` : title
+}
+
+function warmupRecordPracticeCount(record: WarmupRecord) {
+  const items = Array.isArray(record.items) ? record.items : []
+  return items.reduce((sum, item: any) => sum + Math.max(1, Number(item.practiceCount ?? 1)), 0)
+}
+
+function mergeWarmupRecords(localRecords: WarmupRecord[], remoteRecords: WarmupRecord[]) {
+  const seen = new Set<string>()
+  return [...localRecords, ...remoteRecords]
+    .filter((record) => {
+      const keys = warmupRecordKeys(record)
+      if (keys.some((key) => seen.has(key))) return false
+      keys.forEach((key) => seen.add(key))
+      return true
+    })
+    .sort((a, b) => String((b as any).updatedAt ?? b.createdAt ?? '').localeCompare(String((a as any).updatedAt ?? a.createdAt ?? '')))
+}
+
 function WarmupRecordsContent() {
   const { t } = useTranslation()
   const [records, setRecords] = useState<WarmupRecord[]>([])
@@ -182,11 +229,22 @@ function WarmupRecordsContent() {
   const [selectedRecord, setSelectedRecord] = useState<WarmupRecord | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    warmupRecordApi.listAll()
-      .then(setRecords)
-      .catch(() => setRecords([]))
-      .finally(() => setLoading(false))
+    Promise.allSettled([
+      practiceRepository.listLocalWarmupRecords(),
+      warmupRecordApi.listAll(),
+    ]).then(([localResult, remoteResult]) => {
+      if (cancelled) return
+      const localRecords = localResult.status === 'fulfilled' ? localResult.value : []
+      const remoteRecords = remoteResult.status === 'fulfilled' ? remoteResult.value : []
+      setRecords(mergeWarmupRecords(localRecords, remoteRecords))
+    }).catch(() => {
+      if (!cancelled) setRecords([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [])
 
   const pagedRecords = useMemo(() => {
@@ -197,17 +255,21 @@ function WarmupRecordsContent() {
   const columns: ColumnConfig<WarmupRecord>[] = [
     {
       key: 'topicTitle',
-      header: t('learning.topicHeader'),
+      header: t('learning.warmupPractice'),
       cell: (v, row) => {
         const passedItems = row.items?.filter((i: any) => i.passed).length ?? 0
         const totalItems = row.items?.length ?? 0
+        const practiceCount = warmupRecordPracticeCount(row)
         return (
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <span className="text-sm font-medium">{v || t('learning.warmupPractice')}</span>
+              <span className="text-sm font-medium">{warmupRecordDisplayTitle(row, t('learning.warmupPractice'))}</span>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {passedItems}/{totalItems} {t('learning.passedSuffix')}
+                {passedItems}/{totalItems} {t('learning.passedSuffix')} · 练习 {practiceCount} 次
               </p>
+              {v && (
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{v}</p>
+              )}
               {row.feedback && (
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.feedback}</p>
               )}
@@ -244,8 +306,8 @@ function WarmupRecordsContent() {
   ]
 
   return (
-    <div className="space-y-4">
-      <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <p className="shrink-0 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">
         {t('learning.recordsHint')}
       </p>
       <ConfigDataTable
@@ -258,6 +320,7 @@ function WarmupRecordsContent() {
         isLoading={loading}
         emptyMessage={t('learning.noWarmupRecords')}
         onRowClick={setSelectedRecord}
+        className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
       />
       <WarmupRecordDetailDrawer
         record={selectedRecord}
@@ -389,7 +452,7 @@ function WarmupRecordDetailDrawer({
                   {record.topicTitle || t('learning.warmupPractice')} · {t('common.total')} {record.score ?? '-'} {t('learning.scoreUnit')}
                 </p>
                 <h2 className="truncate text-lg font-bold leading-tight text-foreground">
-                  {current?.zh || t('learning.practiceReview')}
+                  {current?.groupTitle || current?.displayLabel || current?.zh || t('learning.practiceReview')}
                 </h2>
               </div>
               <button
@@ -417,6 +480,7 @@ function WarmupRecordDetailDrawer({
             </Button>
             <span className="text-xs text-muted-foreground tabular-nums">
               {currentIdx + 1} / {total}
+              {current?.practiceCount && current.practiceCount > 1 ? ` · 练习 ${current.practiceCount} 次` : ''}
             </span>
             <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
               <span className="mr-1">{t('todayTask.nextQuestion')}</span>
@@ -506,8 +570,8 @@ function PracticeRecordsContent() {
   ]
 
   return (
-    <div className="space-y-4">
-      <p className="rounded-lg bg-muted/35 px-3 py-2 text-xs leading-5 text-muted-foreground">
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <p className="shrink-0 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">
         {t('profile.reviewIncompleteHint')}
       </p>
       <ConfigDataTable
@@ -520,6 +584,7 @@ function PracticeRecordsContent() {
         isLoading={isLoading}
         emptyMessage={t('profile.practiceRecords.empty')}
         onRowClick={setSelectedRecord}
+        className="min-h-0 flex-1"
       />
       <PracticeRecordReadonlyReviewDrawer
         record={selectedRecord}

@@ -444,6 +444,119 @@ export const practiceRepository = {
     return { id: recordId, synced: false }
   },
 
+  async upsertLocalWarmupRecord(params: {
+    id: string
+    topicId: string
+    topicTitle?: string | null
+    items: WarmupRecordEntry[]
+    createdAt?: string
+    syncStatus?: 'pending' | 'synced'
+  }) {
+    const existing = await localDb.get<any>('warmup_records', params.id).catch(() => null)
+    const now = new Date().toISOString()
+    await localDb.put('warmup_records', {
+      id: params.id,
+      topicId: params.topicId,
+      topicTitle: params.topicTitle ?? existing?.topicTitle ?? '',
+      items: params.items,
+      createdAt: existing?.createdAt ?? params.createdAt ?? now,
+      updatedAt: now,
+      syncStatus: params.syncStatus ?? existing?.syncStatus ?? 'pending',
+    })
+  },
+
+  async getLocalWarmupRecord(id: string): Promise<{ items?: WarmupRecordEntry[] } | null> {
+    return localDb.get<any>('warmup_records', id).catch(() => null)
+  },
+
+  async listLocalWarmupRecords(topicId?: string | null): Promise<any[]> {
+    const all = await localDb.list<any>('warmup_records')
+    return all
+      .filter((item) => Array.isArray(item?.items) && item.items.length > 0)
+      .filter((item) => !topicId || item.topicId === topicId)
+      .sort((a, b) => String(b.updatedAt ?? b.createdAt ?? '').localeCompare(String(a.updatedAt ?? a.createdAt ?? '')))
+      .map((item) => ({
+        id: item.id,
+        remoteId: item.remoteId,
+        topicId: item.topicId,
+        topicTitle: item.topicTitle ?? '',
+        score: item.score ?? null,
+        feedback: item.feedback ?? null,
+        items: item.items,
+        createdAt: item.createdAt ?? item.updatedAt ?? new Date().toISOString(),
+        updatedAt: item.updatedAt ?? item.createdAt,
+        syncStatus: item.syncStatus,
+      }))
+  },
+
+  async getWarmupEntriesByRecordIdPrefix(prefix: string): Promise<WarmupRecordEntry[]> {
+    const all = await localDb.list<any>('warmup_records')
+    return all
+      .filter((item) => typeof item?.id === 'string' && item.id.startsWith(prefix) && Array.isArray(item.items))
+      .sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')))
+      .flatMap((item) => item.items as WarmupRecordEntry[])
+  },
+
+  async getWarmupEntriesByDate(date: string): Promise<WarmupRecordEntry[]> {
+    const all = await localDb.list<any>('warmup_records')
+    return all
+      .filter((item) => {
+        if (!Array.isArray(item?.items) || item.items.length === 0) return false
+        const createdDate = String(item.createdAt ?? '').slice(0, 10)
+        const updatedDate = String(item.updatedAt ?? '').slice(0, 10)
+        return createdDate === date || updatedDate === date
+      })
+      .sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')))
+      .flatMap((item) => (item.items as WarmupRecordEntry[]).map((record) => ({
+        ...record,
+        topicTitle: record.topicTitle ?? item.topicTitle ?? '',
+        recordId: item.id,
+      })))
+  },
+
+  async getLatestWarmupEntriesByStepIds(stepIds: string[], excludeRecordId?: string | null): Promise<WarmupRecordEntry[]> {
+    const stepIdSet = new Set(stepIds)
+    if (stepIdSet.size === 0) return []
+    const all = await localDb.list<any>('warmup_records')
+    const latestByStep = new Map<string, { record: WarmupRecordEntry; createdAt: string }>()
+    for (const item of all) {
+      if (!item?.items?.length || item.id === excludeRecordId) continue
+      const createdAt = String(item.updatedAt ?? item.createdAt ?? '')
+      for (const record of item.items as WarmupRecordEntry[]) {
+        if (!stepIdSet.has(record.stepId)) continue
+        const existing = latestByStep.get(record.stepId)
+        if (!existing || createdAt.localeCompare(existing.createdAt) > 0) {
+          latestByStep.set(record.stepId, { record, createdAt })
+        }
+      }
+    }
+    return [...latestByStep.values()].map((item) => item.record)
+  },
+
+  async markWarmupRecordSynced(id: string, remoteId?: string | null) {
+    const existing = await localDb.get<any>('warmup_records', id).catch(() => null)
+    if (!existing) return
+    await localDb.put('warmup_records', {
+      ...existing,
+      remoteId: remoteId ?? existing.remoteId,
+      updatedAt: new Date().toISOString(),
+      syncStatus: 'synced',
+    })
+  },
+
+  async syncLocalWarmupRecord(id: string, topicId: string, topicTitle: string, items: WarmupRecordEntry[]) {
+    await syncOutbox.enqueue({
+      entityType: 'warmup_records',
+      entityId: id,
+      operation: 'create',
+      payload: { topicId, topicTitle, items, createdAt: new Date().toISOString() },
+    })
+  },
+
+  async deleteLocalWarmupRecord(id: string) {
+    await localDb.delete('warmup_records', id)
+  },
+
   /** 标记今日练习活跃（用于打卡统计） */
   async markTodayActivity(count: number = 1, date?: string): Promise<void> {
     const day = /^\d{4}-\d{2}-\d{2}$/.test(date ?? '') ? date! : new Date().toISOString().slice(0, 10)

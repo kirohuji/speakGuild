@@ -22,7 +22,7 @@ import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-outpu
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
 import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
 import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
-import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
@@ -30,6 +30,7 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
+import { practiceRepository } from '@/lib/offline'
 
 // ── 类型 ──
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
@@ -169,16 +170,20 @@ export function TodayTaskPage() {
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // 练习状态
+  const hydrateWarmupSession = useWarmupSessionStore((s) => s.hydrateSession)
+  const hydrateHistoricalStepStates = useWarmupSessionStore((s) => s.hydrateHistoricalStepStates)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
+  const [historicalTodayRecords, setHistoricalTodayRecords] = useState<WarmupRecordEntry[]>([])
   const [autoNextEnabled, setAutoNextEnabled] = useState(false)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
   const localAiPreloadKeyRef = useRef<string | null>(null)
+  const warmupSessionHydratedKeyRef = useRef<string | null>(null)
   const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || (dailyPracticeLastMode as DailyPracticePlanMode) || 'review'
   const [planRunSeed, setPlanRunSeed] = useState(0)
 
@@ -357,6 +362,70 @@ export function TodayTaskPage() {
       })
   }, [markDone, plan?.steps])
 
+  const warmupRecordId = useMemo(() => {
+    if (!plan || plan.scheduledItemIds.length === 0) return null
+    const scope = plan.units.map((unit) => unit.id).join(',') || 'mixed'
+    return `today-warmup:${plan.date}:${plan.mode}:${scope}:${planRunSeed || 'current'}:${plan.scheduledItemIds.join('|')}`
+  }, [plan, planRunSeed])
+
+  useEffect(() => {
+    if (!warmupRecordId || steps.length === 0) return
+    if (warmupSessionHydratedKeyRef.current === warmupRecordId) return
+    warmupSessionHydratedKeyRef.current = warmupRecordId
+    let cancelled = false
+    void practiceRepository.getLocalWarmupRecord(warmupRecordId).then((record) => {
+      if (cancelled) return
+      const rawRecords = record?.items ?? []
+      const stepIds = new Set(steps.map((step) => step.id))
+      const currentRecords = Array.isArray(rawRecords) ? (rawRecords as WarmupRecordEntry[])
+        .filter((record) => stepIds.has(record.stepId))
+        : []
+      if (currentRecords.length > 0) hydrateWarmupSession(currentRecords)
+      const missingStepIds = steps
+        .map((step) => step.id)
+        .filter((stepId) => !currentRecords.some((record) => record.stepId === stepId))
+      if (missingStepIds.length === 0) return
+      void practiceRepository.getLatestWarmupEntriesByStepIds(missingStepIds, warmupRecordId).then((records) => {
+        if (!cancelled && records.length > 0) hydrateHistoricalStepStates(records)
+      })
+    }).catch(() => undefined)
+    return () => { cancelled = true }
+  }, [hydrateHistoricalStepStates, hydrateWarmupSession, steps, warmupRecordId])
+
+  const enrichedWarmupRecords = useMemo(() => {
+    const stepById = new Map(steps.map((step) => [step.id, step]))
+    return warmupStore.records.map((record) => {
+      const step = stepById.get(record.stepId)
+      return {
+        ...record,
+        displayLabel: record.displayLabel ?? step?.displayLabel,
+        topicTitle: record.topicTitle ?? step?.topicTitle,
+      }
+    })
+  }, [steps, warmupStore.records])
+
+  useEffect(() => {
+    if (!warmupRecordId || !plan || enrichedWarmupRecords.length === 0) return
+    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
+    if (!firstTopic) return
+    void practiceRepository.upsertLocalWarmupRecord({
+      id: warmupRecordId,
+      topicId: firstTopic.topicId,
+      topicTitle: firstTopic.topicTitle,
+      items: enrichedWarmupRecords,
+      syncStatus: 'pending',
+    }).catch(() => undefined)
+  }, [enrichedWarmupRecords, plan, warmupRecordId])
+
+  useEffect(() => {
+    if (!recordsOpen || !plan?.date) return
+    let cancelled = false
+    void practiceRepository.getWarmupEntriesByDate(plan.date).then((records) => {
+      if (!cancelled) setHistoricalTodayRecords(records)
+    }).catch(() => undefined)
+    return () => { cancelled = true }
+  }, [recordsOpen, plan?.date, warmupStore.records])
+
   // ── 进度统计 ──
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
   const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
@@ -449,7 +518,7 @@ export function TodayTaskPage() {
 
     const submit = async () => {
       try {
-        await submitToday(warmupStore.records)
+        await submitToday(enrichedWarmupRecords, warmupRecordId)
         console.log('[today-task] ✅ 本组练习已提交 |', doneCount, '题')
       } catch (err) {
         console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
@@ -459,7 +528,7 @@ export function TodayTaskPage() {
     }
 
     submit()
-  }, [allDone, needsReviewRound, steps.length, hasSubmittedToday, warmupStore.records, submitToday])
+  }, [allDone, enrichedWarmupRecords, needsReviewRound, steps.length, hasSubmittedToday, warmupRecordId, submitToday])
 
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
@@ -501,22 +570,34 @@ export function TodayTaskPage() {
   }, [doneIds, openStepAt])
 
   // ── 今日练习记录 ──
-  const todayRecords = warmupStore.records
+  const todayRecords = useMemo(() => {
+    const latestByStep = new Map<string, WarmupRecordEntry>()
+    for (const record of [...historicalTodayRecords, ...enrichedWarmupRecords]) {
+      const key = record.stepId || `${record.zh}|${record.answer}`
+      latestByStep.set(key, record)
+    }
+    return [...latestByStep.values()]
+  }, [enrichedWarmupRecords, historicalTodayRecords])
+  const extraTodayRecordCount = useMemo(() => {
+    const scheduledStepIds = new Set(steps.map((step) => step.id))
+    return todayRecords.filter((record) => !scheduledStepIds.has(record.stepId)).length
+  }, [steps, todayRecords])
 
   // ── 导航 ──
   const currentStep = steps[currentIdx]
   const hasPrev = currentIdx > 0
   const hasNext = currentIdx < steps.length - 1
+  const currentStepDone = currentStep ? doneIds.has(currentStep.id) : false
   const gotoPrev = useCallback(() => setCurrentIdx((p) => Math.max(0, p - 1)), [])
   const gotoNext = useCallback(() => setCurrentIdx((p) => Math.min(steps.length - 1, p + 1)), [steps.length])
 
   useEffect(() => {
-    if (!drawerOpen || !autoNextEnabled || !hasNext) return
+    if (!drawerOpen || !autoNextEnabled || !hasNext || !currentStepDone) return
     const timer = window.setTimeout(() => {
       setCurrentIdx((prev) => Math.min(steps.length - 1, prev + 1))
     }, 3000)
     return () => window.clearTimeout(timer)
-  }, [autoNextEnabled, currentIdx, drawerOpen, hasNext, steps.length])
+  }, [autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext, steps.length])
 
   // ── 加载态：仅在无缓存数据时展示 ──
   if (loading && !plan) return <MobilePageLoading rows={4} />
@@ -630,6 +711,11 @@ export function TodayTaskPage() {
           <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
             {doneCount}/{steps.length} {t('todayTask.questions')}
           </Badge>
+          {extraTodayRecordCount > 0 && (
+            <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px] text-emerald-600">
+              额外 +{extraTodayRecordCount}
+            </Badge>
+          )}
         </div>
         <SegmentedBar segments={topSegments} />
         {plan.mode === 'practice' && (
@@ -651,6 +737,7 @@ export function TodayTaskPage() {
           {plan.mode === 'practice' ? (
             <>
               {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
+              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />额外练习 {extraTodayRecordCount}</span>}
               {steps.length - statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.pending', { count: steps.length - statusCounts.done })}</span>}
             </>
           ) : (
@@ -659,6 +746,7 @@ export function TodayTaskPage() {
               {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />{t('todayTask.review', { count: statusCounts.review })}</span>}
               {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.newPractice', { count: statusCounts.new })}</span>}
               {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
+              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />额外练习 {extraTodayRecordCount}</span>}
             </>
           )}
           {statusCounts.overdue === 0 && statusCounts.review === 0 && statusCounts.new === 0 && statusCounts.done === 0 && (

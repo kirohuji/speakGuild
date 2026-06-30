@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
+import { practiceRepository } from '@/lib/offline'
 import { warmupRecordApi, type WarmupRecord } from '../api/english-practice-api'
 
 interface WarmupHistoryDrawerProps {
@@ -24,6 +25,53 @@ function fmtDate(value: string) {
   })
 }
 
+function warmupRecordFingerprint(record: WarmupRecord) {
+  const items = Array.isArray(record.items) ? record.items : []
+  return items
+    .map((item: any) => `${item.stepId ?? ''}|${item.userAnswer ?? ''}|${item.answer ?? item.suggestedAnswer ?? ''}`)
+    .join('::')
+}
+
+function warmupRecordKeys(record: WarmupRecord) {
+  const keys = new Set<string>()
+  const remoteId = (record as any).remoteId
+  if (remoteId) keys.add(`remote:${remoteId}`)
+  if (!String(record.id).startsWith('guided-warmup:') && !String(record.id).startsWith('today-warmup:') && !String(record.id).startsWith('warmup:')) {
+    keys.add(`remote:${record.id}`)
+  }
+  const fingerprint = warmupRecordFingerprint(record)
+  if (fingerprint) keys.add(`fp:${fingerprint}`)
+  keys.add(`id:${record.id}`)
+  return [...keys]
+}
+
+function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string) {
+  const items = Array.isArray(record.items) ? record.items : []
+  const first = items[0] as any
+  if (!first) return record.topicTitle || fallback
+  const title = first.groupTitle || first.displayLabel || record.topicTitle || fallback
+  const prompt = first.zh || first.promptZh || first.answer || first.suggestedAnswer
+  if (items.length === 1 && prompt && prompt !== title) return `${title} · ${String(prompt).slice(0, 28)}`
+  return items.length > 1 ? `${title} · ${items.length} 题` : title
+}
+
+function warmupRecordPracticeCount(record: WarmupRecord) {
+  const items = Array.isArray(record.items) ? record.items : []
+  return items.reduce((sum, item: any) => sum + Math.max(1, Number(item.practiceCount ?? 1)), 0)
+}
+
+function mergeWarmupRecords(localRecords: WarmupRecord[], remoteRecords: WarmupRecord[]) {
+  const seen = new Set<string>()
+  return [...localRecords, ...remoteRecords]
+    .filter((record) => {
+      const keys = warmupRecordKeys(record)
+      if (keys.some((key) => seen.has(key))) return false
+      keys.forEach((key) => seen.add(key))
+      return true
+    })
+    .sort((a, b) => String((b as any).updatedAt ?? b.createdAt ?? '').localeCompare(String((a as any).updatedAt ?? a.createdAt ?? '')))
+}
+
 export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }: WarmupHistoryDrawerProps) {
   const { t } = useTranslation()
   const [records, setRecords] = useState<WarmupRecord[]>([])
@@ -32,19 +80,34 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
   const [replayItem, setReplayItem] = useState<any | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     if (open && topicId) {
       setLoading(true)
-      warmupRecordApi.list(topicId)
-        .then(setRecords)
-        .catch(() => setRecords([]))
-        .finally(() => setLoading(false))
+      Promise.allSettled([
+        practiceRepository.listLocalWarmupRecords(topicId),
+        warmupRecordApi.list(topicId),
+      ]).then(([localResult, remoteResult]) => {
+        if (cancelled) return
+        const localRecords = localResult.status === 'fulfilled' ? localResult.value : []
+        const remoteRecords = remoteResult.status === 'fulfilled' ? remoteResult.value : []
+        setRecords(mergeWarmupRecords(localRecords, remoteRecords))
+      }).catch(() => {
+        if (!cancelled) setRecords([])
+      }).finally(() => {
+        if (!cancelled) setLoading(false)
+      })
     }
+    return () => { cancelled = true }
   }, [open, topicId])
 
   const typeLabel = (item: any) => {
-    if (item.type === 'chunk_substitution') return '句块'
-    if (item.type === 'pattern_drill') return '句型'
-    if (item.type === 'vocab_drill') return '词汇'
+    if (item.displayLabel) return item.displayLabel
+    const type = item.stepType ?? item.type
+    if (type === 'chunk_substitution') return '句块替换'
+    if (type === 'vocab_sentence_building') return '一词多句'
+    if (type === 'pattern_drill') return '句型操练'
+    if (type === 'vocab_drill') return '词汇输出'
+    if (type === 'sentence_decomposition') return '句子拆解'
     return '练习'
   }
 
@@ -78,6 +141,7 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
               {records.map((record) => {
                 const totalItems = record.items?.length ?? 0
                 const passedItems = record.items?.filter((i: any) => i.passed).length ?? 0
+                const practiceCount = warmupRecordPracticeCount(record)
                 const isExpanded = expandedId === record.id
                 return (
                   <div key={record.id} className="rounded-lg border bg-card">
@@ -94,13 +158,15 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                         {record.score ?? '-'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{topicTitle}</p>
+                        <p className="text-sm font-medium truncate">{warmupRecordDisplayTitle(record, topicTitle)}</p>
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock3 className="size-3" />
                           {fmtDate(record.createdAt)}
                           <span>·</span>
                           <Target className="size-3" />
                           {passedItems}/{totalItems} 通过
+                          <span>·</span>
+                          练习 {practiceCount} 次
                         </div>
                       </div>
                       <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
@@ -125,6 +191,7 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                                   <XCircle className="size-3.5 text-red-400" />
                                 }
                                 {item.groupTitle && <span className="text-[10px] text-muted-foreground truncate">{item.groupTitle}</span>}
+                                {item.practiceCount > 1 && <span className="text-[10px] text-muted-foreground">练习 {item.practiceCount} 次</span>}
                               </div>
                               <p className="text-xs text-muted-foreground">题目: {item.zh || item.promptZh}</p>
                               {item.answer || item.suggestedAnswer ? (

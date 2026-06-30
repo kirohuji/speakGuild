@@ -377,6 +377,26 @@ export class SyncService {
       }
     }
 
+    // ---- 热身/今日任务练习明细 ----
+    if (entityType === 'warmup_records') {
+      if (operation === 'create') {
+        const topicId = payload?.topicId;
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        if (!topicId || items.length === 0) return { handled: false };
+
+        const created = await (this.prisma as any).practiceWarmupRecord.create({
+          data: {
+            userId,
+            topicId,
+            score: typeof payload?.score === 'number' ? payload.score : null,
+            feedback: payload?.feedback ?? null,
+            items,
+          },
+        });
+        return { handled: true, remoteId: created.id, remoteItem: created };
+      }
+    }
+
     // recording 暂不处理（走客户端单个上传 API）
     return { handled: false };
   }
@@ -395,6 +415,7 @@ export class SyncService {
       sceneProgresses,
       chunkProgresses,
       practiceSessions,
+      practiceWarmupRecords,
     ] = await Promise.all([
       this.prisma.expressionItem.findMany({
         where: { userId, updatedAt: { gt: since }, deletedAt: null },
@@ -431,6 +452,19 @@ export class SyncService {
           updatedAt: true,
         },
       }),
+      (this.prisma as any).practiceWarmupRecord.findMany({
+        where: { userId, createdAt: { gt: since } },
+        orderBy: { createdAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
+        select: {
+          id: true,
+          topicId: true,
+          score: true,
+          feedback: true,
+          items: true,
+          createdAt: true,
+        },
+      }),
     ]);
 
     // PracticeTurn 没有直接 userId，通过 session 关联
@@ -453,6 +487,7 @@ export class SyncService {
     for (const s of sceneProgresses) timestamps.push(s.updatedAt.getTime());
     for (const c of chunkProgresses) timestamps.push(c.updatedAt.getTime());
     for (const s of practiceSessions) timestamps.push(s.updatedAt.getTime());
+    for (const r of practiceWarmupRecords) timestamps.push(r.createdAt.getTime());
     // for (const t of practiceTurns) timestamps.push(t.createdAt.getTime());
     for (const e of deletedExpressionItems) {
       if (e.deletedAt) timestamps.push(e.deletedAt.getTime());
@@ -465,7 +500,7 @@ export class SyncService {
     // 任意一个结果集达到 pageSize 上限，说明还有更多数据
     const hasMore = [
       expressionItems, sceneProgresses, chunkProgresses,
-      practiceSessions, deletedExpressionItems,
+      practiceSessions, practiceWarmupRecords, deletedExpressionItems,
     ].some((arr) => arr.length >= SyncService.PULL_PAGE_SIZE);
 
     return {
@@ -476,6 +511,7 @@ export class SyncService {
         sceneProgresses,
         chunkProgresses,
         practiceSessions,
+        practiceWarmupRecords,
         // practiceTurns,
       },
       deleted: {

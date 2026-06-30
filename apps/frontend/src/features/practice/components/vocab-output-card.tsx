@@ -107,7 +107,7 @@ export function VocabOutputCard({
     setResult({ passed: false, feedback: '已标记为需要复练。最后会集中再练一次。', correction: correctionText })
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, score: 'miss', usedHintLevel: 3, correction: correctionText })
+    store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, displayLabel: '词汇输出', score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, title, userInput])
 
   const retryCurrent = useCallback(() => {
@@ -138,12 +138,12 @@ export function VocabOutputCard({
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, displayLabel: '词汇输出', score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
         onComplete?.(currentIdx, false, 'miss')
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, displayLabel: '词汇输出', score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
       }
     } catch (err: any) {
       setResult({ passed: false, feedback: err?.message || '反馈不可用' })

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Clock3, ClipboardList } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, ClipboardList } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +24,11 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
     ok: t('todayTask.scoreOk'),
     weak: t('todayTask.scoreWeak'),
     miss: t('todayTask.scoreMiss'),
+  }
+
+  const sourceLabel = (record: WarmupRecordEntry) => {
+    if (record.recordId?.startsWith('guided-warmup:')) return t('learning.warmupPractice')
+    return t('todayTask.todayPractice')
   }
 
   return (
@@ -56,7 +61,7 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
                   const step = steps.find((s) => s.id === record.stepId)
                   const stepIndex = steps.findIndex((s) => s.id === record.stepId)
                   return (
-                    <div key={record.stepId || idx} className="rounded-lg border bg-card p-3">
+                    <div key={`${record.stepId || 'record'}-${idx}`} className="rounded-lg border bg-card p-3">
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold',
@@ -68,10 +73,8 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px]">{step?.displayLabel || t('todayTask.practice')}</Badge>
-                            {step?.topicTitle && (
-                              <span className="truncate text-xs font-medium text-foreground">{step.topicTitle}</span>
-                            )}
+                            <Badge variant="outline" className="text-[10px]">{step?.displayLabel || record.displayLabel || t('todayTask.practice')}</Badge>
+                            <span className="truncate text-xs font-medium text-muted-foreground">{sourceLabel(record)}</span>
                           </div>
                           <p className="mt-1 text-sm text-foreground">{record.zh}</p>
                           {record.answer && (
@@ -80,33 +83,34 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
                             </p>
                           )}
                           <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
-                            <Clock3 className="size-3" />
-                            <span>{t('todayTask.questionNumber', { number: stepIndex >= 0 ? stepIndex + 1 : '?' })}</span>
                             {record.score && (
+                              <span className={cn(
+                                record.score === 'strong' && 'text-green-600',
+                                record.score === 'ok' && 'text-blue-600',
+                                record.score === 'weak' && 'text-amber-600',
+                                record.score === 'miss' && 'text-red-500',
+                              )}>
+                                {scoreLabels[record.score]}
+                              </span>
+                            )}
+                            {record.practiceCount && record.practiceCount > 1 && (
                               <>
                                 <span>·</span>
-                                <span className={cn(
-                                  record.score === 'strong' && 'text-green-600',
-                                  record.score === 'ok' && 'text-blue-600',
-                                  record.score === 'weak' && 'text-amber-600',
-                                  record.score === 'miss' && 'text-red-500',
-                                )}>
-                                  {scoreLabels[record.score]}
-                                </span>
+                                <span>练习 {record.practiceCount} 次</span>
                               </>
                             )}
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (stepIndex >= 0) onReplay(stepIndex)
-                          }}
-                          className="mt-0.5 shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          title={t('todayTask.replayQuestion')}
-                        >
-                          <ChevronRight className="size-4" />
-                        </button>
+                        {stepIndex >= 0 && (
+                          <button
+                            type="button"
+                            onClick={() => onReplay(stepIndex)}
+                            className="mt-0.5 shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title={t('todayTask.replayQuestion')}
+                          >
+                            <ChevronRight className="size-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )

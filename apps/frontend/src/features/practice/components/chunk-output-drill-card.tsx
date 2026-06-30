@@ -109,7 +109,7 @@ export function ChunkOutputDrillCard({
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType, zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, score: 'miss', usedHintLevel: 3, correction: correctionText })
+    store.recordEntry({ stepId, stepType, zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, groupTitle, onComplete, status, stepId, stepType, store, userInput])
 
   const retryCurrent = useCallback(() => {
@@ -145,14 +145,14 @@ export function ChunkOutputDrillCard({
         setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType, zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordEntry({ stepId, stepType, zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: typeLabel, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
         setCorrection(judgement.correction || (isZhToEn ? current.answer : current.zh) || '')
         onComplete?.(currentIdx, false, 'miss')
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType, zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '' })
+        store.recordEntry({ stepId, stepType, zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '' })
       }
     } catch (err: any) {
       setStatus('failed')

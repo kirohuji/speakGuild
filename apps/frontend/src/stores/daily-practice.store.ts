@@ -14,7 +14,7 @@ interface DailyPracticeState {
   submitting: boolean
   loadToday: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode, forceNew?: boolean) => Promise<void>
   completeStep: (step: ScheduledDailyPracticeItem, score: WarmupScore) => Promise<void>
-  submitToday: (records: WarmupRecordEntry[]) => Promise<void>
+  submitToday: (records: WarmupRecordEntry[], localWarmupRecordId?: string | null) => Promise<void>
   reshuffle: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode) => Promise<void>
 }
 
@@ -67,12 +67,12 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
     })
   },
 
-  async submitToday(records) {
+  async submitToday(records, localWarmupRecordId) {
     const plan = get().plan
     if (!plan) return
     set({ submitting: true })
     try {
-      await dailyPracticeRepository.completeRun(plan, records)
+      await dailyPracticeRepository.completeRun(plan, records, localWarmupRecordId)
     } finally {
       set({ submitting: false })
     }

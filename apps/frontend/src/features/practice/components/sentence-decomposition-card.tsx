@@ -85,7 +85,7 @@ export function SentenceDecompositionCard({
         levelRecordings.forEach((v, k) => { levelAudioObj[k] = v.audioUrl })
         const levelsData = JSON.stringify(levels)
         store.recordStep(stepId, { userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
-        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
+        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', displayLabel: '句子拆解', score: 'strong', correction: levelsData })
       }
       onComplete?.(true, 'strong')
     }

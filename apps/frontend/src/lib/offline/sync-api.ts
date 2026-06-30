@@ -19,6 +19,7 @@ export interface PullResult {
     chunkProgresses: any[]
     practiceSessions: any[]
     practiceTurns: any[]
+    practiceWarmupRecords: any[]
   }
   deleted: {
     expressionItems: string[]

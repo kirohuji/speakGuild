@@ -24,6 +24,10 @@ export interface WarmupRecordEntry {
   passed: boolean
   feedback: string
   groupTitle?: string
+  displayLabel?: string
+  topicTitle?: string
+  recordId?: string
+  practiceCount?: number
   score?: WarmupScore
   usedHintLevel?: 0 | 1 | 2 | 3
   retryCount?: number
@@ -49,6 +53,10 @@ interface WarmupSessionState {
   recordEntry: (entry: WarmupRecordEntry) => void
   /** Reset selected step UI states for a focused re-practice round */
   resetSteps: (stepIds: string[]) => void
+  /** Restore a previous in-progress or completed warmup session */
+  hydrateSession: (records: WarmupRecordEntry[]) => void
+  /** Restore previous answers as display-only step state without adding current records */
+  hydrateHistoricalStepStates: (records: WarmupRecordEntry[]) => void
   /** Clear all session data */
   clearSession: () => void
   /** Get all records for assessment */
@@ -79,7 +87,13 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
 
   recordEntry: (entry) => {
     set((prev) => ({
-      records: [...prev.records.filter((record) => record.stepId !== entry.stepId), entry],
+      records: [
+        ...prev.records.filter((record) => record.stepId !== entry.stepId),
+        {
+          ...entry,
+          practiceCount: (prev.records.find((record) => record.stepId === entry.stepId)?.practiceCount ?? 0) + 1,
+        },
+      ],
     }))
   },
 
@@ -91,6 +105,46 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
       ),
       records: prev.records.filter((record) => !resetIds.has(record.stepId)),
     }))
+  },
+
+  hydrateSession: (records) => {
+    const stepStates: Record<string, WarmupStepState> = {}
+    for (const record of records) {
+      const usedHintLevel = record.usedHintLevel ?? 0
+      stepStates[record.stepId] = {
+        userAnswer: record.userAnswer,
+        audioUrl: record.audioUrl ?? null,
+        status: record.passed ? 'passed' : 'failed',
+        hintLevel: usedHintLevel >= 3 ? 'answer' : usedHintLevel > 0 ? 'hint' : 'none',
+        feedback: record.feedback,
+        correction: record.correction || '',
+        score: record.score ?? (record.passed ? 'strong' : 'miss'),
+        retryCount: record.retryCount ?? (record.passed ? 0 : 1),
+      }
+    }
+    set({ records, stepStates })
+  },
+
+  hydrateHistoricalStepStates: (records) => {
+    set((prev) => {
+      const stepStates = { ...prev.stepStates }
+      for (const record of records) {
+        if (prev.records.some((current) => current.stepId === record.stepId)) continue
+        if (stepStates[record.stepId]) continue
+        const usedHintLevel = record.usedHintLevel ?? 0
+        stepStates[record.stepId] = {
+          userAnswer: record.userAnswer,
+          audioUrl: record.audioUrl ?? null,
+          status: record.passed ? 'passed' : 'failed',
+          hintLevel: usedHintLevel >= 3 ? 'answer' : usedHintLevel > 0 ? 'hint' : 'none',
+          feedback: record.feedback,
+          correction: record.correction || '',
+          score: record.score ?? (record.passed ? 'strong' : 'miss'),
+          retryCount: record.retryCount ?? (record.passed ? 0 : 1),
+        }
+      }
+      return { stepStates }
+    })
   },
 
   clearSession: () => set({ stepStates: {}, records: [] }),

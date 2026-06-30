@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { isIOS } from '@/lib/native'
-import { dailyPracticeRepository, type DailyPracticeCandidate } from '@/lib/offline/daily-practice.repository'
+import { practiceRepository } from '@/lib/offline'
+import { createWarmupPracticeItemId, dailyPracticeRepository, type DailyPracticeCandidate } from '@/lib/offline/daily-practice.repository'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
@@ -62,20 +63,33 @@ export function GuidedWarmupPhase({
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'admin'
   const storageKey = `guided-progress:${topicId}`
+  const sessionStorageKey = `guided-session:${topicId}`
+  const [warmupRunSeed, setWarmupRunSeed] = useState(() => {
+    try {
+      const existing = localStorage.getItem(sessionStorageKey)
+      if (existing) return existing
+      const next = String(Date.now())
+      localStorage.setItem(sessionStorageKey, next)
+      return next
+    } catch {
+      return String(Date.now())
+    }
+  })
+  const recordStorageKey = `guided-warmup:${topicId}:${warmupRunSeed}:records`
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // ── Store (must be before flatSteps) ──
   const warmupStore = useWarmupSessionStore()
+  const hydrateWarmupSession = useWarmupSessionStore((s) => s.hydrateSession)
+  const hydrateHistoricalStepStates = useWarmupSessionStore((s) => s.hydrateHistoricalStepStates)
+  const clearWarmupSession = useWarmupSessionStore((s) => s.clearSession)
   const [assessing, setAssessing] = useState(false)
   const [lastAssessment, setLastAssessment] = useState<{ score: number; feedback: string } | null>(null)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
-  const [warmupRunSeed] = useState(() => Math.random())
   const localAiPreloadKeyRef = useRef<string | null>(null)
-
-  // Clear session on mount (only once)
-  useEffect(() => { warmupStore.clearSession() }, [])
+  const warmupSessionSkipSaveRef = useRef<string | null>(null)
 
   // ── Flatten all warmup items into individual steps ──
   interface FlatStep {
@@ -152,22 +166,24 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
     const steps: FlatStep[] = []
     const makeStep = (params: {
       item: any
-      pipelineIndex: number
       type: string
       prompt: any
       promptIndex: number
+      pattern?: any
       patternIndex?: number
       label: string
       displayLabel: string
       headerContent: string
       render: (localStepId: string) => ReactNode
     }) => {
-      const localStepId = params.patternIndex != null
-        ? `${params.item.id}_${params.patternIndex}_${params.promptIndex}`
-        : `${params.item.id}_${params.promptIndex}`
-      const base = `${packId || 'unknown-pack'}:${topicId}:${params.item.id ?? params.pipelineIndex}:${params.type}`
-      const patternPart = params.patternIndex != null ? `:p${params.patternIndex}` : ''
-      const itemId = `${base}${patternPart}:i${params.promptIndex}`
+      const itemId = createWarmupPracticeItemId({
+        packId: packId || 'unknown-pack',
+        topicId,
+        type: params.type,
+        item: params.item,
+        prompt: params.prompt,
+        pattern: params.pattern,
+      })
       const candidate: DailyPracticeCandidate | null = packId ? {
         itemId,
         packId,
@@ -185,22 +201,21 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       } : null
 
       steps.push({
-        id: localStepId,
+        id: itemId,
         itemId,
         type: params.type,
         label: params.label,
         candidate,
-        render: () => params.render(localStepId),
+        render: () => params.render(itemId),
       })
     }
 
-    for (const [pipelineIndex, item] of warmupItems.entries()) {
+    for (const item of warmupItems) {
       if (item.type === 'chunk_substitution') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
           makeStep({
             item,
-            pipelineIndex,
             type: 'chunk_substitution',
             prompt: sub,
             promptIndex: subIdx,
@@ -224,7 +239,6 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         ;((item.vocabs ?? []) as VocabPromptItem[]).forEach((v, vIdx) => {
           makeStep({
             item,
-            pipelineIndex,
             type: 'vocab_drill',
             prompt: v,
             promptIndex: vIdx,
@@ -247,9 +261,9 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
           ;((pattern.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
             makeStep({
               item,
-              pipelineIndex,
               type: 'vocab_sentence_building',
               prompt: { ...sub, pattern },
+              pattern,
               promptIndex: subIdx,
               patternIndex,
               label: `${item.vocabWord} + ${pattern.chunk}`,
@@ -274,7 +288,6 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         const title = item.title || '句子拆解'
         makeStep({
           item,
-          pipelineIndex,
           type: 'sentence_decomposition',
           prompt: { levels: item.levels, fullSentence: item.fullSentence },
           promptIndex: 0,
@@ -295,7 +308,6 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
           makeStep({
             item,
-            pipelineIndex,
             type: 'pattern_drill',
             prompt: sub,
             promptIndex: subIdx,
@@ -322,6 +334,51 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   const totalSteps = flatSteps.length
   const warmupReferencePreloads = useMemo(() => buildWarmupReferencePreloads(warmupItems), [buildWarmupReferencePreloads, warmupItems])
+
+  useEffect(() => {
+    if (totalSteps === 0) return
+    warmupSessionSkipSaveRef.current = recordStorageKey
+    let cancelled = false
+    void practiceRepository.getLocalWarmupRecord(recordStorageKey).then((record) => {
+      if (cancelled) return
+      const rawRecords = record?.items ?? []
+      const stepIds = new Set(flatSteps.map((step) => step.id))
+      const currentRecords = Array.isArray(rawRecords) ? (rawRecords as WarmupRecordEntry[])
+        .filter((record) => stepIds.has(record.stepId))
+        : []
+      if (currentRecords.length > 0) {
+        hydrateWarmupSession(currentRecords)
+      } else {
+        clearWarmupSession()
+      }
+      const missingStepIds = flatSteps
+        .map((step) => step.id)
+        .filter((stepId) => !currentRecords.some((record) => record.stepId === stepId))
+      if (missingStepIds.length === 0) return
+      void practiceRepository.getLatestWarmupEntriesByStepIds(missingStepIds, recordStorageKey).then((records) => {
+        if (!cancelled && records.length > 0) hydrateHistoricalStepStates(records)
+      })
+    }).catch(() => {
+      clearWarmupSession()
+    })
+    return () => { cancelled = true }
+  }, [clearWarmupSession, flatSteps, hydrateHistoricalStepStates, hydrateWarmupSession, recordStorageKey, totalSteps])
+
+  useEffect(() => {
+    if (totalSteps === 0) return
+    if (warmupSessionSkipSaveRef.current === recordStorageKey) {
+      warmupSessionSkipSaveRef.current = null
+      return
+    }
+    if (warmupStore.records.length === 0) return
+    void practiceRepository.upsertLocalWarmupRecord({
+      id: recordStorageKey,
+      topicId,
+      topicTitle,
+      items: warmupStore.records,
+      syncStatus: 'pending',
+    }).catch(() => undefined)
+  }, [recordStorageKey, topicId, topicTitle, totalSteps, warmupStore.records])
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return
@@ -387,14 +444,17 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   // ── Reset for re-practice ──
   const resetForRepractice = useCallback(() => {
+    const nextSession = String(Date.now())
+    try { localStorage.setItem(sessionStorageKey, nextSession) } catch {}
+    setWarmupRunSeed(nextSession)
     setDoneIds(new Set())
     try { localStorage.removeItem(storageKey) } catch {}
-    warmupStore.clearSession()
+    clearWarmupSession()
     setLastAssessment(null)
     setReviewRoundStarted(false)
     setReviewRoundFinished(false)
     setReviewRunNonce(0)
-  }, [storageKey, warmupStore])
+  }, [clearWarmupSession, sessionStorageKey, storageKey])
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
@@ -430,13 +490,19 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         ? dailyPracticeRepository.syncAdHocRun({ packId, topicId, topicTitle, itemIds, records }).catch(() => undefined)
         : Promise.resolve()
       warmupRecordApi.assess(topicId, topicTitle, records)
-        .then((res) => setLastAssessment(res))
-        .catch(() => setLastAssessment({ score: 0, feedback: '' }))
+        .then((res) => {
+          setLastAssessment(res)
+          void practiceRepository.markWarmupRecordSynced(recordStorageKey, res.id)
+        })
+        .catch(() => {
+          setLastAssessment({ score: 0, feedback: '' })
+          void practiceRepository.syncLocalWarmupRecord(recordStorageKey, topicId, topicTitle, records).catch(() => undefined)
+        })
         .finally(() => {
           void syncProgress.finally(() => setAssessing(false))
         })
     }
-  }, [allDone, flatSteps, needsReviewRound, packId, topicId, topicTitle, assessing, lastAssessment, warmupStore])
+  }, [allDone, flatSteps, needsReviewRound, packId, recordStorageKey, topicId, topicTitle, assessing, lastAssessment, warmupStore])
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -444,16 +510,17 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
   const gotoNext = useCallback(() => setCurrentIdx(prev => Math.min(totalSteps - 1, prev + 1)), [totalSteps])
   const hasPrev = currentIdx > 0
   const hasNext = currentIdx < totalSteps - 1
+  const currentStepDone = flatSteps[currentIdx] ? doneIds.has(flatSteps[currentIdx].id) : false
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [autoNextEnabled, setAutoNextEnabled] = useState(false)
 
   useEffect(() => {
-    if (!autoNextEnabled || !hasNext || allDone) return
+    if (!autoNextEnabled || !hasNext || allDone || !currentStepDone) return
     const timer = window.setTimeout(() => {
       setCurrentIdx((prev) => Math.min(totalSteps - 1, prev + 1))
     }, 3000)
     return () => window.clearTimeout(timer)
-  }, [allDone, autoNextEnabled, currentIdx, hasNext, totalSteps])
+  }, [allDone, autoNextEnabled, currentIdx, currentStepDone, hasNext, totalSteps])
 
   if (totalSteps === 0) {
     return (
