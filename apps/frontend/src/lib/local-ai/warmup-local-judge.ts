@@ -223,6 +223,10 @@ export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promi
     }
   }
 
+  if (answerContainsExpected(userAnswer, input.expectedAnswer)) {
+    return makeResult({ score: 'strong', confidence: 1, targetMatched: true, expectedAnswer: input.expectedAnswer })
+  }
+
   const variantId = usePreferencesStore.getState().localAiWarmupModelVariant
   const config = await warmupModelManager.getLoadConfig(variantId)
   if (!config) throw new Error('local warmup model is not downloaded')

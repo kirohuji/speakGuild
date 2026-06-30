@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Lightbulb, ListMusic, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -10,8 +10,10 @@ import { cn } from '@/lib/cn'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { isIOS } from '@/lib/native'
 import { dailyPracticeRepository, type DailyPracticeCandidate } from '@/lib/offline/daily-practice.repository'
+import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
+import { toast } from 'sonner'
 import { warmupRecordApi } from '../api/english-practice-api'
 import { ChunkOutputDrillCard } from './chunk-output-drill-card'
 import { PatternDrillCard } from './pattern-drill-card'
@@ -56,6 +58,8 @@ export function GuidedWarmupPhase({
   onComplete: () => void
 }) {
   const { t } = useTranslation()
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'admin'
   const storageKey = `guided-progress:${topicId}`
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
@@ -67,6 +71,7 @@ export function GuidedWarmupPhase({
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
   const [warmupRunSeed] = useState(() => Math.random())
+  const localAiPreloadKeyRef = useRef<string | null>(null)
 
   // Clear session on mount (only once)
   useEffect(() => { warmupStore.clearSession() }, [])
@@ -319,10 +324,20 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return
-    void preloadWarmupLocalJudge(warmupReferencePreloads).catch((error) => {
-      console.warn('[warmup-local-judge] preload failed:', error)
-    })
-  }, [localAiWarmupJudgeEnabled, warmupReferencePreloads])
+    const preloadKey = warmupReferencePreloads
+      .map((item) => `${item.stepType}:${item.direction ?? ''}:${item.prompt}:${item.expectedAnswer ?? ''}`)
+      .join('|')
+    if (localAiPreloadKeyRef.current === preloadKey) return
+    localAiPreloadKeyRef.current = preloadKey
+    void preloadWarmupLocalJudge(warmupReferencePreloads)
+      .then(() => {
+        if (isAdmin && warmupReferencePreloads.length > 0) toast.success(`本地 AI 预加载成功 · ${warmupReferencePreloads.length} 题`)
+      })
+      .catch((error) => {
+        console.warn('[warmup-local-judge] preload failed:', error)
+        if (isAdmin) toast.warning(`本地 AI 预加载失败：${error instanceof Error ? error.message : String(error)}`)
+      })
+  }, [isAdmin, localAiWarmupJudgeEnabled, warmupReferencePreloads])
 
   const [doneIds, setDoneIds] = useState<Set<string>>(() => {
     try {

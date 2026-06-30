@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -27,6 +27,8 @@ import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/d
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
+import { useAuth } from '@/providers/auth-provider'
+import { toast } from 'sonner'
 
 // ── 类型 ──
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
@@ -145,6 +147,8 @@ function useTopicStatusMeta(t: (key: string) => string): Record<DailyPracticeSta
 // ── 组件 ──
 export function TodayTaskPage() {
   const { t } = useTranslation()
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
   const TOPIC_STATUS_META = useTopicStatusMeta(t)
   const warmupStore = useWarmupSessionStore()
@@ -172,6 +176,7 @@ export function TodayTaskPage() {
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
+  const localAiPreloadKeyRef = useRef<string | null>(null)
   const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || (dailyPracticeLastMode as DailyPracticePlanMode) || 'review'
   const [planRunSeed, setPlanRunSeed] = useState(0)
 
@@ -186,10 +191,21 @@ export function TodayTaskPage() {
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return
-    void preloadWarmupLocalJudge(buildTodayReferencePreloads(plan?.steps ?? [])).catch((error) => {
-      console.warn('[warmup-local-judge] preload failed:', error)
-    })
-  }, [localAiWarmupJudgeEnabled, plan?.steps])
+    const references = buildTodayReferencePreloads(plan?.steps ?? [])
+    const preloadKey = references
+      .map((item) => `${item.stepType}:${item.direction ?? ''}:${item.prompt}:${item.expectedAnswer ?? ''}`)
+      .join('|')
+    if (localAiPreloadKeyRef.current === preloadKey) return
+    localAiPreloadKeyRef.current = preloadKey
+    void preloadWarmupLocalJudge(references)
+      .then(() => {
+        if (isAdmin && references.length > 0) toast.success(`本地 AI 预加载成功 · ${references.length} 题`)
+      })
+      .catch((error) => {
+        console.warn('[warmup-local-judge] preload failed:', error)
+        if (isAdmin) toast.warning(`本地 AI 预加载失败：${error instanceof Error ? error.message : String(error)}`)
+      })
+  }, [isAdmin, localAiWarmupJudgeEnabled, plan?.steps])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))
