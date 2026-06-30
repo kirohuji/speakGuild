@@ -1,13 +1,121 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·喜好与感受",表达喜好,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。,"[{""en"":""This is my favorite song."",""zh"":""这是我最喜欢的歌。""}]",0
-"基础·喜好与感受",表达喜好,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。,"[{""en"":""I'm so excited!"",""zh"":""我好兴奋！""}]",1
-"基础·喜好与感受",表达喜好,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。,"[{""en"":""I feel nervous."",""zh"":""我感到紧张。""}]",2
-"基础·喜好与感受",表达感受,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。,"[{""en"":""This is my favorite song."",""zh"":""这是我最喜欢的歌。""}]",3
-"基础·喜好与感受",表达感受,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。,"[{""en"":""I'm so excited!"",""zh"":""我好兴奋！""}]",4
-"基础·喜好与感受",表达感受,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。,"[{""en"":""I feel nervous."",""zh"":""我感到紧张。""}]",5
-"基础·简单观点",同意与不同意,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点、看法。,"[{""en"":""In my opinion, it's good."",""zh"":""在我看来这很好。""}]",6
-"基础·简单观点",同意与不同意,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。,"[{""en"":""I agree with you."",""zh"":""我同意你。""}]",7
-"基础·简单观点",同意与不同意,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。,"[{""en"":""That's a good suggestion."",""zh"":""这是个好建议。""}]",8
-"基础·简单观点",提建议,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点、看法。,"[{""en"":""In my opinion, it's good."",""zh"":""在我看来这很好。""}]",9
-"基础·简单观点",提建议,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。,"[{""en"":""I agree with you."",""zh"":""我同意你。""}]",10
-"基础·简单观点",提建议,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。,"[{""en"":""That's a good suggestion."",""zh"":""这是个好建议。""}]",11
+基础⑤·此刻正在做,我正在...,right now,此刻/现在,adv,/raɪt naʊ/,/raɪt naʊ/,L1,此刻。I'm eating right now.,"[{"en":"What are you doing right now?","zh":"你现在在做什么？"}]",0
+基础⑤·此刻正在做,我正在...,at the moment,此刻,adv,/æt ðə ˈmoʊmənt/,/æt ðə ˈməʊmənt/,L1,此刻。I'm busy at the moment.,"[{"en":"I'm working at the moment.","zh":"我此刻在工作。"}]",1
+基础⑤·此刻正在做,我正在...,currently,目前,adv,/ˈkɜːrəntli/,/ˈkʌrəntli/,L1,目前。Currently, I'm studying.,"[{"en":"I'm currently reading a book.","zh":"我目前正在读一本书。"}]",2
+基础⑤·此刻正在做,我正在...,eating,正在吃,verb,/ˈiːtɪŋ/,/ˈiːtɪŋ/,L1,吃(eat)的进行式。,"[{"en":"I'm eating lunch right now.","zh":"我正在吃午饭。"}]",3
+基础⑤·此刻正在做,我正在...,drinking,正在喝,verb,/ˈdrɪŋkɪŋ/,/ˈdrɪŋkɪŋ/,L1,喝(drink)的进行式。,"[{"en":"She is drinking coffee.","zh":"她正在喝咖啡。"}]",4
+基础⑤·此刻正在做,我正在...,studying,正在学习,verb,/ˈstʌdiɪŋ/,/ˈstʌdiɪŋ/,L1,学习(study)的进行式。,"[{"en":"He is studying English.","zh":"他正在学英语。"}]",5
+基础⑤·此刻正在做,我正在...,reading,正在读,verb,/ˈriːdɪŋ/,/ˈriːdɪŋ/,L1,读(read)的进行式。,"[{"en":"I'm reading a book right now.","zh":"我正在读一本书。"}]",6
+基础⑤·此刻正在做,我正在...,writing,正在写,verb,/ˈraɪtɪŋ/,/ˈraɪtɪŋ/,L1,写(write)的进行式。,"[{"en":"She is writing a letter.","zh":"她正在写信。"}]",7
+基础⑤·此刻正在做,我正在...,talking,正在说话,verb,/ˈtɔːkɪŋ/,/ˈtɔːkɪŋ/,L1,说话(talk)的进行式。,"[{"en":"They are talking on the phone.","zh":"他们正在打电话。"}]",8
+基础⑤·此刻正在做,我正在...,listening,正在听,verb,/ˈlɪsənɪŋ/,/ˈlɪsənɪŋ/,L1,听(listen)的进行式。,"[{"en":"I'm listening to music.","zh":"我正在听音乐。"}]",9
+基础⑤·此刻正在做,我正在...,watching,正在看,verb,/ˈwɑːtʃɪŋ/,/ˈwɒtʃɪŋ/,L1,看(watch)的进行式。,"[{"en":"He is watching TV.","zh":"他正在看电视。"}]",10
+基础⑤·此刻正在做,我正在...,cooking,正在做饭,verb,/ˈkʊkɪŋ/,/ˈkʊkɪŋ/,L1,做饭(cook)的进行式。,"[{"en":"Mom is cooking dinner.","zh":"妈妈正在做晚饭。"}]",11
+基础⑤·此刻正在做,他/她正在...,running,正在跑,verb,/ˈrʌnɪŋ/,/ˈrʌnɪŋ/,L1,跑(run)的进行式。,"[{"en":"He is running in the park.","zh":"他正在公园跑步。"}]",0
+基础⑤·此刻正在做,他/她正在...,playing,正在玩,verb,/ˈpleɪɪŋ/,/ˈpleɪɪŋ/,L1,玩(play)的进行式。,"[{"en":"She is playing with her dog.","zh":"她正在和狗玩。"}]",1
+基础⑤·此刻正在做,他/她正在...,sleeping,正在睡觉,verb,/ˈsliːpɪŋ/,/ˈsliːpɪŋ/,L1,睡觉(sleep)的进行式。,"[{"en":"The baby is sleeping.","zh":"宝宝正在睡觉。"}]",2
+基础⑤·此刻正在做,他/她正在...,waiting,正在等待,verb,/ˈweɪtɪŋ/,/ˈweɪtɪŋ/,L1,等待(wait)的进行式。,"[{"en":"He is waiting for the bus.","zh":"他正在等公交。"}]",3
+基础⑤·此刻正在做,他/她正在...,singing,正在唱歌,verb,/ˈsɪŋɪŋ/,/ˈsɪŋɪŋ/,L1,唱歌(sing)的进行式。,"[{"en":"She is singing a song.","zh":"她正在唱歌。"}]",4
+基础⑤·此刻正在做,他/她正在...,dancing,正在跳舞,verb,/ˈdænsɪŋ/,/ˈdɑːnsɪŋ/,L1,跳舞(dance)的进行式。,"[{"en":"They are dancing together.","zh":"他们在一起跳舞。"}]",5
+基础⑤·此刻正在做,他/她正在...,sitting,正坐着,verb,/ˈsɪtɪŋ/,/ˈsɪtɪŋ/,L1,坐(sit)的进行式。,"[{"en":"He is sitting on the chair.","zh":"他正坐在椅子上。"}]",6
+基础⑤·此刻正在做,他/她正在...,standing,正站着,verb,/ˈstændɪŋ/,/ˈstændɪŋ/,L1,站(stand)的进行式。,"[{"en":"She is standing near the door.","zh":"她正站在门边。"}]",7
+基础⑤·此刻正在做,他/她正在...,wearing,正穿着,verb,/ˈwerɪŋ/,/ˈweərɪŋ/,L1,穿(wear)的进行式。,"[{"en":"He is wearing a blue shirt.","zh":"他正穿着一件蓝衬衫。"}]",8
+基础⑤·此刻正在做,他/她正在...,carrying,正拿着/提着,verb,/ˈkæriɪŋ/,/ˈkæriɪŋ/,L1,拿(carry)的进行式。,"[{"en":"She is carrying a big bag.","zh":"她正提着一个大包。"}]",9
+基础⑤·此刻正在做,他/她正在...,looking,正在看/正在找,verb,/ˈlʊkɪŋ/,/ˈlʊkɪŋ/,L1,看(look)的进行式。look for=找。,"[{"en":"He is looking for his keys.","zh":"他正在找钥匙。"}]",10
+基础⑤·此刻正在做,他/她正在...,calling,正在打电话,verb,/ˈkɔːlɪŋ/,/ˈkɔːlɪŋ/,L1,打电话(call)的进行式。,"[{"en":"She is calling her mom.","zh":"她正在给妈妈打电话。"}]",11
+基础⑤·临时vs习惯,平时vs今天,habit,习惯,noun,/ˈhæbɪt/,/ˈhæbɪt/,L1,习惯。daily habit。,"[{"en":"It's my habit to read before bed.","zh":"睡前读书是我的习惯。"}]",0
+基础⑤·临时vs习惯,平时vs今天,routine,日常/惯例,noun,/ruːˈtiːn/,/ruːˈtiːn/,L1,日常惯例。daily routine。,"[{"en":"My morning routine is simple.","zh":"我的早晨例行很简单。"}]",1
+基础⑤·临时vs习惯,平时vs今天,normally,通常,adv,/ˈnɔːrməli/,/ˈnɔːməli/,L1,通常。等于usually。,"[{"en":"I normally get up at 7.","zh":"我通常7点起床。"}]",2
+基础⑤·临时vs习惯,平时vs今天,generally,一般来说,adv,/ˈdʒenərəli/,/ˈdʒenərəli/,L1,一般地。generally speaking。,"[{"en":"I generally walk to work.","zh":"我一般走路去上班。"}]",3
+基础⑤·临时vs习惯,平时vs今天,temporary,临时的,adj,/ˈtempəreri/,/ˈtempərəri/,L1,临时的。temporary job。,"[{"en":"This is just temporary.","zh":"这只是暂时的。"}]",4
+基础⑤·临时vs习惯,平时vs今天,right now,此刻(对比usually),adv,/raɪt naʊ/,/raɪt naʊ/,L1,此刻。与usually对比用。,"[{"en":"I usually walk, but right now I'm driving.","zh":"我通常走路，但此刻我在开车。"}]",5
+基础⑤·临时vs习惯,平时vs今天,today,今天,adv/noun,/təˈdeɪ/,/təˈdeɪ/,L1,今天。与usually对比。,"[{"en":"Usually I walk, but today I'm driving.","zh":"通常我走路，但今天我在开车。"}]",6
+基础⑤·临时vs习惯,平时vs今天,this week,本周,adv,/ðɪs wiːk/,/ðɪs wiːk/,L1,本周。临时时间段。,"[{"en":"I'm working from home this week.","zh":"我这周在家办公。"}]",7
+基础⑤·临时vs习惯,平时vs今天,at the moment,此刻,adv,/æt ðə ˈmoʊmənt/,/æt ðə ˈməʊmənt/,L1,此刻。临时状态。,"[{"en":"I'm quite busy at the moment.","zh":"我此刻很忙。"}]",8
+基础⑤·临时vs习惯,平时vs今天,for now,暂时,adv,/fɔːr naʊ/,/fɔː naʊ/,L1,暂时。for now。,"[{"en":"I'm staying here for now.","zh":"我暂时待在这里。"}]",9
+基础⑤·临时vs习惯,平时vs今天,still,仍然,adv,/stɪl/,/stɪl/,L1,仍然。I'm still working.,"[{"en":"Are you still working?","zh":"你还在工作吗？"}]",10
+基础⑤·临时vs习惯,平时vs今天,anymore,再也不,adv,/ˌeniˈmɔːr/,/ˌeniˈmɔː/,L1,再也不。not...anymore。,"[{"en":"I don't live there anymore.","zh":"我不住在那里了。"}]",11
+基础⑤·临时vs习惯,此刻状态,busy,忙碌的,adj,/ˈbɪzi/,/ˈbɪzi/,L1,忙碌的。I'm busy now.,"[{"en":"I'm busy at the moment.","zh":"我此刻很忙。"}]",0
+基础⑤·临时vs习惯,此刻状态,free,有空的/自由的,adj,/friː/,/friː/,L1,有空的。Are you free now?,"[{"en":"Are you free right now?","zh":"你现在有空吗？"}]",1
+基础⑤·临时vs习惯,此刻状态,available,可用的/有空的,adj,/əˈveɪləbəl/,/əˈveɪləbəl/,L1,有空的。较正式。,"[{"en":"Is she available now?","zh":"她现在有空吗？"}]",2
+基础⑤·临时vs习惯,此刻状态,ready,准备好的,adj,/ˈredi/,/ˈredi/,L1,准备好的。I'm ready.,"[{"en":"Are you ready to go?","zh":"你准备好走了吗？"}]",3
+基础⑤·临时vs习惯,此刻状态,almost,几乎/差不多,adv,/ˈɔːlmoʊst/,/ˈɔːlməʊst/,L1,几乎。almost done。,"[{"en":"I'm almost finished.","zh":"我差不多完成了。"}]",4
+基础⑤·临时vs习惯,此刻状态,just,刚刚,adv,/dʒʌst/,/dʒʌst/,L1,刚刚。I've just arrived.,"[{"en":"I'm just leaving.","zh":"我正要走。"}]",5
+基础⑤·临时vs习惯,此刻状态,now,现在,adv,/naʊ/,/naʊ/,L1,现在。right now。,"[{"en":"What are you doing now?","zh":"你现在在做什么？"}]",6
+基础⑤·临时vs习惯,此刻状态,tonight,今晚,adv/noun,/təˈnaɪt/,/təˈnaɪt/,L1,今晚。,"[{"en":"What are you doing tonight?","zh":"你今晚做什么？"}]",7
+基础⑤·临时vs习惯,此刻状态,this weekend,这个周末,adv,/ðɪs ˈwiːkend/,/ðɪs ˌwiːkˈend/,L1,这个周末。,"[{"en":"I'm visiting my parents this weekend.","zh":"我这个周末要去看父母。"}]",8
+基础⑤·临时vs习惯,此刻状态,next week,下周,adv,/nekst wiːk/,/nekst wiːk/,L1,下周。将来安排。,"[{"en":"I'm starting a new job next week.","zh":"我下周开始新工作。"}]",9
+基础⑤·频率副词,频率表达,rarely,很少,adv,/ˈrerli/,/ˈreəli/,L1,很少。频率5%-10%。,"[{"en":"I rarely eat fast food.","zh":"我很少吃快餐。"}]",0
+基础⑤·频率副词,频率表达,hardly ever,几乎从不,adv,/ˈhɑːrdli ˈevər/,/ˈhɑːdli ˈevə/,L1,几乎从不。频率1%-5%。,"[{"en":"I hardly ever watch TV.","zh":"我几乎不看电视。"}]",1
+基础⑤·频率副词,频率表达,once a week,每周一次,adv,/wʌns ə wiːk/,/wʌns ə wiːk/,L1,每周一次。频率表达。,"[{"en":"I exercise once a week.","zh":"我每周锻炼一次。"}]",2
+基础⑤·频率副词,频率表达,twice a month,每月两次,adv,/twaɪs ə mʌnθ/,/twaɪs ə mʌnθ/,L1,每月两次。,"[{"en":"I visit my parents twice a month.","zh":"我每月看望父母两次。"}]",3
+基础⑤·频率副词,频率表达,every other day,每隔一天,adv,/ˈevri ˈʌðər deɪ/,/ˈevri ˈʌðə deɪ/,L1,每隔一天。every other day。,"[{"en":"I go jogging every other day.","zh":"我每隔一天去慢跑。"}]",4
+基础⑤·频率副词,频率表达,most of the time,大多数时候,adv,/moʊst əv ðə taɪm/,/məʊst əv ðə taɪm/,L1,大多数时候。,"[{"en":"Most of the time, I cook at home.","zh":"大多数时候我在家做饭。"}]",5
+基础⑤·频率副词,频率表达,from time to time,偶尔,adv,/frəm taɪm tə taɪm/,/frəm taɪm tə taɪm/,L1,偶尔。sometimes的同义。,"[{"en":"I go there from time to time.","zh":"我偶尔去那里。"}]",6
+基础⑤·频率副词,频率表达,every single day,每一天(强调),adv,/ˈevri ˈsɪŋɡəl deɪ/,/ˈevri ˈsɪŋɡəl deɪ/,L1,每一天。强调无一例外。,"[{"en":"I think about it every single day.","zh":"我每一天都在想它。"}]",7
+基础⑤·频率副词,频率表达,all the time,一直/总是,adv,/ɔːl ðə taɪm/,/ɔːl ðə taɪm/,L1,一直。比always更随意。,"[{"en":"He talks about football all the time.","zh":"他一直在聊足球。"}]",8
+基础⑤·频率副词,频率表达,not often,不常,adv,/nɑːt ˈɔːfən/,/nɒt ˈɒfən/,L1,不经常。,"[{"en":"I don't go there often.","zh":"我不常去那里。"}]",9
+基础⑤·频率副词,综合运用,frequency,频率,noun,/ˈfriːkwənsi/,/ˈfriːkwənsi/,L1,频率。frequency adverb。,"[{"en":"What is the frequency of your exercise?","zh":"你锻炼的频率是多少？"}]",0
+基础⑤·频率副词,综合运用,describe,描述,verb,/dɪˈskraɪb/,/dɪˈskraɪb/,L1,描述。describe a scene。,"[{"en":"Can you describe what you see?","zh":"你能描述你看到的吗？"}]",1
+基础⑤·频率副词,综合运用,scene,场景,noun,/siːn/,/siːn/,L1,场景。describe the scene。,"[{"en":"Look at this scene. What is happening?","zh":"看这个场景。发生了什么？"}]",2
+基础⑤·频率副词,综合运用,happening,正在发生,verb/noun,/ˈhæpənɪŋ/,/ˈhæpənɪŋ/,L1,发生(happen)的进行式。,"[{"en":"What is happening right now?","zh":"现在正在发生什么？"}]",3
+基础⑤·频率副词,综合运用,narrate,叙述,verb,/ˈnæreɪt/,/nəˈreɪt/,L1,叙述。narrate a story。,"[{"en":"Can you narrate what is going on?","zh":"你能叙述一下正在发生什么吗？"}]",4
+基础⑤·频率副词,综合运用,switch,切换,verb,/swɪtʃ/,/swɪtʃ/,L1,切换。switch tenses。,"[{"en":"Let's switch from present to past.","zh":"让我们从现在时切换到过去时。"}]",5
+基础·喜好与感受,表达喜好,excited,兴奋的,adj,/ɪkˈsaɪtɪd/,/ɪkˈsaɪtɪd/,L1,兴奋的。excited about。,"[{"en":"I'm so excited about the trip!","zh":"我对这次旅行好兴奋！"}]",0
+基础·喜好与感受,表达喜好,interested in,对...感兴趣,adj,/ˈɪntrəstɪd ɪn/,/ˈɪntrəstɪd ɪn/,L1,感兴趣的。be interested in。,"[{"en":"I'm interested in photography.","zh":"我对摄影感兴趣。"}]",1
+基础·喜好与感受,表达喜好,crazy about,疯狂喜欢,adj,/ˈkreɪzi əˈbaʊt/,/ˈkreɪzi əˈbaʊt/,L1,超级喜欢。crazy about。,"[{"en":"He is crazy about basketball.","zh":"他超级喜欢篮球。"}]",2
+基础·喜好与感受,表达喜好,prefer,更喜欢,verb,/prɪˈfɜːr/,/prɪˈfɜː/,L1,更喜欢。prefer A to B。,"[{"en":"I prefer tea to coffee.","zh":"比起咖啡我更喜欢茶。"}]",3
+基础·喜好与感受,表达喜好,dislike,不喜欢,verb,/dɪsˈlaɪk/,/dɪsˈlaɪk/,L1,不喜欢。比don't like强。,"[{"en":"I dislike loud music.","zh":"我不喜欢吵闹的音乐。"}]",4
+基础·喜好与感受,表达喜好,can't stand,受不了,phrase,/kænt stænd/,/kɑːnt stænd/,L1,受不了。非常讨厌。,"[{"en":"I can't stand the noise.","zh":"我受不了噪音。"}]",5
+基础·喜好与感受,表达喜好,not a fan of,不太喜欢,phrase,/nɑːt ə fæn əv/,/nɒt ə fæn əv/,L1,不太喜欢。委婉表达。,"[{"en":"I'm not a big fan of horror movies.","zh":"我不太喜欢恐怖片。"}]",6
+基础·喜好与感受,表达喜好,it depends,看情况,phrase,/ɪt dɪˈpendz/,/ɪt dɪˈpendz/,L1,看情况。不是简单的喜欢/不喜欢。,"[{"en":"Do you like it? — It depends.","zh":"你喜欢吗？——看情况。"}]",7
+基础·喜好与感受,表达喜好,not my thing,不是我的菜,phrase,/nɑːt maɪ θɪŋ/,/nɒt maɪ θɪŋ/,L1,不适合我。口语。,"[{"en":"Sports are not really my thing.","zh":"运动不太适合我。"}]",8
+基础·喜好与感受,表达感受,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。nervous about。,"[{"en":"I feel nervous before the exam.","zh":"考试前我感到紧张。"}]",0
+基础·喜好与感受,表达感受,worried,担心的,adj,/ˈwɜːrid/,/ˈwʌrid/,L1,担心的。worried about。,"[{"en":"I'm worried about my health.","zh":"我担心我的健康。"}]",1
+基础·喜好与感受,表达感受,bored,无聊的,adj,/bɔːrd/,/bɔːd/,L1,无聊的。feel bored。,"[{"en":"I feel bored at home.","zh":"我在家觉得无聊。"}]",2
+基础·喜好与感受,表达感受,surprised,惊讶的,adj,/sərˈpraɪzd/,/səˈpraɪzd/,L1,惊讶的。surprised to see。,"[{"en":"I'm surprised to see you here!","zh":"在这里见到你好惊讶！"}]",3
+基础·喜好与感受,表达感受,angry,生气的,adj,/ˈæŋɡri/,/ˈæŋɡri/,L1,生气的。angry about。,"[{"en":"Why are you so angry?","zh":"你为什么这么生气？"}]",4
+基础·喜好与感受,表达感受,proud,骄傲的,adj,/praʊd/,/praʊd/,L1,骄傲的。proud of。,"[{"en":"I'm proud of my daughter.","zh":"我为女儿感到骄傲。"}]",5
+基础·喜好与感受,表达感受,calm,平静的,adj,/kɑːm/,/kɑːm/,L1,平静的。stay calm。,"[{"en":"Try to stay calm.","zh":"试着保持冷静。"}]",6
+基础·喜好与感受,表达感受,relaxed,放松的,adj,/rɪˈlækst/,/rɪˈlækst/,L1,放松的。feel relaxed。,"[{"en":"I feel relaxed after a bath.","zh":"洗完澡我感到放松。"}]",7
+基础·喜好与感受,表达感受,fine,好的/还行,adj,/faɪn/,/faɪn/,L1,好的。I'm fine。不特别好也不差。,"[{"en":"I'm fine, thanks.","zh":"我很好，谢谢。"}]",8
+基础·喜好与感受,表达感受,okay,还行/不错,adj/adv,/oʊˈkeɪ/,/ˌəʊˈkeɪ/,L1,还行。同fine。,"[{"en":"The movie was okay.","zh":"电影还行。"}]",9
+基础·喜好与感受,表达感受,terrible,糟糕的,adj,/ˈterəbəl/,/ˈterəbəl/,L1,糟糕的。I feel terrible.,"[{"en":"The traffic is terrible today.","zh":"今天交通很糟糕。"}]",10
+基础·喜好与感受,表达感受,amazing,惊人的/超棒的,adj,/əˈmeɪzɪŋ/,/əˈmeɪzɪŋ/,L1,超棒的。amazing view。,"[{"en":"The food is amazing!","zh":"食物超棒！"}]",11
+基础·简单观点,同意与不同意,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,观点。in my opinion。,"[{"en":"In my opinion, this is the best choice.","zh":"在我看来，这是最好的选择。"}]",0
+基础·简单观点,同意与不同意,believe,相信/认为,verb,/bɪˈliːv/,/bɪˈliːv/,L1,相信。I believe that...,"[{"en":"I believe you are right.","zh":"我相信你是对的。"}]",1
+基础·简单观点,同意与不同意,disagree,不同意,verb,/ˌdɪsəˈɡriː/,/ˌdɪsəˈɡriː/,L1,不同意。disagree with。,"[{"en":"I disagree with that idea.","zh":"我不同意那个想法。"}]",2
+基础·简单观点,同意与不同意,suggestion,建议,noun,/səɡˈdʒestʃən/,/səˈdʒestʃən/,L1,建议。a good suggestion。,"[{"en":"That's a good suggestion!","zh":"那是个好建议！"}]",3
+基础·简单观点,同意与不同意,point of view,观点/角度,noun,/pɔɪnt əv vjuː/,/pɔɪnt əv vjuː/,L1,观点。from my point of view。,"[{"en":"From my point of view, it's not a problem.","zh":"从我的角度看，这不是问题。"}]",4
+基础·简单观点,同意与不同意,true,真的,adj,/truː/,/truː/,L1,真的。That's true。,"[{"en":"Is that true? — Yes, it's true.","zh":"那是真的吗？——是真的。"}]",5
+基础·简单观点,同意与不同意,exactly,正是/完全正确,adv,/ɪɡˈzæktli/,/ɪɡˈzæktli/,L1,正是。表示完全同意。,"[{"en":"That's exactly what I think.","zh":"我正是这么想的。"}]",6
+基础·简单观点,同意与不同意,absolutely,绝对地,adv,/ˌæbsəˈluːtli/,/ˌæbsəˈluːtli/,L1,绝对。强烈同意。,"[{"en":"Absolutely! I totally agree.","zh":"绝对的！我完全同意。"}]",7
+基础·简单观点,同意与不同意,definitely,肯定地,adv,/ˈdefɪnətli/,/ˈdefɪnətli/,L1,肯定。I definitely agree。,"[{"en":"I will definitely come.","zh":"我肯定会来。"}]",8
+基础·简单观点,同意与不同意,probably,大概/很可能,adv,/ˈprɑːbəbli/,/ˈprɒbəbli/,L1,大概。不太确定。,"[{"en":"You're probably right.","zh":"你大概是对的。"}]",9
+基础·简单观点,同意与不同意,not sure,不确定,phrase,/nɑːt ʃʊr/,/nɒt ʃɔː/,L1,不确定。I'm not sure。,"[{"en":"I'm not sure about that.","zh":"我不太确定。"}]",10
+基础·简单观点,同意与不同意,no way,不可能/不行,phrase,/noʊ weɪ/,/nəʊ weɪ/,L1,不可能。强烈不同意。,"[{"en":"No way! That can't be true.","zh":"不可能！那不可能是真的。"}]",11
+基础·简单观点,提建议,how about,...怎么样,phrase,/haʊ əˈbaʊt/,/haʊ əˈbaʊt/,L1,…怎么样？提建议。,"[{"en":"How about going to the park?","zh":"去公园怎么样？"}]",0
+基础·简单观点,提建议,why not,为什么不,phrase,/waɪ nɑːt/,/waɪ nɒt/,L1,为什么不。Why not try?,"[{"en":"Why not give it a try?","zh":"为什么不试一试？"}]",1
+基础·简单观点,提建议,let's,让我们,contraction,/lets/,/lets/,L1,让我们。let us 缩写。,"[{"en":"Let's go together!","zh":"我们一起去吧！"}]",2
+基础·简单观点,提建议,up to you,由你决定,phrase,/ʌp tə juː/,/ʌp tə juː/,L1,由你决定。It's up to you。,"[{"en":"Where to eat? It's up to you.","zh":"去哪吃？由你决定。"}]",3
+基础·简单观点,提建议,count me in,算我一个,phrase,/kaʊnt mi ɪn/,/kaʊnt mi ɪn/,L1,算我一个。表示想参与。,"[{"en":"Are you going? Count me in!","zh":"你去吗？算我一个！"}]",4
+基础·简单观点,提建议,I'd love to,我很乐意,phrase,/aɪd lʌv tə/,/aɪd lʌv tə/,L1,我很乐意。接受邀请。,"[{"en":"Want to join? — I'd love to!","zh":"想加入吗？——我很乐意！"}]",5
+基础·简单观点,提建议,I'm afraid not,恐怕不行,phrase,/aɪm əˈfreɪd nɑːt/,/aɪm əˈfreɪd nɒt/,L1,恐怕不行。礼貌拒绝。,"[{"en":"Can you help? — I'm afraid not.","zh":"能帮忙吗？——恐怕不行。"}]",6
+基础·简单观点,提建议,maybe next time,也许下次,phrase,/ˈmeɪbi nekst taɪm/,/ˈmeɪbi nekst taɪm/,L1,也许下次。委婉拒绝。,"[{"en":"Want to come? — Maybe next time.","zh":"想来吗？——也许下次。"}]",7
+基础·简单观点,提建议,I'd rather not,我宁愿不,phrase,/aɪd ˈræðər nɑːt/,/aɪd ˈrɑːðə nɒt/,L1,我宁愿不。较强烈的拒绝。,"[{"en":"Try this? — I'd rather not.","zh":"试试这个？——我宁愿不。"}]",8
+基础·简单观点,提建议,sounds great,听起来很棒,phrase,/saʊndz ɡreɪt/,/saʊndz ɡreɪt/,L1,听起来很棒。That sounds great!,"[{"en":"Let's eat out. — Sounds great!","zh":"出去吃吧。——听起来很棒！"}]",9
+基础·简单观点,提建议,let me think,让我想想,phrase,/let mi θɪŋk/,/let mi θɪŋk/,L1,让我想想。需要时间决定。,"[{"en":"Can you decide now? — Let me think.","zh":"能现在决定吗？——让我想想。"}]",10
+基础·简单观点,提建议,go for it,去吧/试试吧,phrase,/ɡoʊ fɔːr ɪt/,/ɡəʊ fɔːr ɪt/,L1,去吧。鼓励别人尝试。,"[{"en":"Should I try? — Yeah, go for it!","zh":"我该试试吗？——去吧！"}]",11
+基础⑤·频率副词,频率表达,constantly,一直/不停地,adv,/ˈkɑːnstəntli/,/ˈkɒnstəntli/,L1,一直。constantly checking phone。,"[{""en"":""She is constantly checking her phone."",""zh"":""她一直在刷手机。""}]",10
+基础⑤·频率副词,频率表达,regularly,定期地,adv,/ˈreɡjələrli/,/ˈreɡjələli/,L1,定期地。exercise regularly。,"[{""en"":""I exercise regularly."",""zh"":""我定期锻炼。""}]",11
+基础⑤·频率副词,综合运用,action,动作,noun,/ˈækʃən/,/ˈækʃən/,L1,动作。describe the action。,"[{""en"":""What action is he doing?"",""zh"":""他在做什么动作？""}]",6
+基础⑤·频率副词,综合运用,background,背景,noun,/ˈbækɡraʊnd/,/ˈbækɡraʊnd/,L1,背景。background activity。,"[{""en"":""Describe the background of this scene."",""zh"":""描述这个场景的背景。""}]",7
+基础⑤·频率副词,综合运用,notice,注意到,verb,/ˈnoʊtɪs/,/ˈnəʊtɪs/,L1,注意到。I notice that...。,"[{""en"":""Do you notice anything different?"",""zh"":""你注意到有什么不同吗？""}]",8
+基础⑤·频率副词,综合运用,detail,细节,noun,/ˈdiːteɪl/,/ˈdiːteɪl/,L1,细节。in detail。,"[{""en"":""Can you describe it in detail?"",""zh"":""你能详细描述一下吗？""}]",9
+基础⑤·临时vs习惯,此刻状态,anywhere,任何地方,adv,/ˈeniwer/,/ˈeniweə/,L1,任何地方。not going anywhere。,"[{""en"":""I am not going anywhere tonight."",""zh"":""我今晚哪也不去。""}]",10
+基础⑤·临时vs习惯,此刻状态,somewhere,某处,adv,/ˈsʌmwer/,/ˈsʌmweə/,L1,某处。going somewhere。,"[{""en"":""Are you going somewhere?"",""zh"":""你要去什么地方吗？""}]",11
+基础·喜好与感受,表达喜好,okay with,可以接受,phrase,/oʊˈkeɪ wɪð/,/ˌəʊˈkeɪ wɪð/,L1,可以接受。I am okay with that。,"[{""en"":""I am okay with that plan."",""zh"":""我能接受那个计划。""}]",9
+基础·喜好与感受,表达喜好,not bad,还不错,phrase,/nɑːt bæd/,/nɒt bæd/,L1,还不错。委婉喜欢。,"[{""en"":""How is the food? — Not bad."",""zh"":""东西好吃吗？——还不错。""}]",10
+基础·喜好与感受,表达喜好,so-so,一般般,adj,/soʊ soʊ/,/səʊ səʊ/,L1,一般般。不好不坏。,"[{""en"":""How was the movie? — So-so."",""zh"":""电影怎么样？——一般般。""}]",11
+基础·简单观点,提建议,why not try,为什么不试试,phrase,/waɪ nɑːt traɪ/,/waɪ nɒt traɪ/,L1,为什么不试试。鼓励尝试。,"[{""en"":""Why not try something new?"",""zh"":""为什么不试试新东西？""}]",12
+基础·简单观点,提建议,what if,如果怎样,phrase,/wʌt ɪf/,/wɒt ɪf/,L1,如果…会怎样。What if we try?。,"[{""en"":""What if we go tomorrow instead?"",""zh"":""如果我们明天去呢？""}]",13

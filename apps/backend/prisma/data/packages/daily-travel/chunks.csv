@@ -1,7 +1,7 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
 "旅行·机场出发",办理值机,办理值机,I'd like to check in for my flight.,我要办理值机。,L1,值机柜台的标准开场白。,"[{""en"":""Hi, I'd like to check in for my flight to London."",""zh"":""你好，我要办理去伦敦的值机。""}]"
 "旅行·机场出发",办理值机,办理值机,Can I have a window seat please?,能给我靠窗座位吗？,L1,选座位。window seat = 靠窗，aisle seat = 靠走道。,"[{""en"":""Can I have a window seat, please?"",""zh"":""能给我靠窗座位吗？""}]"
-"旅行·机场出发",办理值机,办理值机,How many bags can I check in?,我能托运几件行李？,L1,询问托运行李件数和限额。,
+旅行·机场出发,办理值机,办理值机,How many bags can I check in?,我能托运几件行李？,L1,询问托运行李件数和限额。,
 "旅行·机场出发",办理值机,办理值机,Is my luggage overweight?,我的行李超重了吗？,L2,超重要付费。overweight = 超重，extra fee = 额外费用。,"[{""en"":""Is my luggage overweight? I can take some things out."",""zh"":""我的行李超重了吗？我可以拿出一些东西。""}]"
 "旅行·机场出发",办理值机,办理值机,What gate does my flight depart from?,我的航班在哪个登机口？,L1,确认登机口。登机口可能在起飞前变更。,"[{""en"":""What gate does my flight depart from?"",""zh"":""我的航班在哪个登机口？""}]"
 "旅行·机场出发",过安检,过安检,Do I need to take my laptop out?,我需要把笔记本电脑拿出来吗？,L1,安检时电脑、平板等电子产品需单独放托盘。,"[{""en"":""Do I need to take my laptop out of the bag?"",""zh"":""我需要把笔记本电脑从包里拿出来吗？""}]"

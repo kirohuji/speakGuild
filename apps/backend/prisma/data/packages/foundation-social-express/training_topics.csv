@@ -1,7 +1,94 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础⑥·过去的状态,我以前是/有,Practice talking about past states with was/were and had.,练习用was/were/had描述过去的状态和拥有。,35,L1~L2,掌握was/were的肯定否定疑问和have→had过去式。,过去时 was were had 状态 过去,practice_foundation-social-express_过去的状态_我以前是有
-基础⑥·过去的状态,昨天在哪里,Practice asking and answering about past locations and feelings.,练习询问和回答过去的位置和感受。,35,L1~L2,掌握Where were you? / Were you...? 过去疑问句。,过去 位置 感受 疑问 回答,practice_foundation-social-express_过去的状态_昨天在哪里
-基础⑥·过去的动作,昨天做了什么,Practice describing past actions with regular -ed verbs.,练习用规则动词过去式描述过去的动作。,35,L1~L2,掌握规则动词加ed的读音和拼写。,过去时 ed 发音 规则动词,practice_foundation-social-express_过去的动作_昨天做了什么
-基础⑥·过去的动作,不规则动词,Practice 30 common irregular past tense verbs.,练习30个核心不规则动词过去式。,40,L1~L2,掌握went/ate/had/did/saw/said/got等不规则变化。,不规则动词 过去式 核心动词,practice_foundation-social-express_过去的动作_不规则动词
-基础⑥·讲述经历,上个周末/去年,Practice telling stories about last weekend and last year.,练习讲述上周末和去年的经历。,40,L1~L2,掌握用过去时叙述完整经历的能力。,叙事 过去时 经历 时间表达,practice_foundation-social-express_讲述经历_上个周末去年
-基础⑥·讲述经历,否定和疑问,Practice past tense negatives and questions with didn't and Did.,练习过去时的否定句和疑问句。,35,L1~L2,掌握didn't和Did的用法，以及Wh-过去疑问句。,否定 疑问 didn't Did 过去疑问,practice_foundation-social-express_讲述经历_否定和疑问
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础⑥·过去的状态,我以前是/有,Practice talking about past states with was/were and had.,练习用was/were/had描述过去的状态和拥有。,35,L1~L2,掌握was/were的肯定否定疑问和have→had过去式。,过去时 was were had 状态 过去,"## was / were 过去状态
+- I was a student before. (我以前是学生)
+- They were classmates. (他们以前是同学)
+
+## had 过去拥有
+- I had a dog when I was young. (我小时候有只狗)
+- She had long hair last year. (她去年是长发)
+
+## used to 过去习惯
+- I used to live in Shanghai. (我曾经住在上海)
+- He used to be very shy. (他以前很害羞)
+
+## 时间标志词
+- when I was young / in the past / back then / those days
+- before / once / at that time",practice_foundation-social-express_过去的状态_我以前是有
+基础⑥·过去的状态,昨天在哪里,Practice asking and answering about past locations and feelings.,练习询问和回答过去的位置和感受。,35,L1~L2,掌握Where were you? / Were you...? 过去疑问句。,过去 位置 感受 疑问 回答,"## Where were you? 问过去的所在
+- Where were you yesterday? — I was at home.
+- Were you at school? — No, I was at work.
+
+## 位置表达
+| 在家 | 在工作 | 在学校 | 在外面 | 在里面 |
+|------|--------|--------|--------|--------|
+| at home | at work | at school | outside | inside |
+
+## 状态表达
+- was absent (缺席了) / was present (在场)
+- was alone (独自) / was missing (不见了)
+- was lost (迷路了) / was somewhere (在某处)",practice_foundation-social-express_过去的状态_昨天在哪里
+基础⑥·过去的动作,昨天做了什么,Practice describing past actions with regular -ed verbs.,练习用规则动词过去式描述过去的动作。,35,L1~L2,掌握规则动词加ed的读音和拼写。,过去时 ed 发音 规则动词,"## 规则动词过去式 (-ed)
+动词原形 + ed → 过去式
+
+## 三种发音
+- /t/：walked, talked, finished (清辅音后)
+- /d/：played, cleaned, arrived (浊辅音后)
+- /ɪd/：visited, needed, wanted (t/d后)
+
+## 常用规则动词
+- visit → visited (拜访)
+- arrive → arrived (到达)
+- move → moved (搬家/移动)
+- show → showed (展示)
+- check → checked (检查)
+- seem → seemed (似乎)",practice_foundation-social-express_过去的动作_昨天做了什么
+基础⑥·过去的动作,不规则动词,Practice 30 common irregular past tense verbs.,练习30个核心不规则动词过去式。,40,L1~L2,掌握went/ate/had/did/saw/said/got等不规则变化。,不规则动词 过去式 核心动词,"## 高频不规则动词 (30个核心)
+| 原形 | 过去式 | 含义 |
+|------|--------|------|
+| go | went | 去 |
+| see | saw | 看见 |
+| say | said | 说 |
+| get | got | 得到 |
+| make | made | 制作 |
+| give | gave | 给 |
+| take | took | 拿 |
+| buy | bought | 买 |
+| think | thought | 想 |
+| feel | felt | 感觉 |
+| find | found | 找到 |
+| tell | told | 告诉 |
+
+## 学习技巧
+- 不规则动词需要逐个记忆，没有统一规则
+- 常用就会记住，不要死记硬背
+- 每天练3-5个，日积月累",practice_foundation-social-express_过去的动作_不规则动词
+基础⑥·讲述经历,上个周末/去年,Practice telling stories about last weekend and last year.,练习讲述上周末和去年的经历。,40,L1~L2,掌握用过去时叙述完整经历的能力。,叙事 过去时 经历 时间表达,"## 用过去时叙述经历
+- Last weekend, I went to a party. (上周末我去了派对)
+- Last year, I visited Beijing. (去年我去了北京)
+
+## 叙述要素
+- 时间：last weekend / last month / last year / yesterday / ago
+- 地点：at the park / at a restaurant / at home
+- 事件：went / saw / ate / met / bought / visited
+- 感受：It was fun / I felt happy / It was amazing
+
+## 连接词
+- First / Then / After that / Finally
+- and / but / because / so",practice_foundation-social-express_讲述经历_上个周末去年
+基础⑥·讲述经历,否定和疑问,Practice past tense negatives and questions with didn't and Did.,练习过去时的否定句和疑问句。,35,L1~L2,掌握didn't和Did的用法，以及Wh-过去疑问句。,否定 疑问 didn't Did 过去疑问,"## 过去否定句
+- I didn't + 动词原形：I didn't go. (我没去)
+- ❌ I didn't went. → ✅ I didn't go. (didn't后用原形)
+
+## 过去疑问句
+- Did + 主语 + 动词原形？
+- Did you go? — Yes, I did. / No, I didn't.
+- What did you do? (Wh- + did + 主语 + 动词原形)
+
+## 关键规则
+- 否定和疑问中，did/didn't 已表过去，动词用原形
+- 回答：Yes, I did. 不重复整句
+
+## 实用表达
+- Actually, I didn't... (其实我没...)
+- Neither did I. (我也没)
+- I wonder what happened. (我想知道发生了什么)",practice_foundation-social-express_讲述经历_否定和疑问

@@ -18,20 +18,13 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础②·日程安排,去...做...,go to,去...,phrase,/ɡoʊ tuː/,/ɡəʊ tuː/,L1,去(某地)。go to work/school/the park。,"[{""en"":""I go to work by bus."",""zh"":""我坐公交上班。""}]",0
 基础②·日程安排,去...做...,wait for,等待,phrase,/weɪt fɔːr/,/weɪt fɔː/,L1,等待(某人/物)。,"[{""en"":""I wait for the bus."",""zh"":""我等公交。""}]",1
 基础②·日程安排,去...做...,help...with,帮助做,phrase,/help wɪð/,/help wɪð/,L1,帮助某人做某事。,"[{""en"":""I help my mom with housework."",""zh"":""我帮妈妈做家务。""}]",2
-"基础·起床与洗漱",起床与洗漱,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",0
-"基础·起床与洗漱",起床与洗漱,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",1
-"基础·起床与洗漱",起床与洗漱,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",2
-"基础·起床与洗漱",起床与洗漱,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,"[{""en"":""I'm in a hurry."",""zh"":""我很匆忙。""}]",3
-"基础·起床与洗漱",早餐与出门,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",4
-"基础·起床与洗漱",早餐与出门,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",5
-"基础·起床与洗漱",早餐与出门,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",6
-"基础·起床与洗漱",早餐与出门,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,"[{""en"":""I'm in a hurry."",""zh"":""我很匆忙。""}]",7
-"基础·家务与居家",家务劳动,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",8
-"基础·家务与居家",家务劳动,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",9
-"基础·家务与居家",家务劳动,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",10
-"基础·家务与居家",居家休息,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",11
-"基础·家务与居家",居家休息,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",12
-"基础·家务与居家",居家休息,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",13
+基础·起床与洗漱,起床与洗漱,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",0
+基础·起床与洗漱,起床与洗漱,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",1
+基础·起床与洗漱,起床与洗漱,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",2
+基础·起床与洗漱,起床与洗漱,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,"[{""en"":""I'm in a hurry."",""zh"":""我很匆忙。""}]",3
+基础·家务与居家,家务劳动,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",8
+基础·家务与居家,家务劳动,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",9
+基础·家务与居家,家务劳动,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",10
 基础②·购物与出行,购物消费,buy,买,verb,/baɪ/,/baɪ/,L1,购买。buy + 名词。,"[{""en"":""I want to buy a new shirt."",""zh"":""我想买一件新衬衫。""}]",14
 基础②·购物与出行,购物消费,price,价格,noun,/praɪs/,/praɪs/,L1,价格。How much is the price?,"[{""en"":""The price is too high."",""zh"":""价格太高了。""}]",15
 基础②·购物与出行,购物消费,size,尺码,noun,/saɪz/,/saɪz/,L1,尺寸/尺码。Do you have this in...size?,"[{""en"":""Do you have this in a smaller size?"",""zh"":""这个有小一号的吗？""}]",16
@@ -49,3 +42,80 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础②·餐饮与社交,通讯与联络,message,消息,noun,/ˈmesɪdʒ/,/ˈmesɪdʒ/,L1,消息/信息。send a message。,"[{""en"":""I send messages to my friends."",""zh"":""我给朋友发消息。""}]",28
 基础②·餐饮与社交,通讯与联络,meet,见面,verb,/miːt/,/miːt/,L1,见面/会面。Let's meet at...。,"[{""en"":""Let's meet at the coffee shop."",""zh"":""我们在咖啡店见面吧。""}]",29
 基础②·餐饮与社交,通讯与联络,traffic,交通,noun,/ˈtræfɪk/,/ˈtræfɪk/,L1,交通/路况。The traffic was bad。,"[{""en"":""The traffic was bad."",""zh"":""路上很堵。""}]",30
+基础②·日常习惯,我每天做什么,rice,米饭,noun,/raɪs/,/raɪs/,L1,米饭。I eat rice every day。,"[{""en"":""I eat rice every day."",""zh"":""我每天吃米饭。""}]",3
+基础②·日常习惯,我每天做什么,noodles,面条,noun,/ˈnuːdəlz/,/ˈnuːdəlz/,L1,面条。I like noodles。,"[{""en"":""I eat noodles for lunch."",""zh"":""我中午吃面条。""}]",4
+基础②·日常习惯,我每天做什么,bread,面包,noun,/bred/,/bred/,L1,面包。I eat bread for breakfast。,"[{""en"":""I eat bread for breakfast."",""zh"":""我早餐吃面包。""}]",5
+基础②·日常习惯,我每天做什么,chicken,鸡肉,noun,/ˈtʃɪkɪn/,/ˈtʃɪkɪn/,L1,鸡肉。I like chicken。,"[{""en"":""I eat chicken for dinner."",""zh"":""我晚饭吃鸡肉。""}]",6
+基础②·日常习惯,我每天做什么,fish,鱼,noun,/fɪʃ/,/fɪʃ/,L1,鱼。I eat fish on Fridays。,"[{""en"":""I eat fish every Friday."",""zh"":""我每周五吃鱼。""}]",7
+基础②·日常习惯,我每天做什么,fruit,水果,noun,/fruːt/,/fruːt/,L1,水果。I eat fruit every day。,"[{""en"":""I eat fruit every day."",""zh"":""我每天吃水果。""}]",8
+基础②·日常习惯,我每天做什么,vegetable,蔬菜,noun,/ˈvedʒtəbəl/,/ˈvedʒtəbəl/,L1,蔬菜。I eat vegetables。,"[{""en"":""I eat vegetables every day."",""zh"":""我每天吃蔬菜。""}]",9
+基础②·日常习惯,我的日常动作,write,写,verb,/raɪt/,/raɪt/,L1,写。I write emails。,"[{""en"":""I write a letter."",""zh"":""我写信。""}]",4
+基础②·日常习惯,我的日常动作,run,跑步,verb,/rʌn/,/rʌn/,L1,跑步。I run every morning。,"[{""en"":""I run every morning."",""zh"":""我每天早上跑步。""}]",5
+基础②·日常习惯,我的日常动作,walk,走路,verb,/wɔːk/,/wɔːk/,L1,走路。I walk to school。,"[{""en"":""I walk to school every day."",""zh"":""我每天走路去学校。""}]",6
+基础②·日常习惯,我的日常动作,swim,游泳,verb,/swɪm/,/swɪm/,L1,游泳。I like to swim。,"[{""en"":""I swim every weekend."",""zh"":""我每周末游泳。""}]",7
+基础②·日常习惯,我的日常动作,cook,做饭,verb,/kʊk/,/kʊk/,L1,做饭。I cook dinner。,"[{""en"":""I cook dinner every day."",""zh"":""我每天做晚饭。""}]",8
+基础②·日常习惯,我的日常动作,clean,打扫,verb,/kliːn/,/kliːn/,L1,打扫。I clean the room。,"[{""en"":""I clean my room on weekends."",""zh"":""我周末打扫房间。""}]",9
+基础②·喜好需求,我喜欢/我想要,love,热爱,verb,/lʌv/,/lʌv/,L1,热爱。I love music。,"[{""en"":""I love music."",""zh"":""我热爱音乐。""}]",3
+基础②·喜好需求,我喜欢/我想要,enjoy,享受,verb,/ɪnˈdʒɔɪ/,/ɪnˈdʒɔɪ/,L1,享受。I enjoy reading。,"[{""en"":""I enjoy reading books."",""zh"":""我喜欢读书。""}]",4
+基础②·喜好需求,我喜欢/我想要,hate,讨厌,verb,/heɪt/,/heɪt/,L1,讨厌。I hate cold weather。,"[{""en"":""I hate getting up early."",""zh"":""我讨厌早起。""}]",5
+基础②·喜好需求,我有什么,family,家庭,noun,/ˈfæməli/,/ˈfæməli/,L1,家庭。I have a big family。,"[{""en"":""I have a big family."",""zh"":""我有一个大家庭。""}]",3
+基础②·喜好需求,我有什么,house,房子,noun,/haʊs/,/haʊs/,L1,房子。I have a house。,"[{""en"":""I have a small house."",""zh"":""我有一间小房子。""}]",4
+基础②·喜好需求,我有什么,pet,宠物,noun,/pet/,/pet/,L1,宠物。I have a pet。,"[{""en"":""I have a pet dog."",""zh"":""我有一只宠物狗。""}]",5
+基础②·喜好需求,我有什么,job,工作,noun,/dʒɒb/,/dʒɒb/,L1,工作。I have a job。,"[{""en"":""I have a new job."",""zh"":""我有一份新工作。""}]",6
+基础②·日程安排,我几点做...,morning,早上,noun,/ˈmɔːrnɪŋ/,/ˈmɔːnɪŋ/,L1,早上。in the morning。,"[{""en"":""I get up early in the morning."",""zh"":""我早上早起。""}]",3
+基础②·日程安排,我几点做...,afternoon,下午,noun,/ˌæftərˈnuːn/,/ˌɑːftəˈnuːn/,L1,下午。in the afternoon。,"[{""en"":""I study in the afternoon."",""zh"":""我下午学习。""}]",4
+基础②·日程安排,我几点做...,evening,晚上,noun,/ˈiːvnɪŋ/,/ˈiːvnɪŋ/,L1,晚上。in the evening。,"[{""en"":""I watch TV in the evening."",""zh"":""我晚上看电视。""}]",5
+基础②·日程安排,我几点做...,today,今天,noun,/təˈdeɪ/,/təˈdeɪ/,L1,今天。I am happy today。,"[{""en"":""I am busy today."",""zh"":""我今天很忙。""}]",6
+基础②·日程安排,我几点做...,tomorrow,明天,noun,/təˈmɒroʊ/,/təˈmɒrəʊ/,L1,明天。I go to work tomorrow。,"[{""en"":""I have a meeting tomorrow."",""zh"":""我明天有会。""}]",7
+基础②·日程安排,去...做...,by bus,坐公交,phrase,/baɪ bʌs/,/baɪ bʌs/,L1,坐公交。I go to work by bus。,"[{""en"":""I go to school by bus."",""zh"":""我坐公交上学。""}]",3
+基础②·日程安排,去...做...,by bike,骑车,phrase,/baɪ baɪk/,/baɪ baɪk/,L1,骑车。I go to school by bike。,"[{""en"":""I go to the park by bike."",""zh"":""我骑车去公园。""}]",4
+基础②·日程安排,去...做...,on foot,步行,phrase,/ɒn fʊt/,/ɒn fʊt/,L1,步行。I go to school on foot。,"[{""en"":""I go to work on foot."",""zh"":""我走路去上班。""}]",5
+基础②·日程安排,去...做...,look for,寻找,phrase,/lʊk fɔːr/,/lʊk fɔː/,L1,寻找。I look for my keys。,"[{""en"":""I look for my glasses."",""zh"":""我在找我的眼镜。""}]",6
+基础②·购物与出行,购物消费,money,钱,noun,/ˈmʌni/,/ˈmʌni/,L1,钱。Here is the money。,"[{""en"":""I need some money."",""zh"":""我需要一些钱。""}]",19
+基础②·购物与出行,购物消费,try on,试穿,phrase,/traɪ ɒn/,/traɪ ɒn/,L1,试穿。Can I try this on?,"[{""en"":""I want to try this on."",""zh"":""我想试穿这个。""}]",20
+基础②·购物与出行,购物消费,shirt,衬衫,noun,/ʃɜːrt/,/ʃɜːt/,L1,衬衫。I want to buy a shirt。,"[{""en"":""I like this shirt."",""zh"":""我喜欢这件衬衫。""}]",21
+基础②·购物与出行,购物消费,shoes,鞋子,noun,/ʃuːz/,/ʃuːz/,L1,鞋子(复数)。I need new shoes。,"[{""en"":""I want to buy new shoes."",""zh"":""我想买新鞋。""}]",22
+基础②·购物与出行,天气与出行,cloudy,多云的,adj,/ˈklaʊdi/,/ˈklaʊdi/,L1,多云的。It is cloudy today。,"[{""en"":""It is cloudy today."",""zh"":""今天多云。""}]",23
+基础②·购物与出行,天气与出行,windy,有风的,adj,/ˈwɪndi/,/ˈwɪndi/,L1,有风的。It is windy。,"[{""en"":""It is windy outside."",""zh"":""外面有风。""}]",24
+基础②·购物与出行,天气与出行,cold,寒冷的,adj,/koʊld/,/kəʊld/,L1,寒冷的。It is cold today。,"[{""en"":""I need a coat. It is cold."",""zh"":""我需要外套。天冷。""}]",25
+基础②·购物与出行,天气与出行,hot,炎热的,adj,/hɒt/,/hɒt/,L1,炎热的。It is hot today。,"[{""en"":""It is hot today."",""zh"":""今天很热。""}]",26
+基础②·购物与出行,天气与出行,warm,温暖的,adj,/wɔːrm/,/wɔːm/,L1,温暖的。It is warm。,"[{""en"":""It is warm and sunny today."",""zh"":""今天温暖晴朗。""}]",27
+基础②·购物与出行,天气与出行,subway,地铁,noun,/ˈsʌbweɪ/,/ˈsʌbweɪ/,L1,地铁。I take the subway。,"[{""en"":""I take the subway to work."",""zh"":""我坐地铁上班。""}]",28
+基础②·购物与出行,天气与出行,taxi,出租车,noun,/ˈtæksi/,/ˈtæksi/,L1,出租车。I take a taxi。,"[{""en"":""I take a taxi to the airport."",""zh"":""我打车去机场。""}]",29
+基础②·餐饮与社交,在外就餐,hungry,饿的,adj,/ˈhʌŋɡri/,/ˈhʌŋɡri/,L1,饿的。I am hungry。,"[{""en"":""I am hungry."",""zh"":""我饿了。""}]",27
+基础②·餐饮与社交,在外就餐,thirsty,渴的,adj,/ˈθɜːrsti/,/ˈθɜːsti/,L1,渴的。I am thirsty。,"[{""en"":""I am thirsty."",""zh"":""我渴了。""}]",28
+基础②·餐饮与社交,在外就餐,water,水,noun,/ˈwɒtər/,/ˈwɔːtə/,L1,水。Can I have some water?,"[{""en"":""I drink water every day."",""zh"":""我每天喝水。""}]",29
+基础②·餐饮与社交,在外就餐,coffee,咖啡,noun,/ˈkɒfi/,/ˈkɒfi/,L1,咖啡。I like coffee。,"[{""en"":""I drink coffee in the morning."",""zh"":""我早上喝咖啡。""}]",30
+基础②·餐饮与社交,在外就餐,tea,茶,noun,/tiː/,/tiː/,L1,茶。I like tea。,"[{""en"":""I drink tea after dinner."",""zh"":""我晚饭后喝茶。""}]",31
+基础②·餐饮与社交,在外就餐,soup,汤,noun,/suːp/,/suːp/,L1,汤。I like soup。,"[{""en"":""I want to order soup."",""zh"":""我想点汤。""}]",32
+基础②·餐饮与社交,在外就餐,salad,沙拉,noun,/ˈsæləd/,/ˈsæləd/,L1,沙拉。I want a salad。,"[{""en"":""I like salad."",""zh"":""我喜欢沙拉。""}]",33
+基础②·餐饮与社交,在外就餐,pizza,披萨,noun,/ˈpiːtsə/,/ˈpiːtsə/,L1,披萨。I like pizza。,"[{""en"":""I want to order a pizza."",""zh"":""我想点一个披萨。""}]",34
+基础②·餐饮与社交,通讯与联络,phone,电话,noun,/foʊn/,/fəʊn/,L1,电话/手机。I call on the phone。,"[{""en"":""I check my phone every morning."",""zh"":""我每天早上看手机。""}]",31
+基础②·餐饮与社交,通讯与联络,text,发短信,verb,/tekst/,/tekst/,L1,发短信。I text my friend。,"[{""en"":""I text my friend every day."",""zh"":""我每天给朋友发短信。""}]",32
+基础②·餐饮与社交,通讯与联络,email,邮件,noun,/ˈiːmeɪl/,/ˈiːmeɪl/,L1,邮件。I send emails。,"[{""en"":""I check my email every day."",""zh"":""我每天查邮件。""}]",33
+基础②·餐饮与社交,通讯与联络,late,迟到,adj,/leɪt/,/leɪt/,L1,"迟到。Sorry, I am late。","[{""en"":""I am late for work."",""zh"":""我上班迟到了。""}]",34
+基础·家务与居家,居家休息,music,音乐,noun,/ˈmjuːzɪk/,/ˈmjuːzɪk/,L1,音乐。I listen to music。,"[{""en"":""I like listening to music."",""zh"":""我喜欢听音乐。""}]",14
+基础·家务与居家,居家休息,movie,电影,noun,/ˈmuːvi/,/ˈmuːvi/,L1,电影。I like movies。,"[{""en"":""I watch a movie every weekend."",""zh"":""我每周末看电影。""}]",15
+基础·家务与居家,居家休息,game,游戏,noun,/ɡeɪm/,/ɡeɪm/,L1,游戏。I play games。,"[{""en"":""I play video games after school."",""zh"":""我放学后玩游戏。""}]",16
+基础·家务与居家,居家休息,book,书,noun,/bʊk/,/bʊk/,L1,书。I read books。,"[{""en"":""I read a book every night."",""zh"":""我每晚读一本书。""}]",17
+基础·家务与居家,居家休息,bed,床,noun,/bed/,/bed/,L1,床。I go to bed。,"[{""en"":""I go to bed at 10."",""zh"":""我10点上床。""}]",18
+基础·家务与居家,家务劳动,wash,洗,verb,/wɒʃ/,/wɒʃ/,L1,洗。I wash the dishes。,"[{""en"":""I wash my hands."",""zh"":""我洗手。""}]",11
+基础·家务与居家,家务劳动,sweep,扫,verb,/swiːp/,/swiːp/,L1,扫。I sweep the floor。,"[{""en"":""I sweep the floor every day."",""zh"":""我每天扫地。""}]",12
+基础·家务与居家,家务劳动,mop,拖地,verb,/mɒp/,/mɒp/,L1,拖地。I mop the floor。,"[{""en"":""I mop the floor on weekends."",""zh"":""我周末拖地。""}]",13
+基础·家务与居家,家务劳动,cook,做饭,verb,/kʊk/,/kʊk/,L1,做饭。I cook dinner。,"[{""en"":""I cook dinner for my family."",""zh"":""我给家人做饭。""}]",14
+
+基础②·日常习惯,我的日常动作,sing,唱歌,verb,/sɪŋ/,/sɪŋ/,L1,唱歌。I like to sing。,"[{""en"":""I sing in the shower."",""zh"":""我在淋浴时唱歌。""}]",10
+基础②·日常习惯,我的日常动作,dance,跳舞,verb,/dæns/,/dɑːns/,L1,跳舞。I like to dance。,"[{""en"":""I dance at parties."",""zh"":""我在派对上跳舞。""}]",11
+基础②·日常习惯,我的日常动作,draw,画画,verb,/drɔː/,/drɔː/,L1,画画。I like to draw。,"[{""en"":""I draw pictures on weekends."",""zh"":""我周末画画。""}]",12
+基础②·喜好需求,我喜欢/我想要,try,尝试,verb,/traɪ/,/traɪ/,L1,尝试。I want to try。,"[{""en"":""I want to try this."",""zh"":""我想试试这个。""}]",6
+基础②·喜好需求,我喜欢/我想要,learn,学习,verb,/lɜːrn/,/lɜːn/,L1,学习。I want to learn。,"[{""en"":""I want to learn English."",""zh"":""我想学英语。""}]",7
+基础②·日程安排,我几点做...,lunch,午餐,noun,/lʌntʃ/,/lʌntʃ/,L1,午餐。I eat lunch。,"[{""en"":""I have lunch at 12."",""zh"":""我12点吃午餐。""}]",9
+基础②·日程安排,我几点做...,dinner,晚餐,noun,/ˈdɪnər/,/ˈdɪnə/,L1,晚餐。I eat dinner。,"[{""en"":""I have dinner at 6."",""zh"":""我6点吃晚餐。""}]",10
+基础②·购物与出行,购物消费,jacket,夹克,noun,/ˈdʒækɪt/,/ˈdʒækɪt/,L1,夹克。I want a jacket。,"[{""en"":""I want to buy a jacket."",""zh"":""我想买一件夹克。""}]",23
+基础②·购物与出行,天气与出行,train,火车,noun,/treɪn/,/treɪn/,L1,火车。I take the train。,"[{""en"":""I take the train to Beijing."",""zh"":""我坐火车去北京。""}]",30
+基础②·餐饮与社交,在外就餐,juice,果汁,noun,/dʒuːs/,/dʒuːs/,L1,果汁。I like juice。,"[{""en"":""I drink juice every morning."",""zh"":""我每天早上喝果汁。""}]",35
+基础②·餐饮与社交,在外就餐,milk,牛奶,noun,/mɪlk/,/mɪlk/,L1,牛奶。I drink milk。,"[{""en"":""I drink milk before bed."",""zh"":""我睡前喝牛奶。""}]",36
+基础②·日常习惯,我的日常动作,exercise,锻炼,verb,/ˈeksərsaɪz/,/ˈeksəsaɪz/,L1,锻炼。I exercise every day。,"[{""en"":""I exercise every morning."",""zh"":""我每天早上锻炼。""}]",13
+基础·家务与居家,居家休息,rest,休息,verb,/rest/,/rest/,L1,休息。I rest at home。,"[{""en"":""I rest on weekends."",""zh"":""我周末休息。""}]",19
+基础·家务与居家,居家休息,relax,放松,verb,/rɪˈlæks/,/rɪˈlæks/,L1,放松。I relax at home。,"[{""en"":""I relax after work."",""zh"":""我下班后放松。""}]",20
+基础·家务与居家,家务劳动,fold,折叠,verb,/foʊld/,/fəʊld/,L1,折叠。I fold the clothes。,"[{""en"":""I fold my clothes."",""zh"":""我叠衣服。""}]",15

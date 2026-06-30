@@ -1,6 +1,6 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
 "健康·预约看病",电话预约,电话预约,I'd like to make an appointment.,我想预约。,L2,预约看病的标准开场。,"[{""en"":""I'd like to make an appointment to see Dr. Williams."",""zh"":""我想预约看威廉姆斯医生。""}]"
-"健康·预约看病",电话预约,电话预约,Can you help me with...?,你能帮我...吗？,L2,请求帮助的礼貌说法。预约时常见开场。,
+健康·预约看病,电话预约,电话预约,Can you help me with...?,你能帮我...吗？,L2,请求帮助的礼貌说法。预约时常见开场。,
 "健康·预约看病",电话预约,电话预约,Is Dr. Williams available this week?,威廉姆斯医生这周有空吗？,L2,询问医生是否有可预约的时间。available = 有空的。,"[{""en"":""Is Dr. Williams available this Friday?"",""zh"":""威廉姆斯医生这周五有空吗？""}]"
 "健康·预约看病",电话预约,电话预约,I'd like to see a doctor as soon as possible.,我想尽快看医生。,L2,表达紧急性。不舒服想尽快就诊。,"[{""en"":""I'm not feeling well. I'd like to see a doctor as soon as possible."",""zh"":""我不太舒服，想尽快看医生。""}]"
 "健康·预约看病",改期取消,改期取消,I need to reschedule my appointment.,我需要改期。,L2,改期的标准说法。reschedule = 重新安排时间。,"[{""en"":""I need to reschedule my appointment from Friday to Monday."",""zh"":""我需要把预约从周五改到周一。""}]"
@@ -8,7 +8,7 @@ scene_title,topic_title,category,text,meaning,difficulty,description,examples_js
 "健康·预约看病",改期取消,改期取消,Can I get a refund for the cancellation?,取消能退款吗？,L3,有些诊所取消预约需付费，提前确认。,"[{""en"":""Is there a cancellation fee?"",""zh"":""取消有费用吗？""}]"
 "健康·预约看病",前台登记,前台登记,I have an appointment at 10 AM.,我上午10点有预约。,L1,到前台登记时报预约时间。,"[{""en"":""Hi, I have an appointment at 10 AM with Dr. Williams."",""zh"":""你好，我上午10点约了威廉姆斯医生。""}]"
 "健康·预约看病",前台登记,前台登记,Here is my insurance card.,这是我的保险卡。,L2,出示保险卡。在英美国家每次就诊都需要。,"[{""en"":""Here is my insurance card and ID."",""zh"":""这是我的保险卡和身份证。""}]"
-"健康·预约看病",前台登记,前台登记,Do I need to fill out any forms?,我需要填什么表吗？,L2,首次就诊需填patient information form(病人信息表)。,
+健康·预约看病,前台登记,前台登记,Do I need to fill out any forms?,我需要填什么表吗？,L2,首次就诊需填patient information form(病人信息表)。,
 "健康·看医生",描述症状,描述症状,I haven't been feeling well.,我一直不太舒服。,L1,描述病情的通用开场。比I'm sick更自然。,"[{""en"":""I haven't been feeling well for a few days."",""zh"":""我几天来一直不太舒服。""}]"
 "健康·看医生",描述症状,描述症状,I have a headache and a fever.,我头痛而且发烧。,L1,描述两个常见症状。and连接多个症状。,"[{""en"":""I have a headache, a fever, and a sore throat."",""zh"":""我头痛、发烧、喉咙痛。""}]"
 "健康·看医生",描述症状,描述症状,I've been coughing a lot.,我一直咳得很厉害。,L2,描述持续症状。have been + doing = 一直在。,"[{""en"":""I've been coughing a lot, especially at night."",""zh"":""我一直咳得很厉害，尤其是晚上。""}]"

@@ -77,10 +77,10 @@
           "chunk": "You are",
           "chunkMeaning": "你是",
           "items": [
-            { "zh": "你很善良。", "answer": "You are very kind." },
+            { "zh": "你很善良。", "answer": "You are kind." },
             { "zh": "你是对的。", "answer": "You are right." },
-            { "zh": "你很聪明。", "answer": "You are very smart." },
-            { "zh": "你很有趣。", "answer": "You are very funny." }
+            { "zh": "你很聪明。", "answer": "You are smart." },
+            { "zh": "你很有趣。", "answer": "You are funny." }
           ]
         },
         {
@@ -94,6 +94,10 @@
           "items": [
             { "zh": "你是学生吗？", "answer": "Are you a student?" },
             { "zh": "你是老师吗？", "answer": "Are you a teacher?" },
+            { "zh": "你是工程师吗？", "answer": "Are you an engineer?" },
+            { "zh": "你是艺术家吗？", "answer": "Are you an artist?" },
+            { "zh": "你是演员吗？", "answer": "Are you an actor?" },
+            { "zh": "你是会计吗？", "answer": "Are you an accountant?" },
             { "zh": "你好吗？", "answer": "How are you?" },
             { "zh": "你准备好了吗？", "answer": "Are you ready?" }
           ]
@@ -142,6 +146,8 @@
           "chunkMeaning": "它是",
           "items": [
             { "zh": "这是一本书。", "answer": "It is a book." },
+            { "zh": "这是一个苹果。", "answer": "It is an apple." },
+            { "zh": "这是一个鸡蛋。", "answer": "It is an egg." },
             { "zh": "它很大。", "answer": "It is very big." },
             { "zh": "它是红色的。", "answer": "It is red." },
             { "zh": "今天很热。", "answer": "It is hot today." }
@@ -207,7 +213,12 @@
           "items": [
             { "zh": "它在桌子上。", "answer": "It is on the table." },
             { "zh": "它在包里。", "answer": "It is in the bag." },
+            { "zh": "他在车里。", "answer": "He is in the car." },
+            { "zh": "她在公交车上。", "answer": "She is on the bus." },
+            { "zh": "他在飞机上。", "answer": "He is on the plane." },
             { "zh": "他们在家里。", "answer": "They are at home." },
+            { "zh": "他在上班。", "answer": "He is at work." },
+            { "zh": "他在医院。", "answer": "He is at the hospital." },
             { "zh": "我们在教室里。", "answer": "We are in the classroom." }
           ]
         },
@@ -221,7 +232,7 @@
           "chunkMeaning": "...在哪里？",
           "items": [
             { "zh": "我的手机在哪里？", "answer": "Where is my phone?" },
-            { "zh": "我的钥匙在哪里？", "answer": "Where is my key?" },
+            { "zh": "我的钥匙在哪里？", "answer": "Where is my keys?" },
             { "zh": "你的包在哪里？", "answer": "Where is your bag?" },
             { "zh": "车站在哪里？", "answer": "Where is the station?" }
           ]
@@ -232,9 +243,9 @@
           "title": "描述位置逐步扩展",
           "levels": [
             { "level": 1, "label": "说物品位置", "en": "My phone is on the table.", "zh": "我的手机在桌子上。" },
-            { "level": 2, "label": "加问句", "en": "Where is my phone? It is on the table.", "zh": "我的手机在哪里？在桌子上。", "highlight": "Where is", "hint": "询问位置" },
-            { "level": 3, "label": "换地点", "en": "Where is my phone? It is in my bag.", "zh": "我的手机在哪里？在我的包里。", "highlight": "in my bag", "hint": "换一个位置介词" },
-            { "level": 4, "label": "加否定", "en": "He is not at home. He is at work.", "zh": "他不在家。他在上班。", "highlight": "not at home / at work", "hint": "用否定描述不在某处" }
+            { "level": 2, "label": "加问句", "en": "Where is my phone? My phone is on the table.", "zh": "我的手机在哪里？在桌子上。", "highlight": "Where is my phone?", "hint": "询问位置" },
+            { "level": 3, "label": "换地点", "en": "Where is my phone? My phone is on the table. It is not in my bag.", "zh": "我的手机在哪里？在桌子上。不在包里。", "highlight": "not in my bag", "hint": "用否定说不在哪里" },
+            { "level": 4, "label": "加不在哪", "en": "Where is my phone? My phone is on the table. It is not in my bag. It is not in the car.", "zh": "我的手机在哪里？在桌子上。不在包里。不在车里。", "highlight": "not in the car", "hint": "用否定说也不在车里" }
           ]
         },
         {
@@ -361,7 +372,7 @@
             { "level": 1, "label": "说关系", "en": "We are good friends.", "zh": "我们是好朋友。" },
             { "level": 2, "label": "加来源", "en": "We are good friends from China.", "zh": "我们是来自中国的好朋友。", "highlight": "from China", "hint": "加上来源" },
             { "level": 3, "label": "加感受", "en": "We are good friends from China. We are very happy.", "zh": "我们是来自中国的好朋友。我们很开心。", "highlight": "very happy", "hint": "加上感受" },
-            { "level": 4, "label": "加否定确认", "en": "We are good friends from China. We are very happy. We are not late.", "zh": "我们是来自中国的好朋友。我们很开心。我们没有迟到。", "highlight": "not late", "hint": "加上否定" }
+            { "level": 4, "label": "加否定确认", "en": "We are good friends from China. We are very happy. We are not strangers.", "zh": "我们是来自中国的好朋友。我们很开心。我们不是陌生人。", "highlight": "not strangers", "hint": "加上否定" }
           ]
         },
         {
@@ -411,11 +422,27 @@
           "chunk": "Goodbye / See you",
           "chunkMeaning": "再见 / 回头见",
           "items": [
+            { "zh": "再见！", "answer": "Goodbye!" },
+            { "zh": "拜拜！", "answer": "Bye-bye!" },
             { "zh": "明天见！", "answer": "See you tomorrow!" },
             { "zh": "回头见！", "answer": "See you later!" },
-            { "zh": "祝你愉快！", "answer": "Have a nice day!" },
+            { "zh": "下周见！", "answer": "See you next week!" }
+          ]
+        },
+        {
+          "id": "cs_zh_2",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用英语表达欢迎和关心",
+          "chunk": "Nice to / Take care / Welcome",
+          "chunkMeaning": "很高兴... / 保重 / 欢迎",
+          "items": [
+            { "zh": "很高兴认识你！", "answer": "Nice to meet you!" },
             { "zh": "保重！", "answer": "Take care!" },
-            { "zh": "晚安！", "answer": "Good night!" }
+            { "zh": "欢迎！请进。", "answer": "Welcome! Please come in." },
+            { "zh": "欢迎来我家！", "answer": "Welcome to my home!" },
+            { "zh": "很高兴再次见到你！", "answer": "Nice to see you again!" }
           ]
         },
         {
@@ -461,7 +488,10 @@
           "chunkMeaning": "最近怎么样？/ 怎么样？",
           "items": [
             { "zh": "最近怎么样？——还不错。", "answer": "How's it going? — Pretty good." },
-            { "zh": "怎么样？——没什么。", "answer": "What's up? — Not much." }
+            { "zh": "最近怎么样？——还行。", "answer": "How's it going? — Not bad." },
+            { "zh": "怎么样？——没什么。", "answer": "What's up? — Not much." },
+            { "zh": "有什么新鲜事吗？——没什么。", "answer": "What's new? — Nothing much." },
+            { "zh": "一切都好吗？——挺好的。", "answer": "How's everything? — Great." }
           ]
         },
         {
@@ -478,6 +508,21 @@
             { "zh": "你来自哪里？", "answer": "Where are you from?" },
             { "zh": "你是做什么的？", "answer": "What do you do?" },
             { "zh": "很高兴再次见到你！", "answer": "It's nice to see you again!" }
+          ]
+        },
+        {
+          "id": "cs_zh_2",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 How was 问候过去经历",
+          "chunk": "How was your ___? — It was great!",
+          "chunkMeaning": "你的...怎么样？—很棒！",
+          "items": [
+            { "zh": "你周末过得怎么样？——很棒！", "answer": "How was your weekend? — It was great!" },
+            { "zh": "你今天过得怎么样？——很好！", "answer": "How was your day? — It was great!" },
+            { "zh": "你的假期怎么样？——太棒了！", "answer": "How was your vacation? — It was wonderful!" },
+            { "zh": "你的旅行怎么样？——还不错！", "answer": "How was your trip? — Pretty good!" }
           ]
         },
         {

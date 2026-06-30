@@ -1,0 +1,1545 @@
+{
+  "他/她是谁": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 He/She is 描述家人",
+          "chunk": "He is / She is",
+          "chunkMeaning": "他是/她是",
+          "items": [
+            {
+              "zh": "他是我的父亲。",
+              "answer": "He is my father."
+            },
+            {
+              "zh": "她是我的母亲。",
+              "answer": "She is my mother."
+            },
+            {
+              "zh": "他是我的兄弟。",
+              "answer": "He is my brother."
+            },
+            {
+              "zh": "她是我的姐妹。",
+              "answer": "She is my sister."
+            },
+            {
+              "zh": "他是我的儿子。",
+              "answer": "He is my son."
+            },
+            {
+              "zh": "她是我的女儿。",
+              "answer": "She is my daughter."
+            },
+            {
+              "zh": "他是一名医生。",
+              "answer": "He is a doctor."
+            },
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher."
+            },
+            {
+              "zh": "他很高。",
+              "answer": "He is very tall."
+            },
+            {
+              "zh": "她很善良。",
+              "answer": "She is very kind."
+            },
+            {
+              "zh": "他是我的叔叔。",
+              "answer": "He is my uncle."
+            },
+            {
+              "zh": "她是我的阿姨。",
+              "answer": "She is my aunt."
+            },
+            {
+              "zh": "他是我的爷爷。",
+              "answer": "He is my grandfather."
+            },
+            {
+              "zh": "她很年轻。",
+              "answer": "She is young."
+            },
+            {
+              "zh": "他很英俊。",
+              "answer": "He is handsome."
+            },
+            {
+              "zh": "她是我的婆婆。",
+              "answer": "She is my grandmother."
+            },
+            {
+              "zh": "他很强壮。",
+              "answer": "He is strong."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "He/She is 句型操练",
+          "pattern": "[subject] is [noun/adj].",
+          "patternMeaning": "某人/某物是...",
+          "slots": [
+            "subject",
+            "noun/adj"
+          ],
+          "items": [
+            {
+              "zh": "他是我爸爸。",
+              "answer": "He is my father.",
+              "slotValues": {
+                "subject": "He",
+                "noun/adj": "my father"
+              }
+            },
+            {
+              "zh": "她是一名护士。",
+              "answer": "She is a nurse.",
+              "slotValues": {
+                "subject": "She",
+                "noun/adj": "a nurse"
+              }
+            },
+            {
+              "zh": "他很英俊。",
+              "answer": "He is handsome.",
+              "slotValues": {
+                "subject": "He",
+                "noun/adj": "handsome"
+              }
+            },
+            {
+              "zh": "她很漂亮。",
+              "answer": "She is pretty.",
+              "slotValues": {
+                "subject": "She",
+                "noun/adj": "pretty"
+              }
+            },
+            {
+              "zh": "他的父亲老了。",
+              "answer": "His father is old.",
+              "slotValues": {
+                "subject": "His father",
+                "noun/adj": "old"
+              }
+            },
+            {
+              "zh": "她的母亲很友好。",
+              "answer": "Her mother is friendly.",
+              "slotValues": {
+                "subject": "Her mother",
+                "noun/adj": "friendly"
+              }
+            },
+            {
+              "zh": "她很年轻。",
+              "answer": "She is young.",
+              "slotValues": {
+                "subject": "She",
+                "noun/adj": "young"
+              }
+            },
+            {
+              "zh": "他很聪明。",
+              "answer": "He is smart.",
+              "slotValues": {
+                "subject": "He",
+                "noun/adj": "smart"
+              }
+            },
+            {
+              "zh": "他的太太是老师。",
+              "answer": "His wife is a teacher.",
+              "slotValues": {
+                "subject": "His wife",
+                "noun/adj": "a teacher"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_has",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "has 一词多句",
+          "vocabWord": "has",
+          "vocabMeaning": "有(三单)",
+          "patterns": [
+            {
+              "chunk": "He has ___.",
+              "items": [
+                {
+                  "zh": "他有一辆车。",
+                  "answer": "He has a car."
+                },
+                {
+                  "zh": "他有一只狗。",
+                  "answer": "He has a dog."
+                },
+                {
+                  "zh": "他有一个儿子。",
+                  "answer": "He has a son."
+                }
+              ]
+            },
+            {
+              "chunk": "She has ___.",
+              "items": [
+                {
+                  "zh": "她有一只猫。",
+                  "answer": "She has a cat."
+                },
+                {
+                  "zh": "她有一个女儿。",
+                  "answer": "She has a daughter."
+                },
+                {
+                  "zh": "她有一个大家庭。",
+                  "answer": "She has a big family."
+                },
+                {
+                  "zh": "她有一间漂亮的房子。",
+                  "answer": "She has a nice house."
+                }
+              ]
+            },
+            {
+              "chunk": "He has ___ brothers.",
+              "items": [
+                {
+                  "zh": "他有两个兄弟。",
+                  "answer": "He has two brothers."
+                },
+                {
+                  "zh": "他有三个姐妹。",
+                  "answer": "He has three sisters."
+                },
+                {
+                  "zh": "他没有兄弟。",
+                  "answer": "He doesn't have a brother."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述家人逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说关系",
+              "en": "He is my father.",
+              "zh": "他是我的父亲。"
+            },
+            {
+              "level": 2,
+              "label": "加职业",
+              "en": "He is my father. He is a doctor.",
+              "zh": "他是我的父亲。他是一名医生。",
+              "highlight": "a doctor",
+              "hint": "说出职业"
+            },
+            {
+              "level": 3,
+              "label": "加外貌",
+              "en": "He is my father. He is a doctor. He is very tall.",
+              "zh": "他是我的父亲。他是一名医生。他很高。",
+              "highlight": "very tall",
+              "hint": "描述外貌"
+            },
+            {
+              "level": 4,
+              "label": "加拥有",
+              "en": "He is my father. He is a doctor. He is very tall. He has a car.",
+              "zh": "他是我的父亲。他是一名医生。他很高。他有一辆车。",
+              "highlight": "has a car",
+              "hint": "说拥有什么"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他/她喜欢什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 likes/doesn't like 表达喜好",
+          "chunk": "He likes / She likes / He doesn't like",
+          "chunkMeaning": "他喜欢/她喜欢/他不喜欢",
+          "items": [
+            {
+              "zh": "他喜欢咖啡。",
+              "answer": "He likes coffee."
+            },
+            {
+              "zh": "她喜欢茶。",
+              "answer": "She likes tea."
+            },
+            {
+              "zh": "他喜欢运动。",
+              "answer": "He likes sports."
+            },
+            {
+              "zh": "她喜欢音乐。",
+              "answer": "She likes music."
+            },
+            {
+              "zh": "他热爱音乐。",
+              "answer": "He loves music."
+            },
+            {
+              "zh": "她喜欢读书。",
+              "answer": "She enjoys reading."
+            },
+            {
+              "zh": "他不吃肉。",
+              "answer": "He doesn't like meat."
+            },
+            {
+              "zh": "她不喜欢咖啡。",
+              "answer": "She doesn't like coffee."
+            },
+            {
+              "zh": "他不喜欢做饭。",
+              "answer": "He doesn't like to cook."
+            },
+            {
+              "zh": "她不喜欢看电视。",
+              "answer": "She doesn't like to watch TV."
+            },
+            {
+              "zh": "他喜欢狗。",
+              "answer": "He likes dogs."
+            },
+            {
+              "zh": "她喜欢猫。",
+              "answer": "She likes cats."
+            },
+            {
+              "zh": "他喜欢游泳。",
+              "answer": "He likes to swim."
+            },
+            {
+              "zh": "她讨厌冷天。",
+              "answer": "She hates cold weather."
+            },
+            {
+              "zh": "他不喜欢早起。",
+              "answer": "He doesn't like getting up early."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Does...like? 问句操练",
+          "pattern": "Does [subject] like [noun]?",
+          "patternMeaning": "...喜欢...吗？",
+          "slots": [
+            "subject",
+            "noun"
+          ],
+          "items": [
+            {
+              "zh": "他喜欢运动吗？",
+              "answer": "Does he like sports?",
+              "slotValues": {
+                "subject": "he",
+                "noun": "sports"
+              }
+            },
+            {
+              "zh": "她喜欢音乐吗？",
+              "answer": "Does she like music?",
+              "slotValues": {
+                "subject": "she",
+                "noun": "music"
+              }
+            },
+            {
+              "zh": "他喜欢狗吗？",
+              "answer": "Does he like dogs?",
+              "slotValues": {
+                "subject": "he",
+                "noun": "dogs"
+              }
+            },
+            {
+              "zh": "她喜欢咖啡吗？",
+              "answer": "Does she like coffee?",
+              "slotValues": {
+                "subject": "she",
+                "noun": "coffee"
+              }
+            },
+            {
+              "zh": "他喜欢看书吗？",
+              "answer": "Does he like to read?",
+              "slotValues": {
+                "subject": "he",
+                "noun": "to read"
+              }
+            },
+            {
+              "zh": "他喜欢猫吗？",
+              "answer": "Does he like cats?",
+              "slotValues": {
+                "subject": "he",
+                "noun": "cats"
+              }
+            },
+            {
+              "zh": "她喜欢游泳吗？",
+              "answer": "Does she like to swim?",
+              "slotValues": {
+                "subject": "she",
+                "noun": "to swim"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_likes",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "likes 一词多句",
+          "vocabWord": "likes",
+          "vocabMeaning": "喜欢(三单)",
+          "patterns": [
+            {
+              "chunk": "He likes ___.",
+              "items": [
+                {
+                  "zh": "他喜欢咖啡。",
+                  "answer": "He likes coffee."
+                },
+                {
+                  "zh": "他喜欢猫。",
+                  "answer": "He likes cats."
+                },
+                {
+                  "zh": "他喜欢运动。",
+                  "answer": "He likes sports."
+                },
+                {
+                  "zh": "他喜欢夏天。",
+                  "answer": "He likes summer."
+                },
+                {
+                  "zh": "她喜欢花。",
+                  "answer": "She likes flowers."
+                }
+              ]
+            },
+            {
+              "chunk": "He likes to ___.",
+              "items": [
+                {
+                  "zh": "他喜欢游泳。",
+                  "answer": "He likes to swim."
+                },
+                {
+                  "zh": "他喜欢读书。",
+                  "answer": "He likes to read."
+                },
+                {
+                  "zh": "他喜欢做饭。",
+                  "answer": "He likes to cook."
+                }
+              ]
+            },
+            {
+              "chunk": "He doesn't like ___.",
+              "items": [
+                {
+                  "zh": "他不喜欢肉。",
+                  "answer": "He doesn't like meat."
+                },
+                {
+                  "zh": "他不喜欢冷天。",
+                  "answer": "He hates cold weather."
+                },
+                {
+                  "zh": "她不喜欢早起。",
+                  "answer": "She doesn't like getting up early."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述喜好逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说喜好",
+              "en": "He likes coffee.",
+              "zh": "他喜欢咖啡。"
+            },
+            {
+              "level": 2,
+              "label": "加否定",
+              "en": "He likes coffee, but he doesn't like tea.",
+              "zh": "他喜欢咖啡，但不喜欢茶。",
+              "highlight": "doesn't like tea",
+              "hint": "加不喜欢的东西"
+            },
+            {
+              "level": 3,
+              "label": "加疑问",
+              "en": "He likes coffee, but he doesn't like tea. Does he like milk?",
+              "zh": "他喜欢咖啡，但不喜欢茶。他喜欢牛奶吗？",
+              "highlight": "Does he like",
+              "hint": "加疑问"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他每天做什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "第三人称动词+s/es/ies 练习",
+          "chunk": "He gets up / She goes / He watches",
+          "chunkMeaning": "他起床/她去/他看",
+          "items": [
+            {
+              "zh": "他每天早上7点起床。",
+              "answer": "He gets up at 7 every morning."
+            },
+            {
+              "zh": "她6点起床。",
+              "answer": "She gets up at 6."
+            },
+            {
+              "zh": "她坐公交上学。",
+              "answer": "She goes to school by bus."
+            },
+            {
+              "zh": "他骑车上班。",
+              "answer": "He goes to work by bike."
+            },
+            {
+              "zh": "他在家吃早餐。",
+              "answer": "He eats breakfast at home."
+            },
+            {
+              "zh": "她早上喝咖啡。",
+              "answer": "She drinks coffee in the morning."
+            },
+            {
+              "zh": "他下午6点到家。",
+              "answer": "He comes home at 6 pm."
+            },
+            {
+              "zh": "她晚饭后看电视。",
+              "answer": "She watches TV after dinner."
+            },
+            {
+              "zh": "他每天学英语。",
+              "answer": "He studies English every day."
+            },
+            {
+              "zh": "他每晚10点睡觉。",
+              "answer": "He sleeps at 10 every night."
+            },
+            {
+              "zh": "他早上喝茶。",
+              "answer": "He drinks tea in the morning."
+            },
+            {
+              "zh": "她晚上看书。",
+              "answer": "She reads books at night."
+            },
+            {
+              "zh": "他周末踢足球。",
+              "answer": "He plays football on weekends."
+            },
+            {
+              "zh": "他走路去上班。",
+              "answer": "He walks to work."
+            },
+            {
+              "zh": "她每天早上跑步。",
+              "answer": "She runs every morning."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "He/She [verb+s] at [time] 句型操练",
+          "pattern": "[subject] [verb] at [time].",
+          "patternMeaning": "某人几点做什么",
+          "slots": [
+            "subject",
+            "verb",
+            "time"
+          ],
+          "items": [
+            {
+              "zh": "他7点起床。",
+              "answer": "He gets up at 7.",
+              "slotValues": {
+                "subject": "He",
+                "verb": "gets up",
+                "time": "7"
+              }
+            },
+            {
+              "zh": "她8点去上班。",
+              "answer": "She goes to work at 8.",
+              "slotValues": {
+                "subject": "She",
+                "verb": "goes to work",
+                "time": "8"
+              }
+            },
+            {
+              "zh": "他12点吃午饭。",
+              "answer": "He eats lunch at 12.",
+              "slotValues": {
+                "subject": "He",
+                "verb": "eats lunch",
+                "time": "12"
+              }
+            },
+            {
+              "zh": "她6点到家。",
+              "answer": "She comes home at 6.",
+              "slotValues": {
+                "subject": "She",
+                "verb": "comes home",
+                "time": "6"
+              }
+            },
+            {
+              "zh": "他10点睡觉。",
+              "answer": "He sleeps at 10.",
+              "slotValues": {
+                "subject": "He",
+                "verb": "sleeps",
+                "time": "10"
+              }
+            },
+            {
+              "zh": "她晚上看书。",
+              "answer": "She reads books at night.",
+              "slotValues": {
+                "subject": "She",
+                "verb": "reads books",
+                "time": "at night"
+              }
+            },
+            {
+              "zh": "他早上喝茶。",
+              "answer": "He drinks tea in the morning.",
+              "slotValues": {
+                "subject": "He",
+                "verb": "drinks tea",
+                "time": "in the morning"
+              }
+            },
+            {
+              "zh": "他周末踢足球。",
+              "answer": "He plays football on weekends.",
+              "slotValues": {
+                "subject": "He",
+                "verb": "plays football",
+                "time": "on weekends"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_gets",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "gets up 一词多句",
+          "vocabWord": "gets up",
+          "vocabMeaning": "起床(三单)",
+          "patterns": [
+            {
+              "chunk": "He gets up at ___.",
+              "items": [
+                {
+                  "zh": "他6点起床。",
+                  "answer": "He gets up at 6."
+                },
+                {
+                  "zh": "他7点起床。",
+                  "answer": "He gets up at 7."
+                },
+                {
+                  "zh": "他周末8点起床。",
+                  "answer": "He gets up at 8 on weekends."
+                },
+                {
+                  "zh": "他5点半起床。",
+                  "answer": "He gets up at 5:30."
+                }
+              ]
+            },
+            {
+              "chunk": "He gets up and ___.",
+              "items": [
+                {
+                  "zh": "他起床然后吃早餐。",
+                  "answer": "He gets up and eats breakfast."
+                },
+                {
+                  "zh": "他起床然后洗澡。",
+                  "answer": "He gets up and takes a shower."
+                },
+                {
+                  "zh": "他起床然后去上班。",
+                  "answer": "He gets up and goes to work."
+                }
+              ]
+            },
+            {
+              "chunk": "He ___ gets up early.",
+              "items": [
+                {
+                  "zh": "他总是早起。",
+                  "answer": "He always gets up early."
+                },
+                {
+                  "zh": "他通常6点起床。",
+                  "answer": "He usually gets up at 6."
+                },
+                {
+                  "zh": "他从不早起。",
+                  "answer": "He never gets up early."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述他的一天逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "起床",
+              "en": "He gets up at 7.",
+              "zh": "他7点起床。"
+            },
+            {
+              "level": 2,
+              "label": "吃早餐",
+              "en": "He gets up at 7 and eats breakfast.",
+              "zh": "他7点起床然后吃早餐。",
+              "highlight": "eats breakfast",
+              "hint": "加上吃早餐"
+            },
+            {
+              "level": 3,
+              "label": "去上班",
+              "en": "He gets up at 7, eats breakfast, and goes to work.",
+              "zh": "他7点起床，吃早餐，然后去上班。",
+              "highlight": "goes to work",
+              "hint": "加上去上班"
+            },
+            {
+              "level": 4,
+              "label": "回家",
+              "en": "He gets up at 7, eats breakfast, goes to work, and comes home at 6.",
+              "zh": "他7点起床，吃早餐，上班，然后6点到家。",
+              "highlight": "comes home",
+              "hint": "加上回家"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他/她做什么工作": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "第三人称工作动词练习",
+          "chunk": "He works / She teaches / He drives",
+          "chunkMeaning": "他工作/她教/他开",
+          "items": [
+            {
+              "zh": "他在医院工作。",
+              "answer": "He works in a hospital."
+            },
+            {
+              "zh": "她在办公室工作。",
+              "answer": "She works in an office."
+            },
+            {
+              "zh": "他在银行工作。",
+              "answer": "He works in a bank."
+            },
+            {
+              "zh": "她在一所学校教英语。",
+              "answer": "She teaches English at a school."
+            },
+            {
+              "zh": "他教音乐。",
+              "answer": "He teaches music."
+            },
+            {
+              "zh": "他开出租车。",
+              "answer": "He drives a taxi."
+            },
+            {
+              "zh": "她开公交车。",
+              "answer": "She drives a bus."
+            },
+            {
+              "zh": "她是一名医生。",
+              "answer": "She is a doctor."
+            },
+            {
+              "zh": "他是一名经理。",
+              "answer": "He is a manager."
+            },
+            {
+              "zh": "他是一名工程师。",
+              "answer": "He is an engineer."
+            },
+            {
+              "zh": "他在办公室工作。",
+              "answer": "He works in an office."
+            },
+            {
+              "zh": "他在工厂工作。",
+              "answer": "He works in a factory."
+            },
+            {
+              "zh": "她在一家大公司工作。",
+              "answer": "She works for a big company."
+            },
+            {
+              "zh": "他是服务员。",
+              "answer": "He is a waiter."
+            },
+            {
+              "zh": "她是一名厨师。",
+              "answer": "She is a cook."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "He/She works in a [place] 句型操练",
+          "pattern": "[subject] works in a [place].",
+          "patternMeaning": "某人在某地工作",
+          "slots": [
+            "subject",
+            "place"
+          ],
+          "items": [
+            {
+              "zh": "他在医院工作。",
+              "answer": "He works in a hospital.",
+              "slotValues": {
+                "subject": "He",
+                "place": "hospital"
+              }
+            },
+            {
+              "zh": "她在学校工作。",
+              "answer": "She works at a school.",
+              "slotValues": {
+                "subject": "She",
+                "place": "school"
+              }
+            },
+            {
+              "zh": "他在办公室工作。",
+              "answer": "He works in an office.",
+              "slotValues": {
+                "subject": "He",
+                "place": "office"
+              }
+            },
+            {
+              "zh": "她在工厂工作。",
+              "answer": "She works in a factory.",
+              "slotValues": {
+                "subject": "She",
+                "place": "factory"
+              }
+            },
+            {
+              "zh": "他在一家大公司工作。",
+              "answer": "He works for a big company.",
+              "slotValues": {
+                "subject": "He",
+                "place": "a big company"
+              }
+            },
+            {
+              "zh": "他在工厂工作。",
+              "answer": "He works in a factory.",
+              "slotValues": {
+                "subject": "He",
+                "place": "factory"
+              }
+            },
+            {
+              "zh": "她在银行工作。",
+              "answer": "She works in a bank.",
+              "slotValues": {
+                "subject": "She",
+                "place": "bank"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_works",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "works 一词多句",
+          "vocabWord": "works",
+          "vocabMeaning": "工作(三单)",
+          "patterns": [
+            {
+              "chunk": "He works in a ___.",
+              "items": [
+                {
+                  "zh": "他在医院工作。",
+                  "answer": "He works in a hospital."
+                },
+                {
+                  "zh": "她在学校工作。",
+                  "answer": "She works at a school."
+                },
+                {
+                  "zh": "他在银行工作。",
+                  "answer": "He works in a bank."
+                },
+                {
+                  "zh": "他在商店工作。",
+                  "answer": "He works in a shop."
+                },
+                {
+                  "zh": "她在餐厅工作。",
+                  "answer": "She works in a restaurant."
+                }
+              ]
+            },
+            {
+              "chunk": "He works as a ___.",
+              "items": [
+                {
+                  "zh": "他是一名医生。",
+                  "answer": "He works as a doctor."
+                },
+                {
+                  "zh": "她是一名老师。",
+                  "answer": "She works as a teacher."
+                },
+                {
+                  "zh": "他是一名司机。",
+                  "answer": "He works as a driver."
+                }
+              ]
+            },
+            {
+              "chunk": "Does he work on ___?",
+              "items": [
+                {
+                  "zh": "他周末工作吗？",
+                  "answer": "Does he work on weekends?"
+                },
+                {
+                  "zh": "她晚上工作吗？",
+                  "answer": "Does she work at night?"
+                },
+                {
+                  "zh": "他每天工作吗？",
+                  "answer": "Does he work every day?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述工作逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说职业",
+              "en": "She is a doctor.",
+              "zh": "她是一名医生。"
+            },
+            {
+              "level": 2,
+              "label": "加地点",
+              "en": "She is a doctor. She works in a hospital.",
+              "zh": "她是一名医生。她在医院工作。",
+              "highlight": "works in a hospital",
+              "hint": "加上工作地点"
+            },
+            {
+              "level": 3,
+              "label": "加频率",
+              "en": "She is a doctor. She works in a hospital. She works every day.",
+              "zh": "她是一名医生。她在医院工作。她每天工作。",
+              "highlight": "every day",
+              "hint": "加上频率"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我和你 vs 他/她": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "I vs He/She 对比练习",
+          "chunk": "I ... but he/she ...",
+          "chunkMeaning": "我...但他/她...",
+          "items": [
+            {
+              "zh": "我喜欢咖啡，但她喜欢茶。",
+              "answer": "I like coffee, but she likes tea."
+            },
+            {
+              "zh": "我有车，但他没有车。",
+              "answer": "I have a car, but he doesn't have a car."
+            },
+            {
+              "zh": "我吃早餐，他也吃。",
+              "answer": "I eat breakfast, and he eats breakfast too."
+            },
+            {
+              "zh": "我不喜欢吃肉，但他喜欢吃肉。",
+              "answer": "I don't like meat, but he likes meat."
+            },
+            {
+              "zh": "我7点起床，但她6点起床。",
+              "answer": "I get up at 7, but she gets up at 6."
+            },
+            {
+              "zh": "我有一只猫，她有一只狗。",
+              "answer": "I have a cat, and she has a dog."
+            },
+            {
+              "zh": "我去上班，她上学。",
+              "answer": "I go to work, but she goes to school."
+            },
+            {
+              "zh": "我走路，他开车。",
+              "answer": "I walk, but he drives."
+            },
+            {
+              "zh": "我喜欢运动，她喜欢音乐。",
+              "answer": "I like sports, but she likes music."
+            },
+            {
+              "zh": "我不吃鱼，他吃鱼。",
+              "answer": "I don't eat fish, but he eats fish."
+            },
+            {
+              "zh": "我喜欢夏天，但他喜欢冬天。",
+              "answer": "I like summer, but he likes winter."
+            },
+            {
+              "zh": "我坐公交，但她走路。",
+              "answer": "I take the bus, but she walks."
+            },
+            {
+              "zh": "我4点回家，但他6点回家。",
+              "answer": "I come home at 4, but he comes home at 6."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "I [verb] but he/she [verb+s] 对比操练",
+          "pattern": "I [verb1] but [subject] [verb2].",
+          "patternMeaning": "我...但他/她...",
+          "slots": [
+            "verb1",
+            "subject",
+            "verb2"
+          ],
+          "items": [
+            {
+              "zh": "我喜欢咖啡，但她喜欢茶。",
+              "answer": "I like coffee, but she likes tea.",
+              "slotValues": {
+                "verb1": "like coffee",
+                "subject": "she",
+                "verb2": "likes tea"
+              }
+            },
+            {
+              "zh": "我7点起床，但他8点起床。",
+              "answer": "I get up at 7, but he gets up at 8.",
+              "slotValues": {
+                "verb1": "get up at 7",
+                "subject": "he",
+                "verb2": "gets up at 8"
+              }
+            },
+            {
+              "zh": "我有车，但他没有。",
+              "answer": "I have a car, but he doesn't.",
+              "slotValues": {
+                "verb1": "have a car",
+                "subject": "he",
+                "verb2": "doesn't"
+              }
+            },
+            {
+              "zh": "我走路去上班，但她开车。",
+              "answer": "I walk to work, but she drives.",
+              "slotValues": {
+                "verb1": "walk to work",
+                "subject": "she",
+                "verb2": "drives"
+              }
+            },
+            {
+              "zh": "我不吃肉，但他吃。",
+              "answer": "I don't eat meat, but he eats it.",
+              "slotValues": {
+                "verb1": "don't eat meat",
+                "subject": "he",
+                "verb2": "eats it"
+              }
+            },
+            {
+              "zh": "我喜欢猫，但他喜欢狗。",
+              "answer": "I like cats, but he likes dogs.",
+              "slotValues": {
+                "verb1": "like cats",
+                "subject": "he",
+                "verb2": "likes dogs"
+              }
+            },
+            {
+              "zh": "我坐公交，但她开车。",
+              "answer": "I take the bus, but she drives.",
+              "slotValues": {
+                "verb1": "take the bus",
+                "subject": "she",
+                "verb2": "drives"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_but",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "but 一词多句",
+          "vocabWord": "but",
+          "vocabMeaning": "但是",
+          "patterns": [
+            {
+              "chunk": "I like ___, but he likes ___.",
+              "items": [
+                {
+                  "zh": "我喜欢咖啡，但他喜欢茶。",
+                  "answer": "I like coffee, but he likes tea."
+                },
+                {
+                  "zh": "我喜欢猫，但她喜欢狗。",
+                  "answer": "I like cats, but she likes dogs."
+                },
+                {
+                  "zh": "我喜欢夏天，但他喜欢冬天。",
+                  "answer": "I like summer, but he likes winter."
+                },
+                {
+                  "zh": "我喜欢茶，但他喜欢咖啡。",
+                  "answer": "I like tea, but he likes coffee."
+                },
+                {
+                  "zh": "我喜欢狗，但她喜欢猫。",
+                  "answer": "I like dogs, but she likes cats."
+                }
+              ]
+            },
+            {
+              "chunk": "I ___, but he doesn't ___.",
+              "items": [
+                {
+                  "zh": "我吃肉，但他不吃。",
+                  "answer": "I eat meat, but he doesn't."
+                },
+                {
+                  "zh": "我有车，但她没有。",
+                  "answer": "I have a car, but she doesn't."
+                },
+                {
+                  "zh": "我抽烟，但他不抽。",
+                  "answer": "I smoke, but he doesn't."
+                }
+              ]
+            },
+            {
+              "chunk": "I don't ___, but he ___.",
+              "items": [
+                {
+                  "zh": "我不喜欢咖啡，但他喜欢。",
+                  "answer": "I don't like coffee, but he likes it."
+                },
+                {
+                  "zh": "我不开车，但她开车。",
+                  "answer": "I don't drive, but she drives."
+                },
+                {
+                  "zh": "我不早起，但他早起。",
+                  "answer": "I don't get up early, but he does."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "对比你我他逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说我喜欢",
+              "en": "I like coffee.",
+              "zh": "我喜欢咖啡。"
+            },
+            {
+              "level": 2,
+              "label": "加对比",
+              "en": "I like coffee, but she likes tea.",
+              "zh": "我喜欢咖啡，但她喜欢茶。",
+              "highlight": "but she likes tea",
+              "hint": "加对比"
+            },
+            {
+              "level": 3,
+              "label": "加否定",
+              "en": "I like coffee, but she likes tea. I don't like milk.",
+              "zh": "我喜欢咖啡，但她喜欢茶。我不喜欢牛奶。",
+              "highlight": "don't like milk",
+              "hint": "加自己的否定"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他们的生活": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 They/Their 描述群体",
+          "chunk": "They live / Their / Everyone",
+          "chunkMeaning": "他们住/他们的/每个人",
+          "items": [
+            {
+              "zh": "他们住在北京。",
+              "answer": "They live in Beijing."
+            },
+            {
+              "zh": "他们有一辆车。",
+              "answer": "They have a car."
+            },
+            {
+              "zh": "他们努力工作。",
+              "answer": "They work hard."
+            },
+            {
+              "zh": "他们的房子很大。",
+              "answer": "Their house is big."
+            },
+            {
+              "zh": "他们的家庭很大。",
+              "answer": "Their family is very big."
+            },
+            {
+              "zh": "Tom的妈妈是护士。",
+              "answer": "Tom's mother is a nurse."
+            },
+            {
+              "zh": "Anna的爸爸是医生。",
+              "answer": "Anna's father is a doctor."
+            },
+            {
+              "zh": "大家都喜欢他。",
+              "answer": "Everyone likes him."
+            },
+            {
+              "zh": "他每天锻炼。",
+              "answer": "He exercises every day."
+            },
+            {
+              "zh": "她从不迟到。",
+              "answer": "She is never late."
+            },
+            {
+              "zh": "他有时看书。",
+              "answer": "He sometimes reads books."
+            },
+            {
+              "zh": "他们有一只狗。",
+              "answer": "They have a dog."
+            },
+            {
+              "zh": "他们住在一起。",
+              "answer": "They live together."
+            },
+            {
+              "zh": "他每周末看望父母。",
+              "answer": "He visits his parents every weekend."
+            },
+            {
+              "zh": "她每周给奶奶打电话。",
+              "answer": "She calls her grandmother every week."
+            },
+            {
+              "zh": "他们有一个大家庭。",
+              "answer": "They have a big family."
+            },
+            {
+              "zh": "她经常帮助别人。",
+              "answer": "She often helps others."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "频率副词操练",
+          "pattern": "[subject] [adverb] [verb].",
+          "patternMeaning": "某人(频率)做某事",
+          "slots": [
+            "subject",
+            "adverb",
+            "verb"
+          ],
+          "items": [
+            {
+              "zh": "他总是很开心。",
+              "answer": "He is always happy.",
+              "slotValues": {
+                "subject": "He",
+                "adverb": "always",
+                "verb": "is happy"
+              }
+            },
+            {
+              "zh": "她通常7点起床。",
+              "answer": "She usually gets up at 7.",
+              "slotValues": {
+                "subject": "She",
+                "adverb": "usually",
+                "verb": "gets up at 7"
+              }
+            },
+            {
+              "zh": "他经常看书。",
+              "answer": "He often reads books.",
+              "slotValues": {
+                "subject": "He",
+                "adverb": "often",
+                "verb": "reads books"
+              }
+            },
+            {
+              "zh": "她从不吃肉。",
+              "answer": "She never eats meat.",
+              "slotValues": {
+                "subject": "She",
+                "adverb": "never",
+                "verb": "eats meat"
+              }
+            },
+            {
+              "zh": "他有时跑步。",
+              "answer": "He sometimes runs.",
+              "slotValues": {
+                "subject": "He",
+                "adverb": "sometimes",
+                "verb": "runs"
+              }
+            },
+            {
+              "zh": "他们有时旅行。",
+              "answer": "They sometimes travel.",
+              "slotValues": {
+                "subject": "They",
+                "adverb": "sometimes",
+                "verb": "travel"
+              }
+            },
+            {
+              "zh": "他通常走路去上班。",
+              "answer": "He usually walks to work.",
+              "slotValues": {
+                "subject": "He",
+                "adverb": "usually",
+                "verb": "walks to work"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_always",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "always/usually/often/never 一词多句",
+          "vocabWord": "频率副词",
+          "vocabMeaning": "always/usually/often/sometimes/never",
+          "patterns": [
+            {
+              "chunk": "He always ___.",
+              "items": [
+                {
+                  "zh": "他总是早起。",
+                  "answer": "He always gets up early."
+                },
+                {
+                  "zh": "他总是开心。",
+                  "answer": "He is always happy."
+                },
+                {
+                  "zh": "他总是帮助别人。",
+                  "answer": "He always helps others."
+                },
+                {
+                  "zh": "他总是7点起床。",
+                  "answer": "He always gets up at 7."
+                }
+              ]
+            },
+            {
+              "chunk": "She usually ___.",
+              "items": [
+                {
+                  "zh": "她通常7点起床。",
+                  "answer": "She usually gets up at 7."
+                },
+                {
+                  "zh": "她通常走路去上班。",
+                  "answer": "She usually walks to work."
+                },
+                {
+                  "zh": "她通常晚上看书。",
+                  "answer": "She usually reads at night."
+                }
+              ]
+            },
+            {
+              "chunk": "He never ___.",
+              "items": [
+                {
+                  "zh": "他从不迟到。",
+                  "answer": "He is never late."
+                },
+                {
+                  "zh": "她从不吃肉。",
+                  "answer": "She never eats meat."
+                },
+                {
+                  "zh": "他从不抽烟。",
+                  "answer": "He never smokes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述他们的生活逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说住在哪",
+              "en": "They live in Beijing.",
+              "zh": "他们住在北京。"
+            },
+            {
+              "level": 2,
+              "label": "加工作",
+              "en": "They live in Beijing. They work in an office.",
+              "zh": "他们住在北京。他们在办公室工作。",
+              "highlight": "work in an office",
+              "hint": "加工作地点"
+            },
+            {
+              "level": 3,
+              "label": "加频率",
+              "en": "They live in Beijing. They work in an office. They always work hard.",
+              "zh": "他们住在北京。他们在办公室工作。他们总是努力工作。",
+              "highlight": "always work hard",
+              "hint": "加频率"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

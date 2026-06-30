@@ -1,7 +1,111 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础⑤·此刻正在做,我正在...,Practice present continuous for actions happening right now.,练习现在进行时表达此刻正在做的动作。,35,L1,掌握am/is/are + doing结构，与一般现在时对比。,现在进行时 am doing is doing 此刻,practice_foundation-opinion-basics_此刻正在做_我正在
-基础⑤·此刻正在做,他/她正在...,Practice third person present continuous.,练习第三人称现在进行时：He's / She's doing。,35,L1,掌握第三人称现在进行时否定和疑问形式。,正在进行 he is she is 进行时,practice_foundation-opinion-basics_此刻正在做_他她正在
-基础⑤·临时vs习惯,平时vs今天,Practice contrast between simple present and present continuous.,练习一般现在时vs现在进行时的对比表达。,40,L1~L2,掌握习惯和临时情况的时态区分。,时态对比 现在时 进行时 习惯 临时,practice_foundation-opinion-basics_临时vs习惯_平时vs今天
-基础⑤·临时vs习惯,此刻状态,Practice describing current situations with present continuous.,练习用现在进行时描述当前场景和状态。,35,L1,掌握进行时描述天气/人群/当下情况。,描述 进行时 此刻 场景,practice_foundation-opinion-basics_临时vs习惯_此刻状态
-基础⑤·频率副词,频率表达,Practice frequency adverbs with simple present.,练习频率副词与一般现在时搭配。,35,L1,掌握always/usually/often/sometimes/rarely/never的用法。,频率副词 always usually sometimes never,practice_foundation-opinion-basics_频率副词_频率表达
-基础⑤·频率副词,综合运用,Practice switching between present simple and continuous.,练习在叙述中自然切换现在时和进行时。,40,L1~L2,掌握两种时态在真实交流中的切换。,时态切换 综合 叙事 描述,practice_foundation-opinion-basics_频率副词_综合运用
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础⑤·此刻正在做,我正在...,Practice present continuous for actions happening right now.,练习现在进行时表达此刻正在做的动作。,35,L1,掌握am/is/are + doing结构，与一般现在时对比。,现在进行时 am doing is doing 此刻,"## 现在进行时结构
+- **am/is/are + 动词-ing**：I'm eating. / She's reading. / They're sleeping.
+- 表示**此刻正在发生**的动作，不是习惯。
+
+## 时间标志词
+- right now (此刻) / at the moment (这会儿) / currently (目前)
+- Look! / Listen! 开头常暗示进行时
+
+## 与一般现在时对比
+- 一般现在时：I eat breakfast at 7 every day. (习惯)
+- 现在进行时：I'm eating breakfast right now. (此刻)
+
+## 常见错误
+- ❌ I eating now. → ✅ I'm eating now. (必须有be动词)
+- ❌ I'm eat now. → ✅ I'm eating now. (动词要加-ing)",practice_foundation-opinion-basics_此刻正在做_我正在
+基础⑤·此刻正在做,他/她正在...,Practice third person present continuous.,练习第三人称现在进行时：He's / She's doing。,35,L1,掌握第三人称现在进行时否定和疑问形式。,正在进行 he is she is 进行时,"## 第三人称进行时
+- **He is / She is / It is + 动词-ing**
+- 否定：He isn't working. / She's not sleeping.
+- 疑问：Is he working? — Yes, he is. / No, he isn't.
+
+## 常用进行时动词
+- wearing (穿着)、carrying (拿着)、looking for (在找)
+- sitting (坐着)、standing (站着)、waiting (在等)
+
+## 与第一人称的区别
+| 人称 | be动词 | 例句 |
+|------|--------|------|
+| I | am | I'm reading. |
+| He/She | is | He's reading. |
+| They | are | They're reading. |
+
+## 常见错误
+- ❌ He running. → ✅ He's running.
+- ❌ She is sit. → ✅ She is sitting.",practice_foundation-opinion-basics_此刻正在做_他她正在
+基础⑤·临时vs习惯,平时vs今天,Practice contrast between simple present and present continuous.,练习一般现在时vs现在进行时的对比表达。,40,L1~L2,掌握习惯和临时情况的时态区分。,时态对比 现在时 进行时 习惯 临时,"## 习惯 vs 此刻的核心区别
+- **一般现在时** = 习惯、常规、总是这样
+- **现在进行时** = 此刻临时发生、今天例外
+
+## 对比标志词
+- 习惯：usually / normally / generally / every day / always
+- 临时：today / right now / at the moment / this week
+
+## 典型对比句型
+- I usually walk to work, but today I'm driving.
+- Normally he drinks tea, but right now he's drinking coffee.
+
+## 常见表达
+- still (仍然)：I'm still working. (还在做)
+- anymore (再也不)：I don't live there anymore.
+- for now (暂时)：I'm staying here for now.
+- temporary (临时的)：It's just temporary.",practice_foundation-opinion-basics_临时vs习惯_平时vs今天
+基础⑤·临时vs习惯,此刻状态,Practice describing current situations with present continuous.,练习用现在进行时描述当前场景和状态。,35,L1,掌握进行时描述天气/人群/当下情况。,描述 进行时 此刻 场景,"## 用进行时+形容词描述当前状态
+- I'm busy at the moment. (此刻很忙)
+- Are you free tonight? (今晚有空吗？)
+- She's not available right now. (她现在没空)
+
+## 状态问答
+- Are you ready? — Yes, ready. / Not yet.
+- Is he available? — No, he's busy.
+- What are you doing tonight? — Nothing special.
+
+## 未来安排（进行时表将来）
+- I'm visiting my parents this weekend. (已计划好)
+- She's starting a new job next week.
+- 此时进行时不是""正在做""，而是""计划要做""
+
+## 常见修饰词
+- almost (几乎)：I'm almost done.
+- just (刚刚/正要)：I'm just leaving.
+- right now / at the moment / tonight / this weekend",practice_foundation-opinion-basics_临时vs习惯_此刻状态
+基础⑤·频率副词,频率表达,Practice frequency adverbs with simple present.,练习频率副词与一般现在时搭配。,35,L1,掌握always/usually/often/sometimes/rarely/never的用法。,频率副词 always usually sometimes never,"## 频率副词光谱 (高→低)
+| 频率 | 副词/短语 | 含义 |
+|------|-----------|------|
+| 100% | every single day, all the time | 每天/一直 |
+| 80% | most of the time | 大多数时候 |
+| 50% | from time to time, not often | 偶尔/不常 |
+| 30% | once a week, twice a month | 每周一次/每月两次 |
+| 10% | rarely | 很少 |
+| 1% | hardly ever | 几乎从不 |
+
+## 频率问答
+- How often do you exercise? — Once a week.
+- How often do you travel? — Rarely.
+
+## 位置规则
+- 频率副词放在**动词前**：I rarely eat fast food.
+- 频率短语放在**句尾**：I exercise once a week.
+
+## 常见错误
+- ❌ I exercise one time a week. → ✅ once a week
+- ❌ I rarely don't eat meat. → ✅ I rarely eat meat.",practice_foundation-opinion-basics_频率副词_频率表达
+基础⑤·频率副词,综合运用,Practice switching between present simple and continuous.,练习在叙述中自然切换现在时和进行时。,40,L1~L2,掌握两种时态在真实交流中的切换。,时态切换 综合 叙事 描述,"## 两种时态的自由切换
+在真实对话中，**习惯**用一般现在时，**此刻/临时**用现在进行时。
+
+## 典型叙事模式
+1. 描述背景习惯：I usually get up at 7.
+2. 切换到此刻例外：But today I'm getting up at 8.
+3. 观察与描述：I notice it's raining outside.
+
+## 描述场景的高频词
+- describe (描述)：Can you describe what you see?
+- notice (注意到)：I notice you're wearing a new shirt.
+- happen (发生)：What is happening here?
+- switch (切换)：Let's switch to another topic.
+- detail (细节)：Tell me more in detail.
+
+## 实用技巧
+- 先想""这是习惯还是此刻？""再选时态
+- 用 still / anymore / right now 等词提示时态切换
+- Look! / Listen! 后必用进行时",practice_foundation-opinion-basics_频率副词_综合运用

@@ -1,13 +1,121 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-"基础·问路与交通",问路指路,station,车站,noun,/ˈsteɪʃən/,/ˈsteɪʃən/,L1,火车站/地铁站。,"[{""en"":""Where is the train station?"",""zh"":""火车站在哪里？""}]",0
-"基础·问路与交通",问路指路,ticket,票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,车票、门票。,"[{""en"":""I need a ticket."",""zh"":""我需要一张票。""}]",1
-"基础·问路与交通",问路指路,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘。,"[{""en"":""You need to transfer at the next stop."",""zh"":""你需要在下一站换乘。""}]",2
-"基础·问路与交通",乘坐交通,station,车站,noun,/ˈsteɪʃən/,/ˈsteɪʃən/,L1,火车站/地铁站。,"[{""en"":""Where is the train station?"",""zh"":""火车站在哪里？""}]",3
-"基础·问路与交通",乘坐交通,ticket,票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,车票、门票。,"[{""en"":""I need a ticket."",""zh"":""我需要一张票。""}]",4
-"基础·问路与交通",乘坐交通,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘。,"[{""en"":""You need to transfer at the next stop."",""zh"":""你需要在下一站换乘。""}]",5
-"基础·餐厅与购物",餐厅点餐,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。,"[{""en"":""Can I see the menu?"",""zh"":""我能看看菜单吗？""}]",6
-"基础·餐厅与购物",餐厅点餐,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。,"[{""en"":""Is there any discount?"",""zh"":""有折扣吗？""}]",7
-"基础·餐厅与购物",餐厅点餐,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据、小票。,"[{""en"":""Please give me a receipt."",""zh"":""请给我一张收据。""}]",8
-"基础·餐厅与购物",购物逛街,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。,"[{""en"":""Can I see the menu?"",""zh"":""我能看看菜单吗？""}]",9
-"基础·餐厅与购物",购物逛街,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。,"[{""en"":""Is there any discount?"",""zh"":""有折扣吗？""}]",10
-"基础·餐厅与购物",购物逛街,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据、小票。,"[{""en"":""Please give me a receipt."",""zh"":""请给我一张收据。""}]",11
+基础⑦·计划与预测,我打算...,intend,打算,verb,/ɪnˈtend/,/ɪnˈtend/,L1,打算。intend to do。,"[{"en":"I intend to visit my family.","zh":"我打算去看家人。"}]",1
+基础⑦·计划与预测,我打算...,goal,目标,noun,/ɡoʊl/,/ɡəʊl/,L1,目标。my goal is。,"[{"en":"My goal is to speak English well.","zh":"我的目标是说好英语。"}]",2
+基础⑦·计划与预测,我打算...,someday,总有一天,adv,/ˈsʌmdeɪ/,/ˈsʌmdeɪ/,L1,总有一天。someday I will。,"[{"en":"Someday I will travel the world.","zh":"总有一天我会环游世界。"}]",4
+基础⑦·计划与预测,我打算...,eventually,最终,adv,/ɪˈventʃuəli/,/ɪˈventʃuəli/,L1,最终。eventually。,"[{"en":"I will eventually learn to drive.","zh":"我最终会学会开车。"}]",5
+基础⑦·计划与预测,我打算...,by then,到那时,phrase,/baɪ ðen/,/baɪ ðen/,L1,到那时。by then, I will。,"[{"en":"By then, I will be ready.","zh":"到那时我会准备好的。"}]",6
+基础⑦·计划与预测,我打算...,in the future,在将来,phrase,/ɪn ðə ˈfjuːtʃər/,/ɪn ðə ˈfjuːtʃə/,L1,将来。in the future。,"[{"en":"In the future, I want to be a doctor.","zh":"将来我想当医生。"}]",7
+基础⑦·计划与预测,我打算...,resolution,决心/目标,noun,/ˌrezəˈluːʃən/,/ˌrezəˈluːʃən/,L1,决心。New Year resolution。,"[{"en":"My resolution is to exercise more.","zh":"我的决心是多锻炼。"}]",8
+基础⑦·计划与预测,我打算...,promise,承诺,verb/noun,/ˈprɑːmɪs/,/ˈprɒmɪs/,L1,承诺。I promise I will。,"[{"en":"I promise I will help you.","zh":"我承诺会帮你。"}]",9
+基础⑦·计划与预测,我打算...,expect,预期,verb,/ɪkˈspekt/,/ɪkˈspekt/,L1,预期。I expect to。,"[{"en":"I expect to arrive by 5pm.","zh":"我预期下午5点到。"}]",11
+基础⑦·计划与预测,我打算...,dream,梦想,verb/noun,/driːm/,/driːm/,L1,梦想。dream of doing。,"[{"en":"I dream of traveling the world.","zh":"我梦想环游世界。"}]",12
+基础⑦·计划与预测,将会怎样,predict,预测,verb,/prɪˈdɪkt/,/prɪˈdɪkt/,L1,预测。predict the future。,"[{"en":"Can you predict the weather?","zh":"你能预测天气吗？"}]",0
+基础⑦·计划与预测,将会怎样,forecast,预报,noun/verb,/ˈfɔːrkæst/,/ˈfɔːkɑːst/,L1,预报。weather forecast。,"[{"en":"The forecast says it will rain.","zh":"预报说会下雨。"}]",1
+基础⑦·计划与预测,将会怎样,likely,可能的,adj,/ˈlaɪkli/,/ˈlaɪkli/,L1,可能的。It is likely to。,"[{"en":"It is likely to snow tonight.","zh":"今晚可能会下雪。"}]",3
+基础⑦·计划与预测,将会怎样,perhaps,也许,adv,/pərˈhæps/,/pəˈhæps/,L1,也许。Perhaps it will。,"[{"en":"Perhaps she will come later.","zh":"也许她晚点会来。"}]",4
+基础⑦·计划与预测,将会怎样,climate,气候,noun,/ˈklaɪmət/,/ˈklaɪmət/,L1,气候。climate change。,"[{"en":"The climate here is very warm.","zh":"这里的气候很暖和。"}]",6
+基础⑦·计划与预测,将会怎样,temperature,温度,noun,/ˈtemprətʃər/,/ˈtemprətʃə/,L1,温度。high temperature。,"[{"en":"The temperature will drop tonight.","zh":"今晚温度会下降。"}]",7
+基础⑦·计划与预测,将会怎样,storm,暴风雨,noun,/stɔːrm/,/stɔːm/,L1,暴风雨。a big storm。,"[{"en":"There will be a storm tomorrow.","zh":"明天会有暴风雨。"}]",8
+基础⑦·能力与请求,我能/会...,skill,技能,noun,/skɪl/,/skɪl/,L1,技能。a useful skill。,"[{"en":"Speaking English is a useful skill.","zh":"说英语是个有用的技能。"}]",0
+基础⑦·能力与请求,我能/会...,talent,天赋,noun,/ˈtælənt/,/ˈtælənt/,L1,天赋。a natural talent。,"[{"en":"She has a talent for music.","zh":"她有音乐天赋。"}]",1
+基础⑦·能力与请求,我能/会...,manage,设法做到,verb,/ˈmænɪdʒ/,/ˈmænɪdʒ/,L1,设法。manage to do。,"[{"en":"I can manage it myself.","zh":"我自己能行。"}]",2
+基础⑦·能力与请求,我能/会...,handle,处理,verb,/ˈhændəl/,/ˈhændəl/,L1,处理。handle it。,"[{"en":"Can you handle this problem?","zh":"你能处理这个问题吗？"}]",3
+基础⑦·能力与请求,我能/会...,solve,解决,verb,/sɑːlv/,/sɒlv/,L1,解决。solve a problem。,"[{"en":"I can solve this puzzle.","zh":"我能解开这个谜。"}]",4
+基础⑦·能力与请求,我能/会...,fix,修理,verb,/fɪks/,/fɪks/,L1,修理。fix it。,"[{"en":"Can you fix my phone?","zh":"你能修我的手机吗？"}]",5
+基础⑦·能力与请求,我能/会...,reach,够到/联系,verb,/riːtʃ/,/riːtʃ/,L1,够到。reach the top。,"[{"en":"I can't reach the top shelf.","zh":"我够不到最上面的架子。"}]",6
+基础⑦·能力与请求,我能/会...,lift,举起,verb,/lɪft/,/lɪft/,L1,举起。lift it up。,"[{"en":"Can you lift this box?","zh":"你能举起这个箱子吗？"}]",7
+基础⑦·能力与请求,我能/会...,ride,骑,verb,/raɪd/,/raɪd/,L1,骑。ride a bike。,"[{"en":"Can you ride a horse?","zh":"你会骑马吗？"}]",9
+基础⑦·能力与请求,我能/会...,drive,驾驶,verb,/draɪv/,/draɪv/,L1,驾驶。drive a car。,"[{"en":"Can you drive a car?","zh":"你会开车吗？"}]",11
+基础⑦·能力与请求,你可以/必须...,advise,建议,verb,/ədˈvaɪz/,/ədˈvaɪz/,L1,建议。advise someone to do。,"[{"en":"I advise you to rest.","zh":"我建议你休息。"}]",0
+基础⑦·能力与请求,你可以/必须...,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L1,推荐。I recommend。,"[{"en":"I recommend this restaurant.","zh":"我推荐这家餐厅。"}]",1
+基础⑦·能力与请求,你可以/必须...,suggest,建议,verb,/səɡˈdʒest/,/səˈdʒest/,L1,建议。I suggest。,"[{"en":"I suggest you try this.","zh":"我建议你试试这个。"}]",2
+基础⑦·能力与请求,你可以/必须...,rule,规则,noun,/ruːl/,/ruːl/,L1,规则。follow the rules。,"[{"en":"You must follow the rules.","zh":"你必须遵守规则。"}]",3
+基础⑦·能力与请求,你可以/必须...,law,法律,noun,/lɔː/,/lɔː/,L1,法律。by law。,"[{"en":"You must obey the law.","zh":"你必须遵守法律。"}]",4
+基础⑦·能力与请求,你可以/必须...,duty,责任,noun,/ˈduːti/,/ˈdjuːti/,L1,责任。It's my duty。,"[{"en":"It's my duty to help you.","zh":"帮你是我的责任。"}]",5
+基础⑦·能力与请求,你可以/必须...,require,需要/要求,verb,/rɪˈkwaɪər/,/rɪˈkwaɪə/,L1,要求。be required to。,"[{"en":"You are required to wear a mask.","zh":"要求你戴口罩。"}]",6
+基础⑦·能力与请求,你可以/必须...,force,强迫,verb,/fɔːrs/,/fɔːs/,L1,强迫。force someone to。,"[{"en":"Don't force me to do it.","zh":"别强迫我做。"}]",7
+基础⑦·能力与请求,你可以/必须...,option,选择,noun,/ˈɑːpʃən/,/ˈɒpʃən/,L1,选择。optional。,"[{"en":"You don't have to go — it's an option.","zh":"你不必去——这是可选的。"}]",8
+基础⑦·能力与请求,你可以/必须...,necessary,必要的,adj,/ˈnesəseri/,/ˈnesəsəri/,L1,必要的。It's necessary to。,"[{"en":"It's necessary to be on time.","zh":"准时是必要的。"}]",9
+基础⑦·能力与请求,你可以/必须...,vital,至关重要的,adj,/ˈvaɪtəl/,/ˈvaɪtəl/,L1,至关重要的。vital for。,"[{"en":"Water is vital for life.","zh":"水对生命至关重要。"}]",10
+基础⑦·能力与请求,你可以/必须...,urgent,紧急的,adj,/ˈɜːrdʒənt/,/ˈɜːdʒənt/,L1,紧急的。urgent matter。,"[{"en":"You must act — it's urgent.","zh":"你必须行动——很紧急。"}]",11
+基础⑦·建议与义务,你应该/必须,obey,遵守,verb,/oʊˈbeɪ/,/əˈbeɪ/,L1,遵守。obey the rules。,"[{"en":"You must obey the traffic rules.","zh":"你必须遵守交通规则。"}]",0
+基础⑦·建议与义务,你应该/必须,strict,严格的,adj,/strɪkt/,/strɪkt/,L1,严格的。strict rules。,"[{"en":"My teacher is very strict.","zh":"我的老师很严格。"}]",1
+基础⑦·建议与义务,你应该/必须,forbid,禁止,verb,/fərˈbɪd/,/fəˈbɪd/,L1,禁止。forbid to do。,"[{"en":"It is forbidden to park here.","zh":"这里禁止停车。"}]",3
+基础⑦·建议与义务,你应该/必须,prohibit,禁止(正式),verb,/proʊˈhɪbɪt/,/prəˈhɪbɪt/,L1,禁止。prohibited area。,"[{"en":"Smoking is prohibited.","zh":"禁止吸烟。"}]",4
+基础⑦·建议与义务,你应该/必须,ban,禁止,verb/noun,/bæn/,/bæn/,L1,禁止。a ban on。,"[{"en":"There is a ban on plastic bags.","zh":"禁止使用塑料袋。"}]",5
+基础⑦·建议与义务,你应该/必须,limit,限制,noun/verb,/ˈlɪmɪt/,/ˈlɪmɪt/,L1,限制。speed limit。,"[{"en":"You must not go over the speed limit.","zh":"你不能超速。"}]",6
+基础⑦·建议与义务,你应该/必须,exception,例外,noun,/ɪkˈsepʃən/,/ɪkˈsepʃən/,L1,例外。no exception。,"[{"en":"There is no exception to this rule.","zh":"这条规则没有例外。"}]",7
+基础⑦·建议与义务,你应该/必须,penalty,罚款/处罚,noun,/ˈpenəlti/,/ˈpenəlti/,L1,罚款。pay a penalty。,"[{"en":"You must pay a penalty if you break the rule.","zh":"违反规则你必须交罚款。"}]",8
+基础⑦·建议与义务,你应该/必须,remind,提醒,verb,/rɪˈmaɪnd/,/rɪˈmaɪnd/,L1,提醒。remind someone to。,"[{"en":"Let me remind you of the rule.","zh":"让我提醒你这个规则。"}]",9
+基础⑦·建议与义务,你应该/必须,warn,警告,verb,/wɔːrn/,/wɔːn/,L1,警告。warn about。,"[{"en":"I must warn you about the danger.","zh":"我必须警告你有危险。"}]",10
+基础⑦·建议与义务,你应该/必须,risk,风险,noun,/rɪsk/,/rɪsk/,L1,风险。take a risk。,"[{"en":"You shouldn't take unnecessary risks.","zh":"你不该冒不必要的风险。"}]",11
+基础⑦·建议与义务,可能/不必/禁止,possibly,可能地,adv,/ˈpɑːsəbli/,/ˈpɒsəbli/,L1,可能地。possibly true。,"[{"en":"Could you possibly help me?","zh":"你有可能帮我吗？"}]",0
+基础⑦·建议与义务,可能/不必/禁止,chance,机会/可能性,noun,/tʃæns/,/tʃɑːns/,L1,机会。a chance of。,"[{"en":"There is a chance it might rain.","zh":"有可能下雨。"}]",1
+基础⑦·建议与义务,可能/不必/禁止,guess,猜测,verb/noun,/ɡes/,/ɡes/,L1,猜测。I guess。,"[{"en":"I guess it might be too late.","zh":"我想可能太晚了。"}]",2
+基础⑦·建议与义务,可能/不必/禁止,suppose,猜想/假设,verb,/səˈpoʊz/,/səˈpəʊz/,L1,猜想。I suppose。,"[{"en":"I suppose you may be right.","zh":"我想你可能是对的。"}]",3
+基础⑦·建议与义务,可能/不必/禁止,optional,可选的,adj,/ˈɑːpʃənəl/,/ˈɒpʃənəl/,L1,可选的。not required。,"[{"en":"This task is optional — you don't have to do it.","zh":"这个任务可选——你不必做。"}]",4
+基础⑦·建议与义务,可能/不必/禁止,unnecessary,不必要的,adj,/ʌnˈnesəseri/,/ʌnˈnesəsəri/,L1,不必要的。It's unnecessary。,"[{"en":"It's unnecessary to worry so much.","zh":"这样担心是不必要的。"}]",5
+基础⑦·建议与义务,可能/不必/禁止,permit,许可,verb,/pərˈmɪt/,/pəˈmɪt/,L1,许可。permit someone to。,"[{"en":"You are not permitted to enter.","zh":"你不被允许进入。"}]",6
+基础⑦·建议与义务,可能/不必/禁止,refuse,拒绝,verb,/rɪˈfjuːz/,/rɪˈfjuːz/,L1,拒绝。refuse to do。,"[{"en":"He may refuse to come.","zh":"他可能会拒绝来。"}]",7
+基础⑦·建议与义务,可能/不必/禁止,dare,敢,verb,/der/,/deə/,L1,敢。dare to do。,"[{"en":"I may not dare to try it.","zh":"我可能不敢尝试。"}]",8
+基础·问路与交通,问路指路,direction,方向,noun,/dɪˈrekʃən/,/dɪˈrekʃən/,L1,方向。ask for directions。,"[{"en":"Can you give me directions?","zh":"你能给我指路吗？"}]",0
+基础·问路与交通,问路指路,straight,直的/一直,adj/adv,/streɪt/,/streɪt/,L1,一直。go straight。,"[{"en":"Go straight ahead for two blocks.","zh":"一直往前走两个街区。"}]",1
+基础·问路与交通,问路指路,corner,拐角,noun,/ˈkɔːrnər/,/ˈkɔːnə/,L1,拐角。at the corner。,"[{"en":"Turn right at the corner.","zh":"在拐角右转。"}]",2
+基础·问路与交通,问路指路,block,街区,noun,/blɑːk/,/blɒk/,L1,街区。two blocks away。,"[{"en":"It's about three blocks from here.","zh":"离这里大约三个街区。"}]",3
+基础·问路与交通,问路指路,intersection,十字路口,noun,/ˌɪntərˈsekʃən/,/ˌɪntəˈsekʃən/,L1,十字路口。at the intersection。,"[{"en":"Turn left at the intersection.","zh":"在十字路口左转。"}]",4
+基础·问路与交通,问路指路,traffic light,红绿灯,noun,/ˈtræfɪk laɪt/,/ˈtræfɪk laɪt/,L1,红绿灯。at the traffic lights。,"[{"en":"Stop at the traffic lights.","zh":"在红绿灯处停下。"}]",5
+基础·问路与交通,问路指路,cross,穿过,verb,/krɔːs/,/krɒs/,L1,穿过。cross the road。,"[{"en":"Cross the street carefully.","zh":"小心过马路。"}]",6
+基础·问路与交通,问路指路,opposite,对面,adj/prep,/ˈɑːpəzɪt/,/ˈɒpəzɪt/,L1,对面。opposite the bank。,"[{"en":"The hotel is opposite the station.","zh":"酒店在车站对面。"}]",7
+基础·问路与交通,问路指路,landmark,地标,noun,/ˈlændmɑːrk/,/ˈlændmɑːk/,L1,地标。a famous landmark。,"[{"en":"The museum is a famous landmark.","zh":"这个博物馆是个著名地标。"}]",8
+基础·问路与交通,问路指路,sign,标志/指示牌,noun,/saɪn/,/saɪn/,L1,指示牌。follow the signs。,"[{"en":"Follow the signs to the exit.","zh":"跟着指示牌去出口。"}]",9
+基础·问路与交通,问路指路,map,地图,noun,/mæp/,/mæp/,L1,地图。look at the map。,"[{"en":"Can you show me on the map?","zh":"你能在地图上指给我看吗？"}]",10
+基础·问路与交通,问路指路,north,北,noun,/nɔːrθ/,/nɔːθ/,L1,北。go north。,"[{"en":"The park is north of here.","zh":"公园在这里的北边。"}]",11
+基础·问路与交通,问路指路,south,南,noun,/saʊθ/,/saʊθ/,L1,南。go south。,"[{"en":"Go south on this street.","zh":"沿着这条街往南走。"}]",12
+基础·问路与交通,乘坐交通,platform,站台,noun,/ˈplætfɔːrm/,/ˈplætfɔːm/,L1,站台。platform 3。,"[{"en":"The train leaves from platform 5.","zh":"火车从5号站台出发。"}]",0
+基础·问路与交通,乘坐交通,fare,车费,noun,/fer/,/feə/,L1,车费。bus fare。,"[{"en":"How much is the bus fare?","zh":"公交车费多少钱？"}]",1
+基础·问路与交通,乘坐交通,delay,延误,verb/noun,/dɪˈleɪ/,/dɪˈleɪ/,L1,延误。be delayed。,"[{"en":"The flight was delayed by two hours.","zh":"航班延误了两小时。"}]",2
+基础·问路与交通,乘坐交通,depart,出发,verb,/dɪˈpɑːrt/,/dɪˈpɑːt/,L1,出发。depart from。,"[{"en":"The train departs at 3pm.","zh":"火车下午3点出发。"}]",3
+基础·问路与交通,乘坐交通,one-way,单程,adj,/wʌn weɪ/,/wʌn weɪ/,L1,单程。one-way ticket。,"[{"en":"I'd like a one-way ticket, please.","zh":"我要一张单程票。"}]",4
+基础·问路与交通,乘坐交通,round-trip,往返,adj,/raʊnd trɪp/,/raʊnd trɪp/,L1,往返。round-trip ticket。,"[{"en":"A round-trip ticket is cheaper.","zh":"往返票更便宜。"}]",5
+基础·问路与交通,乘坐交通,route,路线,noun,/ruːt/,/ruːt/,L1,路线。bus route。,"[{"en":"Which route goes to the airport?","zh":"哪条路线去机场？"}]",6
+基础·问路与交通,乘坐交通,passenger,乘客,noun,/ˈpæsəndʒər/,/ˈpæsɪndʒə/,L1,乘客。all passengers。,"[{"en":"All passengers must wear seat belts.","zh":"所有乘客必须系安全带。"}]",7
+基础·问路与交通,乘坐交通,schedule,时刻表,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,时刻表。bus schedule。,"[{"en":"Check the schedule before you go.","zh":"走之前查一下时刻表。"}]",8
+基础·问路与交通,乘坐交通,terminal,航站楼,noun,/ˈtɜːrmɪnəl/,/ˈtɜːmɪnəl/,L1,航站楼。airport terminal。,"[{"en":"Which terminal does the flight leave from?","zh":"航班从哪个航站楼出发？"}]",9
+基础·问路与交通,乘坐交通,gate,登机口,noun,/ɡeɪt/,/ɡeɪt/,L1,登机口。boarding gate。,"[{"en":"Please go to gate 12.","zh":"请去12号登机口。"}]",10
+基础·问路与交通,乘坐交通,luggage,行李,noun,/ˈlʌɡɪdʒ/,/ˈlʌɡɪdʒ/,L1,行李。carry luggage。,"[{"en":"Where can I pick up my luggage?","zh":"我在哪里取行李？"}]",11
+基础·餐厅与购物,餐厅点餐,appetizer,开胃菜,noun,/ˈæpɪtaɪzər/,/ˈæpɪtaɪzə/,L1,开胃菜。starter。,"[{"en":"Would you like an appetizer?","zh":"你想要开胃菜吗？"}]",0
+基础·餐厅与购物,餐厅点餐,main course,主菜,noun,/meɪn kɔːrs/,/meɪn kɔːs/,L1,主菜。the main course。,"[{"en":"What would you like for the main course?","zh":"主菜你想吃什么？"}]",1
+基础·餐厅与购物,餐厅点餐,dessert,甜点,noun,/dɪˈzɜːrt/,/dɪˈzɜːt/,L1,甜点。have dessert。,"[{"en":"Would you like some dessert?","zh":"你想要甜点吗？"}]",2
+基础·餐厅与购物,餐厅点餐,steak,牛排,noun,/steɪk/,/steɪk/,L1,牛排。I'll have the steak。,"[{"en":"I'd like my steak well-done.","zh":"我的牛排要全熟的。"}]",3
+基础·餐厅与购物,餐厅点餐,allergic,过敏的,adj,/əˈlɜːrdʒɪk/,/əˈlɜːdʒɪk/,L1,过敏。allergic to。,"[{"en":"I'm allergic to seafood.","zh":"我对海鲜过敏。"}]",4
+基础·餐厅与购物,餐厅点餐,vegetarian,素食者,noun/adj,/ˌvedʒəˈteriən/,/ˌvedʒɪˈteəriən/,L1,素食者。vegetarian meal。,"[{"en":"Do you have vegetarian options?","zh":"你们有素食选择吗？"}]",5
+基础·餐厅与购物,餐厅点餐,reservation,预订,noun,/ˌrezərˈveɪʃən/,/ˌrezəˈveɪʃən/,L1,预订。make a reservation。,"[{"en":"I'd like to make a reservation for 7pm.","zh":"我想预订晚上7点。"}]",6
+基础·餐厅与购物,餐厅点餐,tip,小费,noun/verb,/tɪp/,/tɪp/,L1,小费。leave a tip。,"[{"en":"Should I leave a tip?","zh":"我应该给小费吗？"}]",7
+基础·餐厅与购物,餐厅点餐,service charge,服务费,noun,/ˈsɜːrvɪs tʃɑːrdʒ/,/ˈsɜːvɪs tʃɑːdʒ/,L1,服务费。service charge included。,"[{"en":"Is the service charge included?","zh":"服务费包含在内吗？"}]",8
+基础·餐厅与购物,餐厅点餐,split the bill,AA制,phrase,/splɪt ðə bɪl/,/splɪt ðə bɪl/,L1,AA制。分开付账。,"[{"en":"Let's split the bill.","zh":"我们AA吧。"}]",9
+基础·餐厅与购物,餐厅点餐,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L1,推荐。what do you recommend?,"[{"en":"What do you recommend today?","zh":"今天你推荐什么？"}]",10
+基础·餐厅与购物,购物逛街,fitting room,试衣间,noun,/ˈfɪtɪŋ ruːm/,/ˈfɪtɪŋ ruːm/,L1,试衣间。try on clothes。,"[{"en":"Where is the fitting room?","zh":"试衣间在哪里？"}]",0
+基础·餐厅与购物,购物逛街,brand,品牌,noun,/brænd/,/brænd/,L1,品牌。a famous brand。,"[{"en":"What brand is this?","zh":"这是什么牌子？"}]",2
+基础·餐厅与购物,购物逛街,quality,质量,noun,/ˈkwɑːləti/,/ˈkwɒləti/,L1,质量。good quality。,"[{"en":"The quality is excellent.","zh":"质量非常好。"}]",3
+基础·餐厅与购物,购物逛街,bargain,便宜货/讨价还价,noun/verb,/ˈbɑːrɡən/,/ˈbɑːɡɪn/,L1,便宜货。a real bargain。,"[{"en":"I got this jacket at a bargain price.","zh":"这件夹克我买得很便宜。"}]",4
+基础·餐厅与购物,购物逛街,sale,促销/打折,noun,/seɪl/,/seɪl/,L1,促销。on sale。,"[{"en":"Is this item on sale?","zh":"这个在打折吗？"}]",5
+基础·餐厅与购物,购物逛街,refund,退款,noun/verb,/ˈriːfʌnd/,/ˈriːfʌnd/,L1,退款。ask for a refund。,"[{"en":"Can I get a refund?","zh":"我能退款吗？"}]",6
+基础·餐厅与购物,购物逛街,exchange,换货,verb/noun,/ɪksˈtʃeɪndʒ/,/ɪksˈtʃeɪndʒ/,L1,换货。exchange for。,"[{"en":"Can I exchange this for a different size?","zh":"我能换个尺码吗？"}]",7
+基础·餐厅与购物,购物逛街,cashier,收银台,noun,/kæˈʃɪr/,/kæˈʃɪə/,L1,收银员/台。pay at the cashier。,"[{"en":"Please pay at the cashier.","zh":"请在收银台付款。"}]",8
+基础·餐厅与购物,购物逛街,window shopping,逛街/橱窗购物,noun,/ˈwɪndoʊ ˌʃɑːpɪŋ/,/ˈwɪndəʊ ˌʃɒpɪŋ/,L1,逛街。go window shopping。,"[{"en":"I like to go window shopping.","zh":"我喜欢逛街。"}]",9
+基础·餐厅与购物,购物逛街,gift,礼物,noun,/ɡɪft/,/ɡɪft/,L1,礼物。buy a gift。,"[{"en":"I'm looking for a gift for my mom.","zh":"我在给我妈妈找礼物。"}]",10
+基础·餐厅与购物,购物逛街,package,包装/包裹,noun,/ˈpækɪdʒ/,/ˈpækɪdʒ/,L1,包装。gift package。,"[{"en":"Can you gift-wrap this for me?","zh":"能帮我包成礼物吗？"}]",11
+基础⑦·计划与预测,将会怎样,freeze,结冰,verb,/friːz/,/friːz/,L1,结冰。It will freeze。,"[{"en":"It will freeze tonight.","zh":"今晚会结冰。"}]",11
+基础⑦·计划与预测,将会怎样,shine,照耀,verb,/ʃaɪn/,/ʃaɪn/,L1,照耀。The sun will shine。,"[{"en":"The sun will shine tomorrow.","zh":"明天太阳会出来。"}]",12
+基础⑦·建议与义务,可能/不必/禁止,hesitate,犹豫,verb,/ˈhezɪteɪt/,/ˈhezɪteɪt/,L1,犹豫。don't hesitate。,"[{"en":"You may hesitate at first.","zh":"你一开始可能会犹豫。"}]",9
+基础⑦·建议与义务,可能/不必/禁止,volunteer,自愿,verb/noun,/ˌvɑːlənˈtɪr/,/ˌvɒlənˈtɪə/,L1,自愿。you don't have to volunteer。,"[{"en":"You don't have to volunteer.","zh":"你不必自愿报名。"}]",10
+基础⑦·建议与义务,可能/不必/禁止,compulsory,强制性的,adj,/kəmˈpʌlsəri/,/kəmˈpʌlsəri/,L1,强制性的。not compulsory。,"[{"en":"This is not compulsory.","zh":"这不是强制性的。"}]",11
+基础·问路与交通,问路指路,shortcut,捷径,noun,/ˈʃɔːrtkʌt/,/ˈʃɔːtkʌt/,L1,捷径。take a shortcut。,"[{"en":"Is there a shortcut to the station?","zh":"去车站有捷径吗？"}]",13
+基础·问路与交通,问路指路,pedestrian,行人,noun,/pəˈdestriən/,/pɪˈdestriən/,L1,行人。pedestrian crossing。,"[{"en":"Pedestrians should use the crossing.","zh":"行人应走人行横道。"}]",14
+基础·问路与交通,问路指路,dead end,死胡同,noun,/ded end/,/ded end/,L1,死胡同。a dead end。,"[{"en":"This road is a dead end.","zh":"这条路是死胡同。"}]",15
+基础·问路与交通,乘坐交通,express,快车/特快,adj,/ɪkˈspres/,/ɪkˈspres/,L1,快车。express train。,"[{"en":"Is this an express train?","zh":"这是快车吗？"}]",12
+基础·问路与交通,乘坐交通,seat belt,安全带,noun,/siːt belt/,/siːt belt/,L1,安全带。fasten seat belt。,"[{"en":"Please fasten your seat belt.","zh":"请系好安全带。"}]",13
+基础·问路与交通,乘坐交通,rush hour,高峰时段,noun,/rʌʃ aʊər/,/rʌʃ aʊə/,L1,高峰时段。during rush hour。,"[{"en":"Avoid traveling during rush hour.","zh":"避免在高峰时段出行。"}]",14
+基础·餐厅与购物,餐厅点餐,course,一道菜,noun,/kɔːrs/,/kɔːs/,L1,一道菜。three-course meal。,"[{""en"":""A three-course meal,一道菜,noun,/kɔːrs/,/kɔːs/,L1,一道菜。three-course meal。,"[{"en":"A three-course meal, please.","zh":"请上三道菜。"}]",12
+基础·餐厅与购物,餐厅点餐,medium rare,三分熟,adj,/ˈmiːdiəm rer/,/ˈmiːdiəm reə/,L1,三分熟(牛排)。medium rare steak。,"[{"en":"I'd like my steak medium rare.","zh":"我的牛排要三分熟。"}]",13
+基础·餐厅与购物,购物逛街,price tag,价格标签,noun,/praɪs tæɡ/,/praɪs tæɡ/,L1,价格标签。check the price tag。,"[{"en":"Let me check the price tag.","zh":"让我看看价格标签。"}]",13

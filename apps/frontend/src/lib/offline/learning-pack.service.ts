@@ -45,6 +45,11 @@ function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['
   assets.push({ url, role })
 }
 
+function isInstallAsset(asset?: AssetRef | null) {
+  const role = String(asset?.role ?? '').toLowerCase()
+  return !['voice', 'audio', 'bgm', 'sfx'].includes(role)
+}
+
 function collectUnitAssets(unitDetail: any): AssetRef[] {
   const assets: AssetRef[] = []
   // Scene background
@@ -59,11 +64,6 @@ function collectUnitAssets(unitDetail: any): AssetRef[] {
     for (const value of expressions) {
       if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
     }
-  }
-  // Vocabulary audio
-  for (const vocab of unitDetail?.vocabularies ?? []) {
-    pushUrlAsset(assets, vocab.audioUsUrl, 'voice')
-    pushUrlAsset(assets, vocab.audioUkUrl, 'voice')
   }
   return assets
 }
@@ -373,11 +373,6 @@ export const learningPackService = {
           if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
         }
       }
-      // Vocab audio from unitDetail (deduplicated)
-      for (const vocab of unitDetail.vocabularies ?? []) {
-        pushUrlAsset(assets, vocab.audioUsUrl, 'voice')
-        pushUrlAsset(assets, vocab.audioUkUrl, 'voice')
-      }
     }
 
     return {
@@ -587,6 +582,7 @@ export const learningPackService = {
 
       for (let i = 0; i < totalAssets; i++) {
         const asset = manifest.assets![i]
+        if (!isInstallAsset(asset)) continue
         if (!asset.path) continue
         const entry = entries.get(normalizeZipPath(asset.path))
         if (!entry) continue
@@ -862,7 +858,7 @@ export const learningPackService = {
     await localDb.put('downloaded_packs', record)
 
     try {
-      for (const asset of manifest.assets) {
+      for (const asset of manifest.assets.filter(isInstallAsset)) {
         await assetCacheService.download(asset)
       }
       const installed = {

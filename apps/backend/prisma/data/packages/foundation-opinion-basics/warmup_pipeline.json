@@ -1,0 +1,1990 @@
+{
+  "我正在...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 I'm [verb-ing] 描述正在做的事",
+          "chunk": "I'm ...ing right now",
+          "chunkMeaning": "我正在...",
+          "items": [
+            {
+              "zh": "我正在吃午饭。",
+              "answer": "I'm eating lunch right now."
+            },
+            {
+              "zh": "我正在喝咖啡。",
+              "answer": "I'm drinking coffee."
+            },
+            {
+              "zh": "我正在学英语。",
+              "answer": "I'm studying English."
+            },
+            {
+              "zh": "我正在读一本书。",
+              "answer": "I'm reading a book."
+            },
+            {
+              "zh": "我正在写信。",
+              "answer": "I'm writing a letter."
+            },
+            {
+              "zh": "我正在听音乐。",
+              "answer": "I'm listening to music."
+            },
+            {
+              "zh": "我正在看电视。",
+              "answer": "I'm watching TV."
+            },
+            {
+              "zh": "我正在做晚饭。",
+              "answer": "I'm cooking dinner."
+            },
+            {
+              "zh": "我正在打电话。",
+              "answer": "I'm talking on the phone."
+            },
+            {
+              "zh": "你能等一会吗？我正在忙。",
+              "answer": "Can you wait? I'm working right now."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "I'm [verb-ing] at the moment 句式操练",
+          "pattern": "I'm [verb-ing] [extra].",
+          "patternMeaning": "我正在...",
+          "slots": [
+            "verb-ing",
+            "extra"
+          ],
+          "items": [
+            {
+              "zh": "我正在吃午饭。",
+              "answer": "I'm eating lunch.",
+              "slotValues": {
+                "verb-ing": "eating",
+                "extra": "lunch"
+              }
+            },
+            {
+              "zh": "我正在家里看书。",
+              "answer": "I'm reading at home.",
+              "slotValues": {
+                "verb-ing": "reading",
+                "extra": "at home"
+              }
+            },
+            {
+              "zh": "我正在厨房做饭。",
+              "answer": "I'm cooking in the kitchen.",
+              "slotValues": {
+                "verb-ing": "cooking",
+                "extra": "in the kitchen"
+              }
+            },
+            {
+              "zh": "我正在公车上听音乐。",
+              "answer": "I'm listening to music on the bus.",
+              "slotValues": {
+                "verb-ing": "listening to music",
+                "extra": "on the bus"
+              }
+            },
+            {
+              "zh": "我正在沙发上坐着看电视。",
+              "answer": "I'm watching TV on the sofa.",
+              "slotValues": {
+                "verb-ing": "watching TV",
+                "extra": "on the sofa"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_right_now",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "right now 一词多句",
+          "vocabWord": "right now",
+          "vocabMeaning": "此刻/现在",
+          "patterns": [
+            {
+              "chunk": "___ right now.",
+              "items": [
+                {
+                  "zh": "我现在很忙。",
+                  "answer": "I'm busy right now."
+                },
+                {
+                  "zh": "我现在在吃饭。",
+                  "answer": "I'm eating right now."
+                },
+                {
+                  "zh": "我现在不能说话。",
+                  "answer": "I can't talk right now."
+                }
+              ]
+            },
+            {
+              "chunk": "What are you doing right now?",
+              "items": [
+                {
+                  "zh": "你现在在做什么？",
+                  "answer": "What are you doing right now?"
+                },
+                {
+                  "zh": "你现在有空吗？",
+                  "answer": "Are you free right now?"
+                },
+                {
+                  "zh": "我现在正在工作。",
+                  "answer": "I'm working right now."
+                }
+              ]
+            },
+            {
+              "chunk": "Right now, I'm ___.",
+              "items": [
+                {
+                  "zh": "此刻，我正在休息。",
+                  "answer": "Right now, I'm taking a break."
+                },
+                {
+                  "zh": "此刻，我正在想你。",
+                  "answer": "Right now, I'm thinking about you."
+                },
+                {
+                  "zh": "此刻，我正在学做新菜。",
+                  "answer": "Right now, I'm learning a new dish."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_at_the_moment",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "at the moment 一词多句",
+          "vocabWord": "at the moment",
+          "vocabMeaning": "此刻",
+          "patterns": [
+            {
+              "chunk": "I'm ___ at the moment.",
+              "items": [
+                {
+                  "zh": "我此刻在忙。",
+                  "answer": "I'm busy at the moment."
+                },
+                {
+                  "zh": "我此刻在工作。",
+                  "answer": "I'm working at the moment."
+                },
+                {
+                  "zh": "我此刻什么也没做。",
+                  "answer": "I'm doing nothing at the moment."
+                }
+              ]
+            },
+            {
+              "chunk": "At the moment, ___.",
+              "items": [
+                {
+                  "zh": "此刻，我正在学开车。",
+                  "answer": "At the moment, I'm learning to drive."
+                },
+                {
+                  "zh": "此刻，他正在睡觉。",
+                  "answer": "At the moment, he is sleeping."
+                },
+                {
+                  "zh": "此刻，外面正在下雨。",
+                  "answer": "At the moment, it's raining outside."
+                }
+              ]
+            },
+            {
+              "chunk": "Are you ___ at the moment?",
+              "items": [
+                {
+                  "zh": "你此刻有空吗？",
+                  "answer": "Are you free at the moment?"
+                },
+                {
+                  "zh": "你此刻在用电脑吗？",
+                  "answer": "Are you using the computer at the moment?"
+                },
+                {
+                  "zh": "你此刻在等人吗？",
+                  "answer": "Are you waiting for someone at the moment?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_currently",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "currently 一词多句",
+          "vocabWord": "currently",
+          "vocabMeaning": "目前/当前",
+          "patterns": [
+            {
+              "chunk": "I'm currently ___.",
+              "items": [
+                {
+                  "zh": "我目前正在学英语。",
+                  "answer": "I'm currently studying English."
+                },
+                {
+                  "zh": "我目前住在上海。",
+                  "answer": "I'm currently living in Shanghai."
+                },
+                {
+                  "zh": "我目前没有工作。",
+                  "answer": "I'm not currently working."
+                }
+              ]
+            },
+            {
+              "chunk": "Currently, ___.",
+              "items": [
+                {
+                  "zh": "目前，我在读一本好书。",
+                  "answer": "Currently, I'm reading a good book."
+                },
+                {
+                  "zh": "目前，他在找新工作。",
+                  "answer": "Currently, he is looking for a new job."
+                },
+                {
+                  "zh": "目前，一切都好。",
+                  "answer": "Currently, everything is fine."
+                }
+              ]
+            },
+            {
+              "chunk": "What are you currently ___?",
+              "items": [
+                {
+                  "zh": "你目前在做什么？",
+                  "answer": "What are you currently doing?"
+                },
+                {
+                  "zh": "你目前在学什么？",
+                  "answer": "What are you currently studying?"
+                },
+                {
+                  "zh": "你目前在读什么书？",
+                  "answer": "What are you currently reading?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从此刻动作到此刻状态逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说此刻动作",
+              "en": "I'm eating lunch.",
+              "zh": "我正在吃午饭。"
+            },
+            {
+              "level": 2,
+              "label": "加时间",
+              "en": "I'm eating lunch right now. I'm quite busy at the moment.",
+              "zh": "我正在吃午饭。我此刻很忙。",
+              "highlight": "I'm quite busy at the moment.",
+              "hint": "加上此刻状态"
+            },
+            {
+              "level": 3,
+              "label": "加反问",
+              "en": "I'm eating lunch right now. I'm quite busy at the moment. What are you doing?",
+              "zh": "我正在吃午饭。我此刻很忙。你在做什么？",
+              "highlight": "What are you doing?",
+              "hint": "加上反问对方"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他/她正在...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 He's / She's [verb-ing] 描述第三人称正在做的事",
+          "chunk": "He's / She's / They're ...ing",
+          "chunkMeaning": "他/她/他们正在...",
+          "items": [
+            {
+              "zh": "他正在公园跑步。",
+              "answer": "He's running in the park."
+            },
+            {
+              "zh": "她正在和狗玩。",
+              "answer": "She's playing with her dog."
+            },
+            {
+              "zh": "宝宝正在睡觉。",
+              "answer": "The baby is sleeping."
+            },
+            {
+              "zh": "他正在等公交。",
+              "answer": "He is waiting for the bus."
+            },
+            {
+              "zh": "她正在唱歌。",
+              "answer": "She's singing a song."
+            },
+            {
+              "zh": "他们正在跳舞。",
+              "answer": "They're dancing together."
+            },
+            {
+              "zh": "他正坐在椅子上。",
+              "answer": "He is sitting on the chair."
+            },
+            {
+              "zh": "她正站在门边。",
+              "answer": "She is standing near the door."
+            },
+            {
+              "zh": "他正穿着一件蓝衬衫。",
+              "answer": "He is wearing a blue shirt."
+            },
+            {
+              "zh": "她正提着一个大包。",
+              "answer": "She is carrying a big bag."
+            },
+            {
+              "zh": "他正在找钥匙。",
+              "answer": "He is looking for his keys."
+            },
+            {
+              "zh": "她正在给妈妈打电话。",
+              "answer": "She is calling her mom."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[subject] is [verb-ing] in/on/at [place] 句式操练",
+          "pattern": "[subject] is [verb-ing] [place].",
+          "patternMeaning": "某人正在[某地]做某事",
+          "slots": [
+            "subject",
+            "verb-ing",
+            "place"
+          ],
+          "items": [
+            {
+              "zh": "他正在公园跑步。",
+              "answer": "He is running in the park.",
+              "slotValues": {
+                "subject": "He",
+                "verb-ing": "running",
+                "place": "in the park"
+              }
+            },
+            {
+              "zh": "她正坐在沙发上。",
+              "answer": "She is sitting on the sofa.",
+              "slotValues": {
+                "subject": "She",
+                "verb-ing": "sitting",
+                "place": "on the sofa"
+              }
+            },
+            {
+              "zh": "宝宝正在床上睡觉。",
+              "answer": "The baby is sleeping in the bed.",
+              "slotValues": {
+                "subject": "The baby",
+                "verb-ing": "sleeping",
+                "place": "in the bed"
+              }
+            },
+            {
+              "zh": "他正站在门口。",
+              "answer": "He is standing at the door.",
+              "slotValues": {
+                "subject": "He",
+                "verb-ing": "standing",
+                "place": "at the door"
+              }
+            },
+            {
+              "zh": "他们正在厨房跳舞。",
+              "answer": "They are dancing in the kitchen.",
+              "slotValues": {
+                "subject": "They",
+                "verb-ing": "dancing",
+                "place": "in the kitchen"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_wearing",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "wearing 一词多句",
+          "vocabWord": "wearing",
+          "vocabMeaning": "正穿着/戴着",
+          "patterns": [
+            {
+              "chunk": "He is wearing ___.",
+              "items": [
+                {
+                  "zh": "他正穿着一件蓝衬衫。",
+                  "answer": "He is wearing a blue shirt."
+                },
+                {
+                  "zh": "她正穿着一件红裙子。",
+                  "answer": "She is wearing a red dress."
+                },
+                {
+                  "zh": "他戴着眼镜。",
+                  "answer": "He is wearing glasses."
+                }
+              ]
+            },
+            {
+              "chunk": "What is she wearing?",
+              "items": [
+                {
+                  "zh": "她穿着什么？",
+                  "answer": "What is she wearing?"
+                },
+                {
+                  "zh": "她穿着一件白色T恤。",
+                  "answer": "She is wearing a white T-shirt."
+                },
+                {
+                  "zh": "你今天穿的是什么？",
+                  "answer": "What are you wearing today?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ is wearing ___.",
+              "items": [
+                {
+                  "zh": "每个人都穿着外套。",
+                  "answer": "Everyone is wearing a jacket."
+                },
+                {
+                  "zh": "他穿着黑色的鞋子。",
+                  "answer": "He is wearing black shoes."
+                },
+                {
+                  "zh": "她戴着帽子。",
+                  "answer": "She is wearing a hat."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_looking",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "looking 一词多句",
+          "vocabWord": "looking",
+          "vocabMeaning": "正在看/正在找",
+          "patterns": [
+            {
+              "chunk": "He is looking for ___.",
+              "items": [
+                {
+                  "zh": "他正在找钥匙。",
+                  "answer": "He is looking for his keys."
+                },
+                {
+                  "zh": "她正在找她的手机。",
+                  "answer": "She is looking for her phone."
+                },
+                {
+                  "zh": "我正在找我的钱包。",
+                  "answer": "I'm looking for my wallet."
+                }
+              ]
+            },
+            {
+              "chunk": "She is looking at ___.",
+              "items": [
+                {
+                  "zh": "她正在看窗外。",
+                  "answer": "She is looking out the window."
+                },
+                {
+                  "zh": "他正在看菜单。",
+                  "answer": "He is looking at the menu."
+                },
+                {
+                  "zh": "你在看什么？",
+                  "answer": "What are you looking at?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ looking ___?",
+              "items": [
+                {
+                  "zh": "你在找什么？",
+                  "answer": "What are you looking for?"
+                },
+                {
+                  "zh": "你在找人吗？",
+                  "answer": "Are you looking for someone?"
+                },
+                {
+                  "zh": "他看起来很累。",
+                  "answer": "He is looking tired."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_sitting",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "sitting / standing 一词多句",
+          "vocabWord": "sitting / standing",
+          "vocabMeaning": "坐着/站着",
+          "patterns": [
+            {
+              "chunk": "___ sitting ___.",
+              "items": [
+                {
+                  "zh": "他正坐在椅子上。",
+                  "answer": "He is sitting on the chair."
+                },
+                {
+                  "zh": "她正坐在我旁边。",
+                  "answer": "She is sitting next to me."
+                },
+                {
+                  "zh": "一只猫正坐在窗台上。",
+                  "answer": "A cat is sitting on the windowsill."
+                }
+              ]
+            },
+            {
+              "chunk": "___ standing ___.",
+              "items": [
+                {
+                  "zh": "他正站在门口。",
+                  "answer": "He is standing at the door."
+                },
+                {
+                  "zh": "她正站在外面等你。",
+                  "answer": "She is standing outside waiting for you."
+                },
+                {
+                  "zh": "为什么你一直站着？",
+                  "answer": "Why are you standing?"
+                }
+              ]
+            },
+            {
+              "chunk": "Is ___ sitting or standing?",
+              "items": [
+                {
+                  "zh": "他是坐着还是站着？",
+                  "answer": "Is he sitting or standing?"
+                },
+                {
+                  "zh": "请坐下。",
+                  "answer": "Please sit down."
+                },
+                {
+                  "zh": "请站起来。",
+                  "answer": "Please stand up."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "描述他/她此刻的样子逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说动作",
+              "en": "He's sitting on the sofa.",
+              "zh": "他正坐在沙发上。"
+            },
+            {
+              "level": 2,
+              "label": "加穿着",
+              "en": "He's sitting on the sofa. He's wearing a blue shirt.",
+              "zh": "他正坐在沙发上。穿着一件蓝衬衫。",
+              "highlight": "He's wearing a blue shirt.",
+              "hint": "加上穿着"
+            },
+            {
+              "level": 3,
+              "label": "加找东西",
+              "en": "He's sitting on the sofa. He's wearing a blue shirt. He's looking for his phone.",
+              "zh": "他正坐在沙发上。穿着一件蓝衬衫。正在找手机。",
+              "highlight": "He's looking for his phone.",
+              "hint": "加上正在找什么"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "平时vs今天": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 I usually...but today I'm... 对比习惯与此刻",
+          "chunk": "I usually ... but today I'm ...",
+          "chunkMeaning": "我通常...但今天...",
+          "items": [
+            {
+              "zh": "我通常走路去上班，但今天我坐公交。",
+              "answer": "I usually walk to work, but today I'm taking the bus."
+            },
+            {
+              "zh": "我通常7点起床，但今天我8点起的。",
+              "answer": "I usually get up at 7, but today I got up at 8."
+            },
+            {
+              "zh": "我一般在家做饭，但今天我出去吃。",
+              "answer": "I normally cook at home, but today I'm eating out."
+            },
+            {
+              "zh": "通常我喝咖啡，但今天我喝茶。",
+              "answer": "Usually I drink coffee, but today I'm drinking tea."
+            },
+            {
+              "zh": "我这周在家办公。",
+              "answer": "I'm working from home this week."
+            },
+            {
+              "zh": "这个暂时的——下周就回去了。",
+              "answer": "It's temporary — I'll go back next week."
+            },
+            {
+              "zh": "我还在工作。",
+              "answer": "I'm still working."
+            },
+            {
+              "zh": "我不再住在那里了。",
+              "answer": "I don't live there anymore."
+            },
+            {
+              "zh": "我暂时待在这里。",
+              "answer": "I'm staying here for now."
+            },
+            {
+              "zh": "我一般不开车，但此刻我在开车。",
+              "answer": "I generally don't drive, but right now I'm driving."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "I usually [verb] but today/right now I'm [verb-ing] 对比操练",
+          "pattern": "I usually [verb1], but [time] I'm [verb2-ing].",
+          "patternMeaning": "我通常...，但[此刻/今天]...",
+          "slots": [
+            "verb1",
+            "time",
+            "verb2-ing"
+          ],
+          "items": [
+            {
+              "zh": "我通常走路，但今天我在开车。",
+              "answer": "I usually walk, but today I'm driving.",
+              "slotValues": {
+                "verb1": "walk",
+                "time": "today",
+                "verb2-ing": "driving"
+              }
+            },
+            {
+              "zh": "我通常在家吃，但今天我在外面吃。",
+              "answer": "I usually eat at home, but today I'm eating out.",
+              "slotValues": {
+                "verb1": "eat at home",
+                "time": "today",
+                "verb2-ing": "eating out"
+              }
+            },
+            {
+              "zh": "我通常看电视，但此刻我在看书。",
+              "answer": "I usually watch TV, but right now I'm reading.",
+              "slotValues": {
+                "verb1": "watch TV",
+                "time": "right now",
+                "verb2-ing": "reading"
+              }
+            },
+            {
+              "zh": "我通常早睡，但今晚我在熬夜。",
+              "answer": "I usually sleep early, but tonight I'm staying up late.",
+              "slotValues": {
+                "verb1": "sleep early",
+                "time": "tonight",
+                "verb2-ing": "staying up late"
+              }
+            },
+            {
+              "zh": "这周我一般很忙，但现在我休息一下。",
+              "answer": "I'm usually busy this week, but right now I'm taking a break.",
+              "slotValues": {
+                "verb1": "busy",
+                "time": "right now",
+                "verb2-ing": "taking a break"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_still",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "still 一词多句",
+          "vocabWord": "still",
+          "vocabMeaning": "仍然/还在",
+          "patterns": [
+            {
+              "chunk": "I'm still ___.",
+              "items": [
+                {
+                  "zh": "我还在工作。",
+                  "answer": "I'm still working."
+                },
+                {
+                  "zh": "我还在等你。",
+                  "answer": "I'm still waiting for you."
+                },
+                {
+                  "zh": "我还在考虑。",
+                  "answer": "I'm still thinking."
+                }
+              ]
+            },
+            {
+              "chunk": "Are you still ___?",
+              "items": [
+                {
+                  "zh": "你还在工作吗？",
+                  "answer": "Are you still working?"
+                },
+                {
+                  "zh": "你还在生我的气吗？",
+                  "answer": "Are you still angry with me?"
+                },
+                {
+                  "zh": "你还需要这个吗？",
+                  "answer": "Do you still need this?"
+                }
+              ]
+            },
+            {
+              "chunk": "I still ___.",
+              "items": [
+                {
+                  "zh": "我仍然记得你。",
+                  "answer": "I still remember you."
+                },
+                {
+                  "zh": "我仍然住在这里。",
+                  "answer": "I still live here."
+                },
+                {
+                  "zh": "我仍然不相信。",
+                  "answer": "I still don't believe it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_anymore",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "anymore 一词多句",
+          "vocabWord": "anymore",
+          "vocabMeaning": "再也不",
+          "patterns": [
+            {
+              "chunk": "I don't ___ anymore.",
+              "items": [
+                {
+                  "zh": "我不再抽烟了。",
+                  "answer": "I don't smoke anymore."
+                },
+                {
+                  "zh": "我不再住那里了。",
+                  "answer": "I don't live there anymore."
+                },
+                {
+                  "zh": "我不再做那份工作了。",
+                  "answer": "I don't do that job anymore."
+                }
+              ]
+            },
+            {
+              "chunk": "___ not ___ anymore.",
+              "items": [
+                {
+                  "zh": "他不再是我朋友了。",
+                  "answer": "He's not my friend anymore."
+                },
+                {
+                  "zh": "这不再是问题了。",
+                  "answer": "It's not a problem anymore."
+                },
+                {
+                  "zh": "我不再年轻了。",
+                  "answer": "I'm not young anymore."
+                }
+              ]
+            },
+            {
+              "chunk": "Do you still ___ or not anymore?",
+              "items": [
+                {
+                  "zh": "你还住在北京吗？",
+                  "answer": "Do you still live in Beijing or not anymore?"
+                },
+                {
+                  "zh": "你还做运动吗？",
+                  "answer": "Do you still exercise or not anymore?"
+                },
+                {
+                  "zh": "你还和她说话吗？",
+                  "answer": "Do you still talk to her or not anymore?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_temporary",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "temporary / for now 一词多句",
+          "vocabWord": "temporary / for now",
+          "vocabMeaning": "临时的/暂时的",
+          "patterns": [
+            {
+              "chunk": "It's just temporary.",
+              "items": [
+                {
+                  "zh": "这只是暂时的。",
+                  "answer": "It's just temporary."
+                },
+                {
+                  "zh": "这是临时的工作。",
+                  "answer": "This is a temporary job."
+                },
+                {
+                  "zh": "这只是暂时的安排。",
+                  "answer": "This is just a temporary arrangement."
+                }
+              ]
+            },
+            {
+              "chunk": "___ for now.",
+              "items": [
+                {
+                  "zh": "我暂时待在这里。",
+                  "answer": "I'm staying here for now."
+                },
+                {
+                  "zh": "暂时就这样吧。",
+                  "answer": "That's enough for now."
+                },
+                {
+                  "zh": "我暂时没有计划。",
+                  "answer": "I have no plans for now."
+                }
+              ]
+            },
+            {
+              "chunk": "___ not forever, just ___.",
+              "items": [
+                {
+                  "zh": "不是永久的，只是暂时的。",
+                  "answer": "It's not forever, just temporary."
+                },
+                {
+                  "zh": "我暂时休息一下，不是永远不回来了。",
+                  "answer": "I'm taking a break for now, not forever."
+                },
+                {
+                  "zh": "这只是暂时的困难。",
+                  "answer": "This is only a temporary problem."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从习惯到例外逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说习惯",
+              "en": "I usually walk to work.",
+              "zh": "我通常走路去上班。"
+            },
+            {
+              "level": 2,
+              "label": "加例外",
+              "en": "I usually walk to work, but today I'm taking the bus.",
+              "zh": "我通常走路去上班，但今天坐公交。",
+              "highlight": "but today I'm taking the bus.",
+              "hint": "加上今天的例外"
+            },
+            {
+              "level": 3,
+              "label": "加原因",
+              "en": "I usually walk to work, but today I'm taking the bus because it's raining.",
+              "zh": "我通常走路去上班，但今天坐公交，因为下雨了。",
+              "highlight": "because it's raining.",
+              "hint": "加上原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "此刻状态": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 I'm [adj] 描述此刻状态",
+          "chunk": "I'm busy / free / ready / ...",
+          "chunkMeaning": "我此刻很忙/有空/准备好了/...",
+          "items": [
+            {
+              "zh": "我此刻很忙。",
+              "answer": "I'm busy at the moment."
+            },
+            {
+              "zh": "你现在有空吗？",
+              "answer": "Are you free right now?"
+            },
+            {
+              "zh": "我现在有空。",
+              "answer": "I'm available now."
+            },
+            {
+              "zh": "我准备好了。",
+              "answer": "I'm ready."
+            },
+            {
+              "zh": "我差不多完成了。",
+              "answer": "I'm almost finished."
+            },
+            {
+              "zh": "我正要走。",
+              "answer": "I'm just leaving."
+            },
+            {
+              "zh": "你现在在做什么？",
+              "answer": "What are you doing now?"
+            },
+            {
+              "zh": "你今晚做什么？",
+              "answer": "What are you doing tonight?"
+            },
+            {
+              "zh": "我这个周末要去看父母。",
+              "answer": "I'm visiting my parents this weekend."
+            },
+            {
+              "zh": "我下周开始新工作。",
+              "answer": "I'm starting a new job next week."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Are you [adj]? — Yes/No, I'm [state] 状态问答操练",
+          "pattern": "Are you [adj]? — [answer], I'm [state].",
+          "patternMeaning": "你...吗？——回答。",
+          "slots": [
+            "adj",
+            "answer",
+            "state"
+          ],
+          "items": [
+            {
+              "zh": "你忙吗？——是的，我正在工作。",
+              "answer": "Are you busy? — Yes, I'm working right now.",
+              "slotValues": {
+                "adj": "busy",
+                "answer": "Yes",
+                "state": "working right now"
+              }
+            },
+            {
+              "zh": "你有空吗？——有，我现在没事。",
+              "answer": "Are you free? — Yes, I'm doing nothing now.",
+              "slotValues": {
+                "adj": "free",
+                "answer": "Yes",
+                "state": "doing nothing now"
+              }
+            },
+            {
+              "zh": "你准备好了吗？——还没有，再等一分钟。",
+              "answer": "Are you ready? — Not yet, just one more minute.",
+              "slotValues": {
+                "adj": "ready",
+                "answer": "Not yet",
+                "state": "just one more minute"
+              }
+            },
+            {
+              "zh": "你今晚有空吗？——有。",
+              "answer": "Are you free tonight? — Yes, I am.",
+              "slotValues": {
+                "adj": "free tonight",
+                "answer": "Yes",
+                "state": ""
+              }
+            },
+            {
+              "zh": "你累吗？——有点，但我还好。",
+              "answer": "Are you tired? — A little, but I'm okay.",
+              "slotValues": {
+                "adj": "tired",
+                "answer": "A little",
+                "state": "okay"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_busy",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "busy 一词多句",
+          "vocabWord": "busy",
+          "vocabMeaning": "忙碌的",
+          "patterns": [
+            {
+              "chunk": "I'm busy ___.",
+              "items": [
+                {
+                  "zh": "我此刻很忙。",
+                  "answer": "I'm busy at the moment."
+                },
+                {
+                  "zh": "我今天很忙。",
+                  "answer": "I'm busy today."
+                },
+                {
+                  "zh": "这周我很忙。",
+                  "answer": "I'm busy this week."
+                }
+              ]
+            },
+            {
+              "chunk": "Are you busy ___?",
+              "items": [
+                {
+                  "zh": "你现在忙吗？",
+                  "answer": "Are you busy right now?"
+                },
+                {
+                  "zh": "你今晚忙吗？",
+                  "answer": "Are you busy tonight?"
+                },
+                {
+                  "zh": "你周末忙吗？",
+                  "answer": "Are you busy this weekend?"
+                }
+              ]
+            },
+            {
+              "chunk": "too busy to ___.",
+              "items": [
+                {
+                  "zh": "太忙了，没时间休息。",
+                  "answer": "I'm too busy to take a break."
+                },
+                {
+                  "zh": "他太忙了，没时间接电话。",
+                  "answer": "He's too busy to answer the phone."
+                },
+                {
+                  "zh": "别太忙了，注意休息。",
+                  "answer": "Don't be too busy. Take care."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_ready",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "ready 一词多句",
+          "vocabWord": "ready",
+          "vocabMeaning": "准备好的",
+          "patterns": [
+            {
+              "chunk": "Are you ready ___?",
+              "items": [
+                {
+                  "zh": "你准备好了吗？",
+                  "answer": "Are you ready?"
+                },
+                {
+                  "zh": "你准备好走了吗？",
+                  "answer": "Are you ready to go?"
+                },
+                {
+                  "zh": "你准备好开始了吗？",
+                  "answer": "Are you ready to start?"
+                }
+              ]
+            },
+            {
+              "chunk": "I'm ready ___.",
+              "items": [
+                {
+                  "zh": "我准备好了。",
+                  "answer": "I'm ready."
+                },
+                {
+                  "zh": "我准备好出发了。",
+                  "answer": "I'm ready to leave."
+                },
+                {
+                  "zh": "我准备好尝试新事物了。",
+                  "answer": "I'm ready to try something new."
+                }
+              ]
+            },
+            {
+              "chunk": "___ get ready.",
+              "items": [
+                {
+                  "zh": "让我们准备吧。",
+                  "answer": "Let's get ready."
+                },
+                {
+                  "zh": "我差不多准备好了。",
+                  "answer": "I'm almost ready."
+                },
+                {
+                  "zh": "你还没准备好吗？",
+                  "answer": "Aren't you ready yet?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_almost",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "almost / just 一词多句",
+          "vocabWord": "almost / just",
+          "vocabMeaning": "几乎/刚刚",
+          "patterns": [
+            {
+              "chunk": "I'm almost ___.",
+              "items": [
+                {
+                  "zh": "我差不多完成了。",
+                  "answer": "I'm almost done."
+                },
+                {
+                  "zh": "我差不多到了。",
+                  "answer": "I'm almost there."
+                },
+                {
+                  "zh": "我差不多准备好了。",
+                  "answer": "I'm almost ready."
+                }
+              ]
+            },
+            {
+              "chunk": "I'm just ___.",
+              "items": [
+                {
+                  "zh": "我正要走。",
+                  "answer": "I'm just leaving."
+                },
+                {
+                  "zh": "我只是在休息。",
+                  "answer": "I'm just resting."
+                },
+                {
+                  "zh": "我只是看看。",
+                  "answer": "I'm just looking."
+                }
+              ]
+            },
+            {
+              "chunk": "___ almost / just ___.",
+              "items": [
+                {
+                  "zh": "差一点！",
+                  "answer": "Almost!"
+                },
+                {
+                  "zh": "我刚到。",
+                  "answer": "I just arrived."
+                },
+                {
+                  "zh": "我刚吃完。",
+                  "answer": "I just finished eating."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从状态到计划逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说状态",
+              "en": "I'm busy right now.",
+              "zh": "我现在很忙。"
+            },
+            {
+              "level": 2,
+              "label": "加时间",
+              "en": "I'm busy right now, but I'm free tonight.",
+              "zh": "我现在很忙，但今晚有空。",
+              "highlight": "but I'm free tonight.",
+              "hint": "加上空闲时间"
+            },
+            {
+              "level": 3,
+              "label": "加提议",
+              "en": "I'm busy right now, but I'm free tonight. Are you free too? Let's meet!",
+              "zh": "我现在很忙，但今晚有空。你也有空吗？我们见面吧！",
+              "highlight": "Are you free too? Let's meet!",
+              "hint": "加上邀约"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "频率表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 rarely / hardly ever / once a week 等描述频率",
+          "chunk": "rarely / hardly ever / once a week / ...",
+          "chunkMeaning": "很少/几乎从不/每周一次/...",
+          "items": [
+            {
+              "zh": "我很少吃快餐。",
+              "answer": "I rarely eat fast food."
+            },
+            {
+              "zh": "我几乎不看电视。",
+              "answer": "I hardly ever watch TV."
+            },
+            {
+              "zh": "我每周锻炼一次。",
+              "answer": "I exercise once a week."
+            },
+            {
+              "zh": "我每月看望父母两次。",
+              "answer": "I visit my parents twice a month."
+            },
+            {
+              "zh": "我每隔一天去跑步。",
+              "answer": "I go jogging every other day."
+            },
+            {
+              "zh": "大多数时候我在家做饭。",
+              "answer": "Most of the time, I cook at home."
+            },
+            {
+              "zh": "我偶尔去那里。",
+              "answer": "I go there from time to time."
+            },
+            {
+              "zh": "我每一天都在想它。",
+              "answer": "I think about it every single day."
+            },
+            {
+              "zh": "他一直在聊足球。",
+              "answer": "He talks about football all the time."
+            },
+            {
+              "zh": "我不常去电影院。",
+              "answer": "I don't go to the cinema often."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "How often do you [verb]? — [frequency] 频率问答操练",
+          "pattern": "How often do you [verb]? — [frequency].",
+          "patternMeaning": "你多久...一次？——频率。",
+          "slots": [
+            "verb",
+            "frequency"
+          ],
+          "items": [
+            {
+              "zh": "你多久锻炼一次？——每周两次。",
+              "answer": "How often do you exercise? — Twice a week.",
+              "slotValues": {
+                "verb": "exercise",
+                "frequency": "Twice a week."
+              }
+            },
+            {
+              "zh": "你多久旅行一次？——一年一次。",
+              "answer": "How often do you travel? — Once a year.",
+              "slotValues": {
+                "verb": "travel",
+                "frequency": "Once a year."
+              }
+            },
+            {
+              "zh": "你多久看电影一次？——很少。",
+              "answer": "How often do you watch movies? — Rarely.",
+              "slotValues": {
+                "verb": "watch movies",
+                "frequency": "Rarely."
+              }
+            },
+            {
+              "zh": "你多久吃一次快餐？——几乎从不。",
+              "answer": "How often do you eat fast food? — Hardly ever.",
+              "slotValues": {
+                "verb": "eat fast food",
+                "frequency": "Hardly ever."
+              }
+            },
+            {
+              "zh": "你多久给父母打电话？——每天。",
+              "answer": "How often do you call your parents? — Every single day.",
+              "slotValues": {
+                "verb": "call your parents",
+                "frequency": "Every single day."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_once_twice",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "once / twice / every other 一词多句",
+          "vocabWord": "once a week / twice a month / every other day",
+          "vocabMeaning": "一周一次/一月两次/每隔一天",
+          "patterns": [
+            {
+              "chunk": "___ once a week.",
+              "items": [
+                {
+                  "zh": "我每周去一次超市。",
+                  "answer": "I go to the supermarket once a week."
+                },
+                {
+                  "zh": "我每周锻炼三次。",
+                  "answer": "I exercise three times a week."
+                },
+                {
+                  "zh": "你多久打扫一次？——每周一次。",
+                  "answer": "How often do you clean? — Once a week."
+                }
+              ]
+            },
+            {
+              "chunk": "___ twice a ___.",
+              "items": [
+                {
+                  "zh": "我每月看望父母两次。",
+                  "answer": "I visit my parents twice a month."
+                },
+                {
+                  "zh": "我每天刷两次牙。",
+                  "answer": "I brush my teeth twice a day."
+                },
+                {
+                  "zh": "我一年旅行两次。",
+                  "answer": "I travel twice a year."
+                }
+              ]
+            },
+            {
+              "chunk": "___ every other day.",
+              "items": [
+                {
+                  "zh": "我每隔一天去跑步。",
+                  "answer": "I go jogging every other day."
+                },
+                {
+                  "zh": "我每隔一天洗一次头。",
+                  "answer": "I wash my hair every other day."
+                },
+                {
+                  "zh": "你每隔一天来一次吗？",
+                  "answer": "Do you come every other day?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_rarely",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "rarely / hardly ever 一词多句",
+          "vocabWord": "rarely / hardly ever",
+          "vocabMeaning": "很少/几乎从不",
+          "patterns": [
+            {
+              "chunk": "I rarely ___.",
+              "items": [
+                {
+                  "zh": "我很少吃快餐。",
+                  "answer": "I rarely eat fast food."
+                },
+                {
+                  "zh": "我很少生气。",
+                  "answer": "I rarely get angry."
+                },
+                {
+                  "zh": "我很少去酒吧。",
+                  "answer": "I rarely go to bars."
+                }
+              ]
+            },
+            {
+              "chunk": "I hardly ever ___.",
+              "items": [
+                {
+                  "zh": "我几乎不看电视。",
+                  "answer": "I hardly ever watch TV."
+                },
+                {
+                  "zh": "我几乎从不喝酒。",
+                  "answer": "I hardly ever drink alcohol."
+                },
+                {
+                  "zh": "我几乎从不迟到。",
+                  "answer": "I hardly ever arrive late."
+                }
+              ]
+            },
+            {
+              "chunk": "Do you ___? — Rarely / Hardly ever.",
+              "items": [
+                {
+                  "zh": "你抽烟吗？——很少。",
+                  "answer": "Do you smoke? — Rarely."
+                },
+                {
+                  "zh": "你熬夜吗？——几乎不。",
+                  "answer": "Do you stay up late? — Hardly ever."
+                },
+                {
+                  "zh": "你吃甜食吗？——很少。",
+                  "answer": "Do you eat sweets? — Not often."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_all_the_time",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "all the time / from time to time 一词多句",
+          "vocabWord": "all the time / from time to time",
+          "vocabMeaning": "一直/偶尔",
+          "patterns": [
+            {
+              "chunk": "___ all the time.",
+              "items": [
+                {
+                  "zh": "他一直在玩手机。",
+                  "answer": "He checks his phone all the time."
+                },
+                {
+                  "zh": "我一直在想这件事。",
+                  "answer": "I think about it all the time."
+                },
+                {
+                  "zh": "不要一直抱怨。",
+                  "answer": "Don't complain all the time."
+                }
+              ]
+            },
+            {
+              "chunk": "___ from time to time.",
+              "items": [
+                {
+                  "zh": "我偶尔去那里。",
+                  "answer": "I go there from time to time."
+                },
+                {
+                  "zh": "我偶尔会想家。",
+                  "answer": "I miss home from time to time."
+                },
+                {
+                  "zh": "偶尔吃点甜的不碍事。",
+                  "answer": "It's okay to eat sweets from time to time."
+                }
+              ]
+            },
+            {
+              "chunk": "___ most of the time.",
+              "items": [
+                {
+                  "zh": "大多数时候我在家做饭。",
+                  "answer": "Most of the time, I cook at home."
+                },
+                {
+                  "zh": "他大多数时候是对的。",
+                  "answer": "He is right most of the time."
+                },
+                {
+                  "zh": "大多数时候这里很安静。",
+                  "answer": "It's quiet here most of the time."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从频率问句到对比描述逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "问频率",
+              "en": "How often do you exercise?",
+              "zh": "你多久锻炼一次？"
+            },
+            {
+              "level": 2,
+              "label": "加回答",
+              "en": "How often do you exercise? — Twice a week. I go jogging every other day.",
+              "zh": "你多久锻炼一次？——每周两次。我每隔一天去慢跑。",
+              "highlight": "Twice a week. I go jogging every other day.",
+              "hint": "加上具体频率和方式"
+            },
+            {
+              "level": 3,
+              "label": "加对比",
+              "en": "How often do you exercise? — Twice a week. But I rarely eat junk food, and I hardly ever drink soda.",
+              "zh": "你多久锻炼一次？——每周两次。但我很少吃垃圾食品，几乎不喝汽水。",
+              "highlight": "But I rarely eat junk food, and I hardly ever drink soda.",
+              "hint": "加上其他习惯对比"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "综合运用": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "在习惯与进行时之间切换",
+          "chunk": "I usually ... but right now I'm ...",
+          "chunkMeaning": "我通常...但现在正在...",
+          "items": [
+            {
+              "zh": "我通常7点起床，但现在我还在睡觉。",
+              "answer": "I usually get up at 7, but right now I'm still sleeping."
+            },
+            {
+              "zh": "他通常走路去上班，但此刻他正坐公交。",
+              "answer": "He usually walks to work, but right now he's taking the bus."
+            },
+            {
+              "zh": "你通常在做什么？但现在你在做什么？",
+              "answer": "What do you usually do? But what are you doing now?"
+            },
+            {
+              "zh": "描述一下这个场景——发生了什么？",
+              "answer": "Describe the scene — what is happening?"
+            },
+            {
+              "zh": "你能叙述一下正在发生什么吗？",
+              "answer": "Can you narrate what is going on?"
+            },
+            {
+              "zh": "我注意到你换了新发型。",
+              "answer": "I notice you changed your hairstyle."
+            },
+            {
+              "zh": "你能详细描述一下吗？",
+              "answer": "Can you describe it in detail?"
+            },
+            {
+              "zh": "他在做什么动作？",
+              "answer": "What action is he doing?"
+            },
+            {
+              "zh": "描述一下背景。",
+              "answer": "Describe the background."
+            },
+            {
+              "zh": "让我切换一下话题。",
+              "answer": "Let me switch the topic."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[subject] is [verb-ing] but usually [subject] [verb] 综合对比操练",
+          "pattern": "[subj1] is [verb-ing1], but usually [subj2] [verb2].",
+          "patternMeaning": "...正在...，但通常...",
+          "slots": [
+            "subj1",
+            "verb-ing1",
+            "subj2",
+            "verb2"
+          ],
+          "items": [
+            {
+              "zh": "他此刻在看书，但通常他看电视。",
+              "answer": "He is reading right now, but usually he watches TV.",
+              "slotValues": {
+                "subj1": "He",
+                "verb-ing1": "reading",
+                "subj2": "he",
+                "verb2": "watches TV"
+              }
+            },
+            {
+              "zh": "她此刻在喝咖啡，但通常她喝茶。",
+              "answer": "She is drinking coffee right now, but usually she drinks tea.",
+              "slotValues": {
+                "subj1": "She",
+                "verb-ing1": "drinking coffee",
+                "subj2": "she",
+                "verb2": "drinks tea"
+              }
+            },
+            {
+              "zh": "我此刻在开车，但通常我坐公交。",
+              "answer": "I'm driving right now, but usually I take the bus.",
+              "slotValues": {
+                "subj1": "I",
+                "verb-ing1": "driving",
+                "subj2": "I",
+                "verb2": "take the bus"
+              }
+            },
+            {
+              "zh": "他们此刻在休息，但通常他们这个时间在工作。",
+              "answer": "They are resting right now, but usually they work at this time.",
+              "slotValues": {
+                "subj1": "They",
+                "verb-ing1": "resting",
+                "subj2": "they",
+                "verb2": "work at this time"
+              }
+            },
+            {
+              "zh": "此刻在下雨，但通常这个季节很干燥。",
+              "answer": "It's raining right now, but usually it's dry this season.",
+              "slotValues": {
+                "subj1": "It",
+                "verb-ing1": "raining",
+                "subj2": "it",
+                "verb2": "is dry this season"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_describe",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "describe 一词多句",
+          "vocabWord": "describe",
+          "vocabMeaning": "描述",
+          "patterns": [
+            {
+              "chunk": "Can you describe ___?",
+              "items": [
+                {
+                  "zh": "你能描述你看到的吗？",
+                  "answer": "Can you describe what you see?"
+                },
+                {
+                  "zh": "你能描述一下那个人吗？",
+                  "answer": "Can you describe that person?"
+                },
+                {
+                  "zh": "你能描述一下当时的情况吗？",
+                  "answer": "Can you describe what happened?"
+                }
+              ]
+            },
+            {
+              "chunk": "Describe ___.",
+              "items": [
+                {
+                  "zh": "描述一下你的日常生活。",
+                  "answer": "Describe your daily routine."
+                },
+                {
+                  "zh": "描述一下这个房间。",
+                  "answer": "Describe this room."
+                },
+                {
+                  "zh": "用三个词描述你自己。",
+                  "answer": "Describe yourself in three words."
+                }
+              ]
+            },
+            {
+              "chunk": "___ in detail.",
+              "items": [
+                {
+                  "zh": "请详细描述。",
+                  "answer": "Please describe it in detail."
+                },
+                {
+                  "zh": "你能再详细一点吗？",
+                  "answer": "Can you be more detailed?"
+                },
+                {
+                  "zh": "我不需要细节，大概就好。",
+                  "answer": "I don't need details, just roughly."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_notice",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "notice 一词多句",
+          "vocabWord": "notice",
+          "vocabMeaning": "注意到",
+          "patterns": [
+            {
+              "chunk": "I notice ___.",
+              "items": [
+                {
+                  "zh": "我注意到你换了新发型。",
+                  "answer": "I notice you changed your hair."
+                },
+                {
+                  "zh": "我注意到你今天很开心。",
+                  "answer": "I notice you are very happy today."
+                },
+                {
+                  "zh": "我注意到外面在下雨。",
+                  "answer": "I notice it's raining outside."
+                }
+              ]
+            },
+            {
+              "chunk": "Did you notice ___?",
+              "items": [
+                {
+                  "zh": "你注意到有什么不同吗？",
+                  "answer": "Did you notice anything different?"
+                },
+                {
+                  "zh": "你注意到他走了吗？",
+                  "answer": "Did you notice he left?"
+                },
+                {
+                  "zh": "你注意到时间了吗？",
+                  "answer": "Did you notice the time?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ without noticing.",
+              "items": [
+                {
+                  "zh": "时间过得不知不觉。",
+                  "answer": "Time passes without noticing."
+                },
+                {
+                  "zh": "我没注意到你来了。",
+                  "answer": "I didn't notice you came in."
+                },
+                {
+                  "zh": "你注意到了吗？——没有，我没注意。",
+                  "answer": "Did you notice? — No, I didn't notice."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_switch",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "switch / happen 一词多句",
+          "vocabWord": "switch / happen",
+          "vocabMeaning": "切换/发生",
+          "patterns": [
+            {
+              "chunk": "Let's switch ___.",
+              "items": [
+                {
+                  "zh": "我们换个话题吧。",
+                  "answer": "Let's switch the topic."
+                },
+                {
+                  "zh": "让我们从现在时切换到过去时。",
+                  "answer": "Let's switch from present to past."
+                },
+                {
+                  "zh": "你能切换一下语言吗？",
+                  "answer": "Can you switch the language?"
+                }
+              ]
+            },
+            {
+              "chunk": "What is happening ___?",
+              "items": [
+                {
+                  "zh": "发生了什么？",
+                  "answer": "What is happening?"
+                },
+                {
+                  "zh": "这里正在发生什么？",
+                  "answer": "What is happening here?"
+                },
+                {
+                  "zh": "我不知道发生了什么。",
+                  "answer": "I don't know what is happening."
+                }
+              ]
+            },
+            {
+              "chunk": "___ switch between ___.",
+              "items": [
+                {
+                  "zh": "我在两种语言之间切换。",
+                  "answer": "I switch between two languages."
+                },
+                {
+                  "zh": "他经常换工作。",
+                  "answer": "He switches jobs often."
+                },
+                {
+                  "zh": "你能帮我换一下吗？",
+                  "answer": "Can you help me switch?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "综合描述一个场景逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "描述动作",
+              "en": "He is sitting at a table. He is drinking coffee.",
+              "zh": "他正坐在桌边。在喝咖啡。"
+            },
+            {
+              "level": 2,
+              "label": "加习惯对比",
+              "en": "He is sitting at a table, drinking coffee. Usually he drinks tea, but today he wanted coffee.",
+              "zh": "他正坐在桌边喝咖啡。通常他喝茶，但今天他想喝咖啡。",
+              "highlight": "Usually he drinks tea, but today he wanted coffee.",
+              "hint": "加上习惯对比"
+            },
+            {
+              "level": 3,
+              "label": "加背景",
+              "en": "He is sitting at a table, drinking coffee. Usually he drinks tea, but today he wanted coffee. I notice the background is quiet and relaxing.",
+              "zh": "他正坐在桌边喝咖啡。通常他喝茶但今天想喝咖啡。我注意到背景很安静放松。",
+              "highlight": "I notice the background is quiet and relaxing.",
+              "hint": "加上背景观察"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

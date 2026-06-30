@@ -57,6 +57,11 @@ export class LearningService {
     assets.push({ url, role });
   }
 
+  private isPackagedAsset(asset: any) {
+    const role = String(asset?.role ?? '').toLowerCase();
+    return !['voice', 'audio', 'bgm', 'sfx'].includes(role);
+  }
+
   private async isLearningPackFreeDownloadsEnabled() {
     const config = await this.prisma.systemConfig.findUnique({
       where: { key: 'learning_pack_free_downloads_enabled' },
@@ -782,36 +787,13 @@ export class LearningService {
 
     // ── topicDetails: per-topic data (each topic has its own vocabs & activeChunks) ──
     const topicDetails = topics.map((topic) => {
-      for (const tv of topic.topicVocabs) {
-        this.pushAsset(assets, tv.vocab.audioUsUrl, 'voice');
-        this.pushAsset(assets, tv.vocab.audioUkUrl, 'voice');
-        // Collect per-example audio URLs from vocabulary examples (JSON field)
-        const vocabExamples = tv.vocab.examples;
-        if (Array.isArray(vocabExamples)) {
-          for (const ex of vocabExamples) {
-            const audio = (ex as any)?.audioUrl;
-            if (typeof audio === 'string') this.pushAsset(assets, audio, 'voice');
-          }
-        }
-      }
-      // Collect per-example audio URLs from chunk examples
-      for (const tc of topic.activeChunks) {
-        const chunkExamples = (tc.chunk as any)?.examples;
-        if (Array.isArray(chunkExamples)) {
-          for (const ex of chunkExamples) {
-            const audio = (ex as any)?.audioUrl;
-            if (typeof audio === 'string') this.pushAsset(assets, audio, 'voice');
-          }
-        }
-      }
-      // ── Collect warmup pipeline assets (audio + images) ──
+      // ── Collect warmup pipeline image assets; audio URLs are cached lazily on first play. ──
       const outputTraining = (topic.metadata as any)?.outputTraining;
       if (outputTraining?.pipeline && Array.isArray(outputTraining.pipeline)) {
         for (const step of outputTraining.pipeline) {
           // Collect per-item audioUrl + imageUrl from chunk_substitution / pattern_drill
           if (step.items && Array.isArray(step.items)) {
             for (const item of step.items) {
-              if (typeof item.audioUrl === 'string') this.pushAsset(assets, item.audioUrl, 'voice');
               if (typeof item.imageUrl === 'string') this.pushAsset(assets, item.imageUrl, 'warmup_image');
             }
           }
@@ -820,16 +802,9 @@ export class LearningService {
             for (const pattern of step.patterns) {
               if (pattern.items && Array.isArray(pattern.items)) {
                 for (const item of pattern.items) {
-                  if (typeof item.audioUrl === 'string') this.pushAsset(assets, item.audioUrl, 'voice');
                   if (typeof item.imageUrl === 'string') this.pushAsset(assets, item.imageUrl, 'warmup_image');
                 }
               }
-            }
-          }
-          // Collect per-level audioUrl from sentence_decomposition
-          if (step.levels && Array.isArray(step.levels)) {
-            for (const level of step.levels) {
-              if (typeof level.audioUrl === 'string') this.pushAsset(assets, level.audioUrl, 'voice');
             }
           }
         }
@@ -966,7 +941,7 @@ export class LearningService {
     const failedAssets: Array<{ url: string; reason: string }> = [];
     const assetPathBySha = new Map<string, string>();
 
-    const assetList = (source.manifest.assets ?? []).filter((a: any) => a?.url);
+    const assetList = (source.manifest.assets ?? []).filter((a: any) => a?.url && this.isPackagedAsset(a));
     const CONCURRENCY = 10;
 
     for (let i = 0; i < assetList.length; i += CONCURRENCY) {

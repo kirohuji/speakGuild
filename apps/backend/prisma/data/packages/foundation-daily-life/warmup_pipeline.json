@@ -42,6 +42,108 @@
           ]
         },
         {
+          "id": "vsb_eat",
+          "type": "vocab_sentence_building",
+          "title": "eat 一词多句",
+          "vocabWord": "eat",
+          "vocabMeaning": "吃",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I eat ___ every day.",
+              "items": [
+                { "zh": "我每天吃早餐。", "answer": "I eat breakfast every day." },
+                { "zh": "我每天吃午饭。", "answer": "I eat lunch every day." },
+                { "zh": "我每天吃水果。", "answer": "I eat fruit every day." }
+              ]
+            },
+            {
+              "chunk": "I like to eat ___.",
+              "items": [
+                { "zh": "我喜欢吃披萨。", "answer": "I like to eat pizza." },
+                { "zh": "我喜欢吃面条。", "answer": "I like to eat noodles." },
+                { "zh": "我喜欢吃米饭。", "answer": "I like to eat rice." }
+              ]
+            },
+            {
+              "chunk": "I don't eat ___.",
+              "items": [
+                { "zh": "我不吃肉。", "answer": "I don't eat meat." },
+                { "zh": "我不吃鱼。", "answer": "I don't eat fish." },
+                { "zh": "我不吃辣的东西。", "answer": "I don't eat spicy food." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_drink",
+          "type": "vocab_sentence_building",
+          "title": "drink 一词多句",
+          "vocabWord": "drink",
+          "vocabMeaning": "喝",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I drink ___ in the morning.",
+              "items": [
+                { "zh": "我早上喝咖啡。", "answer": "I drink coffee in the morning." },
+                { "zh": "我早上喝茶。", "answer": "I drink tea in the morning." },
+                { "zh": "我早上喝水。", "answer": "I drink water in the morning." }
+              ]
+            },
+            {
+              "chunk": "I like drinking ___.",
+              "items": [
+                { "zh": "我喜欢喝咖啡。", "answer": "I like drinking coffee." },
+                { "zh": "我喜欢喝牛奶。", "answer": "I like drinking milk." },
+                { "zh": "我喜欢喝果汁。", "answer": "I like drinking juice." }
+              ]
+            },
+            {
+              "chunk": "I want to drink ___.",
+              "items": [
+                { "zh": "我想喝点水。", "answer": "I want to drink some water." },
+                { "zh": "我想喝杯茶。", "answer": "I want to drink a cup of tea." },
+                { "zh": "我想喝点冷的。", "answer": "I want to drink something cold." }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_go",
+          "type": "vocab_sentence_building",
+          "title": "go 一词多句",
+          "vocabWord": "go",
+          "vocabMeaning": "去",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I go to ___ every day.",
+              "items": [
+                { "zh": "我每天去上学。", "answer": "I go to school every day." },
+                { "zh": "我每天去上班。", "answer": "I go to work every day." },
+                { "zh": "我每天去公园。", "answer": "I go to the park every day." }
+              ]
+            },
+            {
+              "chunk": "I go to ___ by ___.",
+              "items": [
+                { "zh": "我坐公交去上班。", "answer": "I go to work by bus." },
+                { "zh": "我骑车去上学。", "answer": "I go to school by bike." },
+                { "zh": "我走路去超市。", "answer": "I go to the supermarket on foot." }
+              ]
+            },
+            {
+              "chunk": "I want to go to ___.",
+              "items": [
+                { "zh": "我想去海滩。", "answer": "I want to go to the beach." },
+                { "zh": "我想去公园。", "answer": "I want to go to the park." },
+                { "zh": "我想去北京。", "answer": "I want to go to Beijing." }
+              ]
+            }
+          ]
+        },
+        {
           "id": "sd_1",
           "type": "sentence_decomposition",
           "title": "描述一天的习惯",
@@ -153,6 +255,23 @@
           ]
         },
         {
+          "id": "cs_zh_2",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 like doing 表达享受做某事",
+          "chunk": "I like [doing]",
+          "chunkMeaning": "我喜欢做...（享受过程）",
+          "items": [
+            { "zh": "我喜欢读书。", "answer": "I like reading." },
+            { "zh": "我喜欢游泳。", "answer": "I like swimming." },
+            { "zh": "我喜欢跑步。", "answer": "I like running." },
+            { "zh": "我喜欢唱歌。", "answer": "I like singing." },
+            { "zh": "我喜欢跳舞。", "answer": "I like dancing." },
+            { "zh": "我喜欢画画。", "answer": "I like drawing." }
+          ]
+        },
+        {
           "id": "sd_1",
           "type": "sentence_decomposition",
           "title": "表达喜好和需求",
@@ -187,7 +306,7 @@
             { "zh": "我有三个朋友。", "answer": "I have three friends." },
             { "zh": "我没有车。", "answer": "I don't have a car." },
             { "zh": "我没有手机。", "answer": "I don't have a phone." },
-            { "zh": "我7点吃早餐。", "answer": "I have breakfast at 7." },
+            { "zh": "我有一支笔。", "answer": "I have a pen." },
             { "zh": "我有个问题。", "answer": "I have a question." }
           ]
         },
@@ -205,6 +324,40 @@
             { "zh": "你有问题吗？", "answer": "Do you have any questions?", "slotValues": { "noun": "any questions" } },
             { "zh": "你有车吗？", "answer": "Do you have a car?", "slotValues": { "noun": "a car" } },
             { "zh": "你有兄弟吗？", "answer": "Do you have a brother?", "slotValues": { "noun": "a brother" } }
+          ]
+        },
+        {
+          "id": "vsb_have",
+          "type": "vocab_sentence_building",
+          "title": "have 一词多句",
+          "vocabWord": "have",
+          "vocabMeaning": "有",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I have ___.",
+              "items": [
+                { "zh": "我有一个兄弟。", "answer": "I have a brother." },
+                { "zh": "我有一只猫。", "answer": "I have a cat." },
+                { "zh": "我有一辆自行车。", "answer": "I have a bike." }
+              ]
+            },
+            {
+              "chunk": "I don't have ___.",
+              "items": [
+                { "zh": "我没有车。", "answer": "I don't have a car." },
+                { "zh": "我没有手机。", "answer": "I don't have a phone." },
+                { "zh": "我没有时间。", "answer": "I don't have time." }
+              ]
+            },
+            {
+              "chunk": "Do you have ___?",
+              "items": [
+                { "zh": "你有笔吗？", "answer": "Do you have a pen?" },
+                { "zh": "你有问题吗？", "answer": "Do you have any questions?" },
+                { "zh": "你有兄弟姐妹吗？", "answer": "Do you have any brothers or sisters?" }
+              ]
+            }
           ]
         },
         {
@@ -263,6 +416,40 @@
           ]
         },
         {
+          "id": "vsb_getup",
+          "type": "vocab_sentence_building",
+          "title": "get up 一词多句",
+          "vocabWord": "get up",
+          "vocabMeaning": "起床",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I get up at ___.",
+              "items": [
+                { "zh": "我7点起床。", "answer": "I get up at 7." },
+                { "zh": "我6点半起床。", "answer": "I get up at 6:30." },
+                { "zh": "我周末8点起床。", "answer": "I get up at 8 on weekends." }
+              ]
+            },
+            {
+              "chunk": "I get up and ___.",
+              "items": [
+                { "zh": "我起床然后吃早餐。", "answer": "I get up and eat breakfast." },
+                { "zh": "我起床然后洗澡。", "answer": "I get up and take a shower." },
+                { "zh": "我起床然后去上班。", "answer": "I get up and go to work." }
+              ]
+            },
+            {
+              "chunk": "What time do you get up?",
+              "items": [
+                { "zh": "你几点起床？——7点。", "answer": "What time do you get up? — At 7." },
+                { "zh": "你几点起床？——6点半。", "answer": "What time do you get up? — At 6:30." },
+                { "zh": "你周末几点起床？——8点。", "answer": "What time do you get up on weekends? — At 8." }
+              ]
+            }
+          ]
+        },
+        {
           "id": "sd_1",
           "type": "sentence_decomposition",
           "title": "描述一天的日程",
@@ -318,6 +505,40 @@
           ]
         },
         {
+          "id": "vsb_help",
+          "type": "vocab_sentence_building",
+          "title": "help 一词多句",
+          "vocabWord": "help",
+          "vocabMeaning": "帮助",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I help ___ with ___.",
+              "items": [
+                { "zh": "我帮妈妈做家务。", "answer": "I help my mom with housework." },
+                { "zh": "我帮朋友做作业。", "answer": "I help my friend with homework." },
+                { "zh": "我帮爸爸打扫车库。", "answer": "I help my dad with the garage." }
+              ]
+            },
+            {
+              "chunk": "Can you help me?",
+              "items": [
+                { "zh": "你能帮我吗？", "answer": "Can you help me?" },
+                { "zh": "你能帮我洗碗吗？", "answer": "Can you help me with the dishes?" },
+                { "zh": "你能帮我拿一下吗？", "answer": "Can you help me carry this?" }
+              ]
+            },
+            {
+              "chunk": "I need help with ___.",
+              "items": [
+                { "zh": "我需要帮忙做作业。", "answer": "I need help with my homework." },
+                { "zh": "我需要帮忙做饭。", "answer": "I need help with cooking." },
+                { "zh": "我需要帮忙打扫。", "answer": "I need help with cleaning." }
+              ]
+            }
+          ]
+        },
+        {
           "id": "sd_1",
           "type": "sentence_decomposition",
           "title": "描述出行方式",
@@ -352,7 +573,7 @@
             { "zh": "我想买一个礼物。", "answer": "I want to buy a gift." },
             { "zh": "这个有小一号的吗？", "answer": "Do you have this in a smaller size?" },
             { "zh": "这个有蓝色的吗？", "answer": "Do you have this in blue?" },
-            { "zh": "我要这个。给你钱。", "answer": "I'll take this one. Here's the money." },
+            { "zh": "我要这个。给你钱。", "answer": "I take this one. Here is the money." },
             { "zh": "这个太贵了。有便宜一点的吗？", "answer": "This is too expensive. Do you have a cheaper one?" }
           ]
         },
@@ -373,13 +594,47 @@
           ]
         },
         {
+          "id": "vsb_buy",
+          "type": "vocab_sentence_building",
+          "title": "buy 一词多句",
+          "vocabWord": "buy",
+          "vocabMeaning": "买",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I want to buy ___.",
+              "items": [
+                { "zh": "我想买一件衬衫。", "answer": "I want to buy a shirt." },
+                { "zh": "我想买一双鞋。", "answer": "I want to buy a pair of shoes." },
+                { "zh": "我想买一个礼物。", "answer": "I want to buy a gift." }
+              ]
+            },
+            {
+              "chunk": "I need to buy ___.",
+              "items": [
+                { "zh": "我需要买一些食物。", "answer": "I need to buy some food." },
+                { "zh": "我需要买一本书。", "answer": "I need to buy a book." },
+                { "zh": "我需要买一把伞。", "answer": "I need to buy an umbrella." }
+              ]
+            },
+            {
+              "chunk": "Do you want to buy ___?",
+              "items": [
+                { "zh": "你想买这个吗？", "answer": "Do you want to buy this?" },
+                { "zh": "你想买那个吗？", "answer": "Do you want to buy that?" },
+                { "zh": "你想买一些饮料吗？", "answer": "Do you want to buy some drinks?" }
+              ]
+            }
+          ]
+        },
+        {
           "id": "sd_1",
           "type": "sentence_decomposition",
           "title": "描述购物过程",
           "levels": [
             { "level": 1, "label": "想买", "en": "I want to buy a shirt.", "zh": "我想买一件衬衫。" },
             { "level": 2, "label": "试穿", "en": "I want to buy a shirt. Can I try this on?", "zh": "我想买一件衬衫。我可以试穿这件吗？", "highlight": "Can I try this on?", "hint": "请求试穿" },
-            { "level": 3, "label": "购买", "en": "I want to buy a shirt. Can I try this on? I'll take it.", "zh": "我想买一件衬衫。我可以试穿这件吗？我要了。", "highlight": "I'll take it", "hint": "决定购买" }
+            { "level": 3, "label": "购买", "en": "I want to buy a shirt. Can I try this on? I take it.", "zh": "我想买一件衬衫。我可以试穿这件吗？我要了。", "highlight": "I take it", "hint": "决定购买" }
           ]
         }
       ]
@@ -434,7 +689,7 @@
           "levels": [
             { "level": 1, "label": "天气", "en": "It's sunny today.", "zh": "今天天晴。" },
             { "level": 2, "label": "提议", "en": "It's sunny today. Let's go out!", "zh": "今天天晴。我们出去吧！", "highlight": "Let's go out", "hint": "加上提议" },
-            { "level": 3, "label": "交通", "en": "It's sunny today. Let's go out! I walk to the park.", "zh": "今天天晴。我们出去吧！我走路去公园。", "highlight": "walk to the park", "hint": "加上出行方式" }
+            { "level": 3, "label": "交通", "en": "It's sunny today. Let's go out! We can walk to the park.", "zh": "今天天晴。我们出去吧！可以走路去公园。", "highlight": "We can walk", "hint": "加上出行方式" }
           ]
         }
       ]
@@ -451,15 +706,15 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "餐厅常用表达",
-          "chunk": "Can I have / I'd like to order",
+          "chunk": "Can I have / I want to order",
           "chunkMeaning": "我可以要/我想点",
           "items": [
             { "zh": "请给我菜单好吗？", "answer": "Can I have the menu, please?" },
             { "zh": "请给我账单好吗？", "answer": "Can I have the bill, please?" },
             { "zh": "请给我一杯水好吗？", "answer": "Can I have a glass of water, please?" },
-            { "zh": "我想点一个披萨和一份沙拉。", "answer": "I'd like to order a pizza and a salad." },
-            { "zh": "我想点一个汉堡和薯条。", "answer": "I'd like to order a burger and fries." },
-            { "zh": "我想点面条和汤。", "answer": "I'd like to order noodles and soup." },
+            { "zh": "我想点一个披萨和一份沙拉。", "answer": "I want to order a pizza and a salad." },
+            { "zh": "我想点一个汉堡和薯条。", "answer": "I want to order a burger and fries." },
+            { "zh": "我想点面条和汤。", "answer": "I want to order noodles and soup." },
             { "zh": "你有什么推荐的？——意面很不错。", "answer": "What do you recommend? — The pasta is very good." },
             { "zh": "食物很好吃！我很喜欢。", "answer": "The food is delicious! I love it." },
             { "zh": "我饿了。我们今晚出去吃吧。", "answer": "I'm hungry. Let's eat out tonight." },
@@ -483,13 +738,47 @@
           ]
         },
         {
+          "id": "vsb_order",
+          "type": "vocab_sentence_building",
+          "title": "order 一词多句",
+          "vocabWord": "order",
+          "vocabMeaning": "点餐",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I want to order ___.",
+              "items": [
+                { "zh": "我想点一个披萨。", "answer": "I want to order a pizza." },
+                { "zh": "我想点一个汉堡。", "answer": "I want to order a burger." },
+                { "zh": "我想点一份沙拉。", "answer": "I want to order a salad." }
+              ]
+            },
+            {
+              "chunk": "Can I order ___?",
+              "items": [
+                { "zh": "我可以点餐吗？", "answer": "Can I order food?" },
+                { "zh": "我可以现在点吗？", "answer": "Can I order now?" },
+                { "zh": "我可以点饮料吗？", "answer": "Can I order drinks?" }
+              ]
+            },
+            {
+              "chunk": "I like to order ___.",
+              "items": [
+                { "zh": "我喜欢点外卖。", "answer": "I like to order takeout." },
+                { "zh": "我喜欢点披萨。", "answer": "I like to order pizza." },
+                { "zh": "我喜欢在店里点餐。", "answer": "I like to order at the restaurant." }
+              ]
+            }
+          ]
+        },
+        {
           "id": "sd_1",
           "type": "sentence_decomposition",
           "title": "描述去餐厅吃饭",
           "levels": [
             { "level": 1, "label": "要菜单", "en": "Can I have the menu, please?", "zh": "请给我菜单。" },
-            { "level": 2, "label": "点餐", "en": "Can I have the menu, please? I'd like to order a pizza.", "zh": "请给我菜单。我想点一个披萨。", "highlight": "I'd like to order", "hint": "点餐" },
-            { "level": 3, "label": "结账", "en": "Can I have the menu, please? I'd like to order a pizza. Can I have the bill, please?", "zh": "请给我菜单。我想点一个披萨。请给我账单。", "highlight": "Can I have the bill", "hint": "结账" }
+            { "level": 2, "label": "点餐", "en": "Can I have the menu, please? I want to order a pizza.", "zh": "请给我菜单。我想点一个披萨。", "highlight": "I want to order", "hint": "点餐" },
+            { "level": 3, "label": "结账", "en": "Can I have the menu, please? I want to order a pizza. Can I have the bill, please?", "zh": "请给我菜单。我想点一个披萨。请给我账单。", "highlight": "Can I have the bill", "hint": "结账" }
           ]
         }
       ]
@@ -517,7 +806,7 @@
             { "zh": "你能晚点发短信给我吗？", "answer": "Can you text me later?" },
             { "zh": "我们下午3点在咖啡店见面吧。", "answer": "Let's meet at the coffee shop at 3 pm." },
             { "zh": "我们5点在车站见面吧。", "answer": "Let's meet at the station at 5 pm." },
-            { "zh": "我在路上了。我10分钟后到。", "answer": "I'm on my way. I'll be there in 10 minutes." },
+            { "zh": "我在路上了。快到了。", "answer": "I'm on my way. I am almost there." },
             { "zh": "抱歉，我迟到了。路上很堵。", "answer": "Sorry, I'm late. The traffic was bad." }
           ]
         },
@@ -535,6 +824,40 @@
             { "zh": "我们中午在公园见面吧。", "answer": "Let's meet at the park at noon.", "slotValues": { "place": "the park", "time": "noon" } },
             { "zh": "我们7点半在餐厅见面吧。", "answer": "Let's meet at the restaurant at 7:30.", "slotValues": { "place": "the restaurant", "time": "7:30" } },
             { "zh": "我们6点在我家见面吧。", "answer": "Let's meet at my place at 6.", "slotValues": { "place": "my place", "time": "6" } }
+          ]
+        },
+        {
+          "id": "vsb_call",
+          "type": "vocab_sentence_building",
+          "title": "call 一词多句",
+          "vocabWord": "call",
+          "vocabMeaning": "打电话",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I call ___ every ___.",
+              "items": [
+                { "zh": "我每天给妈妈打电话。", "answer": "I call my mom every day." },
+                { "zh": "我每周末给朋友打电话。", "answer": "I call my friend every weekend." },
+                { "zh": "我每天晚上给家人打电话。", "answer": "I call my family every evening." }
+              ]
+            },
+            {
+              "chunk": "Can you call ___?",
+              "items": [
+                { "zh": "你能给我打电话吗？", "answer": "Can you call me?" },
+                { "zh": "你能晚点给我打电话吗？", "answer": "Can you call me later?" },
+                { "zh": "你能明天给我打电话吗？", "answer": "Can you call me tomorrow?" }
+              ]
+            },
+            {
+              "chunk": "I want to call ___.",
+              "items": [
+                { "zh": "我想给朋友打个电话。", "answer": "I want to call my friend." },
+                { "zh": "我想给妈妈打个电话。", "answer": "I want to call my mom." },
+                { "zh": "我想给医生打个电话。", "answer": "I want to call the doctor." }
+              ]
+            }
           ]
         },
         {

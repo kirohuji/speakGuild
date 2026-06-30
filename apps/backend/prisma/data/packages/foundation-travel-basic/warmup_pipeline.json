@@ -1,0 +1,2006 @@
+{
+  "我打算...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 I'm going to / I will 表达计划",
+          "chunk": "I'm going to / I will / I plan to",
+          "chunkMeaning": "我打算/我将/我计划",
+          "items": [
+            {
+              "zh": "我打算下个月去旅行。",
+              "answer": "I'm going to travel next month."
+            },
+            {
+              "zh": "我计划去看望家人。",
+              "answer": "I plan to visit my family."
+            },
+            {
+              "zh": "我很快会给你打电话。",
+              "answer": "I will call you soon."
+            },
+            {
+              "zh": "总有一天我会环游世界。",
+              "answer": "Someday I will travel the world."
+            },
+            {
+              "zh": "我的目标是说好英语。",
+              "answer": "My goal is to speak English well."
+            },
+            {
+              "zh": "我承诺我会帮你。",
+              "answer": "I promise I will help you."
+            },
+            {
+              "zh": "我希望有一天去巴黎。",
+              "answer": "I hope to visit Paris one day."
+            },
+            {
+              "zh": "我预期下午5点到。",
+              "answer": "I expect to arrive by 5pm."
+            },
+            {
+              "zh": "到那时我会准备好的。",
+              "answer": "By then, I will be ready."
+            },
+            {
+              "zh": "将来我想当医生。",
+              "answer": "In the future, I want to be a doctor."
+            },
+            {
+              "zh": "我最终会学会开车。",
+              "answer": "I will eventually learn to drive."
+            },
+            {
+              "zh": "我的决心是多锻炼。",
+              "answer": "My resolution is to exercise more."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "I'm going to [verb] [time] 计划表达操练",
+          "pattern": "I'm going to [verb] [time].",
+          "patternMeaning": "我[时间]打算...",
+          "slots": [
+            "verb",
+            "time"
+          ],
+          "items": [
+            {
+              "zh": "我下个月打算去旅行。",
+              "answer": "I'm going to travel next month.",
+              "slotValues": {
+                "verb": "travel",
+                "time": "next month"
+              }
+            },
+            {
+              "zh": "我下周打算去看家人。",
+              "answer": "I'm going to visit my family next week.",
+              "slotValues": {
+                "verb": "visit my family",
+                "time": "next week"
+              }
+            },
+            {
+              "zh": "我明天打算学做饭。",
+              "answer": "I'm going to learn to cook tomorrow.",
+              "slotValues": {
+                "verb": "learn to cook",
+                "time": "tomorrow"
+              }
+            },
+            {
+              "zh": "我今晚打算早点睡。",
+              "answer": "I'm going to sleep early tonight.",
+              "slotValues": {
+                "verb": "sleep early",
+                "time": "tonight"
+              }
+            },
+            {
+              "zh": "我最终打算买车。",
+              "answer": "I'm going to buy a car eventually.",
+              "slotValues": {
+                "verb": "buy a car",
+                "time": "eventually"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_plan",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "plan / goal / resolution 一词多句",
+          "vocabWord": "plan / goal / resolution",
+          "vocabMeaning": "计划/目标/决心",
+          "patterns": [
+            {
+              "chunk": "I plan to ___.",
+              "items": [
+                {
+                  "zh": "我计划下个月旅行。",
+                  "answer": "I plan to travel next month."
+                },
+                {
+                  "zh": "我计划学一门新技能。",
+                  "answer": "I plan to learn a new skill."
+                },
+                {
+                  "zh": "你计划做什么？",
+                  "answer": "What do you plan to do?"
+                }
+              ]
+            },
+            {
+              "chunk": "My goal is ___.",
+              "items": [
+                {
+                  "zh": "我的目标是说好英语。",
+                  "answer": "My goal is to speak English well."
+                },
+                {
+                  "zh": "你的目标是什么？",
+                  "answer": "What is your goal?"
+                },
+                {
+                  "zh": "她的目标是成为一名医生。",
+                  "answer": "Her goal is to become a doctor."
+                }
+              ]
+            },
+            {
+              "chunk": "My resolution is ___.",
+              "items": [
+                {
+                  "zh": "我的决心是多锻炼。",
+                  "answer": "My resolution is to exercise more."
+                },
+                {
+                  "zh": "我的新年决心是省钱。",
+                  "answer": "My New Year resolution is to save money."
+                },
+                {
+                  "zh": "你有没有新年决心？",
+                  "answer": "Do you have a New Year resolution?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_promise",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "promise / hope / expect 一词多句",
+          "vocabWord": "promise / hope / expect",
+          "vocabMeaning": "承诺/希望/预期",
+          "patterns": [
+            {
+              "chunk": "I promise I will ___.",
+              "items": [
+                {
+                  "zh": "我承诺我会帮你。",
+                  "answer": "I promise I will help you."
+                },
+                {
+                  "zh": "我保证会准时到。",
+                  "answer": "I promise I will be on time."
+                },
+                {
+                  "zh": "你保证吗？",
+                  "answer": "Do you promise?"
+                }
+              ]
+            },
+            {
+              "chunk": "I hope to ___.",
+              "items": [
+                {
+                  "zh": "我希望有一天去巴黎。",
+                  "answer": "I hope to visit Paris one day."
+                },
+                {
+                  "zh": "我希望今年能学会游泳。",
+                  "answer": "I hope to learn to swim this year."
+                },
+                {
+                  "zh": "你希望做什么？",
+                  "answer": "What do you hope to do?"
+                }
+              ]
+            },
+            {
+              "chunk": "I expect to ___.",
+              "items": [
+                {
+                  "zh": "我预期下午5点到。",
+                  "answer": "I expect to arrive by 5pm."
+                },
+                {
+                  "zh": "我预期下周完成。",
+                  "answer": "I expect to finish next week."
+                },
+                {
+                  "zh": "你预期什么时候到？",
+                  "answer": "When do you expect to arrive?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_future",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "soon / someday / eventually 一词多句",
+          "vocabWord": "soon / someday / eventually",
+          "vocabMeaning": "很快/总有一天/最终",
+          "patterns": [
+            {
+              "chunk": "___ soon.",
+              "items": [
+                {
+                  "zh": "我很快会给你打电话。",
+                  "answer": "I will call you soon."
+                },
+                {
+                  "zh": "很快就到。",
+                  "answer": "I will be there soon."
+                },
+                {
+                  "zh": "希望能快点见到你。",
+                  "answer": "I hope to see you soon."
+                }
+              ]
+            },
+            {
+              "chunk": "Someday I will ___.",
+              "items": [
+                {
+                  "zh": "总有一天我会环游世界。",
+                  "answer": "Someday I will travel the world."
+                },
+                {
+                  "zh": "总有一天我会成功的。",
+                  "answer": "Someday I will succeed."
+                },
+                {
+                  "zh": "总有一天你会明白的。",
+                  "answer": "Someday you will understand."
+                }
+              ]
+            },
+            {
+              "chunk": "___ eventually.",
+              "items": [
+                {
+                  "zh": "我最终会学会开车。",
+                  "answer": "I will eventually learn to drive."
+                },
+                {
+                  "zh": "最终一切都会好的。",
+                  "answer": "Everything will be fine eventually."
+                },
+                {
+                  "zh": "你最终会找到的。",
+                  "answer": "You will find it eventually."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从计划到承诺逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说计划",
+              "en": "I'm going to travel next month.",
+              "zh": "我下个月打算去旅行。"
+            },
+            {
+              "level": 2,
+              "label": "加目标",
+              "en": "I'm going to travel next month. My goal is to visit three countries.",
+              "zh": "我下个月打算去旅行。我的目标是去三个国家。",
+              "highlight": "My goal is to visit three countries.",
+              "hint": "加上目标"
+            },
+            {
+              "level": 3,
+              "label": "加承诺",
+              "en": "I'm going to travel next month. My goal is to visit three countries. I promise I will send you postcards.",
+              "zh": "我下个月打算去旅行。目标是去三个国家。我保证给你寄明信片。",
+              "highlight": "I promise I will send you postcards.",
+              "hint": "加上承诺"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "将会怎样": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 will / probably / might 做预测",
+          "chunk": "It will / probably / likely / perhaps",
+          "chunkMeaning": "将会/大概/可能/也许",
+          "items": [
+            {
+              "zh": "明天大概是晴天。",
+              "answer": "It will probably be sunny tomorrow."
+            },
+            {
+              "zh": "今晚可能会下雪。",
+              "answer": "It is likely to snow tonight."
+            },
+            {
+              "zh": "也许她晚点会来。",
+              "answer": "Perhaps she will come later."
+            },
+            {
+              "zh": "预报说会下雨。",
+              "answer": "The forecast says it will rain."
+            },
+            {
+              "zh": "今晚温度会下降。",
+              "answer": "The temperature will drop tonight."
+            },
+            {
+              "zh": "明天会有暴风雨。",
+              "answer": "There will be a storm tomorrow."
+            },
+            {
+              "zh": "明天多云。",
+              "answer": "It will be cloudy tomorrow."
+            },
+            {
+              "zh": "这个周末会是晴天。",
+              "answer": "It will be sunny this weekend."
+            },
+            {
+              "zh": "但愿雨能停。",
+              "answer": "I wish it would stop raining."
+            },
+            {
+              "zh": "这里的气候很暖和。",
+              "answer": "The climate here is very warm."
+            },
+            {
+              "zh": "你能预测天气吗？",
+              "answer": "Can you predict the weather?"
+            },
+            {
+              "zh": "太阳明天会出来。",
+              "answer": "The sun will shine tomorrow."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "It will [verb] / It will be [adj] 预测操练",
+          "pattern": "It will [rest] [time].",
+          "patternMeaning": "[时间]将会...",
+          "slots": [
+            "rest",
+            "time"
+          ],
+          "items": [
+            {
+              "zh": "明天会是晴天。",
+              "answer": "It will be sunny tomorrow.",
+              "slotValues": {
+                "rest": "be sunny",
+                "time": "tomorrow"
+              }
+            },
+            {
+              "zh": "今晚温度会下降。",
+              "answer": "The temperature will drop tonight.",
+              "slotValues": {
+                "rest": "drop",
+                "time": "tonight"
+              }
+            },
+            {
+              "zh": "明天大概会下雨。",
+              "answer": "It will probably rain tomorrow.",
+              "slotValues": {
+                "rest": "probably rain",
+                "time": "tomorrow"
+              }
+            },
+            {
+              "zh": "这个周末会有暴风雨。",
+              "answer": "There will be a storm this weekend.",
+              "slotValues": {
+                "rest": "be a storm",
+                "time": "this weekend"
+              }
+            },
+            {
+              "zh": "今晚可能会结冰。",
+              "answer": "It will likely freeze tonight.",
+              "slotValues": {
+                "rest": "likely freeze",
+                "time": "tonight"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_weather",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "sunny / cloudy / storm / forecast 一词多句",
+          "vocabWord": "sunny / cloudy / storm / forecast",
+          "vocabMeaning": "晴天/多云/暴风雨/预报",
+          "patterns": [
+            {
+              "chunk": "It will be ___.",
+              "items": [
+                {
+                  "zh": "明天会是晴天。",
+                  "answer": "It will be sunny tomorrow."
+                },
+                {
+                  "zh": "明天多云。",
+                  "answer": "It will be cloudy tomorrow."
+                },
+                {
+                  "zh": "今天会很热。",
+                  "answer": "It will be hot today."
+                }
+              ]
+            },
+            {
+              "chunk": "There will be ___.",
+              "items": [
+                {
+                  "zh": "明天会有暴风雨。",
+                  "answer": "There will be a storm tomorrow."
+                },
+                {
+                  "zh": "今晚会结冰。",
+                  "answer": "There will be ice tonight."
+                },
+                {
+                  "zh": "下午会有阵雨。",
+                  "answer": "There will be showers in the afternoon."
+                }
+              ]
+            },
+            {
+              "chunk": "The forecast says ___.",
+              "items": [
+                {
+                  "zh": "预报说会下雨。",
+                  "answer": "The forecast says it will rain."
+                },
+                {
+                  "zh": "天气预报怎么说？",
+                  "answer": "What does the weather forecast say?"
+                },
+                {
+                  "zh": "预报说明天是晴天。",
+                  "answer": "The forecast says it will be sunny tomorrow."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_probably",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "probably / likely / perhaps 一词多句",
+          "vocabWord": "probably / likely / perhaps",
+          "vocabMeaning": "大概/可能/也许",
+          "patterns": [
+            {
+              "chunk": "___ probably ___.",
+              "items": [
+                {
+                  "zh": "明天大概是晴天。",
+                  "answer": "It will probably be sunny tomorrow."
+                },
+                {
+                  "zh": "他大概会迟到。",
+                  "answer": "He will probably be late."
+                },
+                {
+                  "zh": "我大概不会去。",
+                  "answer": "I probably won't go."
+                }
+              ]
+            },
+            {
+              "chunk": "___ likely ___.",
+              "items": [
+                {
+                  "zh": "今晚可能会下雪。",
+                  "answer": "It is likely to snow tonight."
+                },
+                {
+                  "zh": "她很可能会来。",
+                  "answer": "She is likely to come."
+                },
+                {
+                  "zh": "这不太可能。",
+                  "answer": "It is not likely."
+                }
+              ]
+            },
+            {
+              "chunk": "Perhaps ___.",
+              "items": [
+                {
+                  "zh": "也许她晚点会来。",
+                  "answer": "Perhaps she will come later."
+                },
+                {
+                  "zh": "也许你是对的。",
+                  "answer": "Perhaps you are right."
+                },
+                {
+                  "zh": "也许我们应该等等。",
+                  "answer": "Perhaps we should wait."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_wish",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "wish / hope 一词多句",
+          "vocabWord": "wish / hope",
+          "vocabMeaning": "但愿/希望",
+          "patterns": [
+            {
+              "chunk": "I wish ___.",
+              "items": [
+                {
+                  "zh": "但愿雨能停。",
+                  "answer": "I wish it would stop raining."
+                },
+                {
+                  "zh": "但愿我能飞。",
+                  "answer": "I wish I could fly."
+                },
+                {
+                  "zh": "我真希望你在那。",
+                  "answer": "I wish you were there."
+                }
+              ]
+            },
+            {
+              "chunk": "I hope ___.",
+              "items": [
+                {
+                  "zh": "我希望明天是晴天。",
+                  "answer": "I hope it will be sunny tomorrow."
+                },
+                {
+                  "zh": "我希望你能来。",
+                  "answer": "I hope you can come."
+                },
+                {
+                  "zh": "希望如此！",
+                  "answer": "I hope so!"
+                }
+              ]
+            },
+            {
+              "chunk": "___ hope for ___.",
+              "items": [
+                {
+                  "zh": "我们抱着最好的希望。",
+                  "answer": "We hope for the best."
+                },
+                {
+                  "zh": "别放弃希望。",
+                  "answer": "Don't give up hope."
+                },
+                {
+                  "zh": "还有希望吗？",
+                  "answer": "Is there any hope?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从天气预测到行动建议逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "预测天气",
+              "en": "It will probably rain tomorrow.",
+              "zh": "明天大概会下雨。"
+            },
+            {
+              "level": 2,
+              "label": "加建议",
+              "en": "It will probably rain tomorrow. You should take an umbrella.",
+              "zh": "明天大概会下雨。你应该带把伞。",
+              "highlight": "You should take an umbrella.",
+              "hint": "加上建议"
+            },
+            {
+              "level": 3,
+              "label": "加替代",
+              "en": "It will probably rain tomorrow. You should take an umbrella. Perhaps we should stay home instead.",
+              "zh": "明天大概会下雨。你应该带把伞。也许我们应该待在家。",
+              "highlight": "Perhaps we should stay home instead.",
+              "hint": "加上替代方案"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我能/会...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 can / can't 表达能力和不能",
+          "chunk": "I can / I can't / Can you",
+          "chunkMeaning": "我能/我不能/你能",
+          "items": [
+            {
+              "zh": "我会游泳。",
+              "answer": "I can swim."
+            },
+            {
+              "zh": "你会开车吗？",
+              "answer": "Can you drive?"
+            },
+            {
+              "zh": "我够不到最上面的架子。",
+              "answer": "I can't reach the top shelf."
+            },
+            {
+              "zh": "你能举起这个箱子吗？",
+              "answer": "Can you lift this box?"
+            },
+            {
+              "zh": "我能解开这个谜。",
+              "answer": "I can solve this puzzle."
+            },
+            {
+              "zh": "你能修我的手机吗？",
+              "answer": "Can you fix my phone?"
+            },
+            {
+              "zh": "我游得很好。",
+              "answer": "I can swim very well."
+            },
+            {
+              "zh": "你会骑马吗？",
+              "answer": "Can you ride a horse?"
+            },
+            {
+              "zh": "我自己能行。",
+              "answer": "I can manage it myself."
+            },
+            {
+              "zh": "你能处理这个问题吗？",
+              "answer": "Can you handle this problem?"
+            },
+            {
+              "zh": "她有音乐天赋。",
+              "answer": "She has a talent for music."
+            },
+            {
+              "zh": "说英语是个有用的技能。",
+              "answer": "Speaking English is a useful skill."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Can you [verb]? — Yes/No, I can/can't 能力问答操练",
+          "pattern": "Can you [verb]? — [answer].",
+          "patternMeaning": "你能...吗？——回答。",
+          "slots": [
+            "verb",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你会开车吗？——会。",
+              "answer": "Can you drive? — Yes, I can.",
+              "slotValues": {
+                "verb": "drive",
+                "answer": "Yes, I can."
+              }
+            },
+            {
+              "zh": "你会游泳吗？——不会。",
+              "answer": "Can you swim? — No, I can't.",
+              "slotValues": {
+                "verb": "swim",
+                "answer": "No, I can't."
+              }
+            },
+            {
+              "zh": "你能帮我吗？——当然可以。",
+              "answer": "Can you help me? — Sure, I can.",
+              "slotValues": {
+                "verb": "help me",
+                "answer": "Sure, I can."
+              }
+            },
+            {
+              "zh": "你能修这个吗？——我试试。",
+              "answer": "Can you fix this? — I can try.",
+              "slotValues": {
+                "verb": "fix this",
+                "answer": "I can try."
+              }
+            },
+            {
+              "zh": "你能处理这个吗？——我能。",
+              "answer": "Can you handle this? — I can manage.",
+              "slotValues": {
+                "verb": "handle this",
+                "answer": "I can manage."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_skill",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "skill / talent / manage 一词多句",
+          "vocabWord": "skill / talent / manage",
+          "vocabMeaning": "技能/天赋/设法",
+          "patterns": [
+            {
+              "chunk": "___ a useful skill.",
+              "items": [
+                {
+                  "zh": "说英语是个有用的技能。",
+                  "answer": "Speaking English is a useful skill."
+                },
+                {
+                  "zh": "驾驶是一项重要的技能。",
+                  "answer": "Driving is an important skill."
+                },
+                {
+                  "zh": "你有什么技能？",
+                  "answer": "What skills do you have?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ talent for ___.",
+              "items": [
+                {
+                  "zh": "她有音乐天赋。",
+                  "answer": "She has a talent for music."
+                },
+                {
+                  "zh": "他有绘画天赋。",
+                  "answer": "He has a talent for drawing."
+                },
+                {
+                  "zh": "我没什么天赋。",
+                  "answer": "I have no special talent."
+                }
+              ]
+            },
+            {
+              "chunk": "I can manage ___.",
+              "items": [
+                {
+                  "zh": "我自己能行。",
+                  "answer": "I can manage it myself."
+                },
+                {
+                  "zh": "你能自己处理吗？",
+                  "answer": "Can you manage on your own?"
+                },
+                {
+                  "zh": "我自己能搞定。",
+                  "answer": "I can manage by myself."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_fix",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "fix / solve / handle 一词多句",
+          "vocabWord": "fix / solve / handle",
+          "vocabMeaning": "修理/解决/处理",
+          "patterns": [
+            {
+              "chunk": "Can you fix ___?",
+              "items": [
+                {
+                  "zh": "你能修我的手机吗？",
+                  "answer": "Can you fix my phone?"
+                },
+                {
+                  "zh": "你能修这个吗？",
+                  "answer": "Can you fix this?"
+                },
+                {
+                  "zh": "我自己能修。",
+                  "answer": "I can fix it myself."
+                }
+              ]
+            },
+            {
+              "chunk": "I can solve ___.",
+              "items": [
+                {
+                  "zh": "我能解开这个谜。",
+                  "answer": "I can solve this puzzle."
+                },
+                {
+                  "zh": "你能解决这个问题吗？",
+                  "answer": "Can you solve this problem?"
+                },
+                {
+                  "zh": "问题解决了。",
+                  "answer": "The problem is solved."
+                }
+              ]
+            },
+            {
+              "chunk": "Can you handle ___?",
+              "items": [
+                {
+                  "zh": "你能处理这个吗？",
+                  "answer": "Can you handle this?"
+                },
+                {
+                  "zh": "我能处理。",
+                  "answer": "I can handle it."
+                },
+                {
+                  "zh": "你处理得来吗？",
+                  "answer": "Can you handle the pressure?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_reach",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "reach / lift / ride 一词多句",
+          "vocabWord": "reach / lift / ride",
+          "vocabMeaning": "够到/举起/骑",
+          "patterns": [
+            {
+              "chunk": "I can't reach ___.",
+              "items": [
+                {
+                  "zh": "我够不到最上面的架子。",
+                  "answer": "I can't reach the top shelf."
+                },
+                {
+                  "zh": "你能帮我够一下吗？",
+                  "answer": "Can you reach it for me?"
+                },
+                {
+                  "zh": "太高了，我够不到。",
+                  "answer": "It's too high. I can't reach it."
+                }
+              ]
+            },
+            {
+              "chunk": "Can you lift ___?",
+              "items": [
+                {
+                  "zh": "你能举起这个箱子吗？",
+                  "answer": "Can you lift this box?"
+                },
+                {
+                  "zh": "太重了，我举不起来。",
+                  "answer": "It's too heavy. I can't lift it."
+                },
+                {
+                  "zh": "你能帮我抬一下吗？",
+                  "answer": "Can you help me lift this?"
+                }
+              ]
+            },
+            {
+              "chunk": "Can you ride ___?",
+              "items": [
+                {
+                  "zh": "你会骑马吗？",
+                  "answer": "Can you ride a horse?"
+                },
+                {
+                  "zh": "你会骑自行车吗？",
+                  "answer": "Can you ride a bike?"
+                },
+                {
+                  "zh": "我想学骑马。",
+                  "answer": "I want to learn to ride a horse."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从能力到解决问题逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说能力",
+              "en": "I can swim.",
+              "zh": "我会游泳。"
+            },
+            {
+              "level": 2,
+              "label": "加问题",
+              "en": "I can swim, but I can't fix my phone. Can you help me?",
+              "zh": "我会游泳，但我不会修手机。你能帮我吗？",
+              "highlight": "but I can't fix my phone. Can you help me?",
+              "hint": "加上问题和请求"
+            },
+            {
+              "level": 3,
+              "label": "加解决",
+              "en": "I can swim, but I can't fix my phone. Can you help me? — Sure, I can handle it.",
+              "zh": "我会游泳但不会修手机。你能帮我吗？——当然，我能处理。",
+              "highlight": "Sure, I can handle it.",
+              "hint": "加上对方回应"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "你可以/必须...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 should / must / have to 表达建议和义务",
+          "chunk": "You should / You must / You have to",
+          "chunkMeaning": "你应该/你必须/你得",
+          "items": [
+            {
+              "zh": "你应该多休息。",
+              "answer": "You should rest more."
+            },
+            {
+              "zh": "你必须系安全带。",
+              "answer": "You must wear a seat belt."
+            },
+            {
+              "zh": "你得走了——我的公交5点开。",
+              "answer": "I have to go now — my bus leaves at 5."
+            },
+            {
+              "zh": "我建议你试试这个。",
+              "answer": "I recommend you try this."
+            },
+            {
+              "zh": "你必须遵守规则。",
+              "answer": "You must follow the rules."
+            },
+            {
+              "zh": "你必须遵守法律。",
+              "answer": "You must obey the law."
+            },
+            {
+              "zh": "帮你是我的责任。",
+              "answer": "It's my duty to help you."
+            },
+            {
+              "zh": "别强迫我做。",
+              "answer": "Don't force me to do it."
+            },
+            {
+              "zh": "你不必去——这是可选的。",
+              "answer": "You don't have to go — it's an option."
+            },
+            {
+              "zh": "准时是必要的。",
+              "answer": "It's necessary to be on time."
+            },
+            {
+              "zh": "要求你戴口罩。",
+              "answer": "You are required to wear a mask."
+            },
+            {
+              "zh": "你必须行动——很紧急。",
+              "answer": "You must act — it's urgent."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "You should/must [verb] because [reason] 建议义务操练",
+          "pattern": "You [modal] [verb] because [reason].",
+          "patternMeaning": "你应该/必须...因为...",
+          "slots": [
+            "modal",
+            "verb",
+            "reason"
+          ],
+          "items": [
+            {
+              "zh": "你应该休息，因为看起来很累。",
+              "answer": "You should rest because you look tired.",
+              "slotValues": {
+                "modal": "should",
+                "verb": "rest",
+                "reason": "you look tired"
+              }
+            },
+            {
+              "zh": "你必须系安全带，因为这是法律。",
+              "answer": "You must wear a seat belt because it's the law.",
+              "slotValues": {
+                "modal": "must",
+                "verb": "wear a seat belt",
+                "reason": "it's the law"
+              }
+            },
+            {
+              "zh": "你得走了，因为公交快来了。",
+              "answer": "You have to go because the bus is coming.",
+              "slotValues": {
+                "modal": "have to",
+                "verb": "go",
+                "reason": "the bus is coming"
+              }
+            },
+            {
+              "zh": "你不必担心，因为一切都在掌控中。",
+              "answer": "You don't have to worry because everything is under control.",
+              "slotValues": {
+                "modal": "don't have to",
+                "verb": "worry",
+                "reason": "everything is under control"
+              }
+            },
+            {
+              "zh": "你应该试试，因为真的很好。",
+              "answer": "You should try it because it's really good.",
+              "slotValues": {
+                "modal": "should",
+                "verb": "try it",
+                "reason": "it's really good"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_advise",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "advise / recommend / suggest 一词多句",
+          "vocabWord": "advise / recommend / suggest",
+          "vocabMeaning": "建议/推荐",
+          "patterns": [
+            {
+              "chunk": "I advise you to ___.",
+              "items": [
+                {
+                  "zh": "我建议你休息。",
+                  "answer": "I advise you to rest."
+                },
+                {
+                  "zh": "我建议你早点出发。",
+                  "answer": "I advise you to leave early."
+                },
+                {
+                  "zh": "你建议我怎么做？",
+                  "answer": "What do you advise me to do?"
+                }
+              ]
+            },
+            {
+              "chunk": "I recommend ___.",
+              "items": [
+                {
+                  "zh": "我推荐这家餐厅。",
+                  "answer": "I recommend this restaurant."
+                },
+                {
+                  "zh": "你推荐什么？",
+                  "answer": "What do you recommend?"
+                },
+                {
+                  "zh": "我推荐你读这本书。",
+                  "answer": "I recommend you read this book."
+                }
+              ]
+            },
+            {
+              "chunk": "I suggest ___.",
+              "items": [
+                {
+                  "zh": "我建议你试试这个。",
+                  "answer": "I suggest you try this."
+                },
+                {
+                  "zh": "我建议我们早点走。",
+                  "answer": "I suggest we leave early."
+                },
+                {
+                  "zh": "你有什么建议？",
+                  "answer": "What do you suggest?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_rule",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "rule / law / duty 一词多句",
+          "vocabWord": "rule / law / duty",
+          "vocabMeaning": "规则/法律/责任",
+          "patterns": [
+            {
+              "chunk": "You must follow ___.",
+              "items": [
+                {
+                  "zh": "你必须遵守规则。",
+                  "answer": "You must follow the rules."
+                },
+                {
+                  "zh": "你必须遵守法律。",
+                  "answer": "You must obey the law."
+                },
+                {
+                  "zh": "这是规定。",
+                  "answer": "It's the rule."
+                }
+              ]
+            },
+            {
+              "chunk": "___ my duty to ___.",
+              "items": [
+                {
+                  "zh": "帮你是我的责任。",
+                  "answer": "It's my duty to help you."
+                },
+                {
+                  "zh": "这是我的职责。",
+                  "answer": "This is my duty."
+                },
+                {
+                  "zh": "保护家人是我的责任。",
+                  "answer": "It's my duty to protect my family."
+                }
+              ]
+            },
+            {
+              "chunk": "___ required to ___.",
+              "items": [
+                {
+                  "zh": "要求你戴口罩。",
+                  "answer": "You are required to wear a mask."
+                },
+                {
+                  "zh": "不需要。",
+                  "answer": "It's not required."
+                },
+                {
+                  "zh": "这要求提前预约。",
+                  "answer": "This requires a booking in advance."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_vital",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "necessary / vital / urgent 一词多句",
+          "vocabWord": "necessary / vital / urgent",
+          "vocabMeaning": "必要的/至关重要的/紧急的",
+          "patterns": [
+            {
+              "chunk": "It's necessary to ___.",
+              "items": [
+                {
+                  "zh": "准时是必要的。",
+                  "answer": "It's necessary to be on time."
+                },
+                {
+                  "zh": "有必要吗？",
+                  "answer": "Is it necessary?"
+                },
+                {
+                  "zh": "没必要着急。",
+                  "answer": "It's not necessary to hurry."
+                }
+              ]
+            },
+            {
+              "chunk": "___ is vital ___.",
+              "items": [
+                {
+                  "zh": "水对生命至关重要。",
+                  "answer": "Water is vital for life."
+                },
+                {
+                  "zh": "练习对进步很关键。",
+                  "answer": "Practice is vital for improvement."
+                },
+                {
+                  "zh": "速度有多重要？",
+                  "answer": "How vital is speed?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ urgent ___.",
+              "items": [
+                {
+                  "zh": "你必须行动——很紧急。",
+                  "answer": "You must act — it's urgent."
+                },
+                {
+                  "zh": "紧急情况！需要帮忙！",
+                  "answer": "It's urgent! I need help!"
+                },
+                {
+                  "zh": "这有多紧急？",
+                  "answer": "How urgent is this?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从建议到强制逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "给建议",
+              "en": "You should rest more.",
+              "zh": "你应该多休息。"
+            },
+            {
+              "level": 2,
+              "label": "加强制",
+              "en": "You should rest more. Actually, you must rest — the doctor said so.",
+              "zh": "你应该多休息。其实你必须休息——医生说的。",
+              "highlight": "Actually, you must rest — the doctor said so.",
+              "hint": "升级为必须"
+            },
+            {
+              "level": 3,
+              "label": "加后果",
+              "en": "You must rest because it's vital for your health. You don't want to get sick.",
+              "zh": "你必须休息，因为对你的健康至关重要。你不想生病吧。",
+              "highlight": "You don't want to get sick.",
+              "hint": "加上后果"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "你应该/必须": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 mustn't / don't have to 区分禁止和不必",
+          "chunk": "mustn't / don't have to / forbidden",
+          "chunkMeaning": "禁止/不必/被禁止",
+          "items": [
+            {
+              "zh": "你不能超速。",
+              "answer": "You must not go over the speed limit."
+            },
+            {
+              "zh": "你不必来——这是可选的。",
+              "answer": "You don't have to come — it's optional."
+            },
+            {
+              "zh": "这里禁止吸烟。",
+              "answer": "Smoking is prohibited here."
+            },
+            {
+              "zh": "这里不允许抽烟。",
+              "answer": "You are not allowed to smoke here."
+            },
+            {
+              "zh": "你必须遵守交通规则。",
+              "answer": "You must obey the traffic rules."
+            },
+            {
+              "zh": "我的老师很严格。",
+              "answer": "My teacher is very strict."
+            },
+            {
+              "zh": "违反规则你必须交罚款。",
+              "answer": "You must pay a penalty if you break the rule."
+            },
+            {
+              "zh": "让我提醒你这个规则。",
+              "answer": "Let me remind you of the rule."
+            },
+            {
+              "zh": "我必须警告你有危险。",
+              "answer": "I must warn you about the danger."
+            },
+            {
+              "zh": "你不该冒不必要的风险。",
+              "answer": "You shouldn't take unnecessary risks."
+            },
+            {
+              "zh": "这条规则没有例外。",
+              "answer": "There is no exception to this rule."
+            },
+            {
+              "zh": "使用塑料袋是被禁止的。",
+              "answer": "There is a ban on plastic bags."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "You mustn't [verb] because [reason] 禁止操练",
+          "pattern": "You mustn't [verb] because [reason].",
+          "patternMeaning": "你不能...因为...。",
+          "slots": [
+            "verb",
+            "reason"
+          ],
+          "items": [
+            {
+              "zh": "你不能超速，因为有速度限制。",
+              "answer": "You mustn't speed because there is a speed limit.",
+              "slotValues": {
+                "verb": "speed",
+                "reason": "there is a speed limit"
+              }
+            },
+            {
+              "zh": "你不能在这里停车，因为这是禁止的。",
+              "answer": "You mustn't park here because it's forbidden.",
+              "slotValues": {
+                "verb": "park here",
+                "reason": "it's forbidden"
+              }
+            },
+            {
+              "zh": "你不能抽烟，因为这是禁烟区。",
+              "answer": "You mustn't smoke because this is a no-smoking area.",
+              "slotValues": {
+                "verb": "smoke",
+                "reason": "this is a no-smoking area"
+              }
+            },
+            {
+              "zh": "你不必来，因为这是可选的。",
+              "answer": "You don't have to come because it's optional.",
+              "slotValues": {
+                "verb": "come",
+                "reason": "it's optional"
+              }
+            },
+            {
+              "zh": "你不必付钱，因为我已经付了。",
+              "answer": "You don't have to pay because I already paid.",
+              "slotValues": {
+                "verb": "pay",
+                "reason": "I already paid"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_forbid",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "forbid / prohibit / ban 一词多句",
+          "vocabWord": "forbid / prohibit / ban",
+          "vocabMeaning": "禁止",
+          "patterns": [
+            {
+              "chunk": "___ is forbidden.",
+              "items": [
+                {
+                  "zh": "这里禁止停车。",
+                  "answer": "Parking is forbidden here."
+                },
+                {
+                  "zh": "禁止吸烟。",
+                  "answer": "Smoking is forbidden."
+                },
+                {
+                  "zh": "入内是禁止的吗？",
+                  "answer": "Is it forbidden to enter?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ is prohibited.",
+              "items": [
+                {
+                  "zh": "这里禁止吸烟。",
+                  "answer": "Smoking is prohibited here."
+                },
+                {
+                  "zh": "禁止拍照。",
+                  "answer": "Photography is prohibited."
+                },
+                {
+                  "zh": "禁止使用手机。",
+                  "answer": "Cell phone use is prohibited."
+                }
+              ]
+            },
+            {
+              "chunk": "There is a ban on ___.",
+              "items": [
+                {
+                  "zh": "禁止使用塑料袋。",
+                  "answer": "There is a ban on plastic bags."
+                },
+                {
+                  "zh": "禁止在公共场所吸烟。",
+                  "answer": "There is a ban on smoking in public places."
+                },
+                {
+                  "zh": "禁令还在吗？",
+                  "answer": "Is the ban still on?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_strict",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "strict / limit / penalty 一词多句",
+          "vocabWord": "strict / limit / penalty",
+          "vocabMeaning": "严格/限制/处罚",
+          "patterns": [
+            {
+              "chunk": "___ very strict.",
+              "items": [
+                {
+                  "zh": "我的老师很严格。",
+                  "answer": "My teacher is very strict."
+                },
+                {
+                  "zh": "规则非常严格。",
+                  "answer": "The rules are very strict."
+                },
+                {
+                  "zh": "这里的规定严吗？",
+                  "answer": "Are the rules strict here?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ speed limit ___.",
+              "items": [
+                {
+                  "zh": "你不能超速。",
+                  "answer": "You must not go over the speed limit."
+                },
+                {
+                  "zh": "限速是多少？",
+                  "answer": "What is the speed limit?"
+                },
+                {
+                  "zh": "这里限速30。",
+                  "answer": "The speed limit here is 30."
+                }
+              ]
+            },
+            {
+              "chunk": "___ penalty ___.",
+              "items": [
+                {
+                  "zh": "违反规则要交罚款。",
+                  "answer": "There is a penalty for breaking the rules."
+                },
+                {
+                  "zh": "罚款是多少？",
+                  "answer": "What is the penalty?"
+                },
+                {
+                  "zh": "这是罚单。",
+                  "answer": "This is a penalty ticket."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_remind",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "remind / warn / risk 一词多句",
+          "vocabWord": "remind / warn / risk",
+          "vocabMeaning": "提醒/警告/风险",
+          "patterns": [
+            {
+              "chunk": "Let me remind you ___.",
+              "items": [
+                {
+                  "zh": "让我提醒你这个规则。",
+                  "answer": "Let me remind you of the rule."
+                },
+                {
+                  "zh": "我提醒你带伞。",
+                  "answer": "Let me remind you to take an umbrella."
+                },
+                {
+                  "zh": "你提醒了我。",
+                  "answer": "You reminded me."
+                }
+              ]
+            },
+            {
+              "chunk": "I must warn you ___.",
+              "items": [
+                {
+                  "zh": "我必须警告你有危险。",
+                  "answer": "I must warn you about the danger."
+                },
+                {
+                  "zh": "我警告过你。",
+                  "answer": "I warned you."
+                },
+                {
+                  "zh": "有警告标志吗？",
+                  "answer": "Is there a warning sign?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ take a risk.",
+              "items": [
+                {
+                  "zh": "你不该冒不必要的风险。",
+                  "answer": "You shouldn't take unnecessary risks."
+                },
+                {
+                  "zh": "这是值得冒的风险。",
+                  "answer": "It's a risk worth taking."
+                },
+                {
+                  "zh": "你愿意冒险吗？",
+                  "answer": "Are you willing to take the risk?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从规则提醒到后果逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说规则",
+              "en": "You must not smoke here.",
+              "zh": "你不能在这里抽烟。"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "You must not smoke here because smoking is prohibited in this area.",
+              "zh": "你不能在这里抽烟，因为这个区域禁止吸烟。",
+              "highlight": "because smoking is prohibited in this area.",
+              "hint": "加上原因"
+            },
+            {
+              "level": 3,
+              "label": "加后果",
+              "en": "You must not smoke here because smoking is prohibited. If you do, you must pay a penalty.",
+              "zh": "你不能在这抽烟因为禁止吸烟。如果抽了，你得交罚款。",
+              "highlight": "If you do, you must pay a penalty.",
+              "hint": "加上后果"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "可能/不必/禁止": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 may / might / don't have to / mustn't 表达可能和不必",
+          "chunk": "may / might / don't have to / mustn't",
+          "chunkMeaning": "可能/或许/不必/禁止",
+          "items": [
+            {
+              "zh": "可能会下雨。",
+              "answer": "It may rain."
+            },
+            {
+              "zh": "或许会下雪。",
+              "answer": "It might snow."
+            },
+            {
+              "zh": "你不必来——这是可选的。",
+              "answer": "You don't have to come — it's optional."
+            },
+            {
+              "zh": "你不能进入。",
+              "answer": "You must not enter."
+            },
+            {
+              "zh": "我想你可能是对的。",
+              "answer": "I suppose you may be right."
+            },
+            {
+              "zh": "有可能下雨。",
+              "answer": "There is a chance it might rain."
+            },
+            {
+              "zh": "这个任务可选——你不必做。",
+              "answer": "This task is optional — you don't have to do it."
+            },
+            {
+              "zh": "你不被允许进入。",
+              "answer": "You are not permitted to enter."
+            },
+            {
+              "zh": "他可能会拒绝来。",
+              "answer": "He may refuse to come."
+            },
+            {
+              "zh": "我可能不敢尝试。",
+              "answer": "I may not dare to try it."
+            },
+            {
+              "zh": "你一开始可能会犹豫。",
+              "answer": "You may hesitate at first."
+            },
+            {
+              "zh": "你不必自愿报名。",
+              "answer": "You don't have to volunteer."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "It may/might [verb] — but you mustn't [verb] 对比操练",
+          "pattern": "It may [verb1], but you mustn't [verb2].",
+          "patternMeaning": "可能...但你不能...。",
+          "slots": [
+            "verb1",
+            "verb2"
+          ],
+          "items": [
+            {
+              "zh": "可能会下雨，但你不必担心。",
+              "answer": "It may rain, but you don't have to worry.",
+              "slotValues": {
+                "verb1": "rain",
+                "verb2": "worry"
+              }
+            },
+            {
+              "zh": "他可能会迟到，但你不应该生气。",
+              "answer": "He might be late, but you shouldn't get angry.",
+              "slotValues": {
+                "verb1": "be late",
+                "verb2": "get angry"
+              }
+            },
+            {
+              "zh": "情况可能会变，但你不能放弃。",
+              "answer": "Things may change, but you mustn't give up.",
+              "slotValues": {
+                "verb1": "change",
+                "verb2": "give up"
+              }
+            },
+            {
+              "zh": "可能会很难，但你不必一个人面对。",
+              "answer": "It might be hard, but you don't have to face it alone.",
+              "slotValues": {
+                "verb1": "be hard",
+                "verb2": "face it alone"
+              }
+            },
+            {
+              "zh": "也许我是错的，但你不可以这样说话。",
+              "answer": "I might be wrong, but you mustn't speak like that.",
+              "slotValues": {
+                "verb1": "be wrong",
+                "verb2": "speak like that"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_chance",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "chance / guess / suppose 一词多句",
+          "vocabWord": "chance / guess / suppose",
+          "vocabMeaning": "机会/猜测/猜想",
+          "patterns": [
+            {
+              "chunk": "There is a chance ___.",
+              "items": [
+                {
+                  "zh": "有可能下雨。",
+                  "answer": "There is a chance it might rain."
+                },
+                {
+                  "zh": "有成功的可能吗？",
+                  "answer": "Is there a chance of success?"
+                },
+                {
+                  "zh": "没有任何机会。",
+                  "answer": "There is no chance at all."
+                }
+              ]
+            },
+            {
+              "chunk": "I guess ___.",
+              "items": [
+                {
+                  "zh": "我想可能太晚了。",
+                  "answer": "I guess it might be too late."
+                },
+                {
+                  "zh": "我想你是对的。",
+                  "answer": "I guess you're right."
+                },
+                {
+                  "zh": "你猜怎么着？",
+                  "answer": "Guess what?"
+                }
+              ]
+            },
+            {
+              "chunk": "I suppose ___.",
+              "items": [
+                {
+                  "zh": "我想你可能是对的。",
+                  "answer": "I suppose you may be right."
+                },
+                {
+                  "zh": "我想我们可以试试。",
+                  "answer": "I suppose we could try."
+                },
+                {
+                  "zh": "我想是的。",
+                  "answer": "I suppose so."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_optional",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "optional / unnecessary / compulsory 一词多句",
+          "vocabWord": "optional / unnecessary / compulsory",
+          "vocabMeaning": "可选的/不必要的/强制的",
+          "patterns": [
+            {
+              "chunk": "___ optional.",
+              "items": [
+                {
+                  "zh": "这个任务可选——你不必做。",
+                  "answer": "This task is optional — you don't have to do it."
+                },
+                {
+                  "zh": "这是可选的还是必须的？",
+                  "answer": "Is this optional or required?"
+                },
+                {
+                  "zh": "参加是可选的。",
+                  "answer": "Participation is optional."
+                }
+              ]
+            },
+            {
+              "chunk": "___ unnecessary.",
+              "items": [
+                {
+                  "zh": "这样担心是不必要的。",
+                  "answer": "It's unnecessary to worry so much."
+                },
+                {
+                  "zh": "没必要解释。",
+                  "answer": "It's unnecessary to explain."
+                },
+                {
+                  "zh": "这些步骤是不必要的。",
+                  "answer": "These steps are unnecessary."
+                }
+              ]
+            },
+            {
+              "chunk": "___ compulsory.",
+              "items": [
+                {
+                  "zh": "这不是强制性的。",
+                  "answer": "This is not compulsory."
+                },
+                {
+                  "zh": "穿校服是强制的吗？",
+                  "answer": "Is wearing a uniform compulsory?"
+                },
+                {
+                  "zh": "所有学生必须参加——这是强制的。",
+                  "answer": "All students must attend — it's compulsory."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_permit",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "permit / refuse / hesitate 一词多句",
+          "vocabWord": "permit / refuse / hesitate",
+          "vocabMeaning": "许可/拒绝/犹豫",
+          "patterns": [
+            {
+              "chunk": "___ not permitted.",
+              "items": [
+                {
+                  "zh": "你不被允许进入。",
+                  "answer": "You are not permitted to enter."
+                },
+                {
+                  "zh": "这里允许拍照吗？",
+                  "answer": "Is photography permitted here?"
+                },
+                {
+                  "zh": "许可被拒绝了。",
+                  "answer": "Permission was denied."
+                }
+              ]
+            },
+            {
+              "chunk": "___ refuse ___.",
+              "items": [
+                {
+                  "zh": "他可能会拒绝来。",
+                  "answer": "He may refuse to come."
+                },
+                {
+                  "zh": "我无法拒绝。",
+                  "answer": "I can't refuse."
+                },
+                {
+                  "zh": "她拒绝了邀请。",
+                  "answer": "She refused the invitation."
+                }
+              ]
+            },
+            {
+              "chunk": "___ hesitate ___.",
+              "items": [
+                {
+                  "zh": "你一开始可能会犹豫。",
+                  "answer": "You may hesitate at first."
+                },
+                {
+                  "zh": "不要犹豫，去问！",
+                  "answer": "Don't hesitate — just ask!"
+                },
+                {
+                  "zh": "如果有问题，别犹豫联系我。",
+                  "answer": "Don't hesitate to contact me if you have questions."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从可能到不必逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说可能",
+              "en": "It may rain tomorrow.",
+              "zh": "明天可能会下雨。"
+            },
+            {
+              "level": 2,
+              "label": "加不必",
+              "en": "It may rain tomorrow, but you don't have to bring an umbrella — I have one.",
+              "zh": "明天可能下雨，但你不必带伞——我有一把。",
+              "highlight": "but you don't have to bring an umbrella — I have one.",
+              "hint": "加上不必做的事"
+            },
+            {
+              "level": 3,
+              "label": "加可选",
+              "en": "It may rain tomorrow, but you don't have to bring an umbrella. It's optional — I have extras.",
+              "zh": "明天可能下雨但你不必带伞。这是可选的——我有多余的。",
+              "highlight": "It's optional — I have extras.",
+              "hint": "强调可选的"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { isIOS } from '@/lib/native'
@@ -444,6 +445,15 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
   const hasPrev = currentIdx > 0
   const hasNext = currentIdx < totalSteps - 1
   const [playlistOpen, setPlaylistOpen] = useState(false)
+  const [autoNextEnabled, setAutoNextEnabled] = useState(false)
+
+  useEffect(() => {
+    if (!autoNextEnabled || !hasNext || allDone) return
+    const timer = window.setTimeout(() => {
+      setCurrentIdx((prev) => Math.min(totalSteps - 1, prev + 1))
+    }, 3000)
+    return () => window.clearTimeout(timer)
+  }, [allDone, autoNextEnabled, currentIdx, hasNext, totalSteps])
 
   if (totalSteps === 0) {
     return (
@@ -606,6 +616,15 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
           <h1 className="truncate text-lg font-bold text-foreground">{topicTitle}</h1>
           <p className="line-clamp-2 text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
+        <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+          <span>自动</span>
+          <Switch
+            checked={autoNextEnabled}
+            onCheckedChange={setAutoNextEnabled}
+            disabled={totalSteps <= 1}
+            className="origin-right scale-90"
+          />
+        </label>
       </div>
       <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 shrink-0 px-4" />
 

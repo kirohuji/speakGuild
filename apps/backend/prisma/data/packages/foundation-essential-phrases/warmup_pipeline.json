@@ -1,0 +1,2024 @@
+{
+  "一般疑问句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 Yes/No 回答一般疑问句",
+          "chunk": "Yes, ... / No, ...",
+          "chunkMeaning": "是.../不...",
+          "items": [
+            {
+              "zh": "你是学生吗？——是，我是。",
+              "answer": "Are you a student? — Yes, I am."
+            },
+            {
+              "zh": "你喜欢咖啡吗？——不，我不喜欢。",
+              "answer": "Do you like coffee? — No, I don't."
+            },
+            {
+              "zh": "你会游泳吗？——会。",
+              "answer": "Can you swim? — Yes, I can."
+            },
+            {
+              "zh": "你准备好了吗？——还没。",
+              "answer": "Are you ready? — No, I'm not."
+            },
+            {
+              "zh": "她说法语吗？——说。",
+              "answer": "Does she speak French? — Yes, she does."
+            },
+            {
+              "zh": "这大吗？——不，它小。",
+              "answer": "Is it big? — No, it isn't."
+            },
+            {
+              "zh": "这里有人吗？——有。",
+              "answer": "Is anyone here? — Yes, there is."
+            },
+            {
+              "zh": "你确定吗？——确定。",
+              "answer": "Are you sure? — Yes, I am sure."
+            },
+            {
+              "zh": "这样对吗？——对。",
+              "answer": "Is that correct? — Yes, it is."
+            },
+            {
+              "zh": "你明白我的意思吗？——明白。",
+              "answer": "Do you understand me? — Yes, I do."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Can I ask / Is that correct / Am I wrong 问答操练",
+          "pattern": "[aux] [subject] [rest]? — [answer].",
+          "patternMeaning": "...吗？——回答。",
+          "slots": [
+            "aux",
+            "subject",
+            "rest",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "我能问你点事吗？——可以。",
+              "answer": "Can I ask you something? — Sure.",
+              "slotValues": {
+                "aux": "Can",
+                "subject": "I",
+                "rest": "ask you something",
+                "answer": "Sure."
+              }
+            },
+            {
+              "zh": "这样对吗？——对。",
+              "answer": "Is that correct? — Yes, it is.",
+              "slotValues": {
+                "aux": "Is",
+                "subject": "that",
+                "rest": "correct",
+                "answer": "Yes, it is."
+              }
+            },
+            {
+              "zh": "我错了吗？——不，你没错。",
+              "answer": "Am I wrong? — No, you're not.",
+              "slotValues": {
+                "aux": "Am",
+                "subject": "I",
+                "rest": "wrong",
+                "answer": "No, you're not."
+              }
+            },
+            {
+              "zh": "你明白了吗？——明白了。",
+              "answer": "Do you understand? — Yes, I do.",
+              "slotValues": {
+                "aux": "Do",
+                "subject": "you",
+                "rest": "understand",
+                "answer": "Yes, I do."
+              }
+            },
+            {
+              "zh": "你能重复一遍吗？——可以。",
+              "answer": "Can you repeat that? — Sure.",
+              "slotValues": {
+                "aux": "Can",
+                "subject": "you",
+                "rest": "repeat that",
+                "answer": "Sure."
+              }
+            },
+            {
+              "zh": "你能再解释一遍吗？——好的。",
+              "answer": "Can you explain that again? — OK.",
+              "slotValues": {
+                "aux": "Can",
+                "subject": "you",
+                "rest": "explain that again",
+                "answer": "OK."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_ask",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "ask 一词多句",
+          "vocabWord": "ask",
+          "vocabMeaning": "问",
+          "patterns": [
+            {
+              "chunk": "Can I ask ___?",
+              "items": [
+                {
+                  "zh": "我能问你点事吗？",
+                  "answer": "Can I ask you something?"
+                },
+                {
+                  "zh": "我能问个问题吗？",
+                  "answer": "Can I ask a question?"
+                },
+                {
+                  "zh": "我能问他吗？",
+                  "answer": "Can I ask him?"
+                }
+              ]
+            },
+            {
+              "chunk": "I want to ask ___.",
+              "items": [
+                {
+                  "zh": "我想问你一个问题。",
+                  "answer": "I want to ask you a question."
+                },
+                {
+                  "zh": "我想问我妈妈。",
+                  "answer": "I want to ask my mom."
+                },
+                {
+                  "zh": "我想问路。",
+                  "answer": "I want to ask for directions."
+                }
+              ]
+            },
+            {
+              "chunk": "Let me ask ___.",
+              "items": [
+                {
+                  "zh": "让我问一下。",
+                  "answer": "Let me ask."
+                },
+                {
+                  "zh": "让我问他。",
+                  "answer": "Let me ask him."
+                },
+                {
+                  "zh": "让我再去问问。",
+                  "answer": "Let me ask again."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_sure",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "sure 一词多句",
+          "vocabWord": "sure",
+          "vocabMeaning": "确定/当然",
+          "patterns": [
+            {
+              "chunk": "Are you sure ___?",
+              "items": [
+                {
+                  "zh": "你确定吗？",
+                  "answer": "Are you sure?"
+                },
+                {
+                  "zh": "你确定那是真的吗？",
+                  "answer": "Are you sure about that?"
+                },
+                {
+                  "zh": "你确定他是对的？",
+                  "answer": "Are you sure he is correct?"
+                }
+              ]
+            },
+            {
+              "chunk": "I'm sure ___.",
+              "items": [
+                {
+                  "zh": "我确定。",
+                  "answer": "I'm sure."
+                },
+                {
+                  "zh": "我确定他是对的。",
+                  "answer": "I'm sure he is right."
+                },
+                {
+                  "zh": "我不太确定。",
+                  "answer": "I'm not really sure."
+                }
+              ]
+            },
+            {
+              "chunk": "___. — Sure!",
+              "items": [
+                {
+                  "zh": "你能帮我吗？——当然！",
+                  "answer": "Can you help me? — Sure!"
+                },
+                {
+                  "zh": "来点咖啡？——当然！",
+                  "answer": "Some coffee? — Sure!"
+                },
+                {
+                  "zh": "我能坐这吗？——当然。",
+                  "answer": "Can I sit here? — Sure."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_understand",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "understand 一词多句",
+          "vocabWord": "understand",
+          "vocabMeaning": "理解/明白",
+          "patterns": [
+            {
+              "chunk": "Do you understand ___?",
+              "items": [
+                {
+                  "zh": "你明白我的意思吗？",
+                  "answer": "Do you understand me?"
+                },
+                {
+                  "zh": "你理解这个问题吗？",
+                  "answer": "Do you understand the question?"
+                },
+                {
+                  "zh": "你明白他在说什么吗？",
+                  "answer": "Do you understand what he is saying?"
+                }
+              ]
+            },
+            {
+              "chunk": "I understand ___.",
+              "items": [
+                {
+                  "zh": "我明白了。",
+                  "answer": "I understand."
+                },
+                {
+                  "zh": "我理解你的意思。",
+                  "answer": "I understand what you mean."
+                },
+                {
+                  "zh": "我完全理解。",
+                  "answer": "I completely understand."
+                }
+              ]
+            },
+            {
+              "chunk": "I don't understand ___.",
+              "items": [
+                {
+                  "zh": "我不明白。",
+                  "answer": "I don't understand."
+                },
+                {
+                  "zh": "我不理解这个问题。",
+                  "answer": "I don't understand the question."
+                },
+                {
+                  "zh": "对不起，我听不懂。",
+                  "answer": "Sorry, I don't understand."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从提问到确认的对话",
+          "levels": [
+            {
+              "level": 1,
+              "label": "提问",
+              "en": "Can I ask you a question?",
+              "zh": "我能问你个问题吗？"
+            },
+            {
+              "level": 2,
+              "label": "加确认",
+              "en": "Can I ask you a question? Are you sure about this?",
+              "zh": "我能问你个问题吗？你确定吗？",
+              "highlight": "Are you sure about this?",
+              "hint": "加上确认问句"
+            },
+            {
+              "level": 3,
+              "label": "加理解",
+              "en": "Can I ask you a question? Are you sure about this? Do you understand me?",
+              "zh": "我能问你个问题吗？你确定吗？你明白我的意思吗？",
+              "highlight": "Do you understand me?",
+              "hint": "加上理解确认"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "过去疑问句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 yesterday / ago / last 造过去问句",
+          "chunk": "yesterday / ago / last",
+          "chunkMeaning": "昨天/...前/上一个",
+          "items": [
+            {
+              "zh": "你昨天吃早餐了吗？",
+              "answer": "Did you eat breakfast yesterday?"
+            },
+            {
+              "zh": "你两天前看到他了吗？",
+              "answer": "Did you see him two days ago?"
+            },
+            {
+              "zh": "你上周工作了吗？",
+              "answer": "Did you work last week?"
+            },
+            {
+              "zh": "你昨晚在家吗？",
+              "answer": "Were you at home last night?"
+            },
+            {
+              "zh": "你之前来过这里吗？",
+              "answer": "Did you come here before?"
+            },
+            {
+              "zh": "你开完会后吃了吗？",
+              "answer": "Did you eat after the meeting?"
+            },
+            {
+              "zh": "你已经完成了吗？",
+              "answer": "Did you finish already?"
+            },
+            {
+              "zh": "你吃了吗？（还没吃）",
+              "answer": "Did you eat yet?"
+            },
+            {
+              "zh": "你去过一次吗？",
+              "answer": "Did you go there once?"
+            },
+            {
+              "zh": "你曾经去过那里吗？",
+              "answer": "Did you ever go there?"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Did you...? — Yes/No, I... 过去问答操练",
+          "pattern": "Did you [verb] [time]? — [answer].",
+          "patternMeaning": "你[时间]...了吗？——回答。",
+          "slots": [
+            "verb",
+            "time",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你昨天去学校了吗？——去了。",
+              "answer": "Did you go to school yesterday? — Yes, I did.",
+              "slotValues": {
+                "verb": "go to school",
+                "time": "yesterday",
+                "answer": "Yes, I did."
+              }
+            },
+            {
+              "zh": "你昨晚看电视了吗？——没看。",
+              "answer": "Did you watch TV last night? — No, I didn't.",
+              "slotValues": {
+                "verb": "watch TV",
+                "time": "last night",
+                "answer": "No, I didn't."
+              }
+            },
+            {
+              "zh": "你上周打电话了吗？——打了两次。",
+              "answer": "Did you call last week? — Yes, I called twice.",
+              "slotValues": {
+                "verb": "call",
+                "time": "last week",
+                "answer": "Yes, I called twice."
+              }
+            },
+            {
+              "zh": "你已经吃了吗？——已经吃了。",
+              "answer": "Did you eat already? — Yes, I already ate.",
+              "slotValues": {
+                "verb": "eat",
+                "time": "already",
+                "answer": "Yes, I already ate."
+              }
+            },
+            {
+              "zh": "你周末过得好吗？——非常好。",
+              "answer": "Did you have a good weekend? — Yes, it was great.",
+              "slotValues": {
+                "verb": "have a good weekend",
+                "time": "",
+                "answer": "Yes, it was great."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_yesterday",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "yesterday 一词多句",
+          "vocabWord": "yesterday",
+          "vocabMeaning": "昨天",
+          "patterns": [
+            {
+              "chunk": "Did you ___ yesterday?",
+              "items": [
+                {
+                  "zh": "你昨天去学校了吗？",
+                  "answer": "Did you go to school yesterday?"
+                },
+                {
+                  "zh": "你昨天看电视了吗？",
+                  "answer": "Did you watch TV yesterday?"
+                },
+                {
+                  "zh": "你昨天见到她了吗？",
+                  "answer": "Did you see her yesterday?"
+                }
+              ]
+            },
+            {
+              "chunk": "I ___ yesterday.",
+              "items": [
+                {
+                  "zh": "我昨天去了。",
+                  "answer": "I went yesterday."
+                },
+                {
+                  "zh": "我昨天很累。",
+                  "answer": "I was tired yesterday."
+                },
+                {
+                  "zh": "我昨天没去。",
+                  "answer": "I didn't go yesterday."
+                }
+              ]
+            },
+            {
+              "chunk": "Yesterday was ___.",
+              "items": [
+                {
+                  "zh": "昨天是周一。",
+                  "answer": "Yesterday was Monday."
+                },
+                {
+                  "zh": "昨天很热。",
+                  "answer": "Yesterday was hot."
+                },
+                {
+                  "zh": "昨天太棒了。",
+                  "answer": "Yesterday was wonderful."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_already",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "already 一词多句",
+          "vocabWord": "already",
+          "vocabMeaning": "已经",
+          "patterns": [
+            {
+              "chunk": "I already ___.",
+              "items": [
+                {
+                  "zh": "我已经吃了。",
+                  "answer": "I already ate."
+                },
+                {
+                  "zh": "我已经完成了。",
+                  "answer": "I already finished."
+                },
+                {
+                  "zh": "我已经知道了。",
+                  "answer": "I already know."
+                }
+              ]
+            },
+            {
+              "chunk": "Did you already ___?",
+              "items": [
+                {
+                  "zh": "你已经吃了吗？",
+                  "answer": "Did you already eat?"
+                },
+                {
+                  "zh": "你已经完成了吗？",
+                  "answer": "Did you already finish?"
+                },
+                {
+                  "zh": "你已经打电话了吗？",
+                  "answer": "Did you already call?"
+                }
+              ]
+            },
+            {
+              "chunk": "I haven't ___ yet.",
+              "items": [
+                {
+                  "zh": "我还没吃。",
+                  "answer": "I haven't eaten yet."
+                },
+                {
+                  "zh": "我还没准备好。",
+                  "answer": "I'm not ready yet."
+                },
+                {
+                  "zh": "我还没决定。",
+                  "answer": "I haven't decided yet."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_once",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "once / twice 一词多句",
+          "vocabWord": "once / twice",
+          "vocabMeaning": "一次/两次",
+          "patterns": [
+            {
+              "chunk": "___ once a week.",
+              "items": [
+                {
+                  "zh": "我每周去一次。",
+                  "answer": "I go once a week."
+                },
+                {
+                  "zh": "我每周锻炼一次。",
+                  "answer": "I exercise once a week."
+                },
+                {
+                  "zh": "我每周给她打一次电话。",
+                  "answer": "I call her once a week."
+                }
+              ]
+            },
+            {
+              "chunk": "___ twice a day.",
+              "items": [
+                {
+                  "zh": "我每天吃两次。",
+                  "answer": "I eat twice a day."
+                },
+                {
+                  "zh": "他每天来两次。",
+                  "answer": "He comes twice a day."
+                },
+                {
+                  "zh": "我每天刷两次牙。",
+                  "answer": "I brush my teeth twice a day."
+                }
+              ]
+            },
+            {
+              "chunk": "Did you ___ once?",
+              "items": [
+                {
+                  "zh": "你去过一次吗？",
+                  "answer": "Did you go there once?"
+                },
+                {
+                  "zh": "你试过一次吗？",
+                  "answer": "Did you try it once?"
+                },
+                {
+                  "zh": "你只见过他一次？",
+                  "answer": "Did you only meet him once?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "过去问答逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "过去问",
+              "en": "Did you eat?",
+              "zh": "你吃了吗？"
+            },
+            {
+              "level": 2,
+              "label": "加细节",
+              "en": "Did you eat? — Yes, I already ate. I ate noodles.",
+              "zh": "你吃了吗？——已经吃了。吃了面条。",
+              "highlight": "Yes, I already ate. I ate noodles.",
+              "hint": "加上时间和内容"
+            },
+            {
+              "level": 3,
+              "label": "加反问",
+              "en": "Did you eat? — Yes, I already ate. How about you? Did you eat yet?",
+              "zh": "你吃了吗？——已经吃了。你呢？你吃了吗？",
+              "highlight": "How about you? Did you eat yet?",
+              "hint": "加上反问对方"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "6W问句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 person / place / time / thing 回答 W 问句",
+          "chunk": "person / place / time / thing",
+          "chunkMeaning": "人/地方/时间/东西",
+          "items": [
+            {
+              "zh": "那个人是谁？",
+              "answer": "Who is that person?"
+            },
+            {
+              "zh": "这是个好地方。",
+              "answer": "This is a nice place."
+            },
+            {
+              "zh": "现在几点了？",
+              "answer": "What time is it?"
+            },
+            {
+              "zh": "这个东西是什么？",
+              "answer": "What is this thing?"
+            },
+            {
+              "zh": "洗手间在哪里？——在那边。",
+              "answer": "Where is the bathroom? — Over there."
+            },
+            {
+              "zh": "你几点起床？——7点。",
+              "answer": "When do you get up? — At 7."
+            },
+            {
+              "zh": "你为什么迟到？——因为堵车。",
+              "answer": "Why are you late? — Because of traffic."
+            },
+            {
+              "zh": "哪个是你的？——蓝色那个。",
+              "answer": "Which one is yours? — The blue one."
+            },
+            {
+              "zh": "两个都要吗？——两个都要。",
+              "answer": "Do you want both? — Yes, both."
+            },
+            {
+              "zh": "每个都好。——对，每个都好。",
+              "answer": "Each is good. — Yes, each is good."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "What is the reason / Which way 问答操练",
+          "pattern": "[wh] [aux] [subject] [rest]? — [answer].",
+          "patternMeaning": "...？——回答。",
+          "slots": [
+            "wh",
+            "aux",
+            "subject",
+            "rest",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "原因是什么？——我不知道。",
+              "answer": "What is the reason? — I don't know.",
+              "slotValues": {
+                "wh": "What",
+                "aux": "is",
+                "subject": "the reason",
+                "rest": "",
+                "answer": "I don't know."
+              }
+            },
+            {
+              "zh": "车站怎么走？——这边。",
+              "answer": "Which way is the station? — This way.",
+              "slotValues": {
+                "wh": "Which way",
+                "aux": "is",
+                "subject": "the station",
+                "rest": "",
+                "answer": "This way."
+              }
+            },
+            {
+              "zh": "你喜欢什么类型的音乐？——流行。",
+              "answer": "What type of music do you like? — Pop.",
+              "slotValues": {
+                "wh": "What type of music",
+                "aux": "do",
+                "subject": "you",
+                "rest": "like",
+                "answer": "Pop."
+              }
+            },
+            {
+              "zh": "选哪个？——一个都不要。",
+              "answer": "Which one? — None of them.",
+              "slotValues": {
+                "wh": "Which one",
+                "aux": "",
+                "subject": "",
+                "rest": "",
+                "answer": "None of them."
+              }
+            },
+            {
+              "zh": "你要哪个？——每个都好。",
+              "answer": "Which one do you want? — Each is good.",
+              "slotValues": {
+                "wh": "Which one",
+                "aux": "do",
+                "subject": "you",
+                "rest": "want",
+                "answer": "Each is good."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_place",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "place 一词多句",
+          "vocabWord": "place",
+          "vocabMeaning": "地方",
+          "patterns": [
+            {
+              "chunk": "___ a good place.",
+              "items": [
+                {
+                  "zh": "这是个好地方。",
+                  "answer": "This is a good place."
+                },
+                {
+                  "zh": "那是个漂亮的地方。",
+                  "answer": "That is a beautiful place."
+                },
+                {
+                  "zh": "北京是个很棒的地方。",
+                  "answer": "Beijing is a wonderful place."
+                }
+              ]
+            },
+            {
+              "chunk": "What place ___?",
+              "items": [
+                {
+                  "zh": "那是什么地方？",
+                  "answer": "What place is that?"
+                },
+                {
+                  "zh": "你最喜欢什么地方？",
+                  "answer": "What place do you like best?"
+                },
+                {
+                  "zh": "我们在什么地方见面？",
+                  "answer": "What place should we meet?"
+                }
+              ]
+            },
+            {
+              "chunk": "Is this the right place?",
+              "items": [
+                {
+                  "zh": "是这个地方吗？",
+                  "answer": "Is this the place?"
+                },
+                {
+                  "zh": "这是对的地方吗？",
+                  "answer": "Is this the right place?"
+                },
+                {
+                  "zh": "我找对地方了吗？",
+                  "answer": "Did I find the right place?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_time",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "time 一词多句",
+          "vocabWord": "time",
+          "vocabMeaning": "时间",
+          "patterns": [
+            {
+              "chunk": "What time ___?",
+              "items": [
+                {
+                  "zh": "几点了？",
+                  "answer": "What time is it?"
+                },
+                {
+                  "zh": "会议几点？",
+                  "answer": "What time is the meeting?"
+                },
+                {
+                  "zh": "你几点起床？",
+                  "answer": "What time do you get up?"
+                }
+              ]
+            },
+            {
+              "chunk": "It's time to ___.",
+              "items": [
+                {
+                  "zh": "该走了。",
+                  "answer": "It's time to go."
+                },
+                {
+                  "zh": "该吃饭了。",
+                  "answer": "It's time to eat."
+                },
+                {
+                  "zh": "该睡觉了。",
+                  "answer": "It's time to sleep."
+                }
+              ]
+            },
+            {
+              "chunk": "___ on time.",
+              "items": [
+                {
+                  "zh": "请准时。",
+                  "answer": "Please be on time."
+                },
+                {
+                  "zh": "他从不迟到。",
+                  "answer": "He is always on time."
+                },
+                {
+                  "zh": "你能准时到吗？",
+                  "answer": "Can you come on time?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_way",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "way 一词多句",
+          "vocabWord": "way",
+          "vocabMeaning": "方式/路",
+          "patterns": [
+            {
+              "chunk": "Which way ___?",
+              "items": [
+                {
+                  "zh": "哪条路？",
+                  "answer": "Which way?"
+                },
+                {
+                  "zh": "车站怎么走？",
+                  "answer": "Which way is the station?"
+                },
+                {
+                  "zh": "我应该走哪条路？",
+                  "answer": "Which way should I go?"
+                }
+              ]
+            },
+            {
+              "chunk": "This way, ___.",
+              "items": [
+                {
+                  "zh": "这边，请。",
+                  "answer": "This way, please."
+                },
+                {
+                  "zh": "这样不对。",
+                  "answer": "This way is wrong."
+                },
+                {
+                  "zh": "用这个方法做。",
+                  "answer": "Do it this way."
+                }
+              ]
+            },
+            {
+              "chunk": "___ the best way.",
+              "items": [
+                {
+                  "zh": "这是最好的方式。",
+                  "answer": "This is the best way."
+                },
+                {
+                  "zh": "学英语最好的方式是每天练习。",
+                  "answer": "The best way to learn English is to practice every day."
+                },
+                {
+                  "zh": "有没有更好的办法？",
+                  "answer": "Is there a better way?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从 W 问到详情逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "一个问",
+              "en": "Where is this place?",
+              "zh": "这个地方在哪里？"
+            },
+            {
+              "level": 2,
+              "label": "加时间",
+              "en": "Where is this place? What time does it open?",
+              "zh": "这个地方在哪里？几点开门？",
+              "highlight": "What time does it open?",
+              "hint": "加上时间"
+            },
+            {
+              "level": 3,
+              "label": "加方式",
+              "en": "Where is this place? What time does it open? Which way should I go?",
+              "zh": "这个地方在哪里？几点开门？我应该怎么走？",
+              "highlight": "Which way should I go?",
+              "hint": "加上问路"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "What与Who详细问": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 happen / matter / problem / news 扩展 What 问句",
+          "chunk": "happen / matter / problem / news",
+          "chunkMeaning": "发生/事情/问题/消息",
+          "items": [
+            {
+              "zh": "你怎么了？",
+              "answer": "What happened to you?"
+            },
+            {
+              "zh": "他怎么了？",
+              "answer": "What's the matter with him?"
+            },
+            {
+              "zh": "这里有什么问题？",
+              "answer": "What is the problem here?"
+            },
+            {
+              "zh": "今天有什么新闻？",
+              "answer": "What is the news today?"
+            },
+            {
+              "zh": "你有什么想法？",
+              "answer": "What is your idea?"
+            },
+            {
+              "zh": "你最喜欢的食物是什么？",
+              "answer": "What is your favorite food?"
+            },
+            {
+              "zh": "这是谁的书？——我的。",
+              "answer": "Whose book is this? — It's mine."
+            },
+            {
+              "zh": "有人在那吗？",
+              "answer": "Is someone there?"
+            },
+            {
+              "zh": "有人在家吗？",
+              "answer": "Is anyone home?"
+            },
+            {
+              "zh": "这个包是谁的？",
+              "answer": "Who does this bag belong to?"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Why...? — Because... 因果问答操练",
+          "pattern": "Why [aux] [subject] [rest]? — Because [reason].",
+          "patternMeaning": "为什么...？——因为...。",
+          "slots": [
+            "aux",
+            "subject",
+            "rest",
+            "reason"
+          ],
+          "items": [
+            {
+              "zh": "你为什么迟到？——因为我错过了公交。",
+              "answer": "Why are you late? — Because I missed the bus.",
+              "slotValues": {
+                "aux": "are",
+                "subject": "you",
+                "rest": "late",
+                "reason": "I missed the bus"
+              }
+            },
+            {
+              "zh": "你为什么累？——因为我熬夜了。",
+              "answer": "Why are you tired? — Because I stayed up late.",
+              "slotValues": {
+                "aux": "are",
+                "subject": "you",
+                "rest": "tired",
+                "reason": "I stayed up late"
+              }
+            },
+            {
+              "zh": "他为什么高兴？——因为他有了新工作。",
+              "answer": "Why is he happy? — Because he got a new job.",
+              "slotValues": {
+                "aux": "is",
+                "subject": "he",
+                "rest": "happy",
+                "reason": "he got a new job"
+              }
+            },
+            {
+              "zh": "你为什么这么担心？——因为我丢了钱包。",
+              "answer": "Why do you worry so much? — Because I lost my wallet.",
+              "slotValues": {
+                "aux": "do",
+                "subject": "you",
+                "rest": "worry so much",
+                "reason": "I lost my wallet"
+              }
+            },
+            {
+              "zh": "她为什么没来？——因为她生病了。",
+              "answer": "Why didn't she come? — Because she is sick.",
+              "slotValues": {
+                "aux": "didn't",
+                "subject": "she",
+                "rest": "come",
+                "reason": "she is sick"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_favorite",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "favorite 一词多句",
+          "vocabWord": "favorite",
+          "vocabMeaning": "最喜欢的",
+          "patterns": [
+            {
+              "chunk": "What is your favorite ___?",
+              "items": [
+                {
+                  "zh": "你最喜欢的食物是什么？",
+                  "answer": "What is your favorite food?"
+                },
+                {
+                  "zh": "你最喜欢的颜色是什么？",
+                  "answer": "What is your favorite color?"
+                },
+                {
+                  "zh": "你最喜欢的电影是什么？",
+                  "answer": "What is your favorite movie?"
+                }
+              ]
+            },
+            {
+              "chunk": "My favorite ___ is ___.",
+              "items": [
+                {
+                  "zh": "我最喜欢的食物是披萨。",
+                  "answer": "My favorite food is pizza."
+                },
+                {
+                  "zh": "我最喜欢的颜色是蓝色。",
+                  "answer": "My favorite color is blue."
+                },
+                {
+                  "zh": "我最喜欢的地方是海滩。",
+                  "answer": "My favorite place is the beach."
+                }
+              ]
+            },
+            {
+              "chunk": "___ is my favorite.",
+              "items": [
+                {
+                  "zh": "这是我最喜欢的。",
+                  "answer": "This is my favorite."
+                },
+                {
+                  "zh": "咖啡是我的最爱。",
+                  "answer": "Coffee is my favorite."
+                },
+                {
+                  "zh": "夏天是我最喜欢的季节。",
+                  "answer": "Summer is my favorite season."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_idea",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "idea 一词多句",
+          "vocabWord": "idea",
+          "vocabMeaning": "想法/主意",
+          "patterns": [
+            {
+              "chunk": "___ a good idea.",
+              "items": [
+                {
+                  "zh": "好主意！",
+                  "answer": "Good idea!"
+                },
+                {
+                  "zh": "那是个好主意。",
+                  "answer": "That's a good idea."
+                },
+                {
+                  "zh": "这是个坏主意。",
+                  "answer": "This is a bad idea."
+                }
+              ]
+            },
+            {
+              "chunk": "What is your idea?",
+              "items": [
+                {
+                  "zh": "你有什么想法？",
+                  "answer": "What is your idea?"
+                },
+                {
+                  "zh": "你有什么好主意吗？",
+                  "answer": "Do you have any good ideas?"
+                },
+                {
+                  "zh": "我有个主意。",
+                  "answer": "I have an idea."
+                }
+              ]
+            },
+            {
+              "chunk": "I have no idea ___.",
+              "items": [
+                {
+                  "zh": "我不知道。",
+                  "answer": "I have no idea."
+                },
+                {
+                  "zh": "我不知道他在哪。",
+                  "answer": "I have no idea where he is."
+                },
+                {
+                  "zh": "我不知道该怎么做。",
+                  "answer": "I have no idea what to do."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_happen",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "happen 一词多句",
+          "vocabWord": "happen",
+          "vocabMeaning": "发生",
+          "patterns": [
+            {
+              "chunk": "What happened ___?",
+              "items": [
+                {
+                  "zh": "发生了什么事？",
+                  "answer": "What happened?"
+                },
+                {
+                  "zh": "你怎么了？",
+                  "answer": "What happened to you?"
+                },
+                {
+                  "zh": "这里发生了什么？",
+                  "answer": "What happened here?"
+                }
+              ]
+            },
+            {
+              "chunk": "Did ___ happen?",
+              "items": [
+                {
+                  "zh": "发生什么事了吗？",
+                  "answer": "Did something happen?"
+                },
+                {
+                  "zh": "那是什么时候发生的？",
+                  "answer": "When did that happen?"
+                },
+                {
+                  "zh": "这是怎么发生的？",
+                  "answer": "How did this happen?"
+                }
+              ]
+            },
+            {
+              "chunk": "It happens ___.",
+              "items": [
+                {
+                  "zh": "这种事经常发生。",
+                  "answer": "It happens a lot."
+                },
+                {
+                  "zh": "没关系，这种事总会发生。",
+                  "answer": "Don't worry. It happens."
+                },
+                {
+                  "zh": "这种事不会再发生了。",
+                  "answer": "It won't happen again."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从问事到问原因逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "问事",
+              "en": "What happened?",
+              "zh": "发生了什么事？"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "What happened? Why are you crying?",
+              "zh": "发生了什么事？你为什么哭？",
+              "highlight": "Why are you crying?",
+              "hint": "加上原因"
+            },
+            {
+              "level": 3,
+              "label": "加看法",
+              "en": "What happened? Why are you crying? What is your idea to fix it?",
+              "zh": "发生了什么事？你为什么哭？你有什么办法解决？",
+              "highlight": "What is your idea to fix it?",
+              "hint": "加上想法"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "数量与价格": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 dollar / yuan / pay / cost 表达价格",
+          "chunk": "dollar / yuan / pay / cost",
+          "chunkMeaning": "美元/元/支付/花费",
+          "items": [
+            {
+              "zh": "这个多少钱？——10美元。",
+              "answer": "How much is this? — Ten dollars."
+            },
+            {
+              "zh": "这个多少钱？——50元。",
+              "answer": "How much is it? — Fifty yuan."
+            },
+            {
+              "zh": "你付了多少钱？",
+              "answer": "How much did you pay?"
+            },
+            {
+              "zh": "这件衬衫多少钱？",
+              "answer": "How much does this shirt cost?"
+            },
+            {
+              "zh": "总共多少钱？",
+              "answer": "How much is the total?"
+            },
+            {
+              "zh": "找我多少钱？",
+              "answer": "How much change do I get?"
+            },
+            {
+              "zh": "你有现金吗？",
+              "answer": "Do you have cash?"
+            },
+            {
+              "zh": "能给我收据吗？",
+              "answer": "Can I have a receipt?"
+            },
+            {
+              "zh": "有折扣吗？",
+              "answer": "Is there a discount?"
+            },
+            {
+              "zh": "金额是多少？",
+              "answer": "How much is the amount?"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "How much to pay / How much does it cost 问答操练",
+          "pattern": "How much [rest]? — [answer].",
+          "patternMeaning": "多少钱/多少...？——回答。",
+          "slots": [
+            "rest",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你付了多少钱？——50元。",
+              "answer": "How much did you pay? — Fifty yuan.",
+              "slotValues": {
+                "rest": "did you pay",
+                "answer": "Fifty yuan."
+              }
+            },
+            {
+              "zh": "这个多少钱？——20美元。",
+              "answer": "How much does this cost? — Twenty dollars.",
+              "slotValues": {
+                "rest": "does this cost",
+                "answer": "Twenty dollars."
+              }
+            },
+            {
+              "zh": "总共多少？——100元。",
+              "answer": "How much is the total? — One hundred yuan.",
+              "slotValues": {
+                "rest": "is the total",
+                "answer": "One hundred yuan."
+              }
+            },
+            {
+              "zh": "有折扣吗？——有的，打八折。",
+              "answer": "Any discount? — Yes, 20% off.",
+              "slotValues": {
+                "rest": "",
+                "answer": "Yes, 20% off."
+              }
+            },
+            {
+              "zh": "现金还是刷卡？——现金。",
+              "answer": "Cash or card? — Cash.",
+              "slotValues": {
+                "rest": "",
+                "answer": "Cash."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_pay",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "pay 一词多句",
+          "vocabWord": "pay",
+          "vocabMeaning": "支付",
+          "patterns": [
+            {
+              "chunk": "How much did you pay?",
+              "items": [
+                {
+                  "zh": "你付了多少钱？",
+                  "answer": "How much did you pay?"
+                },
+                {
+                  "zh": "我应该付多少钱？",
+                  "answer": "How much should I pay?"
+                },
+                {
+                  "zh": "他付了多少？",
+                  "answer": "How much did he pay?"
+                }
+              ]
+            },
+            {
+              "chunk": "Can I pay ___?",
+              "items": [
+                {
+                  "zh": "我能用现金付吗？",
+                  "answer": "Can I pay in cash?"
+                },
+                {
+                  "zh": "我能刷卡吗？",
+                  "answer": "Can I pay by card?"
+                },
+                {
+                  "zh": "我现在能付吗？",
+                  "answer": "Can I pay now?"
+                }
+              ]
+            },
+            {
+              "chunk": "I need to pay ___.",
+              "items": [
+                {
+                  "zh": "我需要付钱。",
+                  "answer": "I need to pay."
+                },
+                {
+                  "zh": "我需要付50元。",
+                  "answer": "I need to pay fifty yuan."
+                },
+                {
+                  "zh": "让我来付。",
+                  "answer": "Let me pay."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_cost",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "cost 一词多句",
+          "vocabWord": "cost",
+          "vocabMeaning": "花费/成本",
+          "patterns": [
+            {
+              "chunk": "How much does ___ cost?",
+              "items": [
+                {
+                  "zh": "这个多少钱？",
+                  "answer": "How much does this cost?"
+                },
+                {
+                  "zh": "这件衬衫多少钱？",
+                  "answer": "How much does this shirt cost?"
+                },
+                {
+                  "zh": "门票多少钱？",
+                  "answer": "How much does the ticket cost?"
+                }
+              ]
+            },
+            {
+              "chunk": "It costs ___.",
+              "items": [
+                {
+                  "zh": "这个20美元。",
+                  "answer": "It costs twenty dollars."
+                },
+                {
+                  "zh": "这个不贵。",
+                  "answer": "It doesn't cost much."
+                },
+                {
+                  "zh": "这个太贵了。",
+                  "answer": "It costs too much."
+                }
+              ]
+            },
+            {
+              "chunk": "The cost is ___.",
+              "items": [
+                {
+                  "zh": "费用是50元。",
+                  "answer": "The cost is fifty yuan."
+                },
+                {
+                  "zh": "成本很高。",
+                  "answer": "The cost is high."
+                },
+                {
+                  "zh": "总费用是多少？",
+                  "answer": "What is the total cost?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_cash",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "cash 一词多句",
+          "vocabWord": "cash",
+          "vocabMeaning": "现金",
+          "patterns": [
+            {
+              "chunk": "Do you have cash?",
+              "items": [
+                {
+                  "zh": "你有现金吗？",
+                  "answer": "Do you have cash?"
+                },
+                {
+                  "zh": "你带现金了吗？",
+                  "answer": "Do you have cash with you?"
+                },
+                {
+                  "zh": "你有足够的现金吗？",
+                  "answer": "Do you have enough cash?"
+                }
+              ]
+            },
+            {
+              "chunk": "Can I pay in cash?",
+              "items": [
+                {
+                  "zh": "我能付现金吗？",
+                  "answer": "Can I pay in cash?"
+                },
+                {
+                  "zh": "这里能用现金吗？",
+                  "answer": "Can I use cash here?"
+                },
+                {
+                  "zh": "现金还是刷卡？",
+                  "answer": "Cash or card?"
+                }
+              ]
+            },
+            {
+              "chunk": "I don't have cash.",
+              "items": [
+                {
+                  "zh": "我没有现金。",
+                  "answer": "I don't have cash."
+                },
+                {
+                  "zh": "我只有卡，没现金。",
+                  "answer": "I only have a card, no cash."
+                },
+                {
+                  "zh": "能不能刷卡？我没带现金。",
+                  "answer": "Can I pay by card? I don't have cash."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从问价到付款逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "问价",
+              "en": "How much does this cost?",
+              "zh": "这个多少钱？"
+            },
+            {
+              "level": 2,
+              "label": "加支付",
+              "en": "How much does this cost? Can I pay in cash?",
+              "zh": "这个多少钱？我能付现金吗？",
+              "highlight": "Can I pay in cash?",
+              "hint": "加上支付方式"
+            },
+            {
+              "level": 3,
+              "label": "加收据",
+              "en": "How much does this cost? Can I pay in cash? Can I have a receipt?",
+              "zh": "这个多少钱？我能付现金吗？能给我收据吗？",
+              "highlight": "Can I have a receipt?",
+              "hint": "加上要收据"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "频率与方式": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 feel / fast / slow / well / better 描述状态",
+          "chunk": "feel / fast / slow / well / better",
+          "chunkMeaning": "感觉/快/慢/好/更好",
+          "items": [
+            {
+              "zh": "你今天感觉怎么样？",
+              "answer": "How do you feel today?"
+            },
+            {
+              "zh": "我有点不舒服。",
+              "answer": "I don't feel well."
+            },
+            {
+              "zh": "你能跑多快？",
+              "answer": "How fast can you run?"
+            },
+            {
+              "zh": "你能说慢点吗？",
+              "answer": "Can you speak slowly?"
+            },
+            {
+              "zh": "你对他有多了解？",
+              "answer": "How well do you know him?"
+            },
+            {
+              "zh": "我怎么能感觉好点？",
+              "answer": "How can I feel better?"
+            },
+            {
+              "zh": "你能多快完成？",
+              "answer": "How quickly can you finish?"
+            },
+            {
+              "zh": "怎样小心地做？",
+              "answer": "How to do it carefully?"
+            },
+            {
+              "zh": "你多久锻炼一次？",
+              "answer": "How often do you exercise?"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "How do you feel / How fast / How often 问答操练",
+          "pattern": "How [aspect] [aux] [subject] [rest]? — [answer].",
+          "patternMeaning": "怎么/怎么样...？——回答。",
+          "slots": [
+            "aspect",
+            "aux",
+            "subject",
+            "rest",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你感觉怎么样？——我很好。",
+              "answer": "How do you feel? — I feel great.",
+              "slotValues": {
+                "aspect": "",
+                "aux": "do",
+                "subject": "you",
+                "rest": "feel",
+                "answer": "I feel great."
+              }
+            },
+            {
+              "zh": "你能跑多快？——非常快。",
+              "answer": "How fast can you run? — Very fast.",
+              "slotValues": {
+                "aspect": "fast",
+                "aux": "can",
+                "subject": "you",
+                "rest": "run",
+                "answer": "Very fast."
+              }
+            },
+            {
+              "zh": "你多久锻炼一次？——每天。",
+              "answer": "How often do you exercise? — Every day.",
+              "slotValues": {
+                "aspect": "often",
+                "aux": "do",
+                "subject": "you",
+                "rest": "exercise",
+                "answer": "Every day."
+              }
+            },
+            {
+              "zh": "你说英语说得好吗？——还不错。",
+              "answer": "How well do you speak English? — Not bad.",
+              "slotValues": {
+                "aspect": "well",
+                "aux": "do",
+                "subject": "you",
+                "rest": "speak English",
+                "answer": "Not bad."
+              }
+            },
+            {
+              "zh": "你感觉好点了吗？——好多了。",
+              "answer": "Do you feel better? — Much better.",
+              "slotValues": {
+                "aspect": "",
+                "aux": "Do",
+                "subject": "you",
+                "rest": "feel better",
+                "answer": "Much better."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_feel",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "feel 一词多句",
+          "vocabWord": "feel",
+          "vocabMeaning": "感觉",
+          "patterns": [
+            {
+              "chunk": "How do you feel ___?",
+              "items": [
+                {
+                  "zh": "你今天感觉怎么样？",
+                  "answer": "How do you feel today?"
+                },
+                {
+                  "zh": "你感觉好点了吗？",
+                  "answer": "Do you feel better?"
+                },
+                {
+                  "zh": "你对这件事怎么看？",
+                  "answer": "How do you feel about it?"
+                }
+              ]
+            },
+            {
+              "chunk": "I feel ___.",
+              "items": [
+                {
+                  "zh": "我感觉很好。",
+                  "answer": "I feel great."
+                },
+                {
+                  "zh": "我感觉不舒服。",
+                  "answer": "I don't feel well."
+                },
+                {
+                  "zh": "我感觉有点累。",
+                  "answer": "I feel a little tired."
+                }
+              ]
+            },
+            {
+              "chunk": "It feels ___.",
+              "items": [
+                {
+                  "zh": "感觉很好。",
+                  "answer": "It feels good."
+                },
+                {
+                  "zh": "感觉不对。",
+                  "answer": "It feels wrong."
+                },
+                {
+                  "zh": "这感觉很舒服。",
+                  "answer": "This feels comfortable."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_better",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "better 一词多句",
+          "vocabWord": "better",
+          "vocabMeaning": "更好的/更好地",
+          "patterns": [
+            {
+              "chunk": "I feel ___ better.",
+              "items": [
+                {
+                  "zh": "我感觉好多了。",
+                  "answer": "I feel much better."
+                },
+                {
+                  "zh": "你感觉好点了吗？",
+                  "answer": "Are you feeling better?"
+                },
+                {
+                  "zh": "我希望你能快点好起来。",
+                  "answer": "I hope you feel better soon."
+                }
+              ]
+            },
+            {
+              "chunk": "___ is better than ___.",
+              "items": [
+                {
+                  "zh": "这个比那个好。",
+                  "answer": "This is better than that."
+                },
+                {
+                  "zh": "走路比开车好。",
+                  "answer": "Walking is better than driving."
+                },
+                {
+                  "zh": "我觉得这更好。",
+                  "answer": "I think this is better."
+                }
+              ]
+            },
+            {
+              "chunk": "Can you do better?",
+              "items": [
+                {
+                  "zh": "你能做得更好吗？",
+                  "answer": "Can you do better?"
+                },
+                {
+                  "zh": "我想做得更好。",
+                  "answer": "I want to do better."
+                },
+                {
+                  "zh": "下次会更好。",
+                  "answer": "It will be better next time."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_fast",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "fast / slowly 一词多句",
+          "vocabWord": "fast / slowly",
+          "vocabMeaning": "快地/慢慢地",
+          "patterns": [
+            {
+              "chunk": "How fast ___?",
+              "items": [
+                {
+                  "zh": "你能跑多快？",
+                  "answer": "How fast can you run?"
+                },
+                {
+                  "zh": "你能开多快？",
+                  "answer": "How fast can you drive?"
+                },
+                {
+                  "zh": "这有多快？",
+                  "answer": "How fast is it?"
+                }
+              ]
+            },
+            {
+              "chunk": "Please speak ___.",
+              "items": [
+                {
+                  "zh": "请说慢点。",
+                  "answer": "Please speak slowly."
+                },
+                {
+                  "zh": "你能说慢点吗？",
+                  "answer": "Can you speak more slowly?"
+                },
+                {
+                  "zh": "他说得太快了。",
+                  "answer": "He speaks too fast."
+                }
+              ]
+            },
+            {
+              "chunk": "Do it ___.",
+              "items": [
+                {
+                  "zh": "做快点。",
+                  "answer": "Do it quickly."
+                },
+                {
+                  "zh": "小心地做。",
+                  "answer": "Do it carefully."
+                },
+                {
+                  "zh": "不用急，慢慢来。",
+                  "answer": "Take your time. Do it slowly."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从问候到关心的对话",
+          "levels": [
+            {
+              "level": 1,
+              "label": "问候",
+              "en": "How do you feel?",
+              "zh": "你感觉怎么样？"
+            },
+            {
+              "level": 2,
+              "label": "加关心",
+              "en": "How do you feel? Are you feeling better today?",
+              "zh": "你感觉怎么样？今天好点了吗？",
+              "highlight": "Are you feeling better today?",
+              "hint": "加上关心"
+            },
+            {
+              "level": 3,
+              "label": "加提议",
+              "en": "How do you feel? Are you feeling better? How about a walk to feel better?",
+              "zh": "你感觉怎么样？好点了吗？出去走走也许会好点？",
+              "highlight": "How about a walk to feel better?",
+              "hint": "加上提议"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

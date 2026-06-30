@@ -1,0 +1,2018 @@
+{
+  "我喜欢做...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 like/enjoy/hate + doing 表达喜好",
+          "chunk": "like doing / enjoy doing / hate doing",
+          "chunkMeaning": "喜欢做/享受做/讨厌做",
+          "items": [
+            {
+              "zh": "我喜欢游泳。",
+              "answer": "I like swimming."
+            },
+            {
+              "zh": "她喜欢给家人做饭。",
+              "answer": "She enjoys cooking for her family."
+            },
+            {
+              "zh": "我讨厌排长队。",
+              "answer": "I hate waiting in long lines."
+            },
+            {
+              "zh": "比起开车我更喜欢走路。",
+              "answer": "I prefer walking to driving."
+            },
+            {
+              "zh": "我每天练习说英语。",
+              "answer": "I practice speaking English every day."
+            },
+            {
+              "zh": "我避免深夜吃东西。",
+              "answer": "I avoid eating late at night."
+            },
+            {
+              "zh": "我不介意等待。",
+              "answer": "I don't mind waiting."
+            },
+            {
+              "zh": "她建议休息一下。",
+              "answer": "She suggests taking a break."
+            },
+            {
+              "zh": "我在考虑搬到国外。",
+              "answer": "I'm considering moving abroad."
+            },
+            {
+              "zh": "你能想象住在太空吗？",
+              "answer": "Can you imagine living in space?"
+            },
+            {
+              "zh": "我热衷于学法语。",
+              "answer": "I'm keen on learning French."
+            },
+            {
+              "zh": "这本书值得一读。",
+              "answer": "This book is worth reading."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[subject] [verb] doing [noun] 动名词句式操练",
+          "pattern": "[subject] [verb] doing [noun].",
+          "patternMeaning": "某人...做某事",
+          "slots": [
+            "subject",
+            "verb",
+            "noun"
+          ],
+          "items": [
+            {
+              "zh": "我喜欢游泳。",
+              "answer": "I like swimming.",
+              "slotValues": {
+                "subject": "I",
+                "verb": "like",
+                "noun": "swimming"
+              }
+            },
+            {
+              "zh": "她享受做饭。",
+              "answer": "She enjoys cooking.",
+              "slotValues": {
+                "subject": "She",
+                "verb": "enjoys",
+                "noun": "cooking"
+              }
+            },
+            {
+              "zh": "他讨厌等待。",
+              "answer": "He hates waiting.",
+              "slotValues": {
+                "subject": "He",
+                "verb": "hates",
+                "noun": "waiting"
+              }
+            },
+            {
+              "zh": "我避免吃垃圾食品。",
+              "answer": "I avoid eating junk food.",
+              "slotValues": {
+                "subject": "I",
+                "verb": "avoid",
+                "noun": "eating junk food"
+              }
+            },
+            {
+              "zh": "你介意开窗吗？",
+              "answer": "Do you mind opening the window?",
+              "slotValues": {
+                "subject": "you",
+                "verb": "mind",
+                "noun": "opening the window"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_enjoy",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "enjoy / hate / mind 一词多句",
+          "vocabWord": "enjoy / hate / mind",
+          "vocabMeaning": "享受/讨厌/介意",
+          "patterns": [
+            {
+              "chunk": "I enjoy ___.",
+              "items": [
+                {
+                  "zh": "我喜欢做饭。",
+                  "answer": "I enjoy cooking."
+                },
+                {
+                  "zh": "她喜欢踢足球。",
+                  "answer": "She enjoys playing football."
+                },
+                {
+                  "zh": "你喜欢做什么？",
+                  "answer": "What do you enjoy doing?"
+                }
+              ]
+            },
+            {
+              "chunk": "I hate ___.",
+              "items": [
+                {
+                  "zh": "我讨厌早起。",
+                  "answer": "I hate getting up early."
+                },
+                {
+                  "zh": "她讨厌排队。",
+                  "answer": "She hates waiting in lines."
+                },
+                {
+                  "zh": "你讨厌做什么？",
+                  "answer": "What do you hate doing?"
+                }
+              ]
+            },
+            {
+              "chunk": "Do you mind ___?",
+              "items": [
+                {
+                  "zh": "你介意等一下吗？",
+                  "answer": "Do you mind waiting?"
+                },
+                {
+                  "zh": "你介意我坐这吗？",
+                  "answer": "Do you mind if I sit here?"
+                },
+                {
+                  "zh": "我不介意帮你。",
+                  "answer": "I don't mind helping you."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_keen",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "keen on / fond of / worth 一词多句",
+          "vocabWord": "keen on / fond of / worth",
+          "vocabMeaning": "热衷于/喜欢/值得",
+          "patterns": [
+            {
+              "chunk": "I'm keen on ___.",
+              "items": [
+                {
+                  "zh": "我热衷于学法语。",
+                  "answer": "I'm keen on learning French."
+                },
+                {
+                  "zh": "她热衷于摄影。",
+                  "answer": "She's keen on photography."
+                },
+                {
+                  "zh": "你热衷于什么？",
+                  "answer": "What are you keen on?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ fond of ___.",
+              "items": [
+                {
+                  "zh": "她喜欢唱歌。",
+                  "answer": "She is fond of singing."
+                },
+                {
+                  "zh": "我小时候很喜欢画画。",
+                  "answer": "I was fond of drawing as a child."
+                },
+                {
+                  "zh": "你喜欢户外活动吗？",
+                  "answer": "Are you fond of outdoor activities?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ worth ___.",
+              "items": [
+                {
+                  "zh": "这本书值得一读。",
+                  "answer": "This book is worth reading."
+                },
+                {
+                  "zh": "值得一试。",
+                  "answer": "It's worth trying."
+                },
+                {
+                  "zh": "不值得担心。",
+                  "answer": "It's not worth worrying about."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_avoid",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "avoid / consider / give up 一词多句",
+          "vocabWord": "avoid / consider / give up",
+          "vocabMeaning": "避免/考虑/放弃",
+          "patterns": [
+            {
+              "chunk": "I avoid ___.",
+              "items": [
+                {
+                  "zh": "我避免深夜吃东西。",
+                  "answer": "I avoid eating late at night."
+                },
+                {
+                  "zh": "你为什么不避开他？",
+                  "answer": "Why don't you avoid him?"
+                },
+                {
+                  "zh": "避免犯错是很难的。",
+                  "answer": "Avoiding mistakes is hard."
+                }
+              ]
+            },
+            {
+              "chunk": "I'm considering ___.",
+              "items": [
+                {
+                  "zh": "我在考虑搬到国外。",
+                  "answer": "I'm considering moving abroad."
+                },
+                {
+                  "zh": "她在考虑换工作。",
+                  "answer": "She's considering changing jobs."
+                },
+                {
+                  "zh": "你在考虑什么？",
+                  "answer": "What are you considering?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ give up ___.",
+              "items": [
+                {
+                  "zh": "我去年戒烟了。",
+                  "answer": "I gave up smoking last year."
+                },
+                {
+                  "zh": "不要放弃尝试。",
+                  "answer": "Don't give up trying."
+                },
+                {
+                  "zh": "你放弃了什么？",
+                  "answer": "What did you give up?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从喜好到行动逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说喜好",
+              "en": "I like swimming.",
+              "zh": "我喜欢游泳。"
+            },
+            {
+              "level": 2,
+              "label": "加频率",
+              "en": "I like swimming. I practice swimming every week.",
+              "zh": "我喜欢游泳。我每周练习游泳。",
+              "highlight": "I practice swimming every week.",
+              "hint": "加上练习频率"
+            },
+            {
+              "level": 3,
+              "label": "加推荐",
+              "en": "I like swimming. I practice every week. It's really worth trying!",
+              "zh": "我喜欢游泳。每周练习。真的很值得一试！",
+              "highlight": "It's really worth trying!",
+              "hint": "加上推荐"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我想做/需要做": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 want/hope/need + to do 表达意愿",
+          "chunk": "want to do / hope to / need to",
+          "chunkMeaning": "想做/希望/需要做",
+          "items": [
+            {
+              "zh": "我想学中文。",
+              "answer": "I want to learn Chinese."
+            },
+            {
+              "zh": "我需要买些食物。",
+              "answer": "I need to buy some food."
+            },
+            {
+              "zh": "我希望能再见到你。",
+              "answer": "I hope to see you again."
+            },
+            {
+              "zh": "我想现在点餐。",
+              "answer": "I would like to order now."
+            },
+            {
+              "zh": "我承诺会帮你。",
+              "answer": "I promise to help you."
+            },
+            {
+              "zh": "他拒绝回答。",
+              "answer": "He refused to answer."
+            },
+            {
+              "zh": "她同意来。",
+              "answer": "She agreed to come."
+            },
+            {
+              "zh": "我决定待在家。",
+              "answer": "I decided to stay home."
+            },
+            {
+              "zh": "我们计划去巴黎。",
+              "answer": "We plan to visit Paris."
+            },
+            {
+              "zh": "我想学做饭。",
+              "answer": "I want to learn to cook."
+            },
+            {
+              "zh": "他假装睡着了。",
+              "answer": "He pretended to be asleep."
+            },
+            {
+              "zh": "我渴望见到家人。",
+              "answer": "I long to see my family."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "I [verb] to [action] because [reason] 不定式操练",
+          "pattern": "I [verb] to [action] because [reason].",
+          "patternMeaning": "我...做...因为...",
+          "slots": [
+            "verb",
+            "action",
+            "reason"
+          ],
+          "items": [
+            {
+              "zh": "我想学中文因为我想去中国。",
+              "answer": "I want to learn Chinese because I want to visit China.",
+              "slotValues": {
+                "verb": "want",
+                "action": "learn Chinese",
+                "reason": "I want to visit China"
+              }
+            },
+            {
+              "zh": "我需要买食物因为冰箱空了。",
+              "answer": "I need to buy food because the fridge is empty.",
+              "slotValues": {
+                "verb": "need",
+                "action": "buy food",
+                "reason": "the fridge is empty"
+              }
+            },
+            {
+              "zh": "我希望能见到你因为我好想你。",
+              "answer": "I hope to see you because I miss you so much.",
+              "slotValues": {
+                "verb": "hope",
+                "action": "see you",
+                "reason": "I miss you so much"
+              }
+            },
+            {
+              "zh": "他拒绝回答因为他不想撒谎。",
+              "answer": "He refused to answer because he didn't want to lie.",
+              "slotValues": {
+                "verb": "refused",
+                "action": "answer",
+                "reason": "he didn't want to lie"
+              }
+            },
+            {
+              "zh": "我决定留下来因为天气太糟糕了。",
+              "answer": "I decided to stay because the weather was terrible.",
+              "slotValues": {
+                "verb": "decided",
+                "action": "stay",
+                "reason": "the weather was terrible"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_would_like",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "would like / hope / wish 一词多句",
+          "vocabWord": "would like / hope / wish",
+          "vocabMeaning": "想要(委婉)/希望/但愿",
+          "patterns": [
+            {
+              "chunk": "I would like ___.",
+              "items": [
+                {
+                  "zh": "我想订个房间。",
+                  "answer": "I would like to book a room."
+                },
+                {
+                  "zh": "你想要什么？",
+                  "answer": "What would you like?"
+                },
+                {
+                  "zh": "我想点些食物。",
+                  "answer": "I would like to order some food."
+                }
+              ]
+            },
+            {
+              "chunk": "I hope to ___.",
+              "items": [
+                {
+                  "zh": "我希望能再见到你。",
+                  "answer": "I hope to see you again."
+                },
+                {
+                  "zh": "她希望出国旅游。",
+                  "answer": "She hopes to travel abroad."
+                },
+                {
+                  "zh": "你希望做什么？",
+                  "answer": "What do you hope to do?"
+                }
+              ]
+            },
+            {
+              "chunk": "I wish I could ___.",
+              "items": [
+                {
+                  "zh": "但愿我能飞。",
+                  "answer": "I wish I could fly."
+                },
+                {
+                  "zh": "我真希望你能来。",
+                  "answer": "I wish you could come."
+                },
+                {
+                  "zh": "但愿如此！",
+                  "answer": "I wish!"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_promise",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "promise / agree / refuse 一词多句",
+          "vocabWord": "promise / agree / refuse",
+          "vocabMeaning": "承诺/同意/拒绝",
+          "patterns": [
+            {
+              "chunk": "I promise to ___.",
+              "items": [
+                {
+                  "zh": "我承诺会帮你。",
+                  "answer": "I promise to help you."
+                },
+                {
+                  "zh": "我保证会准时。",
+                  "answer": "I promise to be on time."
+                },
+                {
+                  "zh": "你保证吗？",
+                  "answer": "Do you promise?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ agreed to ___.",
+              "items": [
+                {
+                  "zh": "她同意来。",
+                  "answer": "She agreed to come."
+                },
+                {
+                  "zh": "他同意付钱。",
+                  "answer": "He agreed to pay."
+                },
+                {
+                  "zh": "你同意了吗？",
+                  "answer": "Did you agree?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ refused to ___.",
+              "items": [
+                {
+                  "zh": "他拒绝回答。",
+                  "answer": "He refused to answer."
+                },
+                {
+                  "zh": "她拒绝离开。",
+                  "answer": "She refused to leave."
+                },
+                {
+                  "zh": "你为什么拒绝？",
+                  "answer": "Why did you refuse?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_desire",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "desire / long / hesitate 一词多句",
+          "vocabWord": "desire / long / hesitate",
+          "vocabMeaning": "渴望/渴望/犹豫",
+          "patterns": [
+            {
+              "chunk": "I desire to ___.",
+              "items": [
+                {
+                  "zh": "我渴望学到更多。",
+                  "answer": "I desire to learn more."
+                },
+                {
+                  "zh": "她渴望成功。",
+                  "answer": "She desires to succeed."
+                },
+                {
+                  "zh": "你渴望什么？",
+                  "answer": "What do you desire?"
+                }
+              ]
+            },
+            {
+              "chunk": "I long to ___.",
+              "items": [
+                {
+                  "zh": "我渴望见到家人。",
+                  "answer": "I long to see my family."
+                },
+                {
+                  "zh": "他渴望回家。",
+                  "answer": "He longs to go home."
+                },
+                {
+                  "zh": "你渴望什么？",
+                  "answer": "What do you long for?"
+                }
+              ]
+            },
+            {
+              "chunk": "Don't hesitate to ___.",
+              "items": [
+                {
+                  "zh": "别犹豫，尽管问。",
+                  "answer": "Don't hesitate to ask."
+                },
+                {
+                  "zh": "请不要犹豫联系我。",
+                  "answer": "Please don't hesitate to contact me."
+                },
+                {
+                  "zh": "你还在犹豫什么？",
+                  "answer": "What are you hesitating about?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从意愿到承诺逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说意愿",
+              "en": "I want to learn Chinese.",
+              "zh": "我想学中文。"
+            },
+            {
+              "level": 2,
+              "label": "加计划",
+              "en": "I want to learn Chinese. I plan to take classes next month.",
+              "zh": "我想学中文。我计划下个月上课。",
+              "highlight": "I plan to take classes next month.",
+              "hint": "加上计划"
+            },
+            {
+              "level": 3,
+              "label": "加承诺",
+              "en": "I want to learn Chinese. I plan to take classes next month. I promise to practice every day!",
+              "zh": "我想学中文。计划下个月上课。我保证每天练习！",
+              "highlight": "I promise to practice every day!",
+              "hint": "加上承诺"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "请你帮我...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 Could/Would/May 表达礼貌请求",
+          "chunk": "Could you / Would you / May I",
+          "chunkMeaning": "你能/你愿意/我可以",
+          "items": [
+            {
+              "zh": "你能帮我这个吗？",
+              "answer": "Could you help me with this?"
+            },
+            {
+              "zh": "你介意开窗吗？",
+              "answer": "Would you mind opening the window?"
+            },
+            {
+              "zh": "我可以进来吗？",
+              "answer": "May I come in?"
+            },
+            {
+              "zh": "你能帮我个忙吗？",
+              "answer": "Could you do me a favor?"
+            },
+            {
+              "zh": "抱歉麻烦你。",
+              "answer": "Sorry to trouble you."
+            },
+            {
+              "zh": "打扰一下，能帮忙吗？",
+              "answer": "Excuse me, could you help?"
+            },
+            {
+              "zh": "请你开窗好吗？",
+              "answer": "Could you please open the window?"
+            },
+            {
+              "zh": "如果你能帮忙我会很感激。",
+              "answer": "I'd be grateful if you could help."
+            },
+            {
+              "zh": "当然可以，我很乐意帮忙。",
+              "answer": "Certainly, I'd be happy to help."
+            },
+            {
+              "zh": "当然你可以用。",
+              "answer": "Of course you can use it."
+            },
+            {
+              "zh": "不知道你能否帮我。",
+              "answer": "I wonder if you could help me."
+            },
+            {
+              "zh": "你碰巧能借我支笔吗？",
+              "answer": "Could you by any chance lend me a pen?"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Could you [verb]? — Sure/Certainly/Of course 请求与回答操练",
+          "pattern": "Could you [verb]? — [answer].",
+          "patternMeaning": "你能...吗？——回答。",
+          "slots": [
+            "verb",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你能帮我吗？——当然可以。",
+              "answer": "Could you help me? — Of course.",
+              "slotValues": {
+                "verb": "help me",
+                "answer": "Of course."
+              }
+            },
+            {
+              "zh": "你能开门吗？——当然。",
+              "answer": "Could you open the door? — Certainly.",
+              "slotValues": {
+                "verb": "open the door",
+                "answer": "Certainly."
+              }
+            },
+            {
+              "zh": "你能等一下吗？——没问题。",
+              "answer": "Could you wait a moment? — No problem.",
+              "slotValues": {
+                "verb": "wait a moment",
+                "answer": "No problem."
+              }
+            },
+            {
+              "zh": "你介意等一下吗？——一点也不。",
+              "answer": "Would you mind waiting? — Not at all.",
+              "slotValues": {
+                "verb": "waiting",
+                "answer": "Not at all."
+              }
+            },
+            {
+              "zh": "我可以进来吗？——请进。",
+              "answer": "May I come in? — Please do.",
+              "slotValues": {
+                "verb": "come in",
+                "answer": "Please do."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_could",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "could / would / may 一词多句",
+          "vocabWord": "could / would / may",
+          "vocabMeaning": "可以(委婉)/愿意/可以(正式)",
+          "patterns": [
+            {
+              "chunk": "Could you ___?",
+              "items": [
+                {
+                  "zh": "你能帮我吗？",
+                  "answer": "Could you help me?"
+                },
+                {
+                  "zh": "你能开一下门吗？",
+                  "answer": "Could you open the door?"
+                },
+                {
+                  "zh": "你能说慢一点吗？",
+                  "answer": "Could you speak more slowly?"
+                }
+              ]
+            },
+            {
+              "chunk": "Would you mind ___?",
+              "items": [
+                {
+                  "zh": "你介意等一下吗？",
+                  "answer": "Would you mind waiting a moment?"
+                },
+                {
+                  "zh": "你介意我抽烟吗？",
+                  "answer": "Would you mind if I smoke?"
+                },
+                {
+                  "zh": "你介意我坐这里吗？",
+                  "answer": "Would you mind my sitting here?"
+                }
+              ]
+            },
+            {
+              "chunk": "May I ___?",
+              "items": [
+                {
+                  "zh": "我可以进来吗？",
+                  "answer": "May I come in?"
+                },
+                {
+                  "zh": "我可以用你的电话吗？",
+                  "answer": "May I use your phone?"
+                },
+                {
+                  "zh": "我可以问个问题吗？",
+                  "answer": "May I ask a question?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_grateful",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "grateful / appreciate / oblige 一词多句",
+          "vocabWord": "grateful / appreciate / oblige",
+          "vocabMeaning": "感激/感谢/施恩",
+          "patterns": [
+            {
+              "chunk": "I'd be grateful if ___.",
+              "items": [
+                {
+                  "zh": "如果你能帮忙我会很感激。",
+                  "answer": "I'd be grateful if you could help."
+                },
+                {
+                  "zh": "如果你能回复我真的很感激。",
+                  "answer": "I'd be really grateful if you could reply."
+                },
+                {
+                  "zh": "如果你能来就太好了。",
+                  "answer": "I'd be grateful if you could come."
+                }
+              ]
+            },
+            {
+              "chunk": "I'd appreciate ___.",
+              "items": [
+                {
+                  "zh": "我会很感激你的帮助。",
+                  "answer": "I'd appreciate your help."
+                },
+                {
+                  "zh": "如果你能等等。",
+                  "answer": "I'd appreciate it if you could wait."
+                },
+                {
+                  "zh": "谢谢，我很感激。",
+                  "answer": "Thanks, I appreciate it."
+                }
+              ]
+            },
+            {
+              "chunk": "___ much obliged.",
+              "items": [
+                {
+                  "zh": "不胜感激。",
+                  "answer": "Much obliged."
+                },
+                {
+                  "zh": "如果你能帮忙我将感激不尽。",
+                  "answer": "I'd be much obliged if you could help."
+                },
+                {
+                  "zh": "感恩不尽。",
+                  "answer": "I am much obliged to you."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_excuse",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "excuse me / favor / bother 一词多句",
+          "vocabWord": "excuse me / favor / bother",
+          "vocabMeaning": "打扰/帮忙/打扰",
+          "patterns": [
+            {
+              "chunk": "Excuse me, ___?",
+              "items": [
+                {
+                  "zh": "打扰一下，能帮忙吗？",
+                  "answer": "Excuse me, could you help?"
+                },
+                {
+                  "zh": "打扰一下，现在几点了？",
+                  "answer": "Excuse me, what time is it?"
+                },
+                {
+                  "zh": "打扰一下，这是去车站的路吗？",
+                  "answer": "Excuse me, is this the way to the station?"
+                }
+              ]
+            },
+            {
+              "chunk": "Could you do me a favor?",
+              "items": [
+                {
+                  "zh": "你能帮我个忙吗？",
+                  "answer": "Could you do me a favor?"
+                },
+                {
+                  "zh": "帮我个忙——把这个给他。",
+                  "answer": "Do me a favor — give this to him."
+                },
+                {
+                  "zh": "你帮了我一个大忙。",
+                  "answer": "You did me a big favor."
+                }
+              ]
+            },
+            {
+              "chunk": "Sorry to bother ___.",
+              "items": [
+                {
+                  "zh": "抱歉打扰你。",
+                  "answer": "Sorry to bother you."
+                },
+                {
+                  "zh": "抱歉打扰，但...",
+                  "answer": "Sorry to bother, but..."
+                },
+                {
+                  "zh": "不打扰了。",
+                  "answer": "I won't bother you anymore."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从请求到感谢逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "请求",
+              "en": "Could you help me?",
+              "zh": "你能帮我吗？"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "Could you help me? I can't carry this by myself.",
+              "zh": "你能帮我吗？我自己拿不动。",
+              "highlight": "I can't carry this by myself.",
+              "hint": "加上原因"
+            },
+            {
+              "level": 3,
+              "label": "加感谢",
+              "en": "Could you help me? I can't carry this by myself. I'd be so grateful!",
+              "zh": "你能帮我吗？我自己拿不动。我会非常感激的！",
+              "highlight": "I'd be so grateful!",
+              "hint": "加上感谢"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "你想要...吗？": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 Would you like / Do you want / How about 表达邀请",
+          "chunk": "Would you like / Do you want / How about",
+          "chunkMeaning": "你想/你要/...怎么样",
+          "items": [
+            {
+              "zh": "你想要咖啡吗？",
+              "answer": "Would you like some coffee?"
+            },
+            {
+              "zh": "你想加入我们吗？",
+              "answer": "Would you like to join us?"
+            },
+            {
+              "zh": "今晚出去吃怎么样？",
+              "answer": "How about eating out tonight?"
+            },
+            {
+              "zh": "我很乐意接受你的邀请。",
+              "answer": "I'd love to accept your invitation."
+            },
+            {
+              "zh": "抱歉，我得婉拒。",
+              "answer": "I'm sorry, but I have to decline."
+            },
+            {
+              "zh": "改天吧。",
+              "answer": "Maybe another time."
+            },
+            {
+              "zh": "能改天再约吗？",
+              "answer": "Can I take a rain check?"
+            },
+            {
+              "zh": "这次我请客。",
+              "answer": "It's my treat this time."
+            },
+            {
+              "zh": "欢迎你加入我们。",
+              "answer": "You're welcome to join us."
+            },
+            {
+              "zh": "你想晚点一起玩吗？",
+              "answer": "Do you want to hang out later?"
+            },
+            {
+              "zh": "你应该和我们一起来。",
+              "answer": "You should come along with us."
+            },
+            {
+              "zh": "我们即兴去旅行吧！",
+              "answer": "Let's be spontaneous and go on a trip!"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Would you like to [verb]? — I'd love to / I'm afraid not 邀请问答操练",
+          "pattern": "Would you like to [verb]? — [answer].",
+          "patternMeaning": "你想...吗？——回答。",
+          "slots": [
+            "verb",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你想加入我们吗？——我很乐意。",
+              "answer": "Would you like to join us? — I'd love to.",
+              "slotValues": {
+                "verb": "join us",
+                "answer": "I'd love to."
+              }
+            },
+            {
+              "zh": "你想喝杯咖啡吗？——好的，谢谢。",
+              "answer": "Would you like some coffee? — Yes, please.",
+              "slotValues": {
+                "verb": "have some coffee",
+                "answer": "Yes, please."
+              }
+            },
+            {
+              "zh": "你想去散步吗？——恐怕不行。",
+              "answer": "Would you like to go for a walk? — I'm afraid not.",
+              "slotValues": {
+                "verb": "go for a walk",
+                "answer": "I'm afraid not."
+              }
+            },
+            {
+              "zh": "你想出去吃吗？——听起来很棒！",
+              "answer": "Would you like to eat out? — That sounds great!",
+              "slotValues": {
+                "verb": "eat out",
+                "answer": "That sounds great!"
+              }
+            },
+            {
+              "zh": "改天行吗？——当然，改天吧。",
+              "answer": "Can we do it another time? — Sure, another time.",
+              "slotValues": {
+                "verb": "do it",
+                "answer": "Sure, another time."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_invite",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "invite / join / welcome 一词多句",
+          "vocabWord": "invite / join / welcome",
+          "vocabMeaning": "邀请/加入/欢迎",
+          "patterns": [
+            {
+              "chunk": "I'd like to invite you ___.",
+              "items": [
+                {
+                  "zh": "我想邀请你吃晚饭。",
+                  "answer": "I'd like to invite you to dinner."
+                },
+                {
+                  "zh": "你被邀请了！",
+                  "answer": "You're invited!"
+                },
+                {
+                  "zh": "谁邀请你的？",
+                  "answer": "Who invited you?"
+                }
+              ]
+            },
+            {
+              "chunk": "Would you like to join ___?",
+              "items": [
+                {
+                  "zh": "你想加入我们吗？",
+                  "answer": "Would you like to join us?"
+                },
+                {
+                  "zh": "我能加入吗？",
+                  "answer": "Can I join?"
+                },
+                {
+                  "zh": "加入我们吧！",
+                  "answer": "Join us!"
+                }
+              ]
+            },
+            {
+              "chunk": "You're welcome to ___.",
+              "items": [
+                {
+                  "zh": "欢迎你加入我们。",
+                  "answer": "You're welcome to join us."
+                },
+                {
+                  "zh": "随时欢迎你来。",
+                  "answer": "You're welcome anytime."
+                },
+                {
+                  "zh": "不客气。",
+                  "answer": "You're welcome."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_treat",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "treat / hang out / come along 一词多句",
+          "vocabWord": "treat / hang out / come along",
+          "vocabMeaning": "请客/一起玩/一起来",
+          "patterns": [
+            {
+              "chunk": "It's my treat.",
+              "items": [
+                {
+                  "zh": "这次我请客。",
+                  "answer": "It's my treat this time."
+                },
+                {
+                  "zh": "让我来付——我请客。",
+                  "answer": "Let me pay — it's my treat."
+                },
+                {
+                  "zh": "不用，这次算我的。",
+                  "answer": "No, it's on me this time."
+                }
+              ]
+            },
+            {
+              "chunk": "Do you want to hang out ___?",
+              "items": [
+                {
+                  "zh": "你想晚点一起玩吗？",
+                  "answer": "Do you want to hang out later?"
+                },
+                {
+                  "zh": "我们周末一起玩吧。",
+                  "answer": "Let's hang out this weekend."
+                },
+                {
+                  "zh": "你和朋友一起玩吗？",
+                  "answer": "Do you hang out with friends?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ come along.",
+              "items": [
+                {
+                  "zh": "你应该和我们一起来。",
+                  "answer": "You should come along with us."
+                },
+                {
+                  "zh": "一起来吧！",
+                  "answer": "Come along!"
+                },
+                {
+                  "zh": "你想一起来吗？",
+                  "answer": "Would you like to come along?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_decline",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "decline / another time / rain check 一词多句",
+          "vocabWord": "decline / another time / rain check",
+          "vocabMeaning": "婉拒/改天/改日再约",
+          "patterns": [
+            {
+              "chunk": "I'm sorry, but I have to decline.",
+              "items": [
+                {
+                  "zh": "抱歉，我得婉拒。",
+                  "answer": "I'm sorry, but I have to decline."
+                },
+                {
+                  "zh": "她礼貌地婉拒了。",
+                  "answer": "She politely declined."
+                },
+                {
+                  "zh": "你为什么婉拒？",
+                  "answer": "Why did you decline?"
+                }
+              ]
+            },
+            {
+              "chunk": "Maybe another time.",
+              "items": [
+                {
+                  "zh": "改天吧。",
+                  "answer": "Maybe another time."
+                },
+                {
+                  "zh": "下次吧！",
+                  "answer": "Maybe next time!"
+                },
+                {
+                  "zh": "改天一定可以。",
+                  "answer": "Another time for sure."
+                }
+              ]
+            },
+            {
+              "chunk": "Can I take a rain check?",
+              "items": [
+                {
+                  "zh": "能改天再约吗？",
+                  "answer": "Can I take a rain check?"
+                },
+                {
+                  "zh": "我们改天吧——rain check。",
+                  "answer": "Let's rain check — another day."
+                },
+                {
+                  "zh": "当然，改天再约。",
+                  "answer": "Sure, take a rain check."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从邀请到回应逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "邀请",
+              "en": "Would you like to join us for dinner?",
+              "zh": "你想和我们一起吃晚饭吗？"
+            },
+            {
+              "level": 2,
+              "label": "加接受",
+              "en": "Would you like to join us for dinner? — I'd love to! It's been so long.",
+              "zh": "你想和我们吃晚饭吗？——我很乐意！好久不见了。",
+              "highlight": "I'd love to! It's been so long.",
+              "hint": "加上接受+理由"
+            },
+            {
+              "level": 3,
+              "label": "加请客",
+              "en": "Would you like to join us for dinner? — I'd love to! It's my treat this time.",
+              "zh": "你想和我们吃晚饭吗？——我很乐意！这次我请客。",
+              "highlight": "It's my treat this time.",
+              "hint": "加上请客"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我去过/做过": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 have been / have done / ever / never 表达经历",
+          "chunk": "have been / have done / ever / never",
+          "chunkMeaning": "去过/做过/曾经/从未",
+          "items": [
+            {
+              "zh": "我去过北京两次。",
+              "answer": "I have been to Beijing twice."
+            },
+            {
+              "zh": "你吃过寿司吗？——吃过。",
+              "answer": "Have you ever tried sushi? — Yes, I have."
+            },
+            {
+              "zh": "我从未见过鬼。",
+              "answer": "I have never seen a ghost."
+            },
+            {
+              "zh": "我体验过很多文化。",
+              "answer": "I have experienced many cultures."
+            },
+            {
+              "zh": "你出过国吗？",
+              "answer": "Have you ever been abroad?"
+            },
+            {
+              "zh": "我从未去过海外。",
+              "answer": "I have never traveled overseas."
+            },
+            {
+              "zh": "完成比赛是很大的成就。",
+              "answer": "Finishing the race was a great achievement."
+            },
+            {
+              "zh": "去巴黎在我的梦想清单上。",
+              "answer": "Visiting Paris is on my bucket list."
+            },
+            {
+              "zh": "我试过一次。",
+              "answer": "I have tried it once."
+            },
+            {
+              "zh": "我去过那里几次。",
+              "answer": "I have been there several times."
+            },
+            {
+              "zh": "到目前为止我去过5个国家。",
+              "answer": "So far, I have visited 5 countries."
+            },
+            {
+              "zh": "你最近看过什么好电影吗？",
+              "answer": "Have you seen any good movies lately?"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "Have you ever [past-participle]? — Yes, I have / No, I haven't 经历问答操练",
+          "pattern": "Have you ever [verb]? — [answer].",
+          "patternMeaning": "你曾经...过吗？——回答。",
+          "slots": [
+            "verb",
+            "answer"
+          ],
+          "items": [
+            {
+              "zh": "你吃过寿司吗？——吃过。",
+              "answer": "Have you ever tried sushi? — Yes, I have.",
+              "slotValues": {
+                "verb": "tried sushi",
+                "answer": "Yes, I have."
+              }
+            },
+            {
+              "zh": "你出过国吗？——没有。",
+              "answer": "Have you ever been abroad? — No, I haven't.",
+              "slotValues": {
+                "verb": "been abroad",
+                "answer": "No, I haven't."
+              }
+            },
+            {
+              "zh": "你见过雪吗？——见过一次。",
+              "answer": "Have you ever seen snow? — Yes, once.",
+              "slotValues": {
+                "verb": "seen snow",
+                "answer": "Yes, once."
+              }
+            },
+            {
+              "zh": "你骑过马吗？——从未。",
+              "answer": "Have you ever ridden a horse? — Never.",
+              "slotValues": {
+                "verb": "ridden a horse",
+                "answer": "Never."
+              }
+            },
+            {
+              "zh": "你去过伦敦吗？——去过两次。",
+              "answer": "Have you ever been to London? — Yes, twice.",
+              "slotValues": {
+                "verb": "been to London",
+                "answer": "Yes, twice."
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_ever",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "ever / never / once / several times 一词多句",
+          "vocabWord": "ever / never / once / several times",
+          "vocabMeaning": "曾经/从未/一次/几次",
+          "patterns": [
+            {
+              "chunk": "Have you ever ___?",
+              "items": [
+                {
+                  "zh": "你吃过寿司吗？",
+                  "answer": "Have you ever tried sushi?"
+                },
+                {
+                  "zh": "你出过国吗？",
+                  "answer": "Have you ever been abroad?"
+                },
+                {
+                  "zh": "你试过跳伞吗？",
+                  "answer": "Have you ever tried skydiving?"
+                }
+              ]
+            },
+            {
+              "chunk": "I have never ___.",
+              "items": [
+                {
+                  "zh": "我从未见过鬼。",
+                  "answer": "I have never seen a ghost."
+                },
+                {
+                  "zh": "我从未去过海外。",
+                  "answer": "I have never traveled overseas."
+                },
+                {
+                  "zh": "我从未试过那个。",
+                  "answer": "I have never tried that."
+                }
+              ]
+            },
+            {
+              "chunk": "I have ___ several times.",
+              "items": [
+                {
+                  "zh": "我去过几次。",
+                  "answer": "I have been there several times."
+                },
+                {
+                  "zh": "我试过好几次了。",
+                  "answer": "I have tried it several times."
+                },
+                {
+                  "zh": "我看过这部好几次了。",
+                  "answer": "I have seen this several times."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_abroad",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "abroad / overseas / so far 一词多句",
+          "vocabWord": "abroad / overseas / so far",
+          "vocabMeaning": "在国外/海外/到目前为止",
+          "patterns": [
+            {
+              "chunk": "Have you been abroad?",
+              "items": [
+                {
+                  "zh": "你出过国吗？",
+                  "answer": "Have you ever been abroad?"
+                },
+                {
+                  "zh": "她去过国外吗？",
+                  "answer": "Has she been abroad?"
+                },
+                {
+                  "zh": "我想出国留学。",
+                  "answer": "I want to study abroad."
+                }
+              ]
+            },
+            {
+              "chunk": "___ overseas ___.",
+              "items": [
+                {
+                  "zh": "我从未去过海外。",
+                  "answer": "I have never traveled overseas."
+                },
+                {
+                  "zh": "他在海外工作过。",
+                  "answer": "He has worked overseas."
+                },
+                {
+                  "zh": "海外经历很重要。",
+                  "answer": "Overseas experience is valuable."
+                }
+              ]
+            },
+            {
+              "chunk": "So far, I have ___.",
+              "items": [
+                {
+                  "zh": "到目前为止我去过5个国家。",
+                  "answer": "So far, I have visited 5 countries."
+                },
+                {
+                  "zh": "到目前为止一切顺利。",
+                  "answer": "So far, so good."
+                },
+                {
+                  "zh": "到目前为止你学到了什么？",
+                  "answer": "What have you learned so far?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_bucket",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "bucket list / achievement / milestone 一词多句",
+          "vocabWord": "bucket list / achievement / milestone",
+          "vocabMeaning": "梦想清单/成就/里程碑",
+          "patterns": [
+            {
+              "chunk": "___ on my bucket list.",
+              "items": [
+                {
+                  "zh": "去巴黎在我的梦想清单上。",
+                  "answer": "Visiting Paris is on my bucket list."
+                },
+                {
+                  "zh": "你的梦想清单上有什么？",
+                  "answer": "What's on your bucket list?"
+                },
+                {
+                  "zh": "我已经从清单上划掉好几项了。",
+                  "answer": "I've crossed off several items from my bucket list."
+                }
+              ]
+            },
+            {
+              "chunk": "___ achievement ___.",
+              "items": [
+                {
+                  "zh": "完成比赛是很大的成就。",
+                  "answer": "Finishing the race was a great achievement."
+                },
+                {
+                  "zh": "你最大的成就是什么？",
+                  "answer": "What is your greatest achievement?"
+                },
+                {
+                  "zh": "这是我一生的成就。",
+                  "answer": "This is my lifetime achievement."
+                }
+              ]
+            },
+            {
+              "chunk": "___ milestone ___.",
+              "items": [
+                {
+                  "zh": "毕业是我的一个重要里程碑。",
+                  "answer": "Graduation was a big milestone for me."
+                },
+                {
+                  "zh": "这是公司的一个重要里程碑。",
+                  "answer": "This is an important milestone for the company."
+                },
+                {
+                  "zh": "你下一个里程碑是什么？",
+                  "answer": "What is your next milestone?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从经历到成就逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说经历",
+              "en": "I have been to Beijing.",
+              "zh": "我去过北京。"
+            },
+            {
+              "level": 2,
+              "label": "加次数",
+              "en": "I have been to Beijing twice. I have also visited Shanghai.",
+              "zh": "我去过北京两次。还去过上海。",
+              "highlight": "I have also visited Shanghai.",
+              "hint": "加上更多经历"
+            },
+            {
+              "level": 3,
+              "label": "加成就",
+              "en": "I have been to Beijing twice and visited Shanghai. So far, I have visited 5 cities — that's an achievement for me!",
+              "zh": "我去过北京两次、去过上海。目前去过5个城市——对我来说是个成就！",
+              "highlight": "So far, I have visited 5 cities — that's an achievement!",
+              "hint": "加上成就总结"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "已经多久了": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 for/since/already/yet/just 表达持续时间",
+          "chunk": "for / since / already / yet / just",
+          "chunkMeaning": "持续/自从/已经/还没/刚刚",
+          "items": [
+            {
+              "zh": "他住在这里10年了。",
+              "answer": "He has lived here for 10 years."
+            },
+            {
+              "zh": "她从2020年开始学英语。",
+              "answer": "She has studied English since 2020."
+            },
+            {
+              "zh": "我已经做完作业了。",
+              "answer": "I have already finished my homework."
+            },
+            {
+              "zh": "我还没做完。",
+              "answer": "I haven't finished yet."
+            },
+            {
+              "zh": "我刚到。",
+              "answer": "I have just arrived."
+            },
+            {
+              "zh": "我在这里住了3年了。",
+              "answer": "I have lived here for 3 years."
+            },
+            {
+              "zh": "最近你看到她了吗？",
+              "answer": "Have you seen her recently?"
+            },
+            {
+              "zh": "到目前为止一切都好。",
+              "answer": "So far, everything has been good."
+            },
+            {
+              "zh": "到现在为止我从未迟到过。",
+              "answer": "Up to now, I have never been late."
+            },
+            {
+              "zh": "我这辈子都想要这个。",
+              "answer": "I have wanted this all my life."
+            },
+            {
+              "zh": "她在这里工作了十年。",
+              "answer": "She has worked here for a decade."
+            },
+            {
+              "zh": "这是我终身的梦想。",
+              "answer": "It has been my lifelong dream."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "I have [verb] for/since [time] 持续时间操练",
+          "pattern": "I have [verb] [for/since] [time].",
+          "patternMeaning": "我已经...了...。",
+          "slots": [
+            "verb",
+            "prep",
+            "time"
+          ],
+          "items": [
+            {
+              "zh": "我已经等了两个小时了。",
+              "answer": "I have waited for two hours.",
+              "slotValues": {
+                "verb": "waited",
+                "prep": "for",
+                "time": "two hours"
+              }
+            },
+            {
+              "zh": "我从2020年开始学了。",
+              "answer": "I have studied since 2020.",
+              "slotValues": {
+                "verb": "studied",
+                "prep": "since",
+                "time": "2020"
+              }
+            },
+            {
+              "zh": "我住在这里三年了。",
+              "answer": "I have lived here for three years.",
+              "slotValues": {
+                "verb": "lived here",
+                "prep": "for",
+                "time": "three years"
+              }
+            },
+            {
+              "zh": "我们从小就是朋友。",
+              "answer": "We have been friends since childhood.",
+              "slotValues": {
+                "verb": "been friends",
+                "prep": "since",
+                "time": "childhood"
+              }
+            },
+            {
+              "zh": "我刚吃完了。",
+              "answer": "I have just finished eating.",
+              "slotValues": {
+                "verb": "just finished",
+                "prep": "",
+                "time": "eating"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_for_since",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "for / since 一词多句",
+          "vocabWord": "for / since",
+          "vocabMeaning": "持续(时间段)/自从(时间点)",
+          "patterns": [
+            {
+              "chunk": "___ for ___.",
+              "items": [
+                {
+                  "zh": "我在这里住了3年了。",
+                  "answer": "I have lived here for 3 years."
+                },
+                {
+                  "zh": "等了两个小时了。",
+                  "answer": "I have waited for two hours."
+                },
+                {
+                  "zh": "我认识她十年了。",
+                  "answer": "I have known her for ten years."
+                }
+              ]
+            },
+            {
+              "chunk": "___ since ___.",
+              "items": [
+                {
+                  "zh": "我从2020年开始学英语。",
+                  "answer": "I have studied English since 2020."
+                },
+                {
+                  "zh": "从周一开始就没见到他。",
+                  "answer": "I haven't seen him since Monday."
+                },
+                {
+                  "zh": "我从小就喜欢音乐。",
+                  "answer": "I have loved music since I was a child."
+                }
+              ]
+            },
+            {
+              "chunk": "___ since vs for ___.",
+              "items": [
+                {
+                  "zh": "for后面是时间段，since后面是时间点。",
+                  "answer": "Use for with a duration, since with a point in time."
+                },
+                {
+                  "zh": "我学了3年英语（for）。",
+                  "answer": "I have studied English for 3 years."
+                },
+                {
+                  "zh": "从2020年开始学（since）。",
+                  "answer": "I have studied since 2020."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_already",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "already / yet / just 一词多句",
+          "vocabWord": "already / yet / just",
+          "vocabMeaning": "已经/还没/刚刚",
+          "patterns": [
+            {
+              "chunk": "I have already ___.",
+              "items": [
+                {
+                  "zh": "我已经吃过了。",
+                  "answer": "I have already eaten."
+                },
+                {
+                  "zh": "她已经走了。",
+                  "answer": "She has already left."
+                },
+                {
+                  "zh": "你已经做完了吗？",
+                  "answer": "Have you already done it?"
+                }
+              ]
+            },
+            {
+              "chunk": "I haven't ___ yet.",
+              "items": [
+                {
+                  "zh": "我还没完成。",
+                  "answer": "I haven't finished yet."
+                },
+                {
+                  "zh": "他还没到。",
+                  "answer": "He hasn't arrived yet."
+                },
+                {
+                  "zh": "你吃了吗？——还没。",
+                  "answer": "Have you eaten? — Not yet."
+                }
+              ]
+            },
+            {
+              "chunk": "I have just ___.",
+              "items": [
+                {
+                  "zh": "我刚到。",
+                  "answer": "I have just arrived."
+                },
+                {
+                  "zh": "我刚吃完。",
+                  "answer": "I have just finished eating."
+                },
+                {
+                  "zh": "我刚看到她了。",
+                  "answer": "I have just seen her."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_lifelong",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "all my life / decade / lifelong 一词多句",
+          "vocabWord": "all my life / decade / lifelong",
+          "vocabMeaning": "一辈子/十年/终身的",
+          "patterns": [
+            {
+              "chunk": "___ all my life.",
+              "items": [
+                {
+                  "zh": "我这辈子都想要这个。",
+                  "answer": "I have wanted this all my life."
+                },
+                {
+                  "zh": "我这辈子都住在这。",
+                  "answer": "I have lived here all my life."
+                },
+                {
+                  "zh": "这是我一生中最好的。",
+                  "answer": "This is the best of all my life."
+                }
+              ]
+            },
+            {
+              "chunk": "___ for a decade.",
+              "items": [
+                {
+                  "zh": "她在这里工作了十年。",
+                  "answer": "She has worked here for a decade."
+                },
+                {
+                  "zh": "我学英语学了十年。",
+                  "answer": "I have studied English for a decade."
+                },
+                {
+                  "zh": "十年是很长的时间。",
+                  "answer": "A decade is a long time."
+                }
+              ]
+            },
+            {
+              "chunk": "___ lifelong ___.",
+              "items": [
+                {
+                  "zh": "这是我终身的梦想。",
+                  "answer": "It has been my lifelong dream."
+                },
+                {
+                  "zh": "他是一个终身学习者。",
+                  "answer": "He is a lifelong learner."
+                },
+                {
+                  "zh": "学习是一个持续的过程。",
+                  "answer": "Learning is an ongoing process."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从持续到总结逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说持续",
+              "en": "I have lived here for 3 years.",
+              "zh": "我在这里住了3年了。"
+            },
+            {
+              "level": 2,
+              "label": "加起点",
+              "en": "I have lived here for 3 years. I moved here in 2021.",
+              "zh": "我在这里住了3年了。我是2021年搬来的。",
+              "highlight": "I moved here in 2021.",
+              "hint": "加上起点"
+            },
+            {
+              "level": 3,
+              "label": "加感受",
+              "en": "I have lived here for 3 years since 2021. I have really enjoyed it — it has been a wonderful experience so far.",
+              "zh": "我从2021年起在这里住了3年。我真的很享受——目前为止是很棒的经历。",
+              "highlight": "it has been a wonderful experience so far.",
+              "hint": "加上感受总结"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

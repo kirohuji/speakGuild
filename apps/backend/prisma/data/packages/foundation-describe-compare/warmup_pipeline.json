@@ -1,0 +1,2044 @@
+{
+  "比...更": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 -er than / more than 比较事物",
+          "chunk": "-er than / more ... than",
+          "chunkMeaning": "比...更",
+          "items": [
+            {
+              "zh": "我的房子比你的大。",
+              "answer": "My house is bigger than yours."
+            },
+            {
+              "zh": "这本书比那本有趣。",
+              "answer": "This book is more interesting than that one."
+            },
+            {
+              "zh": "她比我高。",
+              "answer": "She is taller than me."
+            },
+            {
+              "zh": "汽车比自行车快。",
+              "answer": "A car is faster than a bike."
+            },
+            {
+              "zh": "这个比那个便宜。",
+              "answer": "This one is cheaper than that one."
+            },
+            {
+              "zh": "英语比中文容易。",
+              "answer": "English is easier than Chinese."
+            },
+            {
+              "zh": "这条路更窄。",
+              "answer": "This street is narrower."
+            },
+            {
+              "zh": "比较这两个选项。",
+              "answer": "Compare these two options."
+            },
+            {
+              "zh": "有什么差异？",
+              "answer": "What is the difference?"
+            },
+            {
+              "zh": "她比我学得好。",
+              "answer": "She is a better student than me."
+            },
+            {
+              "zh": "他的车比我的新。",
+              "answer": "His car is newer than mine."
+            },
+            {
+              "zh": "这个包更重。",
+              "answer": "This bag is heavier."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "A is [comparative] than B 比较级操练",
+          "pattern": "[A] is [comp] than [B].",
+          "patternMeaning": "A比B更...",
+          "slots": [
+            "A",
+            "comp",
+            "B"
+          ],
+          "items": [
+            {
+              "zh": "我的房子比你的大。",
+              "answer": "My house is bigger than yours.",
+              "slotValues": {
+                "A": "My house",
+                "comp": "bigger",
+                "B": "yours"
+              }
+            },
+            {
+              "zh": "她比我高。",
+              "answer": "She is taller than me.",
+              "slotValues": {
+                "A": "She",
+                "comp": "taller",
+                "B": "me"
+              }
+            },
+            {
+              "zh": "这本书比那本有趣。",
+              "answer": "This book is more interesting than that one.",
+              "slotValues": {
+                "A": "This book",
+                "comp": "more interesting",
+                "B": "that one"
+              }
+            },
+            {
+              "zh": "这条路比那条宽。",
+              "answer": "This road is wider than that one.",
+              "slotValues": {
+                "A": "This road",
+                "comp": "wider",
+                "B": "that one"
+              }
+            },
+            {
+              "zh": "今天比昨天暖和。",
+              "answer": "Today is warmer than yesterday.",
+              "slotValues": {
+                "A": "Today",
+                "comp": "warmer",
+                "B": "yesterday"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_er",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "bigger / smaller / faster 一词多句",
+          "vocabWord": "bigger / smaller / faster",
+          "vocabMeaning": "更大/更小/更快",
+          "patterns": [
+            {
+              "chunk": "___ is bigger than ___.",
+              "items": [
+                {
+                  "zh": "我的房子比你的大。",
+                  "answer": "My house is bigger than yours."
+                },
+                {
+                  "zh": "这个城市比那个大。",
+                  "answer": "This city is bigger than that one."
+                },
+                {
+                  "zh": "你的房间比我的大吗？",
+                  "answer": "Is your room bigger than mine?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ is smaller than ___.",
+              "items": [
+                {
+                  "zh": "这个房间更小。",
+                  "answer": "This room is smaller."
+                },
+                {
+                  "zh": "我的包比你的小。",
+                  "answer": "My bag is smaller than yours."
+                },
+                {
+                  "zh": "最小的那个。",
+                  "answer": "The smallest one."
+                }
+              ]
+            },
+            {
+              "chunk": "___ faster than ___.",
+              "items": [
+                {
+                  "zh": "汽车比自行车快。",
+                  "answer": "A car is faster than a bike."
+                },
+                {
+                  "zh": "你能跑得更快吗？",
+                  "answer": "Can you run faster?"
+                },
+                {
+                  "zh": "飞机比火车快得多。",
+                  "answer": "A plane is much faster than a train."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_compare",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "compare / contrast / difference 一词多句",
+          "vocabWord": "compare / contrast / difference",
+          "vocabMeaning": "比较/对比/差异",
+          "patterns": [
+            {
+              "chunk": "Compare ___ with ___.",
+              "items": [
+                {
+                  "zh": "比较这两个选项。",
+                  "answer": "Compare these two options."
+                },
+                {
+                  "zh": "拿你的和我的比一比。",
+                  "answer": "Compare yours with mine."
+                },
+                {
+                  "zh": "你怎么比较它们？",
+                  "answer": "How do you compare them?"
+                }
+              ]
+            },
+            {
+              "chunk": "In contrast, ___.",
+              "items": [
+                {
+                  "zh": "相比之下，这个更便宜。",
+                  "answer": "In contrast, this one is cheaper."
+                },
+                {
+                  "zh": "相反，我更小。",
+                  "answer": "In contrast, I am smaller."
+                },
+                {
+                  "zh": "这个相反。",
+                  "answer": "This is in contrast."
+                }
+              ]
+            },
+            {
+              "chunk": "What is the difference?",
+              "items": [
+                {
+                  "zh": "有什么区别？",
+                  "answer": "What is the difference?"
+                },
+                {
+                  "zh": "我看不出区别。",
+                  "answer": "I can't tell the difference."
+                },
+                {
+                  "zh": "这两个有什么不同？",
+                  "answer": "What is the difference between the two?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_easier",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "easier / heavier / happier 一词多句",
+          "vocabWord": "easier / heavier / happier",
+          "vocabMeaning": "更容易/更重/更开心",
+          "patterns": [
+            {
+              "chunk": "___ is easier than ___.",
+              "items": [
+                {
+                  "zh": "英语比中文容易。",
+                  "answer": "English is easier than Chinese."
+                },
+                {
+                  "zh": "这次考试比上次容易。",
+                  "answer": "This exam is easier than the last one."
+                },
+                {
+                  "zh": "生活变容易了吗？",
+                  "answer": "Has life become easier?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ heavier ___.",
+              "items": [
+                {
+                  "zh": "这个包更重。",
+                  "answer": "This bag is heavier."
+                },
+                {
+                  "zh": "哪个更重？",
+                  "answer": "Which one is heavier?"
+                },
+                {
+                  "zh": "比我想象的重多了。",
+                  "answer": "It is much heavier than I thought."
+                }
+              ]
+            },
+            {
+              "chunk": "___ happier ___.",
+              "items": [
+                {
+                  "zh": "我现在更开心了。",
+                  "answer": "I feel happier now."
+                },
+                {
+                  "zh": "她看起来比之前开心。",
+                  "answer": "She looks happier than before."
+                },
+                {
+                  "zh": "什么能让你更开心？",
+                  "answer": "What would make you happier?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从比较到结论逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "比较",
+              "en": "This bag is bigger than that one.",
+              "zh": "这个包比那个大。"
+            },
+            {
+              "level": 2,
+              "label": "加数量",
+              "en": "This bag is bigger than that one. It is also much cheaper.",
+              "zh": "这个包比那个大。还便宜得多。",
+              "highlight": "It is also much cheaper.",
+              "hint": "加上价格比较"
+            },
+            {
+              "level": 3,
+              "label": "加结论",
+              "en": "This bag is bigger and much cheaper. In contrast, that one is too expensive. Let's get this one.",
+              "zh": "这个包更大、便宜得多。相比之下，那个太贵了。买这个吧。",
+              "highlight": "In contrast, that one is too expensive. Let's get this one.",
+              "hint": "加上结论"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "最...的": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 the -est / the most 表达最高级",
+          "chunk": "the best / the biggest / the most",
+          "chunkMeaning": "最好的/最大的/最...的",
+          "items": [
+            {
+              "zh": "这是最好的一天！",
+              "answer": "This is the best day ever!"
+            },
+            {
+              "zh": "她是我们班最好的学生。",
+              "answer": "She is the best student in our class."
+            },
+            {
+              "zh": "这是最大的那个。",
+              "answer": "It is the biggest one."
+            },
+            {
+              "zh": "请给我最小的尺寸。",
+              "answer": "The smallest size, please."
+            },
+            {
+              "zh": "这是最快的方式。",
+              "answer": "This is the fastest way."
+            },
+            {
+              "zh": "最便宜的选择就行。",
+              "answer": "The cheapest option is fine."
+            },
+            {
+              "zh": "她是最美的。",
+              "answer": "She is the most beautiful."
+            },
+            {
+              "zh": "那是部最烂的电影。",
+              "answer": "That was the worst movie."
+            },
+            {
+              "zh": "她是尖子生。",
+              "answer": "She is the top student."
+            },
+            {
+              "zh": "这是终极目标。",
+              "answer": "This is the ultimate goal."
+            },
+            {
+              "zh": "有史以来最伟大的演出。",
+              "answer": "The greatest show ever."
+            },
+            {
+              "zh": "最明亮的星。",
+              "answer": "The brightest star."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[A] is the [superlative] in/of [scope] 最高级操练",
+          "pattern": "[A] is the [sup] [scope].",
+          "patternMeaning": "A是...中最...的",
+          "slots": [
+            "A",
+            "sup",
+            "scope"
+          ],
+          "items": [
+            {
+              "zh": "这是城里最好的餐厅。",
+              "answer": "This is the best restaurant in town.",
+              "slotValues": {
+                "A": "This",
+                "sup": "best restaurant",
+                "scope": "in town"
+              }
+            },
+            {
+              "zh": "他是班里最高的男孩。",
+              "answer": "He is the tallest boy in the class.",
+              "slotValues": {
+                "A": "He",
+                "sup": "tallest boy",
+                "scope": "in the class"
+              }
+            },
+            {
+              "zh": "这是我看过的最美的地方。",
+              "answer": "This is the most beautiful place I have seen.",
+              "slotValues": {
+                "A": "This",
+                "sup": "most beautiful place",
+                "scope": "I have seen"
+              }
+            },
+            {
+              "zh": "那是部最烂的电影。",
+              "answer": "That was the worst movie ever.",
+              "slotValues": {
+                "A": "That",
+                "sup": "worst movie",
+                "scope": "ever"
+              }
+            },
+            {
+              "zh": "她是我认识的最善良的人。",
+              "answer": "She is the most kind person I know.",
+              "slotValues": {
+                "A": "She",
+                "sup": "most kind person",
+                "scope": "I know"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_best",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "best / worst / most 一词多句",
+          "vocabWord": "best / worst / most",
+          "vocabMeaning": "最好的/最差的/最多的",
+          "patterns": [
+            {
+              "chunk": "___ the best ___.",
+              "items": [
+                {
+                  "zh": "这是最好的一天！",
+                  "answer": "This is the best day ever!"
+                },
+                {
+                  "zh": "她是我最好的朋友。",
+                  "answer": "She is my best friend."
+                },
+                {
+                  "zh": "你做得很棒！",
+                  "answer": "You did the best!"
+                }
+              ]
+            },
+            {
+              "chunk": "___ the worst ___.",
+              "items": [
+                {
+                  "zh": "那是部最烂的电影。",
+                  "answer": "That was the worst movie."
+                },
+                {
+                  "zh": "那是我最糟糕的经历。",
+                  "answer": "That was my worst experience."
+                },
+                {
+                  "zh": "最坏的情况是什么？",
+                  "answer": "What is the worst that could happen?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ the most ___.",
+              "items": [
+                {
+                  "zh": "她是最美的。",
+                  "answer": "She is the most beautiful."
+                },
+                {
+                  "zh": "这是最重要的。",
+                  "answer": "This is the most important."
+                },
+                {
+                  "zh": "你最看重什么？",
+                  "answer": "What is the most important to you?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_est",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "biggest / smallest / fastest 一词多句",
+          "vocabWord": "biggest / smallest / fastest",
+          "vocabMeaning": "最大的/最小的/最快的",
+          "patterns": [
+            {
+              "chunk": "___ the biggest ___.",
+              "items": [
+                {
+                  "zh": "这是最大的那个。",
+                  "answer": "It is the biggest one."
+                },
+                {
+                  "zh": "最大的城市。",
+                  "answer": "The biggest city."
+                },
+                {
+                  "zh": "哪个最大？",
+                  "answer": "Which is the biggest?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ the smallest ___.",
+              "items": [
+                {
+                  "zh": "最小的尺寸。",
+                  "answer": "The smallest size."
+                },
+                {
+                  "zh": "最小的房间。",
+                  "answer": "The smallest room."
+                },
+                {
+                  "zh": "我想要最小的那个。",
+                  "answer": "I want the smallest one."
+                }
+              ]
+            },
+            {
+              "chunk": "___ the fastest ___.",
+              "items": [
+                {
+                  "zh": "这是最快的方式。",
+                  "answer": "This is the fastest way."
+                },
+                {
+                  "zh": "最快的选手。",
+                  "answer": "The fastest runner."
+                },
+                {
+                  "zh": "怎么最快到达？",
+                  "answer": "What is the fastest way to get there?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_top",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "top / ultimate / greatest 一词多句",
+          "vocabWord": "top / ultimate / greatest",
+          "vocabMeaning": "顶尖的/终极的/最伟大的",
+          "patterns": [
+            {
+              "chunk": "___ top ___.",
+              "items": [
+                {
+                  "zh": "她是尖子生。",
+                  "answer": "She is the top student."
+                },
+                {
+                  "zh": "这是顶级品质。",
+                  "answer": "This is top quality."
+                },
+                {
+                  "zh": "一流的表现！",
+                  "answer": "Top performance!"
+                }
+              ]
+            },
+            {
+              "chunk": "___ ultimate ___.",
+              "items": [
+                {
+                  "zh": "这是终极目标。",
+                  "answer": "This is the ultimate goal."
+                },
+                {
+                  "zh": "终极体验。",
+                  "answer": "The ultimate experience."
+                },
+                {
+                  "zh": "什么是终极目标？",
+                  "answer": "What is the ultimate goal?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ greatest ___.",
+              "items": [
+                {
+                  "zh": "有史以来最伟大的演出。",
+                  "answer": "The greatest show ever."
+                },
+                {
+                  "zh": "最伟大的发明。",
+                  "answer": "The greatest invention."
+                },
+                {
+                  "zh": "谁是最伟大的？",
+                  "answer": "Who is the greatest?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从最高级到排名逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "最高级",
+              "en": "This is the best restaurant in town.",
+              "zh": "这是城里最好的餐厅。"
+            },
+            {
+              "level": 2,
+              "label": "加对比",
+              "en": "This is the best restaurant in town. The second best is across the street.",
+              "zh": "这是城里最好的餐厅。第二好的在街对面。",
+              "highlight": "The second best is across the street.",
+              "hint": "加上排名"
+            },
+            {
+              "level": 3,
+              "label": "加推荐",
+              "en": "This is the best restaurant in town. You should definitely try it — it's the ultimate dining experience!",
+              "zh": "这是城里最好的餐厅。你一定要试试——终极的用餐体验！",
+              "highlight": "You should try it — the ultimate experience!",
+              "hint": "加上推荐"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "有...在...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 There is / There are 描述存在",
+          "chunk": "There is / There are / There isn't",
+          "chunkMeaning": "有/没有",
+          "items": [
+            {
+              "zh": "桌上有本书。",
+              "answer": "There is a book on the desk."
+            },
+            {
+              "zh": "花园里有两只猫。",
+              "answer": "There are two cats in the garden."
+            },
+            {
+              "zh": "附近有银行吗？——有。",
+              "answer": "Is there a bank near here? — Yes, there is."
+            },
+            {
+              "zh": "冰箱里没有牛奶了。",
+              "answer": "There isn't any milk in the fridge."
+            },
+            {
+              "zh": "没有任何学生。",
+              "answer": "There aren't any students."
+            },
+            {
+              "zh": "有大量的食物。",
+              "answer": "There is plenty of food."
+            },
+            {
+              "zh": "有可用的房间吗？",
+              "answer": "Is there a room available?"
+            },
+            {
+              "zh": "这个座位有人吗？",
+              "answer": "Is this seat occupied?"
+            },
+            {
+              "zh": "有空房间吗？",
+              "answer": "Is there a vacant room?"
+            },
+            {
+              "zh": "到处都有花。",
+              "answer": "There are flowers everywhere."
+            },
+            {
+              "zh": "缺乏信息。",
+              "answer": "There is a lack of information."
+            },
+            {
+              "zh": "房间是空的。",
+              "answer": "The room is empty."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "There is/are [noun] [place] 存在句操练",
+          "pattern": "There [be] [noun] [place].",
+          "patternMeaning": "[某地]有[某物]。",
+          "slots": [
+            "be",
+            "noun",
+            "place"
+          ],
+          "items": [
+            {
+              "zh": "桌上有本书。",
+              "answer": "There is a book on the desk.",
+              "slotValues": {
+                "be": "is",
+                "noun": "a book",
+                "place": "on the desk"
+              }
+            },
+            {
+              "zh": "花园里有很多花。",
+              "answer": "There are many flowers in the garden.",
+              "slotValues": {
+                "be": "are",
+                "noun": "many flowers",
+                "place": "in the garden"
+              }
+            },
+            {
+              "zh": "冰箱里没有牛奶。",
+              "answer": "There isn't any milk in the fridge.",
+              "slotValues": {
+                "be": "isn't",
+                "noun": "any milk",
+                "place": "in the fridge"
+              }
+            },
+            {
+              "zh": "房间里有很多学生。",
+              "answer": "There are many students in the room.",
+              "slotValues": {
+                "be": "are",
+                "noun": "many students",
+                "place": "in the room"
+              }
+            },
+            {
+              "zh": "附近有医院吗？",
+              "answer": "Is there a hospital nearby?",
+              "slotValues": {
+                "be": "Is",
+                "noun": "a hospital",
+                "place": "nearby"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_there",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "there is / there are 一词多句",
+          "vocabWord": "there is / there are",
+          "vocabMeaning": "有(存在句)",
+          "patterns": [
+            {
+              "chunk": "There is ___.",
+              "items": [
+                {
+                  "zh": "桌上有本书。",
+                  "answer": "There is a book on the desk."
+                },
+                {
+                  "zh": "附近有银行。",
+                  "answer": "There is a bank near here."
+                },
+                {
+                  "zh": "有一个问题。",
+                  "answer": "There is a problem."
+                }
+              ]
+            },
+            {
+              "chunk": "There are ___.",
+              "items": [
+                {
+                  "zh": "花园里有两只猫。",
+                  "answer": "There are two cats in the garden."
+                },
+                {
+                  "zh": "有一些苹果。",
+                  "answer": "There are some apples."
+                },
+                {
+                  "zh": "有很多人。",
+                  "answer": "There are many people."
+                }
+              ]
+            },
+            {
+              "chunk": "Is there ___?",
+              "items": [
+                {
+                  "zh": "附近有医院吗？",
+                  "answer": "Is there a hospital nearby?"
+                },
+                {
+                  "zh": "有问题吗？",
+                  "answer": "Is there a problem?"
+                },
+                {
+                  "zh": "有足够的食物吗？",
+                  "answer": "Is there enough food?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_empty",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "empty / full / crowded 一词多句",
+          "vocabWord": "empty / full / crowded",
+          "vocabMeaning": "空的/满的/拥挤的",
+          "patterns": [
+            {
+              "chunk": "___ is empty.",
+              "items": [
+                {
+                  "zh": "房间是空的。",
+                  "answer": "The room is empty."
+                },
+                {
+                  "zh": "杯子是空的。",
+                  "answer": "The cup is empty."
+                },
+                {
+                  "zh": "冰箱空了。",
+                  "answer": "The fridge is empty."
+                }
+              ]
+            },
+            {
+              "chunk": "___ is full.",
+              "items": [
+                {
+                  "zh": "冰箱满了。",
+                  "answer": "The fridge is full."
+                },
+                {
+                  "zh": "房间满了。",
+                  "answer": "The room is full."
+                },
+                {
+                  "zh": "杯子满了。",
+                  "answer": "The cup is full."
+                }
+              ]
+            },
+            {
+              "chunk": "___ is crowded.",
+              "items": [
+                {
+                  "zh": "街上很拥挤。",
+                  "answer": "The street is crowded."
+                },
+                {
+                  "zh": "公交车上很挤。",
+                  "answer": "The bus is crowded."
+                },
+                {
+                  "zh": "太挤了！",
+                  "answer": "It's too crowded!"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_occupy",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "occupied / vacant / available 一词多句",
+          "vocabWord": "occupied / vacant / available",
+          "vocabMeaning": "被占用的/空着的/可用的",
+          "patterns": [
+            {
+              "chunk": "Is this seat occupied?",
+              "items": [
+                {
+                  "zh": "这个座位有人吗？",
+                  "answer": "Is this seat occupied?"
+                },
+                {
+                  "zh": "洗手间被占用了。",
+                  "answer": "The bathroom is occupied."
+                },
+                {
+                  "zh": "这个位置已被占用。",
+                  "answer": "This spot is occupied."
+                }
+              ]
+            },
+            {
+              "chunk": "___ vacant ___.",
+              "items": [
+                {
+                  "zh": "有空房间吗？",
+                  "answer": "Is there a vacant room?"
+                },
+                {
+                  "zh": "空座位。",
+                  "answer": "A vacant seat."
+                },
+                {
+                  "zh": "有没有空的？",
+                  "answer": "Is there anything vacant?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ available ___.",
+              "items": [
+                {
+                  "zh": "有可用的房间吗？",
+                  "answer": "Is there a room available?"
+                },
+                {
+                  "zh": "这本书还有吗？",
+                  "answer": "Is this book available?"
+                },
+                {
+                  "zh": "你现在有空吗？",
+                  "answer": "Are you available now?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从存在描述到状态描述逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说有",
+              "en": "There is a room on the second floor.",
+              "zh": "二楼有一个房间。"
+            },
+            {
+              "level": 2,
+              "label": "加状态",
+              "en": "There is a room on the second floor, but it is occupied.",
+              "zh": "二楼有一个房间，但被占用了。",
+              "highlight": "but it is occupied.",
+              "hint": "加上状态"
+            },
+            {
+              "level": 3,
+              "label": "加替代",
+              "en": "There is a room on the second floor, but it is occupied. Is there a vacant room available?",
+              "zh": "二楼有一个房间但被占用了。有空房间吗？",
+              "highlight": "Is there a vacant room available?",
+              "hint": "加上询问"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "在...里/上/旁边": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 under / next to / between / behind 描述位置",
+          "chunk": "under / next to / between / behind",
+          "chunkMeaning": "在下面/在旁边/在之间/在后面",
+          "items": [
+            {
+              "zh": "猫在椅子下。",
+              "answer": "The cat is under the chair."
+            },
+            {
+              "zh": "学校在公园旁边。",
+              "answer": "The school is next to the park."
+            },
+            {
+              "zh": "银行在商店和医院之间。",
+              "answer": "The bank is between the store and the hospital."
+            },
+            {
+              "zh": "狗在门后面。",
+              "answer": "The dog is behind the door."
+            },
+            {
+              "zh": "钟在门上方。",
+              "answer": "The clock is above the door."
+            },
+            {
+              "zh": "温度在零下。",
+              "answer": "The temperature is below zero."
+            },
+            {
+              "zh": "她坐在朋友中间。",
+              "answer": "She is sitting among her friends."
+            },
+            {
+              "zh": "自行车靠在墙上。",
+              "answer": "The bike is against the wall."
+            },
+            {
+              "zh": "盒子里面是什么？",
+              "answer": "What is inside the box?"
+            },
+            {
+              "zh": "我们坐外面吧。",
+              "answer": "Let's sit outside."
+            },
+            {
+              "zh": "她坐在我旁边。",
+              "answer": "She sat beside me."
+            },
+            {
+              "zh": "房子被树围绕。",
+              "answer": "The house is surrounded by trees."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[subject] is [prep] [object] 位置介词操练",
+          "pattern": "[S] is [prep] [O].",
+          "patternMeaning": "某物在某位置。",
+          "slots": [
+            "S",
+            "prep",
+            "O"
+          ],
+          "items": [
+            {
+              "zh": "猫在椅子下。",
+              "answer": "The cat is under the chair.",
+              "slotValues": {
+                "S": "The cat",
+                "prep": "under",
+                "O": "the chair"
+              }
+            },
+            {
+              "zh": "学校在公园旁边。",
+              "answer": "The school is next to the park.",
+              "slotValues": {
+                "S": "The school",
+                "prep": "next to",
+                "O": "the park"
+              }
+            },
+            {
+              "zh": "银行在两者之间。",
+              "answer": "The bank is between the store and the hospital.",
+              "slotValues": {
+                "S": "The bank",
+                "prep": "between",
+                "O": "the store and the hospital"
+              }
+            },
+            {
+              "zh": "狗在门后面。",
+              "answer": "The dog is behind the door.",
+              "slotValues": {
+                "S": "The dog",
+                "prep": "behind",
+                "O": "the door"
+              }
+            },
+            {
+              "zh": "她坐在我旁边。",
+              "answer": "She sat beside me.",
+              "slotValues": {
+                "S": "She",
+                "prep": "beside",
+                "O": "me"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_under",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "under / above / below 一词多句",
+          "vocabWord": "under / above / below",
+          "vocabMeaning": "在下面/在上面/在下方",
+          "patterns": [
+            {
+              "chunk": "___ under ___.",
+              "items": [
+                {
+                  "zh": "猫在椅子下。",
+                  "answer": "The cat is under the chair."
+                },
+                {
+                  "zh": "笔在桌子下面。",
+                  "answer": "The pen is under the desk."
+                },
+                {
+                  "zh": "地板下面是什么？",
+                  "answer": "What is under the floor?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ above ___.",
+              "items": [
+                {
+                  "zh": "钟在门上方。",
+                  "answer": "The clock is above the door."
+                },
+                {
+                  "zh": "鸟在我们上方飞。",
+                  "answer": "Birds are flying above us."
+                },
+                {
+                  "zh": "图上方的文字。",
+                  "answer": "The text above the picture."
+                }
+              ]
+            },
+            {
+              "chunk": "___ below ___.",
+              "items": [
+                {
+                  "zh": "温度在零下。",
+                  "answer": "The temperature is below zero."
+                },
+                {
+                  "zh": "山下有个村庄。",
+                  "answer": "There is a village below the mountain."
+                },
+                {
+                  "zh": "往下面看！",
+                  "answer": "Look below!"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_between",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "between / among / next to 一词多句",
+          "vocabWord": "between / among / next to",
+          "vocabMeaning": "在之间/在之中/在...旁边",
+          "patterns": [
+            {
+              "chunk": "___ between ___.",
+              "items": [
+                {
+                  "zh": "银行在商店和医院之间。",
+                  "answer": "The bank is between the store and the hospital."
+                },
+                {
+                  "zh": "坐在我们之间。",
+                  "answer": "Sit between us."
+                },
+                {
+                  "zh": "介于两者之间。",
+                  "answer": "It is something between the two."
+                }
+              ]
+            },
+            {
+              "chunk": "___ among ___.",
+              "items": [
+                {
+                  "zh": "她坐在朋友中间。",
+                  "answer": "She is sitting among her friends."
+                },
+                {
+                  "zh": "藏在树丛中。",
+                  "answer": "Hidden among the trees."
+                },
+                {
+                  "zh": "你是其中最棒的。",
+                  "answer": "You are among the best."
+                }
+              ]
+            },
+            {
+              "chunk": "___ next to ___.",
+              "items": [
+                {
+                  "zh": "学校在公园旁边。",
+                  "answer": "The school is next to the park."
+                },
+                {
+                  "zh": "坐在我旁边。",
+                  "answer": "Sit next to me."
+                },
+                {
+                  "zh": "谁住在你隔壁？",
+                  "answer": "Who lives next to you?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_along",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "along / through / across 一词多句",
+          "vocabWord": "along / through / across",
+          "vocabMeaning": "沿着/穿过/横穿",
+          "patterns": [
+            {
+              "chunk": "___ along ___.",
+              "items": [
+                {
+                  "zh": "沿着河走。",
+                  "answer": "Walk along the river."
+                },
+                {
+                  "zh": "沿着这条街走。",
+                  "answer": "Go along this street."
+                },
+                {
+                  "zh": "跟着我走。",
+                  "answer": "Come along with me."
+                }
+              ]
+            },
+            {
+              "chunk": "___ through ___.",
+              "items": [
+                {
+                  "zh": "穿过那扇门。",
+                  "answer": "Go through the door."
+                },
+                {
+                  "zh": "穿过隧道。",
+                  "answer": "Through the tunnel."
+                },
+                {
+                  "zh": "经历过困难。",
+                  "answer": "Been through difficulties."
+                }
+              ]
+            },
+            {
+              "chunk": "___ across ___.",
+              "items": [
+                {
+                  "zh": "酒店在街对面。",
+                  "answer": "The hotel is across the street."
+                },
+                {
+                  "zh": "过马路。",
+                  "answer": "Go across the road."
+                },
+                {
+                  "zh": "横穿整个国家。",
+                  "answer": "Travel across the country."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从位置描述到路线指引逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "给位置",
+              "en": "The bank is next to the park.",
+              "zh": "银行在公园旁边。"
+            },
+            {
+              "level": 2,
+              "label": "加方向",
+              "en": "The bank is next to the park. Go straight along this street and it's on your left.",
+              "zh": "银行在公园旁边。沿着这条街直走，就在你的左边。",
+              "highlight": "Go straight along this street.",
+              "hint": "加上方向"
+            },
+            {
+              "level": 3,
+              "label": "加参照",
+              "en": "The bank is next to the park. Go straight along this street. It's between the coffee shop and the bookstore.",
+              "zh": "银行在公园旁边。沿着街直走。在咖啡店和书店之间。",
+              "highlight": "between the coffee shop and the bookstore.",
+              "hint": "加上参照物"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "和...一样": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 as...as / too / enough 表达程度",
+          "chunk": "as...as / too...to / ...enough",
+          "chunkMeaning": "一样.../太...而不能/足够...",
+          "items": [
+            {
+              "zh": "她和她哥哥一样高。",
+              "answer": "She is as tall as her brother."
+            },
+            {
+              "zh": "这本书和那本一样好。",
+              "answer": "This book is as good as that one."
+            },
+            {
+              "zh": "他没有他爸爸高。",
+              "answer": "He is not as tall as his father."
+            },
+            {
+              "zh": "这咖啡太烫了不能喝。",
+              "answer": "This coffee is too hot to drink."
+            },
+            {
+              "zh": "这个房间够我们住了。",
+              "answer": "This room is big enough for us."
+            },
+            {
+              "zh": "这个和我的相似。",
+              "answer": "This is similar to mine."
+            },
+            {
+              "zh": "两个一样好。",
+              "answer": "Both are equally good."
+            },
+            {
+              "zh": "这比预期的还要好。",
+              "answer": "This is even better than expected."
+            },
+            {
+              "zh": "他远没你高。",
+              "answer": "He is nowhere near as tall as you."
+            },
+            {
+              "zh": "一加一等于二。",
+              "answer": "One plus one equals two."
+            },
+            {
+              "zh": "这超出了我的预期。",
+              "answer": "This exceeds my expectations."
+            },
+            {
+              "zh": "两个包完全一样。",
+              "answer": "The two bags are identical."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[A] is as [adj] as [B] 同级比较操练",
+          "pattern": "[A] is as [adj] as [B].",
+          "patternMeaning": "A和B一样...",
+          "slots": [
+            "A",
+            "adj",
+            "B"
+          ],
+          "items": [
+            {
+              "zh": "她和她哥哥一样高。",
+              "answer": "She is as tall as her brother.",
+              "slotValues": {
+                "A": "She",
+                "adj": "tall",
+                "B": "her brother"
+              }
+            },
+            {
+              "zh": "这本书和那本一样好。",
+              "answer": "This book is as good as that one.",
+              "slotValues": {
+                "A": "This book",
+                "adj": "good",
+                "B": "that one"
+              }
+            },
+            {
+              "zh": "我和你一样快。",
+              "answer": "I am as fast as you.",
+              "slotValues": {
+                "A": "I",
+                "adj": "fast",
+                "B": "you"
+              }
+            },
+            {
+              "zh": "这不如那贵。",
+              "answer": "This is not as expensive as that.",
+              "slotValues": {
+                "A": "This",
+                "adj": "expensive",
+                "B": "that"
+              }
+            },
+            {
+              "zh": "它和看起来一样好。",
+              "answer": "It is as good as it looks.",
+              "slotValues": {
+                "A": "It",
+                "adj": "good",
+                "B": "it looks"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_as_as",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "as...as / not as...as 一词多句",
+          "vocabWord": "as...as / not as...as",
+          "vocabMeaning": "和...一样/不如...",
+          "patterns": [
+            {
+              "chunk": "___ as ___ as ___.",
+              "items": [
+                {
+                  "zh": "她和她哥哥一样高。",
+                  "answer": "She is as tall as her brother."
+                },
+                {
+                  "zh": "我和你一样好。",
+                  "answer": "I am as good as you."
+                },
+                {
+                  "zh": "它和金子一样贵。",
+                  "answer": "It is as expensive as gold."
+                }
+              ]
+            },
+            {
+              "chunk": "___ not as ___ as ___.",
+              "items": [
+                {
+                  "zh": "他没有他爸爸高。",
+                  "answer": "He is not as tall as his father."
+                },
+                {
+                  "zh": "这不如我想的难。",
+                  "answer": "It is not as hard as I thought."
+                },
+                {
+                  "zh": "没有我想象的那么远。",
+                  "answer": "Not as far as I imagined."
+                }
+              ]
+            },
+            {
+              "chunk": "___ as ___ as possible.",
+              "items": [
+                {
+                  "zh": "尽可能快。",
+                  "answer": "As fast as possible."
+                },
+                {
+                  "zh": "尽可能多。",
+                  "answer": "As much as possible."
+                },
+                {
+                  "zh": "请尽快。",
+                  "answer": "As soon as possible."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_too_enough",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "too / enough 一词多句",
+          "vocabWord": "too / enough",
+          "vocabMeaning": "太.../足够...",
+          "patterns": [
+            {
+              "chunk": "___ too ___ to ___.",
+              "items": [
+                {
+                  "zh": "这咖啡太烫了不能喝。",
+                  "answer": "This coffee is too hot to drink."
+                },
+                {
+                  "zh": "这个包太重了拿不动。",
+                  "answer": "This bag is too heavy to carry."
+                },
+                {
+                  "zh": "太迟了，来不及了。",
+                  "answer": "It's too late to go now."
+                }
+              ]
+            },
+            {
+              "chunk": "___ enough ___.",
+              "items": [
+                {
+                  "zh": "够大了。",
+                  "answer": "It's big enough."
+                },
+                {
+                  "zh": "这辆车对我来说够便宜了。",
+                  "answer": "This car is cheap enough for me."
+                },
+                {
+                  "zh": "你有足够的时间吗？",
+                  "answer": "Do you have enough time?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ enough to ___.",
+              "items": [
+                {
+                  "zh": "房间够我们住了。",
+                  "answer": "This room is big enough for us."
+                },
+                {
+                  "zh": "我够高了吗？",
+                  "answer": "Am I tall enough?"
+                },
+                {
+                  "zh": "不够好。",
+                  "answer": "It's not good enough."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_similar",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "similar / equal / identical 一词多句",
+          "vocabWord": "similar / equal / identical",
+          "vocabMeaning": "相似的/相等的/完全相同的",
+          "patterns": [
+            {
+              "chunk": "___ similar to ___.",
+              "items": [
+                {
+                  "zh": "这个和我的相似。",
+                  "answer": "This is similar to mine."
+                },
+                {
+                  "zh": "你们俩很像。",
+                  "answer": "You two are very similar."
+                },
+                {
+                  "zh": "和之前的类似。",
+                  "answer": "Similar to the previous one."
+                }
+              ]
+            },
+            {
+              "chunk": "___ equal ___.",
+              "items": [
+                {
+                  "zh": "一加一等于二。",
+                  "answer": "One plus one equals two."
+                },
+                {
+                  "zh": "我们平等。",
+                  "answer": "We are equal."
+                },
+                {
+                  "zh": "同等重要。",
+                  "answer": "Equally important."
+                }
+              ]
+            },
+            {
+              "chunk": "___ identical ___.",
+              "items": [
+                {
+                  "zh": "两个包完全一样。",
+                  "answer": "The two bags are identical."
+                },
+                {
+                  "zh": "他们是双胞胎。",
+                  "answer": "They are identical twins."
+                },
+                {
+                  "zh": "几乎一模一样。",
+                  "answer": "Almost identical."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从同级比较到程度升级逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "同级",
+              "en": "This book is as good as that one.",
+              "zh": "这本书和那本一样好。"
+            },
+            {
+              "level": 2,
+              "label": "加不够",
+              "en": "This book is as good as that one. But it is not as interesting as I expected.",
+              "zh": "这本书和那本一样好。但没有我预期的有趣。",
+              "highlight": "But it is not as interesting as I expected.",
+              "hint": "加上不够的地方"
+            },
+            {
+              "level": 3,
+              "label": "加太过了",
+              "en": "This book is as good as that one, but not as interesting. Actually, some parts are too long to read.",
+              "zh": "这本书和那本一样好但没有那么有趣。其实有些部分太长了读不下去。",
+              "highlight": "Actually, some parts are too long to read.",
+              "hint": "加上程度过度"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "怎么做的": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "用 -ly 方式副词描述动作",
+          "chunk": "quickly / carefully / slowly / well",
+          "chunkMeaning": "快速地/小心地/慢慢地/好地",
+          "items": [
+            {
+              "zh": "她唱得好。",
+              "answer": "She sings well."
+            },
+            {
+              "zh": "他跑得很快。",
+              "answer": "He ran quickly."
+            },
+            {
+              "zh": "小心开车。",
+              "answer": "Drive carefully."
+            },
+            {
+              "zh": "请说慢点。",
+              "answer": "Please speak slowly."
+            },
+            {
+              "zh": "他大声笑了。",
+              "answer": "He laughed loudly."
+            },
+            {
+              "zh": "她轻声说。",
+              "answer": "She spoke quietly."
+            },
+            {
+              "zh": "他们开心地跳舞。",
+              "answer": "They danced happily."
+            },
+            {
+              "zh": "我能轻松做到。",
+              "answer": "I can easily do it."
+            },
+            {
+              "zh": "雨下得很大。",
+              "answer": "It rained heavily."
+            },
+            {
+              "zh": "一切顺利。",
+              "answer": "Everything went smoothly."
+            },
+            {
+              "zh": "她工作努力。",
+              "answer": "She works hard."
+            },
+            {
+              "zh": "他开得很快。",
+              "answer": "He drives fast."
+            },
+            {
+              "zh": "她坚定地说了不。",
+              "answer": "She firmly said no."
+            },
+            {
+              "zh": "她轻声耳语。",
+              "answer": "She softly whispered."
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "direction": "zh_to_en",
+          "title": "[subject] [verb] [adverb] 方式副词操练",
+          "pattern": "[S] [V] [adv].",
+          "patternMeaning": "某人...地做某事",
+          "slots": [
+            "S",
+            "V",
+            "adv"
+          ],
+          "items": [
+            {
+              "zh": "她唱得好。",
+              "answer": "She sings well.",
+              "slotValues": {
+                "S": "She",
+                "V": "sings",
+                "adv": "well"
+              }
+            },
+            {
+              "zh": "他小心地开车。",
+              "answer": "He drives carefully.",
+              "slotValues": {
+                "S": "He",
+                "V": "drives",
+                "adv": "carefully"
+              }
+            },
+            {
+              "zh": "他们开心地跳舞。",
+              "answer": "They dance happily.",
+              "slotValues": {
+                "S": "They",
+                "V": "dance",
+                "adv": "happily"
+              }
+            },
+            {
+              "zh": "请说慢一点。",
+              "answer": "Please speak slowly.",
+              "slotValues": {
+                "S": "Please",
+                "V": "speak",
+                "adv": "slowly"
+              }
+            },
+            {
+              "zh": "我能轻松做到。",
+              "answer": "I can easily do it.",
+              "slotValues": {
+                "S": "I",
+                "V": "do it",
+                "adv": "easily"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_ly",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "quickly / slowly / carefully 一词多句",
+          "vocabWord": "quickly / slowly / carefully",
+          "vocabMeaning": "快速地/慢慢地/小心地",
+          "patterns": [
+            {
+              "chunk": "___ quickly.",
+              "items": [
+                {
+                  "zh": "他跑得很快。",
+                  "answer": "He ran quickly."
+                },
+                {
+                  "zh": "请尽快来。",
+                  "answer": "Please come quickly."
+                },
+                {
+                  "zh": "你能快一点吗？",
+                  "answer": "Can you do it more quickly?"
+                }
+              ]
+            },
+            {
+              "chunk": "___ slowly.",
+              "items": [
+                {
+                  "zh": "请说慢点。",
+                  "answer": "Please speak slowly."
+                },
+                {
+                  "zh": "车慢慢移动。",
+                  "answer": "The car moved slowly."
+                },
+                {
+                  "zh": "慢慢学习。",
+                  "answer": "Learn slowly."
+                }
+              ]
+            },
+            {
+              "chunk": "___ carefully.",
+              "items": [
+                {
+                  "zh": "小心开车。",
+                  "answer": "Drive carefully."
+                },
+                {
+                  "zh": "仔细听。",
+                  "answer": "Listen carefully."
+                },
+                {
+                  "zh": "请小心处理。",
+                  "answer": "Please handle it carefully."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_well",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "well / hard / fast 一词多句",
+          "vocabWord": "well / hard / fast",
+          "vocabMeaning": "好地/努力地/很快地",
+          "patterns": [
+            {
+              "chunk": "___ well.",
+              "items": [
+                {
+                  "zh": "她唱得好。",
+                  "answer": "She sings well."
+                },
+                {
+                  "zh": "你做得很好！",
+                  "answer": "You did well!"
+                },
+                {
+                  "zh": "进展顺利。",
+                  "answer": "It's going well."
+                }
+              ]
+            },
+            {
+              "chunk": "___ hard.",
+              "items": [
+                {
+                  "zh": "她工作努力。",
+                  "answer": "She works hard."
+                },
+                {
+                  "zh": "努力学习！",
+                  "answer": "Study hard!"
+                },
+                {
+                  "zh": "他推得很用力。",
+                  "answer": "He pushed hard."
+                }
+              ]
+            },
+            {
+              "chunk": "___ fast.",
+              "items": [
+                {
+                  "zh": "他开得很快。",
+                  "answer": "He drives fast."
+                },
+                {
+                  "zh": "太快了！",
+                  "answer": "That's too fast!"
+                },
+                {
+                  "zh": "你能跑多快？",
+                  "answer": "How fast can you run?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vsb_happily",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "happily / easily / smoothly 一词多句",
+          "vocabWord": "happily / easily / smoothly",
+          "vocabMeaning": "开心地/容易地/顺利地",
+          "patterns": [
+            {
+              "chunk": "___ happily.",
+              "items": [
+                {
+                  "zh": "他们开心地跳舞。",
+                  "answer": "They danced happily."
+                },
+                {
+                  "zh": "幸福地生活。",
+                  "answer": "Live happily."
+                },
+                {
+                  "zh": "她开心地答应了。",
+                  "answer": "She happily agreed."
+                }
+              ]
+            },
+            {
+              "chunk": "___ easily.",
+              "items": [
+                {
+                  "zh": "我能轻松做到。",
+                  "answer": "I can easily do it."
+                },
+                {
+                  "zh": "这不那么容易。",
+                  "answer": "It's not that easy."
+                },
+                {
+                  "zh": "轻松获胜。",
+                  "answer": "Win easily."
+                }
+              ]
+            },
+            {
+              "chunk": "___ smoothly.",
+              "items": [
+                {
+                  "zh": "一切顺利。",
+                  "answer": "Everything went smoothly."
+                },
+                {
+                  "zh": "会议进行顺利。",
+                  "answer": "The meeting ran smoothly."
+                },
+                {
+                  "zh": "希望一切顺利！",
+                  "answer": "Hope everything goes smoothly!"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "从动作到方式逐步扩展",
+          "levels": [
+            {
+              "level": 1,
+              "label": "说动作",
+              "en": "She sings.",
+              "zh": "她唱歌。"
+            },
+            {
+              "level": 2,
+              "label": "加方式",
+              "en": "She sings well. She always sings happily.",
+              "zh": "她唱得好。总是开心地唱歌。",
+              "highlight": "She always sings happily.",
+              "hint": "加上方式描述"
+            },
+            {
+              "level": 3,
+              "label": "加评价",
+              "en": "She sings well and always sings happily. She easily became the top student in music class.",
+              "zh": "她唱得好，总是开心地唱。她轻松成了音乐课的尖子生。",
+              "highlight": "She easily became the top student.",
+              "hint": "加上成果"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

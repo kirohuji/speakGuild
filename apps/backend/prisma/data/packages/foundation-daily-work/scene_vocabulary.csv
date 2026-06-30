@@ -16,3 +16,107 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础③·对比你我他,我和你 vs 他/她,but,但是,conj,/bʌt/,/bʌt/,L1,表示转折对比。,"[{""en"":""I like coffee but she likes tea."",""zh"":""我喜欢咖啡但是她喜欢茶。""}]",0
 基础③·对比你我他,他们的生活,their,他们的,pron,/ðer/,/ðeə/,L1,they的所有格。,"[{""en"":""Their house is big."",""zh"":""他们的房子很大。""}]",0
 基础③·对比你我他,他们的生活,everyone,每个人,pron,/ˈevriwʌn/,/ˈevriwʌn/,L1,everyone = everybody 不定代词。,"[{""en"":""Everyone likes him."",""zh"":""大家都喜欢他。""}]",1
+基础③·描述家人,他/她是谁,brother,兄弟,noun,/ˈbrʌðər/,/ˈbrʌðə/,L1,兄弟。He is my brother。,"[{""en"":""He is my brother."",""zh"":""他是我的兄弟。""}]",5
+基础③·描述家人,他/她是谁,sister,姐妹,noun,/ˈsɪstər/,/ˈsɪstə/,L1,姐妹。She is my sister。,"[{""en"":""She is my sister."",""zh"":""她是我的姐妹。""}]",6
+基础③·描述家人,他/她是谁,son,儿子,noun,/sʌn/,/sʌn/,L1,儿子。He has a son。,"[{""en"":""He has a son."",""zh"":""他有一个儿子。""}]",7
+基础③·描述家人,他/她是谁,daughter,女儿,noun,/ˈdɔːtər/,/ˈdɔːtə/,L1,女儿。She has a daughter。,"[{""en"":""She has a daughter."",""zh"":""她有一个女儿。""}]",8
+基础③·描述家人,他/她是谁,uncle,叔叔/舅舅,noun,/ˈʌŋkəl/,/ˈʌŋkəl/,L1,叔叔/舅舅。His uncle is tall。,"[{""en"":""His uncle is a doctor."",""zh"":""他的叔叔是医生。""}]",9
+基础③·描述家人,他/她是谁,aunt,阿姨/姑姑,noun,/ænt/,/ɑːnt/,L1,阿姨/姑姑。Her aunt is kind。,"[{""en"":""Her aunt is a teacher."",""zh"":""她的阿姨是老师。""}]",10
+基础③·描述家人,他/她是谁,grandfather,爷爷/外公,noun,/ˈɡrænfɑːðər/,/ˈɡrænfɑːðə/,L1,爷爷/外公。His grandfather is old。,"[{""en"":""His grandfather is 80."",""zh"":""他爷爷80岁了。""}]",11
+基础③·描述家人,他/她是谁,grandmother,奶奶/外婆,noun,/ˈɡrænmʌðər/,/ˈɡrænmʌðə/,L1,奶奶/外婆。Her grandmother is kind。,"[{""en"":""Her grandmother is kind."",""zh"":""她奶奶很慈祥。""}]",12
+基础③·描述家人,他/她是谁,tall,高的,adj,/tɔːl/,/tɔːl/,L1,高的。He is very tall。,"[{""en"":""He is very tall."",""zh"":""他很高。""}]",13
+基础③·描述家人,他/她是谁,kind,善良的,adj,/kaɪnd/,/kaɪnd/,L1,善良的/好心的。She is kind。,"[{""en"":""She is very kind."",""zh"":""她很善良。""}]",14
+基础③·描述家人,他/她喜欢什么,loves,爱/非常喜欢(三单),verb,/lʌvz/,/lʌvz/,L1,love的第三人称。比likes程度更强。,"[{""en"":""He loves music."",""zh"":""他热爱音乐。""}]",3
+基础③·描述家人,他/她喜欢什么,enjoys,享受/喜欢(三单),verb,/ɪnˈdʒɔɪz/,/ɪnˈdʒɔɪz/,L1,enjoy的第三人称。enjoy doing sth。,"[{""en"":""She enjoys reading."",""zh"":""她喜欢读书。""}]",4
+基础③·他/她的日常,他每天做什么,eats,吃(三单),verb,/iːts/,/iːts/,L1,eat的第三人称。He eats breakfast at 7。,"[{""en"":""He eats lunch at 12."",""zh"":""他12点吃午饭。""}]",4
+基础③·他/她的日常,他每天做什么,drinks,喝(三单),verb,/drɪŋks/,/drɪŋks/,L1,drink的第三人称。She drinks tea。,"[{""en"":""She drinks tea in the morning."",""zh"":""她早上喝茶。""}]",5
+基础③·他/她的日常,他每天做什么,reads,读(三单),verb,/riːdz/,/riːdz/,L1,read的第三人称。He reads books。,"[{""en"":""He reads books at night."",""zh"":""他晚上看书。""}]",6
+基础③·他/她的日常,他每天做什么,plays,玩/打(三单),verb,/pleɪz/,/pleɪz/,L1,play的第三人称。She plays tennis。,"[{""en"":""She plays football on weekends."",""zh"":""她周末踢足球。""}]",7
+基础③·他/她的日常,他每天做什么,sleeps,睡(三单),verb,/sliːps/,/sliːps/,L1,sleep的第三人称。He sleeps at 10。,"[{""en"":""He sleeps at 10 every night."",""zh"":""他每晚10点睡觉。""}]",8
+基础③·他/她的日常,他/她做什么工作,doctor,医生,noun,/ˈdɒktər/,/ˈdɒktə/,L1,医生。He is a doctor。,"[{""en"":""He is a doctor."",""zh"":""他是一名医生。""}]",2
+基础③·他/她的日常,他/她做什么工作,nurse,护士,noun,/nɜːrs/,/nɜːs/,L1,护士。She is a nurse。,"[{""en"":""She is a nurse."",""zh"":""她是一名护士。""}]",3
+基础③·他/她的日常,他/她做什么工作,driver,司机,noun,/ˈdraɪvər/,/ˈdraɪvə/,L1,司机。He is a bus driver。,"[{""en"":""He is a bus driver."",""zh"":""他是一名公交司机。""}]",4
+基础③·他/她的日常,他/她做什么工作,cook,厨师,noun,/kʊk/,/kʊk/,L1,厨师。She is a cook。,"[{""en"":""She is a cook."",""zh"":""她是一名厨师。""}]",5
+基础③·对比你我他,他们的生活,lives,生活/住在(三单),verb,/lɪvz/,/lɪvz/,L1,live的第三人称。He lives in Beijing。,"[{""en"":""He lives in Beijing."",""zh"":""他住在北京。""}]",2
+基础③·对比你我他,他们的生活,always,总是,adv,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,频率副词，总是。He is always happy。,"[{""en"":""He is always happy."",""zh"":""他总是很开心。""}]",3
+基础③·对比你我他,他们的生活,usually,通常,adv,/ˈjuːʒuəli/,/ˈjuːʒuəli/,L1,频率副词，通常。She usually gets up early。,"[{""en"":""She usually gets up at 7."",""zh"":""她通常7点起床。""}]",4
+基础③·对比你我他,他们的生活,often,经常,adv,/ˈɒfən/,/ˈɒfən/,L1,频率副词，经常。He often reads books。,"[{""en"":""He often reads books."",""zh"":""他经常看书。""}]",5
+基础③·对比你我他,他们的生活,never,从不,adv,/ˈnevər/,/ˈnevə/,L1,频率副词，从不。She never eats meat。,"[{""en"":""She never eats meat."",""zh"":""她从不吃肉。""}]",6
+基础③·描述家人,他/她是谁,short,矮的,adj,/ʃɔːrt/,/ʃɔːt/,L1,矮的。反义词 tall。,"[{""en"":""He is short."",""zh"":""他很矮。""}]",15
+基础③·描述家人,他/她是谁,young,年轻的,adj,/jʌŋ/,/jʌŋ/,L1,年轻的。She is young。,"[{""en"":""She is young."",""zh"":""她很年轻。""}]",16
+基础③·描述家人,他/她是谁,old,老的/旧的,adj,/oʊld/,/əʊld/,L1,老的/旧的。His father is old。,"[{""en"":""His father is old."",""zh"":""他爸爸老了。""}]",17
+基础③·描述家人,他/她是谁,pretty,漂亮的,adj,/ˈprɪti/,/ˈprɪti/,L1,漂亮的(多形容女性)。,"[{""en"":""She is very pretty."",""zh"":""她很漂亮。""}]",18
+基础③·描述家人,他/她是谁,handsome,英俊的,adj,/ˈhænsəm/,/ˈhænsəm/,L1,英俊的(多形容男性)。,"[{""en"":""He is handsome."",""zh"":""他很英俊。""}]",19
+基础③·描述家人,他/她是谁,friendly,友好的,adj,/ˈfrendli/,/ˈfrendli/,L1,友好的。She is very friendly。,"[{""en"":""She is very friendly."",""zh"":""她很友好。""}]",20
+基础③·描述家人,他/她是谁,smart,聪明的,adj,/smɑːrt/,/smɑːt/,L1,聪明的。He is smart。,"[{""en"":""He is very smart."",""zh"":""他很聪明。""}]",21
+基础③·描述家人,他/她是谁,funny,有趣的,adj,/ˈfʌni/,/ˈfʌni/,L1,有趣的/好笑的。He is funny。,"[{""en"":""He is very funny."",""zh"":""他很有趣。""}]",22
+基础③·描述家人,他/她是谁,strong,强壮的,adj,/strɒŋ/,/strɒŋ/,L1,强壮的。He is strong。,"[{""en"":""He is very strong."",""zh"":""他很强壮。""}]",23
+基础③·描述家人,他/她是谁,thin,瘦的,adj,/θɪn/,/θɪn/,L1,瘦的。She is thin。,"[{""en"":""She is very thin."",""zh"":""她很瘦。""}]",24
+基础③·描述家人,他/她是谁,husband,丈夫,noun,/ˈhʌzbənd/,/ˈhʌzbənd/,L1,丈夫。Her husband is a teacher。,"[{""en"":""Her husband is a teacher."",""zh"":""她丈夫是老师。""}]",25
+基础③·描述家人,他/她是谁,wife,妻子,noun,/waɪf/,/waɪf/,L1,妻子。His wife is a doctor。,"[{""en"":""His wife is a doctor."",""zh"":""他妻子是医生。""}]",26
+基础③·描述家人,他/她是谁,cousin,表/堂兄弟姐妹,noun,/ˈkʌzən/,/ˈkʌzən/,L1,表/堂兄弟姐妹。His cousin lives in Beijing。,"[{""en"":""His cousin is a student."",""zh"":""他表弟是学生。""}]",27
+基础③·描述家人,他/她是谁,parents,父母,noun,/ˈperənts/,/ˈpeərənts/,L1,父母。His parents are kind。,"[{""en"":""His parents are teachers."",""zh"":""他父母是老师。""}]",28
+基础③·描述家人,他/她是谁,child,孩子,noun,/tʃaɪld/,/tʃaɪld/,L1,孩子。She has one child。,"[{""en"":""She has a child."",""zh"":""她有一个孩子。""}]",29
+基础③·描述家人,他/她喜欢什么,hates,讨厌(三单),verb,/heɪts/,/heɪts/,L1,hate的第三人称。He hates cold weather。,"[{""en"":""He hates cold weather."",""zh"":""他讨厌冷天。""}]",5
+基础③·他/她的日常,他每天做什么,wakes up,醒来(三单),phrase,/weɪks ʌp/,/weɪks ʌp/,L1,wake up的第三人称。He wakes up at 6。,"[{""en"":""He wakes up at 6."",""zh"":""他6点醒来。""}]",9
+基础③·他/她的日常,他每天做什么,leaves,离开(三单),verb,/liːvz/,/liːvz/,L1,leave的第三人称。She leaves at 8。,"[{""en"":""She leaves for work at 8."",""zh"":""她8点去上班。""}]",10
+基础③·他/她的日常,他每天做什么,comes,来(三单),verb,/kʌmz/,/kʌmz/,L1,come的第三人称。He comes home at 6。,"[{""en"":""He comes home at 6."",""zh"":""他6点到家。""}]",11
+基础③·他/她的日常,他每天做什么,takes,拿/带/做(三单),verb,/teɪks/,/teɪks/,L1,take的第三人称。She takes a shower。,"[{""en"":""She takes a shower in the morning."",""zh"":""她早上洗澡。""}]",12
+基础③·他/她的日常,他每天做什么,makes,做/制作(三单),verb,/meɪks/,/meɪks/,L1,make的第三人称。He makes breakfast。,"[{""en"":""He makes breakfast every day."",""zh"":""他每天做早餐。""}]",13
+基础③·他/她的日常,他每天做什么,cleans,打扫(三单),verb,/kliːnz/,/kliːnz/,L1,clean的第三人称。She cleans the room。,"[{""en"":""She cleans the room every day."",""zh"":""她每天打扫房间。""}]",14
+基础③·他/她的日常,他每天做什么,walks,走路/散步(三单),verb,/wɔːks/,/wɔːks/,L1,walk的第三人称。He walks to work。,"[{""en"":""He walks to work every day."",""zh"":""他每天走路去上班。""}]",15
+基础③·他/她的日常,他每天做什么,runs,跑步(三单),verb,/rʌnz/,/rʌnz/,L1,run的第三人称。She runs every morning。,"[{""en"":""She runs every morning."",""zh"":""她每天早上跑步。""}]",16
+基础③·他/她的日常,他/她做什么工作,teacher,老师,noun,/ˈtiːtʃər/,/ˈtiːtʃə/,L1,老师。She is a teacher。,"[{""en"":""She is a teacher."",""zh"":""她是一名老师。""}]",6
+基础③·他/她的日常,他/她做什么工作,student,学生,noun,/ˈstuːdənt/,/ˈstjuːdənt/,L1,学生。He is a student。,"[{""en"":""He is a student."",""zh"":""他是一名学生。""}]",7
+基础③·他/她的日常,他/她做什么工作,manager,经理,noun,/ˈmænɪdʒər/,/ˈmænɪdʒə/,L1,经理。He is a manager。,"[{""en"":""He is a manager."",""zh"":""他是一名经理。""}]",8
+基础③·他/她的日常,他/她做什么工作,boss,老板,noun,/bɒs/,/bɒs/,L1,老板。His boss is nice。,"[{""en"":""His boss is very kind."",""zh"":""他的老板很和善。""}]",9
+基础③·他/她的日常,他/她做什么工作,engineer,工程师,noun,/ˌendʒɪˈnɪr/,/ˌendʒɪˈnɪə/,L1,工程师。He is an engineer。,"[{""en"":""He is an engineer."",""zh"":""他是一名工程师。""}]",10
+基础③·他/她的日常,他/她做什么工作,farmer,农民,noun,/ˈfɑːrmər/,/ˈfɑːmə/,L1,农民。He is a farmer。,"[{""en"":""He is a farmer."",""zh"":""他是一个农民。""}]",11
+基础③·他/她的日常,他/她做什么工作,writer,作家,noun,/ˈraɪtər/,/ˈraɪtə/,L1,作家。She is a writer。,"[{""en"":""She is a writer."",""zh"":""她是一名作家。""}]",12
+基础③·他/她的日常,他/她做什么工作,office,办公室,noun,/ˈɒfɪs/,/ˈɒfɪs/,L1,办公室。He works in an office。,"[{""en"":""He works in an office."",""zh"":""他在办公室工作。""}]",13
+基础③·他/她的日常,他/她做什么工作,hospital,医院,noun,/ˈhɒspɪtəl/,/ˈhɒspɪtəl/,L1,医院。She works in a hospital。,"[{""en"":""She works in a hospital."",""zh"":""她在医院工作。""}]",14
+基础③·他/她的日常,他/她做什么工作,school,学校,noun,/skuːl/,/skuːl/,L1,学校。He teaches at a school。,"[{""en"":""He works at a school."",""zh"":""他在学校工作。""}]",15
+基础③·他/她的日常,他/她做什么工作,bank,银行,noun,/bæŋk/,/bæŋk/,L1,银行。She works in a bank。,"[{""en"":""She works in a bank."",""zh"":""她在银行工作。""}]",16
+基础③·对比你我他,我和你 vs 他/她,same,相同的,adj,/seɪm/,/seɪm/,L1,相同的。We like the same food。,"[{""en"":""We like the same music."",""zh"":""我们喜欢同样的音乐。""}]",2
+基础③·对比你我他,我和你 vs 他/她,different,不同的,adj,/ˈdɪfərənt/,/ˈdɪfərənt/,L1,不同的。We are different。,"[{""en"":""They have different jobs."",""zh"":""他们有不同的工作。""}]",3
+基础③·对比你我他,他们的生活,family,家庭,noun,/ˈfæməli/,/ˈfæməli/,L1,家庭/家人。His family is big。,"[{""en"":""His family is very big."",""zh"":""他的家庭很大。""}]",7
+基础③·对比你我他,他们的生活,house,房子,noun,/haʊs/,/haʊs/,L1,房子。Their house is big。,"[{""en"":""Their house is very big."",""zh"":""他们的房子很大。""}]",8
+基础③·对比你我他,他们的生活,car,汽车,noun,/kɑːr/,/kɑː/,L1,汽车。He has a car。,"[{""en"":""They have a car."",""zh"":""他们有一辆车。""}]",9
+基础③·对比你我他,他们的生活,dog,狗,noun,/dɒɡ/,/dɒɡ/,L1,狗。They have a dog。,"[{""en"":""They have a dog."",""zh"":""他们有一只狗。""}]",10
+基础③·对比你我他,他们的生活,cat,猫,noun,/kæt/,/kæt/,L1,猫。She has a cat。,"[{""en"":""She has a cat."",""zh"":""她有一只猫。""}]",11
+基础③·对比你我他,他们的生活,early,早的/早地,adv,/ˈɜːrli/,/ˈɜːli/,L1,早。He gets up early。,"[{""en"":""He always gets up early."",""zh"":""他总是早起。""}]",12
+基础③·对比你我他,他们的生活,late,晚的/迟的,adv,/leɪt/,/leɪt/,L1,迟到/晚。She is never late。,"[{""en"":""She is never late."",""zh"":""她从不迟到。""}]",13
+
+基础③·他/她的日常,他每天做什么,drives,开车(三单),verb,/draɪvz/,/draɪvz/,L1,drive的第三人称。He drives to work。,"[{""en"":""He drives to work."",""zh"":""他开车上班。""}]",17
+基础③·他/她的日常,他每天做什么,helps,帮助(三单),verb,/helps/,/helps/,L1,help的第三人称。She helps with housework。,"[{""en"":""She helps with cooking."",""zh"":""她帮忙做饭。""}]",18
+基础③·他/她的日常,他每天做什么,talks,说话(三单),verb,/tɔːks/,/tɔːks/,L1,talk的第三人称。He talks to friends。,"[{""en"":""He talks to his friend."",""zh"":""他和朋友聊天。""}]",19
+基础③·他/她的日常,他每天做什么,listens,听(三单),verb,/ˈlɪsənz/,/ˈlɪsənz/,L1,listen的第三人称。She listens to music。,"[{""en"":""She listens to music."",""zh"":""她听音乐。""}]",20
+基础③·描述家人,他/她是谁,quiet,安静的,adj,/ˈkwaɪət/,/ˈkwaɪət/,L1,安静的。He is quiet。,"[{""en"":""He is very quiet."",""zh"":""他很安静。""}]",30
+基础③·描述家人,他/她是谁,busy,忙碌的,adj,/ˈbɪzi/,/ˈbɪzi/,L1,忙碌的。She is busy。,"[{""en"":""She is very busy."",""zh"":""她很忙。""}]",31
+基础③·描述家人,他/她是谁,lazy,懒惰的,adj,/ˈleɪzi/,/ˈleɪzi/,L1,懒惰的。He is lazy。,"[{""en"":""He is lazy on weekends."",""zh"":""他周末很懒。""}]",32
+基础③·描述家人,他/她喜欢什么,sings,唱歌(三单),verb,/sɪŋz/,/sɪŋz/,L1,sing的第三人称。She sings well。,"[{""en"":""She sings very well."",""zh"":""她唱得很好。""}]",6
+基础③·描述家人,他/她喜欢什么,dances,跳舞(三单),verb,/ˈdænsɪz/,/ˈdɑːnsɪz/,L1,dance的第三人称。He dances。,"[{""en"":""He dances at parties."",""zh"":""他在派对上跳舞。""}]",7
+基础③·他/她的日常,他/她做什么工作,waiter,服务员,noun,/ˈweɪtər/,/ˈweɪtə/,L1,男服务员。He is a waiter。,"[{""en"":""He works as a waiter."",""zh"":""他是服务员。""}]",17
+基础③·他/她的日常,他/她做什么工作,waitress,女服务员,noun,/ˈweɪtrəs/,/ˈweɪtrəs/,L1,女服务员。She is a waitress。,"[{""en"":""She works as a waitress."",""zh"":""她是女服务员。""}]",18
+基础③·对比你我他,他们的生活,sometimes,有时,adv,/ˈsʌmtaɪmz/,/ˈsʌmtaɪmz/,L1,频率副词，有时。He sometimes reads。,"[{""en"":""He sometimes reads books."",""zh"":""他有时看书。""}]",14
+基础③·对比你我他,他们的生活,together,一起,adv,/təˈɡeðər/,/təˈɡeðə/,L1,一起。They work together。,"[{""en"":""They live together."",""zh"":""他们住在一起。""}]",15
+基础③·对比你我他,他们的生活,also,也,adv,/ˈɔːlsoʊ/,/ˈɔːlsəʊ/,L1,也(句中)。She also likes music。,"[{""en"":""He also likes sports."",""zh"":""他也喜欢运动。""}]",16
+基础③·他/她的日常,他每天做什么,washes,洗(三单),verb,/ˈwɒʃɪz/,/ˈwɒʃɪz/,L1,wash的第三人称。He washes the dishes。,"[{""en"":""He washes his hands."",""zh"":""他洗手。""}]",21
+基础③·描述家人,他/她是谁,name,名字,noun,/neɪm/,/neɪm/,L1,名字。His name is Tom。,"[{""en"":""Her name is Anna."",""zh"":""她的名字是安娜。""}]",33
+基础③·描述家人,他/她是谁,age,年龄,noun,/eɪdʒ/,/eɪdʒ/,L1,年龄。His age is 30。,"[{""en"":""Her age is 25."",""zh"":""她25岁。""}]",34
+基础③·描述家人,他/她是谁,birthday,生日,noun,/ˈbɜːrθdeɪ/,/ˈbɜːθdeɪ/,L1,生日。His birthday is in May。,"[{""en"":""Her birthday is in June."",""zh"":""她的生日在六月。""}]",35
+基础③·他/她的日常,他/她做什么工作,company,公司,noun,/ˈkʌmpəni/,/ˈkʌmpəni/,L1,公司。He works for a big company。,"[{""en"":""She works for a big company."",""zh"":""她在一家大公司工作。""}]",19
+基础③·他/她的日常,他/她做什么工作,factory,工厂,noun,/ˈfæktəri/,/ˈfæktəri/,L1,工厂。He works in a factory。,"[{""en"":""They work in a factory."",""zh"":""他们在工厂工作。""}]",20
+基础③·对比你我他,他们的生活,week,周/星期,noun,/wiːk/,/wiːk/,L1,周。every week 每周。,"[{""en"":""They visit every week."",""zh"":""他们每周都来。""}]",17
+基础③·对比你我他,他们的生活,month,月,noun,/mʌnθ/,/mʌnθ/,L1,月。every month 每月。,"[{""en"":""They travel every month."",""zh"":""他们每月旅行。""}]",18
+基础③·对比你我他,他们的生活,year,年,noun,/jɪr/,/jɪə/,L1,年。every year 每年。,"[{""en"":""They visit China every year."",""zh"":""他们每年来中国。""}]",19
+基础③·他/她的日常,他每天做什么,calls,打电话(三单),verb,/kɔːlz/,/kɔːlz/,L1,call的第三人称。He calls his mom。,"[{""en"":""He calls his mom every day."",""zh"":""他每天给妈妈打电话。""}]",22
+基础③·他/她的日常,他每天做什么,sends,发送(三单),verb,/sendz/,/sendz/,L1,send的第三人称。She sends messages。,"[{""en"":""She sends photos to friends."",""zh"":""她给朋友发照片。""}]",23
+基础③·描述家人,他/她是谁,nephew,侄子/外甥,noun,/ˈnefjuː/,/ˈnefjuː/,L1,侄子/外甥。His nephew is 5。,"[{""en"":""His nephew is a student."",""zh"":""他侄子是个学生。""}]",36
+基础③·描述家人,他/她是谁,niece,侄女/外甥女,noun,/niːs/,/niːs/,L1,侄女/外甥女。Her niece is cute。,"[{""en"":""Her niece is very cute."",""zh"":""她侄女很可爱。""}]",37
+基础③·对比你我他,他们的生活,visit,拜访/参观(三单),verb,/ˈvɪzɪt/,/ˈvɪzɪt/,L1,拜访。He visits his parents。,"[{""en"":""She visits her grandmother."",""zh"":""她去看奶奶。""}]",20
+基础③·他/她的日常,他/她做什么工作,sells,卖(三单),verb,/selz/,/selz/,L1,sell的第三人称。She sells clothes。,"[{""en"":""He sells cars."",""zh"":""他卖汽车。""}]",21
+基础③·他/她的日常,他每天做什么,meets,见面(三单),verb,/miːts/,/miːts/,L1,meet的第三人称。She meets friends。,"[{""en"":""He meets his friends on weekends."",""zh"":""他周末见朋友。""}]",24
+基础③·描述家人,他/她是谁,pet,宠物,noun,/pet/,/pet/,L1,宠物。He has a pet。,"[{""en"":""She has a pet bird."",""zh"":""她有一只宠物鸟。""}]",38
+基础③·对比你我他,他们的生活,weekend,周末,noun,/ˈwiːkend/,/ˌwiːkˈend/,L1,周末。on weekends 在周末。,"[{""en"":""They go out on weekends."",""zh"":""他们周末出去。""}]",21
+基础③·对比你我他,他们的生活,every day,每天,phrase,/ˈevri deɪ/,/ˈevri deɪ/,L1,每天。He works every day。,"[{""en"":""He exercises every day."",""zh"":""他每天锻炼。""}]",22

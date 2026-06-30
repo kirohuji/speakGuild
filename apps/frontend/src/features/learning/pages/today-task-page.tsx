@@ -14,6 +14,7 @@ import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
@@ -173,6 +174,7 @@ export function TodayTaskPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
+  const [autoNextEnabled, setAutoNextEnabled] = useState(false)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
@@ -507,6 +509,14 @@ export function TodayTaskPage() {
   const hasNext = currentIdx < steps.length - 1
   const gotoPrev = useCallback(() => setCurrentIdx((p) => Math.max(0, p - 1)), [])
   const gotoNext = useCallback(() => setCurrentIdx((p) => Math.min(steps.length - 1, p + 1)), [steps.length])
+
+  useEffect(() => {
+    if (!drawerOpen || !autoNextEnabled || !hasNext) return
+    const timer = window.setTimeout(() => {
+      setCurrentIdx((prev) => Math.min(steps.length - 1, prev + 1))
+    }, 3000)
+    return () => window.clearTimeout(timer)
+  }, [autoNextEnabled, currentIdx, drawerOpen, hasNext, steps.length])
 
   // ── 加载态：仅在无缓存数据时展示 ──
   if (loading && !plan) return <MobilePageLoading rows={4} />
@@ -853,6 +863,15 @@ export function TodayTaskPage() {
                     {currentStep?.topicTitle}
                   </p>
                 </div>
+                <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+                  <span>自动</span>
+                  <Switch
+                    checked={autoNextEnabled}
+                    onCheckedChange={setAutoNextEnabled}
+                    disabled={steps.length <= 1}
+                    className="origin-right scale-90"
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={() => setDrawerOpen(false)}

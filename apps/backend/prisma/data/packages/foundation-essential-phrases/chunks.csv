@@ -1,16 +1,16 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-基础④·Yes/No问句,一般疑问句,Are you,Are you a student? — Yes, I am.,你是学生吗？——是。,L1,Are you + 名词/形容词 疑问句。,"[{""en"":""Are you a teacher?"",""zh"":""你是老师吗？""}]"
-基础④·Yes/No问句,一般疑问句,Do you,Do you like coffee? — Yes, I do.,你喜欢咖啡吗？——喜欢。,L1,Do you + 动词 疑问句。,"[{""en"":""Do you like tea?"",""zh"":""你喜欢茶吗？""}]"
-基础④·Yes/No问句,一般疑问句,Does he/she,Does she speak English? — Yes, she does.,她说英语吗？——说。,L1,Does he/she + 动词。,"[{""en"":""Does he work here?"",""zh"":""他在这里工作吗？""}]"
-基础④·Yes/No问句,一般疑问句,Can you,Can you swim? — Yes, I can.,你会游泳吗？——会。,L1,Can you + 动词。,"[{""en"":""Can you drive?"",""zh"":""你会开车吗？""}]"
-基础④·Yes/No问句,一般疑问句,Is it,Is it big? — No, it isn't.,它大吗？——不，它小。,L1,Is it + 形容词。,"[{""en"":""Is it good?"",""zh"":""它好吗？""}]"
-基础④·Yes/No问句,一般疑问句,Is there,Is there a bank near here? — Yes, there is.,附近有银行吗？——有。,L1,Is there + 名词? 存在疑问。,"[{""en"":""Is there a restaurant?"",""zh"":""有餐厅吗？""}]"
-基础④·Yes/No问句,过去疑问句,Did you,Did you eat breakfast? — Yes, I did.,你吃早餐了吗？——吃了。,L1,Did you + 动词原形。,"[{""en"":""Did you have lunch?"",""zh"":""你吃午饭了吗？""}]"
-基础④·Yes/No问句,过去疑问句,Did she,Did she go to school yesterday? — No, she didn't.,她昨天上学了吗？——没。,L1,Did she + 动词。,"[{""en"":""Did he come home?"",""zh"":""他回家了吗？""}]"
-基础④·Yes/No问句,过去疑问句,Were you,Were you at home last night? — Yes, I was.,你昨晚在家吗？——在。,L1,Were you + 地点/状态。,"[{""en"":""Were you tired?"",""zh"":""你累了吗？""}]"
-基础④·Yes/No问句,过去疑问句,Was it,Was it expensive? — No, it wasn't.,它贵吗？——不贵。,L1,Was it + 形容词。,"[{""en"":""Was it fun?"",""zh"":""好玩吗？""}]"
-基础④·Yes/No问句,过去疑问句,问候,Did you have a good weekend? — Yes, I did.,你周末过得好吗？——好。,L1,问候式疑问。,"[{""en"":""Did you have a nice day?"",""zh"":""你今天过得好吗？""}]"
-基础④·Yes/No问句,过去疑问句,Was she,Was she at the party? — No, she wasn't.,她在派对上吗？——不在。,L1,第三人称过去疑问。,"[{""en"":""Was he on time?"",""zh"":""他准时吗？""}]"
+基础④·Yes/No问句,一般疑问句,Are you,"Are you a student? — Yes, I am.",你是学生吗？——是。,L1,Are you + 名词/形容词 疑问句。,"[{""en"":""Are you a teacher?"",""zh"":""你是老师吗？""}]"
+基础④·Yes/No问句,一般疑问句,Do you,"Do you like coffee? — Yes, I do.",你喜欢咖啡吗？——喜欢。,L1,Do you + 动词 疑问句。,"[{""en"":""Do you like tea?"",""zh"":""你喜欢茶吗？""}]"
+基础④·Yes/No问句,一般疑问句,Does he/she,"Does she speak English? — Yes, she does.",她说英语吗？——说。,L1,Does he/she + 动词。,"[{""en"":""Does he work here?"",""zh"":""他在这里工作吗？""}]"
+基础④·Yes/No问句,一般疑问句,Can you,"Can you swim? — Yes, I can.",你会游泳吗？——会。,L1,Can you + 动词。,"[{""en"":""Can you drive?"",""zh"":""你会开车吗？""}]"
+基础④·Yes/No问句,一般疑问句,Is it,"Is it big? — No, it isn't.",它大吗？——不，它小。,L1,Is it + 形容词。,"[{""en"":""Is it good?"",""zh"":""它好吗？""}]"
+基础④·Yes/No问句,一般疑问句,Is there,"Is there a bank near here? — Yes, there is.",附近有银行吗？——有。,L1,Is there + 名词? 存在疑问。,"[{""en"":""Is there a restaurant?"",""zh"":""有餐厅吗？""}]"
+基础④·Yes/No问句,过去疑问句,Did you,"Did you eat breakfast? — Yes, I did.",你吃早餐了吗？——吃了。,L1,Did you + 动词原形。,"[{""en"":""Did you have lunch?"",""zh"":""你吃午饭了吗？""}]"
+基础④·Yes/No问句,过去疑问句,Did she,"Did she go to school yesterday? — No, she didn't.",她昨天上学了吗？——没。,L1,Did she + 动词。,"[{""en"":""Did he come home?"",""zh"":""他回家了吗？""}]"
+基础④·Yes/No问句,过去疑问句,Were you,"Were you at home last night? — Yes, I was.",你昨晚在家吗？——在。,L1,Were you + 地点/状态。,"[{""en"":""Were you tired?"",""zh"":""你累了吗？""}]"
+基础④·Yes/No问句,过去疑问句,Was it,"Was it expensive? — No, it wasn't.",它贵吗？——不贵。,L1,Was it + 形容词。,"[{""en"":""Was it fun?"",""zh"":""好玩吗？""}]"
+基础④·Yes/No问句,过去疑问句,问候,"Did you have a good weekend? — Yes, I did.",你周末过得好吗？——好。,L1,问候式疑问。,"[{""en"":""Did you have a nice day?"",""zh"":""你今天过得好吗？""}]"
+基础④·Yes/No问句,过去疑问句,Was she,"Was she at the party? — No, she wasn't.",她在派对上吗？——不在。,L1,第三人称过去疑问。,"[{""en"":""Was he on time?"",""zh"":""他准时吗？""}]"
 基础④·Wh-问句,6W问句,What,What is your name? — My name is Tom.,你叫什么名字？——我叫Tom。,L1,What + be + 名词？,"[{""en"":""What is your phone number?"",""zh"":""你的电话号码是多少？""}]"
 基础④·Wh-问句,6W问句,What do,What do you do? — I am a teacher.,你是做什么的？——老师。,L1,What do + 主语 + do？,"[{""en"":""What do you study?"",""zh"":""你学什么？""}]"
 基础④·Wh-问句,6W问句,Who,Who is she? — She is my sister.,她是谁？——她是我妹妹。,L1,Who + be + ...？,"[{""en"":""Who is your teacher?"",""zh"":""你的老师是谁？""}]"
@@ -34,56 +34,56 @@ scene_title,topic_title,category,text,meaning,difficulty,description,examples_js
 基础④·How问句,频率与方式,How do,How do you go to work? — By bus.,你怎么去上班？——坐公交。,L1,How do + 主语 + 动词？(方式)。,"[{""en"":""How do you learn English?"",""zh"":""你怎么学英语？""}]"
 基础④·How问句,频率与方式,How was,How was your day? — It was good.,你今天过得怎么样？——很好。,L1,How + be + 过去？问候。,"[{""en"":""How was your weekend?"",""zh"":""你周末怎么样？""}]"
 基础④·How问句,频率与方式,How does taste,How does it taste? — It's delicious.,它尝起来怎么样？——好吃。,L1,How + does + 感官动词？,"[{""en"":""How does it look?"",""zh"":""它看起来怎么样？""}]"
-基础④·How问句,频率与方式,How about,How about some coffee? — Sure, thanks.,来点咖啡怎么样？——好的。,L1,How about + 名词？提议。,"[{""en"":""How about a break?"",""zh"":""休息一下怎么样？""}]"
+基础④·How问句,频率与方式,How about,"How about some coffee? — Sure, thanks.",来点咖啡怎么样？——好的。,L1,How about + 名词？提议。,"[{""en"":""How about a break?"",""zh"":""休息一下怎么样？""}]"
 基础④·How问句,频率与方式,How do you like,How do you like your job? — I like it.,你觉得你的工作怎么样？——我喜欢。,L1,How do you like + 名词？询问看法。,"[{""en"":""How do you like this city?"",""zh"":""你觉得这个城市怎么样？""}]"
-"基础·日常高频短语",常用动词短语,常用动词短语,I'll call you back.,我会回电话给你。,L1,日常口语表达。,""
-"基础·日常高频短语",常用动词短语,常用动词短语,Come over to my place.,来我家吧。,L1,日常口语表达。,""
-"基础·日常高频短语",常用动词短语,常用动词短语,I'm running out of time.,我的时间不够了。,L1,日常口语表达。,""
-"基础·日常高频短语",常用动词短语,常用动词短语,Put on your coat.,穿上你的外套。,L1,日常口语表达。,""
-"基础·日常高频短语",常用动词短语,常用动词短语,Take off your shoes.,脱掉你的鞋子。,L1,日常口语表达。,""
-"基础·日常高频短语",常用动词短语,常用动词短语,I'm looking forward to it.,我很期待。,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,What's the matter?,怎么了？,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Are you okay?,你还好吗？,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Take your time.,慢慢来。,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,No worries!,别担心！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Good luck!,祝你好运！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Have fun!,玩得开心！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Take care!,保重！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,See you later!,回头见！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,That's too bad.,那太糟糕了。,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,What a pity!,真可惜！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Congratulations!,恭喜你！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Well done!,做得好！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Cheers!,干杯！/谢谢！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,Same to you!,你也一样！,L1,日常口语表达。,""
-"基础·日常高频短语",情景常用语,情景常用语,I really mean it.,我是认真的。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Hello, who's speaking?,你好，请问是哪位？,L1,"日常口语表达。",""
-"基础·电话与应急",电话用语,电话用语,This is Tom speaking.,我是汤姆。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Can I speak to Mary?,我能和玛丽通话吗？,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Hold on a moment, please.,请稍等。,L1,"日常口语表达。",""
-"基础·电话与应急",电话用语,电话用语,I'll call you back later.,我稍后打给你。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Sorry, I have to go now.,对不起，我现在得挂了。,L1,"日常口语表达。",""
-"基础·电话与应急",电话用语,电话用语,Can you hear me?,你能听到我吗？,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,I can't hear you well.,我听不太清楚。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Please speak slowly.,请说慢一点。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,I'll text you.,我发短信给你。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Send me a message.,给我发消息。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,I missed your call.,我错过了你的电话。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Let me call you back.,让我回电话给你。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,Please leave a message.,请留言。,L1,日常口语表达。,""
-"基础·电话与应急",电话用语,电话用语,I'll get back to you soon.,我很快回复你。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,Help!,救命！,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,Call the police!,报警！,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,I need a doctor!,我需要医生！,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,It's an emergency!,这是紧急情况！,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,I'm lost.,我迷路了。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,I need help.,我需要帮助。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,Please call an ambulance!,请叫救护车！,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,There's a fire!,着火了！,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,I lost my passport.,我丢了护照。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,My wallet was stolen.,我的钱包被偷了。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,I had an accident.,我出了事故。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,Is there a hospital nearby?,附近有医院吗？,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,I don't feel well.,我感觉不舒服。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,It hurts here.,这里疼。,L1,日常口语表达。,""
-"基础·电话与应急",紧急求助,紧急求助,Please take me to the hospital.,请带我去医院。,L1,日常口语表达。,""
+基础·日常高频短语,常用动词短语,常用动词短语,I'll call you back.,我会回电话给你。,L1,日常口语表达。,
+基础·日常高频短语,常用动词短语,常用动词短语,Come over to my place.,来我家吧。,L1,日常口语表达。,
+基础·日常高频短语,常用动词短语,常用动词短语,I'm running out of time.,我的时间不够了。,L1,日常口语表达。,
+基础·日常高频短语,常用动词短语,常用动词短语,Put on your coat.,穿上你的外套。,L1,日常口语表达。,
+基础·日常高频短语,常用动词短语,常用动词短语,Take off your shoes.,脱掉你的鞋子。,L1,日常口语表达。,
+基础·日常高频短语,常用动词短语,常用动词短语,I'm looking forward to it.,我很期待。,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,What's the matter?,怎么了？,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Are you okay?,你还好吗？,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Take your time.,慢慢来。,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,No worries!,别担心！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Good luck!,祝你好运！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Have fun!,玩得开心！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Take care!,保重！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,See you later!,回头见！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,That's too bad.,那太糟糕了。,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,What a pity!,真可惜！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Congratulations!,恭喜你！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Well done!,做得好！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Cheers!,干杯！/谢谢！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,Same to you!,你也一样！,L1,日常口语表达。,
+基础·日常高频短语,情景常用语,情景常用语,I really mean it.,我是认真的。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,"Hello, who's speaking?",你好，请问是哪位？,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,This is Tom speaking.,我是汤姆。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,Can I speak to Mary?,我能和玛丽通话吗？,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,"Hold on a moment, please.",请稍等。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,I'll call you back later.,我稍后打给你。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,"Sorry, I have to go now.",对不起，我现在得挂了。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,Can you hear me?,你能听到我吗？,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,I can't hear you well.,我听不太清楚。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,Please speak slowly.,请说慢一点。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,I'll text you.,我发短信给你。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,Send me a message.,给我发消息。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,I missed your call.,我错过了你的电话。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,Let me call you back.,让我回电话给你。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,Please leave a message.,请留言。,L1,日常口语表达。,
+基础·电话与应急,电话用语,电话用语,I'll get back to you soon.,我很快回复你。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,Help!,救命！,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,Call the police!,报警！,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,I need a doctor!,我需要医生！,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,It's an emergency!,这是紧急情况！,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,I'm lost.,我迷路了。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,I need help.,我需要帮助。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,Please call an ambulance!,请叫救护车！,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,There's a fire!,着火了！,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,I lost my passport.,我丢了护照。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,My wallet was stolen.,我的钱包被偷了。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,I had an accident.,我出了事故。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,Is there a hospital nearby?,附近有医院吗？,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,I don't feel well.,我感觉不舒服。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,It hurts here.,这里疼。,L1,日常口语表达。,
+基础·电话与应急,紧急求助,紧急求助,Please take me to the hospital.,请带我去医院。,L1,日常口语表达。,

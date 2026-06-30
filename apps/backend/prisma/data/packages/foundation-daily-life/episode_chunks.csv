@@ -19,7 +19,7 @@ ch_action_02,1,I need some help.,4
 ch_action_02,1,I need to go now.,5
 ch_action_02,2,I have a brother.,0
 ch_action_02,2,I have two cats.,1
-ch_action_02,2,Do you have a pen? — Yes, I do.,2
+ch_action_02,2,"Do you have a pen? — Yes, I do.",2
 ch_action_02,2,I don't have a car.,3
 ch_action_02,2,I have breakfast at 7.,4
 ch_action_02,2,I have a question.,5
@@ -113,17 +113,17 @@ ch_action_04,2,Let's go to the park this afternoon.,4
 ch_action_04,2,I take the bus to work every day.,5
 ch_action_04,2,I walk to school. It's not far from my home.,6
 ch_action_05,1,I'm hungry. Let's eat out tonight.,0
-ch_action_05,1,Can I have the menu, please?,1
+ch_action_05,1,"Can I have the menu, please?",1
 ch_action_05,1,I'd like to order a pizza and a salad.,2
 ch_action_05,1,What do you recommend? — The pasta is very good.,3
 ch_action_05,1,The food is delicious! I love it.,4
-ch_action_05,1,Can I have the bill, please? — Sure. It's 120 yuan.,5
-ch_action_05,1,I usually cook at home, but today I eat out.,6
+ch_action_05,1,"Can I have the bill, please? — Sure. It's 120 yuan.",5
+ch_action_05,1,"I usually cook at home, but today I eat out.",6
 ch_action_05,2,I call my mom every day.,0
 ch_action_05,2,I send messages to my friends on WeChat.,1
 ch_action_05,2,Can you call me back later? I'm busy right now.,2
 ch_action_05,2,Let's meet at the coffee shop at 3 pm.,3
 ch_action_05,2,I'm on my way. I'll be there in 10 minutes.,4
-ch_action_05,2,Sorry, I'm late. The traffic was bad.,5
+ch_action_05,2,"Sorry, I'm late. The traffic was bad.",5
 ch_action_05,2,I check my phone first thing in the morning.,6
 found_foundation_daily_life_1,2,It's time to go to bed.,14

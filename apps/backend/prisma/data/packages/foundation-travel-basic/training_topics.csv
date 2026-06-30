@@ -1,7 +1,89 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础⑦·计划与预测,我打算...,Practice expressing plans with be going to and will.,练习用be going to和will表达计划。,35,L1~L2,掌握be going to(计划)和will(决定/预测)的区别。,将来时 going to will 计划 预测,practice_foundation-travel-basic_计划与预测_我打算
-基础⑦·计划与预测,将会怎样,Practice making predictions with will and be going to.,练习用will和be going to做预测。,35,L1~L2,掌握预测天气/未来/结果的表达。,预测 将来 天气 未来,practice_foundation-travel-basic_计划与预测_将会怎样
-基础⑦·能力与请求,我能/会...,Practice expressing ability with can and can't.,练习用can表达能力和不能。,35,L1~L2,掌握can表达能力和许可的用法。,情态 can 能力 许可 请求,practice_foundation-travel-basic_能力与请求_我能会
-基础⑦·能力与请求,你可以/必须...,Practice giving suggestions and expressing obligation.,练习用should/must/have to提建议和表达义务。,35,L1~L2,掌握should建议和must/have to必须的用法。,情态 should must have to 建议 义务,practice_foundation-travel-basic_能力与请求_你可以必须
-基础⑦·建议与义务,你应该/必须,Practice using should/must/mustn't/don't have to.,练习should/must/mustn't/don't have to的区分。,40,L1~L2,掌握should/must/have to/mustn't/don't have to的区别。,情态 必须 不必 禁止 区分,practice_foundation-travel-basic_建议与义务_你应该必须
-基础⑦·建议与义务,可能/不必/禁止,Practice expressing possibility and prohibition.,练习表达可能性( may/might )和禁止( mustn't )。,35,L1~L2,掌握may/might表达可能和mustn't表达禁止。,情态 may might 可能 禁止 礼貌,practice_foundation-travel-basic_建议与义务_可能不必禁止
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础⑦·计划与预测,我打算...,Practice expressing plans with be going to and will.,练习用be going to和will表达计划。,35,L1~L2,掌握be going to(计划)和will(决定/预测)的区别。,将来时 going to will 计划 预测,"## be going to 表示计划
+- I'm going to visit my family next week. (已计划好)
+- be going to = 已经决定要做的事
+
+## will 表示当即决定
+- I'll help you. (说话时才决定)
+- will = 说话当下做的决定或承诺
+
+## 对比
+| be going to | will |
+|------------|------|
+| 事先计划 | 当场决定 |
+| I'm going to travel. | I'll call you later. |
+
+## 时间表达
+- soon (很快) / someday (总有一天) / eventually (最终)
+- in the future (将来) / by then (到那时)",practice_foundation-travel-basic_计划与预测_我打算
+基础⑦·计划与预测,将会怎样,Practice making predictions with will and be going to.,练习用will和be going to做预测。,35,L1~L2,掌握预测天气/未来/结果的表达。,预测 将来 天气 未来,"## will / be going to 做预测
+- It will rain tomorrow. (预测天气)
+- Look at those clouds! It's going to rain. (有证据的预测)
+
+## 预测语气强弱
+- definitely (肯定) > probably (大概) > perhaps (也许) > might (可能)
+- It will probably be sunny. (大概会是晴天)
+- It might rain later. (晚点可能会下雨)
+
+## 天气词汇
+- sunny / cloudy / rainy / stormy
+- temperature (温度) / climate (气候) / forecast (预报)",practice_foundation-travel-basic_计划与预测_将会怎样
+基础⑦·能力与请求,我能/会...,Practice expressing ability with can and can't.,练习用can表达能力和不能。,35,L1~L2,掌握can表达能力和许可的用法。,情态 can 能力 许可 请求,"## can 表达能力
+- I can swim. (我会游泳)
+- Can you drive? — Yes, I can. / No, I can't.
+
+## can 表达许可
+- Can I sit here? — Sure.
+- You can use my phone.
+
+## 相关动词
+- manage (设法做到) / handle (处理) / solve (解决) / fix (修理)
+- reach (够到) / lift (举起)
+
+## 常见错误
+- ❌ I can to swim. → ✅ I can swim. (can后接动词原形)
+- ❌ Do you can drive? → ✅ Can you drive?",practice_foundation-travel-basic_能力与请求_我能会
+基础⑦·能力与请求,你可以/必须...,Practice giving suggestions and expressing obligation.,练习用should/must/have to提建议和表达义务。,35,L1~L2,掌握should建议和must/have to必须的用法。,情态 should must have to 建议 义务,"## should 提建议
+- You should rest more. (应该多休息 — 建议)
+- Should I go now? — Yes, you should.
+
+## must 表达必须/义务
+- You must wear a seat belt. (必须系安全带 — 强制)
+- must = 说话人认为必须
+
+## have to 表达外部义务
+- I have to go now — my bus leaves at 5.
+- have to = 外部原因迫使
+
+## 相关词汇
+- advise / recommend / suggest (建议)
+- rule / law / duty (规则/法律/责任)
+- require / force (要求/强迫)",practice_foundation-travel-basic_能力与请求_你可以必须
+基础⑦·建议与义务,你应该/必须,Practice using should/must/mustn't/don't have to.,练习should/must/mustn't/don't have to的区分。,40,L1~L2,掌握should/must/have to/mustn't/don't have to的区别。,情态 必须 不必 禁止 区分,"## must vs have to
+- must: 主观必须 → I must study harder.
+- have to: 客观必须 → I have to wake up early for work.
+
+## mustn't vs don't have to
+- mustn't = 禁止 (you must not do it)
+- don't have to = 不必 (you can, but not required)
+
+## 相关词汇
+- obey (遵守) / strict (严格) / forbid (禁止) / prohibit (禁止)
+- limit (限制) / exception (例外) / penalty (处罚)
+- remind (提醒) / warn (警告) / risk (风险)",practice_foundation-travel-basic_建议与义务_你应该必须
+基础⑦·建议与义务,可能/不必/禁止,Practice expressing possibility and prohibition.,练习表达可能性( may/might )和禁止( mustn't )。,35,L1~L2,掌握may/might表达可能和mustn't表达禁止。,情态 may might 可能 禁止 礼貌,"## may / might 表达可能性
+- It may rain. (50%可能)
+- It might snow. (30%可能) — might 比 may 更不确定
+
+## 礼貌请求 (may / could)
+- May I come in? (正式礼貌)
+- Could you help me? (比 Can you 更礼貌)
+
+## don't have to 表达不必
+- You don't have to come. (不必来 — 可以选择不来)
+- ≠ mustn't (禁止来)
+
+## 相关词汇
+- possibly (可能) / chance (机会) / guess (猜测) / suppose (猜想)
+- optional (可选的) / unnecessary (不必要的)
+- permit (许可) / refuse (拒绝)",practice_foundation-travel-basic_建议与义务_可能不必禁止

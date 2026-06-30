@@ -1,17 +1,17 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础③·描述家人,他/她是谁,He/She is ___.,他/她是...,"my father, a doctor, very tall",He is my father.,L1,0
 基础③·描述家人,他/她是谁,He/She has ___.,他/她有...,"a car, a cat, two brothers",She has a cat.,L1,1
-基础③·描述家人,他/她是谁,His/Her ___ is ___.,他/她的...是...,"name, Tom","phone, new","car, red",His name is Tom.,L1,2
+基础③·描述家人,他/她是谁,His/Her ___ is ___.,他/她的...是...,"name, Tom; phone, new; car, red",His name is Tom.,L1,2
 基础③·描述家人,他/她喜欢什么,He/She likes ___.,他/她喜欢...,"coffee, sports, music",He likes coffee.,L1,0
 基础③·描述家人,他/她喜欢什么,He/She likes to ___.,他/她喜欢做...,"read, swim, travel, cook",She likes to read.,L1,1
 基础③·描述家人,他/她喜欢什么,He/She doesn't like ___.,他/她不喜欢...,"meat, coffee, cold weather",He doesn't like meat.,L1,2
 基础③·描述家人,他/她喜欢什么,Does he/she like ___?,他/她喜欢...吗？,"sports, dogs, music",Does she like music?,L1,3
-基础③·他/她的日常,他每天做什么,He/She ___ at ___.,他/她...点...,"gets up, 7","goes to bed, 11","eats lunch, 12",She gets up at 7.,L1,0
+基础③·他/她的日常,他每天做什么,He/She ___ at ___.,他/她...点...,"gets up, 7; goes to bed, 11; eats lunch, 12",She gets up at 7.,L1,0
 基础③·他/她的日常,他每天做什么,He/She doesn't ___.,他/她不...,"eat meat, drink coffee, smoke",He doesn't eat meat.,L1,1
-基础③·他/她的日常,他/她做什么工作,He/She works in a ___.,他/她在...工作,",hospital, school, bank, office",She works in a hospital.,L1,0
+基础③·他/她的日常,他/她做什么工作,He/She works in a ___.,他/她在...工作,"hospital, school, bank, office",She works in a hospital.,L1,0
 基础③·他/她的日常,他/她做什么工作,Does he/she ___ on weekends?,他/她周末...吗？,"work, study, travel",Does he work on weekends?,L1,1
-基础③·对比你我他,我和你 vs 他/She,I ___ but he/she ___.,我...但他/她...,"like coffee, likes tea","eat breakfast, eats lunch","get up at 6, gets up at 8",I like coffee but she likes tea.,L1,0
-基础③·对比你我他,我和你 vs 他/她,I don't ___ but he/she ___.,我不...但他/她...,"have a car, has a car","like sports, likes sports","eat meat, eats meat",I don't have a car but he has a car.,L1,1
+基础③·对比你我他,我和你 vs 他/She,I ___ but he/she ___.,我...但他/她...,"like coffee, likes tea; eat breakfast, eats lunch; get up at 6, gets up at 8",I like coffee but she likes tea.,L1,0
+基础③·对比你我他,我和你 vs 他/她,I don't ___ but he/she ___.,我不...但他/她...,"have a car, has a car; like sports, likes sports; eat meat, eats meat",I don't have a car but he has a car.,L1,1
 基础③·对比你我他,他们的生活,They ___.,他们...,"live in Beijing, have a car, work hard",They live in Beijing.,L1,0
-基础③·对比你我他,他们的生活,___'s ___ is a ___.,...的...是...,"Tom, mother, nurse","Anna, father, doctor",Tom's mother is a nurse.,L1,1
+基础③·对比你我他,他们的生活,___'s ___ is a ___.,...的...是...,"Tom, mother, nurse; Anna, father, doctor",Tom's mother is a nurse.,L1,1
 基础③·对比你我他,他们的生活,Everyone ___ him/her.,大家都...他/她,"likes, knows, loves",Everyone likes him.,L1,2

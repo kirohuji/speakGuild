@@ -1,7 +1,103 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础⑨·比较事物,比...更,Practice comparatives with -er and more + than.,练习比较级：-er + than / more + than。,35,L1~L2,掌握比较级结构和常见不规则变化。,比较级 er than more than better,practice_foundation-describe-compare_比较事物_比更
-基础⑨·比较事物,最...的,Practice superlatives with the -est and the most.,练习最高级：the -est / the most。,35,L1~L2,掌握最高级结构和用法。,最高级 the est the most best,practice_foundation-describe-compare_比较事物_最的
-基础⑨·描述位置,有...在...,Practice there is/are to describe existence.,练习there is/are存在句表达。,35,L1,掌握there is/are的肯定/否定/疑问形式。,there is there are 存在 位置,practice_foundation-describe-compare_描述位置_有在
-基础⑨·描述位置,在...里/上/旁边,Practice prepositions of place: in/on/at/under/next to.,练习位置介词：in/on/at/under/next to/between。,35,L1,掌握常用位置介词的用法区别。,介词 位置 in on at under next to,practice_foundation-describe-compare_描述位置_在里上旁边
-基础⑨·程度表达,和...一样,Practice as...as comparatives and too/enough.,练习as...as同级比较和too/enough程度。,35,L1~L2,掌握as...as和too/enough的用法。,同级比较 as as too enough 程度,practice_foundation-describe-compare_程度表达_和一样
-基础⑨·程度表达,怎么做的,Practice adverbs of manner: quickly / carefully / well.,练习方式副词：quickly/carefully/well/hard。,35,L1~L2,掌握方式副词的构成和位置。,副词 方式 quickly well carefully 描述,practice_foundation-describe-compare_程度表达_怎么做的
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础⑨·比较事物,比...更,Practice comparatives with -er and more + than.,练习比较级：-er + than / more + than。,35,L1~L2,掌握比较级结构和常见不规则变化。,比较级 er than more than better,"## 比较级构成
+- 短词 + er：big → bigger, fast → faster
+- 以 y 结尾 → ier：happy → happier, easy → easier
+- 长词 + more：more interesting, more beautiful
+- 不规则：good→better, bad→worse, far→farther
+
+## 比较句型
+- A is bigger than B. (A比B大)
+- A is more expensive than B.
+
+## than 后的代词
+- She is taller than me. (口语)
+- She is taller than I am. (正式)
+
+## 常见错误
+- ❌ He is more taller. → ✅ He is taller. (不重复)
+- ❌ She is better than me at sports. → ✅ She is better at sports than me.",practice_foundation-describe-compare_比较事物_比更
+基础⑨·比较事物,最...的,Practice superlatives with the -est and the most.,练习最高级：the -est / the most。,35,L1~L2,掌握最高级结构和用法。,最高级 the est the most best,"## 最高级构成
+- the + 短词 + est：the biggest, the fastest
+- the most + 长词：the most beautiful
+- 不规则：good→best, bad→worst
+
+## 最高级句型
+- This is the best restaurant in town.
+- She is the tallest in our class.
+
+## in vs of
+- in + 地点/范围：the best in the world
+- of + 同类群体：the tallest of all students
+
+## 常见错误
+- ❌ She is best student. → ✅ the best student
+- ❌ the most happiest → ✅ the happiest",practice_foundation-describe-compare_比较事物_最的
+基础⑨·描述位置,有...在...,Practice there is/are to describe existence.,练习there is/are存在句表达。,35,L1,掌握there is/are的肯定/否定/疑问形式。,there is there are 存在 位置,"## There is / There are
+- There is + 单数/不可数：There is a book on the desk.
+- There are + 复数：There are two cats in the garden.
+
+## 否定与疑问
+- 否定：There isn't / There aren't
+- 疑问：Is there...? / Are there...?
+
+## some vs any
+- 肯定句用 some：There are some apples.
+- 否定/疑问用 any：There aren't any students.
+
+## 相关词汇
+- empty (空的) / full (满的) / crowded (拥挤的)
+- available (可用的) / vacant (空着的) / occupied (被占用的)",practice_foundation-describe-compare_描述位置_有在
+基础⑨·描述位置,在...里/上/旁边,Practice prepositions of place: in/on/at/under/next to.,练习位置介词：in/on/at/under/next to/between。,35,L1,掌握常用位置介词的用法区别。,介词 位置 in on at under next to,"## 常用位置介词
+| 介词 | 含义 | 例句 |
+|------|------|------|
+| in | 在里面 | in the box |
+| on | 在上面(接触) | on the table |
+| at | 在某点 | at the door |
+| under | 在下面 | under the chair |
+| next to | 在旁边 | next to the park |
+| between | 在两者间 | between A and B |
+| behind | 在后面 | behind the door |
+| above | 在上方 | above the door |
+| below | 在下方 | below zero |
+| beside | 在旁边 | beside me |
+
+## 常见错误
+- ❌ The cat is in the table. → ✅ on the table
+- ❌ The bank is in the store and the hospital. → ✅ between",practice_foundation-describe-compare_描述位置_在里上旁边
+基础⑨·程度表达,和...一样,Practice as...as comparatives and too/enough.,练习as...as同级比较和too/enough程度。,35,L1~L2,掌握as...as和too/enough的用法。,同级比较 as as too enough 程度,"## as...as 同级比较
+- as + 形容词 + as：He is as tall as me.
+- 否定：not as...as / not so...as
+
+## too + 形容词 + to do
+- This coffee is too hot to drink. (太...而不能)
+- too = 超过可接受的程度
+
+## 形容词 + enough
+- big enough (够大) — enough 在形容词后
+- enough money (足够的钱) — enough 在名词前
+
+## 常见错误
+- ❌ This is enough big. → ✅ big enough
+- ❌ too much hot → ✅ too hot",practice_foundation-describe-compare_程度表达_和一样
+基础⑨·程度表达,怎么做的,Practice adverbs of manner: quickly / carefully / well.,练习方式副词：quickly/carefully/well/hard。,35,L1~L2,掌握方式副词的构成和位置。,副词 方式 quickly well carefully 描述,"## 方式副词构成
+- 形容词 + ly：quick → quickly, careful → carefully
+- y → ily：happy → happily, easy → easily
+- 不规则：good → well, fast → fast (同形), hard → hard
+
+## 副词位置
+- 动词后或句尾：She sings well. / He drives carefully.
+- 方式副词一般不放动词和宾语之间
+
+## 常用方式副词
+| 副词 | 形容词 | 含义 |
+|------|--------|------|
+| well | good | 好地 |
+| quickly | quick | 快速地 |
+| carefully | careful | 小心地 |
+| slowly | slow | 慢慢地 |
+| easily | easy | 容易地 |
+| happily | happy | 开心地 |
+| hard | hard | 努力地 |
+| fast | fast | 很快地 |
+| gently | gentle | 温柔地 |
+| smoothly | smooth | 顺利地 |",practice_foundation-describe-compare_程度表达_怎么做的
