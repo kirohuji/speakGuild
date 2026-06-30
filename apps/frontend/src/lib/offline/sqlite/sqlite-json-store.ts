@@ -79,6 +79,13 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
     ['created_at', 'createdAt', (value) => value?.createdAt ?? null],
   ],
+  warmup_record_entries: [
+    ['record_id', 'recordId', (value) => value?.recordId ?? null],
+    ['step_id', 'stepId', (value) => value?.stepId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['practiced_date', 'practicedDate', (value) => value?.practicedDate ?? null],
+    ['record_updated_at', 'recordUpdatedAt', (value) => value?.recordUpdatedAt ?? null],
+  ],
   daily_practice_items: [
     ['item_id', 'itemId', (value) => value?.itemId ?? value?.id ?? null],
     ['pack_id', 'packId', (value) => value?.packId ?? null],
@@ -302,6 +309,31 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       }
     },
 
+    async findByIndexIn<T>(
+      storeName: TableName,
+      columnName: string,
+      values: Array<string | number>,
+    ): Promise<T[]> {
+      const uniqueValues = [...new Set(values)]
+      if (uniqueValues.length === 0) return []
+
+      try {
+        assertIndexedColumn(storeName, columnName)
+        const rows: Record<string, any>[] = []
+        for (let i = 0; i < uniqueValues.length; i += SQL_BATCH_SIZE) {
+          const chunk = uniqueValues.slice(i, i + SQL_BATCH_SIZE)
+          rows.push(...await executor.queryRows<Record<string, any>>(
+            `SELECT * FROM "${storeName}" WHERE ${columnName} IN (${chunk.map(() => '?').join(', ')}) ORDER BY updated_at DESC`,
+            chunk,
+          ))
+        }
+        return rows.map((row) => hydrateRow<T>(storeName, row))
+      } catch (error) {
+        console.warn(`[${executor.label}] findByIndexIn failed for ${storeName}.${columnName}`, error)
+        return []
+      }
+    },
+
     async count(storeName: TableName): Promise<number> {
       try {
         const rows = await executor.queryRows<{ cnt: number }>(
@@ -318,6 +350,18 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         await write(`DELETE FROM "${storeName}"`)
       } catch (error) {
         console.warn(`[${executor.label}] clear failed for ${storeName}`, error)
+      }
+    },
+
+    async deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void> {
+      try {
+        assertIndexedColumn(storeName, columnName)
+        await write(
+          `DELETE FROM "${storeName}" WHERE ${columnName} ${value === null ? 'IS NULL' : '= ?'}`,
+          value === null ? [] : [value],
+        )
+      } catch (error) {
+        console.warn(`[${executor.label}] deleteByIndex failed for ${storeName}.${columnName}`, error)
       }
     },
 

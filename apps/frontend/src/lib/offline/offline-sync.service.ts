@@ -7,6 +7,7 @@ import { syncOutbox, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { upsertWarmupRecordEntries } from './warmup-record-index'
 
 const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
 
@@ -146,7 +147,7 @@ async function applyPracticeSessionItem(item: any, localSessionId?: string | nul
 
 async function applyWarmupRecordItem(item: any): Promise<void> {
   if (!item?.id || !Array.isArray(item.items) || item.items.length === 0) return
-  await localDb.put('warmup_records', {
+  const record = {
     id: `remote-warmup:${item.id}`,
     remoteId: item.id,
     topicId: item.topicId,
@@ -157,7 +158,9 @@ async function applyWarmupRecordItem(item: any): Promise<void> {
     createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
     updatedAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
     syncStatus: 'synced',
-  })
+  }
+  await localDb.put('warmup_records', record)
+  await upsertWarmupRecordEntries(record)
 }
 
 async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
@@ -294,7 +297,7 @@ async function replayItem(
     if (!result || result.status !== 'synced') {
       throw new Error(result?.error ?? 'warmup record sync failed')
     }
-    await localDb.put('warmup_records', {
+    const record = {
       id: item.entityId,
       remoteId: result.remoteId,
       topicId: payload.topicId,
@@ -305,7 +308,9 @@ async function replayItem(
       createdAt: payload.createdAt ?? item.createdAt,
       updatedAt: new Date().toISOString(),
       syncStatus: 'synced',
-    })
+    }
+    await localDb.put('warmup_records', record)
+    await upsertWarmupRecordEntries({ ...record, updatedAt: record.createdAt })
     return true
   }
 

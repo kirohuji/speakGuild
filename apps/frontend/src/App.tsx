@@ -130,6 +130,7 @@ export default function App() {
             gap={8}
             offset="calc(0.75rem + var(--safe-area-inset-top))"
             toastOptions={{
+              duration: 1000,
               unstyled: true,
               classNames: {
                 toast: 'flex w-[calc(100vw-2rem)] max-w-sm items-center gap-2.5 rounded-2xl bg-muted/80 px-4 py-3 text-foreground backdrop-blur-2xl',

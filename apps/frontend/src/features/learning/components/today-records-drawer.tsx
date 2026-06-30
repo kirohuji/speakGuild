@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, CheckCircle2, XCircle, ClipboardList } from 
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
 import type { PracticeItem } from '../pages/today-task-page'
@@ -32,14 +32,16 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-[env(safe-area-inset-top,0px)] md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
-        <DialogTitle className="sr-only">{t('todayTask.todayPracticeRecords')}</DialogTitle>
-        <DialogDescription className="sr-only">{t('todayTask.todayPracticeRecordsDesc')}</DialogDescription>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent
+        className="!z-[10001] flex h-[95dvh] max-h-[95dvh] w-full max-w-full flex-col overflow-hidden rounded-t-[28px] border-border/70 bg-background p-0 drawer-surface"
+        overlayClassName="!z-[10001]"
+      >
+        <DrawerTitle className="sr-only">{t('todayTask.todayPracticeRecords')}</DrawerTitle>
 
         <div className="flex h-full flex-col">
-          <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-3">
-            <h2 className="text-lg font-semibold text-foreground">{t('todayTask.todayPracticeRecords')}</h2>
+          <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 pb-3 pt-2">
+            <h2 className="text-base font-semibold text-foreground">{t('todayTask.todayPracticeRecords')}</h2>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
@@ -48,7 +50,7 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
               <ChevronDown className="size-5" />
             </button>
           </div>
-          <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
+          <ScrollArea className="min-h-0 flex-1 px-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
             {records.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
                 <ClipboardList className="size-10 text-muted-foreground/30" />
@@ -119,7 +121,7 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
             )}
           </ScrollArea>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   )
 }

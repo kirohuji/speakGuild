@@ -9,6 +9,7 @@ import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } f
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
+import { deleteWarmupRecordEntries, upsertWarmupRecordEntries } from './warmup-record-index'
 
 export type PracticeTurnPayload = {
   round?: number
@@ -36,6 +37,7 @@ function sessionRecordId(sessionId: string) {
 }
 
 const PRACTICE_RECORDS_CACHE_KEY = 'practice-records-cache:loaded'
+const PRACTICE_DATA_RESET_KEY = 'practice-data-reset-at'
 
 function turnRecordId(sessionId: string, round?: number) {
   return `turn:${sessionId}:${round ?? createLocalId('round')}`
@@ -355,13 +357,17 @@ export const practiceRepository = {
     const page = params.page ?? 1
     const pageSize = params.pageSize ?? 20
     const remote = await getPracticeRecords({ page, pageSize })
+    const resetAt = await this.getPracticeDataResetAt()
+    const list = resetAt
+      ? remote.list.filter((record) => String(record.lastPracticeAt ?? '').localeCompare(resetAt) >= 0)
+      : remote.list
     await Promise.all(
-      remote.list
+      list
         .filter((record) => record.status === 'analyzed')
         .map((record) => putPracticeHistoryRecord({ record, syncStatus: 'synced' })),
     )
     await markPracticeRecordsCacheLoaded()
-    return remote
+    return { ...remote, list, total: resetAt ? list.length : remote.total }
   },
 
   async getCachedPracticeSession(sessionId: string): Promise<PracticeSession | null> {
@@ -393,6 +399,17 @@ export const practiceRepository = {
     await localDb.delete('kv', PRACTICE_RECORDS_CACHE_KEY)
   },
 
+  async markPracticeDataReset(): Promise<string> {
+    const resetAt = new Date().toISOString()
+    await localDb.put('kv', { id: PRACTICE_DATA_RESET_KEY, value: resetAt, updatedAt: resetAt })
+    return resetAt
+  },
+
+  async getPracticeDataResetAt(): Promise<string | null> {
+    const marker = await localDb.get<{ value?: string }>('kv', PRACTICE_DATA_RESET_KEY).catch(() => null)
+    return marker?.value ?? null
+  },
+
   // ── Warmup Records (今日任务练习记录) ──
 
   /**
@@ -413,20 +430,23 @@ export const practiceRepository = {
       updatedAt: now,
       syncStatus: 'pending',
     })
+    await upsertWarmupRecordEntries({ id: recordId, topicId, topicTitle, items, createdAt: now, updatedAt: now })
 
     // 2. 后台同步到后端
     try {
       await warmupRecordApi.save(topicId, items)
       await warmupRecordApi.assess(topicId, topicTitle, items)
+      const syncedAt = new Date().toISOString()
       await localDb.put('warmup_records', {
         id: recordId,
         topicId,
         topicTitle,
         items,
         createdAt: now,
-        updatedAt: new Date().toISOString(),
+        updatedAt: syncedAt,
         syncStatus: 'synced',
       })
+      await upsertWarmupRecordEntries({ id: recordId, topicId, topicTitle, items, createdAt: now, updatedAt: now })
     } catch (err) {
       console.warn('[practiceRepo] Warmup sync failed, will retry later:', err)
       // Outbox retry via sync-outbox
@@ -454,7 +474,7 @@ export const practiceRepository = {
   }) {
     const existing = await localDb.get<any>('warmup_records', params.id).catch(() => null)
     const now = new Date().toISOString()
-    await localDb.put('warmup_records', {
+    const nextRecord = {
       id: params.id,
       topicId: params.topicId,
       topicTitle: params.topicTitle ?? existing?.topicTitle ?? '',
@@ -462,7 +482,9 @@ export const practiceRepository = {
       createdAt: existing?.createdAt ?? params.createdAt ?? now,
       updatedAt: now,
       syncStatus: params.syncStatus ?? existing?.syncStatus ?? 'pending',
-    })
+    }
+    await localDb.put('warmup_records', nextRecord)
+    await upsertWarmupRecordEntries(nextRecord)
   },
 
   async getLocalWarmupRecord(id: string): Promise<{ items?: WarmupRecordEntry[] } | null> {
@@ -498,36 +520,25 @@ export const practiceRepository = {
   },
 
   async getWarmupEntriesByDate(date: string): Promise<WarmupRecordEntry[]> {
-    const all = await localDb.list<any>('warmup_records')
-    return all
-      .filter((item) => {
-        if (!Array.isArray(item?.items) || item.items.length === 0) return false
-        const createdDate = String(item.createdAt ?? '').slice(0, 10)
-        const updatedDate = String(item.updatedAt ?? '').slice(0, 10)
-        return createdDate === date || updatedDate === date
-      })
-      .sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')))
-      .flatMap((item) => (item.items as WarmupRecordEntry[]).map((record) => ({
-        ...record,
-        topicTitle: record.topicTitle ?? item.topicTitle ?? '',
-        recordId: item.id,
-      })))
+    const entries = await localDb.findByIndex<any>('warmup_record_entries', 'practiced_date', date)
+    return entries
+      .sort((a, b) => String(a.recordUpdatedAt ?? '').localeCompare(String(b.recordUpdatedAt ?? '')))
+      .map((entry) => entry.record as WarmupRecordEntry)
   },
 
   async getLatestWarmupEntriesByStepIds(stepIds: string[], excludeRecordId?: string | null): Promise<WarmupRecordEntry[]> {
     const stepIdSet = new Set(stepIds)
     if (stepIdSet.size === 0) return []
-    const all = await localDb.list<any>('warmup_records')
     const latestByStep = new Map<string, { record: WarmupRecordEntry; createdAt: string }>()
-    for (const item of all) {
-      if (!item?.items?.length || item.id === excludeRecordId) continue
-      const createdAt = String(item.updatedAt ?? item.createdAt ?? '')
-      for (const record of item.items as WarmupRecordEntry[]) {
-        if (!stepIdSet.has(record.stepId)) continue
-        const existing = latestByStep.get(record.stepId)
-        if (!existing || createdAt.localeCompare(existing.createdAt) > 0) {
-          latestByStep.set(record.stepId, { record, createdAt })
-        }
+    const entries = await localDb.findByIndexIn<any>('warmup_record_entries', 'step_id', [...stepIdSet])
+    for (const entry of entries) {
+      if (excludeRecordId && entry.recordId === excludeRecordId) continue
+      const stepId = String(entry.stepId ?? '')
+      if (!stepIdSet.has(stepId)) continue
+      const createdAt = String(entry.recordUpdatedAt ?? '')
+      const existing = latestByStep.get(stepId)
+      if (!existing || createdAt.localeCompare(existing.createdAt) > 0) {
+        latestByStep.set(stepId, { record: entry.record as WarmupRecordEntry, createdAt })
       }
     }
     return [...latestByStep.values()].map((item) => item.record)
@@ -536,12 +547,14 @@ export const practiceRepository = {
   async markWarmupRecordSynced(id: string, remoteId?: string | null) {
     const existing = await localDb.get<any>('warmup_records', id).catch(() => null)
     if (!existing) return
-    await localDb.put('warmup_records', {
+    const nextRecord = {
       ...existing,
       remoteId: remoteId ?? existing.remoteId,
       updatedAt: new Date().toISOString(),
       syncStatus: 'synced',
-    })
+    }
+    await localDb.put('warmup_records', nextRecord)
+    await upsertWarmupRecordEntries({ ...nextRecord, updatedAt: existing.updatedAt ?? existing.createdAt ?? nextRecord.updatedAt })
   },
 
   async syncLocalWarmupRecord(id: string, topicId: string, topicTitle: string, items: WarmupRecordEntry[]) {
@@ -555,6 +568,7 @@ export const practiceRepository = {
 
   async deleteLocalWarmupRecord(id: string) {
     await localDb.delete('warmup_records', id)
+    await deleteWarmupRecordEntries(id)
   },
 
   /** 标记今日练习活跃（用于打卡统计） */

@@ -25,8 +25,10 @@ export interface ILocalDb {
   delete(storeName: TableName, id: string): Promise<void>
   list<T>(storeName: TableName): Promise<T[]>
   findByIndex<T>(storeName: TableName, columnName: string, value: string | number | null): Promise<T[]>
+  findByIndexIn<T>(storeName: TableName, columnName: string, values: Array<string | number>): Promise<T[]>
   count(storeName: TableName): Promise<number>
   clear(storeName: TableName): Promise<void>
+  deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
   close(): Promise<void>
   /** Drop cached backend/connection. Next access re-initializes from scratch. */
@@ -108,12 +110,24 @@ export const localDb: ILocalDb = {
     return (await getBackend()).findByIndex<T>(storeName, columnName, value)
   },
 
+  async findByIndexIn<T>(
+    storeName: TableName,
+    columnName: string,
+    values: Array<string | number>,
+  ): Promise<T[]> {
+    return (await getBackend()).findByIndexIn<T>(storeName, columnName, values)
+  },
+
   async count(storeName: TableName): Promise<number> {
     return (await getBackend()).count(storeName)
   },
 
   async clear(storeName: TableName): Promise<void> {
     return (await getBackend()).clear(storeName)
+  },
+
+  async deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void> {
+    return (await getBackend()).deleteByIndex(storeName, columnName, value)
   },
 
   async deleteWhere<T>(

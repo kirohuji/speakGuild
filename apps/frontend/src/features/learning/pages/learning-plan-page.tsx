@@ -234,10 +234,14 @@ function WarmupRecordsContent() {
     Promise.allSettled([
       practiceRepository.listLocalWarmupRecords(),
       warmupRecordApi.listAll(),
-    ]).then(([localResult, remoteResult]) => {
+      practiceRepository.getPracticeDataResetAt(),
+    ]).then(([localResult, remoteResult, resetResult]) => {
       if (cancelled) return
       const localRecords = localResult.status === 'fulfilled' ? localResult.value : []
-      const remoteRecords = remoteResult.status === 'fulfilled' ? remoteResult.value : []
+      const resetAt = resetResult.status === 'fulfilled' ? resetResult.value : null
+      const remoteRecords = remoteResult.status === 'fulfilled'
+        ? remoteResult.value.filter((record) => !resetAt || String(record.createdAt ?? '').localeCompare(resetAt) >= 0)
+        : []
       setRecords(mergeWarmupRecords(localRecords, remoteRecords))
     }).catch(() => {
       if (!cancelled) setRecords([])

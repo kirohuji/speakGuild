@@ -10,7 +10,7 @@ import { practiceRepository } from './practice.repository'
 import type { SyncOutboxItem } from './sync-outbox'
 import { warmupEmbeddingCacheRepository } from '@/lib/local-ai/warmup-embedding-cache.repository'
 
-export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'all'
+export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'practice' | 'all'
 
 export interface OfflineStorageStats {
   downloadedPackCount: number
@@ -126,6 +126,18 @@ async function clearAssetFiles(): Promise<void> {
     await Filesystem.rmdir({ path: 'offline-assets', directory: Directory.Data, recursive: true })
   } catch {
     // Directory may not exist.
+  }
+}
+
+function clearPracticeLocalStorageKeys(): void {
+  if (typeof localStorage === 'undefined') return
+  for (const key of Object.keys(localStorage)) {
+    if (
+      key.startsWith('guided-progress:')
+      || key.startsWith('guided-session:')
+    ) {
+      localStorage.removeItem(key)
+    }
   }
 }
 
@@ -288,12 +300,37 @@ export const offlineStorageService = {
 
   async clearCategory(category: OfflineCacheCategory): Promise<void> {
     if (category === 'all') {
+      await this.clearCategory('practice')
       await this.clearCategory('packs')
       await this.clearCategory('assets')
       await this.clearCategory('dictionary')
       await this.clearCategory('expressions')
       await warmupEmbeddingCacheRepository.clear()
       await practiceRepository.clearPracticeRecordsCache()
+      return
+    }
+
+    if (category === 'practice') {
+      await clearTables([
+        'user_progress',
+        'practice_records',
+        'warmup_records',
+        'warmup_record_entries',
+        'daily_activity',
+        'daily_progress',
+        'daily_practice_items',
+        'daily_practice_runs',
+        'daily_practice_attempts',
+      ])
+      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) => [
+        'practice_session',
+        'practice_turn',
+        'warmup_records',
+        'daily_practice',
+      ].includes(item.entityType))
+      await localDb.deleteWhere<any>('kv', (item) => String(item.id).startsWith('session-map:'))
+      await practiceRepository.markPracticeDataReset()
+      clearPracticeLocalStorageKeys()
       return
     }
 
