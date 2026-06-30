@@ -435,6 +435,10 @@ function shuffleItems<T>(items: T[]) {
 }
 
 export const dailyPracticeRepository = {
+  async resolveCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
+    return loadCandidateUnits(scope, targetPackId)
+  },
+
   async buildTodayPlan(
     targetPackId?: string | null,
     targetDate?: string | null,
@@ -446,7 +450,7 @@ export const dailyPracticeRepository = {
     const dailyGoal = preferences.dailyGoal
     const packScope: DailyPracticeScope = preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
     const practiceOrderPool = preferences.dailyPracticeRandomOrder ? shuffleItems : <T,>(items: T[]) => items
-    const units = await loadCandidateUnits(packScope, targetPackId)
+    const units = await this.resolveCandidateUnits(packScope, targetPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
 

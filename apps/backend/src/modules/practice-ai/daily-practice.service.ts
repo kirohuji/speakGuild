@@ -138,6 +138,7 @@ export class DailyPracticeService {
     for (const progress of body.itemProgresses ?? []) {
       await this.mergeItemProgress(userId, progress);
     }
+    await this.syncSceneProgressFromWarmup(userId, body.run.packIds ?? []);
 
     let warmupRecord: any = null;
     if (body.warmupRecord?.topicId && body.warmupRecord.items?.length) {
@@ -221,5 +222,56 @@ export class DailyPracticeService {
         easeFactor: incomingIsLatest ? (progress.easeFactor ?? existing.easeFactor) : existing.easeFactor,
       },
     });
+  }
+
+  private async syncSceneProgressFromWarmup(userId: string, packIds: string[]) {
+    const uniquePackIds = [...new Set((packIds ?? []).filter(Boolean))];
+    if (uniquePackIds.length === 0) return;
+
+    await Promise.all(uniquePackIds.map(async (sceneId) => {
+      const [completedPracticeCount, scene] = await Promise.all([
+        (this.prisma as any).userWarmupItemProgress.count({
+          where: {
+            userId,
+            packId: sceneId,
+            bestScoreRank: { gte: 2 },
+          },
+        }),
+        this.prisma.scene.findUnique({
+          where: { id: sceneId },
+          include: {
+            trainingTopics: {
+              select: {
+                _count: { select: { topicVocabs: true, activeChunks: true } },
+              },
+            },
+          },
+        }),
+      ]);
+      if (!scene) return;
+
+      let vocabTotal = 0;
+      let chunkTotal = 0;
+      for (const topic of scene.trainingTopics) {
+        vocabTotal += (topic as any)._count?.topicVocabs ?? 0;
+        chunkTotal += (topic as any)._count?.activeChunks ?? 0;
+      }
+
+      await this.prisma.userSceneProgress.upsert({
+        where: { userId_sceneId: { userId, sceneId } },
+        create: {
+          userId,
+          sceneId,
+          vocabTotal,
+          chunkTotal,
+          completedPracticeCount,
+        },
+        update: {
+          vocabTotal,
+          chunkTotal,
+          completedPracticeCount,
+        },
+      });
+    }));
   }
 }

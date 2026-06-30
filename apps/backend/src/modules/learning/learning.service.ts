@@ -39,6 +39,75 @@ function extensionFromMime(mime?: string | null) {
   return null;
 }
 
+function stableStringify(value: any): string {
+  if (value == null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+}
+
+function stableHash(value: any): string {
+  const input = stableStringify(value);
+  let hash = 5381;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function compactKey(value: any, fallback: string) {
+  if (value == null) return fallback;
+  return String(value).trim() || fallback;
+}
+
+function warmupItemIdentity(item: any) {
+  return {
+    type: item?.type,
+    title: item?.title,
+    kind: item?.kind,
+    direction: item?.direction,
+    chunk: item?.chunk,
+    chunkMeaning: item?.chunkMeaning,
+    pattern: item?.pattern,
+    patternMeaning: item?.patternMeaning,
+    vocabWord: item?.vocabWord,
+    vocabMeaning: item?.vocabMeaning,
+    fullSentence: item?.fullSentence,
+    levels: item?.levels,
+  };
+}
+
+function createWarmupPracticeItemId(params: {
+  packId: string;
+  topicId: string;
+  type: string;
+  item: any;
+  prompt: any;
+  pattern?: any;
+}) {
+  const itemKey = compactKey(params.item?.id, `item-${stableHash(warmupItemIdentity(params.item))}`);
+  const patternPart = params.pattern
+    ? `:p-${compactKey(params.pattern.id, stableHash({
+      chunk: params.pattern.chunk,
+      meaning: params.pattern.meaning,
+      chunkMeaning: params.pattern.chunkMeaning,
+      pattern: params.pattern.pattern,
+    }))}`
+    : '';
+  const promptKey = compactKey(
+    params.prompt?.id ?? params.prompt?.vocabId,
+    `prompt-${stableHash({
+      zh: params.prompt?.zh,
+      answer: params.prompt?.answer,
+      promptZh: params.prompt?.promptZh,
+      suggestedAnswer: params.prompt?.suggestedAnswer,
+      targetWords: params.prompt?.targetWords,
+      fullSentence: params.prompt?.fullSentence,
+      levels: params.prompt?.levels,
+    })}`,
+  );
+  return `${params.packId}:${params.topicId}:${itemKey}:${params.type}${patternPart}:i-${promptKey}`;
+}
+
 type WarmupTopicForProgress = {
   id: string;
   metadata: any;
@@ -141,25 +210,30 @@ export class LearningService {
     const itemIds: string[] = [];
     for (const topic of topics) {
       const pipeline = this.getWarmupPipeline(topic);
-      for (const [pipelineIndex, item] of pipeline.entries()) {
+      for (const item of pipeline) {
         const type = item?.type;
         if (!type) continue;
-        const base = `${sceneId}:${topic.id}:${item.id ?? pipelineIndex}:${type}`;
-        const push = (promptIndex: number, patternIndex?: number) => {
-          const patternPart = patternIndex != null ? `:p${patternIndex}` : '';
-          itemIds.push(`${base}${patternPart}:i${promptIndex}`);
+        const push = (prompt: any, pattern?: any) => {
+          itemIds.push(createWarmupPracticeItemId({
+            packId: sceneId,
+            topicId: topic.id,
+            type,
+            item,
+            prompt,
+            pattern,
+          }));
         };
 
         if (type === 'chunk_substitution' || type === 'pattern_drill') {
-          (Array.isArray(item.items) ? item.items : []).forEach((_: unknown, index: number) => push(index));
+          (Array.isArray(item.items) ? item.items : []).forEach((prompt: any) => push(prompt));
         } else if (type === 'vocab_drill') {
-          (Array.isArray(item.vocabs) ? item.vocabs : []).forEach((_: unknown, index: number) => push(index));
+          (Array.isArray(item.vocabs) ? item.vocabs : []).forEach((prompt: any) => push(prompt));
         } else if (type === 'vocab_sentence_building') {
-          (Array.isArray(item.patterns) ? item.patterns : []).forEach((pattern: any, patternIndex: number) => {
-            (Array.isArray(pattern?.items) ? pattern.items : []).forEach((_: unknown, index: number) => push(index, patternIndex));
+          (Array.isArray(item.patterns) ? item.patterns : []).forEach((pattern: any) => {
+            (Array.isArray(pattern?.items) ? pattern.items : []).forEach((prompt: any) => push({ ...prompt, pattern }, pattern));
           });
         } else if (type === 'sentence_decomposition') {
-          push(0);
+          push({ levels: item.levels, fullSentence: item.fullSentence });
         }
       }
     }
