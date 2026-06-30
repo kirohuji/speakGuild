@@ -170,6 +170,20 @@ function hasTarget(userAnswer: string, targetText?: string) {
   return targets.some((target) => normalizedAnswer.includes(target))
 }
 
+function answerContainsExpected(userAnswer: string, expectedAnswer?: string) {
+  const normalizedAnswer = normalizeText(userAnswer)
+  const normalizedExpected = normalizeText(expectedAnswer ?? '')
+  return normalizedExpected.length >= 3 && normalizedAnswer.includes(normalizedExpected)
+}
+
+function tokenOverlap(a: string, b?: string) {
+  const aTokens = new Set(normalizeText(a).split(' ').filter((token) => token.length > 1))
+  const bTokens = normalizeText(b ?? '').split(' ').filter((token) => token.length > 1)
+  if (!aTokens.size || !bTokens.length) return 0
+  const matched = bTokens.filter((token) => aTokens.has(token)).length
+  return matched / bTokens.length
+}
+
 function makeResult(params: {
   score: WarmupJudgeScore
   confidence: number
@@ -224,8 +238,18 @@ export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promi
   const [userEmbedding, expectedEmbedding, promptEmbedding] = response.embeddings
   const expectedSimilarity = cosine(userEmbedding, expectedEmbedding)
   const promptSimilarity = cosine(userEmbedding, promptEmbedding)
-  const semanticScore = Math.max(expectedSimilarity, promptSimilarity * 0.92)
+  const containsExpected = answerContainsExpected(userAnswer, input.expectedAnswer)
+  const lexicalScore = tokenOverlap(userAnswer, input.expectedAnswer)
+  const semanticScore = Math.max(expectedSimilarity, promptSimilarity * 0.92, lexicalScore * 0.88)
   const targetMatched = input.direction === 'en_to_zh' || hasTarget(userAnswer, input.targetText)
+
+  if (containsExpected && targetMatched) {
+    return makeResult({ score: 'strong', confidence: Math.max(0.9, semanticScore), targetMatched, expectedAnswer: input.expectedAnswer })
+  }
+
+  if (lexicalScore >= 0.72 && targetMatched) {
+    return makeResult({ score: 'ok', confidence: Math.max(0.72, semanticScore), targetMatched, expectedAnswer: input.expectedAnswer })
+  }
 
   if (semanticScore >= 0.82 && targetMatched) {
     return makeResult({ score: 'strong', confidence: semanticScore, targetMatched, expectedAnswer: input.expectedAnswer })

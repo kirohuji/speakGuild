@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
-import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3, Play, Pause } from 'lucide-react'
+import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3, Play, Pause, Repeat2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -109,6 +109,15 @@ export function VocabOutputCard({
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
     store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, title, userInput])
+
+  const retryCurrent = useCallback(() => {
+    if (isReview || judging) return
+    setUserInput('')
+    setResult(null)
+    setHintLevel('none')
+    setAudioUrl(null)
+    store.resetSteps([stepId])
+  }, [isReview, judging, stepId, store])
 
   const submit = useCallback(async () => {
     if (!userInput.trim() || !current || judging) return
@@ -305,15 +314,21 @@ export function VocabOutputCard({
       {/* Submit — 回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
-        <Button
-          className={cn('w-full rounded-xl', result?.passed ? 'min-h-9' : 'min-h-11')}
-          size={result?.passed ? 'sm' : 'default'}
-          onClick={submit}
-          disabled={judging || !!result?.passed || !userInput.trim()}
-        >
-          {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {judging ? '评判中...' : result?.passed ? '已通过' : '提交'}
-        </Button>
+        {result?.passed ? (
+          <Button className="min-h-9 w-full rounded-xl gap-1.5" size="sm" variant="outline" onClick={retryCurrent}>
+            <Repeat2 className="size-3.5" />
+            重新练习当前题
+          </Button>
+        ) : (
+          <Button
+            className="min-h-11 w-full rounded-xl"
+            onClick={submit}
+            disabled={judging || !userInput.trim()}
+          >
+            {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+            {judging ? '评判中...' : '提交'}
+          </Button>
+        )}
         {result && !result.passed && (
           <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，最后会集中再练一次。</p>
         )}

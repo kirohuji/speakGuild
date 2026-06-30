@@ -112,6 +112,17 @@ export function ChunkOutputDrillCard({
     store.recordEntry({ stepId, stepType, zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, groupTitle, onComplete, status, stepId, stepType, store, userInput])
 
+  const retryCurrent = useCallback(() => {
+    if (isReview || status === 'judging') return
+    setUserInput('')
+    setStatus('idle')
+    setFeedback('')
+    setCorrection('')
+    setHintLevel('none')
+    setAudioUrl(null)
+    store.resetSteps([stepId])
+  }, [isReview, status, stepId, store])
+
   // ── 提交判断 ──
   const submit = useCallback(async () => {
     if (!userInput.trim() || !current || status === 'judging') return
@@ -308,15 +319,21 @@ export function ChunkOutputDrillCard({
       {/* Submit — 回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
-        <Button
-          className={cn('w-full rounded-xl', status === 'passed' ? 'min-h-9' : 'min-h-11')}
-          size={status === 'passed' ? 'sm' : 'default'}
-          onClick={submit}
-          disabled={status === 'judging' || status === 'passed' || !userInput.trim()}
-        >
-          {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-          {status === 'judging' ? '评判中...' : status === 'passed' ? '已通过' : '提交'}
-        </Button>
+        {status === 'passed' ? (
+          <Button className="min-h-9 w-full rounded-xl gap-1.5" size="sm" variant="outline" onClick={retryCurrent}>
+            <Repeat2 className="size-3.5" />
+            重新练习当前题
+          </Button>
+        ) : (
+          <Button
+            className="min-h-11 w-full rounded-xl"
+            onClick={submit}
+            disabled={status === 'judging' || !userInput.trim()}
+          >
+            {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+            {status === 'judging' ? '评判中...' : '提交'}
+          </Button>
+        )}
         {status === 'failed' && (
           <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，先继续往后练，最后会集中再来一次。</p>
         )}

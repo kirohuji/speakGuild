@@ -9,6 +9,10 @@ function isLocalModelHealthError(error: unknown) {
   return /not downloaded|file was not found|local_files_only|failed to fetch|model failed|no available backend|Unable to load from local path/i.test(message)
 }
 
+function isBrowserOffline() {
+  return typeof navigator !== 'undefined' && navigator.onLine === false
+}
+
 // ---- 练习模式 ----
 export interface TrainingTopic {
   id: string
@@ -326,7 +330,7 @@ export const practiceAiApi = {
   }>('/practice-ai/dialogue-turn', dto),
 
   judgeWarmupTurn: async (dto: WarmupTurnJudgeInput) => {
-    if (usePreferencesStore.getState().localAiWarmupJudgeEnabled) {
+    if (usePreferencesStore.getState().localAiWarmupJudgeEnabled || isBrowserOffline()) {
       try {
         const local = await judgeWarmupTurnLocally(dto)
         if (!local.fallback) {
@@ -351,12 +355,16 @@ export const practiceAiApi = {
       }
     }
 
-    return post<{
+    const remote = await post<{
     passed: boolean
     score: 'strong' | 'ok' | 'weak' | 'miss'
     feedback: string
     correction?: string | null
     }>('/practice-ai/warmup-turn', dto)
+    if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
+      toast.info(`云端 AI 已判断：${remote.passed ? '通过' : '未通过'} · ${remote.score}`)
+    }
+    return remote
   },
 
   analyzeSession: (sessionId: string) =>
