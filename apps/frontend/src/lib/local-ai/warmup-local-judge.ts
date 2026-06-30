@@ -1,4 +1,6 @@
 import type { DrillDirection } from '@/features/practice/api/english-practice-api'
+import { usePreferencesStore } from '@/stores/preferences.store'
+import { warmupModelManager, type LocalWarmupModelLoadConfig } from './warmup-model-manager'
 
 export type WarmupJudgeScore = 'strong' | 'ok' | 'weak' | 'miss'
 
@@ -19,6 +21,13 @@ export interface WarmupTurnJudgeOutput {
   correction?: string | null
 }
 
+export interface WarmupReferencePreloadInput {
+  stepType: WarmupTurnJudgeInput['stepType']
+  direction?: DrillDirection
+  prompt: string
+  expectedAnswer?: string
+}
+
 interface LocalJudgeOutput extends WarmupTurnJudgeOutput {
   confidence: number
   fallback: boolean
@@ -29,6 +38,21 @@ type WorkerResponse = {
   ok: boolean
   embeddings?: number[][]
   error?: string
+}
+
+type WorkerMessage = Omit<{
+  id: number
+  type: 'preload' | 'judge-embeddings'
+  references?: WarmupReferenceEmbeddingInput[]
+  reference?: WarmupReferenceEmbeddingInput
+  userAnswer?: string
+  config: LocalWarmupModelLoadConfig
+}, 'id'>
+
+type WarmupReferenceEmbeddingInput = {
+  key: string
+  expectedText: string
+  promptText: string
 }
 
 let worker: Worker | null = null
@@ -58,7 +82,7 @@ function getWorker() {
   return worker
 }
 
-function requestWorker(message: Omit<{ id: number; type: 'preload' | 'embed'; texts?: string[] }, 'id'>, timeoutMs = 8_000) {
+function requestWorker(message: WorkerMessage, timeoutMs = 8_000) {
   const activeWorker = getWorker()
   if (!activeWorker) return Promise.reject(new Error('worker unavailable'))
 
@@ -73,8 +97,40 @@ function requestWorker(message: Omit<{ id: number; type: 'preload' | 'embed'; te
   })
 }
 
-export function preloadWarmupLocalJudge() {
-  return requestWorker({ type: 'preload' }, 20_000).then(() => undefined)
+function normalizeReferenceText(value?: string) {
+  return (value ?? '').trim().slice(0, 500)
+}
+
+function referenceKey(input: WarmupReferencePreloadInput) {
+  return [
+    input.stepType,
+    input.direction ?? '',
+    normalizeReferenceText(input.prompt),
+    normalizeReferenceText(input.expectedAnswer),
+  ].join('|')
+}
+
+function makeReference(input: WarmupReferencePreloadInput): WarmupReferenceEmbeddingInput {
+  const promptText = normalizeReferenceText(input.prompt)
+  return {
+    key: referenceKey(input),
+    expectedText: normalizeReferenceText(input.expectedAnswer) || promptText,
+    promptText,
+  }
+}
+
+export function preloadWarmupLocalJudge(references: WarmupReferencePreloadInput[] = []) {
+  const variantId = usePreferencesStore.getState().localAiWarmupModelVariant
+  return warmupModelManager.getLoadConfig(variantId).then((config) => {
+    if (!config) return undefined
+    const dedupedReferences = Array.from(
+      new Map(references.map((reference) => {
+        const prepared = makeReference(reference)
+        return [prepared.key, prepared]
+      })).values(),
+    )
+    return requestWorker({ type: 'preload', config, references: dedupedReferences }, 30_000).then(() => undefined)
+  })
 }
 
 function normalizeText(value: string) {
@@ -153,12 +209,16 @@ export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promi
     }
   }
 
-  const compareTexts = [
+  const variantId = usePreferencesStore.getState().localAiWarmupModelVariant
+  const config = await warmupModelManager.getLoadConfig(variantId)
+  if (!config) throw new Error('local warmup model is not downloaded')
+
+  const response = await requestWorker({
+    type: 'judge-embeddings',
     userAnswer,
-    input.expectedAnswer || input.prompt,
-    input.prompt,
-  ]
-  const response = await requestWorker({ type: 'embed', texts: compareTexts }, 8_000)
+    reference: makeReference(input),
+    config,
+  }, 8_000)
   if (!response.ok || !response.embeddings) throw new Error(response.error || 'local model failed')
 
   const [userEmbedding, expectedEmbedding, promptEmbedding] = response.embeddings

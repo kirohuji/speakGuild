@@ -26,7 +26,7 @@ import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { preloadWarmupLocalJudge } from '@/lib/local-ai/warmup-local-judge'
+import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 
 // ── 类型 ──
 type SimplePromptItem = { zh: string; answer?: string; hint?: string }
@@ -57,6 +57,48 @@ type PracticeGroup = {
   steps: Array<{ step: PracticeItem; index: number }>
   doneCount: number
   totalCount: number
+}
+
+function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDailyPracticeStore.getState>['plan']>['steps']): WarmupReferencePreloadInput[] {
+  const references: WarmupReferencePreloadInput[] = []
+  for (const source of steps) {
+    const item = source.item
+    const prompt = source.prompt
+    if (source.type === 'chunk_substitution') {
+      const direction = item.direction ?? 'zh_to_en'
+      references.push({
+        stepType: 'chunk_substitution',
+        direction,
+        prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
+        expectedAnswer: prompt.answer,
+      })
+    } else if (source.type === 'vocab_drill') {
+      const direction = item.direction ?? 'zh_to_en'
+      references.push({
+        stepType: 'vocab_drill',
+        direction,
+        prompt: direction === 'zh_to_en' ? prompt.promptZh : (prompt.suggestedAnswer ?? prompt.promptZh),
+        expectedAnswer: prompt.suggestedAnswer,
+      })
+    } else if (source.type === 'vocab_sentence_building') {
+      const direction = item.direction ?? 'zh_to_en'
+      references.push({
+        stepType: 'vocab_sentence_building',
+        direction,
+        prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
+        expectedAnswer: prompt.answer,
+      })
+    } else if (source.type === 'pattern_drill') {
+      const direction = item.direction ?? 'zh_to_en'
+      references.push({
+        stepType: 'pattern_drill',
+        direction,
+        prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
+        expectedAnswer: prompt.answer,
+      })
+    }
+  }
+  return references
 }
 
 // ── 类型显示映射（在组件内用 useMemo 获取 i18n）──
@@ -144,10 +186,10 @@ export function TodayTaskPage() {
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return
-    void preloadWarmupLocalJudge().catch((error) => {
+    void preloadWarmupLocalJudge(buildTodayReferencePreloads(plan?.steps ?? [])).catch((error) => {
       console.warn('[warmup-local-judge] preload failed:', error)
     })
-  }, [localAiWarmupJudgeEnabled])
+  }, [localAiWarmupJudgeEnabled, plan?.steps])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))

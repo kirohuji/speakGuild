@@ -7,7 +7,7 @@ import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/cn'
-import { preloadWarmupLocalJudge } from '@/lib/local-ai/warmup-local-judge'
+import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { isIOS } from '@/lib/native'
 import { dailyPracticeRepository, type DailyPracticeCandidate } from '@/lib/offline/daily-practice.repository'
 import { usePreferencesStore } from '@/stores/preferences.store'
@@ -71,13 +71,6 @@ export function GuidedWarmupPhase({
   // Clear session on mount (only once)
   useEffect(() => { warmupStore.clearSession() }, [])
 
-  useEffect(() => {
-    if (!localAiWarmupJudgeEnabled) return
-    void preloadWarmupLocalJudge().catch((error) => {
-      console.warn('[warmup-local-judge] preload failed:', error)
-    })
-  }, [localAiWarmupJudgeEnabled])
-
   // ── Flatten all warmup items into individual steps ──
   interface FlatStep {
     id: string
@@ -89,6 +82,56 @@ export function GuidedWarmupPhase({
   }
 type SimplePromptItem = { zh: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string }
 type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
+
+  const buildWarmupReferencePreloads = useCallback((items: any[]): WarmupReferencePreloadInput[] => {
+    const references: WarmupReferencePreloadInput[] = []
+    for (const item of items) {
+      if (item.type === 'chunk_substitution') {
+        ;((item.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
+          const direction = item.direction ?? 'zh_to_en'
+          references.push({
+            stepType: 'chunk_substitution',
+            direction,
+            prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
+            expectedAnswer: prompt.answer,
+          })
+        })
+      } else if (item.type === 'vocab_drill') {
+        ;((item.vocabs ?? []) as VocabPromptItem[]).forEach((prompt) => {
+          const direction = item.direction ?? 'zh_to_en'
+          references.push({
+            stepType: 'vocab_drill',
+            direction,
+            prompt: direction === 'zh_to_en' ? prompt.promptZh : (prompt.suggestedAnswer ?? prompt.promptZh),
+            expectedAnswer: prompt.suggestedAnswer,
+          })
+        })
+      } else if (item.type === 'vocab_sentence_building') {
+        for (const pattern of item.patterns ?? []) {
+          ;((pattern.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
+            const direction = item.direction ?? 'zh_to_en'
+            references.push({
+              stepType: 'vocab_sentence_building',
+              direction,
+              prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
+              expectedAnswer: prompt.answer,
+            })
+          })
+        }
+      } else if (item.type === 'pattern_drill') {
+        ;((item.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
+          const direction = item.direction ?? 'zh_to_en'
+          references.push({
+            stepType: 'pattern_drill',
+            direction,
+            prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
+            expectedAnswer: prompt.answer,
+          })
+        })
+      }
+    }
+    return references
+  }, [])
 
   const shuffleSteps = useCallback((steps: FlatStep[]) => {
     const shuffled = [...steps]
@@ -272,6 +315,14 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
   }, [packId, shuffleSteps, topicId, topicTitle, warmupItems, warmupRunSeed])
 
   const totalSteps = flatSteps.length
+  const warmupReferencePreloads = useMemo(() => buildWarmupReferencePreloads(warmupItems), [buildWarmupReferencePreloads, warmupItems])
+
+  useEffect(() => {
+    if (!localAiWarmupJudgeEnabled) return
+    void preloadWarmupLocalJudge(warmupReferencePreloads).catch((error) => {
+      console.warn('[warmup-local-judge] preload failed:', error)
+    })
+  }, [localAiWarmupJudgeEnabled, warmupReferencePreloads])
 
   const [doneIds, setDoneIds] = useState<Set<string>>(() => {
     try {

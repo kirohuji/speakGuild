@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { LocalWarmupModelVariantId } from '@/lib/local-ai/warmup-model-manager'
 import type { TtsProviderKey } from '@/lib/tts-api'
 
 // ---- Web Speech API（浏览器原生，无需后端） ----
@@ -33,6 +34,7 @@ interface Preferences {
   dailyPracticeRandomOrder: boolean
   dailyPracticeLastMode: string
   localAiWarmupJudgeEnabled: boolean
+  localAiWarmupModelVariant: LocalWarmupModelVariantId
   learningReminderEnabled: boolean
   learningReminderTime: string
 }
@@ -52,6 +54,7 @@ interface PreferencesStore extends Preferences {
   setDailyPracticeRandomOrder: (value: boolean) => void
   setDailyPracticeLastMode: (value: string) => void
   setLocalAiWarmupJudgeEnabled: (value: boolean) => void
+  setLocalAiWarmupModelVariant: (value: LocalWarmupModelVariantId) => void
   setLearningReminderEnabled: (value: boolean) => void
   setLearningReminderTime: (value: string) => void
 }
@@ -85,6 +88,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   dailyPracticeRandomOrder: true,
   dailyPracticeLastMode: 'review',
   localAiWarmupJudgeEnabled: false,
+  localAiWarmupModelVariant: 'q8',
   learningReminderEnabled: true,
   learningReminderTime: '20:00',
 }
@@ -112,6 +116,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setDailyPracticeRandomOrder: (value) => set({ dailyPracticeRandomOrder: value }),
       setDailyPracticeLastMode: (value) => set({ dailyPracticeLastMode: value }),
       setLocalAiWarmupJudgeEnabled: (value) => set({ localAiWarmupJudgeEnabled: value }),
+      setLocalAiWarmupModelVariant: (value) => set({ localAiWarmupModelVariant: value }),
       setLearningReminderEnabled: (value) => set({ learningReminderEnabled: value }),
       setLearningReminderTime: (value) => set({ learningReminderTime: value }),
     }),
@@ -126,6 +131,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
           dailyGoal: state.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
           dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
           localAiWarmupJudgeEnabled: state.localAiWarmupJudgeEnabled ?? DEFAULT_PREFERENCES.localAiWarmupJudgeEnabled,
+          localAiWarmupModelVariant: state.localAiWarmupModelVariant ?? DEFAULT_PREFERENCES.localAiWarmupModelVariant,
           learningReminderEnabled: DEFAULT_PREFERENCES.learningReminderEnabled,
           learningReminderTime: !state.learningReminderTime || state.learningReminderTime === '20:30'
             ? DEFAULT_PREFERENCES.learningReminderTime

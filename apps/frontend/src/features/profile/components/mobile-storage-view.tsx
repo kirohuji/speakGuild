@@ -1,11 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ChevronDown, ChevronRight, Database, HardDrive, Trash2 } from 'lucide-react'
+import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, HardDrive, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { offlineStorageService, type OfflineCacheCategory, type OfflineStorageDetails, type OfflineStorageStats } from '@/lib/offline'
+import { useAuth } from '@/providers/auth-provider'
+import { usePreferencesStore } from '@/stores/preferences.store'
+import {
+  LOCAL_WARMUP_MODEL_VARIANTS,
+  warmupModelManager,
+  type LocalWarmupModelStatus,
+  type LocalWarmupModelVariantId,
+} from '@/lib/local-ai/warmup-model-manager'
 
 function formatBytes(bytes?: number) {
   const value = Number(bytes ?? 0)
@@ -27,12 +36,24 @@ function formatDateTime(value?: string | null) {
 
 export function MobileStorageView() {
   const { t } = useTranslation()
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'admin'
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
   const [details, setDetails] = useState<OfflineStorageDetails | null>(null)
+  const [modelStatus, setModelStatus] = useState<LocalWarmupModelStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const [modelLoading, setModelLoading] = useState(true)
   const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
   const [deletingPackId, setDeletingPackId] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean }>({ packs: false, assets: false, sync: false })
+  const [modelDeleting, setModelDeleting] = useState(false)
+  const [modelDownload, setModelDownload] = useState<{ active: boolean; percent: number; file?: string }>({ active: false, percent: 0 })
+  const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean; models: boolean }>({ packs: false, assets: false, sync: false, models: false })
+  const {
+    localAiWarmupJudgeEnabled,
+    localAiWarmupModelVariant,
+    setLocalAiWarmupJudgeEnabled,
+    setLocalAiWarmupModelVariant,
+  } = usePreferencesStore()
 
   const refresh = useCallback(() => {
     setLoading(true)
@@ -52,9 +73,20 @@ export function MobileStorageView() {
       .finally(() => setLoading(false))
   }, [])
 
+  const refreshModelStatus = useCallback((variantId: LocalWarmupModelVariantId = localAiWarmupModelVariant) => {
+    setModelLoading(true)
+    warmupModelManager.getStatus(variantId)
+      .then(setModelStatus)
+      .finally(() => setModelLoading(false))
+  }, [localAiWarmupModelVariant])
+
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  useEffect(() => {
+    refreshModelStatus(localAiWarmupModelVariant)
+  }, [localAiWarmupModelVariant, refreshModelStatus])
 
   const handleClear = useCallback(async (category: OfflineCacheCategory) => {
     setClearing(category)
@@ -82,6 +114,35 @@ export function MobileStorageView() {
     }
   }, [refresh, t])
 
+  const handleDownloadModel = useCallback(async () => {
+    setModelDownload({ active: true, percent: 0 })
+    try {
+      await warmupModelManager.download(localAiWarmupModelVariant, (progress) => {
+        setModelDownload({ active: true, percent: progress.percent, file: progress.file })
+      })
+      toast.success(t('settings.storage.localModelDownloaded', { defaultValue: '本地 AI 模型已下载' }))
+      refreshModelStatus(localAiWarmupModelVariant)
+    } catch (error: any) {
+      toast.error(error?.message || t('settings.storage.localModelDownloadFailed', { defaultValue: '模型下载失败' }))
+    } finally {
+      setModelDownload({ active: false, percent: 0 })
+    }
+  }, [localAiWarmupModelVariant, refreshModelStatus, t])
+
+  const handleDeleteModel = useCallback(async () => {
+    setModelDeleting(true)
+    try {
+      await warmupModelManager.remove()
+      setLocalAiWarmupJudgeEnabled(false)
+      toast.success(t('settings.storage.localModelDeleted', { defaultValue: '本地 AI 模型已删除' }))
+      refreshModelStatus(localAiWarmupModelVariant)
+    } catch (error: any) {
+      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+    } finally {
+      setModelDeleting(false)
+    }
+  }, [localAiWarmupModelVariant, refreshModelStatus, setLocalAiWarmupJudgeEnabled, t])
+
   const totalBytes = stats?.totalCacheBytes ?? 0
   const segments = [
     { key: 'packs' as const, label: t('profile.cachePacks', { defaultValue: '学习包内容' }), value: stats?.downloadedPackBytes ?? 0, color: 'bg-blue-500' },
@@ -90,6 +151,20 @@ export function MobileStorageView() {
     { key: 'expressions' as const, label: t('profile.cacheExpressions', { defaultValue: '学习库缓存' }), value: stats?.expressionBytes ?? 0, color: 'bg-amber-500' },
   ]
   const activeSegments = segments.filter((segment) => segment.value > 0)
+  const selectedVariant = LOCAL_WARMUP_MODEL_VARIANTS.find((variant) => variant.id === localAiWarmupModelVariant) ?? LOCAL_WARMUP_MODEL_VARIANTS[0]
+  const modelInstalled = Boolean(modelStatus?.installed)
+  const modelUnavailable = modelStatus?.nativeAvailable === false
+  const modelStatusText = modelUnavailable
+    ? t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
+    : modelDownload.active
+      ? t('settings.storage.localModelDownloading', { percent: modelDownload.percent, defaultValue: `下载中 ${modelDownload.percent}%` })
+      : modelLoading
+        ? '...'
+        : modelInstalled
+          ? `${t('settings.storage.localModelInstalled', { defaultValue: '已下载' })} · ${formatBytes(modelStatus?.bytes)}`
+          : modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch'
+            ? `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(modelStatus?.bytes)}`
+          : `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedVariant.estimatedBytes)}`
 
   const ClearButton = ({ category }: { category: OfflineCacheCategory }) => (
     <Button
@@ -176,6 +251,128 @@ export function MobileStorageView() {
             ))}
           </div>
         </div>
+      </IosSection>
+
+      <IosSection header={t('settings.storage.localAiModels', { defaultValue: '本地 AI 模型' })}>
+        <IosRow
+          icon={BrainCircuit}
+          iconBg="bg-indigo-500"
+          label={t('settings.storage.warmupJudgeModel', { defaultValue: '知识点判题模型' })}
+          subtitle={`${t(`settings.storage.localModelVariants.${selectedVariant.id}.label`)} · ${modelStatusText}`}
+          right={(
+            <div className="flex items-center gap-1.5">
+              {modelInstalled ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={modelDeleting || modelDownload.active}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void handleDeleteModel()
+                  }}
+                  className="h-8 px-2 text-xs text-red-500 hover:text-red-600"
+                >
+                  {modelDeleting ? t('settings.storage.deleting') : t('settings.storage.deleteText')}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={modelUnavailable || modelDownload.active}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void handleDownloadModel()
+                  }}
+                  className="h-8 px-2 text-xs text-primary"
+                >
+                  <Download className="mr-1 size-3.5" />
+                  {modelDownload.active ? t('settings.storage.downloading', { defaultValue: '下载中' }) : t('settings.storage.download', { defaultValue: '下载' })}
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setExpanded((current) => ({ ...current, models: !current.models }))
+                }}
+                className="flex size-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted/60"
+              >
+                <ToggleIcon open={expanded.models} />
+              </button>
+            </div>
+          )}
+        />
+        {expanded.models && (
+          <div className={detailContainerClass}>
+            <div className="space-y-3 py-3">
+              <div className="grid grid-cols-1 gap-2">
+                {LOCAL_WARMUP_MODEL_VARIANTS.map((variant) => {
+                  const active = variant.id === localAiWarmupModelVariant
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      disabled={modelDownload.active}
+                      onClick={() => setLocalAiWarmupModelVariant(variant.id)}
+                      className={cn(
+                        'rounded-md border px-3 py-2 text-left transition-colors',
+                        active ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-background/60 active:bg-muted/60',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold">{t(`settings.storage.localModelVariants.${variant.id}.label`)}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatBytes(variant.estimatedBytes)}</span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{t(`settings.storage.localModelVariants.${variant.id}.description`)}</p>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {modelDownload.active && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span className="truncate">{modelDownload.file ?? t('settings.storage.downloading', { defaultValue: '下载中' })}</span>
+                    <span>{modelDownload.percent}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, Math.max(0, modelDownload.percent))}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5 text-[11px] leading-5 text-muted-foreground">
+                <p>{t('settings.storage.localModelPath', { defaultValue: '存储位置' })}: Directory.Data / ai-models</p>
+                <p>{t('settings.storage.localModelFiles', { defaultValue: '文件' })}: config.json · tokenizer.json · onnx/{selectedVariant.modelFile.split('/').pop()}</p>
+                {modelStatus?.updatedAt && <p>{t('settings.storage.updated', { updated: formatDateTime(modelStatus.updatedAt) || t('settings.storage.unknownTime') })}</p>}
+                {modelStatus?.missingFiles.length ? (
+                  <p className="line-clamp-2 text-amber-600">{t('settings.storage.localModelMissing', { defaultValue: '缺少文件' })}: {modelStatus.missingFiles.join(', ')}</p>
+                ) : null}
+                {modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch' ? (
+                  <p className="text-amber-600">{t('settings.storage.localModelNeedsRedownloadHint', { defaultValue: '模型记录不完整，请重新下载后再启用本地判断' })}</p>
+                ) : null}
+              </div>
+
+              {isAdmin && (
+                <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{t('settings.localAiWarmupJudge')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {localAiWarmupJudgeEnabled ? t('settings.localAiWarmupJudgeOn') : t('settings.localAiWarmupJudgeOff')}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={localAiWarmupJudgeEnabled}
+                    disabled={!modelInstalled}
+                    onCheckedChange={setLocalAiWarmupJudgeEnabled}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </IosSection>
 
       <IosSection header={t('profile.localLearningData', { defaultValue: '本地学习数据' })}>

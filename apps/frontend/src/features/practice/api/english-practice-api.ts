@@ -4,6 +4,11 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { getCurrentSessionSnapshot } from '@/providers/auth-provider'
 import { toast } from 'sonner'
 
+function isLocalModelHealthError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  return /not downloaded|file was not found|local_files_only|failed to fetch|model failed|no available backend|Unable to load from local path/i.test(message)
+}
+
 // ---- 练习模式 ----
 export interface TrainingTopic {
   id: string
@@ -337,6 +342,12 @@ export const practiceAiApi = {
         }
       } catch (error) {
         console.warn('[warmup-local-judge] fallback to server:', error)
+        if (isLocalModelHealthError(error)) {
+          usePreferencesStore.getState().setLocalAiWarmupJudgeEnabled(false)
+          if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
+            toast.warning('本地 AI 模型加载失败，已回退云端并关闭本地判断，请在存储管理中重新下载')
+          }
+        }
       }
     }
 
