@@ -330,19 +330,23 @@ export const practiceAiApi = {
   }>('/practice-ai/dialogue-turn', dto),
 
   judgeWarmupTurn: async (dto: WarmupTurnJudgeInput) => {
-    if (usePreferencesStore.getState().localAiWarmupJudgeEnabled || isBrowserOffline()) {
+    const preferLocal = usePreferencesStore.getState().localAiWarmupJudgeEnabled
+    if (preferLocal || isBrowserOffline()) {
       try {
         const local = await judgeWarmupTurnLocally(dto)
-        if (!local.fallback) {
-          if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
-            toast.info(`本地 AI 已判断：${local.passed ? '通过' : '未通过'} · ${local.score}`)
-          }
+        if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
+          toast.info(`本地 AI 已判断：${local.passed ? '通过' : '未通过'} · ${local.score}${local.fallback ? ' · 低置信' : ''}`)
+        }
+        if (preferLocal || !local.fallback) {
           return {
             passed: local.passed,
             score: local.score,
             feedback: local.feedback,
             correction: local.correction,
           }
+        }
+        if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
+          toast.info('本地 AI 低置信，已切到云端复判')
         }
       } catch (error) {
         console.warn('[warmup-local-judge] fallback to server:', error)
