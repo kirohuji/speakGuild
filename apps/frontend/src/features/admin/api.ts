@@ -36,6 +36,13 @@ export interface MobileOtaTester {
   targetReleaseLine: string | null;
   targetVersion: string | null;
   notes: string | null;
+  lastPlatform: string | null;
+  lastDeviceModel: string | null;
+  lastDeviceName: string | null;
+  lastManufacturer: string | null;
+  lastOperatingSystem: string | null;
+  lastOsVersion: string | null;
+  lastNativeBuild: string | null;
   lastBundleVersion: string | null;
   lastNativeVersion: string | null;
   lastCheckAt: string | null;

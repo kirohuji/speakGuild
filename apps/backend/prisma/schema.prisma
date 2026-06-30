@@ -1539,9 +1539,16 @@ model MobileOtaTester {
   targetReleaseLine String?
   targetVersion     String?
   notes             String?  @db.Text
-  lastBundleVersion String?
-  lastNativeVersion String?
-  lastCheckAt       DateTime?
+  lastPlatform        String?
+  lastDeviceModel     String?
+  lastDeviceName      String?
+  lastManufacturer    String?
+  lastOperatingSystem String?
+  lastOsVersion       String?
+  lastNativeBuild     String?
+  lastBundleVersion   String?
+  lastNativeVersion   String?
+  lastCheckAt         DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

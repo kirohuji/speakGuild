@@ -80,6 +80,19 @@ const summarizeUserAgent = (userAgent: string | null | undefined) => {
   return `${os} · ${browser}`;
 };
 
+const platformLabel = (platform: string | null | undefined) => {
+  if (platform === 'ios') return 'iOS';
+  if (platform === 'android') return 'Android';
+  if (platform === 'web') return 'Web';
+  return platform || '未知平台';
+};
+
+const versionWithBuild = (version: string | null | undefined, build: string | null | undefined) => {
+  if (!version && !build) return '暂无';
+  if (version && build) return `v${version} (${build})`;
+  return version ? `v${version}` : `Build ${build}`;
+};
+
 function StatDot({
   icon: Icon, label, value, accent,
 }: {
@@ -668,414 +681,401 @@ function UserRow({
 
       {/* 用户详情弹窗 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>用户详情</DialogTitle>
-            <DialogDescription>查看账号状态、登录会话和核心学习数据</DialogDescription>
-          </DialogHeader>
-
+        <DialogContent className="h-[88vh] w-[calc(100vw-32px)] max-w-[1180px] overflow-hidden p-0">
           {detailLoading ? (
-            <div className="space-y-3 py-4">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-24 w-full" />
+            <div className="grid h-full grid-cols-[320px_minmax(0,1fr)]">
+              <div className="border-r p-5">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="mt-5 h-40 w-full" />
+                <Skeleton className="mt-5 h-28 w-full" />
+              </div>
+              <div className="p-5">
+                <Skeleton className="h-10 w-72" />
+                <Skeleton className="mt-5 h-[520px] w-full" />
+              </div>
             </div>
           ) : detail ? (
-            <div className="space-y-5 py-2 max-h-[70vh] overflow-y-auto">
-              {/* ── 头像 + 身份 ────────────────────────── */}
-              <div className="flex items-center gap-4">
-                <div className={cn(
-                  'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold',
-                  detail.role === 'admin'
-                    ? 'bg-amber-500/15 text-amber-600'
-                    : 'bg-primary/10 text-primary'
-                )}>
-                  {detail.name?.[0]?.toUpperCase() || detail.email[0].toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-lg font-semibold truncate">{detail.name || '未命名'}</p>
-                    <Badge
-                      variant={detail.role === 'admin' ? 'default' : 'secondary'}
-                      className={cn(
-                        'text-xs shrink-0',
-                        detail.role === 'admin' && 'bg-amber-500/15 text-amber-700 hover:bg-amber-500/15'
-                      )}
-                    >
-                      {detail.role === 'admin' ? '管理员' : '用户'}
-                    </Badge>
-                  </div>
-                  {detail.username && (
-                    <p className="text-sm text-muted-foreground">@{detail.username}</p>
-                  )}
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'mt-1 text-xs',
-                      detail.presence?.online
-                        ? 'border-emerald-300 text-emerald-600'
-                        : 'text-muted-foreground'
-                    )}
-                  >
-                    {detail.presence?.online
-                      ? `当前在线 · ${detail.presence.socketCount} 个连接`
-                      : '当前离线'}
-                  </Badge>
-                  {/* 会员状态 */}
-                  {detail.membership ? (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'mt-1 text-xs',
-                        detail.membership.status === 'active'
-                          ? 'border-amber-300 text-amber-600'
-                          : 'text-muted-foreground'
-                      )}
-                    >
-                      {detail.membership.plan?.name || '会员'}
-                      &nbsp;·&nbsp;
-                      {detail.membership.status === 'active' ? '生效中' :
-                       detail.membership.status === 'expired' ? '已过期' : '已取消'}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="mt-1 text-xs text-muted-foreground">
-                      免费用户
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <UserLearningTabs overview={learningOverview} />
-
-              {otaEnabled && (
-              <div className="rounded-xl border p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <TestTube2 className="h-4 w-4 text-cyan-500" />
-                  <p className="text-sm font-medium">OTA 测试配置</p>
-                  <Badge variant="outline" className="text-xs text-muted-foreground">
-                    {otaChannel === 'staging' ? '预发布通道' : '正式通道'}
-                  </Badge>
+            <div className="grid h-full min-h-0 grid-cols-[320px_minmax(0,1fr)]">
+              <aside className="flex min-h-0 flex-col border-r bg-muted/20">
+                <div className="border-b px-5 py-4">
+                  <DialogTitle className="text-base">用户详情</DialogTitle>
+                  <DialogDescription className="mt-1 text-xs">账号状态、学习进度、设备与用量</DialogDescription>
                 </div>
 
-                {/* 最近一次检查的版本信息 */}
-                {(detail.mobileOtaTester?.lastBundleVersion || detail.mobileOtaTester?.lastNativeVersion) && (
-                  <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                    {detail.mobileOtaTester?.lastNativeVersion && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">原生版本</p>
-                        <p className="text-sm font-mono font-medium">v{detail.mobileOtaTester.lastNativeVersion}</p>
-                      </div>
-                    )}
-                    {detail.mobileOtaTester?.lastBundleVersion && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">热更包版本</p>
-                        <p className="text-sm font-mono font-medium">v{detail.mobileOtaTester.lastBundleVersion}</p>
-                      </div>
-                    )}
-                    {detail.mobileOtaTester?.lastCheckAt && (
-                      <div className="col-span-2">
-                        <p className="text-[10px] text-muted-foreground">
-                          最近检查 {new Date(detail.mobileOtaTester.lastCheckAt).toLocaleString('zh-CN')}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-muted-foreground">通道</span>
-                    <Select value={otaChannel} onChange={(e) => setOtaChannel(e.target.value)}>
-                      <option value="production">正式版 (production)</option>
-                      <option value="staging">预发布 (staging)</option>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-muted-foreground">平台限制</span>
-                    <Select value={otaPlatform} onChange={(e) => setOtaPlatform(e.target.value)}>
-                      <option value="">不限平台</option>
-                      <option value="ios">iOS</option>
-                      <option value="android">Android</option>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-muted-foreground">目标发布线</span>
-                    <div className="relative">
-                      <GitBranch className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                      <Input className="pl-8" placeholder="1.2" value={otaReleaseLine} onChange={(e) => setOtaReleaseLine(e.target.value)} />
+                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold',
+                      detail.role === 'admin'
+                        ? 'bg-amber-500/15 text-amber-600'
+                        : 'bg-primary/10 text-primary'
+                    )}>
+                      {detail.name?.[0]?.toUpperCase() || detail.email[0].toUpperCase()}
                     </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-muted-foreground">精确版本</span>
-                    <Input placeholder="1.2.3，可留空" value={otaTargetVersion} onChange={(e) => setOtaTargetVersion(e.target.value)} />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-muted-foreground">备注</span>
-                    <Input placeholder="测试说明" value={otaNotes} onChange={(e) => setOtaNotes(e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">
-                    开启后会优先匹配内测包；未指定发布线时，仅按当前主版本找最新可用包。
-                  </p>
-                  <Button size="sm" className="shrink-0" onClick={handleSaveOtaTest} disabled={otaSaving}>
-                    {otaSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    保存
-                  </Button>
-                </div>
-              </div>
-              )}
-
-              {/* ── 登录会话 ────────────────────────────── */}
-              <div className="rounded-xl border p-4 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <MonitorSmartphone className="h-4 w-4 text-emerald-500" />
-                    登录会话
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    {detail.sessions?.length ?? 0} 个有效会话
-                  </Badge>
-                </div>
-                {detail.sessions?.length ? (
-                  <div className="space-y-2">
-                    {detail.sessions.map((session) => (
-                      <div key={session.id} className="rounded-lg bg-muted/40 px-3 py-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="truncate text-sm font-medium">
-                            {summarizeUserAgent(session.userAgent)}
-                          </p>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
-                            {fmtDateTime(session.updatedAt)}
-                          </span>
-                        </div>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">
-                          IP: {session.ipAddress || '未知'} · 过期: {fmtDateTime(session.expiresAt)}
-                        </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-lg font-semibold">{detail.name || '未命名'}</p>
+                        <Badge
+                          variant={detail.role === 'admin' ? 'default' : 'secondary'}
+                          className={cn('shrink-0 text-xs', detail.role === 'admin' && 'bg-amber-500/15 text-amber-700 hover:bg-amber-500/15')}
+                        >
+                          {detail.role === 'admin' ? '管理员' : '用户'}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">暂无有效登录会话</p>
-                )}
-              </div>
-
-              {/* ── 绑定账号 ────────────────────────────── */}
-              <div className="rounded-xl border p-4 space-y-3">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-blue-500" />
-                  绑定账号
-                </p>
-                {detail.accounts?.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {detail.accounts.map((account) => (
-                      <Badge key={account.id} variant="secondary" className="text-xs">
-                        {account.providerId === 'credential'
-                          ? '邮箱密码'
-                          : account.providerId === 'wechat'
-                            ? '微信'
-                            : account.providerId === 'apple'
-                              ? 'Apple'
-                              : account.providerId}
+                      {detail.username && <p className="truncate text-sm text-muted-foreground">@{detail.username}</p>}
+                      <Badge
+                        variant="outline"
+                        className={cn('mt-2 text-xs', detail.presence?.online ? 'border-emerald-300 text-emerald-600' : 'text-muted-foreground')}
+                      >
+                        {detail.presence?.online ? `在线 · ${detail.presence.socketCount} 连接` : '离线'}
                       </Badge>
-                    ))}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">暂无绑定账号</p>
-                )}
-              </div>
 
-              {/* ── 联系方式 ────────────────────────────── */}
-              <div className="space-y-2.5 rounded-xl border bg-muted/30 p-4">
-                <div className="flex items-center gap-3 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground truncate">{detail.email}</span>
-                  {detail.emailVerified ? (
-                    <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 shrink-0">已验证</Badge>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-background px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">输出等级</p>
+                      <p className="mt-1 text-xl font-bold text-primary">{detail.outputLevel || 'L1'}</p>
+                    </div>
+                    <div className="rounded-lg bg-background px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">用户等级</p>
+                      <p className="mt-1 text-xl font-bold text-violet-500">Lv.{detail.userLevel ?? 1}</p>
+                    </div>
+                    <div className="rounded-lg bg-background px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">经验</p>
+                      <p className="mt-1 text-xl font-bold text-amber-500">{fmtShort(detail.totalXp ?? 0)}</p>
+                    </div>
+                    <div className="rounded-lg bg-background px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">积分</p>
+                      <p className="mt-1 text-xl font-bold text-emerald-500">{fmtShort(detail.points ?? 0)}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg bg-background px-3 py-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="min-w-0 flex-1 truncate">{detail.email}</span>
+                      <Badge variant="outline" className={cn('text-[10px]', detail.emailVerified ? 'border-emerald-300 text-emerald-600' : 'text-muted-foreground')}>
+                        {detail.emailVerified ? '已验证' : '未验证'}
+                      </Badge>
+                    </div>
+                    {detail.phoneNumber && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 truncate">{detail.phoneNumber}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>{fmtDateTime(detail.createdAt)} 注册</span>
+                    </div>
+                  </div>
+
+                  {detail.membership ? (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3">
+                      <p className="text-sm font-medium text-amber-700">{detail.membership.plan?.name || '会员'}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {detail.membership.status === 'active' ? '生效中' : detail.membership.status === 'expired' ? '已过期' : '已取消'}
+                        {detail.membership.expiredAt ? ` · ${fmtDateTime(detail.membership.expiredAt)}` : ''}
+                      </p>
+                    </div>
                   ) : (
-                    <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">未验证</Badge>
+                    <div className="rounded-lg bg-background px-3 py-3">
+                      <p className="text-sm font-medium">免费用户</p>
+                      <p className="mt-1 text-xs text-muted-foreground">暂无会员订阅</p>
+                    </div>
+                  )}
+
+                  {detail.learningGoals && detail.learningGoals.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-xs font-medium text-muted-foreground">学习目标</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detail.learningGoals.map((goal) => (
+                          <Badge key={goal} variant="secondary" className="text-[11px]">{learningGoalLabels[goal] ?? goal}</Badge>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-                {detail.phoneNumber && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground">{detail.phoneNumber}</span>
-                    {detail.phoneNumberVerified ? (
-                      <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 shrink-0">已验证</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">未验证</Badge>
-                    )}
-                  </div>
-                )}
-                <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground">
-                    {new Date(detail.createdAt).toLocaleString('zh-CN')} 注册
-                  </span>
-                </div>
-              </div>
 
-              {/* ── 学习画像 ────────────────────────────── */}
-              <div className="rounded-xl border p-4 space-y-3">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-500" />
-                  学习画像
-                </p>
-                <div className="grid grid-cols-4 gap-3">
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-primary">{detail.outputLevel || 'L1'}</p>
-                    <p className="text-[11px] text-muted-foreground">输出等级</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-violet-500">Lv.{detail.userLevel ?? 1}</p>
-                    <p className="text-[11px] text-muted-foreground">用户等级</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-amber-500">{fmtShort(detail.totalXp ?? 0)}</p>
-                    <p className="text-[11px] text-muted-foreground">总经验</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-emerald-500">{fmtShort(detail.points ?? 0)}</p>
-                    <p className="text-[11px] text-muted-foreground">积分</p>
-                  </div>
-                </div>
-                {detail.learningGoals && detail.learningGoals.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {detail.learningGoals.map((goal) => (
-                      <Badge key={goal} variant="secondary" className="text-[11px]">{learningGoalLabels[goal] ?? goal}</Badge>
-                    ))}
-                  </div>
-                )}
-                {detail.outputLevelDetail && (
-                  <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span>来源：{detail.outputLevelDetail.source === 'self_assessment' ? '用户自评' : String(detail.outputLevelDetail.source || '未知')}</span>
-                      <span>更新时间：{fmtDateTime(String(detail.outputLevelDetail.assessedAt || ''))}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── 学习统计 ────────────────────────────── */}
-              <div className="rounded-xl border p-4 space-y-3">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Target className="h-4 w-4 text-blue-500" />
-                  学习统计
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <StatDot icon={MessageSquare} label="练习会话" value={detail._count.practiceSessions} accent="blue" />
-                  <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.storyRecords} accent="violet" />
-                </div>
-              </div>
-
-              {/* ── AI 用量 ──────────────────────────── */}
-              <div className="rounded-xl border p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-violet-500" />
-                    AI 用量统计（近 30 天）
-                  </p>
-                  {aiUsage === null && !aiUsageLoading && (
+                <div className="border-t p-4">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">角色管理</p>
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
-                      variant="outline" size="sm" className="h-7 text-xs"
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        setAiUsageLoading(true)
-                        try {
-                          const data = await getUserAiUsage(user.id)
-                          setAiUsage(data)
-                        } catch { setAiUsage(null) }
-                        finally { setAiUsageLoading(false) }
-                      }}
+                      variant={detail.role === 'user' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => { setNewRole('user'); setRoleConfirmOpen(true); }}
                     >
-                      加载 AI 用量
+                      普通用户
                     </Button>
-                  )}
-                </div>
-                {aiUsageLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-20 w-full" />
+                    <Button
+                      variant={detail.role === 'admin' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => { setNewRole('admin'); setRoleConfirmOpen(true); }}
+                    >
+                      <Shield className="mr-1.5 h-3.5 w-3.5" />
+                      管理员
+                    </Button>
                   </div>
-                ) : aiUsage ? (
-                  <>
-                    <div className="grid grid-cols-4 gap-3">
-                      <div className="text-center rounded-lg bg-muted/40 py-2">
-                        <p className="text-lg font-bold text-violet-500">{aiUsage.totals.dialogue}</p>
-                        <p className="text-[11px] text-muted-foreground">对话判定</p>
-                      </div>
-                      <div className="text-center rounded-lg bg-muted/40 py-2">
-                        <p className="text-lg font-bold text-blue-500">{aiUsage.totals.summary}</p>
-                        <p className="text-[11px] text-muted-foreground">汇总分析</p>
-                      </div>
-                      <div className="text-center rounded-lg bg-muted/40 py-2">
-                        <p className="text-lg font-bold text-amber-500">{fmtShort(aiUsage.totals.tokens)}</p>
-                        <p className="text-[11px] text-muted-foreground">Tokens</p>
-                      </div>
-                      <div className="text-center rounded-lg bg-muted/40 py-2">
-                        <p className="text-lg font-bold text-emerald-500">{aiUsage.totals.dialogue + aiUsage.totals.summary}</p>
-                        <p className="text-[11px] text-muted-foreground">总次数</p>
-                      </div>
-                    </div>
-                    {aiUsage.dailyUsages.length > 0 && (
-                      <div className="max-h-[160px] overflow-y-auto rounded-lg border">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="bg-muted/40">
-                              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">日期</th>
-                              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">对话判定</th>
-                              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">汇总分析</th>
-                              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Tokens</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border">
-                            {aiUsage.dailyUsages.map((d) => (
-                              <tr key={d.date} className="hover:bg-muted/20">
-                                <td className="px-3 py-1.5 text-muted-foreground">{d.date.slice(5)}</td>
-                                <td className="px-3 py-1.5 text-right">{d.dialogue}</td>
-                                <td className="px-3 py-1.5 text-right">{d.summary}</td>
-                                <td className="px-3 py-1.5 text-right">{fmtShort(d.tokens)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      全局已缓存 <span className="font-medium text-foreground">{aiUsage.cachedWordCount}</span> 个单词增强数据
-                    </p>
-                  </>
-                ) : null}
-              </div>
-
-              {/* ── 角色管理 ────────────────────────────── */}
-              <div className="rounded-xl border p-4">
-                <p className="mb-3 text-sm font-medium">角色管理</p>
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant={detail.role === 'user' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => { setNewRole('user'); setRoleConfirmOpen(true); }}
-                  >
-                    普通用户
-                  </Button>
-                  <Button
-                    variant={detail.role === 'admin' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => { setNewRole('admin'); setRoleConfirmOpen(true); }}
-                  >
-                    <Shield className="mr-1.5 h-3.5 w-3.5" />
-                    管理员
-                  </Button>
                 </div>
-              </div>
+              </aside>
+
+              <section className="flex min-h-0 flex-col">
+                <Tabs defaultValue="learning" className="flex min-h-0 flex-1 flex-col">
+                  <div className="border-b px-5 py-3">
+                    <TabsList className="grid w-full max-w-2xl grid-cols-4">
+                      <TabsTrigger value="learning">学习追踪</TabsTrigger>
+                      <TabsTrigger value="access">设备账号</TabsTrigger>
+                      <TabsTrigger value="ota">内测配置</TabsTrigger>
+                      <TabsTrigger value="ai">AI 用量</TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+                    <TabsContent value="learning" className="m-0 space-y-4">
+                      <div className="grid grid-cols-4 gap-3">
+                        <StatDot icon={Target} label="知识点题目" value={learningOverview?.warmup.totalItems ?? 0} accent="cyan" />
+                        <StatDot icon={CheckCircle2} label="已掌握" value={learningOverview?.warmup.masteredItems ?? 0} accent="emerald" />
+                        <StatDot icon={MessageSquare} label="VN 会话" value={detail._count.practiceSessions} accent="blue" />
+                        <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.storyRecords} accent="violet" />
+                      </div>
+                      <UserLearningTabs overview={learningOverview} />
+                      {detail.outputLevelDetail && (
+                        <div className="rounded-lg border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                          <span>输出等级来源：{detail.outputLevelDetail.source === 'self_assessment' ? '用户自评' : String(detail.outputLevelDetail.source || '未知')}</span>
+                          <span className="ml-4">更新时间：{fmtDateTime(String(detail.outputLevelDetail.assessedAt || ''))}</span>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="access" className="m-0 space-y-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_280px] gap-4">
+                        <div className="rounded-lg border">
+                          <div className="flex items-center justify-between border-b px-4 py-3">
+                            <p className="flex items-center gap-2 text-sm font-medium">
+                              <MonitorSmartphone className="h-4 w-4 text-emerald-500" />
+                              登录会话
+                            </p>
+                            <Badge variant="outline" className="text-xs">{detail.sessions?.length ?? 0} 个有效会话</Badge>
+                          </div>
+                          <div className="divide-y">
+                            {detail.sessions?.length ? detail.sessions.map((session) => (
+                              <div key={session.id} className="px-4 py-3">
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="truncate text-sm font-medium">{summarizeUserAgent(session.userAgent)}</p>
+                                  <span className="shrink-0 text-[11px] text-muted-foreground">{fmtDateTime(session.updatedAt)}</span>
+                                </div>
+                                <p className="mt-1 truncate text-xs text-muted-foreground">IP: {session.ipAddress || '未知'} · 过期: {fmtDateTime(session.expiresAt)}</p>
+                              </div>
+                            )) : <p className="px-4 py-8 text-center text-sm text-muted-foreground">暂无有效登录会话</p>}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="rounded-lg border px-4 py-3">
+                            <p className="mb-3 flex items-center gap-2 text-sm font-medium">
+                              <Link2 className="h-4 w-4 text-blue-500" />
+                              绑定账号
+                            </p>
+                            {detail.accounts?.length ? (
+                              <div className="flex flex-wrap gap-2">
+                                {detail.accounts.map((account) => (
+                                  <Badge key={account.id} variant="secondary" className="text-xs">
+                                    {account.providerId === 'credential' ? '邮箱密码' : account.providerId === 'wechat' ? '微信' : account.providerId === 'apple' ? 'Apple' : account.providerId}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : <p className="text-xs text-muted-foreground">暂无绑定账号</p>}
+                          </div>
+
+                          <div className="rounded-lg border px-4 py-3">
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                              <p className="text-sm font-medium">最近设备</p>
+                              <Badge variant="outline" className="text-xs">
+                                {platformLabel(detail.mobileOtaTester?.lastPlatform)}
+                              </Badge>
+                            </div>
+                            <div className="space-y-2 text-xs">
+                              <div>
+                                <p className="text-muted-foreground">设备</p>
+                                <p className="mt-0.5 text-sm font-medium">
+                                  {detail.mobileOtaTester?.lastDeviceName || detail.mobileOtaTester?.lastDeviceModel || summarizeUserAgent(detail.sessions?.[0]?.userAgent)}
+                                </p>
+                                {detail.mobileOtaTester?.lastDeviceModel && detail.mobileOtaTester?.lastDeviceName && (
+                                  <p className="mt-0.5 text-muted-foreground">{detail.mobileOtaTester.lastDeviceModel}</p>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                                  <p className="text-muted-foreground">系统</p>
+                                  <p className="mt-0.5 font-medium">
+                                    {detail.mobileOtaTester?.lastOperatingSystem || platformLabel(detail.mobileOtaTester?.lastPlatform)}
+                                    {detail.mobileOtaTester?.lastOsVersion ? ` ${detail.mobileOtaTester.lastOsVersion}` : ''}
+                                  </p>
+                                </div>
+                                <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                                  <p className="text-muted-foreground">厂商</p>
+                                  <p className="mt-0.5 font-medium">{detail.mobileOtaTester?.lastManufacturer || '暂无'}</p>
+                                </div>
+                                <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                                  <p className="text-muted-foreground">App</p>
+                                  <p className="mt-0.5 font-medium">{versionWithBuild(detail.mobileOtaTester?.lastNativeVersion, detail.mobileOtaTester?.lastNativeBuild)}</p>
+                                </div>
+                                <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                                  <p className="text-muted-foreground">OTA</p>
+                                  <p className="mt-0.5 font-medium">{detail.mobileOtaTester?.lastBundleVersion ? `v${detail.mobileOtaTester.lastBundleVersion}` : '暂无'}</p>
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground">最近上报：{fmtDateTime(detail.mobileOtaTester?.lastCheckAt)}</p>
+                              <p className="text-muted-foreground">最近 IP：{detail.sessions?.[0]?.ipAddress || '暂无 IP'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="ota" className="m-0 space-y-4">
+                      <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                        <div>
+                          <p className="flex items-center gap-2 text-sm font-medium">
+                            <TestTube2 className="h-4 w-4 text-cyan-500" />
+                            OTA 内测配置
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">列表中的“内测”开关控制是否启用；这里配置目标通道和版本。</p>
+                        </div>
+                        <Badge variant="outline" className={cn('text-xs', otaEnabled ? 'border-cyan-300 text-cyan-600' : 'text-muted-foreground')}>
+                          {otaEnabled ? '已开启' : '未开启'}
+                        </Badge>
+                      </div>
+
+                      {(detail.mobileOtaTester?.lastBundleVersion || detail.mobileOtaTester?.lastNativeVersion) && (
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="rounded-lg bg-muted/40 px-3 py-2">
+                            <p className="text-[10px] text-muted-foreground">原生版本</p>
+                            <p className="text-sm font-mono font-medium">{versionWithBuild(detail.mobileOtaTester?.lastNativeVersion, detail.mobileOtaTester?.lastNativeBuild)}</p>
+                          </div>
+                          <div className="rounded-lg bg-muted/40 px-3 py-2">
+                            <p className="text-[10px] text-muted-foreground">热更包版本</p>
+                            <p className="text-sm font-mono font-medium">{detail.mobileOtaTester?.lastBundleVersion ? `v${detail.mobileOtaTester.lastBundleVersion}` : '暂无'}</p>
+                          </div>
+                          <div className="rounded-lg bg-muted/40 px-3 py-2">
+                            <p className="text-[10px] text-muted-foreground">最近检查</p>
+                            <p className="text-sm font-medium">{fmtDateTime(detail.mobileOtaTester?.lastCheckAt)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                          通道
+                          <Select value={otaChannel} onChange={(e) => setOtaChannel(e.target.value)}>
+                            <option value="production">正式版 (production)</option>
+                            <option value="staging">预发布 (staging)</option>
+                          </Select>
+                        </label>
+                        <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                          平台限制
+                          <Select value={otaPlatform} onChange={(e) => setOtaPlatform(e.target.value)}>
+                            <option value="">不限平台</option>
+                            <option value="ios">iOS</option>
+                            <option value="android">Android</option>
+                          </Select>
+                        </label>
+                        <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                          目标发布线
+                          <div className="relative">
+                            <GitBranch className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input className="pl-8" placeholder="1.2" value={otaReleaseLine} onChange={(e) => setOtaReleaseLine(e.target.value)} />
+                          </div>
+                        </label>
+                        <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                          精确版本
+                          <Input placeholder="1.2.3，可留空" value={otaTargetVersion} onChange={(e) => setOtaTargetVersion(e.target.value)} />
+                        </label>
+                        <label className="col-span-2 flex flex-col gap-1.5 text-xs text-muted-foreground">
+                          备注
+                          <Input placeholder="测试说明" value={otaNotes} onChange={(e) => setOtaNotes(e.target.value)} />
+                        </label>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button size="sm" onClick={handleSaveOtaTest} disabled={otaSaving || !otaEnabled}>
+                          {otaSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          保存内测配置
+                        </Button>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="ai" className="m-0 space-y-4">
+                      <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                        <p className="flex items-center gap-2 text-sm font-medium">
+                          <BarChart3 className="h-4 w-4 text-violet-500" />
+                          AI 用量统计（近 30 天）
+                        </p>
+                        {aiUsage === null && !aiUsageLoading && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              setAiUsageLoading(true)
+                              try {
+                                const data = await getUserAiUsage(user.id)
+                                setAiUsage(data)
+                              } catch { setAiUsage(null) }
+                              finally { setAiUsageLoading(false) }
+                            }}
+                          >
+                            加载 AI 用量
+                          </Button>
+                        )}
+                      </div>
+                      {aiUsageLoading ? (
+                        <div className="space-y-3">
+                          <Skeleton className="h-20 w-full" />
+                          <Skeleton className="h-60 w-full" />
+                        </div>
+                      ) : aiUsage ? (
+                        <>
+                          <div className="grid grid-cols-4 gap-3">
+                            <StatDot icon={MessageSquare} label="对话判定" value={aiUsage.totals.dialogue} accent="violet" />
+                            <StatDot icon={BarChart3} label="汇总分析" value={aiUsage.totals.summary} accent="blue" />
+                            <StatDot icon={Target} label="Tokens" value={aiUsage.totals.tokens} accent="amber" />
+                            <StatDot icon={Star} label="缓存单词" value={aiUsage.cachedWordCount} accent="emerald" />
+                          </div>
+                          <div className="overflow-hidden rounded-lg border">
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="bg-muted/40">
+                                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">日期</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">对话判定</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">汇总分析</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Tokens</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y">
+                                {aiUsage.dailyUsages.map((d) => (
+                                  <tr key={d.date} className="hover:bg-muted/20">
+                                    <td className="px-3 py-2 text-muted-foreground">{d.date}</td>
+                                    <td className="px-3 py-2 text-right">{d.dialogue}</td>
+                                    <td className="px-3 py-2 text-right">{d.summary}</td>
+                                    <td className="px-3 py-2 text-right">{fmtShort(d.tokens)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">点击加载后查看该用户的 AI 调用情况</p>
+                      )}
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </section>
             </div>
           ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">加载失败</div>
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">加载失败</div>
           )}
         </DialogContent>
       </Dialog>

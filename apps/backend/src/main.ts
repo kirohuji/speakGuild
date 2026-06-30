@@ -86,8 +86,14 @@ async function bootstrap() {
         deviceId: req.body?.device_id || req.body?.deviceId,
         userId: req.body?.user_id || req.body?.userId,
         nativeVersion: req.body?.native_version || req.body?.nativeVersion,
+        nativeBuild: req.body?.native_build || req.body?.nativeBuild,
         currentBundleVersion: req.body?.current_bundle_version || req.body?.currentBundleVersion,
         channel: req.body?.channel || 'production',
+        deviceModel: req.body?.device_model || req.body?.deviceModel,
+        deviceName: req.body?.device_name || req.body?.deviceName,
+        manufacturer: req.body?.manufacturer,
+        operatingSystem: req.body?.operating_system || req.body?.operatingSystem,
+        osVersion: req.body?.os_version || req.body?.osVersion,
       });
       res.json(result);
     } catch (err: any) {

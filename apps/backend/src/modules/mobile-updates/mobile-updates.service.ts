@@ -22,8 +22,14 @@ export class MobileUpdatesService {
     deviceId?: string;
     userId?: string;
     nativeVersion?: string;
+    nativeBuild?: string;
     currentBundleVersion?: string;
     channel?: string;
+    deviceModel?: string;
+    deviceName?: string;
+    manufacturer?: string;
+    operatingSystem?: string;
+    osVersion?: string;
   }) {
     const {
       platform,
@@ -46,11 +52,25 @@ export class MobileUpdatesService {
           userId,
           enabled: tester?.enabled ?? false,
           channel: tester?.channel ?? 'production',
+          lastPlatform: platform || null,
+          lastDeviceModel: params.deviceModel || null,
+          lastDeviceName: params.deviceName || null,
+          lastManufacturer: params.manufacturer || null,
+          lastOperatingSystem: params.operatingSystem || null,
+          lastOsVersion: params.osVersion || null,
+          lastNativeBuild: params.nativeBuild || null,
           lastBundleVersion: currentBundleVersion || null,
           lastNativeVersion: params.nativeVersion || null,
           lastCheckAt: new Date(),
         },
         update: {
+          lastPlatform: platform || null,
+          lastDeviceModel: params.deviceModel || null,
+          lastDeviceName: params.deviceName || null,
+          lastManufacturer: params.manufacturer || null,
+          lastOperatingSystem: params.operatingSystem || null,
+          lastOsVersion: params.osVersion || null,
+          lastNativeBuild: params.nativeBuild || null,
           lastBundleVersion: currentBundleVersion || null,
           lastNativeVersion: params.nativeVersion || null,
           lastCheckAt: new Date(),

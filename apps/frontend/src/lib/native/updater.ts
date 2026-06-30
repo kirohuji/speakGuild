@@ -57,6 +57,22 @@ async function getNativeAppInfo() {
   }
 }
 
+async function getNativeDeviceInfo() {
+  try {
+    const { Device } = await import('@capacitor/device');
+    const info = await Device.getInfo();
+    return {
+      deviceModel: info.model || undefined,
+      deviceName: info.name || undefined,
+      manufacturer: info.manufacturer || undefined,
+      operatingSystem: info.operatingSystem || undefined,
+      osVersion: info.osVersion || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 class UpdaterService implements UpdaterAPI {
   private _readyNotified = false;
   private _listenersRegistered = false;
@@ -168,9 +184,10 @@ class UpdaterService implements UpdaterAPI {
       const userId = localStorage.getItem('manyu-ota-user-id') || undefined;
       const deviceId = getOrCreateOtaDeviceId();
       const nativeInfo = await getNativeAppInfo();
+      const deviceInfo = await getNativeDeviceInfo();
 
       const checkUrl = 'https://hope.lourd.top:3605/api/mobile-updates/check';
-      console.log(`[Updater] 📡 Checking update: platform=${platform}, native=${nativeInfo.nativeVersion || '-'}, current=${current.version}, url=${checkUrl}`);
+      console.log(`[Updater] 📡 Checking update: platform=${platform}, native=${nativeInfo.nativeVersion || '-'}, current=${current.version}, device=${deviceInfo.deviceModel || '-'}, url=${checkUrl}`);
 
       // 1. 请求后端检查接口
       const res = await fetch(checkUrl, {
@@ -183,6 +200,11 @@ class UpdaterService implements UpdaterAPI {
           nativeVersion: nativeInfo.nativeVersion,
           nativeBuild: nativeInfo.nativeBuild,
           currentBundleVersion: current.version,
+          deviceModel: deviceInfo.deviceModel,
+          deviceName: deviceInfo.deviceName,
+          manufacturer: deviceInfo.manufacturer,
+          operatingSystem: deviceInfo.operatingSystem,
+          osVersion: deviceInfo.osVersion,
           channel: 'production',
         }),
       });
@@ -269,4 +291,3 @@ class UpdaterService implements UpdaterAPI {
 
 export const updater = new UpdaterService();
 export type { UpdaterService, UpdateInfo };
-
