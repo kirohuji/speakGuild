@@ -1,9 +1,6 @@
 import { env, pipeline } from '@huggingface/transformers'
 import type { LocalWarmupModelLoadConfig } from './warmup-model-manager'
 
-env.allowLocalModels = true
-env.allowRemoteModels = false
-
 type WorkerRequest =
   | { id: number; type: 'preload'; config: LocalWarmupModelLoadConfig; references?: WarmupReferenceEmbeddingInput[] }
   | { id: number; type: 'judge-embeddings'; userAnswer: string; reference: WarmupReferenceEmbeddingInput; config: LocalWarmupModelLoadConfig }
@@ -20,18 +17,24 @@ const embeddingCache = new Map<string, number[]>()
 const referenceCache = new Map<string, { expected: number[]; prompt: number[] }>()
 
 function getExtractor(config: LocalWarmupModelLoadConfig) {
-  const nextKey = `${config.modelId}:${config.dtype}:${config.localModelPath}`
+  const localModelPath = config.localModelPath?.trim()
+  const allowRemoteModels = config.allowRemoteModels ?? !localModelPath
+  const nextKey = `${config.modelId}:${config.dtype}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
   if (extractorKey !== nextKey) {
     extractorKey = nextKey
     extractorPromise = null
     embeddingCache.clear()
     referenceCache.clear()
-    env.localModelPath = config.localModelPath
+    env.allowLocalModels = Boolean(localModelPath)
+    env.allowRemoteModels = allowRemoteModels
+    if (localModelPath) {
+      env.localModelPath = localModelPath
+    }
   }
 
   extractorPromise ??= pipeline('feature-extraction', config.modelId, {
     dtype: config.dtype,
-    local_files_only: true,
+    local_files_only: !allowRemoteModels,
   })
   return extractorPromise
 }

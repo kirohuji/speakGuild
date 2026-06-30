@@ -30,7 +30,8 @@ export interface LocalWarmupModelStatus {
 export interface LocalWarmupModelLoadConfig {
   modelId: string
   dtype: LocalWarmupModelVariant['dtype']
-  localModelPath: string
+  localModelPath?: string
+  allowRemoteModels?: boolean
 }
 
 const MODEL_ID = 'Xenova/all-MiniLM-L6-v2'
@@ -76,6 +77,12 @@ export const LOCAL_WARMUP_MODEL_VARIANTS: LocalWarmupModelVariant[] = [
 ]
 
 let installing = false
+
+function isBrowserModelRuntimeAvailable() {
+  return typeof window !== 'undefined'
+    && typeof Worker !== 'undefined'
+    && typeof indexedDB !== 'undefined'
+}
 
 function variantById(variantId: LocalWarmupModelVariantId) {
   return LOCAL_WARMUP_MODEL_VARIANTS.find((variant) => variant.id === variantId) ?? LOCAL_WARMUP_MODEL_VARIANTS[0]
@@ -132,17 +139,18 @@ export const warmupModelManager = {
 
   async getStatus(variantId: LocalWarmupModelVariantId): Promise<LocalWarmupModelStatus> {
     if (!isNative()) {
+      const browserAvailable = isBrowserModelRuntimeAvailable()
       return {
-        nativeAvailable: false,
-        installed: false,
+        nativeAvailable: browserAvailable,
+        installed: browserAvailable,
         installing,
         modelId: MODEL_ID,
         variantId,
         bytes: 0,
         expectedBytes: expectedBytes(variantId),
-        missingFiles: filesForVariant(variantId),
+        missingFiles: browserAvailable ? [] : filesForVariant(variantId),
         manifestFiles: [],
-        health: 'unavailable',
+        health: browserAvailable ? 'ready' : 'unavailable',
       }
     }
 
@@ -188,11 +196,13 @@ export const warmupModelManager = {
 
   async getLoadConfig(variantId: LocalWarmupModelVariantId): Promise<LocalWarmupModelLoadConfig | null> {
     const status = await this.getStatus(variantId)
-    if (!status.nativeAvailable || !status.installed || !status.localModelPath) return null
+    if (!status.nativeAvailable || !status.installed) return null
+    if (isNative() && !status.localModelPath) return null
     return {
       modelId: MODEL_ID,
       dtype: variantById(variantId).dtype,
       localModelPath: status.localModelPath,
+      allowRemoteModels: !status.localModelPath,
     }
   },
 

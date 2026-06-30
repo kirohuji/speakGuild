@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, HardDrive, Trash2 } from 'lucide-react'
+import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, Globe2, HardDrive, Smartphone, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
@@ -9,6 +9,7 @@ import { IosRow, IosSection } from '@/features/profile/components/ios-components
 import { offlineStorageService, type OfflineCacheCategory, type OfflineStorageDetails, type OfflineStorageStats } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { isNative } from '@/lib/native'
 import {
   LOCAL_WARMUP_MODEL_VARIANTS,
   warmupModelManager,
@@ -154,7 +155,13 @@ export function MobileStorageView() {
   const selectedVariant = LOCAL_WARMUP_MODEL_VARIANTS.find((variant) => variant.id === localAiWarmupModelVariant) ?? LOCAL_WARMUP_MODEL_VARIANTS[0]
   const modelInstalled = Boolean(modelStatus?.installed)
   const modelUnavailable = modelStatus?.nativeAvailable === false
-  const modelStatusText = modelUnavailable
+  const isNativeRuntime = isNative()
+  const modelRuntimeLabel = isNativeRuntime
+    ? t('settings.storage.localModelRuntimeCapacitor', { defaultValue: 'Capacitor 端' })
+    : t('settings.storage.localModelRuntimeWeb', { defaultValue: 'Web 端' })
+  const modelStatusText = !isNativeRuntime && modelStatus?.nativeAvailable
+    ? t('settings.storage.localModelWebReady', { defaultValue: '浏览器缓存 · 首次在线加载' })
+    : modelUnavailable
     ? t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
     : modelDownload.active
       ? t('settings.storage.localModelDownloading', { percent: modelDownload.percent, defaultValue: `下载中 ${modelDownload.percent}%` })
@@ -261,7 +268,7 @@ export function MobileStorageView() {
           subtitle={`${t(`settings.storage.localModelVariants.${selectedVariant.id}.label`)} · ${modelStatusText}`}
           right={(
             <div className="flex items-center gap-1.5">
-              {modelInstalled ? (
+              {isNativeRuntime && modelInstalled ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -275,7 +282,7 @@ export function MobileStorageView() {
                 >
                   {modelDeleting ? t('settings.storage.deleting') : t('settings.storage.deleteText')}
                 </Button>
-              ) : (
+              ) : isNativeRuntime ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -290,6 +297,10 @@ export function MobileStorageView() {
                   <Download className="mr-1 size-3.5" />
                   {modelDownload.active ? t('settings.storage.downloading', { defaultValue: '下载中' }) : t('settings.storage.download', { defaultValue: '下载' })}
                 </Button>
+              ) : (
+                <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                  {modelRuntimeLabel}
+                </span>
               )}
               <button
                 type="button"
@@ -343,8 +354,35 @@ export function MobileStorageView() {
                 </div>
               )}
 
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className={cn(
+                  'rounded-md border px-3 py-2',
+                  !isNativeRuntime ? 'border-primary/45 bg-primary/10' : 'border-border/60 bg-background/60',
+                )}>
+                  <div className="flex items-center gap-2 text-xs font-semibold">
+                    <Globe2 className="size-3.5" />
+                    {t('settings.storage.localModelRuntimeWeb', { defaultValue: 'Web 端' })}
+                  </div>
+                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+                    {t('settings.storage.localModelWebModeDesc', { defaultValue: '首次判题时在线加载，之后复用浏览器模型缓存。' })}
+                  </p>
+                </div>
+                <div className={cn(
+                  'rounded-md border px-3 py-2',
+                  isNativeRuntime ? 'border-primary/45 bg-primary/10' : 'border-border/60 bg-background/60',
+                )}>
+                  <div className="flex items-center gap-2 text-xs font-semibold">
+                    <Smartphone className="size-3.5" />
+                    {t('settings.storage.localModelRuntimeCapacitor', { defaultValue: 'Capacitor 端' })}
+                  </div>
+                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+                    {t('settings.storage.localModelCapacitorModeDesc', { defaultValue: '模型文件下载到 App 数据目录，校验完整后可离线判题。' })}
+                  </p>
+                </div>
+              </div>
+
               <div className="space-y-1.5 text-[11px] leading-5 text-muted-foreground">
-                <p>{t('settings.storage.localModelPath', { defaultValue: '存储位置' })}: Directory.Data / ai-models</p>
+                <p>{t('settings.storage.localModelPath', { defaultValue: '存储位置' })}: {isNativeRuntime ? 'Directory.Data / ai-models' : t('settings.storage.localModelBrowserCache', { defaultValue: '浏览器模型缓存' })}</p>
                 <p>{t('settings.storage.localModelFiles', { defaultValue: '文件' })}: config.json · tokenizer.json · onnx/{selectedVariant.modelFile.split('/').pop()}</p>
                 {modelStatus?.updatedAt && <p>{t('settings.storage.updated', { updated: formatDateTime(modelStatus.updatedAt) || t('settings.storage.unknownTime') })}</p>}
                 {modelStatus?.missingFiles.length ? (
