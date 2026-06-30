@@ -42,6 +42,9 @@ function getExtractor(config: LocalWarmupModelLoadConfig) {
   extractorPromise ??= pipeline('feature-extraction', config.modelId, {
     dtype: config.dtype,
     local_files_only: !allowRemoteModels,
+    session_options: {
+      graphOptimizationLevel: 'disabled',
+    }
   })
   return extractorPromise
 }

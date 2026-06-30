@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { generateText } from 'ai';
+import { generateObject, generateText } from 'ai';
+import { z } from 'zod';
 import { DialogueTurnJudgeDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
@@ -506,16 +507,23 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     }
   }
 
-  /** 知识点热身单题快速判定：短 prompt、短 JSON、只返回当前题需要的反馈 */
+  // z.enum 会触发 AI SDK generateObject 泛型推导爆栈 (TS2589)，调用处用 as any 绕过
+  private warmupJudgeSchema = z.object({
+    passed: z.boolean(),
+    score: z.enum(['strong', 'ok', 'weak', 'miss']),
+    feedback: z.string(),
+    correction: z.string().nullable(),
+  });
+
+  /** 知识点热身单题快速判定：Zod 约束 AI 必须返回合法 JSON */
   async judgeWarmupTurn(dto: WarmupTurnJudgeDto, userId?: string) {
     const provider = await this.getProvider();
     const system = `You are a fast ESL warmup judge.
-Return ONLY compact JSON: {"passed":boolean,"score":"strong|ok|weak|miss","feedback":"中文短反馈，最多18字","correction":string|null}
 
 Rules:
-- Judge only this single warmup item.
+- Judge only this single warmup item. expectedAnswer is just ONE example — synonyms and equivalent expressions are equally correct.
 - Be tolerant of minor grammar, spelling, casing, or speech-to-text errors.
-- For zh_to_en, pass when the user's English expresses the prompt and uses the target naturally when targetText is provided.
+- For zh_to_en, PASS when the user's English correctly expresses the Chinese prompt, even if word choice differs from expectedAnswer. Synonyms like prepared/ready, big/large, happy/glad are all fine.
 - For en_to_zh, pass when the user's Chinese captures the core meaning.
 - "strong": natural and correct; "ok": understandable with minor issues; "weak": meaning partly right or needed target is awkward; "miss": wrong/off-topic/empty.
 - Give correction only for weak or miss, using expectedAnswer when useful.`;
@@ -524,44 +532,108 @@ Rules:
       `stepType: ${dto.stepType}`,
       `direction: ${dto.direction ?? 'zh_to_en'}`,
       `prompt: ${dto.prompt}`,
-      dto.expectedAnswer ? `expectedAnswer: ${dto.expectedAnswer}` : null,
+      dto.expectedAnswer ? `expectedAnswer(参考示例，非唯一答案): ${dto.expectedAnswer}` : null,
       dto.targetText ? `targetText: ${dto.targetText}` : null,
       dto.targetMeaning ? `targetMeaning: ${dto.targetMeaning}` : null,
       `userAnswer: ${dto.userAnswer}`,
     ].filter(Boolean).join('\n');
 
-    const result = await generateText({
-      model: provider(),
-      system,
-      prompt,
-      temperature: 0.1,
-      maxOutputTokens: 220,
-    });
-
-    if (userId && result.usage) {
-      this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0);
-    }
-
-    const jsonText = result.text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? result.text;
     try {
-      const parsed = JSON.parse(jsonText);
-      const score = ['strong', 'ok', 'weak', 'miss'].includes(parsed.score) ? parsed.score : (parsed.passed ? 'ok' : 'miss');
+      const result = await generateObject({
+        model: provider(),
+        system,
+        prompt,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        schema: this.warmupJudgeSchema as any, // TS2589: z.enum 泛型推导过深
+        temperature: 0.1,
+        maxOutputTokens: 180,
+      });
+
+      if (userId && result.usage) {
+        this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0);
+      }
+
+      const raw = result.object as { passed: boolean; score: string; feedback: string; correction: string | null };
+      const validScore = (['strong', 'ok', 'weak', 'miss'] as const).find((s) => s === raw.score);
       return {
-        passed: Boolean(parsed.passed),
-        score,
-        feedback: String(parsed.feedback || (parsed.passed ? '表达可以，继续。' : '再调整一下表达。')),
-        correction: parsed.correction ? String(parsed.correction) : null,
-        raw: result.text,
+        passed: Boolean(raw.passed),
+        score: validScore ?? (raw.passed ? 'ok' : 'miss'),
+        feedback: raw.feedback || (raw.passed ? '表达可以，继续。' : '再调整一下表达。'),
+        correction: raw.correction ?? null,
+        raw: JSON.stringify(raw),
       };
     } catch {
+      // Zod 校验失败或模型调用失败 → 规则兜底
+      return this.fallbackJudgeWarmupTurn(dto);
+    }
+  }
+
+  /** 规则兜底：AI 返回无效 JSON 时做基础字符串比对 */
+  private fallbackJudgeWarmupTurn(dto: WarmupTurnJudgeDto) {
+    const userAnswer = (dto.userAnswer ?? '').trim();
+    const expectedAnswer = (dto.expectedAnswer ?? '').trim();
+
+    // 空答案直接判错
+    if (!userAnswer) {
+      return { passed: false, score: 'miss' as const, feedback: '请尝试用英语回答。', correction: expectedAnswer || null, raw: '' };
+    }
+
+    // 大小写不敏感精确匹配 → strong
+    if (expectedAnswer && userAnswer.toLowerCase() === expectedAnswer.toLowerCase()) {
+      return { passed: true, score: 'strong' as const, feedback: '回答正确！', correction: null, raw: '' };
+    }
+
+    // 去除标点后匹配 → ok
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+    if (expectedAnswer && normalize(userAnswer) === normalize(expectedAnswer)) {
+      return { passed: true, score: 'ok' as const, feedback: '正确，注意标点。', correction: null, raw: '' };
+    }
+
+    // 关键词覆盖检测：提取 expectedAnswer 中的实词，检查是否出现在 userAnswer 中
+    if (expectedAnswer) {
+      const keywords = expectedAnswer.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !['the', 'and', 'are', 'was', 'were', 'does', 'did', 'has', 'had', 'will', 'would', 'can', 'could', 'should', 'shall', 'may', 'might', 'this', 'that', 'these', 'those', 'they', 'what', 'when', 'where', 'which', 'who', 'whom', 'how'].includes(w));
+      const userLower = userAnswer.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+      const matchedCount = keywords.filter((kw) => userLower.includes(kw)).length;
+      const coverage = keywords.length > 0 ? matchedCount / keywords.length : 0;
+
+      // 覆盖 >= 60% → ok
+      if (coverage >= 0.6) {
+        return {
+          passed: true,
+          score: 'ok' as const,
+          feedback: coverage >= 0.8 ? '表达正确！' : '基本正确，换个说法也可以。',
+          correction: null,
+          raw: '',
+        };
+      }
+
+      // 覆盖 >= 30% → weak
+      if (coverage >= 0.3) {
+        return {
+          passed: false,
+          score: 'weak' as const,
+          feedback: '意思部分正确，参考示例调整。',
+          correction: expectedAnswer,
+          raw: '',
+        };
+      }
+    }
+
+    // 无法判断 → 宽松通过，不显示 correction 避免误导
+    if (userAnswer.length > 0) {
       return {
-        passed: false,
-        score: 'miss',
-        feedback: '暂时无法判断，请再试一次。',
-        correction: dto.expectedAnswer ?? null,
-        raw: result.text,
+        passed: true,
+        score: 'weak' as const,
+        feedback: '回答已记录，继续加油！',
+        correction: null,
+        raw: '',
       };
     }
+
+    return { passed: false, score: 'miss' as const, feedback: '暂时无法判断，请再试一次。', correction: expectedAnswer || null, raw: '' };
   }
 
   buildPracticeSessionAnalysisPrompt(session: any): { system: string; user: string } {

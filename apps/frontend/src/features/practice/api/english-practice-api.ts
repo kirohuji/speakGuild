@@ -1,5 +1,6 @@
 import { del, get, patch, post } from '@/lib/request'
 import { judgeWarmupTurnLocally, type WarmupTurnJudgeInput } from '@/lib/local-ai/warmup-local-judge'
+import { warmupModelManager } from '@/lib/local-ai/warmup-model-manager'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { getCurrentSessionSnapshot } from '@/providers/auth-provider'
 import { toast } from 'sonner'
@@ -11,6 +12,24 @@ function isLocalModelHealthError(error: unknown) {
 
 function isBrowserOffline() {
   return typeof navigator !== 'undefined' && navigator.onLine === false
+}
+
+type WarmupTurnRemoteJudgeOutput = {
+  passed: boolean
+  score: 'strong' | 'ok' | 'weak' | 'miss'
+  feedback: string
+  correction?: string | null
+}
+
+async function judgeWarmupTurnRemotely(dto: WarmupTurnJudgeInput, reason?: string): Promise<WarmupTurnRemoteJudgeOutput> {
+  if (reason && getCurrentSessionSnapshot()?.user?.role === 'admin') {
+    toast.info(reason)
+  }
+  const remote = await post<WarmupTurnRemoteJudgeOutput>('/practice-ai/warmup-turn', dto)
+  if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
+    toast.info(`云端 AI 已判断：${remote.passed ? '通过' : '未通过'} · ${remote.score}`)
+  }
+  return remote
 }
 
 // ---- 练习模式 ----
@@ -330,12 +349,33 @@ export const practiceAiApi = {
   }>('/practice-ai/dialogue-turn', dto),
 
   judgeWarmupTurn: async (dto: WarmupTurnJudgeInput) => {
-    const preferLocal = usePreferencesStore.getState().localAiWarmupJudgeEnabled
-    if (preferLocal || isBrowserOffline()) {
+    const preferences = usePreferencesStore.getState()
+    const preferLocal = preferences.localAiWarmupJudgeEnabled
+    const offline = isBrowserOffline()
+    if (preferLocal || offline) {
       try {
+        const modelStatus = await warmupModelManager.getStatus(preferences.localAiWarmupModelVariant)
+        if (modelStatus.installing) {
+          toast.info('本地 AI 模型正在下载，下载完成后将自动用于判题')
+          if (!offline) {
+            return judgeWarmupTurnRemotely(dto, getCurrentSessionSnapshot()?.user?.role === 'admin' ? '本地 AI 下载中，已切到云端判题' : undefined)
+          }
+          throw new Error('本地 AI 模型正在下载，离线时暂不可判题')
+        }
+
         const local = await judgeWarmupTurnLocally(dto)
         if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
           toast.info(`本地 AI 已判断：${local.passed ? '通过' : '未通过'} · ${local.score}${local.fallback ? ' · 低置信' : ''}`)
+        }
+        if (!offline && (!local.passed || local.fallback)) {
+          return judgeWarmupTurnRemotely(
+            dto,
+            getCurrentSessionSnapshot()?.user?.role === 'admin'
+              ? local.fallback
+                ? '本地 AI 低置信，已切到云端复判'
+                : '本地 AI 未通过，已切到云端复判'
+              : undefined,
+          )
         }
         if (preferLocal || !local.fallback) {
           return {
@@ -345,9 +385,6 @@ export const practiceAiApi = {
             correction: local.correction,
           }
         }
-        if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
-          toast.info('本地 AI 低置信，已切到云端复判')
-        }
       } catch (error) {
         console.warn('[warmup-local-judge] fallback to server:', error)
         if (isLocalModelHealthError(error)) {
@@ -356,19 +393,11 @@ export const practiceAiApi = {
             toast.warning('本地 AI 模型加载失败，已回退云端并关闭本地判断，请在存储管理中重新下载')
           }
         }
+        if (offline) throw error
       }
     }
 
-    const remote = await post<{
-    passed: boolean
-    score: 'strong' | 'ok' | 'weak' | 'miss'
-    feedback: string
-    correction?: string | null
-    }>('/practice-ai/warmup-turn', dto)
-    if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
-      toast.info(`云端 AI 已判断：${remote.passed ? '通过' : '未通过'} · ${remote.score}`)
-    }
-    return remote
+    return judgeWarmupTurnRemotely(dto)
   },
 
   analyzeSession: (sessionId: string) =>

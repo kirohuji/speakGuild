@@ -72,7 +72,7 @@ function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDai
         stepType: 'chunk_substitution',
         direction,
         prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-        expectedAnswer: prompt.answer,
+        expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
       })
     } else if (source.type === 'vocab_drill') {
       const direction = item.direction ?? 'zh_to_en'
@@ -80,7 +80,7 @@ function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDai
         stepType: 'vocab_drill',
         direction,
         prompt: direction === 'zh_to_en' ? prompt.promptZh : (prompt.suggestedAnswer ?? prompt.promptZh),
-        expectedAnswer: prompt.suggestedAnswer,
+        expectedAnswer: direction === 'zh_to_en' ? prompt.suggestedAnswer : prompt.promptZh,
       })
     } else if (source.type === 'vocab_sentence_building') {
       const direction = item.direction ?? 'zh_to_en'
@@ -88,7 +88,7 @@ function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDai
         stepType: 'vocab_sentence_building',
         direction,
         prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-        expectedAnswer: prompt.answer,
+        expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
       })
     } else if (source.type === 'pattern_drill') {
       const direction = item.direction ?? 'zh_to_en'
@@ -96,7 +96,7 @@ function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDai
         stepType: 'pattern_drill',
         direction,
         prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-        expectedAnswer: prompt.answer,
+        expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
       })
     }
   }

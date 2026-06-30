@@ -128,7 +128,7 @@ export function PatternDrillCard({
         stepType: 'pattern_drill',
         direction,
         prompt: isZhToEn ? current.zh : (current.answer ?? current.zh),
-        expectedAnswer: current.answer,
+        expectedAnswer: isZhToEn ? current.answer : current.zh,
         userAnswer: userInput.trim(),
         targetText: pattern,
         targetMeaning: patternMeaning,
@@ -144,10 +144,10 @@ export function PatternDrillCard({
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
-        setCorrection(judgement.correction || current.answer || '')
+        setCorrection(judgement.correction || (isZhToEn ? current.answer : current.zh) || '')
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.answer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.answer || '' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '', hintLevel, score: 'miss' })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '' })
       }
     } catch (err: any) {
       setStatus('failed')

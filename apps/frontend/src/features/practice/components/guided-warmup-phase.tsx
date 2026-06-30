@@ -98,7 +98,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
             stepType: 'chunk_substitution',
             direction,
             prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-            expectedAnswer: prompt.answer,
+            expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
           })
         })
       } else if (item.type === 'vocab_drill') {
@@ -108,7 +108,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
             stepType: 'vocab_drill',
             direction,
             prompt: direction === 'zh_to_en' ? prompt.promptZh : (prompt.suggestedAnswer ?? prompt.promptZh),
-            expectedAnswer: prompt.suggestedAnswer,
+            expectedAnswer: direction === 'zh_to_en' ? prompt.suggestedAnswer : prompt.promptZh,
           })
         })
       } else if (item.type === 'vocab_sentence_building') {
@@ -119,7 +119,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
               stepType: 'vocab_sentence_building',
               direction,
               prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-              expectedAnswer: prompt.answer,
+              expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
             })
           })
         }
@@ -130,7 +130,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
             stepType: 'pattern_drill',
             direction,
             prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-            expectedAnswer: prompt.answer,
+            expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
           })
         })
       }

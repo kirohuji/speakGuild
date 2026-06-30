@@ -128,7 +128,7 @@ export function VocabOutputCard({
         stepType: 'vocab_drill',
         direction,
         prompt: isZhToEn ? current.promptZh : (current.suggestedAnswer ?? current.promptZh),
-        expectedAnswer: current.suggestedAnswer,
+        expectedAnswer: isZhToEn ? current.suggestedAnswer : current.promptZh,
         userAnswer: userInput.trim(),
         targetText: isZhToEn ? current.targetWords?.join(', ') : undefined,
       })
@@ -140,10 +140,10 @@ export function VocabOutputCard({
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
         store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
-        setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || current.suggestedAnswer || '' })
+        setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || current.suggestedAnswer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || current.suggestedAnswer || '' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '', hintLevel, score: 'miss' })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
       }
     } catch (err: any) {
       setResult({ passed: false, feedback: err?.message || '反馈不可用' })

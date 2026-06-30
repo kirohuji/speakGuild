@@ -215,9 +215,59 @@ export function preloadWarmupLocalJudge(
   })
 }
 
-function normalizeText(value: string) {
+function looksLikePastParticiple(token: string) {
+  const normalized = token.toLowerCase()
+  if (normalized === 'got' || normalized === 'been') return true
+  if (/(ed|en|ne|wn)$/i.test(normalized)) return true
+  return new Set([
+    'done',
+    'had',
+    'made',
+    'taken',
+    'seen',
+    'gone',
+    'come',
+    'found',
+    'left',
+    'lost',
+    'heard',
+    'read',
+    'written',
+    'eaten',
+    'drunk',
+    'known',
+  ]).has(normalized)
+}
+
+function expandAmbiguousApostropheS(subject: string, nextToken = '') {
+  return `${subject} ${looksLikePastParticiple(nextToken) ? 'has' : 'is'}${nextToken ? ` ${nextToken}` : ''}`
+}
+
+function expandEnglishContractions(value: string) {
   return value
     .toLowerCase()
+    .replace(/\bi'm\b/g, 'i am')
+    .replace(/\byou're\b/g, 'you are')
+    .replace(/\bwe're\b/g, 'we are')
+    .replace(/\bthey're\b/g, 'they are')
+    .replace(/\b(he|she|it|that|there|who|what|where|when|why|how)'s(?:\s+([a-z]+))?\b/g, (_match, subject: string, nextToken?: string) => (
+      expandAmbiguousApostropheS(subject, nextToken)
+    ))
+    .replace(/\bcan't\b/g, 'cannot')
+    .replace(/\bwon't\b/g, 'will not')
+    .replace(/\bn't\b/g, ' not')
+    .replace(/\b([a-z]+)'ll\b/g, '$1 will')
+    .replace(/\b([a-z]+)'ve\b/g, '$1 have')
+    .replace(/\b([a-z]+)'d\b/g, '$1 would')
+    .replace(/\b([a-z]+)'re\b/g, '$1 are')
+    .replace(/\b([a-z]+)'m\b/g, '$1 am')
+}
+
+function normalizeText(value: string) {
+  return expandEnglishContractions(value)
+    .replace(/\ball of them\b/g, 'they')
+    .replace(/\ball of us\b/g, 'we')
+    .replace(/\bboth of them\b/g, 'they')
     .replace(/[^\p{L}\p{N}\s']/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -241,15 +291,29 @@ function splitTargets(targetText?: string) {
   if (!targetText) return []
   return targetText
     .split(/[,，、/|;]/)
-    .map((item) => normalizeText(item))
+    .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function normalizeTargetSkeleton(target: string) {
+  return normalizeText(target
+    .replace(/\[[^\]]+\]/g, ' ')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/_{2,}/g, ' ')
+    .replace(/\.{2,}/g, ' '))
+}
+
+function targetCandidates(target: string) {
+  return Array.from(new Set([normalizeText(target), normalizeTargetSkeleton(target)]))
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 2)
 }
 
 function hasTarget(userAnswer: string, targetText?: string) {
   const normalizedAnswer = normalizeText(userAnswer)
   const targets = splitTargets(targetText)
   if (!targets.length) return true
-  return targets.some((target) => normalizedAnswer.includes(target))
+  return targets.some((target) => targetCandidates(target).some((candidate) => normalizedAnswer.includes(candidate)))
 }
 
 function answerContainsExpected(userAnswer: string, expectedAnswer?: string) {
@@ -259,8 +323,18 @@ function answerContainsExpected(userAnswer: string, expectedAnswer?: string) {
 }
 
 function tokenOverlap(a: string, b?: string) {
-  const aTokens = new Set(normalizeText(a).split(' ').filter((token) => token.length > 1))
-  const bTokens = normalizeText(b ?? '').split(' ').filter((token) => token.length > 1)
+  const normalizedA = normalizeText(a)
+  const normalizedB = normalizeText(b ?? '')
+  const hasCjk = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u
+  if (hasCjk.test(normalizedA) || hasCjk.test(normalizedB)) {
+    const aChars = new Set(Array.from(normalizedA).filter((char) => hasCjk.test(char)))
+    const bChars = Array.from(normalizedB).filter((char) => hasCjk.test(char))
+    if (!aChars.size || !bChars.length) return 0
+    return bChars.filter((char) => aChars.has(char)).length / bChars.length
+  }
+
+  const aTokens = new Set(normalizedA.split(' ').filter((token) => token.length > 1))
+  const bTokens = normalizedB.split(' ').filter((token) => token.length > 1)
   if (!aTokens.size || !bTokens.length) return 0
   const matched = bTokens.filter((token) => aTokens.has(token)).length
   return matched / bTokens.length

@@ -132,6 +132,7 @@ export function MobileStorageView() {
 
   const handleDownloadModel = useCallback(async () => {
     setModelDownload({ active: true, percent: 0 })
+    toast.info(t('settings.storage.localModelDownloadStarted', { defaultValue: '本地 AI 模型开始下载' }))
     try {
       await warmupModelManager.download(localAiWarmupModelVariant, (progress) => {
         setModelDownload({ active: true, percent: progress.percent, file: progress.file })
