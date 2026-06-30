@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileAudio, Keyboard, Loader2, Mic, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { transcribeRecording } from '@/lib/practice-ai-api'
+import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { usePreferencesStore } from '@/stores/preferences.store'
 
@@ -79,6 +79,7 @@ export function VnInputPanel({
   const [isPlaying, setIsPlaying] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
+  const localSttEnabled = usePreferencesStore((s) => s.localSttEnabled)
 
   // ── 录音 Refs ──
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -109,7 +110,7 @@ export function VnInputPanel({
   const processAudioBlob = useCallback(async (blob: Blob, filename: string, fallbackAudioUrl: string | null) => {
     setVoiceStatus('processing')
     try {
-      const result = await transcribeRecording(blob, filename)
+      const result = await transcribeVoiceInput(blob, filename)
       const transcribed = normalizeInputText(result.text ?? '')
       if (transcribed) {
         setTranscribedText(transcribed)
@@ -171,7 +172,7 @@ export function VnInputPanel({
     try {
       const nativeSession = await startBestNativeVoiceInput({
         language: 'en-US',
-        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled,
+        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
           setTranscribedText(partialText)
           setText(partialText)
@@ -215,7 +216,7 @@ export function VnInputPanel({
       console.warn('[VN voice] microphone start failed:', error)
       setVoiceError(getMicStartErrorMessage(error))
     }
-  }, [cleanupRecording, nativeSpeechRecognitionEnabled, processAudioBlob])
+  }, [cleanupRecording, localSttEnabled, nativeSpeechRecognitionEnabled, processAudioBlob])
 
   // ── 停止录音 ──
   const stopRecording = useCallback(async () => {
@@ -352,7 +353,7 @@ export function VnInputPanel({
 
     setVoiceStatus('processing')
     try {
-      const result = await transcribeRecording(file, file.name)
+      const result = await transcribeVoiceInput(file, file.name)
       const transcribed = normalizeInputText(result.text ?? '')
       if (transcribed) {
         setTranscribedText(transcribed)

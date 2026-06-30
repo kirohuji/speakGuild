@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { LocalWarmupModelVariantId } from '@/lib/local-ai/warmup-model-manager'
+import type { LocalSttModelVariantId } from '@/lib/local-stt/local-stt-model-manager'
 import type { TtsProviderKey } from '@/lib/tts-api'
 
 // ---- Web Speech API（浏览器原生，无需后端） ----
@@ -29,6 +30,9 @@ interface Preferences {
   ttsBackend: TtsBackendSettings
   wifiOnlyMedia: boolean
   nativeSpeechRecognitionEnabled: boolean
+  localSttEnabled: boolean
+  localSttModelVariant: LocalSttModelVariantId
+  localSttFallbackToCloud: boolean
   dailyGoal: number
   dailyPracticeMixedPacks: boolean
   dailyPracticeRandomOrder: boolean
@@ -49,6 +53,9 @@ interface PreferencesStore extends Preferences {
   setTtsBackend: (settings: Partial<TtsBackendSettings>) => void
   setWifiOnlyMedia: (value: boolean) => void
   setNativeSpeechRecognitionEnabled: (value: boolean) => void
+  setLocalSttEnabled: (value: boolean) => void
+  setLocalSttModelVariant: (value: LocalSttModelVariantId) => void
+  setLocalSttFallbackToCloud: (value: boolean) => void
   setDailyGoal: (value: number) => void
   setDailyPracticeMixedPacks: (value: boolean) => void
   setDailyPracticeRandomOrder: (value: boolean) => void
@@ -83,6 +90,9 @@ const DEFAULT_PREFERENCES: Preferences = {
   ttsBackend: DEFAULT_TTS_BACKEND,
   wifiOnlyMedia: true,
   nativeSpeechRecognitionEnabled: false,
+  localSttEnabled: false,
+  localSttModelVariant: 'tiny-en-q8',
+  localSttFallbackToCloud: true,
   dailyGoal: 20,
   dailyPracticeMixedPacks: false,
   dailyPracticeRandomOrder: true,
@@ -111,6 +121,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
         set((state) => ({ ttsBackend: { ...state.ttsBackend, ...settings } })),
       setWifiOnlyMedia: (value) => set({ wifiOnlyMedia: value }),
       setNativeSpeechRecognitionEnabled: (value) => set({ nativeSpeechRecognitionEnabled: value }),
+      setLocalSttEnabled: (value) => set({ localSttEnabled: value }),
+      setLocalSttModelVariant: (value) => set({ localSttModelVariant: value }),
+      setLocalSttFallbackToCloud: (value) => set({ localSttFallbackToCloud: value }),
       setDailyGoal: (value) => set({ dailyGoal: value }),
       setDailyPracticeMixedPacks: (value) => set({ dailyPracticeMixedPacks: value }),
       setDailyPracticeRandomOrder: (value) => set({ dailyPracticeRandomOrder: value }),
@@ -130,6 +143,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
           ...state,
           dailyGoal: state.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
           dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
+          localSttEnabled: state.localSttEnabled ?? DEFAULT_PREFERENCES.localSttEnabled,
+          localSttModelVariant: state.localSttModelVariant ?? DEFAULT_PREFERENCES.localSttModelVariant,
+          localSttFallbackToCloud: state.localSttFallbackToCloud ?? DEFAULT_PREFERENCES.localSttFallbackToCloud,
           localAiWarmupJudgeEnabled: state.localAiWarmupJudgeEnabled ?? DEFAULT_PREFERENCES.localAiWarmupJudgeEnabled,
           localAiWarmupModelVariant: state.localAiWarmupModelVariant ?? DEFAULT_PREFERENCES.localAiWarmupModelVariant,
           learningReminderEnabled: DEFAULT_PREFERENCES.learningReminderEnabled,

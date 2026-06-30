@@ -42,6 +42,10 @@ export function SettingsTab() {
     setDailyPracticeRandomOrder,
     localAiWarmupJudgeEnabled,
     setLocalAiWarmupJudgeEnabled,
+    localSttEnabled,
+    setLocalSttEnabled,
+    localSttFallbackToCloud,
+    setLocalSttFallbackToCloud,
     learningReminderEnabled,
     setLearningReminderEnabled,
     learningReminderTime,
@@ -181,6 +185,32 @@ export function SettingsTab() {
               <Separator />
             </>
           )}
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>{t('settings.localStt', { defaultValue: '使用本地语音识别' })}</Label>
+              <p className="text-xs text-muted-foreground">
+                {localSttEnabled
+                  ? t('settings.localSttOn', { defaultValue: '录音优先用本地 Whisper 转写' })
+                  : t('settings.localSttOff', { defaultValue: '录音使用云端 Whisper 转写' })}
+              </p>
+            </div>
+            <Switch checked={localSttEnabled} onCheckedChange={setLocalSttEnabled} />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>{t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}</Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
+              </p>
+            </div>
+            <Switch checked={localSttFallbackToCloud} onCheckedChange={setLocalSttFallbackToCloud} />
+          </div>
+
+          <Separator />
 
           <div className="flex items-center justify-between">
             <div>

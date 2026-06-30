@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   ChevronLeft, Loader2, BarChart2, Compass, BookOpen, CheckCircle2,
-  Mic, Play, Square, ClipboardList, GraduationCap, ChevronRight,
+  Mic, Play, Square, ClipboardList, GraduationCap, ChevronRight, Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,7 @@ import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
-import { transcribeRecording } from '@/lib/practice-ai-api'
+import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import {
   Home, BriefcaseBusiness, Shield, Compass as CompassIcon,
 } from 'lucide-react'
@@ -129,13 +129,16 @@ function AssessmentAnswerInput({
   value,
   onChange,
   disabled,
+  isAdmin = false,
 }: {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
+  isAdmin?: boolean
 }) {
   const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
+  const localSttEnabled = usePreferencesStore((s) => s.localSttEnabled)
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
@@ -148,6 +151,7 @@ function AssessmentAnswerInput({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const localAudioUrlRef = useRef<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -205,7 +209,7 @@ function AssessmentAnswerInput({
   const processAudioBlob = useCallback(async (blob: Blob, filename: string, fallbackAudioUrl: string | null) => {
     setVoiceStatus('processing')
     try {
-      const result = await transcribeRecording(blob, filename)
+      const result = await transcribeVoiceInput(blob, filename)
       const text = normalizeAssessmentTranscript(result.text ?? '')
       setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
       if (!text) {
@@ -233,7 +237,7 @@ function AssessmentAnswerInput({
     try {
       const nativeSession = await startBestNativeVoiceInput({
         language: 'en-US',
-        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled,
+        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
           const text = normalizeAssessmentTranscript(partialText)
           if (text) onChange(text)
@@ -274,7 +278,7 @@ function AssessmentAnswerInput({
       setVoiceError(getAssessmentMicErrorMessage(error, t))
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setLocalPlaybackUrl, t, voiceStatus])
+  }, [cleanupRecording, disabled, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setLocalPlaybackUrl, t, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current
@@ -324,9 +328,30 @@ function AssessmentAnswerInput({
     }
   }
 
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || disabled || voiceStatus !== 'idle') return
+    // 重置 input 以允许重复选同一个文件
+    event.target.value = ''
+    setVoiceError('')
+    setElapsed(0)
+    setRecordedAudioUrl(null)
+    setIsPlaying(false)
+    const playbackUrl = URL.createObjectURL(file)
+    setLocalPlaybackUrl(playbackUrl)
+    await processAudioBlob(file, file.name || 'upload.webm', playbackUrl)
+  }, [disabled, voiceStatus, processAudioBlob, setLocalPlaybackUrl])
+
   return (
     <div className="rounded-lg bg-muted/30 p-2">
       <audio ref={audioRef} src={recordedAudioUrl ?? undefined} preload="auto" className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -345,6 +370,19 @@ function AssessmentAnswerInput({
               : t('profile.placement.voiceIdle'))}
         </p>
         <div className="flex items-center gap-1.5">
+          {isAdmin && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={disabled || isProcessing || isRecording}
+              onClick={() => fileInputRef.current?.click()}
+              className="h-9 w-9 shrink-0 rounded-full p-0"
+              title="上传音频文件测试 STT"
+            >
+              <Upload className="size-4" />
+            </Button>
+          )}
           {hasRecording && (
             <Button
               type="button"
@@ -676,6 +714,7 @@ export function LearningAssessmentDialog({
                 value={currentAnswer}
                 onChange={(nextValue) => setAnswers((current) => ({ ...current, [currentPrompt.id]: nextValue }))}
                 disabled={saving}
+                isAdmin={session?.user?.role === 'admin'}
               />
             </div>
           )}

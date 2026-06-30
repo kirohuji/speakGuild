@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, Mic, Square, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { transcribeRecording } from '@/lib/practice-ai-api'
+import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { usePreferencesStore } from '@/stores/preferences.store'
 
@@ -47,6 +47,7 @@ export function PracticeAnswerInput({
   lang = 'en-US',
 }: PracticeAnswerInputProps) {
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
+  const localSttEnabled = usePreferencesStore((s) => s.localSttEnabled)
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
@@ -94,7 +95,7 @@ export function PracticeAnswerInput({
   const processAudioBlob = useCallback(async (blob: Blob, filename: string) => {
     setVoiceStatus('processing')
     try {
-      const result = await transcribeRecording(blob, filename, lang)
+      const result = await transcribeVoiceInput(blob, filename, lang)
       const text = normalizeInputText(result.text ?? '')
 
       // Save audio URL for playback
@@ -129,7 +130,7 @@ export function PracticeAnswerInput({
     try {
       const nativeSession = await startBestNativeVoiceInput({
         language: lang,
-        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled,
+        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
           const text = normalizeInputText(partialText)
           if (text) onChange(text)
@@ -171,7 +172,7 @@ export function PracticeAnswerInput({
       setVoiceError('无法访问麦克风，请检查权限设置')
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, lang, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
+  }, [cleanupRecording, disabled, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current

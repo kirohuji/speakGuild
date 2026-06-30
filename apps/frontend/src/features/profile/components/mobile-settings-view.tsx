@@ -43,6 +43,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     setDailyPracticeRandomOrder,
     localAiWarmupJudgeEnabled,
     setLocalAiWarmupJudgeEnabled,
+    localSttEnabled,
+    setLocalSttEnabled,
+    localSttFallbackToCloud,
+    setLocalSttFallbackToCloud,
     learningReminderEnabled,
     setLearningReminderEnabled,
     learningReminderTime,
@@ -434,6 +438,28 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
             }
           />
         )}
+        <IosRow
+          label={t('settings.localStt', { defaultValue: '使用本地语音识别' })}
+          subtitle={localSttEnabled
+            ? t('settings.localSttOn', { defaultValue: '录音优先用本地 Whisper 转写' })
+            : t('settings.localSttOff', { defaultValue: '录音使用云端 Whisper 转写' })}
+          right={
+            <Switch
+              checked={localSttEnabled}
+              onCheckedChange={setLocalSttEnabled}
+            />
+          }
+        />
+        <IosRow
+          label={t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}
+          subtitle={t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
+          right={
+            <Switch
+              checked={localSttFallbackToCloud}
+              onCheckedChange={setLocalSttFallbackToCloud}
+            />
+          }
+        />
         <IosRow
           label={t('profile.wifiOnlyLabel')}
           last

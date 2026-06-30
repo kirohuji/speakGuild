@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, Globe2, HardDrive, Smartphone, Trash2 } from 'lucide-react'
+import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, Globe2, HardDrive, Mic, Smartphone, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
@@ -21,6 +21,12 @@ import {
   warmupEmbeddingCacheRepository,
   type WarmupEmbeddingCacheStats,
 } from '@/lib/local-ai/warmup-embedding-cache.repository'
+import {
+  LOCAL_STT_MODEL_VARIANTS,
+  localSttModelManager,
+  type LocalSttModelStatus,
+  type LocalSttModelVariantId,
+} from '@/lib/local-stt/local-stt-model-manager'
 
 function formatBytes(bytes?: number) {
   const value = Number(bytes ?? 0)
@@ -47,21 +53,31 @@ export function MobileStorageView() {
   const [stats, setStats] = useState<OfflineStorageStats | null>(null)
   const [details, setDetails] = useState<OfflineStorageDetails | null>(null)
   const [modelStatus, setModelStatus] = useState<LocalWarmupModelStatus | null>(null)
+  const [sttModelStatus, setSttModelStatus] = useState<LocalSttModelStatus | null>(null)
   const [embeddingStats, setEmbeddingStats] = useState<WarmupEmbeddingCacheStats | null>(null)
   const [embeddingModelKey, setEmbeddingModelKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [modelLoading, setModelLoading] = useState(true)
+  const [sttModelLoading, setSttModelLoading] = useState(true)
   const [clearing, setClearing] = useState<OfflineCacheCategory | null>(null)
   const [embeddingClearing, setEmbeddingClearing] = useState(false)
   const [deletingPackId, setDeletingPackId] = useState<string | null>(null)
   const [modelDeleting, setModelDeleting] = useState(false)
+  const [sttModelDeleting, setSttModelDeleting] = useState(false)
   const [modelDownload, setModelDownload] = useState<{ active: boolean; percent: number; file?: string }>({ active: false, percent: 0 })
-  const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean; models: boolean }>({ packs: false, assets: false, sync: false, models: false })
+  const [sttModelDownload, setSttModelDownload] = useState<{ active: boolean; percent: number; file?: string }>({ active: false, percent: 0 })
+  const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean; models: boolean; sttModels: boolean }>({ packs: false, assets: false, sync: false, models: false, sttModels: false })
   const {
     localAiWarmupJudgeEnabled,
     localAiWarmupModelVariant,
+    localSttEnabled,
+    localSttModelVariant,
+    localSttFallbackToCloud,
     setLocalAiWarmupJudgeEnabled,
     setLocalAiWarmupModelVariant,
+    setLocalSttEnabled,
+    setLocalSttModelVariant,
+    setLocalSttFallbackToCloud,
   } = usePreferencesStore()
 
   const refresh = useCallback(() => {
@@ -103,6 +119,17 @@ export function MobileStorageView() {
   useEffect(() => {
     refreshModelStatus(localAiWarmupModelVariant)
   }, [localAiWarmupModelVariant, refreshModelStatus])
+
+  const refreshSttModelStatus = useCallback((variantId: LocalSttModelVariantId = localSttModelVariant) => {
+    setSttModelLoading(true)
+    localSttModelManager.getStatus(variantId)
+      .then(setSttModelStatus)
+      .finally(() => setSttModelLoading(false))
+  }, [localSttModelVariant])
+
+  useEffect(() => {
+    refreshSttModelStatus(localSttModelVariant)
+  }, [localSttModelVariant, refreshSttModelStatus])
 
   const handleClear = useCallback(async (category: OfflineCacheCategory) => {
     setClearing(category)
@@ -177,6 +204,36 @@ export function MobileStorageView() {
     }
   }, [embeddingModelKey, localAiWarmupModelVariant, refresh, refreshModelStatus, t])
 
+  const handleDownloadSttModel = useCallback(async () => {
+    setSttModelDownload({ active: true, percent: 0 })
+    toast.info(t('settings.storage.localSttModelDownloadStarted', { defaultValue: '本地 STT 模型开始下载' }))
+    try {
+      await localSttModelManager.download(localSttModelVariant, (progress) => {
+        setSttModelDownload({ active: true, percent: progress.percent, file: progress.file })
+      })
+      toast.success(t('settings.storage.localSttModelDownloaded', { defaultValue: '本地 STT 模型已下载' }))
+      refreshSttModelStatus(localSttModelVariant)
+    } catch (error: any) {
+      toast.error(error?.message || t('settings.storage.localModelDownloadFailed', { defaultValue: '模型下载失败' }))
+    } finally {
+      setSttModelDownload({ active: false, percent: 0 })
+    }
+  }, [localSttModelVariant, refreshSttModelStatus, t])
+
+  const handleDeleteSttModel = useCallback(async () => {
+    setSttModelDeleting(true)
+    try {
+      await localSttModelManager.remove(localSttModelVariant)
+      setLocalSttEnabled(false)
+      toast.success(t('settings.storage.localSttModelDeleted', { defaultValue: '本地 STT 模型已删除' }))
+      refreshSttModelStatus(localSttModelVariant)
+    } catch (error: any) {
+      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+    } finally {
+      setSttModelDeleting(false)
+    }
+  }, [localSttModelVariant, refreshSttModelStatus, setLocalSttEnabled, t])
+
   const totalBytes = stats?.totalCacheBytes ?? 0
   const segments = [
     { key: 'packs' as const, label: t('profile.cachePacks', { defaultValue: '学习包内容' }), value: stats?.downloadedPackBytes ?? 0, color: 'bg-blue-500' },
@@ -187,8 +244,11 @@ export function MobileStorageView() {
   ]
   const activeSegments = segments.filter((segment) => segment.value > 0)
   const selectedVariant = LOCAL_WARMUP_MODEL_VARIANTS.find((variant) => variant.id === localAiWarmupModelVariant) ?? LOCAL_WARMUP_MODEL_VARIANTS[0]
+  const selectedSttVariant = LOCAL_STT_MODEL_VARIANTS.find((variant) => variant.id === localSttModelVariant) ?? LOCAL_STT_MODEL_VARIANTS[0]
   const modelInstalled = Boolean(modelStatus?.installed)
+  const sttModelInstalled = Boolean(sttModelStatus?.installed)
   const modelUnavailable = modelStatus?.nativeAvailable === false
+  const sttModelUnavailable = sttModelStatus?.nativeAvailable === false
   const isNativeRuntime = isNative()
   const modelRuntimeLabel = isNativeRuntime
     ? t('settings.storage.localModelRuntimeCapacitor', { defaultValue: 'Capacitor 端' })
@@ -206,6 +266,19 @@ export function MobileStorageView() {
           : modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch'
             ? `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(modelStatus?.bytes)}`
           : `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedVariant.estimatedBytes)}`
+  const sttModelStatusText = !isNativeRuntime && sttModelStatus?.nativeAvailable
+    ? t('settings.storage.localSttModelWebReady', { defaultValue: '浏览器缓存 · 首次在线加载' })
+    : sttModelUnavailable
+      ? t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
+      : sttModelDownload.active
+        ? t('settings.storage.localModelDownloading', { percent: sttModelDownload.percent, defaultValue: `下载中 ${sttModelDownload.percent}%` })
+        : sttModelLoading
+          ? '...'
+          : sttModelInstalled
+            ? `${t('settings.storage.localModelInstalled', { defaultValue: '已下载' })} · ${formatBytes(sttModelStatus?.bytes)}`
+            : sttModelStatus?.health === 'manifest_missing' || sttModelStatus?.health === 'manifest_mismatch'
+              ? `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(sttModelStatus?.bytes)}`
+              : `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedSttVariant.estimatedBytes)}`
   const embeddingCacheCount = embeddingModelKey ? embeddingStats?.currentModelCount ?? 0 : embeddingStats?.count ?? 0
   const embeddingCacheBytes = embeddingModelKey ? embeddingStats?.currentModelBytes ?? 0 : embeddingStats?.bytes ?? 0
 
@@ -476,6 +549,143 @@ export function MobileStorageView() {
                   />
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        <IosRow
+          icon={Mic}
+          iconBg="bg-emerald-500"
+          label={t('settings.storage.localSttModel', { defaultValue: '本地语音识别模型' })}
+          subtitle={`${selectedSttVariant.label} · ${sttModelStatusText}`}
+          right={(
+            <div className="flex items-center gap-1.5">
+              {isNativeRuntime && sttModelInstalled ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={sttModelDeleting || sttModelDownload.active}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void handleDeleteSttModel()
+                  }}
+                  className="h-8 px-2 text-xs text-red-500 hover:text-red-600"
+                >
+                  {sttModelDeleting ? t('settings.storage.deleting') : t('settings.storage.deleteText')}
+                </Button>
+              ) : isNativeRuntime ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={sttModelUnavailable || sttModelDownload.active}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void handleDownloadSttModel()
+                  }}
+                  className="h-8 px-2 text-xs text-primary"
+                >
+                  <Download className="mr-1 size-3.5" />
+                  {sttModelDownload.active ? t('settings.storage.downloading', { defaultValue: '下载中' }) : t('settings.storage.download', { defaultValue: '下载' })}
+                </Button>
+              ) : (
+                <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                  {modelRuntimeLabel}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setExpanded((current) => ({ ...current, sttModels: !current.sttModels }))
+                }}
+                className="flex size-8 items-center justify-center rounded-full text-muted-foreground active:bg-muted/60"
+              >
+                <ToggleIcon open={expanded.sttModels} />
+              </button>
+            </div>
+          )}
+        />
+        {expanded.sttModels && (
+          <div className={detailContainerClass}>
+            <div className="space-y-3 py-3">
+              <div className="grid grid-cols-1 gap-2">
+                {LOCAL_STT_MODEL_VARIANTS.map((variant) => {
+                  const active = variant.id === localSttModelVariant
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      disabled={sttModelDownload.active}
+                      onClick={() => setLocalSttModelVariant(variant.id)}
+                      className={cn(
+                        'rounded-md border px-3 py-2 text-left transition-colors',
+                        active ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-background/60 active:bg-muted/60',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold">{variant.label}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatBytes(variant.estimatedBytes)}</span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+                        {variant.id === 'tiny-en-q8'
+                          ? t('settings.storage.localSttTinyDesc', { defaultValue: '更轻，适合移动端快速识别。' })
+                          : variant.id === 'base-en-q8'
+                            ? t('settings.storage.localSttBaseDesc', { defaultValue: '准确率和体积更均衡。' })
+                            : t('settings.storage.localSttSmallDesc', { defaultValue: '更准但更大，适合高频口语练习。' })}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {sttModelDownload.active && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span className="truncate">{sttModelDownload.file ?? t('settings.storage.downloading', { defaultValue: '下载中' })}</span>
+                    <span>{sttModelDownload.percent}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, Math.max(0, sttModelDownload.percent))}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5 text-[11px] leading-5 text-muted-foreground">
+                <p>{t('settings.storage.localModelPath', { defaultValue: '存储位置' })}: {isNativeRuntime ? 'Directory.Data / local-stt-models' : t('settings.storage.localModelBrowserCache', { defaultValue: '浏览器模型缓存' })}</p>
+                <p>{t('settings.storage.localModelFiles', { defaultValue: '文件' })}: config.json · tokenizer.json · onnx/encoder_model_quantized.onnx · onnx/decoder_model_merged_quantized.onnx</p>
+                {sttModelStatus?.updatedAt && <p>{t('settings.storage.updated', { updated: formatDateTime(sttModelStatus.updatedAt) || t('settings.storage.unknownTime') })}</p>}
+                {sttModelStatus?.missingFiles.length ? (
+                  <p className="line-clamp-2 text-amber-600">{t('settings.storage.localModelMissing', { defaultValue: '缺少文件' })}: {sttModelStatus.missingFiles.join(', ')}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-3 border-t border-border/50 pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{t('settings.localStt', { defaultValue: '使用本地语音识别' })}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {localSttEnabled
+                        ? t('settings.localSttOn', { defaultValue: '录音优先用本地 Whisper 转写' })
+                        : t('settings.localSttOff', { defaultValue: '录音使用云端 Whisper 转写' })}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={localSttEnabled}
+                    disabled={isNativeRuntime && !sttModelInstalled}
+                    onCheckedChange={setLocalSttEnabled}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
+                    </p>
+                  </div>
+                  <Switch checked={localSttFallbackToCloud} onCheckedChange={setLocalSttFallbackToCloud} />
+                </div>
+              </div>
             </div>
           </div>
         )}

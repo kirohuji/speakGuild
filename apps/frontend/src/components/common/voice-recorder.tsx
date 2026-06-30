@@ -4,7 +4,8 @@ import { Mic, Square, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AudioPlayer } from '@/components/common/audio-player'
 import { cn } from '@/lib/cn'
-import { transcribeRecording, type TranscribeRecordingResult } from '@/lib/practice-ai-api'
+import type { TranscribeRecordingResult } from '@/lib/practice-ai-api'
+import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import type { TtsWordTimestamp } from '@/lib/tts-api'
 
 type RecorderState =
@@ -67,7 +68,7 @@ export function VoiceRecorder({ onTranscribed, className }: VoiceRecorderProps) 
 
         setState({ status: 'processing' })
         try {
-          const result = await transcribeRecording(blob, `recording.${ext}`)
+          const result = await transcribeVoiceInput(blob, `recording.${ext}`)
 
           if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current)
           const url = URL.createObjectURL(blob)

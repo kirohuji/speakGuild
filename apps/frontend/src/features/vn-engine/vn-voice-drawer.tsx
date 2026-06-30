@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { FileAudio, Loader2, Mic, Pause, Play, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { transcribeRecording } from '@/lib/practice-ai-api'
+import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 
 // ---------------------------------------------------------------------------
 // 音波可视化条（纯 CSS 动画，录音时激活）
@@ -175,7 +175,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
         // 转写
         setVoiceState({ status: 'processing' })
         try {
-          const result = await transcribeRecording(blob, `recording.${ext}`)
+          const result = await transcribeVoiceInput(blob, `recording.${ext}`)
           const transcribed = result.text?.trim()
           if (transcribed) {
             setLastAudioUrl(result.audioUrl ?? null)
@@ -231,7 +231,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
 
     setVoiceState({ status: 'processing' })
     try {
-      const result = await transcribeRecording(file, file.name)
+      const result = await transcribeVoiceInput(file, file.name)
       const transcribed = result.text?.trim()
       if (transcribed) {
         setLastAudioUrl(result.audioUrl ?? null)
