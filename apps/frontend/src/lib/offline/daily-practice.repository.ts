@@ -348,25 +348,29 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
 }
 
 async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
+  // 获取当前用户已加入的学习包列表（my_learning_units 是用户级表，退出登录时会被清空）
+  const myUnits = await learningRepository.getCachedMyUnits().catch(() => [])
+  const enrolledIds = new Set(myUnits.map((u) => u.id))
+
   if (targetPackId) {
+    // 即使通过 URL 指定了 packId，也必须检查当前用户是否已加入该学习包
+    if (!enrolledIds.has(targetPackId)) return []
     const detail = await learningRepository.getCachedUnitDetail(targetPackId)
     return detail ? [detail] : []
   }
 
-  const [packs, units] = await Promise.all([
-    learningPackService.listInstalled(),
-    learningRepository.getCachedMyUnits().catch(() => []),
-  ])
-  const installed = packs.filter((pack) => pack.status === 'installed')
-  const installedIds = installed.map((pack) => pack.packId)
+  if (enrolledIds.size === 0) return []
+
+  const packs = await learningPackService.listInstalled().catch(() => [])
+  const installedIds = new Set(
+    packs.filter((pack) => pack.status === 'installed').map((pack) => pack.packId),
+  )
+
+  // 只选择同时满足"已安装"+"用户已加入"的学习包
+  const candidateIds = [...enrolledIds].filter((id) => installedIds.has(id))
   const unitIds = scope === 'mixed'
-    ? Array.from(new Set([
-        ...units.filter((u) => installedIds.includes(u.id)).map((u) => u.id),
-        ...installedIds,
-      ]))
-    : [
-        units.find((u) => installedIds.includes(u.id))?.id ?? installedIds[0],
-      ].filter(Boolean) as string[]
+    ? candidateIds
+    : [candidateIds[0]].filter(Boolean) as string[]
 
   const details = await Promise.all(unitIds.map((id) => learningRepository.getCachedUnitDetail(id)))
   return details.filter(Boolean) as UnitDetail[]
