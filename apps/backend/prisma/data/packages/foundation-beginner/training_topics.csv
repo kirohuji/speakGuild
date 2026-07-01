@@ -1,99 +1,259 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
-基础①·自我介绍,我是谁,Practice introducing yourself with I am. Say your name age nationality and identity.,练习用I am自我介绍：姓名、年龄、国籍、身份。,35,L1,掌握I am + 名字/年龄/国籍/身份的基本句型，以及否定句I am not。,be动词 自我介绍 I am 否定句,"## 开口顺序
+基础①·自我介绍,我是谁,Practice introducing yourself with I am. Say your name age nationality.,练习用I am自我介绍：姓名、年龄、国籍、身份。,45,L1,掌握I am+名字/年龄/国籍/身份的基本句型，以及否定句I am not。,be动词 自我介绍 I am 否定句,"## 开口顺序
 
-先说 **Hello/Hi**，再说 **I am + 名字**。可以说：
-
+先说 Hello/Hi，再说 I am+名字。
 - I am a student.
 - I am from China.
 - I am 20 years old.
 
-> **注意**：中文说""我学生""，英语必须说 **I am a student**，am 不能少。",practice_foundation-beginner_基础①_自我介绍_我是谁
-基础①·自我介绍,你是谁,Practice asking about others with You are. Learn to greet compliment and confirm.,练习用You are询问他人：问候、赞美、确认。,35,L1,掌握You are + 形容词/身份的用法，以及Are you?疑问句。,be动词 You are 问候 疑问句,"## 核心句型
+注意：不能说 I student，必须有 am。",practice_foundation-beginner_基础①_自我介绍_我是谁
+基础①·自我介绍,你是谁,Practice asking and answering with You are/Are you?.,练习用You are/Are you?询问和回答对方身份和状态。,45,L1,掌握You are+描述/Are you?疑问句，以及How are you?问候。,You are Are you How are you,"## 问候三步
 
-**You are + 形容词** 用来夸别人：
+1. Hello/Hi
+2. How are you? → I'm fine thanks.
+3. Are you a student? → Yes I am./No I'm not.
 
-- You are kind.
-- You are smart.
+You后总是用are，不论单数复数。",practice_foundation-beginner_基础①_自我介绍_你是谁
+基础①·自我介绍,我的信息,Learn to share personal info: name nationality age job.,练习说出自己的基本信息：姓名、国籍、年龄、职业。,45,L1,综合运用I am/My name is/I'm from/I'm+年龄说出完整自我介绍。,综合输出 个人信息,"## 完整模板
 
-**Are you a student?** 是问句，回答：
+Hi! I'm+名字. I'm from+国家. I'm+年龄 years old. I'm a+职业. Nice to meet you!
 
-- Yes, I am.
-- No, I'm not.
+am不能漏，years要加s。",practice_foundation-beginner_基础①_自我介绍_我的信息
+基础①·自我介绍,问候与礼貌,Master greetings and polite expressions: hello hi nice to meet you please thank you.,掌握问候语和礼貌用语：hello/hi/nice to meet you/please/thank you。,45,L1,掌握日常问候和基本礼貌用语。,问候 礼貌 感谢,"## 见面三步
 
-> **对比**：I am 说自己，You are 说对方。",practice_foundation-beginner_基础①_自我介绍_你是谁
-基础①·描述事物,它是什么,Practice describing things with It is. Learn size color temperature and evaluation.,练习用It is描述事物：大小、颜色、温度、评价。,35,L1,掌握It is + 形容词/名词的描述句型，以及否定和疑问式。,be动词 It is 描述 颜色 大小,"## 描述三步
+1. Hi!/Hello!
+2. Nice to meet you.
+3. Nice to meet you too.
 
-1. **说是什么**：It is a book.
-2. **说怎么样**：It is big. / It is red.
-3. **说天气**：It is hot today.
+感谢：Thank you.→You're welcome.
+礼貌请求：Please sit down./Can you help me please?",practice_foundation-beginner_基础①_自我介绍_问候与礼貌
+基础①·自我介绍,年龄与数字,Learn numbers 1-20 and saying your age.,学习数字1到20和表达年龄。,45,L1,掌握数字1-20和年龄表达：I am+数字+years old。,数字 年龄,"## 数字1-10
 
-**否定句**：It is not big. It is small.（不是大的，是小的）
+one two three four five six seven eight nine ten
 
-**疑问句**：Is it good? → Yes, it is. / No, it isn't.",practice_foundation-beginner_基础①_描述事物_它是什么
-基础①·描述事物,他们在哪里,Practice talking about locations with is/are. Learn prepositions and Where questions.,练习用be动词谈论位置：介词和Where问句。,40,L1,掌握物品位置和人物所在位置的表达，以及否定句。,be动词 位置 Where 地点 介词,"## 位置表达
+## 年龄表达
 
-用 **on**（在……上）/ **in**（在……里）/ **at**（在……点）描述位置：
+How old are you?→I am 20 (years old).
 
-- The book is on the desk.
-- It is in the bag.
-- They are at home.
+1 year不加s，2及以上加s：2 years old。",practice_foundation-beginner_基础①_自我介绍_年龄与数字
+基础①·描述事物,它是什么,Learn to describe things with It is+noun/adj.,练习用It is+名词/形容词描述事物。,45,L1,掌握It is+名词/形容词描述事物，以及What is this?问句。,It is 描述,"## 描述格式
 
-**问位置**：Where is my phone? — It is here.
+What is this?→It is a book.
+加颜色：It is red.
+加大小：It is very big.
 
-**否定**：He is not at home. He is at work.",practice_foundation-beginner_基础①_描述事物_他们在哪里
-基础①·描述他人,他/她是谁,Practice describing others with He/She is. Learn relationships occupations and appearance.,练习用He/She is描述他人：关系、职业、外表。,35,L1,掌握第三人称be动词的用法，以及否定和疑问句。,be动词 He is She is 描述 他人,"## 描述他人
+It is=It's。a/an不能省。",practice_foundation-beginner_基础①_描述事物_它是什么
+基础①·描述事物,颜色与大小,Learn colors and sizes: red blue big small long short.,学习颜色词和大小词。,45,L1,掌握基本颜色和大小的形容词，描述物品外观。,颜色 大小 形容词,"## 颜色
 
-**He / She** 代替男生/女生：
+red blue green yellow black white
 
-- She is my friend. / He is a doctor.
-- He is from Japan. / She is 25 years old.
+## 大小
 
-**并列描述**：He is kind and smart.（他又善良又聪明）
+big small long short
 
-**否定**：He is not my brother. He is my cousin.
+顺序：大小+颜色+名词：a big red bag。",practice_foundation-beginner_基础①_描述事物_颜色与大小
+基础①·描述事物,位置与方向,Learn location words: here there on in under next to.,学习位置词：这里、那里、在上面、在里面、在下面、在旁边。,45,L1,掌握基本位置介词和There/Where问答。,位置 介词,"## 位置词
 
-**疑问**：Is she your sister? — No, she is my friend.",practice_foundation-beginner_基础①_描述他人_他她是谁
-基础①·描述他人,我们/他们,Practice using We are and They are to describe groups. Learn plural forms.,练习用We are和They are描述群体：复数和集体表达。,35,L1,掌握复数be动词We are/They are的用法，以及否定句。,be动词 We are They are 复数 群体,"## 复数表达
+here/there/on/in/under/next to
 
-**We** = 我们，**They** = 他们/它们。后面用 **are**，不用 is：
+## 问答
 
-- We are good friends.
-- They are from the same city.
+Where is the book?→It is on the table.
+Where are you?→I'm here.
 
-**否定**：We are not late. We are on time.
+英语位置必须加介词。",practice_foundation-beginner_基础①_描述事物_位置与方向
+基础①·描述事物,天气描述,Learn to describe weather: hot cold sunny rainy warm.,学习描述天气：热、冷、晴、雨、暖。,45,L1,掌握基本天气词，用It is+天气词描述天气。,天气,"## 天气表达
 
-**疑问**：Are they your friends? — Yes, they are.
+How is the weather?→It is sunny.
+It is hot today./It is very cold.
 
-> **规律**：I → am / He/She/It → is / You/We/They → are",practice_foundation-beginner_基础①_描述他人_我们他们
-基础①·日常寒暄,打招呼与告别,Practice greetings and farewells in English. Learn how to say hello goodbye and basic polite expressions.,练习英语打招呼和告别：问候、再见、礼貌用语。,35,L1,掌握Good morning/afternoon/evening问候、告别用语和礼貌表达。,打招呼 告别 问候 礼貌用语,"## 问候与告别
+天气词：sunny rainy cloudy windy hot cold warm
 
-### 打招呼
+It is+天气词比The weather is更自然。",practice_foundation-beginner_基础①_描述事物_天气描述
+基础①·描述事物,数量表达,Learn to express quantity: one two many few a lot of.,学习数量表达：一、二、很多、一些、少量。,45,L1,掌握基本数量词和There be句型。,数量 There be,"## There be
 
-- Good morning!（早上好）
-- Nice to meet you!（很高兴认识你）
-- Long time no see!（好久不见）
+There is a book./There are two pens.
+There are many students.
 
-### 告别
+There is+单数，There are+复数。",practice_foundation-beginner_基础①_描述事物_数量表达
+基础①·描述他人,他/她是谁,Learn to introduce others: He is/She is+name job nationality.,学习介绍他人：他/她是+名字/职业/国籍。,45,L1,掌握He/She is+身份描述，以及His/Her物主代词。,第三人称 介绍,"## 介绍他人
 
-- See you later!（回头见）
-- Have a nice day!（祝你愉快）
-- Take care!（保重）
-- Welcome!（欢迎！）
+He is my friend./She is a teacher.
+His name is Tom./Her name is Mary.
 
-这些是固定短语，直接整体记忆即可。",practice_foundation-beginner_基础①_日常寒暄_打招呼告别
-基础①·日常寒暄,简单闲聊,Practice small talk conversations. Learn how to chat about weather weekend and daily life.,练习简单闲聊：天气、周末、日常生活话题。,40,L1,掌握How's it going? Where are you from? 等闲聊表达。,闲聊 日常对话 社交 问候,"## 闲聊四句
+he=他(男)，she=她(女)，his=他的，her=她的。",practice_foundation-beginner_基础①_描述他人_他她是谁
+基础①·描述他人,家庭关系,Learn family members: father mother brother sister son daughter.,学习家庭关系：爸爸、妈妈、哥哥、姐姐、儿子、女儿。,45,L1,掌握基本家庭称谓，用He/She is my...描述家人。,家庭 亲属,"## 家庭成员
 
-### 随意问候
+father/dad 爸爸 / mother/mom 妈妈
+brother 兄弟 / sister 姐妹
 
-- How's it going? — Pretty good.
-- What's up? — Not much.
+介绍：He is my father./She is my mother.
+brother/sister不分大小，需加older/younger区分。",practice_foundation-beginner_基础①_描述他人_家庭关系
+基础①·描述他人,职业身份,Learn jobs: teacher doctor student worker nurse.,学习职业身份：老师、医生、学生、工人、护士等。,45,L1,掌握常见职业词，用He/She is a+职业描述他人。,职业 身份,"## 常见职业
 
-### 常用话题
+teacher/doctor/student/nurse/worker/driver
 
-- Nice weather today!（天气真好）
-- How was your weekend? — It was great!（周末过得怎么样？）
-- Where are you from? — I'm from China.（你来自哪里？）
-- What do you do? — I'm a student.（你是做什么的？）
-- It's nice to see you again!（再次见到你很高兴！）
+描述：He is a doctor./She is a teacher.
 
-先记住这些固定问句和回答，以后慢慢学语法。",practice_foundation-beginner_基础①_日常寒暄_简单闲聊
+职业前要加a/an：He is doctor ❌→He is a doctor ✅",practice_foundation-beginner_基础①_描述他人_职业身份
+基础①·描述他人,外表描述,Learn to describe appearance: tall short thin young old pretty.,学习描述外表：高矮胖瘦、年轻年老、漂亮。,45,L1,掌握基本外表形容词，用He/She is+外表词描述。,外表 形容词,"## 外表词
+
+tall 高/short 矮/thin 瘦/young 年轻/old 老/pretty 漂亮
+
+He is tall and thin./She is very pretty.
+
+形容人时He is tall描述身高。",practice_foundation-beginner_基础①_描述他人_外表描述
+基础①·描述他人,国籍与语言,Learn countries and languages: China Chinese Japan Japanese America English.,学习国家和语言：中国/中文、日本/日语、美国/英语。,45,L1,掌握常见国家和语言词，用from+国家/speak+语言描述。,国家 语言,"## 国家与语言
+
+China/Chinese 中国/中文
+Japan/Japanese 日本/日语
+America/English 美国/英语
+
+I am from China. I speak Chinese.
+
+Chinese前不加a：I am Chinese.✅",practice_foundation-beginner_基础①_描述他人_国籍与语言
+基础①·日常寒暄,打招呼与告别,Master greetings and farewells: hi hello goodbye see you.,掌握打招呼和告别用语：Hi/Hello/Goodbye/See you。,45,L1,掌握日常打招呼和告别的基本表达方式。,寒暄 打招呼 告别,"## 打招呼
+
+Hi!/Hello!（任何时候）
+Good morning/afternoon/evening!
+
+## 告别
+
+Goodbye!/Bye!/See you later!/Good night!
+
+Good night是告别语不是打招呼。晚上见面说Good evening。",practice_foundation-beginner_基础①_日常寒暄_打招呼告别
+基础①·日常寒暄,简单闲聊,Practice small talk: How are you? Where are you from? What do you do?,练习简单闲聊：你好吗？你来自哪里？你是做什么的？,45,L1,掌握How/What/Where引导的简单闲聊问句和回答。,闲聊 问句,"## 闲聊三步
+
+1. How are you?→I'm fine.
+2. Where are you from?→I'm from China.
+3. What do you do?→I'm a student.
+
+回应时加 And you? 反问对方。",practice_foundation-beginner_基础①_日常寒暄_简单闲聊
+基础①·日常寒暄,询问近况,Learn to ask about recent situations: How is your day? What's new?,学习询问近况：今天过得怎么样？有什么新鲜事？,45,L1,掌握询问对方近况的表达和回应方式。,近况 询问,"## 问近况
+
+How is your day?→It's good./Not bad.
+What's new?→Nothing much.
+How are things?→Everything is fine.
+
+好：Pretty good!/Great!/Not bad!
+一般：So-so.
+不好：Not very good.",practice_foundation-beginner_基础①_日常寒暄_询问近况
+基础①·日常寒暄,介绍他人,Learn to introduce people: This is... Let me introduce... Have you met...?,学习互相介绍：这是.../让我介绍一下.../你见过...吗？,45,L1,掌握互相介绍的社交用语。,介绍 社交,"## 互相介绍
+
+This is my friend Tom.
+Let me introduce my classmate Mary.
+Tom this is Mary. Mary this is Tom.
+
+回应：Nice to meet you./I've heard a lot about you.",practice_foundation-beginner_基础①_日常寒暄_介绍他人
+基础①·日常寒暄,表达关心,Learn to express concern: Are you okay? Take care. Get well soon.,学习表达关心：你还好吗？保重。早日康复。,45,L1,掌握表达关心和问候健康的基本用语。,关心 健康,"## 关心表达
+
+Are you okay?→Yes I'm fine./No I'm a little tired.
+What's wrong?→I have a headache.
+Take care!/Get well soon.
+
+回应：Thank you for asking./I'm fine don't worry.",practice_foundation-beginner_基础①_日常寒暄_表达关心
+基础①·数字与时间,数字1-20,Learn numbers 1-20: one two three...twenty.,学习数字1-20的读写和发音。,45,L1,掌握基数词1-20的读法和写法，能说年龄和数量。,数字 基数词,"## 1-10
+
+one two three four five six seven eight nine ten
+
+## 11-20
+
+eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty
+
+13 thirteen ≠ 30 thirty，注意teen与ty的区别。",practice_foundation-beginner_基础①_数字与时间_数字1-20
+基础①·数字与时间,时间表达,Learn to tell time: What time is it? It's 3 o'clock. half past quarter to.,学习表达时间：几点了？3点、3点半、3点一刻、差一刻4点。,45,L1,掌握基本时间表达，能问时间和说时间。,时间 点钟,"## 问时间
+
+What time is it?
+
+## 整点
+
+It's 3 o'clock.
+
+## 半点与刻
+
+3:30→half past three/three thirty
+3:15→quarter past three/three fifteen
+3:45→quarter to four/three forty-five
+
+口语中直接用数字更常见：three fifteen。",practice_foundation-beginner_基础①_数字与时间_时间表达
+基础①·数字与时间,日期与星期,Learn days and dates: Monday Tuesday... January... 1st 2nd 3rd.,学习星期和日期表达：周一、周二...、一月、二月...、1号、2号。,45,L1,掌握星期一到星期日、月份、序数词基本表达。,星期 日期 月份,"## 星期
+
+Monday Tuesday Wednesday Thursday Friday Saturday Sunday
+
+## 月份
+
+January February March April May June July August September October November December
+
+## 日期
+
+What's the date today?→It's July 1st.
+
+星期首字母大写。on Monday，in July。",practice_foundation-beginner_基础①_数字与时间_日期与星期
+基础①·数字与时间,日常时间词,Learn time words: today tomorrow yesterday morning afternoon evening night.,学习日常时间词：今天、明天、昨天、早上、下午、晚上、夜里。,45,L1,掌握基本时间名词，用时间词描述日常安排。,时间词 日常,"## 时间词
+
+today/tomorrow/yesterday
+morning/afternoon/evening/night
+
+## 搭配
+
+this morning/this afternoon
+tomorrow morning/yesterday evening
+at night/in the morning
+
+in the morning/afternoon/evening，但 at night。",practice_foundation-beginner_基础①_数字与时间_日常时间词
+基础①·数字与时间,频率表达,Learn frequency words: always usually often sometimes never every day.,学习频率词：总是、通常、经常、有时、从不、每天。,45,L1,掌握基本频率副词，能描述习惯的频率。,频率 副词,"## 频率词
+
+always 总是/usually 通常/often 经常/sometimes 有时/never 从不/every day 每天
+
+## 位置
+
+I always eat breakfast.
+频率词在动词前，be动词后：I am always happy。",practice_foundation-beginner_基础①_数字与时间_频率表达
+基础①·基本需求,我想要...,Learn to express wants: I want... I would like... I need...,学习表达想要的：我想要...、我想（礼貌）...、我需要...。,45,L1,掌握want/would like/need表达需求和愿望。,want need 需求,"## 表达需求
+
+I want+名词：I want a coffee.
+I want to+动词：I want to go.
+I would like（更礼貌）：I'd like some water.
+I need：I need help.
+
+want to go,不是want go（to不能省）。",practice_foundation-beginner_基础①_基本需求_我想要
+基础①·基本需求,我能/我会,Learn to express ability: I can... Can you...?,学习表达能力：我会...、我能...、你能...吗？,45,L1,掌握can表达能力、请求和许可。,can 能力,"## Can的用法
+
+能力：I can speak English.
+请求：Can you help me?
+许可：Can I go now?
+
+回答：Yes I can./No I can't.
+
+can后动词原形，不加to：I can swim ✅",practice_foundation-beginner_基础①_基本需求_我能我会
+基础①·基本需求,我喜欢/不喜欢,Learn to express likes and dislikes: I like... I don't like... I love...,学习表达喜好：我喜欢...、我不喜欢...、我热爱...。,45,L1,掌握like/don't like/love表达喜好。,like love 喜好,"## 喜好表达
+
+I like+名词：I like coffee.
+I like+to do/doing：I like to read./I like reading.
+I love+名词/doing：I love music.
+I don't like...：I don't like cold weather.
+
+程度：like < love < really love",practice_foundation-beginner_基础①_基本需求_喜欢不喜欢
+基础①·基本需求,身体感受,Learn to express physical feelings: hungry thirsty tired cold hot sleepy.,学习表达身体感受：饿了、渴了、累了、冷了、热了、困了。,45,L1,掌握基本身体感受词，用I am+感受词表达状态。,身体 感受,"## 感受词
+
+I am hungry./I am thirsty./I am tired.
+I am cold./I am hot./I am sleepy.
+
+## 需求搭配
+
+I am hungry.→I want to eat.
+I am thirsty.→Can I have some water?
+
+I am hungry不是 I have hungry（中文干扰）。",practice_foundation-beginner_基础①_基本需求_身体感受
+基础①·基本需求,请求帮助,Learn to ask for help: Can you help me? I need help. Could you please...?,学习请求帮助：你能帮我吗？我需要帮助。你能...吗？,45,L1,掌握基本求助表达，能在需要时开口求助。,求助 请求,"## 求助表达
+
+Can you help me?
+I need help.
+Could you please...?（更礼貌）
+
+## 具体请求
+
+Can you help me find...?
+Could you please repeat that?
+
+Could比Can更礼貌，对陌生人优先用Could。",practice_foundation-beginner_基础①_基本需求_请求帮助

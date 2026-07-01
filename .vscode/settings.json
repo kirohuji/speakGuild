@@ -4,5 +4,11 @@
       "command": "npx",
       "args": ["shadcn@latest", "mcp"]
     }
+  },
+  "files.exclude": {
+    "**/*.rpyc": true,
+    "**/*.rpa": true,
+    "**/*.rpymc": true,
+    "**/cache/": true
   }
 }

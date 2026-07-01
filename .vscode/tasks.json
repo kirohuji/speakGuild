@@ -1,0 +1,275 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "dedup-check",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/dedup-check.js",
+			"isBackground": false
+		},
+		{
+			"label": "dedup-fix",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/dedup-fix.js",
+			"isBackground": false
+		},
+		{
+			"label": "dedup-fix-v2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/dedup-fix.js",
+			"isBackground": false
+		},
+		{
+			"label": "dedup-verify",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/dedup-check.js",
+			"isBackground": false
+		},
+		{
+			"label": "align-episodes",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/align-episodes.js",
+			"isBackground": false
+		},
+		{
+			"label": "audit-warmup",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/audit-warmup.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-warmup",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-warmup-full.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-warmup-v2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-warmup-v2.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-warmup-v3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-warmup-v3.js",
+			"isBackground": false
+		},
+		{
+			"label": "count-items",
+			"type": "shell",
+			"command": "node -e \"const wp=require('c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-beginner/warmup_pipeline.json'); let total=0,detail={}; Object.entries(wp).forEach(([topic,t])=>{ (t.outputTraining.pipeline||[]).forEach(s=>{ const n=(s.items||[]).length+(s.levels||[]).length; total+=n; detail[s.type]=(detail[s.type]||0)+n; }); }); console.log('总题目数:',total); console.log('按题型:',JSON.stringify(detail)); Object.entries(wp).forEach(([t,d])=>{ const n=(d.outputTraining.pipeline||[]).reduce((s,x)=>s+(x.items||[]).length+(x.levels||[]).length,0); console.log('  '+t+': '+n+'题'); });\"",
+			"isBackground": false
+		},
+		{
+			"label": "audit-daily-life",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const d='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life';['scenes.csv','scene_vocabulary.csv','training_topics.csv','chunks.csv','sentence_patterns.csv','script_episodes.csv','episode_chunks.csv','warmup_pipeline.json'].forEach(f=>{const p=d+'/'+f;if(fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const lines=c.trim().split('\\n');console.log(f+': '+lines.length+' lines');}else{console.log(f+': MISSING');}});\"",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-life",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-life.js",
+			"isBackground": false
+		},
+		{
+			"label": "fix-quotes",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const f='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/scripts/gen-daily-life.js';let c=fs.readFileSync(f,'utf8');c=c.replace(/,m':/g,',m:');fs.writeFileSync(f,c,'utf8');console.log('Fixed');\"",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-life-v2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-life.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-v3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-life.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-simple",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');console.log('test ok');\"",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-run",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-v2.js",
+			"isBackground": false
+		},
+		{
+			"label": "check-daily-status",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const f='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life/scene_vocabulary.csv';const c=fs.readFileSync(f,'utf8');const lines=c.trim().split('\\n');const s=new Set();lines.slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)s.add(m[1].trim().toLowerCase());});console.log('Rows:',lines.length-1,'Distinct:',s.size,'Need:',300-s.size);\"",
+			"isBackground": false
+		},
+		{
+			"label": "fill-daily",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fill-daily.js",
+			"isBackground": false
+		},
+		{
+			"label": "fill-daily-2",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const DAILY='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life';const BEG='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-beginner';const bRaw=fs.readFileSync(BEG+'/scene_vocabulary.csv','utf8');const black=new Set();bRaw.trim().split('\\n').slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)black.add(m[1].trim().toLowerCase());});const selfRaw=fs.readFileSync(DAILY+'/scene_vocabulary.csv','utf8');const selfLines=selfRaw.trim().split('\\n');const existing=new Set();selfLines.slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)existing.add(m[1].trim().toLowerCase());});const newRows=[];const A=(s,t,w,m,p,u1,u2,d,e)=>{const k=w.toLowerCase().trim();if(black.has(k)||existing.has(k))return;existing.add(k);const exf='\\\"'+JSON.stringify(e).replace(/\\\"/g,'\\\"\\\"')+'\\\"';newRows.push([s,t,w,m,p,u1,u2,'L1',d,exf,'0'].join(','));};A('基础②·家务与居家','打扫','vacuum','吸尘器','noun','/ˈvækjuːm/','/ˈvækjuːm/','吸尘器。',[{en:'I vacuum the floor every week.',zh:'每周用吸尘器吸地。'},{en:'The vacuum is very noisy.',zh:'吸尘器很吵。'}]);A('基础②·家务与居家','打扫','broom','扫帚','noun','/bruːm/','/bruːm/','扫帚。',[{en:'I use a broom to sweep.',zh:'用扫帚扫地。'},{en:'Where is the broom?',zh:'扫帚在哪？'}]);console.log('Test:',newRows.length);\"",
+			"isBackground": false
+		},
+		{
+			"label": "fill-daily-2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fill-daily-2.js",
+			"isBackground": false
+		},
+		{
+			"label": "fill-daily-v3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fill-daily-2.js",
+			"isBackground": false
+		},
+		{
+			"label": "fill-final",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const D='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life';const B='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-beginner';const bl=new Set();fs.readFileSync(B+'/scene_vocabulary.csv','utf8').trim().split('\\n').slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)bl.add(m[1].trim().toLowerCase());});const sr=fs.readFileSync(D+'/scene_vocabulary.csv','utf8');const ex=new Set();sr.trim().split('\\n').slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)ex.add(m[1].trim().toLowerCase());});const r=[];const A=(s,t,w,m,p,u1,u2,d,e)=>{const k=w.toLowerCase();if(bl.has(k)||ex.has(k))return;ex.add(k);r.push([s,t,w,m,p,u1,u2,'L1',d,'\\\"'+JSON.stringify(e).replace(/\\\"/g,'\\\"\\\"')+'\\\"','0'].join(','));};A('基础②·日常习惯','学习工作','test','考试','noun','/test/','/test/','考试。搭配:take a test。',[{en:'I have a test tomorrow.',zh:'明天有考试。'},{en:'Did you pass the test?',zh:'考试过了吗？'}]);A('基础②·家务与居家','打扫','dustpan','簸箕','noun','/ˈdʌstpæn/','/ˈdʌstpæn/','簸箕。',[{en:'I use a dustpan to collect the dust.',zh:'用簸箕收垃圾。'},{en:'Where is the dustpan?',zh:'簸箕在哪？'}]);A('基础②·日常习惯','休闲娱乐','indoors','在室内','adv','/ɪnˈdɔːrz/','/ɪnˈdɔːz/','在室内。',[{en:'I prefer to stay indoors when it rains.',zh:'喜欢待在室内。'},{en:'It is too cold to go outdoors.',zh:'太冷了不适合外出。'}]);A('基础②·餐饮与社交','评价','worth','值得的','adj','/wɜːrθ/','/wɜːθ/','值得的。',[{en:'This restaurant is worth a visit.',zh:'这家餐厅值得一去。'},{en:'Is it worth the money?',zh:'值这个价吗？'}]);A('基础②·家务与居家','洗衣','wardrobe','衣柜','noun','/ˈwɔːrdroʊb/','/ˈwɔːdrəʊb/','衣柜。',[{en:'My wardrobe is full of clothes.',zh:'衣柜装满了衣服。'},{en:'I need to clean out my wardrobe.',zh:'需要清理衣柜。'}]);const out=sr.trim()+'\\n'+r.join('\\n')+'\\n';fs.writeFileSync(D+'/scene_vocabulary.csv',out,'utf8');const fin=fs.readFileSync(D+'/scene_vocabulary.csv','utf8').trim().split('\\n');const s=new Set();fin.slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)s.add(m[1].trim().toLowerCase());});console.log('Rows:',fin.length-1,'Distinct:',s.size,'Added:',r.length);\"",
+			"isBackground": false
+		},
+		{
+			"label": "fill-v3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fill-daily-3.js",
+			"isBackground": false
+		},
+		{
+			"label": "check-overlap",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const d='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life';const b='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-beginner';const dv=fs.readFileSync(d+'/scene_vocabulary.csv','utf8');const dw=new Set();dv.trim().split('\\n').slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)dw.add(m[1].trim().toLowerCase());});const bv=fs.readFileSync(b+'/scene_vocabulary.csv','utf8');const bw=new Set();bv.trim().split('\\n').slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)bw.add(m[1].trim().toLowerCase());});const overlap=[...dw].filter(w=>bw.has(w));console.log('Daily rows:',dv.trim().split('\\n').length-1);console.log('Daily distinct:',dw.size);console.log('Beginner distinct:',bw.size);console.log('Overlap:',overlap.length);if(overlap.length>0)console.log('Overlap words:',overlap.slice(0,20).join(', '));\"",
+			"isBackground": false
+		},
+		{
+			"label": "rm-overlap",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rm-overlap.js",
+			"isBackground": false
+		},
+		{
+			"label": "final-3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fill-daily-3.js",
+			"isBackground": false
+		},
+		{
+			"label": "final-fill",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/final-fill.js",
+			"isBackground": false
+		},
+		{
+			"label": "verify-daily",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const D='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life';const B='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-beginner';const raw=fs.readFileSync(D+'/scene_vocabulary.csv','utf8');const lines=raw.trim().split('\\n');const header=lines[0];const dataLines=lines.slice(1);const badLines=[];dataLines.forEach((l,i)=>{const count=(l.match(/\\\"/g)||[]).length;if(count%2!==0)badLines.push(i+2);});console.log('═══ 格式检查 ═══');console.log('总行数:',dataLines.length);console.log('引号异常行:',badLines.length>0?badLines.join(','):'无');const wordMap={};dataLines.forEach((l,i)=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(!m)return;const w=m[1].trim().toLowerCase();if(!wordMap[w])wordMap[w]=[];wordMap[w].push(i+2);});const dups=Object.entries(wordMap).filter(([k,v])=>v.length>1);console.log('内部重复词:',dups.length>0?dups.map(([k,v])=>k+'('+v.length+'x)').join(', '):'无');const sceneTopics={};dataLines.forEach(l=>{const m=l.match(/^([^,]*),([^,]*),/);if(!m)return;const key=m[1]+'|'+m[2];sceneTopics[key]=(sceneTopics[key]||0)+1;});console.log('');console.log('═══ 场景×话题分布 ═══');Object.entries(sceneTopics).forEach(([k,v])=>{const [s,t]=k.split('|');console.log('  '+s+' · '+t+': '+v+'词');});const bl=new Set();fs.readFileSync(B+'/scene_vocabulary.csv','utf8').trim().split('\\n').slice(1).forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)bl.add(m[1].trim().toLowerCase());});const dw=new Set();dataLines.forEach(l=>{const m=l.match(/^[^,]*,[^,]*,(.+?),/);if(m)dw.add(m[1].trim().toLowerCase());});const overlap=[...dw].filter(w=>bl.has(w));console.log('');console.log('═══ 重叠检查 ═══');console.log('Daily distinct:',dw.size);console.log('Beginner distinct:',bl.size);console.log('重叠:',overlap.length,overlap.length>0?overlap.join(', '):'✅ 零重叠');\"",
+			"isBackground": false
+		},
+		{
+			"label": "verify-daily",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/verify-daily.js",
+			"isBackground": false
+		},
+		{
+			"label": "verify-daily-v2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/verify-daily.js",
+			"isBackground": false
+		},
+		{
+			"label": "norm-scenes",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/norm-scenes.js",
+			"isBackground": false
+		},
+		{
+			"label": "check-daily-files",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const d='c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life';['scenes.csv','training_topics.csv','chunks.csv','sentence_patterns.csv','script_episodes.csv','episode_chunks.csv','warmup_pipeline.json'].forEach(f=>{const p=d+'/'+f;if(fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const lines=c.trim().split('\\n');console.log(f+': '+lines.length+' lines');}else{console.log(f+': MISSING');}});\"",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-all",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-all.js",
+			"isBackground": false
+		},
+		{
+			"label": "debug-examples",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const l=fs.readFileSync('c:/Users/z1309/Desktop/work/speakGuild/apps/backend/prisma/data/packages/foundation-daily-life/scene_vocabulary.csv','utf8').trim().split('\\n')[3];console.log('RAW:',l.substring(0,200));const p=[];let q=false,c='';for(let i=0;i<l.length;i++){const ch=l[i];if(ch=='\\\"'){if(q&&l[i+1]=='\\\"'){c+='\\\"';i++;}else{q=!q;}}else if(ch===','&&!q){p.push(c);c='';}else{c+=ch;}}p.push(c);console.log('examples field:',p[9]?p[9].substring(0,100):'MISSING');try{const ex=JSON.parse((p[9]||'[]').replace(/^\\\"/,'').replace(/\\\"$/,'').replace(/\\\"\\\"/g,'\\\"'));console.log('Parsed:',JSON.stringify(ex).substring(0,150));}catch(e){console.log('Parse error:',e.message);}\"",
+			"isBackground": false
+		},
+		{
+			"label": "debug-ex",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/debug-ex.js",
+			"isBackground": false
+		},
+		{
+			"label": "fix-csv",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fix-csv-examples.js",
+			"isBackground": false
+		},
+		{
+			"label": "debug-ex2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/debug-ex2.js",
+			"isBackground": false
+		},
+		{
+			"label": "fix-csv-proper",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/fix-csv-proper.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-warmup",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-warmup.js",
+			"isBackground": false
+		},
+		{
+			"label": "verify-warmup",
+			"type": "shell",
+			"command": "node -e \"const w=JSON.parse(require('fs').readFileSync('apps/backend/prisma/data/packages/foundation-daily-life/warmup_pipeline.json','utf8')); const topics=Object.keys(w); const t=topics[0]; const p=w[t].outputTraining.pipeline; console.log('Topic:',t); p.forEach(s=>{console.log('Type:',s.type,'| Title:',s.title); if(s.items) s.items.slice(0,3).forEach(it=>console.log('  item:',JSON.stringify(it).substring(0,120))); if(s.levels) s.levels.slice(0,3).forEach(l=>console.log('  level:',l.en,'@',l.zh)); });\"",
+			"isBackground": false
+		},
+		{
+			"label": "check-failed-words",
+			"type": "shell",
+			"command": "node -e \"const w=JSON.parse(require('fs').readFileSync('apps/backend/prisma/data/packages/foundation-daily-life/warmup_pipeline.json','utf8')); ['通讯与联络','穿衣'].forEach(topic=>{const p=w[topic].outputTraining.pipeline; console.log('===',topic,'==='); p.forEach(s=>{if(s.type==='chunk_substitution'&&s.direction==='zh_to_en') s.items.filter(it=>['late','wear','pants'].includes(it.targetWord)).forEach(it=>console.log(it.targetWord+':',JSON.stringify(it)));});});\"",
+			"isBackground": false
+		},
+		{
+			"label": "gen-daily-warmup-v2",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-daily-warmup.js",
+			"isBackground": false
+		},
+		{
+			"label": "verify-3-words",
+			"type": "shell",
+			"command": "node -e \"const w=JSON.parse(require('fs').readFileSync('apps/backend/prisma/data/packages/foundation-daily-life/warmup_pipeline.json','utf8')); ['通讯与联络','穿衣'].forEach(topic=>{const p=w[topic].outputTraining.pipeline; p.forEach(s=>{if(s.type==='chunk_substitution'&&s.direction==='zh_to_en') s.items.filter(it=>['late','wear','pants'].includes(it.targetWord)).forEach(it=>console.log(it.targetWord+': zh='+it.zh+' | answer='+it.answer));});});\"",
+			"isBackground": false
+		},
+		{
+			"label": "final-quality-check",
+			"type": "shell",
+			"command": "node -e \"const w=JSON.parse(require('fs').readFileSync('apps/backend/prisma/data/packages/foundation-daily-life/warmup_pipeline.json','utf8')); let singleWords=0,total=0; Object.values(w).forEach(t=>{(t.outputTraining.pipeline||[]).forEach(s=>{(s.items||[]).forEach(it=>{total++; if(it.answer===it.targetWord&&!it.answer.includes(' '))singleWords++;});});}); console.log('单字答案:',singleWords,'/',total,'('+Math.round(singleWords/total*100)+'%)'); const types={}; Object.values(w).forEach(t=>{(t.outputTraining.pipeline||[]).forEach(s=>{types[s.type]=(types[s.type]||0)+1;});}); console.log('题型分布:',JSON.stringify(types));\"",
+			"isBackground": false
+		}
+	]
+}

@@ -5,59 +5,197 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_1",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 I am 介绍自己",
-          "chunk": "I am",
-          "chunkMeaning": "我是",
+          "title": "我是谁 · 中→英输出",
+          "chunk": "I / am / my / from",
+          "chunkMeaning": "我 / 是(一称) / 我的 / 来自",
           "items": [
-            { "zh": "我是李明。", "answer": "I am Li Ming." },
-            { "zh": "我是一名学生。", "answer": "I am a student." },
-            { "zh": "我来自中国。", "answer": "I am from China." },
-            { "zh": "我 20 岁。", "answer": "I am 20 years old." }
+            {
+              "zh": "我是学生。",
+              "answer": "I am a student.",
+              "targetWord": "I"
+            },
+            {
+              "zh": "我很开心。",
+              "answer": "I am happy.",
+              "targetWord": "am"
+            },
+            {
+              "zh": "我的名字是汤姆。",
+              "answer": "My name is Tom.",
+              "targetWord": "my"
+            },
+            {
+              "zh": "我来自中国。",
+              "answer": "I'm from China.",
+              "targetWord": "from"
+            },
+            {
+              "zh": "我的名字是李明。",
+              "answer": "My name is Li Ming.",
+              "targetWord": "name"
+            },
+            {
+              "zh": "我是学生。",
+              "answer": "I am a student.",
+              "targetWord": "student"
+            },
+            {
+              "zh": "我20岁。",
+              "answer": "I am 20 years old.",
+              "targetWord": "year"
+            },
+            {
+              "zh": "我25岁。",
+              "answer": "I am 25 years old.",
+              "targetWord": "old"
+            },
+            {
+              "zh": "我的名是明。",
+              "answer": "My first name is Ming.",
+              "targetWord": "first"
+            },
+            {
+              "zh": "你好！我是李明。",
+              "answer": "Hello! I am Li Ming.",
+              "targetWord": "hello"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_2",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "I am not",
-          "chunkMeaning": "我不是",
+          "title": "我是谁 · 英→中理解",
+          "chunk": "name / student / year / old / first",
+          "chunkMeaning": "名字 / 学生 / 年/岁 / 老的/...岁 / 第一/首先",
           "items": [
-            { "zh": "我不是老师。", "answer": "I am not a teacher." },
-            { "zh": "我不是医生。", "answer": "I am not a doctor." },
-            { "zh": "我不累。", "answer": "I am not tired." },
-            { "zh": "我不饿。", "answer": "I am not hungry." }
-          ]
-        },
-        {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "自我介绍逐步扩展",
-          "levels": [
-            { "level": 1, "label": "打招呼", "en": "Hello!", "zh": "你好！" },
-            { "level": 2, "label": "加名字", "en": "Hello! I am Li Ming.", "zh": "你好！我是李明。", "highlight": "I am", "hint": "说出你的名字" },
-            { "level": 3, "label": "加身份", "en": "Hello! I am Li Ming. I am a student.", "zh": "你好！我是李明。我是一名学生。", "highlight": "a student", "hint": "说出你的身份" },
-            { "level": 4, "label": "加来源", "en": "Hello! I am Li Ming. I am a student from China.", "zh": "你好！我是李明。我是一名来自中国的学生。", "highlight": "from China", "hint": "说出你来自哪里" }
+            {
+              "zh": "我的名字是李明。",
+              "answer": "My name is Li Ming.",
+              "targetWord": "name"
+            },
+            {
+              "zh": "我是学生。",
+              "answer": "I am a student.",
+              "targetWord": "student"
+            },
+            {
+              "zh": "我20岁。",
+              "answer": "I am 20 years old.",
+              "targetWord": "year"
+            },
+            {
+              "zh": "我25岁。",
+              "answer": "I am 25 years old.",
+              "targetWord": "old"
+            },
+            {
+              "zh": "我的名是明。",
+              "answer": "My first name is Ming.",
+              "targetWord": "first"
+            }
           ]
         },
         {
           "id": "pd_1",
           "type": "pattern_drill",
-          "title": "I am ___ 填空操练",
-          "pattern": "I am [noun/phrase].",
-          "patternMeaning": "我是...",
-          "slots": ["noun/phrase"],
+          "title": "我是谁 · 句型操练",
+          "pattern": "[word] am a student",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "我是汤姆。", "answer": "I am Tom.", "slotValues": { "noun/phrase": "Tom" } },
-            { "zh": "我是一名老师。", "answer": "I am a teacher.", "slotValues": { "noun/phrase": "a teacher" } },
-            { "zh": "我来自日本。", "answer": "I am from Japan.", "slotValues": { "noun/phrase": "from Japan" } },
-            { "zh": "我 25 岁。", "answer": "I am 25 years old.", "slotValues": { "noun/phrase": "25 years old" } }
+            {
+              "zh": "我是学生。",
+              "answer": "I am a student.",
+              "slotValues": {
+                "word": "I"
+              }
+            },
+            {
+              "zh": "我开心。",
+              "answer": "I am happy.",
+              "slotValues": {
+                "word": "am"
+              }
+            },
+            {
+              "zh": "我的名字是汤姆。",
+              "answer": "My name is Tom.",
+              "slotValues": {
+                "word": "my"
+              }
+            },
+            {
+              "zh": "我来自中国。",
+              "answer": "I'm from China.",
+              "slotValues": {
+                "word": "from"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_1",
+          "type": "sentence_decomposition",
+          "title": "我是谁 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"year\" (年/岁)",
+              "en": "I am 20 years old.",
+              "zh": "我20岁。",
+              "highlight": "year",
+              "hint": "年/岁"
+            },
+            {
+              "level": 2,
+              "label": "理解\"old\" (老的/...岁)",
+              "en": "I am 25 years old.",
+              "zh": "我25岁。",
+              "highlight": "old",
+              "hint": "老的/...岁"
+            },
+            {
+              "level": 3,
+              "label": "理解\"first\" (第一/首先)",
+              "en": "My first name is Ming.",
+              "zh": "我的名是明。",
+              "highlight": "first",
+              "hint": "第一/首先"
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"I\" 造不同句子",
+          "targetWord": "I",
+          "targetMeaning": "我",
+          "items": [
+            {
+              "zh": "我是学生。",
+              "answer": "I am a student.",
+              "targetWord": "I"
+            },
+            {
+              "zh": "我来自中国。",
+              "answer": "I am from China.",
+              "targetWord": "I"
+            },
+            {
+              "zh": "我20岁。",
+              "answer": "I am 20 years old.",
+              "targetWord": "I"
+            }
           ]
         }
       ]
@@ -69,63 +207,798 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_3",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 You are 夸人",
-          "chunk": "You are",
-          "chunkMeaning": "你是",
+          "title": "你是谁 · 中→英输出",
+          "chunk": "you / are / how / your",
+          "chunkMeaning": "你/你们 / 是(复/二称) / 如何 / 你的",
           "items": [
-            { "zh": "你很善良。", "answer": "You are kind." },
-            { "zh": "你是对的。", "answer": "You are right." },
-            { "zh": "你很聪明。", "answer": "You are smart." },
-            { "zh": "你很有趣。", "answer": "You are funny." }
+            {
+              "zh": "你很善良。",
+              "answer": "You are very kind.",
+              "targetWord": "you"
+            },
+            {
+              "zh": "他们是我的朋友。",
+              "answer": "They are my friends.",
+              "targetWord": "are"
+            },
+            {
+              "zh": "你好吗？—我很好谢谢。",
+              "answer": "How are you?—I'm fine thanks.",
+              "targetWord": "how"
+            },
+            {
+              "zh": "你叫什么名字？",
+              "answer": "What is your name?",
+              "targetWord": "your"
+            },
+            {
+              "zh": "我很好谢谢。",
+              "answer": "I'm fine thank you.",
+              "targetWord": "fine"
+            },
+            {
+              "zh": "我很好谢谢！",
+              "answer": "I'm great thanks!",
+              "targetWord": "great"
+            },
+            {
+              "zh": "很高兴认识你！",
+              "answer": "Nice to meet you!",
+              "targetWord": "meet"
+            },
+            {
+              "zh": "请进。",
+              "answer": "Please come in.",
+              "targetWord": "please"
+            },
+            {
+              "zh": "非常感谢！",
+              "answer": "Thank you very much!",
+              "targetWord": "thank you"
+            },
+            {
+              "zh": "抱歉我迟到了。",
+              "answer": "I'm sorry I'm late.",
+              "targetWord": "sorry"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_4",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "Are you? / How are you?",
-          "chunkMeaning": "你是...吗？/ 你好吗？",
+          "title": "你是谁 · 英→中理解",
+          "chunk": "fine / great / meet / please / thank you",
+          "chunkMeaning": "好的/很好 / 很好的/太棒了 / 见到/遇见 / 请 / 谢谢",
           "items": [
-            { "zh": "你是学生吗？", "answer": "Are you a student?" },
-            { "zh": "你是老师吗？", "answer": "Are you a teacher?" },
-            { "zh": "你是工程师吗？", "answer": "Are you an engineer?" },
-            { "zh": "你是艺术家吗？", "answer": "Are you an artist?" },
-            { "zh": "你是演员吗？", "answer": "Are you an actor?" },
-            { "zh": "你是会计吗？", "answer": "Are you an accountant?" },
-            { "zh": "你好吗？", "answer": "How are you?" },
-            { "zh": "你准备好了吗？", "answer": "Are you ready?" }
+            {
+              "zh": "我很好谢谢。",
+              "answer": "I'm fine thank you.",
+              "targetWord": "fine"
+            },
+            {
+              "zh": "我很好谢谢！",
+              "answer": "I'm great thanks!",
+              "targetWord": "great"
+            },
+            {
+              "zh": "很高兴认识你！",
+              "answer": "Nice to meet you!",
+              "targetWord": "meet"
+            },
+            {
+              "zh": "请进。",
+              "answer": "Please come in.",
+              "targetWord": "please"
+            },
+            {
+              "zh": "非常感谢！",
+              "answer": "Thank you very much!",
+              "targetWord": "thank you"
+            }
           ]
         },
         {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "问候对话逐步扩展",
-          "levels": [
-            { "level": 1, "label": "问候", "en": "Hello! How are you?", "zh": "你好！你好吗？" },
-            { "level": 2, "label": "加回应", "en": "Hello! How are you? I am fine, thank you.", "zh": "你好！你好吗？我很好，谢谢。", "highlight": "I am fine", "hint": "回应问候" },
-            { "level": 3, "label": "加赞美", "en": "Hello! How are you? I am fine, thank you. You are very kind.", "zh": "你好！你好吗？我很好，谢谢。你很善良。", "highlight": "You are very kind", "hint": "赞美对方" },
-            { "level": 4, "label": "加确认", "en": "Hello! How are you? I am fine, thank you. You are very kind. Are you a student?", "zh": "你好！你好吗？我很好，谢谢。你很善良。你是学生吗？", "highlight": "Are you a student?", "hint": "询问对方身份" }
-          ]
-        },
-        {
-          "id": "pd_1",
+          "id": "pd_2",
           "type": "pattern_drill",
-          "title": "Are you...? 问句操练",
-          "pattern": "Are you [noun/adjective]?",
-          "patternMeaning": "你是...吗？",
-          "slots": ["noun/adjective"],
+          "title": "你是谁 · 句型操练",
+          "pattern": "[word] are very kind",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "你是学生吗？", "answer": "Are you a student?", "slotValues": { "noun/adjective": "a student" } },
-            { "zh": "你是医生吗？", "answer": "Are you a doctor?", "slotValues": { "noun/adjective": "a doctor" } },
-            { "zh": "你准备好了吗？", "answer": "Are you ready?", "slotValues": { "noun/adjective": "ready" } },
-            { "zh": "你开心吗？", "answer": "Are you happy?", "slotValues": { "noun/adjective": "happy" } }
+            {
+              "zh": "你很善良。",
+              "answer": "You are very kind.",
+              "slotValues": {
+                "word": "you"
+              }
+            },
+            {
+              "zh": "他们是我的朋友。",
+              "answer": "They are my friends.",
+              "slotValues": {
+                "word": "are"
+              }
+            },
+            {
+              "zh": "你好吗？—我很好谢谢。",
+              "answer": "How are you?—I'm fine thanks.",
+              "slotValues": {
+                "word": "how"
+              }
+            },
+            {
+              "zh": "你叫什么名字？",
+              "answer": "What is your name?",
+              "slotValues": {
+                "word": "your"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_2",
+          "type": "sentence_decomposition",
+          "title": "你是谁 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"meet\" (见到/遇见)",
+              "en": "Nice to meet you!",
+              "zh": "很高兴认识你！",
+              "highlight": "meet",
+              "hint": "见到/遇见"
+            },
+            {
+              "level": 2,
+              "label": "理解\"please\" (请)",
+              "en": "Please come in.",
+              "zh": "请进。",
+              "highlight": "please",
+              "hint": "请"
+            },
+            {
+              "level": 3,
+              "label": "理解\"thank you\" (谢谢)",
+              "en": "Thank you very much!",
+              "zh": "非常感谢！",
+              "highlight": "thank you",
+              "hint": "谢谢"
+            }
+          ]
+        },
+        {
+          "id": "vsb_2",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"you\" 造不同句子",
+          "targetWord": "you",
+          "targetMeaning": "你/你们",
+          "items": [
+            {
+              "zh": "你很善良。",
+              "answer": "You are very kind.",
+              "targetWord": "you"
+            },
+            {
+              "zh": "你今天好吗？",
+              "answer": "How are you today?",
+              "targetWord": "you"
+            },
+            {
+              "zh": "你是学生吗？",
+              "answer": "Are you a student?",
+              "targetWord": "you"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我的信息": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_5",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我的信息 · 中→英输出",
+          "chunk": "China / city / country / speak",
+          "chunkMeaning": "中国 / 城市 / 国家 / 说/讲",
+          "items": [
+            {
+              "zh": "我来自中国。",
+              "answer": "I am from China.",
+              "targetWord": "China"
+            },
+            {
+              "zh": "我住在大城市。",
+              "answer": "I live in a big city.",
+              "targetWord": "city"
+            },
+            {
+              "zh": "我的国家很美丽。",
+              "answer": "My country is very beautiful.",
+              "targetWord": "country"
+            },
+            {
+              "zh": "我会说一点英语。",
+              "answer": "I speak a little English.",
+              "targetWord": "speak"
+            },
+            {
+              "zh": "英语是有用的语言。",
+              "answer": "English is a useful language.",
+              "targetWord": "language"
+            },
+            {
+              "zh": "我住在北京。",
+              "answer": "I live in Beijing.",
+              "targetWord": "live"
+            },
+            {
+              "zh": "你的地址是什么？",
+              "answer": "What is your address?",
+              "targetWord": "address"
+            },
+            {
+              "zh": "这是我的手机。",
+              "answer": "This is my phone.",
+              "targetWord": "phone"
+            },
+            {
+              "zh": "我的电话是123-4567。",
+              "answer": "My phone number is 123-4567.",
+              "targetWord": "number"
+            },
+            {
+              "zh": "我的生日在五月。",
+              "answer": "My birthday is in May.",
+              "targetWord": "birthday"
+            }
+          ]
+        },
+        {
+          "id": "cs_6",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我的信息 · 英→中理解",
+          "chunk": "language / live / address / phone / number",
+          "chunkMeaning": "语言 / 住/生活 / 地址 / 电话/手机 / 数字/号码",
+          "items": [
+            {
+              "zh": "英语是有用的语言。",
+              "answer": "English is a useful language.",
+              "targetWord": "language"
+            },
+            {
+              "zh": "我住在北京。",
+              "answer": "I live in Beijing.",
+              "targetWord": "live"
+            },
+            {
+              "zh": "你的地址是什么？",
+              "answer": "What is your address?",
+              "targetWord": "address"
+            },
+            {
+              "zh": "这是我的手机。",
+              "answer": "This is my phone.",
+              "targetWord": "phone"
+            },
+            {
+              "zh": "我的电话是123-4567。",
+              "answer": "My phone number is 123-4567.",
+              "targetWord": "number"
+            }
+          ]
+        },
+        {
+          "id": "pd_3",
+          "type": "pattern_drill",
+          "title": "我的信息 · 句型操练",
+          "pattern": "I am from [word]",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我来自中国。",
+              "answer": "I am from China.",
+              "slotValues": {
+                "word": "China"
+              }
+            },
+            {
+              "zh": "我住在大城市。",
+              "answer": "I live in a big city.",
+              "slotValues": {
+                "word": "city"
+              }
+            },
+            {
+              "zh": "我的国家很美丽。",
+              "answer": "My country is very beautiful.",
+              "slotValues": {
+                "word": "country"
+              }
+            },
+            {
+              "zh": "我会说一点英语。",
+              "answer": "I speak a little English.",
+              "slotValues": {
+                "word": "speak"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "我的信息 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"address\" (地址)",
+              "en": "What is your address?",
+              "zh": "你的地址是什么？",
+              "highlight": "address",
+              "hint": "地址"
+            },
+            {
+              "level": 2,
+              "label": "理解\"phone\" (电话/手机)",
+              "en": "This is my phone.",
+              "zh": "这是我的手机。",
+              "highlight": "phone",
+              "hint": "电话/手机"
+            },
+            {
+              "level": 3,
+              "label": "理解\"number\" (数字/号码)",
+              "en": "My phone number is 123-4567.",
+              "zh": "我的电话是123-4567。",
+              "highlight": "number",
+              "hint": "数字/号码"
+            }
+          ]
+        },
+        {
+          "id": "vsb_3",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"China\" 造不同句子",
+          "targetWord": "China",
+          "targetMeaning": "中国",
+          "items": [
+            {
+              "zh": "我来自中国。",
+              "answer": "I am from China.",
+              "targetWord": "China"
+            },
+            {
+              "zh": "中国是一个大国。",
+              "answer": "China is a big country.",
+              "targetWord": "China"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我的身份": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_7",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我的身份 · 中→英输出",
+          "chunk": "teacher / doctor / work / study",
+          "chunkMeaning": "老师 / 医生 / 工作 / 学习",
+          "items": [
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher.",
+              "targetWord": "teacher"
+            },
+            {
+              "zh": "他是一名医生。",
+              "answer": "He is a doctor.",
+              "targetWord": "doctor"
+            },
+            {
+              "zh": "我在医院工作。",
+              "answer": "I work in a hospital.",
+              "targetWord": "work"
+            },
+            {
+              "zh": "我每天学英语。",
+              "answer": "I study English every day.",
+              "targetWord": "study"
+            },
+            {
+              "zh": "我每天上学。",
+              "answer": "I go to school every day.",
+              "targetWord": "school"
+            },
+            {
+              "zh": "我有一份好工作。",
+              "answer": "I have a good job.",
+              "targetWord": "job"
+            },
+            {
+              "zh": "他是工程师。",
+              "answer": "He is an engineer.",
+              "targetWord": "engineer"
+            },
+            {
+              "zh": "她是一名护士。",
+              "answer": "She is a nurse.",
+              "targetWord": "nurse"
+            },
+            {
+              "zh": "我爱我的家人。",
+              "answer": "I love my family.",
+              "targetWord": "family"
+            },
+            {
+              "zh": "她是我的朋友。",
+              "answer": "She is my friend.",
+              "targetWord": "friend"
+            }
+          ]
+        },
+        {
+          "id": "cs_8",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我的身份 · 英→中理解",
+          "chunk": "school / job / engineer / nurse / family",
+          "chunkMeaning": "学校 / 工作/职业 / 工程师 / 护士 / 家庭/家人",
+          "items": [
+            {
+              "zh": "我每天上学。",
+              "answer": "I go to school every day.",
+              "targetWord": "school"
+            },
+            {
+              "zh": "我有一份好工作。",
+              "answer": "I have a good job.",
+              "targetWord": "job"
+            },
+            {
+              "zh": "他是工程师。",
+              "answer": "He is an engineer.",
+              "targetWord": "engineer"
+            },
+            {
+              "zh": "她是一名护士。",
+              "answer": "She is a nurse.",
+              "targetWord": "nurse"
+            },
+            {
+              "zh": "我爱我的家人。",
+              "answer": "I love my family.",
+              "targetWord": "family"
+            }
+          ]
+        },
+        {
+          "id": "pd_4",
+          "type": "pattern_drill",
+          "title": "我的身份 · 句型操练",
+          "pattern": "She is a [word]",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher.",
+              "slotValues": {
+                "word": "teacher"
+              }
+            },
+            {
+              "zh": "他是一名医生。",
+              "answer": "He is a doctor.",
+              "slotValues": {
+                "word": "doctor"
+              }
+            },
+            {
+              "zh": "我在医院工作。",
+              "answer": "I work in a hospital.",
+              "slotValues": {
+                "word": "work"
+              }
+            },
+            {
+              "zh": "我每天学英语。",
+              "answer": "I study English every day.",
+              "slotValues": {
+                "word": "study"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_4",
+          "type": "sentence_decomposition",
+          "title": "我的身份 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"engineer\" (工程师)",
+              "en": "He is an engineer.",
+              "zh": "他是工程师。",
+              "highlight": "engineer",
+              "hint": "工程师"
+            },
+            {
+              "level": 2,
+              "label": "理解\"nurse\" (护士)",
+              "en": "She is a nurse.",
+              "zh": "她是一名护士。",
+              "highlight": "nurse",
+              "hint": "护士"
+            },
+            {
+              "level": 3,
+              "label": "理解\"family\" (家庭/家人)",
+              "en": "I love my family.",
+              "zh": "我爱我的家人。",
+              "highlight": "family",
+              "hint": "家庭/家人"
+            }
+          ]
+        },
+        {
+          "id": "vsb_4",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"teacher\" 造不同句子",
+          "targetWord": "teacher",
+          "targetMeaning": "老师",
+          "items": [
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher.",
+              "targetWord": "teacher"
+            },
+            {
+              "zh": "我的老师很善良。",
+              "answer": "My teacher is very kind.",
+              "targetWord": "teacher"
+            },
+            {
+              "zh": "我想当老师。",
+              "answer": "I want to be a teacher.",
+              "targetWord": "teacher"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我的感受": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_9",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我的感受 · 中→英输出",
+          "chunk": "happy / tired / hungry / thirsty",
+          "chunkMeaning": "开心的 / 累的/疲劳的 / 饿的 / 渴的",
+          "items": [
+            {
+              "zh": "很高兴见到你。",
+              "answer": "I'm happy to see you.",
+              "targetWord": "happy"
+            },
+            {
+              "zh": "我下班后很累。",
+              "answer": "I'm tired after work.",
+              "targetWord": "tired"
+            },
+            {
+              "zh": "我饿了。吃饭吧。",
+              "answer": "I'm hungry. Let's eat.",
+              "targetWord": "hungry"
+            },
+            {
+              "zh": "我渴了需要水。",
+              "answer": "I'm thirsty. I need water.",
+              "targetWord": "thirsty"
+            },
+            {
+              "zh": "我今天很难过。",
+              "answer": "I'm sad today.",
+              "targetWord": "sad"
+            },
+            {
+              "zh": "我太兴奋了！",
+              "answer": "I'm so excited!",
+              "targetWord": "excited"
+            },
+            {
+              "zh": "我无聊了。出去吧。",
+              "answer": "I'm bored. Let's go out.",
+              "targetWord": "bored"
+            },
+            {
+              "zh": "我今天很忙。",
+              "answer": "I'm very busy today.",
+              "targetWord": "busy"
+            },
+            {
+              "zh": "我今天下午有空。",
+              "answer": "I'm free this afternoon.",
+              "targetWord": "free"
+            },
+            {
+              "zh": "我准备好出发了。",
+              "answer": "I'm ready to go.",
+              "targetWord": "ready"
+            }
+          ]
+        },
+        {
+          "id": "cs_10",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我的感受 · 英→中理解",
+          "chunk": "sad / excited / bored / busy / free",
+          "chunkMeaning": "难过的 / 兴奋的 / 无聊的 / 忙的 / 有空的/自由的",
+          "items": [
+            {
+              "zh": "我今天很难过。",
+              "answer": "I'm sad today.",
+              "targetWord": "sad"
+            },
+            {
+              "zh": "我太兴奋了！",
+              "answer": "I'm so excited!",
+              "targetWord": "excited"
+            },
+            {
+              "zh": "我无聊了。出去吧。",
+              "answer": "I'm bored. Let's go out.",
+              "targetWord": "bored"
+            },
+            {
+              "zh": "我今天很忙。",
+              "answer": "I'm very busy today.",
+              "targetWord": "busy"
+            },
+            {
+              "zh": "我今天下午有空。",
+              "answer": "I'm free this afternoon.",
+              "targetWord": "free"
+            }
+          ]
+        },
+        {
+          "id": "pd_5",
+          "type": "pattern_drill",
+          "title": "我的感受 · 句型操练",
+          "pattern": "I'm [word] to see you",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "很高兴见到你。",
+              "answer": "I'm happy to see you.",
+              "slotValues": {
+                "word": "happy"
+              }
+            },
+            {
+              "zh": "我下班后很累。",
+              "answer": "I'm tired after work.",
+              "slotValues": {
+                "word": "tired"
+              }
+            },
+            {
+              "zh": "我饿了。吃饭吧。",
+              "answer": "I'm hungry. Let's eat.",
+              "slotValues": {
+                "word": "hungry"
+              }
+            },
+            {
+              "zh": "我渴了需要水。",
+              "answer": "I'm thirsty. I need water.",
+              "slotValues": {
+                "word": "thirsty"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_5",
+          "type": "sentence_decomposition",
+          "title": "我的感受 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"bored\" (无聊的)",
+              "en": "I'm bored. Let's go out.",
+              "zh": "我无聊了。出去吧。",
+              "highlight": "bored",
+              "hint": "无聊的"
+            },
+            {
+              "level": 2,
+              "label": "理解\"busy\" (忙的)",
+              "en": "I'm very busy today.",
+              "zh": "我今天很忙。",
+              "highlight": "busy",
+              "hint": "忙的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"free\" (有空的/自由的)",
+              "en": "I'm free this afternoon.",
+              "zh": "我今天下午有空。",
+              "highlight": "free",
+              "hint": "有空的/自由的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_5",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"happy\" 造不同句子",
+          "targetWord": "happy",
+          "targetMeaning": "开心的",
+          "items": [
+            {
+              "zh": "很高兴见到你。",
+              "answer": "I'm happy to see you.",
+              "targetWord": "happy"
+            },
+            {
+              "zh": "她是个开心女孩。",
+              "answer": "She is a happy girl.",
+              "targetWord": "happy"
+            },
+            {
+              "zh": "你开心吗？—是的。",
+              "answer": "Are you happy?—Yes I am.",
+              "targetWord": "happy"
+            }
           ]
         }
       ]
@@ -137,61 +1010,192 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_11",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 It is 描述事物",
-          "chunk": "It is",
-          "chunkMeaning": "它是",
+          "title": "它是什么 · 中→英输出",
+          "chunk": "it / is / what / color",
+          "chunkMeaning": "它 / 是(三称) / 什么 / 颜色",
           "items": [
-            { "zh": "这是一本书。", "answer": "It is a book." },
-            { "zh": "这是一个苹果。", "answer": "It is an apple." },
-            { "zh": "这是一个鸡蛋。", "answer": "It is an egg." },
-            { "zh": "它很大。", "answer": "It is very big." },
-            { "zh": "它是红色的。", "answer": "It is red." },
-            { "zh": "今天很热。", "answer": "It is hot today." }
+            {
+              "zh": "它是一本书。",
+              "answer": "It is a book.",
+              "targetWord": "it"
+            },
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher.",
+              "targetWord": "is"
+            },
+            {
+              "zh": "你叫什么名字？",
+              "answer": "What is your name?",
+              "targetWord": "what"
+            },
+            {
+              "zh": "天空是蓝色的。",
+              "answer": "The sky is blue.",
+              "targetWord": "color"
+            },
+            {
+              "zh": "这是一本书。",
+              "answer": "It is a book.",
+              "targetWord": "book"
+            },
+            {
+              "zh": "这是一支笔。",
+              "answer": "It is a pen.",
+              "targetWord": "pen"
+            },
+            {
+              "zh": "这是我的手表。",
+              "answer": "This is my watch.",
+              "targetWord": "watch"
+            },
+            {
+              "zh": "我的钥匙在哪里？",
+              "answer": "Where is my key?",
+              "targetWord": "key"
+            },
+            {
+              "zh": "那个东西是什么？",
+              "answer": "What is that thing?",
+              "targetWord": "thing"
+            },
+            {
+              "zh": "这是我的书。",
+              "answer": "This is my book.",
+              "targetWord": "this"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_12",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "What is this? / Is it?",
-          "chunkMeaning": "这是什么？/ 它是...吗？",
+          "title": "它是什么 · 英→中理解",
+          "chunk": "book / pen / watch / key / thing",
+          "chunkMeaning": "书 / 笔 / 手表 / 钥匙 / 东西/事物",
           "items": [
-            { "zh": "这是什么？", "answer": "What is this?" },
-            { "zh": "它好吗？", "answer": "Is it good?" },
-            { "zh": "它是新的吗？", "answer": "Is it new?" },
-            { "zh": "它是蓝色的吗？", "answer": "Is it blue?" }
+            {
+              "zh": "这是一本书。",
+              "answer": "It is a book.",
+              "targetWord": "book"
+            },
+            {
+              "zh": "这是一支笔。",
+              "answer": "It is a pen.",
+              "targetWord": "pen"
+            },
+            {
+              "zh": "这是我的手表。",
+              "answer": "This is my watch.",
+              "targetWord": "watch"
+            },
+            {
+              "zh": "我的钥匙在哪里？",
+              "answer": "Where is my key?",
+              "targetWord": "key"
+            },
+            {
+              "zh": "那个东西是什么？",
+              "answer": "What is that thing?",
+              "targetWord": "thing"
+            }
           ]
         },
         {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "描述事物逐步扩展",
-          "levels": [
-            { "level": 1, "label": "说是什么", "en": "It is a phone.", "zh": "这是一部手机。" },
-            { "level": 2, "label": "加颜色", "en": "It is a phone. It is red.", "zh": "这是一部手机。它是红色的。", "highlight": "red", "hint": "加上颜色" },
-            { "level": 3, "label": "加评价", "en": "It is a phone. It is red. It is very good.", "zh": "这是一部手机。它是红色的。非常好。", "highlight": "very good", "hint": "加上评价" },
-            { "level": 4, "label": "加否定对比", "en": "It is a phone. It is red. It is very good. It is not expensive.", "zh": "这是一部手机。它是红色的。非常好。它不贵。", "highlight": "not expensive", "hint": "加上否定" }
-          ]
-        },
-        {
-          "id": "pd_1",
+          "id": "pd_6",
           "type": "pattern_drill",
-          "title": "Is it ___? 问句操练",
-          "pattern": "Is it [adjective]?",
-          "patternMeaning": "它是...吗？",
-          "slots": ["adjective"],
+          "title": "它是什么 · 句型操练",
+          "pattern": "[word] is a book",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "它大吗？", "answer": "Is it big?", "slotValues": { "adjective": "big" } },
-            { "zh": "它好吗？", "answer": "Is it good?", "slotValues": { "adjective": "good" } },
-            { "zh": "它是新的吗？", "answer": "Is it new?", "slotValues": { "adjective": "new" } },
-            { "zh": "今天热吗？", "answer": "Is it hot today?", "slotValues": { "adjective": "hot today" } }
+            {
+              "zh": "它是一本书。",
+              "answer": "It is a book.",
+              "slotValues": {
+                "word": "it"
+              }
+            },
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher.",
+              "slotValues": {
+                "word": "is"
+              }
+            },
+            {
+              "zh": "你叫什么名字？",
+              "answer": "What is your name?",
+              "slotValues": {
+                "word": "what"
+              }
+            },
+            {
+              "zh": "天空是蓝色的。",
+              "answer": "The sky is blue.",
+              "slotValues": {
+                "word": "color"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_6",
+          "type": "sentence_decomposition",
+          "title": "它是什么 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"watch\" (手表)",
+              "en": "This is my watch.",
+              "zh": "这是我的手表。",
+              "highlight": "watch",
+              "hint": "手表"
+            },
+            {
+              "level": 2,
+              "label": "理解\"key\" (钥匙)",
+              "en": "Where is my key?",
+              "zh": "我的钥匙在哪里？",
+              "highlight": "key",
+              "hint": "钥匙"
+            },
+            {
+              "level": 3,
+              "label": "理解\"thing\" (东西/事物)",
+              "en": "What is that thing?",
+              "zh": "那个东西是什么？",
+              "highlight": "thing",
+              "hint": "东西/事物"
+            }
+          ]
+        },
+        {
+          "id": "vsb_6",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"it\" 造不同句子",
+          "targetWord": "it",
+          "targetMeaning": "它",
+          "items": [
+            {
+              "zh": "它是一本书。",
+              "answer": "It is a book.",
+              "targetWord": "it"
+            },
+            {
+              "zh": "它很大。",
+              "answer": "It is very big.",
+              "targetWord": "it"
+            }
           ]
         }
       ]
@@ -203,63 +1207,783 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_13",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 on / in / at 说位置",
-          "chunk": "on / in / at",
-          "chunkMeaning": "在...上 / 在...里 / 在...",
+          "title": "他们在哪里 · 中→英输出",
+          "chunk": "where / in / on / at",
+          "chunkMeaning": "哪里 / 在...里 / 在...上 / 在(某点)",
           "items": [
-            { "zh": "它在桌子上。", "answer": "It is on the table." },
-            { "zh": "它在包里。", "answer": "It is in the bag." },
-            { "zh": "他在车里。", "answer": "He is in the car." },
-            { "zh": "她在公交车上。", "answer": "She is on the bus." },
-            { "zh": "他在飞机上。", "answer": "He is on the plane." },
-            { "zh": "他们在家里。", "answer": "They are at home." },
-            { "zh": "他在上班。", "answer": "He is at work." },
-            { "zh": "他在医院。", "answer": "He is at the hospital." },
-            { "zh": "我们在教室里。", "answer": "We are in the classroom." }
+            {
+              "zh": "我的手机在哪里？",
+              "answer": "Where is my phone?",
+              "targetWord": "where"
+            },
+            {
+              "zh": "它在包里。",
+              "answer": "It is in the bag.",
+              "targetWord": "in"
+            },
+            {
+              "zh": "书在桌子上。",
+              "answer": "The book is on the desk.",
+              "targetWord": "on"
+            },
+            {
+              "zh": "他们在家。",
+              "answer": "They are at home.",
+              "targetWord": "at"
+            },
+            {
+              "zh": "它在这里。",
+              "answer": "It is here.",
+              "targetWord": "here"
+            },
+            {
+              "zh": "它在那边。",
+              "answer": "It is over there.",
+              "targetWord": "there"
+            },
+            {
+              "zh": "它在包里。",
+              "answer": "It is in the bag.",
+              "targetWord": "bag"
+            },
+            {
+              "zh": "书在桌子上。",
+              "answer": "The book is on the desk.",
+              "targetWord": "desk"
+            },
+            {
+              "zh": "它在桌子上。",
+              "answer": "It is on the table.",
+              "targetWord": "table"
+            },
+            {
+              "zh": "猫在床下面。",
+              "answer": "The cat is under the bed.",
+              "targetWord": "under"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_14",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "Where is?",
-          "chunkMeaning": "...在哪里？",
+          "title": "他们在哪里 · 英→中理解",
+          "chunk": "here / there / bag / desk / table",
+          "chunkMeaning": "这里 / 那里 / 包/袋子 / 书桌 / 桌子",
           "items": [
-            { "zh": "我的手机在哪里？", "answer": "Where is my phone?" },
-            { "zh": "我的钥匙在哪里？", "answer": "Where is my keys?" },
-            { "zh": "你的包在哪里？", "answer": "Where is your bag?" },
-            { "zh": "车站在哪里？", "answer": "Where is the station?" }
+            {
+              "zh": "它在这里。",
+              "answer": "It is here.",
+              "targetWord": "here"
+            },
+            {
+              "zh": "它在那边。",
+              "answer": "It is over there.",
+              "targetWord": "there"
+            },
+            {
+              "zh": "它在包里。",
+              "answer": "It is in the bag.",
+              "targetWord": "bag"
+            },
+            {
+              "zh": "书在桌子上。",
+              "answer": "The book is on the desk.",
+              "targetWord": "desk"
+            },
+            {
+              "zh": "它在桌子上。",
+              "answer": "It is on the table.",
+              "targetWord": "table"
+            }
           ]
         },
         {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "描述位置逐步扩展",
-          "levels": [
-            { "level": 1, "label": "说物品位置", "en": "My phone is on the table.", "zh": "我的手机在桌子上。" },
-            { "level": 2, "label": "加问句", "en": "Where is my phone? My phone is on the table.", "zh": "我的手机在哪里？在桌子上。", "highlight": "Where is my phone?", "hint": "询问位置" },
-            { "level": 3, "label": "换地点", "en": "Where is my phone? My phone is on the table. It is not in my bag.", "zh": "我的手机在哪里？在桌子上。不在包里。", "highlight": "not in my bag", "hint": "用否定说不在哪里" },
-            { "level": 4, "label": "加不在哪", "en": "Where is my phone? My phone is on the table. It is not in my bag. It is not in the car.", "zh": "我的手机在哪里？在桌子上。不在包里。不在车里。", "highlight": "not in the car", "hint": "用否定说也不在车里" }
-          ]
-        },
-        {
-          "id": "pd_1",
+          "id": "pd_7",
           "type": "pattern_drill",
-          "title": "Where is ___? 问句操练",
-          "pattern": "Where is [object]? It is [preposition] [place].",
-          "patternMeaning": "...在哪里？它在...",
-          "slots": ["object", "preposition", "place"],
+          "title": "他们在哪里 · 句型操练",
+          "pattern": "[word] is my phone",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "我的手机在哪里？在桌子上。", "answer": "Where is my phone? It is on the table.", "slotValues": { "object": "my phone", "preposition": "on", "place": "the table" } },
-            { "zh": "我的钥匙在哪里？在包里。", "answer": "Where is my key? It is in the bag.", "slotValues": { "object": "my key", "preposition": "in", "place": "the bag" } },
-            { "zh": "猫在哪里？在床下面。", "answer": "Where is the cat? It is under the bed.", "slotValues": { "object": "the cat", "preposition": "under", "place": "the bed" } }
+            {
+              "zh": "我的手机在哪里？",
+              "answer": "Where is my phone?",
+              "slotValues": {
+                "word": "where"
+              }
+            },
+            {
+              "zh": "它在包里。",
+              "answer": "It is in the bag.",
+              "slotValues": {
+                "word": "in"
+              }
+            },
+            {
+              "zh": "书在桌子上。",
+              "answer": "The book is on the desk.",
+              "slotValues": {
+                "word": "on"
+              }
+            },
+            {
+              "zh": "他们在家。",
+              "answer": "They are at home.",
+              "slotValues": {
+                "word": "at"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_7",
+          "type": "sentence_decomposition",
+          "title": "他们在哪里 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"bag\" (包/袋子)",
+              "en": "It is in the bag.",
+              "zh": "它在包里。",
+              "highlight": "bag",
+              "hint": "包/袋子"
+            },
+            {
+              "level": 2,
+              "label": "理解\"desk\" (书桌)",
+              "en": "The book is on the desk.",
+              "zh": "书在桌子上。",
+              "highlight": "desk",
+              "hint": "书桌"
+            },
+            {
+              "level": 3,
+              "label": "理解\"table\" (桌子)",
+              "en": "It is on the table.",
+              "zh": "它在桌子上。",
+              "highlight": "table",
+              "hint": "桌子"
+            }
+          ]
+        },
+        {
+          "id": "vsb_7",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"where\" 造不同句子",
+          "targetWord": "where",
+          "targetMeaning": "哪里",
+          "items": [
+            {
+              "zh": "我的手机在哪里？",
+              "answer": "Where is my phone?",
+              "targetWord": "where"
+            },
+            {
+              "zh": "你在哪里？",
+              "answer": "Where are you?",
+              "targetWord": "where"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "大小与颜色": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_15",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "大小与颜色 · 中→英输出",
+          "chunk": "big / small / long / short",
+          "chunkMeaning": "大的 / 小的 / 长的 / 短的/矮的",
+          "items": [
+            {
+              "zh": "它很大。",
+              "answer": "It is very big.",
+              "targetWord": "big"
+            },
+            {
+              "zh": "它很小。",
+              "answer": "It is very small.",
+              "targetWord": "small"
+            },
+            {
+              "zh": "这条路很长。",
+              "answer": "The road is very long.",
+              "targetWord": "long"
+            },
+            {
+              "zh": "她很矮。",
+              "answer": "She is short.",
+              "targetWord": "short"
+            },
+            {
+              "zh": "它是红色的。",
+              "answer": "It is red.",
+              "targetWord": "red"
+            },
+            {
+              "zh": "天空是蓝色的。",
+              "answer": "The sky is blue.",
+              "targetWord": "blue"
+            },
+            {
+              "zh": "草是绿色的。",
+              "answer": "The grass is green.",
+              "targetWord": "green"
+            },
+            {
+              "zh": "太阳是黄色的。",
+              "answer": "The sun is yellow.",
+              "targetWord": "yellow"
+            },
+            {
+              "zh": "它是黑色的。",
+              "answer": "It is black.",
+              "targetWord": "black"
+            },
+            {
+              "zh": "雪是白色的。",
+              "answer": "The snow is white.",
+              "targetWord": "white"
+            }
+          ]
+        },
+        {
+          "id": "cs_16",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "大小与颜色 · 英→中理解",
+          "chunk": "red / blue / green / yellow / black",
+          "chunkMeaning": "红色的 / 蓝色的 / 绿色的 / 黄色的 / 黑色的",
+          "items": [
+            {
+              "zh": "它是红色的。",
+              "answer": "It is red.",
+              "targetWord": "red"
+            },
+            {
+              "zh": "天空是蓝色的。",
+              "answer": "The sky is blue.",
+              "targetWord": "blue"
+            },
+            {
+              "zh": "草是绿色的。",
+              "answer": "The grass is green.",
+              "targetWord": "green"
+            },
+            {
+              "zh": "太阳是黄色的。",
+              "answer": "The sun is yellow.",
+              "targetWord": "yellow"
+            },
+            {
+              "zh": "它是黑色的。",
+              "answer": "It is black.",
+              "targetWord": "black"
+            }
+          ]
+        },
+        {
+          "id": "pd_8",
+          "type": "pattern_drill",
+          "title": "大小与颜色 · 句型操练",
+          "pattern": "It is very [word]",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "它很大。",
+              "answer": "It is very big.",
+              "slotValues": {
+                "word": "big"
+              }
+            },
+            {
+              "zh": "它很小。",
+              "answer": "It is very small.",
+              "slotValues": {
+                "word": "small"
+              }
+            },
+            {
+              "zh": "这条路很长。",
+              "answer": "The road is very long.",
+              "slotValues": {
+                "word": "long"
+              }
+            },
+            {
+              "zh": "她很矮。",
+              "answer": "She is short.",
+              "slotValues": {
+                "word": "short"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_8",
+          "type": "sentence_decomposition",
+          "title": "大小与颜色 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"green\" (绿色的)",
+              "en": "The grass is green.",
+              "zh": "草是绿色的。",
+              "highlight": "green",
+              "hint": "绿色的"
+            },
+            {
+              "level": 2,
+              "label": "理解\"yellow\" (黄色的)",
+              "en": "The sun is yellow.",
+              "zh": "太阳是黄色的。",
+              "highlight": "yellow",
+              "hint": "黄色的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"black\" (黑色的)",
+              "en": "It is black.",
+              "zh": "它是黑色的。",
+              "highlight": "black",
+              "hint": "黑色的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_8",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"big\" 造不同句子",
+          "targetWord": "big",
+          "targetMeaning": "大的",
+          "items": [
+            {
+              "zh": "它很大。",
+              "answer": "It is very big.",
+              "targetWord": "big"
+            },
+            {
+              "zh": "北京是个大城市。",
+              "answer": "Beijing is a big city.",
+              "targetWord": "big"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "评价事物": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_17",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "评价事物 · 中→英输出",
+          "chunk": "good / bad / new / wonderful",
+          "chunkMeaning": "好的 / 坏的/不好的 / 新的 / 极好的",
+          "items": [
+            {
+              "zh": "它很好。",
+              "answer": "It is very good.",
+              "targetWord": "good"
+            },
+            {
+              "zh": "天气不好。",
+              "answer": "The weather is bad.",
+              "targetWord": "bad"
+            },
+            {
+              "zh": "是一部新手机。",
+              "answer": "It is a new phone.",
+              "targetWord": "new"
+            },
+            {
+              "zh": "真是美好的一天！",
+              "answer": "It is a wonderful day!",
+              "targetWord": "wonderful"
+            },
+            {
+              "zh": "它很贵。",
+              "answer": "It is very expensive.",
+              "targetWord": "expensive"
+            },
+            {
+              "zh": "它很便宜。",
+              "answer": "It is very cheap.",
+              "targetWord": "cheap"
+            },
+            {
+              "zh": "她很漂亮。",
+              "answer": "She is beautiful.",
+              "targetWord": "beautiful"
+            },
+            {
+              "zh": "房间很干净。",
+              "answer": "The room is clean.",
+              "targetWord": "clean"
+            },
+            {
+              "zh": "地板很脏。",
+              "answer": "The floor is dirty.",
+              "targetWord": "dirty"
+            },
+            {
+              "zh": "你是对的。",
+              "answer": "You are right.",
+              "targetWord": "right"
+            }
+          ]
+        },
+        {
+          "id": "cs_18",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "评价事物 · 英→中理解",
+          "chunk": "expensive / cheap / beautiful / clean / dirty",
+          "chunkMeaning": "贵的 / 便宜的 / 美丽的 / 干净的 / 脏的",
+          "items": [
+            {
+              "zh": "它很贵。",
+              "answer": "It is very expensive.",
+              "targetWord": "expensive"
+            },
+            {
+              "zh": "它很便宜。",
+              "answer": "It is very cheap.",
+              "targetWord": "cheap"
+            },
+            {
+              "zh": "她很漂亮。",
+              "answer": "She is beautiful.",
+              "targetWord": "beautiful"
+            },
+            {
+              "zh": "房间很干净。",
+              "answer": "The room is clean.",
+              "targetWord": "clean"
+            },
+            {
+              "zh": "地板很脏。",
+              "answer": "The floor is dirty.",
+              "targetWord": "dirty"
+            }
+          ]
+        },
+        {
+          "id": "pd_9",
+          "type": "pattern_drill",
+          "title": "评价事物 · 句型操练",
+          "pattern": "It is very [word]",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "它很好。",
+              "answer": "It is very good.",
+              "slotValues": {
+                "word": "good"
+              }
+            },
+            {
+              "zh": "天气不好。",
+              "answer": "The weather is bad.",
+              "slotValues": {
+                "word": "bad"
+              }
+            },
+            {
+              "zh": "是一部新手机。",
+              "answer": "It is a new phone.",
+              "slotValues": {
+                "word": "new"
+              }
+            },
+            {
+              "zh": "真是美好的一天！",
+              "answer": "It is a wonderful day!",
+              "slotValues": {
+                "word": "wonderful"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_9",
+          "type": "sentence_decomposition",
+          "title": "评价事物 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"beautiful\" (美丽的)",
+              "en": "She is beautiful.",
+              "zh": "她很漂亮。",
+              "highlight": "beautiful",
+              "hint": "美丽的"
+            },
+            {
+              "level": 2,
+              "label": "理解\"clean\" (干净的)",
+              "en": "The room is clean.",
+              "zh": "房间很干净。",
+              "highlight": "clean",
+              "hint": "干净的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"dirty\" (脏的)",
+              "en": "The floor is dirty.",
+              "zh": "地板很脏。",
+              "highlight": "dirty",
+              "hint": "脏的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_9",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"good\" 造不同句子",
+          "targetWord": "good",
+          "targetMeaning": "好的",
+          "items": [
+            {
+              "zh": "它很好。",
+              "answer": "It is very good.",
+              "targetWord": "good"
+            },
+            {
+              "zh": "好主意！",
+              "answer": "Good idea!",
+              "targetWord": "good"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "天气与温度": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_19",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "天气与温度 · 中→英输出",
+          "chunk": "hot / cold / warm / cool",
+          "chunkMeaning": "热的 / 冷的 / 温暖的 / 凉爽的/酷的",
+          "items": [
+            {
+              "zh": "今天很热。",
+              "answer": "It is hot today.",
+              "targetWord": "hot"
+            },
+            {
+              "zh": "外面很冷。",
+              "answer": "It is cold outside.",
+              "targetWord": "cold"
+            },
+            {
+              "zh": "今天很暖和。",
+              "answer": "It is warm today.",
+              "targetWord": "warm"
+            },
+            {
+              "zh": "今天很凉爽。",
+              "answer": "It is cool today.",
+              "targetWord": "cool"
+            },
+            {
+              "zh": "今天晴朗。",
+              "answer": "It is sunny today.",
+              "targetWord": "sunny"
+            },
+            {
+              "zh": "今天下雨。",
+              "answer": "It is rainy today.",
+              "targetWord": "rainy"
+            },
+            {
+              "zh": "今天多云。",
+              "answer": "It is cloudy today.",
+              "targetWord": "cloudy"
+            },
+            {
+              "zh": "外面有风。",
+              "answer": "It is windy outside.",
+              "targetWord": "windy"
+            },
+            {
+              "zh": "今天下雪。",
+              "answer": "It is snowy today.",
+              "targetWord": "snowy"
+            },
+            {
+              "zh": "今天天气真好！",
+              "answer": "Nice weather today!",
+              "targetWord": "weather"
+            }
+          ]
+        },
+        {
+          "id": "cs_20",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "天气与温度 · 英→中理解",
+          "chunk": "sunny / rainy / cloudy / windy / snowy",
+          "chunkMeaning": "晴朗的 / 下雨的 / 多云的 / 有风的 / 下雪的",
+          "items": [
+            {
+              "zh": "今天晴朗。",
+              "answer": "It is sunny today.",
+              "targetWord": "sunny"
+            },
+            {
+              "zh": "今天下雨。",
+              "answer": "It is rainy today.",
+              "targetWord": "rainy"
+            },
+            {
+              "zh": "今天多云。",
+              "answer": "It is cloudy today.",
+              "targetWord": "cloudy"
+            },
+            {
+              "zh": "外面有风。",
+              "answer": "It is windy outside.",
+              "targetWord": "windy"
+            },
+            {
+              "zh": "今天下雪。",
+              "answer": "It is snowy today.",
+              "targetWord": "snowy"
+            }
+          ]
+        },
+        {
+          "id": "pd_10",
+          "type": "pattern_drill",
+          "title": "天气与温度 · 句型操练",
+          "pattern": "It is [word] today",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "今天很热。",
+              "answer": "It is hot today.",
+              "slotValues": {
+                "word": "hot"
+              }
+            },
+            {
+              "zh": "外面很冷。",
+              "answer": "It is cold outside.",
+              "slotValues": {
+                "word": "cold"
+              }
+            },
+            {
+              "zh": "今天很暖和。",
+              "answer": "It is warm today.",
+              "slotValues": {
+                "word": "warm"
+              }
+            },
+            {
+              "zh": "今天很凉爽。",
+              "answer": "It is cool today.",
+              "slotValues": {
+                "word": "cool"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_10",
+          "type": "sentence_decomposition",
+          "title": "天气与温度 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"cloudy\" (多云的)",
+              "en": "It is cloudy today.",
+              "zh": "今天多云。",
+              "highlight": "cloudy",
+              "hint": "多云的"
+            },
+            {
+              "level": 2,
+              "label": "理解\"windy\" (有风的)",
+              "en": "It is windy outside.",
+              "zh": "外面有风。",
+              "highlight": "windy",
+              "hint": "有风的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"snowy\" (下雪的)",
+              "en": "It is snowy today.",
+              "zh": "今天下雪。",
+              "highlight": "snowy",
+              "hint": "下雪的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_10",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"hot\" 造不同句子",
+          "targetWord": "hot",
+          "targetMeaning": "热的",
+          "items": [
+            {
+              "zh": "今天很热。",
+              "answer": "It is hot today.",
+              "targetWord": "hot"
+            },
+            {
+              "zh": "茶太烫了。",
+              "answer": "The tea is too hot.",
+              "targetWord": "hot"
+            }
           ]
         }
       ]
@@ -271,59 +1995,192 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_21",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 He / She is 描述他人",
-          "chunk": "He is / She is",
-          "chunkMeaning": "他是 / 她是",
+          "title": "他/她是谁 · 中→英输出",
+          "chunk": "he / she / who / not",
+          "chunkMeaning": "他 / 她 / 谁 / 不",
           "items": [
-            { "zh": "她是我的朋友。", "answer": "She is my friend." },
-            { "zh": "他是一名医生。", "answer": "He is a doctor." },
-            { "zh": "他很高。", "answer": "He is very tall." },
-            { "zh": "她来自日本。", "answer": "She is from Japan." }
+            {
+              "zh": "他是我的兄弟。",
+              "answer": "He is my brother.",
+              "targetWord": "he"
+            },
+            {
+              "zh": "她是一名医生。",
+              "answer": "She is a doctor.",
+              "targetWord": "she"
+            },
+            {
+              "zh": "那个女孩是谁？",
+              "answer": "Who is that girl?",
+              "targetWord": "who"
+            },
+            {
+              "zh": "他不是老师。",
+              "answer": "He is not a teacher.",
+              "targetWord": "not"
+            },
+            {
+              "zh": "他是个高个子男人。",
+              "answer": "He is a tall man.",
+              "targetWord": "man"
+            },
+            {
+              "zh": "她是个善良的女人。",
+              "answer": "She is a kind woman.",
+              "targetWord": "woman"
+            },
+            {
+              "zh": "他是个好男孩。",
+              "answer": "He is a good boy.",
+              "targetWord": "boy"
+            },
+            {
+              "zh": "她是个聪明的女孩。",
+              "answer": "She is a smart girl.",
+              "targetWord": "girl"
+            },
+            {
+              "zh": "她人很好。",
+              "answer": "She is a nice person.",
+              "targetWord": "person"
+            },
+            {
+              "zh": "很多人在这里。",
+              "answer": "Many people are here.",
+              "targetWord": "people"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_22",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "Is he/she? / Who is?",
-          "chunkMeaning": "他/她是...吗？/ 谁是？",
+          "title": "他/她是谁 · 英→中理解",
+          "chunk": "man / woman / boy / girl / person",
+          "chunkMeaning": "男人 / 女人 / 男孩 / 女孩 / 人",
           "items": [
-            { "zh": "她是你的妹妹吗？", "answer": "Is she your sister?" },
-            { "zh": "他是你的老师吗？", "answer": "Is he your teacher?" },
-            { "zh": "她是你的朋友吗？", "answer": "Is she your friend?" },
-            { "zh": "他是谁？", "answer": "Who is he?" }
+            {
+              "zh": "他是个高个子男人。",
+              "answer": "He is a tall man.",
+              "targetWord": "man"
+            },
+            {
+              "zh": "她是个善良的女人。",
+              "answer": "She is a kind woman.",
+              "targetWord": "woman"
+            },
+            {
+              "zh": "他是个好男孩。",
+              "answer": "He is a good boy.",
+              "targetWord": "boy"
+            },
+            {
+              "zh": "她是个聪明的女孩。",
+              "answer": "She is a smart girl.",
+              "targetWord": "girl"
+            },
+            {
+              "zh": "她人很好。",
+              "answer": "She is a nice person.",
+              "targetWord": "person"
+            }
           ]
         },
         {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "描述他人逐步扩展",
-          "levels": [
-            { "level": 1, "label": "说关系", "en": "She is my friend.", "zh": "她是我的朋友。" },
-            { "level": 2, "label": "加职业", "en": "She is my friend. She is a doctor.", "zh": "她是我的朋友。她是一名医生。", "highlight": "a doctor", "hint": "说出她的职业" },
-            { "level": 3, "label": "加外表", "en": "She is my friend. She is a doctor. She is very kind.", "zh": "她是我的朋友。她是一名医生。她很善良。", "highlight": "very kind", "hint": "描述她的性格" },
-            { "level": 4, "label": "加国籍", "en": "She is my friend. She is a doctor. She is very kind. She is from Japan.", "zh": "她是我的朋友。她是一名医生。她很善良。她来自日本。", "highlight": "from Japan", "hint": "说出她来自哪里" }
-          ]
-        },
-        {
-          "id": "pd_1",
+          "id": "pd_11",
           "type": "pattern_drill",
-          "title": "Is he/she ___? 问句操练",
-          "pattern": "Is [subject] your [relationship]?",
-          "patternMeaning": "...是你的...吗？",
-          "slots": ["subject", "relationship"],
+          "title": "他/她是谁 · 句型操练",
+          "pattern": "[word] is my brot[word]r",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "她是你的妹妹吗？", "answer": "Is she your sister?", "slotValues": { "subject": "she", "relationship": "sister" } },
-            { "zh": "他是你的兄弟吗？", "answer": "Is he your brother?", "slotValues": { "subject": "he", "relationship": "brother" } },
-            { "zh": "她是你的老师吗？", "answer": "Is she your teacher?", "slotValues": { "subject": "she", "relationship": "teacher" } },
-            { "zh": "他是你的朋友吗？", "answer": "Is he your friend?", "slotValues": { "subject": "he", "relationship": "friend" } }
+            {
+              "zh": "他是我的兄弟。",
+              "answer": "He is my brother.",
+              "slotValues": {
+                "word": "he"
+              }
+            },
+            {
+              "zh": "她是一名医生。",
+              "answer": "She is a doctor.",
+              "slotValues": {
+                "word": "she"
+              }
+            },
+            {
+              "zh": "那个女孩是谁？",
+              "answer": "Who is that girl?",
+              "slotValues": {
+                "word": "who"
+              }
+            },
+            {
+              "zh": "他不是老师。",
+              "answer": "He is not a teacher.",
+              "slotValues": {
+                "word": "not"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_11",
+          "type": "sentence_decomposition",
+          "title": "他/她是谁 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"boy\" (男孩)",
+              "en": "He is a good boy.",
+              "zh": "他是个好男孩。",
+              "highlight": "boy",
+              "hint": "男孩"
+            },
+            {
+              "level": 2,
+              "label": "理解\"girl\" (女孩)",
+              "en": "She is a smart girl.",
+              "zh": "她是个聪明的女孩。",
+              "highlight": "girl",
+              "hint": "女孩"
+            },
+            {
+              "level": 3,
+              "label": "理解\"person\" (人)",
+              "en": "She is a nice person.",
+              "zh": "她人很好。",
+              "highlight": "person",
+              "hint": "人"
+            }
+          ]
+        },
+        {
+          "id": "vsb_11",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"he\" 造不同句子",
+          "targetWord": "he",
+          "targetMeaning": "他",
+          "items": [
+            {
+              "zh": "他是我的兄弟。",
+              "answer": "He is my brother.",
+              "targetWord": "he"
+            },
+            {
+              "zh": "他是一名医生。",
+              "answer": "He is a doctor.",
+              "targetWord": "he"
+            }
           ]
         }
       ]
@@ -335,59 +2192,783 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_23",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 We / They are 说复数",
-          "chunk": "We are / They are",
-          "chunkMeaning": "我们是 / 他们是",
+          "title": "我们/他们 · 中→英输出",
+          "chunk": "we / they / us / them",
+          "chunkMeaning": "我们 / 他们 / 我们(宾格) / 他们(宾格)",
           "items": [
-            { "zh": "我们是好朋友。", "answer": "We are good friends." },
-            { "zh": "我们今天很开心。", "answer": "We are very happy today." },
-            { "zh": "他们来自同一个城市。", "answer": "They are from the same city." },
-            { "zh": "他们现在不在这里。", "answer": "They are not here right now." }
+            {
+              "zh": "我们是好朋友。",
+              "answer": "We are good friends.",
+              "targetWord": "we"
+            },
+            {
+              "zh": "他们来自中国。",
+              "answer": "They are from China.",
+              "targetWord": "they"
+            },
+            {
+              "zh": "跟我们一起来。",
+              "answer": "Come with us.",
+              "targetWord": "us"
+            },
+            {
+              "zh": "我喜欢他们。",
+              "answer": "I like them.",
+              "targetWord": "them"
+            },
+            {
+              "zh": "这是我们的学校。",
+              "answer": "This is our school.",
+              "targetWord": "our"
+            },
+            {
+              "zh": "他们的房子很大。",
+              "answer": "Their house is big.",
+              "targetWord": "their"
+            },
+            {
+              "zh": "我们是一个组。",
+              "answer": "We are a group.",
+              "targetWord": "group"
+            },
+            {
+              "zh": "我们是个好团队。",
+              "answer": "We are a good team.",
+              "targetWord": "team"
+            },
+            {
+              "zh": "我们一起学习。",
+              "answer": "We study together.",
+              "targetWord": "together"
+            },
+            {
+              "zh": "我们都是学生。",
+              "answer": "We are both students.",
+              "targetWord": "both"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_24",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "Are they? / We are not",
-          "chunkMeaning": "他们是...吗？/ 我们不",
+          "title": "我们/他们 · 英→中理解",
+          "chunk": "our / their / group / team / together",
+          "chunkMeaning": "我们的 / 他们的 / 组/群 / 团队/队 / 一起",
           "items": [
-            { "zh": "他们是你的朋友吗？", "answer": "Are they your friends?" },
-            { "zh": "他们是学生吗？", "answer": "Are they students?" },
-            { "zh": "我们没有迟到。", "answer": "We are not late." },
-            { "zh": "我们不是陌生人。", "answer": "We are not strangers." }
+            {
+              "zh": "这是我们的学校。",
+              "answer": "This is our school.",
+              "targetWord": "our"
+            },
+            {
+              "zh": "他们的房子很大。",
+              "answer": "Their house is big.",
+              "targetWord": "their"
+            },
+            {
+              "zh": "我们是一个组。",
+              "answer": "We are a group.",
+              "targetWord": "group"
+            },
+            {
+              "zh": "我们是个好团队。",
+              "answer": "We are a good team.",
+              "targetWord": "team"
+            },
+            {
+              "zh": "我们一起学习。",
+              "answer": "We study together.",
+              "targetWord": "together"
+            }
           ]
         },
         {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "复数描述逐步扩展",
-          "levels": [
-            { "level": 1, "label": "说关系", "en": "We are good friends.", "zh": "我们是好朋友。" },
-            { "level": 2, "label": "加来源", "en": "We are good friends from China.", "zh": "我们是来自中国的好朋友。", "highlight": "from China", "hint": "加上来源" },
-            { "level": 3, "label": "加感受", "en": "We are good friends from China. We are very happy.", "zh": "我们是来自中国的好朋友。我们很开心。", "highlight": "very happy", "hint": "加上感受" },
-            { "level": 4, "label": "加否定确认", "en": "We are good friends from China. We are very happy. We are not strangers.", "zh": "我们是来自中国的好朋友。我们很开心。我们不是陌生人。", "highlight": "not strangers", "hint": "加上否定" }
-          ]
-        },
-        {
-          "id": "pd_1",
+          "id": "pd_12",
           "type": "pattern_drill",
-          "title": "Are they ___? 问句操练",
-          "pattern": "Are they [noun/adjective]?",
-          "patternMeaning": "他们是...吗？",
-          "slots": ["noun/adjective"],
+          "title": "我们/他们 · 句型操练",
+          "pattern": "[word] are good friends",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "他们是你的朋友吗？", "answer": "Are they your friends?", "slotValues": { "noun/adjective": "your friends" } },
-            { "zh": "他们是学生吗？", "answer": "Are they students?", "slotValues": { "noun/adjective": "students" } },
-            { "zh": "他们准备好了吗？", "answer": "Are they ready?", "slotValues": { "noun/adjective": "ready" } },
-            { "zh": "他们在家吗？", "answer": "Are they at home?", "slotValues": { "noun/adjective": "at home" } }
+            {
+              "zh": "我们是好朋友。",
+              "answer": "We are good friends.",
+              "slotValues": {
+                "word": "we"
+              }
+            },
+            {
+              "zh": "他们来自中国。",
+              "answer": "They are from China.",
+              "slotValues": {
+                "word": "they"
+              }
+            },
+            {
+              "zh": "跟我们一起来。",
+              "answer": "Come with us.",
+              "slotValues": {
+                "word": "us"
+              }
+            },
+            {
+              "zh": "我喜欢他们。",
+              "answer": "I like them.",
+              "slotValues": {
+                "word": "them"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_12",
+          "type": "sentence_decomposition",
+          "title": "我们/他们 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"group\" (组/群)",
+              "en": "We are a group.",
+              "zh": "我们是一个组。",
+              "highlight": "group",
+              "hint": "组/群"
+            },
+            {
+              "level": 2,
+              "label": "理解\"team\" (团队/队)",
+              "en": "We are a good team.",
+              "zh": "我们是个好团队。",
+              "highlight": "team",
+              "hint": "团队/队"
+            },
+            {
+              "level": 3,
+              "label": "理解\"together\" (一起)",
+              "en": "We study together.",
+              "zh": "我们一起学习。",
+              "highlight": "together",
+              "hint": "一起"
+            }
+          ]
+        },
+        {
+          "id": "vsb_12",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"we\" 造不同句子",
+          "targetWord": "we",
+          "targetMeaning": "我们",
+          "items": [
+            {
+              "zh": "我们是好朋友。",
+              "answer": "We are good friends.",
+              "targetWord": "we"
+            },
+            {
+              "zh": "我们来自中国。",
+              "answer": "We are from China.",
+              "targetWord": "we"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "家人关系": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_25",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "家人关系 · 中→英输出",
+          "chunk": "father / mother / brother / sister",
+          "chunkMeaning": "父亲 / 母亲 / 兄弟 / 姐妹",
+          "items": [
+            {
+              "zh": "我爸爸是医生。",
+              "answer": "My father is a doctor.",
+              "targetWord": "father"
+            },
+            {
+              "zh": "她妈妈是老师。",
+              "answer": "Her mother is a teacher.",
+              "targetWord": "mother"
+            },
+            {
+              "zh": "他是我的兄弟。",
+              "answer": "He is my brother.",
+              "targetWord": "brother"
+            },
+            {
+              "zh": "她是我姐妹。",
+              "answer": "She is my sister.",
+              "targetWord": "sister"
+            },
+            {
+              "zh": "他儿子5岁。",
+              "answer": "His son is 5 years old.",
+              "targetWord": "son"
+            },
+            {
+              "zh": "她女儿很聪明。",
+              "answer": "Her daughter is very smart.",
+              "targetWord": "daughter"
+            },
+            {
+              "zh": "她丈夫是工程师。",
+              "answer": "Her husband is an engineer.",
+              "targetWord": "husband"
+            },
+            {
+              "zh": "他妻子是护士。",
+              "answer": "His wife is a nurse.",
+              "targetWord": "wife"
+            },
+            {
+              "zh": "她是个好孩子。",
+              "answer": "She is a good child.",
+              "targetWord": "child"
+            },
+            {
+              "zh": "我父母很善良。",
+              "answer": "My parents are very kind.",
+              "targetWord": "parent"
+            }
+          ]
+        },
+        {
+          "id": "cs_26",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "家人关系 · 英→中理解",
+          "chunk": "son / daughter / husband / wife / child",
+          "chunkMeaning": "儿子 / 女儿 / 丈夫 / 妻子 / 孩子",
+          "items": [
+            {
+              "zh": "他儿子5岁。",
+              "answer": "His son is 5 years old.",
+              "targetWord": "son"
+            },
+            {
+              "zh": "她女儿很聪明。",
+              "answer": "Her daughter is very smart.",
+              "targetWord": "daughter"
+            },
+            {
+              "zh": "她丈夫是工程师。",
+              "answer": "Her husband is an engineer.",
+              "targetWord": "husband"
+            },
+            {
+              "zh": "他妻子是护士。",
+              "answer": "His wife is a nurse.",
+              "targetWord": "wife"
+            },
+            {
+              "zh": "她是个好孩子。",
+              "answer": "She is a good child.",
+              "targetWord": "child"
+            }
+          ]
+        },
+        {
+          "id": "pd_13",
+          "type": "pattern_drill",
+          "title": "家人关系 · 句型操练",
+          "pattern": "My [word] is a doctor",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我爸爸是医生。",
+              "answer": "My father is a doctor.",
+              "slotValues": {
+                "word": "father"
+              }
+            },
+            {
+              "zh": "她妈妈是老师。",
+              "answer": "Her mother is a teacher.",
+              "slotValues": {
+                "word": "mother"
+              }
+            },
+            {
+              "zh": "他是我的兄弟。",
+              "answer": "He is my brother.",
+              "slotValues": {
+                "word": "brother"
+              }
+            },
+            {
+              "zh": "她是我姐妹。",
+              "answer": "She is my sister.",
+              "slotValues": {
+                "word": "sister"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_13",
+          "type": "sentence_decomposition",
+          "title": "家人关系 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"husband\" (丈夫)",
+              "en": "Her husband is an engineer.",
+              "zh": "她丈夫是工程师。",
+              "highlight": "husband",
+              "hint": "丈夫"
+            },
+            {
+              "level": 2,
+              "label": "理解\"wife\" (妻子)",
+              "en": "His wife is a nurse.",
+              "zh": "他妻子是护士。",
+              "highlight": "wife",
+              "hint": "妻子"
+            },
+            {
+              "level": 3,
+              "label": "理解\"child\" (孩子)",
+              "en": "She is a good child.",
+              "zh": "她是个好孩子。",
+              "highlight": "child",
+              "hint": "孩子"
+            }
+          ]
+        },
+        {
+          "id": "vsb_13",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"father\" 造不同句子",
+          "targetWord": "father",
+          "targetMeaning": "父亲",
+          "items": [
+            {
+              "zh": "我爸爸是医生。",
+              "answer": "My father is a doctor.",
+              "targetWord": "father"
+            },
+            {
+              "zh": "他爸爸在银行工作。",
+              "answer": "His father works in a bank.",
+              "targetWord": "father"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "职业身份": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_27",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "职业身份 · 中→英输出",
+          "chunk": "lawyer / artist / reporter / worker",
+          "chunkMeaning": "律师 / 艺术家/画家 / 记者 / 工人/员工",
+          "items": [
+            {
+              "zh": "她是一名律师。",
+              "answer": "She is a lawyer.",
+              "targetWord": "lawyer"
+            },
+            {
+              "zh": "他是一名艺术家。",
+              "answer": "He is an artist.",
+              "targetWord": "artist"
+            },
+            {
+              "zh": "他是一名记者。",
+              "answer": "He is a reporter.",
+              "targetWord": "reporter"
+            },
+            {
+              "zh": "他是个勤奋的员工。",
+              "answer": "He is a hard worker.",
+              "targetWord": "worker"
+            },
+            {
+              "zh": "我老板很忙。",
+              "answer": "My boss is very busy.",
+              "targetWord": "boss"
+            },
+            {
+              "zh": "她是一名经理。",
+              "answer": "She is a manager.",
+              "targetWord": "manager"
+            },
+            {
+              "zh": "他是个好厨师。",
+              "answer": "He is a good cook.",
+              "targetWord": "cook"
+            },
+            {
+              "zh": "他是一名公交车司机。",
+              "answer": "He is a bus driver.",
+              "targetWord": "driver"
+            },
+            {
+              "zh": "他是个农民。",
+              "answer": "He is a farmer.",
+              "targetWord": "farmer"
+            },
+            {
+              "zh": "报警！",
+              "answer": "Call the police!",
+              "targetWord": "police"
+            }
+          ]
+        },
+        {
+          "id": "cs_28",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "职业身份 · 英→中理解",
+          "chunk": "boss / manager / cook / driver / farmer",
+          "chunkMeaning": "老板 / 经理 / 厨师/做饭 / 司机 / 农民",
+          "items": [
+            {
+              "zh": "我老板很忙。",
+              "answer": "My boss is very busy.",
+              "targetWord": "boss"
+            },
+            {
+              "zh": "她是一名经理。",
+              "answer": "She is a manager.",
+              "targetWord": "manager"
+            },
+            {
+              "zh": "他是个好厨师。",
+              "answer": "He is a good cook.",
+              "targetWord": "cook"
+            },
+            {
+              "zh": "他是一名公交车司机。",
+              "answer": "He is a bus driver.",
+              "targetWord": "driver"
+            },
+            {
+              "zh": "他是个农民。",
+              "answer": "He is a farmer.",
+              "targetWord": "farmer"
+            }
+          ]
+        },
+        {
+          "id": "pd_14",
+          "type": "pattern_drill",
+          "title": "职业身份 · 句型操练",
+          "pattern": "She is a [word]",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "她是一名律师。",
+              "answer": "She is a lawyer.",
+              "slotValues": {
+                "word": "lawyer"
+              }
+            },
+            {
+              "zh": "他是一名艺术家。",
+              "answer": "He is an artist.",
+              "slotValues": {
+                "word": "artist"
+              }
+            },
+            {
+              "zh": "他是一名记者。",
+              "answer": "He is a reporter.",
+              "slotValues": {
+                "word": "reporter"
+              }
+            },
+            {
+              "zh": "他是个勤奋的员工。",
+              "answer": "He is a hard worker.",
+              "slotValues": {
+                "word": "worker"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_14",
+          "type": "sentence_decomposition",
+          "title": "职业身份 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"cook\" (厨师/做饭)",
+              "en": "He is a good cook.",
+              "zh": "他是个好厨师。",
+              "highlight": "cook",
+              "hint": "厨师/做饭"
+            },
+            {
+              "level": 2,
+              "label": "理解\"driver\" (司机)",
+              "en": "He is a bus driver.",
+              "zh": "他是一名公交车司机。",
+              "highlight": "driver",
+              "hint": "司机"
+            },
+            {
+              "level": 3,
+              "label": "理解\"farmer\" (农民)",
+              "en": "He is a farmer.",
+              "zh": "他是个农民。",
+              "highlight": "farmer",
+              "hint": "农民"
+            }
+          ]
+        },
+        {
+          "id": "vsb_14",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"lawyer\" 造不同句子",
+          "targetWord": "lawyer",
+          "targetMeaning": "律师",
+          "items": [
+            {
+              "zh": "她是一名律师。",
+              "answer": "She is a lawyer.",
+              "targetWord": "lawyer"
+            },
+            {
+              "zh": "我想当律师。",
+              "answer": "I want to be a lawyer.",
+              "targetWord": "lawyer"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "外表性格": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_29",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "外表性格 · 中→英输出",
+          "chunk": "tall / honest / young / kind",
+          "chunkMeaning": "高的 / 诚实的 / 年轻的 / 善良的",
+          "items": [
+            {
+              "zh": "他很高。",
+              "answer": "He is very tall.",
+              "targetWord": "tall"
+            },
+            {
+              "zh": "他很诚实。",
+              "answer": "He is very honest.",
+              "targetWord": "honest"
+            },
+            {
+              "zh": "她很年轻。",
+              "answer": "She is very young.",
+              "targetWord": "young"
+            },
+            {
+              "zh": "她很善良。",
+              "answer": "She is very kind.",
+              "targetWord": "kind"
+            },
+            {
+              "zh": "他很聪明。",
+              "answer": "He is very smart.",
+              "targetWord": "smart"
+            },
+            {
+              "zh": "他很有趣。",
+              "answer": "He is very funny.",
+              "targetWord": "funny"
+            },
+            {
+              "zh": "她很友好。",
+              "answer": "She is very friendly.",
+              "targetWord": "friendly"
+            },
+            {
+              "zh": "他很强壮。",
+              "answer": "He is very strong.",
+              "targetWord": "strong"
+            },
+            {
+              "zh": "他很帅。",
+              "answer": "He is very handsome.",
+              "targetWord": "handsome"
+            },
+            {
+              "zh": "他人不错。",
+              "answer": "He is a nice person.",
+              "targetWord": "nice"
+            }
+          ]
+        },
+        {
+          "id": "cs_30",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "外表性格 · 英→中理解",
+          "chunk": "smart / funny / friendly / strong / handsome",
+          "chunkMeaning": "聪明的 / 有趣的/好笑的 / 友好的 / 强壮的 / 英俊的/帅气的",
+          "items": [
+            {
+              "zh": "他很聪明。",
+              "answer": "He is very smart.",
+              "targetWord": "smart"
+            },
+            {
+              "zh": "他很有趣。",
+              "answer": "He is very funny.",
+              "targetWord": "funny"
+            },
+            {
+              "zh": "她很友好。",
+              "answer": "She is very friendly.",
+              "targetWord": "friendly"
+            },
+            {
+              "zh": "他很强壮。",
+              "answer": "He is very strong.",
+              "targetWord": "strong"
+            },
+            {
+              "zh": "他很帅。",
+              "answer": "He is very handsome.",
+              "targetWord": "handsome"
+            }
+          ]
+        },
+        {
+          "id": "pd_15",
+          "type": "pattern_drill",
+          "title": "外表性格 · 句型操练",
+          "pattern": "He is very [word]",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "他很高。",
+              "answer": "He is very tall.",
+              "slotValues": {
+                "word": "tall"
+              }
+            },
+            {
+              "zh": "他很诚实。",
+              "answer": "He is very honest.",
+              "slotValues": {
+                "word": "honest"
+              }
+            },
+            {
+              "zh": "她很年轻。",
+              "answer": "She is very young.",
+              "slotValues": {
+                "word": "young"
+              }
+            },
+            {
+              "zh": "她很善良。",
+              "answer": "She is very kind.",
+              "slotValues": {
+                "word": "kind"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_15",
+          "type": "sentence_decomposition",
+          "title": "外表性格 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"friendly\" (友好的)",
+              "en": "She is very friendly.",
+              "zh": "她很友好。",
+              "highlight": "friendly",
+              "hint": "友好的"
+            },
+            {
+              "level": 2,
+              "label": "理解\"strong\" (强壮的)",
+              "en": "He is very strong.",
+              "zh": "他很强壮。",
+              "highlight": "strong",
+              "hint": "强壮的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"handsome\" (英俊的/帅气的)",
+              "en": "He is very handsome.",
+              "zh": "他很帅。",
+              "highlight": "handsome",
+              "hint": "英俊的/帅气的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_15",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"tall\" 造不同句子",
+          "targetWord": "tall",
+          "targetMeaning": "高的",
+          "items": [
+            {
+              "zh": "他很高。",
+              "answer": "He is very tall.",
+              "targetWord": "tall"
+            },
+            {
+              "zh": "她比我高。",
+              "answer": "She is taller than me.",
+              "targetWord": "tall"
+            }
           ]
         }
       ]
@@ -399,75 +2980,192 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_31",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用英语打招呼",
-          "chunk": "Good morning / Hello / Hi",
-          "chunkMeaning": "早上好 / 你好 / 嗨",
+          "title": "打招呼与告别 · 中→英输出",
+          "chunk": "hi / goodbye / good morning / good afternoon",
+          "chunkMeaning": "嗨/你好 / 再见 / 早上好 / 下午好",
           "items": [
-            { "zh": "早上好！", "answer": "Good morning!" },
-            { "zh": "你好！", "answer": "Hello!" },
-            { "zh": "下午好！", "answer": "Good afternoon!" },
-            { "zh": "晚上好！", "answer": "Good evening!" }
+            {
+              "zh": "嗨！你好吗？",
+              "answer": "Hi! How are you?",
+              "targetWord": "hi"
+            },
+            {
+              "zh": "再见！回头见！",
+              "answer": "Goodbye! See you later!",
+              "targetWord": "goodbye"
+            },
+            {
+              "zh": "早上好！你今天怎么样？",
+              "answer": "Good morning! How are you today?",
+              "targetWord": "good morning"
+            },
+            {
+              "zh": "下午好！很高兴见到你。",
+              "answer": "Good afternoon! Nice to see you.",
+              "targetWord": "good afternoon"
+            },
+            {
+              "zh": "晚上好！你今天过得怎么样？",
+              "answer": "Good evening! How was your day?",
+              "targetWord": "good evening"
+            },
+            {
+              "zh": "很高兴认识你！—我也是。",
+              "answer": "Nice to meet you!—Nice to meet you too.",
+              "targetWord": "nice to meet you"
+            },
+            {
+              "zh": "回头见！—再见！",
+              "answer": "See you later!—See you!",
+              "targetWord": "see you later"
+            },
+            {
+              "zh": "保重！—我会的。拜！",
+              "answer": "Take care!—I will. Bye!",
+              "targetWord": "take care"
+            },
+            {
+              "zh": "欢迎！请进。",
+              "answer": "Welcome! Please come in.",
+              "targetWord": "welcome"
+            },
+            {
+              "zh": "祝你愉快！—你也是！",
+              "answer": "Have a nice day!—You too!",
+              "targetWord": "have a nice day"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_32",
           "type": "chunk_substitution",
           "kind": "word",
-          "direction": "zh_to_en",
-          "title": "用英语告别和回应",
-          "chunk": "Goodbye / See you",
-          "chunkMeaning": "再见 / 回头见",
+          "direction": "en_to_zh",
+          "title": "打招呼与告别 · 英→中理解",
+          "chunk": "good evening / nice to meet you / see you later / take care / welcome",
+          "chunkMeaning": "晚上好 / 很高兴认识你 / 回头见 / 保重 / 欢迎",
           "items": [
-            { "zh": "再见！", "answer": "Goodbye!" },
-            { "zh": "拜拜！", "answer": "Bye-bye!" },
-            { "zh": "明天见！", "answer": "See you tomorrow!" },
-            { "zh": "回头见！", "answer": "See you later!" },
-            { "zh": "下周见！", "answer": "See you next week!" }
+            {
+              "zh": "晚上好！你今天过得怎么样？",
+              "answer": "Good evening! How was your day?",
+              "targetWord": "good evening"
+            },
+            {
+              "zh": "很高兴认识你！—我也是。",
+              "answer": "Nice to meet you!—Nice to meet you too.",
+              "targetWord": "nice to meet you"
+            },
+            {
+              "zh": "回头见！—再见！",
+              "answer": "See you later!—See you!",
+              "targetWord": "see you later"
+            },
+            {
+              "zh": "保重！—我会的。拜！",
+              "answer": "Take care!—I will. Bye!",
+              "targetWord": "take care"
+            },
+            {
+              "zh": "欢迎！请进。",
+              "answer": "Welcome! Please come in.",
+              "targetWord": "welcome"
+            }
           ]
         },
         {
-          "id": "cs_zh_2",
-          "type": "chunk_substitution",
-          "kind": "word",
-          "direction": "zh_to_en",
-          "title": "用英语表达欢迎和关心",
-          "chunk": "Nice to / Take care / Welcome",
-          "chunkMeaning": "很高兴... / 保重 / 欢迎",
-          "items": [
-            { "zh": "很高兴认识你！", "answer": "Nice to meet you!" },
-            { "zh": "保重！", "answer": "Take care!" },
-            { "zh": "欢迎！请进。", "answer": "Welcome! Please come in." },
-            { "zh": "欢迎来我家！", "answer": "Welcome to my home!" },
-            { "zh": "很高兴再次见到你！", "answer": "Nice to see you again!" }
-          ]
-        },
-        {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "问候对话逐步扩展",
-          "levels": [
-            { "level": 1, "label": "打招呼", "en": "Good morning!", "zh": "早上好！" },
-            { "level": 2, "label": "问候", "en": "Good morning! How are you?", "zh": "早上好！你好吗？", "highlight": "How are you?", "hint": "加上问候" },
-            { "level": 3, "label": "告别", "en": "Good morning! How are you? I am fine. See you later!", "zh": "早上好！你好吗？我很好。回头见！", "highlight": "See you later!", "hint": "加告别" },
-            { "level": 4, "label": "加祝福", "en": "Good morning! How are you? I am fine. See you later! Have a nice day!", "zh": "早上好！你好吗？我很好。回头见！祝你愉快！", "highlight": "Have a nice day!", "hint": "加上祝福" }
-          ]
-        },
-        {
-          "id": "pd_1",
+          "id": "pd_16",
           "type": "pattern_drill",
-          "title": "问候时间替换操练",
-          "pattern": "Good [time_of_day]!",
-          "patternMeaning": "...好！",
-          "slots": ["time_of_day"],
+          "title": "打招呼与告别 · 句型操练",
+          "pattern": "[word] How are you",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "早上好！", "answer": "Good morning!", "slotValues": { "time_of_day": "morning" } },
-            { "zh": "下午好！", "answer": "Good afternoon!", "slotValues": { "time_of_day": "afternoon" } },
-            { "zh": "晚上好！", "answer": "Good evening!", "slotValues": { "time_of_day": "evening" } }
+            {
+              "zh": "嗨！你好吗？",
+              "answer": "Hi! How are you?",
+              "slotValues": {
+                "word": "hi"
+              }
+            },
+            {
+              "zh": "再见！回头见！",
+              "answer": "Goodbye! See you later!",
+              "slotValues": {
+                "word": "goodbye"
+              }
+            },
+            {
+              "zh": "早上好！你今天怎么样？",
+              "answer": "Good morning! How are you today?",
+              "slotValues": {
+                "word": "good morning"
+              }
+            },
+            {
+              "zh": "下午好！很高兴见到你。",
+              "answer": "Good afternoon! Nice to see you.",
+              "slotValues": {
+                "word": "good afternoon"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_16",
+          "type": "sentence_decomposition",
+          "title": "打招呼与告别 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"see you later\" (回头见)",
+              "en": "See you later!—See you!",
+              "zh": "回头见！—再见！",
+              "highlight": "see you later",
+              "hint": "回头见"
+            },
+            {
+              "level": 2,
+              "label": "理解\"take care\" (保重)",
+              "en": "Take care!—I will. Bye!",
+              "zh": "保重！—我会的。拜！",
+              "highlight": "take care",
+              "hint": "保重"
+            },
+            {
+              "level": 3,
+              "label": "理解\"welcome\" (欢迎)",
+              "en": "Welcome! Please come in.",
+              "zh": "欢迎！请进。",
+              "highlight": "welcome",
+              "hint": "欢迎"
+            }
+          ]
+        },
+        {
+          "id": "vsb_16",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"hi\" 造不同句子",
+          "targetWord": "hi",
+          "targetMeaning": "嗨/你好",
+          "items": [
+            {
+              "zh": "嗨！你好吗？",
+              "answer": "Hi! How are you?",
+              "targetWord": "hi"
+            },
+            {
+              "zh": "嗨！很高兴认识你。",
+              "answer": "Hi there! Nice to meet you.",
+              "targetWord": "hi"
+            }
           ]
         }
       ]
@@ -479,76 +3177,2753 @@
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_33",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "随意问候",
-          "chunk": "How's it going? / What's up?",
-          "chunkMeaning": "最近怎么样？/ 怎么样？",
+          "title": "简单闲聊 · 中→英输出",
+          "chunk": "how's it going / what's up / plans / weekend",
+          "chunkMeaning": "最近怎么样 / 怎么样 / 计划/打算 / 周末",
           "items": [
-            { "zh": "最近怎么样？——还不错。", "answer": "How's it going? — Pretty good." },
-            { "zh": "最近怎么样？——还行。", "answer": "How's it going? — Not bad." },
-            { "zh": "怎么样？——没什么。", "answer": "What's up? — Not much." },
-            { "zh": "有什么新鲜事吗？——没什么。", "answer": "What's new? — Nothing much." },
-            { "zh": "一切都好吗？——挺好的。", "answer": "How's everything? — Great." }
+            {
+              "zh": "最近怎么样？—还不错。",
+              "answer": "How's it going?—Pretty good.",
+              "targetWord": "how's it going"
+            },
+            {
+              "zh": "怎么样？—没什么。",
+              "answer": "What's up?—Not much.",
+              "targetWord": "what's up"
+            },
+            {
+              "zh": "今天有什么打算？",
+              "answer": "Any plans for today?",
+              "targetWord": "plans"
+            },
+            {
+              "zh": "你周末怎么样？—很棒！",
+              "answer": "How was your weekend?—It was great!",
+              "targetWord": "weekend"
+            },
+            {
+              "zh": "好久不见！你怎么样？",
+              "answer": "Long time no see! How are you?",
+              "targetWord": "long time no see"
+            },
+            {
+              "zh": "很高兴再次见到你！",
+              "answer": "It's nice to see you again!",
+              "targetWord": "again"
+            },
+            {
+              "zh": "你的家乡在哪里？",
+              "answer": "Where is your hometown?",
+              "targetWord": "hometown"
+            },
+            {
+              "zh": "假期过得怎么样？",
+              "answer": "How was your vacation?",
+              "targetWord": "vacation"
+            },
+            {
+              "zh": "你的爱好是什么？—我喜欢阅读。",
+              "answer": "What's your hobby?—I like reading.",
+              "targetWord": "hobby"
+            },
+            {
+              "zh": "你空闲时间做什么？",
+              "answer": "What do you do in your free time?",
+              "targetWord": "free time"
+            }
           ]
         },
         {
-          "id": "cs_en_1",
+          "id": "cs_34",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "en_to_zh",
-          "title": "英译中理解",
-          "chunk": "Small talk phrases",
-          "chunkMeaning": "闲聊短语",
+          "title": "简单闲聊 · 英→中理解",
+          "chunk": "long time no see / again / hometown / vacation / hobby",
+          "chunkMeaning": "好久不见 / 再次/又 / 家乡 / 假期/度假 / 爱好",
           "items": [
-            { "zh": "今天天气真好！", "answer": "Nice weather today!" },
-            { "zh": "你周末过得怎么样？", "answer": "How was your weekend?" },
-            { "zh": "你来自哪里？", "answer": "Where are you from?" },
-            { "zh": "你是做什么的？", "answer": "What do you do?" },
-            { "zh": "很高兴再次见到你！", "answer": "It's nice to see you again!" }
+            {
+              "zh": "好久不见！你怎么样？",
+              "answer": "Long time no see! How are you?",
+              "targetWord": "long time no see"
+            },
+            {
+              "zh": "很高兴再次见到你！",
+              "answer": "It's nice to see you again!",
+              "targetWord": "again"
+            },
+            {
+              "zh": "你的家乡在哪里？",
+              "answer": "Where is your hometown?",
+              "targetWord": "hometown"
+            },
+            {
+              "zh": "假期过得怎么样？",
+              "answer": "How was your vacation?",
+              "targetWord": "vacation"
+            },
+            {
+              "zh": "你的爱好是什么？—我喜欢阅读。",
+              "answer": "What's your hobby?—I like reading.",
+              "targetWord": "hobby"
+            }
           ]
         },
         {
-          "id": "cs_zh_2",
+          "id": "pd_17",
+          "type": "pattern_drill",
+          "title": "简单闲聊 · 句型操练",
+          "pattern": "[word]—Pretty good",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "最近怎么样？—还不错。",
+              "answer": "How's it going?—Pretty good.",
+              "slotValues": {
+                "word": "how's it going"
+              }
+            },
+            {
+              "zh": "怎么样？—没什么。",
+              "answer": "What's up?—Not much.",
+              "slotValues": {
+                "word": "what's up"
+              }
+            },
+            {
+              "zh": "今天有什么打算？",
+              "answer": "Any plans for today?",
+              "slotValues": {
+                "word": "plans"
+              }
+            },
+            {
+              "zh": "你周末怎么样？—很棒！",
+              "answer": "How was your weekend?—It was great!",
+              "slotValues": {
+                "word": "weekend"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_17",
+          "type": "sentence_decomposition",
+          "title": "简单闲聊 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"hometown\" (家乡)",
+              "en": "Where is your hometown?",
+              "zh": "你的家乡在哪里？",
+              "highlight": "hometown",
+              "hint": "家乡"
+            },
+            {
+              "level": 2,
+              "label": "理解\"vacation\" (假期/度假)",
+              "en": "How was your vacation?",
+              "zh": "假期过得怎么样？",
+              "highlight": "vacation",
+              "hint": "假期/度假"
+            },
+            {
+              "level": 3,
+              "label": "理解\"hobby\" (爱好)",
+              "en": "What's your hobby?—I like reading.",
+              "zh": "你的爱好是什么？—我喜欢阅读。",
+              "highlight": "hobby",
+              "hint": "爱好"
+            }
+          ]
+        },
+        {
+          "id": "vsb_17",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"how's it going\" 造不同句子",
+          "targetWord": "how's it going",
+          "targetMeaning": "最近怎么样",
+          "items": [
+            {
+              "zh": "最近怎么样？—还不错。",
+              "answer": "How's it going?—Pretty good.",
+              "targetWord": "how's it going"
+            },
+            {
+              "zh": "最近怎么样？—还行。",
+              "answer": "How's it going?—Not bad.",
+              "targetWord": "how's it going"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "初次见面": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_35",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 How was 问候过去经历",
-          "chunk": "How was your ___? — It was great!",
-          "chunkMeaning": "你的...怎么样？—很棒！",
+          "title": "初次见面 · 中→英输出",
+          "chunk": "introduce / pleased / glad / first time",
+          "chunkMeaning": "介绍 / 高兴的 / 高兴的 / 第一次",
           "items": [
-            { "zh": "你周末过得怎么样？——很棒！", "answer": "How was your weekend? — It was great!" },
-            { "zh": "你今天过得怎么样？——很好！", "answer": "How was your day? — It was great!" },
-            { "zh": "你的假期怎么样？——太棒了！", "answer": "How was your vacation? — It was wonderful!" },
-            { "zh": "你的旅行怎么样？——还不错！", "answer": "How was your trip? — Pretty good!" }
+            {
+              "zh": "让我介绍一下自己。",
+              "answer": "Let me introduce myself.",
+              "targetWord": "introduce"
+            },
+            {
+              "zh": "很高兴认识你！",
+              "answer": "Pleased to meet you!",
+              "targetWord": "pleased"
+            },
+            {
+              "zh": "很高兴认识你！",
+              "answer": "Glad to meet you!",
+              "targetWord": "glad"
+            },
+            {
+              "zh": "这是我第一次来这里。",
+              "answer": "This is my first time here.",
+              "targetWord": "first time"
+            },
+            {
+              "zh": "你来自哪里？—我来自日本。",
+              "answer": "Where do you come from?—I come from Japan.",
+              "targetWord": "come from"
+            },
+            {
+              "zh": "我想去北京看看。",
+              "answer": "I want to visit Beijing.",
+              "targetWord": "visit"
+            },
+            {
+              "zh": "你待多久？",
+              "answer": "How long are you staying?",
+              "targetWord": "stay"
+            },
+            {
+              "zh": "我喜欢旅行。",
+              "answer": "I like to travel.",
+              "targetWord": "travel"
+            },
+            {
+              "zh": "欢迎来到中国！",
+              "answer": "Welcome to China!",
+              "targetWord": "welcome to"
+            },
+            {
+              "zh": "祝你待得愉快！",
+              "answer": "Enjoy your stay!",
+              "targetWord": "enjoy"
+            }
           ]
         },
         {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "闲聊对话逐步扩展",
-          "levels": [
-            { "level": 1, "label": "随意问候", "en": "How's it going? — Pretty good.", "zh": "最近怎么样？——还不错。" },
-            { "level": 2, "label": "加天气", "en": "How's it going? — Pretty good. Nice weather today!", "zh": "最近怎么样？——还不错。今天天气真好！", "highlight": "Nice weather today!", "hint": "聊聊天气" },
-            { "level": 3, "label": "加来源", "en": "How's it going? — Pretty good. Nice weather today! Where are you from?", "zh": "最近怎么样？——还不错。今天天气真好！你来自哪里？", "highlight": "Where are you from?", "hint": "问对方来自哪里" },
-            { "level": 4, "label": "加职业", "en": "How's it going? — Pretty good. Nice weather today! Where are you from? What do you do?", "zh": "最近怎么样？——还不错。今天天气真好！你来自哪里？你是做什么的？", "highlight": "What do you do?", "hint": "问对方的职业" }
+          "id": "cs_36",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "初次见面 · 英→中理解",
+          "chunk": "come from / visit / stay / travel / welcome to",
+          "chunkMeaning": "来自 / 参观/拜访 / 待/停留 / 旅行 / 欢迎来到",
+          "items": [
+            {
+              "zh": "你来自哪里？—我来自日本。",
+              "answer": "Where do you come from?—I come from Japan.",
+              "targetWord": "come from"
+            },
+            {
+              "zh": "我想去北京看看。",
+              "answer": "I want to visit Beijing.",
+              "targetWord": "visit"
+            },
+            {
+              "zh": "你待多久？",
+              "answer": "How long are you staying?",
+              "targetWord": "stay"
+            },
+            {
+              "zh": "我喜欢旅行。",
+              "answer": "I like to travel.",
+              "targetWord": "travel"
+            },
+            {
+              "zh": "欢迎来到中国！",
+              "answer": "Welcome to China!",
+              "targetWord": "welcome to"
+            }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "pd_18",
           "type": "pattern_drill",
-          "title": "Where / What 问句操练",
-          "pattern": "[question]? — I'm [answer].",
-          "patternMeaning": "...？——我...",
-          "slots": ["question", "answer"],
+          "title": "初次见面 · 句型操练",
+          "pattern": "Let me [word] myself",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
           "direction": "zh_to_en",
           "items": [
-            { "zh": "你来自哪里？——我来自中国。", "answer": "Where are you from? — I'm from China.", "slotValues": { "question": "Where are you from", "answer": "from China" } },
-            { "zh": "你是做什么的？——我是学生。", "answer": "What do you do? — I'm a student.", "slotValues": { "question": "What do you do", "answer": "a student" } },
-            { "zh": "你来自哪里？——我来自日本。", "answer": "Where are you from? — I'm from Japan.", "slotValues": { "question": "Where are you from", "answer": "from Japan" } },
-            { "zh": "你是做什么的？——我是老师。", "answer": "What do you do? — I'm a teacher.", "slotValues": { "question": "What do you do", "answer": "a teacher" } }
+            {
+              "zh": "让我介绍一下自己。",
+              "answer": "Let me introduce myself.",
+              "slotValues": {
+                "word": "introduce"
+              }
+            },
+            {
+              "zh": "很高兴认识你！",
+              "answer": "Pleased to meet you!",
+              "slotValues": {
+                "word": "pleased"
+              }
+            },
+            {
+              "zh": "很高兴认识你！",
+              "answer": "Glad to meet you!",
+              "slotValues": {
+                "word": "glad"
+              }
+            },
+            {
+              "zh": "这是我第一次来这里。",
+              "answer": "This is my first time here.",
+              "slotValues": {
+                "word": "first time"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_18",
+          "type": "sentence_decomposition",
+          "title": "初次见面 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"stay\" (待/停留)",
+              "en": "How long are you staying?",
+              "zh": "你待多久？",
+              "highlight": "stay",
+              "hint": "待/停留"
+            },
+            {
+              "level": 2,
+              "label": "理解\"travel\" (旅行)",
+              "en": "I like to travel.",
+              "zh": "我喜欢旅行。",
+              "highlight": "travel",
+              "hint": "旅行"
+            },
+            {
+              "level": 3,
+              "label": "理解\"welcome to\" (欢迎来到)",
+              "en": "Welcome to China!",
+              "zh": "欢迎来到中国！",
+              "highlight": "welcome to",
+              "hint": "欢迎来到"
+            }
+          ]
+        },
+        {
+          "id": "vsb_18",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"introduce\" 造不同句子",
+          "targetWord": "introduce",
+          "targetMeaning": "介绍",
+          "items": [
+            {
+              "zh": "让我介绍一下自己。",
+              "answer": "Let me introduce myself.",
+              "targetWord": "introduce"
+            },
+            {
+              "zh": "我想介绍我的朋友。",
+              "answer": "I want to introduce my friend.",
+              "targetWord": "introduce"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "礼貌用语": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_37",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "礼貌用语 · 中→英输出",
+          "chunk": "thanks / my pleasure / never mind / excuse me",
+          "chunkMeaning": "谢谢(口语) / 我的荣幸/乐意效劳 / 没关系/别在意 / 打扰一下/劳驾",
+          "items": [
+            {
+              "zh": "多谢！",
+              "answer": "Thanks a lot!",
+              "targetWord": "thanks"
+            },
+            {
+              "zh": "谢谢！—我的荣幸。",
+              "answer": "Thank you!—My pleasure.",
+              "targetWord": "my pleasure"
+            },
+            {
+              "zh": "抱歉！—没关系。",
+              "answer": "Sorry!—Never mind.",
+              "targetWord": "never mind"
+            },
+            {
+              "zh": "打扰一下车站在哪？",
+              "answer": "Excuse me where is the station?",
+              "targetWord": "excuse me"
+            },
+            {
+              "zh": "谢谢！—不客气。",
+              "answer": "Thank you!—You're welcome.",
+              "targetWord": "you're welcome"
+            },
+            {
+              "zh": "你能帮我吗？—没问题。",
+              "answer": "Can you help me?—No problem.",
+              "targetWord": "no problem"
+            },
+            {
+              "zh": "请再说一遍？",
+              "answer": "Pardon? Can you say that again?",
+              "targetWord": "pardon"
+            },
+            {
+              "zh": "我可以进来吗？",
+              "answer": "May I come in?",
+              "targetWord": "may I"
+            },
+            {
+              "zh": "请问你能帮我吗？",
+              "answer": "Could you help me please?",
+              "targetWord": "could you"
+            },
+            {
+              "zh": "你想喝点茶吗？",
+              "answer": "Would you like some tea?",
+              "targetWord": "would you"
+            }
+          ]
+        },
+        {
+          "id": "cs_38",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "礼貌用语 · 英→中理解",
+          "chunk": "you're welcome / no problem / pardon / may I / could you",
+          "chunkMeaning": "不客气 / 没问题 / 请再说一遍 / 我可以...吗 / 你能...吗",
+          "items": [
+            {
+              "zh": "谢谢！—不客气。",
+              "answer": "Thank you!—You're welcome.",
+              "targetWord": "you're welcome"
+            },
+            {
+              "zh": "你能帮我吗？—没问题。",
+              "answer": "Can you help me?—No problem.",
+              "targetWord": "no problem"
+            },
+            {
+              "zh": "请再说一遍？",
+              "answer": "Pardon? Can you say that again?",
+              "targetWord": "pardon"
+            },
+            {
+              "zh": "我可以进来吗？",
+              "answer": "May I come in?",
+              "targetWord": "may I"
+            },
+            {
+              "zh": "请问你能帮我吗？",
+              "answer": "Could you help me please?",
+              "targetWord": "could you"
+            }
+          ]
+        },
+        {
+          "id": "pd_19",
+          "type": "pattern_drill",
+          "title": "礼貌用语 · 句型操练",
+          "pattern": "[word] a lot",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "多谢！",
+              "answer": "Thanks a lot!",
+              "slotValues": {
+                "word": "thanks"
+              }
+            },
+            {
+              "zh": "谢谢！—我的荣幸。",
+              "answer": "Thank you!—My pleasure.",
+              "slotValues": {
+                "word": "my pleasure"
+              }
+            },
+            {
+              "zh": "抱歉！—没关系。",
+              "answer": "Sorry!—Never mind.",
+              "slotValues": {
+                "word": "never mind"
+              }
+            },
+            {
+              "zh": "打扰一下车站在哪？",
+              "answer": "Excuse me where is the station?",
+              "slotValues": {
+                "word": "excuse me"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_19",
+          "type": "sentence_decomposition",
+          "title": "礼貌用语 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"pardon\" (请再说一遍)",
+              "en": "Pardon? Can you say that again?",
+              "zh": "请再说一遍？",
+              "highlight": "pardon",
+              "hint": "请再说一遍"
+            },
+            {
+              "level": 2,
+              "label": "理解\"may I\" (我可以...吗)",
+              "en": "May I come in?",
+              "zh": "我可以进来吗？",
+              "highlight": "may I",
+              "hint": "我可以...吗"
+            },
+            {
+              "level": 3,
+              "label": "理解\"could you\" (你能...吗)",
+              "en": "Could you help me please?",
+              "zh": "请问你能帮我吗？",
+              "highlight": "could you",
+              "hint": "你能...吗"
+            }
+          ]
+        },
+        {
+          "id": "vsb_19",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"thanks\" 造不同句子",
+          "targetWord": "thanks",
+          "targetMeaning": "谢谢(口语)",
+          "items": [
+            {
+              "zh": "多谢！",
+              "answer": "Thanks a lot!",
+              "targetWord": "thanks"
+            },
+            {
+              "zh": "谢谢你的帮助。",
+              "answer": "Thanks for your help.",
+              "targetWord": "thanks"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "问候与回应": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_39",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "问候与回应 · 中→英输出",
+          "chunk": "how are you / I'm fine / not bad / pretty good",
+          "chunkMeaning": "你好吗 / 我很好 / 还不错 / 挺好的",
+          "items": [
+            {
+              "zh": "你好吗？—我很好谢谢。",
+              "answer": "How are you?—I'm fine thank you.",
+              "targetWord": "how are you"
+            },
+            {
+              "zh": "我很好谢谢。你呢？",
+              "answer": "I'm fine thanks. And you?",
+              "targetWord": "I'm fine"
+            },
+            {
+              "zh": "你好吗？—还不错。",
+              "answer": "How are you?—Not bad.",
+              "targetWord": "not bad"
+            },
+            {
+              "zh": "最近怎么样？—挺好的。",
+              "answer": "How's it going?—Pretty good.",
+              "targetWord": "pretty good"
+            },
+            {
+              "zh": "你好吗？—太棒了！",
+              "answer": "How are you?—Awesome!",
+              "targetWord": "awesome"
+            },
+            {
+              "zh": "你好吗？—很糟糕。",
+              "answer": "How are you?—Terrible.",
+              "targetWord": "terrible"
+            },
+            {
+              "zh": "你好吗？—一般般。",
+              "answer": "How are you?—So-so.",
+              "targetWord": "so-so"
+            },
+            {
+              "zh": "最近怎么样？—和平时一样。",
+              "answer": "How's it going?—Same as usual.",
+              "targetWord": "same as usual"
+            },
+            {
+              "zh": "最近怎么样？—还行吧。",
+              "answer": "How's it going?—Can't complain.",
+              "targetWord": "can't complain"
+            },
+            {
+              "zh": "我很好谢谢。你呢？",
+              "answer": "I'm fine thanks. And you?",
+              "targetWord": "and you"
+            }
+          ]
+        },
+        {
+          "id": "cs_40",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "问候与回应 · 英→中理解",
+          "chunk": "awesome / terrible / so-so / same as usual / can't complain",
+          "chunkMeaning": "太棒了/厉害 / 糟糕的 / 一般般 / 和平时一样 / 没什么可抱怨的",
+          "items": [
+            {
+              "zh": "你好吗？—太棒了！",
+              "answer": "How are you?—Awesome!",
+              "targetWord": "awesome"
+            },
+            {
+              "zh": "你好吗？—很糟糕。",
+              "answer": "How are you?—Terrible.",
+              "targetWord": "terrible"
+            },
+            {
+              "zh": "你好吗？—一般般。",
+              "answer": "How are you?—So-so.",
+              "targetWord": "so-so"
+            },
+            {
+              "zh": "最近怎么样？—和平时一样。",
+              "answer": "How's it going?—Same as usual.",
+              "targetWord": "same as usual"
+            },
+            {
+              "zh": "最近怎么样？—还行吧。",
+              "answer": "How's it going?—Can't complain.",
+              "targetWord": "can't complain"
+            }
+          ]
+        },
+        {
+          "id": "pd_20",
+          "type": "pattern_drill",
+          "title": "问候与回应 · 句型操练",
+          "pattern": "[word]—I'm fine thank you",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你好吗？—我很好谢谢。",
+              "answer": "How are you?—I'm fine thank you.",
+              "slotValues": {
+                "word": "how are you"
+              }
+            },
+            {
+              "zh": "我很好谢谢。你呢？",
+              "answer": "I'm fine thanks. And you?",
+              "slotValues": {
+                "word": "I'm fine"
+              }
+            },
+            {
+              "zh": "你好吗？—还不错。",
+              "answer": "How are you?—Not bad.",
+              "slotValues": {
+                "word": "not bad"
+              }
+            },
+            {
+              "zh": "最近怎么样？—挺好的。",
+              "answer": "How's it going?—Pretty good.",
+              "slotValues": {
+                "word": "pretty good"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_20",
+          "type": "sentence_decomposition",
+          "title": "问候与回应 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"so-so\" (一般般)",
+              "en": "How are you?—So-so.",
+              "zh": "你好吗？—一般般。",
+              "highlight": "so-so",
+              "hint": "一般般"
+            },
+            {
+              "level": 2,
+              "label": "理解\"same as usual\" (和平时一样)",
+              "en": "How's it going?—Same as usual.",
+              "zh": "最近怎么样？—和平时一样。",
+              "highlight": "same as usual",
+              "hint": "和平时一样"
+            },
+            {
+              "level": 3,
+              "label": "理解\"can't complain\" (没什么可抱怨的)",
+              "en": "How's it going?—Can't complain.",
+              "zh": "最近怎么样？—还行吧。",
+              "highlight": "can't complain",
+              "hint": "没什么可抱怨的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_20",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"how are you\" 造不同句子",
+          "targetWord": "how are you",
+          "targetMeaning": "你好吗",
+          "items": [
+            {
+              "zh": "你好吗？—我很好谢谢。",
+              "answer": "How are you?—I'm fine thank you.",
+              "targetWord": "how are you"
+            },
+            {
+              "zh": "你今天好吗？—很好！",
+              "answer": "How are you today?—I'm great!",
+              "targetWord": "how are you"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "数字1-20": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_41",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "数字1-20 · 中→英输出",
+          "chunk": "one / two / three / four",
+          "chunkMeaning": "一 / 二 / 三 / 四",
+          "items": [
+            {
+              "zh": "我有一个兄弟。",
+              "answer": "I have one brother.",
+              "targetWord": "one"
+            },
+            {
+              "zh": "我有两个姐妹。",
+              "answer": "I have two sisters.",
+              "targetWord": "two"
+            },
+            {
+              "zh": "我每天学三小时英语。",
+              "answer": "I study English three hours a day.",
+              "targetWord": "three"
+            },
+            {
+              "zh": "我家有四口人。",
+              "answer": "There are four people in my family.",
+              "targetWord": "four"
+            },
+            {
+              "zh": "给我五分钟。",
+              "answer": "Give me five minutes.",
+              "targetWord": "five"
+            },
+            {
+              "zh": "我六点起床。",
+              "answer": "I get up at six.",
+              "targetWord": "six"
+            },
+            {
+              "zh": "一周有七天。",
+              "answer": "There are seven days in a week.",
+              "targetWord": "seven"
+            },
+            {
+              "zh": "我每晚睡八小时。",
+              "answer": "I sleep eight hours every night.",
+              "targetWord": "eight"
+            },
+            {
+              "zh": "九点了。",
+              "answer": "It is nine o'clock.",
+              "targetWord": "nine"
+            },
+            {
+              "zh": "我十岁了。",
+              "answer": "I am ten years old.",
+              "targetWord": "ten"
+            }
+          ]
+        },
+        {
+          "id": "cs_42",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "数字1-20 · 英→中理解",
+          "chunk": "five / six / seven / eight / nine",
+          "chunkMeaning": "五 / 六 / 七 / 八 / 九",
+          "items": [
+            {
+              "zh": "给我五分钟。",
+              "answer": "Give me five minutes.",
+              "targetWord": "five"
+            },
+            {
+              "zh": "我六点起床。",
+              "answer": "I get up at six.",
+              "targetWord": "six"
+            },
+            {
+              "zh": "一周有七天。",
+              "answer": "There are seven days in a week.",
+              "targetWord": "seven"
+            },
+            {
+              "zh": "我每晚睡八小时。",
+              "answer": "I sleep eight hours every night.",
+              "targetWord": "eight"
+            },
+            {
+              "zh": "九点了。",
+              "answer": "It is nine o'clock.",
+              "targetWord": "nine"
+            }
+          ]
+        },
+        {
+          "id": "pd_21",
+          "type": "pattern_drill",
+          "title": "数字1-20 · 句型操练",
+          "pattern": "I have [word] brother",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我有一个兄弟。",
+              "answer": "I have one brother.",
+              "slotValues": {
+                "word": "one"
+              }
+            },
+            {
+              "zh": "我有两个姐妹。",
+              "answer": "I have two sisters.",
+              "slotValues": {
+                "word": "two"
+              }
+            },
+            {
+              "zh": "我每天学三小时英语。",
+              "answer": "I study English three hours a day.",
+              "slotValues": {
+                "word": "three"
+              }
+            },
+            {
+              "zh": "我家有四口人。",
+              "answer": "There are four people in my family.",
+              "slotValues": {
+                "word": "four"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_21",
+          "type": "sentence_decomposition",
+          "title": "数字1-20 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"seven\" (七)",
+              "en": "There are seven days in a week.",
+              "zh": "一周有七天。",
+              "highlight": "seven",
+              "hint": "七"
+            },
+            {
+              "level": 2,
+              "label": "理解\"eight\" (八)",
+              "en": "I sleep eight hours every night.",
+              "zh": "我每晚睡八小时。",
+              "highlight": "eight",
+              "hint": "八"
+            },
+            {
+              "level": 3,
+              "label": "理解\"nine\" (九)",
+              "en": "It is nine o'clock.",
+              "zh": "九点了。",
+              "highlight": "nine",
+              "hint": "九"
+            }
+          ]
+        },
+        {
+          "id": "vsb_21",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"one\" 造不同句子",
+          "targetWord": "one",
+          "targetMeaning": "一",
+          "items": [
+            {
+              "zh": "我有一个兄弟。",
+              "answer": "I have one brother.",
+              "targetWord": "one"
+            },
+            {
+              "zh": "请等一下。",
+              "answer": "One moment please.",
+              "targetWord": "one"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "数字21-100": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_43",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "数字21-100 · 中→英输出",
+          "chunk": "eleven / twelve / twenty / thirty",
+          "chunkMeaning": "十一 / 十二 / 二十 / 三十",
+          "items": [
+            {
+              "zh": "十一点了。",
+              "answer": "It is eleven o'clock.",
+              "targetWord": "eleven"
+            },
+            {
+              "zh": "一年有十二个月。",
+              "answer": "There are twelve months in a year.",
+              "targetWord": "twelve"
+            },
+            {
+              "zh": "我二十岁。",
+              "answer": "I am twenty years old.",
+              "targetWord": "twenty"
+            },
+            {
+              "zh": "我三十岁。",
+              "answer": "I am thirty years old.",
+              "targetWord": "thirty"
+            },
+            {
+              "zh": "他四十岁。",
+              "answer": "He is forty years old.",
+              "targetWord": "forty"
+            },
+            {
+              "zh": "我爸爸五十岁。",
+              "answer": "My father is fifty.",
+              "targetWord": "fifty"
+            },
+            {
+              "zh": "一百个人在这里。",
+              "answer": "One hundred people are here.",
+              "targetWord": "hundred"
+            },
+            {
+              "zh": "温度是零度。",
+              "answer": "The temperature is zero.",
+              "targetWord": "zero"
+            },
+            {
+              "zh": "一千个人来了。",
+              "answer": "One thousand people came.",
+              "targetWord": "thousand"
+            },
+            {
+              "zh": "从一数到十。",
+              "answer": "Count from one to ten.",
+              "targetWord": "count"
+            }
+          ]
+        },
+        {
+          "id": "cs_44",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "数字21-100 · 英→中理解",
+          "chunk": "forty / fifty / hundred / zero / thousand",
+          "chunkMeaning": "四十 / 五十 / 百 / 零 / 千",
+          "items": [
+            {
+              "zh": "他四十岁。",
+              "answer": "He is forty years old.",
+              "targetWord": "forty"
+            },
+            {
+              "zh": "我爸爸五十岁。",
+              "answer": "My father is fifty.",
+              "targetWord": "fifty"
+            },
+            {
+              "zh": "一百个人在这里。",
+              "answer": "One hundred people are here.",
+              "targetWord": "hundred"
+            },
+            {
+              "zh": "温度是零度。",
+              "answer": "The temperature is zero.",
+              "targetWord": "zero"
+            },
+            {
+              "zh": "一千个人来了。",
+              "answer": "One thousand people came.",
+              "targetWord": "thousand"
+            }
+          ]
+        },
+        {
+          "id": "pd_22",
+          "type": "pattern_drill",
+          "title": "数字21-100 · 句型操练",
+          "pattern": "It is [word] o'clock",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "十一点了。",
+              "answer": "It is eleven o'clock.",
+              "slotValues": {
+                "word": "eleven"
+              }
+            },
+            {
+              "zh": "一年有十二个月。",
+              "answer": "There are twelve months in a year.",
+              "slotValues": {
+                "word": "twelve"
+              }
+            },
+            {
+              "zh": "我二十岁。",
+              "answer": "I am twenty years old.",
+              "slotValues": {
+                "word": "twenty"
+              }
+            },
+            {
+              "zh": "我三十岁。",
+              "answer": "I am thirty years old.",
+              "slotValues": {
+                "word": "thirty"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_22",
+          "type": "sentence_decomposition",
+          "title": "数字21-100 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"hundred\" (百)",
+              "en": "One hundred people are here.",
+              "zh": "一百个人在这里。",
+              "highlight": "hundred",
+              "hint": "百"
+            },
+            {
+              "level": 2,
+              "label": "理解\"zero\" (零)",
+              "en": "The temperature is zero.",
+              "zh": "温度是零度。",
+              "highlight": "zero",
+              "hint": "零"
+            },
+            {
+              "level": 3,
+              "label": "理解\"thousand\" (千)",
+              "en": "One thousand people came.",
+              "zh": "一千个人来了。",
+              "highlight": "thousand",
+              "hint": "千"
+            }
+          ]
+        },
+        {
+          "id": "vsb_22",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"eleven\" 造不同句子",
+          "targetWord": "eleven",
+          "targetMeaning": "十一",
+          "items": [
+            {
+              "zh": "十一点了。",
+              "answer": "It is eleven o'clock.",
+              "targetWord": "eleven"
+            },
+            {
+              "zh": "十一个学生在这里。",
+              "answer": "Eleven students are here.",
+              "targetWord": "eleven"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "时间表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_45",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "时间表达 · 中→英输出",
+          "chunk": "time / o'clock / half / quarter",
+          "chunkMeaning": "时间 / ...点(整) / 一半/半 / 四分之一/一刻",
+          "items": [
+            {
+              "zh": "几点了？",
+              "answer": "What time is it?",
+              "targetWord": "time"
+            },
+            {
+              "zh": "七点了。",
+              "answer": "It is seven o'clock.",
+              "targetWord": "o'clock"
+            },
+            {
+              "zh": "七点半了。",
+              "answer": "It is half past seven.",
+              "targetWord": "half"
+            },
+            {
+              "zh": "八点一刻了。",
+              "answer": "It is a quarter past eight.",
+              "targetWord": "quarter"
+            },
+            {
+              "zh": "我早上学习。",
+              "answer": "I study in the morning.",
+              "targetWord": "morning"
+            },
+            {
+              "zh": "我下午工作。",
+              "answer": "I work in the afternoon.",
+              "targetWord": "afternoon"
+            },
+            {
+              "zh": "我晚上看书。",
+              "answer": "I read in the evening.",
+              "targetWord": "evening"
+            },
+            {
+              "zh": "我晚上睡觉。",
+              "answer": "I sleep at night.",
+              "targetWord": "night"
+            },
+            {
+              "zh": "我中午吃午饭。",
+              "answer": "I have lunch at noon.",
+              "targetWord": "noon"
+            },
+            {
+              "zh": "我午夜前睡觉。",
+              "answer": "I go to bed before midnight.",
+              "targetWord": "midnight"
+            }
+          ]
+        },
+        {
+          "id": "cs_46",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "时间表达 · 英→中理解",
+          "chunk": "morning / afternoon / evening / night / noon",
+          "chunkMeaning": "早上/上午 / 下午 / 傍晚/晚上 / 夜晚/夜里 / 中午",
+          "items": [
+            {
+              "zh": "我早上学习。",
+              "answer": "I study in the morning.",
+              "targetWord": "morning"
+            },
+            {
+              "zh": "我下午工作。",
+              "answer": "I work in the afternoon.",
+              "targetWord": "afternoon"
+            },
+            {
+              "zh": "我晚上看书。",
+              "answer": "I read in the evening.",
+              "targetWord": "evening"
+            },
+            {
+              "zh": "我晚上睡觉。",
+              "answer": "I sleep at night.",
+              "targetWord": "night"
+            },
+            {
+              "zh": "我中午吃午饭。",
+              "answer": "I have lunch at noon.",
+              "targetWord": "noon"
+            }
+          ]
+        },
+        {
+          "id": "pd_23",
+          "type": "pattern_drill",
+          "title": "时间表达 · 句型操练",
+          "pattern": "What [word] is it",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "几点了？",
+              "answer": "What time is it?",
+              "slotValues": {
+                "word": "time"
+              }
+            },
+            {
+              "zh": "七点了。",
+              "answer": "It is seven o'clock.",
+              "slotValues": {
+                "word": "o'clock"
+              }
+            },
+            {
+              "zh": "七点半了。",
+              "answer": "It is half past seven.",
+              "slotValues": {
+                "word": "half"
+              }
+            },
+            {
+              "zh": "八点一刻了。",
+              "answer": "It is a quarter past eight.",
+              "slotValues": {
+                "word": "quarter"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_23",
+          "type": "sentence_decomposition",
+          "title": "时间表达 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"evening\" (傍晚/晚上)",
+              "en": "I read in the evening.",
+              "zh": "我晚上看书。",
+              "highlight": "evening",
+              "hint": "傍晚/晚上"
+            },
+            {
+              "level": 2,
+              "label": "理解\"night\" (夜晚/夜里)",
+              "en": "I sleep at night.",
+              "zh": "我晚上睡觉。",
+              "highlight": "night",
+              "hint": "夜晚/夜里"
+            },
+            {
+              "level": 3,
+              "label": "理解\"noon\" (中午)",
+              "en": "I have lunch at noon.",
+              "zh": "我中午吃午饭。",
+              "highlight": "noon",
+              "hint": "中午"
+            }
+          ]
+        },
+        {
+          "id": "vsb_23",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"time\" 造不同句子",
+          "targetWord": "time",
+          "targetMeaning": "时间",
+          "items": [
+            {
+              "zh": "几点了？",
+              "answer": "What time is it?",
+              "targetWord": "time"
+            },
+            {
+              "zh": "我没时间。",
+              "answer": "I don't have time.",
+              "targetWord": "time"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "日期与星期": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_47",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "日期与星期 · 中→英输出",
+          "chunk": "today / tomorrow / yesterday / week",
+          "chunkMeaning": "今天 / 明天 / 昨天 / 周/星期",
+          "items": [
+            {
+              "zh": "今天是星期一。",
+              "answer": "Today is Monday.",
+              "targetWord": "today"
+            },
+            {
+              "zh": "明天见！",
+              "answer": "See you tomorrow!",
+              "targetWord": "tomorrow"
+            },
+            {
+              "zh": "我昨天很忙。",
+              "answer": "I was busy yesterday.",
+              "targetWord": "yesterday"
+            },
+            {
+              "zh": "我每周工作五天。",
+              "answer": "I work five days a week.",
+              "targetWord": "week"
+            },
+            {
+              "zh": "我这个月很忙。",
+              "answer": "I am busy this month.",
+              "targetWord": "month"
+            },
+            {
+              "zh": "秋天是我最喜欢的季节。",
+              "answer": "Autumn is my favorite season.",
+              "targetWord": "season"
+            },
+            {
+              "zh": "我星期一上班。",
+              "answer": "I go to work on Monday.",
+              "targetWord": "Monday"
+            },
+            {
+              "zh": "我星期天休息。",
+              "answer": "I rest on Sunday.",
+              "targetWord": "Sunday"
+            },
+            {
+              "zh": "今天几号？",
+              "answer": "What is the date today?",
+              "targetWord": "date"
+            },
+            {
+              "zh": "看看日历。",
+              "answer": "Look at the calendar.",
+              "targetWord": "calendar"
+            }
+          ]
+        },
+        {
+          "id": "cs_48",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "日期与星期 · 英→中理解",
+          "chunk": "month / season / Monday / Sunday / date",
+          "chunkMeaning": "月/月份 / 季节 / 星期一 / 星期天 / 日期",
+          "items": [
+            {
+              "zh": "我这个月很忙。",
+              "answer": "I am busy this month.",
+              "targetWord": "month"
+            },
+            {
+              "zh": "秋天是我最喜欢的季节。",
+              "answer": "Autumn is my favorite season.",
+              "targetWord": "season"
+            },
+            {
+              "zh": "我星期一上班。",
+              "answer": "I go to work on Monday.",
+              "targetWord": "Monday"
+            },
+            {
+              "zh": "我星期天休息。",
+              "answer": "I rest on Sunday.",
+              "targetWord": "Sunday"
+            },
+            {
+              "zh": "今天几号？",
+              "answer": "What is the date today?",
+              "targetWord": "date"
+            }
+          ]
+        },
+        {
+          "id": "pd_24",
+          "type": "pattern_drill",
+          "title": "日期与星期 · 句型操练",
+          "pattern": "[word] is Monday",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "今天是星期一。",
+              "answer": "Today is Monday.",
+              "slotValues": {
+                "word": "today"
+              }
+            },
+            {
+              "zh": "明天见！",
+              "answer": "See you tomorrow!",
+              "slotValues": {
+                "word": "tomorrow"
+              }
+            },
+            {
+              "zh": "我昨天很忙。",
+              "answer": "I was busy yesterday.",
+              "slotValues": {
+                "word": "yesterday"
+              }
+            },
+            {
+              "zh": "我每周工作五天。",
+              "answer": "I work five days a week.",
+              "slotValues": {
+                "word": "week"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_24",
+          "type": "sentence_decomposition",
+          "title": "日期与星期 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"Monday\" (星期一)",
+              "en": "I go to work on Monday.",
+              "zh": "我星期一上班。",
+              "highlight": "Monday",
+              "hint": "星期一"
+            },
+            {
+              "level": 2,
+              "label": "理解\"Sunday\" (星期天)",
+              "en": "I rest on Sunday.",
+              "zh": "我星期天休息。",
+              "highlight": "Sunday",
+              "hint": "星期天"
+            },
+            {
+              "level": 3,
+              "label": "理解\"date\" (日期)",
+              "en": "What is the date today?",
+              "zh": "今天几号？",
+              "highlight": "date",
+              "hint": "日期"
+            }
+          ]
+        },
+        {
+          "id": "vsb_24",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"today\" 造不同句子",
+          "targetWord": "today",
+          "targetMeaning": "今天",
+          "items": [
+            {
+              "zh": "今天是星期一。",
+              "answer": "Today is Monday.",
+              "targetWord": "today"
+            },
+            {
+              "zh": "我今天很忙。",
+              "answer": "I'm very busy today.",
+              "targetWord": "today"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "年龄与数量": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_49",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "年龄与数量 · 中→英输出",
+          "chunk": "how old / how many / how much / age",
+          "chunkMeaning": "多大 / 多少(可数) / 多少(不可数)/多少钱 / 年龄",
+          "items": [
+            {
+              "zh": "你多大了？—我20。",
+              "answer": "How old are you?—I'm 20.",
+              "targetWord": "how old"
+            },
+            {
+              "zh": "这里有多少人？",
+              "answer": "How many people are here?",
+              "targetWord": "how many"
+            },
+            {
+              "zh": "这个多少钱？",
+              "answer": "How much is this?",
+              "targetWord": "how much"
+            },
+            {
+              "zh": "你的年龄是多少？",
+              "answer": "What is your age?",
+              "targetWord": "age"
+            },
+            {
+              "zh": "我有很多朋友。",
+              "answer": "I have a lot of friends.",
+              "targetWord": "a lot"
+            },
+            {
+              "zh": "我有几个问题。",
+              "answer": "I have a few questions.",
+              "targetWord": "a few"
+            },
+            {
+              "zh": "我需要一些水。",
+              "answer": "I need some water.",
+              "targetWord": "some"
+            },
+            {
+              "zh": "很多人住在这里。",
+              "answer": "Many people live here.",
+              "targetWord": "many"
+            },
+            {
+              "zh": "非常感谢！",
+              "answer": "Thank you very much!",
+              "targetWord": "much"
+            },
+            {
+              "zh": "够了。",
+              "answer": "That's enough.",
+              "targetWord": "enough"
+            }
+          ]
+        },
+        {
+          "id": "cs_50",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "年龄与数量 · 英→中理解",
+          "chunk": "a lot / a few / some / many / much",
+          "chunkMeaning": "很多 / 几个/一些 / 一些 / 许多(可数) / 许多(不可数)",
+          "items": [
+            {
+              "zh": "我有很多朋友。",
+              "answer": "I have a lot of friends.",
+              "targetWord": "a lot"
+            },
+            {
+              "zh": "我有几个问题。",
+              "answer": "I have a few questions.",
+              "targetWord": "a few"
+            },
+            {
+              "zh": "我需要一些水。",
+              "answer": "I need some water.",
+              "targetWord": "some"
+            },
+            {
+              "zh": "很多人住在这里。",
+              "answer": "Many people live here.",
+              "targetWord": "many"
+            },
+            {
+              "zh": "非常感谢！",
+              "answer": "Thank you very much!",
+              "targetWord": "much"
+            }
+          ]
+        },
+        {
+          "id": "pd_25",
+          "type": "pattern_drill",
+          "title": "年龄与数量 · 句型操练",
+          "pattern": "[word] are you—I'm 20",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你多大了？—我20。",
+              "answer": "How old are you?—I'm 20.",
+              "slotValues": {
+                "word": "how old"
+              }
+            },
+            {
+              "zh": "这里有多少人？",
+              "answer": "How many people are here?",
+              "slotValues": {
+                "word": "how many"
+              }
+            },
+            {
+              "zh": "这个多少钱？",
+              "answer": "How much is this?",
+              "slotValues": {
+                "word": "how much"
+              }
+            },
+            {
+              "zh": "你的年龄是多少？",
+              "answer": "What is your age?",
+              "slotValues": {
+                "word": "age"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_25",
+          "type": "sentence_decomposition",
+          "title": "年龄与数量 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"some\" (一些)",
+              "en": "I need some water.",
+              "zh": "我需要一些水。",
+              "highlight": "some",
+              "hint": "一些"
+            },
+            {
+              "level": 2,
+              "label": "理解\"many\" (许多(可数))",
+              "en": "Many people live here.",
+              "zh": "很多人住在这里。",
+              "highlight": "many",
+              "hint": "许多(可数)"
+            },
+            {
+              "level": 3,
+              "label": "理解\"much\" (许多(不可数))",
+              "en": "Thank you very much!",
+              "zh": "非常感谢！",
+              "highlight": "much",
+              "hint": "许多(不可数)"
+            }
+          ]
+        },
+        {
+          "id": "vsb_25",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"how old\" 造不同句子",
+          "targetWord": "how old",
+          "targetMeaning": "多大",
+          "items": [
+            {
+              "zh": "你多大了？—我20。",
+              "answer": "How old are you?—I'm 20.",
+              "targetWord": "how old"
+            },
+            {
+              "zh": "你弟弟多大了？",
+              "answer": "How old is your brother?",
+              "targetWord": "how old"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我想要": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_51",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我想要 · 中→英输出",
+          "chunk": "want / would like / need / wish",
+          "chunkMeaning": "想要 / 想要(礼貌) / 需要 / 希望/祝愿",
+          "items": [
+            {
+              "zh": "我想要一部新手机。",
+              "answer": "I want a new phone.",
+              "targetWord": "want"
+            },
+            {
+              "zh": "我想要点茶。",
+              "answer": "I would like some tea.",
+              "targetWord": "would like"
+            },
+            {
+              "zh": "我需要水。",
+              "answer": "I need water.",
+              "targetWord": "need"
+            },
+            {
+              "zh": "祝你生日快乐！",
+              "answer": "I wish you a happy birthday!",
+              "targetWord": "wish"
+            },
+            {
+              "zh": "我希望你一切都好。",
+              "answer": "I hope you are well.",
+              "targetWord": "hope"
+            },
+            {
+              "zh": "我计划去北京。",
+              "answer": "I plan to visit Beijing.",
+              "targetWord": "plan"
+            },
+            {
+              "zh": "我的梦想是环游世界。",
+              "answer": "My dream is to travel the world.",
+              "targetWord": "dream"
+            },
+            {
+              "zh": "我的目标是把英语说好。",
+              "answer": "My goal is to speak English well.",
+              "targetWord": "goal"
+            },
+            {
+              "zh": "比起咖啡我更喜欢茶。",
+              "answer": "I prefer tea to coffee.",
+              "targetWord": "prefer"
+            },
+            {
+              "zh": "请选一个。",
+              "answer": "Please choose one.",
+              "targetWord": "choose"
+            }
+          ]
+        },
+        {
+          "id": "cs_52",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我想要 · 英→中理解",
+          "chunk": "hope / plan / dream / goal / prefer",
+          "chunkMeaning": "希望 / 计划 / 梦想/做梦 / 目标 / 更喜欢",
+          "items": [
+            {
+              "zh": "我希望你一切都好。",
+              "answer": "I hope you are well.",
+              "targetWord": "hope"
+            },
+            {
+              "zh": "我计划去北京。",
+              "answer": "I plan to visit Beijing.",
+              "targetWord": "plan"
+            },
+            {
+              "zh": "我的梦想是环游世界。",
+              "answer": "My dream is to travel the world.",
+              "targetWord": "dream"
+            },
+            {
+              "zh": "我的目标是把英语说好。",
+              "answer": "My goal is to speak English well.",
+              "targetWord": "goal"
+            },
+            {
+              "zh": "比起咖啡我更喜欢茶。",
+              "answer": "I prefer tea to coffee.",
+              "targetWord": "prefer"
+            }
+          ]
+        },
+        {
+          "id": "pd_26",
+          "type": "pattern_drill",
+          "title": "我想要 · 句型操练",
+          "pattern": "I [word] a new phone",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我想要一部新手机。",
+              "answer": "I want a new phone.",
+              "slotValues": {
+                "word": "want"
+              }
+            },
+            {
+              "zh": "我想要点茶。",
+              "answer": "I would like some tea.",
+              "slotValues": {
+                "word": "would like"
+              }
+            },
+            {
+              "zh": "我需要水。",
+              "answer": "I need water.",
+              "slotValues": {
+                "word": "need"
+              }
+            },
+            {
+              "zh": "祝你生日快乐！",
+              "answer": "I wish you a happy birthday!",
+              "slotValues": {
+                "word": "wish"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_26",
+          "type": "sentence_decomposition",
+          "title": "我想要 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"dream\" (梦想/做梦)",
+              "en": "My dream is to travel the world.",
+              "zh": "我的梦想是环游世界。",
+              "highlight": "dream",
+              "hint": "梦想/做梦"
+            },
+            {
+              "level": 2,
+              "label": "理解\"goal\" (目标)",
+              "en": "My goal is to speak English well.",
+              "zh": "我的目标是把英语说好。",
+              "highlight": "goal",
+              "hint": "目标"
+            },
+            {
+              "level": 3,
+              "label": "理解\"prefer\" (更喜欢)",
+              "en": "I prefer tea to coffee.",
+              "zh": "比起咖啡我更喜欢茶。",
+              "highlight": "prefer",
+              "hint": "更喜欢"
+            }
+          ]
+        },
+        {
+          "id": "vsb_26",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"want\" 造不同句子",
+          "targetWord": "want",
+          "targetMeaning": "想要",
+          "items": [
+            {
+              "zh": "我想要一部新手机。",
+              "answer": "I want a new phone.",
+              "targetWord": "want"
+            },
+            {
+              "zh": "我想学英语。",
+              "answer": "I want to learn English.",
+              "targetWord": "want"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我需要": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_53",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我需要 · 中→英输出",
+          "chunk": "vital / must / have to / should",
+          "chunkMeaning": "至关重要的 / 必须 / 不得不/必须 / 应该",
+          "items": [
+            {
+              "zh": "学这个至关重要。",
+              "answer": "It is vital to learn this.",
+              "targetWord": "vital"
+            },
+            {
+              "zh": "我必须走了。",
+              "answer": "I must go now.",
+              "targetWord": "must"
+            },
+            {
+              "zh": "我必须去上班。",
+              "answer": "I have to go to work.",
+              "targetWord": "have to"
+            },
+            {
+              "zh": "你应该休息。",
+              "answer": "You should rest.",
+              "targetWord": "should"
+            },
+            {
+              "zh": "这很重要。",
+              "answer": "This is very important.",
+              "targetWord": "important"
+            },
+            {
+              "zh": "没必要。",
+              "answer": "It is not necessary.",
+              "targetWord": "necessary"
+            },
+            {
+              "zh": "很紧急。",
+              "answer": "It is urgent.",
+              "targetWord": "urgent"
+            },
+            {
+              "zh": "我需要基础英语。",
+              "answer": "I need basic English.",
+              "targetWord": "basic"
+            },
+            {
+              "zh": "水对生命是必需的。",
+              "answer": "Water is essential for life.",
+              "targetWord": "essential"
+            },
+            {
+              "zh": "这份工作需要英语。",
+              "answer": "This job requires English.",
+              "targetWord": "require"
+            }
+          ]
+        },
+        {
+          "id": "cs_54",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我需要 · 英→中理解",
+          "chunk": "important / necessary / urgent / basic / essential",
+          "chunkMeaning": "重要的 / 必要的 / 紧急的 / 基本的 / 必需的",
+          "items": [
+            {
+              "zh": "这很重要。",
+              "answer": "This is very important.",
+              "targetWord": "important"
+            },
+            {
+              "zh": "没必要。",
+              "answer": "It is not necessary.",
+              "targetWord": "necessary"
+            },
+            {
+              "zh": "很紧急。",
+              "answer": "It is urgent.",
+              "targetWord": "urgent"
+            },
+            {
+              "zh": "我需要基础英语。",
+              "answer": "I need basic English.",
+              "targetWord": "basic"
+            },
+            {
+              "zh": "水对生命是必需的。",
+              "answer": "Water is essential for life.",
+              "targetWord": "essential"
+            }
+          ]
+        },
+        {
+          "id": "pd_27",
+          "type": "pattern_drill",
+          "title": "我需要 · 句型操练",
+          "pattern": "It is [word] to learn this",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "学这个至关重要。",
+              "answer": "It is vital to learn this.",
+              "slotValues": {
+                "word": "vital"
+              }
+            },
+            {
+              "zh": "我必须走了。",
+              "answer": "I must go now.",
+              "slotValues": {
+                "word": "must"
+              }
+            },
+            {
+              "zh": "我必须去上班。",
+              "answer": "I have to go to work.",
+              "slotValues": {
+                "word": "have to"
+              }
+            },
+            {
+              "zh": "你应该休息。",
+              "answer": "You should rest.",
+              "slotValues": {
+                "word": "should"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_27",
+          "type": "sentence_decomposition",
+          "title": "我需要 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"urgent\" (紧急的)",
+              "en": "It is urgent.",
+              "zh": "很紧急。",
+              "highlight": "urgent",
+              "hint": "紧急的"
+            },
+            {
+              "level": 2,
+              "label": "理解\"basic\" (基本的)",
+              "en": "I need basic English.",
+              "zh": "我需要基础英语。",
+              "highlight": "basic",
+              "hint": "基本的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"essential\" (必需的)",
+              "en": "Water is essential for life.",
+              "zh": "水对生命是必需的。",
+              "highlight": "essential",
+              "hint": "必需的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_27",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"vital\" 造不同句子",
+          "targetWord": "vital",
+          "targetMeaning": "至关重要的",
+          "items": [
+            {
+              "zh": "学这个至关重要。",
+              "answer": "It is vital to learn this.",
+              "targetWord": "vital"
+            },
+            {
+              "zh": "水对生命至关重要。",
+              "answer": "Water is vital for life.",
+              "targetWord": "vital"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我能/我会": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_55",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我能/我会 · 中→英输出",
+          "chunk": "can / cannot / could / be able to",
+          "chunkMeaning": "能/会 / 不能 / 可以/能(过去/委婉) / 能够",
+          "items": [
+            {
+              "zh": "我会说英语。",
+              "answer": "I can speak English.",
+              "targetWord": "can"
+            },
+            {
+              "zh": "我不会游泳。",
+              "answer": "I cannot swim.",
+              "targetWord": "cannot"
+            },
+            {
+              "zh": "请问你能帮我吗？",
+              "answer": "Could you please help me?",
+              "targetWord": "could"
+            },
+            {
+              "zh": "我会说英语。",
+              "answer": "I am able to speak English.",
+              "targetWord": "be able to"
+            },
+            {
+              "zh": "我会做饭。",
+              "answer": "I know how to cook.",
+              "targetWord": "know how to"
+            },
+            {
+              "zh": "说是重要技能。",
+              "answer": "Speaking is an important skill.",
+              "targetWord": "skill"
+            },
+            {
+              "zh": "她有能力快速学习。",
+              "answer": "She has the ability to learn fast.",
+              "targetWord": "ability"
+            },
+            {
+              "zh": "可能吗？",
+              "answer": "Is it possible?",
+              "targetWord": "possible"
+            },
+            {
+              "zh": "今天不可能完成。",
+              "answer": "It is impossible to finish today.",
+              "targetWord": "impossible"
+            },
+            {
+              "zh": "让我试试。",
+              "answer": "Let me try.",
+              "targetWord": "try"
+            }
+          ]
+        },
+        {
+          "id": "cs_56",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我能/我会 · 英→中理解",
+          "chunk": "know how to / skill / ability / possible / impossible",
+          "chunkMeaning": "知道怎么做 / 技能/技巧 / 能力 / 可能的 / 不可能的",
+          "items": [
+            {
+              "zh": "我会做饭。",
+              "answer": "I know how to cook.",
+              "targetWord": "know how to"
+            },
+            {
+              "zh": "说是重要技能。",
+              "answer": "Speaking is an important skill.",
+              "targetWord": "skill"
+            },
+            {
+              "zh": "她有能力快速学习。",
+              "answer": "She has the ability to learn fast.",
+              "targetWord": "ability"
+            },
+            {
+              "zh": "可能吗？",
+              "answer": "Is it possible?",
+              "targetWord": "possible"
+            },
+            {
+              "zh": "今天不可能完成。",
+              "answer": "It is impossible to finish today.",
+              "targetWord": "impossible"
+            }
+          ]
+        },
+        {
+          "id": "pd_28",
+          "type": "pattern_drill",
+          "title": "我能/我会 · 句型操练",
+          "pattern": "I [word] speak English",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我会说英语。",
+              "answer": "I can speak English.",
+              "slotValues": {
+                "word": "can"
+              }
+            },
+            {
+              "zh": "我不会游泳。",
+              "answer": "I cannot swim.",
+              "slotValues": {
+                "word": "cannot"
+              }
+            },
+            {
+              "zh": "请问你能帮我吗？",
+              "answer": "Could you please help me?",
+              "slotValues": {
+                "word": "could"
+              }
+            },
+            {
+              "zh": "我会说英语。",
+              "answer": "I am able to speak English.",
+              "slotValues": {
+                "word": "be able to"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_28",
+          "type": "sentence_decomposition",
+          "title": "我能/我会 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"ability\" (能力)",
+              "en": "She has the ability to learn fast.",
+              "zh": "她有能力快速学习。",
+              "highlight": "ability",
+              "hint": "能力"
+            },
+            {
+              "level": 2,
+              "label": "理解\"possible\" (可能的)",
+              "en": "Is it possible?",
+              "zh": "可能吗？",
+              "highlight": "possible",
+              "hint": "可能的"
+            },
+            {
+              "level": 3,
+              "label": "理解\"impossible\" (不可能的)",
+              "en": "It is impossible to finish today.",
+              "zh": "今天不可能完成。",
+              "highlight": "impossible",
+              "hint": "不可能的"
+            }
+          ]
+        },
+        {
+          "id": "vsb_28",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"can\" 造不同句子",
+          "targetWord": "can",
+          "targetMeaning": "能/会",
+          "items": [
+            {
+              "zh": "我会说英语。",
+              "answer": "I can speak English.",
+              "targetWord": "can"
+            },
+            {
+              "zh": "你能帮我吗？",
+              "answer": "Can you help me?",
+              "targetWord": "can"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我喜欢": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_57",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我喜欢 · 中→英输出",
+          "chunk": "like / love / adore / favorite",
+          "chunkMeaning": "喜欢 / 爱/热爱 / 非常喜欢/崇拜 / 最喜欢的",
+          "items": [
+            {
+              "zh": "我喜欢咖啡。",
+              "answer": "I like coffee.",
+              "targetWord": "like"
+            },
+            {
+              "zh": "我爱我的家人。",
+              "answer": "I love my family.",
+              "targetWord": "love"
+            },
+            {
+              "zh": "我太喜欢这首歌了！",
+              "answer": "I adore this song!",
+              "targetWord": "adore"
+            },
+            {
+              "zh": "我最喜欢的颜色是蓝色。",
+              "answer": "My favorite color is blue.",
+              "targetWord": "favorite"
+            },
+            {
+              "zh": "我痴迷于英语！",
+              "answer": "I am crazy about English!",
+              "targetWord": "crazy about"
+            },
+            {
+              "zh": "我讨厌早起。",
+              "answer": "I hate getting up early.",
+              "targetWord": "hate"
+            },
+            {
+              "zh": "我不喜欢吵闹的地方。",
+              "answer": "I dislike noisy places.",
+              "targetWord": "dislike"
+            },
+            {
+              "zh": "我对音乐有兴趣。",
+              "answer": "I have an interest in music.",
+              "targetWord": "interest"
+            },
+            {
+              "zh": "我喜欢摄影。",
+              "answer": "I am into photography.",
+              "targetWord": "be into"
+            },
+            {
+              "zh": "英语很有趣！",
+              "answer": "English is fun!",
+              "targetWord": "fun"
+            }
+          ]
+        },
+        {
+          "id": "cs_58",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我喜欢 · 英→中理解",
+          "chunk": "crazy about / hate / dislike / interest / be into",
+          "chunkMeaning": "疯狂喜欢/痴迷于 / 讨厌/恨 / 不喜欢 / 兴趣 / 对...感兴趣/喜欢",
+          "items": [
+            {
+              "zh": "我痴迷于英语！",
+              "answer": "I am crazy about English!",
+              "targetWord": "crazy about"
+            },
+            {
+              "zh": "我讨厌早起。",
+              "answer": "I hate getting up early.",
+              "targetWord": "hate"
+            },
+            {
+              "zh": "我不喜欢吵闹的地方。",
+              "answer": "I dislike noisy places.",
+              "targetWord": "dislike"
+            },
+            {
+              "zh": "我对音乐有兴趣。",
+              "answer": "I have an interest in music.",
+              "targetWord": "interest"
+            },
+            {
+              "zh": "我喜欢摄影。",
+              "answer": "I am into photography.",
+              "targetWord": "be into"
+            }
+          ]
+        },
+        {
+          "id": "pd_29",
+          "type": "pattern_drill",
+          "title": "我喜欢 · 句型操练",
+          "pattern": "I [word] coffee",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我喜欢咖啡。",
+              "answer": "I like coffee.",
+              "slotValues": {
+                "word": "like"
+              }
+            },
+            {
+              "zh": "我爱我的家人。",
+              "answer": "I love my family.",
+              "slotValues": {
+                "word": "love"
+              }
+            },
+            {
+              "zh": "我太喜欢这首歌了！",
+              "answer": "I adore this song!",
+              "slotValues": {
+                "word": "adore"
+              }
+            },
+            {
+              "zh": "我最喜欢的颜色是蓝色。",
+              "answer": "My favorite color is blue.",
+              "slotValues": {
+                "word": "favorite"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_29",
+          "type": "sentence_decomposition",
+          "title": "我喜欢 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"dislike\" (不喜欢)",
+              "en": "I dislike noisy places.",
+              "zh": "我不喜欢吵闹的地方。",
+              "highlight": "dislike",
+              "hint": "不喜欢"
+            },
+            {
+              "level": 2,
+              "label": "理解\"interest\" (兴趣)",
+              "en": "I have an interest in music.",
+              "zh": "我对音乐有兴趣。",
+              "highlight": "interest",
+              "hint": "兴趣"
+            },
+            {
+              "level": 3,
+              "label": "理解\"be into\" (对...感兴趣/喜欢)",
+              "en": "I am into photography.",
+              "zh": "我喜欢摄影。",
+              "highlight": "be into",
+              "hint": "对...感兴趣/喜欢"
+            }
+          ]
+        },
+        {
+          "id": "vsb_29",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"like\" 造不同句子",
+          "targetWord": "like",
+          "targetMeaning": "喜欢",
+          "items": [
+            {
+              "zh": "我喜欢咖啡。",
+              "answer": "I like coffee.",
+              "targetWord": "like"
+            },
+            {
+              "zh": "我喜欢看书。",
+              "answer": "I like reading books.",
+              "targetWord": "like"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "请求帮助": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_59",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "请求帮助 · 中→英输出",
+          "chunk": "help / ask / request / favor",
+          "chunkMeaning": "帮助 / 问/请求 / 请求/要求 / 帮忙/恩惠",
+          "items": [
+            {
+              "zh": "你能帮我吗？",
+              "answer": "Can you help me?",
+              "targetWord": "help"
+            },
+            {
+              "zh": "我能问你一个问题吗？",
+              "answer": "Can I ask you a question?",
+              "targetWord": "ask"
+            },
+            {
+              "zh": "我有一个请求。",
+              "answer": "I have a request.",
+              "targetWord": "request"
+            },
+            {
+              "zh": "你能帮我一个忙吗？",
+              "answer": "Can you do me a favor?",
+              "targetWord": "favor"
+            },
+            {
+              "zh": "我有麻烦了。",
+              "answer": "I'm in trouble.",
+              "targetWord": "trouble"
+            },
+            {
+              "zh": "没问题！",
+              "answer": "No problem!",
+              "targetWord": "problem"
+            },
+            {
+              "zh": "你有问题吗？",
+              "answer": "Do you have a question?",
+              "targetWord": "question"
+            },
+            {
+              "zh": "请回答我的问题。",
+              "answer": "Please answer my question.",
+              "targetWord": "answer"
+            },
+            {
+              "zh": "谢谢你的支持。",
+              "answer": "Thank you for your support.",
+              "targetWord": "support"
+            },
+            {
+              "zh": "我不明白。",
+              "answer": "I don't understand.",
+              "targetWord": "understand"
+            }
+          ]
+        },
+        {
+          "id": "cs_60",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "请求帮助 · 英→中理解",
+          "chunk": "trouble / problem / question / answer / support",
+          "chunkMeaning": "麻烦/问题 / 问题/难题 / 问题 / 回答/答案 / 支持/帮助",
+          "items": [
+            {
+              "zh": "我有麻烦了。",
+              "answer": "I'm in trouble.",
+              "targetWord": "trouble"
+            },
+            {
+              "zh": "没问题！",
+              "answer": "No problem!",
+              "targetWord": "problem"
+            },
+            {
+              "zh": "你有问题吗？",
+              "answer": "Do you have a question?",
+              "targetWord": "question"
+            },
+            {
+              "zh": "请回答我的问题。",
+              "answer": "Please answer my question.",
+              "targetWord": "answer"
+            },
+            {
+              "zh": "谢谢你的支持。",
+              "answer": "Thank you for your support.",
+              "targetWord": "support"
+            }
+          ]
+        },
+        {
+          "id": "pd_30",
+          "type": "pattern_drill",
+          "title": "请求帮助 · 句型操练",
+          "pattern": "Can you [word] me",
+          "patternMeaning": "用目标词填入句型",
+          "slots": [
+            "word"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你能帮我吗？",
+              "answer": "Can you help me?",
+              "slotValues": {
+                "word": "help"
+              }
+            },
+            {
+              "zh": "我能问你一个问题吗？",
+              "answer": "Can I ask you a question?",
+              "slotValues": {
+                "word": "ask"
+              }
+            },
+            {
+              "zh": "我有一个请求。",
+              "answer": "I have a request.",
+              "slotValues": {
+                "word": "request"
+              }
+            },
+            {
+              "zh": "你能帮我一个忙吗？",
+              "answer": "Can you do me a favor?",
+              "slotValues": {
+                "word": "favor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_30",
+          "type": "sentence_decomposition",
+          "title": "请求帮助 · 句子拆解",
+          "levels": [
+            {
+              "level": 1,
+              "label": "理解\"question\" (问题)",
+              "en": "Do you have a question?",
+              "zh": "你有问题吗？",
+              "highlight": "question",
+              "hint": "问题"
+            },
+            {
+              "level": 2,
+              "label": "理解\"answer\" (回答/答案)",
+              "en": "Please answer my question.",
+              "zh": "请回答我的问题。",
+              "highlight": "answer",
+              "hint": "回答/答案"
+            },
+            {
+              "level": 3,
+              "label": "理解\"support\" (支持/帮助)",
+              "en": "Thank you for your support.",
+              "zh": "谢谢你的支持。",
+              "highlight": "support",
+              "hint": "支持/帮助"
+            }
+          ]
+        },
+        {
+          "id": "vsb_30",
+          "type": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "title": "用 \"help\" 造不同句子",
+          "targetWord": "help",
+          "targetMeaning": "帮助",
+          "items": [
+            {
+              "zh": "你能帮我吗？",
+              "answer": "Can you help me?",
+              "targetWord": "help"
+            },
+            {
+              "zh": "我需要你的帮助。",
+              "answer": "I need your help.",
+              "targetWord": "help"
+            }
           ]
         }
       ]
