@@ -1545,6 +1545,7 @@ model MobileOtaTester {
   lastManufacturer    String?
   lastOperatingSystem String?
   lastOsVersion       String?
+  lastIpAddress       String?
   lastNativeBuild     String?
   lastBundleVersion   String?
   lastNativeVersion   String?

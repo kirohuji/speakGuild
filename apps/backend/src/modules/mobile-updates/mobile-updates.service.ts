@@ -30,6 +30,7 @@ export class MobileUpdatesService {
     manufacturer?: string;
     operatingSystem?: string;
     osVersion?: string;
+    ipAddress?: string;
   }) {
     const {
       platform,
@@ -58,6 +59,7 @@ export class MobileUpdatesService {
           lastManufacturer: params.manufacturer || null,
           lastOperatingSystem: params.operatingSystem || null,
           lastOsVersion: params.osVersion || null,
+          lastIpAddress: params.ipAddress || null,
           lastNativeBuild: params.nativeBuild || null,
           lastBundleVersion: currentBundleVersion || null,
           lastNativeVersion: params.nativeVersion || null,
@@ -70,6 +72,7 @@ export class MobileUpdatesService {
           lastManufacturer: params.manufacturer || null,
           lastOperatingSystem: params.operatingSystem || null,
           lastOsVersion: params.osVersion || null,
+          lastIpAddress: params.ipAddress || null,
           lastNativeBuild: params.nativeBuild || null,
           lastBundleVersion: currentBundleVersion || null,
           lastNativeVersion: params.nativeVersion || null,

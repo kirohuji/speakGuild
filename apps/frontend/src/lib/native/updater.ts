@@ -35,6 +35,11 @@ const downloadListeners: DownloadListener[] = [];
 const failedListeners: FailedListener[] = [];
 const OTA_DEVICE_ID_KEY = 'manyu-ota-device-id';
 
+function getCheckUpdateUrl() {
+  const apiBase = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '');
+  return `${apiBase}/mobile-updates/check`;
+}
+
 function getOrCreateOtaDeviceId() {
   const existing = localStorage.getItem(OTA_DEVICE_ID_KEY);
   if (existing) return existing;
@@ -186,8 +191,21 @@ class UpdaterService implements UpdaterAPI {
       const nativeInfo = await getNativeAppInfo();
       const deviceInfo = await getNativeDeviceInfo();
 
-      const checkUrl = 'https://hope.lourd.top:3605/api/mobile-updates/check';
+      const checkUrl = getCheckUpdateUrl();
       console.log(`[Updater] 📡 Checking update: platform=${platform}, native=${nativeInfo.nativeVersion || '-'}, current=${current.version}, device=${deviceInfo.deviceModel || '-'}, url=${checkUrl}`);
+      console.log('[Updater] device snapshot', {
+        platform,
+        userId,
+        deviceId,
+        nativeVersion: nativeInfo.nativeVersion,
+        nativeBuild: nativeInfo.nativeBuild,
+        currentBundleVersion: current.version,
+        deviceModel: deviceInfo.deviceModel,
+        deviceName: deviceInfo.deviceName,
+        manufacturer: deviceInfo.manufacturer,
+        operatingSystem: deviceInfo.operatingSystem,
+        osVersion: deviceInfo.osVersion,
+      });
 
       // 1. 请求后端检查接口
       const res = await fetch(checkUrl, {

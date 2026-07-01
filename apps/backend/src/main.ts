@@ -10,6 +10,22 @@ import { auth } from './modules/auth/auth';
 import { MobileUpdatesService } from './modules/mobile-updates/mobile-updates.service';
 import { OpsAlertService } from './common/ops/ops-alert.service';
 
+function getClientIp(req: any) {
+  const forwarded = req.headers?.['x-forwarded-for'];
+  const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  if (typeof forwardedValue === 'string' && forwardedValue.trim()) {
+    return forwardedValue.split(',')[0]?.trim();
+  }
+
+  const realIp = req.headers?.['x-real-ip'];
+  const realIpValue = Array.isArray(realIp) ? realIp[0] : realIp;
+  if (typeof realIpValue === 'string' && realIpValue.trim()) {
+    return realIpValue.trim();
+  }
+
+  return req.ip || req.socket?.remoteAddress || undefined;
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
@@ -94,6 +110,7 @@ async function bootstrap() {
         manufacturer: req.body?.manufacturer,
         operatingSystem: req.body?.operating_system || req.body?.operatingSystem,
         osVersion: req.body?.os_version || req.body?.osVersion,
+        ipAddress: getClientIp(req),
       });
       res.json(result);
     } catch (err: any) {

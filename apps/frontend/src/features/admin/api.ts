@@ -42,6 +42,7 @@ export interface MobileOtaTester {
   lastManufacturer: string | null;
   lastOperatingSystem: string | null;
   lastOsVersion: string | null;
+  lastIpAddress: string | null;
   lastNativeBuild: string | null;
   lastBundleVersion: string | null;
   lastNativeVersion: string | null;

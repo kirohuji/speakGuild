@@ -927,7 +927,7 @@ function UserRow({
                                 </div>
                               </div>
                               <p className="text-muted-foreground">最近上报：{fmtDateTime(detail.mobileOtaTester?.lastCheckAt)}</p>
-                              <p className="text-muted-foreground">最近 IP：{detail.sessions?.[0]?.ipAddress || '暂无 IP'}</p>
+                              <p className="text-muted-foreground">最近 IP：{detail.mobileOtaTester?.lastIpAddress || detail.sessions?.[0]?.ipAddress || '暂无 IP'}</p>
                             </div>
                           </div>
                         </div>
