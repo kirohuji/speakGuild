@@ -5,9 +5,11 @@ import { useConfigStore } from '@/stores/config.store'
 import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
-import { offlineSyncService } from '@/lib/offline'
+import { offlineStorageService, offlineSyncService } from '@/lib/offline'
 import { refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
 import { isNative, revenueCat } from '@/lib/native'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { useSearchStore } from '@/stores/search.store'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 
@@ -104,6 +106,16 @@ function setCurrentSessionSnapshot(session: SessionPayload) {
   currentSessionSnapshot = session
 }
 
+async function clearUserScopedClientData() {
+  try {
+    await offlineStorageService.clearUserData()
+  } catch (error) {
+    console.warn('[auth] clear user offline data failed:', error)
+  }
+  useOfflineSyncStore.getState().reset()
+  useSearchStore.getState().clearHistory()
+}
+
 function normalizeSessionResponse(raw: unknown): SessionPayload {
   if (!raw || typeof raw !== 'object') return null
 
@@ -145,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleUnauthorized = () => {
       setCurrentSessionSnapshot(null)
       setSession(null)
+      void clearUserScopedClientData()
     }
     window.addEventListener('auth:unauthorized', handleUnauthorized)
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
@@ -260,12 +273,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
-    await authClient.signOut()
+    await authClient.signOut().catch((error) => {
+      console.warn('[auth] signOut request failed, clearing local session anyway:', error)
+    })
     if (isNative()) {
       await revenueCat.reset().catch((error) => {
         console.warn('[RevenueCat] logout reset failed:', error)
       })
     }
+    await clearUserScopedClientData()
     clearBearerToken()
     useProfileCacheStore.getState().reset()
     localStorage.removeItem(OTA_USER_ID_KEY)

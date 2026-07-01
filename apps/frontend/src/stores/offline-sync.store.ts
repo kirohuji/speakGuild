@@ -22,6 +22,7 @@ interface OfflineSyncState {
   begin: (summary: string) => string
   finish: (id: string, input: { status: 'success' | 'failed'; summary: string; detail?: unknown; error?: unknown }) => void
   clearLogs: () => void
+  reset: () => void
 }
 
 function createId() {
@@ -95,6 +96,16 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
 
       clearLogs() {
         set({ logs: [], lastError: null })
+      },
+
+      reset() {
+        set({
+          isSyncing: false,
+          currentLogId: null,
+          lastSyncedAt: null,
+          lastError: null,
+          logs: [],
+        })
       },
     }),
     {

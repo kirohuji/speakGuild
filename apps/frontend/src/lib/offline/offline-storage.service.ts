@@ -12,6 +12,26 @@ import { warmupEmbeddingCacheRepository } from '@/lib/local-ai/warmup-embedding-
 
 export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'practice' | 'all'
 
+const USER_SCOPED_TABLES: TableName[] = [
+  'my_learning_units',
+  'expression_entries',
+  'user_progress',
+  'practice_records',
+  'warmup_records',
+  'warmup_record_entries',
+  'daily_activity',
+  'daily_progress',
+  'daily_practice_items',
+  'daily_practice_runs',
+  'daily_practice_attempts',
+  'outbox',
+]
+
+const USER_SCOPED_KV_KEYS = new Set([
+  'practice-records-cache:loaded',
+  'practice-data-reset-at',
+])
+
 export interface OfflineStorageStats {
   downloadedPackCount: number
   downloadedPackBytes: number
@@ -141,7 +161,30 @@ function clearPracticeLocalStorageKeys(): void {
   }
 }
 
+function clearUserScopedLocalStorageKeys(): void {
+  clearPracticeLocalStorageKeys()
+  if (typeof localStorage === 'undefined') return
+  localStorage.removeItem('manyu-search-history')
+}
+
 export const offlineStorageService = {
+  /**
+   * Clear data that belongs to the signed-in user while keeping reusable offline
+   * resources such as installed learning packs, downloaded assets, dictionaries,
+   * and local AI/STT model files.
+   */
+  async clearUserData(): Promise<void> {
+    await clearTables(USER_SCOPED_TABLES)
+    await localDb.deleteWhere<any>('kv', (item) => {
+      const id = String(item.id ?? '')
+      return USER_SCOPED_KV_KEYS.has(id)
+        || id.startsWith('session-map:')
+        || id.startsWith('expression-cache:')
+        || id.startsWith('sync:user:')
+    })
+    clearUserScopedLocalStorageKeys()
+  },
+
   async getStats(): Promise<OfflineStorageStats> {
     const [
       packs,
