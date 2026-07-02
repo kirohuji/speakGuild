@@ -12,7 +12,6 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑦·计划与预测,将会怎样,The ___ will start at ___.,...会在...开始,meeting / 3 pm / class / 9 am / movie / 7 pm / party / 8,The meeting will start at 3 pm.,L1~L2,10
 基础⑦·计划与预测,将会怎样,___ will probably ___.,...可能会...,He / be late / She / come / He / call / They / forget / He / say no,He will probably be late.,L1~L2,11
 基础⑦·计划与预测,将会怎样,There will be ___.,会有...,a lot of people / a test tomorrow / free food / a big party,There will be a lot of people at the concert.,L1~L2,12
-基础⑦·能力与请求,我能/会…,I can ___.,我能...,swim / speak English / drive / cook / play guitar / run fast,I can swim.,L1~L2,13
 基础⑦·能力与请求,我能/会…,I can't ___.,我不能/会...,speak French / sing / dance / run fast / understand this / find my keys,I can't speak French.,L1~L2,14
 基础⑦·能力与请求,我能/会…,She can ___ very ___.,她...非常...,sing / well / draw / beautifully / cook / deliciously / run / fast,She can sing very well.,L1~L2,15
 基础⑦·能力与请求,请求帮助,Can you ___? — Sure.,你能...吗？,help me / open the door / pass the salt / wait a moment / take a photo,Can you help me? Sure.,L1~L2,16
@@ -22,7 +21,6 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑦·能力与请求,Can/Could 礼貌程度,Could you tell me how to get to ___?,您能告诉我去...怎么走吗？,the museum / the airport / the train station / the city center / this address,Could you tell me how to get to the museum?,L1~L2,20
 基础⑦·能力与请求,Can/Could 礼貌程度,Could I have ___ please?,请给我...好吗？,the bill / a glass of water / the menu / a receipt / more time,Could I have the bill please?,L1~L2,21
 基础⑦·能力与请求,Can/Could 礼貌程度,Could you ___?,您能...吗？,speak more slowly / speak louder / repeat that / wait a moment / spell your name,Could you speak more slowly please?,L1~L2,22
-基础⑦·能力与请求,Can/Could 礼貌程度,Can I try ___ on?,我能试穿...吗？,this jacket / these shoes / that dress / this hat / the scarf,Can I try this on?,L1~L2,23
 基础⑦·建议与义务,你应该/必须,You should ___.,你应该...,see a doctor / take a break / study more / call her / try it,You should see a doctor.,L1~L2,24
 基础⑦·建议与义务,你应该/必须,You shouldn't ___.,你不该...,eat junk food / stay up late / worry / spend all your money / be rude,You shouldn't eat so much junk food.,L1~L2,25
 基础⑦·建议与义务,你应该/必须,You must ___.,你必须...,wear a seatbelt / stop here / show your ID / follow the rules / be quiet,You must wear a seatbelt.,L1~L2,26

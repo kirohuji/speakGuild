@@ -9,28 +9,33 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑨·比较事物,越...越...,The ___ the ___.,越...越...,"faster better, sooner better, more merrier, cheaper better",The faster the better.,L1,7
 基础⑨·描述位置,有...在...,There is a ___ on/in the ___.,在...上/里有...,"book desk, cat sofa, lamp nightstand, photo wall",There is a book on the desk.,L1,8
 基础⑨·描述位置,有...在...,There are ___ in the ___.,在...里有...,"three people room, five books bag, many students classroom",There are three people in the room.,L1,9
-基础⑨·描述位置,存在句疑问否定,Is there a ___ near here?,附近有...吗？,"bank, restaurant, hospital, park, supermarket, ATM",Is there a bank near here?,L1,10
 基础⑨·描述位置,存在句疑问否定,There isn't any ___ left.,没有...了。,"milk, bread, time, money, rice, juice",There isn't any milk left.,L1,11
-基础⑨·描述位置,在...里/上/旁边,___ is under/next to/between ___.,...在...下/旁边/之间。,cat under table, bank next to post office, restaurant between hotel and cinema,The cat is under the table.,L1,12
-基础⑨·描述位置,方向与指路,Go straight and turn ___ at ___.,直走在...处...转。,left the corner, right the traffic light, left the second corner,Go straight and turn left at the corner.,L1,13
-基础⑨·描述位置,空间描述,___ is across from ___.,...在...对面。,hospital station, my office mall, bus stop bank,The hospital is across from the station.,L1,14
-基础⑨·程度表达,和...一样,___ is as ___ as ___.,...和...一样...,she tall her sister, he smart you, it fast a car,She is as tall as her sister.,L1,15
-基础⑨·程度表达,不如...,___ is not as ___ as ___.,...不如...,this car expensive that one, today cold yesterday, he tall me,This car is not as expensive as that one.,L1,16
-基础⑨·程度表达,和...一样,I have as many ___ as ___.,我有和...一样多的...,books you, friends him, ideas her, problems them,I have as many books as you.,L1,17
-基础⑨·程度表达,太...不能,This ___ is too ___.,这个...太...,bag heavy, coffee hot, room noisy, price high, shirt small,This bag is too heavy.,L1,18
-基础⑨·程度表达,足够...,___ is ___ enough for ___.,...对...足够...,the room big ten people, water warm swimming, he old driving,The room is big enough for ten people.,L1,19
-基础⑨·程度表达,方式副词,Please ___ slowly/carefully.,请慢慢地/小心地...,speak, walk, drive, eat, write, move, read,Please speak slowly.,L1,20
-基础⑨·程度表达,方式副词,He/She ___ very well.,他/她...得很好。,speaks English, sings, dances, plays, cooks, draws, writes, teaches,She speaks English very well.,L1,21
-基础⑨·偏好与推荐,偏好选择,Which do you like more ___ or ___? I like ___ better.,你更喜欢...还是...？我更喜欢...,the red one the blue one, tea or coffee, summer or winter,Which do you like more the red one or the blue one?,L1,22
-基础⑨·偏好与推荐,偏好选择,I prefer ___ It's ___er and ___.,我更喜欢...它更...,this restaurant cheaper better, this phone lighter faster, this jacket warmer nicer,I prefer this restaurant It's cheaper and better.,L1,23
-基础⑨·偏好与推荐,二选一比较,This one is more ___ than that one.,这个比那个更...,comfortable, beautiful, useful, interesting, suitable, practical,This one is more comfortable than that one.,L1,24
-基础⑨·偏好与推荐,二选一比较,Between ___ and ___ which is ___?,在...和...之间哪个更...？,the bus and the subway faster, this one and that one better, walking and biking easier,Between these two which is faster?,L1,25
-基础⑨·偏好与推荐,最高级推荐,This is the best ___ in ___.,这是...中最好的...,restaurant this area, café the neighborhood, park the city, bookstore this area,This is the best restaurant in this area.,L1,26
-基础⑨·偏好与推荐,推荐表达,I recommend ___ It's the most ___.,我推荐...它是最...的。,this one popular, this book interesting, this hotel comfortable,I recommend this one It's the most popular dish here.,L1,27
-基础⑨·偏好与推荐,对比评价,Compared to ___ this is much ___.,与...相比这个更...,the other one better, my old phone faster, that restaurant cheaper,Compared to the other one this is much better.,L1,28
-基础⑨·综合评价,多维度比较,This one is ___er and ___ but that one has ___.,这个更...更...但那个有...,lighter faster a better camera, cheaper nicer more features,This phone is lighter and faster but that one has a better camera.,L1,29
-基础⑨·综合评价,变化描述,It's getting ___er and ___er every day.,一天比一天更...,hot hot, cold cold, big big, warm warm,It's getting hotter and hotter every day.,L1,30
-基础⑨·综合评价,变化描述,He is more and more ___.,他越来越...,confident, popular, successful, interesting, independent,He is more and more confident in speaking English.,L1,31
-基础⑨·综合评价,综合推荐,All things considered ___ is the best choice for ___ because it's ___ and ___.,综合考虑...是...最好的选择因为...,this beginners easy affordable, that travelers cheap convenient,All things considered this is the best choice for beginners.,L1,32
-基础⑨·综合评价,观点对比,In my opinion ___ However some people prefer that one because ___.,依我看...但有些人更喜欢因为...,this one is better it's cheaper, this way is easier it's faster,In my opinion this one is better However some people prefer that one.,L1,33
-基础⑨·综合评价,性价比评价,The more you ___ the better ___.,越...越好...,practice you get, pay quality you get, learn you become, save the more you have,The more you pay the better quality you get.,L1,34
+基础⑨·描述位置,在...里/上/旁边,___ is under/next to/between ___.,...在...下/旁边/之间。,cat under table, bank next to post office, restaurant between hotel and cinema,The cat is under the table.
+基础⑨·描述位置,方向与指路,Go straight and turn ___ at ___.,直走在...处...转。,left the corner, right the traffic light, left the second corner,Go straight and turn left at the corner.
+基础⑨·描述位置,空间描述,___ is across from ___.,...在...对面。,hospital station, my office mall, bus stop bank,The hospital is across from the station.
+基础⑨·程度表达,和...一样,___ is as ___ as ___.,...和...一样...,she tall her sister, he smart you, it fast a car,She is as tall as her sister.
+基础⑨·程度表达,不如...,___ is not as ___ as ___.,...不如...,this car expensive that one, today cold yesterday, he tall me,This car is not as expensive as that one.
+基础⑨·程度表达,和...一样,I have as many ___ as ___.,我有和...一样多的...,books you, friends him, ideas her, problems them
+基础⑨·程度表达,太...不能,This ___ is too ___.,这个...太...,bag heavy, coffee hot, room noisy, price high
+基础⑨·程度表达,足够...,___ is ___ enough for ___.,...对...足够...,the room big ten people, water warm swimming, he old driving,The room is big enough for ten people.
+基础⑨·程度表达,方式副词,Please ___ slowly/carefully.,请慢慢地/小心地...,speak, walk, drive, eat
+基础⑨·程度表达,方式副词,He/She ___ very well.,他/她...得很好。,speaks English, sings, dances, plays
+基础⑨·偏好与推荐,偏好选择,Which do you like more ___ or ___? I like ___ better.,你更喜欢...还是...？我更喜欢...,the red one the blue one, tea or coffee, summer or winter,Which do you like more the red one or the blue one?
+基础⑨·偏好与推荐,偏好选择,I prefer ___ It's ___er and ___.,我更喜欢...它更...,this restaurant cheaper better, this phone lighter faster, this jacket warmer nicer,I prefer this restaurant It's cheaper and better.
+基础⑨·偏好与推荐,二选一比较,This one is more ___ than that one.,这个比那个更...,comfortable, beautiful, useful, interesting
+基础⑨·偏好与推荐,二选一比较,Between ___ and ___ which is ___?,在...和...之间哪个更...？,the bus and the subway faster, this one and that one better, walking and biking easier,Between these two which is faster?
+基础⑨·偏好与推荐,最高级推荐,This is the best ___ in ___.,这是...中最好的...,restaurant this area, café the neighborhood, park the city, bookstore this area
+基础⑨·偏好与推荐,推荐表达,I recommend ___ It's the most ___.,我推荐...它是最...的。,this one popular, this book interesting, this hotel comfortable,I recommend this one It's the most popular dish here.
+基础⑨·偏好与推荐,对比评价,Compared to ___ this is much ___.,与...相比这个更...,the other one better, my old phone faster, that restaurant cheaper,Compared to the other one this is much better.
+基础⑨·综合评价,多维度比较,This one is ___er and ___ but that one has ___.,这个更...更...但那个有...,lighter faster a better camera, cheaper nicer more features,This phone is lighter and faster but that one has a better camera.,L1
+基础⑨·综合评价,变化描述,It's getting ___er and ___er every day.,一天比一天更...,hot hot, cold cold, big big, warm warm
+基础⑨·综合评价,变化描述,He is more and more ___.,他越来越...,confident, popular, successful, interesting
+基础⑨·综合评价,综合推荐,All things considered ___ is the best choice for ___ because it's ___ and ___.,综合考虑...是...最好的选择因为...,this beginners easy affordable, that travelers cheap convenient,All things considered this is the best choice for beginners.,L1
+基础⑨·综合评价,观点对比,In my opinion ___ However some people prefer that one because ___.,依我看...但有些人更喜欢因为...,this one is better it's cheaper, this way is easier it's faster,In my opinion this one is better However some people prefer that one.,L1
+基础⑨·综合评价,性价比评价,The more you ___ the better ___.,越...越好...,practice you get, pay quality you get, learn you become, save the more you have
+基础⑨·比较事物,不规则比较,"The ___, the ___.",越___越___。,faster / better / more / merrier / cheaper / better / earlier / easier,"The faster, the better.",L1,12
+基础⑨·偏好与推荐,偏好选择,I prefer ___. Its ___er and ___.,我更喜欢___。它更___更___。,this restaurant / cheaper / better / this phone / lighter / faster / this jacket / warmer,I prefer this restaurant.,L1,13
+基础⑨·偏好与推荐,偏好选择,"Between ___ and ___, which is ___?",___和___之间，哪个更___？,the bus and the subway / faster / this one and that one / better / walking and biking,"Between these two, which is faster?",L1,14
+基础⑨·偏好与推荐,最高级推荐,I recommend ___. Its the most ___.,我推荐___。它是最___的。,this one / popular / this book / interesting / this hotel / comfortable,I recommend this one.,L1,15
+基础⑨·偏好与推荐,对比评价,"Compared to ___, this is much ___.",和___相比，这个更___。,the other one / better / my old phone / faster / that restaurant / cheaper,"Compared to the other one, this is much better.",L1,16
+基础⑨·综合评价,多维度比较,"This one is ___er and ___, but that one has ___.",这个更___更___，但那个有___。,lighter / faster / a better camera / cheaper / nicer / more features,"This phone is lighter and faster, but that one has a better camera.",L1,17

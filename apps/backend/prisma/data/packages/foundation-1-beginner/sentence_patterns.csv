@@ -37,7 +37,6 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础①·日常寒暄,询问近况,How is ___? It is ___.,___怎么样？___。,your day good / everything fine,How is your day? It is good.,L1,0
 基础①·日常寒暄,介绍他人,This is my ___.,这是我的___。,friend / brother / classmate,This is my friend Tom.,L1,0
 基础①·日常寒暄,表达关心,Are you ___? I am ___.,你___吗？我___。,okay fine / tired sorry,Are you okay? I am fine.,L1,0
-基础①·数字与时间,数字1-20,I have ___ ___.,我有___个___。,three books / five pens,I have three books.,L1,0
 基础①·数字与时间,时间表达,What time is it? It is ___.,几点了？___。,three oclock / half past six,What time is it? It is three oclock.,L1,0
 基础①·数字与时间,时间表达,I ___ at ___.,我在___点___。,eat breakfast 7 / go to school 8,I eat breakfast at 7.,L1,1
 基础①·数字与时间,日期与星期,Today is ___.,今天是___。,Monday / Tuesday / Friday,Today is Monday.,L1,0

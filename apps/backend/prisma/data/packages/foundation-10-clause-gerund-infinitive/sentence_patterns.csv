@@ -43,3 +43,21 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑩·综合运用,观点：我为什么觉得...,I think the + 名词 + that + 句子 + is worth + 动名词,我觉得...值得...,movie that we watched is worth seeing book that we read is worth reading,I think the movie that we watched is worth seeing.,L1,41
 基础⑩·综合运用,叙事：我的一段经历,I decided to + 动词原形 + because I think + 句子,我决定...因为我认为...,learn English it's important for my future start running it's healthy,I decided to learn English because I think it's important.,L1,42
 基础⑩·综合运用,长篇描述：我最喜欢的...,主语 + enjoy + 动名词 + because + 句子,我喜欢...因为...,traveling I think it's the best way to learn reading I think it's relaxing,I enjoy traveling because I think it's the best way to learn.,L1,43
+基础⑩·表达想法,我认为…,I think (that) + ___,我认为___。,you are right / he is nice / it's a good idea / we should go / she is busy,I think (that) you are right.,L1,44
+基础⑩·表达想法,我认为…,I don't think (that) + ___,我认为___不___。,it's a good idea / he will come / it's true / she likes it / we have time,I don't think (that) it's a good idea.,L1,45
+基础⑩·表达想法,我知道/听说,I know (that) + ___,我知道___。,you are busy / he is a good person / it's not easy / she works hard / you mean well,I know (that) you are busy.,L1,46
+基础⑩·表达想法,我知道/听说,I'm sure (that) + ___,我确定___。,everything will be fine / he will come / we can finish / she knows the answer / it's safe,I'm sure (that) everything will be fine.,L1,47
+基础⑩·表达想法,我知道/听说,I'm sorry (that) + ___,抱歉___。,I'm late / I forgot / I missed the call / I didn't call / I broke it,I'm sorry (that) I'm late.,L1,48
+基础⑩·表达想法,我知道/听说,I believe (that) + ___,我相信___。,you can do it / he is telling the truth / she is honest / things will get better,I believe (that) you can do it.,L1,49
+基础⑩·表达想法,转述他人,He said (that) + ___,他说___。,he would come / he was busy / she was happy / they were leaving / it was done,He said (that) he would come.,L1,50
+基础⑩·表达想法,转述他人,She told me (that) + ___,她告诉我___。,she liked it / she needed help / he was sick / they had arrived / it was ready,She told me (that) she liked it.,L1,51
+基础⑩·表达想法,转述他人,I heard (that) + ___,我听说___。,the store is closing / he got married / she moved / they are hiring / the price went up,I heard (that) the store is closing.,L1,52
+基础⑩·表达想法,不确定,I'm not sure (that/whether) + ___,我不确定___。,I can go / I can finish / it will work / I understood / he remembers,I'm not sure (that) I can go.,L1,53
+基础⑩·表达想法,不确定,I don't know + wh-词 + ___,我不知道___。,what he wants / what to do / what she said / where it is / what this means,I don't know what he wants.,L1,54
+基础⑩·描述人物事物,描述物品,The + 名词 + that + ___ + be ___,___的___是___。,book / I read / interesting / movie / I watched / good / phone / I bought / expensive,The book that I read is very interesting.,L1,55
+基础⑩·描述人物事物,描述人,The + 人 + who + ___ + be ___,___的___是___。,person / called / my boss / girl / is talking to Tom / my friend / man / works there / a doctor,The person who called is my boss.,L1,56
+基础⑩·描述人物事物,描述人,Do you know the + 人 + who + ___?,你认识___的那个人吗？,girl / is talking to Tom / man / is standing there / woman / works there / boy / won the game,Do you know the girl who is talking to Tom?,L1,57
+基础⑩·描述人物事物,地点与原因,The + 地点 + where + ___ + be ___,___的___是___。,restaurant / we met / still there / school / I studied / far / park / we played / nice,The restaurant where we met is still there.,L1,58
+基础⑩·描述人物事物,地点与原因,This is the reason why + ___.,这就是为什么___。,I came / I called / I left / I chose this / I said no,This is the reason why I came.,L1,59
+基础⑩·描述人物事物,地点与原因,There are many + 名词 + that + ___.,有很多___的___。,things / I want to learn / books / I want to read / places / I want to visit,There are many things that I want to learn.,L1,60
+基础⑩·意图与目的,为了目的,主语 + 动词 + to + 动词原形,为了___而___。,came here / study English / went to the store / buy some food / saved money / buy a car,I came here to study English.,L1,61

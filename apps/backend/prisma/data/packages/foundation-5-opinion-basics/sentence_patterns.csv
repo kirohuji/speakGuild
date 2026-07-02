@@ -2,20 +2,20 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑤·此刻正在做,我正在…,I'm ___ right now.,我现在正在___。,"eating breakfast, drinking coffee, reading a book, cooking dinner",I'm eating breakfast right now.,L1,1
 基础⑤·此刻正在做,他/她正在…,He/She is ___ at the moment.,他/她此刻正在___。,"working, sleeping, studying, driving, teaching",He is working at the moment.,L1,2
 基础⑤·此刻正在做,他/她正在…,They/We are ___ right now.,他们/我们此刻正在___。,"playing, waiting, having lunch, watching a movie",They are playing right now.,L1,3
-基础⑤·此刻正在做,此刻与习惯对比,I ___ every day, but right now I'm ___.,我每天___，但此刻正在___。,"eat breakfast / eating lunch, read books / reading a magazine",I eat breakfast every day, but right now I'm eating lunch.,L1,4
-基础⑤·此刻正在做,此刻与习惯对比,He usually ___, but today he's ___.,他通常___，但今天___。,"takes the bus / taking a taxi, works in the office / working from home",He usually takes the bus, but today he's taking a taxi.,L1,5
+基础⑤·此刻正在做,此刻与习惯对比,I ___ every day, but right now I'm ___.,我每天___，但此刻正在___。,"eat breakfast / eating lunch, read books / reading a magazine",I eat breakfast every day, but right now I'm eating lunch.
+基础⑤·此刻正在做,此刻与习惯对比,He usually ___, but today he's ___.,他通常___，但今天___。,"takes the bus / taking a taxi, works in the office / working from home",He usually takes the bus, but today he's taking a taxi.
 基础⑤·此刻正在做,此刻场景描述,Look! ___ is/are ___.,看！___正在___。,"It / raining, They / coming, The baby / sleeping",Look! It's raining.,L1,6
 基础⑤·此刻正在做,此刻场景描述,It's ___ outside.,外面正在___。,"raining, snowing, getting dark, sunny, windy",It's raining outside.,L1,7
 基础⑤·此刻正在做,此刻场景描述,People are ___ing.,人们正在___。,"waiting, standing, talking, walking, running",People are waiting in line.,L1,8
 基础⑤·此刻正在做,感官动词对比,I think ___ is ___.,我觉得___正在___。,"he / sleeping, she / working, it / raining",I think he is sleeping.,L1,9
-基础⑤·此刻正在做,此刻与习惯对比,Right now I'm ___, and my friend is ___.,现在我在___，我的朋友正在___。,"cooking / setting the table, studying / listening to music",Right now I'm cooking, and my friend is setting the table.,L1,10
-基础⑤·临时vs习惯,平时vs今天,I usually ___, but today I'm ___.,我通常___但今天___。,"take the bus / taking a taxi, eat at home / eating out, walk / driving",I usually take the bus, but today I'm taking a taxi.,L1~L2,11
-基础⑤·临时vs习惯,平时vs今天,I normally ___, but this week I'm ___.,我通常___但这周___。,"walk to school / riding a bike, work in Beijing / working in Shanghai",I normally walk to school, but this month I'm riding a bike.,L1~L2,12
-基础⑤·临时vs习惯,常态vs例外,She ___ at work, but today she's ___ing.,她上班___但今天___。,"wears a uniform / wearing a dress, wears a suit / wearing jeans",She wears a uniform at work, but today she's wearing a dress.,L1~L2,13
-基础⑤·临时vs习惯,常态vs例外,I ___ at ___, but today I'm ___ at ___.,我___点___但今天___点___。,"get up / 7 / getting up / 8, have breakfast / 7 / having breakfast / 8",I get up at 7, but today I'm getting up at 8.,L1~L2,14
-基础⑤·临时vs习惯,常态vs例外,We usually ___ on ___, but this week we're ___ on ___.,我们通常___但本周___。,"meet / Fridays / meeting / Thursday, eat out / Saturdays / eating out / Friday",We usually meet on Fridays, but this week we're meeting on Thursday.,L1~L2,15
-基础⑤·临时vs习惯,平时vs今天,I live in ___, but I'm staying in ___ this month.,我住在___但这个月待在___。,"Beijing / Shanghai, London / New York, Tokyo / Osaka",I live in Beijing, but I'm staying in Shanghai this month.,L1~L2,16
-基础⑤·临时vs习惯,此刻状态,I ___ after work, but today I'm ___ right now.,我下班后___但此刻___。,"feel tired / feeling tired, feel hungry / feeling hungry",I feel tired after work, but I'm feeling really tired right now.,L1~L2,17
+基础⑤·此刻正在做,此刻与习惯对比,Right now I'm ___, and my friend is ___.,现在我在___，我的朋友正在___。,"cooking / setting the table, studying / listening to music",Right now I'm cooking, and my friend is setting the table.
+基础⑤·临时vs习惯,平时vs今天,I usually ___, but today I'm ___.,我通常___但今天___。,"take the bus / taking a taxi, eat at home / eating out, walk / driving",I usually take the bus, but today I'm taking a taxi.
+基础⑤·临时vs习惯,平时vs今天,I normally ___, but this week I'm ___.,我通常___但这周___。,"walk to school / riding a bike, work in Beijing / working in Shanghai",I normally walk to school, but this month I'm riding a bike.
+基础⑤·临时vs习惯,常态vs例外,She ___ at work, but today she's ___ing.,她上班___但今天___。,"wears a uniform / wearing a dress, wears a suit / wearing jeans",She wears a uniform at work, but today she's wearing a dress.
+基础⑤·临时vs习惯,常态vs例外,I ___ at ___, but today I'm ___ at ___.,我___点___但今天___点___。,"get up / 7 / getting up / 8, have breakfast / 7 / having breakfast / 8",I get up at 7, but today I'm getting up at 8.
+基础⑤·临时vs习惯,常态vs例外,We usually ___ on ___, but this week we're ___ on ___.,我们通常___但本周___。,"meet / Fridays / meeting / Thursday, eat out / Saturdays / eating out / Friday",We usually meet on Fridays, but this week we're meeting on Thursday.
+基础⑤·临时vs习惯,平时vs今天,I live in ___, but I'm staying in ___ this month.,我住在___但这个月待在___。,"Beijing / Shanghai, London / New York, Tokyo / Osaka",I live in Beijing, but I'm staying in Shanghai this month.
+基础⑤·临时vs习惯,此刻状态,I ___ after work, but today I'm ___ right now.,我下班后___但此刻___。,"feel tired / feeling tired, feel hungry / feeling hungry",I feel tired after work, but I'm feeling really tired right now.
 基础⑤·临时vs习惯,此刻状态,It ___ here in ___.,___这里___。,"rains a lot / summer, snows / winter, gets hot / July",It rains a lot here in summer.,L1~L2,18
 基础⑤·临时vs习惯,此刻状态,It's ___ing right now.,此刻正在___。,"rain, snow, get dark, get cold",It's raining right now.,L1~L2,19
 基础⑤·临时vs习惯,此刻状态,___ is/are ___ing right now.,___此刻正在___。,"The baby / sleeping, People / waiting, The sun / shining",The baby is sleeping right now.,L1~L2,20
@@ -27,19 +27,17 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑤·频率副词,有时/很少/从不,I never ___.,我从不___。,"smoke, eat meat, drink alcohol, get up late",I never smoke.,L1,26
 基础⑤·频率副词,be+频率副词,She is always ___.,她总是___。,"late, happy, busy, kind, early, on time",She is always late for class.,L1,27
 基础⑤·频率副词,be+频率副词,He is never ___.,他从不___。,"tired, late, hungry, angry, sick",He is never tired in the morning.,L1,28
-基础⑤·频率副词,频率+进行时混合,I usually ___, but this month I'm ___.,我通常___但这个月___。,"walk to work / taking the bus, cook at home / eating out",I usually walk to work, but this month I'm taking the bus.,L1~L2,29
 基础⑤·频率副词,频率+进行时混合,I think ___ is ___ing. He/She usually ___ at this time.,我觉得___正在___。他/她通常这个时间___。,"he / sleeping / takes a nap, she / working / has a meeting",I think he is sleeping. He usually takes a nap at this time.,L1~L2,30
 基础⑤·频率副词,频率问句,How often do you ___? — I ___ once/twice a ___.,你多久___一次？——我每周/月___一次。,"exercise / exercise / week, read / read / month, travel / travel / year",How often do you exercise? — I usually go running three times a week.,L1,31
 基础⑤·have与get,have状态用法,I have ___. (状态，不用进行时),我有___。,"a car, two brothers, a headache, blue eyes, a dog",I have a car.,L1~L2,32
-基础⑤·have与get,have状态用法,He has ___. (状态, 不用进行时),他有___。,"a sister, a bike, a cold, brown hair, a big house",He has a sister.,L1~L2,33
-基础⑤·have与get,have动作用法,I ___ every day, but right now I'm having ___.,我每天___但现在正在___。,"have breakfast / breakfast, have lunch / lunch, have dinner / dinner",I have breakfast at 7 every day, but right now I'm having breakfast.,L1~L2,34
+基础⑤·have与get,have状态用法,He has ___. (状态, 不用进行时),他有___。,"a sister, a bike, a cold, brown hair, a big house",He has a sister.,L1~L2
 基础⑤·have与get,have动作用法,I'm having ___ right now.,我现在正在___。,"lunch, a meeting, a great time, a busy week, fun",I'm having lunch right now.,L1~L2,35
 基础⑤·have与get,have动作用法,She is having ___ this ___. (临时经历),她这___正在___。,"a busy / week, a good / day, a hard / month, a relaxing / weekend",She is having a busy week.,L1~L2,36
-基础⑤·have与get,get起床/到达,I get up at ___, but right now I'm getting up.,我___点起床但正在起床。,"7, 6:30, 8, 5:30",I get up at 7 every day, but right now I'm getting up.,L1~L2,37
-基础⑤·have与get,get起床/到达,I get home at ___, but today I'm getting home ___.,我___点到家但今天___到家。,"6 / late, 5 / early, 7 / on time",I get home at 6 every day, but today I'm getting home late.,L1~L2,38
+基础⑤·have与get,get起床/到达,I get up at ___, but right now I'm getting up.,我___点起床但正在起床。,"7, 6:30, 8, 5:30",I get up at 7 every day, but right now I'm getting up.
+基础⑤·have与get,get起床/到达,I get home at ___, but today I'm getting home ___.,我___点到家但今天___到家。,"6 / late, 5 / early, 7 / on time",I get home at 6 every day, but today I'm getting home late.
 基础⑤·have与get,get变得/收到,I'm getting ___. Let's ___.,我开始___了。我们___吧。,"tired / take a break, hungry / eat something, cold / go inside",I'm getting tired. Let's take a break.,L1~L2,39
 基础⑤·have与get,get变得/收到,It's getting ___. Let's ___.,天___了。我们___吧。,"dark / go inside, cold / wear a jacket, late / hurry up",It's getting dark. Let's go inside.,L1~L2,40
-基础⑤·have与get,get变得/收到,I get ___ every day, but these days I'm getting ___.,我每天___但这些天___。,"a lot of emails / too much spam, good feedback / more requests",I get a lot of emails every day, but these days I'm getting too much spam.,L1~L2,41
+基础⑤·have与get,get变得/收到,I get ___ every day, but these days I'm getting ___.,我每天___但这些天___。,"a lot of emails / too much spam, good feedback / more requests",I get a lot of emails every day, but these days I'm getting too much spam.
 基础⑤·have与get,get变得/收到,She gets ___ when ___.,当___时她会___。,"angry / people are late, worried / her kids are out late",She gets angry when people are late.,L1~L2,42
 基础⑤·have与get,get短语动词,He is getting ___ with ___ (正在变得/相处),他正在___。,"better / his work, along well / his classmates, tired / the long walk",He is getting along well with his classmates.,L1~L2,43
-基础⑤·have与get,get短语动词,Right now she's getting ___, but she usually ___.,她正在___但她通常___。,"ready / takes her time, dressed / is quick, up / gets up at 7",Right now she's getting dressed, but she usually takes her time.,L1~L2,44
+基础⑤·have与get,get短语动词,Right now she's getting ___, but she usually ___.,她正在___但她通常___。,"ready / takes her time, dressed / is quick, up / gets up at 7",Right now she's getting dressed, but she usually takes her time.

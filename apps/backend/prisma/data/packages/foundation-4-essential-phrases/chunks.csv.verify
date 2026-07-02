@@ -1,0 +1,11 @@
+scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
+基础④·出行与交通,问路与位置,Where is,"Excuse me, where is the nearest subway station? — It's just around the corner.","请问，最近的地铁站在哪里？——就在拐角处。",L1,Where is the nearest + 地点名词 问句。,"[{""en"":""Where is the nearest bus stop?"",""zh"":""最近的公交站在哪里？""}]"
+基础④·出行与交通,问路与位置,How do I get to,"How do I get to the museum? — Go straight and turn left at the corner.","我怎么去博物馆？——直走在拐角左转。",L1,How do I get to + 地点 问路问句。,"[{""en"":""How do I get to the airport?"",""zh"":""我怎么去机场？""}]"
+基础④·出行与交通,问路与位置,Is there a,"Is there a pharmacy near here? — Yes, there's one across the street.","附近有药店吗？——有的，街对面有一家。",L1,Is there a + 地点 + near here 存在问句。,"[{""en"":""Is there a coffee shop near here?"",""zh"":""附近有咖啡店吗？""}]"
+基础④·出行与交通,问路与位置,How far,"How far is it from here? — It's about 10 minutes on foot.","从这里有多远？——走路大约10分钟。",L1,How far is + 地点 + from here 距离问句。,"[{""en"":""How far is the airport from here?"",""zh"":""机场离这里多远？""}]"
+基础④·出行与交通,问路与位置,Am I going,"Am I going the right way to the station? — Yes, keep going straight.","我去车站的方向对吗？——对，直走。",L1,Am I going the right way to + 地点 方向确认问句。,"[{""en"":""Am I going the right way to the museum?"",""zh"":""我去博物馆的方向对吗？""}]"
+基础④·出行与交通,问路与位置,Do you have,"Do you have a map? — Sure. Let me show you.","你有地图吗？——有，我给你看。",L1,Do you have + 名词 问句。,"[{""en"":""Do you have a city map?"",""zh"":""你有城市地图吗？""}]"
+基础④·出行与交通,问路与位置,Is this,"Is this seat taken? — No, go ahead.","这个座位有人吗？——没有，请坐。",L1,Is this + 名词 + taken/free 确认问句。,"[{""en"":""Is this seat free?"",""zh"":""这个座位空着吗？""}]"
+基础④·出行与交通,问时间与交通,What time does,"What time does the museum open? — It opens at 9 am.","博物馆几点开门？——早上9点。",L1,What time does + 名词 + open/close 时间问句。,"[{""en"":""What time does the store close?"",""zh"":""商店几点关门？""}]"
+基础④·出行与交通,问时间与交通,What time is,"What time is the next train to Shanghai? — At 3:15 pm.","下一趟去上海的高铁几点？——下午3:15。",L1,What time is + 名词 时间问询。,"[{""en"":""What time is your flight?"",""zh"":""你的航班是几点？""}]"
+基础④·出行与交通,问时间与交通,Which goes to,"Which bus goes to the city center? — Bus number 5 goes there.","哪路公交去市中心？——5路公交。",L1,Which + 交通工具 + goes to + 地点 路线问句。,"[{""en"":""Which train goes to the airport?"",""zh"":""哪趟地铁去机场？""}]"

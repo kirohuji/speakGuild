@@ -1,6 +1,5 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑧·并列与转折,and 并列,I like ___ and ___.,我喜欢...和...,"coffee and tea, cats and dogs, reading and writing",I like coffee and tea.,L1,0
-基础⑧·并列与转折,and 并列,He is ___ and ___.,他...又...,"tall and handsome, young and energetic, funny and friendly",She is smart and kind.,L1,1
 基础⑧·并列与转折,and 并列,I ___ and ___.,我...并且...,"went to the store and bought milk, sat down and read a book",I went to the store and bought some milk.,L1,2
 基础⑧·并列与转折,or 选择,Do you want ___ or ___?,你想要...还是...？,"tea or coffee, this or that, to stay or to go",Do you want tea or coffee?,L1,3
 基础⑧·并列与转折,or 选择,Is it ___ or ___?,它是...还是...？,"big or small, hot or cold, new or old, cheap or expensive",Is it big or small?,L1,4
@@ -41,5 +40,5 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础⑧·举例与补充,对话衔接词,Anyway ___.,不管怎样...,"let's get back to the topic, I have to go now",Anyway let's get back to the topic.,L1,39
 基础⑧·举例与补充,but 转折,I wanted to ___ but ___ so I ___.,我想...但是...所以我...,"go out it rained stayed home, call you you were busy texted you",I wanted to go out but it started to rain so I stayed home.,L1,40
 基础⑧·举例与补充,because 原因,When I ___ I was ___ because ___.,当我...时我...因为...,"got home really hungry I didn't eat lunch, saw her happy she passed the test",When I got home I was really hungry because I didn't eat lunch.,L1,41
-基础⑧·举例与补充,时间顺序链,First I ___ After that I ___ Then I ___ because ___.,首先...之后...然后...因为...,"went to the museum had lunch walked in the park the weather was nice",First we went to the museum After that we had lunch Then we walked in the park.,L1,42
-基础⑧·综合叙事,多步骤叙事,First I ___ and ___ Then I ___ and ___ After that I ___.,首先我...然后我...之后我...,"went to the store bought food came home cooked dinner ate and watched TV",First I went to the store and bought food Then I came home and cooked dinner.,L1,43
+基础⑧·举例与补充,时间顺序链,First I ___ After that I ___ Then I ___ because ___.,首先...之后...然后...因为...,went to the museum had lunch walked in the park the weather was nice,First we went to the museum After that we had lunch Then we walked in the park.,L1,42
+基础⑧·综合叙事,多步骤叙事,First I ___ and ___ Then I ___ and ___ After that I ___.,首先我...然后我...之后我...,went to the store bought food came home cooked dinner ate and watched TV,First I went to the store and bought food Then I came home and cooked dinner.,L1,43

@@ -5,26 +5,19 @@ scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
 基础②·日常习惯,我每天做什么,I don't ___.,我不...,eat meat / drink coffee / smoke,I don't eat meat.,L1,3
 基础②·日常习惯,我的日常动作,I ___ from ___ to ___.,我从...到...做...,work / 9 / 5 / study / 8 / 6,I work from 9 to 5.,L1,4
 基础②·日常习惯,我的日常动作,I do ___ after school.,我放学后...,my homework / housework / exercise,I do my homework after school.,L1,5
-基础②·日常习惯,我的日常动作,I ___ every ___.,我每...做...,study English / day / walk my dog / evening,I study English every day.,L1,6
 基础②·日常习惯,起床到出门,I ___ in the ___.,我在...做...,take a shower / morning / read / evening,I take a shower in the morning.,L1,7
 基础②·日常习惯,起床到出门,I ___ at ___ o'clock.,我...点...,get up / 7 / go to bed / 11,I get up at 7 o'clock.,L1,8
 基础②·日常习惯,晚上做什么,I ___ after ___.,我...后做...,watch TV / dinner / read books / school,I watch TV after dinner.,L1,9
-基础②·喜好与需求,我喜欢…,I like ___.,我喜欢...,coffee / cats / music / sports,I like coffee.,L1,10
 基础②·喜好与需求,我喜欢…,I like to ___.,我喜欢做...,read / swim / travel / cook,I like to read.,L1,11
 基础②·喜好与需求,我喜欢…,I love ___.,我热爱...,music / animals / dancing,I love music.,L1,12
-基础②·喜好与需求,我不喜欢…,I don't like ___.,我不喜欢...,cold weather / getting up early / spiders,I don't like cold weather.,L1,13
 基础②·喜好与需求,我想要…,I want a ___.,我想要一个...,new phone / car / job / pet,I want a new phone.,L1,14
 基础②·喜好与需求,我想要…,I want to ___.,我想做...,learn Spanish / travel / sleep,I want to learn Spanish.,L1,15
-基础②·喜好与需求,我想要…,I would like ___.,我想要（礼貌）...,some water / to order / a coffee,I would like some water.,L1,16
-基础②·喜好与需求,我需要…,I need ___.,我需要...,help / water / a break / more time,I need help.,L1,17
 基础②·喜好与需求,我需要…,I need to ___.,我需要做...,go / sleep / study / leave,I need to go.,L1,18
 基础②·喜好与需求,我有什么,I have a ___.,我有一个...,brother / car / dog / question,I have a brother.,L1,19
 基础②·喜好与需求,我有什么,I have ___.,我有...,two cats / many friends / no time,I have two cats.,L1,20
 基础②·喜好与需求,询问拥有,Do you have ___?,你有...吗？,a pen / time / any questions,Do you have a pen?,L1,21
 基础②·喜好与需求,否定拥有,I don't have ___.,我没有...,a car / a phone / siblings / time,I don't have a car.,L1,22
-基础②·喜好与需求,我的能力,I can ___.,我会/能...,speak English / swim / sing / dance,I can speak English.,L1,23
 基础②·喜好与需求,请求许可,Can I ___?,我能...吗？,go now / sit here / ask a question,Can I go now?,L1,24
-基础②·日程安排,起床与睡觉,I ___ at ___.,我...点...,get up / 7 / have lunch / 12 / come home / 6,I get up at 7 o'clock.,L1,25
 基础②·日程安排,交通方式,I go to ___ by ___.,我乘...去...,work / bus / school / bike / the park / subway,I go to work by bus.,L1,26
 基础②·日程安排,交通方式,I take the ___ to ___.,我坐...去...,bus / school / subway / work / train / the airport,I take the bus to work.,L1,27
 基础②·日程安排,早晚行程,I come to ___ ___.,我到......,school early / work on time / home late,I come to school early.,L1,28
