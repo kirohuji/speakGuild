@@ -70,7 +70,7 @@ const config: CapacitorConfig = {
 
     // Keyboard — 键盘行为控制（减少键盘弹出时的卡顿和布局抖动）
     Keyboard: {
-      resize: KeyboardResize.Body,
+      resize: KeyboardResize.None,
       resizeOnFullScreen: true,
     },
 

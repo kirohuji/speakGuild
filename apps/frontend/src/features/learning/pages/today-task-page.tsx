@@ -926,7 +926,7 @@ export function TodayTaskPage() {
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DialogContent
           data-keyboard-overlay="practice"
-          className="!z-[10000] flex flex-col h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden"
+          className="left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
         >
           <DialogTitle className="sr-only">
             {currentStep?.displayLabel || currentMeta.label} · {currentStep?.topicTitle}

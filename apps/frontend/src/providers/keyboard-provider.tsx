@@ -22,6 +22,7 @@ function useNativeKeyboard() {
     let listeners: { remove: () => Promise<void> | void }[] = [];
     let focusScrollTimer: number | undefined;
     let stableViewportHeight = window.innerHeight;
+    let currentKeyboardHeight = 0;
 
     const getKeyboardContext = () => {
       const activeElement = document.activeElement;
@@ -59,12 +60,20 @@ function useNativeKeyboard() {
 
       const parentRect = scrollParent.getBoundingClientRect();
       const inputRect = activeElement.getBoundingClientRect();
-      const targetTop = inputRect.top - parentRect.top + scrollParent.scrollTop;
-      const centeredTop = targetTop - (parentRect.height - inputRect.height) / 2;
+      const padding = 16;
+      const safeTop = parentRect.top + padding;
+      const safeBottom = Math.min(parentRect.bottom, stableViewportHeight - currentKeyboardHeight) - padding;
+
+      if (inputRect.top >= safeTop && inputRect.bottom <= safeBottom) return;
+
+      const scrollDelta =
+        inputRect.bottom > safeBottom
+          ? inputRect.bottom - safeBottom
+          : inputRect.top - safeTop;
 
       scrollParent.scrollTo({
-        top: Math.max(0, centeredTop),
-        behavior: 'smooth',
+        top: Math.max(0, scrollParent.scrollTop + scrollDelta),
+        behavior: 'auto',
       });
     };
 
@@ -79,6 +88,7 @@ function useNativeKeyboard() {
     };
 
     const setKeyboardOpen = (height: number) => {
+      currentKeyboardHeight = height;
       const currentViewportHeight = window.innerHeight;
       const expectedAvailableHeight = stableViewportHeight - height;
       const availableHeight = Math.max(
@@ -94,6 +104,7 @@ function useNativeKeyboard() {
     };
 
     const setKeyboardClosed = () => {
+      currentKeyboardHeight = 0;
       stableViewportHeight = window.innerHeight;
       document.documentElement.style.setProperty('--keyboard-height', '0px');
       document.documentElement.style.setProperty('--keyboard-offset', '0px');
