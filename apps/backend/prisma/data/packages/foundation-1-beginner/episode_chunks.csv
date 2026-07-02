@@ -8,31 +8,83 @@ ch_be_01,2,You are very kind.,0
 ch_be_01,2,Are you a student? Yes I am.,1
 ch_be_01,2,How are you? I am fine.,2
 ch_be_01,2,Nice to meet you!,3
+ch_be_01,2,My name is Li Ming.,4
 ch_be_02,1,It is a book.,0
 ch_be_02,1,What is this? It is a pen.,1
 ch_be_02,1,It is very big.,2
+ch_be_02,1,It is not a pen. It is a pencil.,3
+ch_be_02,1,The apple is red.,4
 ch_be_02,2,It is on the table.,0
 ch_be_02,2,It is in the bag.,1
 ch_be_02,2,Where is the book?,2
+ch_be_02,2,It is big and red.,3
+ch_be_02,3,It is sunny today.,0
+ch_be_02,3,It is very hot today.,1
+ch_be_02,3,There is a book on the table.,2
+ch_be_02,3,There are two pens.,3
 ch_be_03,1,He is my friend.,0
 ch_be_03,1,She is a teacher.,1
 ch_be_03,1,His name is Tom.,2
-ch_be_03,1,Her name is Mary.,3
+ch_be_03,1,He is a doctor.,3
+ch_be_03,1,She is a nurse.,4
 ch_be_03,2,My father is a doctor.,0
-ch_be_03,2,My mother is a teacher.,1
-ch_be_03,2,I have one brother.,2
-ch_be_04,1,Good morning!,0
+ch_be_03,2,I have one brother.,1
+ch_be_03,2,I am from China.,2
+ch_be_03,2,I speak Chinese.,3
+ch_be_03,3,He is tall and thin.,0
+ch_be_03,3,She is very pretty.,1
+ch_be_03,3,We are good friends.,2
+ch_be_03,3,They are from China.,3
+ch_be_03,3,We are both students.,4
+ch_be_04,1,Good morning! How are you?,0
 ch_be_04,1,Goodbye! See you!,1
 ch_be_04,1,See you later!,2
+ch_be_04,1,Thanks a lot!,3
+ch_be_04,1,Excuse me where is the bathroom?,4
 ch_be_04,2,Where are you from? I am from China.,0
 ch_be_04,2,What do you do? I am a student.,1
-ch_be_05,1,one two three four five,0
-ch_be_05,1,eleven twelve thirteen,1
-ch_be_05,2,I always eat breakfast.,0
-ch_be_05,2,I sometimes watch TV.,1
+ch_be_04,2,How is your day? It is good.,2
+ch_be_04,2,Not bad thank you.,3
+ch_be_04,3,This is my friend Tom.,0
+ch_be_04,3,Have you met my brother?,1
+ch_be_04,3,Are you okay? I am fine.,2
+ch_be_04,3,Take care! See you!,3
+ch_be_04,4,Could you help me please?,0
+ch_be_04,4,Let me introduce myself.,1
+ch_be_04,4,How is it going? Pretty good.,2
+ch_be_05,1,one two three four five six seven eight nine ten,0
+ch_be_05,1,eleven twelve thirteen fourteen fifteen sixteen,1
+ch_be_05,1,twenty-one to one hundred,2
+ch_be_05,1,a hundred a thousand a million,3
+ch_be_05,1,first second third fourth fifth,4
+ch_be_05,1,the first time the second floor,5
+ch_be_05,2,What time is it? It is three oclock,0
+ch_be_05,2,It is half past three,1
+ch_be_05,2,It is a quarter past six,2
+ch_be_05,2,It is four twenty,3
+ch_be_05,3,Today is Monday,0
+ch_be_05,3,I go to school on Monday,1
+ch_be_05,3,January February March April,2
+ch_be_05,3,My birthday is in May,3
+ch_be_05,3,Today is May 1st,4
+ch_be_05,3,I was born in 2000,5
+ch_be_05,4,How much is it? It is 50 yuan,0
+ch_be_05,4,How old are you? I am 25 years old,1
+ch_be_05,4,My phone number is one-three-eight,2
+ch_be_05,4,I study English every day,3
+ch_be_05,5,I always eat breakfast,0
+ch_be_05,5,I often go to the park on weekends,1
 ch_be_06,1,I want a coffee.,0
 ch_be_06,1,I would like some water.,1
-ch_be_06,1,I need help.,2
-ch_be_06,2,I am hungry. I want to eat.,0
-ch_be_06,2,I am thirsty. Can I have water?,1
-ch_be_06,2,I am tired. I need to rest.,2
+ch_be_06,1,I need help,2
+ch_be_06,1,I can speak English.,3
+ch_be_06,1,Can you help me find this?,4
+ch_be_06,1,Can I go now,5
+ch_be_06,2,I like coffee,0
+ch_be_06,2,I dont like cold weather,1
+ch_be_06,2,I love music,2
+ch_be_06,2,I am hungry I want to eat,3
+ch_be_06,2,I am thirsty Can I have water,4
+ch_be_06,2,I am tired I need to rest,5
+ch_be_06,3,Can you help me find this?,0
+ch_be_06,3,Excuse me where is the bathroom?,1

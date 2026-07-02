@@ -1,23 +1,60 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础④·Yes/No问句,一般疑问句,Are you ___?,你是...吗？,"a student, happy, ready, tired",Are you a student?,L1,0
-基础④·Yes/No问句,一般疑问句,Do you ___?,你...吗？,"like coffee, eat meat, speak English",Do you like coffee?,L1,1
-基础④·Yes/No问句,一般疑问句,Does he/she ___?,他/她...吗？,"speak English, work here, like music",Does she speak English?,L1,2
-基础④·Yes/No问句,一般疑问句,Can you ___?,你能...吗？,"swim, drive, cook, help me",Can you swim?,L1,3
-基础④·Yes/No问句,过去疑问句,Did you ___?,你...了吗？,"eat breakfast, watch TV, call her",Did you eat breakfast?,L1,0
-基础④·Yes/No问句,过去疑问句,Were you ___?,你当时...吗？,"at home, tired, happy, late",Were you at home?,L1,1
-基础④·Wh-问句,6W问句,What is ___?,什么是？/叫什么？,"your name, this, that, your phone number",What is your name?,L1,0
-基础④·Wh-问句,6W问句,Where is ___?,在哪里？,"the bathroom, my phone, the bus stop",Where is the bathroom?,L1,1
-基础④·Wh-问句,6W问句,When do you ___?,你什么时候？,"get up, eat lunch, go home",When do you get up?,L1,2
-基础④·Wh-问句,6W问句,Why are you ___?,你为什么？,"late, tired, sad, happy",Why are you late?,L1,3
-基础④·Wh-问句,6W问句,Which ___ is ___?,哪个...是？,"one, yours, book, his",Which one is yours?,L1,4
-基础④·Wh-问句,What与Who详细问,What time is ___?,几点？,"it, the meeting, lunch",What time is it?,L1,0
-基础④·Wh-问句,What与Who详细问,What kind of ___ do you like?,你喜欢什么类型...？,"music, movies, food, books",What kind of music do you like?,L1,1
-基础④·Wh-问句,What与Who详细问,Whose ___ is this?,这是谁的...？,"book, phone, bag, coat",Whose book is this?,L1,2
-基础④·How问句,数量与价格,How many ___ do you have?,你有多少...？,"books, pens, friends, cats",How many books do you have?,L1,0
-基础④·How问句,数量与价格,How much is ___?,多少钱？,"this, the ticket, your phone",How much is this?,L1,1
-基础④·How问句,数量与价格,How far is ___?,多远？,"it, the airport, your home",How far is it?,L1,2
-基础④·How问句,数量与价格,How long does it take?,需要多久？,（固定句型）,How long does it take?,L1,3
-基础④·How问句,频率与方式,How often do you ___?,你多久一次？,"exercise, read, travel",How often do you exercise?,L1,0
-基础④·How问句,频率与方式,How do you ___?,你怎么？,"go to work, learn English, cook this",How do you go to work?,L1,1
-基础④·How问句,频率与方式,How was ___?,怎么样？,"your day, your weekend, the movie",How was your day?,L1,2
-基础④·How问句,频率与方式,How about ___?,怎么样？建议,"some coffee, a break, going out",How about some coffee?,L1,3
+基础④·出行与交通,问路与位置,Where is the nearest ___?,最近的___在哪里？,"subway station, bus stop, ATM, restroom, pharmacy, hospital",Where is the nearest subway station?,L1,1
+基础④·出行与交通,问路与位置,Where are the ___?,___在哪里？,"restrooms, elevators, stairs, exits, lockers, ticket machines",Where are the restrooms?,L1,2
+基础④·出行与交通,问路与位置,How do I get to ___?,我怎么去___？,"the museum, the airport, the train station, the city center, your hotel",How do I get to the museum?,L1,3
+基础④·出行与交通,问路与位置,Is there a ___ near here?,附近有___吗？,"pharmacy, supermarket, post office, park, bank, coffee shop",Is there a pharmacy near here?,L1,4
+基础④·出行与交通,问路与位置,How far is ___ from here?,___离这里多远？,"the airport, your hotel, the beach, downtown, the hospital",How far is it from here?,L1,5
+基础④·出行与交通,问路与位置,Am I going the right way to ___?,我去___的方向对吗？,"the station, the museum, the park, the library, the stadium",Am I going the right way to the station?,L1,6
+基础④·出行与交通,问时间与交通,What time does ___ open/close?,___几点开/关？,"the museum, the store, the bank, the movie, the meeting",What time does the museum open?,L1,7
+基础④·出行与交通,问时间与交通,What time is ___?,___是几点？,"the next train, the last bus, your flight, the check-in, the show",What time is the next train to Shanghai?,L1,8
+基础④·出行与交通,问时间与交通,Which ___ goes to ___?,哪趟___去___？,"bus / the city center, train / the airport, subway / the stadium",Which bus goes to the city center?,L1,9
+基础④·出行与交通,问时间与交通,How long does it take to ___?,___需要多久？,"get there, walk, drive, fly, get through security, get a taxi",How long does it take to get there?,L1,10
+基础④·出行与交通,问时间与交通,Where do I ___?,我在哪里___？,"buy a ticket, pay, check in, get a taxi, wait for the bus",Where do I buy a ticket?,L1,11
+基础④·出行与交通,问时间与交通,Does this ___ stop at ___?,这趟___在___停吗？,"bus / the museum, train / the airport, line / downtown",Does this bus stop at the museum?,L1,12
+基础④·出行与交通,问时间与交通,How much does it cost to go to ___?,去___多少钱？,"the airport, the station, downtown, this address, the hotel",How much does it cost to go to the airport?,L1,13
+基础④·消费与服务,购物问询,How much is ___?,___多少钱？,"this, that, the red one, this shirt, a cup of coffee, the ticket",How much is this?,L1,14
+基础④·消费与服务,购物问询,How much are ___?,___多少钱？,"these shoes, the apples, those flowers, the tickets, the souvenirs",How much are these?,L1,15
+基础④·消费与服务,购物问询,Do you have this in ___?,你们有___的吗？,"a small size, blue, another color, medium, large, a different style",Do you have this in a small size?,L1,16
+基础④·消费与服务,试穿与尺寸,I want to try ___ on. Where is the fitting room?,我想试穿___。试衣间在哪？,"this jacket, these shoes, that dress, those pants, this hat, the scarf",I want to try this on. Where is the fitting room?,L1,17
+基础④·消费与服务,试穿与尺寸,Do you have other ___?,你们有其他___吗？,"colors, styles, sizes, options, brands, ones",Do you have other colors?,L1,18
+基础④·消费与服务,支付与结账,Do you take ___?,你们收___吗？,"cards, cash, WeChat, Alipay, credit cards, phone payments",Do you take cards?,L1,19
+基础④·消费与服务,支付与结账,I need ___, please.,我需要___。,"a receipt, a bag, a refund, an exchange, a discount, your business card",I need a receipt, please.,L1,20
+基础④·消费与服务,餐厅点餐,I want to see ___, please.,我想看___。,"the menu, the wine list, the dessert menu, the specials, the room",I want to see the menu, please.,L1,21
+基础④·消费与服务,餐厅点餐,What do you recommend for ___?,你推荐什么___？,"a starter, the main course, dessert, drinks, someone who likes spicy food",What do you recommend?,L1,22
+基础④·消费与服务,餐厅点餐,Does this contain/have ___?,这个含有___吗？,"nuts, dairy, gluten, pork, alcohol, any allergens",Does this dish contain nuts?,L1,23
+基础④·消费与服务,餐厅服务与评价,Is ___ included?,包含___吗？,"service charge, tax, tip, breakfast, parking, Wi-Fi, the entrance fee",Is service charge included?,L1,24
+基础④·消费与服务,餐厅服务与评价,Do you have any ___ options?,你们有___选项吗？,"vegetarian, vegan, gluten-free, halal, kids', non-spicy, local",Do you have any vegetarian options?,L1,25
+基础④·消费与服务,餐厅服务与评价,Is there a table ___?,有___的桌子吗？,"by the window, outside, in the corner, at the bar, near the stage, somewhere quiet",Is there a table by the window?,L1,26
+基础④·社交与寒暄,认识新朋友,What do you do?,你是做什么的？,（固定搭配）,What do you do? — I'm a student.,L1,27
+基础④·社交与寒暄,认识新朋友,Where are you from? — I'm from ___.,你从哪里来？——我来自___。,"Chengdu, Beijing, Guangdong, Japan, a small town, the US",Where are you from? — I'm from Chengdu.,L1,28
+基础④·社交与寒暄,认识新朋友,How's it going? — ___.,最近怎么样？——___。,"Not bad, Great, Can't complain, Same as usual, Busy but good",How's it going? — Pretty good!,L1,29
+基础④·社交与寒暄,认识新朋友,What do you do ___?,你平时___做什么？,"for fun, on weekends, after work, in your free time, to relax, for exercise",What do you do for fun?,L1,30
+基础④·社交与寒暄,爱好与兴趣,What kind of ___ do you like?,你喜欢什么类型的___？,"music, movies, food, books, sports, games, TV shows, animals",What kind of music do you like?,L1,31
+基础④·社交与寒暄,爱好与兴趣,Do you like ___?,你喜欢___吗？,"traveling, cooking, hiking, reading, watching sports, trying new food",Do you like traveling?,L1,32
+基础④·社交与寒暄,爱好与兴趣,What ___ do you want to ___?,你想___什么___？,"countries / visit, cities / see, food / try, places / go to",What countries do you want to visit?,L1,33
+基础④·社交与寒暄,约见面,Are you free ___?,你___有空吗？,"this weekend, tonight, tomorrow, after work, next Friday, on Sunday",Are you free this weekend?,L1,34
+基础④·社交与寒暄,约见面,Do you want to ___?,你想___吗？,"grab lunch, get a coffee, go shopping, see a movie, take a walk, hang out",Do you want to grab lunch together?,L1,35
+基础④·社交与寒暄,约见面,What time do you want to ___?,你想几点___？,"meet, start, leave, arrive, have dinner, come over",What time do you want to meet?,L1,36
+基础④·社交与寒暄,约见面,Where do you want to ___?,你想在哪___？,"meet, go, eat, sit, wait",Where do you want to meet?,L1,37
+基础④·社交与寒暄,关心与问候,How is ___?,___怎么样？,"your day, everything, your work, your family, your new job, life",How is your day?,L1,38
+基础④·社交与寒暄,关心与问候,Is everything ___?,一切都___吗？,"okay, alright, going well, ready for tomorrow, clear",Is everything okay?,L1,39
+基础④·社交与寒暄,关心与问候,Do you need ___?,你需要___吗？,"help, anything, a hand, some water, a break, directions",Do you need help?,L1,40
+基础④·电话与联络,打电话找人,Is ___ there, please?,请问___在吗？,"Mr. Wang, the manager, your parents, the doctor, your colleague",Is Mr. Wang there, please?,L1,41
+基础④·电话与联络,打电话找人,Who's calling, please? — This is ___.,请问是哪位？——我是___。,"your student, Tom's friend, the delivery person, the landlord",Who's calling, please?,L1,42
+基础④·电话与联络,打电话找人,Is ___ available?,___方便接电话吗？,"Mr. Wang, the doctor, your boss, the technician, customer service",Is Mr. Wang available?,L1,43
+基础④·电话与联络,打电话找人,When is ___ back?,___什么时候回来？,"he, she, the manager, your colleague, the doctor",When is he back?,L1,44
+基础④·电话与联络,打电话找人,When is a good time to ___?,什么时候___合适？,"call, reach you, come by, have a meeting, drop in, chat",When is a good time to call back?,L1,45
+基础④·电话与联络,留言与回电,Please ask him to ___.,请让他___。,"call me back, email me, text me, confirm the time",Please ask him to call me back.,L1,46
+基础④·电话与联络,留言与回电,Please tell him ___.,请告诉他___。,"I called, I need to change the time, the meeting is at 3",Please tell him I called.,L1,47
+基础④·电话与联络,留言与回电,Does ___ know ___?,___知道___吗？,"she / I called, the boss / about the meeting, your parents / you are here",Does he know I called?,L1,48
+基础④·电话与联络,留言与回电,Do I ___ or ___?,我是___还是___？,"wait / call again, email / text, come in person / try tomorrow",Do I call back or wait?,L1,49
+基础④·电话与联络,留言与回电,What's your ___?,你的___是什么？,"phone number, email address, WeChat, office number",What's your phone number?,L1,50
+基础④·应急与求助,紧急呼救,Help! Where is the nearest ___?,救命！最近的___在哪？,"hospital, police station, fire station, emergency room, pharmacy, exit",Where is the nearest hospital?,L1,51
+基础④·应急与求助,紧急呼救,How do I ___?,我怎么___？,"call an ambulance, call the police, report a fire, get emergency help, find a doctor",How do I call an ambulance?,L1,52
+基础④·应急与求助,紧急呼救,Is there a ___ here?,这里有___吗？,"doctor, nurse, police officer, security guard, translator, someone who speaks Chinese",Is there a doctor here?,L1,53
+基础④·应急与求助,紧急呼救,Is everyone ___?,大家都___吗？,"safe, accounted for, out of the building, okay, alright, still inside",Is everyone okay?,L1,54
+基础④·应急与求助,看病问诊,What do I do? I have a ___.,我该怎么办？我___。,"headache, fever, stomachache, sore throat, toothache, back pain, cold, cough",What do I do? I have a bad headache.,L1,55
+基础④·应急与求助,看病问诊,Do I need to ___?,我需要___吗？,"see a doctor, go to the hospital, take medicine, get an X-ray, call an ambulance, stay overnight",Do I need to see a doctor?,L1,56
+基础④·应急与求助,看病问诊,Is there a ___ open right now?,现在有开着的___吗？,"pharmacy, doctor's office, clinic, hospital nearby, emergency dentist",Is there a pharmacy open right now?,L1,57
+基础④·应急与求助,问路求助,Do you speak ___?,你说___吗？,"Chinese, English, Japanese, Korean, French, Spanish",Do you speak Chinese?,L1,58
+基础④·应急与求助,看病问诊,How much does it cost to ___?,___要多少钱？,"see a doctor, get a check-up, stay overnight, get an X-ray, fill this prescription",How much does it cost to see a doctor?,L1,59

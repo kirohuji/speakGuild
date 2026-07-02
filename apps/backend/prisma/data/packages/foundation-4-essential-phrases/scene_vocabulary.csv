@@ -1,121 +1,334 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础④·Yes/No问句,一般疑问句,question,问题,noun,/ˈkwestʃən/,/ˈkwestʃən/,L1,问题。ask a question = 问问题。,"[{"en":"Do you have a question?","zh":"你有问题吗？"}]",0
-基础④·Yes/No问句,一般疑问句,answer,回答,noun/verb,/ˈænsər/,/ˈɑːnsə/,L1,回答。answer the question。,"[{"en":"Please answer my question.","zh":"请回答我的问题。"}]",1
-基础④·Yes/No问句,一般疑问句,yes,是,adv,/jes/,/jes/,L1,肯定回答。,"[{"en":"Yes, I am.","zh":"是的，我是。"}]",2
-基础④·Yes/No问句,一般疑问句,no,不/不是,adv,/noʊ/,/nəʊ/,L1,否定回答。,"[{"en":"No, I'm not.","zh":"不，我不是。"}]",3
-基础④·Yes/No问句,一般疑问句,ask,问,verb,/æsk/,/ɑːsk/,L1,问问题。ask a question。,"[{"en":"Can I ask you something?","zh":"我能问你点事吗？"}]",4
-基础④·Yes/No问句,一般疑问句,sure,当然/确定,adj/adv,/ʃʊr/,/ʃɔː/,L1,确定。Are you sure?,"[{"en":"Are you sure about that?","zh":"你确定吗？"}]",5
-基础④·Yes/No问句,一般疑问句,maybe,也许,adv,/ˈmeɪbi/,/ˈmeɪbi/,L1,也许。不确定的回答。,"[{"en":"Maybe later.","zh":"也许晚点。"}]",6
-基础④·Yes/No问句,一般疑问句,really,真的,adv,/ˈriːəli/,/ˈrɪəli/,L1,真的。表示惊讶或强调。,"[{"en":"Really? Is that true?","zh":"真的吗？那是真的吗？"}]",7
-基础④·Yes/No问句,一般疑问句,correct,正确的,adj,/kəˈrekt/,/kəˈrekt/,L1,正确的。That's correct。,"[{"en":"Is that correct?","zh":"对吗？"}]",8
-基础④·Yes/No问句,一般疑问句,wrong,错误的,adj,/rɔːŋ/,/rɒŋ/,L1,错误的。wrong answer。,"[{"en":"Is it wrong?","zh":"它错了吗？"}]",9
-基础④·Yes/No问句,一般疑问句,understand,理解,verb,/ˌʌndərˈstænd/,/ˌʌndəˈstænd/,L1,理解。Do you understand?,"[{"en":"Do you understand me?","zh":"你明白我的意思吗？"}]",10
-基础④·Yes/No问句,一般疑问句,explain,解释,verb,/ɪkˈspleɪn/,/ɪkˈspleɪn/,L1,解释。Can you explain?,"[{"en":"Can you explain that again?","zh":"你能再解释一遍吗？"}]",11
-基础④·Yes/No问句,一般疑问句,repeat,重复,verb,/rɪˈpiːt/,/rɪˈpiːt/,L1,重复。Please repeat。,"[{"en":"Can you repeat that?","zh":"你能重复一遍吗？"}]",12
-基础④·Yes/No问句,过去疑问句,did,做(过去助动词),verb,/dɪd/,/dɪd/,L1,do的过去式。构成过去疑问句。,"[{"en":"Did you eat?","zh":"你吃了吗？"}]",0
-基础④·Yes/No问句,过去疑问句,yesterday,昨天,adv,/ˈjestərdeɪ/,/ˈjestədeɪ/,L1,昨天。过去时间表达。,"[{"en":"Did you go to school yesterday?","zh":"你昨天上学了吗？"}]",1
-基础④·Yes/No问句,过去疑问句,ago,…以前,adv,/əˈɡoʊ/,/əˈɡəʊ/,L1,…以前。two days ago。,"[{"en":"Did you see him two days ago?","zh":"你两天前看到他了吗？"}]",2
-基础④·Yes/No问句,过去疑问句,last,上一个/最后的,adj,/læst/,/lɑːst/,L1,上一个的。last week。,"[{"en":"Did you work last weekend?","zh":"你上周周末工作了吗？"}]",3
-基础④·Yes/No问句,过去疑问句,before,之前,prep/adv,/bɪˈfɔːr/,/bɪˈfɔː/,L1,在…之前。Have you been here before?,"[{"en":"Did you come here before?","zh":"你之前来过这里吗？"}]",4
-基础④·Yes/No问句,过去疑问句,after,之后,prep,/ˈæftər/,/ˈɑːftə/,L1,在…之后。after work。,"[{"en":"Did you eat after the meeting?","zh":"你开完会后吃了吗？"}]",5
-基础④·Yes/No问句,过去疑问句,already,已经,adv,/ɔːlˈredi/,/ɔːlˈredi/,L1,已经。用于疑问句表惊讶。,"[{"en":"Did you finish already?","zh":"你已经完成了吗？"}]",6
-基础④·Yes/No问句,过去疑问句,yet,还/已经,adv,/jet/,/jet/,L1,还。用于疑问句或否定。,"[{"en":"Did you eat yet?","zh":"你吃了吗？"}]",7
-基础④·Yes/No问句,过去疑问句,once,一次,adv,/wʌns/,/wʌns/,L1,一次。once a week。,"[{"en":"Did you go there once?","zh":"你去过一次吗？"}]",8
-基础④·Yes/No问句,过去疑问句,twice,两次,adv,/twaɪs/,/twaɪs/,L1,两次。twice a day。,"[{"en":"Did you call twice?","zh":"你打了两次吗？"}]",9
-基础④·Yes/No问句,过去疑问句,ever,曾经,adv,/ˈevər/,/ˈevə/,L1,曾经。Have you ever...?,"[{"en":"Did you ever go there?","zh":"你曾经去过那里吗？"}]",10
-基础④·Wh-问句,6W问句,what,什么,pron,/wʌt/,/wɒt/,L1,疑问词。What is this?,"[{"en":"What is your name?","zh":"你叫什么名字？"}]",0
-基础④·Wh-问句,6W问句,where,哪里,adv,/wer/,/weə/,L1,疑问词。Where is...?,"[{"en":"Where is the bathroom?","zh":"洗手间在哪里？"}]",1
-基础④·Wh-问句,6W问句,when,什么时候,adv,/wen/,/wen/,L1,疑问词。When do you...?,"[{"en":"When do you get up?","zh":"你几点起床？"}]",2
-基础④·Wh-问句,6W问句,why,为什么,adv,/waɪ/,/waɪ/,L1,疑问词。Why are you...?,"[{"en":"Why are you late?","zh":"你为什么迟到？"}]",3
-基础④·Wh-问句,6W问句,which,哪个,pron,/wɪtʃ/,/wɪtʃ/,L1,疑问词。Which one?,"[{"en":"Which one is yours?","zh":"哪个是你的？"}]",4
-基础④·Wh-问句,6W问句,person,人,noun,/ˈpɜːrsən/,/ˈpɜːsən/,L1,人。Who question answers。,"[{"en":"Who is that person?","zh":"那个人是谁？"}]",5
-基础④·Wh-问句,6W问句,place,地方,noun,/pleɪs/,/pleɪs/,L1,地方。Where question answers。,"[{"en":"What place is that?","zh":"那是什么地方？"}]",6
-基础④·Wh-问句,6W问句,time,时间,noun,/taɪm/,/taɪm/,L1,时间。When question answers。,"[{"en":"What time do you get up?","zh":"你几点起床？"}]",7
-基础④·Wh-问句,6W问句,reason,原因,noun,/ˈriːzən/,/ˈriːzən/,L1,原因。Why question answers。,"[{"en":"What is the reason?","zh":"原因是什么？"}]",8
-基础④·Wh-问句,6W问句,way,方式/路,noun,/weɪ/,/weɪ/,L1,方式。this way。which way。,"[{"en":"Which way is the station?","zh":"车站怎么走？"}]",9
-基础④·Wh-问句,6W问句,thing,东西/事情,noun,/θɪŋ/,/θɪŋ/,L1,东西。What is that thing?,"[{"en":"What is this thing?","zh":"这个东西是什么？"}]",10
-基础④·Wh-问句,6W问句,each,每个,adj/pron,/iːtʃ/,/iːtʃ/,L1,每个。each one。,"[{"en":"Which one to choose? Each is good.","zh":"选哪个？每个都好。"}]",11
-基础④·Wh-问句,6W问句,both,两者都,adj/pron,/boʊθ/,/bəʊθ/,L1,（两者）都。,"[{"en":"Which one? Both are fine.","zh":"哪个？两个都行。"}]",12
-基础④·Wh-问句,6W问句,type,类型,noun,/taɪp/,/taɪp/,L1,类型。What type?,"[{"en":"What type of music do you like?","zh":"你喜欢什么类型的音乐？"}]",13
-基础④·Wh-问句,6W问句,none,没有任何,pron,/nʌn/,/nʌn/,L1,一个都没有。,"[{"en":"Which one? None of them.","zh":"哪个？一个都不要。"}]",14
-基础④·Wh-问句,What与Who详细问,whose,谁的,pron,/huːz/,/huːz/,L1,所有格疑问词。Whose...?,"[{"en":"Whose book is this?","zh":"这是谁的书？"}]",0
-基础④·Wh-问句,What与Who详细问,because,因为,conj,/bɪˈkɔːz/,/bɪˈkɒz/,L1,因果关系连接词。,"[{"en":"Because I was sick.","zh":"因为我生病了。"}]",1
-基础④·Wh-问句,What与Who详细问,happen,发生,verb,/ˈhæpən/,/ˈhæpən/,L1,发生。What happened?,"[{"en":"What happened to you?","zh":"你怎么了？"}]",2
-基础④·Wh-问句,What与Who详细问,matter,事情/要紧,noun/verb,/ˈmætər/,/ˈmætə/,L1,事情。What's the matter?,"[{"en":"What's the matter with him?","zh":"他怎么了？"}]",3
-基础④·Wh-问句,What与Who详细问,problem,问题/麻烦,noun,/ˈprɑːbləm/,/ˈprɒbləm/,L1,问题。What's the problem?,"[{"en":"What is the problem here?","zh":"这里有什么问题？"}]",4
-基础④·Wh-问句,What与Who详细问,news,新闻/消息,noun,/nuːz/,/njuːz/,L1,新闻。What's the news?,"[{"en":"What is the news today?","zh":"今天有什么新闻？"}]",5
-基础④·Wh-问句,What与Who详细问,idea,想法,noun,/aɪˈdiːə/,/aɪˈdɪə/,L1,想法。good idea。,"[{"en":"What is your idea?","zh":"你有什么想法？"}]",6
-基础④·Wh-问句,What与Who详细问,favorite,最喜欢的,adj,/ˈfeɪvərɪt/,/ˈfeɪvərɪt/,L1,最喜欢的。What's your favorite...?,"[{"en":"What is your favorite food?","zh":"你最喜欢的食物是什么？"}]",7
-基础④·Wh-问句,What与Who详细问,belong,属于,verb,/bɪˈlɔːŋ/,/bɪˈlɒŋ/,L1,属于。Who does this belong to?,"[{"en":"Who does this bag belong to?","zh":"这个包是谁的？"}]",8
-基础④·Wh-问句,What与Who详细问,someone,某人,pron,/ˈsʌmwʌn/,/ˈsʌmwʌn/,L1,某人。someone else。,"[{"en":"Is someone there?","zh":"有人在那吗？"}]",9
-基础④·Wh-问句,What与Who详细问,owner,主人/所有者,noun,/ˈoʊnər/,/ˈəʊnə/,L1,主人。Who is the owner?,"[{"en":"Who is the owner of this car?","zh":"这辆车的主人是谁？"}]",10
-基础④·Wh-问句,What与Who详细问,anyone,任何人,pron,/ˈeniwʌn/,/ˈeniwʌn/,L1,任何人。,"[{"en":"Is anyone home?","zh":"有人在家吗？"}]",11
-基础④·How问句,数量与价格,how,如何/多么,adv,/haʊ/,/haʊ/,L1,疑问副词。How + 形容词/副词。,"[{"en":"How are you?","zh":"你好吗？"}]",0
-基础④·How问句,数量与价格,many,许多(可数),adj,/ˈmeni/,/ˈmeni/,L1,与可数名词连用。How many...?,"[{"en":"How many books?","zh":"多少本书？"}]",1
-基础④·How问句,数量与价格,much,许多(不可数),adj,/mʌtʃ/,/mʌtʃ/,L1,与不可数名词连用。How much...?,"[{"en":"How much is it?","zh":"多少钱？"}]",2
-基础④·How问句,数量与价格,dollar,美元,noun,/ˈdɑːlər/,/ˈdɒlə/,L1,美元。,"[{"en":"How much is it? Ten dollars.","zh":"多少钱？10美元。"}]",3
-基础④·How问句,数量与价格,yuan,元(人民币),noun,/juˈɑːn/,/juːˈɑːn/,L1,人民币元。,"[{"en":"How much is it? Fifty yuan.","zh":"多少钱？50元。"}]",4
-基础④·How问句,数量与价格,pay,支付,verb,/peɪ/,/peɪ/,L1,支付。How much to pay?,"[{"en":"How much did you pay?","zh":"你付了多少钱？"}]",5
-基础④·How问句,数量与价格,cost,花费/成本,verb/noun,/kɔːst/,/kɒst/,L1,花费。How much does it cost?,"[{"en":"How much does this shirt cost?","zh":"这件衬衫多少钱？"}]",6
-基础④·How问句,数量与价格,total,总共,adj/noun,/ˈtoʊtəl/,/ˈtəʊtəl/,L1,总共。,"[{"en":"How much is the total?","zh":"总共多少钱？"}]",7
-基础④·How问句,数量与价格,change,零钱/找零,noun,/tʃeɪndʒ/,/tʃeɪndʒ/,L1,找零。Here is your change。,"[{"en":"How much change do I get?","zh":"找我多少钱？"}]",8
-基础④·How问句,数量与价格,cash,现金,noun,/kæʃ/,/kæʃ/,L1,现金。pay in cash。,"[{"en":"Do you have cash?","zh":"你有现金吗？"}]",9
-基础④·How问句,数量与价格,receipt,收据/小票,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据。,"[{"en":"Can I have a receipt?","zh":"能给我收据吗？"}]",10
-基础④·How问句,数量与价格,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。any discount?,"[{"en":"Is there a discount?","zh":"有折扣吗？"}]",11
-基础④·How问句,数量与价格,amount,数量/金额,noun,/əˈmaʊnt/,/əˈmaʊnt/,L1,数量。a large amount。,"[{"en":"How much is the amount?","zh":"金额是多少？"}]",12
-基础④·How问句,频率与方式,often,经常,adv,/ˈɔːfən/,/ˈɒfən/,L1,频率副词。How often = 多久一次。,"[{"en":"How often do you exercise?","zh":"你多久锻炼一次？"}]",0
-基础④·How问句,频率与方式,about,关于/大约,prep/adv,/əˈbaʊt/,/əˈbaʊt/,L1,How about...? = ...怎么样？,"[{"en":"How about some coffee?","zh":"来点咖啡怎么样？"}]",1
-基础④·How问句,频率与方式,feel,感觉,verb,/fiːl/,/fiːl/,L1,感觉。How do you feel?,"[{"en":"How do you feel today?","zh":"你今天感觉怎么样？"}]",2
-基础④·How问句,频率与方式,fast,快的,adj/adv,/fæst/,/fɑːst/,L1,快的。How fast?,"[{"en":"How fast can you run?","zh":"你能跑多快？"}]",3
-基础④·How问句,频率与方式,slow,慢的,adj,/sloʊ/,/sləʊ/,L1,慢的。,"[{"en":"How slow is it?","zh":"有多慢？"}]",4
-基础④·How问句,频率与方式,well,好地/健康的,adv/adj,/wel/,/wel/,L1,好。Well done。,"[{"en":"How well do you know him?","zh":"你对他有多了解？"}]",5
-基础④·How问句,频率与方式,better,更好的,adj/adv,/ˈbetər/,/ˈbetə/,L1,更好的。better than。,"[{"en":"How can I feel better?","zh":"我怎么能感觉好点？"}]",6
-基础④·How问句,频率与方式,carefully,小心地,adv,/ˈkerfəli/,/ˈkeəfəli/,L1,小心地。,"[{"en":"How to do it carefully?","zh":"怎样小心地做？"}]",7
-基础④·How问句,频率与方式,quickly,快速地,adv,/ˈkwɪkli/,/ˈkwɪkli/,L1,快速地。quickly run。,"[{"en":"How quickly can you finish?","zh":"你能多快完成？"}]",8
-基础④·How问句,频率与方式,slowly,慢慢地,adv,/ˈsloʊli/,/ˈsləʊli/,L1,慢慢地。Please speak slowly。,"[{"en":"Can you speak slowly?","zh":"你能说慢点吗？"}]",9
-基础·日常高频短语,常用动词短语,forget,忘记,verb,/fərˈɡet/,/fəˈɡet/,L1,忘记。Don't forget。,"[{"en":"Did you forget my name?","zh":"你忘了我的名字吗？"}]",0
-基础·日常高频短语,常用动词短语,remember,记住,verb,/rɪˈmembər/,/rɪˈmembə/,L1,记住。remember to do。,"[{"en":"Do you remember me?","zh":"你记得我吗？"}]",1
-基础·日常高频短语,常用动词短语,decide,决定,verb,/dɪˈsaɪd/,/dɪˈsaɪd/,L1,决定。decide to do。,"[{"en":"Can you decide now?","zh":"你能现在决定吗？"}]",2
-基础·日常高频短语,常用动词短语,choose,选择,verb,/tʃuːz/,/tʃuːz/,L1,选择。choose one。,"[{"en":"Which one did you choose?","zh":"你选了哪个？"}]",3
-基础·日常高频短语,常用动词短语,agree,同意,verb,/əˈɡriː/,/əˈɡriː/,L1,同意。agree with。,"[{"en":"Do you agree with me?","zh":"你同意我吗？"}]",4
-基础·日常高频短语,常用动词短语,prepare,准备,verb,/prɪˈper/,/prɪˈpeə/,L1,准备。prepare for。,"[{"en":"Did you prepare for the test?","zh":"你为考试做准备了吗？"}]",5
-基础·日常高频短语,常用动词短语,finish,完成,verb,/ˈfɪnɪʃ/,/ˈfɪnɪʃ/,L1,完成。finish doing。,"[{"en":"Did you finish your homework?","zh":"你完成作业了吗？"}]",6
-基础·日常高频短语,常用动词短语,start,开始,verb,/stɑːrt/,/stɑːt/,L1,开始。start to do。,"[{"en":"When did you start working here?","zh":"你什么时候开始在这工作的？"}]",7
-基础·日常高频短语,常用动词短语,bring,带来,verb,/brɪŋ/,/brɪŋ/,L1,带来。bring to。,"[{"en":"Can you bring me some water?","zh":"你能给我带点水吗？"}]",8
-基础·日常高频短语,常用动词短语,pick up,捡起/接,phrasal verb,/pɪk ʌp/,/pɪk ʌp/,L1,捡起。pick up the phone。,"[{"en":"Can you pick up the phone?","zh":"你能接一下电话吗？"}]",9
-基础·日常高频短语,情景常用语,luck,运气,noun,/lʌk/,/lʌk/,L1,运气。Good luck!,"[{"en":"Do you believe in luck?","zh":"你相信运气吗？"}]",0
-基础·日常高频短语,情景常用语,fun,乐趣,adj/noun,/fʌn/,/fʌn/,L1,有趣的。Have fun!,"[{"en":"Did you have fun?","zh":"你玩得开心吗？"}]",1
-基础·日常高频短语,情景常用语,care,关心/保重,verb/noun,/ker/,/keə/,L1,关心。Take care!,"[{"en":"Do you care about him?","zh":"你关心他吗？"}]",2
-基础·日常高频短语,情景常用语,worry,担心,verb,/ˈwɜːri/,/ˈwʌri/,L1,担心。Don't worry。,"[{"en":"Why do you worry so much?","zh":"你为什么这么担心？"}]",3
-基础·日常高频短语,情景常用语,congratulations,祝贺,exclamation,/kənˌɡrætʃəˈleɪʃənz/,/kənˌɡrætʃəˈleɪʃənz/,L1,恭喜！,"[{"en":"Congratulations on your new job!","zh":"恭喜你找到新工作！"}]",4
-基础·日常高频短语,情景常用语,hope,希望,verb/noun,/hoʊp/,/həʊp/,L1,希望。I hope so。,"[{"en":"Do you hope to go abroad?","zh":"你希望出国吗？"}]",5
-基础·日常高频短语,情景常用语,wish,祝愿/愿望,verb/noun,/wɪʃ/,/wɪʃ/,L1,祝愿。Best wishes。,"[{"en":"What do you wish for?","zh":"你许了什么愿？"}]",6
-基础·日常高频短语,情景常用语,mind,介意,verb/noun,/maɪnd/,/maɪnd/,L1,介意。Do you mind?,"[{"en":"Do you mind if I sit here?","zh":"你介意我坐这吗？"}]",7
-基础·日常高频短语,情景常用语,wonderful,精彩的,adj,/ˈwʌndərfəl/,/ˈwʌndəfəl/,L1,精彩的。wonderful time。,"[{"en":"Is your trip wonderful?","zh":"你的旅行精彩吗？"}]",8
-基础·日常高频短语,情景常用语,great,很棒的,adj,/ɡreɪt/,/ɡreɪt/,L1,很棒的。That's great!,"[{"en":"Is the food great there?","zh":"那里的食物很棒吗？"}]",9
-基础·电话与应急,电话用语,speaking,正在通话/我就是,verb/noun,/ˈspiːkɪŋ/,/ˈspiːkɪŋ/,L1,This is Tom speaking。,"[{"en":"Who is speaking?","zh":"你是哪位？"}]",0
-基础·电话与应急,电话用语,hold on,稍等,phrasal verb,/hoʊld ɑːn/,/həʊld ɒn/,L1,等一下。Hold on a moment。,"[{"en":"Can you hold on a second?","zh":"你能稍等一下吗？"}]",1
-基础·电话与应急,电话用语,line,线路/电话线,noun,/laɪn/,/laɪn/,L1,电话线路。The line is busy。,"[{"en":"Is the line clear?","zh":"线路通吗？"}]",2
-基础·电话与应急,电话用语,signal,信号,noun,/ˈsɪɡnəl/,/ˈsɪɡnəl/,L1,信号。no signal。,"[{"en":"Is there a signal there?","zh":"那里有信号吗？"}]",3
-基础·电话与应急,电话用语,battery,电池,noun,/ˈbætəri/,/ˈbætəri/,L1,电池。low battery。,"[{"en":"Is your battery low?","zh":"你电池快没电了吗？"}]",4
-基础·电话与应急,电话用语,voice,声音,noun,/vɔɪs/,/vɔɪs/,L1,声音。voice message。,"[{"en":"Can you hear my voice?","zh":"你能听到我的声音吗？"}]",5
-基础·电话与应急,电话用语,hear,听到,verb,/hɪr/,/hɪə/,L1,听到。Can you hear me?,"[{"en":"Do you hear me clearly?","zh":"你能听清我吗？"}]",6
-基础·电话与应急,电话用语,speak,说话,verb,/spiːk/,/spiːk/,L1,说话。speak to someone。,"[{"en":"Can I speak to Mary?","zh":"我能和玛丽通话吗？"}]",7
-基础·电话与应急,电话用语,soon,很快,adv,/suːn/,/suːn/,L1,很快。see you soon。,"[{"en":"Can you call back soon?","zh":"你能尽快回电话吗？"}]",8
-基础·电话与应急,电话用语,later,稍后,adv,/ˈleɪtər/,/ˈleɪtə/,L1,稍后。later today。,"[{"en":"Can I call you later?","zh":"我稍后打给你好吗？"}]",9
-基础·电话与应急,电话用语,leave,离开/留下,verb,/liːv/,/liːv/,L1,留下。leave a message。,"[{"en":"Can I leave a message?","zh":"我能留个言吗？"}]",10
-基础·电话与应急,电话用语,miss,错过/想念,verb,/mɪs/,/mɪs/,L1,错过。miss a call。,"[{"en":"Did I miss your call?","zh":"我错过你的电话了吗？"}]",11
-基础·电话与应急,电话用语,dial,拨号,verb,/ˈdaɪəl/,/ˈdaɪəl/,L1,拨号。dial the number。,"[{"en":"What number should I dial?","zh":"我应该拨什么号码？"}]",12
-基础·电话与应急,紧急求助,emergency,紧急情况,noun,/iˈmɜːrdʒənsi/,/iˈmɜːdʒənsi/,L1,紧急情况。,"[{"en":"Call me in an emergency.","zh":"紧急情况给我打电话。"}]",0
-基础·电话与应急,紧急求助,ambulance,救护车,noun,/ˈæmbjələns/,/ˈæmbjələns/,L1,救护车。,"[{"en":"Please call an ambulance!","zh":"请叫救护车！"}]",1
-基础·电话与应急,紧急求助,passport,护照,noun,/ˈpæspɔːrt/,/ˈpæspɔːt/,L1,护照。,"[{"en":"I lost my passport.","zh":"我丢了护照。"}]",2
-基础·电话与应急,紧急求助,police,警察,noun,/pəˈliːs/,/pəˈliːs/,L1,警察。Call the police!,"[{"en":"Did you call the police?","zh":"你报警了吗？"}]",3
-基础·电话与应急,紧急求助,fire,火/火灾,noun,/ˈfaɪər/,/ˈfaɪə/,L1,火灾。fire station。,"[{"en":"Is there a fire?","zh":"有着火吗？"}]",4
-基础·电话与应急,紧急求助,accident,事故,noun,/ˈæksɪdənt/,/ˈæksɪdənt/,L1,事故。car accident。,"[{"en":"Did you see the accident?","zh":"你看到事故了吗？"}]",5
-基础·电话与应急,紧急求助,hurt,受伤/疼,verb/adj,/hɜːrt/,/hɜːt/,L1,受伤。Are you hurt?,"[{"en":"Where does it hurt?","zh":"哪里疼？"}]",6
-基础·电话与应急,紧急求助,sick,生病的,adj,/sɪk/,/sɪk/,L1,生病的。feel sick。,"[{"en":"Are you feeling sick?","zh":"你感觉不舒服吗？"}]",7
-基础·电话与应急,紧急求助,lost,迷路的/丢失的,adj,/lɔːst/,/lɒst/,L1,迷路的。get lost。,"[{"en":"Are you lost?","zh":"你迷路了吗？"}]",8
-基础·电话与应急,紧急求助,stolen,被偷的,adj,/ˈstoʊlən/,/ˈstəʊlən/,L1,被偷的。was stolen。,"[{"en":"Was your wallet stolen?","zh":"你的钱包被偷了吗？"}]",9
-基础·电话与应急,紧急求助,wallet,钱包,noun,/ˈwɑːlɪt/,/ˈwɒlɪt/,L1,钱包。,"[{"en":"I lost my wallet.","zh":"我丢了钱包。"}]",10
-基础·电话与应急,紧急求助,nearby,附近的,adj/adv,/ˌnɪrˈbaɪ/,/ˌnɪəˈbaɪ/,L1,附近的。nearby hospital。,"[{"en":"Is there a hospital nearby?","zh":"附近有医院吗？"}]",11
-基础·电话与应急,紧急求助,address,地址,noun,/ˈædres/,/əˈdres/,L1,地址。home address。,"[{"en":"What is your address?","zh":"你的地址是什么？"}]",12
+基础④·出行与交通,核心词汇,abroad,,adv,,,L1,,,0
+基础④·出行与交通,核心词汇,administration,,n,,,L1,,,1
+基础④·出行与交通,核心词汇,airport,,n,,,L1,,,2
+基础④·出行与交通,核心词汇,anywhere,,adv,,,L1,,,3
+基础④·出行与交通,核心词汇,arrive,,v,,,L1,,,4
+基础④·出行与交通,核心词汇,back,,n,,,L1,,,5
+基础④·出行与交通,核心词汇,boat,,n,,,L1,,,6
+基础④·出行与交通,核心词汇,bullet,,n,,,L1,,,7
+基础④·出行与交通,核心词汇,carrot,,n,,,L1,,,8
+基础④·出行与交通,核心词汇,civil,,adj,,,L1,,,9
+基础④·出行与交通,核心词汇,column,,n,,,L1,,,10
+基础④·出行与交通,核心词汇,confidence,,n,,,L1,,,11
+基础④·出行与交通,核心词汇,correct,,adj,,,L1,,,12
+基础④·出行与交通,核心词汇,crisis,,n,,,L1,,,13
+基础④·出行与交通,核心词汇,danger,,n,,,L1,,,14
+基础④·出行与交通,核心词汇,delivery,,n,,,L1,,,15
+基础④·出行与交通,核心词汇,die,,v,,,L1,,,16
+基础④·出行与交通,核心词汇,dismiss,,v,,,L1,,,17
+基础④·出行与交通,核心词汇,drop,,v,,,L1,,,18
+基础④·出行与交通,核心词汇,empty,,adj,,,L1,,,19
+基础④·出行与交通,核心词汇,everywhere,,adv,,,L1,,,20
+基础④·出行与交通,核心词汇,expect,,v,,,L1,,,21
+基础④·出行与交通,核心词汇,farm,,n,,,L1,,,22
+基础④·出行与交通,核心词汇,fill,,v,,,L1,,,23
+基础④·出行与交通,核心词汇,flu,,n,,,L1,,,24
+基础④·出行与交通,核心词汇,fundamental,,adj,,,L1,,,25
+基础④·出行与交通,核心词汇,grab,,v,,,L1,,,26
+基础④·出行与交通,核心词汇,hearing,,n,,,L1,,,27
+基础④·出行与交通,核心词汇,hide,,v,,,L1,,,28
+基础④·出行与交通,核心词汇,hospital,,n,,,L1,,,29
+基础④·出行与交通,核心词汇,illness,,n,,,L1,,,30
+基础④·出行与交通,核心词汇,initial,,adj,,,L1,,,31
+基础④·出行与交通,核心词汇,interested,,adj,,,L1,,,32
+基础④·出行与交通,核心词汇,item,,n,,,L1,,,33
+基础④·出行与交通,核心词汇,king,,n,,,L1,,,34
+基础④·出行与交通,核心词汇,learning,,n,,,L1,,,35
+基础④·出行与交通,核心词汇,lock,,v,,,L1,,,36
+基础④·出行与交通,核心词汇,lovely,,adj,,,L1,,,37
+基础④·出行与交通,核心词汇,matter,,n,,,L1,,,38
+基础④·出行与交通,核心词汇,mile,,n,,,L1,,,39
+基础④·出行与交通,核心词汇,monkey,,n,,,L1,,,40
+基础④·出行与交通,核心词汇,nature,,n,,,L1,,,41
+基础④·出行与交通,核心词汇,ocean,,n,,,L1,,,42
+基础④·出行与交通,核心词汇,opposite,,adj,,,L1,,,43
+基础④·出行与交通,核心词汇,particular,,adj,,,L1,,,44
+基础④·出行与交通,核心词汇,physics,,n,,,L1,,,45
+基础④·出行与交通,核心词汇,poor,,adj,,,L1,,,46
+基础④·出行与交通,核心词汇,privacy,,n,,,L1,,,47
+基础④·出行与交通,核心词汇,project,,n,,,L1,,,48
+基础④·出行与交通,核心词汇,quietly,,adv,,,L1,,,49
+基础④·出行与交通,核心词汇,recommend,,v,,,L1,,,50
+基础④·出行与交通,核心词汇,rescue,,v,,,L1,,,51
+基础④·出行与交通,核心词汇,role,,n,,,L1,,,52
+基础④·出行与交通,核心词汇,save,,v,,,L1,,,53
+基础④·出行与交通,核心词汇,sentence,,n,,,L1,,,54
+基础④·出行与交通,核心词汇,sick,,adj,,,L1,,,55
+基础④·出行与交通,核心词汇,skin,,n,,,L1,,,56
+基础④·出行与交通,核心词汇,some,,det,,,L1,,,57
+基础④·出行与交通,核心词汇,speech,,n,,,L1,,,58
+基础④·出行与交通,核心词汇,stream,,n,,,L1,,,59
+基础④·出行与交通,核心词汇,task,,n,,,L1,,,60
+基础④·出行与交通,核心词汇,tie,,v,,,L1,,,61
+基础④·出行与交通,核心词汇,twin,,n,,,L1,,,62
+基础④·出行与交通,核心词汇,variety,,n,,,L1,,,63
+基础④·出行与交通,核心词汇,weekend,,n,,,L1,,,64
+基础④·出行与交通,核心词汇,wildlife,,n,,,L1,,,65
+基础④·出行与交通,核心词汇,worse,,adj,,,L1,,,66
+基础④·消费与服务,核心词汇,accident,,n,,,L1,,,67
+基础④·消费与服务,核心词汇,advertise,,v,,,L1,,,68
+基础④·消费与服务,核心词汇,along,,prep,,,L1,,,69
+基础④·消费与服务,核心词汇,appeal,,n,,,L1,,,70
+基础④·消费与服务,核心词汇,athlete,,n,,,L1,,,71
+基础④·消费与服务,核心词汇,behind,,prep,,,L1,,,72
+基础④·消费与服务,核心词汇,bottle,,n,,,L1,,,73
+基础④·消费与服务,核心词汇,camp,,n,,,L1,,,74
+基础④·消费与服务,核心词汇,certainly,,adv,,,L1,,,75
+基础④·消费与服务,核心词汇,closed,,adj,,,L1,,,76
+基础④·消费与服务,核心词汇,commission,,n,,,L1,,,77
+基础④·消费与服务,核心词汇,construct,,v,,,L1,,,78
+基础④·消费与服务,核心词汇,correctly,,adv,,,L1,,,79
+基础④·消费与服务,核心词汇,cross,,v,,,L1,,,80
+基础④·消费与服务,核心词汇,dangerous,,adj,,,L1,,,81
+基础④·消费与服务,核心词汇,department,,n,,,L1,,,82
+基础④·消费与服务,核心词汇,digital,,adj,,,L1,,,83
+基础④·消费与服务,核心词汇,distance,,n,,,L1,,,84
+基础④·消费与服务,核心词汇,easily,,adv,,,L1,,,85
+基础④·消费与服务,核心词汇,end,,n,,,L1,,,86
+基础④·消费与服务,核心词汇,evil,,adj,,,L1,,,87
+基础④·消费与服务,核心词汇,express,,v,,,L1,,,88
+基础④·消费与服务,核心词汇,farming,,n,,,L1,,,89
+基础④·消费与服务,核心词汇,finger,,n,,,L1,,,90
+基础④·消费与服务,核心词汇,fresh,,adj,,,L1,,,91
+基础④·消费与服务,核心词汇,funding,,n,,,L1,,,92
+基础④·消费与服务,核心词汇,guess,,v,,,L1,,,93
+基础④·消费与服务,核心词汇,heart,,n,,,L1,,,94
+基础④·消费与服务,核心词汇,hill,,n,,,L1,,,95
+基础④·消费与服务,核心词汇,humorous,,adj,,,L1,,,96
+基础④·消费与服务,核心词汇,illustrate,,v,,,L1,,,97
+基础④·消费与服务,核心词汇,injury,,n,,,L1,,,98
+基础④·消费与服务,核心词汇,interesting,,adj,,,L1,,,99
+基础④·消费与服务,核心词汇,join,,v,,,L1,,,100
+基础④·消费与服务,核心词汇,lab,,n,,,L1,,,101
+基础④·消费与服务,核心词汇,leave,,v,,,L1,,,102
+基础④·消费与服务,核心词汇,logical,,adj,,,L1,,,103
+基础④·消费与服务,核心词汇,major,,adj,,,L1,,,104
+基础④·消费与服务,核心词汇,medicine,,n,,,L1,,,105
+基础④·消费与服务,核心词汇,minimum,,adj,,,L1,,,106
+基础④·消费与服务,核心词汇,motor,,n,,,L1,,,107
+基础④·消费与服务,核心词汇,next to,,prep,,,L1,,,108
+基础④·消费与服务,核心词汇,offence,,n,,,L1,,,109
+基础④·消费与服务,核心词汇,organ,,n,,,L1,,,110
+基础④·消费与服务,核心词汇,passenger,,n,,,L1,,,111
+基础④·消费与服务,核心词汇,piece,,n,,,L1,,,112
+基础④·消费与服务,核心词汇,possibility,,n,,,L1,,,113
+基础④·消费与服务,核心词汇,probably,,adv,,,L1,,,114
+基础④·消费与服务,核心词汇,protect,,v,,,L1,,,115
+基础④·消费与服务,核心词汇,quite,,adv,,,L1,,,116
+基础④·消费与服务,核心词汇,record,,n,,,L1,,,117
+基础④·消费与服务,核心词汇,researcher,,n,,,L1,,,118
+基础④·消费与服务,核心词汇,rude,,adj,,,L1,,,119
+基础④·消费与服务,核心词汇,science,,n,,,L1,,,120
+基础④·消费与服务,核心词汇,serve,,v,,,L1,,,121
+基础④·消费与服务,核心词汇,silver,,n,,,L1,,,122
+基础④·消费与服务,核心词汇,slope,,n,,,L1,,,123
+基础④·消费与服务,核心词汇,somewhat,,adv,,,L1,,,124
+基础④·消费与服务,核心词汇,stable,,adj,,,L1,,,125
+基础④·消费与服务,核心词汇,stress,,n,,,L1,,,126
+基础④·消费与服务,核心词汇,terrible,,adj,,,L1,,,127
+基础④·消费与服务,核心词汇,together,,adv,,,L1,,,128
+基础④·消费与服务,核心词汇,type,,n,,,L1,,,129
+基础④·消费与服务,核心词汇,via,,prep,,,L1,,,130
+基础④·消费与服务,核心词汇,whereas,,conj,,,L1,,,131
+基础④·消费与服务,核心词汇,will modal,,v,,,L1,,,132
+基础④·消费与服务,核心词汇,wound,,n,,,L1,,,133
+基础④·社交与寒暄,核心词汇,across,,prep,,,L1,,,134
+基础④·社交与寒暄,核心词汇,agree,,v,,,L1,,,135
+基础④·社交与寒暄,核心词汇,amount,,n,,,L1,,,136
+基础④·社交与寒暄,核心词汇,apply,,v,,,L1,,,137
+基础④·社交与寒暄,核心词汇,audience,,n,,,L1,,,138
+基础④·社交与寒暄,核心词汇,between,,prep,,,L1,,,139
+基础④·社交与寒暄,核心词汇,brilliant,,adj,,,L1,,,140
+基础④·社交与寒暄,核心词汇,cancel,,v,,,L1,,,141
+基础④·社交与寒暄,核心词汇,check,,v,,,L1,,,142
+基础④·社交与寒暄,核心词汇,closely,,adv,,,L1,,,143
+基础④·社交与寒暄,核心词汇,committee,,n,,,L1,,,144
+基础④·社交与寒暄,核心词汇,conversation,,n,,,L1,,,145
+基础④·社交与寒暄,核心词汇,couple,,n,,,L1,,,146
+基础④·社交与寒暄,核心词汇,curve,,n,,,L1,,,147
+基础④·社交与寒暄,核心词汇,decision,,n,,,L1,,,148
+基础④·社交与寒暄,核心词汇,deserve,,v,,,L1,,,149
+基础④·社交与寒暄,核心词汇,direction,,n,,,L1,,,150
+基础④·社交与寒暄,核心词汇,dollar,,n,,,L1,,,151
+基础④·社交与寒暄,核心词汇,electricity,,n,,,L1,,,152
+基础④·社交与寒暄,核心词汇,enjoy,,v,,,L1,,,153
+基础④·社交与寒暄,核心词汇,exact,,adj,,,L1,,,154
+基础④·社交与寒暄,核心词汇,extend,,v,,,L1,,,155
+基础④·社交与寒暄,核心词汇,fast,,adj,,,L1,,,156
+基础④·社交与寒暄,核心词汇,fire,,n,,,L1,,,157
+基础④·社交与寒暄,核心词汇,full,,adj,,,L1,,,158
+基础④·社交与寒暄,核心词汇,gallery,,n,,,L1,,,159
+基础④·社交与寒暄,核心词汇,guide,,n,,,L1,,,160
+基础④·社交与寒暄,核心词汇,heaven,,n,,,L1,,,161
+基础④·社交与寒暄,核心词汇,hobby,,n,,,L1,,,162
+基础④·社交与寒暄,核心词汇,hurt,,v,,,L1,,,163
+基础④·社交与寒暄,核心词汇,illustration,,n,,,L1,,,164
+基础④·社交与寒暄,核心词汇,institute,,n,,,L1,,,165
+基础④·社交与寒暄,核心词汇,internet,,n,,,L1,,,166
+基础④·社交与寒暄,核心词汇,joke,,n,,,L1,,,167
+基础④·社交与寒暄,核心词汇,land,,n,,,L1,,,168
+基础④·社交与寒暄,核心词汇,left,,adj,,,L1,,,169
+基础④·社交与寒暄,核心词汇,lose,,v,,,L1,,,170
+基础④·社交与寒暄,核心词汇,map,,n,,,L1,,,171
+基础④·社交与寒暄,核心词汇,metre,,n,,,L1,,,172
+基础④·社交与寒暄,核心词汇,miss,,v,,,L1,,,173
+基础④·社交与寒暄,核心词汇,movie,,n,,,L1,,,174
+基础④·社交与寒暄,核心词汇,notion,,n,,,L1,,,175
+基础④·社交与寒暄,核心词汇,office,,n,,,L1,,,176
+基础④·社交与寒暄,核心词汇,pain,,n,,,L1,,,177
+基础④·社交与寒暄,核心词汇,peace,,n,,,L1,,,178
+基础④·社交与寒暄,核心词汇,platform,,n,,,L1,,,179
+基础④·社交与寒暄,核心词汇,potential,,adj,,,L1,,,180
+基础④·社交与寒暄,核心词汇,problem,,n,,,L1,,,181
+基础④·社交与寒暄,核心词汇,protection,,n,,,L1,,,182
+基础④·社交与寒暄,核心词汇,reach,,v,,,L1,,,183
+基础④·社交与寒暄,核心词汇,region,,n,,,L1,,,184
+基础④·社交与寒暄,核心词汇,reserve,,n,,,L1,,,185
+基础④·社交与寒暄,核心词汇,safe,,adj,,,L1,,,186
+基础④·社交与寒暄,核心词汇,score,,v,,,L1,,,187
+基础④·社交与寒暄,核心词汇,shake,,v,,,L1,,,188
+基础④·社交与寒暄,核心词汇,sing,,v,,,L1,,,189
+基础④·社交与寒暄,核心词汇,slowly,,adv,,,L1,,,190
+基础④·社交与寒暄,核心词汇,somewhere,,adv,,,L1,,,191
+基础④·社交与寒暄,核心词汇,start,,v,,,L1,,,192
+基础④·社交与寒暄,核心词汇,subject,,n,,,L1,,,193
+基础④·社交与寒暄,核心词汇,thief,,n,,,L1,,,194
+基础④·社交与寒暄,核心词汇,toy,,n,,,L1,,,195
+基础④·社交与寒暄,核心词汇,unhappy,,adj,,,L1,,,196
+基础④·社交与寒暄,核心词汇,video,,n,,,L1,,,197
+基础④·社交与寒暄,核心词汇,wherever,,conj,,,L1,,,198
+基础④·社交与寒暄,核心词汇,willing,,adj,,,L1,,,199
+基础④·社交与寒暄,核心词汇,yeah,,exclam,,,L1,,,200
+基础④·电话与联络,核心词汇,act,,v,,,L1,,,201
+基础④·电话与联络,核心词汇,ah,,exclam,,,L1,,,202
+基础④·电话与联络,核心词汇,any,,det,,,L1,,,203
+基础④·电话与联络,核心词汇,army,,n,,,L1,,,204
+基础④·电话与联络,核心词汇,available,,adj,,,L1,,,205
+基础④·电话与联络,核心词汇,bit,,n,,,L1,,,206
+基础④·电话与联络,核心词汇,broken,,adj,,,L1,,,207
+基础④·电话与联络,核心词汇,capture,,v,,,L1,,,208
+基础④·电话与联络,核心词汇,chemistry,,n,,,L1,,,209
+基础④·电话与联络,核心词汇,club,,n,,,L1,,,210
+基础④·电话与联络,核心词汇,community,,n,,,L1,,,211
+基础④·电话与联络,核心词汇,core,,n,,,L1,,,212
+基础④·电话与联络,核心词汇,credit,,n,,,L1,,,213
+基础④·电话与联络,核心词汇,customer,,n,,,L1,,,214
+基础④·电话与联络,核心词汇,deeply,,adv,,,L1,,,215
+基础④·电话与联络,核心词汇,design,,n,,,L1,,,216
+基础④·电话与联络,核心词汇,disease,,n,,,L1,,,217
+基础④·电话与联络,核心词汇,download,,v,,,L1,,,218
+基础④·电话与联络,核心词汇,elsewhere,,adv,,,L1,,,219
+基础④·电话与联络,核心词汇,enormous,,adj,,,L1,,,220
+基础④·电话与联络,核心词汇,example,,n,,,L1,,,221
+基础④·电话与联络,核心词汇,fact,,n,,,L1,,,222
+基础④·电话与联络,核心词汇,fee,,n,,,L1,,,223
+基础④·电话与联络,核心词汇,flat,,n,,,L1,,,224
+基础④·电话与联络,核心词汇,fun,,n,,,L1,,,225
+基础④·电话与联络,核心词汇,gift,,n,,,L1,,,226
+基础④·电话与联络,核心词汇,happily,,adv,,,L1,,,227
+基础④·电话与联络,核心词汇,height,,n,,,L1,,,228
+基础④·电话与联络,核心词汇,hold,,v,,,L1,,,229
+基础④·电话与联络,核心词汇,ideal,,adj,,,L1,,,230
+基础④·电话与联络,核心词汇,impress,,v,,,L1,,,231
+基础④·电话与联络,核心词汇,instructor,,n,,,L1,,,232
+基础④·电话与联络,核心词汇,invent,,v,,,L1,,,233
+基础④·电话与联络,核心词汇,kill,,v,,,L1,,,234
+基础④·电话与联络,核心词汇,language,,n,,,L1,,,235
+基础④·电话与联络,核心词汇,life,,n,,,L1,,,236
+基础④·电话与联络,核心词汇,lost,,adj,,,L1,,,237
+基础④·电话与联络,核心词汇,mark,,v,,,L1,,,238
+基础④·电话与联络,核心词汇,midnight,,n,,,L1,,,239
+基础④·电话与联络,核心词汇,missing,,adj,,,L1,,,240
+基础④·电话与联络,核心词汇,musical,,adj,,,L1,,,241
+基础④·电话与联络,核心词汇,nowhere,,adv,,,L1,,,242
+基础④·电话与联络,核心词汇,opinion,,n,,,L1,,,243
+基础④·电话与联络,核心词汇,panel,,n,,,L1,,,244
+基础④·电话与联络,核心词汇,permission,,n,,,L1,,,245
+基础④·电话与联络,核心词汇,pleased,,adj,,,L1,,,246
+基础④·电话与联络,核心词汇,practice,,n,,,L1,,,247
+基础④·电话与联络,核心词汇,process,,n,,,L1,,,248
+基础④·电话与联络,核心词汇,provide,,v,,,L1,,,249
+基础④·电话与联络,核心词汇,real,,adj,,,L1,,,250
+基础④·电话与联络,核心词汇,regulation,,n,,,L1,,,251
+基础④·电话与联络,核心词汇,return,,v,,,L1,,,252
+基础④·电话与联络,核心词汇,sail,,v,,,L1,,,253
+基础④·电话与联络,核心词汇,secondly,,adv,,,L1,,,254
+基础④·电话与联络,核心词汇,shoulder,,n,,,L1,,,255
+基础④·电话与联络,核心词汇,sir,,n,,,L1,,,256
+基础④·电话与联络,核心词汇,social,,adj,,,L1,,,257
+基础④·电话与联络,核心词汇,space,,n,,,L1,,,258
+基础④·电话与联络,核心词汇,station,,n,,,L1,,,259
+基础④·电话与联络,核心词汇,suppose,,v,,,L1,,,260
+基础④·电话与联络,核心词汇,thin,,adj,,,L1,,,261
+基础④·电话与联络,核心词汇,tree,,n,,,L1,,,262
+基础④·电话与联络,核心词汇,universe,,n,,,L1,,,263
+基础④·电话与联络,核心词汇,village,,n,,,L1,,,264
+基础④·电话与联络,核心词汇,whole,,adj,,,L1,,,265
+基础④·电话与联络,核心词汇,without,,prep,,,L1,,,266
+基础④·应急与求助,核心词汇,actress,,n,,,L1,,,267
+基础④·应急与求助,核心词汇,aircraft,,n,,,L1,,,268
+基础④·应急与求助,核心词汇,anyway,,adv,,,L1,,,269
+基础④·应急与求助,核心词汇,around,,prep,,,L1,,,270
+基础④·应急与求助,核心词汇,award,,n,,,L1,,,271
+基础④·应急与求助,核心词汇,bitter,,adj,,,L1,,,272
+基础④·应急与求助,核心词汇,building,,n,,,L1,,,273
+基础④·应急与求助,核心词汇,card,,n,,,L1,,,274
+基础④·应急与求助,核心词汇,cigarette,,n,,,L1,,,275
+基础④·应急与求助,核心词汇,coach,,n,,,L1,,,276
+基础④·应急与求助,核心词汇,condition,,n,,,L1,,,277
+基础④·应急与求助,核心词汇,corner,,n,,,L1,,,278
+基础④·应急与求助,核心词汇,crime,,n,,,L1,,,279
+基础④·应急与求助,核心词汇,dancing,,n,,,L1,,,280
+基础④·应急与求助,核心词汇,delay,,v,,,L1,,,281
+基础④·应急与求助,核心词汇,detective,,n,,,L1,,,282
+基础④·应急与求助,核心词汇,dish,,n,,,L1,,,283
+基础④·应急与求助,核心词汇,drag,,v,,,L1,,,284
+基础④·应急与求助,核心词汇,emotional,,adj,,,L1,,,285
+基础④·应急与求助,核心词汇,especially,,adv,,,L1,,,286
+基础④·应急与求助,核心词汇,excuse,,n,,,L1,,,287
+基础④·应急与求助,核心词汇,far,,adv,,,L1,,,288
+基础④·应急与求助,核心词汇,fiction,,n,,,L1,,,289
+基础④·应急与求助,核心词汇,float,,v,,,L1,,,290
+基础④·应急与求助,核心词汇,fund,,n,,,L1,,,291
+基础④·应急与求助,核心词汇,government,,n,,,L1,,,292
+基础④·应急与求助,核心词汇,have to modal,,v,,,L1,,,293
+基础④·应急与求助,核心词汇,helpful,,adj,,,L1,,,294
+基础④·应急与求助,核心词汇,horse,,n,,,L1,,,295
+基础④·应急与求助,核心词汇,ill,,adj,,,L1,,,296
+基础④·应急与求助,核心词汇,incredible,,adj,,,L1,,,297
+基础④·应急与求助,核心词汇,interest,,n,,,L1,,,298
+基础④·应急与求助,核心词汇,investment,,n,,,L1,,,299
+基础④·应急与求助,核心词汇,kilometre,,n,,,L1,,,300
+基础④·应急与求助,核心词汇,launch,,v,,,L1,,,301
+基础④·应急与求助,核心词汇,lifestyle,,n,,,L1,,,302
+基础④·应急与求助,核心词汇,loudly,,adv,,,L1,,,303
+基础④·应急与求助,核心词汇,massive,,adj,,,L1,,,304
+基础④·应急与求助,核心词汇,might modal,,v,,,L1,,,305
+基础④·应急与求助,核心词汇,mission,,n,,,L1,,,306
+基础④·应急与求助,核心词汇,natural,,adj,,,L1,,,307
+基础④·应急与求助,核心词汇,observe,,v,,,L1,,,308
+基础④·应急与求助,核心词汇,opportunity,,n,,,L1,,,309
+基础④·应急与求助,核心词汇,part,,n,,,L1,,,310
+基础④·应急与求助,核心词汇,phenomenon,,n,,,L1,,,311
+基础④·应急与求助,核心词汇,pollution,,n,,,L1,,,312
+基础④·应急与求助,核心词汇,preserve,,v,,,L1,,,313
+基础④·应急与求助,核心词汇,program,,n,,,L1,,,314
+基础④·应急与求助,核心词汇,purpose,,n,,,L1,,,315
+基础④·应急与求助,核心词汇,realistic,,adj,,,L1,,,316
+基础④·应急与求助,核心词汇,replace,,v,,,L1,,,317
+基础④·应急与求助,核心词汇,reward,,n,,,L1,,,318
+基础④·应急与求助,核心词汇,satisfied,,adj,,,L1,,,319
+基础④·应急与求助,核心词汇,secure,,v,,,L1,,,320
+基础④·应急与求助,核心词汇,show,,v,,,L1,,,321
+基础④·应急与求助,核心词汇,skill,,n,,,L1,,,322
+基础④·应急与求助,核心词汇,solution,,n,,,L1,,,323
+基础④·应急与求助,核心词汇,speaker,,n,,,L1,,,324
+基础④·应急与求助,核心词汇,still,,adv,,,L1,,,325
+基础④·应急与求助,核心词汇,surrounding,,adj,,,L1,,,326
+基础④·应急与求助,核心词汇,ticket,,n,,,L1,,,327
+基础④·应急与求助,核心词汇,tropical,,adj,,,L1,,,328
+基础④·应急与求助,核心词汇,used to modal,,v,,,L1,,,329
+基础④·应急与求助,核心词汇,war,,n,,,L1,,,330
+基础④·应急与求助,核心词汇,whom,,pron,,,L1,,,331
+基础④·应急与求助,核心词汇,wood,,n,,,L1,,,332

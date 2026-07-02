@@ -1,121 +1,351 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础⑥·过去的状态,我以前是/有,was,是(过去式),verb,/wʌz/,/wɒz/,L1,am/is的过去式。I was tired.,"[{"en":"I was a student before.","zh":"我以前是学生。"}]",0
-基础⑥·过去的状态,我以前是/有,were,是(过去式-复数),verb,/wɜːr/,/wɜː/,L1,are的过去式。We were happy.,"[{"en":"They were classmates.","zh":"他们以前是同学。"}]",1
-基础⑥·过去的状态,我以前是/有,had,有(过去式),verb,/hæd/,/hæd/,L1,have/has的过去式。I had a dog.,"[{"en":"I had a cat when I was young.","zh":"我小时候有只猫。"}]",2
-基础⑥·过去的状态,我以前是/有,used to,曾经,phrase,/juːst tə/,/juːst tə/,L1,过去常常。used to do。,"[{"en":"I used to live in Shanghai.","zh":"我曾经住在上海。"}]",3
-基础⑥·过去的状态,我以前是/有,in the past,在过去,phrase,/ɪn ðə pæst/,/ɪn ðə pɑːst/,L1,在过去。in the past。,"[{"en":"In the past, people wrote letters.","zh":"过去人们写信。"}]",4
-基础⑥·过去的状态,我以前是/有,back then,那时候,phrase,/bæk ðen/,/bæk ðen/,L1,那时候。口语常用。,"[{"en":"Back then, I was very shy.","zh":"那时候我很害羞。"}]",5
-基础⑥·过去的状态,我以前是/有,childhood,童年,noun,/ˈtʃaɪldhʊd/,/ˈtʃaɪldhʊd/,L1,童年。childhood memory。,"[{"en":"I had a happy childhood.","zh":"我有一个快乐的童年。"}]",6
-基础⑥·过去的状态,我以前是/有,previous,之前的,adj,/ˈpriːviəs/,/ˈpriːviəs/,L1,之前的。previous job。,"[{"en":"My previous job was in a bank.","zh":"我之前的工作在银行。"}]",8
-基础⑥·过去的状态,我以前是/有,former,以前的,adj,/ˈfɔːrmər/,/ˈfɔːmə/,L1,以前的。former boss。,"[{"en":"My former teacher was very kind.","zh":"我以前的老师很善良。"}]",9
-基础⑥·过去的状态,我以前是/有,at that time,那时,phrase,/æt ðæt taɪm/,/æt ðæt taɪm/,L1,在那时。at that time。,"[{"en":"At that time, I was too young.","zh":"那时我太年轻了。"}]",10
-基础⑥·过去的状态,我以前是/有,those days,那些日子,phrase,/ðoʊz deɪz/,/ðəʊz deɪz/,L1,那些日子。回忆过去。,"[{"en":"I miss those days.","zh":"我想念那些日子。"}]",11
-基础⑥·过去的状态,昨天在哪里,at home,在家,phrase,/æt hoʊm/,/æt həʊm/,L1,在家。I was at home.,"[{"en":"I was at home all day yesterday.","zh":"我昨天整天在家。"}]",0
-基础⑥·过去的状态,昨天在哪里,at work,在工作,phrase,/æt wɜːrk/,/æt wɜːk/,L1,在工作。She was at work.,"[{"en":"He was at work when I called.","zh":"我打电话时他在工作。"}]",1
-基础⑥·过去的状态,昨天在哪里,at school,在学校,phrase,/æt skuːl/,/æt skuːl/,L1,在学校。We were at school.,"[{"en":"Were you at school yesterday?","zh":"你昨天在学校吗？"}]",2
-基础⑥·过去的状态,昨天在哪里,outside,在外面,adv,/aʊtˈsaɪd/,/aʊtˈsaɪd/,L1,在外面。It was outside.,"[{"en":"The cat was outside all night.","zh":"猫整晚都在外面。"}]",3
-基础⑥·过去的状态,昨天在哪里,inside,在里面,adv,/ɪnˈsaɪd/,/ɪnˈsaɪd/,L1,在里面。inside the house。,"[{"en":"We were inside because of the rain.","zh":"因为下雨我们在里面。"}]",4
-基础⑥·过去的状态,昨天在哪里,nowhere,无处,adv,/ˈnoʊwer/,/ˈnəʊweə/,L1,无处。nowhere to go。,"[{"en":"There was nowhere to sit.","zh":"没有地方坐。"}]",6
-基础⑥·过去的状态,昨天在哪里,alone,独自,adj/adv,/əˈloʊn/,/əˈləʊn/,L1,独自。I was alone.,"[{"en":"She was alone at home.","zh":"她独自在家。"}]",7
-基础⑥·过去的状态,昨天在哪里,missing,失踪的/缺失的,adj,/ˈmɪsɪŋ/,/ˈmɪsɪŋ/,L1,不见的。was missing。,"[{"en":"My keys were missing.","zh":"我的钥匙不见了。"}]",8
-基础⑥·过去的状态,昨天在哪里,present,在场的,adj,/ˈprezənt/,/ˈprezənt/,L1,在场的。was present。,"[{"en":"Were you present at the meeting?","zh":"你在会议现场吗？"}]",9
-基础⑥·过去的状态,昨天在哪里,absent,缺席的,adj,/ˈæbsənt/,/ˈæbsənt/,L1,缺席的。was absent。,"[{"en":"He was absent yesterday.","zh":"他昨天缺席了。"}]",10
-基础⑥·过去的动作,昨天做了什么,arrive,到达,verb,/əˈraɪv/,/əˈraɪv/,L1,到达。arrived at 3pm。,"[{"en":"He arrived late last night.","zh":"他昨晚到得很晚。"}]",1
-基础⑥·过去的动作,昨天做了什么,move,移动/搬家,verb,/muːv/,/muːv/,L1,移动。moved to a new place。,"[{"en":"We moved here last year.","zh":"我们去年搬来的。"}]",2
-基础⑥·过去的动作,昨天做了什么,drop,掉落/放弃,verb,/drɑːp/,/drɒp/,L1,掉落。dropped my phone。,"[{"en":"I dropped my phone yesterday.","zh":"我昨天把手机掉了。"}]",3
-基础⑥·过去的动作,昨天做了什么,pick,捡/摘,verb,/pɪk/,/pɪk/,L1,捡。picked up the book。,"[{"en":"I picked up the letter.","zh":"我捡起了信。"}]",4
-基础⑥·过去的动作,昨天做了什么,show,展示,verb,/ʃoʊ/,/ʃəʊ/,L1,展示。showed me around。,"[{"en":"She showed me her new house.","zh":"她给我看了她的新房子。"}]",5
-基础⑥·过去的动作,昨天做了什么,check,检查,verb,/tʃek/,/tʃek/,L1,检查。checked my email。,"[{"en":"I checked my phone this morning.","zh":"我今天早上查了手机。"}]",7
-基础⑥·过去的动作,昨天做了什么,plan,计划,verb,/plæn/,/plæn/,L1,计划。planned a trip。,"[{"en":"We planned a surprise party.","zh":"我们计划了一个惊喜派对。"}]",8
-基础⑥·过去的动作,昨天做了什么,reply,回复,verb,/rɪˈplaɪ/,/rɪˈplaɪ/,L1,回复。replied to my message。,"[{"en":"She replied to my email.","zh":"她回复了我的邮件。"}]",10
-基础⑥·过去的动作,昨天做了什么,seem,似乎/好像,verb,/siːm/,/siːm/,L1,似乎。seemed happy。,"[{"en":"He seemed tired yesterday.","zh":"他昨天似乎很累。"}]",11
-基础⑥·过去的动作,不规则动词,went,去(go的过去式),verb,/went/,/went/,L1,去。原形go。,"[{"en":"I went to the store yesterday.","zh":"我昨天去了商店。"}]",0
-基础⑥·过去的动作,不规则动词,saw,看见(see的过去式),verb,/sɔː/,/sɔː/,L1,看见。原形see。,"[{"en":"I saw a great movie last night.","zh":"我昨晚看了一部好电影。"}]",1
-基础⑥·过去的动作,不规则动词,said,说(say的过去式),verb,/sed/,/sed/,L1,说。原形say。,"[{"en":"He said he was tired.","zh":"他说他累了。"}]",2
-基础⑥·过去的动作,不规则动词,got,得到/变得(get的过去式),verb,/ɡɑːt/,/ɡɒt/,L1,得到。原形get。,"[{"en":"I got home very late.","zh":"我到家很晚。"}]",3
-基础⑥·过去的动作,不规则动词,made,做/制作(make的过去式),verb,/meɪd/,/meɪd/,L1,制作。原形make。,"[{"en":"She made a cake for me.","zh":"她给我做了个蛋糕。"}]",4
-基础⑥·过去的动作,不规则动词,gave,给(give的过去式),verb,/ɡeɪv/,/ɡeɪv/,L1,给。原形give。,"[{"en":"He gave me a book.","zh":"他给了我一本书。"}]",5
-基础⑥·过去的动作,不规则动词,took,拿/花费(take的过去式),verb,/tʊk/,/tʊk/,L1,拿。原形take。,"[{"en":"I took a lot of pictures.","zh":"我拍了很多照片。"}]",6
-基础⑥·过去的动作,不规则动词,thought,想(think的过去式),verb,/θɔːt/,/θɔːt/,L1,想。原形think。,"[{"en":"I thought about you.","zh":"我想起你了。"}]",8
-基础⑥·过去的动作,不规则动词,found,找到(find的过去式),verb,/faʊnd/,/faʊnd/,L1,找到。原形find。,"[{"en":"I found my wallet!","zh":"我找到钱包了！"}]",10
-基础⑥·过去的动作,不规则动词,told,告诉(tell的过去式),verb,/toʊld/,/təʊld/,L1,告诉。原形tell。,"[{"en":"She told me the news.","zh":"她告诉了我这个消息。"}]",11
-基础⑥·讲述经历,上个周末/去年,experience,经历,noun,/ɪkˈspɪriəns/,/ɪkˈspɪəriəns/,L1,经历。an amazing experience。,"[{"en":"Tell me about your experience.","zh":"跟我说说你的经历。"}]",0
-基础⑥·讲述经历,上个周末/去年,event,事件/活动,noun,/ɪˈvent/,/ɪˈvent/,L1,事件。a special event。,"[{"en":"I went to an event last month.","zh":"我上个月参加了一个活动。"}]",2
-基础⑥·讲述经历,上个周末/去年,trip,旅行,noun,/trɪp/,/trɪp/,L1,旅行。a trip to Beijing。,"[{"en":"I took a trip to Shanghai last year.","zh":"我去年去上海旅行了。"}]",3
-基础⑥·讲述经历,上个周末/去年,journey,旅程,noun,/ˈdʒɜːrni/,/ˈdʒɜːni/,L1,旅程。a long journey。,"[{"en":"The journey took three hours.","zh":"旅程花了三个小时。"}]",4
-基础⑥·讲述经历,上个周末/去年,party,派对,noun,/ˈpɑːrti/,/ˈpɑːti/,L1,派对。a birthday party。,"[{"en":"I went to a party last night.","zh":"我昨晚去了一个派对。"}]",5
-基础⑥·讲述经历,上个周末/去年,guest,客人,noun,/ɡest/,/ɡest/,L1,客人。a special guest。,"[{"en":"We had guests over last weekend.","zh":"上周末我们有客人来。"}]",6
-基础⑥·讲述经历,上个周末/去年,host,主人/主办,noun/verb,/hoʊst/,/həʊst/,L1,主人。host a party。,"[{"en":"Who hosted the dinner?","zh":"谁主办的晚宴？"}]",7
-基础⑥·讲述经历,上个周末/去年,memory,回忆,noun,/ˈmeməri/,/ˈmeməri/,L1,回忆。a good memory。,"[{"en":"I have a great memory of that day.","zh":"我对那天有美好的回忆。"}]",8
-基础⑥·讲述经历,上个周末/去年,story,故事,noun,/ˈstɔːri/,/ˈstɔːri/,L1,故事。tell a story。,"[{"en":"Can you tell me a story?","zh":"你能给我讲个故事吗？"}]",9
-基础⑥·讲述经历,上个周末/去年,moment,时刻,noun,/ˈmoʊmənt/,/ˈməʊmənt/,L1,时刻。a special moment。,"[{"en":"It was a wonderful moment.","zh":"那是一个美妙的时刻。"}]",10
-基础⑥·讲述经历,上个周末/去年,surprise,惊喜,noun/verb,/sərˈpraɪz/,/səˈpraɪz/,L1,惊喜。a big surprise。,"[{"en":"They gave me a big surprise.","zh":"他们给了我一个大惊喜。"}]",11
-基础⑥·讲述经历,否定和疑问,deny,否认,verb,/dɪˈnaɪ/,/dɪˈnaɪ/,L1,否认。denied doing。,"[{"en":"He denied breaking the window.","zh":"他否认打破了窗户。"}]",0
-基础⑥·讲述经历,否定和疑问,admit,承认,verb,/ədˈmɪt/,/ədˈmɪt/,L1,承认。admitted it。,"[{"en":"She admitted she was wrong.","zh":"她承认她错了。"}]",1
-基础⑥·讲述经历,否定和疑问,doubt,怀疑,verb/noun,/daʊt/,/daʊt/,L1,怀疑。I doubt it。,"[{"en":"I doubt that story is true.","zh":"我怀疑那个故事是真的。"}]",2
-基础⑥·讲述经历,否定和疑问,truth,真相,noun,/truːθ/,/truːθ/,L1,真相。tell the truth。,"[{"en":"Tell me the truth.","zh":"告诉我真相。"}]",3
-基础⑥·讲述经历,否定和疑问,lie,谎言/撒谎,noun/verb,/laɪ/,/laɪ/,L1,谎言。tell a lie。,"[{"en":"He told a lie yesterday.","zh":"他昨天撒了谎。"}]",4
-基础⑥·讲述经历,否定和疑问,wonder,想知道/好奇,verb,/ˈwʌndər/,/ˈwʌndə/,L1,想知道。I wonder why。,"[{"en":"I wonder what happened.","zh":"我想知道发生了什么。"}]",5
-基础⑥·讲述经历,否定和疑问,actually,实际上,adv,/ˈæktʃuəli/,/ˈæktʃuəli/,L1,实际上。Actually, I did。,"[{"en":"Actually, I didn't go there.","zh":"实际上我没去那里。"}]",6
-基础⑥·讲述经历,否定和疑问,neither,也不,adv,/ˈniːðər/,/ˈnaɪðə/,L1,也不。Neither did I。,"[{"en":"I didn't go. — Neither did I.","zh":"我没去。——我也没去。"}]",8
-基础⑥·讲述经历,否定和疑问,either,也(否定),adv,/ˈiːðər/,/ˈaɪðə/,L1,也(否定句中)。I didn't either。,"[{"en":"I didn't see it either.","zh":"我也没看到。"}]",9
-基础·问候与介绍,见面问候,greeting,问候,noun,/ˈɡriːtɪŋ/,/ˈɡriːtɪŋ/,L1,问候。a warm greeting。,"[{"en":"A simple greeting can make someone's day.","zh":"一个简单的问候能让别人开心。"}]",0
-基础·问候与介绍,见面问候,stranger,陌生人,noun,/ˈstreɪndʒər/,/ˈstreɪndʒə/,L1,陌生人。talk to a stranger。,"[{"en":"Don't talk to strangers.","zh":"不要和陌生人说话。"}]",1
-基础·问候与介绍,见面问候,acquaintance,熟人/认识的人,noun,/əˈkweɪntəns/,/əˈkweɪntəns/,L1,认识的人。an old acquaintance。,"[{"en":"He is just an acquaintance.","zh":"他只是个认识的人。"}]",2
-基础·问候与介绍,见面问候,neighbor,邻居,noun,/ˈneɪbər/,/ˈneɪbə/,L1,邻居。next-door neighbor。,"[{"en":"Our neighbor is very friendly.","zh":"我们的邻居很友好。"}]",3
-基础·问候与介绍,见面问候,colleague,同事,noun,/ˈkɑːliːɡ/,/ˈkɒliːɡ/,L1,同事。work colleague。,"[{"en":"My colleague helped me a lot.","zh":"我的同事帮了我很多。"}]",4
-基础·问候与介绍,见面问候,catch up,叙旧/聊聊近况,phrase,/kætʃ ʌp/,/kætʃ ʌp/,L1,叙旧。Let's catch up。,"[{"en":"We need to catch up soon!","zh":"我们得找时间叙叙旧！"}]",5
-基础·问候与介绍,见面问候,long time,好久,phrase,/lɔːŋ taɪm/,/lɒŋ taɪm/,L1,好久。long time no see。,"[{"en":"Long time no see! How are you?","zh":"好久不见！你好吗？"}]",6
-基础·问候与介绍,见面问候,it has been a while,有一阵子了,phrase,/ɪt hæz bɪn ə waɪl/,/ɪt hæz bɪn ə waɪl/,L1,有一阵子不见了。,"[{"en":"It's been a while! What's new?","zh":"有一阵子了！有什么新鲜事？"}]",7
-基础·问候与介绍,见面问候,how have you been,你最近怎么样,phrase,/haʊ hæv juː bɪn/,/haʊ hæv juː bɪn/,L1,你最近怎么样？问候语。,"[{"en":"How have you been? — Pretty good!","zh":"你最近怎么样？——挺好的！"}]",8
-基础·问候与介绍,见面问候,what is new,有什么新鲜事,phrase,/wʌt ɪz nuː/,/wɒt ɪz njuː/,L1,有什么新鲜事？What's new?,"[{"en":"What's new with you?","zh":"你有什么新鲜事？"}]",9
-基础·问候与介绍,自我介绍,hometown,家乡,noun,/ˈhoʊmtaʊn/,/ˈhəʊmtaʊn/,L1,家乡。my hometown。,"[{"en":"My hometown is a small city.","zh":"我的家乡是一座小城。"}]",1
-基础·问候与介绍,自我介绍,occupation,职业,noun,/ˌɑːkjəˈpeɪʃən/,/ˌɒkjəˈpeɪʃən/,L1,职业。What's your occupation?,"[{"en":"My occupation is teacher.","zh":"我的职业是老师。"}]",2
-基础·问候与介绍,自我介绍,major,专业,noun,/ˈmeɪdʒər/,/ˈmeɪdʒə/,L1,专业。my major is English。,"[{"en":"What was your major?","zh":"你的专业是什么？"}]",3
-基础·问候与介绍,自我介绍,hobby,爱好,noun,/ˈhɑːbi/,/ˈhɒbi/,L1,爱好。hobby。,"[{"en":"My hobby is playing guitar.","zh":"我的爱好是弹吉他。"}]",4
-基础·问候与介绍,自我介绍,graduate,毕业,verb,/ˈɡrædʒueɪt/,/ˈɡrædʒueɪt/,L1,毕业。graduated from。,"[{"en":"I graduated last year.","zh":"我去年毕业了。"}]",5
-基础·问候与介绍,自我介绍,single,单身,adj,/ˈsɪŋɡəl/,/ˈsɪŋɡəl/,L1,单身的。I'm single。,"[{"en":"Are you single or married?","zh":"你单身还是已婚？"}]",6
-基础·问候与介绍,自我介绍,married,已婚的,adj,/ˈmærid/,/ˈmærid/,L1,已婚的。get married。,"[{"en":"I got married two years ago.","zh":"我两年前结婚了。"}]",7
-基础·问候与介绍,自我介绍,flatmate,室友(英),noun,/ˈflætmeɪt/,/ˈflætmeɪt/,L1,室友。同flat-mate。,"[{"en":"My flatmate is from Canada.","zh":"我的室友来自加拿大。"}]",8
-基础·问候与介绍,自我介绍,roommate,室友(美),noun,/ˈruːmmeɪt/,/ˈruːmmeɪt/,L1,室友。同room-mate。,"[{"en":"I share the room with my roommate.","zh":"我和室友合住。"}]",9
-基础·礼貌与请求,礼貌用语,polite,有礼貌的,adj,/pəˈlaɪt/,/pəˈlaɪt/,L1,有礼貌的。be polite。,"[{"en":"It's important to be polite.","zh":"有礼貌很重要。"}]",0
-基础·礼貌与请求,礼貌用语,rude,粗鲁的,adj,/ruːd/,/ruːd/,L1,粗鲁的。don't be rude。,"[{"en":"It's rude to interrupt.","zh":"打断别人是粗鲁的。"}]",1
-基础·礼貌与请求,礼貌用语,thankful,感激的,adj,/ˈθæŋkfəl/,/ˈθæŋkfəl/,L1,感激的。be thankful for。,"[{"en":"I'm thankful for your help.","zh":"我很感激你的帮助。"}]",2
-基础·礼貌与请求,礼貌用语,grateful,感恩的,adj,/ˈɡreɪtfəl/,/ˈɡreɪtfəl/,L1,感恩的。I'm grateful。,"[{"en":"I'm so grateful for everything.","zh":"我对一切都很感恩。"}]",3
-基础·礼貌与请求,礼貌用语,apologize,道歉,verb,/əˈpɑːlədʒaɪz/,/əˈpɒlədʒaɪz/,L1,道歉。apologize for。,"[{"en":"I want to apologize for my mistake.","zh":"我想为我的错误道歉。"}]",4
-基础·礼貌与请求,礼貌用语,forgive,原谅,verb,/fərˈɡɪv/,/fəˈɡɪv/,L1,原谅。forgive me。,"[{"en":"Please forgive me.","zh":"请原谅我。"}]",5
-基础·礼貌与请求,礼貌用语,manners,礼貌/规矩,noun,/ˈmænərz/,/ˈmænəz/,L1,礼貌。good manners。,"[{"en":"Good manners are important.","zh":"好的礼貌很重要。"}]",6
-基础·礼貌与请求,礼貌用语,kindness,善良,noun,/ˈkaɪndnəs/,/ˈkaɪndnəs/,L1,善良。act of kindness。,"[{"en":"Thank you for your kindness.","zh":"谢谢你的善良。"}]",7
-基础·礼貌与请求,礼貌用语,respect,尊重,verb/noun,/rɪˈspekt/,/rɪˈspekt/,L1,尊重。show respect。,"[{"en":"We should respect each other.","zh":"我们应该互相尊重。"}]",8
-基础·礼貌与请求,礼貌用语,interrupt,打断,verb,/ˌɪntəˈrʌpt/,/ˌɪntəˈrʌpt/,L1,打断。Sorry to interrupt。,"[{"en":"Sorry to interrupt you.","zh":"抱歉打断你。"}]",9
-基础·礼貌与请求,礼貌用语,pardon,原谅/再说一遍,verb/noun,/ˈpɑːrdən/,/ˈpɑːdən/,L1,再说一遍。I beg your pardon。,"[{"en":"I beg your pardon? Could you repeat?","zh":"你说什么？能再说一遍吗？"}]",10
-基础·礼貌与请求,礼貌用语,excuse,原谅/借口,verb/noun,/ɪkˈskjuːs/,/ɪkˈskjuːs/,L1,原谅。Excuse me。,"[{"en":"Excuse me, is this seat taken?","zh":"不好意思，这个座位有人吗？"}]",11
-基础·礼貌与请求,请求与帮助,request,请求,noun/verb,/rɪˈkwest/,/rɪˈkwest/,L1,请求。make a request。,"[{"en":"I have a small request.","zh":"我有一个小请求。"}]",0
-基础·礼貌与请求,请求与帮助,favor,帮忙/恩惠,noun,/ˈfeɪvər/,/ˈfeɪvə/,L1,帮忙。do me a favor。,"[{"en":"Can you do me a favor?","zh":"你能帮我个忙吗？"}]",1
-基础·礼貌与请求,请求与帮助,permission,许可,noun,/pərˈmɪʃən/,/pəˈmɪʃən/,L1,许可。ask for permission。,"[{"en":"May I have your permission?","zh":"我可以得到你的许可吗？"}]",2
-基础·礼貌与请求,请求与帮助,offer,提供,verb/noun,/ˈɔːfər/,/ˈɒfə/,L1,提供。offer help。,"[{"en":"Can I offer you a drink?","zh":"我能给你一杯饮料吗？"}]",3
-基础·礼貌与请求,请求与帮助,accept,接受,verb,/əkˈsept/,/əkˈsept/,L1,接受。accept the offer。,"[{"en":"I gladly accepted his help.","zh":"我欣然接受了他的帮助。"}]",4
-基础·礼貌与请求,请求与帮助,decline,婉拒,verb,/dɪˈklaɪn/,/dɪˈklaɪn/,L1,婉拒。decline politely。,"[{"en":"She politely declined the invitation.","zh":"她礼貌地拒绝了邀请。"}]",5
-基础·礼貌与请求,请求与帮助,allow,允许,verb,/əˈlaʊ/,/əˈlaʊ/,L1,允许。allow me to。,"[{"en":"Please allow me to explain.","zh":"请允许我解释。"}]",6
-基础·礼貌与请求,请求与帮助,willing,愿意的,adj,/ˈwɪlɪŋ/,/ˈwɪlɪŋ/,L1,愿意的。be willing to。,"[{"en":"Are you willing to help?","zh":"你愿意帮忙吗？"}]",7
-基础·礼貌与请求,请求与帮助,lend,借出,verb,/lend/,/lend/,L1,借出。lend me a hand。,"[{"en":"Can you lend me some money?","zh":"你能借我点钱吗？"}]",8
-基础·礼貌与请求,请求与帮助,return,归还,verb,/rɪˈtɜːrn/,/rɪˈtɜːn/,L1,归还。return the book。,"[{"en":"I will return it tomorrow.","zh":"我明天还。"}]",9
-基础·礼貌与请求,请求与帮助,share,分享,verb,/ʃer/,/ʃeə/,L1,分享。share with me。,"[{"en":"Can you share your experience?","zh":"你能分享一下你的经历吗？"}]",10
-基础·礼貌与请求,请求与帮助,assist,协助,verb,/əˈsɪst/,/əˈsɪst/,L1,协助。assist with。,"[{"en":"Can I assist you with anything?","zh":"我能帮你什么吗？"}]",11
-基础⑥·过去的状态,我以前是/有,earlier,早些时候,adv,/ˈɜːrliər/,/ˈɜːliə/,L1,早些时候。earlier today。,"[{"en":"I saw him earlier today.","zh":"我今天早些时候看到他了。"}]",12
-基础⑥·过去的状态,我以前是/有,grow up,长大,phrase,/ɡroʊ ʌp/,/ɡrəʊ ʌp/,L1,长大。grew up in Beijing。,"[{"en":"I grew up in a small town.","zh":"我在一个小镇长大。"}]",13
-基础⑥·过去的状态,昨天在哪里,elsewhere,别处,adv,/ˈelswer/,/ˈelsweə/,L1,在别处。somewhere else。,"[{"en":"He was elsewhere at that time.","zh":"他那时在别处。"}]",12
-基础⑥·过去的状态,昨天在哪里,close by,在附近,phrase,/kloʊs baɪ/,/kləʊs baɪ/,L1,在附近。was close by。,"[{"en":"I was close by when it happened.","zh":"事情发生时我就在附近。"}]",13
-基础⑥·过去的动作,昨天做了什么,spot,看到/发现,verb,/spɑːt/,/spɒt/,L1,发现。spotted something。,"[{"en":"I spotted a strange bird.","zh":"我看到一只奇怪的鸟。"}]",12
-基础⑥·过去的动作,昨天做了什么,resolve,决定/解决,verb,/rɪˈzɑːlv/,/rɪˈzɒlv/,L1,决定。resolved to try。,"[{"en":"I resolved to try harder.","zh":"我决定更努力。"}]",13
-基础⑥·过去的动作,不规则动词,spoke,说(speak的过去式),verb,/spoʊk/,/spəʊk/,L1,说。原形speak。,"[{"en":"I spoke to my boss yesterday.","zh":"我昨天和老板谈话了。"}]",12
-基础⑥·过去的动作,不规则动词,knew,知道(know的过去式),verb,/nuː/,/njuː/,L1,知道。原形know。,"[{"en":"I knew something was wrong.","zh":"我知道有什么不对劲。"}]",13
-基础⑥·讲述经历,上个周末/去年,celebrate,庆祝,verb,/ˈselɪbreɪt/,/ˈselɪbreɪt/,L1,庆祝。celebrated my birthday。,"[{"en":"We celebrated her birthday last weekend.","zh":"上周末我们庆祝了她的生日。"}]",12
-基础⑥·讲述经历,否定和疑问,seriously,认真地,adv,/ˈsɪriəsli/,/ˈsɪəriəsli/,L1,认真地。Seriously?,"[{"en":"Seriously? Did you really do that?","zh":"真的假的？你真的做了吗？"}]",10
-基础·问候与介绍,见面问候,formal,正式的,adj,/ˈfɔːrməl/,/ˈfɔːməl/,L1,正式的。formal greeting。,"[{"en":"This is a formal greeting.","zh":"这是一个正式的问候。"}]",10
-基础·问候与介绍,见面问候,casual,随意的,adj,/ˈkæʒuəl/,/ˈkæʒuəl/,L1,随意的。casual greeting。,"[{"en":"A casual \"Hi\" is fine.","zh":"随意说声\"嗨\"就好。"}]",11
-基础·问候与介绍,自我介绍,native,本地人/母语的,adj,/ˈneɪtɪv/,/ˈneɪtɪv/,L1,本地的。native speaker。,"[{"en":"I'm a native of Beijing.","zh":"我是北京本地人。"}]",10
-基础·问候与介绍,自我介绍,abroad,在国外,adv,/əˈbrɔːd/,/əˈbrɔːd/,L1,在国外。study abroad。,"[{"en":"I want to study abroad.","zh":"我想出国留学。"}]",11
-基础·礼貌与请求,礼貌用语,gratitude,感激之情,noun,/ˈɡrætɪtuːd/,/ˈɡrætɪtjuːd/,L1,感激。express gratitude。,"[{"en":"I want to express my gratitude.","zh":"我想表达我的感激之情。"}]",12
-基础·礼貌与请求,礼貌用语,regret,后悔/遗憾,verb/noun,/rɪˈɡret/,/rɪˈɡret/,L1,后悔。I regret that。,"[{"en":"I regret what I said yesterday.","zh":"我后悔昨天说的话。"}]",13
-基础·礼貌与请求,请求与帮助,cooperate,合作,verb,/koʊˈɑːpəreɪt/,/kəʊˈɒpəreɪt/,L1,合作。cooperate with。,"[{"en":"Let's cooperate on this project.","zh":"我们在这个项目上合作吧。"}]",12
+基础⑥·过去的状态,核心词汇,accurate,,adj,,,L1,,,0
+基础⑥·过去的状态,核心词汇,advantage,,n,,,L1,,,1
+基础⑥·过去的状态,核心词汇,agency,,n,,,L1,,,2
+基础⑥·过去的状态,核心词汇,already,,adv,,,L1,,,3
+基础⑥·过去的状态,核心词汇,anniversary,,n,,,L1,,,4
+基础⑥·过去的状态,核心词汇,arrangement,,n,,,L1,,,5
+基础⑥·过去的状态,核心词汇,attempt,,n,,,L1,,,6
+基础⑥·过去的状态,核心词汇,beach,,n,,,L1,,,7
+基础⑥·过去的状态,核心词汇,bird,,n,,,L1,,,8
+基础⑥·过去的状态,核心词汇,borrow,,v,,,L1,,,9
+基础⑥·过去的状态,核心词汇,cafe,,n,,,L1,,,10
+基础⑥·过去的状态,核心词汇,century,,n,,,L1,,,11
+基础⑥·过去的状态,核心词汇,climate,,n,,,L1,,,12
+基础⑥·过去的状态,核心词汇,comfortable,,adj,,,L1,,,13
+基础⑥·过去的状态,核心词汇,concerned,,adj,,,L1,,,14
+基础⑥·过去的状态,核心词汇,continent,,n,,,L1,,,15
+基础⑥·过去的状态,核心词汇,course,,n,,,L1,,,16
+基础⑥·过去的状态,核心词汇,date,,n,,,L1,,,17
+基础⑥·过去的状态,核心词汇,definitely,,adv,,,L1,,,18
+基础⑥·过去的状态,核心词汇,desperate,,adj,,,L1,,,19
+基础⑥·过去的状态,核心词汇,discover,,v,,,L1,,,20
+基础⑥·过去的状态,核心词汇,during,,prep,,,L1,,,21
+基础⑥·过去的状态,核心词汇,engage,,v,,,L1,,,22
+基础⑥·过去的状态,核心词汇,euro,,n,,,L1,,,23
+基础⑥·过去的状态,核心词汇,excellent,,adj,,,L1,,,24
+基础⑥·过去的状态,核心词汇,extreme,,adj,,,L1,,,25
+基础⑥·过去的状态,核心词汇,fellow,,adj,,,L1,,,26
+基础⑥·过去的状态,核心词汇,foreign,,adj,,,L1,,,27
+基础⑥·过去的状态,核心词汇,formal,,adj,,,L1,,,28
+基础⑥·过去的状态,核心词汇,frog,,n,,,L1,,,29
+基础⑥·过去的状态,核心词汇,god,,n,,,L1,,,30
+基础⑥·过去的状态,核心词汇,healthy,,adj,,,L1,,,31
+基础⑥·过去的状态,核心词汇,holiday,,n,,,L1,,,32
+基础⑥·过去的状态,核心词汇,inch,,n,,,L1,,,33
+基础⑥·过去的状态,核心词汇,informal,,adj,,,L1,,,34
+基础⑥·过去的状态,核心词汇,introduce,,v,,,L1,,,35
+基础⑥·过去的状态,核心词汇,justify,,v,,,L1,,,36
+基础⑥·过去的状态,核心词汇,likely,,adj,,,L1,,,37
+基础⑥·过去的状态,核心词汇,manage,,v,,,L1,,,38
+基础⑥·过去的状态,核心词汇,memory,,n,,,L1,,,39
+基础⑥·过去的状态,核心词汇,model,,n,,,L1,,,40
+基础⑥·过去的状态,核心词汇,museum,,n,,,L1,,,41
+基础⑥·过去的状态,核心词汇,north,,n,,,L1,,,42
+基础⑥·过去的状态,核心词汇,online,,adj,,,L1,,,43
+基础⑥·过去的状态,核心词汇,outcome,,n,,,L1,,,44
+基础⑥·过去的状态,核心词汇,palace,,n,,,L1,,,45
+基础⑥·过去的状态,核心词汇,perfect,,adj,,,L1,,,46
+基础⑥·过去的状态,核心词汇,plastic,,n,,,L1,,,47
+基础⑥·过去的状态,核心词汇,prepare,,v,,,L1,,,48
+基础⑥·过去的状态,核心词汇,proof,,n,,,L1,,,49
+基础⑥·过去的状态,核心词汇,raise,,v,,,L1,,,50
+基础⑥·过去的状态,核心词汇,recycle,,v,,,L1,,,51
+基础⑥·过去的状态,核心词汇,remove,,v,,,L1,,,52
+基础⑥·过去的状态,核心词汇,round,,adj,,,L1,,,53
+基础⑥·过去的状态,核心词汇,search,,n,,,L1,,,54
+基础⑥·过去的状态,核心词汇,serious,,adj,,,L1,,,55
+基础⑥·过去的状态,核心词汇,sheep,,n,,,L1,,,56
+基础⑥·过去的状态,核心词汇,skirt,,n,,,L1,,,57
+基础⑥·过去的状态,核心词汇,stage,,n,,,L1,,,58
+基础⑥·过去的状态,核心词汇,straight,,adv,,,L1,,,59
+基础⑥·过去的状态,核心词汇,succeed,,v,,,L1,,,60
+基础⑥·过去的状态,核心词汇,swimming,,n,,,L1,,,61
+基础⑥·过去的状态,核心词汇,therapy,,n,,,L1,,,62
+基础⑥·过去的状态,核心词汇,tour,,n,,,L1,,,63
+基础⑥·过去的状态,核心词汇,transform,,v,,,L1,,,64
+基础⑥·过去的状态,核心词汇,underground,,adj,,,L1,,,65
+基础⑥·过去的状态,核心词汇,university,,n,,,L1,,,66
+基础⑥·过去的状态,核心词汇,visitor,,n,,,L1,,,67
+基础⑥·过去的状态,核心词汇,wedding,,n,,,L1,,,68
+基础⑥·过去的状态,核心词汇,wild,,adj,,,L1,,,69
+基础⑥·过去的动作,核心词汇,achieve,,v,,,L1,,,70
+基础⑥·过去的动作,核心词汇,adventure,,n,,,L1,,,71
+基础⑥·过去的动作,核心词汇,agenda,,n,,,L1,,,72
+基础⑥·过去的动作,核心词汇,alternative,,n,,,L1,,,73
+基础⑥·过去的动作,核心词汇,anything,,pron,,,L1,,,74
+基础⑥·过去的动作,核心词汇,article,,n,,,L1,,,75
+基础⑥·过去的动作,核心词汇,attend,,v,,,L1,,,76
+基础⑥·过去的动作,核心词汇,before,,prep,,,L1,,,77
+基础⑥·过去的动作,核心词汇,birthday,,n,,,L1,,,78
+基础⑥·过去的动作,核心词汇,bridge,,n,,,L1,,,79
+基础⑥·过去的动作,核心词汇,care,,n,,,L1,,,80
+基础⑥·过去的动作,核心词汇,character,,n,,,L1,,,81
+基础⑥·过去的动作,核心词汇,code,,n,,,L1,,,82
+基础⑥·过去的动作,核心词汇,common,,adj,,,L1,,,83
+基础⑥·过去的动作,核心词汇,concert,,n,,,L1,,,84
+基础⑥·过去的动作,核心词汇,corporate,,adj,,,L1,,,85
+基础⑥·过去的动作,核心词汇,crazy,,adj,,,L1,,,86
+基础⑥·过去的动作,核心词汇,dead,,adj,,,L1,,,87
+基础⑥·过去的动作,核心词汇,deliberate,,adj,,,L1,,,88
+基础⑥·过去的动作,核心词汇,detail,,n,,,L1,,,89
+基础⑥·过去的动作,核心词汇,district,,n,,,L1,,,90
+基础⑥·过去的动作,核心词汇,east,,n,,,L1,,,91
+基础⑥·过去的动作,核心词汇,entire,,adj,,,L1,,,92
+基础⑥·过去的动作,核心词汇,evaluate,,v,,,L1,,,93
+基础⑥·过去的动作,核心词汇,exciting,,adj,,,L1,,,94
+基础⑥·过去的动作,核心词汇,fail,,v,,,L1,,,95
+基础⑥·过去的动作,核心词汇,fight,,v,,,L1,,,96
+基础⑥·过去的动作,核心词汇,forest,,n,,,L1,,,97
+基础⑥·过去的动作,核心词汇,former,,adj,,,L1,,,98
+基础⑥·过去的动作,核心词汇,gas,,n,,,L1,,,99
+基础⑥·过去的动作,核心词汇,greet,,v,,,L1,,,100
+基础⑥·过去的动作,核心词汇,hell,,n,,,L1,,,101
+基础⑥·过去的动作,核心词汇,huge,,adj,,,L1,,,102
+基础⑥·过去的动作,核心词汇,income,,n,,,L1,,,103
+基础⑥·过去的动作,核心词汇,information,,n,,,L1,,,104
+基础⑥·过去的动作,核心词汇,judgement,,n,,,L1,,,105
+基础⑥·过去的动作,核心词汇,lake,,n,,,L1,,,106
+基础⑥·过去的动作,核心词汇,lion,,n,,,L1,,,107
+基础⑥·过去的动作,核心词汇,matching,,adj,,,L1,,,108
+基础⑥·过去的动作,核心词汇,metal,,n,,,L1,,,109
+基础⑥·过去的动作,核心词汇,modern,,adj,,,L1,,,110
+基础⑥·过去的动作,核心词汇,myself,,pron,,,L1,,,111
+基础⑥·过去的动作,核心词汇,novel,,n,,,L1,,,112
+基础⑥·过去的动作,核心词汇,operate,,v,,,L1,,,113
+基础⑥·过去的动作,核心词汇,oven,,n,,,L1,,,114
+基础⑥·过去的动作,核心词汇,participant,,n,,,L1,,,115
+基础⑥·过去的动作,核心词汇,perform,,v,,,L1,,,116
+基础⑥·过去的动作,核心词汇,population,,n,,,L1,,,117
+基础⑥·过去的动作,核心词汇,present,,adj,,,L1,,,118
+基础⑥·过去的动作,核心词汇,public,,adj,,,L1,,,119
+基础⑥·过去的动作,核心词汇,rate,,n,,,L1,,,120
+基础⑥·过去的动作,核心词汇,regret,,v,,,L1,,,121
+基础⑥·过去的动作,核心词汇,representative,,n,,,L1,,,122
+基础⑥·过去的动作,核心词汇,salary,,n,,,L1,,,123
+基础⑥·过去的动作,核心词汇,secretary,,n,,,L1,,,124
+基础⑥·过去的动作,核心词汇,severe,,adj,,,L1,,,125
+基础⑥·过去的动作,核心词汇,shut,,v,,,L1,,,126
+基础⑥·过去的动作,核心词汇,smoking,,n,,,L1,,,127
+基础⑥·过去的动作,核心词汇,state,,n,,,L1,,,128
+基础⑥·过去的动作,核心词汇,strategy,,n,,,L1,,,129
+基础⑥·过去的动作,核心词汇,success,,n,,,L1,,,130
+基础⑥·过去的动作,核心词汇,system,,n,,,L1,,,131
+基础⑥·过去的动作,核心词汇,thing,,n,,,L1,,,132
+基础⑥·过去的动作,核心词汇,tourism,,n,,,L1,,,133
+基础⑥·过去的动作,核心词汇,true,,adj,,,L1,,,134
+基础⑥·过去的动作,核心词汇,understand,,v,,,L1,,,135
+基础⑥·过去的动作,核心词汇,upper,,adj,,,L1,,,136
+基础⑥·过去的动作,核心词汇,wage,,n,,,L1,,,137
+基础⑥·过去的动作,核心词汇,welcome,,exclam,,,L1,,,138
+基础⑥·过去的动作,核心词汇,wire,,n,,,L1,,,139
+基础⑥·讲述经历,核心词汇,actually,,adv,,,L1,,,140
+基础⑥·讲述经历,核心词汇,advertising,,n,,,L1,,,141
+基础⑥·讲述经历,核心词汇,ago,,adv,,,L1,,,142
+基础⑥·讲述经历,核心词汇,ancient,,adj,,,L1,,,143
+基础⑥·讲述经历,核心词汇,app,,n,,,L1,,,144
+基础⑥·讲述经历,核心词汇,aspect,,n,,,L1,,,145
+基础⑥·讲述经历,核心词汇,average,,adj,,,L1,,,146
+基础⑥·讲述经历,核心词汇,behaviour,,n,,,L1,,,147
+基础⑥·讲述经历,核心词汇,blind,,adj,,,L1,,,148
+基础⑥·讲述经历,核心词汇,bring,,v,,,L1,,,149
+基础⑥·讲述经历,核心词汇,case,,n,,,L1,,,150
+基础⑥·讲述经历,核心词汇,chip,,n,,,L1,,,151
+基础⑥·讲述经历,核心词汇,college,,n,,,L1,,,152
+基础⑥·讲述经历,核心词汇,concentration,,n,,,L1,,,153
+基础⑥·讲述经历,核心词汇,confusing,,adj,,,L1,,,154
+基础⑥·讲述经历,核心词汇,council,,n,,,L1,,,155
+基础⑥·讲述经历,核心词汇,critic,,n,,,L1,,,156
+基础⑥·讲述经历,核心词汇,dear,,adj,,,L1,,,157
+基础⑥·讲述经历,核心词汇,deliberately,,adv,,,L1,,,158
+基础⑥·讲述经历,核心词汇,detect,,v,,,L1,,,159
+基础⑥·讲述经历,核心词汇,divorced,,adj,,,L1,,,160
+基础⑥·讲述经历,核心词汇,edit,,v,,,L1,,,161
+基础⑥·讲述经历,核心词汇,environment,,n,,,L1,,,162
+基础⑥·讲述经历,核心词汇,ever,,adv,,,L1,,,163
+基础⑥·讲述经历,核心词汇,experience,,n,,,L1,,,164
+基础⑥·讲述经历,核心词汇,failure,,n,,,L1,,,165
+基础⑥·讲述经历,核心词汇,film,,n,,,L1,,,166
+基础⑥·讲述经历,核心词汇,forget,,v,,,L1,,,167
+基础⑥·讲述经历,核心词汇,fortunately,,adv,,,L1,,,168
+基础⑥·讲述经历,核心词汇,gate,,n,,,L1,,,169
+基础⑥·讲述经历,核心词汇,guy,,n,,,L1,,,170
+基础⑥·讲述经历,核心词汇,hero,,n,,,L1,,,171
+基础⑥·讲述经历,核心词汇,hunting,,n,,,L1,,,172
+基础⑥·讲述经历,核心词汇,individual,,n,,,L1,,,173
+基础⑥·讲述经历,核心词汇,initiative,,n,,,L1,,,174
+基础⑥·讲述经历,核心词汇,jump,,v,,,L1,,,175
+基础⑥·讲述经历,核心词汇,league,,n,,,L1,,,176
+基础⑥·讲述经历,核心词汇,loose,,adj,,,L1,,,177
+基础⑥·讲述经历,核心词汇,material,,n,,,L1,,,178
+基础⑥·讲述经历,核心词汇,mineral,,n,,,L1,,,179
+基础⑥·讲述经历,核心词汇,mostly,,adv,,,L1,,,180
+基础⑥·讲述经历,核心词汇,necessary,,adj,,,L1,,,181
+基础⑥·讲述经历,核心词汇,offensive,,adj,,,L1,,,182
+基础⑥·讲述经历,核心词汇,ordinary,,adj,,,L1,,,183
+基础⑥·讲述经历,核心词汇,overall,,adj,,,L1,,,184
+基础⑥·讲述经历,核心词汇,passage,,n,,,L1,,,185
+基础⑥·讲述经历,核心词汇,period,,n,,,L1,,,186
+基础⑥·讲述经历,核心词汇,positive,,adj,,,L1,,,187
+基础⑥·讲述经历,核心词汇,printer,,n,,,L1,,,188
+基础⑥·讲述经历,核心词汇,purchase,,n,,,L1,,,189
+基础⑥·讲述经历,核心词汇,reader,,n,,,L1,,,190
+基础⑥·讲述经历,核心词汇,relax,,v,,,L1,,,191
+基础⑥·讲述经历,核心词汇,response,,n,,,L1,,,192
+基础⑥·讲述经历,核心词汇,satellite,,n,,,L1,,,193
+基础⑥·讲述经历,核心词汇,section,,n,,,L1,,,194
+基础⑥·讲述经历,核心词汇,shade,,n,,,L1,,,195
+基础⑥·讲述经历,核心词汇,silence,,n,,,L1,,,196
+基础⑥·讲述经历,核心词汇,sock,,n,,,L1,,,197
+基础⑥·讲述经历,核心词汇,statement,,n,,,L1,,,198
+基础⑥·讲述经历,核心词汇,strict,,adj,,,L1,,,199
+基础⑥·讲述经历,核心词汇,successful,,adj,,,L1,,,200
+基础⑥·讲述经历,核心词汇,teenage,,adj,,,L1,,,201
+基础⑥·讲述经历,核心词汇,thought,,n,,,L1,,,202
+基础⑥·讲述经历,核心词汇,tourist,,n,,,L1,,,203
+基础⑥·讲述经历,核心词汇,trust,,n,,,L1,,,204
+基础⑥·讲述经历,核心词汇,unfortunately,,adv,,,L1,,,205
+基础⑥·讲述经历,核心词汇,usual,,adj,,,L1,,,206
+基础⑥·讲述经历,核心词汇,wake,,v,,,L1,,,207
+基础⑥·讲述经历,核心词汇,west,,n,,,L1,,,208
+基础⑥·讲述经历,核心词汇,world,,n,,,L1,,,209
+基础⑥·完成时入门,核心词汇,adult,,n,,,L1,,,210
+基础⑥·完成时入门,核心词汇,advice,,n,,,L1,,,211
+基础⑥·完成时入门,核心词汇,alive,,adj,,,L1,,,212
+基础⑥·完成时入门,核心词汇,anger,,n,,,L1,,,213
+基础⑥·完成时入门,核心词汇,appropriate,,adj,,,L1,,,214
+基础⑥·完成时入门,核心词汇,associate,,v,,,L1,,,215
+基础⑥·完成时入门,核心词汇,background,,n,,,L1,,,216
+基础⑥·完成时入门,核心词汇,below,,adv,,,L1,,,217
+基础⑥·完成时入门,核心词汇,blood,,n,,,L1,,,218
+基础⑥·完成时入门,核心词汇,burn,,v,,,L1,,,219
+基础⑥·完成时入门,核心词汇,cell,,n,,,L1,,,220
+基础⑥·完成时入门,核心词汇,cinema,,n,,,L1,,,221
+基础⑥·完成时入门,核心词汇,comedy,,n,,,L1,,,222
+基础⑥·完成时入门,核心词汇,concept,,n,,,L1,,,223
+基础⑥·完成时入门,核心词汇,connect,,v,,,L1,,,224
+基础⑥·完成时入门,核心词汇,country,,n,,,L1,,,225
+基础⑥·完成时入门,核心词汇,curly,,adj,,,L1,,,226
+基础⑥·完成时入门,核心词汇,debate,,n,,,L1,,,227
+基础⑥·完成时入门,核心词汇,demonstrate,,v,,,L1,,,228
+基础⑥·完成时入门,核心词汇,device,,n,,,L1,,,229
+基础⑥·完成时入门,核心词汇,dominate,,v,,,L1,,,230
+基础⑥·完成时入门,核心词汇,effect,,n,,,L1,,,231
+基础⑥·完成时入门,核心词汇,estate,,n,,,L1,,,232
+基础⑥·完成时入门,核心词汇,every,,det,,,L1,,,233
+基础⑥·完成时入门,核心词汇,experiment,,n,,,L1,,,234
+基础⑥·完成时入门,核心词汇,fair,,adj,,,L1,,,235
+基础⑥·完成时入门,核心词汇,fly,,v,,,L1,,,236
+基础⑥·完成时入门,核心词汇,forgive,,v,,,L1,,,237
+基础⑥·完成时入门,核心词汇,fortune,,n,,,L1,,,238
+基础⑥·完成时入门,核心词汇,generate,,v,,,L1,,,239
+基础⑥·完成时入门,核心词汇,gym,,n,,,L1,,,240
+基础⑥·完成时入门,核心词汇,hesitate,,v,,,L1,,,241
+基础⑥·完成时入门,核心词汇,idea,,n,,,L1,,,242
+基础⑥·完成时入门,核心词汇,industry,,n,,,L1,,,243
+基础⑥·完成时入门,核心词汇,inside,,prep,,,L1,,,244
+基础⑥·完成时入门,核心词汇,just,,adv,,,L1,,,245
+基础⑥·完成时入门,核心词汇,learn,,v,,,L1,,,246
+基础⑥·完成时入门,核心词汇,luck,,n,,,L1,,,247
+基础⑥·完成时入门,核心词汇,mean,,v,,,L1,,,248
+基础⑥·完成时入门,核心词汇,minor,,adj,,,L1,,,249
+基础⑥·完成时入门,核心词汇,move,,v,,,L1,,,250
+基础⑥·完成时入门,核心词汇,news,,n,,,L1,,,251
+基础⑥·完成时入门,核心词汇,officer,,n,,,L1,,,252
+基础⑥·完成时入门,核心词汇,origin,,n,,,L1,,,253
+基础⑥·完成时入门,核心词汇,page,,n,,,L1,,,254
+基础⑥·完成时入门,核心词汇,past,,adj,,,L1,,,255
+基础⑥·完成时入门,核心词汇,pile,,n,,,L1,,,256
+基础⑥·完成时入门,核心词汇,power,,n,,,L1,,,257
+基础⑥·完成时入门,核心词汇,priority,,n,,,L1,,,258
+基础⑥·完成时入门,核心词汇,quality,,n,,,L1,,,259
+基础⑥·完成时入门,核心词汇,realize,,v,,,L1,,,260
+基础⑥·完成时入门,核心词汇,relevant,,adj,,,L1,,,261
+基础⑥·完成时入门,核心词汇,rid,,v,,,L1,,,262
+基础⑥·完成时入门,核心词汇,saving,,n,,,L1,,,263
+基础⑥·完成时入门,核心词汇,self,,n,,,L1,,,264
+基础⑥·完成时入门,核心词汇,shadow,,n,,,L1,,,265
+基础⑥·完成时入门,核心词汇,since,,prep,,,L1,,,266
+基础⑥·完成时入门,核心词汇,soon,,adv,,,L1,,,267
+基础⑥·完成时入门,核心词汇,status,,n,,,L1,,,268
+基础⑥·完成时入门,核心词汇,strong,,adj,,,L1,,,269
+基础⑥·完成时入门,核心词汇,suggestion,,n,,,L1,,,270
+基础⑥·完成时入门,核心词汇,teenager,,n,,,L1,,,271
+基础⑥·完成时入门,核心词汇,tool,,n,,,L1,,,272
+基础⑥·完成时入门,核心词汇,towards,,prep,,,L1,,,273
+基础⑥·完成时入门,核心词汇,try,,v,,,L1,,,274
+基础⑥·完成时入门,核心词汇,uniform,,n,,,L1,,,275
+基础⑥·完成时入门,核心词汇,violence,,n,,,L1,,,276
+基础⑥·完成时入门,核心词汇,wave,,n,,,L1,,,277
+基础⑥·完成时入门,核心词汇,wet,,adj,,,L1,,,278
+基础⑥·完成时入门,核心词汇,wow,,exclam,,,L1,,,279
+基础⑥·过去与现在对比,核心词汇,advance,,n,,,L1,,,280
+基础⑥·过去与现在对比,核心词汇,age,,n,,,L1,,,281
+基础⑥·过去与现在对比,核心词汇,all,,det,,,L1,,,282
+基础⑥·过去与现在对比,核心词汇,ankle,,n,,,L1,,,283
+基础⑥·过去与现在对比,核心词汇,architecture,,n,,,L1,,,284
+基础⑥·过去与现在对比,核心词汇,associated,,adj,,,L1,,,285
+基础⑥·过去与现在对比,核心词汇,barrier,,n,,,L1,,,286
+基础⑥·过去与现在对比,核心词汇,biology,,n,,,L1,,,287
+基础⑥·过去与现在对比,核心词汇,bored,,adj,,,L1,,,288
+基础⑥·过去与现在对比,核心词汇,bush,,n,,,L1,,,289
+基础⑥·过去与现在对比,核心词汇,cent,,n,,,L1,,,290
+基础⑥·过去与现在对比,核心词汇,classical,,adj,,,L1,,,291
+基础⑥·过去与现在对比,核心词汇,comfort,,n,,,L1,,,292
+基础⑥·过去与现在对比,核心词汇,concern,,n,,,L1,,,293
+基础⑥·过去与现在对比,核心词汇,consideration,,n,,,L1,,,294
+基础⑥·过去与现在对比,核心词汇,courage,,n,,,L1,,,295
+基础⑥·过去与现在对比,核心词汇,dad,,n,,,L1,,,296
+基础⑥·过去与现在对比,核心词汇,defence,,n,,,L1,,,297
+基础⑥·过去与现在对比,核心词汇,desert,,n,,,L1,,,298
+基础⑥·过去与现在对比,核心词汇,difference,,n,,,L1,,,299
+基础⑥·过去与现在对比,核心词汇,dry,,adj,,,L1,,,300
+基础⑥·过去与现在对比,核心词汇,energy,,n,,,L1,,,301
+基础⑥·过去与现在对比,核心词汇,estimate,,v,,,L1,,,302
+基础⑥·过去与现在对比,核心词汇,everyday,,adj,,,L1,,,303
+基础⑥·过去与现在对比,核心词汇,external,,adj,,,L1,,,304
+基础⑥·过去与现在对比,核心词汇,false,,adj,,,L1,,,305
+基础⑥·过去与现在对比,核心词汇,focus,,v,,,L1,,,306
+基础⑥·过去与现在对比,核心词汇,form,,n,,,L1,,,307
+基础⑥·过去与现在对比,核心词汇,forward,,adv,,,L1,,,308
+基础⑥·过去与现在对比,核心词汇,geography,,n,,,L1,,,309
+基础⑥·过去与现在对比,核心词汇,hate,,v,,,L1,,,310
+基础⑥·过去与现在对比,核心词汇,himself,,pron,,,L1,,,311
+基础⑥·过去与现在对比,核心词汇,image,,n,,,L1,,,312
+基础⑥·过去与现在对比,核心词汇,inform,,v,,,L1,,,313
+基础⑥·过去与现在对比,核心词汇,insurance,,n,,,L1,,,314
+基础⑥·过去与现在对比,核心词汇,justice,,n,,,L1,,,315
+基础⑥·过去与现在对比,核心词汇,lemon,,n,,,L1,,,316
+基础⑥·过去与现在对比,核心词汇,machine,,n,,,L1,,,317
+基础⑥·过去与现在对比,核心词汇,media,,n,,,L1,,,318
+基础⑥·过去与现在对比,核心词汇,mirror,,n,,,L1,,,319
+基础⑥·过去与现在对比,核心词汇,movement,,n,,,L1,,,320
+基础⑥·过去与现在对比,核心词汇,noisy,,adj,,,L1,,,321
+基础⑥·过去与现在对比,核心词汇,once,,adv,,,L1,,,322
+基础⑥·过去与现在对比,核心词汇,original,,adj,,,L1,,,323
+基础⑥·过去与现在对比,核心词汇,pair,,n,,,L1,,,324
+基础⑥·过去与现在对比,核心词汇,per,,prep,,,L1,,,325
+基础⑥·过去与现在对比,核心词汇,place,,n,,,L1,,,326
+基础⑥·过去与现在对比,核心词汇,pregnant,,adj,,,L1,,,327
+基础⑥·过去与现在对比,核心词汇,promise,,v,,,L1,,,328
+基础⑥·过去与现在对比,核心词汇,quick,,adj,,,L1,,,329
+基础⑥·过去与现在对比,核心词汇,recipe,,n,,,L1,,,330
+基础⑥·过去与现在对比,核心词汇,remember,,v,,,L1,,,331
+基础⑥·过去与现在对比,核心词汇,river,,n,,,L1,,,332
+基础⑥·过去与现在对比,核心词汇,scary,,adj,,,L1,,,333
+基础⑥·过去与现在对比,核心词汇,separate,,adj,,,L1,,,334
+基础⑥·过去与现在对比,核心词汇,shape,,n,,,L1,,,335
+基础⑥·过去与现在对比,核心词汇,sincere,,adj,,,L1,,,336
+基础⑥·过去与现在对比,核心词汇,spell,,v,,,L1,,,337
+基础⑥·过去与现在对比,核心词汇,step,,n,,,L1,,,338
+基础⑥·过去与现在对比,核心词汇,stupid,,adj,,,L1,,,339
+基础⑥·过去与现在对比,核心词汇,surprised,,adj,,,L1,,,340
+基础⑥·过去与现在对比,核心词汇,themselves,,pron,,,L1,,,341
+基础⑥·过去与现在对比,核心词汇,tooth,,n,,,L1,,,342
+基础⑥·过去与现在对比,核心词汇,tradition,,n,,,L1,,,343
+基础⑥·过去与现在对比,核心词汇,ultimately,,adv,,,L1,,,344
+基础⑥·过去与现在对比,核心词汇,unit,,n,,,L1,,,345
+基础⑥·过去与现在对比,核心词汇,visit,,v,,,L1,,,346
+基础⑥·过去与现在对比,核心词汇,wealth,,n,,,L1,,,347
+基础⑥·过去与现在对比,核心词汇,while,,conj,,,L1,,,348
+基础⑥·过去与现在对比,核心词汇,yet,,adv,,,L1,,,349

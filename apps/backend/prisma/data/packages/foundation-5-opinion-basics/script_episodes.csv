@@ -1,5 +1,9 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-found_foundation_opinion_basics_0,喜好与感受,1,表达喜好,基础·喜好与感受,L1,1,2,6,2,15,"[""练习表达喜好相关表达""]",2,2,2,Tutor,口语教练,true,practice_foundation-opinion-basics_基础_喜好与感受_表达喜好,{xp:10}
-found_foundation_opinion_basics_0,喜好与感受,2,表达感受,基础·喜好与感受,L1,1,2,6,2,15,"[""练习表达感受相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-opinion-basics_基础_喜好与感受_表达感受,{xp:10}
-found_foundation_opinion_basics_1,简单观点,1,同意与不同意,基础·简单观点,L1,1,2,6,2,15,"[""练习同意与不同意相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-opinion-basics_基础_简单观点_同意与不同意,{xp:10}
-found_foundation_opinion_basics_1,简单观点,2,提建议,基础·简单观点,L1,1,2,6,2,15,"[""练习提建议相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-opinion-basics_基础_简单观点_提建议,{xp:10}
+ch_prog_01,此刻正在做,1,我正在…,基础⑤·此刻正在做,L1,1,8,15,5,8,"[""学会I'm eating/drinking/reading现在进行时"",""学会与一般现在时对比""]",2,4,2,Tutor,英语导师,true,practice_foundation-present-continuous_此刻正在做_我正在,"{""xp"":10}"
+ch_prog_01,此刻正在做,2,他/她正在…,基础⑤·此刻正在做,L1,1,8,15,4,7,"[""学会He's/She's working/sleeping/teaching"",""学会I think...is...推测表达""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_此刻正在做_他她正在,"{""xp"":10}"
+ch_prog_02,临时vs习惯,1,平时vs今天,基础⑤·临时vs习惯,L1~L2,1,8,15,4,8,"[""学会usually...but today/I live in...but..."",""学会She wears...but today she's wearing...""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_临时vs习惯_平时vs今天,"{""xp"":10}"
+ch_prog_02,临时vs习惯,2,此刻状态,基础⑤·临时vs习惯,L1~L2,1,8,15,4,7,"[""学会It's raining/It's getting dark/I'm feeling tired"",""学会现在进行时描述此刻状态对比""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_临时vs习惯_此刻状态,"{""xp"":10}"
+ch_prog_03,频率副词,1,频率表达,基础⑤·频率副词,L1,1,8,15,4,8,"[""学会always/usually/often/sometimes/rarely/never"",""学会频率副词在be动词后的位置""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_频率副词_总是通常经常,"{""xp"":10}"
+ch_prog_03,频率副词,2,双时态混合,基础⑤·频率副词,L1~L2,1,8,15,4,6,"[""学会频率+进行时混合"",""学会How often频率问句""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_频率副词_频率进行时混合,"{""xp"":10}"
+ch_prog_04,have与get,1,have的两种用法,基础⑤·have与get,L1~L2,1,8,15,4,8,"[""掌握have表拥有不可进行时"",""掌握have表吃/经历可进行时""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_have与get_have状态用法,"{""xp"":10}"
+ch_prog_04,have与get,2,get的日常表达,基础⑤·have与get,L1~L2,1,8,15,4,8,"[""掌握get up/home/to起床到达"",""掌握get tired/dark/angry变得/收到"",""掌握get along短语动词""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_have与get_get起床到达,"{""xp"":10}"

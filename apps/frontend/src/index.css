@@ -257,6 +257,14 @@
     @apply backdrop-blur-xl bg-background/70;
   }
 
+  .mobile-bottom-nav,
+  .mobile-bottom-nav * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   .app-surface {
     background-color: hsl(var(--background));
     background-image: var(--app-bg-image,

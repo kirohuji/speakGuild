@@ -1,62 +1,60 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-基础③·描述家人,他/她是谁,第三人称,He is my father. She is my mother.,他是我爸爸。她是我妈妈。,L1,第三人称be动词介绍家人。,"[{""en"":""He is my brother."",""zh"":""他是我的兄弟。""}]"
-基础③·描述家人,他/她是谁,第三人称,He is a doctor. She is a teacher.,他是医生。她是老师。,L1,第三人称+职业。,"[{""en"":""She is a nurse."",""zh"":""她是一名护士。""}]"
-基础③·描述家人,他/她是谁,第三人称,He is very tall. She is very kind.,他很高。她很善良。,L1,第三人称+形容词描述。,"[{""en"":""He is very funny."",""zh"":""他很有趣。""}]"
-基础③·描述家人,他/她是谁,has,He has a car. She has a cat.,他有一辆车。她有一只猫。,L1,have→has。,"[{""en"":""He has a dog."",""zh"":""他有一只狗。""}]"
-基础③·描述家人,他/她是谁,has,He has two brothers.,他有两个兄弟。,L1,has+复数名词。,"[{""en"":""She has three sisters."",""zh"":""她有三个姐妹。""}]"
-基础③·描述家人,他/她是谁,所有格,His name is Tom. Her name is Anna.,他叫Tom。她叫Anna。,L1,his/her所有格。,"[{""en"":""His phone is new."",""zh"":""他的手机是新的。""}]"
-基础③·描述家人,他/她喜欢什么,likes,He likes coffee. She likes tea.,他喜欢咖啡。她喜欢茶。,L1,like→likes。,"[{""en"":""He likes sports."",""zh"":""他喜欢运动。""}]"
-基础③·描述家人,他/她喜欢什么,likes to,He likes to read books.,他喜欢看书。,L1,likes+to do。,"[{""en"":""She likes to swim."",""zh"":""她喜欢游泳。""}]"
-基础③·描述家人,他/她喜欢什么,否定,He doesn't like meat.,他不喜欢吃肉。,L1,doesn't like + 名词。,"[{""en"":""She doesn't like coffee."",""zh"":""她不喜欢咖啡。""}]"
-基础③·描述家人,他/她喜欢什么,否定,She doesn't like to watch TV.,她不喜欢看电视。,L1,doesn't like + to do。,"[{""en"":""He doesn't like to cook."",""zh"":""他不喜欢做饭。""}]"
-基础③·描述家人,他/她喜欢什么,疑问,"Does he like sports? — Yes, he does.",他喜欢运动吗？——喜欢。,L1,Does...like? 疑问句。,"[{""en"":""Does she like music?"",""zh"":""她喜欢音乐吗？""}]"
-基础③·描述家人,他/她喜欢什么,疑问,What does she like? — She likes music.,她喜欢什么？——她喜欢音乐。,L1,What does...like?。,"[{""en"":""What does he like?"",""zh"":""他喜欢什么？""}]"
-基础③·他/她的日常,他每天做什么,gets,He gets up at 7 every morning.,他每天早上7点起床。,L1,get→gets 起床。,"[{""en"":""She gets up at 6."",""zh"":""她6点起床。""}]"
+基础③·描述家人,他是谁,He is,He is my father. She is my mother.,他是我爸爸。她是我妈妈。,L1,第三人称be动词介绍家人。,"[{""en"":""He is my brother."",""zh"":""他是我的兄弟。""}]"
+基础③·描述家人,他是谁,He is,He is a doctor. She is a teacher.,他是医生。她是老师。,L1,第三人称+职业。,"[{""en"":""She is a nurse."",""zh"":""她是一名护士。""}]"
+基础③·描述家人,他是谁,He is,He is very tall. She is very kind.,他很高。她很善良。,L1,第三人称+形容词描述。,"[{""en"":""He is very funny."",""zh"":""他很有趣。""}]"
+基础③·描述家人,他是谁,所有格,His name is Tom. Her name is Anna.,他叫Tom。她叫Anna。,L1,his/her所有格。,"[{""en"":""His phone is new."",""zh"":""他的手机是新的。""}]"
+基础③·描述家人,他有什么,has,He has a car. She has a cat.,他有一辆车。她有一只猫。,L1,have→has。,"[{""en"":""He has a dog."",""zh"":""他有一只狗。""}]"
+基础③·描述家人,他有什么,has,He has two brothers.,他有两个兄弟。,L1,has+复数名词。,"[{""en"":""She has three sisters."",""zh"":""她有三个姐妹。""}]"
+基础③·描述家人,他有什么,doesn't have,He doesn't have a phone.,他没有手机。,L1,否定拥有。doesn't have。,"[{""en"":""He doesn't have a car."",""zh"":""他没有车。""}]"
+基础③·描述家人,她喜欢什么,likes,She likes music. He likes sports.,她喜欢音乐。他喜欢运动。,L1,like→likes。,"[{""en"":""He likes coffee."",""zh"":""他喜欢咖啡。""}]"
+基础③·描述家人,她喜欢什么,likes to,He likes to read books.,他喜欢看书。,L1,likes+to do。,"[{""en"":""She likes to swim."",""zh"":""她喜欢游泳。""}]"
+基础③·描述家人,她不喜欢什么,doesn't like,She doesn't like cold weather.,她不喜欢冷天。,L1,doesn't like+名词。,"[{""en"":""He doesn't like spiders."",""zh"":""他不喜欢蜘蛛。""}]"
+基础③·描述家人,她不喜欢什么,doesn't like to,He doesn't like to watch TV.,他不喜欢看电视。,L1,doesn't like+to do。,"[{""en"":""She doesn't like to cook."",""zh"":""她不喜欢做饭。""}]"
+基础③·描述家人,疑问与回答,Does,Dose he like sports? Yes he does.,他喜欢运动吗？喜欢。,L1,Does...like?疑问句。,"[{""en"":""Does she like music?"",""zh"":""她喜欢音乐吗？""}]"
+基础③·描述家人,疑问与回答,What does,What does she like? She likes music.,她喜欢什么？她喜欢音乐。,L1,What does...like?。,"[{""en"":""What does he like?"",""zh"":""他喜欢什么？""}]"
+基础③·描述家人,家人职业,job,My mother is a nurse. She works in a hospital.,我妈妈是护士。她在医院工作。,L1,职业+地点。,"[{""en"":""My father is a doctor. He works in a hospital."",""zh"":""我爸爸是医生。他在医院工作。""}]"
+基础③·描述家人,家人习惯,always,My dad always gets up early.,我爸爸总是早起。,L1,频率副词+第三人称。,"[{""en"":""My mom always drinks tea."",""zh"":""我妈妈总是喝茶。""}]"
+基础③·他/她的日常,他每天做什么,gets up,He gets up at 7 every morning.,他每天早上7点起床。,L1,get→gets 起床。,"[{""en"":""She gets up at 6."",""zh"":""她6点起床。""}]"
 基础③·他/她的日常,他每天做什么,goes,She goes to school by bus.,她坐公交上学。,L1,go→goes 去。,"[{""en"":""He goes to work by bike."",""zh"":""他骑车上班。""}]"
-基础③·他/她的日常,他每天做什么,eats,He eats breakfast at home.,他在家吃早餐。,L1,eat→eats 吃。,"[{""en"":""She eats lunch at school."",""zh"":""她在学校吃午饭。""}]"
-基础③·他/她的日常,他每天做什么,drinks,She drinks coffee in the morning.,她早上喝咖啡。,L1,drink→drinks 喝。,"[{""en"":""He drinks tea in the evening."",""zh"":""他晚上喝茶。""}]"
-基础③·他/她的日常,他每天做什么,comes,He comes home at 6 pm.,他下午6点到家。,L1,come→comes 回来。,"[{""en"":""She comes home at 5."",""zh"":""她5点到家。""}]"
-基础③·他/她的日常,他每天做什么,加es,She watches TV after dinner.,她晚饭后看电视。,L1,watch→watches (加es)。,"[{""en"":""He watches movies on weekends."",""zh"":""他周末看电影。""}]"
-基础③·他/她的日常,他每天做什么,ies,He studies English every day.,他每天学英语。,L1,study→studies (y→ies)。,"[{""en"":""She studies math."",""zh"":""她学数学。""}]"
-基础③·他/她的日常,他每天做什么,否定,He doesn't eat breakfast.,他不吃早餐。,L1,doesn't+动词原形。,"[{""en"":""She doesn't watch TV."",""zh"":""她不看电视。""}]"
-基础③·他/她的日常,他/她做什么工作,works,He works in a hospital.,他在医院工作。,L1,work→works。,"[{""en"":""She works in an office."",""zh"":""她在办公室工作。""}]"
-基础③·他/她的日常,他/她做什么工作,teaches,She teaches English at a school.,她在一所学校教英语。,L1,teach→teaches (加es)。,"[{""en"":""He teaches music."",""zh"":""他教音乐。""}]"
-基础③·他/她的日常,他/她做什么工作,drives,He drives a taxi.,他开出租车。,L1,drive→drives。,"[{""en"":""She drives a bus."",""zh"":""她开公交车。""}]"
-基础③·他/她的日常,他/她做什么工作,does,She does her homework after school.,她放学后做作业。,L1,do→does。,"[{""en"":""He does housework on weekends."",""zh"":""他周末做家务。""}]"
-基础③·他/她的日常,他/她做什么工作,says,He says hello to everyone.,他跟大家打招呼。,L1,say→says。,"[{""en"":""She says thank you."",""zh"":""她说谢谢。""}]"
-基础③·他/她的日常,他/她做什么工作,疑问,"Does he work on weekends? — No, he doesn't.",他周末工作吗？——不。,L1,Does...work?疑问。,"[{""en"":""Does she study on weekends?"",""zh"":""她周末学习吗？""}]"
-基础③·对比你我他,我和你 vs 他/她,对比,"I eat breakfast, and he eats breakfast too.",我吃早餐，他也吃。,L1,我 vs 他动词变化对比。,"[{""en"":""I like coffee and she likes tea."",""zh"":""我喜欢咖啡，她喜欢茶。""}]"
-基础③·对比你我他,我和你 vs 他/她,对比,"I like coffee, but she doesn't like coffee.",我喜欢咖啡，但她不喜欢。,L1,肯定vs否定对比。,"[{""en"":""I have a car, but he doesn't have a car."",""zh"":""我有车，但他没有。""}]"
-基础③·对比你我他,我和你 vs 他/她,对比,"I have a cat, and she has a dog.",我有一只猫，她有一只狗。,L1,have vs has对比。,"[{""en"":""I have a pen, and he has a pencil."",""zh"":""我有一支笔，他有一支铅笔。""}]"
-基础③·对比你我他,我和你 vs 他/她,对比,"I don't have a car, but he has a car.",我没有车，但他有。,L1,don't have vs has对比。,"[{""en"":""I don't have a phone, but she has a phone."",""zh"":""我没有手机，但她有。""}]"
-基础③·对比你我他,我和你 vs 他/她,对比,"I get up at 6, but he gets up at 8.",我6点起床，他8点。,L1,不同时间动词变化对比。,"[{""en"":""I go to bed at 10, but she goes to bed at 11."",""zh"":""我10点睡觉，她11点。""}]"
-基础③·对比你我他,我和你 vs 他/她,所有格,My name is Tom. His name is Jack.,我叫Tom。他叫Jack。,L1,my vs his所有格对比。,"[{""en"":""My bag is blue. His bag is black."",""zh"":""我的包是蓝色的。他的包是黑色的。""}]"
-基础③·对比你我他,他们的生活,复数,They live in Beijing.,他们住在北京。,L1,they+动词原形(不加s)。,"[{""en"":""They live in Shanghai."",""zh"":""他们住在上海。""}]"
-基础③·对比你我他,他们的生活,复数,They have two children.,他们有两个孩子。,L1,they have (不是has)。,"[{""en"":""They have a big house."",""zh"":""他们有一个大房子。""}]"
-基础③·对比你我他,他们的生活,复数,People here speak Chinese.,这里的人说中文。,L1,people+复数动词。,"[{""en"":""People here speak English."",""zh"":""这里的人说英语。""}]"
-基础③·对比你我他,他们的生活,复数,My parents work very hard.,我的父母工作很努力。,L1,复数主语+动词原形。,"[{""en"":""My friends live nearby."",""zh"":""我的朋友住在附近。""}]"
-基础③·对比你我他,他们的生活,复数,The children play in the park.,孩子们在公园玩。,L1,复数主语。,"[{""en"":""The students study hard."",""zh"":""学生们学习很努力。""}]"
+基础③·他/她的日常,他每天做什么,eats,He eats lunch at school.,他在学校吃午饭。,L1,eat→eats 吃。,"[{""en"":""She eats breakfast at home."",""zh"":""她在家里吃早餐。""}]"
+基础③·他/她的日常,他每天做什么,drinks,She drinks water after exercise.,她运动后喝水。,L1,drink→drinks 喝。,"[{""en"":""He drinks tea in the morning."",""zh"":""他早上喝茶。""}]"
+基础③·他/她的日常,他每天做什么,doesn't,He doesn't eat junk food.,他不吃垃圾食品。,L1,doesn't+动词原形。,"[{""en"":""She doesn't drink soda."",""zh"":""她不喝苏打水。""}]"
+基础③·他/她的日常,她几点起床,gets up,She gets up at 6 every day.,她每天6点起床。,L1,第三人称起床时间。,"[{""en"":""He gets up at 8 on weekends."",""zh"":""他周末8点起床。""}]"
+基础③·他/她的日常,她几点起床,comes home,He comes home at 6 pm.,他下午6点到家。,L1,come→comes。,"[{""en"":""She comes home at 5."",""zh"":""她5点到家。""}]"
+基础③·他/她的日常,她几点起床,goes to bed,She goes to bed at 10 pm.,她晚上10点睡觉。,L1,go→goes to bed。,"[{""en"":""He goes to bed at 11."",""zh"":""他11点睡觉。""}]"
+基础③·他/她的日常,工作与学习,works,He works in a hospital.,他在医院工作。,L1,work→works。,"[{""en"":""She works in an office."",""zh"":""她在办公室工作。""}]"
+基础③·他/她的日常,工作与学习,studies,She studies English at university.,她在大学学英语。,L1,study→studies(y→ies)。,"[{""en"":""He studies math."",""zh"":""他学数学。""}]"
+基础③·他/她的日常,工作与学习,teaches,He teaches music at a school.,他在一所学校教音乐。,L1,teach→teaches(加es)。,"[{""en"":""She teaches English."",""zh"":""她教英语。""}]"
+基础③·他/她的日常,工作与学习,watches,She watches TV after dinner.,她晚饭后看电视。,L1,watch→watches(加es)。,"[{""en"":""He watches movies on weekends."",""zh"":""他周末看电影。""}]"
+基础③·他/她的日常,工作与学习,does,He does his homework in the evening.,他晚上做作业。,L1,do→does。,"[{""en"":""She does housework."",""zh"":""她做家务。""}]"
+基础③·他/她的日常,疑问与回答,Does,Does he work on weekends? No he doesn't.,他周末工作吗？不。,L1,Does...work?疑问。,"[{""en"":""Does she study on weekends?"",""zh"":""她周末学习吗？""}]"
+基础③·他/她的日常,疑问与回答,Where does,Where does she study? She studies at a university.,她在哪里学习？她在大学学习。,L1,Where does...?特殊疑问。,"[{""en"":""Where does he work?"",""zh"":""他在哪里工作？""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I like music and she likes music too.,我喜欢音乐，她也喜欢。,L1,肯定句对比。,"[{""en"":""I eat breakfast and he eats breakfast too."",""zh"":""我吃早餐，他也吃。""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I eat breakfast but he eats lunch only.,我吃早餐，但他只吃午餐。,L1,不同动作对比。,"[{""en"":""I drink coffee but she drinks tea."",""zh"":""我喝咖啡，但她喝茶。""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I like coffee but she doesn't like coffee.,我喜欢咖啡，但她不喜欢。,L1,肯定vs否定对比。,"[{""en"":""I have a car but he doesn't have a car."",""zh"":""我有车，但他没有。""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I don't have a pet but she has a cat.,我没有宠物，但她有猫。,L1,don't have vs has对比。,"[{""en"":""I don't have a phone but she has a phone."",""zh"":""我没有手机，但她有。""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I have a brother and he has a sister.,我有一个兄弟，他有一个姐妹。,L1,have vs has对比。,"[{""en"":""I have a bike and she has a car."",""zh"":""我有一辆自行车，她有一辆车。""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I have a bike but she doesn't have a bike.,我有自行车，但她没有。,L1,肯定vs否定have。,"[{""en"":""I have a cat but she doesn't have a cat."",""zh"":""我有一只猫，但她没有。""}]"
+基础③·对比你我他,我和你vs他/她,contrast,I get up at 6 but he gets up at 8.,我6点起床，他8点。,L1,时间习惯对比。,"[{""en"":""I go to bed at 10 but she goes to bed at 11."",""zh"":""我10点睡觉，她11点。""}]"
+基础③·对比你我他,我和你vs他/她,所有格,My name is Tom. His name is Jack.,我叫Tom。他叫Jack。,L1,my vs his所有格对比。,"[{""en"":""My bag is blue. His bag is black."",""zh"":""我的包是蓝色的。他的包是黑色的。""}]"
+基础③·对比你我他,他们的生活,复数主语,They live in Beijing.,他们住在北京。,L1,they+动词原形(不加s)。,"[{""en"":""They live in Shanghai."",""zh"":""他们住在上海。""}]"
+基础③·对比你我他,他们的生活,复数主语,They have a car and a dog.,他们有一辆车和一只狗。,L1,they have(不是has)。,"[{""en"":""They have a big house."",""zh"":""他们有一个大房子。""}]"
+基础③·对比你我他,他们的生活,复数主语,My parents work very hard.,我的父母工作很努力。,L1,复数主语+动词原形。,"[{""en"":""My friends live nearby."",""zh"":""我的朋友住在附近。""}]"
+基础③·对比你我他,他们的生活,复数主语,The children play in the park.,孩子们在公园玩。,L1,复数主语+play。,"[{""en"":""The students study hard."",""zh"":""学生们学习很努力。""}]"
+基础③·对比你我他,他们的生活,复数主语,People here speak Chinese.,这里的人说中文。,L1,people+复数动词。,"[{""en"":""People here speak English."",""zh"":""这里的人说英语。""}]"
 基础③·对比你我他,他们的生活,所有格,Their house is very big.,他们的房子很大。,L1,their所有格。,"[{""en"":""Their car is new."",""zh"":""他们的车是新的。""}]"
-基础③·对比你我他,他们的生活,'s,Tom's mother is a nurse.,Tom的妈妈是护士。,L1,'s所有格。,"[{""en"":""Anna's father is a doctor."",""zh"":""Anna的爸爸是医生。""}]"
+基础③·对比你我他,他们的生活,'s所有格,Tom's mother is a nurse.,Tom的妈妈是护士。,L1,'s所有格。,"[{""en"":""Anna's father is a doctor."",""zh"":""Anna的爸爸是医生。""}]"
 基础③·对比你我他,他们的生活,不定代词,Everyone likes him.,大家都喜欢他。,L1,不定代词+likes。,"[{""en"":""Everyone knows her."",""zh"":""大家都认识她。""}]"
-基础·办公室日常,办公室交流,办公室交流,I'll send you an email.,我会发邮件给你。,L1,日常口语表达。,
-基础·办公室日常,办公室交流,办公室交流,Please review this document.,请审阅这份文件。,L1,日常口语表达。,
-基础·办公室日常,办公室交流,办公室交流,Thank you for your help.,谢谢你的帮助。,L1,日常口语表达。,
-基础·办公室日常,办公室交流,办公室交流,I'll finish it by Friday.,我会在周五前完成。,L1,日常口语表达。,
-基础·办公室日常,办公室交流,办公室交流,Let me know if you have questions.,有问题请告诉我。,L1,日常口语表达。,
-基础·办公室日常,办公室交流,办公室交流,Great job on the project!,项目做得很好！,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,What time is the meeting?,会议几点了？,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,The meeting is at 3 PM.,会议在下午3点。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Don't forget the appointment.,别忘了预约。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,I need to prepare a report.,我需要准备一份报告。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Can you help me with this?,你能帮我这个吗？,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,I'll be there on time.,我会准时到。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Please confirm your attendance.,请确认你是否出席。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,The deadline is next week.,截止日期是下周。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,I need to work overtime today.,我今天需要加班。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Let me grab a coffee first.,让我先喝杯咖啡。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,I'll print the documents.,我会打印文件。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Please sign here.,请在这里签名。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,I'll file the report.,我会归档报告。,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Can I take a day off?,我能请一天假吗？,L1,日常口语表达。,
-基础·办公室日常,日程与安排,日程与安排,Enjoy your lunch break!,午餐愉快！,L1,日常口语表达。,
+基础③·职业与叙事,他做什么工作,job,He is a firefighter. He helps people.,他是一名消防员。他帮助别人。,L1,职业+工作描述。,"[{""en"":""She is a police officer. She protects people."",""zh"":""她是一名警察。她保护人们。""}]"
+基础③·职业与叙事,他做什么工作,job,He drives a taxi. He works at night.,他开出租车。他晚上工作。,L1,驾驶类职业。,"[{""en"":""She drives a bus during the day."",""zh"":""她白天开公交车。""}]"
+基础③·职业与叙事,工作描述,job,My aunt works in a hospital. She takes care of patients.,我阿姨在医院工作。她照顾病人。,L1,工作地点+职责。,"[{""en"":""My uncle works in a restaurant. He cooks food."",""zh"":""我叔叔在餐厅工作。他做饭。""}]"
+基础③·职业与叙事,工作描述,job,His job is very interesting. He travels a lot.,他的工作很有趣。他经常出差。,L1,评价工作。,"[{""en"":""Her job is busy. She works late."",""zh"":""她的工作很忙。她工作到很晚。""}]"
+基础③·职业与叙事,工作描述,job,She works from home. She is a writer.,她在家工作。她是一名作家。,L1,工作方式+职业。,"[{""en"":""He works from a cafe. He is a freelancer."",""zh"":""他在咖啡馆工作。他是自由职业者。""}]"
+基础③·职业与叙事,工作描述,job,He wants to be a scientist when he grows up.,他长大后想当科学家。,L1,未来职业愿望。,"[{""en"":""She wants to be an astronaut."",""zh"":""她想当宇航员。""}]"
+基础③·职业与叙事,场景描述,Look,Look! The boy is running after his dog.,看！那个男孩在追他的狗。,L1,Look!引导场景描述。,"[{""en"":""Look! The girl is dancing."",""zh"":""看！那个女孩在跳舞。""}]"
+基础③·职业与叙事,场景描述,In the picture,In the picture a girl is reading under a tree.,画里，一个女孩在树下看书。,L1,图片描述。,"[{""en"":""In the picture a boy is playing with a ball."",""zh"":""画里，一个男孩在玩球。""}]"
+基础③·职业与叙事,简单故事,过去式,She opened the door and smiled at me.,她打开门，对我笑了笑。,L1,简单过去式动作。,"[{""en"":""He stood up and walked away."",""zh"":""他站起来走开了。""}]"
+基础③·职业与叙事,简单故事,Suddenly,Suddenly it started to rain. Everyone ran home.,突然，下雨了。大家都跑回家了。,L1,Suddenly引导。,"[{""en"":""Suddenly the phone rang. Everyone jumped."",""zh"":""突然电话响了。大家都跳了起来。""}]"
+基础③·职业与叙事,图片描述,There was,There was a big dog in the park. It was very friendly.,公园里有一只大狗。它很友好。,L1,There was描述存在。,"[{""en"":""There was a cat in the garden. It was cute."",""zh"":""花园里有一只猫。它很可爱。""}]"
+基础③·职业与叙事,图片描述,I saw,I saw a man on the street. He looked happy.,我在街上看到一个男人。他看起来很开心。,L1,I saw描述所见。,"[{""en"":""I saw a woman. She looked sad."",""zh"":""我看到一个女人。她看起来很伤心。""}]"
+基础③·职业与叙事,图片描述,He told me,He told me a funny story. I laughed so hard.,他给我讲了个搞笑的故事。我笑死了！,L1,told me+名词。,"[{""en"":""He told me a secret. I was surprised."",""zh"":""他告诉我一个秘密。我很惊讶。""}]"

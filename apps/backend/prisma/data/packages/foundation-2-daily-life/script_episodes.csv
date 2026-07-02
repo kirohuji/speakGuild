@@ -1,13 +1,13 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_dl_1,我有什么,1,我有什么,基础②·喜好与感受,L1,1,3,5,3,5,"[""掌握我有什么核心表达""]",2,3,2,Tutor,英语导师,true,practice_foundation-daily-life_我有什么_第1课,{""xp"":10}
-ch_dl_1,我有什么,2,我喜欢/我想要,基础②·喜好与感受,L1,1,3,5,3,5,"[""掌握我喜欢/我想要核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_我喜欢我想要_第2课,{""xp"":10}
-ch_dl_2,家务劳动,1,家务劳动,基础②·家务与居家,L1,1,3,5,3,5,"[""掌握家务劳动核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_家务劳动_第3课,{""xp"":10}
-ch_dl_2,家务劳动,2,居家休息,基础②·家务与居家,L1,1,3,5,3,5,"[""掌握居家休息核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_居家休息_第4课,{""xp"":10}
-ch_dl_3,我每天做什么,1,我每天做什么,基础②·日常习惯,L1,1,3,5,3,5,"[""掌握我每天做什么核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_我每天做什么_第5课,{""xp"":10}
-ch_dl_3,我每天做什么,2,我的日常动作,基础②·日常习惯,L1,1,3,5,3,5,"[""掌握我的日常动作核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_我的日常动作_第6课,{""xp"":10}
-ch_dl_4,购物消费,1,购物消费,基础②·购物与出行,L1,1,3,5,3,5,"[""掌握购物消费核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_购物消费_第7课,{""xp"":10}
-ch_dl_4,购物消费,2,天气与出行,基础②·购物与出行,L1,1,3,5,3,5,"[""掌握天气与出行核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_天气与出行_第8课,{""xp"":10}
-ch_dl_5,起床与洗漱,1,起床与洗漱,基础②·起床与洗漱,L1,1,3,5,3,5,"[""掌握起床与洗漱核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_起床与洗漱_第9课,{""xp"":10}
-ch_dl_5,起床与洗漱,2,起床,基础②·起床与洗漱,L1,1,3,5,3,5,"[""掌握起床核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_起床_第10课,{""xp"":10}
-ch_dl_6,在外就餐,1,在外就餐,基础②·餐饮与社交,L1,1,3,5,3,5,"[""掌握在外就餐核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_在外就餐_第11课,{""xp"":10}
-ch_dl_6,在外就餐,2,通讯与联络,基础②·餐饮与社交,L1,1,3,5,3,5,"[""掌握通讯与联络核心表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_通讯与联络_第12课,{""xp"":10}
+ch_dl_01,日常习惯,1,我每天做什么,基础②·日常习惯,L1,1,3,5,3,7,"[""用一般动词描述日常习惯"",""掌握eat/drink/go等动词""]",2,3,2,Tutor,英语导师,true,practice_foundation-daily-life_日常习惯_我每天做什么,"{""xp"":10}"
+ch_dl_01,日常习惯,2,我的日常动作,基础②·日常习惯,L1,1,3,5,3,6,"[""掌握study/play/listen等日常动作"",""学会don't否定句""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_日常习惯_我的日常动作,"{""xp"":10}"
+ch_dl_02,喜好与需求,1,我喜欢/我想要,基础②·喜好与需求,L1,1,3,5,3,7,"[""用like/want/need表达喜好需求"",""掌握would like礼貌表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_喜好需求_我喜欢我想要,"{""xp"":10}"
+ch_dl_02,喜好与需求,2,我有什么,基础②·喜好与需求,L1,1,3,5,3,7,"[""用have表达拥有"",""学会Do you have?疑问句""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_喜好需求_我有什么,"{""xp"":10}"
+ch_dl_03,日程安排,1,几点起床,基础②·日程安排,L1,1,3,5,3,6,"[""用at表达具体时间"",""学会get up/go to bed等短语""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_日程安排_几点起床,"{""xp"":10}"
+ch_dl_03,日程安排,2,去...做...,基础②·日程安排,L1,1,3,5,3,6,"[""掌握交通方式表达"",""学会go to/work by/come to""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_日程安排_去做什么,"{""xp"":10}"
+ch_dl_04,购物与出行,1,购物消费,基础②·购物与出行,L1,1,3,5,3,8,"[""掌握购物用语"",""学会How much?问价格""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_购物出行_购物消费,"{""xp"":10}"
+ch_dl_04,购物与出行,2,天气与出行,基础②·购物与出行,L1,1,3,5,3,6,"[""掌握天气描述"",""学会出行表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_购物出行_天气出行,"{""xp"":10}"
+ch_dl_05,餐饮与社交,1,在外就餐,基础②·餐饮与社交,L1,1,3,5,3,7,"[""掌握点餐用语"",""学会评价食物""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_餐饮社交_在外就餐,"{""xp"":10}"
+ch_dl_05,餐饮与社交,2,通讯与联络,基础②·餐饮与社交,L1,1,3,5,3,7,"[""掌握打电话发消息"",""学会约见面和道歉""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_餐饮社交_通讯联络,"{""xp"":10}"
+ch_dl_06,祈使句,1,日常指令,基础②·祈使句,L1,1,3,5,3,7,"[""掌握肯定祈使句"",""学会否定祈使句Don't""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_祈使句_日常指令,"{""xp"":10}"
+ch_dl_06,祈使句,2,提议与提醒,基础②·祈使句,L1,1,3,5,3,7,"[""掌握Let's提议"",""学会提醒和建议表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-daily-life_祈使句_提议提醒,"{""xp"":10}"

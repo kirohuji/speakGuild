@@ -31,7 +31,7 @@ export function BottomNav() {
   if (!visible || !isLoggedIn || !isMobile) return null
 
   return (
-    <nav className="fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl"
+    <nav className="mobile-bottom-nav fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl"
          style={{ bottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px))` }}>
       <div className="flex h-16 items-center justify-around px-1.5">
         {navItems.map(({ label, path, icon: Icon }) => {
@@ -43,6 +43,8 @@ export function BottomNav() {
               onClick={(event) => {
                 if (active) event.preventDefault()
               }}
+              onContextMenu={(event) => event.preventDefault()}
+              draggable={false}
               className={cn(
                 'relative flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 transition-colors',
                 active ? 'bg-background/54 text-foreground shadow-sm' : 'text-muted-foreground'

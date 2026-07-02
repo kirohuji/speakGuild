@@ -1,9 +1,56 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-"基础·问候与介绍",见面问候,"How ___ you?",你...怎么样？,are, have, were,How are you?,L1,0
-"基础·问候与介绍",见面问候,"Nice to ___ you!",很高兴...你！,meet, see,Nice to meet you!,L1,1
-"基础·问候与介绍",自我介绍,"I'm from ___.",我来自...,China, Beijing, a small town,I'm from China.,L1,2
-"基础·问候与介绍",自我介绍,"I like ___ and ___.",我喜欢...和...,traveling / reading, singing / dancing, sports / music,I like traveling and reading.,L1,3
-"基础·礼貌与请求",礼貌用语,"Thank you for ___.",谢谢你的...,your help, your time, your kindness,Thank you for your help.,L1,4
-"基础·礼貌与请求",礼貌用语,"Sorry to ___.",抱歉...,bother you, interrupt, be late,Sorry to bother you.,L1,5
-"基础·礼貌与请求",请求与帮助,"Can you ___?",你能...吗？,help me, open the door, come here,Can you help me?,L1,6
-"基础·礼貌与请求",请求与帮助,"Would you like ___?",你想要...吗？,some water, some tea, a break,Would you like some water?,L1,7
+基础⑥·过去的状态,我以前是/有,I was ___.,我是/曾是,a student / happy / at home / tired / sick / young,I was a student last year.,L1,0
+基础⑥·过去的状态,我以前是/有,He/She was ___.,他/她曾是,shy / tall / at work / late / kind / busy,He was very shy before.,L1,1
+基础⑥·过去的状态,我以前是/有,They were ___.,他们曾是,at home / happy / busy / tired / students / at school,They were at home yesterday.,L1,2
+基础⑥·过去的状态,我以前是/有,It was ___.,它是/那时是,a nice day / cold / fun / great / rainy / hot,It was a nice day yesterday.,L1,3
+基础⑥·过去的状态,我以前是/有,I had ___.,我过去有,a dog / a car / a bike / long hair / a dream / a cold,I had a dog when I was a child.,L1,4
+基础⑥·过去的状态,我以前是/有,She had ___.,她过去有,short hair / glasses / a meeting / long hair / an idea,She had long hair last year.,L1,5
+基础⑥·过去的状态,昨天在哪里,Were you ___? — Yes I was. / No I wasn't.,你过去是...吗？,at home / tired / busy / late / happy / at work,Were you at home last night? Yes I was.,L1,6
+基础⑥·过去的状态,昨天在哪里,Was he/she ___? — Yes he was. / No she wasn't.,他/她过去是...吗？,at the party / in class / on time / sick / late,Was she at the party? No she wasn't.,L1,7
+基础⑥·过去的状态,昨天的感受,How was ___? — It was ___.,...怎么样？,your weekend / great / the movie / boring / your day / good,How was your weekend? It was great!,L1,8
+基础⑥·过去的状态,过去的天气和日子,The ___ was ___.,...是...,movie / boring / food / delicious / party / fun / weather / nice,The movie was really boring.,L1,9
+基础⑥·过去的状态,昨天在哪里,Where were you ___? — I was ___.,你过去在哪？,yesterday / last night / at 8 pm / last weekend / at home,Where were you last night? I was at home.,L1,10
+基础⑥·过去的动作,昨天做了什么,I ___ at ___.,我(在几点)做了(什么),got up / 8 / went to bed / 11 / left / 7,I got up at 8 yesterday.,L1,11
+基础⑥·过去的动作,昨天做了什么,I went to ___.,我去了...,the supermarket / the park / a restaurant / work / school,I went to the supermarket.,L1,12
+基础⑥·过去的动作,昨天做了什么,I ate ___ for ___.,我吃了...作为...,noodles / lunch / rice / dinner / bread / breakfast,I ate noodles for lunch.,L1,13
+基础⑥·过去的动作,规则动词 -ed,I ___ed ___ last ___.,我上(段时间)做了...,watched / a movie / night / played / basketball / weekend / studied, watched a movie last night.,L1,14
+基础⑥·过去的动作,规则动词 -ed,I ___ed ___ with ___.,我和...一起做了...,played / basketball / my friends / cooked / dinner / my family,I played basketball with my friends.,L1,15
+基础⑥·过去的动作,不规则动词,I saw ___ at ___.,我在...看到...,a friend / the mall / my teacher / school / him / the party,I saw a friend at the mall.,L1~L2,16
+基础⑥·过去的动作,不规则动词,She said ___.,她说了...,hello / goodbye / thank you / sorry / nothing / yes,She said hello to me.,L1~L2,17
+基础⑥·过去的动作,不规则动词,He made ___.,他做了...,a cake / dinner / a mistake / a phone call / a plan,He made a big cake for the party.,L1~L2,18
+基础⑥·过去的动作,不规则动词,I did ___.,我做了...,my homework / the dishes / exercise / my best / nothing,I did my homework after school.,L1~L2,19
+基础⑥·过去的动作,不规则动词,We had ___.,我们度过了...,a great time / a meeting / lunch / fun / a party,We had a great time at the beach.,L1~L2,20
+基础⑥·过去的动作,不规则动词,She took ___.,她拿了/拍了...,a lot of photos / a taxi / a break / the bus / a shower,She took a lot of photos.,L1~L2,21
+基础⑥·讲述经历,上个周末/去年,Last weekend I ___.,上个周末我...,visited my grandparents / stayed home / went shopping / cleaned my room,Last weekend I visited my grandparents.,L1~L2,22
+基础⑥·讲述经历,上个周末/去年,Last year I ___.,去年我...,traveled to Japan / started a new job / moved to Beijing / learned to drive,Last year I traveled to Japan.,L1~L2,23
+基础⑥·讲述经历,ago 表达,I ___ ___ ago.,我...前...,lived in Shanghai / two years / started this job / three months / graduated / one year,I lived in Shanghai two years ago.,L1~L2,24
+基础⑥·讲述经历,某年某事,We moved to ___ in ___.,我们在某年搬到了...,Beijing / 2015 / this apartment / last month / this city / 2020,We moved to this city in 2018.,L1~L2,25
+基础⑥·讲述经历,某年某事,She started ___ when she was ___.,她...岁时开始...,learning English / 10 / playing piano / 6 / working here / 2020,She started learning English when she was 10.,L1~L2,26
+基础⑥·讲述经历,某年某事,I met ___ in/at ___.,我在...认识了...,my best friend / college / my wife / work / him / a party,I met my best friend in college.,L1~L2,27
+基础⑥·讲述经历,否定句 didn't,I didn't ___.,我没有...,go to school / eat breakfast / sleep well / watch TV / call her,I didn't go to school yesterday.,L1,28
+基础⑥·讲述经历,否定句 didn't,She didn't ___.,她没有...,like the movie / come to class / call me / eat anything / say anything,She didn't like the movie.,L1,29
+基础⑥·讲述经历,疑问句 Did,Did you ___? — Yes I did. / No I didn't.,你...了吗？,have a good weekend / eat lunch / finish work / call her / sleep well,Did you have a good weekend? Yes I did!,L1~L2,30
+基础⑥·讲述经历,疑问句 Did,Did she ___? — Yes she did. / No she didn't.,她...了吗？,call you / come to class / bring the book / tell you the news / arrive on time,Did she call you yesterday? No she didn't.,L1~L2,31
+基础⑥·讲述经历,疑问句 Did,When did you ___? — I ___ at ___.,你什么时候...了？,arrive / arrived / 3 / leave / left / 5 / start / started / 9,When did you arrive? I arrived at 3 pm.,L1~L2,32
+基础⑥·讲述经历,疑问句 Did,Where did you ___? — I ___ to ___.,你去哪...了？,go / went / a concert / eat / ate / a restaurant / buy that / bought it / online,Where did you go last night? I went to a concert.,L1~L2,33
+基础⑥·讲述经历,疑问句 Did,What did you ___? — I ___.,你...了什么？,do yesterday / stayed home / eat for breakfast / had toast / watch on TV / watched a show,What did you do yesterday? I stayed home.,L1~L2,34
+基础⑥·完成时入门,去过/做过,I have been to ___.,我去过...,Beijing / Japan / the US / Hong Kong / three countries / abroad,I have been to Beijing.,L1~L2,35
+基础⑥·完成时入门,去过/做过,Have you ever been to ___? — Yes I have. / No I haven't.,你去过...吗？,Shanghai / Paris / a concert / this restaurant / abroad / the US,Have you ever been to Shanghai? Yes I have.,L1~L2,36
+基础⑥·完成时入门,去过/做过,I have never ___.,我从未...,been abroad / driven a car / seen snow / eaten Indian food / ridden a horse,I have never tried hot pot.,L1~L2,37
+基础⑥·完成时入门,去过/做过,Have you ___? — Yes I have. / Not yet.,你...了吗？,finished your homework / eaten / called her / seen this / decided / started,Have you finished your homework? Yes I have.,L1~L2,38
+基础⑥·完成时入门,刚刚/还没,She has already ___.,她已经...,left / finished / eaten / called / gone home / paid the bill,She has already left the office.,L1~L2,39
+基础⑥·完成时入门,刚刚/还没,I have just ___.,我刚刚...,arrived / finished / eaten / heard the news / talked to him / seen her,I have just arrived at the station.,L1~L2,40
+基础⑥·完成时入门,刚刚/还没,I haven't ___ yet.,我还没...,eaten lunch / decided / finished / told him / started / gotten a reply,I haven't eaten lunch yet.,L1~L2,41
+基础⑥·完成时入门,持续多久,I have ___ for ___.,我...了(时间段),lived here / five years / worked here / three years / known her / a long time / waited / an hour,I have lived here for five years.,L1~L2,42
+基础⑥·完成时入门,持续多久,He/She has ___ since ___.,他/她从(时间点)起就一直...,worked here / 2020 / been a teacher / 2018 / played piano / he was 6 / lived alone / last year,She has worked here since 2020.,L1~L2,43
+基础⑥·过去与现在对比,过去vs现在习惯,I used to ___ but now I don't.,我以前...但现在不了。,play the piano / live in a small town / stay up late / drink coffee, used to play the piano but now I don't.,L1~L2,44
+基础⑥·过去与现在对比,过去vs现在习惯,She used to ___ but now she ___.,她以前...但现在...,have long hair / has short hair / wear glasses / wears contacts / be shy / is outgoing,She used to have long hair but now she has short hair.,L1~L2,45
+基础⑥·过去与现在对比,过去vs现在习惯,I didn't use to ___ but now I ___.,我过去不...但现在...,like vegetables / love them / get up early / do / drink coffee / drink tea,I didn't use to like vegetables but now I love them.,L1~L2,46
+基础⑥·过去与现在对比,过去vs现在习惯,Did you use to ___? — Yes I did. / No I didn't.,你过去...吗？,live here / play soccer / study at this school / have a pet / be shy,Did you use to live here? Yes I did.,L1~L2,47
+基础⑥·过去与现在对比,回忆过去,I remember when I was a child I ___ every day.,我记得小时候每天...,played outside / went fishing / rode my bike / watched cartoons,I remember when I was a child I played outside every day.,L1~L2,48
+基础⑥·过去与现在对比,今昔对比,When I was ___ I ___ Now I ___.,当我...时我...现在我...,young / stayed up late / go to bed early / a kid / was afraid of the dark / am not,When I was young I stayed up late. Now I go to bed early.,L1~L2,49
+基础⑥·过去与现在对比,今昔对比,I always ___ when I was a ___.,我小时候总...,watched TV / kid / played outside / child / studied hard / student,I always watched TV after school when I was a kid.,L1~L2,50
+基础⑥·过去与现在对比,今昔对比,Life was ___ before. Now ___.,以前生活...现在...,simpler / everything is so fast / cheaper / prices are higher / quieter / it's noisy,Life was simpler before. Now everything is so fast.,L1~L2,51
+基础⑥·过去与现在对比,used to表达,There used to be ___ but now it's ___.,这里过去有...但现在它是...,a park / a shopping mall / a cinema / a supermarket / a school / an apartment,There used to be a park here but now it's a shopping mall.,L1~L2,52
+基础⑥·过去与现在对比,used to表达,I used to think ___ but now I know ___.,我以前认为...但现在我知道...,this was difficult / it's easy / he was unfriendly / he's nice,I used to think this was difficult but now I know it's easy.,L1~L2,53
+基础⑥·过去与现在对比,生活变化,Things have changed so much in the past ___.,过去...变化很大。,ten years / five years / few months / decade / century,Things have changed so much in the past ten years.,L1~L2,54

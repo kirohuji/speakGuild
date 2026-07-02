@@ -1,9 +1,62 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-"基础·问路与交通",问路指路,"Where is the ___?",...在哪里？,station, museum, toilet, bank,Where is the station?,L1,0
-"基础·问路与交通",问路指路,"How do I get to ___?",我怎么去...？,the museum, the station, the airport,How do I get to the museum?,L1,1
-"基础·问路与交通",乘坐交通,"How much is ___?",...多少钱？,the fare, a ticket, this,How much is the fare?,L1,2
-"基础·问路与交通",乘坐交通,"How long does ___ take?",...需要多长时间？,it, the trip, the journey,How long does it take?,L1,3
-"基础·餐厅与购物",餐厅点餐,"I'd like to ___.",我想要...,order, pay, have the steak,I'd like to order.,L1,4
-"基础·餐厅与购物",餐厅点餐,"Could I have ___?",能给我...吗？,the menu, the check, a glass of water,Could I have the menu?,L1,5
-"基础·餐厅与购物",购物逛街,"How much is ___?",...多少钱？,this, that, it,How much is this?,L1,6
-"基础·餐厅与购物",购物逛街,"Do you have this in ___?",这个有...吗？,a smaller size, other colors, a larger size,Do you have this in a smaller size?,L1,7
+基础⑦·计划与预测,我打算…,I'm going to ___.,我打算...,travel / study abroad / buy a car / move / get married,I'm going to travel next month.,L1~L2,0
+基础⑦·计划与预测,我打算…,What are you going to ___?,你打算...什么？,do this weekend / eat / wear / buy / study,What are you going to do this weekend?,L1~L2,1
+基础⑦·计划与预测,我打算…,Are you going to ___? — Yes I am.,你打算...吗？,come / stay / join us / eat here / leave soon,Are you going to join us? Yes I am.,L1~L2,2
+基础⑦·计划与预测,我打算…,I'll ___.,我会...,call you later / be right back / see you there / do it now,I'll call you later.,L1~L2,3
+基础⑦·计划与预测,我打算…,I will ___.,我将会...,study harder / try my best / never give up / always remember you,I will study harder this year.,L1~L2,4
+基础⑦·计划与预测,我打算…,She's going to ___.,她快要...,have a baby / start a new job / graduate / take a test,She's going to have a baby.,L1~L2,5
+基础⑦·计划与预测,将会怎样,It will ___ tomorrow.,明天会...,rain / snow / be hot / be sunny / get dark soon,It will rain tomorrow.,L1~L2,6
+基础⑦·计划与预测,将会怎样,It's going to ___. Look at ___.,快要...了！看...,rain / those clouds / snow / the sky / be fun / the weather,It's going to rain. Look at those clouds!,L1~L2,7
+基础⑦·计划与预测,将会怎样,I will be ___.,我将会是...,25 next month / there / ready / on time / a doctor someday,I will be 25 next month.,L1~L2,8
+基础⑦·计划与预测,将会怎样,Everything will be ___.,一切都会...,okay / fine / great / better / ready soon,Everything will be okay.,L1~L2,9
+基础⑦·计划与预测,将会怎样,The ___ will start at ___.,...会在...开始,meeting / 3 pm / class / 9 am / movie / 7 pm / party / 8,The meeting will start at 3 pm.,L1~L2,10
+基础⑦·计划与预测,将会怎样,___ will probably ___.,...可能会...,He / be late / She / come / He / call / They / forget / He / say no,He will probably be late.,L1~L2,11
+基础⑦·计划与预测,将会怎样,There will be ___.,会有...,a lot of people / a test tomorrow / free food / a big party,There will be a lot of people at the concert.,L1~L2,12
+基础⑦·能力与请求,我能/会…,I can ___.,我能...,swim / speak English / drive / cook / play guitar / run fast,I can swim.,L1~L2,13
+基础⑦·能力与请求,我能/会…,I can't ___.,我不能/会...,speak French / sing / dance / run fast / understand this / find my keys,I can't speak French.,L1~L2,14
+基础⑦·能力与请求,我能/会…,She can ___ very ___.,她...非常...,sing / well / draw / beautifully / cook / deliciously / run / fast,She can sing very well.,L1~L2,15
+基础⑦·能力与请求,请求帮助,Can you ___? — Sure.,你能...吗？,help me / open the door / pass the salt / wait a moment / take a photo,Can you help me? Sure.,L1~L2,16
+基础⑦·能力与请求,请求许可,Can I ___? — Yes of course.,我能...吗？,use your phone / sit here / come in / borrow this / ask a question,Can I use your phone? Yes of course.,L1~L2,17
+基础⑦·能力与请求,请求许可,Can I have ___? — Here you go.,我能要...吗？,a glass of water / the menu / more time / a tissue / your name,Can I have a glass of water?,L1~L2,18
+基础⑦·能力与请求,Can/Could 礼貌程度,You can ___.,你可以...,do it / make it / pass the test / win / park over there / sit here,You can do it! I believe in you.,L1~L2,19
+基础⑦·能力与请求,Can/Could 礼貌程度,Could you tell me how to get to ___?,您能告诉我去...怎么走吗？,the museum / the airport / the train station / the city center / this address,Could you tell me how to get to the museum?,L1~L2,20
+基础⑦·能力与请求,Can/Could 礼貌程度,Could I have ___ please?,请给我...好吗？,the bill / a glass of water / the menu / a receipt / more time,Could I have the bill please?,L1~L2,21
+基础⑦·能力与请求,Can/Could 礼貌程度,Could you ___?,您能...吗？,speak more slowly / speak louder / repeat that / wait a moment / spell your name,Could you speak more slowly please?,L1~L2,22
+基础⑦·能力与请求,Can/Could 礼貌程度,Can I try ___ on?,我能试穿...吗？,this jacket / these shoes / that dress / this hat / the scarf,Can I try this on?,L1~L2,23
+基础⑦·建议与义务,你应该/必须,You should ___.,你应该...,see a doctor / take a break / study more / call her / try it,You should see a doctor.,L1~L2,24
+基础⑦·建议与义务,你应该/必须,You shouldn't ___.,你不该...,eat junk food / stay up late / worry / spend all your money / be rude,You shouldn't eat so much junk food.,L1~L2,25
+基础⑦·建议与义务,你应该/必须,You must ___.,你必须...,wear a seatbelt / stop here / show your ID / follow the rules / be quiet,You must wear a seatbelt.,L1~L2,26
+基础⑦·建议与义务,禁止与不必,You mustn't ___.,你不能/禁止...,park here / smoke here / be late / touch that / feed the animals,You mustn't park here.,L1~L2,27
+基础⑦·建议与义务,你应该/必须,We must be ___.,我们必须...,there by 8 / on time / quiet / careful / ready by 6,We must be there by 8 o'clock.,L1~L2,28
+基础⑦·建议与义务,客观义务 have to,I have to ___.,我必须...,work tomorrow / go now / finish this / wake up early / pick up my kids,I have to work tomorrow.,L1~L2,29
+基础⑦·建议与义务,客观义务 have to,She has to ___.,她必须...,take medicine / wear glasses / work late / study / see a doctor,She has to take medicine every day.,L1~L2,30
+基础⑦·建议与义务,禁止与不必,I don't have to ___.,我不必...,work on Sundays / cook tonight / pay / go / worry about it,I don't have to work on Sundays.,L1~L2,31
+基础⑦·建议与义务,客观义务 have to,Do I have to ___? — Yes you do.,我必须...吗？,bring my passport / sign this / stay / wear a suit / pay now,Do I have to bring my passport? Yes you do.,L1~L2,32
+基础⑦·建议与义务,建议疑问句,You should try ___.,你应该试试...,this dish / the coffee / this app / yoga / studying abroad,You should try this dish.,L1~L2,33
+基础⑦·建议与义务,建议疑问句,What should I ___?,我该...什么？,do / say / bring / wear / buy / order / prepare,What should I do?,L1~L2,34
+基础⑦·建议与义务,建议疑问句,I should ___.,我该...,go now / get going / head out / be on my way / get back to work,I should go now.,L1~L2,35
+基础⑦·情态综合,可能 may/might,It may ___ later.,晚点可能会...,rain / snow / be cold / get crowded / take a while,It may rain later. Take an umbrella.,L1~L2,36
+基础⑦·情态综合,可能 may/might,She might ___.,她可能会...,come to the party / call later / be late / change her mind / not know,She might come to the party. I'm not sure.,L1~L2,37
+基础⑦·情态综合,可能 may/might,May I ___? — Yes please.,我可以...吗？,come in / sit here / use the restroom / ask something / leave early,May I come in? Yes please.,L1~L2,38
+基础⑦·情态综合,邀请与提议,Would you like ___? — Yes please. / No thank you.,你要...吗？,some coffee / some tea / a cookie / more water / something to eat,Would you like some coffee? Yes please.,L1~L2,39
+基础⑦·情态综合,邀请与提议,Would you like to ___? — I'd love to!,你愿意...吗？,join us / watch a movie / go for a walk / try this dish / dance,Would you like to join us for dinner? I'd love to!,L1~L2,40
+基础⑦·情态综合,邀请与提议,What would you like to ___?,你想...什么？,drink / eat / order / do / watch / start with / talk about,What would you like to drink?,L1~L2,41
+基础⑦·情态综合,邀请与提议,Will you ___? — Sure no problem.,你能...吗？,help me / come to my party / be my friend / call me later / wait for me,Will you help me with this? Sure no problem.,L1~L2,42
+基础⑦·情态综合,主动提供 Shall I/Let me,Shall I ___? — Yes please.,要我...吗？,open the window / help you / call a taxi / get you some water / turn on the light,Shall I open the window? Yes please.,L1~L2,43
+基础⑦·情态综合,主动提供 Shall I/Let me,Let me ___.,让我...,help you / carry that / open the door / show you around / check for you,Let me help you with that.,L1~L2,44
+基础⑦·情态综合,委婉提议 How about,How about ___? — Sounds great!,...怎么样？,going out / ordering pizza / watching a movie / taking a break / trying something new,How about going out for a walk? Sounds great!,L1~L2,45
+基础⑦·情态综合,委婉提议 How about,Why don't we ___? — Good idea!,我们为什么不...？,try that new restaurant / go together / ask for help / start early / take a different approach,Why don't we try that new restaurant? Good idea!,L1~L2,46
+基础⑦·情态综合,礼貌接受与拒绝,That sounds ___! — Thank you for ___.,听起来...！,great / wonderful / amazing / perfect / fun / inviting me / your invitation,That sounds great! Thank you for inviting me.,L1~L2,47
+基础⑦·情态综合,礼貌接受与拒绝,I'd love to ___.,我很乐意...,join you / come along / help out / give a hand / try it,I'd love to join you.,L1~L2,48
+基础⑦·情态综合,礼貌接受与拒绝,Thanks but ___.,谢谢但...,I'm full / I can't / I'm busy / I have to go / maybe next time,Thanks but I'm full.,L1~L2,49
+基础⑦·情态综合,可能 may/might,Do you think I should ___?,你觉得我该...吗？,go to the doctor / tell her / wait / apply for it / take the job / say sorry / buy it,Do you think I should go to the doctor?,L1~L2,50
+基础⑦·祝愿与承诺,祝福用语,Good luck on ___!,祝...好运！,your test / your exam / your interview / your presentation / the big day,Good luck on your test! You'll do great.,L1~L2,51
+基础⑦·祝愿与承诺,祝福用语,Have a great ___!,...愉快！,trip / vacation / weekend / day / time / holiday,Have a great trip!,L1~L2,52
+基础⑦·祝愿与承诺,祝福用语,Happy ___!,...快乐！,birthday / New Year / anniversary / holidays / Valentine's Day,Happy birthday! I hope you have a wonderful day!,L1~L2,53
+基础⑦·祝愿与承诺,祝福用语,Congratulations on ___!,恭喜...！,your new job / your promotion / your graduation / your success,Congratulations on your new job!,L1~L2,54
+基础⑦·祝愿与承诺,鼓励与支持,I believe in you. You can ___!,我相信你。你能...！,make it / pass the test / win / succeed / be anything you want,I believe in you. You can do it!,L1~L2,55
+基础⑦·祝愿与承诺,鼓励与支持,Keep ___! Don't give up!,继续...！别放弃！,going / trying / studying / practicing / working hard,Keep going! Don't give up!,L1~L2,56
+基础⑦·祝愿与承诺,承诺与保证,I promise I'll ___.,我保证我会...,be there / call you / finish it / tell you / help you / never lie to you,I promise I'll be there on time.,L1~L2,57
+基础⑦·祝愿与承诺,承诺与保证,I swear I won't ___.,我发誓不会...,tell anyone / forget / break my promise / let you down / be late again,I swear I won't tell anyone.,L1~L2,58
+基础⑦·祝愿与承诺,提供帮助,I'd be happy to ___.,我很乐意...,help / give you a hand / show you around / pick you up / take a look,I'd be happy to help you with your project.,L1~L2,59
+基础⑦·祝愿与承诺,提供帮助,I'm willing to ___.,我愿意...,try / learn / help / work hard / compromise / give it a shot,I'm willing to try new things.,L1~L2,60

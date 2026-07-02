@@ -1,7 +1,108 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础③·描述家人,他/她是谁,Practice describing family with He/She is and He/She has.,练习用He/She is和He/She has描述家人。,35,L1,掌握第三人称be动词和have→has的用法。,第三人称 be has 家人 关系,practice_foundation-daily-work_描述家人_他她是谁
-基础③·描述家人,他/她喜欢什么,Practice expressing likes and dislikes in third person.,练习第三人称表达喜好：likes/doesn't like。,35,L1,掌握like→likes否定和疑问形式。,第三人称 likes doesn't like 疑问,practice_foundation-daily-work_描述家人_他她喜欢什么
-基础③·他/她的日常,他每天做什么,Practice daily actions in third person with verb+s/es/ies.,练习第三人称日常动词变化+s/es/ies。,35,L1,掌握一般动词的第三人称单数变化规则。,第三人称 动词变化 s es ies 日常,practice_foundation-daily-work_他的日常_他每天做什么
-基础③·他/她的日常,他/她做什么工作,Practice describing jobs and workplaces in third person.,练习第三人称描述工作和地点。,35,L1,掌握第三人称工作相关动词：works/teaches/drives。,第三人称 工作 职业 动词变化,practice_foundation-daily-work_他的日常_她做什么工作
-基础③·对比你我他,我和你 vs 他/她,Practice contrasting I vs He/She in present simple.,练习对比第一人称和第三人称的动词变化。,40,L1,掌握I vs He/She的对比表达和don't vs doesn't。,对比 第一人称 第三人称 doesn't,practice_foundation-daily-work_对比你我他_我和你vs他她
-基础③·对比你我他,他们的生活,Practice describing groups and using possessive forms.,练习描述群体和使用所有格形式。,35,L1,掌握复数主语、their和's所有格用法。,复数 their 所有格 群体 描述,practice_foundation-daily-work_对比你我他_他们的生活
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础③·描述家人,他是谁,Practice describing family with He/She is and He/She has.,练习用He/She is和He/She has描述家人。,35,L1,掌握第三人称be动词和have→has的用法。,第三人称 be has 家人,"## 核心句型
+- He is my father. She is my mother.
+- He is a doctor. She is a teacher.
+- He is very tall. She is very kind.
+- His name is Tom. Her name is Anna.
+注意：has是have的第三人称单数形式。",practice_foundation-daily-work_描述家人_他是谁
+基础③·描述家人,他有什么,Practice talking about possession in third person with has.,练习第三人称表达拥有：has/doesn't have。,35,L1,掌握has和doesn't have表达拥有和没有。,has doesn't have 拥有,"## 拥有表达
+- He has a car. She has a cat.
+- He has two brothers.
+- He doesn't have a phone.
+doesn't have = does not have。",practice_foundation-daily-work_描述家人_他有什么
+基础③·描述家人,她喜欢什么,Practice expressing likes and dislikes in third person.,练习第三人称表达喜好：likes/doesn't like/Does...?。,35,L1,掌握like→likes否定和疑问形式。,第三人称 likes doesn't like 疑问,"## 喜好表达
+- She likes music. He likes sports.
+- He likes to read books.
+- She doesn't like cold weather.
+- Does he like sports? Yes he does.
+- What does she like? She likes music.
+第三人称like加s。",practice_foundation-daily-work_描述家人_她喜欢什么
+基础③·描述家人,家人职业,Practice describing family members jobs and workplaces.,练习描述家人的职业和工作地点。,35,L1,掌握职业名称和工作地点表达。,职业 工作 医院 学校,"## 家人职业
+- My mother is a nurse. She works in a hospital.
+- He is a firefighter. He helps people.
+职业前要加a/an：He is a doctor。",practice_foundation-daily-work_描述家人_家人职业
+基础③·描述家人,家人习惯,Practice describing family habits with frequency adverbs.,练习用频率副词描述家人习惯。,35,L1,掌握always/usually等频率副词与第三人称搭配。,频率 习惯 always,"## 家人习惯
+- My dad always gets up early.
+- She always drinks tea in the morning.
+频率副词在动词前。",practice_foundation-daily-work_描述家人_家人习惯
+基础③·他/她的日常,他每天做什么,Practice daily actions in third person with verb+s/es/ies.,练习第三人称日常动词变化+s/es/ies。,35,L1,掌握一般动词的第三人称单数变化规则。,第三人称 动词变化 s es ies,"## 动词变化
+- He gets up at 7 every morning.
+- She goes to school by bus.
+- He eats lunch at school.
+- She drinks water after exercise.
+- He doesn't eat junk food.
+规则：一般+s，go→goes(es)，study→studies(ies)。",practice_foundation-daily-work_他的日常_他每天做什么
+基础③·他/她的日常,她几点起床,Practice talking about someone's daily schedule.,练习描述他人的作息时间。,35,L1,掌握第三人称时间表达：gets up/comes home/goes to bed。,作息 时间 起床 睡觉,"## 作息时间
+- She gets up at 6 every day.
+- He comes home at 6 pm.
+- She goes to bed at 10 pm.
+第三人称动词要用变化形式。",practice_foundation-daily-work_他的日常_她几点起床
+基础③·他/她的日常,工作与学习,Practice describing jobs and study in third person.,练习第三人称描述工作和学习。,35,L1,掌握works/studies/teaches等第三人称动词。,工作 学习 第三人称,"## 工作与学习
+- He works in a hospital.
+- She studies English at university.
+- He teaches music at a school.
+- She watches TV after dinner.
+- He does his homework in the evening.
+works/studies/teaches都是第三人称变化。",practice_foundation-daily-work_他的日常_工作学习
+基础③·他/她的日常,疑问与回答,Practice asking questions in third person with Does and Where.,练习第三人称疑问句：Does...? / Where does...?。,35,L1,掌握Does和Where does疑问句及简短回答。,Does 疑问 回答,"## 疑问句
+- Does he work on weekends? No he doesn't.
+- Where does she study? She studies at a university.
+Does+动词原形。回答用does/doesn't。",practice_foundation-daily-work_他的日常_疑问回答
+基础③·他/她的日常,周末活动,Practice describing weekend activities in third person.,练习描述他/她的周末活动。,35,L1,掌握第三人称周末活动表达。,周末 活动 第三人称,"## 周末活动
+- He plays football on weekends.
+- She visits her grandparents on Sundays.
+- He relaxes at home.
+注意play→plays visit→visits relax→relaxes。",practice_foundation-daily-work_他的日常_周末活动
+基础③·对比你我他,我和你vs他/她,Practice contrasting I vs He/She in present simple.,练习对比第一人称和第三人称的动词变化。,40,L1,掌握I vs He/She的对比表达和don't vs doesn't。,对比 第一人称 第三人称 doesn't,"## 核心对比
+- I like music and she likes music too.
+- I like coffee but she doesn't like coffee.
+- I don't have a pet but she has a cat.
+- I have a brother and he has a sister.
+- I get up at 6 but he gets up at 8.
+I用动词原形，he/she用动词+s。",practice_foundation-daily-work_对比你我他_我和你vs他她
+基础③·对比你我他,肯定与否定,Practice affirmative vs negative in first and third person.,练习第一和第三人称的肯定句与否定句对比。,35,L1,掌握don't vs doesn't的对比。,肯定 否定 don't doesn't,"## 肯定vs否定
+- I like coffee but she doesn't like coffee.
+- I eat breakfast but he eats lunch only.
+- I have a bike but she doesn't have a bike.
+I用don't，he/she用doesn't。",practice_foundation-daily-work_对比你我他_肯定否定
+基础③·对比你我他,have vs has,Practice have for I vs has for he/she.,练习I用have和he/she用has的对比。,35,L1,掌握have和has在不同人称中的使用。,have has 拥有 对比,"## have vs has
+- I have a brother and he has a sister.
+- I don't have a pet but she has a cat.
+- I have a bike but she doesn't have a bike.
+I用have，he/she用has。",practice_foundation-daily-work_对比你我他_havevshas
+基础③·对比你我他,时间习惯对比,Practice time habit comparison between I and he/she.,练习我与他/她的时间习惯对比。,35,L1,掌握时间表达在不同人称中的使用。,时间 习惯 对比,"## 时间习惯对比
+- I get up at 6 but he gets up at 8.
+- My name is Tom. His name is Jack.
+注意物主代词的变化：my→his/her。",practice_foundation-daily-work_对比你我他_时间习惯
+基础③·对比你我他,他们的生活,Practice describing groups and using possessive forms.,练习描述群体和使用所有格形式。,35,L1,掌握复数主语、their和's所有格用法。,复数 their 所有格 群体,"## 他们的生活
+- They live in Beijing.
+- My parents work very hard.
+- The children play in the park.
+- People here speak Chinese.
+- Their house is very big.
+- Tom's mother is a nurse.
+- Everyone likes him.
+复数主语动词不加s。",practice_foundation-daily-work_对比你我他_他们的生活
+基础③·职业与叙事,他做什么工作,Practice describing jobs in third person.,练习第三人称描述职业和工作内容。,35,L1,掌握职业描述和工作动词表达。,职业 描述 工作,"## 职业描述
+- He is a firefighter. He helps people.
+- He drives a taxi. He works at night.
+- He wants to be a scientist.
+用He/She is a + 职业描述。",practice_foundation-daily-work_职业叙事_职业描述
+基础③·职业与叙事,工作描述,Practice describing workplaces and job characteristics.,练习描述工作地点和工作特点。,35,L1,掌握工作地点和评价工作的表达。,工作 地点 评价,"## 工作描述
+- My aunt works in a hospital. She takes care of patients.
+- His job is very interesting. He travels a lot.
+- She works from home. She is a writer.
+用works in/at描述工作地点。",practice_foundation-daily-work_职业叙事_工作描述
+基础③·职业与叙事,场景描述,Practice describing scenes with Look and In the picture.,练习用Look和In the picture描述场景。,35,L1,掌握场景描述的基本句型。,场景 描述 Look picture,"## 场景描述
+- Look! The boy is running after his dog.
+- In the picture a girl is reading under a tree.
+Look! + be + doing描述正在发生的动作。",practice_foundation-daily-work_职业叙事_场景描述
+基础③·职业与叙事,简单故事,Practice telling simple stories with past tense and connecting words.,练习用过去式和连接词讲简单故事。,40,L1,掌握简单叙事的基本表达。,故事 过去式 连接,"## 简单故事
+- She opened the door and smiled at me.
+- Suddenly it started to rain. Everyone ran home.
+用过去式描述发生过的事。",practice_foundation-daily-work_职业叙事_简单故事
+基础③·职业与叙事,图片描述,Practice describing pictures with There was and I saw.,练习用There was和I saw描述图片。,35,L1,掌握图片描述的基本句型。,图片 描述 There was I saw,"## 图片描述
+- There was a big dog in the park. It was very friendly.
+- I saw a man on the street. He looked happy.
+- He told me a funny story. I laughed so hard!
+There was + 名词 + in + 地点。",practice_foundation-daily-work_职业叙事_图片描述

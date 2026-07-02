@@ -1,61 +1,39 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_opinion_basics_0,1,I like this very much.,0
-found_foundation_opinion_basics_0,1,I love playing basketball.,1
-found_foundation_opinion_basics_0,1,I enjoy reading books.,2
-found_foundation_opinion_basics_0,1,I'm interested in music.,3
-found_foundation_opinion_basics_0,1,I don't like coffee.,4
-found_foundation_opinion_basics_0,1,I hate being late.,5
-found_foundation_opinion_basics_0,1,I prefer tea over coffee.,6
-found_foundation_opinion_basics_0,1,My favorite food is pizza.,7
-found_foundation_opinion_basics_0,1,I'm crazy about dogs.,8
-found_foundation_opinion_basics_0,1,I can't stand the noise.,9
-found_foundation_opinion_basics_0,1,It's okay, I guess.,10
-found_foundation_opinion_basics_0,1,I don't mind waiting.,11
-found_foundation_opinion_basics_0,1,I feel happy when I sing.,12
-found_foundation_opinion_basics_0,1,This is amazing!,13
-found_foundation_opinion_basics_0,1,That's terrible!,14
-found_foundation_opinion_basics_0,2,I feel great today!,0
-found_foundation_opinion_basics_0,2,I'm so happy!,1
-found_foundation_opinion_basics_0,2,I'm tired after work.,2
-found_foundation_opinion_basics_0,2,I feel bored.,3
-found_foundation_opinion_basics_0,2,I'm excited about the trip!,4
-found_foundation_opinion_basics_0,2,I'm worried about the exam.,5
-found_foundation_opinion_basics_0,2,That makes me sad.,6
-found_foundation_opinion_basics_0,2,I'm surprised to see you!,7
-found_foundation_opinion_basics_0,2,I feel nervous.,8
-found_foundation_opinion_basics_0,2,I'm really angry!,9
-found_foundation_opinion_basics_0,2,Take it easy.,10
-found_foundation_opinion_basics_0,2,Don't worry, be happy!,11
-found_foundation_opinion_basics_0,2,I feel much better now.,12
-found_foundation_opinion_basics_0,2,That's wonderful news!,13
-found_foundation_opinion_basics_0,2,I'm proud of you!,14
-found_foundation_opinion_basics_1,1,I think so too.,0
-found_foundation_opinion_basics_1,1,I agree with you.,1
-found_foundation_opinion_basics_1,1,That's a good idea!,2
-found_foundation_opinion_basics_1,1,You're right.,3
-found_foundation_opinion_basics_1,1,I don't think so.,4
-found_foundation_opinion_basics_1,1,I'm not sure about that.,5
-found_foundation_opinion_basics_1,1,That's true.,6
-found_foundation_opinion_basics_1,1,I disagree.,7
-found_foundation_opinion_basics_1,1,In my opinion...,8
-found_foundation_opinion_basics_1,1,From my point of view...,9
-found_foundation_opinion_basics_1,1,I believe that's correct.,10
-found_foundation_opinion_basics_1,1,That makes sense.,11
-found_foundation_opinion_basics_1,1,I see what you mean.,12
-found_foundation_opinion_basics_1,1,Not exactly.,13
-found_foundation_opinion_basics_1,1,Let's agree to disagree.,14
-found_foundation_opinion_basics_1,2,Let's go to the park.,0
-found_foundation_opinion_basics_1,2,How about having coffee?,1
-found_foundation_opinion_basics_1,2,What do you think?,2
-found_foundation_opinion_basics_1,2,Why don't we go together?,3
-found_foundation_opinion_basics_1,2,Do you want to join us?,4
-found_foundation_opinion_basics_1,2,That sounds great!,5
-found_foundation_opinion_basics_1,2,I'd love to!,6
-found_foundation_opinion_basics_1,2,Maybe next time.,7
-found_foundation_opinion_basics_1,2,Count me in!,8
-found_foundation_opinion_basics_1,2,I'm afraid I can't.,9
-found_foundation_opinion_basics_1,2,Let me think about it.,10
-found_foundation_opinion_basics_1,2,Good idea!,11
-found_foundation_opinion_basics_1,2,I'd rather not.,12
-found_foundation_opinion_basics_1,2,It's up to you.,13
-found_foundation_opinion_basics_1,2,Whatever you think is fine.,14
+ch_prog_01,1,I eat breakfast every day. / Im eating breakfast right now.,0
+ch_prog_01,1,I drink coffee in the morning. / Im drinking coffee right now.,1
+ch_prog_01,1,I read books at night. / Im reading a great book.,2
+ch_prog_01,1,I cook dinner at home. / Im cooking pasta right now.,3
+ch_prog_01,1,I study English every day. / Im studying for a test now.,4
+ch_prog_01,1,It rains a lot in summer. / Its raining outside right now.,5
+ch_prog_01,1,People wait for the bus here. / People are waiting in line.,6
+ch_prog_01,1,I usually watch TV after dinner. / But right now Im watching a movie.,7
+ch_prog_01,2,He works in an office. / Hes working from home today.,0
+ch_prog_01,2,He drives to work every day. / Hes driving to the airport now.,1
+ch_prog_01,2,She teaches English. / Shes teaching a class right now.,2
+ch_prog_01,2,She writes reports at work. / Shes writing an email now.,3
+ch_prog_01,2,The sun rises in the east. / The sun is shining today!,4
+ch_prog_01,2,He looks happy in photos. / Hes looking at his phone.,5
+ch_prog_01,2,She thinks it's a good idea. / She's thinking about the problem.,6
+ch_prog_02,1,I live in Beijing. / Im staying in Shanghai this week.,0
+ch_prog_02,1,I usually take the bus. / Im taking a taxi today.,1
+ch_prog_02,1,We usually eat at home. / Were eating out tonight.,2
+ch_prog_02,1,She wears a uniform at work. / Shes wearing a dress today.,3
+ch_prog_02,1,He usually gets up at 7. / Hes getting up at 5 tomorrow.,4
+ch_prog_02,1,They usually meet on Fridays. / Theyre meeting on Thursday this week.,5
+ch_prog_02,1,I normally walk to school. / Im riding a bike this month.,6
+ch_prog_02,1,"I usually work in Beijing, but this week Im working in Shanghai.",7
+ch_prog_02,2,It rains a lot in spring. / Its raining right now.,0
+ch_prog_02,2,It gets dark early in winter. / Its getting dark. Lets go inside.,1
+ch_prog_02,2,I feel tired after work. / Im feeling really tired now.,2
+ch_prog_02,2,The baby sleeps a lot. / The baby is sleeping now.,3
+ch_prog_02,2,I have a headache sometimes. / I have a headache right now.,4
+ch_prog_02,2,I think she is a good teacher. / Right now Im thinking about the lesson.,5
+ch_prog_02,2,"I usually work in Beijing, but this week Im working in Shanghai.",6
+ch_prog_03,1,I always get up at 7.,0
+ch_prog_03,1,I usually drink coffee in the morning.,1
+ch_prog_03,1,I often read before bed.,2
+ch_prog_03,1,I sometimes watch TV after work.,3
+ch_prog_03,1,I rarely eat junk food.,4
+ch_prog_03,1,I never smoke.,5
+ch_prog_03,1,She is always late for class.,6
+ch_prog_03,1,He is never tired in the morning.,7

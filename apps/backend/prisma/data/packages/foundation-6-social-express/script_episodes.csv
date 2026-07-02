@@ -1,5 +1,11 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-found_foundation_social_express_0,问候与介绍,1,见面问候,基础·问候与介绍,L1,1,2,6,2,15,"[""练习见面问候相关表达""]",2,2,2,Tutor,口语教练,true,practice_foundation-social-express_基础_问候与介绍_见面问候,{xp:10}
-found_foundation_social_express_0,问候与介绍,2,自我介绍,基础·问候与介绍,L1,1,2,6,2,15,"[""练习自我介绍相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_基础_问候与介绍_自我介绍,{xp:10}
-found_foundation_social_express_1,礼貌与请求,1,礼貌用语,基础·礼貌与请求,L1,1,2,6,2,15,"[""练习礼貌用语相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_基础_礼貌与请求_礼貌用语,{xp:10}
-found_foundation_social_express_1,礼貌与请求,2,请求与帮助,基础·礼貌与请求,L1,1,2,6,2,15,"[""练习请求与帮助相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_基础_礼貌与请求_请求与帮助,{xp:10}
+found_foundation_social_express_0,过去的状态,1,我以前是/有,基础⑥·过去的状态,L1,1,3,10,2,7,"[""练习用was/were/had描述过去的状态和拥有""]",2,2,2,Tutor,口语教练,true,practice_foundation-social-express_过去的状态_我以前是有,{xp:10}
+found_foundation_social_express_0,过去的状态,2,昨天在哪里/怎么样,基础⑥·过去的状态,L1,1,3,10,2,7,"[""练习询问和回答过去的所在和感受""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_过去的状态_昨天在哪里,{xp:10}
+found_foundation_social_express_1,过去的动作,1,昨天做了什么,基础⑥·过去的动作,L1,1,3,10,2,7,"[""练习用规则动词过去式描述日常动作""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_过去的动作_昨天做了什么,{xp:10}
+found_foundation_social_express_1,过去的动作,2,不规则动词专项,基础⑥·过去的动作,L1~L2,1,3,10,2,8,"[""练习30个核心不规则动词过去式""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_过去的动作_不规则动词,{xp:10}
+found_foundation_social_express_2,讲述经历,1,上个周末/去年,基础⑥·讲述经历,L1~L2,1,3,10,2,7,"[""练习讲述上周末和去年的经历""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_讲述经历_上个周末去年,{xp:10}
+found_foundation_social_express_2,讲述经历,2,否定和疑问,基础⑥·讲述经历,L1~L2,1,3,10,2,7,"[""练习过去时否定句和疑问句""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_讲述经历_否定和疑问,{xp:10}
+found_foundation_social_express_3,完成时入门,1,去过/做过,基础⑥·完成时入门,L1~L2,1,3,10,2,5,"[""练习用have been和have done表达经历""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_完成时入门_去过做过,{xp:10}
+found_foundation_social_express_3,完成时入门,2,刚刚/还没/多久了,基础⑥·完成时入门,L1~L2,1,3,10,2,7,"[""练习just/already/yet和for/since的用法""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_完成时入门_刚刚还没,{xp:10}
+found_foundation_social_express_4,过去与现在对比,1,回忆过去/used to,基础⑥·过去与现在对比,L1~L2,1,3,10,2,6,"[""练习used to表达过去习惯和回忆""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_过去与现在对比_回忆过去,{xp:10}
+found_foundation_social_express_4,过去与现在对比,2,今昔对比,基础⑥·过去与现在对比,L1~L2,1,3,10,2,5,"[""练习过去与现在的对比表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-social-express_过去与现在对比_今昔对比,{xp:10}

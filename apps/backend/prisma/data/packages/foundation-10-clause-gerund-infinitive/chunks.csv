@@ -1,31 +1,63 @@
 scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-基础·天气与季节,谈论天气,谈论天气,What's the weather like today?,今天天气怎么样？,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's sunny today.,今天是晴天。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's raining outside.,外面在下雨。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's very cold today.,今天很冷。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's hot and humid.,又热又潮湿。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's cloudy today.,今天是阴天。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's snowing heavily.,正在下大雪。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,The temperature is 25 degrees.,温度是25度。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's windy today.,今天有风。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,Bring an umbrella!,带把伞！,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,The weather is nice today.,今天天气真好。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,It's getting warmer.,天气变暖了。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,What a beautiful day!,多美好的一天！,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,I hope it doesn't rain.,我希望别下雨。,L1,日常口语表达。,
-基础·天气与季节,谈论天气,谈论天气,The sun is shining.,阳光明媚。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,My favorite season is spring.,我最喜欢的季节是春天。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,Summer is very hot.,夏天很热。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,Leaves fall in autumn.,秋天树叶落下。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,It snows in winter.,冬天会下雪。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,The flowers are blooming.,花开了。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,Let's go for a walk.,我们去散步吧。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,The air is fresh.,空气很新鲜。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,I love the beach!,我爱海滩！,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,The stars are beautiful.,星星很美。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,Let's enjoy the sunset.,我们欣赏日落吧。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,The mountain is covered with snow.,山被雪覆盖了。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,I like to hike in the forest.,我喜欢在森林里徒步。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,The river is very clean.,这条河很干净。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,Birds are singing.,鸟儿在歌唱。,L1,日常口语表达。,
-基础·天气与季节,季节与自然,季节与自然,What a lovely garden!,多可爱的花园！,L1,日常口语表达。,
+基础⑩·表达想法,我认为...,宾语从句肯定,I think (that) you are right.,我认为你是对的。,L1,I think+(that)宾语从句。,"[{""en"":""I think (that) he is nice."",""zh"":""我觉得他很好。""}]"
+基础⑩·表达想法,我认为...,宾语从句否定,I don't think (that) it's a good idea.,我认为这不是个好主意。,L1,否定转移从句。,"[{""en"":""I don't think (that) he will come."",""zh"":""我认为他不会来。""}]"
+基础⑩·表达想法,我认为...,宾语从句,I believe (that) he is telling the truth.,我相信他说的是实话。,L1,I believe+that从句。,"[{""en"":""I believe (that) you can do it."",""zh"":""我相信你能做到。""}]"
+基础⑩·表达想法,我知道/听说,我知道,I know (that) you are busy.,我知道你很忙。,L1,I know+that从句。,"[{""en"":""I know (that) he is a good person."",""zh"":""我知道他是个好人。""}]"
+基础⑩·表达想法,我知道/听说,我确定,I'm sure (that) everything will be fine.,我确定一切都会好的。,L1,I'm sure+that从句。,"[{""en"":""I'm sure (that) he will come."",""zh"":""我确定他会来。""}]"
+基础⑩·表达想法,我知道/听说,抱歉,I'm sorry (that) I'm late.,抱歉我迟到了。,L1,I'm sorry+that从句。,"[{""en"":""I'm sorry (that) I forgot."",""zh"":""抱歉我忘了。""}]"
+基础⑩·表达想法,转述他人,他说,He said (that) he would come.,他说他会来。,L1,He said+that从句转述。,"[{""en"":""He said (that) he was busy."",""zh"":""他说他很忙。""}]"
+基础⑩·表达想法,转述他人,她告诉我,She told me (that) she liked it.,她告诉我她喜欢。,L1,She told me+that从句。,"[{""en"":""She told me (that) she needed help."",""zh"":""她告诉我她需要帮助。""}]"
+基础⑩·表达想法,转述他人,我听说,I heard (that) the store is closing.,我听说那家店要关了。,L1,I heard+that从句。,"[{""en"":""I heard (that) he got married."",""zh"":""我听说他结婚了。""}]"
+基础⑩·表达想法,不确定,不确定,I'm not sure (that) I can go.,我不确定我能去。,L1,I'm not sure+that从句。,"[{""en"":""I'm not sure (that) I can finish."",""zh"":""我不确定我能完成。""}]"
+基础⑩·表达想法,疑问词从句,不知道,I don't know what he wants.,我不知道他想要什么。,L1,wh-宾语从句。,"[{""en"":""I don't know what to do."",""zh"":""我不知道该做什么。""}]"
+基础⑩·表达想法,疑问词从句,问路,Can you tell me where the station is?,你能告诉我车站在哪吗？,L1,where宾语从句。,"[{""en"":""Can you tell me where the bathroom is?"",""zh"":""你能告诉我洗手间在哪吗？""}]"
+基础⑩·表达想法,疑问词从句,想知道,I wonder why he is late.,我想知道他为什么迟到。,L1,why宾语从句。,"[{""en"":""I wonder why she left."",""zh"":""我想知道她为什么离开。""}]"
+基础⑩·描述人物事物,描述物品,that指物,The book that I read is very interesting.,我读的那本书很有趣。,L1,that定语从句(指物)。,"[{""en"":""The movie that I watched is good."",""zh"":""我看的那部电影不错。""}]"
+基础⑩·描述人物事物,描述物品,that指物,Is this the food that you like?,这是你喜欢的食物吗？,L1,that定语从句疑问。,"[{""en"":""Is this the music that you like?"",""zh"":""这是你喜欢的音乐吗？""}]"
+基础⑩·描述人物事物,描述物品,that指物,I like the one that you showed me.,我喜欢你给我看的那一个。,L1,that定语从句。,"[{""en"":""I like the color that you chose."",""zh"":""我喜欢你选的颜色。""}]"
+基础⑩·描述人物事物,描述人,who指人,The person who called is my boss.,打电话的那个人是我老板。,L1,who定语从句(指人)。,"[{""en"":""The person who helped me is my friend."",""zh"":""帮助我的人是我朋友。""}]"
+基础⑩·描述人物事物,描述人,who指人,Do you know the girl who is talking to Tom?,你认识和汤姆说话的那个女孩吗？,L1,who定语从句疑问。,"[{""en"":""Do you know the man who is standing there?"",""zh"":""你认识站在那里的那个人吗？""}]"
+基础⑩·描述人物事物,描述人,who指人,He is the kind of person who never gives up.,他是那种永不放弃的人。,L1,who定语从句描述性格。,"[{""en"":""He is the kind of person who always helps."",""zh"":""他是那种总是帮助别人的人。""}]"
+基础⑩·描述人物事物,地点与原因,where地点,The restaurant where we met is still there.,我们见面的那家餐厅还在那里。,L1,where定语从句。,"[{""en"":""The school where we studied is far."",""zh"":""我们学习的学校很远。""}]"
+基础⑩·描述人物事物,地点与原因,where地点,That's the place where I grew up.,那是我长大的地方。,L1,where定语从句。,"[{""en"":""That's the place where I was born."",""zh"":""那是我出生的地方。""}]"
+基础⑩·描述人物事物,地点与原因,why原因,This is the reason why I came.,这就是我来的原因。,L1,why定语从句。,"[{""en"":""This is the reason why I called."",""zh"":""这就是我打电话的原因。""}]"
+基础⑩·描述人物事物,偏好描述,that指物,The movie that I like most is this one.,我最喜欢的那部电影是这部。,L1,定语从句表达偏好。,"[{""en"":""The book that I like most is this one."",""zh"":""我最喜欢的书是这本。""}]"
+基础⑩·描述人物事物,偏好描述,复合定语从句,The friend who helped me is someone that I can always trust.,帮我的那个朋友是我永远可以信任的人。,L1,复合定语从句。,"[{""en"":""The teacher who taught me is someone that I respect."",""zh"":""教我的老师是我尊重的人。""}]"
+基础⑩·描述人物事物,综合描述,综合表达,There are many things that I want to learn.,有很多我想学的东西。,L1,综合定语从句。,"[{""en"":""There are many books that I want to read."",""zh"":""有很多我想读的书。""}]"
+基础⑩·意图与目的,想要/希望,希望,I hope to see you again soon.,我希望很快再见到你。,L1,hope+to do。,"[{""en"":""I hope to finish on time."",""zh"":""我希望按时完成。""}]"
+基础⑩·意图与目的,想要/希望,礼貌意愿,I would like to apply for this job.,我想申请这份工作。,L1,would like+to do。,"[{""en"":""I would like to book a table."",""zh"":""我想订个桌子。""}]"
+基础⑩·意图与目的,决定/承诺,决定,I decided to study abroad.,我决定出国留学。,L1,decide+to do。,"[{""en"":""I decided to change my job."",""zh"":""我决定换工作。""}]"
+基础⑩·意图与目的,决定/承诺,选择,She chose to stay at home.,她选择待在家里。,L1,choose+to do。,"[{""en"":""She chose to study art."",""zh"":""她选择学艺术。""}]"
+基础⑩·意图与目的,决定/承诺,承诺,I promised to help him.,我答应帮助他。,L1,promise+to do。,"[{""en"":""I promised to be on time."",""zh"":""我答应准时。""}]"
+基础⑩·意图与目的,决定/承诺,提醒,Don't forget to call me.,别忘了给我打电话。,L1,forget+to do。,"[{""en"":""Don't forget to lock the door."",""zh"":""别忘了锁门。""}]"
+基础⑩·意图与目的,为了...目的,目的,I came here to study English.,我来这里学英语。,L1,不定式表目的。,"[{""en"":""I came here to work."",""zh"":""我来这里工作。""}]"
+基础⑩·意图与目的,为了...目的,目的,I went to the store to buy some food.,我去商店买食物。,L1,不定式表目的。,"[{""en"":""I went to the bank to cash money."",""zh"":""我去银行取钱。""}]"
+基础⑩·意图与目的,为了...目的,目的,I saved money to buy a car.,我存钱买车。,L1,不定式表目的。,"[{""en"":""I saved money to travel."",""zh"":""我存钱旅游。""}]"
+基础⑩·意图与目的,评价：做...是...的,评价,It's important to practice every day.,每天练习很重要。,L1,It's+adj+to do。,"[{""en"":""It's important to stay healthy."",""zh"":""保持健康很重要。""}]"
+基础⑩·意图与目的,评价：做...是...的,评价,It's fun to travel with friends.,和朋友一起旅行很有趣。,L1,It's+adj+to do。,"[{""en"":""It's fun to try new food."",""zh"":""尝试新食物很有趣。""}]"
+基础⑩·意图与目的,评价：做...是...的,评价,It's hard to say goodbye.,说再见很难。,L1,It's+adj+to do。,"[{""en"":""It's hard to believe."",""zh"":""很难相信。""}]"
+基础⑩·意图与目的,有事要做,有事要做,I have something to tell you.,我有事要告诉你。,L1,不定式作定语。,"[{""en"":""I have something to show you."",""zh"":""我有东西要给你看。""}]"
+基础⑩·喜好与活动,我喜欢做...,enjoy,I enjoy reading books in my free time.,我喜欢空闲时读书。,L1,enjoy+doing。,"[{""en"":""I enjoy listening to music."",""zh"":""我喜欢听音乐。""}]"
+基础⑩·喜好与活动,我喜欢做...,like+doing,I like swimming but I don't like running.,我喜欢游泳但不喜欢跑步。,L1,like+doing。,"[{""en"":""I like cooking but I don't like cleaning."",""zh"":""我喜欢做饭但不喜欢打扫。""}]"
+基础⑩·喜好与活动,我喜欢做...,love+doing,I love watching movies on weekends.,我周末喜欢看电影。,L1,love+doing。,"[{""en"":""I love eating out."",""zh"":""我喜欢出去吃饭。""}]"
+基础⑩·喜好与活动,我喜欢做...,hate+doing,I hate waiting in long lines.,我讨厌排长队。,L1,hate+doing。,"[{""en"":""I hate getting up early."",""zh"":""我讨厌早起。""}]"
+基础⑩·喜好与活动,开始/结束/继续,start+doing,I started learning English two years ago.,我两年前开始学英语。,L1,start+doing。,"[{""en"":""I started learning to drive last month."",""zh"":""我上个月开始学开车。""}]"
+基础⑩·喜好与活动,开始/结束/继续,finish+doing,I finished writing the report.,我写完了报告。,L1,finish+doing。,"[{""en"":""I finished reading the book."",""zh"":""我读完了那本书。""}]"
+基础⑩·喜好与活动,开始/结束/继续,keep+doing,I keep trying even when it's hard.,即使很难我也继续尝试。,L1,keep+doing。,"[{""en"":""I keep practicing."",""zh"":""我继续练习。""}]"
+基础⑩·喜好与活动,擅长/对...感兴趣,be good at,I'm good at remembering names.,我擅长记名字。,L1,be good at+doing。,"[{""en"":""I'm good at solving problems."",""zh"":""我擅长解决问题。""}]"
+基础⑩·喜好与活动,擅长/对...感兴趣,be interested in,She is interested in learning new things.,她对学新东西感兴趣。,L1,be interested in+doing。,"[{""en"":""She is interested in art."",""zh"":""她对艺术感兴趣。""}]"
+基础⑩·喜好与活动,擅长/对...感兴趣,be tired of,He is tired of waiting.,他厌倦了等待。,L1,be tired of+doing。,"[{""en"":""I'm tired of working too much."",""zh"":""我厌倦了工作太多。""}]"
+基础⑩·喜好与活动,做...很有趣,动名词主语,Swimming is a lot of fun.,游泳很有趣。,L1,动名词作主语。,"[{""en"":""Traveling is a lot of fun."",""zh"":""旅行很有趣。""}]"
+基础⑩·喜好与活动,做...很有趣,动名词主语,Learning a new language is good for your brain.,学新语言对大脑好。,L1,动名词作主语。,"[{""en"":""Reading is good for your mind."",""zh"":""阅读对大脑好。""}]"
+基础⑩·喜好与活动,感谢/道歉,感谢,Thank you for helping me.,谢谢你帮我。,L1,thank you for+doing。,"[{""en"":""Thank you for coming."",""zh"":""谢谢你来。""}]"
+基础⑩·喜好与活动,感谢/道歉,道歉,I'm sorry for being late.,抱歉我迟到了。,L1,I'm sorry for+doing。,"[{""en"":""I'm sorry for not calling."",""zh"":""抱歉没打电话。""}]"
+基础⑩·综合运用,混合从句与不定式,从句+不定式,I think it's important to practice every day.,我认为每天练习很重要。,L1,从句+不定式混合。,"[{""en"":""I think it's necessary to save money."",""zh"":""我认为存钱有必要。""}]"
+基础⑩·综合运用,混合从句与不定式,从句+不定式,I know that he wants to be a doctor.,我知道他想当医生。,L1,从句+不定式混合。,"[{""en"":""I know that she wants to be a teacher."",""zh"":""我知道她想当老师。""}]"
+基础⑩·综合运用,混合不定式与动名词,从句+动名词,I believe that learning English is fun.,我相信学英语很有趣。,L1,从句+动名词混合。,"[{""en"":""I believe that cooking is an art."",""zh"":""我相信烹饪是一门艺术。""}]"
+基础⑩·综合运用,混合不定式与动名词,从句+动名词,She said that she enjoys working here.,她说她喜欢在这里工作。,L1,从句+动名词混合。,"[{""en"":""She said that she enjoys teaching children."",""zh"":""她说她喜欢教孩子。""}]"
+基础⑩·综合运用,叙事：我的一段经历,定语从句+不定式,The best thing that you can do is to keep trying.,你能做的最好的事就是继续尝试。,L1,定语从句+不定式。,"[{""en"":""The best thing that you can do is to stay positive."",""zh"":""你能做的最好的事就是保持积极。""}]"
+基础⑩·综合运用,观点：我为什么觉得...,综合运用,I think the movie that we watched is worth seeing.,我觉得我们看的那部电影值得看。,L1,综合从句+不定式。,"[{""en"":""I think the book that we read is worth reading."",""zh"":""我觉得我们读的那本书值得读。""}]"
+基础⑩·综合运用,观点：我为什么觉得...,综合运用,What I like most about this city is the people.,这个城市我最喜欢的是这里的人。,L1,what主语从句。,"[{""en"":""What I like most about this job is the team."",""zh"":""这个工作我最喜欢的是团队。""}]"
+基础⑩·综合运用,叙事：我的一段经历,长篇表达,I decided to learn English because I think it's important for my future.,我决定学英语因为我认为它对我的未来很重要。,L1,综合叙事。,"[{""en"":""I decided to start running because I think it's healthy."",""zh"":""我决定开始跑步因为我认为它健康。""}]"
+基础⑩·综合运用,长篇描述：我最喜欢的...,综合描述,The friend who encouraged me the most is someone that I will always remember.,最鼓励我的朋友是我永远会记住的人。,L1,综合描述。,"[{""en"":""The teacher who inspired me is someone that I will never forget."",""zh"":""启发我的老师是我永远不会忘记的人。""}]"
+基础⑩·综合运用,长篇描述：我最喜欢的...,长篇叙事,I enjoy traveling because I think it's the best way to learn about different cultures.,我喜欢旅行因为我认为它是了解不同文化最好的方式。,L1,长篇叙事。,"[{""en"":""I enjoy reading because I think it's the best way to relax."",""zh"":""我喜欢阅读因为我认为它是放松最好的方式。""}]"

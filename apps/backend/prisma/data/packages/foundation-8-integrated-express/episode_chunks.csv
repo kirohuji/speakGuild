@@ -1,20 +1,65 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-ch_int_01,1,I like swimming in the summer.,0
-ch_int_01,1,She enjoys cooking for her family.,1
-ch_int_01,1,I hate waiting in long lines.,2
-ch_int_01,2,I want to learn Chinese.,0
-ch_int_01,2,I need to finish my homework.,1
-ch_int_01,2,I hope to see you again.,2
-ch_int_01,2,I would like to order some food.,3
-ch_int_02,1,Could you help me with this?,0
-ch_int_02,1,Would you mind opening the window?,1
-ch_int_02,1,May I come in?,2
-ch_int_02,2,Would you like some coffee?,0
-ch_int_02,2,How about going for a walk?,1
-ch_int_03,1,I have been to Beijing twice.,0
-ch_int_03,1,Have you ever tried sushi? — Yes, I have.,1
-ch_int_03,1,I have never seen a ghost.,2
-ch_int_03,2,He has lived here for 10 years.,0
-ch_int_03,2,She has studied English since 2020.,1
-ch_int_03,2,I have already finished my homework.,2
-ch_int_03,2,I haven't finished yet.,3
+ch_conj_01,1,I like coffee and tea.,0
+ch_conj_01,1,She is smart and kind.,1
+ch_conj_01,1,I went to the store and bought some milk.,2
+ch_conj_01,1,Do you want tea or coffee?,3
+ch_conj_01,1,Is it big or small?,4
+ch_conj_01,1,I like him but he doesn't like me.,5
+ch_conj_01,1,The food is cheap but it's delicious.,6
+ch_conj_01,2,I stayed home because I was sick.,0
+ch_conj_01,2,She is happy because she passed the test.,1
+ch_conj_01,2,Because it rained we stayed inside.,2
+ch_conj_01,2,I was tired so I went to bed early.,3
+ch_conj_01,2,It started to rain so we took a taxi.,4
+ch_conj_01,2,I wanted to go However I was too busy.,5
+ch_conj_01,2,She not only speaks English but also speaks Chinese.,6
+ch_conj_02,1,When I arrived she was cooking.,0
+ch_conj_02,1,I always listen to music when I run.,1
+ch_conj_02,1,Call me when you get home.,2
+ch_conj_02,1,I brush my teeth before I go to bed.,3
+ch_conj_02,1,After I finished work I went to the gym.,4
+ch_conj_02,1,We played games while we waited.,5
+ch_conj_02,1,Please wait here until I come back.,6
+ch_conj_02,2,If it rains tomorrow I'll stay home.,0
+ch_conj_02,2,If you study hard you will pass the test.,1
+ch_conj_02,2,Let me know if you need help.,2
+ch_conj_02,2,I won't go unless you come with me.,3
+ch_conj_02,2,You can't enter unless you have a ticket.,4
+ch_conj_02,2,If I were you I would take the job.,5
+ch_conj_02,2,As long as you try your best it's okay.,6
+ch_conj_03,1,I like sports For example I play basketball.,0
+ch_conj_03,1,She is kind Also she is very hardworking.,1
+ch_conj_03,1,I like coffee He likes coffee too.,2
+ch_conj_03,1,She speaks English and she speaks Japanese as well.,3
+ch_conj_03,1,I don't like coffee I don't like tea either.,4
+ch_conj_03,1,It's a nice restaurant What's more the prices are good.,5
+ch_conj_03,1,I want to go but I have no time Besides I don't have money.,6
+ch_conj_03,2,First I get up Then I take a shower After that I eat breakfast.,0
+ch_conj_03,2,I went to the supermarket Next I went to the bank Finally I went home.,1
+ch_conj_03,2,At first I didn't like the job But later I started to enjoy it.,2
+ch_conj_03,2,While I was cooking my sister was setting the table.,3
+ch_conj_03,2,Before you leave please turn off the lights.,4
+ch_conj_03,2,After you finish let me know Then we can go together.,5
+ch_conj_04,1,Well I think it's a good idea.,0
+ch_conj_04,1,Actually I don't like coffee I prefer tea.,1
+ch_conj_04,1,By the way did you hear about the party?,2
+ch_conj_04,1,Anyway let's get back to the topic.,3
+ch_conj_04,1,I mean it's not that I don't want to go I'm just tired.,4
+ch_conj_04,1,Let me see I think the answer is B.,5
+ch_conj_04,1,You know I've always wanted to learn guitar.,6
+ch_conj_04,2,I wanted to go out but it started to rain so I stayed home and watched a movie.,0
+ch_conj_04,2,If you're free this weekend we can go hiking But if it rains let's just stay in and play games.,1
+ch_conj_04,2,When I got home I was really hungry because I didn't eat lunch.,2
+ch_conj_04,2,She's very smart and she works hard so she always gets good grades.,3
+ch_conj_04,2,I like both coffee and tea but if I have to choose I prefer coffee because it helps me wake up.,4
+ch_conj_04,2,First we went to the museum After that we had lunch Then we walked in the park because the weather was nice.,5
+ch_conj_05,1,First I went to the store and bought some food Then I came home and cooked dinner After that I ate and watched TV.,0
+ch_conj_05,1,Before I go to work I always take a shower and eat breakfast After I get home I usually relax and read a book.,1
+ch_conj_05,1,I was late for work because I missed the bus so I had to take a taxi It was expensive but I had no choice.,2
+ch_conj_05,1,She studied very hard because she wanted to pass the exam and she did it I'm so proud of her.,3
+ch_conj_05,1,When I got to the station the train had already left If I had left home earlier I wouldn't have missed it.,4
+ch_conj_05,2,I think this is a good idea because it's simple and easy to do If we try it we might get good results.,0
+ch_conj_05,2,I like living in the city because it's convenient and exciting However it's also crowded and expensive.,1
+ch_conj_05,2,As long as you study hard you'll do well But if you don't practice enough you might fall behind.,2
+ch_conj_05,2,I think you should take the job because it's a good opportunity Besides you can learn a lot of new things there.,3
+ch_conj_05,2,In conclusion I believe that learning English is very important Not only can you talk to more people but you can also get a better job.,4

@@ -1,17 +1,46 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础③·描述家人,他/她是谁,He/She is ___.,他/她是...,"my father, a doctor, very tall",He is my father.,L1,0
-基础③·描述家人,他/她是谁,He/She has ___.,他/她有...,"a car, a cat, two brothers",She has a cat.,L1,1
-基础③·描述家人,他/她是谁,His/Her ___ is ___.,他/她的...是...,"name, Tom; phone, new; car, red",His name is Tom.,L1,2
-基础③·描述家人,他/她喜欢什么,He/She likes ___.,他/她喜欢...,"coffee, sports, music",He likes coffee.,L1,0
-基础③·描述家人,他/她喜欢什么,He/She likes to ___.,他/她喜欢做...,"read, swim, travel, cook",She likes to read.,L1,1
-基础③·描述家人,他/她喜欢什么,He/She doesn't like ___.,他/她不喜欢...,"meat, coffee, cold weather",He doesn't like meat.,L1,2
-基础③·描述家人,他/她喜欢什么,Does he/she like ___?,他/她喜欢...吗？,"sports, dogs, music",Does she like music?,L1,3
-基础③·他/她的日常,他每天做什么,He/She ___ at ___.,他/她...点...,"gets up, 7; goes to bed, 11; eats lunch, 12",She gets up at 7.,L1,0
-基础③·他/她的日常,他每天做什么,He/She doesn't ___.,他/她不...,"eat meat, drink coffee, smoke",He doesn't eat meat.,L1,1
-基础③·他/她的日常,他/她做什么工作,He/She works in a ___.,他/她在...工作,"hospital, school, bank, office",She works in a hospital.,L1,0
-基础③·他/她的日常,他/她做什么工作,Does he/she ___ on weekends?,他/她周末...吗？,"work, study, travel",Does he work on weekends?,L1,1
-基础③·对比你我他,我和你 vs 他/She,I ___ but he/she ___.,我...但他/她...,"like coffee, likes tea; eat breakfast, eats lunch; get up at 6, gets up at 8",I like coffee but she likes tea.,L1,0
-基础③·对比你我他,我和你 vs 他/她,I don't ___ but he/she ___.,我不...但他/她...,"have a car, has a car; like sports, likes sports; eat meat, eats meat",I don't have a car but he has a car.,L1,1
-基础③·对比你我他,他们的生活,They ___.,他们...,"live in Beijing, have a car, work hard",They live in Beijing.,L1,0
-基础③·对比你我他,他们的生活,___'s ___ is a ___.,...的...是...,"Tom, mother, nurse; Anna, father, doctor",Tom's mother is a nurse.,L1,1
-基础③·对比你我他,他们的生活,Everyone ___ him/her.,大家都...他/她,"likes, knows, loves",Everyone likes him.,L1,2
+基础③·描述家人,他是谁,He/She is ___.,他/她是...,my father / a doctor / very tall,He is my father.,L1,0
+基础③·描述家人,他是谁,He/She has ___.,他/她有...,a car / a cat / two brothers,She has a cat.,L1,1
+基础③·描述家人,他是谁,He/She doesn't have ___.,他/她没有...,a phone / a car / a bike / a pet,He doesn't have a phone.,L1,2
+基础③·描述家人,他是谁,His/Her name is ___.,他/她的名字是...,Tom / Anna / Jack / Mary,His name is Tom.,L1,3
+基础③·描述家人,他有什么,His/Her ___ is ___.,他/她的...是...,phone new / bag red / car blue,His car is red.,L1,4
+基础③·描述家人,她喜欢什么,He/She likes ___.,他/她喜欢...,music / sports / animals / cooking / dancing,She likes music.,L1,5
+基础③·描述家人,她喜欢什么,He/She likes to ___.,他/她喜欢做...,read / sing / swim / travel / cook,He likes to read.,L1,6
+基础③·描述家人,她不喜欢什么,He/She doesn't like ___.,他/她不喜欢...,cold weather / spiders / getting up early,She doesn't like cold weather.,L1,7
+基础③·描述家人,疑问与回答,Does he/she like ___? Yes he/she does.,他/她喜欢...吗？,music / dogs / sports / traveling,Does she like music? Yes she does.,L1,8
+基础③·描述家人,疑问与回答,What does he/she like? He/She likes ___.,他/她喜欢什么？,music / sports / animals / cooking,What does he like? He likes sports.,L1,9
+基础③·描述家人,家人职业,My ___ is a ___. He/She works in a ___.,我的...是...他/她在...工作。,mother nurse hospital / father doctor hospital / uncle engineer office,My mother is a nurse. She works in a hospital.,L1,10
+基础③·描述家人,家人习惯,My ___ always ___s ___.,我的...总是...,dad gets up early / mom drinks tea / brother plays guitar,My dad always gets up early.,L1,11
+基础③·他/她的日常,他每天做什么,He/She gets up at ___.,他/她...点起床。,6 / 7 / 7:30 / 8,He gets up at 7.,L1,12
+基础③·他/她的日常,他每天做什么,He/She goes to ___ by ___.,他/她乘...去...,school bus / work car / the park bike,She goes to school by bus.,L1,13
+基础③·他/她的日常,他每天做什么,He/She eats ___ at ___.,他/她在...吃...,breakfast at 7 / lunch at school / dinner at home,He eats lunch at school.,L1,14
+基础③·他/她的日常,他每天做什么,He/She drinks ___ after ___.,他/她...后喝...,water exercise / juice breakfast / milk dinner,She drinks water after exercise.,L1,15
+基础③·他/她的日常,他每天做什么,He/She doesn't ___.,他/她不做...,eat junk food / drink soda / smoke / stay up late,He doesn't eat junk food.,L1,16
+基础③·他/她的日常,她几点起床,He/She comes home at ___.,他/她...点到家。,5 / 6 / 6:30 / 8,He comes home at 6.,L1,17
+基础③·他/她的日常,她几点起床,He/She goes to bed at ___.,他/她...点睡觉。,9 / 10 / 11 / midnight,She goes to bed at 10.,L1,18
+基础③·他/她的日常,工作与学习,He/She works in a ___.,他/她在...工作。,hospital / school / office / bank / restaurant,She works in a hospital.,L1,19
+基础③·他/她的日常,工作与学习,He/She studies ___ at ___.,他/她在...学...。,"English university / math school / music a studio",He studies English at university.,L1,20
+基础③·他/她的日常,工作与学习,He/She ___ after ___.,他/她...后做...。,"watches TV dinner / does homework school / reads work",She watches TV after dinner.,L1,21
+基础③·他/她的日常,疑问与回答,Where does he/she ___? He/She ___.,他/她在哪里...？,work works in a hospital / live lives in Beijing,Where does he work? He works in a hospital.,L1,22
+基础③·他/她的日常,疑问与回答,Does he/she ___ on weekends? Yes/No.,他/她周末...吗？,work / study / travel / play sports,Does she work on weekends? No she doesn't.,L1,23
+基础③·对比你我他,我和你vs他/她,I ___ and he/she ___ too.,我...他/她也...。,"like music likes music / eat breakfast eats breakfast",I like music and she likes music too.,L1,24
+基础③·对比你我他,我和你vs他/她,I ___ but he/she ___.,我...但他/她...。,"like coffee likes tea / have a bike has a car",I like coffee but she likes tea.,L1,25
+基础③·对比你我他,我和你vs他/她,I ___ but he/she doesn't ___.,我...但他/她不...。,"like coffee like coffee / have a pet have a pet",I like coffee but she doesn't like coffee.,L1,26
+基础③·对比你我他,我和你vs他/她,I don't ___ but he/she ___.,我不...但他/她...。,"have a pet has a cat / drink coffee drinks tea",I don't have a pet but she has a cat.,L1,27
+基础③·对比你我他,我和你vs他/她,I have ___ and he/she has ___.,我有...他/她有...。,"a brother a sister / a bike a car",I have a brother and he has a sister.,L1,28
+基础③·对比你我他,我和你vs他/她,I ___ at ___ but he/she ___ at ___.,我...点但他/她...点。,"get up 6 gets up 8 / go to bed 10 goes to bed 11",I get up at 6 but he gets up at 8.,L1,29
+基础③·对比你我他,我和你vs他/她,My ___ is ___. His/Her ___ is ___.,我的...是他的/她的...是。,"name Tom name Jack / bag blue bag black",My name is Tom. His name is Jack.,L1,30
+基础③·对比你我他,他们的生活,They ___.,他们...。,"live in Beijing / have a car / like music / speak Chinese",They live in Beijing.,L1,31
+基础③·对比你我他,他们的生活,My parents ___.,我的父母...。,"work hard / live nearby / like traveling / cook well",My parents work very hard.,L1,32
+基础③·对比你我他,他们的生活,The children/students ___.,孩子们/学生们...。,"play in the park / study hard / read books",The children play in the park.,L1,33
+基础③·对比你我他,他们的生活,Their ___ is/are ___.,他们的...。,"house big / car new / parents kind",Their house is very big.,L1,34
+基础③·对比你我他,他们的生活,___'s ___ is a ___.,...的...是...。,"Tom mother nurse / Anna father doctor",Tom's mother is a nurse.,L1,35
+基础③·对比你我他,他们的生活,Everyone ___ him/her.,大家都...他/她。,"likes / knows / loves",Everyone likes him.,L1,36
+基础③·职业与叙事,他做什么工作,He/She is a ___. He/She ___.,他/她是...他/她...。,"firefighter helps people / chef cooks food / pilot flies planes",He is a firefighter. He helps people.,L1,37
+基础③·职业与叙事,工作描述,My ___ works in a ___. He/She ___.,我的...在...工作。他/她...。,"aunt hospital takes care of patients / uncle restaurant cooks food",My aunt works in a hospital. She takes care of patients.,L1,38
+基础③·职业与叙事,工作描述,His/Her job is ___. He/She ___.,他/她的工作...他/她...。,"interesting travels a lot / busy works late / stressful needs a break",His job is very interesting. He travels a lot.,L1,39
+基础③·职业与叙事,工作描述,He/She works from ___. He/She is a ___.,他/她在...工作。他/她是...。,"home writer / a cafe freelancer / an office manager",She works from home. She is a writer.,L1,40
+基础③·职业与叙事,场景描述,Look! The ___ is ___ing ___.,看！...正在...。,"boy running after his dog / girl dancing on stage / cat climbing the tree",Look! The boy is running after his dog.,L1,41
+基础③·职业与叙事,场景描述,In the picture ___ is ___ing ___.,画里...正在...。,"a girl reading under a tree / a boy playing with a ball / a family having a picnic",In the picture a girl is reading under a tree.,L1,42
+基础③·职业与叙事,图片描述,There was a ___ in ___. It was ___.,...里有一个...它很...。,"big dog the park friendly / cat the garden cute",There was a big dog in the park. It was very friendly.,L1,43
+基础③·职业与叙事,简单故事,Suddenly ___.,突然...。,"it started to rain / the phone rang / the car stopped",Suddenly it started to rain.,L1,44

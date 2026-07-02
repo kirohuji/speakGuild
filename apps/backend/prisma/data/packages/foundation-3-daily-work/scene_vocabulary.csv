@@ -1,122 +1,312 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础③·描述家人,他/她是谁,father,父亲,noun,/ˈfɑːðər/,/ˈfɑːðə/,L1,爸爸。口语常称dad。,"[{""en"":""My father is a doctor."",""zh"":""我爸爸是医生。""}]",0
-基础③·描述家人,他/她是谁,mother,母亲,noun,/ˈmʌðər/,/ˈmʌðə/,L1,妈妈。口语常称mom。,"[{""en"":""Her mother is a teacher."",""zh"":""她妈妈是老师。""}]",1
-基础③·描述家人,他/她是谁,has,有(三单),verb,/hæz/,/hæz/,L1,have的第三人称单数形式。,"[{""en"":""He has a car."",""zh"":""他有一辆车。""}]",2
-基础③·描述家人,他/她是谁,his,他的,pron,/hɪz/,/hɪz/,L1,he的所有格。,"[{""en"":""His name is Tom."",""zh"":""他的名字是Tom。""}]",3
-基础③·描述家人,他/她是谁,her,她的,pron,/hɜːr/,/hɜː/,L1,she的所有格。,"[{""en"":""Her phone is new."",""zh"":""她的手机是新的。""}]",4
-基础③·描述家人,他/她喜欢什么,likes,喜欢(三单),verb,/laɪks/,/laɪks/,L1,like的第三人称单数形式。,"[{""en"":""He likes coffee."",""zh"":""他喜欢咖啡。""}]",0
-基础③·描述家人,他/她喜欢什么,doesn't,不(三单助动词),aux,/ˈdʌznt/,/ˈdʌznt/,L1,does not缩写。第三人称否定助动词。,"[{""en"":""She doesn't like meat."",""zh"":""她不喜欢肉。""}]",1
-基础③·描述家人,他/她喜欢什么,does,做(三单)/助动词,verb,/dʌz/,/dʌz/,L1,do的第三人称单数形式。也用作疑问句助动词。,"[{""en"":""Does he like sports?"",""zh"":""他喜欢运动吗？""}]",2
-基础③·他/她的日常,他每天做什么,gets up,起床,phrase,/ɡets ʌp/,/ɡets ʌp/,L1,get up的第三人称形式。,"[{""en"":""He gets up at 7."",""zh"":""他7点起床。""}]",0
-基础③·他/她的日常,他每天做什么,goes,去(三单),verb,/ɡoʊz/,/ɡəʊz/,L1,go的第三人称单数形式。,"[{""en"":""She goes to school by bus."",""zh"":""她坐公交上学。""}]",1
-基础③·他/她的日常,他每天做什么,watches,看(三单),verb,/ˈwɒtʃɪz/,/ˈwɒtʃɪz/,L1,watch的第三人称单数(加es)。,"[{""en"":""He watches TV after dinner."",""zh"":""他晚饭后看电视。""}]",2
-基础③·他/她的日常,他每天做什么,studies,学习(三单),verb,/ˈstʌdiz/,/ˈstʌdiz/,L1,study的第三人称单数(y→ies)。,"[{""en"":""She studies English."",""zh"":""她学英语。""}]",3
-基础③·他/她的日常,他/她做什么工作,works,工作(三单),verb,/wɜːrks/,/wɜːks/,L1,work的第三人称单数形式。,"[{""en"":""He works in a hospital."",""zh"":""他在医院工作。""}]",0
-基础③·他/她的日常,他/她做什么工作,teaches,教(三单),verb,/ˈtiːtʃɪz/,/ˈtiːtʃɪz/,L1,teach的第三人称单数(加es)。,"[{""en"":""She teaches English."",""zh"":""她教英语。""}]",1
-基础③·对比你我他,我和你 vs 他/她,but,但是,conj,/bʌt/,/bʌt/,L1,表示转折对比。,"[{""en"":""I like coffee but she likes tea."",""zh"":""我喜欢咖啡但是她喜欢茶。""}]",0
-基础③·对比你我他,他们的生活,their,他们的,pron,/ðer/,/ðeə/,L1,they的所有格。,"[{""en"":""Their house is big."",""zh"":""他们的房子很大。""}]",0
-基础③·对比你我他,他们的生活,everyone,每个人,pron,/ˈevriwʌn/,/ˈevriwʌn/,L1,everyone = everybody 不定代词。,"[{""en"":""Everyone likes him."",""zh"":""大家都喜欢他。""}]",1
-基础③·描述家人,他/她是谁,brother,兄弟,noun,/ˈbrʌðər/,/ˈbrʌðə/,L1,兄弟。He is my brother。,"[{""en"":""He is my brother."",""zh"":""他是我的兄弟。""}]",5
-基础③·描述家人,他/她是谁,sister,姐妹,noun,/ˈsɪstər/,/ˈsɪstə/,L1,姐妹。She is my sister。,"[{""en"":""She is my sister."",""zh"":""她是我的姐妹。""}]",6
-基础③·描述家人,他/她是谁,son,儿子,noun,/sʌn/,/sʌn/,L1,儿子。He has a son。,"[{""en"":""He has a son."",""zh"":""他有一个儿子。""}]",7
-基础③·描述家人,他/她是谁,daughter,女儿,noun,/ˈdɔːtər/,/ˈdɔːtə/,L1,女儿。She has a daughter。,"[{""en"":""She has a daughter."",""zh"":""她有一个女儿。""}]",8
-基础③·描述家人,他/她是谁,uncle,叔叔/舅舅,noun,/ˈʌŋkəl/,/ˈʌŋkəl/,L1,叔叔/舅舅。His uncle is tall。,"[{""en"":""His uncle is a doctor."",""zh"":""他的叔叔是医生。""}]",9
-基础③·描述家人,他/她是谁,aunt,阿姨/姑姑,noun,/ænt/,/ɑːnt/,L1,阿姨/姑姑。Her aunt is kind。,"[{""en"":""Her aunt is a teacher."",""zh"":""她的阿姨是老师。""}]",10
-基础③·描述家人,他/她是谁,grandfather,爷爷/外公,noun,/ˈɡrænfɑːðər/,/ˈɡrænfɑːðə/,L1,爷爷/外公。His grandfather is old。,"[{""en"":""His grandfather is 80."",""zh"":""他爷爷80岁了。""}]",11
-基础③·描述家人,他/她是谁,grandmother,奶奶/外婆,noun,/ˈɡrænmʌðər/,/ˈɡrænmʌðə/,L1,奶奶/外婆。Her grandmother is kind。,"[{""en"":""Her grandmother is kind."",""zh"":""她奶奶很慈祥。""}]",12
-基础③·描述家人,他/她是谁,tall,高的,adj,/tɔːl/,/tɔːl/,L1,高的。He is very tall。,"[{""en"":""He is very tall."",""zh"":""他很高。""}]",13
-基础③·描述家人,他/她是谁,kind,善良的,adj,/kaɪnd/,/kaɪnd/,L1,善良的/好心的。She is kind。,"[{""en"":""She is very kind."",""zh"":""她很善良。""}]",14
-基础③·描述家人,他/她喜欢什么,loves,爱/非常喜欢(三单),verb,/lʌvz/,/lʌvz/,L1,love的第三人称。比likes程度更强。,"[{""en"":""He loves music."",""zh"":""他热爱音乐。""}]",3
-基础③·描述家人,他/她喜欢什么,enjoys,享受/喜欢(三单),verb,/ɪnˈdʒɔɪz/,/ɪnˈdʒɔɪz/,L1,enjoy的第三人称。enjoy doing sth。,"[{""en"":""She enjoys reading."",""zh"":""她喜欢读书。""}]",4
-基础③·他/她的日常,他每天做什么,eats,吃(三单),verb,/iːts/,/iːts/,L1,eat的第三人称。He eats breakfast at 7。,"[{""en"":""He eats lunch at 12."",""zh"":""他12点吃午饭。""}]",4
-基础③·他/她的日常,他每天做什么,drinks,喝(三单),verb,/drɪŋks/,/drɪŋks/,L1,drink的第三人称。She drinks tea。,"[{""en"":""She drinks tea in the morning."",""zh"":""她早上喝茶。""}]",5
-基础③·他/她的日常,他每天做什么,reads,读(三单),verb,/riːdz/,/riːdz/,L1,read的第三人称。He reads books。,"[{""en"":""He reads books at night."",""zh"":""他晚上看书。""}]",6
-基础③·他/她的日常,他每天做什么,plays,玩/打(三单),verb,/pleɪz/,/pleɪz/,L1,play的第三人称。She plays tennis。,"[{""en"":""She plays football on weekends."",""zh"":""她周末踢足球。""}]",7
-基础③·他/她的日常,他每天做什么,sleeps,睡(三单),verb,/sliːps/,/sliːps/,L1,sleep的第三人称。He sleeps at 10。,"[{""en"":""He sleeps at 10 every night."",""zh"":""他每晚10点睡觉。""}]",8
-基础③·他/她的日常,他/她做什么工作,doctor,医生,noun,/ˈdɒktər/,/ˈdɒktə/,L1,医生。He is a doctor。,"[{""en"":""He is a doctor."",""zh"":""他是一名医生。""}]",2
-基础③·他/她的日常,他/她做什么工作,nurse,护士,noun,/nɜːrs/,/nɜːs/,L1,护士。She is a nurse。,"[{""en"":""She is a nurse."",""zh"":""她是一名护士。""}]",3
-基础③·他/她的日常,他/她做什么工作,driver,司机,noun,/ˈdraɪvər/,/ˈdraɪvə/,L1,司机。He is a bus driver。,"[{""en"":""He is a bus driver."",""zh"":""他是一名公交司机。""}]",4
-基础③·他/她的日常,他/她做什么工作,cook,厨师,noun,/kʊk/,/kʊk/,L1,厨师。She is a cook。,"[{""en"":""She is a cook."",""zh"":""她是一名厨师。""}]",5
-基础③·对比你我他,他们的生活,lives,生活/住在(三单),verb,/lɪvz/,/lɪvz/,L1,live的第三人称。He lives in Beijing。,"[{""en"":""He lives in Beijing."",""zh"":""他住在北京。""}]",2
-基础③·对比你我他,他们的生活,always,总是,adv,/ˈɔːlweɪz/,/ˈɔːlweɪz/,L1,频率副词，总是。He is always happy。,"[{""en"":""He is always happy."",""zh"":""他总是很开心。""}]",3
-基础③·对比你我他,他们的生活,usually,通常,adv,/ˈjuːʒuəli/,/ˈjuːʒuəli/,L1,频率副词，通常。She usually gets up early。,"[{""en"":""She usually gets up at 7."",""zh"":""她通常7点起床。""}]",4
-基础③·对比你我他,他们的生活,often,经常,adv,/ˈɒfən/,/ˈɒfən/,L1,频率副词，经常。He often reads books。,"[{""en"":""He often reads books."",""zh"":""他经常看书。""}]",5
-基础③·对比你我他,他们的生活,never,从不,adv,/ˈnevər/,/ˈnevə/,L1,频率副词，从不。She never eats meat。,"[{""en"":""She never eats meat."",""zh"":""她从不吃肉。""}]",6
-基础③·描述家人,他/她是谁,short,矮的,adj,/ʃɔːrt/,/ʃɔːt/,L1,矮的。反义词 tall。,"[{""en"":""He is short."",""zh"":""他很矮。""}]",15
-基础③·描述家人,他/她是谁,young,年轻的,adj,/jʌŋ/,/jʌŋ/,L1,年轻的。She is young。,"[{""en"":""She is young."",""zh"":""她很年轻。""}]",16
-基础③·描述家人,他/她是谁,old,老的/旧的,adj,/oʊld/,/əʊld/,L1,老的/旧的。His father is old。,"[{""en"":""His father is old."",""zh"":""他爸爸老了。""}]",17
-基础③·描述家人,他/她是谁,pretty,漂亮的,adj,/ˈprɪti/,/ˈprɪti/,L1,漂亮的(多形容女性)。,"[{""en"":""She is very pretty."",""zh"":""她很漂亮。""}]",18
-基础③·描述家人,他/她是谁,handsome,英俊的,adj,/ˈhænsəm/,/ˈhænsəm/,L1,英俊的(多形容男性)。,"[{""en"":""He is handsome."",""zh"":""他很英俊。""}]",19
-基础③·描述家人,他/她是谁,friendly,友好的,adj,/ˈfrendli/,/ˈfrendli/,L1,友好的。She is very friendly。,"[{""en"":""She is very friendly."",""zh"":""她很友好。""}]",20
-基础③·描述家人,他/她是谁,smart,聪明的,adj,/smɑːrt/,/smɑːt/,L1,聪明的。He is smart。,"[{""en"":""He is very smart."",""zh"":""他很聪明。""}]",21
-基础③·描述家人,他/她是谁,funny,有趣的,adj,/ˈfʌni/,/ˈfʌni/,L1,有趣的/好笑的。He is funny。,"[{""en"":""He is very funny."",""zh"":""他很有趣。""}]",22
-基础③·描述家人,他/她是谁,strong,强壮的,adj,/strɒŋ/,/strɒŋ/,L1,强壮的。He is strong。,"[{""en"":""He is very strong."",""zh"":""他很强壮。""}]",23
-基础③·描述家人,他/她是谁,thin,瘦的,adj,/θɪn/,/θɪn/,L1,瘦的。She is thin。,"[{""en"":""She is very thin."",""zh"":""她很瘦。""}]",24
-基础③·描述家人,他/她是谁,husband,丈夫,noun,/ˈhʌzbənd/,/ˈhʌzbənd/,L1,丈夫。Her husband is a teacher。,"[{""en"":""Her husband is a teacher."",""zh"":""她丈夫是老师。""}]",25
-基础③·描述家人,他/她是谁,wife,妻子,noun,/waɪf/,/waɪf/,L1,妻子。His wife is a doctor。,"[{""en"":""His wife is a doctor."",""zh"":""他妻子是医生。""}]",26
-基础③·描述家人,他/她是谁,cousin,表/堂兄弟姐妹,noun,/ˈkʌzən/,/ˈkʌzən/,L1,表/堂兄弟姐妹。His cousin lives in Beijing。,"[{""en"":""His cousin is a student."",""zh"":""他表弟是学生。""}]",27
-基础③·描述家人,他/她是谁,parents,父母,noun,/ˈperənts/,/ˈpeərənts/,L1,父母。His parents are kind。,"[{""en"":""His parents are teachers."",""zh"":""他父母是老师。""}]",28
-基础③·描述家人,他/她是谁,child,孩子,noun,/tʃaɪld/,/tʃaɪld/,L1,孩子。She has one child。,"[{""en"":""She has a child."",""zh"":""她有一个孩子。""}]",29
-基础③·描述家人,他/她喜欢什么,hates,讨厌(三单),verb,/heɪts/,/heɪts/,L1,hate的第三人称。He hates cold weather。,"[{""en"":""He hates cold weather."",""zh"":""他讨厌冷天。""}]",5
-基础③·他/她的日常,他每天做什么,wakes up,醒来(三单),phrase,/weɪks ʌp/,/weɪks ʌp/,L1,wake up的第三人称。He wakes up at 6。,"[{""en"":""He wakes up at 6."",""zh"":""他6点醒来。""}]",9
-基础③·他/她的日常,他每天做什么,leaves,离开(三单),verb,/liːvz/,/liːvz/,L1,leave的第三人称。She leaves at 8。,"[{""en"":""She leaves for work at 8."",""zh"":""她8点去上班。""}]",10
-基础③·他/她的日常,他每天做什么,comes,来(三单),verb,/kʌmz/,/kʌmz/,L1,come的第三人称。He comes home at 6。,"[{""en"":""He comes home at 6."",""zh"":""他6点到家。""}]",11
-基础③·他/她的日常,他每天做什么,takes,拿/带/做(三单),verb,/teɪks/,/teɪks/,L1,take的第三人称。She takes a shower。,"[{""en"":""She takes a shower in the morning."",""zh"":""她早上洗澡。""}]",12
-基础③·他/她的日常,他每天做什么,makes,做/制作(三单),verb,/meɪks/,/meɪks/,L1,make的第三人称。He makes breakfast。,"[{""en"":""He makes breakfast every day."",""zh"":""他每天做早餐。""}]",13
-基础③·他/她的日常,他每天做什么,cleans,打扫(三单),verb,/kliːnz/,/kliːnz/,L1,clean的第三人称。She cleans the room。,"[{""en"":""She cleans the room every day."",""zh"":""她每天打扫房间。""}]",14
-基础③·他/她的日常,他每天做什么,walks,走路/散步(三单),verb,/wɔːks/,/wɔːks/,L1,walk的第三人称。He walks to work。,"[{""en"":""He walks to work every day."",""zh"":""他每天走路去上班。""}]",15
-基础③·他/她的日常,他每天做什么,runs,跑步(三单),verb,/rʌnz/,/rʌnz/,L1,run的第三人称。She runs every morning。,"[{""en"":""She runs every morning."",""zh"":""她每天早上跑步。""}]",16
-基础③·他/她的日常,他/她做什么工作,teacher,老师,noun,/ˈtiːtʃər/,/ˈtiːtʃə/,L1,老师。She is a teacher。,"[{""en"":""She is a teacher."",""zh"":""她是一名老师。""}]",6
-基础③·他/她的日常,他/她做什么工作,student,学生,noun,/ˈstuːdənt/,/ˈstjuːdənt/,L1,学生。He is a student。,"[{""en"":""He is a student."",""zh"":""他是一名学生。""}]",7
-基础③·他/她的日常,他/她做什么工作,manager,经理,noun,/ˈmænɪdʒər/,/ˈmænɪdʒə/,L1,经理。He is a manager。,"[{""en"":""He is a manager."",""zh"":""他是一名经理。""}]",8
-基础③·他/她的日常,他/她做什么工作,boss,老板,noun,/bɒs/,/bɒs/,L1,老板。His boss is nice。,"[{""en"":""His boss is very kind."",""zh"":""他的老板很和善。""}]",9
-基础③·他/她的日常,他/她做什么工作,engineer,工程师,noun,/ˌendʒɪˈnɪr/,/ˌendʒɪˈnɪə/,L1,工程师。He is an engineer。,"[{""en"":""He is an engineer."",""zh"":""他是一名工程师。""}]",10
-基础③·他/她的日常,他/她做什么工作,farmer,农民,noun,/ˈfɑːrmər/,/ˈfɑːmə/,L1,农民。He is a farmer。,"[{""en"":""He is a farmer."",""zh"":""他是一个农民。""}]",11
-基础③·他/她的日常,他/她做什么工作,writer,作家,noun,/ˈraɪtər/,/ˈraɪtə/,L1,作家。She is a writer。,"[{""en"":""She is a writer."",""zh"":""她是一名作家。""}]",12
-基础③·他/她的日常,他/她做什么工作,office,办公室,noun,/ˈɒfɪs/,/ˈɒfɪs/,L1,办公室。He works in an office。,"[{""en"":""He works in an office."",""zh"":""他在办公室工作。""}]",13
-基础③·他/她的日常,他/她做什么工作,hospital,医院,noun,/ˈhɒspɪtəl/,/ˈhɒspɪtəl/,L1,医院。She works in a hospital。,"[{""en"":""She works in a hospital."",""zh"":""她在医院工作。""}]",14
-基础③·他/她的日常,他/她做什么工作,school,学校,noun,/skuːl/,/skuːl/,L1,学校。He teaches at a school。,"[{""en"":""He works at a school."",""zh"":""他在学校工作。""}]",15
-基础③·他/她的日常,他/她做什么工作,bank,银行,noun,/bæŋk/,/bæŋk/,L1,银行。She works in a bank。,"[{""en"":""She works in a bank."",""zh"":""她在银行工作。""}]",16
-基础③·对比你我他,我和你 vs 他/她,same,相同的,adj,/seɪm/,/seɪm/,L1,相同的。We like the same food。,"[{""en"":""We like the same music."",""zh"":""我们喜欢同样的音乐。""}]",2
-基础③·对比你我他,我和你 vs 他/她,different,不同的,adj,/ˈdɪfərənt/,/ˈdɪfərənt/,L1,不同的。We are different。,"[{""en"":""They have different jobs."",""zh"":""他们有不同的工作。""}]",3
-基础③·对比你我他,他们的生活,family,家庭,noun,/ˈfæməli/,/ˈfæməli/,L1,家庭/家人。His family is big。,"[{""en"":""His family is very big."",""zh"":""他的家庭很大。""}]",7
-基础③·对比你我他,他们的生活,house,房子,noun,/haʊs/,/haʊs/,L1,房子。Their house is big。,"[{""en"":""Their house is very big."",""zh"":""他们的房子很大。""}]",8
-基础③·对比你我他,他们的生活,car,汽车,noun,/kɑːr/,/kɑː/,L1,汽车。He has a car。,"[{""en"":""They have a car."",""zh"":""他们有一辆车。""}]",9
-基础③·对比你我他,他们的生活,dog,狗,noun,/dɒɡ/,/dɒɡ/,L1,狗。They have a dog。,"[{""en"":""They have a dog."",""zh"":""他们有一只狗。""}]",10
-基础③·对比你我他,他们的生活,cat,猫,noun,/kæt/,/kæt/,L1,猫。She has a cat。,"[{""en"":""She has a cat."",""zh"":""她有一只猫。""}]",11
-基础③·对比你我他,他们的生活,early,早的/早地,adv,/ˈɜːrli/,/ˈɜːli/,L1,早。He gets up early。,"[{""en"":""He always gets up early."",""zh"":""他总是早起。""}]",12
-基础③·对比你我他,他们的生活,late,晚的/迟的,adv,/leɪt/,/leɪt/,L1,迟到/晚。She is never late。,"[{""en"":""She is never late."",""zh"":""她从不迟到。""}]",13
-
-基础③·他/她的日常,他每天做什么,drives,开车(三单),verb,/draɪvz/,/draɪvz/,L1,drive的第三人称。He drives to work。,"[{""en"":""He drives to work."",""zh"":""他开车上班。""}]",17
-基础③·他/她的日常,他每天做什么,helps,帮助(三单),verb,/helps/,/helps/,L1,help的第三人称。She helps with housework。,"[{""en"":""She helps with cooking."",""zh"":""她帮忙做饭。""}]",18
-基础③·他/她的日常,他每天做什么,talks,说话(三单),verb,/tɔːks/,/tɔːks/,L1,talk的第三人称。He talks to friends。,"[{""en"":""He talks to his friend."",""zh"":""他和朋友聊天。""}]",19
-基础③·他/她的日常,他每天做什么,listens,听(三单),verb,/ˈlɪsənz/,/ˈlɪsənz/,L1,listen的第三人称。She listens to music。,"[{""en"":""She listens to music."",""zh"":""她听音乐。""}]",20
-基础③·描述家人,他/她是谁,quiet,安静的,adj,/ˈkwaɪət/,/ˈkwaɪət/,L1,安静的。He is quiet。,"[{""en"":""He is very quiet."",""zh"":""他很安静。""}]",30
-基础③·描述家人,他/她是谁,busy,忙碌的,adj,/ˈbɪzi/,/ˈbɪzi/,L1,忙碌的。She is busy。,"[{""en"":""She is very busy."",""zh"":""她很忙。""}]",31
-基础③·描述家人,他/她是谁,lazy,懒惰的,adj,/ˈleɪzi/,/ˈleɪzi/,L1,懒惰的。He is lazy。,"[{""en"":""He is lazy on weekends."",""zh"":""他周末很懒。""}]",32
-基础③·描述家人,他/她喜欢什么,sings,唱歌(三单),verb,/sɪŋz/,/sɪŋz/,L1,sing的第三人称。She sings well。,"[{""en"":""She sings very well."",""zh"":""她唱得很好。""}]",6
-基础③·描述家人,他/她喜欢什么,dances,跳舞(三单),verb,/ˈdænsɪz/,/ˈdɑːnsɪz/,L1,dance的第三人称。He dances。,"[{""en"":""He dances at parties."",""zh"":""他在派对上跳舞。""}]",7
-基础③·他/她的日常,他/她做什么工作,waiter,服务员,noun,/ˈweɪtər/,/ˈweɪtə/,L1,男服务员。He is a waiter。,"[{""en"":""He works as a waiter."",""zh"":""他是服务员。""}]",17
-基础③·他/她的日常,他/她做什么工作,waitress,女服务员,noun,/ˈweɪtrəs/,/ˈweɪtrəs/,L1,女服务员。She is a waitress。,"[{""en"":""She works as a waitress."",""zh"":""她是女服务员。""}]",18
-基础③·对比你我他,他们的生活,sometimes,有时,adv,/ˈsʌmtaɪmz/,/ˈsʌmtaɪmz/,L1,频率副词，有时。He sometimes reads。,"[{""en"":""He sometimes reads books."",""zh"":""他有时看书。""}]",14
-基础③·对比你我他,他们的生活,together,一起,adv,/təˈɡeðər/,/təˈɡeðə/,L1,一起。They work together。,"[{""en"":""They live together."",""zh"":""他们住在一起。""}]",15
-基础③·对比你我他,他们的生活,also,也,adv,/ˈɔːlsoʊ/,/ˈɔːlsəʊ/,L1,也(句中)。She also likes music。,"[{""en"":""He also likes sports."",""zh"":""他也喜欢运动。""}]",16
-基础③·他/她的日常,他每天做什么,washes,洗(三单),verb,/ˈwɒʃɪz/,/ˈwɒʃɪz/,L1,wash的第三人称。He washes the dishes。,"[{""en"":""He washes his hands."",""zh"":""他洗手。""}]",21
-基础③·描述家人,他/她是谁,name,名字,noun,/neɪm/,/neɪm/,L1,名字。His name is Tom。,"[{""en"":""Her name is Anna."",""zh"":""她的名字是安娜。""}]",33
-基础③·描述家人,他/她是谁,age,年龄,noun,/eɪdʒ/,/eɪdʒ/,L1,年龄。His age is 30。,"[{""en"":""Her age is 25."",""zh"":""她25岁。""}]",34
-基础③·描述家人,他/她是谁,birthday,生日,noun,/ˈbɜːrθdeɪ/,/ˈbɜːθdeɪ/,L1,生日。His birthday is in May。,"[{""en"":""Her birthday is in June."",""zh"":""她的生日在六月。""}]",35
-基础③·他/她的日常,他/她做什么工作,company,公司,noun,/ˈkʌmpəni/,/ˈkʌmpəni/,L1,公司。He works for a big company。,"[{""en"":""She works for a big company."",""zh"":""她在一家大公司工作。""}]",19
-基础③·他/她的日常,他/她做什么工作,factory,工厂,noun,/ˈfæktəri/,/ˈfæktəri/,L1,工厂。He works in a factory。,"[{""en"":""They work in a factory."",""zh"":""他们在工厂工作。""}]",20
-基础③·对比你我他,他们的生活,week,周/星期,noun,/wiːk/,/wiːk/,L1,周。every week 每周。,"[{""en"":""They visit every week."",""zh"":""他们每周都来。""}]",17
-基础③·对比你我他,他们的生活,month,月,noun,/mʌnθ/,/mʌnθ/,L1,月。every month 每月。,"[{""en"":""They travel every month."",""zh"":""他们每月旅行。""}]",18
-基础③·对比你我他,他们的生活,year,年,noun,/jɪr/,/jɪə/,L1,年。every year 每年。,"[{""en"":""They visit China every year."",""zh"":""他们每年来中国。""}]",19
-基础③·他/她的日常,他每天做什么,calls,打电话(三单),verb,/kɔːlz/,/kɔːlz/,L1,call的第三人称。He calls his mom。,"[{""en"":""He calls his mom every day."",""zh"":""他每天给妈妈打电话。""}]",22
-基础③·他/她的日常,他每天做什么,sends,发送(三单),verb,/sendz/,/sendz/,L1,send的第三人称。She sends messages。,"[{""en"":""She sends photos to friends."",""zh"":""她给朋友发照片。""}]",23
-基础③·描述家人,他/她是谁,nephew,侄子/外甥,noun,/ˈnefjuː/,/ˈnefjuː/,L1,侄子/外甥。His nephew is 5。,"[{""en"":""His nephew is a student."",""zh"":""他侄子是个学生。""}]",36
-基础③·描述家人,他/她是谁,niece,侄女/外甥女,noun,/niːs/,/niːs/,L1,侄女/外甥女。Her niece is cute。,"[{""en"":""Her niece is very cute."",""zh"":""她侄女很可爱。""}]",37
-基础③·对比你我他,他们的生活,visit,拜访/参观(三单),verb,/ˈvɪzɪt/,/ˈvɪzɪt/,L1,拜访。He visits his parents。,"[{""en"":""She visits her grandmother."",""zh"":""她去看奶奶。""}]",20
-基础③·他/她的日常,他/她做什么工作,sells,卖(三单),verb,/selz/,/selz/,L1,sell的第三人称。She sells clothes。,"[{""en"":""He sells cars."",""zh"":""他卖汽车。""}]",21
-基础③·他/她的日常,他每天做什么,meets,见面(三单),verb,/miːts/,/miːts/,L1,meet的第三人称。She meets friends。,"[{""en"":""He meets his friends on weekends."",""zh"":""他周末见朋友。""}]",24
-基础③·描述家人,他/她是谁,pet,宠物,noun,/pet/,/pet/,L1,宠物。He has a pet。,"[{""en"":""She has a pet bird."",""zh"":""她有一只宠物鸟。""}]",38
-基础③·对比你我他,他们的生活,weekend,周末,noun,/ˈwiːkend/,/ˌwiːkˈend/,L1,周末。on weekends 在周末。,"[{""en"":""They go out on weekends."",""zh"":""他们周末出去。""}]",21
-基础③·对比你我他,他们的生活,every day,每天,phrase,/ˈevri deɪ/,/ˈevri deɪ/,L1,每天。He works every day。,"[{""en"":""He exercises every day."",""zh"":""他每天锻炼。""}]",22
+基础③·描述家人,核心词汇,able,,adj,,,L1,,,0
+基础③·描述家人,核心词汇,after,,prep,,,L1,,,1
+基础③·描述家人,核心词汇,animal,,n,,,L1,,,2
+基础③·描述家人,核心词汇,appear,,v,,,L1,,,3
+基础③·描述家人,核心词汇,artificial,,adj,,,L1,,,4
+基础③·描述家人,核心词汇,assume,,v,,,L1,,,5
+基础③·描述家人,核心词汇,away,,adv,,,L1,,,6
+基础③·描述家人,核心词汇,beer,,n,,,L1,,,7
+基础③·描述家人,核心词汇,better,,adj,,,L1,,,8
+基础③·描述家人,核心词汇,born,,v,,,L1,,,9
+基础③·描述家人,核心词汇,build,,v,,,L1,,,10
+基础③·描述家人,核心词汇,career,,n,,,L1,,,11
+基础③·描述家人,核心词汇,change,,v,,,L1,,,12
+基础③·描述家人,核心词汇,church,,n,,,L1,,,13
+基础③·描述家人,核心词汇,cloud,,n,,,L1,,,14
+基础③·描述家人,核心词汇,complete,,adj,,,L1,,,15
+基础③·描述家人,核心词汇,contribute,,v,,,L1,,,16
+基础③·描述家人,核心词汇,count,,v,,,L1,,,17
+基础③·描述家人,核心词汇,cry,,v,,,L1,,,18
+基础③·描述家人,核心词汇,delicious,,adj,,,L1,,,19
+基础③·描述家人,核心词汇,description,,n,,,L1,,,20
+基础③·描述家人,核心词汇,disagree,,v,,,L1,,,21
+基础③·描述家人,核心词汇,dishonest,,adj,,,L1,,,22
+基础③·描述家人,核心词汇,draft,,n,,,L1,,,23
+基础③·描述家人,核心词汇,else,,adv,,,L1,,,24
+基础③·描述家人,核心词汇,employer,,n,,,L1,,,25
+基础③·描述家人,核心词汇,everybody,,pron,,,L1,,,26
+基础③·描述家人,核心词汇,exam,,n,,,L1,,,27
+基础③·描述家人,核心词汇,face,,n,,,L1,,,28
+基础③·描述家人,核心词汇,farmer,,n,,,L1,,,29
+基础③·描述家人,核心词汇,fix,,v,,,L1,,,30
+基础③·描述家人,核心词汇,fully,,adv,,,L1,,,31
+基础③·描述家人,核心词汇,golf,,n,,,L1,,,32
+基础③·描述家人,核心词汇,group,,n,,,L1,,,33
+基础③·描述家人,核心词汇,heavy,,adj,,,L1,,,34
+基础③·描述家人,核心词汇,hope,,v,,,L1,,,35
+基础③·描述家人,核心词汇,immediately,,adv,,,L1,,,36
+基础③·描述家人,核心词汇,intelligent,,adj,,,L1,,,37
+基础③·描述家人,核心词汇,jeans,,n,,,L1,,,38
+基础③·描述家人,核心词汇,keep,,v,,,L1,,,39
+基础③·描述家人,核心词汇,laughter,,n,,,L1,,,40
+基础③·描述家人,核心词汇,level,,n,,,L1,,,41
+基础③·描述家人,核心词汇,main,,adj,,,L1,,,42
+基础③·描述家人,核心词汇,mass,,n,,,L1,,,43
+基础③·描述家人,核心词汇,mobile,,adj,,,L1,,,44
+基础③·描述家人,核心词汇,must modal,,v,,,L1,,,45
+基础③·描述家人,核心词汇,network,,n,,,L1,,,46
+基础③·描述家人,核心词汇,nothing,,pron,,,L1,,,47
+基础③·描述家人,核心词汇,open,,adj,,,L1,,,48
+基础③·描述家人,核心词汇,pack,,v,,,L1,,,49
+基础③·描述家人,核心词汇,partner,,n,,,L1,,,50
+基础③·描述家人,核心词汇,personality,,n,,,L1,,,51
+基础③·描述家人,核心词汇,pilot,,n,,,L1,,,52
+基础③·描述家人,核心词汇,pool,,n,,,L1,,,53
+基础③·描述家人,核心词汇,prize,,n,,,L1,,,54
+基础③·描述家人,核心词汇,programme,,n,,,L1,,,55
+基础③·描述家人,核心词汇,queen,,n,,,L1,,,56
+基础③·描述家人,核心词汇,ready,,adj,,,L1,,,57
+基础③·描述家人,核心词汇,relationship,,n,,,L1,,,58
+基础③·描述家人,核心词汇,requirement,,n,,,L1,,,59
+基础③·描述家人,核心词汇,rise,,v,,,L1,,,60
+基础③·描述家人,核心词汇,season,,n,,,L1,,,61
+基础③·描述家人,核心词汇,ship,,n,,,L1,,,62
+基础③·描述家人,核心词汇,singer,,n,,,L1,,,63
+基础③·描述家人,核心词汇,smile,,v,,,L1,,,64
+基础③·描述家人,核心词汇,somebody,,pron,,,L1,,,65
+基础③·描述家人,核心词汇,south,,n,,,L1,,,66
+基础③·描述家人,核心词汇,stamp,,n,,,L1,,,67
+基础③·描述家人,核心词汇,story,,n,,,L1,,,68
+基础③·描述家人,核心词汇,surround,,v,,,L1,,,69
+基础③·描述家人,核心词汇,tennis,,n,,,L1,,,70
+基础③·描述家人,核心词汇,tower,,n,,,L1,,,71
+基础③·描述家人,核心词汇,twice,,adv,,,L1,,,72
+基础③·描述家人,核心词汇,useful,,adj,,,L1,,,73
+基础③·描述家人,核心词汇,volume,,n,,,L1,,,74
+基础③·描述家人,核心词汇,widely,,adv,,,L1,,,75
+基础③·描述家人,核心词汇,wish,,v,,,L1,,,76
+基础③·描述家人,核心词汇,writer,,n,,,L1,,,77
+基础③·他/她的日常,核心词汇,above,,prep,,,L1,,,78
+基础③·他/她的日常,核心词汇,aid,,n,,,L1,,,79
+基础③·他/她的日常,核心词汇,any more,,adv,,,L1,,,80
+基础③·他/她的日常,核心词汇,appearance,,n,,,L1,,,81
+基础③·他/她的日常,核心词汇,artist,,n,,,L1,,,82
+基础③·他/她的日常,核心词汇,aunt,,n,,,L1,,,83
+基础③·他/她的日常,核心词汇,baby,,n,,,L1,,,84
+基础③·他/她的日常,核心词汇,begin,,v,,,L1,,,85
+基础③·他/她的日常,核心词汇,beyond,,prep,,,L1,,,86
+基础③·他/她的日常,核心词汇,bottom,,n,,,L1,,,87
+基础③·他/她的日常,核心词汇,button,,n,,,L1,,,88
+基础③·他/她的日常,核心词汇,carefully,,adv,,,L1,,,89
+基础③·他/她的日常,核心词汇,chart,,n,,,L1,,,90
+基础③·他/她的日常,核心词汇,citizen,,n,,,L1,,,91
+基础③·他/她的日常,核心词汇,colleague,,n,,,L1,,,92
+基础③·他/她的日常,核心词汇,completely,,adv,,,L1,,,93
+基础③·他/她的日常,核心词汇,contribution,,n,,,L1,,,94
+基础③·他/她的日常,核心词汇,cousin,,n,,,L1,,,95
+基础③·他/她的日常,核心词汇,culture,,n,,,L1,,,96
+基础③·他/她的日常,核心词汇,delighted,,adj,,,L1,,,97
+基础③·他/她的日常,核心词汇,destroy,,v,,,L1,,,98
+基础③·他/她的日常,核心词汇,disappear,,v,,,L1,,,99
+基础③·他/她的日常,核心词汇,distribute,,v,,,L1,,,100
+基础③·他/她的日常,核心词汇,driving,,n,,,L1,,,101
+基础③·他/她的日常,核心词汇,emerge,,v,,,L1,,,102
+基础③·他/她的日常,核心词汇,engineer,,n,,,L1,,,103
+基础③·他/她的日常,核心词汇,everyone,,pron,,,L1,,,104
+基础③·他/她的日常,核心词汇,exist,,v,,,L1,,,105
+基础③·他/她的日常,核心词汇,factor,,n,,,L1,,,106
+基础③·他/她的日常,核心词汇,female,,adj,,,L1,,,107
+基础③·他/她的日常,核心词汇,flexible,,adj,,,L1,,,108
+基础③·他/她的日常,核心词汇,funny,,adj,,,L1,,,109
+基础③·他/她的日常,核心词汇,grandfather,,n,,,L1,,,110
+基础③·他/她的日常,核心词汇,grow,,v,,,L1,,,111
+基础③·他/她的日常,核心词汇,herself,,pron,,,L1,,,112
+基础③·他/她的日常,核心词汇,housing,,n,,,L1,,,113
+基础③·他/她的日常,核心词汇,important,,adj,,,L1,,,114
+基础③·他/她的日常,核心词汇,introduction,,n,,,L1,,,115
+基础③·他/她的日常,核心词汇,jewellery,,n,,,L1,,,116
+基础③·他/她的日常,核心词汇,laptop,,n,,,L1,,,117
+基础③·他/她的日常,核心词汇,lawyer,,n,,,L1,,,118
+基础③·他/她的日常,核心词汇,library,,n,,,L1,,,119
+基础③·他/她的日常,核心词汇,manager,,n,,,L1,,,120
+基础③·他/她的日常,核心词汇,maths,,n,,,L1,,,121
+基础③·他/她的日常,核心词汇,moral,,adj,,,L1,,,122
+基础③·他/她的日常,核心词汇,national,,adj,,,L1,,,123
+基础③·他/她的日常,核心词汇,next,,adj,,,L1,,,124
+基础③·他/她的日常,核心词汇,nut,,n,,,L1,,,125
+基础③·他/她的日常,核心词汇,organize,,v,,,L1,,,126
+基础③·他/她的日常,核心词汇,parent,,n,,,L1,,,127
+基础③·他/她的日常,核心词汇,pattern,,n,,,L1,,,128
+基础③·他/她的日常,核心词汇,phase,,n,,,L1,,,129
+基础③·他/她的日常,核心词汇,police,,n,,,L1,,,130
+基础③·他/她的日常,核心词汇,pound,,n,,,L1,,,131
+基础③·他/她的日常,核心词汇,professional,,adj,,,L1,,,132
+基础③·他/她的日常,核心词汇,psychology,,n,,,L1,,,133
+基础③·他/她的日常,核心词汇,quiet,,adj,,,L1,,,134
+基础③·他/她的日常,核心词汇,reason,,n,,,L1,,,135
+基础③·他/她的日常,核心词汇,relatively,,adv,,,L1,,,136
+基础③·他/她的日常,核心词汇,research,,n,,,L1,,,137
+基础③·他/她的日常,核心词汇,rubbish,,n,,,L1,,,138
+基础③·他/她的日常,核心词汇,seek,,v,,,L1,,,139
+基础③·他/她的日常,核心词汇,shout,,v,,,L1,,,140
+基础③·他/她的日常,核心词汇,single,,adj,,,L1,,,141
+基础③·他/她的日常,核心词汇,snake,,n,,,L1,,,142
+基础③·他/她的日常,核心词汇,someone,,pron,,,L1,,,143
+基础③·他/她的日常,核心词汇,spend,,v,,,L1,,,144
+基础③·他/她的日常,核心词汇,stay,,v,,,L1,,,145
+基础③·他/她的日常,核心词汇,style,,n,,,L1,,,146
+基础③·他/她的日常,核心词汇,survey,,n,,,L1,,,147
+基础③·他/她的日常,核心词汇,than,,conj,,,L1,,,148
+基础③·他/她的日常,核心词汇,traffic,,n,,,L1,,,149
+基础③·他/她的日常,核心词汇,uncle,,n,,,L1,,,150
+基础③·他/她的日常,核心词汇,van,,n,,,L1,,,151
+基础③·他/她的日常,核心词汇,web,,n,,,L1,,,152
+基础③·他/她的日常,核心词汇,wife,,n,,,L1,,,153
+基础③·他/她的日常,核心词汇,worker,,n,,,L1,,,154
+基础③·他/她的日常,核心词汇,writing,,n,,,L1,,,155
+基础③·对比你我他,核心词汇,absolute,,adj,,,L1,,,156
+基础③·对比你我他,核心词汇,almost,,adv,,,L1,,,157
+基础③·对比你我他,核心词汇,apparent,,adj,,,L1,,,158
+基础③·对比你我他,核心词汇,area,,n,,,L1,,,159
+基础③·对比你我他,核心词汇,artistic,,adj,,,L1,,,160
+基础③·对比你我他,核心词汇,author,,n,,,L1,,,161
+基础③·对比你我他,核心词汇,bar,,n,,,L1,,,162
+基础③·对比你我他,核心词汇,beginning,,n,,,L1,,,163
+基础③·对比你我他,核心词汇,blonde,,adj,,,L1,,,164
+基础③·对比你我他,核心词汇,boyfriend,,n,,,L1,,,165
+基础③·对比你我他,核心词汇,capacity,,n,,,L1,,,166
+基础③·对比你我他,核心词汇,castle,,n,,,L1,,,167
+基础③·对比你我他,核心词汇,chat,,v,,,L1,,,168
+基础③·对比你我他,核心词汇,clever,,adj,,,L1,,,169
+基础③·对比你我他,核心词汇,collect,,v,,,L1,,,170
+基础③·对比你我他,核心词汇,conduct,,v,,,L1,,,171
+基础③·对比你我他,核心词汇,control,,n,,,L1,,,172
+基础③·对比你我他,核心词汇,crew,,n,,,L1,,,173
+基础③·对比你我他,核心词汇,cure,,v,,,L1,,,174
+基础③·对比你我他,核心词汇,dentist,,n,,,L1,,,175
+基础③·对比你我他,核心词汇,dictionary,,n,,,L1,,,176
+基础③·对比你我他,核心词汇,discuss,,v,,,L1,,,177
+基础③·对比你我他,核心词汇,distribution,,n,,,L1,,,178
+基础③·对比你我他,核心词汇,earth,,n,,,L1,,,179
+基础③·对比你我他,核心词汇,employ,,v,,,L1,,,180
+基础③·对比你我他,核心词汇,ensure,,v,,,L1,,,181
+基础③·对比你我他,核心词汇,everything,,pron,,,L1,,,182
+基础③·对比你我他,核心词汇,explain,,v,,,L1,,,183
+基础③·对比你我他,核心词汇,factory,,n,,,L1,,,184
+基础③·对比你我他,核心词汇,finally,,adv,,,L1,,,185
+基础③·对比你我他,核心词汇,friendly,,adj,,,L1,,,186
+基础③·对比你我他,核心词汇,further,,adj,,,L1,,,187
+基础③·对比你我他,核心词汇,grandmother,,n,,,L1,,,188
+基础③·对比你我他,核心词汇,hall,,n,,,L1,,,189
+基础③·对比你我他,核心词汇,history,,n,,,L1,,,190
+基础③·对比你我他,核心词汇,however,,adv,,,L1,,,191
+基础③·对比你我他,核心词汇,impose,,v,,,L1,,,192
+基础③·对比你我他,核心词汇,investigation,,n,,,L1,,,193
+基础③·对比你我他,核心词汇,job,,n,,,L1,,,194
+基础③·对比你我他,核心词汇,largely,,adv,,,L1,,,195
+基础③·对比你我他,核心词汇,leader,,n,,,L1,,,196
+基础③·对比你我他,核心词汇,loan,,n,,,L1,,,197
+基础③·对比你我他,核心词汇,manner,,n,,,L1,,,198
+基础③·对比你我他,核心词汇,member,,n,,,L1,,,199
+基础③·对比你我他,核心词汇,mouse,,n,,,L1,,,200
+基础③·对比你我他,核心词汇,neighbour,,n,,,L1,,,201
+基础③·对比你我他,核心词汇,nightmare,,n,,,L1,,,202
+基础③·对比你我他,核心词汇,object,,n,,,L1,,,203
+基础③·对比你我他,核心词汇,otherwise,,adv,,,L1,,,204
+基础③·对比你我他,核心词汇,park,,n,,,L1,,,205
+基础③·对比你我他,核心词汇,perhaps,,adv,,,L1,,,206
+基础③·对比你我他,核心词汇,physical,,adj,,,L1,,,207
+基础③·对比你我他,核心词汇,policeman,,n,,,L1,,,208
+基础③·对比你我他,核心词汇,president,,n,,,L1,,,209
+基础③·对比你我他,核心词汇,professor,,n,,,L1,,,210
+基础③·对比你我他,核心词汇,pull,,v,,,L1,,,211
+基础③·对比你我他,核心词汇,rather,,adv,,,L1,,,212
+基础③·对比你我他,核心词汇,reasonable,,adj,,,L1,,,213
+基础③·对比你我他,核心词汇,repair,,v,,,L1,,,214
+基础③·对比你我他,核心词汇,result,,n,,,L1,,,215
+基础③·对比你我他,核心词汇,sandwich,,n,,,L1,,,216
+基础③·对比你我他,核心词汇,seem,,v,,,L1,,,217
+基础③·对比你我他,核心词汇,sign,,n,,,L1,,,218
+基础③·对比你我他,核心词汇,skiing,,n,,,L1,,,219
+基础③·对比你我他,核心词汇,soccer,,n,,,L1,,,220
+基础③·对比你我他,核心词汇,song,,n,,,L1,,,221
+基础③·对比你我他,核心词汇,spider,,n,,,L1,,,222
+基础③·对比你我他,核心词汇,stock,,n,,,L1,,,223
+基础③·对比你我他,核心词汇,suddenly,,adv,,,L1,,,224
+基础③·对比你我他,核心词汇,tale,,n,,,L1,,,225
+基础③·对比你我他,核心词汇,thanks,,exclam,,,L1,,,226
+基础③·对比你我他,核心词汇,trial,,n,,,L1,,,227
+基础③·对比你我他,核心词汇,unique,,adj,,,L1,,,228
+基础③·对比你我他,核心词汇,venue,,n,,,L1,,,229
+基础③·对比你我他,核心词汇,website,,n,,,L1,,,230
+基础③·对比你我他,核心词汇,wine,,n,,,L1,,,231
+基础③·对比你我他,核心词汇,working,,adj,,,L1,,,232
+基础③·对比你我他,核心词汇,yours,,pron,,,L1,,,233
+基础③·职业与叙事,核心词汇,actor,,n,,,L1,,,234
+基础③·职业与叙事,核心词汇,among,,prep,,,L1,,,235
+基础③·职业与叙事,核心词汇,apparently,,adv,,,L1,,,236
+基础③·职业与叙事,核心词汇,argument,,n,,,L1,,,237
+基础③·职业与叙事,核心词汇,assistant,,n,,,L1,,,238
+基础③·职业与叙事,核心词汇,avoid,,v,,,L1,,,239
+基础③·职业与叙事,核心词汇,become,,v,,,L1,,,240
+基础③·职业与叙事,核心词汇,belt,,n,,,L1,,,241
+基础③·职业与叙事,核心词汇,board,,n,,,L1,,,242
+基础③·职业与叙事,核心词汇,budget,,n,,,L1,,,243
+基础③·职业与叙事,核心词汇,capital,,n,,,L1,,,244
+基础③·职业与叙事,核心词汇,certain,,adj,,,L1,,,245
+基础③·职业与叙事,核心词汇,chef,,n,,,L1,,,246
+基础③·职业与叙事,核心词汇,climb,,v,,,L1,,,247
+基础③·职业与叙事,核心词汇,commitment,,n,,,L1,,,248
+基础③·职业与叙事,核心词汇,consider,,v,,,L1,,,249
+基础③·职业与叙事,核心词汇,convinced,,adj,,,L1,,,250
+基础③·职业与叙事,核心词汇,crowded,,adj,,,L1,,,251
+基础③·职业与叙事,核心词汇,dancer,,n,,,L1,,,252
+基础③·职业与叙事,核心词汇,describe,,v,,,L1,,,253
+基础③·职业与叙事,核心词汇,differently,,adv,,,L1,,,254
+基础③·职业与叙事,核心词汇,discussion,,n,,,L1,,,255
+基础③·职业与叙事,核心词汇,double,,adj,,,L1,,,256
+基础③·职业与叙事,核心词汇,electrical,,adj,,,L1,,,257
+基础③·职业与叙事,核心词汇,employee,,n,,,L1,,,258
+基础③·职业与叙事,核心词汇,error,,n,,,L1,,,259
+基础③·职业与叙事,核心词汇,evidence,,n,,,L1,,,260
+基础③·职业与叙事,核心词汇,expose,,v,,,L1,,,261
+基础③·职业与叙事,核心词汇,fantastic,,adj,,,L1,,,262
+基础③·职业与叙事,核心词汇,finish,,v,,,L1,,,263
+基础③·职业与叙事,核心词汇,front,,n,,,L1,,,264
+基础③·职业与叙事,核心词汇,girlfriend,,n,,,L1,,,265
+基础③·职业与叙事,核心词汇,grandparent,,n,,,L1,,,266
+基础③·职业与叙事,核心词汇,hat,,n,,,L1,,,267
+基础③·职业与叙事,核心词汇,hockey,,n,,,L1,,,268
+基础③·职业与叙事,核心词汇,husband,,n,,,L1,,,269
+基础③·职业与叙事,核心词汇,instruction,,n,,,L1,,,270
+基础③·职业与叙事,核心词汇,involve,,v,,,L1,,,271
+基础③·职业与叙事,核心词汇,journalist,,n,,,L1,,,272
+基础③·职业与叙事,核心词汇,laugh,,v,,,L1,,,273
+基础③·职业与叙事,核心词汇,lesson,,n,,,L1,,,274
+基础③·职业与叙事,核心词汇,local,,adj,,,L1,,,275
+基础③·职业与叙事,核心词汇,married,,adj,,,L1,,,276
+基础③·职业与叙事,核心词汇,middle,,n,,,L1,,,277
+基础③·职业与叙事,核心词汇,musician,,n,,,L1,,,278
+基础③·职业与叙事,核心词汇,nervous,,adj,,,L1,,,279
+基础③·职业与叙事,核心词汇,nobody,,pron,,,L1,,,280
+基础③·职业与叙事,核心词汇,onto,,prep,,,L1,,,281
+基础③·职业与叙事,核心词汇,pace,,n,,,L1,,,282
+基础③·职业与叙事,核心词汇,parking,,n,,,L1,,,283
+基础③·职业与叙事,核心词汇,personal,,adj,,,L1,,,284
+基础③·职业与叙事,核心词汇,piano,,n,,,L1,,,285
+基础③·职业与叙事,核心词汇,polite,,adj,,,L1,,,286
+基础③·职业与叙事,核心词汇,prison,,n,,,L1,,,287
+基础③·职业与叙事,核心词汇,profile,,n,,,L1,,,288
+基础③·职业与叙事,核心词汇,pupil,,n,,,L1,,,289
+基础③·职业与叙事,核心词汇,raw,,adj,,,L1,,,290
+基础③·职业与叙事,核心词汇,refer,,v,,,L1,,,291
+基础③·职业与叙事,核心词汇,reporter,,n,,,L1,,,292
+基础③·职业与叙事,核心词汇,revolution,,n,,,L1,,,293
+基础③·职业与叙事,核心词汇,scientist,,n,,,L1,,,294
+基础③·职业与叙事,核心词汇,send,,v,,,L1,,,295
+基础③·职业与叙事,核心词汇,similar,,adj,,,L1,,,296
+基础③·职业与叙事,核心词汇,slip,,v,,,L1,,,297
+基础③·职业与叙事,核心词汇,soldier,,n,,,L1,,,298
+基础③·职业与叙事,核心词汇,source,,n,,,L1,,,299
+基础③·职业与叙事,核心词汇,sponsor,,v,,,L1,,,300
+基础③·职业与叙事,核心词汇,stone,,n,,,L1,,,301
+基础③·职业与叙事,核心词汇,support,,v,,,L1,,,302
+基础③·职业与叙事,核心词汇,target,,n,,,L1,,,303
+基础③·职业与叙事,核心词汇,title,,n,,,L1,,,304
+基础③·职业与叙事,核心词汇,truck,,n,,,L1,,,305
+基础③·职业与叙事,核心词汇,unusual,,adj,,,L1,,,306
+基础③·职业与叙事,核心词汇,voice,,n,,,L1,,,307
+基础③·职业与叙事,核心词汇,whisper,,v,,,L1,,,308
+基础③·职业与叙事,核心词汇,wise,,adj,,,L1,,,309
+基础③·职业与叙事,核心词汇,worry,,v,,,L1,,,310

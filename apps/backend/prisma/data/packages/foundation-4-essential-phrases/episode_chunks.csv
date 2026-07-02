@@ -1,89 +1,71 @@
-episode_chapter,episode_order,chunk_text_match,sort_order
-ch_q_01,1,Are you a student? — Yes, I am.,0
-ch_q_01,1,Do you like coffee? — Yes, I do.,1
-ch_q_01,1,Does she speak English? — Yes, she does.,2
-ch_q_01,1,Can you swim? — Yes, I can.,3
-ch_q_01,1,Is it big? — No, it isn't.,4
-ch_q_01,1,Is there a bank near here? — Yes, there is.,5
-ch_q_01,2,Did you eat breakfast? — Yes, I did.,0
-ch_q_01,2,Did she go to school yesterday? — No, she didn't.,1
-ch_q_01,2,Were you at home last night? — Yes, I was.,2
-ch_q_01,2,Was it expensive? — No, it wasn't.,3
-ch_q_01,2,Did you have a good weekend? — Yes, I did.,4
-ch_q_01,2,Was she at the party? — No, she wasn't.,5
-ch_q_02,1,What is your name? — My name is Tom.,0
-ch_q_02,1,What do you do? — I am a teacher.,1
-ch_q_02,1,Who is she? — She is my sister.,2
-ch_q_02,1,Where is the bathroom? — It's over there.,3
-ch_q_02,1,Where do you live? — I live in Beijing.,4
-ch_q_02,1,When do you get up? — I get up at 7.,5
-ch_q_02,1,Why are you late? — Because I missed the bus.,6
-ch_q_02,1,Which one is yours? — The blue one.,7
-ch_q_02,2,What time is it? — It's 3 o'clock.,0
-ch_q_02,2,What kind of music do you like? — Pop.,1
-ch_q_02,2,What color is your car? — It's red.,2
-ch_q_02,2,Who is your best friend? — Li Ming.,3
-ch_q_02,2,Whose book is this? — It's mine.,4
-ch_q_03,1,How many books do you have? — I have ten.,0
-ch_q_03,1,How much is this? — It's 20 dollars.,1
-ch_q_03,1,How much water do you drink? — About 2 liters.,2
-ch_q_03,1,How far is it from here? — About 2 km.,3
-ch_q_03,1,How long does it take? — About 30 minutes.,4
-ch_q_03,1,How old are you? — I'm 25.,5
-ch_q_03,2,How often do you exercise? — Every day.,0
-ch_q_03,2,How do you go to work? — By bus.,1
-ch_q_03,2,How was your day? — It was good.,2
-ch_q_03,2,How does it taste? — It's delicious.,3
-ch_q_03,2,How about some coffee? — Sure, thanks.,4
-ch_q_03,2,How do you like your job? — I like it.,5
-found_foundation_essential_phrases_0,1,I'll call you back.,9
-found_foundation_essential_phrases_0,1,Come over to my place.,10
-found_foundation_essential_phrases_0,1,I'm running out of time.,11
-found_foundation_essential_phrases_0,1,Put on your coat.,12
-found_foundation_essential_phrases_0,1,Take off your shoes.,13
-found_foundation_essential_phrases_0,1,I'm looking forward to it.,14
-found_foundation_essential_phrases_0,2,What's the matter?,0
-found_foundation_essential_phrases_0,2,Are you okay?,1
-found_foundation_essential_phrases_0,2,Take your time.,2
-found_foundation_essential_phrases_0,2,No worries!,3
-found_foundation_essential_phrases_0,2,Good luck!,4
-found_foundation_essential_phrases_0,2,Have fun!,5
-found_foundation_essential_phrases_0,2,Take care!,6
-found_foundation_essential_phrases_0,2,See you later!,7
-found_foundation_essential_phrases_0,2,That's too bad.,8
-found_foundation_essential_phrases_0,2,What a pity!,9
-found_foundation_essential_phrases_0,2,Congratulations!,10
-found_foundation_essential_phrases_0,2,Well done!,11
-found_foundation_essential_phrases_0,2,Cheers!,12
-found_foundation_essential_phrases_0,2,Same to you!,13
-found_foundation_essential_phrases_0,2,I really mean it.,14
-found_foundation_essential_phrases_1,1,Hello, who's speaking?,0
-found_foundation_essential_phrases_1,1,This is Tom speaking.,1
-found_foundation_essential_phrases_1,1,Can I speak to Mary?,2
-found_foundation_essential_phrases_1,1,Hold on a moment, please.,3
-found_foundation_essential_phrases_1,1,I'll call you back later.,4
-found_foundation_essential_phrases_1,1,Sorry, I have to go now.,5
-found_foundation_essential_phrases_1,1,Can you hear me?,6
-found_foundation_essential_phrases_1,1,I can't hear you well.,7
-found_foundation_essential_phrases_1,1,Please speak slowly.,8
-found_foundation_essential_phrases_1,1,I'll text you.,9
-found_foundation_essential_phrases_1,1,Send me a message.,10
-found_foundation_essential_phrases_1,1,I missed your call.,11
-found_foundation_essential_phrases_1,1,Let me call you back.,12
-found_foundation_essential_phrases_1,1,Please leave a message.,13
-found_foundation_essential_phrases_1,1,I'll get back to you soon.,14
-found_foundation_essential_phrases_1,2,Help!,0
-found_foundation_essential_phrases_1,2,Call the police!,1
-found_foundation_essential_phrases_1,2,I need a doctor!,2
-found_foundation_essential_phrases_1,2,It's an emergency!,3
-found_foundation_essential_phrases_1,2,I'm lost.,4
-found_foundation_essential_phrases_1,2,I need help.,5
-found_foundation_essential_phrases_1,2,Please call an ambulance!,6
-found_foundation_essential_phrases_1,2,There's a fire!,7
-found_foundation_essential_phrases_1,2,I lost my passport.,8
-found_foundation_essential_phrases_1,2,My wallet was stolen.,9
-found_foundation_essential_phrases_1,2,I had an accident.,10
-found_foundation_essential_phrases_1,2,Is there a hospital nearby?,11
-found_foundation_essential_phrases_1,2,I don't feel well.,12
-found_foundation_essential_phrases_1,2,It hurts here.,13
-found_foundation_essential_phrases_1,2,Please take me to the hospital.,14
+episode_chapter,episode_order,chunk_text_match,sort_order,
+ch_q_04,1,Excuse me, where is the nearest subway station? — It's just around the corner.,['0']
+ch_q_04,1,How do I get to the museum? -- Go straight and turn left at the corner.,1,
+ch_q_04,1,"Is there a pharmacy near here? -- Yes, theres one across the street.", there's one across the street.,['2']
+ch_q_04,1,How far is it from here? -- Its about 10 minutes on foot.,3,
+ch_q_04,1,"Am I going the right way to the station? -- Yes, keep going straight.", keep going straight.,['4']
+ch_q_04,1,Do you have a map? -- Sure. Let me show you.,5,
+ch_q_04,1,"Is this seat taken? -- No, go ahead.", go ahead.,['6']
+ch_q_04,2,What time does the museum open? -- It opens at 9 am.,0,
+ch_q_04,2,What time is the next train to Shanghai? -- At 3:15 pm.,1,
+ch_q_04,2,Which bus goes to the city center? -- Bus number 5 goes there.,2,
+ch_q_04,2,How long does it take to get there? -- About 30 minutes by bus.,3,
+ch_q_04,2,Where do I buy a ticket? -- You can buy one at the machine over there.,4,
+ch_q_04,2,"Does this bus stop at the museum? -- Yes, its the third stop.", it's the third stop.,['5']
+ch_q_04,2,How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.,6,
+ch_q_04_2,1,How much is this? -- Its 120 yuan.,0,
+ch_q_04_2,1,How much are these? -- Theyre 80 yuan each.,1,
+ch_q_04_2,1,"Do you have this in a small size? -- Let me check. Yes, here you are.", here you are.,['2']
+ch_q_04_2,1,"This is a little expensive. Do you have other ones? -- Yes, we have these. Theyre on sale.", we have these. They're on sale.,['3']
+ch_q_04_2,1,"Do you take cards? -- Yes, we take all major cards.", we take all major cards.,['4']
+ch_q_04_2,1,"I need a receipt, please. -- Of course. Here you are.", please. — Of course. Here you are.,['5']
+ch_q_04_2,1,"I want to try this on. Where is the fitting room? -- Over there, on the left.", on the left.,['6']
+ch_q_04_2,2,"I want to see the menu, please. -- Here you go.", please. — Here you go.,['0']
+ch_q_04_2,2,What do you recommend? -- The grilled fish is very popular.,1,
+ch_q_04_2,2,Does this dish contain nuts? — No, it doesn't. It's nut-free.,['2']
+ch_q_04_2,2,I want the bill, please. — Sure. It's 185 yuan in total.,['3']
+ch_q_04_2,2,Is service charge included? — Yes, it's already included.,['4']
+ch_q_04_2,2,Do you have any vegetarian options? — Yes, we have several.,['5']
+ch_q_04_2,2,Is there a table by the window? — Of course. Right this way.,6,
+ch_q_04_3,1,What do you do? -- Im a student. / I work in a hospital.,0,
+ch_q_04_3,1,Where are you from? -- Im from Chengdu. How about you?,1,
+ch_q_04_3,1,How's it going? — Pretty good! And you?,2,
+ch_q_04_3,1,What do you do for fun? -- I like watching movies and hiking.,3,
+ch_q_04_3,1,What kind of music do you like? -- I like pop and a little bit of jazz.,4,
+ch_q_04_3,1,"Do you like traveling? -- Yes, I love it!", I love it!,['5']
+ch_q_04_3,1,What countries do you want to visit? -- I want to go to Japan and France.,6,
+ch_q_04_3,2,"Are you free this weekend? -- Yes, I am. Why?", I am. Why?,['0']
+ch_q_04_3,2,Do you want to grab lunch together? -- Id love to!,1,
+ch_q_04_3,2,What time do you want to meet? -- How about 12:30?,2,
+ch_q_04_3,2,Where do you want to meet? -- Lets meet at the entrance.,3,
+ch_q_04_3,2,"How is your day? -- Its good! A little busy, but good.", but good.,['4']
+ch_q_04_3,2,"Is everything okay? You look tired. -- Yeah, Im fine. Just didnt sleep well.", I'm fine. Just didn't sleep well.,['5']
+ch_q_04_3,2,Do you need help? -- Thats very kind of you. I think Im okay.,6,
+ch_q_04_4,1,Hello, is Mr. Wang there,"[' please? — Speaking. / Just a moment', ' please.', '0']"
+ch_q_04_4,1,Who's calling, please? — This is Li Ming from ABC Company.,['1']
+ch_q_04_4,1,"Is Mr. Wang available? -- Sorry, hes in a meeting right now.", he's in a meeting right now.,['2']
+ch_q_04_4,1,When is he back? -- He is back in about an hour.,3,
+ch_q_04_4,1,I want to call back. When is a good time? — Try after 3 pm. He is free then.,4,
+ch_q_04_4,1,"Do you hear me? The signal is bad here. -- Yes, I hear you.", I hear you.,['5']
+ch_q_04_4,1,Sorry, I think you have the wrong number. — Oh,"["" I'm sorry."", '6']"
+ch_q_04_4,2,I want to leave a message. Is that okay? -- Sure. Go ahead.,0,
+ch_q_04_4,2,Please take a message for me. -- Of course. What do you want me to tell him?,1,
+ch_q_04_4,2,Please ask him to call me back. -- Sure. Whats your name and number?,2,
+ch_q_04_4,2,Please tell him I called. -- I will. Dont worry.,3,
+ch_q_04_4,2,"Does he know I called? -- Yes, he does. He says he calls you tonight.", he does. He says he calls you tonight.,['4']
+ch_q_04_4,2,"Do I call back or wait for his call? -- He says he calls you, so just wait.", so just wait.,['5']
+ch_q_04_4,2,What's your phone number? — It's 138-5555-1234.,6,
+ch_q_04_5,1,Help! Is anyone here? -- I hear you! Whats wrong?,0,
+ch_q_04_5,1,Where is the nearest hospital? -- Its about 3 kilometers from here.,1,
+ch_q_04_5,1,How do I call an ambulance? -- Dial 120. Tell them your location.,2,
+ch_q_04_5,1,Is there a doctor here? -- Im a doctor. What happened?,3,
+ch_q_04_5,1,"Is anyone calling the police? -- Yes, I call them right now.", I call them right now.,['4']
+ch_q_04_5,1,Is everyone okay? -- I think so. One person is a little hurt.,5,
+ch_q_04_5,1,What happened? Tell me what you see. -- A car hits the pole over there.,6,
+ch_q_04_5,2,I don't feel well. Where is the nearest hospital? — It's about 10 minutes by taxi.,0,
+ch_q_04_5,2,What do I do? I have a bad headache. -- You lie down and rest.,1,
+ch_q_04_5,2,"Do I need to see a doctor? -- If it doesnt get better in a day, yes.", yes.,['2']
+ch_q_04_5,2,"Is there a pharmacy open right now? -- Yes, theres a 24-hour pharmacy two blocks away.", there's a 24-hour pharmacy two blocks away.,['3']
+ch_q_04_5,2,Please help me. Im lost. -- Of course. Where do you want to go?,4,
+ch_q_04_5,2,Do you speak Chinese? -- A little. Let me find someone who does.,5,
+ch_q_04_5,2,How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.,6,

@@ -1,121 +1,233 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础⑩·喜好与活动,我喜欢做...,doing,做(动名词),noun,/ˈduːɪŋ/,/ˈduːɪŋ/,L2,动词+ing变名词。like doing。,"[{"en":"I like swimming.","zh":"我喜欢游泳。"}]",0
-基础⑩·喜好与活动,我喜欢做...,practice,练习,verb,/ˈpræktɪs/,/ˈpræktɪs/,L2,practice+doing。,"[{"en":"I practice speaking every day.","zh":"我每天练习说。"}]",4
-基础⑩·喜好与活动,我喜欢做...,avoid,避免,verb,/əˈvɔɪd/,/əˈvɔɪd/,L2,avoid+doing。avoid eating。,"[{"en":"I avoid eating late at night.","zh":"我避免深夜吃东西。"}]",5
-基础⑩·喜好与活动,我喜欢做...,consider,考虑,verb,/kənˈsɪdər/,/kənˈsɪdə/,L2,consider+doing。,"[{"en":"I'm considering moving abroad.","zh":"我在考虑搬到国外。"}]",8
-基础⑩·喜好与活动,我喜欢做...,imagine,想象,verb,/ɪˈmædʒɪn/,/ɪˈmædʒɪn/,L2,imagine+doing。,"[{"en":"Can you imagine living in space?","zh":"你能想象住在太空吗？"}]",10
-基础⑩·喜好与活动,我想做/需要做,would like,想要(委婉),phrase,/wʊd laɪk/,/wʊd laɪk/,L2,比want更礼貌。,"[{"en":"I would like to order now.","zh":"我想现在点餐。"}]",1
-基础⑩·喜好与活动,我想做/需要做,pretend,假装,verb,/prɪˈtend/,/prɪˈtend/,L2,pretend+to do。,"[{"en":"He pretended to be asleep.","zh":"他假装睡着了。"}]",11
-基础⑩·礼貌与请求,请你帮我...,could,可以(委婉),modal,/kʊd/,/kʊd/,L2,can的委婉用法。Could you...?,"[{"en":"Could you help me?","zh":"你能帮我吗？"}]",0
-基础⑩·礼貌与请求,请你帮我...,would,愿意(委婉),modal,/wʊd/,/wʊd/,L2,Will的委婉用法。Would you...?,"[{"en":"Would you mind waiting?","zh":"你介意等一下吗？"}]",1
-基础⑩·礼貌与请求,请你帮我...,may,可以(正式),modal,/meɪ/,/meɪ/,L2,正式请求。May I...?,"[{"en":"May I use your phone?","zh":"我可以用你的电话吗？"}]",2
-基础⑩·礼貌与请求,请你帮我...,trouble,麻烦,noun/verb,/ˈtrʌbəl/,/ˈtrʌbəl/,L2,麻烦。Sorry to trouble you。,"[{"en":"Sorry to trouble you.","zh":"抱歉麻烦你。"}]",4
-基础⑩·礼貌与请求,请你帮我...,bother,打扰,verb,/ˈbɑːðər/,/ˈbɒðə/,L2,打扰。Sorry to bother。,"[{"en":"Sorry to bother you.","zh":"抱歉打扰。"}]",5
-基础⑩·礼貌与请求,请你帮我...,excuse me,打扰一下,phrase,/ɪkˈskjuːz mi/,/ɪkˈskjuːz mi/,L2,打扰一下。引起注意。,"[{"en":"Excuse me, could you help?","zh":"打扰一下，能帮忙吗？"}]",6
-基础⑩·礼貌与请求,请你帮我...,please,请,adv,/pliːz/,/pliːz/,L2,请。礼貌用词。,"[{"en":"Could you please open the window?","zh":"请你开窗好吗？"}]",7
-基础⑩·礼貌与请求,请你帮我...,appreciate,感谢/感激,verb,/əˈpriːʃieɪt/,/əˈpriːʃieɪt/,L2,感激。I'd appreciate it。,"[{"en":"I'd appreciate your help.","zh":"我会很感激你的帮助。"}]",9
-基础⑩·礼貌与请求,请你帮我...,certainly,当然可以,adv,/ˈsɜːrtənli/,/ˈsɜːtənli/,L2,当然可以。正式回答。,"[{"en":"Certainly, I'd be happy to help.","zh":"当然可以，我很乐意帮忙。"}]",10
-基础⑩·礼貌与请求,请你帮我...,of course,当然,phrase,/əv kɔːrs/,/əv kɔːs/,L2,当然。肯定的回答。,"[{"en":"Of course you can use it.","zh":"当然你可以用。"}]",11
-基础⑩·礼貌与请求,你想要...吗？,would you like,你想要...,phrase,/wʊd juː laɪk/,/wʊd juː laɪk/,L2,邀请/提议。Would you like...?,"[{"en":"Would you like some tea?","zh":"你想喝茶吗？"}]",0
-基础⑩·礼貌与请求,你想要...吗？,invite,邀请,verb,/ɪnˈvaɪt/,/ɪnˈvaɪt/,L2,邀请。invite someone to。,"[{"en":"I'd like to invite you to dinner.","zh":"我想邀请你吃晚饭。"}]",1
-基础⑩·礼貌与请求,你想要...吗？,join,加入,verb,/dʒɔɪn/,/dʒɔɪn/,L2,加入。join us。,"[{"en":"Would you like to join us?","zh":"你想加入我们吗？"}]",2
-基础⑩·礼貌与请求,你想要...吗？,another time,改天,phrase,/əˈnʌðər taɪm/,/əˈnʌðə taɪm/,L2,改天。委婉拒绝。,"[{"en":"Maybe another time.","zh":"改天吧。"}]",5
-基础⑩·礼貌与请求,你想要...吗？,rain check,改日再约,noun,/reɪn tʃek/,/reɪn tʃek/,L2,改日再约。美式口语。,"[{"en":"Can I take a rain check?","zh":"能改天再约吗？"}]",6
-基础⑩·礼貌与请求,你想要...吗？,I'd be delighted,我很乐意,phrase,/aɪd bi dɪˈlaɪtɪd/,/aɪd bi dɪˈlaɪtɪd/,L2,很乐意。正式接受。,"[{"en":"I'd be delighted to come.","zh":"我很乐意来。"}]",7
-基础⑩·礼貌与请求,你想要...吗？,treat,请客/款待,verb/noun,/triːt/,/triːt/,L2,请客。my treat。,"[{"en":"It's my treat this time.","zh":"这次我请客。"}]",8
-基础⑩·经历与持续,我去过/做过,have been,去过,phrase,/hæv biːn/,/hæv biːn/,L2,去过某地。have been to。,"[{"en":"I have been to London twice.","zh":"我去过伦敦两次。"}]",0
-基础⑩·经历与持续,我去过/做过,overseas,海外,adv/adj,/ˌoʊvərˈsiːz/,/ˌəʊvəˈsiːz/,L2,海外。go overseas。,"[{"en":"I have never traveled overseas.","zh":"我从未去过海外。"}]",5
-基础⑩·经历与持续,我去过/做过,achievement,成就,noun,/əˈtʃiːvmənt/,/əˈtʃiːvmənt/,L2,成就。lifetime achievement。,"[{"en":"Finishing the race was a great achievement.","zh":"完成比赛是很大的成就。"}]",6
-基础⑩·经历与持续,我去过/做过,bucket list,遗愿清单/梦想清单,noun,/ˈbʌkɪt lɪst/,/ˈbʌkɪt lɪst/,L2,梦想清单。bucket list。,"[{"en":"Visiting Paris is on my bucket list.","zh":"去巴黎在我的梦想清单上。"}]",7
-基础⑩·经历与持续,我去过/做过,several times,几次,phrase,/ˈsevrəl taɪmz/,/ˈsevrəl taɪmz/,L2,几次。several times。,"[{"en":"I have been there several times.","zh":"我去过那里几次。"}]",9
-基础⑩·经历与持续,我去过/做过,so far,到目前为止,phrase,/soʊ fɑːr/,/səʊ fɑː/,L2,到目前为止。so far。,"[{"en":"So far, I have visited 5 countries.","zh":"到目前为止我去过5个国家。"}]",10
-基础⑩·经历与持续,我去过/做过,lately,最近,adv,/ˈleɪtli/,/ˈleɪtli/,L2,最近。与完成时连用。,"[{"en":"Have you seen any good movies lately?","zh":"你最近看过什么好电影吗？"}]",11
-基础⑩·经历与持续,已经多久了,for,持续(时间段),prep,/fɔːr/,/fɔː/,L2,for+时间段。for 5 years。,"[{"en":"I have lived here for 3 years.","zh":"我在这里住了3年了。"}]",0
-基础⑩·经历与持续,已经多久了,since,自从(时间点),prep,/sɪns/,/sɪns/,L2,since+时间点。since 2020。,"[{"en":"I have studied English since 2020.","zh":"我从2020年开始学英语。"}]",1
-基础⑩·经历与持续,已经多久了,recently,最近,adv,/ˈriːsəntli/,/ˈriːsəntli/,L2,最近。recently。,"[{"en":"Have you seen her recently?","zh":"你最近看到她了吗？"}]",5
-基础⑩·经历与持续,已经多久了,so far,到目前为止,phrase,/soʊ fɑːr/,/səʊ fɑː/,L2,到目前为止。完成时。,"[{"en":"So far, everything has been good.","zh":"到目前为止一切都好。"}]",6
-基础⑩·经历与持续,已经多久了,up to now,到现在为止,phrase,/ʌp tə naʊ/,/ʌp tə naʊ/,L2,到现在为止。up to now。,"[{"en":"Up to now, I have never been late.","zh":"到现在为止我从未迟到过。"}]",7
-基础⑩·经历与持续,已经多久了,all my life,一辈子,phrase,/ɔːl maɪ laɪf/,/ɔːl maɪ laɪf/,L2,一辈子。all my life。,"[{"en":"I have wanted this all my life.","zh":"我这辈子都想要这个。"}]",8
-基础⑩·经历与持续,已经多久了,century,世纪,noun,/ˈsentʃəri/,/ˈsentʃəri/,L2,世纪。for centuries。,"[{"en":"This building has stood for centuries.","zh":"这座建筑已经屹立了几个世纪。"}]",9
-基础⑩·经历与持续,已经多久了,decade,十年,noun,/ˈdekeɪd/,/ˈdekeɪd/,L2,十年。for a decade。,"[{"en":"She has worked here for a decade.","zh":"她在这里工作了十年。"}]",10
-基础⑩·经历与持续,已经多久了,lifelong,终身的,adj,/ˈlaɪflɔːŋ/,/ˈlaɪflɒŋ/,L2,终身的。lifelong dream。,"[{"en":"It has been my lifelong dream.","zh":"这是我终身的梦想。"}]",11
-基础⑩·喜好与活动,我喜欢做...,gerund,动名词,noun,/ˈdʒerənd/,/ˈdʒerənd/,L2,动名词。动词+ing形式。,"[{"en":"A gerund is a verb+ing used as a noun.","zh":"动名词是动词+ing用作名词。"}]",12
-基础⑩·喜好与活动,我喜欢做...,keen on,热衷于,phrase,/kiːn ɑːn/,/kiːn ɒn/,L2,热衷于。keen on doing。,"[{"en":"I'm keen on learning French.","zh":"我热衷于学法语。"}]",13
-基础⑩·喜好与活动,我喜欢做...,fond of,喜欢,phrase,/fɑːnd əv/,/fɒnd əv/,L2,喜欢。fond of doing。,"[{"en":"She is fond of singing.","zh":"她喜欢唱歌。"}]",14
-基础⑩·喜好与活动,我喜欢做...,addicted to,沉迷于,phrase,/əˈdɪktɪd tə/,/əˈdɪktɪd tə/,L2,沉迷。addicted to doing。,"[{"en":"He is addicted to gaming.","zh":"他沉迷于游戏。"}]",15
-基础⑩·喜好与活动,我喜欢做...,can't help,忍不住,phrase,/kænt help/,/kɑːnt help/,L2,忍不住。can't help doing。,"[{"en":"I can't help laughing.","zh":"我忍不住笑。"}]",16
-基础⑩·喜好与活动,我喜欢做...,worth,值得,adj,/wɜːrθ/,/wɜːθ/,L2,值得。worth doing。,"[{"en":"This book is worth reading.","zh":"这本书值得一读。"}]",17
-基础⑩·喜好与活动,我喜欢做...,give up,放弃,phrasal verb,/ɡɪv ʌp/,/ɡɪv ʌp/,L2,放弃。give up doing。,"[{"en":"I gave up smoking last year.","zh":"我去年戒烟了。"}]",18
-基础⑩·喜好与活动,我喜欢做...,put off,推迟,phrasal verb,/pʊt ɔːf/,/pʊt ɒf/,L2,推迟。put off doing。,"[{"en":"Don't put off doing your homework.","zh":"别推迟做作业。"}]",19
-基础⑩·喜好与活动,我想做/需要做,infinitive,不定式,noun,/ɪnˈfɪnətɪv/,/ɪnˈfɪnətɪv/,L2,不定式。to+动词原形。,"[{"en":"An infinitive is to + base verb.","zh":"不定式是to+动词原形。"}]",12
-基础⑩·喜好与活动,我想做/需要做,attempt,尝试,verb,/əˈtempt/,/əˈtempt/,L2,尝试。attempt to do。,"[{"en":"He attempted to climb the mountain.","zh":"他尝试攀登那座山。"}]",13
-基础⑩·喜好与活动,我想做/需要做,deserve,值得,verb,/dɪˈzɜːrv/,/dɪˈzɜːv/,L2,值得。deserve to do。,"[{"en":"You deserve to be happy.","zh":"你值得开心。"}]",14
-基础⑩·喜好与活动,我想做/需要做,tend,倾向于,verb,/tend/,/tend/,L2,倾向于。tend to do。,"[{"en":"I tend to wake up early.","zh":"我倾向于早起。"}]",15
-基础⑩·喜好与活动,我想做/需要做,afford,负担得起,verb,/əˈfɔːrd/,/əˈfɔːd/,L2,负担得起。afford to do。,"[{"en":"I can't afford to buy a car.","zh":"我买不起车。"}]",16
-基础⑩·喜好与活动,我想做/需要做,struggle,挣扎/努力,verb,/ˈstrʌɡəl/,/ˈstrʌɡəl/,L2,挣扎。struggle to do。,"[{"en":"I struggle to understand math.","zh":"我学数学很吃力。"}]",17
-基础⑩·礼貌与请求,请你帮我...,would you mind,你介意...吗,phrase,/wʊd juː maɪnd/,/wʊd juː maɪnd/,L2,你介意吗。礼貌请求。,"[{"en":"Would you mind closing the door?","zh":"你介意关上门吗？"}]",12
-基础⑩·礼貌与请求,请你帮我...,is it okay if,...可以吗,phrase,/ɪz ɪt oʊˈkeɪ ɪf/,/ɪz ɪt əʊˈkeɪ ɪf/,L2,...可以吗。请求许可。,"[{"en":"Is it okay if I sit here?","zh":"我可以坐这吗？"}]",13
-基础⑩·礼貌与请求,请你帮我...,wonder if,想知道是否,phrase,/ˈwʌndər ɪf/,/ˈwʌndə ɪf/,L2,想知道。I wonder if you could。,"[{"en":"I wonder if you could help me.","zh":"不知道你能否帮我。"}]",14
-基础⑩·礼貌与请求,请你帮我...,by any chance,碰巧/也许,phrase,/baɪ ˈeni tʃæns/,/baɪ ˈeni tʃɑːns/,L2,碰巧。委婉插入语。,"[{"en":"Could you by any chance lend me a pen?","zh":"你碰巧能借我支笔吗？"}]",15
-基础⑩·礼貌与请求,请你帮我...,no rush,不急,phrase,/noʊ rʌʃ/,/nəʊ rʌʃ/,L2,不急。no rush。,"[{"en":"Take your time — no rush.","zh":"慢慢来——不急。"}]",16
-基础⑩·礼貌与请求,请你帮我...,whenever,随时/无论何时,conj,/wenˈevər/,/wenˈevə/,L2,随时。whenever you can。,"[{"en":"Come whenever you like.","zh":"你随时可以来。"}]",17
-基础⑩·礼貌与请求,请你帮我...,at your convenience,在你方便时,phrase,/æt jɔːr kənˈviːniəns/,/æt jɔː kənˈviːniəns/,L2,在你方便时。正式。,"[{"en":"Please reply at your convenience.","zh":"请在你方便时回复。"}]",18
-基础⑩·礼貌与请求,请你帮我...,oblige,帮忙/施恩,verb,/əˈblaɪdʒ/,/əˈblaɪdʒ/,L2,帮忙。much obliged。,"[{"en":"I'd be much obliged if you could help.","zh":"如果你能帮忙我将不胜感激。"}]",19
-基础⑩·礼貌与请求,你想要...吗？,drop by,顺便来访,phrasal verb,/drɑːp baɪ/,/drɒp baɪ/,L2,顺便来访。drop by。,"[{"en":"Feel free to drop by anytime.","zh":"随时欢迎你顺便来访。"}]",10
-基础⑩·礼貌与请求,你想要...吗？,get together,聚一聚,phrasal verb,/ɡet təˈɡeðər/,/ɡet təˈɡeðə/,L2,聚一聚。get together。,"[{"en":"Let's get together this weekend.","zh":"这周末我们聚一聚吧。"}]",11
-基础⑩·礼貌与请求,你想要...吗？,hang out,一起玩/闲逛,phrasal verb,/hæŋ aʊt/,/hæŋ aʊt/,L2,一起玩。hang out with。,"[{"en":"Do you want to hang out later?","zh":"你想晚点一起玩吗？"}]",12
-基础⑩·礼貌与请求,你想要...吗？,come along,一起来,phrasal verb,/kʌm əˈlɔːŋ/,/kʌm əˈlɒŋ/,L2,一起来。come along。,"[{"en":"You should come along with us.","zh":"你应该和我们一起来。"}]",13
-基础⑩·礼貌与请求,你想要...吗？,spontaneous,即兴的/自发的,adj,/spɑːnˈteɪniəs/,/spɒnˈteɪniəs/,L2,即兴的。spontaneous trip。,"[{"en":"Let's be spontaneous and go on a trip!","zh":"我们即兴去旅行吧！"}]",14
-基础⑩·礼貌与请求,你想要...吗？,postpone,推迟,verb,/poʊstˈpoʊn/,/pəʊstˈpəʊn/,L2,推迟。postpone the meeting。,"[{"en":"Can we postpone to next week?","zh":"我们能推迟到下周吗？"}]",15
-基础⑩·礼貌与请求,你想要...吗？,cancel,取消,verb,/ˈkænsəl/,/ˈkænsəl/,L2,取消。cancel plans。,"[{"en":"I'm sorry, I have to cancel.","zh":"抱歉，我得取消。"}]",16
-基础⑩·礼貌与请求,你想要...吗？,rain or shine,风雨无阻,phrase,/reɪn ɔːr ʃaɪn/,/reɪn ɔː ʃaɪn/,L2,风雨无阻。无论如何。,"[{"en":"We'll go, rain or shine!","zh":"风雨无阻，我们一定去！"}]",17
-基础⑩·经历与持续,我去过/做过,globe,地球/全球,noun,/ɡloʊb/,/ɡləʊb/,L2,全球。around the globe。,"[{"en":"I have traveled around the globe.","zh":"我环游过全球。"}]",12
-基础⑩·经历与持续,我去过/做过,continent,大洲,noun,/ˈkɑːntɪnənt/,/ˈkɒntɪnənt/,L2,大洲。7 continents。,"[{"en":"I have visited three continents.","zh":"我去过三大洲。"}]",13
-基础⑩·经历与持续,我去过/做过,master,掌握,verb,/ˈmæstər/,/ˈmɑːstə/,L2,掌握。master a skill。,"[{"en":"I have mastered basic cooking.","zh":"我已经掌握了基础烹饪。"}]",14
-基础⑩·经历与持续,我去过/做过,overcome,克服,verb,/ˌoʊvərˈkʌm/,/ˌəʊvəˈkʌm/,L2,克服。overcome fear。,"[{"en":"I have overcome my fear of speaking.","zh":"我已经克服了说话的恐惧。"}]",15
-基础⑩·经历与持续,我去过/做过,witness,目击/见证,verb,/ˈwɪtnəs/,/ˈwɪtnəs/,L2,目击。witness an event。,"[{"en":"I have witnessed amazing things.","zh":"我见证过很多了不起的事。"}]",16
-基础⑩·经历与持续,我去过/做过,accomplish,完成/达成,verb,/əˈkɑːmplɪʃ/,/əˈkʌmplɪʃ/,L2,达成。accomplish a goal。,"[{"en":"I have accomplished many goals.","zh":"我达成了很多目标。"}]",17
-基础⑩·经历与持续,我去过/做过,milestone,里程碑,noun,/ˈmaɪlstoʊn/,/ˈmaɪlstəʊn/,L2,里程碑。a major milestone。,"[{"en":"Graduation was a big milestone for me.","zh":"毕业是我的一个重要里程碑。"}]",18
-基础⑩·经历与持续,我去过/做过,memorable,难忘的,adj,/ˈmemərəbəl/,/ˈmemərəbəl/,L2,难忘的。memorable experience。,"[{"en":"It was the most memorable trip ever.","zh":"那是最难忘的一次旅行。"}]",19
-基础⑩·经历与持续,已经多久了,eternity,永恒/极长时间,noun,/ɪˈtɜːrnəti/,/ɪˈtɜːnəti/,L2,极长时间。feel like an eternity。,"[{"en":"I have waited for an eternity.","zh":"我感觉等了一辈子。"}]",12
-基础⑩·经历与持续,已经多久了,duration,持续时间,noun,/duˈreɪʃən/,/djuˈreɪʃən/,L2,持续时间。for the duration。,"[{"en":"I have stayed for the entire duration.","zh":"我全程都在。"}]",13
-基础⑩·经历与持续,已经多久了,throughout,贯穿,prep,/θruːˈaʊt/,/θruːˈaʊt/,L2,贯穿。throughout my life。,"[{"en":"I have worked hard throughout my life.","zh":"我一生都在努力工作。"}]",14
-基础⑩·经历与持续,已经多久了,nowadays,如今,adv,/ˈnaʊədeɪz/,/ˈnaʊədeɪz/,L2,如今。对比过去。,"[{"en":"Nowadays, I have gotten used to it.","zh":"如今我已经习惯了。"}]",15
-基础⑩·经历与持续,已经多久了,from the start,从一开始,phrase,/frəm ðə stɑːrt/,/frəm ðə stɑːt/,L2,从一开始。from the start。,"[{"en":"I have known that from the start.","zh":"我从一开始就知道了。"}]",16
-基础⑩·经历与持续,已经多久了,long-term,长期的,adj,/lɔːŋ tɜːrm/,/lɒŋ tɜːm/,L2,长期的。long-term goal。,"[{"en":"This has been my long-term dream.","zh":"这一直是我长期的梦想。"}]",17
-基础⑩·经历与持续,已经多久了,permanent,永久的,adj,/ˈpɜːrmənənt/,/ˈpɜːmənənt/,L2,永久的。not temporary。,"[{"en":"I have found a permanent solution.","zh":"我找到了一个永久的解决方案。"}]",18
-基础⑩·经历与持续,已经多久了,ongoing,进行中的/持续中的,adj,/ˈɑːnɡoʊɪŋ/,/ˈɒnɡəʊɪŋ/,L2,持续中的。ongoing process。,"[{"en":"Learning is an ongoing process.","zh":"学习是一个持续的过程。"}]",19
-基础⑩·喜好与活动,我喜欢做...,adore,非常喜欢,verb,/əˈdɔːr/,/əˈdɔː/,L2,非常喜欢。adore doing。,"[{"en":"I adore watching sunsets.","zh":"我非常喜欢看日落。"}]",20
-基础⑩·喜好与活动,我喜欢做...,dread,惧怕,verb,/dred/,/dred/,L2,惧怕。dread doing。,"[{"en":"I dread going to the dentist.","zh":"我害怕去看牙医。"}]",21
-基础⑩·喜好与活动,我喜欢做...,resent,怨恨/不满,verb,/rɪˈzent/,/rɪˈzent/,L2,不满。resent doing。,"[{"en":"I resent having to work late.","zh":"我讨厌不得不加班。"}]",23
-基础⑩·喜好与活动,我喜欢做...,tolerate,忍受,verb,/ˈtɑːləreɪt/,/ˈtɒləreɪt/,L2,忍受。tolerate doing。,"[{"en":"I can't tolerate waiting.","zh":"我受不了等待。"}]",24
-基础⑩·喜好与活动,我想做/需要做,desire,渴望,verb/noun,/dɪˈzaɪər/,/dɪˈzaɪə/,L2,渴望。desire to do。,"[{"en":"I desire to learn more.","zh":"我渴望学到更多。"}]",20
-基础⑩·喜好与活动,我想做/需要做,long,渴望,verb,/lɔːŋ/,/lɒŋ/,L2,渴望。long to do。,"[{"en":"I long to see my family.","zh":"我渴望见到家人。"}]",21
-基础⑩·喜好与活动,我想做/需要做,yearn,向往,verb,/jɜːrn/,/jɜːn/,L2,向往。yearn to do。,"[{"en":"She yearns to travel abroad.","zh":"她向往出国旅行。"}]",22
-基础⑩·喜好与活动,我想做/需要做,beg,恳求,verb,/beɡ/,/beɡ/,L2,恳求。beg to do。,"[{"en":"I beg to differ.","zh":"恕我不敢苟同。"}]",23
-基础⑩·喜好与活动,我想做/需要做,swear,发誓,verb,/swer/,/sweə/,L2,发誓。swear to do。,"[{"en":"I swear to tell the truth.","zh":"我发誓说真话。"}]",24
-基础⑩·礼貌与请求,请你帮我...,do you happen to,你碰巧...,phrase,/duː juː ˈhæpən tə/,/duː juː ˈhæpən tə/,L2,你碰巧。委婉询问。,"[{"en":"Do you happen to know the time?","zh":"你碰巧知道时间吗？"}]",20
-基础⑩·礼貌与请求,请你帮我...,if it's not too much trouble,如果不是太麻烦,phrase,/ɪf ɪts nɑːt tuː mʌtʃ ˈtrʌbəl/,/ɪf ɪts nɒt tuː mʌtʃ ˈtrʌbəl/,L2,如果不是太麻烦。,"[{"en":"If it's not too much trouble, could you help?","zh":"如果不是太麻烦，你能帮忙吗？"}]",21
-基础⑩·礼貌与请求,请你帮我...,I was wondering if,我在想是否...,phrase,/aɪ wʌz ˈwʌndərɪŋ ɪf/,/aɪ wɒz ˈwʌndərɪŋ ɪf/,L2,我在想是否。最委婉。,"[{"en":"I was wondering if you could help me.","zh":"我在想您是否能帮我。"}]",22
-基础⑩·礼貌与请求,你想要...吗？,fancy,想要(英式),verb,/ˈfænsi/,/ˈfænsi/,L2,想要。Fancy a drink?,"[{"en":"Fancy going out tonight?","zh":"今晚想出去吗？"}]",18
-基础⑩·礼貌与请求,你想要...吗？,pleasure,荣幸/快乐,noun,/ˈpleʒər/,/ˈpleʒə/,L2,荣幸。my pleasure。,"[{"en":"It would be my pleasure to join you.","zh":"能加入你是我的荣幸。"}]",19
-基础⑩·礼貌与请求,你想要...吗？,hospitality,款待/热情好客,noun,/ˌhɑːspɪˈtæləti/,/ˌhɒspɪˈtæləti/,L2,款待。thank you for your hospitality。,"[{"en":"Thank you for your warm hospitality.","zh":"感谢你的热情款待。"}]",20
-基础⑩·经历与持续,我去过/做过,destination,目的地,noun,/ˌdestɪˈneɪʃən/,/ˌdestɪˈneɪʃən/,L2,目的地。travel destination。,"[{"en":"What is your favorite travel destination?","zh":"你最喜欢的旅行目的地是哪？"}]",20
-基础⑩·经历与持续,我去过/做过,adventure,冒险,noun,/ədˈventʃər/,/ədˈventʃə/,L2,冒险。an adventure。,"[{"en":"I have had many adventures abroad.","zh":"我在国外有过很多冒险。"}]",21
-基础⑩·经历与持续,我去过/做过,voyage,航行/远行,noun,/ˈvɔɪɪdʒ/,/ˈvɔɪɪdʒ/,L2,航行。a long voyage。,"[{"en":"I have taken a long voyage across the sea.","zh":"我做了一次跨海远航。"}]",22
-基础⑩·经历与持续,已经多久了,endless,无尽的,adj,/ˈendləs/,/ˈendləs/,L2,无尽的。endless waiting。,"[{"en":"The wait has felt endless.","zh":"等待感觉无尽。"}]",20
-基础⑩·经历与持续,已经多久了,brief,短暂的,adj,/briːf/,/briːf/,L2,短暂的。a brief moment。,"[{"en":"I have only had a brief look.","zh":"我只是短暂地看了一眼。"}]",21
-基础⑩·经历与持续,已经多久了,elapsed,已过去的,adj,/ɪˈlæpst/,/ɪˈlæpst/,L2,已过的。time elapsed。,"[{"en":"Three years have elapsed since then.","zh":"从那时起三年已过去了。"}]",22
-基础⑩·经历与持续,已经多久了,countless,无数的,adj,/ˈkaʊntləs/,/ˈkaʊntləs/,L2,无数的。countless times。,"[{"en":"I have tried countless times.","zh":"我试过无数次了。"}]",23
-基础⑩·经历与持续,已经多久了,by far,迄今为止(强调),phrase,/baɪ fɑːr/,/baɪ fɑː/,L2,迄今为止。by far the best。,"[{"en":"This is by far the best trip I have taken.","zh":"这是迄今我最好的一次旅行。"}]",24
-基础⑩·经历与持续,我去过/做过,unforgettable,难忘的,adj,/ˌʌnfərˈɡetəbəl/,/ˌʌnfəˈɡetəbəl/,L2,难忘的。unforgettable experience。,"[{\"en\":\"It was an unforgettable trip.\",\"zh\":\"那是一次难忘的旅行。\"}]",23
-基础⑩·经历与持续,我去过/做过,cherish,珍惜,verb,/ˈtʃerɪʃ/,/ˈtʃerɪʃ/,L2,珍惜。cherish the memory。,"[{\"en\":\"I cherish every moment with you.\",\"zh\":\"我珍惜和你在一起的每一刻。\"}]",24
-基础⑩·经历与持续,我去过/做过,once-in-a-lifetime,一生一次的,adj,/wʌns ɪn ə ˈlaɪftaɪm/,/wʌns ɪn ə ˈlaɪftaɪm/,L2,一生一次。,"[{\"en\":\"It was a once-in-a-lifetime opportunity.\",\"zh\":\"那是一个一生一次的机会。\"}]",25
-基础⑩·经历与持续,我去过/做过,treasure,珍藏,verb,/ˈtreʒər/,/ˈtreʒə/,L2,珍藏。treasure the moment。,"[{\"en\":\"I will treasure this memory forever.\",\"zh\":\"我会永远珍藏这个回忆。\"}]",26
-基础⑩·经历与持续,已经多久了,beforehand,提前/事先,adv,/bɪˈfɔːrhænd/,/bɪˈfɔːhænd/,L2,提前。know beforehand。,"[{\"en\":\"I wish I had known beforehand.\",\"zh\":\"我真希望我事先知道。\"}]",25
-基础⑩·经历与持续,已经多久了,afterward,之后,adv,/ˈæftərwərd/,/ˈɑːftəwəd/,L2,之后。shortly afterward。,"[{\"en\":\"I felt great afterward.\",\"zh\":\"之后我感觉很好。\"}]",26
-基础⑩·经历与持续,已经多久了,in advance,提前,phrase,/ɪn ædˈvæns/,/ɪn ædˈvɑːns/,L2,提前。in advance。,"[{\"en\":\"Please let me know in advance.\",\"zh\":\"请提前告诉我。\"}]",27
-基础⑩·礼貌与请求,你想要...吗？,drop in,顺便拜访,phrasal verb,/drɑːp ɪn/,/drɒp ɪn/,L2,顺便拜访。drop in。,"[{\"en\":\"Feel free to drop in anytime.\",\"zh\":\"随时欢迎你顺便来访。\"}]",21
-基础⑩·礼貌与请求,请你帮我...,at once,立刻,phrase,/æt wʌns/,/æt wʌns/,L2,立刻。at once。,"[{\"en\":\"Please come at once.\",\"zh\":\"请立刻过来。\"}]",23
-基础⑩·喜好与活动,我喜欢做...,detest,憎恶,verb,/dɪˈtest/,/dɪˈtest/,L2,憎恶。detest doing。,"[{\"en\":\"I detest doing housework.\",\"zh\":\"我憎恶做家务。\"}]",26
-基础⑩·喜好与活动,我想做/需要做,urge,强烈要求/冲动,verb/noun,/ɜːrdʒ/,/ɜːdʒ/,L2,强烈要求。urge to do。,"[{\"en\":\"I have a sudden urge to travel.\",\"zh\":\"我有一种突然想去旅行的冲动。\"}]",26
+基础⑧·并列与转折,核心词汇,abandon,,v,,,L1+L2,,,0
+基础⑧·并列与转折,核心词汇,additional,,adj,,,L1+L2,,,1
+基础⑧·并列与转折,核心词汇,amazed,,adj,,,L1+L2,,,2
+基础⑧·并列与转折,核心词汇,assessment,,n,,,L1+L2,,,3
+基础⑧·并列与转折,核心词汇,beauty,,n,,,L1+L2,,,4
+基础⑧·并列与转折,核心词汇,brave,,adj,,,L1+L2,,,5
+基础⑧·并列与转折,核心词汇,celebration,,n,,,L1+L2,,,6
+基础⑧·并列与转折,核心词汇,click,,v,,,L1+L2,,,7
+基础⑧·并列与转折,核心词汇,complex,,adj,,,L1+L2,,,8
+基础⑧·并列与转折,核心词汇,conservative,,adj,,,L1+L2,,,9
+基础⑧·并列与转折,核心词汇,criticism,,n,,,L1+L2,,,10
+基础⑧·并列与转折,核心词汇,demand,,n,,,L1+L2,,,11
+基础⑧·并列与转折,核心词汇,disappointing,,adj,,,L1+L2,,,12
+基础⑧·并列与转折,核心词汇,economy,,n,,,L1+L2,,,13
+基础⑧·并列与转折,核心词汇,effort,,n,,,L1+L2,,,14
+基础⑧·并列与转折,核心词汇,enthusiastic,,adj,,,L1+L2,,,15
+基础⑧·并列与转折,核心词汇,expand,,v,,,L1+L2,,,16
+基础⑧·并列与转折,核心词汇,fasten,,v,,,L1+L2,,,17
+基础⑧·并列与转折,核心词汇,frame,,n,,,L1+L2,,,18
+基础⑧·并列与转折,核心词汇,generally,,adv,,,L1+L2,,,19
+基础⑧·并列与转折,核心词汇,hang,,v,,,L1+L2,,,20
+基础⑧·并列与转折,核心词汇,hunt,,v,,,L1+L2,,,21
+基础⑧·并列与转折,核心词汇,indoors,,adv,,,L1+L2,,,22
+基础⑧·并列与转折,核心词汇,intention,,n,,,L1+L2,,,23
+基础⑧·并列与转折,核心词汇,latest,,adj,,,L1+L2,,,24
+基础⑧·并列与转折,核心词汇,mad,,adj,,,L1+L2,,,25
+基础⑧·并列与转折,核心词汇,measure,,v,,,L1+L2,,,26
+基础⑧·并列与转折,核心词汇,naturally,,adv,,,L1+L2,,,27
+基础⑧·并列与转折,核心词汇,organizer,,n,,,L1+L2,,,28
+基础⑧·并列与转折,核心词汇,passion,,n,,,L1+L2,,,29
+基础⑧·并列与转折,核心词汇,plenty,,pron,,,L1+L2,,,30
+基础⑧·并列与转折,核心词汇,presence,,n,,,L1+L2,,,31
+基础⑧·并列与转折,核心词汇,profit,,n,,,L1+L2,,,32
+基础⑧·并列与转折,核心词汇,qualify,,v,,,L1+L2,,,33
+基础⑧·并列与转折,核心词汇,reliable,,adj,,,L1+L2,,,34
+基础⑧·并列与转折,核心词汇,royal,,adj,,,L1+L2,,,35
+基础⑧·并列与转折,核心词汇,script,,n,,,L1+L2,,,36
+基础⑧·并列与转折,核心词汇,setting,,n,,,L1+L2,,,37
+基础⑧·并列与转折,核心词汇,slightly,,adv,,,L1+L2,,,38
+基础⑧·并列与转折,核心词汇,standard,,n,,,L1+L2,,,39
+基础⑧·并列与转折,核心词汇,sudden,,adj,,,L1+L2,,,40
+基础⑧·并列与转折,核心词汇,talent,,n,,,L1+L2,,,41
+基础⑧·并列与转折,核心词汇,thus,,adv,,,L1+L2,,,42
+基础⑧·并列与转折,核心词汇,truth,,n,,,L1+L2,,,43
+基础⑧·并列与转折,核心词汇,unpleasant,,adj,,,L1+L2,,,44
+基础⑧·并列与转折,核心词汇,vote,,n,,,L1+L2,,,45
+基础⑧·并列与转折,核心词汇,wool,,n,,,L1+L2,,,46
+基础⑧·因果与条件,核心词汇,access,,n,,,L1+L2,,,47
+基础⑧·因果与条件,核心词汇,advanced,,adj,,,L1+L2,,,48
+基础⑧·因果与条件,核心词汇,annoyed,,adj,,,L1+L2,,,49
+基础⑧·因果与条件,核心词汇,atmosphere,,n,,,L1+L2,,,50
+基础⑧·因果与条件,核心词汇,beg,,v,,,L1+L2,,,51
+基础⑧·因果与条件,核心词汇,breast,,n,,,L1+L2,,,52
+基础⑧·因果与条件,核心词汇,challenge,,n,,,L1+L2,,,53
+基础⑧·因果与条件,核心词汇,coal,,n,,,L1+L2,,,54
+基础⑧·因果与条件,核心词汇,concentrate,,v,,,L1+L2,,,55
+基础⑧·因果与条件,核心词汇,consumer,,n,,,L1+L2,,,56
+基础⑧·因果与条件,核心词汇,current,,adj,,,L1+L2,,,57
+基础⑧·因果与条件,核心词汇,depressed,,adj,,,L1+L2,,,58
+基础⑧·因果与条件,核心词汇,disc,,n,,,L1+L2,,,59
+基础⑧·因果与条件,核心词汇,educated,,adj,,,L1+L2,,,60
+基础⑧·因果与条件,核心词汇,embarrassing,,adj,,,L1+L2,,,61
+基础⑧·因果与条件,核心词汇,escape,,v,,,L1+L2,,,62
+基础⑧·因果与条件,核心词汇,explore,,v,,,L1+L2,,,63
+基础⑧·因果与条件,核心词汇,file,,n,,,L1+L2,,,64
+基础⑧·因果与条件,核心词汇,frighten,,v,,,L1+L2,,,65
+基础⑧·因果与条件,核心词汇,generous,,adj,,,L1+L2,,,66
+基础⑧·因果与条件,核心词汇,heating,,n,,,L1+L2,,,67
+基础⑧·因果与条件,核心词汇,ignore,,v,,,L1+L2,,,68
+基础⑧·因果与条件,核心词汇,injured,,adj,,,L1+L2,,,69
+基础⑧·因果与条件,核心词汇,iron,,n,,,L1+L2,,,70
+基础⑧·因果与条件,核心词汇,leaf,,n,,,L1+L2,,,71
+基础⑧·因果与条件,核心词汇,mainly,,adv,,,L1+L2,,,72
+基础⑧·因果与条件,核心词汇,mild,,adj,,,L1+L2,,,73
+基础⑧·因果与条件,核心词汇,net,,n,,,L1+L2,,,74
+基础⑧·因果与条件,核心词汇,outdoor,,adj,,,L1+L2,,,75
+基础⑧·因果与条件,核心词汇,percentage,,n,,,L1+L2,,,76
+基础⑧·因果与条件,核心词汇,poetry,,n,,,L1+L2,,,77
+基础⑧·因果与条件,核心词汇,presentation,,n,,,L1+L2,,,78
+基础⑧·因果与条件,核心词汇,property,,n,,,L1+L2,,,79
+基础⑧·因果与条件,核心词汇,quote,,v,,,L1+L2,,,80
+基础⑧·因果与条件,核心词汇,rely,,v,,,L1+L2,,,81
+基础⑧·因果与条件,核心词汇,rub,,v,,,L1+L2,,,82
+基础⑧·因果与条件,核心词汇,secondary,,adj,,,L1+L2,,,83
+基础⑧·因果与条件,核心词汇,shelf,,n,,,L1+L2,,,84
+基础⑧·因果与条件,核心词汇,soil,,n,,,L1+L2,,,85
+基础⑧·因果与条件,核心词汇,steel,,n,,,L1+L2,,,86
+基础⑧·因果与条件,核心词汇,suffer,,v,,,L1+L2,,,87
+基础⑧·因果与条件,核心词汇,technical,,adj,,,L1+L2,,,88
+基础⑧·因果与条件,核心词汇,tiny,,adj,,,L1+L2,,,89
+基础⑧·因果与条件,核心词汇,tunnel,,n,,,L1+L2,,,90
+基础⑧·因果与条件,核心词汇,urban,,adj,,,L1+L2,,,91
+基础⑧·因果与条件,核心词汇,weapon,,n,,,L1+L2,,,92
+基础⑧·因果与条件,核心词汇,yard,,n,,,L1+L2,,,93
+基础⑧·时间与顺序,核心词汇,actual,,adj,,,L1+L2,,,94
+基础⑧·时间与顺序,核心词汇,afterwards,,adv,,,L1+L2,,,95
+基础⑧·时间与顺序,核心词汇,application,,n,,,L1+L2,,,96
+基础⑧·时间与顺序,核心词汇,attraction,,n,,,L1+L2,,,97
+基础⑧·时间与顺序,核心词汇,bend,,v,,,L1+L2,,,98
+基础⑧·时间与顺序,核心词汇,bride,,n,,,L1+L2,,,99
+基础⑧·时间与顺序,核心词汇,characteristic,,n,,,L1+L2,,,100
+基础⑧·时间与顺序,核心词汇,combination,,n,,,L1+L2,,,101
+基础⑧·时间与顺序,核心词汇,confident,,adj,,,L1+L2,,,102
+基础⑧·时间与顺序,核心词汇,contract,,n,,,L1+L2,,,103
+基础⑧·时间与顺序,核心词汇,damage,,n,,,L1+L2,,,104
+基础⑧·时间与顺序,核心词汇,despite,,prep,,,L1+L2,,,105
+基础⑧·时间与顺序,核心词汇,documentary,,n,,,L1+L2,,,106
+基础⑧·时间与顺序,核心词汇,effective,,adj,,,L1+L2,,,107
+基础⑧·时间与顺序,核心词汇,encounter,,v,,,L1+L2,,,108
+基础⑧·时间与顺序,核心词汇,establish,,v,,,L1+L2,,,109
+基础⑧·时间与顺序,核心词汇,extraordinary,,adj,,,L1+L2,,,110
+基础⑧·时间与顺序,核心词汇,finding,,n,,,L1+L2,,,111
+基础⑧·时间与顺序,核心词汇,fry,,v,,,L1+L2,,,112
+基础⑧·时间与顺序,核心词汇,giant,,adj,,,L1+L2,,,113
+基础⑧·时间与顺序,核心词汇,highly,,adv,,,L1+L2,,,114
+基础⑧·时间与顺序,核心词汇,immigrant,,n,,,L1+L2,,,115
+基础⑧·时间与顺序,核心词汇,insight,,n,,,L1+L2,,,116
+基础⑧·时间与顺序,核心词汇,keen,,adj,,,L1+L2,,,117
+基础⑧·时间与顺序,核心词汇,length,,n,,,L1+L2,,,118
+基础⑧·时间与顺序,核心词汇,management,,n,,,L1+L2,,,119
+基础⑧·时间与顺序,核心词汇,mud,,n,,,L1+L2,,,120
+基础⑧·时间与顺序,核心词汇,obligation,,n,,,L1+L2,,,121
+基础⑧·时间与顺序,核心词汇,outer,,adj,,,L1+L2,,,122
+基础⑧·时间与顺序,核心词汇,persuade,,v,,,L1+L2,,,123
+基础⑧·时间与顺序,核心词汇,political,,adj,,,L1+L2,,,124
+基础⑧·时间与顺序,核心词汇,previous,,adj,,,L1+L2,,,125
+基础⑧·时间与顺序,核心词汇,propose,,v,,,L1+L2,,,126
+基础⑧·时间与顺序,核心词汇,rarely,,adv,,,L1+L2,,,127
+基础⑧·时间与顺序,核心词汇,represent,,v,,,L1+L2,,,128
+基础⑧·时间与顺序,核心词汇,sample,,n,,,L1+L2,,,129
+基础⑧·时间与顺序,核心词汇,seed,,n,,,L1+L2,,,130
+基础⑧·时间与顺序,核心词汇,shelter,,n,,,L1+L2,,,131
+基础⑧·时间与顺序,核心词汇,specialist,,n,,,L1+L2,,,132
+基础⑧·时间与顺序,核心词汇,strength,,n,,,L1+L2,,,133
+基础⑧·时间与顺序,核心词汇,supply,,n,,,L1+L2,,,134
+基础⑧·时间与顺序,核心词汇,theirs,,pron,,,L1+L2,,,135
+基础⑧·时间与顺序,核心词汇,totally,,adv,,,L1+L2,,,136
+基础⑧·时间与顺序,核心词汇,ugly,,adj,,,L1+L2,,,137
+基础⑧·时间与顺序,核心词汇,valuable,,adj,,,L1+L2,,,138
+基础⑧·时间与顺序,核心词汇,whenever,,conj,,,L1+L2,,,139
+基础⑧·举例与补充,核心词汇,ad,,n,,,L1+L2,,,140
+基础⑧·举例与补充,核心词汇,agent,,n,,,L1+L2,,,141
+基础⑧·举例与补充,核心词汇,approve,,v,,,L1+L2,,,142
+基础⑧·举例与补充,核心词汇,bake,,v,,,L1+L2,,,143
+基础⑧·举例与补充,核心词汇,border,,n,,,L1+L2,,,144
+基础⑧·举例与补充,核心词汇,campaign,,n,,,L1+L2,,,145
+基础⑧·举例与补充,核心词汇,charge,,n,,,L1+L2,,,146
+基础⑧·举例与补充,核心词汇,combine,,v,,,L1+L2,,,147
+基础⑧·举例与补充,核心词汇,connection,,n,,,L1+L2,,,148
+基础⑧·举例与补充,核心词汇,contrast,,n,,,L1+L2,,,149
+基础⑧·举例与补充,核心词汇,decent,,adj,,,L1+L2,,,150
+基础⑧·举例与补充,核心词汇,development,,n,,,L1+L2,,,151
+基础⑧·举例与补充,核心词汇,domestic,,adj,,,L1+L2,,,152
+基础⑧·举例与补充,核心词汇,effectively,,adv,,,L1+L2,,,153
+基础⑧·举例与补充,核心词汇,entertain,,v,,,L1+L2,,,154
+基础⑧·举例与补充,核心词汇,exchange,,n,,,L1+L2,,,155
+基础⑧·举例与补充,核心词汇,facility,,n,,,L1+L2,,,156
+基础⑧·举例与补充,核心词汇,flag,,n,,,L1+L2,,,157
+基础⑧·举例与补充,核心词汇,furthermore,,adv,,,L1+L2,,,158
+基础⑧·举例与补充,核心词汇,grand,,adj,,,L1+L2,,,159
+基础⑧·举例与补充,核心词汇,hollow,,adj,,,L1+L2,,,160
+基础⑧·举例与补充,核心词汇,impression,,n,,,L1+L2,,,161
+基础⑧·举例与补充,核心词汇,instance,,n,,,L1+L2,,,162
+基础⑧·举例与补充,核心词汇,kiss,,v,,,L1+L2,,,163
+基础⑧·举例与补充,核心词汇,licence,,n,,,L1+L2,,,164
+基础⑧·举例与补充,核心词汇,means,,n,,,L1+L2,,,165
+基础⑧·举例与补充,核心词汇,mysterious,,adj,,,L1+L2,,,166
+基础⑧·举例与补充,核心词汇,obviously,,adv,,,L1+L2,,,167
+基础⑧·举例与补充,核心词汇,pale,,adj,,,L1+L2,,,168
+基础⑧·举例与补充,核心词汇,pipe,,n,,,L1+L2,,,169
+基础⑧·举例与补充,核心词汇,portrait,,n,,,L1+L2,,,170
+基础⑧·举例与补充,核心词汇,prince,,n,,,L1+L2,,,171
+基础⑧·举例与补充,核心词汇,punish,,v,,,L1+L2,,,172
+基础⑧·举例与补充,核心词汇,reject,,v,,,L1+L2,,,173
+基础⑧·举例与补充,核心词汇,retired,,adj,,,L1+L2,,,174
+基础⑧·举例与补充,核心词汇,sand,,n,,,L1+L2,,,175
+基础⑧·举例与补充,核心词汇,sensitive,,adj,,,L1+L2,,,176
+基础⑧·举例与补充,核心词汇,shiny,,adj,,,L1+L2,,,177
+基础⑧·举例与补充,核心词汇,spending,,n,,,L1+L2,,,178
+基础⑧·举例与补充,核心词汇,struggle,,v,,,L1+L2,,,179
+基础⑧·举例与补充,核心词汇,survive,,v,,,L1+L2,,,180
+基础⑧·举例与补充,核心词汇,therefore,,adv,,,L1+L2,,,181
+基础⑧·举例与补充,核心词汇,tough,,adj,,,L1+L2,,,182
+基础⑧·举例与补充,核心词汇,unemployed,,adj,,,L1+L2,,,183
+基础⑧·举例与补充,核心词汇,victim,,n,,,L1+L2,,,184
+基础⑧·举例与补充,核心词汇,whether,,conj,,,L1+L2,,,185
+基础⑧·综合叙事,核心词汇,addition,,n,,,L1+L2,,,186
+基础⑧·综合叙事,核心词汇,alarm,,n,,,L1+L2,,,187
+基础⑧·综合叙事,核心词汇,arrest,,v,,,L1+L2,,,188
+基础⑧·综合叙事,核心词汇,basic,,adj,,,L1+L2,,,189
+基础⑧·综合叙事,核心词汇,brand,,n,,,L1+L2,,,190
+基础⑧·综合叙事,核心词汇,captain,,n,,,L1+L2,,,191
+基础⑧·综合叙事,核心词汇,chest,,n,,,L1+L2,,,192
+基础⑧·综合叙事,核心词汇,command,,n,,,L1+L2,,,193
+基础⑧·综合叙事,核心词汇,consequence,,n,,,L1+L2,,,194
+基础⑧·综合叙事,核心词汇,cottage,,n,,,L1+L2,,,195
+基础⑧·综合叙事,核心词汇,definite,,adj,,,L1+L2,,,196
+基础⑧·综合叙事,核心词汇,directly,,adv,,,L1+L2,,,197
+基础⑧·综合叙事,核心词汇,drum,,n,,,L1+L2,,,198
+基础⑧·综合叙事,核心词汇,efficient,,adj,,,L1+L2,,,199
+基础⑧·综合叙事,核心词汇,enthusiasm,,n,,,L1+L2,,,200
+基础⑧·综合叙事,核心词汇,existence,,n,,,L1+L2,,,201
+基础⑧·综合叙事,核心词汇,familiar,,adj,,,L1+L2,,,202
+基础⑧·综合叙事,核心词汇,fold,,v,,,L1+L2,,,203
+基础⑧·综合叙事,核心词汇,garage,,n,,,L1+L2,,,204
+基础⑧·综合叙事,核心词汇,handle,,v,,,L1+L2,,,205
+基础⑧·综合叙事,核心词汇,honest,,adj,,,L1+L2,,,206
+基础⑧·综合叙事,核心词汇,indeed,,adv,,,L1+L2,,,207
+基础⑧·综合叙事,核心词汇,intense,,adj,,,L1+L2,,,208
+基础⑧·综合叙事,核心词汇,landscape,,n,,,L1+L2,,,209
+基础⑧·综合叙事,核心词汇,literature,,n,,,L1+L2,,,210
+基础⑧·综合叙事,核心词汇,meanwhile,,adv,,,L1+L2,,,211
+基础⑧·综合叙事,核心词汇,nail,,n,,,L1+L2,,,212
+基础⑧·综合叙事,核心词汇,official,,adj,,,L1+L2,,,213
+基础⑧·综合叙事,核心词汇,particularly,,adv,,,L1+L2,,,214
+基础⑧·综合叙事,核心词汇,plain,,adj,,,L1+L2,,,215
+基础⑧·综合叙事,核心词汇,pray,,v,,,L1+L2,,,216
+基础⑧·综合叙事,核心词汇,private,,adj,,,L1+L2,,,217
+基础⑧·综合叙事,核心词汇,pursue,,v,,,L1+L2,,,218
+基础⑧·综合叙事,核心词汇,relative,,adj,,,L1+L2,,,219
+基础⑧·综合叙事,核心词汇,roll,,v,,,L1+L2,,,220
+基础⑧·综合叙事,核心词汇,scheme,,n,,,L1+L2,,,221
+基础⑧·综合叙事,核心词汇,sequence,,n,,,L1+L2,,,222
+基础⑧·综合叙事,核心词汇,signal,,n,,,L1+L2,,,223
+基础⑧·综合叙事,核心词汇,spot,,n,,,L1+L2,,,224
+基础⑧·综合叙事,核心词汇,stuff,,n,,,L1+L2,,,225
+基础⑧·综合叙事,核心词汇,sympathy,,n,,,L1+L2,,,226
+基础⑧·综合叙事,核心词汇,though,,conj,,,L1+L2,,,227
+基础⑧·综合叙事,核心词汇,treat,,v,,,L1+L2,,,228
+基础⑧·综合叙事,核心词汇,unless,,conj,,,L1+L2,,,229
+基础⑧·综合叙事,核心词汇,vision,,n,,,L1+L2,,,230
+基础⑧·综合叙事,核心词汇,witness,,n,,,L1+L2,,,231

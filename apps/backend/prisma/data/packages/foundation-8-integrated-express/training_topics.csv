@@ -1,111 +1,426 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
-基础⑩·喜好与活动,我喜欢做...,Practice like/enjoy/hate + doing and want/need/hope + to do.,练习动名词和不定式的用法。,35,L1~L2,掌握like+doing(动名词)和want+to do(不定式)的区分。,动名词 不定式 like doing want to do,"## 动名词 (Gerund): 动词+ing 变名词
-- like + doing: I like swimming. (我喜欢游泳这件事)
-- enjoy + doing: She enjoys cooking. (她享受做饭)
-- hate + doing: I hate waiting. (我讨厌等待)
+基础⑧·并列与转折,and 并列,Practice using and to connect nouns adjectives and verbs.,练习用and连接名词/形容词/动词，表达并列关系。,35,L1~L2,掌握and连接并列成分的基本用法。,并列连词 and 连接 并列,"## and 并列连接
+and 用来连接两个并列的成分——名词、形容词、动词或整个句子。
 
-## 接动名词的常用动词
-| 动词 | 含义 | 例句 |
-|------|------|------|
-| enjoy | 享受 | I enjoy reading. |
-| mind | 介意 | Do you mind waiting? |
-| avoid | 避免 | Avoid eating late. |
-| practice | 练习 | Practice speaking. |
-| suggest | 建议 | She suggests going. |
-| consider | 考虑 | Consider moving. |
-| miss | 想念 | I miss seeing you. |
+## 连接名词
+- I like coffee and tea.
+- I bought apples and bananas.
 
-## 关键规则
-- like/love/hate/prefer 后可接 doing 或 to do，意思基本相同
-- enjoy/mind/avoid/practice 后**只能接 doing**",practice_foundation-integrated-express_喜好与活动_我喜欢做
-基础⑩·喜好与活动,我想做/需要做,Practice would like/hope/need + to do polite expressions.,练习委婉表达意愿：would like / hope to / need to。,35,L1~L2,掌握would like to和hope to等委婉表达。,委婉 意愿 would like hope to need to,"## 不定式 (Infinitive): to + 动词原形
-- want + to do: I want to learn Chinese.
-- hope + to do: I hope to see you.
-- need + to do: I need to finish this.
+## 连接形容词
+- She is smart and kind.
+- The room is clean and comfortable.
 
-## 接不定式的常用动词
-| 动词 | 含义 | 例句 |
-|------|------|------|
-| agree | 同意 | She agreed to come. |
-| refuse | 拒绝 | He refused to answer. |
-| promise | 承诺 | I promise to help. |
-| offer | 主动 | He offered to drive. |
-| decide | 决定 | I decided to stay. |
-| plan | 计划 | We plan to visit. |
-| pretend | 假装 | He pretended to sleep. |
-
-## would like 委婉表达
-- I would like to order. (比 I want to 更礼貌)
-- Would you like to join us? (邀请)",practice_foundation-integrated-express_喜好与活动_我想做需要做
-基础⑩·礼貌与请求,请你帮我...,Practice polite requests with Could Would and May I.,练习Could/Would/May I等礼貌请求。,35,L1~L2,掌握Could you / Would you / May I 三种礼貌请求。,礼貌请求 could would may please,"## 三种礼貌请求
-| 句式 | 礼貌度 | 例句 |
-|------|--------|------|
-| Can you...? | 一般 | Can you help me? |
-| Could you...? | 较礼貌 | Could you help me? |
-| Would you mind...? | 最礼貌 | Would you mind helping? |
-
-## 回答方式
-- Could you...? → Sure. / Of course. / Certainly.
-- Would you mind...? → Not at all. / Of course not.
-- 拒绝时：I'm sorry, but... / I'm afraid I can't.
-
-## 加分表达
-- I'd appreciate it if you could...
-- I'd be grateful if you would...
-- Sorry to bother you, but...",practice_foundation-integrated-express_礼貌与请求_请你帮我
-基础⑩·礼貌与请求,你想要...吗？,Practice offering and inviting with Would you like and Do you want.,练习邀请和提议：Would you like / Do you want / How about。,35,L1~L2,掌握邀请和提议的各种表达方式。,邀请 提议 would you like how about,"## 邀请和提议
-- Would you like some coffee? (邀请喝茶)
-- Do you want to join us? (一般邀请)
-- How about going out? (提议)
-
-## 接受邀请
-- I'd love to! (很乐意)
-- That sounds great! (听起来很棒)
-- Count me in! (算我一个)
-
-## 婉拒邀请
-- I'm afraid I can't. (恐怕不行)
-- Maybe another time. (改天吧)
-- Can I take a rain check? (能改日吗？)
-
-## 请客相关
-- It's my treat. (我请客)
-- Let me get this. (让我来付)
-- It's on me. (算我的)",practice_foundation-integrated-express_礼貌与请求_你想要吗
-基础⑩·经历与持续,我去过/做过,Practice present perfect with have been/done and ever/never.,练习现在完成时：have been to / have done / ever/never。,40,L1~L2,掌握现在完成时表经历的基本用法。,完成时 have been to ever never 经历,"## 现在完成时 (经历用法)
-- I have been to Beijing. (去过 — 现在已经不在那)
-- Have you ever tried sushi? (你吃过吗？— 经历)
-- I have never seen a ghost. (从未见过 — 零经历)
-
-## 结构
-have/has + 过去分词
-- I have visited 5 countries.
-- She has never been abroad.
-
-## 标志词
-- ever (曾经): Have you ever...?
-- never (从未): I have never...
-- once / twice / several times / so far / lately
-
-## 关键区别
-- I went to Beijing last year. (过去具体时间 → 一般过去时)
-- I have been to Beijing. (不强调时间 → 现在完成时)",practice_foundation-integrated-express_经历与持续_我去过做过
-基础⑩·经历与持续,已经多久了,Practice present perfect with for since already yet just.,练习现在完成时的时间表达：for/since/already/yet/just。,40,L1~L2,掌握for/since/already/yet/just的用法。,完成时 for since already yet just 持续,"## 现在完成时 (持续用法)
-- for + 时间段: I have lived here for 3 years.
-- since + 时间点: I have studied English since 2020.
-
-## 其他标志词
-| 词 | 含义 | 位置 |
-|----|------|------|
-| already | 已经 | 句中(肯定) |
-| yet | 还(没) | 句尾(否定/疑问) |
-| just | 刚刚 | 句中 |
-| recently | 最近 | 句尾或句中 |
-
-## for vs since
-- for + 长度：for 5 years / for a long time
-- since + 起点：since 2020 / since Monday / since I was young
+## 连接动词
+- I went to the store and bought some milk.
+- She sat down and started to read.
 
 ## 常见错误
-- ❌ I have lived here since 3 years. → ✅ for 3 years
-- ❌ I have lived here for 2020. → ✅ since 2020",practice_foundation-integrated-express_经历与持续_已经多久了
+❌ I like drink coffee and tea. → and 前后结构要一致
+✅ I like coffee and tea. / I like to drink coffee and tea.",practice_foundation-integrated-express_并列与转折_and并列
+基础⑧·并列与转折,or 选择,Practice using or to express choices and alternatives.,练习用or表达选择、疑问和替代。,35,L1~L2,掌握or在疑问句和陈述句中表达选择的用法。,选择连词 or 选择 疑问,"## or 选择连接
+or 用来提供选项或表达选择。
+
+## 疑问句中选择
+- Do you want tea or coffee?
+- Is it big or small?
+- Are you coming or staying?
+
+## 陈述句中使用
+- You can have tea or coffee.
+- I can go today or tomorrow.
+
+## 常见表达
+- or not: Do you want to go or not?
+- or something: Do you want coffee or something?
+- either...or: You can either stay or go.",practice_foundation-integrated-express_并列与转折_or选择
+基础⑧·并列与转折,but 转折,Practice using but to express contrast and opposition.,练习用but表达转折和对比关系。,35,L1~L2,掌握but连接两个相反或对比内容的用法。,转折连词 but 转折 对比,"## but 转折连接
+but 用来连接两个意思相反或形成对比的内容。
+
+## 基本结构
+- I like him, but he doesn't like me.
+- The food is cheap, but it's delicious.
+
+## 主语不同的转折
+- I wanted to go, but I was too busy.
+- She tried her best, but she failed.
+
+## 描述对比
+- The hotel is small, but it's very clean.
+- He is young, but he is very smart.
+
+## 常见错误
+❌ I like him but he doesn't like me.（缺少逗号可以接受，但加逗号更规范）
+✅ I like him, but he doesn't like me.",practice_foundation-integrated-express_并列与转折_but转折
+基础⑧·并列与转折,however 对比,Practice using however to express contrast in formal contexts.,练习用however在正式语境中表达转折对比。,35,L1~L2,掌握however在句首引出转折的正式用法。,转折副词 however 对比 正式,"## however 对比表达
+however 比 but 更正式，通常放在句首，后面用逗号。
+
+## 基本结构
+- I wanted to go. However, I was too busy.
+- The food was good. However, it was expensive.
+
+## 表示对比
+- She studied hard. However, she didn't pass.
+- The hotel was nice. However, it was far from the beach.
+
+## however vs but
+- but: 连接两个分句，口语化
+- however: 开启新句子，更正式
+
+## 例句
+- I like living in the city. However, it's very expensive.
+- He is rich. However, he is not happy.",practice_foundation-integrated-express_并列与转折_however对比
+基础⑧·并列与转折,not only...but also 递进,Practice using not only...but also to express progression.,练习用not only...but also表达递进关系。,35,L1~L2,掌握not only...but also连接两个递进成分的用法。,递进结构 not only but also 递进,"## not only...but also 递进
+表示"不仅……而且……"，强调后者的重要性。
+
+## 连接动词
+- She not only speaks English, but also speaks Chinese.
+- He not only sings, but also dances.
+
+## 连接名词
+- She is not only a teacher, but also a writer.
+- He not only plays guitar, but also violin.
+
+## 连接形容词
+- She is not only smart, but also kind.
+- The movie is not only funny, but also touching.
+
+## 倒装结构（高级）
+- Not only does she speak English, but she also speaks Chinese.
+
+## 常见错误
+❌ I not only speak English but also Chinese. → 前后结构不一致
+✅ I speak not only English but also Chinese.",practice_foundation-integrated-express_并列与转折_notonlybutalso递进
+基础⑧·因果与条件,because 原因,Practice using because to express reasons and causes.,练习用because表达原因和理由。,35,L1~L2,掌握because引导原因从句的句首和句中位置。,原因连词 because 原因 理由,"## because 原因从句
+because 表示"因为"，说明某事发生的原因。
+
+## 句中位置（最常用）
+- I stayed home because I was sick.
+- She is happy because she passed the test.
+
+## 句首位置（强调原因）
+- Because it rained, we stayed inside.
+- Because I was tired, I went to bed early.
+
+## 常见错误
+❌ Because I was tired, so I went home. → because 和 so 不能同时使用
+✅ Because I was tired, I went home.
+✅ I was tired, so I went home.",practice_foundation-integrated-express_因果与条件_because原因
+基础⑧·因果与条件,so 结果,Practice using so to express results and consequences.,练习用so表达结果和后果。,35,L1~L2,掌握so引导结果从句的用法。,结果连词 so 结果 后果,"## so 结果从句
+so 表示"所以"，引出前面动作的结果。
+
+## 基本结构
+- I was tired, so I went to bed early.
+- It started to rain, so we took a taxi.
+
+## 常见句型
+- I was hungry, so I ate something.
+- I was busy, so I couldn't come.
+- The store was closed, so I went home.
+- I lost my phone, so I bought a new one.
+
+## because + so 不能连用
+❌ Because I was tired, so I went home.
+✅ I was tired, so I went home.
+✅ Because I was tired, I went home.",practice_foundation-integrated-express_因果与条件_so结果
+基础⑧·因果与条件,if 条件,Practice using if to express conditions and possibilities.,练习用if表达条件和假设。,35,L1~L2,掌握if引导条件从句的基本用法（第一条件句）。,条件连词 if 条件 假设,"## if 条件从句
+if 表示"如果"，引导条件从句。
+
+## 第一条件句（if + 现在时，主句 + will）
+- If it rains tomorrow, I'll stay home.
+- If you study hard, you will pass the test.
+
+## if + 祈使句
+- Let me know if you need help.
+- Call me if you get lost.
+- Take an umbrella if it rains.
+
+## 重要规则
+if 从句中用现在时表示将来，不用 will。
+❌ If it will rain, I'll stay home.
+✅ If it rains, I'll stay home.",practice_foundation-integrated-express_因果与条件_if条件
+基础⑧·因果与条件,unless 除非,Practice using unless to express negative conditions.,练习用unless表达否定条件（除非）。,35,L1~L2,掌握unless引导条件从句表示"除非…否则…"。,条件连词 unless 除非 条件,"## unless 条件从句
+unless 表示"除非"，相当于"if not"。
+
+## 基本结构
+- I won't go unless you come with me.
+- You can't enter unless you have a ticket.
+
+## unless + 肯定句
+- I won't eat unless I'm hungry.
+- I won't buy it unless it's cheap.
+- You can't drive unless you have a license.
+- You won't pass unless you study.
+
+## unless 与 if not 互换
+- I won't go unless you come. = I won't go if you don't come.
+- You can't enter unless you have a ticket. = You can't enter if you don't have a ticket.",practice_foundation-integrated-express_因果与条件_unless除非
+基础⑧·因果与条件,as long as 只要,Practice using as long as to express sufficient conditions.,练习用as long as表达充分条件（只要）。,35,L1~L2,掌握as long as引导条件从句的用法。,条件短语 as long as 只要 条件,"## as long as 条件从句
+as long as 表示"只要"，引导充分条件。
+
+## 基本结构
+- As long as you try your best, it's okay.
+- As long as you're happy, I'm happy.
+
+## 常见句型
+- As long as we're together, everything is fine.
+- As long as it doesn't rain, we'll go.
+- As long as you study hard, you'll do well.
+- As long as you need help, I'll be here.
+
+## 虚拟建议
+- If I were you, I would take the job.
+- If I were you, I would say sorry.
+- If I were you, I would go to the doctor.",practice_foundation-integrated-express_因果与条件_aslongas只要
+基础⑧·时间与顺序,when 当…时,Practice using when to express timing and simultaneous actions.,练习用when表达"当…时"的时间关系。,35,L1~L2,掌握when引导时间从句的用法。,时间连词 when 时间 同时,"## when 时间从句
+when 表示"当……时"，引导时间状语从句。
+
+## 过去时间
+- When I arrived, she was cooking.
+- When I called, he was sleeping.
+- When I got home, they were watching TV.
+
+## 习惯表达
+- I always listen to music when I run.
+- I always drink coffee when I wake up.
+- I read when I take the bus.
+
+## 将来时间（用现在时）
+- Call me when you get home.
+- Text me when you arrive.
+- Tell her when you see her.",practice_foundation-integrated-express_时间与顺序_when当
+基础⑧·时间与顺序,before/after 前后,Practice using before and after to express sequence.,练习用before和after表达事件的先后顺序。,35,L1~L2,掌握before和after引导时间从句的用法。,时间连词 before after 先后 顺序,"## before 和 after 时间从句
+before（在……之前）和 after（在……之后）表示事件先后顺序。
+
+## before 用法
+- I brush my teeth before I go to bed.
+- I eat breakfast before I leave.
+- I check my email before I start work.
+- Before you leave, please turn off the lights.
+
+## after 用法
+- After I finished work, I went to the gym.
+- After I woke up, I took a shower.
+- After I ate dinner, I watched a movie.
+- After you finish, let me know. Then we can go together.",practice_foundation-integrated-express_时间与顺序_beforeafter前后
+基础⑧·时间与顺序,while 同时,Practice using while to express simultaneous actions.,练习用while表达两个同时进行的动作。,35,L1~L2,掌握while表示"在…期间"的用法。,时间连词 while 同时 同步,"## while 时间从句
+while 表示"在……期间"或"当……的同时"。
+
+## 两个动作同时进行
+- We played games while we waited.
+- I listened to music while I worked.
+- I talked on the phone while I walked.
+
+## 过去进行时
+- While I was cooking, my sister was setting the table.
+- While I was studying, my roommate was sleeping.
+- While I was working, my friend was waiting.
+
+## while vs when
+- while + 持续动作（进行时）
+- when + 瞬时动作或持续动作
+
+## 例句
+- Please listen while I'm talking.
+- Don't use your phone while you're driving.",practice_foundation-integrated-express_时间与顺序_while同时
+基础⑧·时间与顺序,until 直到,Practice using until to express a limit in time.,练习用until表达"直到…为止"的时间界限。,35,L1~L2,掌握until引导时间从句的用法。,时间连词 until 直到 界限,"## until 时间从句
+until 表示"直到……为止"。
+
+## 基本结构
+- Please wait here until I come back.
+- Stay here until it stops raining.
+- Keep trying until you succeed.
+
+## 常见句型
+- I waited until she arrived.
+- Don't leave until I come back.
+- Please stay until the meeting ends.
+- I didn't know until you told me.
+
+## until vs before
+- until: 持续到某个时间点
+- before: 在某个时间点之前",practice_foundation-integrated-express_时间与顺序_until直到
+基础⑧·时间与顺序,时间顺序链,Practice sequencing events with first then after that next finally.,练习用First/Then/After that/Next/Finally表达时间顺序。,40,L1~L2,掌握时间顺序词叙述多步骤事件的能力。,顺序词 first then after that finally 叙事,"## 时间顺序词
+使用顺序词可以让叙述清晰有条理。
+
+## 基本顺序链
+- First, I get up. Then, I take a shower. After that, I eat breakfast.
+- I went to the supermarket. Next, I went to the bank. Finally, I went home.
+
+## 常用顺序词
+| 词 | 用途 |
+|----|------|
+| First / First of all | 首先 |
+| Then / Next | 然后 / 接着 |
+| After that / Afterwards | 之后 |
+| Finally / Eventually | 最后 |
+
+## at first...but later
+- At first, I didn't like the job. But later, I started to enjoy it.
+- At first, it was hard. But later, it became easy.",practice_foundation-integrated-express_时间与顺序_时间顺序链
+基础⑧·举例与补充,for example 举例,Practice using for example to give examples.,练习用for example举例说明。,35,L1~L2,掌握for example举例表达的用法。,举例表达 for example 举例 例证,"## for example 举例
+for example 用来引出具体例子，帮助说明前面的观点。
+
+## 基本用法
+- I like sports. For example, I play basketball.
+- I enjoy music. For example, I listen to pop.
+
+## 常见句型
+- I like movies. For example, I watch comedies.
+- I love food. For example, I enjoy hot pot.
+- There are many things to do here. For example, you can visit the museum.
+
+## for example vs for instance
+- for example = for instance，可以互换使用。
+
+## 相关表达
+- such as / like / including（后接名词短语）
+- for example / for instance（后接完整句子）",practice_foundation-integrated-express_举例与补充_for example举例
+基础⑧·举例与补充,also/too/as well 补充,Practice using also too and as well to add information.,练习用also/too/as well补充附加信息。,35,L1~L2,掌握also/too/as well在句中的位置和用法。,补充副词 also too as well 补充,"## also / too / as well 补充
+这三个词都表示"也/还"，但位置不同。
+
+## also 位置
+- 放在be动词/助动词后，实义动词前
+- She is kind. Also, she is very hardworking.
+- He also likes music.
+
+## too 位置
+- 放在句末，前面通常用逗号
+- I like coffee. He likes coffee, too.
+
+## as well 位置
+- 放在句末，与too类似
+- She speaks English, and she speaks Japanese as well.
+
+## 常见用法
+- He is smart. Also, he is funny.
+- You play guitar? I play guitar, too.
+- He can cook, and he can bake as well.",practice_foundation-integrated-express_举例与补充_alsotooaswell补充
+基础⑧·举例与补充,besides/what's more 递进,Practice using besides and what's more to add further points.,练习用besides和what's more追加更重要的信息。,35,L1~L2,掌握besides和what's more表达递进的用法。,递进表达 besides what's more 进一步,"## besides / what's more 递进
+这两个词用来追加信息，表示"而且/再说/更重要的是"。
+
+## what's more 用法
+- It's a nice restaurant. What's more, the prices are good.
+- It's a good movie. What's more, it's free!
+- This hotel is nice. What's more, it's near the beach.
+
+## besides 用法
+- I want to go, but I have no time. Besides, I don't have money.
+- I want to travel, but I'm busy. Besides, tickets are expensive.
+
+## 对比
+- what's more: 追加正面信息
+- besides: 追加理由（常带有"再说"的语气）",practice_foundation-integrated-express_举例与补充_besideswhatsmore递进
+基础⑧·举例与补充,either 否定补充,Practice using either to express agreement in negative sentences.,练习用either在否定句中表达"也不"。,35,L1~L2,掌握either在否定句中表示"也（不）"的用法。,否定补充 either 也不 否定,"## either 否定补充
+either 用在否定句中，表示"也不"。
+
+## 基本用法
+- I don't like coffee. I don't like tea, either.
+- I don't eat meat. I don't eat fish, either.
+
+## 常见句型
+- I don't drink alcohol. I don't smoke, either.
+- I don't like loud music. I don't like cold weather, either.
+
+## too vs either
+- too: 用于肯定句 → I like it, too.
+- either: 用于否定句 → I don't like it, either.
+
+## 常见错误
+❌ I don't like it too. → 否定句中用either
+✅ I don't like it, either.",practice_foundation-integrated-express_举例与补充_either否定补充
+基础⑧·举例与补充,对话衔接词,Practice discourse markers like well actually by the way anyway.,练习well/actually/by the way/anyway等对话衔接词。,35,L1~L2,掌握日常对话中的口语衔接词。,"衔接词 well actually by the way anyway","## 对话衔接词（口语润滑剂）
+这些词不改变句子意思，但让英语听起来自然流畅。
+
+## Well - 犹豫/思考
+- Well, I think it's a good idea.
+- Well, I'm not sure.
+
+## Actually - 纠正/补充
+- Actually, I don't like coffee. I prefer tea.
+- Actually, I changed my mind.
+
+## By the way - 切换话题
+- By the way, did you hear about the party?
+- By the way, I saw your brother yesterday.
+
+## Anyway - 回到正题
+- Anyway, let's get back to the topic.
+- Anyway, I have to go now.
+
+## I mean - 解释澄清
+- I mean, it's not that I don't want to go. I'm just tired.
+
+## Let me see - 思考
+- Let me see... I think the answer is B.
+
+## You know - 引起共鸣
+- You know, I've always wanted to learn guitar.",practice_foundation-integrated-express_举例与补充_对话衔接词
+基础⑧·综合叙事,多步骤叙事,Practice multi-step narratives with sequence markers and conjunctions.,练习使用顺序词和连词进行多步骤叙事。,40,L1~L2,掌握用顺序词和连接词叙述多步骤事件。,"叙事 顺序 多步骤 First Then","## 多步骤叙事
+使用顺序词和连词把多个事件连接成完整的叙事。
+
+## 多步骤 + and 并列
+- First, I went to the store and bought some food. Then, I came home and cooked dinner. After that, I ate and watched TV.
+
+## before/after 叙事
+- Before I go to work, I always take a shower and eat breakfast. After I get home, I usually relax and read a book.
+
+## 关键技巧
+- 使用顺序词（First/Then/After that/Finally）
+- 使用连接词（and/but/because/so）
+- 保持时态一致",practice_foundation-integrated-express_综合叙事_多步骤叙事
+基础⑧·综合叙事,因果链叙事,Practice cause-and-effect chain narratives with because and so.,练习用because和so进行因果链叙事。,40,L1~L2,掌握用因果链表达复杂事件的因果关系。,"因果链 because so 叙事 因果","## 因果链叙事
+一个原因导致一个结果，这个结果又成为下一个原因。
+
+## 因果链示例
+- I was late for work because I missed the bus, so I had to take a taxi. It was expensive, but I had no choice.
+
+## 原因+结果+评价
+- She studied very hard because she wanted to pass the exam, and she did it! I'm so proud of her.
+
+## 常用结构
+- Because A..., B happened. So then C... But D...
+- A because B, so C. However, D.",practice_foundation-integrated-express_综合叙事_因果链叙事
+基础⑧·综合叙事,条件链叙事,Practice conditional chain narratives with if and unless.,练习用if/unless进行条件链叙事。,40,L1~L2,掌握条件链表达假设和条件关系。,"条件链 if unless 条件 假设","## 条件链叙事
+一个条件导致一个结果，这个结果又是下一个条件。
+
+## 条件+时间
+- When I got to the station, the train had already left. If I had left home earlier, I wouldn't have missed it.
+
+## 观点+条件
+- I think this is a good idea because it's simple and easy to do. If we try it, we might get good results.
+
+## 对比+条件
+- I like living in the city because it's convenient and exciting. However, it's also crowded and expensive.
+
+## 常用结构
+- If A, then B. But if C, then D.
+- As long as A, B. But if C, D.",practice_foundation-integrated-express_综合叙事_条件链叙事
+基础⑧·综合叙事,时间链叙事,Practice combining time clauses with sequence markers in narratives.,练习在叙事中结合时间从句和顺序词。,40,L1~L2,掌握时间链表达复杂的先后关系。,"时间链 when after before 叙事","## 时间链叙事
+结合时间从句和顺序词表达复杂的时间关系。
+
+## when + 因果
+- When I got home, I was really hungry because I didn't eat lunch.
+
+## 综合链
+- First, we went to the museum. After that, we had lunch. Then, we walked in the park because the weather was nice.
+
+## 多链叙事的技巧
+1. 确定事件顺序
+2. 选择合适连接词
+3. 保持时态一致
+4. 用逗号分隔分句",practice_foundation-integrated-express_综合叙事_时间链叙事
+基础⑧·综合叙事,混合观点表达,Practice expressing mixed opinions with multiple conjunctions.,练习使用多种连接词表达复杂观点。,40,L1~L2,掌握在观点表达中综合使用多种连接词。,"综合表达 I think because but however besides","## 混合观点表达
+在同一段话中使用多种连接词表达复杂的观点。
+
+## 观点+原因+对比
+- I think you should take the job because it's a good opportunity. Besides, you can learn a lot of new things there.
+
+## 条件+转折+结果
+- As long as you study hard, you'll do well. But if you don't practice enough, you might fall behind.
+
+## 总结+递进
+- In conclusion, I believe that learning English is very important. Not only can you talk to more people, but you can also get a better job.
+
+## 常用结构
+- I think A because B. However, C.
+- In conclusion, I believe that A. Not only B, but also C.",practice_foundation-integrated-express_综合叙事_混合观点表达

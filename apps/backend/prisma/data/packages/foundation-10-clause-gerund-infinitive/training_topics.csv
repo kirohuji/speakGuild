@@ -1,7 +1,310 @@
-scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,ink_script_key
-基础⑧·并列与转折,和/或者/但是,Practice connecting ideas with and but or because so.,练习用and/but/or/because/so连接想法。,35,L1~L2,掌握并列连词和转折连词的基本用法。,并列 转折 and but because so,practice_foundation-weather-nature_并列与转折_和或者但是
-基础⑧·并列与转折,因为/所以,Practice cause and effect with because and so.,练习用because和so表达因果。,35,L1~L2,掌握因果连接词和复杂句表达。,因果 because so 原因 结果,practice_foundation-weather-nature_并列与转折_因为所以
-基础⑧·时间与条件,当...时/之前/之后,Practice time clauses with when while before after until.,练习时间从句：when/while/before/after/until。,40,L1~L2,掌握时间连接词引导的状语从句。,时间从句 when while before after,practice_foundation-weather-nature_时间与条件_当之前之后
-基础⑧·时间与条件,如果/除非,Practice conditional clauses with if and unless.,练习条件从句：if和unless。,35,L1~L2,掌握条件句的基本结构(零条件/第一条件)。,条件句 if unless 假设 条件,practice_foundation-weather-nature_时间与条件_如果除非
-基础⑧·让步与定语,虽然/尽管,Practice concession with although even though though.,练习让步从句：although/even though/though。,35,L1~L2,掌握让步连接词的句首和句中用法。,让步 although even though 对比,practice_foundation-weather-nature_让步与定语_虽然尽管
-基础⑧·让步与定语,定语从句入门,Practice relative clauses with who which that where.,练习定语从句：who/which/that/where。,40,L1~L2,掌握关系代词引导的定语从句(修饰人/物/地点)。,定语从句 who which that where 修饰,practice_foundation-weather-nature_让步与定语_定语从句入门
+scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
+基础⑩·表达想法,我认为...,Practice I think that I believe that I know that clauses.,练习I think/believe/know+(that)宾语从句表达想法。,35,L1~L2,掌握that宾语从句的肯定和否定形式。,宾语从句 我认为 I think I believe I know,"## that 宾语从句
+宾语从句 = 一个完整句子作为动词的宾语。
+
+## 肯定形式
+- I think (that) you are right.
+- I believe (that) he is telling the truth.
+- I know (that) you are busy.
+
+## 否定转移
+- I don't think (that) it's a good idea.
+- 注意：否定转移到主句，不是从句
+
+## that 在口语中可省略
+- I think you are right. = I think that you are right.",practice_foundation-clause-gerund_表达想法_我认为
+基础⑩·表达想法,我知道/听说,Practice I know that I'm sure that I'm sorry that.,练习I know/I'm sure/I'm sorry+(that)从句。,35,L1~L2,掌握表达确定和感受的宾语从句。,我知道 I know I'm sure I'm sorry that,"## 我知道/确定
+- I know (that) you are busy.
+- I'm sure (that) everything will be fine.
+- I'm sure (that) he will come.
+
+## 抱歉
+- I'm sorry (that) I'm late.
+- I'm sorry (that) I forgot.
+- I'm sorry (that) I missed the call.
+
+## 例句
+- I'm sure we can finish on time.
+- I know she works very hard.",practice_foundation-clause-gerund_表达想法_我知道听说
+基础⑩·表达想法,不确定,Practice I'm not sure and I don't know wh- clauses.,练习I'm not sure/I don't know+wh-不确定表达。,35,L1~L2,掌握不确定表达和疑问词从句。,不确定 not sure don't know what where why,"## 不确定表达
+- I'm not sure (that) I can go.
+- I'm not sure (that) it will work.
+
+## wh- 宾语从句
+- I don't know what he wants.
+- Can you tell me where the station is?
+- I wonder why he is late.
+
+## 例句
+- I don't know what to do.
+- Can you tell me where the bathroom is?
+- I wonder why she left.",practice_foundation-clause-gerund_表达想法_不确定
+基础⑩·表达想法,转述他人,Practice reported speech He said that She told me that.,练习转述表达：He said/She told me/I heard+(that)从句。,35,L1~L2,掌握转述他人话语的动词+that从句。,"转述 said told me heard that","## 转述动词
+- He said (that) he would come.
+- She told me (that) she liked it.
+- I heard (that) the store is closing.
+
+## 时态变化
+- 转述时动词时态有时需要后移
+- He said: ""I am busy."" → He said (that) he was busy.
+- 但陈述普遍事实时可不变时态
+
+## 例句
+- She told me she needed help.
+- I heard he got married.",practice_foundation-clause-gerund_表达想法_转述他人
+基础⑩·表达想法,疑问词从句,Practice wh- clauses what where when why how.,练习what/where/when/why/how引导的宾语从句。,35,L1~L2,掌握疑问词引导的宾语从句。,疑问词从句 what where when why how,"## wh- 宾语从句
+- I don't know what he wants.
+- Can you tell me where the station is?
+- I wonder why he is late.
+- I understand how you feel.
+
+## 语序注意
+- 宾语从句用陈述句语序，不是疑问句语序
+- ✅ I know where he lives.
+- ❌ I know where does he live.
+
+## 例句
+- Do you know when the meeting starts?
+- I don't understand why she said that.",practice_foundation-clause-gerund_表达想法_疑问词从句
+基础⑩·描述人物事物,描述物品,Practice relative clauses with that for objects.,练习用that引导定语从句描述物品。,35,L1~L2,掌握that指物的定语从句。,定语从句 that 指物 描述物品,"## 定语从句（that指物）
+- The book that I read is very interesting.
+- Is this the food that you like?
+- I like the one that you showed me.
+
+## that 在从句中作宾语时可省略
+- The book I read is good. = The book that I read is good.
+
+## 例句
+- The movie that we watched was great.
+- I like the phone that you recommended.",practice_foundation-clause-gerund_描述人物事物_描述物品
+基础⑩·描述人物事物,描述人,Practice relative clauses with who for people.,练习用who引导定语从句描述人。,35,L1~L2,掌握who指人的定语从句。,定语从句 who 指人 描述人,"## 定语从句（who指人）
+- The person who called is my boss.
+- Do you know the girl who is talking to Tom?
+- He is the kind of person who never gives up.
+
+## who vs that
+- who 专指人（更精确）
+- that 也可指人（口语通用）
+
+## 例句
+- The friend who helped me is very kind.
+- I know the woman who works there.",practice_foundation-clause-gerund_描述人物事物_描述人
+基础⑩·描述人物事物,地点与原因,Practice relative clauses with where and why.,练习where和why引导的定语从句。,35,L1~L2,掌握where和why定语从句。,定语从句 where why 地点 原因,"## 地点从句（where）
+- The restaurant where we met is still there.
+- That's the place where I grew up.
+
+## 原因从句（why）
+- This is the reason why I came.
+- That's why I called.
+
+## 例句
+- The park where we walked is beautiful.
+- The company where I work is far away.
+- Tell me the reason why you said no.",practice_foundation-clause-gerund_描述人物事物_地点与原因
+基础⑩·描述人物事物,偏好描述,Practice describing preferences with relative clauses.,练习用定语从句表达偏好（最喜欢的…）。,35,L1~L2,掌握定语从句综合表达偏好。,"偏好 描述 the one that I like most","## 偏好描述
+- The movie that I like most is...
+- The book that I like most is...
+- The color that I like best is blue.
+
+## 例句
+- The food that I like most is pizza.
+- The song that I enjoy most is this one.",practice_foundation-clause-gerund_描述人物事物_偏好描述
+基础⑩·描述人物事物,综合描述,Practice complex descriptions combining multiple relative clauses.,练习多个定语从句综合描述。,35,L1~L2,掌握定语从句的综合运用。,综合描述 someone that who there are many,"## 综合描述
+- The friend who helped me is someone that I can always trust.
+- There are many things that I want to learn.
+
+## 例句
+- There are many places that I want to visit.
+- She is the kind of person who always helps others.
+- He is someone that everyone respects.",practice_foundation-clause-gerund_描述人物事物_综合描述
+基础⑩·意图与目的,想要/希望,Practice want to hope to would like to for intentions.,练习用不定式表达想要/希望/意愿。,35,L1~L2,掌握want/hope/would like+to do。,"不定式 想要 want to hope to would like to","## 不定式表示意图
+- I want to learn Spanish.
+- I hope to see you again soon.
+- I would like to apply for this job.
+
+## 接不定式的动词
+- want / hope / wish / expect / plan / intend
+- 这些动词后只能接 to do
+
+## 例句
+- I want to travel abroad.
+- I hope to hear from you soon.
+- I would like to speak to the manager.",practice_foundation-clause-gerund_意图与目的_想要希望
+基础⑩·意图与目的,决定/承诺,Practice decided to promised to and forget to.,练习用不定式表达决定、承诺和提醒。,35,L1~L2,掌握decide/promise/forget+to do。,"不定式 决定 decided to promised to don''t forget","## 决定
+- I decided to study abroad.
+- She chose to stay at home.
+
+## 承诺
+- I promised to help him.
+
+## 提醒
+- Don't forget to call me.
+
+## 例句
+- I decided to change my job.
+- He promised to be on time.
+- Don't forget to lock the door.",practice_foundation-clause-gerund_意图与目的_决定承诺
+基础⑩·意图与目的,为了...目的,Practice infinitive of purpose to express reasons for actions.,练习用不定式表达做某事的目的。,35,L1~L2,掌握不定式作目的状语的用法。,"不定式 目的 to do in order to","## 不定式表示目的
+- I came here to study English.
+- I went to the store to buy some food.
+- I saved money to buy a car.
+
+## 结构
+- 主语 + 动词 + 目的: to + 动词原形
+
+## 例句
+- I went to the bank to cash a check.
+- I called to check the time.
+- I went to the gym to work out.",practice_foundation-clause-gerund_意图与目的_为了目的
+基础⑩·意图与目的,评价：做...是...的,Practice It is + adjective + to do structure.,练习It is + 形容词 + to do 表达评价。,35,L1~L2,掌握It's+adj+to do评价句型。,"不定式 评价 It is important to It is fun to","## It's + 形容词 + to do
+- It's important to practice every day.
+- It's fun to travel with friends.
+- It's hard to say goodbye.
+
+## 常见形容词
+- important / necessary / possible / impossible
+- fun / hard / difficult / easy / safe / dangerous
+
+## 例句
+- It's nice to meet you.
+- It's good to see you again.
+- It's easy to learn with practice.",practice_foundation-clause-gerund_意图与目的_评价
+基础⑩·意图与目的,有事要做,Practice have something to do structure.,练习have+名词+to do表示"有事要做"。,35,L1~L2,掌握不定式作定语的用法。,"不定式 定语 have something to do","## 不定式作定语
+- I have something to tell you.
+- I have something to show you.
+- I have a lot to learn.
+
+## 结构
+- have + 名词 + to do
+
+## 例句
+- Do you have anything to eat?
+- I have nothing to say.
+- She has a lot of work to do.
+- Give me something to drink.",practice_foundation-clause-gerund_意图与目的_有事要做
+基础⑩·喜好与活动,我喜欢做...,Practice enjoy like love hate + gerund for activities.,练习enjoy/like/love/hate+doing表达喜好活动。,35,L1~L2,掌握动名词作宾语的用法。,动名词 enjoy like love hate doing,"## 动名词作宾语
+- I enjoy reading books in my free time.
+- I like swimming but I don't like running.
+- I love watching movies on weekends.
+- I hate waiting in long lines.
+
+## 只接动名词的动词
+- enjoy / mind / avoid / practice / suggest / finish / keep
+
+## like/love/hate可接to do或doing
+- I like swimming. = I like to swim.
+- 意思基本相同",practice_foundation-clause-gerund_喜好与活动_我喜欢做
+基础⑩·喜好与活动,开始/结束/继续,Practice start finish keep + gerund for action phases.,练习start/finish/keep+doing表达开始结束继续。,35,L1~L2,掌握表示动作阶段的动名词句型。,动名词 start finish keep doing,"## 开始/结束/继续
+- I started learning English two years ago.
+- I finished writing the report.
+- I keep trying even when it's hard.
+
+## 常用动词
+- start / begin / finish / stop / continue / keep
+
+## 例句
+- I started learning to drive last month.
+- She finished cleaning the room.
+- Keep practicing and you'll improve.",practice_foundation-clause-gerund_喜好与活动_开始结束继续
+基础⑩·喜好与活动,擅长/对...感兴趣,Practice be good at be interested in + gerund.,练习be good at/be interested in+doing表达擅长和兴趣。,35,L1~L2,掌握介词+动名词的用法。,动名词 擅长 good at interested in tired of,"## 介词+动名词
+- I'm good at remembering names.
+- She is interested in learning new things.
+- He is tired of waiting.
+
+## 常用搭配
+- be good at / be bad at
+- be interested in / be fond of
+- be tired of / be afraid of
+- be excited about / be worried about
+
+## 例句
+- I'm good at solving problems.
+- She is interested in art and music.
+- He is tired of working too much.",practice_foundation-clause-gerund_喜好与活动_擅长感兴趣
+基础⑩·喜好与活动,做...很有趣,Practice gerund as subject Swimming is fun.,练习动名词作主语表达活动的性质。,35,L1~L2,掌握动名词作主语的用法。,动名词主语 Swimming is fun Learning is good,"## 动名词作主语
+- Swimming is a lot of fun.
+- Learning a new language is good for your brain.
+
+## 常见句型
+- ___ is a lot of fun.（…很有趣）
+- ___ is good for ___.（…对…有好处）
+- ___ takes time.（…需要时间）
+
+## 例句
+- Running is good for your health.
+- Traveling broadens the mind.
+- Reading is good for your mind.",practice_foundation-clause-gerund_喜好与活动_做很有趣
+基础⑩·喜好与活动,感谢/道歉,Practice Thank you for I'm sorry for + gerund.,练习Thank you for/I'm sorry for+doing表达感谢和道歉。,35,L1~L2,掌握感谢和道歉的动名词表达。,"动名词 感谢 thank you for sorry for","## 感谢和道歉
+- Thank you for helping me.
+- I'm sorry for being late.
+
+## 结构
+- Thank you for + 动名词
+- I'm sorry for + 动名词
+
+## 例句
+- Thank you for coming.
+- Thank you for waiting.
+- I'm sorry for not calling.
+- I'm sorry for disturbing you.
+- Thank you for your time.
+- I'm sorry for making you wait.",practice_foundation-clause-gerund_喜好与活动_感谢道歉
+基础⑩·综合运用,混合从句与不定式,Practice combining object clauses with infinitives.,练习宾语从句和不定式的混合表达。,40,L1~L2,掌握从句+不定式的综合表达。,"混合 从句 不定式 think it important to","## 从句+不定式
+- I think it's important to practice every day.
+- I know that he wants to be a doctor.
+
+## 从句+动名词
+- I believe that learning English is fun.
+- She said that she enjoys working here.
+
+## 定语从句+不定式
+- The best thing that you can do is to keep trying.
+
+## 例句
+- I think it's necessary to save money.
+- I know that she wants to travel the world.",practice_foundation-clause-gerund_综合运用_混合从句不定式
+基础⑩·综合运用,混合不定式与动名词,Practice mixing infinitives and gerunds in complex sentences.,练习不定式和动名词的混合表达。,40,L1~L2,掌握不定式和动名词的综合运用。,混合 不定式 动名词 enjoy traveling is the best,"## 混合表达
+- The best thing that you can do is to keep trying.
+- I enjoy traveling because I think it's the best way to learn.
+
+## 结构
+- 从句 + 不定式
+- 从句 + 动名词
+- 定语从句 + 不定式
+
+## 例句
+- The most important thing is to never give up.
+- I like reading because it helps me relax.",practice_foundation-clause-gerund_综合运用_混合不定式动名词
+基础⑩·综合运用,叙事：我的一段经历,Practice telling stories using clauses infinitives and gerunds.,练习用从句、不定式和动名词讲述经历。,40,L1~L2,掌握综合运用叙述经历。,"叙事 经历 混合表达","## 用混合结构叙事
+- I decided to learn English because I think it's important for my future.
+- The friend who encouraged me the most is someone that I will always remember.
+
+## 技巧
+- 用定语从句描述人和事物
+- 用不定式表达目的和意图
+- 用宾语从句表达想法和感受
+
+## 例句
+- I decided to start running because I think it's healthy.
+- The teacher who inspired me is someone that I respect deeply.",practice_foundation-clause-gerund_综合运用_叙事
+基础⑩·综合运用,观点：我为什么觉得...,Practice expressing opinions with complex structures.,练习用复杂结构表达观点和理由。,40,L1~L2,掌握用复杂结构表达观点的能力。,观点 复杂表达 I think because","## 观点表达
+- I think the movie that we watched is worth seeing.
+- What I like most about this city is the people.
+
+## 推荐理由
+- I recommend this book because it's interesting and easy to read.
+- I think you should try this restaurant because the food is amazing.
+
+## 例句
+- I believe that traveling is the best way to learn.
+- What I enjoy most about my job is meeting new people.",practice_foundation-clause-gerund_综合运用_观点
+基础⑩·综合运用,长篇描述：我最喜欢的...,Practice long descriptions using all learned structures.,练习综合运用从句、不定式和动名词进行长篇描述。,40,L1~L2,掌握综合运用所有结构的表达能力。,"长篇描述 我最喜欢的 混合 综合","## 长篇描述结构
+1. 先用定语从句引出主题
+2. 用宾语从句表达观点
+3. 用不定式说明原因
+4. 用动名词表达感受
+
+## 例句
+- The thing that I like most is reading because I think it's a great way to relax.
+- I enjoy traveling because I believe it's the best way to learn about different cultures.
+- The friend who helped me the most is someone that I will never forget.",practice_foundation-clause-gerund_综合运用_长篇描述

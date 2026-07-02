@@ -1,5 +1,45 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-"基础·天气与季节",谈论天气,"What's the weather like ___?",...天气怎么样？,today, tomorrow, in summer,What's the weather like today?,L1,0
-"基础·天气与季节",谈论天气,"It's ___ today.",今天...,sunny, rainy, cold, hot, cloudy,It's sunny today.,L1,1
-"基础·天气与季节",季节与自然,"My favorite season is ___.",我最喜欢的季节是...,spring, summer, autumn, winter,My favorite season is spring.,L1,2
-"基础·天气与季节",季节与自然,"Let's go for a ___.",我们去...吧,walk, hike, swim, run,Let's go for a walk.,L1,3
+基础⑩·表达想法,我认为...,I think (that) + 句子,我认为...,you are right he is nice it's a good idea,I think (that) you are right.,L1,0
+基础⑩·表达想法,我认为...,I don't think (that) + 句子,我认为...不...,it's a good idea he will come it's true,I don't think (that) it's a good idea.,L1,1
+基础⑩·表达想法,我认为...,I believe (that) + 句子,我相信...,he is telling the truth you can do it she is honest,I believe (that) you can do it.,L1,2
+基础⑩·表达想法,我知道/听说,I know (that) + 句子,我知道...,you are busy he is a good person she works hard,I know (that) you are busy.,L1,3
+基础⑩·表达想法,我知道/听说,I'm sure (that) + 句子,我确定...,everything will be fine he will come we can finish,I'm sure (that) everything will be fine.,L1,4
+基础⑩·表达想法,我知道/听说,I'm sorry (that) + 句子,抱歉...,I'm late I forgot I missed the call,I'm sorry (that) I'm late.,L1,5
+基础⑩·表达想法,转述他人,He said (that) + 句子,他说...,he would come he was busy she was happy,He said (that) he would come.,L1,6
+基础⑩·表达想法,转述他人,She told me (that) + 句子,她告诉我...,she liked it she needed help he was sick,She told me (that) she liked it.,L1,7
+基础⑩·表达想法,转述他人,I heard (that) + 句子,我听说...,the store is closing he got married she moved,I heard (that) the store is closing.,L1,8
+基础⑩·表达想法,不确定,I'm not sure (that/whether) + 句子,我不确定...,I can go it will work I understood,I'm not sure (that) I can go.,L1,9
+基础⑩·表达想法,疑问词从句,I don't know + wh-词 + 句子,我不知道...,what he wants where he is why she left,I don't know what he wants.,L1,10
+基础⑩·描述人物事物,描述物品,The + 名词 + that + 句子 + be...,...的那个...,book I read is interesting movie I watched is good,The book that I read is interesting.,L1,11
+基础⑩·描述人物事物,描述人,The + 人 + who + 句子 + be...,...的那个人...,person who called is my boss friend who helped me is kind,The person who called is my boss.,L1,12
+基础⑩·描述人物事物,描述人,Do you know the + 人 + who + 句子?,你认识那个...的人吗？,girl who is talking to Tom man who is standing there,Do you know the girl who is talking to Tom?,L1,13
+基础⑩·描述人物事物,地点与原因,The + 地点 + where + 句子 + be...,...的那个地方...,restaurant where we met is still there school where we studied is far,The restaurant where we met is still there.,L1,14
+基础⑩·描述人物事物,地点与原因,This is the reason why + 句子,这就是为什么...,I came I called I left I chose this,This is the reason why I came.,L1,15
+基础⑩·描述人物事物,综合描述,There are many + 名词 + that + 句子,有很多...的...,things that I want to learn books that I want to read,There are many things that I want to learn.,L1,16
+基础⑩·意图与目的,想要/希望,主语 + want to + 动词原形,想做某事,learn Spanish travel abroad buy a car,I want to learn Spanish.,L1,17
+基础⑩·意图与目的,想要/希望,主语 + hope to + 动词原形,希望做某事,see you again finish on time hear from you,I hope to see you again.,L1,18
+基础⑩·意图与目的,想要/希望,主语 + would like to + 动词原形,想做某事(礼貌),apply for this job book a table speak to the manager,I would like to apply for this job.,L1,19
+基础⑩·意图与目的,决定/承诺,主语 + decided to + 动词原形,决定做某事,study abroad change my job move to a new city,I decided to study abroad.,L1,20
+基础⑩·意图与目的,决定/承诺,主语 + promised to + 动词原形,承诺做某事,help him be on time finish it,I promised to help him.,L1,21
+基础⑩·意图与目的,决定/承诺,Don't forget to + 动词原形,别忘了做某事,call me bring your passport lock the door,Don't forget to call me.,L1,22
+基础⑩·意图与目的,为了...目的,主语 + 动词 + 目的: to + 动词原形,为了做某事,came here to study English went to store to buy food saved money to buy a car,I came here to study English.,L1,23
+基础⑩·意图与目的,评价：做...是...的,It's + 形容词 + to + 动词原形,做...是...的,important to practice every day fun to travel with friends hard to say goodbye,It's important to practice every day.,L1,24
+基础⑩·意图与目的,有事要做,主语 + have + 名词 + to + 动词原形,有...要做,something to tell you a lot to learn nothing to say,I have something to tell you.,L1,25
+基础⑩·喜好与活动,我喜欢做...,主语 + enjoy + 动名词,喜欢做某事,reading books listening to music cooking,I enjoy reading books.,L1,26
+基础⑩·喜好与活动,我喜欢做...,主语 + like/love + 动名词,喜欢做某事,swimming watching movies traveling,I like swimming.,L1,27
+基础⑩·喜好与活动,我喜欢做...,主语 + hate + 动名词,讨厌做某事,waiting in long lines being late losing,I hate waiting in long lines.,L1,28
+基础⑩·喜好与活动,开始/结束/继续,主语 + started/finished + 动名词,开始/结束做某事,learning English writing the report reading the book,I started learning English.,L1,29
+基础⑩·喜好与活动,开始/结束/继续,主语 + keep + 动名词,继续做某事,trying practicing learning moving forward,I keep trying.,L1,30
+基础⑩·喜好与活动,擅长/对...感兴趣,主语 + be good at + 动名词,擅长做某事,remembering names solving problems learning languages,I'm good at remembering names.,L1,31
+基础⑩·喜好与活动,擅长/对...感兴趣,主语 + be interested in + 动名词,对...感兴趣,learning new things art music photography,She is interested in learning new things.,L1,32
+基础⑩·喜好与活动,擅长/对...感兴趣,主语 + be tired of + 动名词,厌倦了,waiting working too much the same routine,He is tired of waiting.,L1,33
+基础⑩·喜好与活动,做...很有趣,动名词 + be + 形容词,做...是...,Swimming is a lot of fun Traveling is educational Reading is relaxing,Swimming is a lot of fun.,L1,34
+基础⑩·喜好与活动,感谢/道歉,Thank you for + 动名词,感谢做某事,helping coming calling waiting,Thank you for helping me.,L1,35
+基础⑩·喜好与活动,感谢/道歉,I'm sorry for + 动名词,为做某事道歉,being late not calling disturbing you forgetting,I'm sorry for being late.,L1,36
+基础⑩·综合运用,混合从句与不定式,I think it's + 形容词 + to + 动词原形,我认为做...是...的,important to practice every day necessary to save money fun to try new things,I think it's important to practice every day.,L1,37
+基础⑩·综合运用,混合从句与不定式,I know that + 主语 + wants to + 动词原形,我知道...想做...,he wants to be a doctor she wants to be a teacher they want to start a company,I know that he wants to be a doctor.,L1,38
+基础⑩·综合运用,混合不定式与动名词,I believe that + 动名词 + be + 形容词,我相信...是...,learning English is fun cooking is an art traveling is educational,I believe that learning English is fun.,L1,39
+基础⑩·综合运用,叙事：我的一段经历,The + 名词 + that + 句子 + is to + 动词原形,...能做的最好的事是...,thing you can do is to keep trying way to learn is to practice,The best thing that you can do is to keep trying.,L1,40
+基础⑩·综合运用,观点：我为什么觉得...,I think the + 名词 + that + 句子 + is worth + 动名词,我觉得...值得...,movie that we watched is worth seeing book that we read is worth reading,I think the movie that we watched is worth seeing.,L1,41
+基础⑩·综合运用,叙事：我的一段经历,I decided to + 动词原形 + because I think + 句子,我决定...因为我认为...,learn English it's important for my future start running it's healthy,I decided to learn English because I think it's important.,L1,42
+基础⑩·综合运用,长篇描述：我最喜欢的...,主语 + enjoy + 动名词 + because + 句子,我喜欢...因为...,traveling I think it's the best way to learn reading I think it's relaxing,I enjoy traveling because I think it's the best way to learn.,L1,43

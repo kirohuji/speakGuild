@@ -1,302 +1,433 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础②·日常习惯,我每天做什么,eat,吃,verb,/iːt/,/iːt/,L1,吃。三餐搭配：eat breakfast/lunch/dinner。,"[{""en"":""I eat breakfast every morning."",""zh"":""我每天早上吃早餐。""}]",0
-基础②·日常习惯,我每天做什么,drink,喝,verb,/drɪŋk/,/drɪŋk/,L1,喝。搭配：drink water/tea/coffee。,"[{""en"":""I drink tea in the morning."",""zh"":""我早上喝茶。""}]",0
-基础②·日常习惯,我每天做什么,every,每,det,/ˈevri/,/ˈevri/,L1,每一个。every day/morning/week。,"[{""en"":""I go to school every day."",""zh"":""我每天上学。""}]",0
-基础②·日常习惯,我的日常动作,read,读,verb,/riːd/,/riːd/,L1,阅读。read books/news/stories。,"[{""en"":""I read books at night."",""zh"":""我晚上看书。""}]",0
-基础②·日常习惯,我的日常动作,play,玩/打,verb,/pleɪ/,/pleɪ/,L1,玩/打(球)。play football/games/guitar。,"[{""en"":""I play football on weekends."",""zh"":""我周末踢足球。""}]",0
-基础②·喜好需求,我有什么,have,有,verb,/hæv/,/hæv/,L1,有/拥有。have + 名词。第三人称用has。,"[{""en"":""I have a brother."",""zh"":""我有一个兄弟。""}]",0
-基础②·喜好需求,我有什么,do,做/助动词,verb,/duː/,/duː/,L1,做/干。也用作疑问句助动词：Do you...?,"[{""en"":""Do you have a pen?"",""zh"":""你有笔吗？""}]",0
-基础②·喜好需求,我有什么,don't,不,aux,/doʊnt/,/dəʊnt/,L1,do not缩写。构成否定：I don't...。,"[{""en"":""I don't have a car."",""zh"":""我没有车。""}]",0
-基础②·日程安排,我几点做...,get up,起床,phrase,/ɡet ʌp/,/ɡet ʌp/,L1,起床。日常最常用动词短语。,"[{""en"":""I get up at 7."",""zh"":""我7点起床。""}]",0
-基础②·日程安排,我几点做...,go to bed,上床睡觉,phrase,/ɡoʊ tuː bed/,/ɡəʊ tuː bed/,L1,上床睡觉。,"[{""en"":""I go to bed at 11."",""zh"":""我11点睡觉。""}]",0
-基础②·日程安排,我几点做...,take a shower,洗澡,phrase,/teɪk ə ˈʃaʊər/,/teɪk ə ˈʃaʊə/,L1,淋浴/洗澡。,"[{""en"":""I take a shower in the morning."",""zh"":""我早上洗澡。""}]",0
-基础②·日程安排,去...做...,go to,去...,phrase,/ɡoʊ tuː/,/ɡəʊ tuː/,L1,去(某地)。go to work/school/the park。,"[{""en"":""I go to work by bus."",""zh"":""我坐公交上班。""}]",0
-基础②·日程安排,去...做...,wait for,等待,phrase,/weɪt fɔːr/,/weɪt fɔː/,L1,等待(某人/物)。,"[{""en"":""I wait for the bus."",""zh"":""我等公交。""}]",0
-基础②·日程安排,去...做...,help...with,帮助做,phrase,/help wɪð/,/help wɪð/,L1,帮助某人做某事。,"[{""en"":""I help my mom with housework."",""zh"":""我帮妈妈做家务。""}]",0
-基础②·起床与洗漱,起床与洗漱,alarm,闹钟,noun,/əˈlɑːrm/,/əˈlɑːm/,L1,闹钟。,"[{""en"":""I set the alarm for 7."",""zh"":""我把闹钟设到7点。""}]",0
-基础②·起床与洗漱,起床与洗漱,shower,淋浴,noun,/ˈʃaʊər/,/ˈʃaʊə/,L1,淋浴。,"[{""en"":""I take a shower every morning."",""zh"":""我每天早上淋浴。""}]",0
-基础②·起床与洗漱,起床与洗漱,breakfast,早餐,noun,/ˈbrekfəst/,/ˈbrekfəst/,L1,早餐。,"[{""en"":""I had breakfast at 8."",""zh"":""我8点吃了早餐。""}]",0
-基础②·起床与洗漱,起床与洗漱,hurry,匆忙,noun,/ˈhɜːri/,/ˈhʌri/,L1,匆忙。,"[{""en"":""I'm in a hurry."",""zh"":""我很匆忙。""}]",0
-基础②·家务与居家,家务劳动,laundry,洗衣,noun,/ˈlɔːndri/,/ˈlɔːndri/,L1,要洗的衣服。,"[{""en"":""I need to do the laundry."",""zh"":""我需要洗衣服。""}]",0
-基础②·家务与居家,家务劳动,tidy,整理,verb,/ˈtaɪdi/,/ˈtaɪdi/,L1,整理、收拾。,"[{""en"":""Please tidy your room."",""zh"":""请整理你的房间。""}]",0
-基础②·家务与居家,家务劳动,trash,垃圾,noun,/træʃ/,/træʃ/,L1,垃圾。,"[{""en"":""Take out the trash."",""zh"":""把垃圾拿出去。""}]",0
-基础②·购物与出行,购物消费,buy,买,verb,/baɪ/,/baɪ/,L1,购买。buy + 名词。,"[{""en"":""I want to buy a new shirt."",""zh"":""我想买一件新衬衫。""}]",0
-基础②·购物与出行,购物消费,price,价格,noun,/praɪs/,/praɪs/,L1,价格。How much is the price?,"[{""en"":""The price is too high."",""zh"":""价格太高了。""}]",0
-基础②·购物与出行,购物消费,size,尺码,noun,/saɪz/,/saɪz/,L1,尺寸/尺码。Do you have this in...size?,"[{""en"":""Do you have this in a smaller size?"",""zh"":""这个有小一号的吗？""}]",0
-基础②·购物与出行,天气与出行,bus,公交车,noun,/bʌs/,/bʌs/,L1,公交车。I take the bus to work。,"[{""en"":""I take the bus to work."",""zh"":""我坐公交上班。""}]",0
-基础②·餐饮与社交,在外就餐,menu,菜单,noun,/ˈmenjuː/,/ˈmenjuː/,L1,菜单。Can I have the menu?,"[{""en"":""Can I have the menu, please?"",""zh"":""请给我菜单好吗？""}]",0
-基础②·餐饮与社交,在外就餐,order,点餐,verb,/ˈɔːrdər/,/ˈɔːdə/,L1,点菜/订购。I'd like to order...。,"[{""en"":""I'd like to order a pizza."",""zh"":""我想点一个披萨。""}]",0
-基础②·餐饮与社交,在外就餐,delicious,美味的,adj,/dɪˈlɪʃəs/,/dɪˈlɪʃəs/,L1,好吃的/美味的。The food is delicious。,"[{""en"":""The food is delicious!"",""zh"":""食物很好吃！""}]",0
-基础②·餐饮与社交,在外就餐,bill,账单,noun,/bɪl/,/bɪl/,L1,账单。Can I have the bill?,"[{""en"":""Can I have the bill, please?"",""zh"":""请给我账单好吗？""}]",0
-基础②·餐饮与社交,通讯与联络,call,打电话,verb,/kɔːl/,/kɔːl/,L1,打电话。call + 人。,"[{""en"":""I call my mom every day."",""zh"":""我每天给妈妈打电话。""}]",0
-基础②·餐饮与社交,通讯与联络,message,消息,noun,/ˈmesɪdʒ/,/ˈmesɪdʒ/,L1,消息/信息。send a message。,"[{""en"":""I send messages to my friends."",""zh"":""我给朋友发消息。""}]",0
-基础②·餐饮与社交,通讯与联络,traffic,交通,noun,/ˈtræfɪk/,/ˈtræfɪk/,L1,交通/路况。The traffic was bad。,"[{""en"":""The traffic was bad."",""zh"":""路上很堵。""}]",0
-基础②·日常习惯,我每天做什么,rice,米饭,noun,/raɪs/,/raɪs/,L1,米饭。I eat rice every day。,"[{""en"":""I eat rice every day."",""zh"":""我每天吃米饭。""}]",0
-基础②·日常习惯,我每天做什么,noodles,面条,noun,/ˈnuːdəlz/,/ˈnuːdəlz/,L1,面条。I like noodles。,"[{""en"":""I eat noodles for lunch."",""zh"":""我中午吃面条。""}]",0
-基础②·日常习惯,我每天做什么,bread,面包,noun,/bred/,/bred/,L1,面包。I eat bread for breakfast。,"[{""en"":""I eat bread for breakfast."",""zh"":""我早餐吃面包。""}]",0
-基础②·日常习惯,我每天做什么,chicken,鸡肉,noun,/ˈtʃɪkɪn/,/ˈtʃɪkɪn/,L1,鸡肉。I like chicken。,"[{""en"":""I eat chicken for dinner."",""zh"":""我晚饭吃鸡肉。""}]",0
-基础②·日常习惯,我每天做什么,fish,鱼,noun,/fɪʃ/,/fɪʃ/,L1,鱼。I eat fish on Fridays。,"[{""en"":""I eat fish every Friday."",""zh"":""我每周五吃鱼。""}]",0
-基础②·日常习惯,我每天做什么,fruit,水果,noun,/fruːt/,/fruːt/,L1,水果。I eat fruit every day。,"[{""en"":""I eat fruit every day."",""zh"":""我每天吃水果。""}]",0
-基础②·日常习惯,我每天做什么,vegetable,蔬菜,noun,/ˈvedʒtəbəl/,/ˈvedʒtəbəl/,L1,蔬菜。I eat vegetables。,"[{""en"":""I eat vegetables every day."",""zh"":""我每天吃蔬菜。""}]",0
-基础②·日常习惯,我的日常动作,write,写,verb,/raɪt/,/raɪt/,L1,写。I write emails。,"[{""en"":""I write a letter."",""zh"":""我写信。""}]",0
-基础②·日常习惯,我的日常动作,run,跑步,verb,/rʌn/,/rʌn/,L1,跑步。I run every morning。,"[{""en"":""I run every morning."",""zh"":""我每天早上跑步。""}]",0
-基础②·日常习惯,我的日常动作,walk,走路,verb,/wɔːk/,/wɔːk/,L1,走路。I walk to school。,"[{""en"":""I walk to school every day."",""zh"":""我每天走路去学校。""}]",0
-基础②·日常习惯,我的日常动作,swim,游泳,verb,/swɪm/,/swɪm/,L1,游泳。I like to swim。,"[{""en"":""I swim every weekend."",""zh"":""我每周末游泳。""}]",0
-基础②·喜好需求,我有什么,house,房子,noun,/haʊs/,/haʊs/,L1,房子。I have a house。,"[{""en"":""I have a small house."",""zh"":""我有一间小房子。""}]",0
-基础②·喜好需求,我有什么,pet,宠物,noun,/pet/,/pet/,L1,宠物。I have a pet。,"[{""en"":""I have a pet dog."",""zh"":""我有一只宠物狗。""}]",0
-基础②·日程安排,去...做...,by bus,坐公交,phrase,/baɪ bʌs/,/baɪ bʌs/,L1,坐公交。I go to work by bus。,"[{""en"":""I go to school by bus."",""zh"":""我坐公交上学。""}]",0
-基础②·日程安排,去...做...,by bike,骑车,phrase,/baɪ baɪk/,/baɪ baɪk/,L1,骑车。I go to school by bike。,"[{""en"":""I go to the park by bike."",""zh"":""我骑车去公园。""}]",0
-基础②·日程安排,去...做...,on foot,步行,phrase,/ɒn fʊt/,/ɒn fʊt/,L1,步行。I go to school on foot。,"[{""en"":""I go to work on foot."",""zh"":""我走路去上班。""}]",0
-基础②·日程安排,去...做...,look for,寻找,phrase,/lʊk fɔːr/,/lʊk fɔː/,L1,寻找。I look for my keys。,"[{""en"":""I look for my glasses."",""zh"":""我在找我的眼镜。""}]",0
-基础②·购物与出行,购物消费,money,钱,noun,/ˈmʌni/,/ˈmʌni/,L1,钱。Here is the money。,"[{""en"":""I need some money."",""zh"":""我需要一些钱。""}]",0
-基础②·购物与出行,购物消费,try on,试穿,phrase,/traɪ ɒn/,/traɪ ɒn/,L1,试穿。Can I try this on?,"[{""en"":""I want to try this on."",""zh"":""我想试穿这个。""}]",0
-基础②·购物与出行,购物消费,shirt,衬衫,noun,/ʃɜːrt/,/ʃɜːt/,L1,衬衫。I want to buy a shirt。,"[{""en"":""I like this shirt."",""zh"":""我喜欢这件衬衫。""}]",0
-基础②·购物与出行,购物消费,shoes,鞋子,noun,/ʃuːz/,/ʃuːz/,L1,鞋子(复数)。I need new shoes。,"[{""en"":""I want to buy new shoes."",""zh"":""我想买新鞋。""}]",0
-基础②·购物与出行,天气与出行,subway,地铁,noun,/ˈsʌbweɪ/,/ˈsʌbweɪ/,L1,地铁。I take the subway。,"[{""en"":""I take the subway to work."",""zh"":""我坐地铁上班。""}]",0
-基础②·购物与出行,天气与出行,taxi,出租车,noun,/ˈtæksi/,/ˈtæksi/,L1,出租车。I take a taxi。,"[{""en"":""I take a taxi to the airport."",""zh"":""我打车去机场。""}]",0
-基础②·餐饮与社交,在外就餐,water,水,noun,/ˈwɒtər/,/ˈwɔːtə/,L1,水。Can I have some water?,"[{""en"":""I drink water every day."",""zh"":""我每天喝水。""}]",0
-基础②·餐饮与社交,在外就餐,coffee,咖啡,noun,/ˈkɒfi/,/ˈkɒfi/,L1,咖啡。I like coffee。,"[{""en"":""I drink coffee in the morning."",""zh"":""我早上喝咖啡。""}]",0
-基础②·餐饮与社交,在外就餐,tea,茶,noun,/tiː/,/tiː/,L1,茶。I like tea。,"[{""en"":""I drink tea after dinner."",""zh"":""我晚饭后喝茶。""}]",0
-基础②·餐饮与社交,在外就餐,soup,汤,noun,/suːp/,/suːp/,L1,汤。I like soup。,"[{""en"":""I want to order soup."",""zh"":""我想点汤。""}]",0
-基础②·餐饮与社交,在外就餐,salad,沙拉,noun,/ˈsæləd/,/ˈsæləd/,L1,沙拉。I want a salad。,"[{""en"":""I like salad."",""zh"":""我喜欢沙拉。""}]",0
-基础②·餐饮与社交,在外就餐,pizza,披萨,noun,/ˈpiːtsə/,/ˈpiːtsə/,L1,披萨。I like pizza。,"[{""en"":""I want to order a pizza."",""zh"":""我想点一个披萨。""}]",0
-基础②·餐饮与社交,通讯与联络,text,发短信,verb,/tekst/,/tekst/,L1,发短信。I text my friend。,"[{""en"":""I text my friend every day."",""zh"":""我每天给朋友发短信。""}]",0
-基础②·餐饮与社交,通讯与联络,email,邮件,noun,/ˈiːmeɪl/,/ˈiːmeɪl/,L1,邮件。I send emails。,"[{""en"":""I check my email every day."",""zh"":""我每天查邮件。""}]",0
-基础②·餐饮与社交,通讯与联络,late,迟到,adj,/leɪt/,/leɪt/,L1,迟到。Sorry I am late。,"[{""en"":""I am late for work."",""zh"":""我上班迟到了。""}]",0
-基础②·家务与居家,居家休息,music,音乐,noun,/ˈmjuːzɪk/,/ˈmjuːzɪk/,L1,音乐。I listen to music。,"[{""en"":""I like listening to music."",""zh"":""我喜欢听音乐。""}]",0
-基础②·家务与居家,居家休息,movie,电影,noun,/ˈmuːvi/,/ˈmuːvi/,L1,电影。I like movies。,"[{""en"":""I watch a movie every weekend."",""zh"":""我每周末看电影。""}]",0
-基础②·家务与居家,居家休息,game,游戏,noun,/ɡeɪm/,/ɡeɪm/,L1,游戏。I play games。,"[{""en"":""I play video games after school."",""zh"":""我放学后玩游戏。""}]",0
-基础②·家务与居家,居家休息,bed,床,noun,/bed/,/bed/,L1,床。I go to bed。,"[{""en"":""I go to bed at 10."",""zh"":""我10点上床。""}]",0
-基础②·家务与居家,家务劳动,wash,洗,verb,/wɒʃ/,/wɒʃ/,L1,洗。I wash the dishes。,"[{""en"":""I wash my hands."",""zh"":""我洗手。""}]",0
-基础②·家务与居家,家务劳动,sweep,扫,verb,/swiːp/,/swiːp/,L1,扫。I sweep the floor。,"[{""en"":""I sweep the floor every day."",""zh"":""我每天扫地。""}]",0
-基础②·家务与居家,家务劳动,mop,拖地,verb,/mɒp/,/mɒp/,L1,拖地。I mop the floor。,"[{""en"":""I mop the floor on weekends."",""zh"":""我周末拖地。""}]",0
-基础②·日常习惯,我的日常动作,sing,唱歌,verb,/sɪŋ/,/sɪŋ/,L1,唱歌。I like to sing。,"[{""en"":""I sing in the shower."",""zh"":""我在淋浴时唱歌。""}]",0
-基础②·日常习惯,我的日常动作,dance,跳舞,verb,/dæns/,/dɑːns/,L1,跳舞。I like to dance。,"[{""en"":""I dance at parties."",""zh"":""我在派对上跳舞。""}]",0
-基础②·日常习惯,我的日常动作,draw,画画,verb,/drɔː/,/drɔː/,L1,画画。I like to draw。,"[{""en"":""I draw pictures on weekends."",""zh"":""我周末画画。""}]",0
-基础②·喜好需求,我喜欢/我想要,learn,学习,verb,/lɜːrn/,/lɜːn/,L1,学习。I want to learn。,"[{""en"":""I want to learn English."",""zh"":""我想学英语。""}]",0
-基础②·日程安排,我几点做...,lunch,午餐,noun,/lʌntʃ/,/lʌntʃ/,L1,午餐。I eat lunch。,"[{""en"":""I have lunch at 12."",""zh"":""我12点吃午餐。""}]",0
-基础②·日程安排,我几点做...,dinner,晚餐,noun,/ˈdɪnər/,/ˈdɪnə/,L1,晚餐。I eat dinner。,"[{""en"":""I have dinner at 6."",""zh"":""我6点吃晚餐。""}]",0
-基础②·购物与出行,购物消费,jacket,夹克,noun,/ˈdʒækɪt/,/ˈdʒækɪt/,L1,夹克。I want a jacket。,"[{""en"":""I want to buy a jacket."",""zh"":""我想买一件夹克。""}]",0
-基础②·购物与出行,天气与出行,train,火车,noun,/treɪn/,/treɪn/,L1,火车。I take the train。,"[{""en"":""I take the train to Beijing."",""zh"":""我坐火车去北京。""}]",0
-基础②·餐饮与社交,在外就餐,juice,果汁,noun,/dʒuːs/,/dʒuːs/,L1,果汁。I like juice。,"[{""en"":""I drink juice every morning."",""zh"":""我每天早上喝果汁。""}]",0
-基础②·餐饮与社交,在外就餐,milk,牛奶,noun,/mɪlk/,/mɪlk/,L1,牛奶。I drink milk。,"[{""en"":""I drink milk before bed."",""zh"":""我睡前喝牛奶。""}]",0
-基础②·日常习惯,我的日常动作,exercise,锻炼,verb,/ˈeksərsaɪz/,/ˈeksəsaɪz/,L1,锻炼。I exercise every day。,"[{""en"":""I exercise every morning."",""zh"":""我每天早上锻炼。""}]",0
-基础②·家务与居家,居家休息,rest,休息,verb,/rest/,/rest/,L1,休息。I rest at home。,"[{""en"":""I rest on weekends."",""zh"":""我周末休息。""}]",0
-基础②·家务与居家,居家休息,relax,放松,verb,/rɪˈlæks/,/rɪˈlæks/,L1,放松。I relax at home。,"[{""en"":""I relax after work."",""zh"":""我下班后放松。""}]",0
-基础②·家务与居家,家务劳动,fold,折叠,verb,/foʊld/,/fəʊld/,L1,折叠。I fold the clothes。,"[{""en"":""I fold my clothes."",""zh"":""我叠衣服。""}]",0
-基础②·起床与洗漱,起床,wake up,醒来,phrase,/weɪk ʌp/,/weɪk ʌp/,L1,醒来/起床。搭配: wake up early/wake me up。,"[{""en"":""I wake up at 7 every morning."",""zh"":""我每天早上7点醒来。""},{""en"":""Please wake me up at 6."",""zh"":""请6点叫醒我。""}]",0
-基础②·起床与洗漱,起床,early,早的,adj,/ˈɜːrli/,/ˈɜːli/,L1,早的/提早。反义: late。,"[{""en"":""I get up early every day."",""zh"":""我每天早起。""},{""en"":""It is too early to go."",""zh"":""现在去太早了。""}]",1
-基础②·起床与洗漱,起床,pillow,枕头,noun,/ˈpɪloʊ/,/ˈpɪləʊ/,L1,枕头。搭配: soft pillow。,"[{""en"":""I like a soft pillow."",""zh"":""我喜欢软枕头。""},{""en"":""Put your head on the pillow."",""zh"":""把头放在枕头上。""}]",2
-基础②·起床与洗漱,起床,sleepy,困的,adj,/ˈsliːpi/,/ˈsliːpi/,L1,困的/想睡的。区别于tired(累)。,"[{""en"":""I feel sleepy."",""zh"":""我困了。""},{""en"":""You look sleepy."",""zh"":""你看起来很困。""}]",3
-基础②·起床与洗漱,起床,yawn,打哈欠,verb,/jɔːn/,/jɔːn/,L1,打哈欠。,"[{""en"":""I yawn when I am sleepy."",""zh"":""我困的时候打哈欠。""},{""en"":""He yawned during the meeting."",""zh"":""他开会时打了个哈欠。""}]",4
-基础②·起床与洗漱,起床,stretch,伸懒腰,verb,/stretʃ/,/stretʃ/,L1,伸懒腰/伸展。,"[{""en"":""I stretch when I wake up."",""zh"":""我醒来时伸懒腰。""},{""en"":""She stretched her arms."",""zh"":""她伸展胳膊。""}]",5
-基础②·起床与洗漱,洗漱,brush,刷,verb,/brʌʃ/,/brʌʃ/,L1,刷。搭配: brush my teeth/brush my hair。,"[{""en"":""I brush my teeth twice a day."",""zh"":""我每天刷两次牙。""},{""en"":""She brushes her hair every morning."",""zh"":""她每天早上梳头。""}]",0
-基础②·起床与洗漱,洗漱,toothbrush,牙刷,noun,/ˈtuːθbrʌʃ/,/ˈtuːθbrʌʃ/,L1,牙刷。搭配: new toothbrush。,"[{""en"":""I need a new toothbrush."",""zh"":""我需要一把新牙刷。""},{""en"":""Where is my toothbrush?"",""zh"":""我的牙刷在哪里？""}]",1
-基础②·起床与洗漱,洗漱,toothpaste,牙膏,noun,/ˈtuːθpeɪst/,/ˈtuːθpeɪst/,L1,牙膏。搭配: squeeze toothpaste。,"[{""en"":""Put some toothpaste on your toothbrush."",""zh"":""在牙刷上挤点牙膏。""},{""en"":""We are out of toothpaste."",""zh"":""牙膏用完了。""}]",2
-基础②·起床与洗漱,洗漱,towel,毛巾,noun,/ˈtaʊəl/,/ˈtaʊəl/,L1,毛巾。搭配: bath towel/clean towel。,"[{""en"":""I dry my face with a towel."",""zh"":""我用毛巾擦脸。""},{""en"":""Can I have a clean towel?"",""zh"":""能给我一条干净毛巾吗？""}]",3
-基础②·起床与洗漱,洗漱,mirror,镜子,noun,/ˈmɪrər/,/ˈmɪrə/,L1,镜子。搭配: look in the mirror。,"[{""en"":""I look at myself in the mirror."",""zh"":""我照镜子看自己。""},{""en"":""There is a mirror in the bathroom."",""zh"":""浴室里有一面镜子。""}]",4
-基础②·起床与洗漱,洗漱,soap,肥皂,noun,/soʊp/,/səʊp/,L1,肥皂。搭配: a bar of soap/hand soap。,"[{""en"":""I wash my hands with soap."",""zh"":""我用肥皂洗手。""},{""en"":""There is no soap in the bathroom."",""zh"":""浴室里没有肥皂。""}]",5
-基础②·起床与洗漱,洗漱,rinse,冲洗,verb,/rɪns/,/rɪns/,L1,冲洗/漱口。搭配: rinse my mouth。,"[{""en"":""I rinse my mouth after brushing."",""zh"":""刷完牙我漱口。""},{""en"":""Rinse the soap off your face."",""zh"":""把脸上的肥皂冲掉。""}]",6
-基础②·起床与洗漱,洗漱,refresh,提神,verb,/rɪˈfreʃ/,/rɪˈfreʃ/,L1,使精神焕发/提神。,"[{""en"":""A shower helps me feel refreshed."",""zh"":""淋浴让我精神焕发。""},{""en"":""I wash my face to refresh myself."",""zh"":""我洗脸提神。""}]",7
-基础②·起床与洗漱,穿衣,wear,穿/戴,verb,/wer/,/weə/,L1,穿/戴(状态)。与put on区别:wear=状态 put on=动作。,"[{""en"":""I wear a uniform to school."",""zh"":""我穿校服上学。""},{""en"":""She wears glasses."",""zh"":""她戴眼镜。""}]",0
-基础②·起床与洗漱,穿衣,put on,穿上(动作),phrase,/pʊt ɑːn/,/pʊt ɒn/,L1,穿上(动作)。与wear区别:put on是穿的动作。,"[{""en"":""I put on my coat before going out."",""zh"":""出门前我穿上外套。""},{""en"":""Put on your shoes. We are late."",""zh"":""穿上鞋。我们要迟到了。""}]",1
-基础②·起床与洗漱,穿衣,pants,裤子,noun,/pænts/,/pænts/,L1,裤子(美式 常复数)。英式用trousers。,"[{""en"":""I need to buy new pants."",""zh"":""我需要买新裤子。""},{""en"":""These pants are too long."",""zh"":""这条裤子太长了。""}]",2
-基础②·起床与洗漱,穿衣,socks,袜子,noun,/sɑːks/,/sɒks/,L1,袜子(复数)。单数:sock。,"[{""en"":""I wear warm socks in winter."",""zh"":""冬天我穿暖和的袜子。""},{""en"":""I need to change my socks."",""zh"":""我需要换袜子。""}]",3
-基础②·起床与洗漱,穿衣,coat,大衣,noun,/koʊt/,/kəʊt/,L1,大衣/外套(比jacket更长更厚)。,"[{""en"":""I need a heavy coat for winter."",""zh"":""我需要件冬天穿的厚外套。""},{""en"":""Take off your coat. It is warm inside."",""zh"":""脱下外套吧。里面暖和。""}]",4
-基础②·起床与洗漱,穿衣,change,换/更换,verb,/tʃeɪndʒ/,/tʃeɪndʒ/,L1,换/更换(衣服)。搭配: change clothes/get changed。,"[{""en"":""I change my clothes after work."",""zh"":""下班后我换衣服。""},{""en"":""Let me change into something comfortable."",""zh"":""让我换上舒服的衣服。""}]",5
-基础②·起床与洗漱,穿衣,uniform,制服,noun,/ˈjuːnɪfɔːrm/,/ˈjuːnɪfɔːm/,L1,制服。搭配: school uniform。,"[{""en"":""We wear a uniform at school."",""zh"":""我们在学校穿制服。""},{""en"":""Do you like your school uniform?"",""zh"":""你喜欢你们的校服吗？""}]",6
-基础②·起床与洗漱,早餐,egg,鸡蛋,noun,/eɡ/,/eɡ/,L1,鸡蛋。可数名词。搭配: boiled egg/fried egg。,"[{""en"":""I eat an egg every morning."",""zh"":""我每天早上吃一个鸡蛋。""},{""en"":""How do you like your eggs?"",""zh"":""你的鸡蛋想怎么做？""}]",0
-基础②·起床与洗漱,早餐,cereal,麦片,noun,/ˈsɪriəl/,/ˈsɪəriəl/,L1,麦片/谷物早餐。,"[{""en"":""I have cereal for breakfast."",""zh"":""我早餐吃麦片。""},{""en"":""Do you like cereal with milk?"",""zh"":""你喜欢牛奶泡麦片吗？""}]",1
-基础②·起床与洗漱,早餐,jam,果酱,noun,/dʒæm/,/dʒæm/,L1,果酱。搭配: strawberry jam。,"[{""en"":""I like toast with jam."",""zh"":""我喜欢果酱吐司。""},{""en"":""Do you want some jam on your bread?"",""zh"":""面包上要抹点果酱吗？""}]",2
-基础②·起床与洗漱,早餐,butter,黄油,noun,/ˈbʌtər/,/ˈbʌtə/,L1,黄油。不可数名词。,"[{""en"":""I put butter on my toast."",""zh"":""我在吐司上抹黄油。""},{""en"":""Would you like butter or jam?"",""zh"":""你要黄油还是果酱？""}]",3
-基础②·起床与洗漱,早餐,toast,吐司,noun,/toʊst/,/təʊst/,L1,吐司/烤面包。,"[{""en"":""I have toast for breakfast."",""zh"":""我早餐吃吐司。""},{""en"":""The toast is ready."",""zh"":""吐司好了。""}]",4
-基础②·起床与洗漱,早餐,prepare,准备,verb,/prɪˈper/,/prɪˈpeə/,L1,准备。搭配: prepare breakfast。,"[{""en"":""I prepare breakfast for my family."",""zh"":""我给家人准备早餐。""},{""en"":""She is preparing for work."",""zh"":""她在准备工作。""}]",5
-基础②·起床与洗漱,早餐,skip,跳过(饭),verb,/skɪp/,/skɪp/,L1,跳过/略过。搭配:skip breakfast。,"[{""en"":""I never skip breakfast."",""zh"":""我从不不吃早餐。""},{""en"":""Don't skip meals. It is not healthy."",""zh"":""别不吃饭。不健康。""}]",6
-基础②·起床与洗漱,出门,leave,离开,verb,/liːv/,/liːv/,L1,离开/出发。过去式:left。,"[{""en"":""I leave home at 8 am."",""zh"":""我早上8点出门。""},{""en"":""What time do you leave for work?"",""zh"":""你几点出门上班？""}]",0
-基础②·起床与洗漱,出门,lock,锁/锁上,verb,/lɑːk/,/lɒk/,L1,锁/锁上。搭配:lock the door。,"[{""en"":""I lock the door before I leave."",""zh"":""我出门前锁门。""},{""en"":""Don't forget to lock the door."",""zh"":""别忘了锁门。""}]",1
-基础②·起床与洗漱,出门,keys,钥匙,noun,/kiːz/,/kiːz/,L1,钥匙(复数)。单数:key。,"[{""en"":""Where are my keys? I can't find them."",""zh"":""我的钥匙找不到。""},{""en"":""Don't forget your keys."",""zh"":""别忘了带钥匙。""}]",2
-基础②·起床与洗漱,出门,check,检查,verb,/tʃek/,/tʃek/,L1,检查/确认。搭配:check if/double check。,"[{""en"":""I check my bag before leaving."",""zh"":""出门前我检查一下包。""},{""en"":""Check if the door is locked."",""zh"":""检查一下门锁了没有。""}]",3
-基础②·起床与洗漱,出门,elevator,电梯,noun,/ˈelɪveɪtər/,/ˈelɪveɪtə/,L1,电梯。英式:lift。,"[{""en"":""I take the elevator to the 5th floor."",""zh"":""我坐电梯到五楼。""},{""en"":""The elevator is very slow."",""zh"":""电梯很慢。""}]",4
-基础②·起床与洗漱,出门,stairs,楼梯,noun,/sterz/,/steəz/,L1,楼梯(复数)。搭配:take the stairs。,"[{""en"":""I take the stairs instead of the elevator."",""zh"":""我走楼梯不坐电梯。""},{""en"":""Be careful on the stairs."",""zh"":""走楼梯小心。""}]",5
-基础②·起床与洗漱,出门,rush,匆忙,verb,/rʌʃ/,/rʌʃ/,L1,匆忙/赶时间。搭配:in a rush/rush hour。,"[{""en"":""I am in a rush this morning."",""zh"":""我今早赶时间。""},{""en"":""Don't rush. We have time."",""zh"":""别急。我们有时间。""}]",6
-基础②·起床与洗漱,出门,commute,通勤,verb,/kəˈmjuːt/,/kəˈmjuːt/,L1,通勤/上下班路程。,"[{""en"":""My commute takes about 30 minutes."",""zh"":""我通勤大约30分钟。""},{""en"":""How do you commute to work?"",""zh"":""你怎么上下班？""}]",7
-基础②·购物与出行,交通出行,ticket,车票,noun,/ˈtɪkɪt/,/ˈtɪkɪt/,L1,票/车票。搭配:buy a ticket。,"[{""en"":""I need to buy a train ticket."",""zh"":""我需要买张火车票。""},{""en"":""How much is a ticket to Shanghai?"",""zh"":""去上海的票多少钱？""}]",0
-基础②·购物与出行,交通出行,fare,车费,noun,/fer/,/feə/,L1,车费/票价。搭配:bus fare。,"[{""en"":""The bus fare is two yuan."",""zh"":""公交车费两元。""},{""en"":""How much is the taxi fare?"",""zh"":""打车费多少？""}]",1
-基础②·购物与出行,交通出行,platform,站台,noun,/ˈplætfɔːrm/,/ˈplætfɔːm/,L1,站台。搭配:platform number。,"[{""en"":""The train arrives at platform 3."",""zh"":""火车在3号站台。""},{""en"":""Which platform should I go to?"",""zh"":""我该去哪个站台？""}]",2
-基础②·购物与出行,交通出行,seat,座位,noun,/siːt/,/siːt/,L1,座位。搭配:take a seat/window seat。,"[{""en"":""Is this seat taken?"",""zh"":""这个座位有人吗？""},{""en"":""I prefer a window seat."",""zh"":""我喜欢靠窗的座位。""}]",3
-基础②·购物与出行,交通出行,delay,延误,noun,/dɪˈleɪ/,/dɪˈleɪ/,L1,延误/延迟。,"[{""en"":""The train is delayed by 30 minutes."",""zh"":""火车延误了30分钟。""},{""en"":""Sorry for the delay."",""zh"":""抱歉延误了。""}]",4
-基础②·购物与出行,交通出行,arrive,到达,verb,/əˈraɪv/,/əˈraɪv/,L1,到达。反义:leave/depart。,"[{""en"":""I arrive at work at 9 am."",""zh"":""我早上9点到公司。""},{""en"":""What time does the bus arrive?"",""zh"":""公交车几点到？""}]",5
-基础②·购物与出行,交通出行,direction,方向,noun,/dəˈrekʃn/,/dɪˈrekʃn/,L1,方向。搭配:which direction。,"[{""en"":""Which direction should I go?"",""zh"":""我该往哪个方向走？""},{""en"":""You are going in the right direction."",""zh"":""你走的方向对了。""}]",6
-基础②·购物与出行,交通出行,cross,穿过,verb,/krɔːs/,/krɒs/,L1,穿过/横过。搭配:cross the street。,"[{""en"":""Cross the street carefully."",""zh"":""过马路小心。""},{""en"":""We need to cross the bridge."",""zh"":""我们需要过桥。""}]",7
-基础②·购物与出行,支付,credit card,信用卡,phrase,/ˈkredɪt kɑːrd/,/ˈkredɪt kɑːd/,L1,信用卡。搭配:pay by credit card。,"[{""en"":""Can I pay by credit card?"",""zh"":""我能用信用卡付款吗？""},{""en"":""I lost my credit card."",""zh"":""我的信用卡丢了。""}]",0
-基础②·购物与出行,支付,wallet,钱包,noun,/ˈwɑːlɪt/,/ˈwɒlɪt/,L1,钱包。搭配:lost my wallet。,"[{""en"":""I left my wallet at home."",""zh"":""我把钱包忘家里了。""},{""en"":""Where is my wallet?"",""zh"":""我的钱包呢？""}]",1
-基础②·购物与出行,支付,receipt,收据,noun,/rɪˈsiːt/,/rɪˈsiːt/,L1,收据/小票。搭配:keep the receipt。,"[{""en"":""Can I have a receipt please?"",""zh"":""请给我一张收据。""},{""en"":""Keep the receipt in case you need to return."",""zh"":""保留收据以备退货。""}]",2
-基础②·购物与出行,支付,coin,硬币,noun,/kɔɪn/,/kɔɪn/,L1,硬币。搭配:a few coins。,"[{""en"":""I have some coins in my pocket."",""zh"":""我口袋里有几个硬币。""},{""en"":""Do you have a coin for the machine?"",""zh"":""你有硬币投机器吗？""}]",3
-基础②·购物与出行,支付,afford,负担得起,verb,/əˈfɔːrd/,/əˈfɔːd/,L1,负担得起。搭配:can afford。,"[{""en"":""I can't afford this right now."",""zh"":""我现在买不起这个。""},{""en"":""Can you afford a new car?"",""zh"":""你买得起新车吗？""}]",4
-基础②·购物与出行,支付,budget,预算,noun,/ˈbʌdʒɪt/,/ˈbʌdʒɪt/,L1,预算。搭配:on a budget。,"[{""en"":""I am on a tight budget this month."",""zh"":""我这个月预算紧张。""},{""en"":""We need to plan a budget."",""zh"":""我们需要做个预算。""}]",5
-基础②·购物与出行,问路,straight,直走,adv,/streɪt/,/streɪt/,L1,直走/直的。搭配:go straight。,"[{""en"":""Go straight for two blocks."",""zh"":""直走两个街区。""},{""en"":""The museum is straight ahead."",""zh"":""博物馆就在前面直走。""}]",0
-基础②·购物与出行,问路,turn,转弯,verb,/tɜːrn/,/tɜːn/,L1,转弯/转向。搭配:turn left/right。,"[{""en"":""Turn left at the next corner."",""zh"":""下一个路口左转。""},{""en"":""Take the second turn on the right."",""zh"":""第二个路口右转。""}]",1
-基础②·购物与出行,问路,corner,拐角,noun,/ˈkɔːrnər/,/ˈkɔːnə/,L1,拐角/角落。搭配:on the corner。,"[{""en"":""The store is on the corner."",""zh"":""商店在拐角处。""},{""en"":""Turn right at the corner."",""zh"":""在拐角处右转。""}]",2
-基础②·购物与出行,问路,block,街区,noun,/blɑːk/,/blɒk/,L1,街区。搭配:two blocks away。,"[{""en"":""The station is two blocks away."",""zh"":""车站离这里两个街区。""},{""en"":""Walk one block and you will see it."",""zh"":""走一个街区就能看到。""}]",3
-基础②·购物与出行,问路,near,在附近,prep,/nɪr/,/nɪə/,L1,在...附近。反义:far。,"[{""en"":""Is there a bank near here?"",""zh"":""这附近有银行吗？""},{""en"":""The school is very near my home."",""zh"":""学校离我家很近。""}]",4
-基础②·购物与出行,问路,far,远的,adj,/fɑːr/,/fɑː/,L1,远的。反义:near。,"[{""en"":""How far is the airport?"",""zh"":""机场有多远？""},{""en"":""It is not far. Just 10 minutes."",""zh"":""不远。只要10分钟。""}]",5
-基础②·购物与出行,问路,map,地图,noun,/mæp/,/mæp/,L1,地图。搭配:use a map。,"[{""en"":""Can you show me on the map?"",""zh"":""你能在地图上指给我看吗？""},{""en"":""I use a map on my phone."",""zh"":""我用手机上的地图。""}]",6
-基础②·购物与出行,问路,landmark,地标,noun,/ˈlændmɑːrk/,/ˈlændmɑːk/,L1,地标/标志性建筑。,"[{""en"":""The hotel is near a famous landmark."",""zh"":""酒店在一个著名地标附近。""},{""en"":""Use the tall building as a landmark."",""zh"":""以那栋高楼作地标。""}]",7
-基础②·购物与出行,问路,lost,迷路,adj,/lɔːst/,/lɒst/,L1,迷路的。搭配:get lost/I am lost。,"[{""en"":""I am lost. Can you help me?"",""zh"":""我迷路了。你能帮我吗？""},{""en"":""Don't get lost in the city."",""zh"":""别在城市里迷路了。""}]",8
-基础②·购物与出行,问路,sign,指示牌,noun,/saɪn/,/saɪn/,L1,标志/指示牌。搭配:follow the sign。,"[{""en"":""Follow the signs to the station."",""zh"":""跟着指示牌去车站。""},{""en"":""I can't read the sign from here."",""zh"":""我从这里看不清指示牌。""}]",9
-基础②·家务与居家,打扫,dust,灰尘,noun,/dʌst/,/dʌst/,L1,灰尘/除尘。搭配:dust the furniture。,"[{""en"":""There is a lot of dust on the shelf."",""zh"":""架子上有很多灰尘。""},{""en"":""I dust the furniture every week."",""zh"":""我每周给家具除尘。""}]",0
-基础②·家务与居家,打扫,mess,混乱,noun,/mes/,/mes/,L1,混乱/脏乱。搭配:make a mess。,"[{""en"":""Your room is a mess! Clean it up."",""zh"":""你的房间一团糟！收拾一下。""},{""en"":""Sorry for the mess."",""zh"":""抱歉这么乱。""}]",1
-基础②·家务与居家,打扫,organize,整理,verb,/ˈɔːrɡənaɪz/,/ˈɔːɡənaɪz/,L1,整理/组织。搭配:organize the closet。,"[{""en"":""I need to organize my closet."",""zh"":""我需要整理衣柜。""},{""en"":""She is very organized."",""zh"":""她很有条理。""}]",2
-基础②·家务与居家,打扫,chore,家务,noun,/tʃɔːr/,/tʃɔː/,L1,家务活。搭配:do chores。,"[{""en"":""I have many chores to do today."",""zh"":""我今天有很多家务要做。""},{""en"":""Doing chores is part of daily life."",""zh"":""做家务是日常生活的一部分。""}]",3
-基础②·家务与居家,打扫,housework,家务劳动,noun,/ˈhaʊswɜːrk/,/ˈhaʊswɜːk/,L1,家务劳动。不可数。搭配:do housework。,"[{""en"":""I help my mom with housework."",""zh"":""我帮妈妈做家务。""},{""en"":""Housework takes a lot of time."",""zh"":""家务很花时间。""}]",4
-基础②·家务与居家,洗衣,washing machine,洗衣机,phrase,/ˈwɑːʃɪŋ məˌʃiːn/,/ˈwɒʃɪŋ məˌʃiːn/,L1,洗衣机。,"[{""en"":""Put the clothes in the washing machine."",""zh"":""把衣服放进洗衣机。""},{""en"":""The washing machine is broken."",""zh"":""洗衣机坏了。""}]",0
-基础②·家务与居家,洗衣,dry,晾干,verb,/draɪ/,/draɪ/,L1,晾干/烘干。反义:wet。,"[{""en"":""I hang the clothes to dry."",""zh"":""我把衣服晾起来。""},{""en"":""The clothes are still wet. Let them dry."",""zh"":""衣服还湿的。让它干。""}]",1
-基础②·家务与居家,洗衣,hang,挂,verb,/hæŋ/,/hæŋ/,L1,挂/悬挂。搭配:hang up clothes。,"[{""en"":""I hang my shirts in the closet."",""zh"":""我把衬衫挂在衣柜里。""},{""en"":""Hang your coat here."",""zh"":""把外套挂这里。""}]",2
-基础②·家务与居家,洗衣,stain,污渍,noun,/steɪn/,/steɪn/,L1,污渍。搭配:remove a stain。,"[{""en"":""There is a stain on my shirt."",""zh"":""我衬衫上有个污渍。""},{""en"":""How do I remove this stain?"",""zh"":""怎么去掉这个污渍？""}]",3
-基础②·家务与居家,洗衣,iron,熨烫,verb,/ˈaɪərn/,/ˈaɪən/,L1,熨斗/熨烫。搭配:iron clothes。,"[{""en"":""I iron my shirts before work."",""zh"":""上班前我熨衬衫。""},{""en"":""Do you iron your clothes?"",""zh"":""你熨衣服吗？""}]",4
-基础②·家务与居家,洗衣,closet,衣柜,noun,/ˈklɑːzɪt/,/ˈklɒzɪt/,L1,衣柜/壁橱。英式:wardrobe。,"[{""en"":""I put my clothes in the closet."",""zh"":""我把衣服放进衣柜。""},{""en"":""My closet is full of clothes."",""zh"":""我的衣柜装满了衣服。""}]",5
-基础②·家务与居家,洗衣,detergent,洗衣液,noun,/dɪˈtɜːrdʒənt/,/dɪˈtɜːdʒənt/,L1,洗衣液/洗涤剂。,"[{""en"":""I need to buy laundry detergent."",""zh"":""我需要买洗衣液。""},{""en"":""Don't use too much detergent."",""zh"":""不要用太多洗衣液。""}]",6
-基础②·家务与居家,洗衣,fabric,布料,noun,/ˈfæbrɪk/,/ˈfæbrɪk/,L1,布料/织物。,"[{""en"":""This fabric feels very soft."",""zh"":""这块布料摸起来很软。""},{""en"":""What kind of fabric is this?"",""zh"":""这是什么布料？""}]",7
-基础②·家务与居家,烹饪,boil,煮,verb,/bɔɪl/,/bɔɪl/,L1,煮沸/煮。搭配:boil water。,"[{""en"":""Boil the water before adding noodles."",""zh"":""水烧开后再加面条。""},{""en"":""I like boiled eggs for breakfast."",""zh"":""我早餐喜欢吃煮鸡蛋。""}]",0
-基础②·家务与居家,烹饪,fry,煎/炒,verb,/fraɪ/,/fraɪ/,L1,煎/炒/炸。搭配:fry an egg。,"[{""en"":""I fry the vegetables in a pan."",""zh"":""我在平底锅里炒蔬菜。""},{""en"":""Would you like fried or boiled eggs?"",""zh"":""你要煎蛋还是煮蛋？""}]",1
-基础②·家务与居家,烹饪,cut,切,verb,/kʌt/,/kʌt/,L1,切。搭配:cut vegetables。,"[{""en"":""I cut the vegetables into small pieces."",""zh"":""我把蔬菜切成小块。""},{""en"":""Be careful when you cut with a knife."",""zh"":""用刀切的时候小心。""}]",2
-基础②·家务与居家,烹饪,mix,混合,verb,/mɪks/,/mɪks/,L1,混合/搅拌。搭配:mix together。,"[{""en"":""Mix the eggs and flour together."",""zh"":""把鸡蛋和面粉混合。""},{""en"":""Mix well before cooking."",""zh"":""煮之前搅拌均匀。""}]",3
-基础②·家务与居家,烹饪,stir,搅拌,verb,/stɜːr/,/stɜː/,L1,搅拌。搭配:stir the soup。,"[{""en"":""Stir the soup while it cooks."",""zh"":""煮汤时搅拌一下。""},{""en"":""Keep stirring so it doesn't burn."",""zh"":""不停搅拌免得烧焦。""}]",4
-基础②·家务与居家,烹饪,oven,烤箱,noun,/ˈʌvn/,/ˈʌvn/,L1,烤箱。搭配:put in the oven。,"[{""en"":""Put the pizza in the oven for 15 minutes."",""zh"":""把披萨放烤箱烤15分钟。""},{""en"":""Preheat the oven to 180 degrees."",""zh"":""烤箱预热到180度。""}]",5
-基础②·家务与居家,烹饪,recipe,食谱,noun,/ˈresəpi/,/ˈresɪpi/,L1,食谱/菜谱。搭配:follow a recipe。,"[{""en"":""I found a great recipe online."",""zh"":""我在网上找到一个很棒的食谱。""},{""en"":""Can you share that recipe?"",""zh"":""能分享一下那个食谱吗？""}]",6
-基础②·家务与居家,烹饪,pot,锅,noun,/pɑːt/,/pɒt/,L1,锅。搭配:a pot of soup。,"[{""en"":""The soup is in the pot on the stove."",""zh"":""汤在炉子上的锅里。""},{""en"":""Use a big pot to boil the noodles."",""zh"":""用大锅煮面条。""}]",7
-基础②·家务与居家,烹饪,flavor,风味,noun,/ˈfleɪvər/,/ˈfleɪvə/,L1,风味/味道。搭配:good flavor。,"[{""en"":""I love the flavor of this dish."",""zh"":""我喜欢这道菜的风味。""},{""en"":""What flavor of ice cream do you want?"",""zh"":""你要什么口味的冰淇淋？""}]",8
-基础②·喜好与感受,喜欢,boring,无聊的,adj,/ˈbɔːrɪŋ/,/ˈbɔːrɪŋ/,L1,无聊的(形容事物)。人用bored。,"[{""en"":""The movie was boring."",""zh"":""电影很无聊。""},{""en"":""I don't like boring work."",""zh"":""我不喜欢无聊的工作。""}]",0
-基础②·喜好与感受,感受,feel,感觉,verb,/fiːl/,/fiːl/,L1,感觉/觉得。搭配:feel happy/feel tired。,"[{""en"":""I feel happy today."",""zh"":""我今天感觉开心。""},{""en"":""How do you feel?"",""zh"":""你感觉怎么样？""}]",0
-基础②·喜好与感受,感受,angry,生气的,adj,/ˈæŋɡri/,/ˈæŋɡri/,L1,生气的。搭配:get angry/angry at。,"[{""en"":""I am angry about the mistake."",""zh"":""我对这个错误很生气。""},{""en"":""Don't be angry. It's okay."",""zh"":""别生气。没事的。""}]",1
-基础②·喜好与感受,感受,nervous,紧张的,adj,/ˈnɜːrvəs/,/ˈnɜːvəs/,L1,紧张的。搭配:feel nervous。,"[{""en"":""I feel nervous before a test."",""zh"":""考试前我感到紧张。""},{""en"":""Don't be nervous. You can do it."",""zh"":""别紧张。你能行的。""}]",2
-基础②·喜好与感受,感受,proud,自豪的,adj,/praʊd/,/praʊd/,L1,自豪的。搭配:be proud of。,"[{""en"":""I am proud of my son."",""zh"":""我为我儿子感到自豪。""},{""en"":""You should be proud of yourself."",""zh"":""你应该为自己骄傲。""}]",3
-基础②·喜好与感受,感受,surprised,惊讶的,adj,/sərˈpraɪzd/,/səˈpraɪzd/,L1,惊讶的。搭配:be surprised。,"[{""en"":""I was surprised by the news."",""zh"":""我被这个消息惊到了。""},{""en"":""You look surprised!"",""zh"":""你看起来很惊讶！""}]",4
-基础②·喜好与感受,感受,worried,担心的,adj,/ˈwɜːrid/,/ˈwʌrid/,L1,担心的。搭配:worried about。,"[{""en"":""I am worried about my test."",""zh"":""我担心我的考试。""},{""en"":""Don't be worried. Everything is fine."",""zh"":""别担心。一切都好。""}]",5
-基础②·喜好与感受,感受,lonely,孤独的,adj,/ˈloʊnli/,/ˈləʊnli/,L1,孤独的/寂寞的。,"[{""en"":""I feel lonely sometimes."",""zh"":""我有时感到孤独。""},{""en"":""She looked lonely at the party."",""zh"":""她在派对上看起来很孤单。""}]",6
-基础②·喜好与感受,感受,grateful,感激的,adj,/ˈɡreɪtfl/,/ˈɡreɪtfl/,L1,感激的。搭配:be grateful for。,"[{""en"":""I am grateful for your help."",""zh"":""我感激你的帮助。""},{""en"":""We are very grateful to you."",""zh"":""我们非常感激你。""}]",7
-基础②·喜好与感受,感受,calm,平静的,adj,/kɑːm/,/kɑːm/,L1,平静的/冷静的。搭配:stay calm。,"[{""en"":""Try to stay calm."",""zh"":""试着保持冷静。""},{""en"":""The sea is very calm today."",""zh"":""今天海面很平静。""}]",8
-基础②·喜好与感受,感受,upset,难过的,adj,/ʌpˈset/,/ʌpˈset/,L1,难过的/心烦的。,"[{""en"":""She looks upset. What happened?"",""zh"":""她看起来很难过。怎么了？""},{""en"":""Don't be upset about it."",""zh"":""别为这事难过。""}]",9
-基础②·喜好与感受,愿望,decide,决定,verb,/dɪˈsaɪd/,/dɪˈsaɪd/,L1,决定。搭配:decide to do。,"[{""en"":""I decided to learn English."",""zh"":""我决定学英语。""},{""en"":""Have you decided yet?"",""zh"":""你决定了吗？""}]",0
-基础②·喜好与感受,愿望,improve,提高/改善,verb,/ɪmˈpruːv/,/ɪmˈpruːv/,L1,提高/改善。搭配:improve English。,"[{""en"":""I want to improve my English."",""zh"":""我想提高英语。""},{""en"":""Your English is improving!"",""zh"":""你的英语在进步！""}]",1
-基础②·喜好与感受,愿望,achieve,实现/达成,verb,/əˈtʃiːv/,/əˈtʃiːv/,L1,实现/达成。搭配:achieve a goal。,"[{""en"":""I want to achieve my dream."",""zh"":""我想实现梦想。""},{""en"":""You achieved a lot this year."",""zh"":""你今年收获了很多。""}]",2
-基础②·家务与居家,休息,sofa,沙发,noun,/ˈsoʊfə/,/ˈsəʊfə/,L1,沙发。也可说couch。,"[{""en"":""I like to relax on the sofa."",""zh"":""我喜欢在沙发上放松。""},{""en"":""Come sit on the sofa."",""zh"":""来坐沙发。""}]",0
-基础②·家务与居家,休息,nap,小睡,noun,/næp/,/næp/,L1,小睡/午觉。搭配:take a nap。,"[{""en"":""I take a short nap after lunch."",""zh"":""午饭后我小睡一会儿。""},{""en"":""A 20-minute nap can refresh you."",""zh"":""20分钟小睡能让你恢复精神。""}]",0
-基础②·家务与居家,休息,lazy,懒的,adj,/ˈleɪzi/,/ˈleɪzi/,L1,懒的。搭配:feel lazy/lazy day。,"[{""en"":""I feel lazy today."",""zh"":""今天犯懒。""},{""en"":""Don't be lazy. Go exercise."",""zh"":""别懒了。去运动吧。""}]",0
-基础②·家务与居家,休息,cozy,温馨的,adj,/ˈkoʊzi/,/ˈkəʊzi/,L1,舒适温馨的。,"[{""en"":""My room is very cozy."",""zh"":""我的房间很温馨。""},{""en"":""It is so cozy here."",""zh"":""这里太舒服了。""}]",0
-基础②·家务与居家,休息,comfortable,舒服的,adj,/ˈkʌmftəbl/,/ˈkʌmfətəbl/,L1,舒服的/舒适的。,"[{""en"":""This chair is very comfortable."",""zh"":""这把椅子很舒服。""},{""en"":""Make yourself comfortable."",""zh"":""别客气随意坐。""}]",0
-基础②·家务与居家,休息,slippers,拖鞋,noun,/ˈslɪpərz/,/ˈslɪpəz/,L1,拖鞋(常用复数)。,"[{""en"":""I put on my slippers at home."",""zh"":""我回家就换上拖鞋。""},{""en"":""These slippers are very soft."",""zh"":""这双拖鞋很软。""}]",0
-基础②·家务与居家,休息,candle,蜡烛,noun,/ˈkændl/,/ˈkændl/,L1,蜡烛。搭配:light a candle。,"[{""en"":""I light a candle to relax."",""zh"":""我点蜡烛来放松。""},{""en"":""The candle smells nice."",""zh"":""蜡烛闻起来很香。""}]",0
-基础②·家务与居家,休息,unwind,放松,verb,/ˌʌnˈwaɪnd/,/ˌʌnˈwaɪnd/,L1,放松/减压。搭配:unwind after work。,"[{""en"":""I need time to unwind after work."",""zh"":""下班后我需要时间放松。""},{""en"":""Reading helps me unwind."",""zh"":""阅读帮我放松。""}]",0
-基础②·家务与居家,休息,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,日程/时间表。搭配:busy schedule。,"[{""en"":""My schedule is very busy."",""zh"":""我的日程很满。""},{""en"":""What is your schedule today?"",""zh"":""你今天行程怎么安排？""}]",0
-基础②·家务与居家,接待,greet,迎接,verb,/ɡriːt/,/ɡriːt/,L1,迎接/问候。搭配:greet guests。,"[{""en"":""I greet my guests at the door."",""zh"":""我在门口迎接客人。""},{""en"":""She greeted me with a smile."",""zh"":""她微笑着迎接我。""}]",0
-基础②·家务与居家,接待,offer,提供,verb,/ˈɔːfər/,/ˈɒfə/,L1,提供/主动给。搭配:offer a drink。,"[{""en"":""Can I offer you something to drink?"",""zh"":""我能给你拿点喝的吗？""},{""en"":""She offered to help me."",""zh"":""她主动帮我。""}]",0
-基础②·家务与居家,接待,chat,聊天,verb,/tʃæt/,/tʃæt/,L1,聊天/闲聊。搭配:have a chat。,"[{""en"":""We chatted for hours."",""zh"":""我们聊了好几个小时。""},{""en"":""Let's have a chat over tea."",""zh"":""喝杯茶聊聊天吧。""}]",0
-基础②·家务与居家,接待,entrance,入口,noun,/ˈentrəns/,/ˈentrəns/,L1,入口/门口。搭配:at the entrance。,"[{""en"":""Please wait at the entrance."",""zh"":""请在入口等候。""},{""en"":""The entrance is on the left."",""zh"":""入口在左侧。""}]",0
-基础②·家务与居家,接待,farewell,告别,noun,/ˌferˈwel/,/ˌfeəˈwel/,L1,告别。搭配:say farewell。,"[{""en"":""It's time to say farewell."",""zh"":""该告别了。""},{""en"":""Thanks for coming. Farewell!"",""zh"":""谢谢光临。再见！""}]",0
-基础②·家务与居家,接待,drop by,串门,phrase,/drɑːp baɪ/,/drɒp baɪ/,L1,顺便拜访。搭配:drop by my house。,"[{""en"":""Feel free to drop by anytime."",""zh"":""随时欢迎来串门。""},{""en"":""Can I drop by your place later?"",""zh"":""我晚点能去你那儿坐坐吗？""}]",0
-基础②·家务与居家,接待,make yourself at home,别客气,phrase,/meɪk jɔːrˈself æt hoʊm/,/meɪk jɔːˈself æt həʊm/,L1,别客气/当自己家。,"[{""en"":""Please make yourself at home."",""zh"":""请别客气。当自己家。""},{""en"":""Make yourself at home. I'll be right back."",""zh"":""别客气。我马上回来。""}]",0
-基础②·餐饮与社交,点餐,waiter,服务员,noun,/ˈweɪtər/,/ˈweɪtə/,L1,服务员(男)。女:waitress。,"[{""en"":""The waiter is very friendly."",""zh"":""服务员很友好。""},{""en"":""Waiter! Can I have the bill?"",""zh"":""服务员！买单。""}]",0
-基础②·餐饮与社交,点餐,recommend,推荐,verb,/ˌrekəˈmend/,/ˌrekəˈmend/,L1,推荐。搭配:highly recommend。,"[{""en"":""What do you recommend?"",""zh"":""你有什么推荐的？""},{""en"":""I recommend the chicken here."",""zh"":""我推荐这里的鸡肉。""}]",0
-基础②·餐饮与社交,点餐,dessert,甜点,noun,/dɪˈzɜːrt/,/dɪˈzɜːt/,L1,甜点。搭配:for dessert。,"[{""en"":""Would you like some dessert?"",""zh"":""要来点甜点吗？""},{""en"":""My favorite dessert is ice cream."",""zh"":""我最喜欢的甜点是冰淇淋。""}]",0
-基础②·餐饮与社交,点餐,spicy,辣的,adj,/ˈspaɪsi/,/ˈspaɪsi/,L1,辣的。搭配:very spicy。,"[{""en"":""This dish is very spicy!"",""zh"":""这道菜很辣！""},{""en"":""I like spicy food."",""zh"":""我喜欢辣的食物。""}]",0
-基础②·餐饮与社交,点餐,salty,咸的,adj,/ˈsɔːlti/,/ˈsɒlti/,L1,咸的。搭配:too salty。,"[{""en"":""The soup is too salty."",""zh"":""汤太咸了。""},{""en"":""I prefer salty snacks."",""zh"":""我更喜欢咸的零食。""}]",0
-基础②·餐饮与社交,评价,taste,尝/味道,verb,/teɪst/,/teɪst/,L1,尝/味道。搭配:taste good。,"[{""en"":""This soup tastes great!"",""zh"":""这汤味道好极了！""},{""en"":""Can I have a taste?"",""zh"":""我能尝一下吗？""}]",0
-基础②·餐饮与社交,评价,smell,闻/气味,verb,/smel/,/smel/,L1,闻/气味。搭配:smell good。,"[{""en"":""It smells delicious in here!"",""zh"":""这里闻起来好香！""},{""en"":""What is that smell?"",""zh"":""那是什么味道？""}]",0
-基础②·日常习惯,三餐饮食,snack,零食,noun,/snæk/,/snæk/,L1,零食/小吃。搭配:have a snack。,"[{""en"":""I have a snack in the afternoon."",""zh"":""下午吃点零食。""},{""en"":""Fruit is a healthy snack."",""zh"":""水果是健康零食。""}]",0
-基础②·日常习惯,三餐饮食,meal,一餐,noun,/miːl/,/miːl/,L1,一餐/一顿饭。搭配:three meals a day。,"[{""en"":""I eat three meals a day."",""zh"":""一天吃三餐。""},{""en"":""Breakfast is the most important meal."",""zh"":""早餐是最重要的一餐。""}]",0
-基础②·日常习惯,学习工作,homework,作业,noun,/ˈhoʊmwɜːrk/,/ˈhəʊmwɜːk/,L1,家庭作业。不可数。搭配:do homework。,"[{""en"":""I do my homework after dinner."",""zh"":""晚饭后做作业。""},{""en"":""The homework is difficult."",""zh"":""作业很难。""}]",0
-基础②·日常习惯,休闲娱乐,guitar,吉他,noun,/ɡɪˈtɑːr/,/ɡɪˈtɑː/,L1,吉他。搭配:play the guitar。乐器前加the。,"[{""en"":""I play the guitar in my free time."",""zh"":""空闲时间弹吉他。""},{""en"":""He is learning the guitar."",""zh"":""他在学吉他。""}]",0
-基础②·日常习惯,睡前准备,sleep,睡觉,verb,/sliːp/,/sliːp/,L1,睡觉。过去式:slept。,"[{""en"":""I sleep eight hours every night."",""zh"":""每晚睡八小时。""},{""en"":""Did you sleep well last night?"",""zh"":""昨晚睡得好吗？""}]",0
-基础②·日常习惯,睡前准备,pajamas,睡衣,noun,/pəˈdʒɑːməz/,/pəˈdʒɑːməz/,L1,睡衣(常用复数)。,"[{""en"":""I put on my pajamas before bed."",""zh"":""睡前穿上睡衣。""},{""en"":""These pajamas are comfortable."",""zh"":""这件睡衣很舒服。""}]",0
-基础②·日常习惯,睡前准备,blanket,被子,noun,/ˈblæŋkɪt/,/ˈblæŋkɪt/,L1,毯子/被子。搭配:warm blanket。,"[{""en"":""I need a warm blanket in winter."",""zh"":""冬天需要暖和的被子。""},{""en"":""Pull up the blanket. It is cold."",""zh"":""拉上被子。天冷。""}]",0
-基础②·日常习惯,睡前准备,lights,灯,noun,/laɪts/,/laɪts/,L1,灯/灯光(复数)。搭配:turn off the lights。,"[{""en"":""I turn off the lights before sleeping."",""zh"":""睡前关灯。""},{""en"":""Can you turn off the lights?"",""zh"":""能关灯吗？""}]",0
-基础②·日常习惯,睡前准备,quiet,安静的,adj,/ˈkwaɪət/,/ˈkwaɪət/,L1,安静的。搭配:keep quiet。,"[{""en"":""I need a quiet place to sleep."",""zh"":""需要安静的地方睡觉。""},{""en"":""Please be quiet."",""zh"":""请安静。""}]",0
-基础②·餐饮与社交,通信,ring,响铃,verb,/rɪŋ/,/rɪŋ/,L1,响铃/打电话。搭配:phone rings。,"[{""en"":""The phone is ringing."",""zh"":""电话响了。""},{""en"":""I will ring you later."",""zh"":""晚点打给你。""}]",0
-基础②·餐饮与社交,通信,signal,信号,noun,/ˈsɪɡnəl/,/ˈsɪɡnəl/,L1,信号。搭配:poor signal。,"[{""en"":""The signal is very poor here."",""zh"":""这里信号很差。""},{""en"":""I can't call. No signal."",""zh"":""打不通。没信号。""}]",0
-基础②·餐饮与社交,通信,hang up,挂断,phrase,/hæŋ ʌp/,/hæŋ ʌp/,L1,挂断电话。搭配:hang up the phone。,"[{""en"":""Don't hang up! I have more to say."",""zh"":""别挂！还有话说。""},{""en"":""He hung up before I could answer."",""zh"":""我还没接他就挂了。""}]",0
-基础②·餐饮与社交,通信,dial,拨号,verb,/ˈdaɪəl/,/ˈdaɪəl/,L1,拨号。搭配:dial a number。,"[{""en"":""I think you dialed the wrong number."",""zh"":""好像拨错号了。""},{""en"":""Please dial again later."",""zh"":""请稍后再拨。""}]",0
-基础②·购物与出行,户外,park,公园,noun,/pɑːrk/,/pɑːk/,L1,公园。搭配:go to the park。,"[{""en"":""I often go to the park."",""zh"":""经常去公园。""},{""en"":""Let's meet at the park."",""zh"":""在公园见吧。""}]",0
-基础②·购物与出行,户外,rain,下雨,verb,/reɪn/,/reɪn/,L1,雨/下雨。搭配:It is raining。,"[{""en"":""It is raining outside."",""zh"":""外面在下雨。""},{""en"":""Take an umbrella. It might rain."",""zh"":""带把伞。可能要下雨。""}]",0
-基础②·购物与出行,户外,snow,下雪,verb,/snoʊ/,/snəʊ/,L1,雪/下雪。搭配:It is snowing。,"[{""en"":""It snowed last night."",""zh"":""昨晚下雪了。""},{""en"":""Children love playing in the snow."",""zh"":""孩子们喜欢玩雪。""}]",0
-基础②·购物与出行,户外,wind,风,noun,/wɪnd/,/wɪnd/,L1,风。搭配:strong wind。,"[{""en"":""The wind is very strong today."",""zh"":""今天风很大。""},{""en"":""The wind blows from the north."",""zh"":""风从北边吹来。""}]",0
-基础②·购物与出行,户外,umbrella,雨伞,noun,/ʌmˈbrelə/,/ʌmˈbrelə/,L1,雨伞。搭配:take an umbrella。,"[{""en"":""Don't forget your umbrella."",""zh"":""别忘了带伞。""},{""en"":""Can I share your umbrella?"",""zh"":""能和你共用一把伞吗？""}]",0
-基础②·家务与居家,打扫,vacuum,吸尘器,noun,/ˈvækjuːm/,/ˈvækjuːm/,L1,吸尘器。搭配:vacuum the floor。,"[{""en"":""I vacuum the floor every week."",""zh"":""每周用吸尘器吸地。""},{""en"":""The vacuum is very noisy."",""zh"":""吸尘器很吵。""}]",0
-基础②·家务与居家,打扫,broom,扫帚,noun,/bruːm/,/bruːm/,L1,扫帚。搭配:use a broom。,"[{""en"":""I use a broom to sweep."",""zh"":""用扫帚扫地。""},{""en"":""Where is the broom?"",""zh"":""扫帚在哪？""}]",0
-基础②·家务与居家,打扫,curtain,窗帘,noun,/ˈkɜːrtn/,/ˈkɜːtn/,L1,窗帘。搭配:open the curtains。,"[{""en"":""I open the curtains every morning."",""zh"":""每天早上拉开窗帘。""},{""en"":""The curtains are thick."",""zh"":""窗帘很厚。""}]",0
-基础②·家务与居家,打扫,balcony,阳台,noun,/ˈbælkəni/,/ˈbælkəni/,L1,阳台。搭配:on the balcony。,"[{""en"":""I sit on the balcony."",""zh"":""坐在阳台上。""},{""en"":""The balcony has a nice view."",""zh"":""阳台视野很好。""}]",0
-基础②·家务与居家,打扫,shelf,架子,noun,/ʃelf/,/ʃelf/,L1,架子/搁板。复数:shelves。,"[{""en"":""I put books on the shelf."",""zh"":""把书放在架子上。""},{""en"":""The shelf is full."",""zh"":""架子上满了。""}]",0
-基础②·家务与居家,打扫,drawer,抽屉,noun,/drɔːr/,/drɔː/,L1,抽屉。搭配:open the drawer。,"[{""en"":""The keys are in the drawer."",""zh"":""钥匙在抽屉里。""},{""en"":""I need to organize this drawer."",""zh"":""需要整理这个抽屉。""}]",0
-基础②·家务与居家,烹饪,chop,切碎,verb,/tʃɑːp/,/tʃɒp/,L1,剁/切碎。搭配:chop vegetables。,"[{""en"":""Chop the onions finely."",""zh"":""把洋葱切碎。""},{""en"":""Chop the meat before cooking."",""zh"":""煮之前把肉切碎。""}]",0
-基础②·家务与居家,烹饪,bake,烘烤,verb,/beɪk/,/beɪk/,L1,烘烤/烘焙。搭配:bake a cake。,"[{""en"":""I bake bread on weekends."",""zh"":""周末烤面包。""},{""en"":""She baked a cake for me."",""zh"":""她为我烤了蛋糕。""}]",0
-基础②·家务与居家,烹饪,grill,烧烤,verb,/ɡrɪl/,/ɡrɪl/,L1,烧烤/烤架。搭配:grill meat。,"[{""en"":""We grill meat in the backyard."",""zh"":""在后院烤肉。""},{""en"":""Grilled chicken is great."",""zh"":""烤鸡很棒。""}]",0
-基础②·家务与居家,烹饪,steam,蒸,verb,/stiːm/,/stiːm/,L1,蒸。搭配:steam vegetables。,"[{""en"":""I like steamed fish."",""zh"":""喜欢蒸鱼。""},{""en"":""Steam the rice for 20 min."",""zh"":""米饭蒸20分钟。""}]",0
-基础②·餐饮与社交,评价,fresh,新鲜的,adj,/freʃ/,/freʃ/,L1,新鲜的。搭配:fresh food。,"[{""en"":""The vegetables are very fresh."",""zh"":""蔬菜很新鲜。""},{""en"":""I like fresh air."",""zh"":""喜欢新鲜空气。""}]",0
-基础②·餐饮与社交,评价,average,一般的,adj,/ˈævərɪdʒ/,/ˈævərɪdʒ/,L1,普通的。搭配:just average。,"[{""en"":""The food was just average."",""zh"":""食物一般般。""},{""en"":""How was the movie? Average."",""zh"":""电影怎么样？一般。""}]",0
-基础②·餐饮与社交,评价,excellent,极好的,adj,/ˈeksələnt/,/ˈeksələnt/,L1,极好的/优秀的。,"[{""en"":""The service is excellent!"",""zh"":""服务太好了！""},{""en"":""You did an excellent job."",""zh"":""做得非常出色。""}]",0
-基础②·餐饮与社交,评价,atmosphere,氛围,noun,/ˈætməsfɪr/,/ˈætməsfɪə/,L1,氛围。搭配:nice atmosphere。,"[{""en"":""I love the atmosphere here."",""zh"":""喜欢这里的氛围。""},{""en"":""It has a cozy atmosphere."",""zh"":""氛围很温馨。""}]",0
-基础②·餐饮与社交,评价,opinion,意见,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,意见。搭配:in my opinion。,"[{""en"":""In my opinion this is the best."",""zh"":""依我看这是最好的。""},{""en"":""What is your opinion?"",""zh"":""你有什么看法？""}]",0
-基础②·餐饮与社交,评价,complain,抱怨,verb,/kəmˈpleɪn/,/kəmˈpleɪn/,L1,抱怨/投诉。,"[{""en"":""I want to complain about the service."",""zh"":""想投诉服务。""},{""en"":""Stop complaining. Let's enjoy."",""zh"":""别抱怨了。好好享受。""}]",0
-基础②·购物与出行,购物,store,商店,noun,/stɔːr/,/stɔː/,L1,商店。英式:shop。,"[{""en"":""I go to the store every weekend."",""zh"":""每周末去商店。""},{""en"":""This store has good prices."",""zh"":""这家店价格不错。""}]",0
-基础②·购物与出行,购物,mall,商场,noun,/mɔːl/,/mɔːl/,L1,商场。搭配:go to the mall。,"[{""en"":""I like shopping at the mall."",""zh"":""喜欢在商场购物。""},{""en"":""The mall is very crowded."",""zh"":""商场很挤。""}]",0
-基础②·购物与出行,购物,discount,折扣,noun,/ˈdɪskaʊnt/,/ˈdɪskaʊnt/,L1,折扣。搭配:on discount。,"[{""en"":""This is on discount today."",""zh"":""这个今天打折。""},{""en"":""I bought it at a discount."",""zh"":""打折买的。""}]",0
-基础②·购物与出行,购物,bargain,便宜货,noun,/ˈbɑːrɡən/,/ˈbɑːɡɪn/,L1,讨价还价/便宜货。,"[{""en"":""I like to bargain at the market."",""zh"":""喜欢在市场讨价还价。""},{""en"":""That is a real bargain!"",""zh"":""真是便宜货！""}]",0
-基础②·购物与出行,购物,return,退货,verb,/rɪˈtɜːrn/,/rɪˈtɜːn/,L1,退货/归还。,"[{""en"":""Can I return this if it doesn't fit?"",""zh"":""不合适可以退吗？""},{""en"":""They have a 30-day return policy."",""zh"":""有30天退货政策。""}]",0
-基础②·购物与出行,交通出行,drive,开车,verb,/draɪv/,/draɪv/,L1,开车。过去式:drove。,"[{""en"":""I drive to work every day."",""zh"":""每天开车上班。""},{""en"":""Can you drive? Yes I can."",""zh"":""会开车吗？会。""}]",0
-基础②·购物与出行,交通出行,bike,自行车,noun,/baɪk/,/baɪk/,L1,自行车。搭配:ride a bike。,"[{""en"":""I go to work by bike."",""zh"":""骑自行车上班。""},{""en"":""My bike is very old."",""zh"":""自行车很旧了。""}]",0
-基础②·购物与出行,交通出行,station,车站,noun,/ˈsteɪʃn/,/ˈsteɪʃn/,L1,车站。搭配:bus station。,"[{""en"":""The bus station is near my home."",""zh"":""车站离家很近。""},{""en"":""Meet you at the station."",""zh"":""在车站等你。""}]",0
-基础②·购物与出行,交通出行,stop,停靠点,noun,/stɑːp/,/stɒp/,L1,站/停靠点。搭配:bus stop。,"[{""en"":""I get off at the next stop."",""zh"":""下一站下车。""},{""en"":""Where is the nearest bus stop?"",""zh"":""最近的公交站在哪？""}]",0
-基础②·购物与出行,交通出行,route,路线,noun,/ruːt/,/ruːt/,L1,路线。搭配:bus route。,"[{""en"":""Which bus route do you take?"",""zh"":""坐哪条公交线路？""},{""en"":""I found a new route to work."",""zh"":""找到一条新路线。""}]",0
-基础②·喜好与感受,感受,disappointed,失望的,adj,/ˌdɪsəˈpɔɪntɪd/,/ˌdɪsəˈpɔɪntɪd/,L1,失望的。,"[{""en"":""I was disappointed by the result."",""zh"":""对结果失望。""},{""en"":""Don't be disappointed."",""zh"":""别失望。""}]",0
-基础②·喜好与感受,感受,confused,困惑的,adj,/kənˈfjuːzd/,/kənˈfjuːzd/,L1,困惑的。搭配:I am confused。,"[{""en"":""I am confused. Can you explain?"",""zh"":""搞糊涂了。能解释吗？""},{""en"":""She looked confused."",""zh"":""她看起来很困惑。""}]",0
-基础②·喜好与感受,感受,embarrassed,尴尬的,adj,/ɪmˈbærəst/,/ɪmˈbærəst/,L1,尴尬的。,"[{""en"":""I felt embarrassed at the party."",""zh"":""在派对上很尴尬。""},{""en"":""Don't be embarrassed."",""zh"":""别尴尬。""}]",0
-基础②·喜好与感受,感受,jealous,嫉妒的,adj,/ˈdʒeləs/,/ˈdʒeləs/,L1,嫉妒的。搭配:be jealous of。,"[{""en"":""She is jealous of her sister."",""zh"":""她嫉妒姐姐。""},{""en"":""Don't be jealous."",""zh"":""别嫉妒。""}]",0
-基础②·日常习惯,休闲娱乐,jogging,慢跑,noun,/ˈdʒɑːɡɪŋ/,/ˈdʒɒɡɪŋ/,L1,慢跑。搭配:go jogging。,"[{""en"":""I go jogging every morning."",""zh"":""每天早上慢跑。""},{""en"":""Jogging is good exercise."",""zh"":""慢跑是很好的运动。""}]",0
-基础②·日常习惯,休闲娱乐,cycling,骑行,noun,/ˈsaɪklɪŋ/,/ˈsaɪklɪŋ/,L1,骑行。搭配:go cycling。,"[{""en"":""I like cycling on weekends."",""zh"":""周末喜欢骑行。""},{""en"":""Cycling is good for your legs."",""zh"":""骑行对腿有好处。""}]",0
-基础②·日常习惯,休闲娱乐,hiking,徒步,noun,/ˈhaɪkɪŋ/,/ˈhaɪkɪŋ/,L1,远足/徒步。搭配:go hiking。,"[{""en"":""We go hiking in the mountains."",""zh"":""去山里徒步。""},{""en"":""Hiking is my favorite activity."",""zh"":""徒步是我最爱的活动。""}]",0
-基础②·日常习惯,休闲娱乐,swimming,游泳,noun,/ˈswɪmɪŋ/,/ˈswɪmɪŋ/,L1,游泳。搭配:go swimming。,"[{""en"":""I go swimming every summer."",""zh"":""每年夏天去游泳。""},{""en"":""Swimming is great exercise."",""zh"":""游泳是很好的运动。""}]",0
-基础②·日常习惯,学习工作,grade,成绩,noun,/ɡreɪd/,/ɡreɪd/,L1,成绩/年级。搭配:good grade。,"[{""en"":""I got a good grade on the test."",""zh"":""考试得了好成绩。""},{""en"":""What grade are you in?"",""zh"":""上几年级？""}]",0
-基础②·日常习惯,学习工作,exam,考试,noun,/ɪɡˈzæm/,/ɪɡˈzæm/,L1,考试。搭配:final exam。,"[{""en"":""I am preparing for an important exam."",""zh"":""在准备重要考试。""},{""en"":""The exam was very hard."",""zh"":""考试很难。""}]",0
-基础②·日常习惯,学习工作,notebook,笔记本,noun,/ˈnoʊtbʊk/,/ˈnəʊtbʊk/,L1,笔记本。搭配:write in my notebook。,"[{""en"":""I write new words in my notebook."",""zh"":""把生词写在笔记本上。""},{""en"":""Can I borrow your notebook?"",""zh"":""能借你的笔记本吗？""}]",0
-基础②·日常习惯,学习工作,concentrate,专心,verb,/ˈkɑːnsntreɪt/,/ˈkɒnsntreɪt/,L1,集中注意力。搭配:concentrate on。,"[{""en"":""I need to concentrate on my study."",""zh"":""需要专心学习。""},{""en"":""It is hard to concentrate with noise."",""zh"":""有噪音很难集中。""}]",0
-基础②·日常习惯,学习工作,review,复习,verb,/rɪˈvjuː/,/rɪˈvjuː/,L1,复习/回顾。搭配:review notes。,"[{""en"":""I review my notes before the exam."",""zh"":""考前复习笔记。""},{""en"":""Let me review what we learned."",""zh"":""回顾一下今天学的内容。""}]",0
-基础②·日常习惯,通勤出行,ride,骑/乘,verb,/raɪd/,/raɪd/,L1,骑/乘坐。过去式:rode。,"[{""en"":""I ride my bike to school."",""zh"":""骑自行车上学。""},{""en"":""Let's go for a ride."",""zh"":""一起去兜风吧。""}]",0
-基础②·日常习惯,通勤出行,transfer,换乘,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L1,换乘/转车。搭配:transfer to。,"[{""en"":""I transfer to the subway here."",""zh"":""在这里换乘地铁。""},{""en"":""You need to transfer to bus 5."",""zh"":""需要换乘5路公交。""}]",0
-基础②·日常习惯,通勤出行,crowded,拥挤的,adj,/ˈkraʊdɪd/,/ˈkraʊdɪd/,L1,拥挤的。搭配:crowded bus。,"[{""en"":""The bus is very crowded."",""zh"":""公交车很挤。""},{""en"":""I don't like crowded places."",""zh"":""不喜欢拥挤的地方。""}]",0
-基础②·日常习惯,学习工作,test,考试,noun,/test/,/test/,L1,考试/测验。搭配:take a test。,"[{""en"":""I have a test tomorrow."",""zh"":""明天有考试。""},{""en"":""Did you pass the test?"",""zh"":""考试过了吗？""}]",0
-基础②·家务与居家,打扫,dustpan,簸箕,noun,/ˈdʌstpæn/,/ˈdʌstpæn/,L1,簸箕。搭配:dustpan and broom。,"[{""en"":""I use a dustpan to collect the dust."",""zh"":""用簸箕收垃圾。""},{""en"":""Where is the dustpan?"",""zh"":""簸箕在哪？""}]",0
-基础②·日常习惯,休闲娱乐,indoors,在室内,adv,/ɪnˈdɔːrz/,/ɪnˈdɔːz/,L1,在室内。反义:outdoors。,"[{""en"":""I prefer to stay indoors when it rains."",""zh"":""下雨时喜欢待在室内。""},{""en"":""It is too cold to go outdoors."",""zh"":""太冷了不适合外出。""}]",0
-基础②·餐饮与社交,评价,worth,值得的,adj,/wɜːrθ/,/wɜːθ/,L1,值得的。搭配:worth it。,"[{""en"":""This restaurant is worth a visit."",""zh"":""这家餐厅值得一去。""},{""en"":""Is it worth the money?"",""zh"":""值这个价吗？""}]",0
-基础②·家务与居家,洗衣,wardrobe,衣柜,noun,/ˈwɔːrdroʊb/,/ˈwɔːdrəʊb/,L1,衣柜/衣橱。,"[{""en"":""My wardrobe is full of clothes."",""zh"":""衣柜装满了衣服。""},{""en"":""I need to clean out my wardrobe."",""zh"":""需要清理衣柜。""}]",0
-基础②·家务与居家,打扫,faucet,水龙头,noun,/ˈfɔːsɪt/,/ˈfɔːsɪt/,L1,水龙头。英式:tap。,"[{""en"":""Turn on the faucet."",""zh"":""打开水龙头。""},{""en"":""The faucet is leaking."",""zh"":""水龙头在漏水。""}]",0
-基础②·家务与居家,打扫,radiator,暖气片,noun,/ˈreɪdieɪtər/,/ˈreɪdieɪtə/,L1,暖气片/散热器。,"[{""en"":""The radiator is very hot."",""zh"":""暖气片很烫。""},{""en"":""I turned on the radiator."",""zh"":""我开了暖气。""}]",0
-基础②·家务与居家,打扫,carpet,地毯,noun,/ˈkɑːrpɪt/,/ˈkɑːpɪt/,L1,地毯。搭配:vacuum the carpet。,"[{""en"":""I vacuum the carpet every week."",""zh"":""每周用吸尘器吸地毯。""},{""en"":""The carpet is very soft."",""zh"":""地毯很软。""}]",0
-基础②·家务与居家,打扫,cushion,靠垫,noun,/ˈkʊʃn/,/ˈkʊʃn/,L1,靠垫/坐垫。,"[{""en"":""I put a cushion on the sofa."",""zh"":""在沙发上放了个靠垫。""},{""en"":""This cushion is very comfortable."",""zh"":""这个靠垫很舒服。""}]",0
-基础②·家务与居家,打扫,mat,垫子,noun,/mæt/,/mæt/,L1,垫子/地垫。搭配:door mat。,"[{""en"":""Wipe your shoes on the mat."",""zh"":""在垫子上擦擦鞋。""},{""en"":""There is a mat at the door."",""zh"":""门口有一块垫子。""}]",0
-基础②·家务与居家,烹饪,ladle,勺子/舀,noun,/ˈleɪdl/,/ˈleɪdl/,L1,长柄勺/汤勺。,"[{""en"":""Use a ladle to serve the soup."",""zh"":""用汤勺盛汤。""},{""en"":""Where is the ladle?"",""zh"":""汤勺在哪？""}]",0
-基础②·家务与居家,烹饪,whisk,搅拌器,noun,/wɪsk/,/wɪsk/,L1,搅拌器/打蛋器。,"[{""en"":""I use a whisk to mix the eggs."",""zh"":""用打蛋器搅拌鸡蛋。""},{""en"":""Do you have a whisk?"",""zh"":""有打蛋器吗？""}]",0
-基础②·家务与居家,烹饪,peel,削皮,verb,/piːl/,/piːl/,L1,削皮/剥皮。搭配:peel an apple。,"[{""en"":""Peel the potatoes before cooking."",""zh"":""煮之前削土豆皮。""},{""en"":""Can you help me peel these?"",""zh"":""能帮我削这些吗？""}]",0
-基础②·家务与居家,烹饪,roast,烤(肉),verb,/roʊst/,/rəʊst/,L1,烤(肉)/烘烤。搭配:roast chicken。,"[{""en"":""I roast a chicken every Sunday."",""zh"":""每周日烤一只鸡。""},{""en"":""Roast beef is my favorite."",""zh"":""烤牛肉是我的最爱。""}]",0
-基础②·家务与居家,烹饪,simmer,慢炖/煨,verb,/ˈsɪmər/,/ˈsɪmə/,L1,慢炖/煨。搭配:simmer for 30 minutes。,"[{""en"":""Let the soup simmer for an hour."",""zh"":""让汤慢炖一小时。""},{""en"":""Simmer the sauce on low heat."",""zh"":""用小火煨酱汁。""}]",0
-基础②·餐饮与社交,点餐,appetizer,开胃菜,noun,/ˈæpɪtaɪzər/,/ˈæpɪtaɪzə/,L1,开胃菜/前菜。英式:starter。,"[{""en"":""Would you like an appetizer?"",""zh"":""要来点开胃菜吗？""},{""en"":""The appetizer was delicious."",""zh"":""开胃菜很好吃。""}]",0
-基础②·餐饮与社交,点餐,main course,主菜,phrase,/meɪn kɔːrs/,/meɪn kɔːs/,L1,主菜。,"[{""en"":""What would you like for the main course?"",""zh"":""主菜想吃什么？""},{""en"":""The main course was excellent."",""zh"":""主菜很棒。""}]",0
-基础②·餐饮与社交,点餐,beef,牛肉,noun,/biːf/,/biːf/,L1,牛肉。不可数。搭配:roast beef。,"[{""en"":""I would like the beef please."",""zh"":""请给我牛肉。""},{""en"":""How do you want your beef cooked?"",""zh"":""牛肉要几分熟？""}]",0
-基础②·购物与出行,户外,sunshine,阳光,noun,/ˈsʌnʃaɪn/,/ˈsʌnʃaɪn/,L1,阳光/日照。,"[{""en"":""I love the sunshine in spring."",""zh"":""喜欢春天的阳光。""},{""en"":""Let's enjoy the sunshine."",""zh"":""出去享受阳光吧。""}]",0
-基础②·购物与出行,户外,forest,森林,noun,/ˈfɔːrɪst/,/ˈfɒrɪst/,L1,森林。搭配:in the forest。,"[{""en"":""I like walking in the forest."",""zh"":""喜欢在森林里散步。""},{""en"":""The forest is very quiet."",""zh"":""森林很安静。""}]",0
-基础②·购物与出行,户外,river,河流,noun,/ˈrɪvər/,/ˈrɪvə/,L1,河流。搭配:by the river。,"[{""en"":""There is a river near my home."",""zh"":""我家附近有一条河。""},{""en"":""We walked along the river."",""zh"":""我们沿河散步。""}]",0
-基础②·购物与出行,户外,bridge,桥,noun,/brɪdʒ/,/brɪdʒ/,L1,桥。搭配:cross the bridge。,"[{""en"":""Cross the bridge and turn left."",""zh"":""过桥后左转。""},{""en"":""The bridge is very old."",""zh"":""这座桥很古老。""}]",0
-基础②·日常习惯,通勤出行,rush hour,高峰时段,phrase,/rʌʃ aʊər/,/rʌʃ aʊə/,L1,高峰时段。搭配:during rush hour。,"[{""en"":""I avoid driving during rush hour."",""zh"":""我避免高峰时段开车。""},{""en"":""Rush hour starts at 5 pm."",""zh"":""高峰时段下午5点开始。""}]",0
-基础②·日常习惯,睡前准备,nightlight,夜灯,noun,/ˈnaɪtlaɪt/,/ˈnaɪtlaɪt/,L1,夜灯/小夜灯。,"[{""en"":""I use a nightlight in my room."",""zh"":""房间里用夜灯。""},{""en"":""The nightlight is very dim."",""zh"":""夜灯很暗。""}]",0
-基础②·日常习惯,睡前准备,snore,打鼾,verb,/snɔːr/,/snɔː/,L1,打鼾/打呼噜。,"[{""en"":""My father snores loudly."",""zh"":""爸爸打鼾很响。""},{""en"":""Do you snore when you sleep?"",""zh"":""你睡觉打鼾吗？""}]",0
-基础②·餐饮与社交,通信,voicemail,语音信箱,noun,/ˈvɔɪsmeɪl/,/ˈvɔɪsmeɪl/,L1,语音信箱。,"[{""en"":""I left you a voicemail."",""zh"":""给你留了语音留言。""},{""en"":""The call went to voicemail."",""zh"":""电话转到语音信箱了。""}]",0
-基础②·餐饮与社交,通信,line,线路,noun,/laɪn/,/laɪn/,L1,电话线路/线。搭配:the line is busy。,"[{""en"":""The line is busy. I will call later."",""zh"":""线路忙。晚点再打。""},{""en"":""Please hold the line."",""zh"":""请不要挂断。""}]",0
-基础②·喜好与感受,感受,exhausted,精疲力竭的,adj,/ɪɡˈzɔːstɪd/,/ɪɡˈzɔːstɪd/,L1,精疲力竭的。比tired更强。,"[{""en"":""I am exhausted after work."",""zh"":""下班后精疲力竭。""},{""en"":""You look exhausted. Get some rest."",""zh"":""你看起来累坏了。休息吧。""}]",0
-基础②·喜好与感受,感受,delighted,高兴的,adj,/dɪˈlaɪtɪd/,/dɪˈlaɪtɪd/,L1,高兴的/欣喜的。比happy更正式。,"[{""en"":""I am delighted to meet you."",""zh"":""很高兴认识你。""},{""en"":""She was delighted with the gift."",""zh"":""她对礼物很满意。""}]",0
-基础②·购物与出行,支付,refund,退款,noun,/ˈriːfʌnd/,/ˈriːfʌnd/,L1,退款。搭配:get a refund。,"[{""en"":""Can I get a refund?"",""zh"":""能退款吗？""},{""en"":""The store gave me a full refund."",""zh"":""商店给我全额退款。""}]",0
-基础②·购物与出行,支付,coupon,优惠券,noun,/ˈkuːpɑːn/,/ˈkuːpɒn/,L1,优惠券。,"[{""en"":""I have a coupon for this store."",""zh"":""我有这家店的优惠券。""},{""en"":""Use this coupon to save 10%."",""zh"":""用这张券省10%。""}]",0
-基础②·日常习惯,休闲娱乐,sightseeing,观光,noun,/ˈsaɪtsiːɪŋ/,/ˈsaɪtsiːɪŋ/,L1,观光/游览。搭配:go sightseeing。,"[{""en"":""I like sightseeing when I travel."",""zh"":""旅行时喜欢观光。""},{""en"":""We went sightseeing all day."",""zh"":""我们观光了一整天。""}]",0
-基础②·日常习惯,休闲娱乐,camping,露营,noun,/ˈkæmpɪŋ/,/ˈkæmpɪŋ/,L1,露营。搭配:go camping。,"[{""en"":""We go camping every summer."",""zh"":""每年夏天去露营。""},{""en"":""Camping is a lot of fun."",""zh"":""露营很有趣。""}]",0
-基础②·日常习惯,休闲娱乐,knitting,编织,noun,/ˈnɪtɪŋ/,/ˈnɪtɪŋ/,L1,编织/针织。,"[{""en"":""My grandmother likes knitting."",""zh"":""奶奶喜欢编织。""},{""en"":""Knitting is a relaxing hobby."",""zh"":""编织是放松的爱好。""}]",0
-基础②·日常习惯,休闲娱乐,gardening,园艺,noun,/ˈɡɑːrdnɪŋ/,/ˈɡɑːdnɪŋ/,L1,园艺/种花草。,"[{""en"":""I enjoy gardening on weekends."",""zh"":""周末喜欢做园艺。""},{""en"":""Gardening is good exercise."",""zh"":""园艺是很好的运动。""}]",0
-基础②·日常习惯,休闲娱乐,fishing,钓鱼,noun,/ˈfɪʃɪŋ/,/ˈfɪʃɪŋ/,L1,钓鱼。搭配:go fishing。,"[{""en"":""My father likes fishing."",""zh"":""爸爸喜欢钓鱼。""},{""en"":""Let us go fishing this weekend."",""zh"":""周末去钓鱼吧。""}]",0
-基础②·喜好与感受,感受,frustrated,沮丧的,adj,/ˈfrʌstreɪtɪd/,/frʌˈstreɪtɪd/,L1,沮丧的/挫败的。,"[{""en"":""I feel frustrated when I cannot understand."",""zh"":""听不懂时感到沮丧。""},{""en"":""Do not get frustrated. Keep trying."",""zh"":""别气馁。继续努力。""}]",0
+基础②·日常习惯,核心词汇,ability,,n,,,L1,,,0
+基础②·日常习惯,核心词汇,afraid,,adj,,,L1,,,1
+基础②·日常习惯,核心词汇,apartment,,n,,,L1,,,2
+基础②·日常习惯,核心词汇,attention,,n,,,L1,,,3
+基础②·日常习惯,核心词汇,bath,,n,,,L1,,,4
+基础②·日常习惯,核心词汇,beef,,n,,,L1,,,5
+基础②·日常习惯,核心词汇,biscuit,,n,,,L1,,,6
+基础②·日常习惯,核心词汇,bowl,,n,,,L1,,,7
+基础②·日常习惯,核心词汇,businessman,,n,,,L1,,,8
+基础②·日常习惯,核心词汇,camera,,n,,,L1,,,9
+基础②·日常习惯,核心词汇,cat,,n,,,L1,,,10
+基础②·日常习惯,核心词汇,cheap,,adj,,,L1,,,11
+基础②·日常习惯,核心词汇,class,,n,,,L1,,,12
+基础②·日常习惯,核心词汇,clothes,,n,,,L1,,,13
+基础②·日常习惯,核心词汇,competition,,n,,,L1,,,14
+基础②·日常习惯,核心词汇,cook,,v,,,L1,,,15
+基础②·日常习惯,核心词汇,create,,v,,,L1,,,16
+基础②·日常习惯,核心词汇,cup,,n,,,L1,,,17
+基础②·日常习惯,核心词汇,death,,n,,,L1,,,18
+基础②·日常习惯,核心词汇,dialogue,,n,,,L1,,,19
+基础②·日常习惯,核心词汇,display,,v,,,L1,,,20
+基础②·日常习惯,核心词汇,dream,,n,,,L1,,,21
+基础②·日常习惯,核心词汇,education,,n,,,L1,,,22
+基础②·日常习惯,核心词汇,engine,,n,,,L1,,,23
+基础②·日常习惯,核心词汇,exercise,,n,,,L1,,,24
+基础②·日常习惯,核心词汇,extremely,,adv,,,L1,,,25
+基础②·日常习惯,核心词汇,feature,,n,,,L1,,,26
+基础②·日常习惯,核心词汇,fishing,,n,,,L1,,,27
+基础②·日常习惯,核心词汇,following,,adj,,,L1,,,28
+基础②·日常习惯,核心词汇,fruit,,n,,,L1,,,29
+基础②·日常习惯,核心词汇,gold,,n,,,L1,,,30
+基础②·日常习惯,核心词汇,harmful,,adj,,,L1,,,31
+基础②·日常习惯,核心词汇,hotel,,n,,,L1,,,32
+基础②·日常习惯,核心词汇,imply,,v,,,L1,,,33
+基础②·日常习惯,核心词汇,invitation,,n,,,L1,,,34
+基础②·日常习惯,核心词汇,journey,,n,,,L1,,,35
+基础②·日常习惯,核心词汇,lamp,,n,,,L1,,,36
+基础②·日常习惯,核心词汇,link,,n,,,L1,,,37
+基础②·日常习惯,核心词汇,magazine,,n,,,L1,,,38
+基础②·日常习惯,核心词汇,meaning,,n,,,L1,,,39
+基础②·日常习惯,核心词汇,message,,n,,,L1,,,40
+基础②·日常习惯,核心词汇,mountain,,n,,,L1,,,41
+基础②·日常习惯,核心词汇,neat,,adj,,,L1,,,42
+基础②·日常习惯,核心词汇,onion,,n,,,L1,,,43
+基础②·日常习惯,核心词汇,owner,,n,,,L1,,,44
+基础②·日常习惯,核心词汇,party,,n,,,L1,,,45
+基础②·日常习惯,核心词汇,pet,,n,,,L1,,,46
+基础②·日常习惯,核心词汇,plan,,n,,,L1,,,47
+基础②·日常习惯,核心词汇,point,,n,,,L1,,,48
+基础②·日常习惯,核心词汇,potato,,n,,,L1,,,49
+基础②·日常习惯,核心词汇,psychologist,,n,,,L1,,,50
+基础②·日常习惯,核心词汇,reading,,n,,,L1,,,51
+基础②·日常习惯,核心词汇,reputation,,n,,,L1,,,52
+基础②·日常习惯,核心词汇,routine,,n,,,L1,,,53
+基础②·日常习惯,核心词汇,salad,,n,,,L1,,,54
+基础②·日常习惯,核心词汇,scream,,v,,,L1,,,55
+基础②·日常习惯,核心词汇,shirt,,n,,,L1,,,56
+基础②·日常习惯,核心词汇,should modal,,v,,,L1,,,57
+基础②·日常习惯,核心词汇,slight,,adj,,,L1,,,58
+基础②·日常习惯,核心词汇,sound,,n,,,L1,,,59
+基础②·日常习惯,核心词汇,sport,,n,,,L1,,,60
+基础②·日常习惯,核心词汇,store,,n,,,L1,,,61
+基础②·日常习惯,核心词汇,surgery,,n,,,L1,,,62
+基础②·日常习惯,核心词汇,taste,,n,,,L1,,,63
+基础②·日常习惯,核心词汇,television,,n,,,L1,,,64
+基础②·日常习惯,核心词汇,threaten,,v,,,L1,,,65
+基础②·日常习惯,核心词汇,tomato,,n,,,L1,,,66
+基础②·日常习惯,核心词汇,training,,n,,,L1,,,67
+基础②·日常习惯,核心词汇,trouble,,n,,,L1,,,68
+基础②·日常习惯,核心词汇,valley,,n,,,L1,,,69
+基础②·日常习惯,核心词汇,wall,,n,,,L1,,,70
+基础②·日常习惯,核心词汇,wheel,,n,,,L1,,,71
+基础②·喜好与需求,核心词汇,about,,prep,,,L1,,,72
+基础②·喜好与需求,核心词汇,aggressive,,adj,,,L1,,,73
+基础②·喜好与需求,核心词汇,argue,,v,,,L1,,,74
+基础②·喜好与需求,核心词汇,badly,,adv,,,L1,,,75
+基础②·喜好与需求,核心词汇,bathroom,,n,,,L1,,,76
+基础②·喜好与需求,核心词汇,benefit,,n,,,L1,,,77
+基础②·喜好与需求,核心词汇,blog,,n,,,L1,,,78
+基础②·喜好与需求,核心词汇,brain,,n,,,L1,,,79
+基础②·喜好与需求,核心词汇,busy,,adj,,,L1,,,80
+基础②·喜好与需求,核心词汇,cannot,,v,,,L1,,,81
+基础②·喜好与需求,核心词汇,catch,,v,,,L1,,,82
+基础②·喜好与需求,核心词汇,cheese,,n,,,L1,,,83
+基础②·喜好与需求,核心词汇,classroom,,n,,,L1,,,84
+基础②·喜好与需求,核心词汇,clothing,,n,,,L1,,,85
+基础②·喜好与需求,核心词汇,complain,,v,,,L1,,,86
+基础②·喜好与需求,核心词汇,cooker,,n,,,L1,,,87
+基础②·喜好与需求,核心词汇,creation,,n,,,L1,,,88
+基础②·喜好与需求,核心词汇,cupboard,,n,,,L1,,,89
+基础②·喜好与需求,核心词汇,decide,,v,,,L1,,,90
+基础②·喜好与需求,核心词汇,diary,,n,,,L1,,,91
+基础②·喜好与需求,核心词汇,document,,n,,,L1,,,92
+基础②·喜好与需求,核心词汇,dress,,n,,,L1,,,93
+基础②·喜好与需求,核心词汇,egg,,n,,,L1,,,94
+基础②·喜好与需求,核心词汇,enquiry,,n,,,L1,,,95
+基础②·喜好与需求,核心词汇,expensive,,adj,,,L1,,,96
+基础②·喜好与需求,核心词汇,famous,,adj,,,L1,,,97
+基础②·喜好与需求,核心词汇,feed,,v,,,L1,,,98
+基础②·喜好与需求,核心词汇,fit,,v,,,L1,,,99
+基础②·喜好与需求,核心词汇,football,,n,,,L1,,,100
+基础②·喜好与需求,核心词汇,furniture,,n,,,L1,,,101
+基础②·喜好与需求,核心词汇,grey,,adj,,,L1,,,102
+基础②·喜好与需求,核心词汇,heat,,n,,,L1,,,103
+基础②·喜好与需求,核心词汇,hour,,n,,,L1,,,104
+基础②·喜好与需求,核心词汇,infection,,n,,,L1,,,105
+基础②·喜好与需求,核心词汇,invite,,v,,,L1,,,106
+基础②·喜好与需求,核心词汇,juice,,n,,,L1,,,107
+基础②·喜好与需求,核心词汇,late,,adj,,,L1,,,108
+基础②·喜好与需求,核心词汇,list,,n,,,L1,,,109
+基础②·喜好与需求,核心词汇,mail,,n,,,L1,,,110
+基础②·喜好与需求,核心词汇,meat,,n,,,L1,,,111
+基础②·喜好与需求,核心词汇,method,,n,,,L1,,,112
+基础②·喜好与需求,核心词汇,multiple,,adj,,,L1,,,113
+基础②·喜好与需求,核心词汇,neck,,n,,,L1,,,114
+基础②·喜好与需求,核心词汇,only,,adj,,,L1,,,115
+基础②·喜好与需求,核心词汇,paint,,v,,,L1,,,116
+基础②·喜好与需求,核心词汇,passport,,n,,,L1,,,117
+基础②·喜好与需求,核心词汇,petrol,,n,,,L1,,,118
+基础②·喜好与需求,核心词汇,planet,,n,,,L1,,,119
+基础②·喜好与需求,核心词汇,pose,,v,,,L1,,,120
+基础②·喜好与需求,核心词汇,predict,,v,,,L1,,,121
+基础②·喜好与需求,核心词汇,publication,,n,,,L1,,,122
+基础②·喜好与需求,核心词汇,recall,,v,,,L1,,,123
+基础②·喜好与需求,核心词汇,request,,n,,,L1,,,124
+基础②·喜好与需求,核心词汇,rule,,n,,,L1,,,125
+基础②·喜好与需求,核心词汇,sale,,n,,,L1,,,126
+基础②·喜好与需求,核心词汇,seat,,n,,,L1,,,127
+基础②·喜好与需求,核心词汇,shoe,,n,,,L1,,,128
+基础②·喜好与需求,核心词汇,shower,,n,,,L1,,,129
+基础②·喜好与需求,核心词汇,slow,,adj,,,L1,,,130
+基础②·喜好与需求,核心词汇,soup,,n,,,L1,,,131
+基础②·喜好与需求,核心词汇,stair,,n,,,L1,,,132
+基础②·喜好与需求,核心词汇,strange,,adj,,,L1,,,133
+基础②·喜好与需求,核心词汇,surprising,,adj,,,L1,,,134
+基础②·喜好与需求,核心词汇,teach,,v,,,L1,,,135
+基础②·喜好与需求,核心词汇,temperature,,n,,,L1,,,136
+基础②·喜好与需求,核心词汇,through,,prep,,,L1,,,137
+基础②·喜好与需求,核心词汇,top,,n,,,L1,,,138
+基础②·喜好与需求,核心词汇,transition,,n,,,L1,,,139
+基础②·喜好与需求,核心词汇,turn,,v,,,L1,,,140
+基础②·喜好与需求,核心词汇,vast,,adj,,,L1,,,141
+基础②·喜好与需求,核心词汇,wash,,v,,,L1,,,142
+基础②·喜好与需求,核心词汇,win,,v,,,L1,,,143
+基础②·日程安排,核心词汇,according to,,prep,,,L1,,,144
+基础②·日程安排,核心词汇,allow,,v,,,L1,,,145
+基础②·日程安排,核心词汇,arms,,n,,,L1,,,146
+基础②·日程安排,核心词汇,ball,,n,,,L1,,,147
+基础②·日程安排,核心词汇,bean,,n,,,L1,,,148
+基础②·日程安排,核心词汇,best,,adj,,,L1,,,149
+基础②·日程安排,核心词汇,blow,,v,,,L1,,,150
+基础②·日程安排,核心词汇,breakfast,,n,,,L1,,,151
+基础②·日程安排,核心词汇,butter,,n,,,L1,,,152
+基础②·日程安排,核心词汇,capable,,adj,,,L1,,,153
+基础②·日程安排,核心词汇,celebrate,,v,,,L1,,,154
+基础②·日程安排,核心词汇,chicken,,n,,,L1,,,155
+基础②·日程安排,核心词汇,clean,,adj,,,L1,,,156
+基础②·日程安排,核心词汇,comment,,n,,,L1,,,157
+基础②·日程安排,核心词汇,complicated,,adj,,,L1,,,158
+基础②·日程安排,核心词汇,cooking,,n,,,L1,,,159
+基础②·日程安排,核心词汇,creative,,adj,,,L1,,,160
+基础②·日程安排,核心词汇,cycle,,n,,,L1,,,161
+基础②·日程安排,核心词汇,decoration,,n,,,L1,,,162
+基础②·日程安排,核心词汇,dinner,,n,,,L1,,,163
+基础②·日程安排,核心词汇,dog,,n,,,L1,,,164
+基础②·日程安排,核心词汇,drive,,v,,,L1,,,165
+基础②·日程安排,核心词汇,electric,,adj,,,L1,,,166
+基础②·日程安排,核心词汇,equipment,,n,,,L1,,,167
+基础②·日程安排,核心词汇,expert,,n,,,L1,,,168
+基础②·日程安排,核心词汇,fan,,n,,,L1,,,169
+基础②·日程安排,核心词汇,festival,,n,,,L1,,,170
+基础②·日程安排,核心词汇,flash,,n,,,L1,,,171
+基础②·日程安排,核心词汇,fork,,n,,,L1,,,172
+基础②·日程安排,核心词汇,game,,n,,,L1,,,173
+基础②·日程安排,核心词汇,ground,,n,,,L1,,,174
+基础②·日程安排,核心词汇,hers,,pron,,,L1,,,175
+基础②·日程安排,核心词汇,household,,n,,,L1,,,176
+基础②·日程安排,核心词汇,install,,v,,,L1,,,177
+基础②·日程安排,核心词汇,island,,n,,,L1,,,178
+基础②·日程安排,核心词汇,kid,,n,,,L1,,,179
+基础②·日程安排,核心词汇,later,,adv,,,L1,,,180
+基础②·日程安排,核心词汇,load,,n,,,L1,,,181
+基础②·日程安排,核心词汇,majority,,n,,,L1,,,182
+基础②·日程安排,核心词汇,medical,,adj,,,L1,,,183
+基础②·日程安排,核心词汇,military,,adj,,,L1,,,184
+基础②·日程安排,核心词汇,multiply,,v,,,L1,,,185
+基础②·日程安排,核心词汇,newspaper,,n,,,L1,,,186
+基础②·日程安排,核心词汇,opposed,,adj,,,L1,,,187
+基础②·日程安排,核心词汇,painter,,n,,,L1,,,188
+基础②·日程安排,核心词汇,patient,,n,,,L1,,,189
+基础②·日程安排,核心词汇,photo,,n,,,L1,,,190
+基础②·日程安排,核心词汇,plant,,n,,,L1,,,191
+基础②·日程安排,核心词汇,position,,n,,,L1,,,192
+基础②·日程安排,核心词汇,price,,n,,,L1,,,193
+基础②·日程安排,核心词汇,publish,,v,,,L1,,,194
+基础②·日程安排,核心词汇,recognize,,v,,,L1,,,195
+基础②·日程安排,核心词汇,restaurant,,n,,,L1,,,196
+基础②·日程安排,核心词汇,runner,,n,,,L1,,,197
+基础②·日程安排,核心词汇,salt,,n,,,L1,,,198
+基础②·日程安排,核心词汇,sell,,v,,,L1,,,199
+基础②·日程安排,核心词汇,shooting,,n,,,L1,,,200
+基础②·日程安排,核心词汇,side,,n,,,L1,,,201
+基础②·日程安排,核心词汇,smartphone,,n,,,L1,,,202
+基础②·日程安排,核心词汇,speed,,n,,,L1,,,203
+基础②·日程安排,核心词汇,steady,,adj,,,L1,,,204
+基础②·日程安排,核心词汇,study,,n,,,L1,,,205
+基础②·日程安排,核心词汇,swear,,v,,,L1,,,206
+基础②·日程安排,核心词汇,teaching,,n,,,L1,,,207
+基础②·日程安排,核心词汇,text,,n,,,L1,,,208
+基础②·日程安排,核心词汇,throw,,v,,,L1,,,209
+基础②·日程安排,核心词汇,topic,,n,,,L1,,,210
+基础②·日程安排,核心词汇,transport,,n,,,L1,,,211
+基础②·日程安排,核心词汇,understanding,,n,,,L1,,,212
+基础②·日程安排,核心词汇,vegetable,,n,,,L1,,,213
+基础②·日程安排,核心词汇,washing,,n,,,L1,,,214
+基础②·日程安排,核心词汇,winner,,n,,,L1,,,215
+基础②·购物与出行,核心词汇,adapt,,v,,,L1,,,216
+基础②·购物与出行,核心词汇,although,,conj,,,L1,,,217
+基础②·购物与出行,核心词汇,as,,prep,,,L1,,,218
+基础②·购物与出行,核心词汇,baseball,,n,,,L1,,,219
+基础②·购物与出行,核心词汇,beat,,v,,,L1,,,220
+基础②·购物与出行,核心词汇,bet,,v,,,L1,,,221
+基础②·购物与出行,核心词汇,boil,,v,,,L1,,,222
+基础②·购物与出行,核心词汇,bright,,adj,,,L1,,,223
+基础②·购物与出行,核心词汇,buy,,v,,,L1,,,224
+基础②·购物与出行,核心词汇,careful,,adj,,,L1,,,225
+基础②·购物与出行,核心词汇,celebrity,,n,,,L1,,,226
+基础②·购物与出行,核心词汇,chocolate,,n,,,L1,,,227
+基础②·购物与出行,核心词汇,clear,,adj,,,L1,,,228
+基础②·购物与出行,核心词汇,communicate,,v,,,L1,,,229
+基础②·购物与出行,核心词汇,connected,,adj,,,L1,,,230
+基础②·购物与出行,核心词汇,cost,,n,,,L1,,,231
+基础②·购物与出行,核心词汇,creature,,n,,,L1,,,232
+基础②·购物与出行,核心词汇,daily,,adj,,,L1,,,233
+基础②·购物与出行,核心词汇,defeat,,v,,,L1,,,234
+基础②·购物与出行,核心词汇,director,,n,,,L1,,,235
+基础②·购物与出行,核心词汇,dozen,,n,,,L1,,,236
+基础②·购物与出行,核心词汇,driver,,n,,,L1,,,237
+基础②·购物与出行,核心词汇,elephant,,n,,,L1,,,238
+基础②·购物与出行,核心词汇,ethical,,adj,,,L1,,,239
+基础②·购物与出行,核心词汇,explanation,,n,,,L1,,,240
+基础②·购物与出行,核心词汇,fashion,,n,,,L1,,,241
+基础②·购物与出行,核心词汇,figure,,n,,,L1,,,242
+基础②·购物与出行,核心词汇,floor,,n,,,L1,,,243
+基础②·购物与出行,核心词汇,free,,adj,,,L1,,,244
+基础②·购物与出行,核心词汇,garden,,n,,,L1,,,245
+基础②·购物与出行,核心词汇,guest,,n,,,L1,,,246
+基础②·购物与出行,核心词汇,hey,,exclam,,,L1,,,247
+基础②·购物与出行,核心词汇,human,,adj,,,L1,,,248
+基础②·购物与出行,核心词汇,instead,,adv,,,L1,,,249
+基础②·购物与出行,核心词汇,jacket,,n,,,L1,,,250
+基础②·购物与出行,核心词汇,kitchen,,n,,,L1,,,251
+基础②·购物与出行,核心词汇,lazy,,adj,,,L1,,,252
+基础②·购物与出行,核心词汇,loud,,adj,,,L1,,,253
+基础②·购物与出行,核心词汇,market,,n,,,L1,,,254
+基础②·购物与出行,核心词汇,meet,,v,,,L1,,,255
+基础②·购物与出行,核心词汇,money,,n,,,L1,,,256
+基础②·购物与出行,核心词汇,music,,n,,,L1,,,257
+基础②·购物与出行,核心词汇,none,,pron,,,L1,,,258
+基础②·购物与出行,核心词汇,order,,n,,,L1,,,259
+基础②·购物与出行,核心词汇,painting,,n,,,L1,,,260
+基础②·购物与出行,核心词汇,pay,,v,,,L1,,,261
+基础②·购物与出行,核心词汇,photograph,,n,,,L1,,,262
+基础②·购物与出行,核心词汇,plate,,n,,,L1,,,263
+基础②·购物与出行,核心词汇,possible,,adj,,,L1,,,264
+基础②·购物与出行,核心词汇,principle,,n,,,L1,,,265
+基础②·购物与出行,核心词汇,quantity,,n,,,L1,,,266
+基础②·购物与出行,核心词汇,register,,v,,,L1,,,267
+基础②·购物与出行,核心词汇,reveal,,v,,,L1,,,268
+基础②·购物与出行,核心词汇,running,,n,,,L1,,,269
+基础②·购物与出行,核心词汇,sauce,,n,,,L1,,,270
+基础②·购物与出行,核心词汇,service,,n,,,L1,,,271
+基础②·购物与出行,核心词汇,shop,,n,,,L1,,,272
+基础②·购物与出行,核心词汇,singing,,n,,,L1,,,273
+基础②·购物与出行,核心词汇,soap,,n,,,L1,,,274
+基础②·购物与出行,核心词汇,spelling,,n,,,L1,,,275
+基础②·购物与出行,核心词汇,steal,,v,,,L1,,,276
+基础②·购物与出行,核心词汇,sugar,,n,,,L1,,,277
+基础②·购物与出行,核心词汇,sweater,,n,,,L1,,,278
+基础②·购物与出行,核心词汇,team,,n,,,L1,,,279
+基础②·购物与出行,核心词汇,theatre,,n,,,L1,,,280
+基础②·购物与出行,核心词汇,tidy,,adj,,,L1,,,281
+基础②·购物与出行,核心词汇,towel,,n,,,L1,,,282
+基础②·购物与出行,核心词汇,travel,,v,,,L1,,,283
+基础②·购物与出行,核心词汇,united,,adj,,,L1,,,284
+基础②·购物与出行,核心词汇,virus,,n,,,L1,,,285
+基础②·购物与出行,核心词汇,way,,n,,,L1,,,286
+基础②·购物与出行,核心词汇,worried,,adj,,,L1,,,287
+基础②·餐饮与社交,核心词汇,address,,n,,,L1,,,288
+基础②·餐饮与社交,核心词汇,amazing,,adj,,,L1,,,289
+基础②·餐饮与社交,核心词汇,asleep,,adj,,,L1,,,290
+基础②·餐饮与社交,核心词汇,basically,,adv,,,L1,,,291
+基础②·餐饮与社交,核心词汇,bed,,n,,,L1,,,292
+基础②·餐饮与社交,核心词汇,bill,,n,,,L1,,,293
+基础②·餐饮与社交,核心词汇,boring,,adj,,,L1,,,294
+基础②·餐饮与社交,核心词汇,broadcast,,v,,,L1,,,295
+基础②·餐饮与社交,核心词汇,cake,,n,,,L1,,,296
+基础②·餐饮与社交,核心词汇,carpet,,n,,,L1,,,297
+基础②·餐饮与社交,核心词汇,centre,,n,,,L1,,,298
+基础②·餐饮与社交,核心词汇,choice,,n,,,L1,,,299
+基础②·餐饮与社交,核心词汇,clearly,,adv,,,L1,,,300
+基础②·餐饮与社交,核心词汇,company,,n,,,L1,,,301
+基础②·餐饮与社交,核心词汇,context,,n,,,L1,,,302
+基础②·餐饮与社交,核心词汇,cow,,n,,,L1,,,303
+基础②·餐饮与社交,核心词汇,crowd,,n,,,L1,,,304
+基础②·餐饮与社交,核心词汇,dance,,n,,,L1,,,305
+基础②·餐饮与社交,核心词汇,delight,,v,,,L1,,,306
+基础②·餐饮与社交,核心词汇,dirty,,adj,,,L1,,,307
+基础②·餐饮与社交,核心词汇,draw,,v,,,L1,,,308
+基础②·餐饮与社交,核心词汇,early,,adj,,,L1,,,309
+基础②·餐饮与社交,核心词汇,email,,n,,,L1,,,310
+基础②·餐饮与社交,核心词汇,even,,adv,,,L1,,,311
+基础②·餐饮与社交,核心词汇,exploration,,n,,,L1,,,312
+基础②·餐饮与社交,核心词汇,fault,,n,,,L1,,,313
+基础②·餐饮与社交,核心词汇,final,,adj,,,L1,,,314
+基础②·餐饮与社交,核心词汇,flower,,n,,,L1,,,315
+基础②·餐饮与社交,核心词汇,freedom,,n,,,L1,,,316
+基础②·餐饮与社交,核心词汇,genre,,n,,,L1,,,317
+基础②·餐饮与社交,核心词汇,habit,,n,,,L1,,,318
+基础②·餐饮与社交,核心词汇,hit,,v,,,L1,,,319
+基础②·餐饮与社交,核心词汇,ice cream,,n,,,L1,,,320
+基础②·餐饮与社交,核心词汇,international,,adj,,,L1,,,321
+基础②·餐饮与社交,核心词汇,jam,,n,,,L1,,,322
+基础②·餐饮与社交,核心词汇,knife,,n,,,L1,,,323
+基础②·餐饮与社交,核心词汇,lend,,v,,,L1,,,324
+基础②·餐饮与社交,核心词汇,lucky,,adj,,,L1,,,325
+基础②·餐饮与社交,核心词汇,mathematics,,n,,,L1,,,326
+基础②·餐饮与社交,核心词汇,meeting,,n,,,L1,,,327
+基础②·餐饮与社交,核心词汇,monitor,,n,,,L1,,,328
+基础②·餐饮与社交,核心词汇,narrow,,adj,,,L1,,,329
+基础②·餐饮与社交,核心词汇,note,,n,,,L1,,,330
+基础②·餐饮与社交,核心词汇,organization,,n,,,L1,,,331
+基础②·餐饮与社交,核心词汇,pants,,n,,,L1,,,332
+基础②·餐饮与社交,核心词汇,pepper,,n,,,L1,,,333
+基础②·餐饮与社交,核心词汇,phrase,,n,,,L1,,,334
+基础②·餐饮与社交,核心词汇,player,,n,,,L1,,,335
+基础②·餐饮与社交,核心词汇,post,,n,,,L1,,,336
+基础②·餐饮与社交,核心词汇,product,,n,,,L1,,,337
+基础②·餐饮与社交,核心词汇,quickly,,adv,,,L1,,,338
+基础②·餐饮与社交,核心词汇,repeat,,v,,,L1,,,339
+基础②·餐饮与社交,核心词汇,ride,,v,,,L1,,,340
+基础②·餐饮与社交,核心词汇,rush,,v,,,L1,,,341
+基础②·餐饮与社交,核心词汇,scene,,n,,,L1,,,342
+基础②·餐饮与社交,核心词汇,settle,,v,,,L1,,,343
+基础②·餐饮与社交,核心词汇,shopping,,n,,,L1,,,344
+基础②·餐饮与社交,核心词汇,size,,n,,,L1,,,345
+基础②·餐饮与社交,核心词汇,soft,,adj,,,L1,,,346
+基础②·餐饮与社交,核心词汇,split,,v,,,L1,,,347
+基础②·餐饮与社交,核心词汇,stiff,,adj,,,L1,,,348
+基础②·餐饮与社交,核心词汇,suit,,n,,,L1,,,349
+基础②·餐饮与社交,核心词汇,sweet,,adj,,,L1,,,350
+基础②·餐饮与社交,核心词汇,technology,,n,,,L1,,,351
+基础②·餐饮与社交,核心词汇,thick,,adj,,,L1,,,352
+基础②·餐饮与社交,核心词汇,tip,,n,,,L1,,,353
+基础②·餐饮与社交,核心词汇,traditional,,adj,,,L1,,,354
+基础②·餐饮与社交,核心词汇,traveller,,n,,,L1,,,355
+基础②·餐饮与社交,核心词汇,upstairs,,adv,,,L1,,,356
+基础②·餐饮与社交,核心词汇,vitamin,,n,,,L1,,,357
+基础②·餐饮与社交,核心词汇,weak,,adj,,,L1,,,358
+基础②·餐饮与社交,核心词汇,would modal,,v,,,L1,,,359
+基础②·祈使句,核心词汇,affect,,v,,,L1,,,360
+基础②·祈使句,核心词汇,anybody,,pron,,,L1,,,361
+基础②·祈使句,核心词汇,association,,n,,,L1,,,362
+基础②·祈使句,核心词汇,basketball,,n,,,L1,,,363
+基础②·祈使句,核心词汇,bedroom,,n,,,L1,,,364
+基础②·祈使句,核心词汇,birth,,n,,,L1,,,365
+基础②·祈使句,核心词汇,boss,,n,,,L1,,,366
+基础②·祈使句,核心词汇,brown,,adj,,,L1,,,367
+基础②·祈使句,核心词汇,calculate,,v,,,L1,,,368
+基础②·祈使句,核心词汇,cash,,n,,,L1,,,369
+基础②·祈使句,核心词汇,charity,,n,,,L1,,,370
+基础②·祈使句,核心词汇,cite,,v,,,L1,,,371
+基础②·祈使句,核心词汇,clock,,n,,,L1,,,372
+基础②·祈使句,核心词汇,compete,,v,,,L1,,,373
+基础②·祈使句,核心词汇,convert,,v,,,L1,,,374
+基础②·祈使句,核心词汇,cream,,n,,,L1,,,375
+基础②·祈使句,核心词汇,crucial,,adj,,,L1,,,376
+基础②·祈使句,核心词汇,deal,,v,,,L1,,,377
+基础②·祈使句,核心词汇,designer,,n,,,L1,,,378
+基础②·祈使句,核心词汇,discovery,,n,,,L1,,,379
+基础②·祈使句,核心词汇,drawing,,n,,,L1,,,380
+基础②·祈使句,核心词汇,earn,,v,,,L1,,,381
+基础②·祈使句,核心词汇,emphasize,,v,,,L1,,,382
+基础②·祈使句,核心词汇,except,,prep,,,L1,,,383
+基础②·祈使句,核心词汇,extra,,adj,,,L1,,,384
+基础②·祈使句,核心词汇,feather,,n,,,L1,,,385
+基础②·祈使句,核心词汇,fish,,n,,,L1,,,386
+基础②·祈使句,核心词汇,follow,,v,,,L1,,,387
+基础②·祈使句,核心词汇,frequency,,n,,,L1,,,388
+基础②·祈使句,核心词汇,glass,,n,,,L1,,,389
+基础②·祈使句,核心词汇,hard,,adj,,,L1,,,390
+基础②·祈使句,核心词汇,homework,,n,,,L1,,,391
+基础②·祈使句,核心词汇,imagine,,v,,,L1,,,392
+基础②·祈使句,核心词汇,interrupt,,v,,,L1,,,393
+基础②·祈使句,核心词汇,jazz,,n,,,L1,,,394
+基础②·祈使句,核心词汇,knock,,v,,,L1,,,395
+基础②·祈使句,核心词汇,let,,v,,,L1,,,396
+基础②·祈使句,核心词汇,lunch,,n,,,L1,,,397
+基础②·祈使句,核心词汇,meal,,n,,,L1,,,398
+基础②·祈使句,核心词汇,menu,,n,,,L1,,,399
+基础②·祈使句,核心词汇,motorcycle,,n,,,L1,,,400
+基础②·祈使句,核心词汇,nearly,,adv,,,L1,,,401
+基础②·祈使句,核心词汇,oil,,n,,,L1,,,402
+基础②·祈使句,核心词汇,owe,,v,,,L1,,,403
+基础②·祈使句,核心词汇,paragraph,,n,,,L1,,,404
+基础②·祈使句,核心词汇,perspective,,n,,,L1,,,405
+基础②·祈使句,核心词汇,picture,,n,,,L1,,,406
+基础②·祈使句,核心词汇,pocket,,n,,,L1,,,407
+基础②·祈使句,核心词汇,poster,,n,,,L1,,,408
+基础②·祈使句,核心词汇,pronounce,,v,,,L1,,,409
+基础②·祈使句,核心词汇,rapidly,,adv,,,L1,,,410
+基础②·祈使句,核心词汇,report,,n,,,L1,,,411
+基础②·祈使句,核心词汇,route,,n,,,L1,,,412
+基础②·祈使句,核心词汇,sadly,,adv,,,L1,,,413
+基础②·祈使句,核心词汇,schedule,,n,,,L1,,,414
+基础②·祈使句,核心词汇,sheet,,n,,,L1,,,415
+基础②·祈使句,核心词汇,shot,,n,,,L1,,,416
+基础②·祈使句,核心词汇,ski,,v,,,L1,,,417
+基础②·祈使句,核心词汇,sort,,n,,,L1,,,418
+基础②·祈使句,核心词汇,spoon,,n,,,L1,,,419
+基础②·祈使句,核心词汇,stomach,,n,,,L1,,,420
+基础②·祈使句,核心词汇,supermarket,,n,,,L1,,,421
+基础②·祈使句,核心词汇,tablet,,n,,,L1,,,422
+基础②·祈使句,核心词汇,telephone,,n,,,L1,,,423
+基础②·祈使句,核心词汇,threat,,n,,,L1,,,424
+基础②·祈使句,核心词汇,toilet,,n,,,L1,,,425
+基础②·祈使句,核心词汇,trainer,,n,,,L1,,,426
+基础②·祈使句,核心词汇,trip,,n,,,L1,,,427
+基础②·祈使句,核心词汇,vacation,,n,,,L1,,,428
+基础②·祈使句,核心词汇,waiter,,n,,,L1,,,429
+基础②·祈使句,核心词汇,wear,,v,,,L1,,,430
+基础②·祈使句,核心词汇,zone,,n,,,L1,,,431

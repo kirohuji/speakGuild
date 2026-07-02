@@ -1,12 +1,45 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础⑩·喜好与活动,我喜欢做...,I like/enjoy/hate ___ing.,我喜欢/讨厌做...,"swimming, cooking, waiting",I like swimming.,L2,0
-基础⑩·喜好与活动,我想做/需要做,I want/need/hope to ___.,我想/需要/希望做...,"learn Chinese, finish, see you",I want to learn Chinese.,L2,0
-基础⑩·喜好与活动,我想做/需要做,I would like to ___.,我想要做...,"order food, book a room",I would like to order.,L2,1
-基础⑩·礼貌与请求,请你帮我...,Could you ___?,你能...吗？,"help me, open the door, wait",Could you help me?,L2,0
-基础⑩·礼貌与请求,请你帮我...,May I ___?,我可以...吗？,"come in, use your phone, sit here",May I come in?,L2,1
-基础⑩·礼貌与请求,你想要...吗？,Would you like ___?,你想要...吗？,"some coffee, some tea, to join us",Would you like some coffee?,L2,0
-基础⑩·礼貌与请求,你想要...吗？,How about ___ing?,...怎么样？,"going for a walk, eating out",How about going for a walk?,L2,1
-基础⑩·经历与持续,我去过/做过,I have been to ___.,我去过...,"Beijing, Japan, the US",I have been to Beijing.,L2,0
-基础⑩·经历与持续,我去过/做过,Have you ever ___?,你曾经...过吗？,"tried sushi, been to Japan",Have you ever tried sushi?,L2,1
-基础⑩·经历与持续,已经多久了,I have ___ for/since ___.,我已经...多久了,"lived here, 10 years",I have lived here for 10 years.,L2,0
-基础⑩·经历与持续,已经多久了,I have already ___.,我已经...了,"finished, left, seen it",I have already finished.,L2,1
+基础⑧·并列与转折,and 并列,I like ___ and ___.,我喜欢...和...,"coffee and tea, cats and dogs, reading and writing",I like coffee and tea.,L1,0
+基础⑧·并列与转折,and 并列,He is ___ and ___.,他...又...,"tall and handsome, young and energetic, funny and friendly",She is smart and kind.,L1,1
+基础⑧·并列与转折,and 并列,I ___ and ___.,我...并且...,"went to the store and bought milk, sat down and read a book",I went to the store and bought some milk.,L1,2
+基础⑧·并列与转折,or 选择,Do you want ___ or ___?,你想要...还是...？,"tea or coffee, this or that, to stay or to go",Do you want tea or coffee?,L1,3
+基础⑧·并列与转折,or 选择,Is it ___ or ___?,它是...还是...？,"big or small, hot or cold, new or old, cheap or expensive",Is it big or small?,L1,4
+基础⑧·并列与转折,but 转折,I ___ but ___.,我...但是...,"like him he doesn't like me, want to go I'm busy, tried my best I failed",I like him but he doesn't like me.,L1,5
+基础⑧·并列与转折,but 转折,___ is ___ but ___.,...是...但是...,"the food cheap delicious, the hotel small clean, he young smart",The food is cheap but it's delicious.,L1,6
+基础⑧·并列与转折,however 对比,I ___ However ___.,我...然而...,"wanted to go I was too busy, tried my best I failed",I wanted to go However I was too busy.,L1,7
+基础⑧·并列与转折,not only...but also 递进,She not only ___ but also ___.,她不仅...而且...,"speaks English speaks Chinese, sings dances, likes music likes art",She not only speaks English but also speaks Chinese.,L1,8
+基础⑧·因果与条件,because 原因,I ___ because ___.,我...因为...,"stayed home I was sick, was late I missed the bus, ate a lot I was hungry",I stayed home because I was sick.,L1,9
+基础⑧·因果与条件,because 原因,___ because ___.,...因为...,"He's tired he worked all night, We're excited it's our first trip",She is happy because she passed the test.,L1,10
+基础⑧·因果与条件,because 原因,Because ___ ___.,因为...所以...,"it rained we stayed inside, I was tired I went to bed early",Because it rained we stayed inside.,L1,11
+基础⑧·因果与条件,so 结果,I was ___ so I ___.,我...所以我...,"tired went to bed early, hungry ate, busy couldn't come",I was tired so I went to bed early.,L1,12
+基础⑧·因果与条件,so 结果,___ so ___.,...所以...,"it started to rain we took a taxi, the store was closed I went home",It started to rain so we took a taxi.,L1,13
+基础⑧·因果与条件,when 当…时,When I ___ ___.,当我...时...,"arrived she was cooking, called he was sleeping, got home they were watching TV",When I arrived she was cooking.,L1,14
+基础⑧·因果与条件,when 当…时,I always ___ when I ___.,我总是在...时...,"drink coffee wake up, read take the bus, listen to music run",I always listen to music when I run.,L1,15
+基础⑧·因果与条件,when 当…时,___ when you ___.,当你...时请...,"Call me get home, Text me arrive, Tell her see her",Call me when you get home.,L1,16
+基础⑧·因果与条件,before/after 前后,I ___ before I ___.,我在...之前...,"brush my teeth go to bed, eat breakfast leave, check my email start work",I brush my teeth before I go to bed.,L1,17
+基础⑧·因果与条件,before/after 前后,After I ___ I ___.,在...之后我...,"finished work went to the gym, woke up took a shower, ate dinner watched a movie",After I finished work I went to the gym.,L1,18
+基础⑧·因果与条件,while 同时,I ___ while ___.,我...的同时...,"listened to music I worked, talked on the phone I walked, played games we waited",We played games while we waited.,L1,19
+基础⑧·因果与条件,until 直到,___ until ___.,直到...,"Stay here it stops raining, Keep trying you succeed, Wait I come back",Please wait here until I come back.,L1,20
+基础⑧·因果与条件,if 条件,If ___ I'll ___.,如果...我就...,"it rains stay home, I have time call you, it's cheap buy it",If it rains tomorrow I'll stay home.,L1,21
+基础⑧·因果与条件,if 条件,If you ___ you will ___.,如果你...你就会...,"study hard pass the test, practice every day get better, save money be rich",If you study hard you will pass the test.,L1,22
+基础⑧·因果与条件,unless 除非,I won't ___ unless ___.,除非...否则我不会...,"go you come, eat I'm hungry, leave you ask me, buy it it's cheap",I won't go unless you come with me.,L1,23
+基础⑧·因果与条件,as long as 只要,If I were you I would ___.,如果我是你我就会...,"take the job, say sorry, go to the doctor, study abroad, wait longer",If I were you I would take the job.,L1,24
+基础⑧·因果与条件,as long as 只要,As long as ___ ___.,只要...就...,"you try your best it's okay, you're happy I'm happy, it doesn't rain we'll go",As long as you try your best it's okay.,L1,25
+基础⑧·时间与顺序,for example 举例,I like ___ For example I ___.,我喜欢...比如我...,"sports play basketball, music listen to pop, movies watch comedies",I like sports For example I play basketball.,L1,26
+基础⑧·时间与顺序,also/too/as well 补充,He/She is ___ Also he/she is ___.,他/她很...而且也很...,"kind hardworking, smart funny, tall strong, rich generous",She is kind Also she is very hardworking.,L1,27
+基础⑧·时间与顺序,also/too/as well 补充,I ___ He/She ___ too.,我...他/她也...,"like coffee likes coffee, play guitar plays guitar, am from Beijing is from Beijing",I like coffee He likes coffee too.,L1,28
+基础⑧·时间与顺序,either 否定补充,I don't ___ I don't ___ either.,我不...我也不...,"eat meat eat fish, drink alcohol smoke, like loud music like cold weather",I don't like coffee I don't like tea either.,L1,29
+基础⑧·时间与顺序,besides/what's more 递进,It's a ___ What's more ___.,这是...而且...,"good movie it's free, nice hotel it's near the beach, fun game it's easy to learn",It's a nice restaurant What's more the prices are good.,L1,30
+基础⑧·时间与顺序,时间顺序链,First I ___ Then I ___ After that I ___.,首先...然后...之后...,"get up take a shower eat breakfast, do homework watch TV go to bed",First I get up Then I take a shower After that I eat breakfast.,L1,31
+基础⑧·时间与顺序,时间顺序链,I went to ___ Next I went to ___ Finally ___.,我去了...接着去了...最后...,"the supermarket the bank went home, the park the library went to a cafe",I went to the supermarket Next I went to the bank Finally I went home.,L1,32
+基础⑧·时间与顺序,时间顺序链,At first ___ But later ___.,起初...但后来...,"I didn't like the job I started to enjoy it, it was hard it became easy, she was shy she opened up",At first I didn't like the job But later I started to enjoy it.,L1,33
+基础⑧·时间与顺序,before/after 前后,Before you ___ please ___.,在你...之前请...,"leave turn off the lights, go lock the door, sleep brush your teeth",Before you leave please turn off the lights.,L1,34
+基础⑧·时间与顺序,before/after 前后,After you ___ let me know Then ___.,在你...之后告诉我然后...,"finish we can go together, arrive we can meet, decide I'll book it",After you finish let me know Then we can go together.,L1,35
+基础⑧·举例与补充,对话衔接词,Well I think ___.,嗯我觉得...,"it's a good idea, it depends, I'm not sure",Well I think it's a good idea.,L1,36
+基础⑧·举例与补充,对话衔接词,Actually I ___.,其实我...,"don't like coffee prefer tea, changed my mind am from Beijing",Actually I don't like coffee I prefer tea.,L1,37
+基础⑧·举例与补充,对话衔接词,By the way ___.,顺便说一下...,"did you hear about the party, I saw your brother yesterday",By the way did you hear about the party?,L1,38
+基础⑧·举例与补充,对话衔接词,Anyway ___.,不管怎样...,"let's get back to the topic, I have to go now",Anyway let's get back to the topic.,L1,39
+基础⑧·举例与补充,but 转折,I wanted to ___ but ___ so I ___.,我想...但是...所以我...,"go out it rained stayed home, call you you were busy texted you",I wanted to go out but it started to rain so I stayed home.,L1,40
+基础⑧·举例与补充,because 原因,When I ___ I was ___ because ___.,当我...时我...因为...,"got home really hungry I didn't eat lunch, saw her happy she passed the test",When I got home I was really hungry because I didn't eat lunch.,L1,41
+基础⑧·举例与补充,时间顺序链,First I ___ After that I ___ Then I ___ because ___.,首先...之后...然后...因为...,"went to the museum had lunch walked in the park the weather was nice",First we went to the museum After that we had lunch Then we walked in the park.,L1,42
+基础⑧·综合叙事,多步骤叙事,First I ___ and ___ Then I ___ and ___ After that I ___.,首先我...然后我...之后我...,"went to the store bought food came home cooked dinner ate and watched TV",First I went to the store and bought food Then I came home and cooked dinner.,L1,43

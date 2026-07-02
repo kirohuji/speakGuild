@@ -1,3 +1,11 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-found_foundation_weather_nature_0,天气与季节,1,谈论天气,基础·天气与季节,L1,1,2,6,2,15,"[""练习谈论天气相关表达""]",2,2,2,Tutor,口语教练,true,practice_foundation-weather-nature_基础_天气与季节_谈论天气,{xp:10}
-found_foundation_weather_nature_0,天气与季节,2,季节与自然,基础·天气与季节,L1,1,2,6,2,15,"[""练习季节与自然相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-weather-nature_基础_天气与季节_季节与自然,{xp:10}
+ch_clause_01,表达想法,1,我认为/我知道,基础⑩·表达想法,L2,1,2,4,6,6,"[""学会I think/I believe宾语从句"",""学会I know/I'm sure/I'm sorry从句""]",2,3,2,Tutor,英语导师,true,practice_foundation-clause-gerund_表达想法_我认为我知道,"{""xp"":15}"
+ch_clause_01,表达想法,2,转述与不确定,基础⑩·表达想法,L2,1,2,4,6,6,"[""学会He said/She told me转述"",""学会I heard转述"",""学会wh-疑问词从句""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_表达想法_转述与不确定,"{""xp"":15}"
+ch_clause_02,描述人物事物,1,描述物品与人,基础⑩·描述人物事物,L2,1,2,4,6,6,"[""学会that定语从句描述物品"",""学会who定语从句描述人""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_描述人物事物_描述物品与人,"{""xp"":15}"
+ch_clause_02,描述人物事物,2,地点与偏好,基础⑩·描述人物事物,L2,1,2,4,6,6,"[""学会where地点从句"",""学会why原因从句"",""学会综合定语从句表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_描述人物事物_地点与偏好,"{""xp"":15}"
+ch_clause_03,意图与目的,1,想要/决定/承诺,基础⑩·意图与目的,L2,1,2,4,6,6,"[""学会want/hope/would like+to do"",""学会decide/promise/forget+to do""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_意图与目的_想要决定承诺,"{""xp"":15}"
+ch_clause_03,意图与目的,2,目的与评价,基础⑩·意图与目的,L2,1,2,4,6,6,"[""学会不定式表目的"",""学会It's+adj+to do评价"",""学会have something to do""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_意图与目的_目的与评价,"{""xp"":15}"
+ch_clause_04,喜好与活动,1,喜欢/开始/擅长,基础⑩·喜好与活动,L2,1,2,4,6,6,"[""学会enjoy/like/love/hate+doing"",""学会start/finish/keep+doing"",""学会be good at/be interested in+doing""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_喜好与活动_喜欢开始擅长,"{""xp"":15}"
+ch_clause_04,喜好与活动,2,感谢与对比,基础⑩·喜好与活动,L2,1,2,4,6,6,"[""学会动名词作主语"",""学会Thank you for+doing"",""学会I'm sorry for+doing""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_喜好与活动_感谢与对比,"{""xp"":15}"
+ch_clause_05,综合运用,1,混合叙事表达,基础⑩·综合运用,L2,1,2,4,6,6,"[""学会从句+不定式混合"",""学会从句+动名词混合"",""学会定语从句+不定式混合""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_综合运用_混合叙事表达,"{""xp"":15}"
+ch_clause_05,综合运用,2,观点与推荐,基础⑩·综合运用,L2,1,2,4,6,6,"[""学会综合表达观点"",""学会长篇描述"",""学会推荐理由表达""]",2,3,2,Tutor,英语导师,false,practice_foundation-clause-gerund_综合运用_观点与推荐,"{""xp"":15}"

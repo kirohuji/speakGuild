@@ -1,89 +1,71 @@
-scene_title,topic_title,category,text,meaning,difficulty,description,examples_json
-基础④·Yes/No问句,一般疑问句,Are you,"Are you a student? — Yes, I am.",你是学生吗？——是。,L1,Are you + 名词/形容词 疑问句。,"[{""en"":""Are you a teacher?"",""zh"":""你是老师吗？""}]"
-基础④·Yes/No问句,一般疑问句,Do you,"Do you like coffee? — Yes, I do.",你喜欢咖啡吗？——喜欢。,L1,Do you + 动词 疑问句。,"[{""en"":""Do you like tea?"",""zh"":""你喜欢茶吗？""}]"
-基础④·Yes/No问句,一般疑问句,Does he/she,"Does she speak English? — Yes, she does.",她说英语吗？——说。,L1,Does he/she + 动词。,"[{""en"":""Does he work here?"",""zh"":""他在这里工作吗？""}]"
-基础④·Yes/No问句,一般疑问句,Can you,"Can you swim? — Yes, I can.",你会游泳吗？——会。,L1,Can you + 动词。,"[{""en"":""Can you drive?"",""zh"":""你会开车吗？""}]"
-基础④·Yes/No问句,一般疑问句,Is it,"Is it big? — No, it isn't.",它大吗？——不，它小。,L1,Is it + 形容词。,"[{""en"":""Is it good?"",""zh"":""它好吗？""}]"
-基础④·Yes/No问句,一般疑问句,Is there,"Is there a bank near here? — Yes, there is.",附近有银行吗？——有。,L1,Is there + 名词? 存在疑问。,"[{""en"":""Is there a restaurant?"",""zh"":""有餐厅吗？""}]"
-基础④·Yes/No问句,过去疑问句,Did you,"Did you eat breakfast? — Yes, I did.",你吃早餐了吗？——吃了。,L1,Did you + 动词原形。,"[{""en"":""Did you have lunch?"",""zh"":""你吃午饭了吗？""}]"
-基础④·Yes/No问句,过去疑问句,Did she,"Did she go to school yesterday? — No, she didn't.",她昨天上学了吗？——没。,L1,Did she + 动词。,"[{""en"":""Did he come home?"",""zh"":""他回家了吗？""}]"
-基础④·Yes/No问句,过去疑问句,Were you,"Were you at home last night? — Yes, I was.",你昨晚在家吗？——在。,L1,Were you + 地点/状态。,"[{""en"":""Were you tired?"",""zh"":""你累了吗？""}]"
-基础④·Yes/No问句,过去疑问句,Was it,"Was it expensive? — No, it wasn't.",它贵吗？——不贵。,L1,Was it + 形容词。,"[{""en"":""Was it fun?"",""zh"":""好玩吗？""}]"
-基础④·Yes/No问句,过去疑问句,问候,"Did you have a good weekend? — Yes, I did.",你周末过得好吗？——好。,L1,问候式疑问。,"[{""en"":""Did you have a nice day?"",""zh"":""你今天过得好吗？""}]"
-基础④·Yes/No问句,过去疑问句,Was she,"Was she at the party? — No, she wasn't.",她在派对上吗？——不在。,L1,第三人称过去疑问。,"[{""en"":""Was he on time?"",""zh"":""他准时吗？""}]"
-基础④·Wh-问句,6W问句,What,What is your name? — My name is Tom.,你叫什么名字？——我叫Tom。,L1,What + be + 名词？,"[{""en"":""What is your phone number?"",""zh"":""你的电话号码是多少？""}]"
-基础④·Wh-问句,6W问句,What do,What do you do? — I am a teacher.,你是做什么的？——老师。,L1,What do + 主语 + do？,"[{""en"":""What do you study?"",""zh"":""你学什么？""}]"
-基础④·Wh-问句,6W问句,Who,Who is she? — She is my sister.,她是谁？——她是我妹妹。,L1,Who + be + ...？,"[{""en"":""Who is your teacher?"",""zh"":""你的老师是谁？""}]"
-基础④·Wh-问句,6W问句,Where,Where is the bathroom? — It's over there.,洗手间在哪里？——在那里。,L1,Where + be + 名词？,"[{""en"":""Where is my phone?"",""zh"":""我的手机在哪里？""}]"
-基础④·Wh-问句,6W问句,Where do,Where do you live? — I live in Beijing.,你住在哪里？——我住北京。,L1,Where do + 主语 + 动词？,"[{""en"":""Where do you work?"",""zh"":""你在哪里工作？""}]"
-基础④·Wh-问句,6W问句,When,When do you get up? — I get up at 7.,你几点起床？——7点。,L1,When do + 主语 + 动词？,"[{""en"":""When do you eat lunch?"",""zh"":""你几点吃午饭？""}]"
-基础④·Wh-问句,6W问句,Why,Why are you late? — Because I missed the bus.,你为什么迟到？——没赶上公交。,L1,Why + be + 主语 + ...？,"[{""en"":""Why are you tired?"",""zh"":""你为什么累？""}]"
-基础④·Wh-问句,6W问句,Which,Which one is yours? — The blue one.,哪个是你的？——蓝色那个。,L1,Which + 名词 + be？,"[{""en"":""Which seat is yours?"",""zh"":""哪个座位是你的？""}]"
-基础④·Wh-问句,What与Who详细问,What time,What time is it? — It's 3 o'clock.,几点了？——三点。,L1,What time + be？,"[{""en"":""What time is the meeting?"",""zh"":""会议几点？""}]"
-基础④·Wh-问句,What与Who详细问,What kind,What kind of music do you like? — Pop.,你喜欢什么类型音乐？——流行。,L1,What kind of + 名词？,"[{""en"":""What kind of movies do you like?"",""zh"":""你喜欢什么类型电影？""}]"
-基础④·Wh-问句,What与Who详细问,What color,What color is your car? — It's red.,你的车什么颜色？——红色。,L1,What color + be？,"[{""en"":""What color is your bag?"",""zh"":""你的包什么颜色？""}]"
-基础④·Wh-问句,What与Who详细问,Who is,Who is your best friend? — Li Ming.,你最好的朋友是谁？——李明。,L1,Who + be + 所有格 + 名词？,"[{""en"":""Who is your boss?"",""zh"":""你的老板是谁？""}]"
-基础④·Wh-问句,What与Who详细问,Whose,Whose book is this? — It's mine.,这是谁的书？——我的。,L1,Whose + 名词 + be？,"[{""en"":""Whose phone is this?"",""zh"":""这是谁的手机？""}]"
-基础④·How问句,数量与价格,How many,How many books do you have? — I have ten.,你有多少本书？——十本。,L1,How many + 可数名词复数？,"[{""en"":""How many pens do you have?"",""zh"":""你有多少支笔？""}]"
-基础④·How问句,数量与价格,How much,How much is this? — It's 20 dollars.,这个多少钱？——20美元。,L1,How much + be + 名词？(价格)。,"[{""en"":""How much is the ticket?"",""zh"":""门票多少钱？""}]"
-基础④·How问句,数量与价格,How much不可数,How much water do you drink? — About 2 liters.,你喝多少水？——约2升。,L1,How much + 不可数名词？(数量)。,"[{""en"":""How much time do we have?"",""zh"":""我们还有多少时间？""}]"
-基础④·How问句,数量与价格,How far,How far is it from here? — About 2 km.,离这里多远？——约2公里。,L1,How far + be + 名词？,"[{""en"":""How far is the airport?"",""zh"":""机场多远？""}]"
-基础④·How问句,数量与价格,How long,How long does it take? — About 30 minutes.,需要多久？——约30分钟。,L1,How long does it take to...？,"[{""en"":""How long does it take to get there?"",""zh"":""到那里要多久？""}]"
-基础④·How问句,数量与价格,How old,How old are you? — I'm 25.,你多大了？——25岁。,L1,How old + be + 主语？,"[{""en"":""How old is your brother?"",""zh"":""你兄弟多大了？""}]"
-基础④·How问句,频率与方式,How often,How often do you exercise? — Every day.,你多久锻炼一次？——每天。,L1,How often + do + 主语 + 动词？,"[{""en"":""How often do you travel?"",""zh"":""你多久旅行一次？""}]"
-基础④·How问句,频率与方式,How do,How do you go to work? — By bus.,你怎么去上班？——坐公交。,L1,How do + 主语 + 动词？(方式)。,"[{""en"":""How do you learn English?"",""zh"":""你怎么学英语？""}]"
-基础④·How问句,频率与方式,How was,How was your day? — It was good.,你今天过得怎么样？——很好。,L1,How + be + 过去？问候。,"[{""en"":""How was your weekend?"",""zh"":""你周末怎么样？""}]"
-基础④·How问句,频率与方式,How does taste,How does it taste? — It's delicious.,它尝起来怎么样？——好吃。,L1,How + does + 感官动词？,"[{""en"":""How does it look?"",""zh"":""它看起来怎么样？""}]"
-基础④·How问句,频率与方式,How about,"How about some coffee? — Sure, thanks.",来点咖啡怎么样？——好的。,L1,How about + 名词？提议。,"[{""en"":""How about a break?"",""zh"":""休息一下怎么样？""}]"
-基础④·How问句,频率与方式,How do you like,How do you like your job? — I like it.,你觉得你的工作怎么样？——我喜欢。,L1,How do you like + 名词？询问看法。,"[{""en"":""How do you like this city?"",""zh"":""你觉得这个城市怎么样？""}]"
-基础·日常高频短语,常用动词短语,常用动词短语,I'll call you back.,我会回电话给你。,L1,日常口语表达。,
-基础·日常高频短语,常用动词短语,常用动词短语,Come over to my place.,来我家吧。,L1,日常口语表达。,
-基础·日常高频短语,常用动词短语,常用动词短语,I'm running out of time.,我的时间不够了。,L1,日常口语表达。,
-基础·日常高频短语,常用动词短语,常用动词短语,Put on your coat.,穿上你的外套。,L1,日常口语表达。,
-基础·日常高频短语,常用动词短语,常用动词短语,Take off your shoes.,脱掉你的鞋子。,L1,日常口语表达。,
-基础·日常高频短语,常用动词短语,常用动词短语,I'm looking forward to it.,我很期待。,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,What's the matter?,怎么了？,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Are you okay?,你还好吗？,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Take your time.,慢慢来。,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,No worries!,别担心！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Good luck!,祝你好运！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Have fun!,玩得开心！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Take care!,保重！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,See you later!,回头见！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,That's too bad.,那太糟糕了。,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,What a pity!,真可惜！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Congratulations!,恭喜你！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Well done!,做得好！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Cheers!,干杯！/谢谢！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,Same to you!,你也一样！,L1,日常口语表达。,
-基础·日常高频短语,情景常用语,情景常用语,I really mean it.,我是认真的。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,"Hello, who's speaking?",你好，请问是哪位？,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,This is Tom speaking.,我是汤姆。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,Can I speak to Mary?,我能和玛丽通话吗？,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,"Hold on a moment, please.",请稍等。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,I'll call you back later.,我稍后打给你。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,"Sorry, I have to go now.",对不起，我现在得挂了。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,Can you hear me?,你能听到我吗？,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,I can't hear you well.,我听不太清楚。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,Please speak slowly.,请说慢一点。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,I'll text you.,我发短信给你。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,Send me a message.,给我发消息。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,I missed your call.,我错过了你的电话。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,Let me call you back.,让我回电话给你。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,Please leave a message.,请留言。,L1,日常口语表达。,
-基础·电话与应急,电话用语,电话用语,I'll get back to you soon.,我很快回复你。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,Help!,救命！,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,Call the police!,报警！,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,I need a doctor!,我需要医生！,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,It's an emergency!,这是紧急情况！,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,I'm lost.,我迷路了。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,I need help.,我需要帮助。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,Please call an ambulance!,请叫救护车！,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,There's a fire!,着火了！,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,I lost my passport.,我丢了护照。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,My wallet was stolen.,我的钱包被偷了。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,I had an accident.,我出了事故。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,Is there a hospital nearby?,附近有医院吗？,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,I don't feel well.,我感觉不舒服。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,It hurts here.,这里疼。,L1,日常口语表达。,
-基础·电话与应急,紧急求助,紧急求助,Please take me to the hospital.,请带我去医院。,L1,日常口语表达。,
+"scene_title","topic_title","category","text","meaning","difficulty","description","examples_json"
+"基础④·出行与交通","问路与位置","Where is","Excuse me, where is the nearest subway station? -- Its just around the corner.","请问，最近的地铁站在哪里？——就在拐角处。","L1","Where is the nearest + 地点名词 问句。","[{""en"":""Where is the nearest bus stop?"",""zh"":""最近的公交站在哪里？""}]"
+"基础④·出行与交通","问路与位置","How do I get to","How do I get to the museum? -- Go straight and turn left at the corner.","我怎么去博物馆？——直走在拐角左转。","L1","How do I get to + 地点 问路问句。","[{""en"":""How do I get to the airport?"",""zh"":""我怎么去机场？""}]"
+"基础④·出行与交通","问路与位置","Is there a","Is there a pharmacy near here? -- Yes, theres one across the street.","附近有药店吗？——有的，街对面有一家。","L1","Is there a + 地点 + near here 存在问句。","[{""en"":""Is there a coffee shop near here?"",""zh"":""附近有咖啡店吗？""}]"
+"基础④·出行与交通","问路与位置","How far","How far is it from here? -- Its about 10 minutes on foot.","从这里有多远？——走路大约10分钟。","L1","How far is + 地点 + from here 距离问句。","[{""en"":""How far is the airport from here?"",""zh"":""机场离这里多远？""}]"
+"基础④·出行与交通","问路与位置","Am I going","Am I going the right way to the station? -- Yes, keep going straight.","我去车站的方向对吗？——对，直走。","L1","Am I going the right way to + 地点 方向确认问句。","[{""en"":""Am I going the right way to the museum?"",""zh"":""我去博物馆的方向对吗？""}]"
+"基础④·出行与交通","问路与位置","Do you have","Do you have a map? -- Sure. Let me show you.","你有地图吗？——有，我给你看。","L1","Do you have + 名词 问句。","[{""en"":""Do you have a city map?"",""zh"":""你有城市地图吗？""}]"
+"基础④·出行与交通","问路与位置","Is this","Is this seat taken? -- No, go ahead.","这个座位有人吗？——没有，请坐。","L1","Is this + 名词 + taken/free 确认问句。","[{""en"":""Is this seat free?"",""zh"":""这个座位空着吗？""}]"
+"基础④·出行与交通","问时间与交通","What time does","What time does the museum open? -- It opens at 9 am.","博物馆几点开门？——早上9点。","L1","What time does + 名词 + open/close 时间问句。","[{""en"":""What time does the store close?"",""zh"":""商店几点关门？""}]"
+"基础④·出行与交通","问时间与交通","What time is","What time is the next train to Shanghai? -- At 3:15 pm.","下一趟去上海的高铁几点？——下午3:15。","L1","What time is + 名词 时间问询。","[{""en"":""What time is your flight?"",""zh"":""你的航班是几点？""}]"
+"基础④·出行与交通","问时间与交通","Which goes to","Which bus goes to the city center? -- Bus number 5 goes there.","哪路公交去市中心？——5路公交。","L1","Which + 交通工具 + goes to + 地点 路线问句。","[{""en"":""Which train goes to the airport?"",""zh"":""哪趟地铁去机场？""}]"
+"基础④·出行与交通","问时间与交通","How long does it take","How long does it take to get there? -- About 30 minutes by bus.","到那里需要多久？——坐公交大约30分钟。","L1","How long does it take to + 动词短语 时长问句。","[{""en"":""How long does it take to walk there?"",""zh"":""走路到那里要多久？""}]"
+"基础④·出行与交通","问时间与交通","Where do I","Where do I buy a ticket? -- You can buy one at the machine over there.","我在哪里买票？——你可以在那边的机器上买。","L1","Where do I + 动词短语 地点问句。","[{""en"":""Where do I pay?"",""zh"":""我在哪里付款？""}]"
+"基础④·出行与交通","问时间与交通","Does this stop at","Does this bus stop at the museum? -- Yes, its the third stop.","这路车在博物馆停吗？——是的，第三站。","L1","Does this + 交通工具 + stop at + 地点 线路确认。","[{""en"":""Does this train stop at the airport?"",""zh"":""这趟地铁在机场停吗？""}]"
+"基础④·出行与交通","问时间与交通","How much does it cost","How much does it cost to go to the airport? -- About 120 yuan.","去机场要多少钱？——大约120元。","L1","How much does it cost to go to + 地点 费用问句。","[{""en"":""How much does it cost to go to the station?"",""zh"":""去车站多少钱？""}]"
+"基础④·消费与服务","购物问询","How much is","How much is this? -- Its 120 yuan.","这个多少钱？——120元。","L1","How much is + 单数名词 价格问句。","[{""en"":""How much is that shirt?"",""zh"":""那件衬衫多少钱？""}]"
+"基础④·消费与服务","购物问询","How much are","How much are these? -- Theyre 80 yuan each.","这些多少钱？——每个80元。","L1","How much are + 复数名词 价格问句。","[{""en"":""How much are these shoes?"",""zh"":""这些鞋子多少钱？""}]"
+"基础④·消费与服务","购物问询","Do you have this in","Do you have this in a small size? -- Let me check. Yes, here you are.","你们有这个小号的吗？——我看看。有的，给你。","L1","Do you have this in + 尺寸/颜色 问句。","[{""en"":""Do you have this in blue?"",""zh"":""你们有蓝色的吗？""}]"
+"基础④·消费与服务","购物问询","Do you have other ones","This is a little expensive. Do you have other ones? -- Yes, we have these. Theyre on sale.","这个有点贵。你们有其他的吗？——有的，这些正在打折。","L1","Do you have other + 复数名词 选择问句。","[{""en"":""Do you have other styles?"",""zh"":""你们有其他款式吗？""}]"
+"基础④·消费与服务","购物问询","Do you take","Do you take cards? -- Yes, we take all major cards.","你们收卡吗？——收，所有主要卡都收。","L1","Do you take + 支付方式 支付问句。","[{""en"":""Do you take WeChat?"",""zh"":""你们收微信吗？""}]"
+"基础④·消费与服务","购物问询","I need","I need a receipt, please. -- Of course. Here you are.","我需要收据。——好的，给你。","L1","I need + 名词 需求表达。","[{""en"":""I need a bag, please."",""zh"":""我需要一个袋子。""}]"
+"基础④·消费与服务","试穿与尺寸","I want to try on","I want to try this on. Where is the fitting room? -- Over there, on the left.","我想试穿这个。试衣间在哪？——那边，左边。","L1","I want to try + 名词 + on + Where is 试穿问句。","[{""en"":""I want to try these shoes on. Where is the fitting room?"",""zh"":""我想试穿这双鞋。试衣间在哪？""}]"
+"基础④·消费与服务","试穿与尺寸","Do you have other","Do you have other colors? -- Yes, we have blue, red, and white.","你们有其他颜色吗？——有，有蓝色、红色和白色。","L1","Do you have other + 名词 问句。","[{""en"":""Do you have other sizes?"",""zh"":""你们有其他尺寸吗？""}]"
+"基础④·消费与服务","试穿与尺寸","Do you have this in medium","Do you have this in medium? -- Let me check for you.","你们有中号的吗？——我帮你查一下。","L1","Do you have this in + 尺寸 问句。","[{""en"":""Do you have this in large?"",""zh"":""你们有大号的吗？""}]"
+"基础④·消费与服务","试穿与尺寸","Do you have this in another style","Do you have this in a different style? -- Yes, we have some new arrivals.","你们有其他风格的吗？——有的，我们有一些新款。","L1","Do you have this in + 不同款式 问句。","[{""en"":""Do you have this in a different color?"",""zh"":""你们有其他颜色的吗？""}]"
+"基础④·消费与服务","支付与结账","Do you take cash","Do you take cash? -- Yes, we take cash and cards.","你们收现金吗？——收，我们收现金和卡。","L1","Do you take + 支付方式 问句。","[{""en"":""Do you take Alipay?"",""zh"":""你们收支付宝吗？""}]"
+"基础④·消费与服务","支付与结账","I need a refund","I need a refund, please. -- Do you have the receipt?","我需要退款。——你有收据吗？","L1","I need + 名词 需求表达。","[{""en"":""I need an exchange, please."",""zh"":""我需要换货。""}]"
+"基础④·消费与服务","餐厅点餐","I want to see the menu","I want to see the menu, please. -- Here you go.","我想看菜单。——给你。","L1","I want to see + 名词 请求。","[{""en"":""I want to see the wine list, please."",""zh"":""我想看酒单。""}]"
+"基础④·消费与服务","餐厅点餐","What do you recommend","What do you recommend? -- The grilled fish is very popular.","你推荐什么？——烤鱼很受欢迎。","L1","What do you recommend 推荐问句。","[{""en"":""What do you recommend for a starter?"",""zh"":""前菜你推荐什么？""}]"
+"基础④·社交与寒暄","认识新朋友","What do you do","What do you do? -- Im a student. / I work in a hospital.","你是做什么的？——我是学生。/ 我在医院工作。","L1","What do you do 职业问句。","[{""en"":""What do you do?"",""zh"":""你是做什么工作的？""}]"
+"基础④·社交与寒暄","认识新朋友","Where are you from","Where are you from? -- Im from Chengdu. How about you?","你从哪里来？——我来自成都。你呢？","L1","Where are you from 来源问句。","[{""en"":""Where are you from?"",""zh"":""你从哪里来？""}]"
+"基础④·社交与寒暄","认识新朋友","Hows it going","Hows it going? -- Pretty good! And you?","最近怎么样？——挺好的！你呢？","L1","Hows it going 问候问句。","[{""en"":""Hows it going? -- Not bad."",""zh"":""最近怎么样？——还行。""}]"
+"基础④·社交与寒暄","认识新朋友","What do you do for fun","What do you do for fun? -- I like watching movies and hiking.","你平时玩什么？——我喜欢看电影和徒步。","L1","What do you do for fun 爱好问句。","[{""en"":""What do you do on weekends?"",""zh"":""你周末做什么？""}]"
+"基础④·社交与寒暄","爱好与兴趣","What kind of","What kind of music do you like? -- I like pop and a little bit of jazz.","你喜欢什么类型的音乐？——我喜欢流行和一点爵士。","L1","What kind of + 名词 + do you like 喜好问句。","[{""en"":""What kind of movies do you like?"",""zh"":""你喜欢什么类型的电影？""}]"
+"基础④·社交与寒暄","爱好与兴趣","Do you like","Do you like traveling? -- Yes, I love it!","你喜欢旅行吗？——是的，我很喜欢！","L1","Do you like + 动名词/名词 喜好问句。","[{""en"":""Do you like cooking?"",""zh"":""你喜欢烹饪吗？""}]"
+"基础④·社交与寒暄","爱好与兴趣","What countries","What countries do you want to visit? -- I want to go to Japan and France.","你想去哪些国家？——我想去日本和法国。","L1","What + 名词 + do you want to 愿望问句。","[{""en"":""What cities do you want to visit?"",""zh"":""你想去哪些城市？""}]"
+"基础④·社交与寒暄","约见面","Are you free","Are you free this weekend? -- Yes, I am. Why?","你这周末有空吗？——有空，怎么啦？","L1","Are you free + 时间 空闲问句。","[{""en"":""Are you free tonight?"",""zh"":""你今晚有空吗？""}]"
+"基础④·社交与寒暄","约见面","Do you want to grab lunch","Do you want to grab lunch together? -- Id love to!","一起吃午饭吗？——我很乐意！","L1","Do you want to + 动词短语 建议问句。","[{""en"":""Do you want to get a coffee?"",""zh"":""你想喝杯咖啡吗？""}]"
+"基础④·社交与寒暄","约见面","What time do you want to meet","What time do you want to meet? -- How about 12:30?","你想几点见面？——12:30怎么样？","L1","What time do you want to + 动词 时间确认。","[{""en"":""What time do you want to start?"",""zh"":""你想几点开始？""}]"
+"基础④·社交与寒暄","约见面","Where do you want to meet","Where do you want to meet? -- Lets meet at the entrance.","你想在哪见面？——我们在大门口见吧。","L1","Where do you want to + 动词 地点确认。","[{""en"":""Where do you want to eat?"",""zh"":""你想在哪吃？""}]"
+"基础④·社交与寒暄","关心与问候","How is your day","How is your day? -- Its good! A little busy, but good.","你今天怎么样？——挺好的！有点忙，但不错。","L1","How is + 名词 问候问句。","[{""en"":""How is your work?"",""zh"":""你工作怎么样？""}]"
+"基础④·社交与寒暄","关心与问候","Is everything okay","Is everything okay? You look tired. -- Yeah, Im fine. Just didnt sleep well.","一切都好吗？你看起来累了。——嗯，没事，只是没睡好。","L1","Is everything + 形容词 关心问句。","[{""en"":""Is everything alright?"",""zh"":""一切都好吗？""}]"
+"基础④·社交与寒暄","关心与问候","Do you need help","Do you need help? -- Thats very kind of you. I think Im okay.","你需要帮助吗？——你真好，我想我没事。","L1","Do you need + 名词 主动提供帮助。","[{""en"":""Do you need a hand?"",""zh"":""你需要搭把手吗？""}]"
+"基础④·电话与联络","打电话找人","Hello is there","Hello, is Mr. Wang there, please? -- Speaking. / Just a moment, please.","你好，请问王先生在吗？——我就是。/ 请稍等。","L1","Is + 人名 + there 电话找人问句。","[{""en"":""Hello, is the manager there, please?"",""zh"":""你好，请问经理在吗？""}]"
+"基础④·电话与联络","打电话找人","Whos calling","Whos calling, please? -- This is Li Ming from ABC Company.","请问是哪位？——我是ABC公司的李明。","L1","Whos calling 电话询问对方身份。","[{""en"":""Whos calling? -- This is your student."",""zh"":""请问是哪位？——我是你的学生。""}]"
+"基础④·电话与联络","打电话找人","Is available","Is Mr. Wang available? -- Sorry, hes in a meeting right now.","王先生方便接电话吗？——对不起，他正在开会。","L1","Is + 人名 + available 空闲确认问句。","[{""en"":""Is the doctor available?"",""zh"":""医生方便接电话吗？""}]"
+"基础④·电话与联络","打电话找人","When is he back","When is he back? -- He is back in about an hour.","他什么时候回来？——大约一小时后回来。","L1","When is + 人称 + back 时间问句。","[{""en"":""When is she back?"",""zh"":""她什么时候回来？""}]"
+"基础④·电话与联络","打电话找人","When is a good time","When is a good time to call? -- Try after 3 pm. He is free then.","什么时候打合适？——下午3点后试试，他有空。","L1","When is a good time to + 动词 合适时间问句。","[{""en"":""When is a good time to reach you?"",""zh"":""什么时候联系你合适？""}]"
+"基础④·电话与联络","打电话找人","Do you hear me","Do you hear me? The signal is bad here. -- Yes, I hear you.","你听得见吗？这里信号不好。——是的，我听得见。","L1","Do you + 感官动词 + me 信号确认问句。","[{""en"":""Do you see me?"",""zh"":""你看到我了吗？""}]"
+"基础④·电话与联络","打电话找人","wrong number","Sorry, I think you have the wrong number. -- Oh, Im sorry. Ill check the number again.","对不起，你打错了。——哦，抱歉，我再查一下号码。","L1","Sorry you have the wrong number 打错电话表达。","[{""en"":""Sorry, this isnt the hospital."",""zh"":""对不起，这里不是医院。""}]"
+"基础④·电话与联络","留言与回电","leave a message","I want to leave a message. Is that okay? -- Sure. Go ahead.","我想留言，可以吗？——好的，请说。","L1","I want to leave a message 留言请求。","[{""en"":""I want to leave a message for Mr. Wang."",""zh"":""我想给王先生留言。""}]"
+"基础④·电话与联络","留言与回电","take a message","Please take a message for me. -- Of course. What do you want me to tell him?","请帮我留言。——好的，你想我告诉他什么？","L1","Please take a message 请求传话。","[{""en"":""Please pass on a message."",""zh"":""请帮我转达留言。""}]"
+"基础④·电话与联络","留言与回电","Please ask him to","Please ask him to call me back. -- Sure. Whats your name and number?","请让他回电话给我。——好的，你的名字和电话是？","L1","Please ask him to + 动词 请求传话。","[{""en"":""Please ask him to email me."",""zh"":""请他给我发邮件。""}]"
+"基础④·电话与联络","留言与回电","Please tell him","Please tell him I called. -- I will. Dont worry.","请告诉他我来过电话。——我会的，别担心。","L1","Please tell him + 从句 传话请求。","[{""en"":""Please tell him I need to change the time."",""zh"":""请告诉他我需要改时间。""}]"
+"基础④·电话与联络","留言与回电","Does he know","Does he know I called? -- Yes, he does. He says he calls you tonight.","他知道我来过电话吗？——他知道，他说今晚打给你。","L1","Does + 人称 + know + 从句 确认问句。","[{""en"":""Does she know about the meeting?"",""zh"":""她知道会议的事吗？""}]"
+"基础④·电话与联络","留言与回电","Do I or","Do I call back or wait for his call? -- He says he calls you, so just wait.","我回电还是等他电话？——他说打给你，等着吧。","L1","Do I + 动词 + or + 动词 选择问句。","[{""en"":""Do I email or text?"",""zh"":""我发邮件还是发短信？""}]"
+"基础④·电话与联络","留言与回电","Whats your number","Whats your phone number? -- Its 138-5555-1234.","你的电话号码是多少？——138-5555-1234。","L1","Whats your + 联系方式 问句。","[{""en"":""Whats your email address?"",""zh"":""你的邮箱地址是什么？""}]"
+"基础④·应急与求助","紧急呼救","Help is anyone here","Help! Is anyone here? -- I hear you! Whats wrong?","救命！有人吗？——我听到了！怎么了？","L1","Help + Is anyone here 紧急呼救。","[{""en"":""Help! Im stuck!"",""zh"":""救命！我被困住了！""}]"
+"基础④·应急与求助","紧急呼救","Where is the nearest hospital","Where is the nearest hospital? -- Its about 3 kilometers from here.","最近的医院在哪？——大约3公里远。","L1","Where is the nearest + 地点 紧急问句。","[{""en"":""Where is the nearest police station?"",""zh"":""最近的警察局在哪？""}]"
+"基础④·应急与求助","紧急呼救","How do I call an ambulance","How do I call an ambulance? -- Dial 120. Tell them your location.","我怎么叫救护车？——拨打120，告诉他们你的位置。","L1","How do I + 动词短语 方法问句。","[{""en"":""How do I call the police?"",""zh"":""我怎么报警？""}]"
+"基础④·应急与求助","紧急呼救","Is there a doctor here","Is there a doctor here? -- Im a doctor. What happened?","这里有医生吗？——我是医生，发生什么事了？","L1","Is there a + 职业 + here 存在问句。","[{""en"":""Is there a nurse here?"",""zh"":""这里有护士吗？""}]"
+"基础④·应急与求助","紧急呼救","Is anyone calling the police","Is anyone calling the police? -- Yes, I call them right now.","有人在报警吗？——是的，我马上报警。","L1","Is anyone + 动词-ing 进行确认问句。","[{""en"":""Is anyone calling an ambulance?"",""zh"":""有人在叫救护车吗？""}]"
+"基础④·应急与求助","紧急呼救","Is everyone okay","Is everyone okay? -- I think so. One person is a little hurt.","大家都还好吗？——是的，有一个人受了点伤。","L1","Is everyone + 形容词 安全确认问句。","[{""en"":""Is everyone safe?"",""zh"":""大家都安全吗？""}]"
+"基础④·应急与求助","紧急呼救","What happened","What happened? Tell me what you see. -- A car hits the pole over there.","发生什么了？告诉我你看到了什么。——那边有辆车撞到柱子了。","L1","What happened 询问事件问句。","[{""en"":""What happened? Tell me who is here."",""zh"":""发生什么了？告诉我谁在这里。""}]"
+"基础④·应急与求助","问路求助","Please help me lost","Please help me. Im lost. -- Of course. Where do you want to go?","请帮帮我，我迷路了。——好的，你想去哪？","L1","Please help me + 困境描述 求助表达。","[{""en"":""Please help me. I cant find my hotel."",""zh"":""请帮帮我，我找不到酒店了。""}]"
+"基础④·应急与求助","问路求助","Do you speak Chinese","Do you speak Chinese? -- A little. Let me find someone who does.","你说中文吗？——一点点，我找个人帮忙。","L1","Do you speak + 语言 语言问句。","[{""en"":""Do you speak English?"",""zh"":""你说英语吗？""}]"
+"基础④·应急与求助","看病问诊","I dont feel well hospital","I dont feel well. Where is the nearest hospital? -- Its about 10 minutes by taxi.","我不舒服。最近的医院在哪？——打车大约10分钟。","L1","I dont feel well + Where is 看病问句。","[{""en"":""I dont feel well. Where is the nearest clinic?"",""zh"":""我不舒服，最近的诊所在哪？""}]"
+"基础④·应急与求助","看病问诊","What do I do headache","What do I do? I have a bad headache. -- You lie down and rest.","我该怎么办？我头很疼。——你躺下休息。","L1","What do I do + I have a + 症状 寻求建议问句。","[{""en"":""What do I do? I have a fever."",""zh"":""我该怎么办？我发烧了。""}]"
+"基础④·应急与求助","看病问诊","Do I need to see a doctor","Do I need to see a doctor? -- If it doesnt get better in a day, yes.","我需要看医生吗？——如果一天内没好，就需要了。","L1","Do I need to + 动词短语 必要性问句。","[{""en"":""Do I need to take medicine?"",""zh"":""我需要吃药吗？""}]"
+"基础④·应急与求助","看病问诊","Is there a pharmacy open","Is there a pharmacy open right now? -- Yes, theres a 24-hour pharmacy two blocks away.","现在有开着的药店吗？——有的，两个街区外有家24小时药店。","L1","Is there a + 名词 + open 营业问句。","[{""en"":""Is there a clinic open right now?"",""zh"":""现在有开着的诊所吗？""}]"
+"基础④·应急与求助","看病问诊","How much does it cost to see a doctor","How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.","在这里看医生多少钱？——挂号费大约200元。","L1","How much does it cost to + 动词短语 费用问句。","[{""en"":""How much does it cost to get an X-ray?"",""zh"":""拍X光多少钱？""}]"

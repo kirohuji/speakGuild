@@ -1,5 +1,11 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-found_foundation_travel_basic_0,问路与交通,1,问路指路,基础·问路与交通,L1,1,2,6,2,15,"[""练习问路指路相关表达""]",2,2,2,Tutor,口语教练,true,practice_foundation-travel-basic_基础_问路与交通_问路指路,{xp:10}
-found_foundation_travel_basic_0,问路与交通,2,乘坐交通,基础·问路与交通,L1,1,2,6,2,15,"[""练习乘坐交通相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_基础_问路与交通_乘坐交通,{xp:10}
-found_foundation_travel_basic_1,餐厅与购物,1,餐厅点餐,基础·餐厅与购物,L1,1,2,6,2,15,"[""练习餐厅点餐相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_基础_餐厅与购物_餐厅点餐,{xp:10}
-found_foundation_travel_basic_1,餐厅与购物,2,购物逛街,基础·餐厅与购物,L1,1,2,6,2,15,"[""练习购物逛街相关表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_基础_餐厅与购物_购物逛街,{xp:10}
+found_foundation_travel_basic_0,计划与预测,1,我打算,基础⑦·计划与预测,L1~L2,1,3,10,2,7,"[""练习用be going to和will表达计划""]",2,2,2,Tutor,口语教练,true,practice_foundation-travel-basic_计划与预测_我打算,{xp:10}
+found_foundation_travel_basic_0,计划与预测,2,将会怎样,基础⑦·计划与预测,L1~L2,1,3,10,2,7,"[""练习用will和be going to做预测""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_计划与预测_将会怎样,{xp:10}
+found_foundation_travel_basic_1,能力与请求,1,我能/会,基础⑦·能力与请求,L1~L2,1,3,10,2,4,"[""练习用can表达能力和不能""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_能力与请求_我能会,{xp:10}
+found_foundation_travel_basic_1,能力与请求,2,请求与许可,基础⑦·能力与请求,L1~L2,1,3,10,2,10,"[""练习用Can/Could请求帮助和许可""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_能力与请求_请求帮助,{xp:10}
+found_foundation_travel_basic_2,建议与义务,1,你应该/必须,基础⑦·建议与义务,L1~L2,1,3,10,2,7,"[""练习用should/must和have to表达建议和义务""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_建议与义务_你应该必须,{xp:10}
+found_foundation_travel_basic_2,建议与义务,2,禁止与不必,基础⑦·建议与义务,L1~L2,1,3,10,2,7,"[""练习用mustn't和don't have to表达禁止与不必""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_建议与义务_禁止与不必,{xp:10}
+found_foundation_travel_basic_3,情态综合,1,可能/邀请/提议,基础⑦·情态综合,L1~L2,1,3,10,2,11,"[""练习用may/might/would you like/邀请表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_情态综合_可能maymight,{xp:10}
+found_foundation_travel_basic_3,情态综合,2,提供帮助/回应,基础⑦·情态综合,L1~L2,1,3,10,2,8,"[""练习主动提供帮助和礼貌回应""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_情态综合_主动提供,{xp:10}
+found_foundation_travel_basic_4,祝愿与承诺,1,祝福与鼓励,基础⑦·祝愿与承诺,L1~L2,1,3,10,2,6,"[""练习祝福用语和鼓励支持""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_祝愿与承诺_祝福用语,{xp:10}
+found_foundation_travel_basic_4,祝愿与承诺,2,承诺与意愿,基础⑦·祝愿与承诺,L1~L2,1,3,10,2,6,"[""练习承诺保证和意愿表达""]",2,2,2,Tutor,口语教练,false,practice_foundation-travel-basic_祝愿与承诺_承诺与保证,{xp:10}

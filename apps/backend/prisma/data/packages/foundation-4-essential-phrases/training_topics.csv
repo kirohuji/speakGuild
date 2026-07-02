@@ -1,83 +1,295 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
-基础④·Yes/No问句,一般疑问句,Practice Yes/No questions with be do and can.,练习be/do/can构成的一般疑问句。,35,L1,掌握Are you? / Do you? / Can you? 疑问句及简短回答。,疑问句 Yes/No be do can 简短回答,"## 三种疑问句结构
-- **Are you...?** → Yes, I am. / No, I'm not. (be动词疑问句)
-- **Do you...?** → Yes, I do. / No, I don't. (一般动词疑问句)
-- **Can you...?** → Yes, I can. / No, I can't. (能力/请求)
+基础④·出行与交通,问路与位置,Practice asking for directions and locations with Where/How/Is there.,练习问路与位置：Where is...? / How do I get to...? / Is there...?,35,L1,掌握问路与位置的疑问句表达。,疑问句 问路 Where How Is there,"## 问路与位置核心句型
+- **Where is the nearest...?** 最近的...在哪里？
+- **How do I get to...?** 我怎么去...？
+- **Is there a... near here?** 这附近有...吗？
+- **How far is... from here?** ...离这里多远？
 
-## 回答规则
-- 问什么，答什么：Do you like coffee? → Yes, I do. (不重复整句)
-- Is there...? → Yes, there is. / No, there isn't.
+## 常用回答
+- It's just around the corner. 就在拐角处。
+- Go straight and turn left. 直走左转。
+- It's about 10 minutes on foot. 走路约10分钟。
 
-## 常见错误
-- ❌ Are you like coffee? → ✅ Do you like coffee?
-- ❌ Do you a student? → ✅ Are you a student?
-- ❌ Can you to swim? → ✅ Can you swim? (can后接动词原形)",practice_foundation-essential-phrases_YesNo问句_一般疑问句
-基础④·Yes/No问句,过去疑问句,Practice past tense questions with did and were.,练习过去式疑问句：Did you? / Were you?。,35,L1,掌握Did you? / Were you? 过去疑问句。,过去 疑问句 did were 过去时,"## 过去疑问句两种结构
-- **Did + 主语 + 动词原形**：Did you eat? — Yes, I did.
-- **Was/Were + 主语 + ...?**：Were you at home? — Yes, I was.
+## 替换练习思维
+先想"我要问什么类型"→ Where(地点)/How(方式)/Is there(存在) → 再搭具体内容。",practice_foundation-essential-phrases_出行与交通_问路与位置
+基础④·出行与交通,问时间与交通,Practice asking about time schedules and transportation with What time/Which/How long.,练习问时间与交通：What time...? / Which...? / How long...?,35,L1,掌握问时间和交通方式的疑问句。,疑问句 时间 交通 What time Which How long,"## 时间与交通核心句型
+- **What time does...open/close?** ...几点开/关？
+- **What time is...?** ...是几点？
+- **Which bus/train goes to...?** 哪路公交/地铁去...？
+- **How long does it take...?** ...需要多久？
 
-## 关键规则
-- Did 后面动词**必须用原形**：Did you went ❌ → Did you go ✅
-- was/were 依主语选择：I/he/she/it → was；you/we/they → were
-
-## 常用时间词
-- yesterday (昨天) / last night (昨晚) / last week (上周)
-- ...ago (…以前) / this morning (今天早上)",practice_foundation-essential-phrases_YesNo问句_过去疑问句
-基础④·Wh-问句,6W问句,Practice Wh- questions: What Who Where When Why Which.,练习6W问句：What/Who/Where/When/Why/Which。,35,L1,掌握6W疑问词的用法和疑问句语序。,Wh- 疑问句 6W 特殊疑问句,"## 6个核心疑问词
-| 疑问词 | 问什么 | 例句 |
-|--------|--------|------|
-| What | 事物/内容 | What is your name? |
-| Who | 人 | Who is she? |
-| Where | 地点 | Where is the bathroom? |
-| When | 时间 | When do you get up? |
-| Why | 原因 | Why are you late? |
-| Which | 选择 | Which one is yours? |
-
-## 疑问句语序
-**疑问词 + be/do + 主语 + ...?**
-- What is your name? (be动词)
-- Where do you live? (实义动词需要do)
-
-## 常见错误
-- ❌ Where you live? → ✅ Where do you live?
-- ❌ Why you are late? → ✅ Why are you late?",practice_foundation-essential-phrases_Wh问句_6W问句
-基础④·Wh-问句,What与Who详细问,Practice detailed questions with What and Who.,练习What和Who的详细问法。,35,L1,掌握What time/color/kind of 和 Who is/Whose 问句。,What Who Whose 详细 疑问,"## What 的详细问法
-- **What time** (几点)：What time is it? — It's 3 o'clock.
-- **What kind of** (什么类型)：What kind of music do you like?
-- **What color** (什么颜色)：What color is your car?
-
-## Who/Whose 详细问法
-- **Who is** (谁)：Who is your best friend?
-- **Whose** (谁的)：Whose book is this? — It's mine.
+## 常用场景
+- 问博物馆/商店开门时间
+- 问车次/航班时间
+- 问乘车路线
+- 问路程时长
 
 ## 注意
-- What time 问具体时间点；When 可以问更宽泛的时间
-- Whose 后面直接跟名词，回答用 mine/yours/his 等",practice_foundation-essential-phrases_Wh问句_What与Who详细问
-基础④·How问句,数量与价格,Practice How many/much/far/long questions.,练习How many/much/far/long问句。,35,L1,掌握How搭配数量/价格/距离/时长的问法。,How many much far long 疑问,"## How 搭配数量
-- **How many + 可数名词复数**：How many books do you have?
-- **How much + 不可数名词**：How much water do you drink?
+What time问具体时间点；How long问时长。",practice_foundation-essential-phrases_出行与交通_问时间与交通
+基础④·出行与交通,乘坐公共交通,Practice asking about public transportation with Where do I/Does this bus.,练习乘坐公共交通的疑问句：Where do I...? / Does this bus...?,35,L1,掌握公共交通相关的疑问句表达。,疑问句 公交 地铁 乘车 Where Does,"## 公共交通核心句型
+- **Where do I buy a ticket?** 我在哪买票？
+- **Does this bus stop at...?** 这路车在...停吗？
+- **Where do I wait for the bus?** 我在哪等车？
 
-## How 搭配价格
-- **How much is this?** — It's 20 dollars. (问价格)
+## 常用词汇
+- ticket / map / platform / transfer / fare
+- one-way / round-trip / seat / window seat
 
-## How 搭配距离/时长/年龄
-- **How far** (多远)：How far is it from here? — About 2 km.
-- **How long** (多久)：How long does it take? — 30 minutes.
-- **How old** (多大)：How old are you? — I'm 25.
+## 文化提示
+国外公交车很多不报站，上车前要确认路线。",practice_foundation-essential-phrases_出行与交通_乘坐公共交通
+基础④·出行与交通,问方向与距离,Practice asking about directions and distance with How far/Am I going.,练习问方向与距离：How far...? / Am I going the right way?,35,L1,掌握问方向和距离的疑问句。,疑问句 方向 距离 指路 How far,"## 方向与距离核心句型
+- **How far is it from here?** 离这里多远？
+- **Am I going the right way to...?** 我去...的方向对吗？
+- **Which way is...?** ...在哪边？
 
-## 常见错误
-- ❌ How many water? → ✅ How much water? (不可数用much)
-- ❌ How much books? → ✅ How many books? (可数用many)",practice_foundation-essential-phrases_How问句_数量与价格
-基础④·How问句,频率与方式,Practice How often/do/about questions.,练习How often/do/about/how was问句。,35,L1,掌握How often/do/about/how was的交流用法。,How often about 频率 方式 感受,"## How 搭配频率
-- **How often** (多久一次)：How often do you exercise? — Every day.
-- 回答：every day / once a week / twice a month / sometimes
+## 常用回答
+- It's about 2 kilometers from here.
+- Keep going straight.
+- Take the first right.
 
-## How 搭配方式
-- **How do you go to work?** — By bus. (问交通方式)
-- **How do you learn English?** — I listen and practice. (问方法)
+## 替换练习
+替换地点名词：the station / the museum / the park / the library / the stadium",practice_foundation-essential-phrases_出行与交通_问方向与距离
+基础④·出行与交通,打车与接送,Practice asking about taxis and pickups with How much to/Do you have.,练习打车与接送的疑问句：How much to...? / Do you have...?,35,L1,掌握打车场景的疑问句表达。,疑问句 打车 出租车 费用 How much,"## 打车核心句型
+- **How much does it cost to go to...?** 到...多少钱？
+- **Do you have a map?** 你有地图吗？
+- **Do you have the address?** 你有地址吗？
 
-## How 感受问候
-- **How was your day?** — It was good. (问候)
-- **How does it taste?** — Delicious. (问感受)
-- **How about some coffee?** — Sure! (提建议)
-- **How do you like...?** — I like it. (问看法)",practice_foundation-essential-phrases_How问句_频率与方式
+## 常用表达
+- About 120 yuan. 大约120元。
+- Sure. Let me show you. 好的，我指给你看。
+
+## 注意
+本课只使用be/do/does，不引入can。表达"能"的概念用Do you have方式。",practice_foundation-essential-phrases_出行与交通_打车与接送
+基础④·消费与服务,购物问询,Practice shopping questions with How much/Do you have.,练习购物问询：How much...? / Do you have...?,35,L1,掌握购物场景的疑问句表达。,疑问句 购物 价格 How much Do you have,"## 购物核心句型
+- **How much is this?** 这个多少钱？
+- **How much are these?** 这些多少钱？
+- **Do you have this in...?** 你们有...的吗？
+
+## 常用回答
+- It's 120 yuan. 120元。
+- They're 80 yuan each. 每个80元。
+- Let me check. 我看看。
+
+## 替换练习
+替换商品/颜色/尺寸名词。",practice_foundation-essential-phrases_消费与服务_购物问询
+基础④·消费与服务,试穿与尺寸,Practice trying on clothes and asking about sizes with I want to try/Do you have.,练习试穿与尺寸：I want to try on...? / Do you have other...?,35,L1,掌握试穿和选尺寸的疑问句表达。,疑问句 试穿 尺寸 颜色 款式,"## 试穿核心句型
+- **I want to try this on. Where is the fitting room?** 我想试穿。试衣间在哪？
+- **Do you have this in a small size?** 你们有小号吗？
+- **Do you have other colors/styles?** 你们有其他颜色/款式吗？
+
+## 常用表达
+- Over there, on the left. 那边，左边。
+- We have these. They're on sale. 我们有这些，正在打折。
+
+## 提醒
+先用I want表达需求，再问Where is补充信息。",practice_foundation-essential-phrases_消费与服务_试穿与尺寸
+基础④·消费与服务,支付与结账,Practice payment and checkout questions with Do you take/I need.,练习支付与结账：Do you take...? / I need...,35,L1,掌握支付和结账场景的疑问句表达。,疑问句 支付 结账 收据 刷卡,"## 支付核心句型
+- **Do you take cards?** 你们收卡吗？
+- **I need a receipt, please.** 我需要收据。
+- **I need a bag, please.** 我需要袋子。
+
+## 常见支付方式
+- cash / credit card / WeChat / Alipay
+- phone payment
+
+## 替换练习
+I need + 名词（receipt/bag/refund/exchange/discount）",practice_foundation-essential-phrases_消费与服务_支付与结账
+基础④·消费与服务,餐厅点餐,Practice restaurant ordering with I want to see/What do you recommend.,练习餐厅点餐：I want to see... / What do you recommend?,35,L1,掌握餐厅点餐场景的疑问句表达。,疑问句 点餐 菜单 推荐 餐厅,"## 点餐核心句型
+- **I want to see the menu, please.** 我想看菜单。
+- **What do you recommend?** 你推荐什么？
+- **Does this dish contain...?** 这道菜含有...吗？
+
+## 常用回答
+- Here you go. 给你。
+- The grilled fish is very popular. 烤鱼很受欢迎。
+
+## 替换练习
+替换菜品/成分名词。不要用I would like（太正式），用I want。",practice_foundation-essential-phrases_消费与服务_餐厅点餐
+基础④·消费与服务,餐厅服务与评价,Practice restaurant service questions with I want the bill/Is service charge included.,练习餐厅服务与评价：I want the bill... / Is...included?,35,L1,掌握餐厅服务和评价的疑问句表达。,疑问句 服务 账单 评价 Is included,"## 服务核心句型
+- **I want the bill, please.** 我要买单。
+- **Is service charge included?** 服务费包含在内吗？
+- **Do you have any vegetarian options?** 你们有素食选项吗？
+- **Is there a table by the window?** 有靠窗的桌子吗？
+
+## 常用表达
+- Sure. It's 185 yuan in total. 总共185元。
+- Yes, it's already included. 已经包含了。
+
+## 注意
+用Is...included?比直接问How much更地道。",practice_foundation-essential-phrases_消费与服务_餐厅服务与评价
+基础④·社交与寒暄,认识新朋友,Practice meeting new people with What do you do/Where are you from.,练习认识新朋友：What do you do? / Where are you from?,35,L1,掌握社交场合认识新朋友的疑问句表达。,疑问句 社交 认识新朋友 职业 来源,"## 认识新朋友核心句型
+- **What do you do?** 你是做什么的？
+- **Where are you from?** 你从哪里来？
+- **How's it going?** 最近怎么样？
+
+## 常用回答
+- I'm a student. / I work in a hospital.
+- I'm from Chengdu. How about you?
+- Pretty good! And you?
+
+## 社交问句链
+What do you do? → Where are you from? → What do you like? 形成自然的问句链。",practice_foundation-essential-phrases_社交与寒暄_认识新朋友
+基础④·社交与寒暄,爱好与兴趣,Practice hobbies and interests with What kind of/Do you like.,练习爱好与兴趣：What kind of...? / Do you like...?,35,L1,掌握询问爱好和兴趣的疑问句表达。,疑问句 爱好 兴趣 What kind Do you like,"## 爱好核心句型
+- **What do you do for fun?** 你平时做什么玩？
+- **What kind of music do you like?** 你喜欢什么类型的音乐？
+- **Do you like traveling?** 你喜欢旅行吗？
+- **What countries do you want to visit?** 你想去哪些国家？
+
+## 常用回答
+- I like watching movies and hiking.
+- I like pop and a little bit of jazz.
+- Yes, I love it!
+
+## 替换练习
+替换music/movies/food/books/sports/games等名词。",practice_foundation-essential-phrases_社交与寒暄_爱好与兴趣
+基础④·社交与寒暄,约见面,Practice making plans with Are you free/Do you want to.,练习约见面：Are you free...? / Do you want to...?,35,L1,掌握约见面和确认时间的疑问句表达。,疑问句 邀约 见面 时间 地点,"## 约见面三步曲
+1. **Are you free this weekend?** 你这周末有空吗？
+2. **Do you want to grab lunch together?** 一起吃午饭吗？
+3. **What time/Where do you want to meet?** 几点/在哪见？
+
+## 常用回答
+- Yes, I am. Why? 有空，怎么啦？
+- I'd love to! 我很乐意！
+- How about 12:30? 12:30怎么样？
+
+## 注意
+邀约顺序：先问是否空闲 → 再提建议 → 最后确认时间地点。",practice_foundation-essential-phrases_社交与寒暄_约见面
+基础④·社交与寒暄,关心与问候,Practice caring and greeting with How is your day/Is everything okay.,练习关心与问候：How is...? / Is everything okay?,35,L1,掌握表达关心和问候的疑问句表达。,疑问句 关心 问候 How Is everything,"## 关心核心句型
+- **How is your day?** 你今天怎么样？
+- **Is everything okay?** 一切都好吗？
+- **Do you need help?** 你需要帮助吗？
+
+## 常用回答
+- It's good! A little busy, but good.
+- Yeah, I'm fine. Just didn't sleep well.
+- That's very kind of you.
+
+## 替换练习
+替换your day/everything/your work/your family等。",practice_foundation-essential-phrases_社交与寒暄_关心与问候
+基础④·社交与寒暄,邀请与回应,Practice invitations and responses with Do you want to/What time.,练习邀请与回应：Do you want to...? / Are you free?,35,L1,掌握提出邀请和回应的疑问句表达。,疑问句 邀请 回应 建议 约定,"## 邀请核心句型
+- **Are you free tonight?** 你今晚有空吗？
+- **Do you want to see a movie?** 你想看电影吗？
+- **What time do you want to meet?** 你想几点见？
+
+## 自然回应
+肯定：I'd love to! / Sounds good! / Sure!
+婉拒：Maybe next time. / I'm busy then.
+
+## 约定后补充
+Where do you want to meet?
+Let's meet at the entrance.",practice_foundation-essential-phrases_社交与寒暄_邀请与回应
+基础④·电话与联络,打电话找人,Practice calling someone with Is...there/Who's calling.,练习打电话找人：Is...there? / Who's calling?,35,L1,掌握打电话找人的疑问句表达。,疑问句 电话 找人 Is there Who calling,"## 打电话核心句型
+- **Hello, is Mr. Wang there, please?** 你好，请问王先生在吗？
+- **Who's calling, please?** 请问是哪位？
+- **Is Mr. Wang available?** 王先生方便接电话吗？
+
+## 电话三步走
+Hello, this is... → Is...there? → Who's calling?
+
+## 常用回答
+- Speaking. / Just a moment, please.
+- Sorry, he's in a meeting right now.",practice_foundation-essential-phrases_电话与联络_打电话找人
+基础④·电话与联络,留言与回电,Practice leaving messages with I want to leave a message/Please ask him to.,练习留言与回电：I want to leave a message... / Please ask him to...,35,L1,掌握电话留言和回电的疑问句表达。,疑问句 留言 回电 消息 Message,"## 留言核心句型
+- **I want to leave a message. Is that okay?** 我想留言，可以吗？
+- **Please ask him to call me back.** 请他回电话给我。
+- **Please tell him I called.** 请告诉他我来过电话。
+
+## 留言四步
+1. I want to leave a message.
+2. Please ask him to call me back.
+3. What's your phone number?
+4. Does he know I called?
+
+## 常用问句
+- Do I call back or wait for his call?
+- What's your phone number?",practice_foundation-essential-phrases_电话与联络_留言与回电
+基础④·电话与联络,电话确认,Practice phone confirmation with Does...know/Do I...or.,练习电话确认：Does...know? / Do I...or...?,35,L1,掌握电话确认疑问句表达。,疑问句 电话确认 确认 知晓 Does know,"## 确认核心句型
+- **Does he know I called?** 他知道我来过电话吗？
+- **Do I call back or wait for his call?** 我回电还是等他电话？
+- **When is a good time to call?** 什么时候打电话合适？
+
+## 常用回答
+- Yes, he does. He says he calls you tonight.
+- Try after 3 pm. He is free then.
+
+## 注意
+选择疑问句用Do I...or...结构。",practice_foundation-essential-phrases_电话与联络_电话确认
+基础④·电话与联络,问联系方式,Practice asking for contact info with What's your/What's your number.,练习问联系方式：What's your...? / What's your number?,35,L1,掌握询问联系方式的疑问句表达。,疑问句 联系方式 电话 邮箱 微信,"## 联系方式核心句型
+- **What's your phone number?** 你的电话号码是多少？
+- **What's your email address?** 你的邮箱地址是什么？
+- **What's your WeChat?** 你的微信是什么？
+
+## 常用回答
+- It's 138-5555-1234.
+- It's tom@gmail.com.
+
+## 替换练习
+phone number / email address / WeChat / office number",practice_foundation-essential-phrases_电话与联络_问联系方式
+基础④·电话与联络,电话问题处理,Practice phone issues with Do you hear me/Sorry wrong number.,练习电话问题处理：Do you hear me? / Sorry wrong number.,35,L1,掌握电话故障和问题处理的疑问句表达。,疑问句 电话问题 信号 打错 听不清,"## 问题处理核心句型
+- **Do you hear me? The signal is bad here.** 你听得见吗？信号不好。
+- **Sorry, I think you have the wrong number.** 对不起，你打错了。
+- **When is he back?** 他什么时候回来？
+
+## 常用表达
+- Yes, I hear you. Do you hear me now?
+- Oh, I'm sorry. I'll check the number again.
+- He is back in about an hour.
+
+## 信号问题替换
+Do you hear/see/understand/follow me?",practice_foundation-essential-phrases_电话与联络_电话问题处理
+基础④·应急与求助,紧急呼救,Practice emergency calls with Help!/Where is/Is there a doctor.,练习紧急呼救：Help! / Where is...? / Is there a doctor?,35,L1,掌握紧急情况下的呼救疑问句表达。,疑问句 紧急 呼救 帮助 Where Is there,"## 紧急呼救核心句型
+- **Help! Is anyone here?** 救命！有人吗？
+- **Where is the nearest hospital?** 最近的医院在哪？
+- **How do I call an ambulance?** 我怎么叫救护车？
+- **Is there a doctor here?** 这里有医生吗？
+
+## 紧急三步
+先短呼Help! → 再问Where is...? → 然后Is there...?
+
+## 常用回答
+- I hear you! What's wrong?
+- Dial 120. Tell them your location.",practice_foundation-essential-phrases_应急与求助_紧急呼救
+基础④·应急与求助,问路求助,Practice asking for help when lost with Please help me/I'm lost.,练习迷路求助：Please help me. / I'm lost.,35,L1,掌握迷路时求助的疑问句和表达。,疑问句 迷路 求助 问路 Please help,"## 迷路求助核心句型
+- **Please help me. I'm lost.** 请帮帮我，我迷路了。
+- **Do you speak Chinese?** 你说中文吗？
+- **Is anyone calling the police?** 有人在报警吗？
+
+## 常用表达
+- Of course. Where do you want to go?
+- A little. Let me find someone who does.
+
+## 替换练习
+I'm lost / my phone dies / I can't find my hotel / I miss my bus",practice_foundation-essential-phrases_应急与求助_问路求助
+基础④·应急与求助,看病问诊,Practice seeing a doctor with I don't feel well/What do I do.,练习看病问诊：I don't feel well. / What do I do?,35,L1,掌握看病问诊场景的疑问句表达。,疑问句 看病 医院 医生 症状,"## 看病核心句型
+- **I don't feel well. Where is the nearest hospital?** 我不舒服，最近的医院在哪？
+- **What do I do? I have a bad headache.** 我该怎么办？我头疼得厉害。
+- **Do I need to see a doctor?** 我需要看医生吗？
+
+## 看病三步
+先说自己状态(I don't feel well) → 再问Where is/What do I do → 最后确认Do I need
+
+## 替换练习
+headache/fever/stomachache/sore throat/toothache/pain/cold/cough",practice_foundation-essential-phrases_应急与求助_看病问诊
+基础④·应急与求助,丢失物品,Practice reporting lost items with Where is/I lost my.,练习丢失物品：Where is...? / I lost my...,35,L1,掌握丢失物品时的疑问句和求助表达。,疑问句 丢失 物品 求助 遗失,"## 丢失物品核心句型
+- **Is there a pharmacy open right now?** 现在有开着的药店吗？
+- **Is everyone okay?** 大家都好吗？
+- **What happened? Tell me what you see.** 发生什么了？告诉我你看到了什么。
+
+## 常用表达
+- Yes, there's a 24-hour pharmacy two blocks away.
+- I think so. One person is a little hurt.
+
+## 注意
+丢失物品时先用I lost my...说明情况，再用Is there...询问。",practice_foundation-essential-phrases_应急与求助_丢失物品
+基础④·应急与求助,语言沟通困难,Practice language difficulty with Do you speak/How much does it cost.,练习语言沟通困难：Do you speak...? / How much does it cost?,35,L1,掌握语言沟通困难时的疑问句表达。,疑问句 语言 沟通 费用 How much Do you speak,"## 语言沟通核心句型
+- **Do you speak Chinese?** 你说中文吗？
+- **How much does it cost to see a doctor here?** 在这里看医生多少钱？
+- **Is there a doctor here?** 这里有医生吗？
+
+## 常用回答
+- A little. Let me find someone who does.
+- The consultation fee is about 200 yuan.
+
+## 替换练习
+Do you speak English/Japanese/Korean/French/Spanish?
+How much does it cost to get a check-up/stay overnight/get an X-ray?",practice_foundation-essential-phrases_应急与求助_语言沟通困难

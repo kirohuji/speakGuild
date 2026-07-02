@@ -1,17 +1,67 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-ch_desc_01,1,My bag is bigger than yours.,0
-ch_desc_01,1,This book is more interesting than that one.,1
-ch_desc_01,1,She is a better student than me.,2
-ch_desc_01,2,She is the best student in our class.,0
-ch_desc_01,2,This is the most beautiful place I've seen.,1
-ch_desc_02,1,There is a bank near my house.,0
-ch_desc_02,1,There are two cats in the garden.,1
-ch_desc_02,1,Is there a bank near here? — Yes, there is.,2
-ch_desc_02,1,There isn't any milk in the fridge.,3
+ch_desc_01,1,This book is bigger than that one.,0
+ch_desc_01,1,She is taller than her brother.,1
+ch_desc_01,1,This phone is more expensive than that one.,2
+ch_desc_01,1,Chinese is more difficult than English.,3
+ch_desc_01,1,My bag is heavier than yours.,4
+ch_desc_01,1,This restaurant is better than that one.,5
+ch_desc_01,1,He runs faster than me.,6
+ch_desc_01,2,This is the biggest cake I have ever seen.,0
+ch_desc_01,2,She is the smartest student in the class.,1
+ch_desc_01,2,This is the most beautiful place I have ever visited.,2
+ch_desc_01,2,He is the best player on the team.,3
+ch_desc_01,2,What is the most important thing in life?,4
+ch_desc_01,2,It's one of the most popular apps in the world.,5
+ch_desc_01,2,The faster the better.,6
+ch_desc_02,1,There is a book on the desk.,0
+ch_desc_02,1,There are three people in the room.,1
+ch_desc_02,1,Is there a bank near here? Yes there is.,2
+ch_desc_02,1,There is some water in the bottle.,3
+ch_desc_02,1,Are there any questions? No there aren't.,4
+ch_desc_02,1,There isn't any milk left.,5
+ch_desc_02,1,There was a big storm last night.,6
 ch_desc_02,2,The cat is under the table.,0
-ch_desc_02,2,The school is next to the library.,1
-ch_desc_03,1,She is as tall as her brother.,0
-ch_desc_03,1,He is not as tall as his father.,1
-ch_desc_03,1,This coffee is too hot to drink.,2
-ch_desc_03,1,This room is big enough for us.,3
-ch_desc_03,2,She speaks English very well.,0
+ch_desc_02,2,The bank is next to the post office.,1
+ch_desc_02,2,The restaurant is between the hotel and the cinema.,2
+ch_desc_02,2,The hospital is across from the station.,3
+ch_desc_02,2,Go straight and turn left at the corner.,4
+ch_desc_02,2,It's on the second floor.,5
+ch_desc_02,2,The keys are in my bag.,6
+ch_desc_03,1,She is as tall as her sister.,0
+ch_desc_03,1,This car is not as expensive as that one.,1
+ch_desc_03,1,He doesn't run as fast as I do.,2
+ch_desc_03,1,I have as many books as you.,3
+ch_desc_03,1,This bag is too heavy I can't carry it.,4
+ch_desc_03,1,The room is big enough for ten people.,5
+ch_desc_03,1,I'm not tall enough to reach the top shelf.,6
+ch_desc_03,2,Please speak slowly I can't understand.,0
+ch_desc_03,2,She speaks English very well.,1
+ch_desc_03,2,He works very hard every day.,2
+ch_desc_03,2,She always drives carefully.,3
+ch_desc_03,2,I finished my homework quickly and went out to play.,4
+ch_desc_03,2,This is much better than that one.,5
+ch_desc_04,1,Which do you like more the red one or the blue one? I like the blue one better.,0
+ch_desc_04,1,I prefer this restaurant It's cheaper and the food is better.,1
+ch_desc_04,1,This one is more comfortable than that one I'll take this.,2
+ch_desc_04,1,I think X is better for beginners Y is better for advanced learners.,3
+ch_desc_04,1,It's not as expensive as I thought I'll buy it.,4
+ch_desc_04,1,Between these two which is faster? The red car is much faster.,5
+ch_desc_04,1,I like both but I like this one a little more because it's brighter.,6
+ch_desc_04,2,This is the best restaurant in this area You should try it.,0
+ch_desc_04,2,I recommend this one It's the most popular dish here.,1
+ch_desc_04,2,It's not the cheapest but it's the most reliable one.,2
+ch_desc_04,2,If you want something cheap this one is your best choice.,3
+ch_desc_04,2,Compared to the other one this is much better.,4
+ch_desc_04,2,It's the same price but this one is more useful.,5
+ch_desc_04,2,I've tried both and this one is definitely better.,6
+ch_desc_05,1,This phone is lighter and faster but that one has a better camera.,0
+ch_desc_05,1,This restaurant is more expensive than that one but the food is much better here.,1
+ch_desc_05,1,It's getting hotter and hotter every day.,2
+ch_desc_05,1,He is more and more confident in speaking English.,3
+ch_desc_05,1,The city is becoming more beautiful than before.,4
+ch_desc_05,1,This one is cheaper but the quality is not as good You get what you pay for.,5
+ch_desc_05,2,All things considered this is the best choice for beginners because it's easy and affordable.,0
+ch_desc_05,2,In my opinion this one is better However some people prefer that one because it's cheaper.,1
+ch_desc_05,2,I highly recommend this product It's not the cheapest but it's the most durable one you can find.,2
+ch_desc_05,2,The more you pay the better quality you get So if you want something good don't buy the cheapest one.,3
+ch_desc_05,2,Compared to last year the prices are getting higher and higher Everything is more expensive now.,4

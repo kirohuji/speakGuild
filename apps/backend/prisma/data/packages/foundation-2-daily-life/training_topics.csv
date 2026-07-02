@@ -1,70 +1,155 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
 基础②·日常习惯,我每天做什么,Practice daily habits with action verbs like eat drink and go to school.,练习用一般动词描述日常习惯：吃、喝、去上学。,35,L1,掌握I eat/drink/go的肯定句和don't否定句。,一般动词 习惯 肯定句 否定句,"## 核心句型
-- I eat breakfast every morning. (我每天早上吃早餐)
-- I drink coffee in the morning. (我早上喝咖啡)
-- I go to school every day. (我每天去上学)
-
+- I eat breakfast every morning.
+- I drink coffee in the morning.
+- I go to school every day.
 ## 否定句
-I don't + 动词原形：I don't eat meat.
-注意：don't 后面用动词原形，不加s。",practice_foundation-daily-life_日常习惯_我每天做什么
+I don't + 动词原形：I don't eat meat.",practice_foundation-daily-life_日常习惯_我每天做什么
 基础②·日常习惯,我的日常动作,Practice common daily actions like read watch play and study.,练习日常动作：看书、看电视、玩、学习。,35,L1,掌握read/watch/play/study等常用动词用法。,日常动作 动词 时间表达,"## 常用动作动词
-- read (读)：I read books at night.
-- watch (看)：I watch TV after dinner.
-- play (玩/打)：I play football on weekends.
-- study (学习)：I study English every day.
-
-## 注意
-play + 球类/游戏不加 the：play football / play games",practice_foundation-daily-life_日常习惯_我的日常动作
-基础②·喜好需求,我喜欢/我想要,Practice expressing likes wants and needs with like want and need.,练习表达喜好、想要和需求。,35,L1,掌握like/want/need的用法和搭配。,喜好 需求 like want need,"## 三个核心动词
-- like + 名词：I like coffee.
-- like + to do：I like to read.
-- want + 名词：I want a new phone.
-- want + to do：I want to travel.
-- need + 名词：I need help.
-- need + to do：I need to go.
-like/want/need 后可接名词或 to do。",practice_foundation-daily-life_喜好需求_我喜欢我想要
-基础②·喜好需求,我有什么,Practice talking about possession with have and has.,练习用have谈论拥有什么。,35,L1,掌握have的肯定/否定/疑问形式。,拥有 have 疑问句 否定句,"## have 的三种形式
+- read：I read books at night.
+- watch：I watch TV after dinner.
+- play：I play football on weekends.
+- study：I study English every day.",practice_foundation-daily-life_日常习惯_我的日常动作
+基础②·日常习惯,起床到出门,Practice morning routine phrases like take a shower and wash face.,练习起床洗漱到出门的表达。,35,L1,掌握起床到出门的日常表达。,起床 洗漱 出门,"## 起床到出门
+- I get up at 7 o'clock.
+- I take a shower in the morning.
+- I leave for work at 8.
+注意：get up和wake up的区别。",practice_foundation-daily-life_日常习惯_起床出门
+基础②·日常习惯,晚上做什么,Practice evening activities like reading and watching TV.,练习晚上日常活动：看书、看电视、睡觉。,35,L1,掌握晚上活动表达和频率。,晚上 阅读 电视 睡觉,"## 晚上活动
+- I read books at night.
+- I watch TV after dinner.
+- I go to bed at 11 pm.
+after dinner表示晚饭后。",practice_foundation-daily-life_日常习惯_晚上做什么
+基础②·日常习惯,周末活动,Practice talking about weekend activities like relaxing and visiting family.,练习描述周末活动：放松、看望家人、出去玩。,35,L1,掌握周末活动表达。,周末 放松 看望 外出,"## 周末活动
+- I relax on weekends.
+- I visit my grandparents on Sundays.
+- I hang out with friends on Saturday.
+I do my homework after school.",practice_foundation-daily-life_日常习惯_周末活动
+基础②·喜好与需求,我喜欢…,Practice expressing likes with like love and enjoy.,练习表达喜好：like/love/enjoy。,35,L1,掌握like/love表达喜好。,"like + 名词 / like to do","## 喜好表达
+- I like coffee.
+- I like to read books.
+- I love music.
+like < love程度递进",practice_foundation-daily-life_喜好需求_我喜欢
+基础②·喜好与需求,我想要…,Practice expressing wants needs with want need and would like.,练习表达想要和需要：want/need/would like。,35,L1,掌握want/need/would like表达需求。,want need would like,"## 想要和需要
+- I want a new phone.
+- I want to learn Spanish.
+- I would like some water.
+- I need some help.
+- I need to go now.
+want/would like/need后可接名词或to do。",practice_foundation-daily-life_喜好需求_我想要
+基础②·喜好与需求,我有什么,Practice talking about possession with have.,练习用have谈论拥有什么。,35,L1,掌握have的肯定/否定/疑问形式。,拥有 have 疑问句 否定句,"## have 的三种形式
 - 肯定：I have a brother. / I have two cats.
 - 否定：I don't have a car.
-- 疑问：Do you have a pen? — Yes, I do.
-have + 餐食 = 吃：I have breakfast at 7.",practice_foundation-daily-life_喜好需求_我有什么
-基础②·日程安排,我几点做...,Practice talking about daily schedule with time expressions.,练习用时间表达描述日程。,40,L1,掌握at + 时间 / in the morning等时间表达。,日程 时间 at in on 日常,"## 时间表达
-- at + 具体时间：I get up at 7 o'clock.
-- in + 时间段：I take a shower in the morning.
-- on + 天：I play football on weekends.
-
-## 常用动词短语
-get up / go to bed / have lunch / come home / leave for
-这些是固定搭配，整体记忆。",practice_foundation-daily-life_日程安排_我几点做
-基础②·日程安排,去...做...,Practice verbs with prepositions like go to come to wait for and talk to.,练习动词+介词搭配：go to / wait for / talk to。,35,L1,掌握动词+介词的固定搭配用法。,动词 介词 go to look for help with,"## 动词+介词搭配
-- go to + 地点：I go to work by bus.
-- wait for + 人/物：I wait for the bus.
-- look for + 物：I look for my keys.
-- help + 人 + with + 事：I help my mom with housework.
-- talk to + 人：I talk to my friend.
-这些是固定搭配，整体记忆即可。",practice_foundation-daily-life_日程安排_去做什么
-基础②·购物与出行,购物消费,Practice shopping conversations: buying things asking prices and trying on clothes.,练习购物对话：买东西、问价格、试穿。,40,L1,掌握购物相关表达：How much? / Can I try on? / I want to buy。,购物 价格 试穿 消费,"## 购物常用
-- 问价格：How much is this? — It's 50 yuan.
-- 试穿：Can I try this on? — Sure.
-- 想买：I want to buy a new shirt.
-- 评价：This is too expensive.
-- 尺码：Do you have this in a smaller size?",practice_foundation-daily-life_购物与出行_购物消费
-基础②·购物与出行,天气与出行,Practice talking about weather and transportation for going out.,练习谈论天气和出行交通方式。,35,L1,掌握天气描述和交通方式表达：It's sunny / I take the bus。,天气 出行 交通 建议,"## 天气描述
+- 疑问：Do you have a pen? — Yes, I do.",practice_foundation-daily-life_喜好需求_我有什么
+基础②·喜好与需求,我不喜欢…,Practice expressing dislikes with don't like and hate.,练习表达不喜欢：don't like/hate。,35,L1,掌握don't like表达不喜欢。,不喜欢 don't like,"## 不喜欢表达
+- I don't like cold weather.
+- 注意：don't like后面接名词或动名词。
+- I can speak English.
+- Can I go now?",practice_foundation-daily-life_喜好需求_我不喜欢
+基础②·喜好与需求,我的能力和意愿,Practice talking about ability with can.,练习用can表达能力和意愿。,35,L1,掌握can表达能力和请求许可。,can 能力 许可,"## Can的用法
+- 能力：I can speak English.
+- 请求许可：Can I go now?
+- 回答：Yes, you can. / No, you can't.",practice_foundation-daily-life_喜好需求_我的能力
+基础②·日程安排,几点起床,Practice talking about daily schedule with time expressions.,练习用时间表达描述每日作息时间。,40,L1,掌握at + 时间表达作息。,日程 时间 at,"## 时间表达
+- I get up at 7 o'clock.
+- I have breakfast at 7.
+- I have lunch at 12.
+- I come home at 6 pm.
+- I go to bed at 11 pm.
+at + 具体时间点。",practice_foundation-daily-life_日程安排_几点起床
+基础②·日程安排,上学/上班,Practice talking about going to school or work.,练习表达上学/上班的行程。,35,L1,掌握go to / leave for等表达。,上学 上班 go to leave for,"## 上学/上班
+- I leave for work at 8.
+- I go to work by bus.
+- I take the subway to school.
+- I come to school early.
+leave for = 出发去某地。",practice_foundation-daily-life_日程安排_上学上班
+基础②·日程安排,放学/下班后,Practice talking about after school or after work activities.,练习描述放学/下班后的活动。,35,L1,掌握after school/work表达。,放学 下班 after,"## 放学/下班后
+- I come home at 6 pm.
+- I stay at home on Sundays.
+- I do my homework after school.
+on Sundays = 每个周日。",practice_foundation-daily-life_日程安排_放学下班后
+基础②·日程安排,交通方式,Practice talking about transportation by bus bike or subway.,练习用by/take表达交通方式。,35,L1,掌握交通方式表达：by bus / take the subway。,交通 by take,"## 交通方式
+- I go to work by bus.
+- I take the subway to school.
+- I walk to school.
+by+交通工具，take the+交通工具。",practice_foundation-daily-life_日程安排_交通方式
+基础②·日程安排,时间规划,Practice planning schedule with wait for and look for.,练习用wait for和look for表达等待和寻找。,35,L1,掌握wait for/look for等短语动词。,等待 寻找 计划,"## 时间规划
+- I wait for the bus at the stop.
+- I look for my keys.
+- I come to school on time.
+wait for + 人/物，look for + 物。",practice_foundation-daily-life_日程安排_时间规划
+基础②·购物与出行,我想买…,Practice saying what you want to buy.,练习表达想买什么。,35,L1,掌握I want to buy表达购物意愿。,购物 想买 buy,"## 我想买
+- I want to buy a new shirt.
+- I need to go shopping this weekend.
+want to buy + 物品，need to go + 地点。",practice_foundation-daily-life_购物出行_我想买
+基础②·购物与出行,问价格,Practice asking prices with How much.,练习用How much问价格。,35,L1,掌握How much is/are问价格。,价格 How much,"## 问价格
+- How much is this? — It's 50 yuan.
+- How much are these? — They're 100 yuan.
+is+单数，are+复数。",practice_foundation-daily-life_购物出行_问价格
+基础②·购物与出行,试穿与挑选,Practice trying on clothes and choosing sizes.,练习试穿和挑选尺码颜色。,40,L1,掌握try on和size表达。,试穿 挑选 尺码,"## 试穿与挑选
+- Can I try this on? — Sure.
+- Do you have this in a smaller size?
+- This is too expensive.
+- I'll take this one.
+try on可分开：try it on。",practice_foundation-daily-life_购物出行_试穿挑选
+基础②·购物与出行,天气与活动,Practice describing weather and suggesting activities.,练习描述天气和提议活动。,35,L1,掌握天气描述和Let's提议。,天气 活动 Let's,"## 天气与活动
 - It's sunny today. Let's go out!
-- What's the weather like? — It's warm.
-
-## 交通方式
-- I take the bus to work.
+- What's the weather like?
+- I go out for a walk every evening.
+- Let's go to the park.
+It's+天气词，Let's+动词。",practice_foundation-daily-life_购物出行_天气活动
+基础②·购物与出行,出行计划,Practice talking about travel plans and transportation.,练习用I walk / I take描述出行方式。,35,L1,掌握出行方式表达。,出行 计划 方式,"## 出行计划
 - I walk to school. It's not far.
-- I go to work by bus.",practice_foundation-daily-life_购物与出行_天气与出行
-基础②·餐饮与社交,在外就餐,Practice ordering food at a restaurant and talking about dining experiences.,练习在餐厅点餐和评价食物。,40,L1,掌握餐厅用语：Can I have the menu? / I'd like to order / The food is delicious。,餐厅 点餐 评价 外出就餐,"## 餐厅流程
-- 要菜单：Can I have the menu, please?
-- 点餐：I'd like to order a pizza.
-- 推荐：What do you recommend?
-- 评价：The food is delicious!
-- 结账：Can I have the bill, please?",practice_foundation-daily-life_餐饮与社交_在外就餐
-基础②·餐饮与社交,通讯与联络,Practice making phone calls sending messages and making plans to meet up.,练习打电话、发消息和约定见面。,35,L1,掌握通讯表达：call / send messages / Let's meet at。,通讯 电话 短信 见面,"## 通讯表达
-- 打电话：I call my mom every day.
-- 发消息：I send messages to my friends.
-- 约定：Let's meet at the coffee shop at 3 pm.
-- 迟到：Sorry, I'm late. The traffic was bad.",practice_foundation-daily-life_餐饮与社交_通讯与联络
+- I need an umbrella. It's raining.
+- I take the bus to work.
+注意交通工具前用the。",practice_foundation-daily-life_购物出行_出行计划
+基础②·餐饮与社交,点餐,Practice ordering food at a restaurant.,练习在餐厅点餐。,40,L1,掌握点餐用语：menu / order / recommend。,餐厅 点餐 菜单,"## 点餐流程
+- Can I have the menu please?
+- I'd like to order a pizza and a salad.
+- What do you recommend?
+- I'll have the same.
+礼貌点餐用I'd like to...。",practice_foundation-daily-life_餐饮社交_点餐
+基础②·餐饮与社交,评价食物,Practice evaluating food with delicious and tasty.,练习评价食物：delicious/tasty/sweet。,35,L1,掌握评价食物的表达。,评价 食物 味道,"## 评价食物
+- The food is delicious! I love it.
+- Can I have the bill please?
+- It's 120 yuan.
+delicious比good程度更强。",practice_foundation-daily-life_餐饮社交_评价食物
+基础②·餐饮与社交,打电话与发消息,Practice making phone calls and sending messages.,练习打电话和发消息。,35,L1,掌握call/send/text等通讯动词。,电话 消息 通讯,"## 通讯表达
+- I call my mom every day.
+- I send messages to my friends on WeChat.
+- Can you call me back later?
+call后直接加人。",practice_foundation-daily-life_餐饮社交_打电话
+基础②·餐饮与社交,约见面,Practice making plans to meet someone.,练习约定见面时间和地点。,35,L1,掌握Let's meet at表达约见。,约定 见面 meet,"## 约见面
+- Let's meet at the coffee shop at 3 pm.
+- I'm on my way. I'll be there in 10 minutes.
+meet at + 地点 + at + 时间。",practice_foundation-daily-life_餐饮社交_约见面
+基础②·餐饮与社交,迟到与道歉,Practice apologizing for being late.,练习迟到道歉和早晨习惯表达。,35,L1,掌握道歉表达和日常习惯。,迟到 道歉 习惯,"## 迟到和习惯
+- Sorry I'm late. The traffic was bad.
+- I check my phone first thing in the morning.
+道歉时解释原因。",practice_foundation-daily-life_餐饮社交_迟到道歉
+基础②·祈使句,日常指令,Practice giving daily commands and instructions.,练习日常指令表达：肯定祈使句。,35,L1,掌握肯定祈使句基本结构。,祈使句 指令 命令,"## 日常指令
+- Sit down please.
+- Open the door please.
+- Please be quiet.
+- Come here. Go there.
+祈使句以动词原形开头。",practice_foundation-daily-life_祈使句_日常指令
+基础②·祈使句,否定祈使句,Practice negative commands with Don't.,练习否定祈使句：Don't + 动词。,35,L1,掌握Don't否定祈使句结构。,否定祈使句 Don't,"## 否定祈使句
+- Don't worry.
+- Don't be late for class.
+- Don't forget to bring your book.
+Don't + 动词原形。",practice_foundation-daily-life_祈使句_否定祈使句
+基础②·祈使句,Let's提议,Practice making suggestions with Let's.,练习Let's提议和Let's not否定提议。,35,L1,掌握Let's + 动词和Let's not结构。,Let's 提议 建议,"## Let's提议
+- Let's go!
+- Let's meet at 3 o'clock.
+- Let's not wait any longer.
+Let's = Let us，表示建议。",practice_foundation-daily-life_祈使句_Let's提议
+基础②·祈使句,提醒与建议,Practice giving reminders and advice with Be and Please.,练习提醒和建议的表达。,35,L1,掌握Be + 形容词和礼貌提醒。,提醒 建议 Be careful,"## 提醒与建议
+- Be careful!
+- Please be on time.
+- Don't forget to call me.
+Be + 形容词表示'要...'。",practice_foundation-daily-life_祈使句_提醒建议
+基础②·祈使句,综合运用,Practice comprehensive use of imperative sentences.,综合练习祈使句的各种用法。,40,L1,综合运用各种祈使句表达。,祈使句 综合 运用,"## 综合运用
+- Let's go out for dinner tonight.
+- Don't forget to call me when you arrive.
+- Be careful and don't be late.
+将肯定祈使句、否定祈使句和Let's结合使用。",practice_foundation-daily-life_祈使句_综合运用

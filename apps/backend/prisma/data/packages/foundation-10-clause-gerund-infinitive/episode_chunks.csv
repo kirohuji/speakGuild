@@ -1,31 +1,64 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_weather_nature_0,1,What's the weather like today?,0
-found_foundation_weather_nature_0,1,It's sunny today.,1
-found_foundation_weather_nature_0,1,It's raining outside.,2
-found_foundation_weather_nature_0,1,It's very cold today.,3
-found_foundation_weather_nature_0,1,It's hot and humid.,4
-found_foundation_weather_nature_0,1,It's cloudy today.,5
-found_foundation_weather_nature_0,1,It's snowing heavily.,6
-found_foundation_weather_nature_0,1,The temperature is 25 degrees.,7
-found_foundation_weather_nature_0,1,It's windy today.,8
-found_foundation_weather_nature_0,1,Bring an umbrella!,9
-found_foundation_weather_nature_0,1,The weather is nice today.,10
-found_foundation_weather_nature_0,1,It's getting warmer.,11
-found_foundation_weather_nature_0,1,What a beautiful day!,12
-found_foundation_weather_nature_0,1,I hope it doesn't rain.,13
-found_foundation_weather_nature_0,1,The sun is shining.,14
-found_foundation_weather_nature_0,2,My favorite season is spring.,0
-found_foundation_weather_nature_0,2,Summer is very hot.,1
-found_foundation_weather_nature_0,2,Leaves fall in autumn.,2
-found_foundation_weather_nature_0,2,It snows in winter.,3
-found_foundation_weather_nature_0,2,The flowers are blooming.,4
-found_foundation_weather_nature_0,2,Let's go for a walk.,5
-found_foundation_weather_nature_0,2,The air is fresh.,6
-found_foundation_weather_nature_0,2,I love the beach!,7
-found_foundation_weather_nature_0,2,The stars are beautiful.,8
-found_foundation_weather_nature_0,2,Let's enjoy the sunset.,9
-found_foundation_weather_nature_0,2,The mountain is covered with snow.,10
-found_foundation_weather_nature_0,2,I like to hike in the forest.,11
-found_foundation_weather_nature_0,2,The river is very clean.,12
-found_foundation_weather_nature_0,2,Birds are singing.,13
-found_foundation_weather_nature_0,2,What a lovely garden!,14
+ch_clause_01,1,I think (that) you are right.,0
+ch_clause_01,1,I don't think (that) it's a good idea.,1
+ch_clause_01,1,I believe (that) he is telling the truth.,2
+ch_clause_01,1,I know (that) you are busy.,3
+ch_clause_01,1,I'm sure (that) everything will be fine.,4
+ch_clause_01,1,I'm sorry (that) I'm late.,5
+ch_clause_01,2,He said (that) he would come.,0
+ch_clause_01,2,She told me (that) she liked it.,1
+ch_clause_01,2,I heard (that) the store is closing.,2
+ch_clause_01,2,I'm not sure (that) I can go.,3
+ch_clause_01,2,I don't know what he wants.,4
+ch_clause_01,2,Can you tell me where the station is?,5
+ch_clause_01,2,I wonder why he is late.,6
+ch_clause_02,1,The book that I read is very interesting.,0
+ch_clause_02,1,Is this the food that you like?,1
+ch_clause_02,1,I like the one that you showed me.,2
+ch_clause_02,1,The person who called is my boss.,3
+ch_clause_02,1,Do you know the girl who is talking to Tom?,4
+ch_clause_02,1,He is the kind of person who never gives up.,5
+ch_clause_02,2,The restaurant where we met is still there.,0
+ch_clause_02,2,That's the place where I grew up.,1
+ch_clause_02,2,This is the reason why I came.,2
+ch_clause_02,2,The movie that I like most is this one.,3
+ch_clause_02,2,The friend who helped me is someone that I can always trust.,4
+ch_clause_02,2,There are many things that I want to learn.,5
+ch_clause_03,1,I want to learn Spanish.,0
+ch_clause_03,1,I hope to see you again soon.,1
+ch_clause_03,1,I would like to apply for this job.,2
+ch_clause_03,1,I decided to study abroad.,3
+ch_clause_03,1,She chose to stay at home.,4
+ch_clause_03,1,I promised to help him.,5
+ch_clause_03,1,Don't forget to call me.,6
+ch_clause_03,2,I came here to study English.,0
+ch_clause_03,2,I went to the store to buy some food.,1
+ch_clause_03,2,I saved money to buy a car.,2
+ch_clause_03,2,It's important to practice every day.,3
+ch_clause_03,2,It's fun to travel with friends.,4
+ch_clause_03,2,It's hard to say goodbye.,5
+ch_clause_03,2,I have something to tell you.,6
+ch_clause_04,1,I enjoy reading books in my free time.,0
+ch_clause_04,1,I like swimming but I don't like running.,1
+ch_clause_04,1,I love watching movies on weekends.,2
+ch_clause_04,1,I hate waiting in long lines.,3
+ch_clause_04,1,I started learning English two years ago.,4
+ch_clause_04,1,I finished writing the report.,5
+ch_clause_04,1,I keep trying even when it's hard.,6
+ch_clause_04,2,I'm good at remembering names.,0
+ch_clause_04,2,She is interested in learning new things.,1
+ch_clause_04,2,He is tired of waiting.,2
+ch_clause_04,2,Swimming is a lot of fun.,3
+ch_clause_04,2,Learning a new language is good for your brain.,4
+ch_clause_04,2,Thank you for helping me.,5
+ch_clause_04,2,I'm sorry for being late.,6
+ch_clause_05,1,I think it's important to practice every day.,0
+ch_clause_05,1,I know that he wants to be a doctor.,1
+ch_clause_05,1,I believe that learning English is fun.,2
+ch_clause_05,1,She said that she enjoys working here.,3
+ch_clause_05,1,The best thing that you can do is to keep trying.,4
+ch_clause_05,2,I think the movie that we watched is worth seeing.,0
+ch_clause_05,2,What I like most about this city is the people.,1
+ch_clause_05,2,I decided to learn English because I think it's important for my future.,2
+ch_clause_05,2,The friend who encouraged me the most is someone that I will always remember.,3
+ch_clause_05,2,I enjoy traveling because I think it's the best way to learn about different cultures.,4

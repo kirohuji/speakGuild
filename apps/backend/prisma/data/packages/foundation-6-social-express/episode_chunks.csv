@@ -1,61 +1,70 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_social_express_0,1,Hello! How are you?,0
-found_foundation_social_express_0,1,Hi! Long time no see.,1
-found_foundation_social_express_0,1,Nice to meet you!,2
-found_foundation_social_express_0,1,How's it going?,3
-found_foundation_social_express_0,1,Pretty good, thanks!,4
-found_foundation_social_express_0,1,What have you been up to?,5
-found_foundation_social_express_0,1,Good morning!,6
-found_foundation_social_express_0,1,Good afternoon!,7
-found_foundation_social_express_0,1,Good evening!,8
-found_foundation_social_express_0,1,It's been a while!,9
-found_foundation_social_express_0,1,How have you been?,10
-found_foundation_social_express_0,1,I'm doing great!,11
-found_foundation_social_express_0,1,Not bad, how about you?,12
-found_foundation_social_express_0,1,Same as always.,13
-found_foundation_social_express_0,1,Glad to see you again!,14
-found_foundation_social_express_0,2,My name is...,0
-found_foundation_social_express_0,2,I'm from China.,1
-found_foundation_social_express_0,2,I live in Beijing.,2
-found_foundation_social_express_0,2,I'm a student.,3
-found_foundation_social_express_0,2,I work as a teacher.,4
-found_foundation_social_express_0,2,I'm 25 years old.,5
-found_foundation_social_express_0,2,I have two brothers.,6
-found_foundation_social_express_0,2,This is my friend, Tom.,7
-found_foundation_social_express_0,2,We're classmates.,8
-found_foundation_social_express_0,2,I'm from a small town.,9
-found_foundation_social_express_0,2,I study at university.,10
-found_foundation_social_express_0,2,My major is English.,11
-found_foundation_social_express_0,2,I like traveling and reading.,12
-found_foundation_social_express_0,2,I'm here on vacation.,13
-found_foundation_social_express_0,2,I'm happy to be here.,14
-found_foundation_social_express_1,1,Thank you very much!,0
-found_foundation_social_express_1,1,You're welcome.,1
-found_foundation_social_express_1,1,I'm sorry.,2
-found_foundation_social_express_1,1,That's okay.,3
-found_foundation_social_express_1,1,Excuse me.,4
-found_foundation_social_express_1,1,No problem!,5
-found_foundation_social_express_1,1,I appreciate your help.,6
-found_foundation_social_express_1,1,Thanks for your time.,7
-found_foundation_social_express_1,1,Sorry to bother you.,8
-found_foundation_social_express_1,1,That's very kind of you!,9
-found_foundation_social_express_1,1,Please.,10
-found_foundation_social_express_1,1,After you.,11
-found_foundation_social_express_1,1,Bless you! (after sneeze),12
-found_foundation_social_express_1,1,My apologies.,13
-found_foundation_social_express_1,1,Don't worry about it.,14
-found_foundation_social_express_1,2,Can you help me?,0
-found_foundation_social_express_1,2,Could you please open the door?,1
-found_foundation_social_express_1,2,May I come in?,2
-found_foundation_social_express_1,2,Would you mind helping me?,3
-found_foundation_social_express_1,2,Is it okay if I sit here?,4
-found_foundation_social_express_1,2,Can I borrow your pen?,5
-found_foundation_social_express_1,2,Could you speak more slowly?,6
-found_foundation_social_express_1,2,Do you need a hand?,7
-found_foundation_social_express_1,2,Let me help you!,8
-found_foundation_social_express_1,2,Can I get you something?,9
-found_foundation_social_express_1,2,Would you like some water?,10
-found_foundation_social_express_1,2,Please come in.,11
-found_foundation_social_express_1,2,Take a seat, please.,12
-found_foundation_social_express_1,2,Make yourself at home.,13
-found_foundation_social_express_1,2,Let me know if you need anything.,14
+found_foundation_social_express_0,1,I was a student last year.,0
+found_foundation_social_express_0,1,He was very shy before.,1
+found_foundation_social_express_0,1,They were at home yesterday.,2
+found_foundation_social_express_0,1,I had a dog when I was a child.,3
+found_foundation_social_express_0,1,She had long hair last year.,4
+found_foundation_social_express_0,1,It was a nice day yesterday.,5
+found_foundation_social_express_0,1,I was happy with the result.,6
+found_foundation_social_express_0,2,I was at the office all day.,0
+found_foundation_social_express_0,2,Were you at home last night? Yes I was.,1
+found_foundation_social_express_0,2,Was she at the party? No she wasn't,2
+found_foundation_social_express_0,2,How was your weekend? It was great!,3
+found_foundation_social_express_0,2,The movie was really boring.,4
+found_foundation_social_express_0,2,Was it cold yesterday?,5
+found_foundation_social_express_0,2,Where were you last night? I was at home.,6
+found_foundation_social_express_1,1,I got up at 8 yesterday.,0
+found_foundation_social_express_1,1,I went to the supermarket.,1
+found_foundation_social_express_1,1,I ate noodles for lunch.,2
+found_foundation_social_express_1,1,I watched a movie last night.,3
+found_foundation_social_express_1,1,I played basketball with my friends every weekend.,4
+found_foundation_social_express_1,1,I studied for two hours.,5
+found_foundation_social_express_1,1,I cooked dinner for my family.,6
+found_foundation_social_express_1,2,I saw a friend at the mall.,0
+found_foundation_social_express_1,2,She said hello to me.,1
+found_foundation_social_express_1,2,I got a new phone last week.,2
+found_foundation_social_express_1,2,He made a big cake for the party.,3
+found_foundation_social_express_1,2,I did my homework after school.,4
+found_foundation_social_express_1,2,We had a great time at the beach.,5
+found_foundation_social_express_1,2,She took a lot of photos.,6
+found_foundation_social_express_1,2,He came home very late.,7
+found_foundation_social_express_2,1,Last weekend I visited my grandparents.,0
+found_foundation_social_express_2,1,Last year I traveled to Japan.,1
+found_foundation_social_express_2,1,I lived in Shanghai two years ago.,2
+found_foundation_social_express_2,1,I started this job three months ago.,3
+found_foundation_social_express_2,1,We moved to this city in 2018.,4
+found_foundation_social_express_2,1,I met my best friend in college.,5
+found_foundation_social_express_2,1,She started learning English when she was 10.,6
+found_foundation_social_express_2,2,I didn't go to school yesterday I was sick.,0
+found_foundation_social_express_2,2,She didn't like the movie.,1
+found_foundation_social_express_2,2,Did you have a good weekend? Yes I did.,2
+found_foundation_social_express_2,2,Did she call you yesterday? No she didn't.,3
+found_foundation_social_express_2,2,When did you arrive? I arrived at 3 pm.,4
+found_foundation_social_express_2,2,Where did you go last night? I went to a concert.,5
+found_foundation_social_express_2,2,What did you do yesterday? I stayed home.,6
+found_foundation_social_express_3,1,I have been to Beijing.,0
+found_foundation_social_express_3,1,Have you ever been to Shanghai? Yes I have.,1
+found_foundation_social_express_3,1,I have never tried hot pot.,2
+found_foundation_social_express_3,1,She has seen that movie three times.,3
+found_foundation_social_express_3,1,Have you finished your homework? Yes I have.,4
+found_foundation_social_express_3,2,I have lost my keys!,0
+found_foundation_social_express_3,2,She has already left the office.,1
+found_foundation_social_express_3,2,I have just arrived at the station.,2
+found_foundation_social_express_3,2,I haven't eaten lunch yet.,3
+found_foundation_social_express_3,2,Have you eaten yet? No not yet.,4
+found_foundation_social_express_3,2,I have lived here for five years.,5
+found_foundation_social_express_3,2,She has worked here since 2020.,6
+found_foundation_social_express_4,1,I remember when I was a child I played outside every day.,0
+found_foundation_social_express_4,1,Those were the good old days.,1
+found_foundation_social_express_4,1,I used to play the piano but now I don't.,2
+found_foundation_social_express_4,1,She used to have long hair but now she has short hair.,3
+found_foundation_social_express_4,1,I didn't use to like vegetables but now I love them.,4
+found_foundation_social_express_4,1,Did you use to live here? Yes I did.,5
+found_foundation_social_express_4,2,I have changed a lot since then.,0
+found_foundation_social_express_4,2,Things have changed so much in the past ten years.,1
+found_foundation_social_express_4,2,Life was simpler before Now everything is so fast.,2
+found_foundation_social_express_4,2,When I was young I stayed up late Now I go to bed early.,3
+found_foundation_social_express_4,2,I always watched TV after school when I was a kid.,4
+found_foundation_social_express_4,2,There used to be a park here but now it's a shopping mall.,5
+found_foundation_social_express_4,2,I used to think this was difficult but now I know it's easy.,6
+found_foundation_social_express_4,2,Looking back I realize how much I have grown.,7

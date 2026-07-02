@@ -1,121 +1,215 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础⑨·比较事物,比...更,bigger,更大的,adj,/ˈbɪɡər/,/ˈbɪɡə/,L2,big的比较级。,"[{"en":"My house is bigger than yours.","zh":"我的房子比你的大。"}]",0
-基础⑨·比较事物,比...更,than,比,conj,/ðæn/,/ðən/,L2,比较级后接比较对象。,"[{"en":"She is taller than me.","zh":"她比我高。"}]",1
-基础⑨·比较事物,比...更,smaller,更小的,adj,/ˈsmɔːlər/,/ˈsmɔːlə/,L2,small的比较级。,"[{"en":"This room is smaller.","zh":"这个房间更小。"}]",2
-基础⑨·比较事物,比...更,faster,更快的,adj,/ˈfæstər/,/ˈfɑːstə/,L2,fast的比较级。,"[{"en":"A car is faster than a bike.","zh":"汽车比自行车快。"}]",3
-基础⑨·比较事物,比...更,cheaper,更便宜的,adj,/ˈtʃiːpər/,/ˈtʃiːpə/,L2,cheap的比较级。,"[{"en":"This one is cheaper than that one.","zh":"这个比那个便宜。"}]",4
-基础⑨·比较事物,比...更,easier,更容易的,adj,/ˈiːziər/,/ˈiːziə/,L2,easy的比较级。y→i+er。,"[{"en":"English is easier than Chinese.","zh":"英语比中文容易。"}]",5
-基础⑨·比较事物,比...更,heavier,更重的,adj,/ˈheviər/,/ˈheviə/,L2,heavy的比较级。,"[{"en":"This bag is heavier.","zh":"这个包更重。"}]",6
-基础⑨·比较事物,比...更,happier,更开心的,adj,/ˈhæpiər/,/ˈhæpiə/,L2,happy的比较级。,"[{"en":"I feel happier now.","zh":"我现在感觉更开心。"}]",7
-基础⑨·比较事物,比...更,closer,更近的,adj,/ˈkloʊsər/,/ˈkləʊsə/,L2,close的比较级。,"[{"en":"Come closer.","zh":"靠近一点。"}]",8
-基础⑨·比较事物,比...更,wider,更宽的,adj,/ˈwaɪdər/,/ˈwaɪdə/,L2,wide的比较级。,"[{"en":"This road is wider.","zh":"这条路更宽。"}]",9
-基础⑨·比较事物,比...更,narrower,更窄的,adj,/ˈnæroʊər/,/ˈnærəʊə/,L2,narrow的比较级。,"[{"en":"This street is narrower.","zh":"这条街更窄。"}]",10
-基础⑨·比较事物,比...更,more,更多的,adj/adv,/mɔːr/,/mɔː/,L2,many/much的比较级。more+adj。,"[{"en":"This is more interesting.","zh":"这个更有趣。"}]",11
-基础⑨·比较事物,比...更,less,更少的,adj/adv,/les/,/les/,L2,little的比较级。less than。,"[{"en":"I have less time than you.","zh":"我的时间比你少。"}]",12
-基础⑨·比较事物,比...更,compare,比较,verb,/kəmˈper/,/kəmˈpeə/,L2,比较。compare A with B。,"[{"en":"Compare these two options.","zh":"比较这两个选项。"}]",13
-基础⑨·比较事物,比...更,contrast,对比,noun/verb,/ˈkɑːntræst/,/ˈkɒntrɑːst/,L2,对比。in contrast。,"[{"en":"In contrast, this one is cheaper.","zh":"相比之下，这个更便宜。"}]",14
-基础⑨·比较事物,比...更,difference,差异,noun,/ˈdɪfərəns/,/ˈdɪfərəns/,L2,差异。the difference between。,"[{"en":"What is the difference?","zh":"有什么差异？"}]",15
-基础⑨·比较事物,最...的,best,最好的,adj,/best/,/best/,L2,good的最高级。,"[{"en":"This is the best day ever!","zh":"这是最好的一天！"}]",0
-基础⑨·比较事物,最...的,biggest,最大的,adj,/ˈbɪɡɪst/,/ˈbɪɡɪst/,L2,big的最高级。,"[{"en":"It is the biggest one.","zh":"这是最大的那个。"}]",1
-基础⑨·比较事物,最...的,smallest,最小的,adj,/ˈsmɔːlɪst/,/ˈsmɔːlɪst/,L2,small的最高级。,"[{"en":"The smallest size, please.","zh":"请给我最小的尺寸。"}]",2
-基础⑨·比较事物,最...的,fastest,最快的,adj,/ˈfæstɪst/,/ˈfɑːstɪst/,L2,fast的最高级。,"[{"en":"This is the fastest way.","zh":"这是最快的方式。"}]",3
-基础⑨·比较事物,最...的,cheapest,最便宜的,adj,/ˈtʃiːpɪst/,/ˈtʃiːpɪst/,L2,cheap的最高级。,"[{"en":"The cheapest option is fine.","zh":"最便宜的选择就行。"}]",4
-基础⑨·比较事物,最...的,easiest,最容易的,adj,/ˈiːziɪst/,/ˈiːziɪst/,L2,easy的最高级。,"[{"en":"The easiest way to learn.","zh":"最容易的学习方式。"}]",5
-基础⑨·比较事物,最...的,most,最多的,adj/adv,/moʊst/,/məʊst/,L2,many/much的最高级。,"[{"en":"She is the most beautiful.","zh":"她是最美的。"}]",6
-基础⑨·比较事物,最...的,least,最少的,adj/adv,/liːst/,/liːst/,L2,little的最高级。,"[{"en":"Choose the least expensive one.","zh":"选最不贵的。"}]",7
-基础⑨·比较事物,最...的,worst,最差的,adj,/wɜːrst/,/wɜːst/,L2,bad的最高级。bad→worse→worst。,"[{"en":"That was the worst movie.","zh":"那是部最烂的电影。"}]",8
-基础⑨·比较事物,最...的,farthest,最远的,adj,/ˈfɑːrðɪst/,/ˈfɑːðɪst/,L2,far的最高级。far→farther→farthest。,"[{"en":"It is the farthest city.","zh":"那是座最远的城市。"}]",9
-基础⑨·比较事物,最...的,top,顶尖的,adj,/tɑːp/,/tɒp/,L2,顶尖的。top student。,"[{"en":"She is the top student.","zh":"她是尖子生。"}]",10
-基础⑨·比较事物,最...的,number one,第一,adj,/ˈnʌmbər wʌn/,/ˈnʌmbə wʌn/,L2,第一。number one。,"[{"en":"He is number one in the class.","zh":"他是班里第一名。"}]",11
-基础⑨·比较事物,最...的,ultimate,终极的,adj,/ˈʌltɪmət/,/ˈʌltɪmət/,L2,终极的。the ultimate goal。,"[{"en":"This is the ultimate goal.","zh":"这是终极目标。"}]",12
-基础⑨·比较事物,最...的,peerless,无双的,adj,/ˈpɪrləs/,/ˈpɪələs/,L2,无双的。peerless beauty。,"[{"en":"Her talent is peerless.","zh":"她的才华无人能及。"}]",13
-基础⑨·描述位置,有...在...,there,那里(存在句),adv,/ðer/,/ðeə/,L2,There is/are 存在句。,"[{"en":"There is a book on the desk.","zh":"桌上有本书。"}]",0
-基础⑨·描述位置,有...在...,some,一些,det,/sʌm/,/sʌm/,L2,肯定句中的一些。,"[{"en":"There are some apples.","zh":"有一些苹果。"}]",1
-基础⑨·描述位置,有...在...,any,任何(否定/疑问),det,/ˈeni/,/ˈeni/,L2,否定/疑问中的一些。,"[{"en":"There aren't any students.","zh":"没有任何学生。"}]",2
-基础⑨·描述位置,有...在...,exist,存在,verb,/ɪɡˈzɪst/,/ɪɡˈzɪst/,L2,存在。do ghosts exist?,"[{"en":"Do ghosts exist?","zh":"鬼存在吗？"}]",4
-基础⑨·描述位置,有...在...,empty,空的,adj,/ˈempti/,/ˈempti/,L2,空的。empty room。,"[{"en":"The room is empty.","zh":"房间是空的。"}]",6
-基础⑨·描述位置,有...在...,full,满的,adj,/fʊl/,/fʊl/,L2,满的。full of。,"[{"en":"The fridge is full.","zh":"冰箱满了。"}]",7
-基础⑨·描述位置,有...在...,crowded,拥挤的,adj,/ˈkraʊdɪd/,/ˈkraʊdɪd/,L2,拥挤的。crowded place。,"[{"en":"The street is crowded.","zh":"街上很拥挤。"}]",8
-基础⑨·描述位置,有...在...,occupied,被占用的,adj,/ˈɑːkjupaɪd/,/ˈɒkjupaɪd/,L2,被占用的。seat occupied。,"[{"en":"Is this seat occupied?","zh":"这个座位有人吗？"}]",9
-基础⑨·描述位置,有...在...,vacant,空着的,adj,/ˈveɪkənt/,/ˈveɪkənt/,L2,空着的。vacant seat。,"[{"en":"Is there a vacant room?","zh":"有空房间吗？"}]",10
-基础⑨·描述位置,有...在...,plenty,大量,pron,/ˈplenti/,/ˈplenti/,L2,大量。plenty of。,"[{"en":"There is plenty of food.","zh":"有大量的食物。"}]",11
-基础⑨·描述位置,有...在...,supply,供应,noun,/səˈplaɪ/,/səˈplaɪ/,L2,供应。supply of。,"[{"en":"Is there enough supply?","zh":"有足够的供应吗？"}]",12
-基础⑨·描述位置,在...里/上/旁边,under,在...下面,prep,/ˈʌndər/,/ˈʌndə/,L2,在...下面。,"[{"en":"The cat is under the chair.","zh":"猫在椅子下。"}]",0
-基础⑨·描述位置,在...里/上/旁边,next to,在...旁边,phrase,/nekst tuː/,/nekst tə/,L2,在...旁边。,"[{"en":"The school is next to the park.","zh":"学校在公园旁边。"}]",1
-基础⑨·描述位置,在...里/上/旁边,between,在...之间,prep,/bɪˈtwiːn/,/bɪˈtwiːn/,L2,在两者之间。,"[{"en":"The bank is between the store and the hospital.","zh":"银行在商店和医院之间。"}]",2
-基础⑨·描述位置,在...里/上/旁边,behind,在...后面,prep,/bɪˈhaɪnd/,/bɪˈhaɪnd/,L2,在...后面。,"[{"en":"The dog is behind the door.","zh":"狗在门后面。"}]",3
-基础⑨·描述位置,在...里/上/旁边,above,在...上方,prep,/əˈbʌv/,/əˈbʌv/,L2,在...上方(不接触)。,"[{"en":"The clock is above the door.","zh":"钟在门上方。"}]",4
-基础⑨·描述位置,在...里/上/旁边,below,在...下方,prep,/bɪˈloʊ/,/bɪˈləʊ/,L2,在...下方。,"[{"en":"The temperature is below zero.","zh":"温度在零下。"}]",5
-基础⑨·描述位置,在...里/上/旁边,among,在...之中(三者+),prep,/əˈmʌŋ/,/əˈmʌŋ/,L2,在...之中(多者)。,"[{"en":"She is sitting among her friends.","zh":"她坐在朋友中间。"}]",6
-基础⑨·描述位置,在...里/上/旁边,against,靠着,prep,/əˈɡenst/,/əˈɡenst/,L2,靠着。against the wall。,"[{"en":"The bike is against the wall.","zh":"自行车靠在墙上。"}]",7
-基础⑨·描述位置,在...里/上/旁边,beside,在...旁边,prep,/bɪˈsaɪd/,/bɪˈsaɪd/,L2,在...旁边。=next to。,"[{"en":"She sat beside me.","zh":"她坐在我旁边。"}]",10
-基础⑨·描述位置,在...里/上/旁边,surround,围绕,verb,/səˈraʊnd/,/səˈraʊnd/,L2,围绕。surrounded by。,"[{"en":"The house is surrounded by trees.","zh":"房子被树围绕。"}]",11
-基础⑨·程度表达,和...一样,as,一样地,adv,/æz/,/əz/,L2,as...as结构。,"[{"en":"He is as tall as me.","zh":"他和我一样高。"}]",0
-基础⑨·程度表达,和...一样,enough,足够,adv,/ɪˈnʌf/,/ɪˈnʌf/,L2,放在形容词后。,"[{"en":"It's big enough.","zh":"够大了。"}]",1
-基础⑨·程度表达,和...一样,equal,相等的,adj,/ˈiːkwəl/,/ˈiːkwəl/,L2,相等的。equal to。,"[{"en":"One plus one equals two.","zh":"一加一等于二。"}]",2
-基础⑨·程度表达,和...一样,identical,完全相同的,adj,/aɪˈdentɪkəl/,/aɪˈdentɪkəl/,L2,完全相同的。identical twins。,"[{"en":"The two bags are identical.","zh":"两个包完全一样。"}]",3
-基础⑨·程度表达,和...一样,mirror,镜子/反映,noun/verb,/ˈmɪrər/,/ˈmɪrə/,L2,镜子。mirror image。,"[{"en":"She is the mirror image of her mom.","zh":"她和她妈妈一模一样。"}]",4
-基础⑨·程度表达,和...一样,similar,相似的,adj,/ˈsɪmələr/,/ˈsɪmɪlə/,L2,相似的。similar to。,"[{"en":"This is similar to mine.","zh":"这个和我的相似。"}]",5
-基础⑨·程度表达,和...一样,barely,几乎不,adv,/ˈberli/,/ˈbeəli/,L2,几乎不。barely enough。,"[{"en":"I barely had enough time.","zh":"我几乎没时间。"}]",6
-基础⑨·程度表达,和...一样,exceed,超过,verb,/ɪkˈsiːd/,/ɪkˈsiːd/,L2,超过。exceed the limit。,"[{"en":"This exceeds my expectations.","zh":"这超出了我的预期。"}]",7
-基础⑨·程度表达,和...一样,match,匹配,verb,/mætʃ/,/mætʃ/,L2,匹配。match with。,"[{"en":"Your shoes match your bag.","zh":"你的鞋和包很配。"}]",8
-基础⑨·程度表达,和...一样,likewise,同样地,adv,/ˈlaɪkwaɪz/,/ˈlaɪkwaɪz/,L2,同样地。likewise。,"[{"en":"He is kind, and likewise his sister.","zh":"他很善良，他妹妹也一样。"}]",9
-基础⑨·程度表达,和...一样,equally,相等地,adv,/ˈiːkwəli/,/ˈiːkwəli/,L2,相等地。equally good。,"[{"en":"Both are equally good.","zh":"两个一样好。"}]",10
-基础⑨·程度表达,和...一样,even,甚至/更加,adv,/ˈiːvən/,/ˈiːvən/,L2,甚至。even better。,"[{"en":"This is even better than expected.","zh":"这比预期的还要好。"}]",11
-基础⑨·程度表达,和...一样,nowhere near,远不及,phrase,/ˈnoʊwer nɪr/,/ˈnəʊweə nɪə/,L2,远不及。nowhere near as。,"[{"en":"He is nowhere near as tall as you.","zh":"他远没你高。"}]",12
-基础⑨·程度表达,怎么做的,loudly,大声地,adv,/ˈlaʊdli/,/ˈlaʊdli/,L2,loud+ly。,"[{"en":"He laughed loudly.","zh":"他大声笑了。"}]",4
-基础⑨·程度表达,怎么做的,quietly,安静地,adv,/ˈkwaɪətli/,/ˈkwaɪətli/,L2,quiet+ly。,"[{"en":"She spoke quietly.","zh":"她轻声说。"}]",5
-基础⑨·程度表达,怎么做的,happily,开心地,adv,/ˈhæpɪli/,/ˈhæpɪli/,L2,happy→happily。,"[{"en":"They danced happily.","zh":"他们开心地跳舞。"}]",6
-基础⑨·程度表达,怎么做的,easily,容易地,adv,/ˈiːzɪli/,/ˈiːzɪli/,L2,easy→easily。,"[{"en":"I can easily do it.","zh":"我能轻松做到。"}]",7
-基础⑨·程度表达,怎么做的,heavily,沉重地,adv,/ˈhevɪli/,/ˈhevɪli/,L2,heavy→heavily。,"[{"en":"It rained heavily.","zh":"雨下得很大。"}]",8
-基础⑨·程度表达,怎么做的,smoothly,顺利地,adv,/ˈsmuːðli/,/ˈsmuːðli/,L2,smooth+ly。,"[{"en":"Everything went smoothly.","zh":"一切顺利。"}]",9
-基础⑨·程度表达,怎么做的,hard,努力地/硬地,adv,/hɑːrd/,/hɑːd/,L2,努力。hard本身是副词。,"[{"en":"She works hard.","zh":"她工作努力。"}]",10
-基础⑨·程度表达,怎么做的,gently,温柔地,adv,/ˈdʒentli/,/ˈdʒentli/,L2,gentle→gently。,"[{"en":"She touched it gently.","zh":"她温柔地碰了碰。"}]",13
-基础⑨·程度表达,怎么做的,roughly,粗暴地/大约地,adv,/ˈrʌfli/,/ˈrʌfli/,L2,rough+ly。,"[{"en":"He roughly pushed me.","zh":"他粗暴地推了我。"}]",14
-基础⑨·比较事物,比...更,shorter,更短的,adj,/ˈʃɔːrtər/,/ˈʃɔːtə/,L2,short比较级。,"[{"en":"This route is shorter.","zh":"这条路更短。"}]",16
-基础⑨·比较事物,比...更,longer,更长的,adj,/ˈlɔːŋər/,/ˈlɒŋə/,L2,long比较级。,"[{"en":"This rope is longer.","zh":"这根绳子更长。"}]",17
-基础⑨·比较事物,比...更,thicker,更厚的,adj,/ˈθɪkər/,/ˈθɪkə/,L2,thick比较级。,"[{"en":"This book is thicker.","zh":"这本书更厚。"}]",18
-基础⑨·比较事物,比...更,thinner,更薄的/更瘦的,adj,/ˈθɪnər/,/ˈθɪnə/,L2,thin比较级。,"[{"en":"She looks thinner.","zh":"她看起来更瘦了。"}]",19
-基础⑨·比较事物,比...更,lighter,更轻的,adj,/ˈlaɪtər/,/ˈlaɪtə/,L2,light比较级。,"[{"en":"This bag is lighter.","zh":"这个包更轻。"}]",20
-基础⑨·比较事物,比...更,darker,更暗的,adj,/ˈdɑːrkər/,/ˈdɑːkə/,L2,dark比较级。,"[{"en":"It is getting darker.","zh":"天越来越暗了。"}]",21
-基础⑨·比较事物,比...更,weaker,更弱的,adj,/ˈwiːkər/,/ˈwiːkə/,L2,weak比较级。,"[{"en":"I feel weaker today.","zh":"我今天感觉更虚弱。"}]",22
-基础⑨·比较事物,比...更,tougher,更坚韧的,adj,/ˈtʌfər/,/ˈtʌfə/,L2,tough比较级。,"[{"en":"This material is tougher.","zh":"这种材料更坚韧。"}]",23
-基础⑨·比较事物,最...的,tallest,最高的,adj,/ˈtɔːlɪst/,/ˈtɔːlɪst/,L2,tall最高级。,"[{"en":"He is the tallest boy.","zh":"他是最高的男孩。"}]",14
-基础⑨·比较事物,最...的,shortest,最短的,adj,/ˈʃɔːrtɪst/,/ˈʃɔːtɪst/,L2,short最高级。,"[{"en":"The shortest route.","zh":"最短的路线。"}]",15
-基础⑨·比较事物,最...的,longest,最长的,adj,/ˈlɔːŋɡɪst/,/ˈlɒŋɡɪst/,L2,long最高级。,"[{"en":"The longest river.","zh":"最长的河。"}]",16
-基础⑨·比较事物,最...的,newest,最新的,adj,/ˈnuːɪst/,/ˈnjuːɪst/,L2,new最高级。,"[{"en":"The newest model.","zh":"最新款。"}]",17
-基础⑨·比较事物,最...的,oldest,最老的,adj,/ˈoʊldɪst/,/ˈəʊldɪst/,L2,old最高级。,"[{"en":"The oldest building.","zh":"最老的建筑。"}]",18
-基础⑨·比较事物,最...的,greatest,最伟大的,adj,/ˈɡreɪtɪst/,/ˈɡreɪtɪst/,L2,great最高级。,"[{"en":"The greatest show ever.","zh":"有史以来最伟大的演出。"}]",19
-基础⑨·描述位置,有...在...,everywhere,到处,adv,/ˈevriwer/,/ˈevriweə/,L2,到处。there is...everywhere。,"[{"en":"There are flowers everywhere.","zh":"到处都有花。"}]",14
-基础⑨·描述位置,有...在...,lack,缺乏,noun/verb,/læk/,/læk/,L2,缺乏。there is a lack of。,"[{"en":"There is a lack of information.","zh":"缺乏信息。"}]",16
-基础⑨·描述位置,有...在...,shortage,短缺,noun,/ˈʃɔːrtɪdʒ/,/ˈʃɔːtɪdʒ/,L2,短缺。shortage of。,"[{"en":"There is a shortage of water.","zh":"缺水。"}]",17
-基础⑨·描述位置,在...里/上/旁边,along,沿着,prep,/əˈlɔːŋ/,/əˈlɒŋ/,L2,沿着。along the road。,"[{"en":"Walk along the river.","zh":"沿着河走。"}]",12
-基础⑨·描述位置,在...里/上/旁边,beyond,在...之外,prep,/bɪˈjɑːnd/,/bɪˈjɒnd/,L2,在...之外。beyond the bridge。,"[{"en":"The park is beyond the hill.","zh":"公园在山那边。"}]",13
-基础⑨·描述位置,在...里/上/旁边,toward,朝/向,prep,/tɔːrd/,/təˈwɔːd/,L2,朝。go toward the sun。,"[{"en":"He walked toward me.","zh":"他向我走来。"}]",14
-基础⑨·描述位置,在...里/上/旁边,through,穿过,prep,/θruː/,/θruː/,L2,穿过。through the tunnel。,"[{"en":"Go through the door.","zh":"穿过那扇门。"}]",15
-基础⑨·描述位置,在...里/上/旁边,across,横穿/在对面,prep,/əˈkrɔːs/,/əˈkrɒs/,L2,横穿。across the street。,"[{"en":"The hotel is across the street.","zh":"酒店在街对面。"}]",16
-基础⑨·程度表达,和...一样,slightly,稍微,adv,/ˈslaɪtli/,/ˈslaɪtli/,L2,稍微。slightly better。,"[{"en":"This is slightly bigger.","zh":"这个稍微大一点。"}]",13
-基础⑨·程度表达,和...一样,considerably,相当大地,adv,/kənˈsɪdərəbli/,/kənˈsɪdərəbli/,L2,相当大地。considerably better。,"[{"en":"This is considerably cheaper.","zh":"这个便宜得多。"}]",14
-基础⑨·程度表达,和...一样,half,一半,noun/adv,/hæf/,/hɑːf/,L2,一半。half as much。,"[{"en":"I have half as much money.","zh":"我的钱只有一半。"}]",16
-基础⑨·程度表达,和...一样,nearly,几乎,adv,/ˈnɪrli/,/ˈnɪəli/,L2,几乎。nearly as good。,"[{"en":"It is nearly as good.","zh":"几乎一样好。"}]",17
-基础⑨·程度表达,怎么做的,politely,有礼貌地,adv,/pəˈlaɪtli/,/pəˈlaɪtli/,L2,polite+ly。,"[{"en":"He spoke politely.","zh":"他礼貌地说。"}]",15
-基础⑨·程度表达,怎么做的,bravely,勇敢地,adv,/ˈbreɪvli/,/ˈbreɪvli/,L2,brave+ly。,"[{"en":"She bravely faced it.","zh":"她勇敢地面对了。"}]",16
-基础⑨·程度表达,怎么做的,angrily,生气地,adv,/ˈæŋɡrɪli/,/ˈæŋɡrɪli/,L2,angry→angrily。,"[{"en":"He shouted angrily.","zh":"他生气地喊。"}]",17
-基础⑨·程度表达,怎么做的,patiently,耐心地,adv,/ˈpeɪʃəntli/,/ˈpeɪʃəntli/,L2,patient+ly。,"[{"en":"She waited patiently.","zh":"她耐心地等待。"}]",18
-基础⑨·程度表达,怎么做的,perfectly,完美地,adv,/ˈpɜːrfɪktli/,/ˈpɜːfɪktli/,L2,perfect+ly。,"[{"en":"It fits perfectly.","zh":"非常合身。"}]",19
-基础⑨·程度表达,怎么做的,suddenly,突然地,adv,/ˈsʌdənli/,/ˈsʌdənli/,L2,sudden+ly。,"[{"en":"Suddenly, it started to rain.","zh":"突然开始下雨了。"}]",20
-基础⑨·程度表达,怎么做的,naturally,自然地,adv,/ˈnætʃərəli/,/ˈnætʃərəli/,L2,natural+ly。,"[{"en":"She speaks naturally.","zh":"她说话很自然。"}]",21
-基础⑨·比较事物,比...更,richer,更富有的,adj,/ˈrɪtʃər/,/ˈrɪtʃə/,L2,rich比较级。,"[{\"en\":\"He is richer than before.\",\"zh\":\"他比以前更有钱了。\"}]",24
-基础⑨·比较事物,比...更,poorer,更穷的,adj,/ˈpʊrər/,/ˈpʊərə/,L2,poor比较级。,"[{\"en\":\"The country became poorer.\",\"zh\":\"这个国家更穷了。\"}]",25
-基础⑨·比较事物,比...更,smarter,更聪明的,adj,/ˈsmɑːrtər/,/ˈsmɑːtə/,L2,smart比较级。,"[{\"en\":\"She is smarter than me.\",\"zh\":\"她比我聪明。\"}]",26
-基础⑨·比较事物,最...的,cleanest,最干净的,adj,/ˈkliːnɪst/,/ˈkliːnɪst/,L2,clean最高级。,"[{\"en\":\"The cleanest room.\",\"zh\":\"最干净的房间。\"}]",20
-基础⑨·比较事物,最...的,deepest,最深的,adj,/ˈdiːpɪst/,/ˈdiːpɪst/,L2,deep最高级。,"[{\"en\":\"The deepest ocean.\",\"zh\":\"最深的海洋。\"}]",21
-基础⑨·比较事物,最...的,brightest,最明亮的,adj,/ˈbraɪtɪst/,/ˈbraɪtɪst/,L2,bright最高级。,"[{\"en\":\"The brightest star.\",\"zh\":\"最明亮的星。\"}]",22
-基础⑨·描述位置,在...里/上/旁边,hide,隐藏/躲藏,verb,/haɪd/,/haɪd/,L2,躲藏。hide behind。,"[{\"en\":\"He hid behind the tree.\",\"zh\":\"他躲在树后。\"}]",17
-基础⑨·描述位置,在...里/上/旁边,lean,倚靠/倾斜,verb,/liːn/,/liːn/,L2,倚靠。lean against。,"[{\"en\":\"He leaned against the wall.\",\"zh\":\"他靠在墙上。\"}]",18
-基础⑨·程度表达,怎么做的,firmly,坚定地,adv,/ˈfɜːrmli/,/ˈfɜːmli/,L2,firm+ly。,"[{\"en\":\"She firmly said no.\",\"zh\":\"她坚定地说了不。\"}]",22
-基础⑨·程度表达,怎么做的,softly,温柔地,adv,/ˈsɔːftli/,/ˈsɒftli/,L2,soft+ly。,"[{\"en\":\"She softly whispered.\",\"zh\":\"她轻声耳语。\"}]",23
-基础⑨·程度表达,和...一样,seldom,很少,adv,/ˈseldəm/,/ˈseldəm/,L2,很少。,"[{\"en\":\"I seldom go there.\",\"zh\":\"我很少去那里。\"}]",18
-基础⑨·程度表达,和...一样,vastly,极大地,adv,/ˈvæstli/,/ˈvɑːstli/,L2,极大地。,"[{\"en\":\"They are vastly different.\",\"zh\":\"它们差异极大。\"}]",19
-基础⑨·程度表达,和...一样,somewhat,有点/稍微,adv,/ˈsʌmwʌt/,/ˈsʌmwɒt/,L2,有点。somewhat better。,"[{\"en\":\"It is somewhat expensive.\",\"zh\":\"这有点贵。\"}]",20
-基础⑨·描述位置,在...里/上/旁边,overhead,在头顶上,adv,/ˌoʊvərˈhed/,/ˌəʊvəˈhed/,L2,在头顶上。fly overhead。,"[{\"en\":\"A plane flew overhead.\",\"zh\":\"一架飞机从头顶飞过。\"}]",19
+基础⑨·比较事物,核心词汇,accommodation,,n,,,L1+L2,,,0
+基础⑨·比较事物,核心词汇,annual,,adj,,,L1+L2,,,1
+基础⑨·比较事物,核心词汇,authority,,n,,,L1+L2,,,2
+基础⑨·比较事物,核心词汇,bite,,v,,,L1+L2,,,3
+基础⑨·比较事物,核心词汇,campus,,n,,,L1+L2,,,4
+基础⑨·比较事物,核心词汇,chief,,adj,,,L1+L2,,,5
+基础⑨·比较事物,核心词汇,comparison,,n,,,L1+L2,,,6
+基础⑨·比较事物,核心词汇,cotton,,n,,,L1+L2,,,7
+基础⑨·比较事物,核心词汇,cruel,,adj,,,L1+L2,,,8
+基础⑨·比较事物,核心词汇,depressing,,adj,,,L1+L2,,,9
+基础⑨·比较事物,核心词汇,discount,,n,,,L1+L2,,,10
+基础⑨·比较事物,核心词汇,educational,,adj,,,L1+L2,,,11
+基础⑨·比较事物,核心词汇,entertainment,,n,,,L1+L2,,,12
+基础⑨·比较事物,核心词汇,fancy,,v,,,L1+L2,,,13
+基础⑨·比较事物,核心词汇,folk,,n,,,L1+L2,,,14
+基础⑨·比较事物,核心词汇,gang,,n,,,L1+L2,,,15
+基础⑨·比较事物,核心词汇,govern,,v,,,L1+L2,,,16
+基础⑨·比较事物,核心词汇,heavily,,adv,,,L1+L2,,,17
+基础⑨·比较事物,核心词汇,impact,,n,,,L1+L2,,,18
+基础⑨·比较事物,核心词汇,innocent,,adj,,,L1+L2,,,19
+基础⑨·比较事物,核心词汇,keyboard,,n,,,L1+L2,,,20
+基础⑨·比较事物,核心词汇,limited,,adj,,,L1+L2,,,21
+基础⑨·比较事物,核心词汇,lung,,n,,,L1+L2,,,22
+基础⑨·比较事物,核心词汇,mix,,v,,,L1+L2,,,23
+基础⑨·比较事物,核心词汇,northern,,adj,,,L1+L2,,,24
+基础⑨·比较事物,核心词汇,originally,,adv,,,L1+L2,,,25
+基础⑨·比较事物,核心词汇,perfectly,,adv,,,L1+L2,,,26
+基础⑨·比较事物,核心词汇,politician,,n,,,L1+L2,,,27
+基础⑨·比较事物,核心词汇,press,,v,,,L1+L2,,,28
+基础⑨·比较事物,核心词汇,prospect,,n,,,L1+L2,,,29
+基础⑨·比较事物,核心词汇,rank,,n,,,L1+L2,,,30
+基础⑨·比较事物,核心词汇,relate,,v,,,L1+L2,,,31
+基础⑨·比较事物,核心词汇,require,,v,,,L1+L2,,,32
+基础⑨·比较事物,核心词汇,rubber,,n,,,L1+L2,,,33
+基础⑨·比较事物,核心词汇,sensible,,adj,,,L1+L2,,,34
+基础⑨·比较事物,核心词汇,silent,,adj,,,L1+L2,,,35
+基础⑨·比较事物,核心词汇,smart,,adj,,,L1+L2,,,36
+基础⑨·比较事物,核心词汇,statistic,,n,,,L1+L2,,,37
+基础⑨·比较事物,核心词汇,suitable,,adj,,,L1+L2,,,38
+基础⑨·比较事物,核心词汇,theme,,n,,,L1+L2,,,39
+基础⑨·比较事物,核心词汇,treatment,,n,,,L1+L2,,,40
+基础⑨·比较事物,核心词汇,unlike,,prep,,,L1+L2,,,41
+基础⑨·比较事物,核心词汇,warn,,v,,,L1+L2,,,42
+基础⑨·描述位置,核心词汇,acquire,,v,,,L1+L2,,,43
+基础⑨·描述位置,核心词汇,appointment,,n,,,L1+L2,,,44
+基础⑨·描述位置,核心词汇,balance,,n,,,L1+L2,,,45
+基础⑨·描述位置,核心词汇,bother,,v,,,L1+L2,,,46
+基础⑨·描述位置,核心词汇,careless,,adj,,,L1+L2,,,47
+基础⑨·描述位置,核心词汇,childhood,,n,,,L1+L2,,,48
+基础⑨·描述位置,核心词汇,competitive,,adj,,,L1+L2,,,49
+基础⑨·描述位置,核心词汇,countryside,,n,,,L1+L2,,,50
+基础⑨·描述位置,核心词汇,currently,,adv,,,L1+L2,,,51
+基础⑨·描述位置,核心词汇,destination,,n,,,L1+L2,,,52
+基础⑨·描述位置,核心词汇,donate,,v,,,L1+L2,,,53
+基础⑨·描述位置,核心词汇,elderly,,adj,,,L1+L2,,,54
+基础⑨·描述位置,核心词汇,episode,,n,,,L1+L2,,,55
+基础⑨·描述位置,核心词汇,favour,,n,,,L1+L2,,,56
+基础⑨·描述位置,核心词汇,found,,v,,,L1+L2,,,57
+基础⑨·描述位置,核心词汇,gather,,v,,,L1+L2,,,58
+基础⑨·描述位置,核心词汇,grade,,n,,,L1+L2,,,59
+基础⑨·描述位置,核心词汇,hire,,v,,,L1+L2,,,60
+基础⑨·描述位置,核心词汇,impressive,,adj,,,L1+L2,,,61
+基础⑨·描述位置,核心词汇,insist,,v,,,L1+L2,,,62
+基础⑨·描述位置,核心词汇,label,,n,,,L1+L2,,,63
+基础⑨·描述位置,核心词汇,living,,adj,,,L1+L2,,,64
+基础⑨·描述位置,核心词汇,magic,,n,,,L1+L2,,,65
+基础⑨·描述位置,核心词汇,mixed,,adj,,,L1+L2,,,66
+基础⑨·描述位置,核心词汇,occasion,,n,,,L1+L2,,,67
+基础⑨·描述位置,核心词汇,outdoors,,adv,,,L1+L2,,,68
+基础⑨·描述位置,核心词汇,photographer,,n,,,L1+L2,,,69
+基础⑨·描述位置,核心词汇,popularity,,n,,,L1+L2,,,70
+基础⑨·描述位置,核心词汇,previously,,adv,,,L1+L2,,,71
+基础⑨·描述位置,核心词汇,protest,,n,,,L1+L2,,,72
+基础⑨·描述位置,核心词汇,reaction,,n,,,L1+L2,,,73
+基础⑨·描述位置,核心词汇,relaxed,,adj,,,L1+L2,,,74
+基础⑨·描述位置,核心词汇,resident,,n,,,L1+L2,,,75
+基础⑨·描述位置,核心词汇,rugby,,n,,,L1+L2,,,76
+基础⑨·描述位置,核心词汇,sex,,n,,,L1+L2,,,77
+基础⑨·描述位置,核心词汇,similarity,,n,,,L1+L2,,,78
+基础⑨·描述位置,核心词汇,solid,,adj,,,L1+L2,,,79
+基础⑨·描述位置,核心词汇,steep,,adj,,,L1+L2,,,80
+基础⑨·描述位置,核心词汇,surface,,n,,,L1+L2,,,81
+基础⑨·描述位置,核心词汇,throat,,n,,,L1+L2,,,82
+基础⑨·描述位置,核心词汇,tube,,n,,,L1+L2,,,83
+基础⑨·描述位置,核心词汇,update,,v,,,L1+L2,,,84
+基础⑨·描述位置,核心词汇,weigh,,v,,,L1+L2,,,85
+基础⑨·程度表达,核心词汇,album,,n,,,L1+L2,,,86
+基础⑨·程度表达,核心词汇,arise,,v,,,L1+L2,,,87
+基础⑨·程度表达,核心词汇,basis,,n,,,L1+L2,,,88
+基础⑨·程度表达,核心词汇,breath,,n,,,L1+L2,,,89
+基础⑨·程度表达,核心词汇,central,,adj,,,L1+L2,,,90
+基础⑨·程度表达,核心词汇,client,,n,,,L1+L2,,,91
+基础⑨·程度表达,核心词汇,confirm,,v,,,L1+L2,,,92
+基础⑨·程度表达,核心词汇,covered,,adj,,,L1+L2,,,93
+基础⑨·程度表达,核心词汇,decade,,n,,,L1+L2,,,94
+基础⑨·程度表达,核心词汇,diagram,,n,,,L1+L2,,,95
+基础⑨·程度表达,核心词汇,drunk,,adj,,,L1+L2,,,96
+基础⑨·程度表达,核心词汇,election,,n,,,L1+L2,,,97
+基础⑨·程度表达,核心词汇,excitement,,n,,,L1+L2,,,98
+基础⑨·程度表达,核心词汇,financial,,adj,,,L1+L2,,,99
+基础⑨·程度表达,核心词汇,freeze,,v,,,L1+L2,,,100
+基础⑨·程度表达,核心词汇,gentle,,adj,,,L1+L2,,,101
+基础⑨·程度表达,核心词汇,growth,,n,,,L1+L2,,,102
+基础⑨·程度表达,核心词汇,holy,,adj,,,L1+L2,,,103
+基础⑨·程度表达,核心词汇,increasingly,,adv,,,L1+L2,,,104
+基础⑨·程度表达,核心词汇,internal,,adj,,,L1+L2,,,105
+基础⑨·程度表达,核心词汇,lay,,v,,,L1+L2,,,106
+基础⑨·程度表达,核心词汇,location,,n,,,L1+L2,,,107
+基础⑨·程度表达,核心词汇,marketing,,n,,,L1+L2,,,108
+基础⑨·程度表达,核心词汇,murder,,n,,,L1+L2,,,109
+基础⑨·程度表达,核心词汇,old-fashioned,,adj,,,L1+L2,,,110
+基础⑨·程度表达,核心词汇,outline,,n,,,L1+L2,,,111
+基础⑨·程度表达,核心词汇,plot,,n,,,L1+L2,,,112
+基础⑨·程度表达,核心词汇,poverty,,n,,,L1+L2,,,113
+基础⑨·程度表达,核心词汇,princess,,n,,,L1+L2,,,114
+基础⑨·程度表达,核心词汇,punishment,,n,,,L1+L2,,,115
+基础⑨·程度表达,核心词汇,recover,,v,,,L1+L2,,,116
+基础⑨·程度表达,核心词汇,religion,,n,,,L1+L2,,,117
+基础⑨·程度表达,核心词汇,resort,,n,,,L1+L2,,,118
+基础⑨·程度表达,核心词汇,sculpture,,n,,,L1+L2,,,119
+基础⑨·程度表达,核心词汇,shell,,n,,,L1+L2,,,120
+基础⑨·程度表达,核心词汇,similarly,,adv,,,L1+L2,,,121
+基础⑨·程度表达,核心词汇,species,,n,,,L1+L2,,,122
+基础⑨·程度表达,核心词汇,string,,n,,,L1+L2,,,123
+基础⑨·程度表达,核心词汇,switch,,v,,,L1+L2,,,124
+基础⑨·程度表达,核心词汇,toe,,n,,,L1+L2,,,125
+基础⑨·程度表达,核心词汇,unable,,adj,,,L1+L2,,,126
+基础⑨·程度表达,核心词汇,urge,,v,,,L1+L2,,,127
+基础⑨·程度表达,核心词汇,worldwide,,adj,,,L1+L2,,,128
+基础⑨·偏好与推荐,核心词汇,announce,,v,,,L1+L2,,,129
+基础⑨·偏好与推荐,核心词汇,arrival,,n,,,L1+L2,,,130
+基础⑨·偏好与推荐,核心词汇,bee,,n,,,L1+L2,,,131
+基础⑨·偏好与推荐,核心词汇,brief,,adj,,,L1+L2,,,132
+基础⑨·偏好与推荐,核心词汇,champion,,n,,,L1+L2,,,133
+基础⑨·偏好与推荐,核心词汇,coin,,n,,,L1+L2,,,134
+基础⑨·偏好与推荐,核心词汇,contact,,n,,,L1+L2,,,135
+基础⑨·偏好与推荐,核心词汇,crash,,n,,,L1+L2,,,136
+基础⑨·偏好与推荐,核心词汇,declare,,v,,,L1+L2,,,137
+基础⑨·偏好与推荐,核心词汇,dirt,,n,,,L1+L2,,,138
+基础⑨·偏好与推荐,核心词汇,earthquake,,n,,,L1+L2,,,139
+基础⑨·偏好与推荐,核心词汇,emergency,,n,,,L1+L2,,,140
+基础⑨·偏好与推荐,核心词汇,expedition,,n,,,L1+L2,,,141
+基础⑨·偏好与推荐,核心词汇,firm,,n,,,L1+L2,,,142
+基础⑨·偏好与推荐,核心词汇,frightened,,adj,,,L1+L2,,,143
+基础⑨·偏好与推荐,核心词汇,glad,,adj,,,L1+L2,,,144
+基础⑨·偏好与推荐,核心词汇,happiness,,n,,,L1+L2,,,145
+基础⑨·偏好与推荐,核心词汇,horrible,,adj,,,L1+L2,,,146
+基础⑨·偏好与推荐,核心词汇,indicate,,v,,,L1+L2,,,147
+基础⑨·偏好与推荐,核心词汇,invest,,v,,,L1+L2,,,148
+基础⑨·偏好与推荐,核心词汇,leather,,n,,,L1+L2,,,149
+基础⑨·偏好与推荐,核心词汇,lonely,,adj,,,L1+L2,,,150
+基础⑨·偏好与推荐,核心词汇,measurement,,n,,,L1+L2,,,151
+基础⑨·偏好与推荐,核心词汇,narrative,,n,,,L1+L2,,,152
+基础⑨·偏好与推荐,核心词汇,opponent,,n,,,L1+L2,,,153
+基础⑨·偏好与推荐,核心词汇,pan,,n,,,L1+L2,,,154
+基础⑨·偏好与推荐,核心词汇,pointed,,adj,,,L1+L2,,,155
+基础⑨·偏好与推荐,核心词汇,powder,,n,,,L1+L2,,,156
+基础⑨·偏好与推荐,核心词汇,producer,,n,,,L1+L2,,,157
+基础⑨·偏好与推荐,核心词汇,queue,,n,,,L1+L2,,,158
+基础⑨·偏好与推荐,核心词汇,reference,,n,,,L1+L2,,,159
+基础⑨·偏好与推荐,核心词汇,remark,,n,,,L1+L2,,,160
+基础⑨·偏好与推荐,核心词汇,revise,,v,,,L1+L2,,,161
+基础⑨·偏好与推荐,核心词汇,select,,v,,,L1+L2,,,162
+基础⑨·偏好与推荐,核心词汇,shock,,n,,,L1+L2,,,163
+基础⑨·偏好与推荐,核心词汇,simply,,adv,,,L1+L2,,,164
+基础⑨·偏好与推荐,核心词汇,spicy,,adj,,,L1+L2,,,165
+基础⑨·偏好与推荐,核心词汇,submit,,v,,,L1+L2,,,166
+基础⑨·偏好与推荐,核心词汇,talented,,adj,,,L1+L2,,,167
+基础⑨·偏好与推荐,核心词汇,trade,,n,,,L1+L2,,,168
+基础⑨·偏好与推荐,核心词汇,underwear,,n,,,L1+L2,,,169
+基础⑨·偏好与推荐,核心词汇,value,,n,,,L1+L2,,,170
+基础⑨·偏好与推荐,核心词汇,youth,,n,,,L1+L2,,,171
+基础⑨·综合评价,核心词汇,annoying,,adj,,,L1+L2,,,172
+基础⑨·综合评价,核心词汇,attach,,v,,,L1+L2,,,173
+基础⑨·综合评价,核心词汇,being,,n,,,L1+L2,,,174
+基础⑨·综合评价,核心词汇,bubble,,n,,,L1+L2,,,175
+基础⑨·综合评价,核心词汇,cheat,,v,,,L1+L2,,,176
+基础⑨·综合评价,核心词汇,commercial,,adj,,,L1+L2,,,177
+基础⑨·综合评价,核心词汇,convenient,,adj,,,L1+L2,,,178
+基础⑨·综合评价,核心词汇,criticize,,v,,,L1+L2,,,179
+基础⑨·综合评价,核心词汇,definition,,n,,,L1+L2,,,180
+基础⑨·综合评价,核心词汇,discipline,,n,,,L1+L2,,,181
+基础⑨·综合评价,核心词汇,edge,,n,,,L1+L2,,,182
+基础⑨·综合评价,核心词汇,enemy,,n,,,L1+L2,,,183
+基础⑨·综合评价,核心词汇,explosion,,n,,,L1+L2,,,184
+基础⑨·综合评价,核心词汇,flood,,n,,,L1+L2,,,185
+基础⑨·综合评价,核心词汇,fuel,,n,,,L1+L2,,,186
+基础⑨·综合评价,核心词汇,goods,,n,,,L1+L2,,,187
+基础⑨·综合评价,核心词汇,hardly,,adv,,,L1+L2,,,188
+基础⑨·综合评价,核心词汇,illegal,,adj,,,L1+L2,,,189
+基础⑨·综合评价,核心词汇,influence,,n,,,L1+L2,,,190
+基础⑨·综合评价,核心词汇,issue,,n,,,L1+L2,,,191
+基础⑨·综合评价,核心词汇,limit,,n,,,L1+L2,,,192
+基础⑨·综合评价,核心词汇,lower,,v,,,L1+L2,,,193
+基础⑨·综合评价,核心词汇,medium,,adj,,,L1+L2,,,194
+基础⑨·综合评价,核心词汇,necessarily,,adv,,,L1+L2,,,195
+基础⑨·综合评价,核心词汇,opposition,,n,,,L1+L2,,,196
+基础⑨·综合评价,核心词汇,path,,n,,,L1+L2,,,197
+基础⑨·综合评价,核心词汇,poison,,n,,,L1+L2,,,198
+基础⑨·综合评价,核心词汇,prayer,,n,,,L1+L2,,,199
+基础⑨·综合评价,核心词汇,promote,,v,,,L1+L2,,,200
+基础⑨·综合评价,核心词汇,racing,,n,,,L1+L2,,,201
+基础⑨·综合评价,核心词汇,regard,,v,,,L1+L2,,,202
+基础⑨·综合评价,核心词汇,remote,,adj,,,L1+L2,,,203
+基础⑨·综合评价,核心词汇,romantic,,adj,,,L1+L2,,,204
+基础⑨·综合评价,核心词汇,selection,,n,,,L1+L2,,,205
+基础⑨·综合评价,核心词汇,shoot,,v,,,L1+L2,,,206
+基础⑨·综合评价,核心词汇,slave,,n,,,L1+L2,,,207
+基础⑨·综合评价,核心词汇,spread,,v,,,L1+L2,,,208
+基础⑨·综合评价,核心词汇,substance,,n,,,L1+L2,,,209
+基础⑨·综合评价,核心词汇,technique,,n,,,L1+L2,,,210
+基础⑨·综合评价,核心词汇,transfer,,v,,,L1+L2,,,211
+基础⑨·综合评价,核心词汇,unemployment,,n,,,L1+L2,,,212
+基础⑨·综合评价,核心词汇,visual,,adj,,,L1+L2,,,213

@@ -6,16 +6,12 @@ scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowle
 - 不规则：good→better, bad→worse, far→farther
 
 ## 比较句型
-- A is bigger than B. (A比B大)
+- A is bigger than B.（A比B大）
 - A is more expensive than B.
 
-## than 后的代词
-- She is taller than me. (口语)
-- She is taller than I am. (正式)
-
 ## 常见错误
-- ❌ He is more taller. → ✅ He is taller. (不重复)
-- ❌ She is better than me at sports. → ✅ She is better at sports than me.",practice_foundation-describe-compare_比较事物_比更
+❌ He is more taller. → 不重复比较级
+✅ He is taller. / He is much taller.",practice_foundation-describe-compare_比较事物_比更
 基础⑨·比较事物,最...的,Practice superlatives with the -est and the most.,练习最高级：the -est / the most。,35,L1~L2,掌握最高级结构和用法。,最高级 the est the most best,"## 最高级构成
 - the + 短词 + est：the biggest, the fastest
 - the most + 长词：the most beautiful
@@ -25,79 +21,259 @@ scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowle
 - This is the best restaurant in town.
 - She is the tallest in our class.
 
-## in vs of
-- in + 地点/范围：the best in the world
-- of + 同类群体：the tallest of all students
-
 ## 常见错误
-- ❌ She is best student. → ✅ the best student
-- ❌ the most happiest → ✅ the happiest",practice_foundation-describe-compare_比较事物_最的
-基础⑨·描述位置,有...在...,Practice there is/are to describe existence.,练习there is/are存在句表达。,35,L1,掌握there is/are的肯定/否定/疑问形式。,there is there are 存在 位置,"## There is / There are
+❌ She is best student. → ✅ the best student
+❌ the most happiest → ✅ the happiest",practice_foundation-describe-compare_比较事物_最的
+基础⑨·比较事物,不规则比较,Practice irregular comparatives like better worse more less.,练习不规则比较级：better/worse/more/less/farther。,35,L1~L2,掌握不规则比较级和最高级变化。,不规则比较 better worse more less farther,"## 不规则比较级
+- good → better → best
+- bad → worse → worst
+- many/much → more → most
+- little → less → least
+- far → farther/further → farthest/furthest
+
+## 不规则比较句型
+- This restaurant is better than that one.
+- He is the best player on the team.
+- I have more books than you.",practice_foundation-describe-compare_比较事物_不规则比较
+基础⑨·比较事物,越...越...,Practice the + comparative the + comparative structure.,练习the...the...比较结构（越…越…）。,35,L1~L2,掌握the more the more句型。,"越越比较 the more the better","## the...the... 比较结构
+- The faster, the better.（越快越好）
+- The more, the merrier.（越多越开心）
+
+## 完整句型
+- The more you practice, the better you get.
+- The sooner, the better.
+- The cheaper, the better.
+- The earlier, the easier.",practice_foundation-describe-compare_比较事物_越越
+基础⑨·比较事物,多音节比较,Practice multi-syllable adjectives with more and most.,练习多音节形容词的比较级和最高级（more/most）。,35,L1~L2,掌握多音节形容词比较规则。,多音节 more most 形容词比较,"## 多音节形容词比较
+- 多音节（≥2音节）用 more/most
+- beautiful → more beautiful → the most beautiful
+- expensive → more expensive → the most expensive
+
+## 常见多音节形容词
+- important / difficult / interesting
+- popular / delicious / comfortable
+- dangerous / exciting / convenient
+
+## 例句
+- This phone is more expensive than that one.
+- Chinese is more difficult than English.",practice_foundation-describe-compare_比较事物_多音节比较
+基础⑨·描述位置,有...在...,Practice there is/are to describe existence.,练习there is/are存在句表达。,35,L1,掌握there is/are肯定否定疑问形式。,there is there are 存在 位置,"## There is / There are
 - There is + 单数/不可数：There is a book on the desk.
-- There are + 复数：There are two cats in the garden.
+- There are + 复数：There are three people in the room.
 
 ## 否定与疑问
 - 否定：There isn't / There aren't
 - 疑问：Is there...? / Are there...?
 
+## 过去存在
+- There was a big storm last night.",practice_foundation-describe-compare_描述位置_有在
+基础⑨·描述位置,在...里/上/旁边,Practice prepositions of place in on at under next to.,练习位置介词：in/on/under/next to/between等。,35,L1,掌握常用位置介词的用法。,介词 位置 in on under next to between,"## 常用位置介词
+- in（在…里面）：in the box
+- on（在…上面）：on the table
+- under（在…下面）：under the chair
+- next to（在…旁边）：next to the bank
+- between（在…之间）：between A and B
+- across from（在…对面）：across from the station
+
+## 常见错误
+❌ The cat is in the table. → ✅ on the table",practice_foundation-describe-compare_描述位置_在里上旁边
+基础⑨·描述位置,方向与指路,Practice giving directions go straight turn left right.,练习指路表达：直走/左转/右转/过马路。,35,L1,掌握基本方向指路用语。,指路 方向 go straight turn left right,"## 方向指路
+- Go straight and turn left at the corner.
+- Turn right at the traffic light.
+- It's on your left/right.
+- Go past the bank.
+
+## 常用表达
+- Go straight ahead.
+- Take the first right.
+- Cross the street.
+- It's at the end of the street.",practice_foundation-describe-compare_描述位置_方向与指路
+基础⑨·描述位置,空间描述,Practice describing spatial relationships between objects.,练习描述物体之间的空间关系。,35,L1,掌握空间描述常用句型。,空间 位置 介词 描述,"## 空间描述
+- The restaurant is between the hotel and the cinema.
+- The hospital is across from the station.
+- The bank is next to the post office.
+- The keys are in my bag.
+
+## 楼层表达
+- It's on the second floor.
+- It's on the first floor.
+- It's on the top floor.",practice_foundation-describe-compare_描述位置_空间描述
+基础⑨·描述位置,存在句疑问否定,Practice there is/are questions and negative forms.,练习there is/are的疑问句和否定句。,35,L1,掌握存在句的疑问和否定用法。,"疑问 否定 Is there there isn''t any","## 存在句疑问
+- Is there a bank near here? — Yes, there is.
+- Are there any questions? — No, there aren't.
+
+## 否定存在
+- There isn't any milk left.
+- There aren't any seats left.
+
 ## some vs any
-- 肯定句用 some：There are some apples.
-- 否定/疑问用 any：There aren't any students.
+- 肯定：There is some water.
+- 否定/疑问：There isn't any water.",practice_foundation-describe-compare_描述位置_存在句疑问否定
+基础⑨·程度表达,和...一样,Practice as...as comparatives for equal comparison.,练习as...as同级比较表达相同程度。,35,L1~L2,掌握as...as肯定比较句。,"同级比较 as as 一样","## as...as 同级比较
+- as + 形容词 + as：和…一样
+- She is as tall as her sister.
+- This car is as fast as that one.
 
-## 相关词汇
-- empty (空的) / full (满的) / crowded (拥挤的)
-- available (可用的) / vacant (空着的) / occupied (被占用的)",practice_foundation-describe-compare_描述位置_有在
-基础⑨·描述位置,在...里/上/旁边,Practice prepositions of place: in/on/at/under/next to.,练习位置介词：in/on/at/under/next to/between。,35,L1,掌握常用位置介词的用法区别。,介词 位置 in on at under next to,"## 常用位置介词
-| 介词 | 含义 | 例句 |
-|------|------|------|
-| in | 在里面 | in the box |
-| on | 在上面(接触) | on the table |
-| at | 在某点 | at the door |
-| under | 在下面 | under the chair |
-| next to | 在旁边 | next to the park |
-| between | 在两者间 | between A and B |
-| behind | 在后面 | behind the door |
-| above | 在上方 | above the door |
-| below | 在下方 | below zero |
-| beside | 在旁边 | beside me |
+## as many/much as
+- I have as many books as you.
+- He has as much money as me.
 
-## 常见错误
-- ❌ The cat is in the table. → ✅ on the table
-- ❌ The bank is in the store and the hospital. → ✅ between",practice_foundation-describe-compare_描述位置_在里上旁边
-基础⑨·程度表达,和...一样,Practice as...as comparatives and too/enough.,练习as...as同级比较和too/enough程度。,35,L1~L2,掌握as...as和too/enough的用法。,同级比较 as as too enough 程度,"## as...as 同级比较
-- as + 形容词 + as：He is as tall as me.
-- 否定：not as...as / not so...as
+## 例句
+- He is as smart as you.
+- This book is as good as that one.",practice_foundation-describe-compare_程度表达_和一样
+基础⑨·程度表达,不如...,Practice not as...as for negative comparison.,练习not as...as表达"不如…"的比较。,35,L1~L2,掌握not as...as否定比较句。,"不如 not as as 否定比较","## not as...as 否定比较
+- not as + 形容词 + as：不如…
+- This car is not as expensive as that one.
+- He is not as tall as his brother.
 
-## too + 形容词 + to do
-- This coffee is too hot to drink. (太...而不能)
-- too = 超过可接受的程度
+## 例句
+- Today is not as cold as yesterday.
+- This phone is not as good as that one.
+- She doesn't run as fast as I do.",practice_foundation-describe-compare_程度表达_不如
+基础⑨·程度表达,太...不能,Practice too + adjective to express excess.,练习too+形容词表达"太…而不能…"。,35,L1~L2,掌握too+形容词的用法。,too 太 不能 程度,"## too + 形容词
+- too 表示"太…"，超过可接受的程度
+- This bag is too heavy. I can't carry it.
+- This coffee is too hot to drink.
 
-## 形容词 + enough
-- big enough (够大) — enough 在形容词后
-- enough money (足够的钱) — enough 在名词前
+## 常见搭配
+- too big / too small / too expensive
+- too hot / too cold / too noisy
+- too difficult / too easy / too far
 
-## 常见错误
-- ❌ This is enough big. → ✅ big enough
-- ❌ too much hot → ✅ too hot",practice_foundation-describe-compare_程度表达_和一样
-基础⑨·程度表达,怎么做的,Practice adverbs of manner: quickly / carefully / well.,练习方式副词：quickly/carefully/well/hard。,35,L1~L2,掌握方式副词的构成和位置。,副词 方式 quickly well carefully 描述,"## 方式副词构成
+## 例句
+- This shirt is too small for me.
+- It's too far to walk.",practice_foundation-describe-compare_程度表达_太不能
+基础⑨·程度表达,足够...,Practice enough adjective to express sufficiency.,练习形容词+enough表达"足够…"。,35,L1~L2,掌握enough的用法和位置。,enough 足够 程度 位置,"## 形容词 + enough
+- enough 放在形容词后
+- The room is big enough for ten people.
+- I'm not tall enough to reach the top shelf.
+
+## 名词 + enough
+- enough 放在名词前
+- I have enough money.
+- There isn't enough time.
+
+## 例句
+- This car is fast enough for me.
+- She is old enough to drive.
+- The water is warm enough to swim.",practice_foundation-describe-compare_程度表达_足够
+基础⑨·程度表达,方式副词,Practice adverbs of manner quickly carefully well hard.,练习方式副词：quickly/carefully/well/hard/slowly。,35,L1~L2,掌握方式副词的构成和位置。,"副词 方式 quickly well carefully","## 方式副词
 - 形容词 + ly：quick → quickly, careful → carefully
+- 特殊：good → well, fast → fast, hard → hard
 - y → ily：happy → happily, easy → easily
-- 不规则：good → well, fast → fast (同形), hard → hard
 
 ## 副词位置
-- 动词后或句尾：She sings well. / He drives carefully.
-- 方式副词一般不放动词和宾语之间
+- 动词后：She speaks English well.
+- 句尾：He drives carefully.
 
-## 常用方式副词
-| 副词 | 形容词 | 含义 |
-|------|--------|------|
-| well | good | 好地 |
-| quickly | quick | 快速地 |
-| carefully | careful | 小心地 |
-| slowly | slow | 慢慢地 |
-| easily | easy | 容易地 |
-| happily | happy | 开心地 |
-| hard | hard | 努力地 |
-| fast | fast | 很快地 |
-| gently | gentle | 温柔地 |
-| smoothly | smooth | 顺利地 |",practice_foundation-describe-compare_程度表达_怎么做的
+## 常见副词
+- slowly / quickly / carefully / quietly
+- well / hard / fast / clearly
+- politely / happily / easily",practice_foundation-describe-compare_程度表达_方式副词
+基础⑨·偏好与推荐,偏好选择,Practice expressing preferences which do you like more I prefer.,练习偏好表达：Which do you like more / I prefer / I like better。,35,L1~L2,掌握偏好选择句型。,偏好 prefer like better which more,"## 偏好选择
+- Which do you like more, A or B?
+- I like A better.
+- I prefer A (to B).
+
+## 常见表达
+- I prefer this restaurant. It's cheaper.
+- Which do you like more, tea or coffee?
+- Between these two, which is faster?
+
+## 例句
+- I like both, but I like this one more.
+- This one is more comfortable. I'll take this.",practice_foundation-describe-compare_偏好与推荐_偏好选择
+基础⑨·偏好与推荐,推荐表达,Practice making recommendations I recommend this is the best.,练习推荐表达：I recommend / This is the best / You should try。,35,L1~L2,掌握推荐句型。,推荐 recommend the best you should,"## 推荐表达
+- I recommend this one.
+- This is the best restaurant in this area.
+- You should try it.
+
+## 理由
+- It's the most popular dish here.
+- It's not the cheapest, but it's the most reliable.
+- If you want something cheap, this is your best choice.
+
+## 例句
+- I recommend this book. It's very interesting.
+- This is the best café in the neighborhood.",practice_foundation-describe-compare_偏好与推荐_推荐表达
+基础⑨·偏好与推荐,对比评价,Practice comparison evaluation compared to the same but.,练习对比评价：Compared to / It's the same but / I've tried both。,35,L1~L2,掌握对比评价表达。,"对比 compared to same price tried both","## 对比评价
+- Compared to the other one, this is much better.
+- It's the same price, but this one is more useful.
+- I've tried both, and this one is definitely better.
+
+## 例句
+- Compared to my old phone, this one is much faster.
+- It's the same size, but this one is lighter.
+- I've tried both restaurants, and this one is better.",practice_foundation-describe-compare_偏好与推荐_对比评价
+基础⑨·偏好与推荐,最高级推荐,Practice superlative recommendations the best in...,练习最高级推荐：the best in / the most popular。,35,L1~L2,掌握最高级推荐句型。,最高级推荐 the best the most recommend,"## 最高级推荐
+- This is the best restaurant in this area.
+- It's the most popular dish here.
+- It's not the cheapest, but it's the most reliable.
+
+## 例句
+- This is the best park in the city.
+- She is the most talented singer in the group.
+- This is the most comfortable hotel I've stayed at.",practice_foundation-describe-compare_偏好与推荐_最高级推荐
+基础⑨·偏好与推荐,二选一比较,Practice comparing two options between A and B.,练习二选一比较：Between A and B, which is...?,35,L1~L2,掌握二选一比较句型。,"二选一 between which more better","## 二选一比较
+- Between A and B, which is faster?
+- Which do you like more, A or B?
+- I like this one a little more because it's brighter.
+
+## 例句
+- Between the bus and the subway, which is cheaper?
+- Between these two, which is better for beginners?
+- I like both, but I prefer this one because it's more practical.",practice_foundation-describe-compare_偏好与推荐_二选一比较
+基础⑨·综合评价,多维度比较,Practice multi-dimensional comparisons with and but.,练习多维度比较：更…但…（比较多个维度）。,40,L1~L2,掌握多维度比较句型。,"多维度比较 lighter but better camera","## 多维度比较
+- This phone is lighter and faster, but that one has a better camera.
+- This restaurant is more expensive, but the food is much better.
+
+## 常用结构
+- A is ___er and ___, but B has ___.
+- A is ___, but B is ___.
+
+## 例句
+- This laptop is cheaper and lighter, but that one has more storage.
+- Hotel A is more expensive, but it's closer to the beach.",practice_foundation-describe-compare_综合评价_多维度比较
+基础⑨·综合评价,变化描述,Practice describing changes with getting more and more.,练习变化描述：越来越…、变得更好等。,40,L1~L2,掌握变化描述句型。,"变化 getting warmer more and more becoming","## 变化描述
+- It's getting hotter and hotter every day.
+- He is more and more confident.
+- The city is becoming more beautiful than before.
+
+## 常用结构
+- getting + 比较级 + and + 比较级
+- more and more + 形容词
+- becoming + 比较级 + than before
+
+## 例句
+- The prices are getting higher and higher.
+- She is becoming more and more popular.",practice_foundation-describe-compare_综合评价_变化描述
+基础⑨·综合评价,性价比评价,Practice value for money expressions worth the price.,练习性价比评价：便宜但质量、值得、一分钱一分货。,40,L1~L2,掌握性价比评价表达。,"性价比 cheaper quality worth get what you pay","## 性价比评价
+- This one is cheaper, but the quality is not as good.
+- You get what you pay for.
+- The more you pay, the better quality you get.
+
+## 例句
+- This is good value for money.
+- It's not the cheapest, but it's the most durable.
+- Don't buy the cheapest one if you want something good.",practice_foundation-describe-compare_综合评价_性价比评价
+基础⑨·综合评价,综合推荐,Practice comprehensive recommendations all things considered.,练习综合推荐：综合考虑/整体来看/强烈推荐。,40,L1~L2,掌握综合推荐句型。,"综合推荐 all things considered I highly recommend","## 综合推荐
+- All things considered, this is the best choice for beginners.
+- I highly recommend this product.
+- It's not the cheapest, but it's the most durable.
+
+## 例句
+- All things considered, this is the best option.
+- I highly recommend this hotel. It's comfortable and affordable.
+- Overall, this is the best value for money.",practice_foundation-describe-compare_综合评价_综合推荐
+基础⑨·综合评价,观点对比,Practice comparing opinions in my opinion however.,练习观点对比：依我看…但有些人认为…。,40,L1~L2,掌握观点对比表达。,"观点对比 in my opinion however prefer","## 观点对比
+- In my opinion, this one is better.
+- However, some people prefer that one because it's cheaper.
+
+## 常用结构
+- In my opinion / From my perspective / Personally
+- However / On the other hand
+- Some people prefer...because...
+
+## 例句
+- In my opinion, this is the best choice. However, some people might disagree.
+- Some people prefer city life because it's convenient. However, I prefer the suburbs.",practice_foundation-describe-compare_综合评价_观点对比

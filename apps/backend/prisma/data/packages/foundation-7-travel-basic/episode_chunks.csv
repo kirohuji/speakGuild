@@ -1,61 +1,74 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_travel_basic_0,1,Excuse me, where is the station?,0
-found_foundation_travel_basic_0,1,How do I get to the museum?,1
-found_foundation_travel_basic_0,1,Is it far from here?,2
-found_foundation_travel_basic_0,1,Go straight ahead.,3
-found_foundation_travel_basic_0,1,Turn left at the corner.,4
-found_foundation_travel_basic_0,1,Turn right at the traffic lights.,5
-found_foundation_travel_basic_0,1,It's next to the bank.,6
-found_foundation_travel_basic_0,1,It's across from the park.,7
-found_foundation_travel_basic_0,1,It's on your left.,8
-found_foundation_travel_basic_0,1,Walk for about 5 minutes.,9
-found_foundation_travel_basic_0,1,You can take the bus.,10
-found_foundation_travel_basic_0,1,It's about 2 blocks away.,11
-found_foundation_travel_basic_0,1,I'm lost. Can you help me?,12
-found_foundation_travel_basic_0,1,Is there a toilet near here?,13
-found_foundation_travel_basic_0,1,I'm looking for this address.,14
-found_foundation_travel_basic_0,2,Which bus goes to the airport?,0
-found_foundation_travel_basic_0,2,How much is the fare?,1
-found_foundation_travel_basic_0,2,Please take me to this address.,2
-found_foundation_travel_basic_0,2,Where is the nearest subway station?,3
-found_foundation_travel_basic_0,2,Which line goes to the city center?,4
-found_foundation_travel_basic_0,2,How many stops to the hotel?,5
-found_foundation_travel_basic_0,2,Please stop here.,6
-found_foundation_travel_basic_0,2,Can I have a ticket to London?,7
-found_foundation_travel_basic_0,2,How long does it take?,8
-found_foundation_travel_basic_0,2,The train is delayed.,9
-found_foundation_travel_basic_0,2,Which platform does the train leave from?,10
-found_foundation_travel_basic_0,2,I need to buy a ticket.,11
-found_foundation_travel_basic_0,2,One-way or round-trip?,12
-found_foundation_travel_basic_0,2,Do I need to transfer?,13
-found_foundation_travel_basic_0,2,Please call a taxi for me.,14
-found_foundation_travel_basic_1,1,A table for two, please.,0
-found_foundation_travel_basic_1,1,I'd like to order now.,1
-found_foundation_travel_basic_1,1,What would you recommend?,2
-found_foundation_travel_basic_1,1,I'll have the steak.,3
-found_foundation_travel_basic_1,1,Could I have the menu?,4
-found_foundation_travel_basic_1,1,What's today's special?,5
-found_foundation_travel_basic_1,1,I'm allergic to nuts.,6
-found_foundation_travel_basic_1,1,This is not what I ordered.,7
-found_foundation_travel_basic_1,1,The food is delicious!,8
-found_foundation_travel_basic_1,1,Could I have the check, please?,9
-found_foundation_travel_basic_1,1,Keep the change.,10
-found_foundation_travel_basic_1,1,Can I pay by card?,11
-found_foundation_travel_basic_1,1,I'd like a glass of water.,12
-found_foundation_travel_basic_1,1,Is service charge included?,13
-found_foundation_travel_basic_1,1,We'd like to split the bill.,14
-found_foundation_travel_basic_1,2,How much is this?,0
-found_foundation_travel_basic_1,2,Is there a discount?,1
-found_foundation_travel_basic_1,2,Can I try this on?,2
-found_foundation_travel_basic_1,2,Where is the fitting room?,3
-found_foundation_travel_basic_1,2,Do you have this in a smaller size?,4
-found_foundation_travel_basic_1,2,I'm just looking, thanks.,5
-found_foundation_travel_basic_1,2,I'll take it.,6
-found_foundation_travel_basic_1,2,Do you accept credit cards?,7
-found_foundation_travel_basic_1,2,Can I get a receipt?,8
-found_foundation_travel_basic_1,2,I'd like to return this.,9
-found_foundation_travel_basic_1,2,It doesn't fit me.,10
-found_foundation_travel_basic_1,2,Is this on sale?,11
-found_foundation_travel_basic_1,2,Do you have this in other colors?,12
-found_foundation_travel_basic_1,2,That's too expensive.,13
-found_foundation_travel_basic_1,2,I'm looking for a gift.,14
+found_foundation_travel_basic_0,1,I'm going to travel next month.,0
+found_foundation_travel_basic_0,1,What are you going to do this weekend?,1
+found_foundation_travel_basic_0,1,Are you going to join us? Yes I am.,2
+found_foundation_travel_basic_0,1,I'll call you later.,3
+found_foundation_travel_basic_0,1,I will study harder this year.,4
+found_foundation_travel_basic_0,1,I think I'll stay home today.,5
+found_foundation_travel_basic_0,1,She's going to have a baby.,6
+found_foundation_travel_basic_0,2,It will rain tomorrow.,0
+found_foundation_travel_basic_0,2,It's going to rain Look at those clouds!,1
+found_foundation_travel_basic_0,2,I will be 25 next month.,2
+found_foundation_travel_basic_0,2,Everything will be okay Don't worry.,3
+found_foundation_travel_basic_0,2,The meeting will start at 3 pm.,4
+found_foundation_travel_basic_0,2,He will probably be late.,5
+found_foundation_travel_basic_0,2,There will be a lot of people at the concert.,6
+found_foundation_travel_basic_1,1,I can swim,0
+found_foundation_travel_basic_1,1,I can't speak French.,1
+found_foundation_travel_basic_1,1,He can run very fast.,2
+found_foundation_travel_basic_1,1,I can't find my keys.,3
+found_foundation_travel_basic_1,2,Can you help me? Sure.,0
+found_foundation_travel_basic_1,2,Can I use your phone? Yes of course.,1
+found_foundation_travel_basic_1,2,Can I have a glass of water?,2
+found_foundation_travel_basic_1,2,You can do it! I believe in you.,3
+found_foundation_travel_basic_1,2,You can park over there.,4
+found_foundation_travel_basic_1,2,Could you tell me how to get to the museum?,5
+found_foundation_travel_basic_1,2,Could I have the bill please?,6
+found_foundation_travel_basic_1,2,Could you speak more slowly please?,7
+found_foundation_travel_basic_1,2,Can I try this on? Sure.,8
+found_foundation_travel_basic_1,2,Can I get a receipt please?,9
+found_foundation_travel_basic_2,1,You should see a doctor.,0
+found_foundation_travel_basic_2,1,You shouldn't eat so much junk food.,1
+found_foundation_travel_basic_2,1,You must wear a seatbelt in the car.,2
+found_foundation_travel_basic_2,1,We must be there by 8 o'clock.,3
+found_foundation_travel_basic_2,1,I have to work tomorrow.,4
+found_foundation_travel_basic_2,1,She has to take medicine every day.,5
+found_foundation_travel_basic_2,1,Do I have to bring my passport? Yes you do.,6
+found_foundation_travel_basic_2,2,You mustn't park here.,0
+found_foundation_travel_basic_2,2,I don't have to work on Sundays.,1
+found_foundation_travel_basic_2,2,You don't have to pay now You can pay later.,2
+found_foundation_travel_basic_2,2,You should try this dish It's really good!,3
+found_foundation_travel_basic_2,2,What should I do? You should call the police.,4
+found_foundation_travel_basic_2,2,Should I take a taxi or the subway?,5
+found_foundation_travel_basic_2,2,I should go now It's getting late.,6
+found_foundation_travel_basic_3,1,It may rain later Take an umbrella.,0
+found_foundation_travel_basic_3,1,She might come to the party I'm not sure.,1
+found_foundation_travel_basic_3,1,May I come in? Yes please.,2
+found_foundation_travel_basic_3,1,Would you like some more tea? Thanks but I'm full.,3
+found_foundation_travel_basic_3,1,Would you like to join us for dinner? I'd love to!,4
+found_foundation_travel_basic_3,1,What would you like to drink? Water please.,5
+found_foundation_travel_basic_3,1,Will you help me with this? Sure no problem.,6
+found_foundation_travel_basic_3,1,Do you think I should go to the doctor?,7
+found_foundation_travel_basic_3,1,You mustn't tell anyone It's a secret.,8
+found_foundation_travel_basic_3,1,Everything will be okay Don't worry.,9
+found_foundation_travel_basic_3,2,Shall I open the window? Yes please.,0
+found_foundation_travel_basic_3,2,Let me help you with that.,1
+found_foundation_travel_basic_3,2,How about going out for a walk? Sounds great!,2
+found_foundation_travel_basic_3,2,Why don't we try that new restaurant? Good idea!,3
+found_foundation_travel_basic_3,2,That sounds great! Thank you for inviting me.,4
+found_foundation_travel_basic_3,2,I'd be happy to help you with your project.,5
+found_foundation_travel_basic_3,2,Would you like to join us? I'd love to!,6
+found_foundation_travel_basic_3,2,Would you like some more tea? Thanks but I'm full.,7
+found_foundation_travel_basic_3,2,I should go now It's getting late.,8
+found_foundation_travel_basic_4,1,Good luck on your test! You'll do great.,0
+found_foundation_travel_basic_4,1,Have a great trip! I hope you have fun!,1
+found_foundation_travel_basic_4,1,Happy birthday! I hope you have a wonderful day!,2
+found_foundation_travel_basic_4,1,Congratulations on your new job!,3
+found_foundation_travel_basic_4,1,I believe in you You can do it!,4
+found_foundation_travel_basic_4,1,Keep going! Don't give up!,5
+found_foundation_travel_basic_4,2,I promise I'll be there on time.,0
+found_foundation_travel_basic_4,2,I swear I won't tell anyone.,1
+found_foundation_travel_basic_4,2,I guarantee you'll love it.,2
+found_foundation_travel_basic_4,2,I'd be happy to help you with your project.,3
+found_foundation_travel_basic_4,2,I'm willing to try new things.,4
+found_foundation_travel_basic_4,2,Let me know if you need anything.,5

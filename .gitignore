@@ -30,3 +30,4 @@ etl/
 .venv/
 test-results
 playwright-report
+packages_backup/
