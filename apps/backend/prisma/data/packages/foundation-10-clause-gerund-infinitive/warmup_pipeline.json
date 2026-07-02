@@ -1,0 +1,47 @@
+{
+  "观点：我为什么觉得...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "观点：我为什么觉得... · 中译英",
+          "chunk": "worth",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我觉得我们看的那部电影值得看。",
+              "answer": "I think the movie that we watched is worth seeing.",
+              "targetWord": "worth"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "观点：我为什么觉得... · 句型",
+          "pattern": "I think the + 名词 + that + 句子 + is worth + 动名词",
+          "patternMeaning": "我觉得...值得...",
+          "slots": [
+            "movie that we watched is worth seeing book that we read is worth reading"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我觉得...值得...",
+              "answer": "I think the movie that we watched is worth seeing.",
+              "pattern": "I think the + 名词 + that + 句子 + is worth + 动名词",
+              "slotValues": {
+                "slot1": "movie that we watched is worth seeing book that we read is worth reading"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

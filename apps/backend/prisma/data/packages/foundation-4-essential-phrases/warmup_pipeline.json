@@ -1,2020 +1,2577 @@
 {
-  "一般疑问句": {
+  "问路与位置": {
     "outputTraining": {
       "version": 1,
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_zh_0",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 Yes/No 回答一般疑问句",
-          "chunk": "Yes, ... / No, ...",
-          "chunkMeaning": "是.../不...",
+          "title": "问路与位置 · 中译英",
+          "chunk": "excuse / left",
+          "chunkMeaning": "",
           "items": [
             {
-              "zh": "你是学生吗？——是，我是。",
-              "answer": "Are you a student? — Yes, I am."
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "targetWord": "excuse"
             },
             {
-              "zh": "你喜欢咖啡吗？——不，我不喜欢。",
-              "answer": "Do you like coffee? — No, I don't."
-            },
-            {
-              "zh": "你会游泳吗？——会。",
-              "answer": "Can you swim? — Yes, I can."
-            },
-            {
-              "zh": "你准备好了吗？——还没。",
-              "answer": "Are you ready? — No, I'm not."
-            },
-            {
-              "zh": "她说法语吗？——说。",
-              "answer": "Does she speak French? — Yes, she does."
-            },
-            {
-              "zh": "这大吗？——不，它小。",
-              "answer": "Is it big? — No, it isn't."
-            },
-            {
-              "zh": "这里有人吗？——有。",
-              "answer": "Is anyone here? — Yes, there is."
-            },
-            {
-              "zh": "你确定吗？——确定。",
-              "answer": "Are you sure? — Yes, I am sure."
-            },
-            {
-              "zh": "这样对吗？——对。",
-              "answer": "Is that correct? — Yes, it is."
-            },
-            {
-              "zh": "你明白我的意思吗？——明白。",
-              "answer": "Do you understand me? — Yes, I do."
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "targetWord": "left"
             }
           ]
         },
         {
-          "id": "pd_1",
-          "type": "pattern_drill",
-          "direction": "zh_to_en",
-          "title": "Can I ask / Is that correct / Am I wrong 问答操练",
-          "pattern": "[aux] [subject] [rest]? — [answer].",
-          "patternMeaning": "...吗？——回答。",
-          "slots": [
-            "aux",
-            "subject",
-            "rest",
-            "answer"
-          ],
-          "items": [
-            {
-              "zh": "我能问你点事吗？——可以。",
-              "answer": "Can I ask you something? — Sure.",
-              "slotValues": {
-                "aux": "Can",
-                "subject": "I",
-                "rest": "ask you something",
-                "answer": "Sure."
-              }
-            },
-            {
-              "zh": "这样对吗？——对。",
-              "answer": "Is that correct? — Yes, it is.",
-              "slotValues": {
-                "aux": "Is",
-                "subject": "that",
-                "rest": "correct",
-                "answer": "Yes, it is."
-              }
-            },
-            {
-              "zh": "我错了吗？——不，你没错。",
-              "answer": "Am I wrong? — No, you're not.",
-              "slotValues": {
-                "aux": "Am",
-                "subject": "I",
-                "rest": "wrong",
-                "answer": "No, you're not."
-              }
-            },
-            {
-              "zh": "你明白了吗？——明白了。",
-              "answer": "Do you understand? — Yes, I do.",
-              "slotValues": {
-                "aux": "Do",
-                "subject": "you",
-                "rest": "understand",
-                "answer": "Yes, I do."
-              }
-            },
-            {
-              "zh": "你能重复一遍吗？——可以。",
-              "answer": "Can you repeat that? — Sure.",
-              "slotValues": {
-                "aux": "Can",
-                "subject": "you",
-                "rest": "repeat that",
-                "answer": "Sure."
-              }
-            },
-            {
-              "zh": "你能再解释一遍吗？——好的。",
-              "answer": "Can you explain that again? — OK.",
-              "slotValues": {
-                "aux": "Can",
-                "subject": "you",
-                "rest": "explain that again",
-                "answer": "OK."
-              }
-            }
-          ]
-        },
-        {
-          "id": "vsb_ask",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "ask 一词多句",
-          "vocabWord": "ask",
-          "vocabMeaning": "问",
-          "patterns": [
-            {
-              "chunk": "Can I ask ___?",
-              "items": [
-                {
-                  "zh": "我能问你点事吗？",
-                  "answer": "Can I ask you something?"
-                },
-                {
-                  "zh": "我能问个问题吗？",
-                  "answer": "Can I ask a question?"
-                },
-                {
-                  "zh": "我能问他吗？",
-                  "answer": "Can I ask him?"
-                }
-              ]
-            },
-            {
-              "chunk": "I want to ask ___.",
-              "items": [
-                {
-                  "zh": "我想问你一个问题。",
-                  "answer": "I want to ask you a question."
-                },
-                {
-                  "zh": "我想问我妈妈。",
-                  "answer": "I want to ask my mom."
-                },
-                {
-                  "zh": "我想问路。",
-                  "answer": "I want to ask for directions."
-                }
-              ]
-            },
-            {
-              "chunk": "Let me ask ___.",
-              "items": [
-                {
-                  "zh": "让我问一下。",
-                  "answer": "Let me ask."
-                },
-                {
-                  "zh": "让我问他。",
-                  "answer": "Let me ask him."
-                },
-                {
-                  "zh": "让我再去问问。",
-                  "answer": "Let me ask again."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_sure",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "sure 一词多句",
-          "vocabWord": "sure",
-          "vocabMeaning": "确定/当然",
-          "patterns": [
-            {
-              "chunk": "Are you sure ___?",
-              "items": [
-                {
-                  "zh": "你确定吗？",
-                  "answer": "Are you sure?"
-                },
-                {
-                  "zh": "你确定那是真的吗？",
-                  "answer": "Are you sure about that?"
-                },
-                {
-                  "zh": "你确定他是对的？",
-                  "answer": "Are you sure he is correct?"
-                }
-              ]
-            },
-            {
-              "chunk": "I'm sure ___.",
-              "items": [
-                {
-                  "zh": "我确定。",
-                  "answer": "I'm sure."
-                },
-                {
-                  "zh": "我确定他是对的。",
-                  "answer": "I'm sure he is right."
-                },
-                {
-                  "zh": "我不太确定。",
-                  "answer": "I'm not really sure."
-                }
-              ]
-            },
-            {
-              "chunk": "___. — Sure!",
-              "items": [
-                {
-                  "zh": "你能帮我吗？——当然！",
-                  "answer": "Can you help me? — Sure!"
-                },
-                {
-                  "zh": "来点咖啡？——当然！",
-                  "answer": "Some coffee? — Sure!"
-                },
-                {
-                  "zh": "我能坐这吗？——当然。",
-                  "answer": "Can I sit here? — Sure."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_understand",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "understand 一词多句",
-          "vocabWord": "understand",
-          "vocabMeaning": "理解/明白",
-          "patterns": [
-            {
-              "chunk": "Do you understand ___?",
-              "items": [
-                {
-                  "zh": "你明白我的意思吗？",
-                  "answer": "Do you understand me?"
-                },
-                {
-                  "zh": "你理解这个问题吗？",
-                  "answer": "Do you understand the question?"
-                },
-                {
-                  "zh": "你明白他在说什么吗？",
-                  "answer": "Do you understand what he is saying?"
-                }
-              ]
-            },
-            {
-              "chunk": "I understand ___.",
-              "items": [
-                {
-                  "zh": "我明白了。",
-                  "answer": "I understand."
-                },
-                {
-                  "zh": "我理解你的意思。",
-                  "answer": "I understand what you mean."
-                },
-                {
-                  "zh": "我完全理解。",
-                  "answer": "I completely understand."
-                }
-              ]
-            },
-            {
-              "chunk": "I don't understand ___.",
-              "items": [
-                {
-                  "zh": "我不明白。",
-                  "answer": "I don't understand."
-                },
-                {
-                  "zh": "我不理解这个问题。",
-                  "answer": "I don't understand the question."
-                },
-                {
-                  "zh": "对不起，我听不懂。",
-                  "answer": "Sorry, I don't understand."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "从提问到确认的对话",
-          "levels": [
-            {
-              "level": 1,
-              "label": "提问",
-              "en": "Can I ask you a question?",
-              "zh": "我能问你个问题吗？"
-            },
-            {
-              "level": 2,
-              "label": "加确认",
-              "en": "Can I ask you a question? Are you sure about this?",
-              "zh": "我能问你个问题吗？你确定吗？",
-              "highlight": "Are you sure about this?",
-              "hint": "加上确认问句"
-            },
-            {
-              "level": 3,
-              "label": "加理解",
-              "en": "Can I ask you a question? Are you sure about this? Do you understand me?",
-              "zh": "我能问你个问题吗？你确定吗？你明白我的意思吗？",
-              "highlight": "Do you understand me?",
-              "hint": "加上理解确认"
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "过去疑问句": {
-    "outputTraining": {
-      "version": 1,
-      "enabled": true,
-      "pipeline": [
-        {
-          "id": "cs_zh_1",
+          "id": "cs_en_1",
           "type": "chunk_substitution",
           "kind": "word",
-          "direction": "zh_to_en",
-          "title": "用 yesterday / ago / last 造过去问句",
-          "chunk": "yesterday / ago / last",
-          "chunkMeaning": "昨天/...前/上一个",
+          "direction": "en_to_zh",
+          "title": "问路与位置 · 英译中",
+          "chunk": "across / far / station",
+          "chunkMeaning": "",
           "items": [
             {
-              "zh": "你昨天吃早餐了吗？",
-              "answer": "Did you eat breakfast yesterday?"
+              "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
+              "answer": "附近有药店吗？——有的，街对面有一家。",
+              "targetWord": "across"
             },
             {
-              "zh": "你两天前看到他了吗？",
-              "answer": "Did you see him two days ago?"
+              "en": "How far is it from here? -- Its about 10 minutes on foot.",
+              "answer": "从这里有多远？——走路大约10分钟。",
+              "targetWord": "far"
             },
             {
-              "zh": "你上周工作了吗？",
-              "answer": "Did you work last week?"
-            },
-            {
-              "zh": "你昨晚在家吗？",
-              "answer": "Were you at home last night?"
-            },
-            {
-              "zh": "你之前来过这里吗？",
-              "answer": "Did you come here before?"
-            },
-            {
-              "zh": "你开完会后吃了吗？",
-              "answer": "Did you eat after the meeting?"
-            },
-            {
-              "zh": "你已经完成了吗？",
-              "answer": "Did you finish already?"
-            },
-            {
-              "zh": "你吃了吗？（还没吃）",
-              "answer": "Did you eat yet?"
-            },
-            {
-              "zh": "你去过一次吗？",
-              "answer": "Did you go there once?"
-            },
-            {
-              "zh": "你曾经去过那里吗？",
-              "answer": "Did you ever go there?"
+              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
+              "answer": "我去车站的方向对吗？——对，直走。",
+              "targetWord": "station"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "pd_2",
           "type": "pattern_drill",
-          "direction": "zh_to_en",
-          "title": "Did you...? — Yes/No, I... 过去问答操练",
-          "pattern": "Did you [verb] [time]? — [answer].",
-          "patternMeaning": "你[时间]...了吗？——回答。",
+          "title": "问路与位置 · 句型",
+          "pattern": "Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
           "slots": [
-            "verb",
-            "time",
-            "answer"
+            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
           ],
+          "direction": "zh_to_en",
           "items": [
             {
-              "zh": "你昨天去学校了吗？——去了。",
-              "answer": "Did you go to school yesterday? — Yes, I did.",
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest subway station?",
+              "pattern": "Where is the nearest ___?",
               "slotValues": {
-                "verb": "go to school",
-                "time": "yesterday",
-                "answer": "Yes, I did."
+                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
               }
             },
             {
-              "zh": "你昨晚看电视了吗？——没看。",
-              "answer": "Did you watch TV last night? — No, I didn't.",
+              "zh": "___在哪里？",
+              "answer": "Where are the restrooms?",
+              "pattern": "Where are the ___?",
               "slotValues": {
-                "verb": "watch TV",
-                "time": "last night",
-                "answer": "No, I didn't."
+                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
               }
             },
             {
-              "zh": "你上周打电话了吗？——打了两次。",
-              "answer": "Did you call last week? — Yes, I called twice.",
+              "zh": "我怎么去___？",
+              "answer": "How do I get to the museum?",
+              "pattern": "How do I get to ___?",
               "slotValues": {
-                "verb": "call",
-                "time": "last week",
-                "answer": "Yes, I called twice."
+                "slot1": "the museum, the airport, the train station, the city center, your hotel"
               }
             },
             {
-              "zh": "你已经吃了吗？——已经吃了。",
-              "answer": "Did you eat already? — Yes, I already ate.",
+              "zh": "附近有___吗？",
+              "answer": "Is there a pharmacy near here?",
+              "pattern": "Is there a ___ near here?",
               "slotValues": {
-                "verb": "eat",
-                "time": "already",
-                "answer": "Yes, I already ate."
+                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
               }
             },
             {
-              "zh": "你周末过得好吗？——非常好。",
-              "answer": "Did you have a good weekend? — Yes, it was great.",
+              "zh": "___离这里多远？",
+              "answer": "How far is it from here?",
+              "pattern": "How far is ___ from here?",
               "slotValues": {
-                "verb": "have a good weekend",
-                "time": "",
-                "answer": "Yes, it was great."
+                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
               }
             }
           ]
         },
         {
-          "id": "vsb_yesterday",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "yesterday 一词多句",
-          "vocabWord": "yesterday",
-          "vocabMeaning": "昨天",
-          "patterns": [
-            {
-              "chunk": "Did you ___ yesterday?",
-              "items": [
-                {
-                  "zh": "你昨天去学校了吗？",
-                  "answer": "Did you go to school yesterday?"
-                },
-                {
-                  "zh": "你昨天看电视了吗？",
-                  "answer": "Did you watch TV yesterday?"
-                },
-                {
-                  "zh": "你昨天见到她了吗？",
-                  "answer": "Did you see her yesterday?"
-                }
-              ]
-            },
-            {
-              "chunk": "I ___ yesterday.",
-              "items": [
-                {
-                  "zh": "我昨天去了。",
-                  "answer": "I went yesterday."
-                },
-                {
-                  "zh": "我昨天很累。",
-                  "answer": "I was tired yesterday."
-                },
-                {
-                  "zh": "我昨天没去。",
-                  "answer": "I didn't go yesterday."
-                }
-              ]
-            },
-            {
-              "chunk": "Yesterday was ___.",
-              "items": [
-                {
-                  "zh": "昨天是周一。",
-                  "answer": "Yesterday was Monday."
-                },
-                {
-                  "zh": "昨天很热。",
-                  "answer": "Yesterday was hot."
-                },
-                {
-                  "zh": "昨天太棒了。",
-                  "answer": "Yesterday was wonderful."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_already",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "already 一词多句",
-          "vocabWord": "already",
-          "vocabMeaning": "已经",
-          "patterns": [
-            {
-              "chunk": "I already ___.",
-              "items": [
-                {
-                  "zh": "我已经吃了。",
-                  "answer": "I already ate."
-                },
-                {
-                  "zh": "我已经完成了。",
-                  "answer": "I already finished."
-                },
-                {
-                  "zh": "我已经知道了。",
-                  "answer": "I already know."
-                }
-              ]
-            },
-            {
-              "chunk": "Did you already ___?",
-              "items": [
-                {
-                  "zh": "你已经吃了吗？",
-                  "answer": "Did you already eat?"
-                },
-                {
-                  "zh": "你已经完成了吗？",
-                  "answer": "Did you already finish?"
-                },
-                {
-                  "zh": "你已经打电话了吗？",
-                  "answer": "Did you already call?"
-                }
-              ]
-            },
-            {
-              "chunk": "I haven't ___ yet.",
-              "items": [
-                {
-                  "zh": "我还没吃。",
-                  "answer": "I haven't eaten yet."
-                },
-                {
-                  "zh": "我还没准备好。",
-                  "answer": "I'm not ready yet."
-                },
-                {
-                  "zh": "我还没决定。",
-                  "answer": "I haven't decided yet."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_once",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "once / twice 一词多句",
-          "vocabWord": "once / twice",
-          "vocabMeaning": "一次/两次",
-          "patterns": [
-            {
-              "chunk": "___ once a week.",
-              "items": [
-                {
-                  "zh": "我每周去一次。",
-                  "answer": "I go once a week."
-                },
-                {
-                  "zh": "我每周锻炼一次。",
-                  "answer": "I exercise once a week."
-                },
-                {
-                  "zh": "我每周给她打一次电话。",
-                  "answer": "I call her once a week."
-                }
-              ]
-            },
-            {
-              "chunk": "___ twice a day.",
-              "items": [
-                {
-                  "zh": "我每天吃两次。",
-                  "answer": "I eat twice a day."
-                },
-                {
-                  "zh": "他每天来两次。",
-                  "answer": "He comes twice a day."
-                },
-                {
-                  "zh": "我每天刷两次牙。",
-                  "answer": "I brush my teeth twice a day."
-                }
-              ]
-            },
-            {
-              "chunk": "Did you ___ once?",
-              "items": [
-                {
-                  "zh": "你去过一次吗？",
-                  "answer": "Did you go there once?"
-                },
-                {
-                  "zh": "你试过一次吗？",
-                  "answer": "Did you try it once?"
-                },
-                {
-                  "zh": "你只见过他一次？",
-                  "answer": "Did you only meet him once?"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "sd_1",
+          "id": "sd_3",
           "type": "sentence_decomposition",
-          "title": "过去问答逐步扩展",
+          "title": "问路与位置 · 逐步构建",
           "levels": [
             {
               "level": 1,
-              "label": "过去问",
-              "en": "Did you eat?",
-              "zh": "你吃了吗？"
+              "label": "基础句",
+              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "highlight": "excuse",
+              "hint": "从简单开始"
             },
             {
               "level": 2,
               "label": "加细节",
-              "en": "Did you eat? — Yes, I already ate. I ate noodles.",
-              "zh": "你吃了吗？——已经吃了。吃了面条。",
-              "highlight": "Yes, I already ate. I ate noodles.",
-              "hint": "加上时间和内容"
-            },
-            {
-              "level": 3,
-              "label": "加反问",
-              "en": "Did you eat? — Yes, I already ate. How about you? Did you eat yet?",
-              "zh": "你吃了吗？——已经吃了。你呢？你吃了吗？",
-              "highlight": "How about you? Did you eat yet?",
-              "hint": "加上反问对方"
+              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "highlight": "left",
+              "hint": "加信息"
             }
           ]
         }
       ]
     }
   },
-  "6W问句": {
+  "问时间与交通": {
     "outputTraining": {
       "version": 1,
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_zh_0",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 person / place / time / thing 回答 W 问句",
-          "chunk": "person / place / time / thing",
-          "chunkMeaning": "人/地方/时间/东西",
+          "title": "问时间与交通 · 中译英",
+          "chunk": "ticket",
+          "chunkMeaning": "",
           "items": [
             {
-              "zh": "那个人是谁？",
-              "answer": "Who is that person?"
-            },
-            {
-              "zh": "这是个好地方。",
-              "answer": "This is a nice place."
-            },
-            {
-              "zh": "现在几点了？",
-              "answer": "What time is it?"
-            },
-            {
-              "zh": "这个东西是什么？",
-              "answer": "What is this thing?"
-            },
-            {
-              "zh": "洗手间在哪里？——在那边。",
-              "answer": "Where is the bathroom? — Over there."
-            },
-            {
-              "zh": "你几点起床？——7点。",
-              "answer": "When do you get up? — At 7."
-            },
-            {
-              "zh": "你为什么迟到？——因为堵车。",
-              "answer": "Why are you late? — Because of traffic."
-            },
-            {
-              "zh": "哪个是你的？——蓝色那个。",
-              "answer": "Which one is yours? — The blue one."
-            },
-            {
-              "zh": "两个都要吗？——两个都要。",
-              "answer": "Do you want both? — Yes, both."
-            },
-            {
-              "zh": "每个都好。——对，每个都好。",
-              "answer": "Each is good. — Yes, each is good."
+              "zh": "我在哪里买票？——你可以在那边的机器上买。",
+              "answer": "Where do I buy a ticket? -- You can buy one at the machine over there.",
+              "targetWord": "ticket"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "问时间与交通 · 英译中",
+          "chunk": "airport",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "How much does it cost to go to the airport? -- About 120 yuan.",
+              "answer": "去机场要多少钱？——大约120元。",
+              "targetWord": "airport"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
-          "direction": "zh_to_en",
-          "title": "What is the reason / Which way 问答操练",
-          "pattern": "[wh] [aux] [subject] [rest]? — [answer].",
-          "patternMeaning": "...？——回答。",
+          "title": "问时间与交通 · 句型",
+          "pattern": "What time does ___ open/close?",
+          "patternMeaning": "___几点开/关？",
           "slots": [
-            "wh",
-            "aux",
-            "subject",
-            "rest",
-            "answer"
+            "the museum, the store, the bank, the movie, the meeting"
           ],
+          "direction": "zh_to_en",
           "items": [
             {
-              "zh": "原因是什么？——我不知道。",
-              "answer": "What is the reason? — I don't know.",
+              "zh": "___几点开/关？",
+              "answer": "What time does the museum open?",
+              "pattern": "What time does ___ open/close?",
               "slotValues": {
-                "wh": "What",
-                "aux": "is",
-                "subject": "the reason",
-                "rest": "",
-                "answer": "I don't know."
+                "slot1": "the museum, the store, the bank, the movie, the meeting"
               }
             },
             {
-              "zh": "车站怎么走？——这边。",
-              "answer": "Which way is the station? — This way.",
+              "zh": "___是几点？",
+              "answer": "What time is the next train to Shanghai?",
+              "pattern": "What time is ___?",
               "slotValues": {
-                "wh": "Which way",
-                "aux": "is",
-                "subject": "the station",
-                "rest": "",
-                "answer": "This way."
+                "slot1": "the next train, the last bus, your flight, the check-in, the show"
               }
             },
             {
-              "zh": "你喜欢什么类型的音乐？——流行。",
-              "answer": "What type of music do you like? — Pop.",
+              "zh": "哪趟___去___？",
+              "answer": "Which bus goes to the city center?",
+              "pattern": "Which ___ goes to ___?",
               "slotValues": {
-                "wh": "What type of music",
-                "aux": "do",
-                "subject": "you",
-                "rest": "like",
-                "answer": "Pop."
+                "slot1": "bus",
+                "slot2": "the city center, train",
+                "slot3": "the airport, subway"
               }
             },
             {
-              "zh": "选哪个？——一个都不要。",
-              "answer": "Which one? — None of them.",
+              "zh": "___需要多久？",
+              "answer": "How long does it take to get there?",
+              "pattern": "How long does it take to ___?",
               "slotValues": {
-                "wh": "Which one",
-                "aux": "",
-                "subject": "",
-                "rest": "",
-                "answer": "None of them."
+                "slot1": "get there, walk, drive, fly, get through security, get a taxi"
               }
             },
             {
-              "zh": "你要哪个？——每个都好。",
-              "answer": "Which one do you want? — Each is good.",
+              "zh": "我在哪里___？",
+              "answer": "Where do I buy a ticket?",
+              "pattern": "Where do I ___?",
               "slotValues": {
-                "wh": "Which one",
-                "aux": "do",
-                "subject": "you",
-                "rest": "want",
-                "answer": "Each is good."
+                "slot1": "buy a ticket, pay, check in, get a taxi, wait for the bus"
               }
-            }
-          ]
-        },
-        {
-          "id": "vsb_place",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "place 一词多句",
-          "vocabWord": "place",
-          "vocabMeaning": "地方",
-          "patterns": [
-            {
-              "chunk": "___ a good place.",
-              "items": [
-                {
-                  "zh": "这是个好地方。",
-                  "answer": "This is a good place."
-                },
-                {
-                  "zh": "那是个漂亮的地方。",
-                  "answer": "That is a beautiful place."
-                },
-                {
-                  "zh": "北京是个很棒的地方。",
-                  "answer": "Beijing is a wonderful place."
-                }
-              ]
-            },
-            {
-              "chunk": "What place ___?",
-              "items": [
-                {
-                  "zh": "那是什么地方？",
-                  "answer": "What place is that?"
-                },
-                {
-                  "zh": "你最喜欢什么地方？",
-                  "answer": "What place do you like best?"
-                },
-                {
-                  "zh": "我们在什么地方见面？",
-                  "answer": "What place should we meet?"
-                }
-              ]
-            },
-            {
-              "chunk": "Is this the right place?",
-              "items": [
-                {
-                  "zh": "是这个地方吗？",
-                  "answer": "Is this the place?"
-                },
-                {
-                  "zh": "这是对的地方吗？",
-                  "answer": "Is this the right place?"
-                },
-                {
-                  "zh": "我找对地方了吗？",
-                  "answer": "Did I find the right place?"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_time",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "time 一词多句",
-          "vocabWord": "time",
-          "vocabMeaning": "时间",
-          "patterns": [
-            {
-              "chunk": "What time ___?",
-              "items": [
-                {
-                  "zh": "几点了？",
-                  "answer": "What time is it?"
-                },
-                {
-                  "zh": "会议几点？",
-                  "answer": "What time is the meeting?"
-                },
-                {
-                  "zh": "你几点起床？",
-                  "answer": "What time do you get up?"
-                }
-              ]
-            },
-            {
-              "chunk": "It's time to ___.",
-              "items": [
-                {
-                  "zh": "该走了。",
-                  "answer": "It's time to go."
-                },
-                {
-                  "zh": "该吃饭了。",
-                  "answer": "It's time to eat."
-                },
-                {
-                  "zh": "该睡觉了。",
-                  "answer": "It's time to sleep."
-                }
-              ]
-            },
-            {
-              "chunk": "___ on time.",
-              "items": [
-                {
-                  "zh": "请准时。",
-                  "answer": "Please be on time."
-                },
-                {
-                  "zh": "他从不迟到。",
-                  "answer": "He is always on time."
-                },
-                {
-                  "zh": "你能准时到吗？",
-                  "answer": "Can you come on time?"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_way",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "way 一词多句",
-          "vocabWord": "way",
-          "vocabMeaning": "方式/路",
-          "patterns": [
-            {
-              "chunk": "Which way ___?",
-              "items": [
-                {
-                  "zh": "哪条路？",
-                  "answer": "Which way?"
-                },
-                {
-                  "zh": "车站怎么走？",
-                  "answer": "Which way is the station?"
-                },
-                {
-                  "zh": "我应该走哪条路？",
-                  "answer": "Which way should I go?"
-                }
-              ]
-            },
-            {
-              "chunk": "This way, ___.",
-              "items": [
-                {
-                  "zh": "这边，请。",
-                  "answer": "This way, please."
-                },
-                {
-                  "zh": "这样不对。",
-                  "answer": "This way is wrong."
-                },
-                {
-                  "zh": "用这个方法做。",
-                  "answer": "Do it this way."
-                }
-              ]
-            },
-            {
-              "chunk": "___ the best way.",
-              "items": [
-                {
-                  "zh": "这是最好的方式。",
-                  "answer": "This is the best way."
-                },
-                {
-                  "zh": "学英语最好的方式是每天练习。",
-                  "answer": "The best way to learn English is to practice every day."
-                },
-                {
-                  "zh": "有没有更好的办法？",
-                  "answer": "Is there a better way?"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "sd_1",
-          "type": "sentence_decomposition",
-          "title": "从 W 问到详情逐步扩展",
-          "levels": [
-            {
-              "level": 1,
-              "label": "一个问",
-              "en": "Where is this place?",
-              "zh": "这个地方在哪里？"
-            },
-            {
-              "level": 2,
-              "label": "加时间",
-              "en": "Where is this place? What time does it open?",
-              "zh": "这个地方在哪里？几点开门？",
-              "highlight": "What time does it open?",
-              "hint": "加上时间"
-            },
-            {
-              "level": 3,
-              "label": "加方式",
-              "en": "Where is this place? What time does it open? Which way should I go?",
-              "zh": "这个地方在哪里？几点开门？我应该怎么走？",
-              "highlight": "Which way should I go?",
-              "hint": "加上问路"
             }
           ]
         }
       ]
     }
   },
-  "What与Who详细问": {
+  "乘坐公共交通": {
     "outputTraining": {
       "version": 1,
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_zh_0",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 happen / matter / problem / news 扩展 What 问句",
-          "chunk": "happen / matter / problem / news",
-          "chunkMeaning": "发生/事情/问题/消息",
+          "title": "乘坐公共交通 · 中译英",
+          "chunk": "excuse / left",
+          "chunkMeaning": "",
           "items": [
             {
-              "zh": "你怎么了？",
-              "answer": "What happened to you?"
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "targetWord": "excuse"
             },
             {
-              "zh": "他怎么了？",
-              "answer": "What's the matter with him?"
-            },
-            {
-              "zh": "这里有什么问题？",
-              "answer": "What is the problem here?"
-            },
-            {
-              "zh": "今天有什么新闻？",
-              "answer": "What is the news today?"
-            },
-            {
-              "zh": "你有什么想法？",
-              "answer": "What is your idea?"
-            },
-            {
-              "zh": "你最喜欢的食物是什么？",
-              "answer": "What is your favorite food?"
-            },
-            {
-              "zh": "这是谁的书？——我的。",
-              "answer": "Whose book is this? — It's mine."
-            },
-            {
-              "zh": "有人在那吗？",
-              "answer": "Is someone there?"
-            },
-            {
-              "zh": "有人在家吗？",
-              "answer": "Is anyone home?"
-            },
-            {
-              "zh": "这个包是谁的？",
-              "answer": "Who does this bag belong to?"
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "targetWord": "left"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "乘坐公共交通 · 英译中",
+          "chunk": "across / far / station",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
+              "answer": "附近有药店吗？——有的，街对面有一家。",
+              "targetWord": "across"
+            },
+            {
+              "en": "How far is it from here? -- Its about 10 minutes on foot.",
+              "answer": "从这里有多远？——走路大约10分钟。",
+              "targetWord": "far"
+            },
+            {
+              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
+              "answer": "我去车站的方向对吗？——对，直走。",
+              "targetWord": "station"
+            },
+            {
+              "en": "Do you have a map? -- Sure. Let me show you.",
+              "answer": "你有地图吗？——有，我给你看。",
+              "targetWord": "map"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
-          "direction": "zh_to_en",
-          "title": "Why...? — Because... 因果问答操练",
-          "pattern": "Why [aux] [subject] [rest]? — Because [reason].",
-          "patternMeaning": "为什么...？——因为...。",
+          "title": "乘坐公共交通 · 句型",
+          "pattern": "Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
           "slots": [
-            "aux",
-            "subject",
-            "rest",
-            "reason"
+            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
           ],
+          "direction": "zh_to_en",
           "items": [
             {
-              "zh": "你为什么迟到？——因为我错过了公交。",
-              "answer": "Why are you late? — Because I missed the bus.",
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest subway station?",
+              "pattern": "Where is the nearest ___?",
               "slotValues": {
-                "aux": "are",
-                "subject": "you",
-                "rest": "late",
-                "reason": "I missed the bus"
+                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
               }
             },
             {
-              "zh": "你为什么累？——因为我熬夜了。",
-              "answer": "Why are you tired? — Because I stayed up late.",
+              "zh": "___在哪里？",
+              "answer": "Where are the restrooms?",
+              "pattern": "Where are the ___?",
               "slotValues": {
-                "aux": "are",
-                "subject": "you",
-                "rest": "tired",
-                "reason": "I stayed up late"
+                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
               }
             },
             {
-              "zh": "他为什么高兴？——因为他有了新工作。",
-              "answer": "Why is he happy? — Because he got a new job.",
+              "zh": "我怎么去___？",
+              "answer": "How do I get to the museum?",
+              "pattern": "How do I get to ___?",
               "slotValues": {
-                "aux": "is",
-                "subject": "he",
-                "rest": "happy",
-                "reason": "he got a new job"
+                "slot1": "the museum, the airport, the train station, the city center, your hotel"
               }
             },
             {
-              "zh": "你为什么这么担心？——因为我丢了钱包。",
-              "answer": "Why do you worry so much? — Because I lost my wallet.",
+              "zh": "附近有___吗？",
+              "answer": "Is there a pharmacy near here?",
+              "pattern": "Is there a ___ near here?",
               "slotValues": {
-                "aux": "do",
-                "subject": "you",
-                "rest": "worry so much",
-                "reason": "I lost my wallet"
+                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
               }
             },
             {
-              "zh": "她为什么没来？——因为她生病了。",
-              "answer": "Why didn't she come? — Because she is sick.",
+              "zh": "___离这里多远？",
+              "answer": "How far is it from here?",
+              "pattern": "How far is ___ from here?",
               "slotValues": {
-                "aux": "didn't",
-                "subject": "she",
-                "rest": "come",
-                "reason": "she is sick"
+                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
               }
             }
           ]
         },
         {
-          "id": "vsb_favorite",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "favorite 一词多句",
-          "vocabWord": "favorite",
-          "vocabMeaning": "最喜欢的",
-          "patterns": [
-            {
-              "chunk": "What is your favorite ___?",
-              "items": [
-                {
-                  "zh": "你最喜欢的食物是什么？",
-                  "answer": "What is your favorite food?"
-                },
-                {
-                  "zh": "你最喜欢的颜色是什么？",
-                  "answer": "What is your favorite color?"
-                },
-                {
-                  "zh": "你最喜欢的电影是什么？",
-                  "answer": "What is your favorite movie?"
-                }
-              ]
-            },
-            {
-              "chunk": "My favorite ___ is ___.",
-              "items": [
-                {
-                  "zh": "我最喜欢的食物是披萨。",
-                  "answer": "My favorite food is pizza."
-                },
-                {
-                  "zh": "我最喜欢的颜色是蓝色。",
-                  "answer": "My favorite color is blue."
-                },
-                {
-                  "zh": "我最喜欢的地方是海滩。",
-                  "answer": "My favorite place is the beach."
-                }
-              ]
-            },
-            {
-              "chunk": "___ is my favorite.",
-              "items": [
-                {
-                  "zh": "这是我最喜欢的。",
-                  "answer": "This is my favorite."
-                },
-                {
-                  "zh": "咖啡是我的最爱。",
-                  "answer": "Coffee is my favorite."
-                },
-                {
-                  "zh": "夏天是我最喜欢的季节。",
-                  "answer": "Summer is my favorite season."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_idea",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "idea 一词多句",
-          "vocabWord": "idea",
-          "vocabMeaning": "想法/主意",
-          "patterns": [
-            {
-              "chunk": "___ a good idea.",
-              "items": [
-                {
-                  "zh": "好主意！",
-                  "answer": "Good idea!"
-                },
-                {
-                  "zh": "那是个好主意。",
-                  "answer": "That's a good idea."
-                },
-                {
-                  "zh": "这是个坏主意。",
-                  "answer": "This is a bad idea."
-                }
-              ]
-            },
-            {
-              "chunk": "What is your idea?",
-              "items": [
-                {
-                  "zh": "你有什么想法？",
-                  "answer": "What is your idea?"
-                },
-                {
-                  "zh": "你有什么好主意吗？",
-                  "answer": "Do you have any good ideas?"
-                },
-                {
-                  "zh": "我有个主意。",
-                  "answer": "I have an idea."
-                }
-              ]
-            },
-            {
-              "chunk": "I have no idea ___.",
-              "items": [
-                {
-                  "zh": "我不知道。",
-                  "answer": "I have no idea."
-                },
-                {
-                  "zh": "我不知道他在哪。",
-                  "answer": "I have no idea where he is."
-                },
-                {
-                  "zh": "我不知道该怎么做。",
-                  "answer": "I have no idea what to do."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_happen",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "happen 一词多句",
-          "vocabWord": "happen",
-          "vocabMeaning": "发生",
-          "patterns": [
-            {
-              "chunk": "What happened ___?",
-              "items": [
-                {
-                  "zh": "发生了什么事？",
-                  "answer": "What happened?"
-                },
-                {
-                  "zh": "你怎么了？",
-                  "answer": "What happened to you?"
-                },
-                {
-                  "zh": "这里发生了什么？",
-                  "answer": "What happened here?"
-                }
-              ]
-            },
-            {
-              "chunk": "Did ___ happen?",
-              "items": [
-                {
-                  "zh": "发生什么事了吗？",
-                  "answer": "Did something happen?"
-                },
-                {
-                  "zh": "那是什么时候发生的？",
-                  "answer": "When did that happen?"
-                },
-                {
-                  "zh": "这是怎么发生的？",
-                  "answer": "How did this happen?"
-                }
-              ]
-            },
-            {
-              "chunk": "It happens ___.",
-              "items": [
-                {
-                  "zh": "这种事经常发生。",
-                  "answer": "It happens a lot."
-                },
-                {
-                  "zh": "没关系，这种事总会发生。",
-                  "answer": "Don't worry. It happens."
-                },
-                {
-                  "zh": "这种事不会再发生了。",
-                  "answer": "It won't happen again."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "sd_1",
+          "id": "sd_3",
           "type": "sentence_decomposition",
-          "title": "从问事到问原因逐步扩展",
+          "title": "乘坐公共交通 · 逐步构建",
           "levels": [
             {
               "level": 1,
-              "label": "问事",
-              "en": "What happened?",
-              "zh": "发生了什么事？"
+              "label": "基础句",
+              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "highlight": "excuse",
+              "hint": "从简单开始"
             },
             {
               "level": 2,
-              "label": "加原因",
-              "en": "What happened? Why are you crying?",
-              "zh": "发生了什么事？你为什么哭？",
-              "highlight": "Why are you crying?",
-              "hint": "加上原因"
-            },
-            {
-              "level": 3,
-              "label": "加看法",
-              "en": "What happened? Why are you crying? What is your idea to fix it?",
-              "zh": "发生了什么事？你为什么哭？你有什么办法解决？",
-              "highlight": "What is your idea to fix it?",
-              "hint": "加上想法"
+              "label": "加细节",
+              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "highlight": "left",
+              "hint": "加信息"
             }
           ]
         }
       ]
     }
   },
-  "数量与价格": {
+  "问方向与距离": {
     "outputTraining": {
       "version": 1,
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_zh_0",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 dollar / yuan / pay / cost 表达价格",
-          "chunk": "dollar / yuan / pay / cost",
-          "chunkMeaning": "美元/元/支付/花费",
+          "title": "问方向与距离 · 中译英",
+          "chunk": "excuse / left",
+          "chunkMeaning": "",
           "items": [
             {
-              "zh": "这个多少钱？——10美元。",
-              "answer": "How much is this? — Ten dollars."
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "targetWord": "excuse"
             },
             {
-              "zh": "这个多少钱？——50元。",
-              "answer": "How much is it? — Fifty yuan."
-            },
-            {
-              "zh": "你付了多少钱？",
-              "answer": "How much did you pay?"
-            },
-            {
-              "zh": "这件衬衫多少钱？",
-              "answer": "How much does this shirt cost?"
-            },
-            {
-              "zh": "总共多少钱？",
-              "answer": "How much is the total?"
-            },
-            {
-              "zh": "找我多少钱？",
-              "answer": "How much change do I get?"
-            },
-            {
-              "zh": "你有现金吗？",
-              "answer": "Do you have cash?"
-            },
-            {
-              "zh": "能给我收据吗？",
-              "answer": "Can I have a receipt?"
-            },
-            {
-              "zh": "有折扣吗？",
-              "answer": "Is there a discount?"
-            },
-            {
-              "zh": "金额是多少？",
-              "answer": "How much is the amount?"
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "targetWord": "left"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "问方向与距离 · 英译中",
+          "chunk": "across / far / station",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
+              "answer": "附近有药店吗？——有的，街对面有一家。",
+              "targetWord": "across"
+            },
+            {
+              "en": "How far is it from here? -- Its about 10 minutes on foot.",
+              "answer": "从这里有多远？——走路大约10分钟。",
+              "targetWord": "far"
+            },
+            {
+              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
+              "answer": "我去车站的方向对吗？——对，直走。",
+              "targetWord": "station"
+            },
+            {
+              "en": "Do you have a map? -- Sure. Let me show you.",
+              "answer": "你有地图吗？——有，我给你看。",
+              "targetWord": "map"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
-          "direction": "zh_to_en",
-          "title": "How much to pay / How much does it cost 问答操练",
-          "pattern": "How much [rest]? — [answer].",
-          "patternMeaning": "多少钱/多少...？——回答。",
+          "title": "问方向与距离 · 句型",
+          "pattern": "Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
           "slots": [
-            "rest",
-            "answer"
+            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
           ],
+          "direction": "zh_to_en",
           "items": [
             {
-              "zh": "你付了多少钱？——50元。",
-              "answer": "How much did you pay? — Fifty yuan.",
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest subway station?",
+              "pattern": "Where is the nearest ___?",
               "slotValues": {
-                "rest": "did you pay",
-                "answer": "Fifty yuan."
+                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
               }
             },
             {
-              "zh": "这个多少钱？——20美元。",
-              "answer": "How much does this cost? — Twenty dollars.",
+              "zh": "___在哪里？",
+              "answer": "Where are the restrooms?",
+              "pattern": "Where are the ___?",
               "slotValues": {
-                "rest": "does this cost",
-                "answer": "Twenty dollars."
+                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
               }
             },
             {
-              "zh": "总共多少？——100元。",
-              "answer": "How much is the total? — One hundred yuan.",
+              "zh": "我怎么去___？",
+              "answer": "How do I get to the museum?",
+              "pattern": "How do I get to ___?",
               "slotValues": {
-                "rest": "is the total",
-                "answer": "One hundred yuan."
+                "slot1": "the museum, the airport, the train station, the city center, your hotel"
               }
             },
             {
-              "zh": "有折扣吗？——有的，打八折。",
-              "answer": "Any discount? — Yes, 20% off.",
+              "zh": "附近有___吗？",
+              "answer": "Is there a pharmacy near here?",
+              "pattern": "Is there a ___ near here?",
               "slotValues": {
-                "rest": "",
-                "answer": "Yes, 20% off."
+                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
               }
             },
             {
-              "zh": "现金还是刷卡？——现金。",
-              "answer": "Cash or card? — Cash.",
+              "zh": "___离这里多远？",
+              "answer": "How far is it from here?",
+              "pattern": "How far is ___ from here?",
               "slotValues": {
-                "rest": "",
-                "answer": "Cash."
+                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
               }
             }
           ]
         },
         {
-          "id": "vsb_pay",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "pay 一词多句",
-          "vocabWord": "pay",
-          "vocabMeaning": "支付",
-          "patterns": [
-            {
-              "chunk": "How much did you pay?",
-              "items": [
-                {
-                  "zh": "你付了多少钱？",
-                  "answer": "How much did you pay?"
-                },
-                {
-                  "zh": "我应该付多少钱？",
-                  "answer": "How much should I pay?"
-                },
-                {
-                  "zh": "他付了多少？",
-                  "answer": "How much did he pay?"
-                }
-              ]
-            },
-            {
-              "chunk": "Can I pay ___?",
-              "items": [
-                {
-                  "zh": "我能用现金付吗？",
-                  "answer": "Can I pay in cash?"
-                },
-                {
-                  "zh": "我能刷卡吗？",
-                  "answer": "Can I pay by card?"
-                },
-                {
-                  "zh": "我现在能付吗？",
-                  "answer": "Can I pay now?"
-                }
-              ]
-            },
-            {
-              "chunk": "I need to pay ___.",
-              "items": [
-                {
-                  "zh": "我需要付钱。",
-                  "answer": "I need to pay."
-                },
-                {
-                  "zh": "我需要付50元。",
-                  "answer": "I need to pay fifty yuan."
-                },
-                {
-                  "zh": "让我来付。",
-                  "answer": "Let me pay."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_cost",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "cost 一词多句",
-          "vocabWord": "cost",
-          "vocabMeaning": "花费/成本",
-          "patterns": [
-            {
-              "chunk": "How much does ___ cost?",
-              "items": [
-                {
-                  "zh": "这个多少钱？",
-                  "answer": "How much does this cost?"
-                },
-                {
-                  "zh": "这件衬衫多少钱？",
-                  "answer": "How much does this shirt cost?"
-                },
-                {
-                  "zh": "门票多少钱？",
-                  "answer": "How much does the ticket cost?"
-                }
-              ]
-            },
-            {
-              "chunk": "It costs ___.",
-              "items": [
-                {
-                  "zh": "这个20美元。",
-                  "answer": "It costs twenty dollars."
-                },
-                {
-                  "zh": "这个不贵。",
-                  "answer": "It doesn't cost much."
-                },
-                {
-                  "zh": "这个太贵了。",
-                  "answer": "It costs too much."
-                }
-              ]
-            },
-            {
-              "chunk": "The cost is ___.",
-              "items": [
-                {
-                  "zh": "费用是50元。",
-                  "answer": "The cost is fifty yuan."
-                },
-                {
-                  "zh": "成本很高。",
-                  "answer": "The cost is high."
-                },
-                {
-                  "zh": "总费用是多少？",
-                  "answer": "What is the total cost?"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "vsb_cash",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "cash 一词多句",
-          "vocabWord": "cash",
-          "vocabMeaning": "现金",
-          "patterns": [
-            {
-              "chunk": "Do you have cash?",
-              "items": [
-                {
-                  "zh": "你有现金吗？",
-                  "answer": "Do you have cash?"
-                },
-                {
-                  "zh": "你带现金了吗？",
-                  "answer": "Do you have cash with you?"
-                },
-                {
-                  "zh": "你有足够的现金吗？",
-                  "answer": "Do you have enough cash?"
-                }
-              ]
-            },
-            {
-              "chunk": "Can I pay in cash?",
-              "items": [
-                {
-                  "zh": "我能付现金吗？",
-                  "answer": "Can I pay in cash?"
-                },
-                {
-                  "zh": "这里能用现金吗？",
-                  "answer": "Can I use cash here?"
-                },
-                {
-                  "zh": "现金还是刷卡？",
-                  "answer": "Cash or card?"
-                }
-              ]
-            },
-            {
-              "chunk": "I don't have cash.",
-              "items": [
-                {
-                  "zh": "我没有现金。",
-                  "answer": "I don't have cash."
-                },
-                {
-                  "zh": "我只有卡，没现金。",
-                  "answer": "I only have a card, no cash."
-                },
-                {
-                  "zh": "能不能刷卡？我没带现金。",
-                  "answer": "Can I pay by card? I don't have cash."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "sd_1",
+          "id": "sd_3",
           "type": "sentence_decomposition",
-          "title": "从问价到付款逐步扩展",
+          "title": "问方向与距离 · 逐步构建",
           "levels": [
             {
               "level": 1,
-              "label": "问价",
-              "en": "How much does this cost?",
-              "zh": "这个多少钱？"
+              "label": "基础句",
+              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "highlight": "excuse",
+              "hint": "从简单开始"
             },
             {
               "level": 2,
-              "label": "加支付",
-              "en": "How much does this cost? Can I pay in cash?",
-              "zh": "这个多少钱？我能付现金吗？",
-              "highlight": "Can I pay in cash?",
-              "hint": "加上支付方式"
-            },
-            {
-              "level": 3,
-              "label": "加收据",
-              "en": "How much does this cost? Can I pay in cash? Can I have a receipt?",
-              "zh": "这个多少钱？我能付现金吗？能给我收据吗？",
-              "highlight": "Can I have a receipt?",
-              "hint": "加上要收据"
+              "label": "加细节",
+              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "highlight": "left",
+              "hint": "加信息"
             }
           ]
         }
       ]
     }
   },
-  "频率与方式": {
+  "打车与接送": {
     "outputTraining": {
       "version": 1,
       "enabled": true,
       "pipeline": [
         {
-          "id": "cs_zh_1",
+          "id": "cs_zh_0",
           "type": "chunk_substitution",
           "kind": "word",
           "direction": "zh_to_en",
-          "title": "用 feel / fast / slow / well / better 描述状态",
-          "chunk": "feel / fast / slow / well / better",
-          "chunkMeaning": "感觉/快/慢/好/更好",
+          "title": "打车与接送 · 中译英",
+          "chunk": "excuse / left",
+          "chunkMeaning": "",
           "items": [
             {
-              "zh": "你今天感觉怎么样？",
-              "answer": "How do you feel today?"
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "targetWord": "excuse"
             },
             {
-              "zh": "我有点不舒服。",
-              "answer": "I don't feel well."
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "targetWord": "left"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "打车与接送 · 英译中",
+          "chunk": "across / far / station",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
+              "answer": "附近有药店吗？——有的，街对面有一家。",
+              "targetWord": "across"
             },
             {
-              "zh": "你能跑多快？",
-              "answer": "How fast can you run?"
+              "en": "How far is it from here? -- Its about 10 minutes on foot.",
+              "answer": "从这里有多远？——走路大约10分钟。",
+              "targetWord": "far"
             },
             {
-              "zh": "你能说慢点吗？",
-              "answer": "Can you speak slowly?"
+              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
+              "answer": "我去车站的方向对吗？——对，直走。",
+              "targetWord": "station"
             },
             {
-              "zh": "你对他有多了解？",
-              "answer": "How well do you know him?"
+              "en": "Do you have a map? -- Sure. Let me show you.",
+              "answer": "你有地图吗？——有，我给你看。",
+              "targetWord": "map"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "打车与接送 · 句型",
+          "pattern": "Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
+          "slots": [
+            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest subway station?",
+              "pattern": "Where is the nearest ___?",
+              "slotValues": {
+                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+              }
             },
             {
-              "zh": "我怎么能感觉好点？",
-              "answer": "How can I feel better?"
+              "zh": "___在哪里？",
+              "answer": "Where are the restrooms?",
+              "pattern": "Where are the ___?",
+              "slotValues": {
+                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
+              }
             },
             {
-              "zh": "你能多快完成？",
-              "answer": "How quickly can you finish?"
+              "zh": "我怎么去___？",
+              "answer": "How do I get to the museum?",
+              "pattern": "How do I get to ___?",
+              "slotValues": {
+                "slot1": "the museum, the airport, the train station, the city center, your hotel"
+              }
             },
             {
-              "zh": "怎样小心地做？",
-              "answer": "How to do it carefully?"
+              "zh": "附近有___吗？",
+              "answer": "Is there a pharmacy near here?",
+              "pattern": "Is there a ___ near here?",
+              "slotValues": {
+                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
+              }
             },
             {
-              "zh": "你多久锻炼一次？",
-              "answer": "How often do you exercise?"
+              "zh": "___离这里多远？",
+              "answer": "How far is it from here?",
+              "pattern": "How far is ___ from here?",
+              "slotValues": {
+                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "打车与接送 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基础句",
+              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
+              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
+              "highlight": "excuse",
+              "hint": "从简单开始"
+            },
+            {
+              "level": 2,
+              "label": "加细节",
+              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
+              "zh": "我怎么去博物馆？——直走在拐角左转。",
+              "highlight": "left",
+              "hint": "加信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "购物问询": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "购物问询 · 中译英",
+          "chunk": "check",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你们有这个小号的吗？——我看看。有的，给你。",
+              "answer": "Do you have this in a small size? -- Let me check. Yes, here you are.",
+              "targetWord": "check"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "购物问询 · 英译中",
+          "chunk": "major",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Do you take cards? -- Yes, we take all major cards.",
+              "answer": "你们收卡吗？——收，所有主要卡都收。",
+              "targetWord": "major"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "购物问询 · 句型",
+          "pattern": "How much is ___?",
+          "patternMeaning": "___多少钱？",
+          "slots": [
+            "this",
+            "that",
+            "the red one"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "___多少钱？",
+              "answer": "How much is this?",
+              "pattern": "How much is ___?",
+              "slotValues": {
+                "slot1": "this",
+                "slot2": "that",
+                "slot3": "the red one"
+              }
+            },
+            {
+              "zh": "___多少钱？",
+              "answer": "How much are these?",
+              "pattern": "How much are ___?",
+              "slotValues": {
+                "slot1": "these shoes",
+                "slot2": "the apples",
+                "slot3": "those flowers"
+              }
+            },
+            {
+              "zh": "这个有___吗？",
+              "answer": "Do you have this in a small size?",
+              "pattern": "Do you have this in ___?",
+              "slotValues": {
+                "slot1": "a small size",
+                "slot2": "blue",
+                "slot3": "another color"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "试穿与尺寸": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "试穿与尺寸 · 中译英",
+          "chunk": "left",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我想试穿这个。试衣间在哪？——那边，左边。",
+              "answer": "I want to try this on. Where is the fitting room? -- Over there, on the left.",
+              "targetWord": "left"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "试穿与尺寸 · 英译中",
+          "chunk": "check",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Do you have this in medium? -- Let me check for you.",
+              "answer": "你们有中号的吗？——我帮你查一下。",
+              "targetWord": "check"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "试穿与尺寸 · 句型",
+          "pattern": "I want to try ___ on. Where is the fitting room?",
+          "patternMeaning": "我想试穿___。试衣间在哪？",
+          "slots": [
+            "this jacket, these shoes, that dress, those pants, this hat, the scarf"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我想试穿___。试衣间在哪？",
+              "answer": "I want to try this on. Where is the fitting room?",
+              "pattern": "I want to try ___ on. Where is the fitting room?",
+              "slotValues": {
+                "slot1": "this jacket, these shoes, that dress, those pants, this hat, the scarf"
+              }
+            },
+            {
+              "zh": "你们有其他___吗？",
+              "answer": "Do you have other colors?",
+              "pattern": "Do you have other ___?",
+              "slotValues": {
+                "slot1": "colors, styles, sizes, options, brands, ones"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "餐厅点餐": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "餐厅点餐 · 中译英",
+          "chunk": "recommend",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你推荐什么？——烤鱼很受欢迎。",
+              "answer": "What do you recommend? -- The grilled fish is very popular.",
+              "targetWord": "recommend"
             }
           ]
         },
         {
           "id": "pd_1",
           "type": "pattern_drill",
-          "direction": "zh_to_en",
-          "title": "How do you feel / How fast / How often 问答操练",
-          "pattern": "How [aspect] [aux] [subject] [rest]? — [answer].",
-          "patternMeaning": "怎么/怎么样...？——回答。",
+          "title": "餐厅点餐 · 句型",
+          "pattern": "I want to see ___, please.",
+          "patternMeaning": "我想看看___。",
           "slots": [
-            "aspect",
-            "aux",
-            "subject",
-            "rest",
-            "answer"
+            "the menu",
+            "the wine list",
+            "the dessert menu"
           ],
+          "direction": "zh_to_en",
           "items": [
             {
-              "zh": "你感觉怎么样？——我很好。",
-              "answer": "How do you feel? — I feel great.",
+              "zh": "我想看看___。",
+              "answer": "I want to see the menu, please.",
+              "pattern": "I want to see ___, please.",
               "slotValues": {
-                "aspect": "",
-                "aux": "do",
-                "subject": "you",
-                "rest": "feel",
-                "answer": "I feel great."
+                "slot1": "the menu",
+                "slot2": "the wine list",
+                "slot3": "the dessert menu"
               }
             },
             {
-              "zh": "你能跑多快？——非常快。",
-              "answer": "How fast can you run? — Very fast.",
+              "zh": "你推荐什么___？",
+              "answer": "What do you recommend?",
+              "pattern": "What do you recommend for ___?",
               "slotValues": {
-                "aspect": "fast",
-                "aux": "can",
-                "subject": "you",
-                "rest": "run",
-                "answer": "Very fast."
+                "slot1": "a starter",
+                "slot2": "the main course",
+                "slot3": "dessert"
               }
             },
             {
-              "zh": "你多久锻炼一次？——每天。",
-              "answer": "How often do you exercise? — Every day.",
+              "zh": "这个含有___吗？",
+              "answer": "Does this dish contain nuts?",
+              "pattern": "Does this contain ___?",
               "slotValues": {
-                "aspect": "often",
-                "aux": "do",
-                "subject": "you",
-                "rest": "exercise",
-                "answer": "Every day."
-              }
-            },
-            {
-              "zh": "你说英语说得好吗？——还不错。",
-              "answer": "How well do you speak English? — Not bad.",
-              "slotValues": {
-                "aspect": "well",
-                "aux": "do",
-                "subject": "you",
-                "rest": "speak English",
-                "answer": "Not bad."
-              }
-            },
-            {
-              "zh": "你感觉好点了吗？——好多了。",
-              "answer": "Do you feel better? — Much better.",
-              "slotValues": {
-                "aspect": "",
-                "aux": "Do",
-                "subject": "you",
-                "rest": "feel better",
-                "answer": "Much better."
+                "slot1": "nuts",
+                "slot2": "dairy",
+                "slot3": "gluten"
               }
             }
           ]
-        },
+        }
+      ]
+    }
+  },
+  "餐厅服务与评价": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
         {
-          "id": "vsb_feel",
-          "type": "vocab_sentence_building",
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
           "direction": "zh_to_en",
-          "title": "feel 一词多句",
-          "vocabWord": "feel",
-          "vocabMeaning": "感觉",
-          "patterns": [
+          "title": "餐厅服务与评价 · 中译英",
+          "chunk": "check / major",
+          "chunkMeaning": "",
+          "items": [
             {
-              "chunk": "How do you feel ___?",
-              "items": [
-                {
-                  "zh": "你今天感觉怎么样？",
-                  "answer": "How do you feel today?"
-                },
-                {
-                  "zh": "你感觉好点了吗？",
-                  "answer": "Do you feel better?"
-                },
-                {
-                  "zh": "你对这件事怎么看？",
-                  "answer": "How do you feel about it?"
-                }
-              ]
+              "zh": "你们有这个小号的吗？——我看看。有的，给你。",
+              "answer": "Do you have this in a small size? -- Let me check. Yes, here you are.",
+              "targetWord": "check"
             },
             {
-              "chunk": "I feel ___.",
-              "items": [
-                {
-                  "zh": "我感觉很好。",
-                  "answer": "I feel great."
-                },
-                {
-                  "zh": "我感觉不舒服。",
-                  "answer": "I don't feel well."
-                },
-                {
-                  "zh": "我感觉有点累。",
-                  "answer": "I feel a little tired."
-                }
-              ]
-            },
-            {
-              "chunk": "It feels ___.",
-              "items": [
-                {
-                  "zh": "感觉很好。",
-                  "answer": "It feels good."
-                },
-                {
-                  "zh": "感觉不对。",
-                  "answer": "It feels wrong."
-                },
-                {
-                  "zh": "这感觉很舒服。",
-                  "answer": "This feels comfortable."
-                }
-              ]
+              "zh": "你们收卡吗？——收，所有主要卡都收。",
+              "answer": "Do you take cards? -- Yes, we take all major cards.",
+              "targetWord": "major"
             }
           ]
         },
         {
-          "id": "vsb_better",
-          "type": "vocab_sentence_building",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "餐厅服务与评价 · 英译中",
+          "chunk": "left / check / some",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I want to try this on. Where is the fitting room? -- Over there, on the left.",
+              "answer": "我想试穿这个。试衣间在哪？——那边，左边。",
+              "targetWord": "left"
+            },
+            {
+              "en": "Do you have this in medium? -- Let me check for you.",
+              "answer": "你们有中号的吗？——我帮你查一下。",
+              "targetWord": "check"
+            },
+            {
+              "en": "Do you have this in a different style? -- Yes, we have some new arrivals.",
+              "answer": "你们有其他风格的吗？——有的，我们有一些新款。",
+              "targetWord": "some"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "餐厅服务与评价 · 句型",
+          "pattern": "Is ___ included?",
+          "patternMeaning": "___包含在内吗？",
+          "slots": [
+            "service charge",
+            "tax",
+            "tip"
+          ],
           "direction": "zh_to_en",
-          "title": "better 一词多句",
-          "vocabWord": "better",
-          "vocabMeaning": "更好的/更好地",
-          "patterns": [
+          "items": [
             {
-              "chunk": "I feel ___ better.",
-              "items": [
-                {
-                  "zh": "我感觉好多了。",
-                  "answer": "I feel much better."
-                },
-                {
-                  "zh": "你感觉好点了吗？",
-                  "answer": "Are you feeling better?"
-                },
-                {
-                  "zh": "我希望你能快点好起来。",
-                  "answer": "I hope you feel better soon."
-                }
-              ]
+              "zh": "___包含在内吗？",
+              "answer": "Is service charge included?",
+              "pattern": "Is ___ included?",
+              "slotValues": {
+                "slot1": "service charge",
+                "slot2": "tax",
+                "slot3": "tip"
+              }
             },
             {
-              "chunk": "___ is better than ___.",
-              "items": [
-                {
-                  "zh": "这个比那个好。",
-                  "answer": "This is better than that."
-                },
-                {
-                  "zh": "走路比开车好。",
-                  "answer": "Walking is better than driving."
-                },
-                {
-                  "zh": "我觉得这更好。",
-                  "answer": "I think this is better."
-                }
-              ]
+              "zh": "你们有___选项吗？",
+              "answer": "Do you have any vegetarian options?",
+              "pattern": "Do you have any ___ options?",
+              "slotValues": {
+                "slot1": "vegetarian",
+                "slot2": "vegan",
+                "slot3": "gluten-free"
+              }
             },
             {
-              "chunk": "Can you do better?",
-              "items": [
-                {
-                  "zh": "你能做得更好吗？",
-                  "answer": "Can you do better?"
-                },
-                {
-                  "zh": "我想做得更好。",
-                  "answer": "I want to do better."
-                },
-                {
-                  "zh": "下次会更好。",
-                  "answer": "It will be better next time."
-                }
-              ]
+              "zh": "有___的桌子吗？",
+              "answer": "Is there a table by the window?",
+              "pattern": "Is there a table ___?",
+              "slotValues": {
+                "slot1": "by the window",
+                "slot2": "outside",
+                "slot3": "in the corner"
+              }
             }
           ]
         },
         {
-          "id": "vsb_fast",
-          "type": "vocab_sentence_building",
-          "direction": "zh_to_en",
-          "title": "fast / slowly 一词多句",
-          "vocabWord": "fast / slowly",
-          "vocabMeaning": "快地/慢慢地",
-          "patterns": [
-            {
-              "chunk": "How fast ___?",
-              "items": [
-                {
-                  "zh": "你能跑多快？",
-                  "answer": "How fast can you run?"
-                },
-                {
-                  "zh": "你能开多快？",
-                  "answer": "How fast can you drive?"
-                },
-                {
-                  "zh": "这有多快？",
-                  "answer": "How fast is it?"
-                }
-              ]
-            },
-            {
-              "chunk": "Please speak ___.",
-              "items": [
-                {
-                  "zh": "请说慢点。",
-                  "answer": "Please speak slowly."
-                },
-                {
-                  "zh": "你能说慢点吗？",
-                  "answer": "Can you speak more slowly?"
-                },
-                {
-                  "zh": "他说得太快了。",
-                  "answer": "He speaks too fast."
-                }
-              ]
-            },
-            {
-              "chunk": "Do it ___.",
-              "items": [
-                {
-                  "zh": "做快点。",
-                  "answer": "Do it quickly."
-                },
-                {
-                  "zh": "小心地做。",
-                  "answer": "Do it carefully."
-                },
-                {
-                  "zh": "不用急，慢慢来。",
-                  "answer": "Take your time. Do it slowly."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "sd_1",
+          "id": "sd_3",
           "type": "sentence_decomposition",
-          "title": "从问候到关心的对话",
+          "title": "餐厅服务与评价 · 逐步构建",
           "levels": [
             {
               "level": 1,
-              "label": "问候",
-              "en": "How do you feel?",
-              "zh": "你感觉怎么样？"
+              "label": "基础句",
+              "en": "Do you have this in a small size? -- Let me check. Yes, here you are.",
+              "zh": "你们有这个小号的吗？——我看看。有的，给你。",
+              "highlight": "check",
+              "hint": "从简单开始"
             },
             {
               "level": 2,
-              "label": "加关心",
-              "en": "How do you feel? Are you feeling better today?",
-              "zh": "你感觉怎么样？今天好点了吗？",
-              "highlight": "Are you feeling better today?",
-              "hint": "加上关心"
+              "label": "加细节",
+              "en": "Do you take cards? -- Yes, we take all major cards.",
+              "zh": "你们收卡吗？——收，所有主要卡都收。",
+              "highlight": "major",
+              "hint": "加信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "认识新朋友": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "认识新朋友 · 中译英",
+          "chunk": "hospital",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你是做什么的？——我是学生。/ 我在医院工作。",
+              "answer": "What do you do? -- Im a student. / I work in a hospital.",
+              "targetWord": "hospital"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "认识新朋友 · 英译中",
+          "chunk": "fun",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "What do you do for fun? -- I like watching movies and hiking.",
+              "answer": "你平时玩什么？——我喜欢看电影和徒步。",
+              "targetWord": "fun"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "认识新朋友 · 句型",
+          "pattern": "What do you do? — I am a ___.",
+          "patternMeaning": "你是做什么的？",
+          "slots": [
+            "student",
+            "teacher",
+            "designer"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你是做什么的？",
+              "answer": "What do you do? — I am a student.",
+              "pattern": "What do you do? — I am a ___.",
+              "slotValues": {
+                "slot1": "student",
+                "slot2": "teacher",
+                "slot3": "designer"
+              }
             },
             {
-              "level": 3,
-              "label": "加提议",
-              "en": "How do you feel? Are you feeling better? How about a walk to feel better?",
-              "zh": "你感觉怎么样？好点了吗？出去走走也许会好点？",
-              "highlight": "How about a walk to feel better?",
-              "hint": "加上提议"
+              "zh": "你在哪里工作？",
+              "answer": "What do you do? — I work in a bank.",
+              "pattern": "What do you do? — I work in ___.",
+              "slotValues": {
+                "slot1": "a bank",
+                "slot2": "a school",
+                "slot3": "IT"
+              }
+            },
+            {
+              "zh": "你来自哪里？",
+              "answer": "Where are you from? — I am from Chengdu.",
+              "pattern": "Where are you from? — I am from ___.",
+              "slotValues": {
+                "slot1": "Chengdu",
+                "slot2": "Beijing",
+                "slot3": "Guangdong"
+              }
+            },
+            {
+              "zh": "最近怎么样？",
+              "answer": "How's it going? — Pretty good!",
+              "pattern": "How's it going? — ___.",
+              "slotValues": {
+                "slot1": "Not bad",
+                "slot2": "Great",
+                "slot3": "Can't complain"
+              }
+            },
+            {
+              "zh": "你___做什么？",
+              "answer": "What do you do for fun?",
+              "pattern": "What do you do for ___?",
+              "slotValues": {
+                "slot1": "fun",
+                "slot2": "exercise",
+                "slot3": "relaxation"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "爱好与兴趣": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "爱好与兴趣 · 中译英",
+          "chunk": "bit",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你喜欢什么类型的音乐？——我喜欢流行和一点爵士。",
+              "answer": "What kind of music do you like? -- I like pop and a little bit of jazz.",
+              "targetWord": "bit"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "爱好与兴趣 · 句型",
+          "pattern": "What do you do? — I am a ___.",
+          "patternMeaning": "你是做什么的？",
+          "slots": [
+            "student",
+            "teacher",
+            "designer"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你是做什么的？",
+              "answer": "What do you do? — I am a student.",
+              "pattern": "What do you do? — I am a ___.",
+              "slotValues": {
+                "slot1": "student",
+                "slot2": "teacher",
+                "slot3": "designer"
+              }
+            },
+            {
+              "zh": "你在哪里工作？",
+              "answer": "What do you do? — I work in a bank.",
+              "pattern": "What do you do? — I work in ___.",
+              "slotValues": {
+                "slot1": "a bank",
+                "slot2": "a school",
+                "slot3": "IT"
+              }
+            },
+            {
+              "zh": "你来自哪里？",
+              "answer": "Where are you from? — I am from Chengdu.",
+              "pattern": "Where are you from? — I am from ___.",
+              "slotValues": {
+                "slot1": "Chengdu",
+                "slot2": "Beijing",
+                "slot3": "Guangdong"
+              }
+            },
+            {
+              "zh": "最近怎么样？",
+              "answer": "How's it going? — Pretty good!",
+              "pattern": "How's it going? — ___.",
+              "slotValues": {
+                "slot1": "Not bad",
+                "slot2": "Great",
+                "slot3": "Can't complain"
+              }
+            },
+            {
+              "zh": "你___做什么？",
+              "answer": "What do you do for fun?",
+              "pattern": "What do you do for ___?",
+              "slotValues": {
+                "slot1": "fun",
+                "slot2": "exercise",
+                "slot3": "relaxation"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "约见面": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "约见面 · 中译英",
+          "chunk": "weekend",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你这周末有空吗？——有空，怎么啦？",
+              "answer": "Are you free this weekend? -- Yes, I am. Why?",
+              "targetWord": "weekend"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "约见面 · 英译中",
+          "chunk": "grab",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Do you want to grab lunch together? -- Id love to!",
+              "answer": "一起吃午饭吗？——我很乐意！",
+              "targetWord": "grab"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "约见面 · 句型",
+          "pattern": "Are you free ___?",
+          "patternMeaning": "你___有空吗？",
+          "slots": [
+            "this weekend",
+            "tonight",
+            "tomorrow"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你___有空吗？",
+              "answer": "Are you free this weekend?",
+              "pattern": "Are you free ___?",
+              "slotValues": {
+                "slot1": "this weekend",
+                "slot2": "tonight",
+                "slot3": "tomorrow"
+              }
+            },
+            {
+              "zh": "你想___吗？",
+              "answer": "Do you want to grab lunch together?",
+              "pattern": "Do you want to ___?",
+              "slotValues": {
+                "slot1": "grab lunch",
+                "slot2": "get a coffee",
+                "slot3": "go shopping"
+              }
+            },
+            {
+              "zh": "你想几点___？",
+              "answer": "What time do you want to meet?",
+              "pattern": "What time do you want to ___?",
+              "slotValues": {
+                "slot1": "meet",
+                "slot2": "start",
+                "slot3": "leave"
+              }
+            },
+            {
+              "zh": "你想在哪里___？",
+              "answer": "Where do you want to meet?",
+              "pattern": "Where do you want to ___?",
+              "slotValues": {
+                "slot1": "meet",
+                "slot2": "go",
+                "slot3": "eat"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "关心与问候": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "关心与问候 · 中译英",
+          "chunk": "yeah",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "一切都好吗？你看起来累了。——嗯，没事，只是没睡好。",
+              "answer": "Is everything okay? You look tired. -- Yeah, Im fine. Just didnt sleep well.",
+              "targetWord": "yeah"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "关心与问候 · 句型",
+          "pattern": "How is ___?",
+          "patternMeaning": "___怎么样？",
+          "slots": [
+            "your day",
+            "everything",
+            "your work"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "___怎么样？",
+              "answer": "How is your day?",
+              "pattern": "How is ___?",
+              "slotValues": {
+                "slot1": "your day",
+                "slot2": "everything",
+                "slot3": "your work"
+              }
+            },
+            {
+              "zh": "一切都___吗？",
+              "answer": "Is everything okay?",
+              "pattern": "Is everything ___?",
+              "slotValues": {
+                "slot1": "okay",
+                "slot2": "alright",
+                "slot3": "going well"
+              }
+            },
+            {
+              "zh": "你需要___吗？",
+              "answer": "Do you need help?",
+              "pattern": "Do you need ___?",
+              "slotValues": {
+                "slot1": "help",
+                "slot2": "anything",
+                "slot3": "a hand"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "邀请与回应": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "邀请与回应 · 中译英",
+          "chunk": "hospital / fun",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你是做什么的？——我是学生。/ 我在医院工作。",
+              "answer": "What do you do? -- Im a student. / I work in a hospital.",
+              "targetWord": "hospital"
+            },
+            {
+              "zh": "你平时玩什么？——我喜欢看电影和徒步。",
+              "answer": "What do you do for fun? -- I like watching movies and hiking.",
+              "targetWord": "fun"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "邀请与回应 · 英译中",
+          "chunk": "bit / weekend / grab",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "What kind of music do you like? -- I like pop and a little bit of jazz.",
+              "answer": "你喜欢什么类型的音乐？——我喜欢流行和一点爵士。",
+              "targetWord": "bit"
+            },
+            {
+              "en": "Are you free this weekend? -- Yes, I am. Why?",
+              "answer": "你这周末有空吗？——有空，怎么啦？",
+              "targetWord": "weekend"
+            },
+            {
+              "en": "Do you want to grab lunch together? -- Id love to!",
+              "answer": "一起吃午饭吗？——我很乐意！",
+              "targetWord": "grab"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "邀请与回应 · 句型",
+          "pattern": "What do you do? — I am a ___.",
+          "patternMeaning": "你是做什么的？",
+          "slots": [
+            "student",
+            "teacher",
+            "designer"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你是做什么的？",
+              "answer": "What do you do? — I am a student.",
+              "pattern": "What do you do? — I am a ___.",
+              "slotValues": {
+                "slot1": "student",
+                "slot2": "teacher",
+                "slot3": "designer"
+              }
+            },
+            {
+              "zh": "你在哪里工作？",
+              "answer": "What do you do? — I work in a bank.",
+              "pattern": "What do you do? — I work in ___.",
+              "slotValues": {
+                "slot1": "a bank",
+                "slot2": "a school",
+                "slot3": "IT"
+              }
+            },
+            {
+              "zh": "你来自哪里？",
+              "answer": "Where are you from? — I am from Chengdu.",
+              "pattern": "Where are you from? — I am from ___.",
+              "slotValues": {
+                "slot1": "Chengdu",
+                "slot2": "Beijing",
+                "slot3": "Guangdong"
+              }
+            },
+            {
+              "zh": "最近怎么样？",
+              "answer": "How's it going? — Pretty good!",
+              "pattern": "How's it going? — ___.",
+              "slotValues": {
+                "slot1": "Not bad",
+                "slot2": "Great",
+                "slot3": "Can't complain"
+              }
+            },
+            {
+              "zh": "你___做什么？",
+              "answer": "What do you do for fun?",
+              "pattern": "What do you do for ___?",
+              "slotValues": {
+                "slot1": "fun",
+                "slot2": "exercise",
+                "slot3": "relaxation"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "邀请与回应 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基础句",
+              "en": "What do you do? -- Im a student. / I work in a hospital.",
+              "zh": "你是做什么的？——我是学生。/ 我在医院工作。",
+              "highlight": "hospital",
+              "hint": "从简单开始"
+            },
+            {
+              "level": 2,
+              "label": "加细节",
+              "en": "What do you do for fun? -- I like watching movies and hiking.",
+              "zh": "你平时玩什么？——我喜欢看电影和徒步。",
+              "highlight": "fun",
+              "hint": "加信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "打电话找人": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "打电话找人 · 中译英",
+          "chunk": "available",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "answer": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "targetWord": "available"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "打电话找人 · 英译中",
+          "chunk": "back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "When is he back? -- He is back in about an hour.",
+              "answer": "他什么时候回来？——大约一小时后回来。",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "打电话找人 · 句型",
+          "pattern": "Is ___ there, please?",
+          "patternMeaning": "请问___在吗？",
+          "slots": [
+            "Mr Wang",
+            "the manager",
+            "your parents"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请问___在吗？",
+              "answer": "Is Mr Wang there, please?",
+              "pattern": "Is ___ there, please?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the manager",
+                "slot3": "your parents"
+              }
+            },
+            {
+              "zh": "请问哪位？",
+              "answer": "Who's calling, please? — This is Toms friend.",
+              "pattern": "Who's calling, please? — This is ___.",
+              "slotValues": {
+                "slot1": "your student",
+                "slot2": "Toms friend",
+                "slot3": "the delivery person"
+              }
+            },
+            {
+              "zh": "___方便接电话吗？",
+              "answer": "Is Mr Wang available?",
+              "pattern": "Is ___ available?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the doctor",
+                "slot3": "your boss"
+              }
+            },
+            {
+              "zh": "___什么时候回来？",
+              "answer": "When is he back?",
+              "pattern": "When is ___ back?",
+              "slotValues": {
+                "slot1": "he",
+                "slot2": "she",
+                "slot3": "the manager"
+              }
+            },
+            {
+              "zh": "什么时候___比较方便？",
+              "answer": "When is a good time to call back?",
+              "pattern": "When is a good time to ___?",
+              "slotValues": {
+                "slot1": "call",
+                "slot2": "reach you",
+                "slot3": "come by"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "留言与回电": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "留言与回电 · 中译英",
+          "chunk": "leave",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我想留言，可以吗？——好的，请说。",
+              "answer": "I want to leave a message. Is that okay? -- Sure. Go ahead.",
+              "targetWord": "leave"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "留言与回电 · 英译中",
+          "chunk": "back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Please ask him to call me back. -- Sure. Whats your name and number?",
+              "answer": "请让他回电话给我。——好的，你的名字和电话是？",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "留言与回电 · 句型",
+          "pattern": "Is ___ there, please?",
+          "patternMeaning": "请问___在吗？",
+          "slots": [
+            "Mr Wang",
+            "the manager",
+            "your parents"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请问___在吗？",
+              "answer": "Is Mr Wang there, please?",
+              "pattern": "Is ___ there, please?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the manager",
+                "slot3": "your parents"
+              }
+            },
+            {
+              "zh": "请问哪位？",
+              "answer": "Who's calling, please? — This is Toms friend.",
+              "pattern": "Who's calling, please? — This is ___.",
+              "slotValues": {
+                "slot1": "your student",
+                "slot2": "Toms friend",
+                "slot3": "the delivery person"
+              }
+            },
+            {
+              "zh": "___方便接电话吗？",
+              "answer": "Is Mr Wang available?",
+              "pattern": "Is ___ available?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the doctor",
+                "slot3": "your boss"
+              }
+            },
+            {
+              "zh": "___什么时候回来？",
+              "answer": "When is he back?",
+              "pattern": "When is ___ back?",
+              "slotValues": {
+                "slot1": "he",
+                "slot2": "she",
+                "slot3": "the manager"
+              }
+            },
+            {
+              "zh": "什么时候___比较方便？",
+              "answer": "When is a good time to call back?",
+              "pattern": "When is a good time to ___?",
+              "slotValues": {
+                "slot1": "call",
+                "slot2": "reach you",
+                "slot3": "come by"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "电话确认": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "电话确认 · 中译英",
+          "chunk": "available / back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "answer": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "targetWord": "available"
+            },
+            {
+              "zh": "他什么时候回来？——大约一小时后回来。",
+              "answer": "When is he back? -- He is back in about an hour.",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "电话确认 · 英译中",
+          "chunk": "ill / leave / back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Sorry, I think you have the wrong number. -- Oh, Im sorry. Ill check the number again.",
+              "answer": "对不起，你打错了。——哦，抱歉，我再查一下号码。",
+              "targetWord": "ill"
+            },
+            {
+              "en": "I want to leave a message. Is that okay? -- Sure. Go ahead.",
+              "answer": "我想留言，可以吗？——好的，请说。",
+              "targetWord": "leave"
+            },
+            {
+              "en": "Please ask him to call me back. -- Sure. Whats your name and number?",
+              "answer": "请让他回电话给我。——好的，你的名字和电话是？",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "电话确认 · 句型",
+          "pattern": "Is ___ there, please?",
+          "patternMeaning": "请问___在吗？",
+          "slots": [
+            "Mr Wang",
+            "the manager",
+            "your parents"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请问___在吗？",
+              "answer": "Is Mr Wang there, please?",
+              "pattern": "Is ___ there, please?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the manager",
+                "slot3": "your parents"
+              }
+            },
+            {
+              "zh": "请问哪位？",
+              "answer": "Who's calling, please? — This is Toms friend.",
+              "pattern": "Who's calling, please? — This is ___.",
+              "slotValues": {
+                "slot1": "your student",
+                "slot2": "Toms friend",
+                "slot3": "the delivery person"
+              }
+            },
+            {
+              "zh": "___方便接电话吗？",
+              "answer": "Is Mr Wang available?",
+              "pattern": "Is ___ available?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the doctor",
+                "slot3": "your boss"
+              }
+            },
+            {
+              "zh": "___什么时候回来？",
+              "answer": "When is he back?",
+              "pattern": "When is ___ back?",
+              "slotValues": {
+                "slot1": "he",
+                "slot2": "she",
+                "slot3": "the manager"
+              }
+            },
+            {
+              "zh": "什么时候___比较方便？",
+              "answer": "When is a good time to call back?",
+              "pattern": "When is a good time to ___?",
+              "slotValues": {
+                "slot1": "call",
+                "slot2": "reach you",
+                "slot3": "come by"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "电话确认 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基础句",
+              "en": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "highlight": "available",
+              "hint": "从简单开始"
+            },
+            {
+              "level": 2,
+              "label": "加细节",
+              "en": "When is he back? -- He is back in about an hour.",
+              "zh": "他什么时候回来？——大约一小时后回来。",
+              "highlight": "back",
+              "hint": "加信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "问联系方式": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "问联系方式 · 中译英",
+          "chunk": "available / back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "answer": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "targetWord": "available"
+            },
+            {
+              "zh": "他什么时候回来？——大约一小时后回来。",
+              "answer": "When is he back? -- He is back in about an hour.",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "问联系方式 · 英译中",
+          "chunk": "ill / leave / back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Sorry, I think you have the wrong number. -- Oh, Im sorry. Ill check the number again.",
+              "answer": "对不起，你打错了。——哦，抱歉，我再查一下号码。",
+              "targetWord": "ill"
+            },
+            {
+              "en": "I want to leave a message. Is that okay? -- Sure. Go ahead.",
+              "answer": "我想留言，可以吗？——好的，请说。",
+              "targetWord": "leave"
+            },
+            {
+              "en": "Please ask him to call me back. -- Sure. Whats your name and number?",
+              "answer": "请让他回电话给我。——好的，你的名字和电话是？",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "问联系方式 · 句型",
+          "pattern": "Is ___ there, please?",
+          "patternMeaning": "请问___在吗？",
+          "slots": [
+            "Mr Wang",
+            "the manager",
+            "your parents"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请问___在吗？",
+              "answer": "Is Mr Wang there, please?",
+              "pattern": "Is ___ there, please?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the manager",
+                "slot3": "your parents"
+              }
+            },
+            {
+              "zh": "请问哪位？",
+              "answer": "Who's calling, please? — This is Toms friend.",
+              "pattern": "Who's calling, please? — This is ___.",
+              "slotValues": {
+                "slot1": "your student",
+                "slot2": "Toms friend",
+                "slot3": "the delivery person"
+              }
+            },
+            {
+              "zh": "___方便接电话吗？",
+              "answer": "Is Mr Wang available?",
+              "pattern": "Is ___ available?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the doctor",
+                "slot3": "your boss"
+              }
+            },
+            {
+              "zh": "___什么时候回来？",
+              "answer": "When is he back?",
+              "pattern": "When is ___ back?",
+              "slotValues": {
+                "slot1": "he",
+                "slot2": "she",
+                "slot3": "the manager"
+              }
+            },
+            {
+              "zh": "什么时候___比较方便？",
+              "answer": "When is a good time to call back?",
+              "pattern": "When is a good time to ___?",
+              "slotValues": {
+                "slot1": "call",
+                "slot2": "reach you",
+                "slot3": "come by"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "问联系方式 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基础句",
+              "en": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "highlight": "available",
+              "hint": "从简单开始"
+            },
+            {
+              "level": 2,
+              "label": "加细节",
+              "en": "When is he back? -- He is back in about an hour.",
+              "zh": "他什么时候回来？——大约一小时后回来。",
+              "highlight": "back",
+              "hint": "加信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "电话问题处理": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "电话问题处理 · 中译英",
+          "chunk": "available / back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "answer": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "targetWord": "available"
+            },
+            {
+              "zh": "他什么时候回来？——大约一小时后回来。",
+              "answer": "When is he back? -- He is back in about an hour.",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "电话问题处理 · 英译中",
+          "chunk": "ill / leave / back",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Sorry, I think you have the wrong number. -- Oh, Im sorry. Ill check the number again.",
+              "answer": "对不起，你打错了。——哦，抱歉，我再查一下号码。",
+              "targetWord": "ill"
+            },
+            {
+              "en": "I want to leave a message. Is that okay? -- Sure. Go ahead.",
+              "answer": "我想留言，可以吗？——好的，请说。",
+              "targetWord": "leave"
+            },
+            {
+              "en": "Please ask him to call me back. -- Sure. Whats your name and number?",
+              "answer": "请让他回电话给我。——好的，你的名字和电话是？",
+              "targetWord": "back"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "电话问题处理 · 句型",
+          "pattern": "Is ___ there, please?",
+          "patternMeaning": "请问___在吗？",
+          "slots": [
+            "Mr Wang",
+            "the manager",
+            "your parents"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请问___在吗？",
+              "answer": "Is Mr Wang there, please?",
+              "pattern": "Is ___ there, please?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the manager",
+                "slot3": "your parents"
+              }
+            },
+            {
+              "zh": "请问哪位？",
+              "answer": "Who's calling, please? — This is Toms friend.",
+              "pattern": "Who's calling, please? — This is ___.",
+              "slotValues": {
+                "slot1": "your student",
+                "slot2": "Toms friend",
+                "slot3": "the delivery person"
+              }
+            },
+            {
+              "zh": "___方便接电话吗？",
+              "answer": "Is Mr Wang available?",
+              "pattern": "Is ___ available?",
+              "slotValues": {
+                "slot1": "Mr Wang",
+                "slot2": "the doctor",
+                "slot3": "your boss"
+              }
+            },
+            {
+              "zh": "___什么时候回来？",
+              "answer": "When is he back?",
+              "pattern": "When is ___ back?",
+              "slotValues": {
+                "slot1": "he",
+                "slot2": "she",
+                "slot3": "the manager"
+              }
+            },
+            {
+              "zh": "什么时候___比较方便？",
+              "answer": "When is a good time to call back?",
+              "pattern": "When is a good time to ___?",
+              "slotValues": {
+                "slot1": "call",
+                "slot2": "reach you",
+                "slot3": "come by"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "电话问题处理 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基础句",
+              "en": "Is Mr. Wang available? -- Sorry, hes in a meeting right now.",
+              "zh": "王先生方便接电话吗？——对不起，他正在开会。",
+              "highlight": "available",
+              "hint": "从简单开始"
+            },
+            {
+              "level": 2,
+              "label": "加细节",
+              "en": "When is he back? -- He is back in about an hour.",
+              "zh": "他什么时候回来？——大约一小时后回来。",
+              "highlight": "back",
+              "hint": "加信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "紧急呼救": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "紧急呼救 · 中译英",
+          "chunk": "hospital",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "最近的医院在哪？——大约3公里远。",
+              "answer": "Where is the nearest hospital? -- Its about 3 kilometers from here.",
+              "targetWord": "hospital"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "紧急呼救 · 英译中",
+          "chunk": "hurt",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is everyone okay? -- I think so. One person is a little hurt.",
+              "answer": "大家都还好吗？——是的，有一个人受了点伤。",
+              "targetWord": "hurt"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "紧急呼救 · 句型",
+          "pattern": "Help! Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
+          "slots": [
+            "hospital",
+            "police station",
+            "fire station"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest hospital?",
+              "pattern": "Help! Where is the nearest ___?",
+              "slotValues": {
+                "slot1": "hospital",
+                "slot2": "police station",
+                "slot3": "fire station"
+              }
+            },
+            {
+              "zh": "我该怎么___？",
+              "answer": "How do I call an ambulance?",
+              "pattern": "How do I ___?",
+              "slotValues": {
+                "slot1": "call an ambulance",
+                "slot2": "call the police",
+                "slot3": "report a fire"
+              }
+            },
+            {
+              "zh": "这里有___吗？",
+              "answer": "Is there a doctor here?",
+              "pattern": "Is there a ___ here?",
+              "slotValues": {
+                "slot1": "doctor",
+                "slot2": "nurse",
+                "slot3": "police officer"
+              }
+            },
+            {
+              "zh": "大家都___吗？",
+              "answer": "Is everyone okay?",
+              "pattern": "Is everyone ___?",
+              "slotValues": {
+                "slot1": "safe",
+                "slot2": "accounted for",
+                "slot3": "out of the building"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "问路求助": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "问路求助 · 中译英",
+          "chunk": "lost",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "请帮帮我，我迷路了。——好的，你想去哪？",
+              "answer": "Please help me. Im lost. -- Of course. Where do you want to go?",
+              "targetWord": "lost"
+            }
+          ]
+        },
+        {
+          "id": "pd_1",
+          "type": "pattern_drill",
+          "title": "问路求助 · 句型",
+          "pattern": "Help! Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
+          "slots": [
+            "hospital",
+            "police station",
+            "fire station"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest hospital?",
+              "pattern": "Help! Where is the nearest ___?",
+              "slotValues": {
+                "slot1": "hospital",
+                "slot2": "police station",
+                "slot3": "fire station"
+              }
+            },
+            {
+              "zh": "我该怎么___？",
+              "answer": "How do I call an ambulance?",
+              "pattern": "How do I ___?",
+              "slotValues": {
+                "slot1": "call an ambulance",
+                "slot2": "call the police",
+                "slot3": "report a fire"
+              }
+            },
+            {
+              "zh": "这里有___吗？",
+              "answer": "Is there a doctor here?",
+              "pattern": "Is there a ___ here?",
+              "slotValues": {
+                "slot1": "doctor",
+                "slot2": "nurse",
+                "slot3": "police officer"
+              }
+            },
+            {
+              "zh": "大家都___吗？",
+              "answer": "Is everyone okay?",
+              "pattern": "Is everyone ___?",
+              "slotValues": {
+                "slot1": "safe",
+                "slot2": "accounted for",
+                "slot3": "out of the building"
+              }
+            },
+            {
+              "zh": "我该怎么办？我___。",
+              "answer": "What do I do? I have a bad headache.",
+              "pattern": "What do I do? I have a ___.",
+              "slotValues": {
+                "slot1": "headache",
+                "slot2": "fever",
+                "slot3": "stomachache"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "看病问诊": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "看病问诊 · 中译英",
+          "chunk": "hospital",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我不舒服。最近的医院在哪？——打车大约10分钟。",
+              "answer": "I dont feel well. Where is the nearest hospital? -- Its about 10 minutes by taxi.",
+              "targetWord": "hospital"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "看病问诊 · 英译中",
+          "chunk": "fee",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.",
+              "answer": "在这里看医生多少钱？——挂号费大约200元。",
+              "targetWord": "fee"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "看病问诊 · 句型",
+          "pattern": "What do I do? I have a ___.",
+          "patternMeaning": "我该怎么办？我___。",
+          "slots": [
+            "headache",
+            "fever",
+            "stomachache"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我该怎么办？我___。",
+              "answer": "What do I do? I have a bad headache.",
+              "pattern": "What do I do? I have a ___.",
+              "slotValues": {
+                "slot1": "headache",
+                "slot2": "fever",
+                "slot3": "stomachache"
+              }
+            },
+            {
+              "zh": "我需要___吗？",
+              "answer": "Do I need to see a doctor?",
+              "pattern": "Do I need to ___?",
+              "slotValues": {
+                "slot1": "see a doctor",
+                "slot2": "go to the hospital",
+                "slot3": "take medicine"
+              }
+            },
+            {
+              "zh": "现在有开着的___吗？",
+              "answer": "Is there a pharmacy open right now?",
+              "pattern": "Is there a ___ open right now?",
+              "slotValues": {
+                "slot1": "pharmacy",
+                "slot2": "doctors office",
+                "slot3": "clinic"
+              }
+            },
+            {
+              "zh": "___要多少钱？",
+              "answer": "How much does it cost to see a doctor?",
+              "pattern": "How much does it cost to ___?",
+              "slotValues": {
+                "slot1": "see a doctor",
+                "slot2": "get a check-up",
+                "slot3": "stay overnight"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "丢失物品": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "丢失物品 · 中译英",
+          "chunk": "hospital",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "最近的医院在哪？——大约3公里远。",
+              "answer": "Where is the nearest hospital? -- Its about 3 kilometers from here.",
+              "targetWord": "hospital"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "丢失物品 · 英译中",
+          "chunk": "hurt / lost",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is everyone okay? -- I think so. One person is a little hurt.",
+              "answer": "大家都还好吗？——是的，有一个人受了点伤。",
+              "targetWord": "hurt"
+            },
+            {
+              "en": "Please help me. Im lost. -- Of course. Where do you want to go?",
+              "answer": "请帮帮我，我迷路了。——好的，你想去哪？",
+              "targetWord": "lost"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "丢失物品 · 句型",
+          "pattern": "Help! Where is the nearest ___?",
+          "patternMeaning": "最近的___在哪里？",
+          "slots": [
+            "hospital",
+            "police station",
+            "fire station"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "最近的___在哪里？",
+              "answer": "Where is the nearest hospital?",
+              "pattern": "Help! Where is the nearest ___?",
+              "slotValues": {
+                "slot1": "hospital",
+                "slot2": "police station",
+                "slot3": "fire station"
+              }
+            },
+            {
+              "zh": "我该怎么___？",
+              "answer": "How do I call an ambulance?",
+              "pattern": "How do I ___?",
+              "slotValues": {
+                "slot1": "call an ambulance",
+                "slot2": "call the police",
+                "slot3": "report a fire"
+              }
+            },
+            {
+              "zh": "这里有___吗？",
+              "answer": "Is there a doctor here?",
+              "pattern": "Is there a ___ here?",
+              "slotValues": {
+                "slot1": "doctor",
+                "slot2": "nurse",
+                "slot3": "police officer"
+              }
+            },
+            {
+              "zh": "大家都___吗？",
+              "answer": "Is everyone okay?",
+              "pattern": "Is everyone ___?",
+              "slotValues": {
+                "slot1": "safe",
+                "slot2": "accounted for",
+                "slot3": "out of the building"
+              }
+            },
+            {
+              "zh": "我该怎么办？我___。",
+              "answer": "What do I do? I have a bad headache.",
+              "pattern": "What do I do? I have a ___.",
+              "slotValues": {
+                "slot1": "headache",
+                "slot2": "fever",
+                "slot3": "stomachache"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "语言沟通困难": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "语言沟通困难 · 中译英",
+          "chunk": "hospital",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "最近的医院在哪？——大约3公里远。",
+              "answer": "Where is the nearest hospital? -- Its about 3 kilometers from here.",
+              "targetWord": "hospital"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "语言沟通困难 · 英译中",
+          "chunk": "hurt / lost",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is everyone okay? -- I think so. One person is a little hurt.",
+              "answer": "大家都还好吗？——是的，有一个人受了点伤。",
+              "targetWord": "hurt"
+            },
+            {
+              "en": "Please help me. Im lost. -- Of course. Where do you want to go?",
+              "answer": "请帮帮我，我迷路了。——好的，你想去哪？",
+              "targetWord": "lost"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "语言沟通困难 · 句型",
+          "pattern": "Do you speak ___?",
+          "patternMeaning": "你说___吗？",
+          "slots": [
+            "Chinese",
+            "English",
+            "Japanese"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你说___吗？",
+              "answer": "Do you speak Chinese?",
+              "pattern": "Do you speak ___?",
+              "slotValues": {
+                "slot1": "Chinese",
+                "slot2": "English",
+                "slot3": "Japanese"
+              }
             }
           ]
         }
