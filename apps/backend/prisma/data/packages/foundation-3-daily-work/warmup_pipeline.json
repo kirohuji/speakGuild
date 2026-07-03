@@ -31,6 +31,32 @@
           ]
         },
         {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "他每天做什么 · 英译中",
+          "chunk": "routine / task / break",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He has a daily routine.",
+              "answer": "他有日常的安排。",
+              "targetWord": "routine"
+            },
+            {
+              "en": "He finishes his task on time.",
+              "answer": "他按时完成任务。",
+              "targetWord": "task"
+            },
+            {
+              "en": "He takes a break at noon.",
+              "answer": "他中午休息。",
+              "targetWord": "break"
+            }
+          ]
+        },
+        {
           "id": "pd_1",
           "type": "pattern_drill",
           "title": "他每天做什么 · 句型",
@@ -106,8 +132,14 @@
             {
               "chunk": "He/She ___ at ___.",
               "items": [
-                { "zh": "他7点起床。", "answer": "He gets up at 7." },
-                { "zh": "她6点起床。", "answer": "She gets up at 6." }
+                {
+                  "zh": "他7点起床。",
+                  "answer": "He gets up at 7."
+                },
+                {
+                  "zh": "她6点起床。",
+                  "answer": "She gets up at 6."
+                }
               ]
             }
           ]
@@ -143,6 +175,32 @@
               "zh": "她在大学学英语。",
               "answer": "She studies English at university.",
               "targetWord": "study"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "工作与学习 · 英译中",
+          "chunk": "office / class / training",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He goes to the office every day.",
+              "answer": "他每天去办公室。",
+              "targetWord": "office"
+            },
+            {
+              "en": "She attends class in the morning.",
+              "answer": "她早上上课。",
+              "targetWord": "class"
+            },
+            {
+              "en": "He has training on Friday.",
+              "answer": "他周五有培训。",
+              "targetWord": "training"
             }
           ]
         },
@@ -202,8 +260,14 @@
             {
               "chunk": "He/She works in a ___.",
               "items": [
-                { "zh": "她在医院工作。", "answer": "She works in a hospital." },
-                { "zh": "他在学校工作。", "answer": "He works in a school." }
+                {
+                  "zh": "她在医院工作。",
+                  "answer": "She works in a hospital."
+                },
+                {
+                  "zh": "他在学校工作。",
+                  "answer": "He works in a school."
+                }
               ]
             }
           ]
@@ -248,18 +312,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "周末活动 · 英译中",
-          "chunk": "grandparents / home",
+          "chunk": "outdoor / visit / hobby",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "She visits her grandparents on Sundays.",
-              "answer": "她周日去看望祖父母。",
-              "targetWord": "grandparents"
+              "en": "I like outdoor activities.",
+              "answer": "我喜欢户外活动。",
+              "targetWord": "outdoor"
             },
             {
-              "en": "He relaxes at home on weekends.",
-              "answer": "他周末在家放松。",
-              "targetWord": "home"
+              "en": "We visit our grandparents on weekends.",
+              "answer": "我们周末去看望祖父母。",
+              "targetWord": "visit"
+            },
+            {
+              "en": "My hobby is painting.",
+              "answer": "我的爱好是画画。",
+              "targetWord": "hobby"
             }
           ]
         },
@@ -348,18 +417,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "肯定与否定 · 英译中",
-          "chunk": "doesn't / don't",
+          "chunk": "agree / correct / wrong",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "He doesn't like coffee.",
-              "answer": "他不喜欢咖啡。",
-              "targetWord": "coffee"
+              "en": "I agree with your opinion.",
+              "answer": "我同意你的看法。",
+              "targetWord": "agree"
             },
             {
-              "en": "I don't have a car.",
-              "answer": "我没有车。",
-              "targetWord": "car"
+              "en": "You are correct.",
+              "answer": "你是对的。",
+              "targetWord": "correct"
+            },
+            {
+              "en": "That's completely wrong.",
+              "answer": "那完全错了。",
+              "targetWord": "wrong"
             }
           ]
         },
@@ -462,18 +536,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "have vs has · 英译中",
-          "chunk": "has / have",
+          "chunk": "possess / own / belong",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "She has a new bike.",
-              "answer": "她有一辆新自行车。",
-              "targetWord": "bike"
+              "en": "I possess a laptop.",
+              "answer": "我有一台笔记本电脑。",
+              "targetWord": "possess"
             },
             {
-              "en": "He has two sisters.",
-              "answer": "他有两个姐妹。",
-              "targetWord": "sisters"
+              "en": "This book belongs to me.",
+              "answer": "这本书是我的。",
+              "targetWord": "belong"
+            },
+            {
+              "en": "She owns a small apartment.",
+              "answer": "她拥有一套小公寓。",
+              "targetWord": "own"
             }
           ]
         },
@@ -813,18 +892,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "工作描述 · 英译中",
-          "chunk": "job / writer",
+          "chunk": "role / position / duty",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "His job is very interesting. He travels a lot.",
-              "answer": "他的工作很有趣。他经常出差。",
-              "targetWord": "job"
+              "en": "His role is to manage the team.",
+              "answer": "他的角色是管理团队。",
+              "targetWord": "role"
             },
             {
-              "en": "She works from home. She is a writer.",
-              "answer": "她在家工作。她是一名作家。",
-              "targetWord": "writer"
+              "en": "She got a new position.",
+              "answer": "她得到了新职位。",
+              "targetWord": "position"
+            },
+            {
+              "en": "My duty is to answer calls.",
+              "answer": "我的职责是接电话。",
+              "targetWord": "duty"
             }
           ]
         },
@@ -906,6 +990,32 @@
           ]
         },
         {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "场景描述 · 英译中",
+          "chunk": "meeting / project / report",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We have a meeting at 10.",
+              "answer": "我们10点开会。",
+              "targetWord": "meeting"
+            },
+            {
+              "en": "I'm working on a project.",
+              "answer": "我在做一个项目。",
+              "targetWord": "project"
+            },
+            {
+              "en": "She is writing a report.",
+              "answer": "她在写报告。",
+              "targetWord": "report"
+            }
+          ]
+        },
+        {
           "id": "pd_1",
           "type": "pattern_drill",
           "title": "场景描述 · 句型",
@@ -951,8 +1061,14 @@
             {
               "chunk": "Look! The ___ is ___ing ___.",
               "items": [
-                { "zh": "看！那个男孩在追他的狗。", "answer": "Look! The boy is running after his dog." },
-                { "zh": "看！那个女孩在跳舞。", "answer": "Look! The girl is dancing on stage." }
+                {
+                  "zh": "看！那个男孩在追他的狗。",
+                  "answer": "Look! The boy is running after his dog."
+                },
+                {
+                  "zh": "看！那个女孩在跳舞。",
+                  "answer": "Look! The girl is dancing on stage."
+                }
               ]
             }
           ]
@@ -988,6 +1104,32 @@
               "zh": "他给我讲了个搞笑的故事。",
               "answer": "He told me a funny story.",
               "targetWord": "funny"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "简单故事 · 英译中",
+          "chunk": "begin / happen / remember",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Let's begin from the start.",
+              "answer": "我们从开始讲起。",
+              "targetWord": "begin"
+            },
+            {
+              "en": "The story happened last year.",
+              "answer": "故事发生在去年。",
+              "targetWord": "happen"
+            },
+            {
+              "en": "I remember this event well.",
+              "answer": "我清楚记得这件事。",
+              "targetWord": "remember"
             }
           ]
         },
@@ -1037,8 +1179,14 @@
             {
               "chunk": "Suddenly ___. Everyone ___.",
               "items": [
-                { "zh": "突然下雨了。大家都跑回家了。", "answer": "Suddenly it started to rain. Everyone ran home." },
-                { "zh": "突然电话响了。大家都跳了起来。", "answer": "Suddenly the phone rang. Everyone jumped." }
+                {
+                  "zh": "突然下雨了。大家都跑回家了。",
+                  "answer": "Suddenly it started to rain. Everyone ran home."
+                },
+                {
+                  "zh": "突然电话响了。大家都跳了起来。",
+                  "answer": "Suddenly the phone rang. Everyone jumped."
+                }
               ]
             }
           ]
@@ -1126,6 +1274,861 @@
               "slotValues": {
                 "slot1": "cat the garden cute",
                 "slot2": "big dog the park friendly"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他是谁": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "他是谁 · 中译英",
+          "chunk": "doctor / teacher / engineer",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他是医生。",
+              "answer": "He is a doctor.",
+              "targetWord": "doctor"
+            },
+            {
+              "zh": "她是一名老师。",
+              "answer": "She is a teacher.",
+              "targetWord": "teacher"
+            },
+            {
+              "zh": "他是工程师。",
+              "answer": "He is an engineer.",
+              "targetWord": "engineer"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "他是谁 · 英译中",
+          "chunk": "manager / driver / writer",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He is a project manager.",
+              "answer": "他是项目经理。",
+              "targetWord": "manager"
+            },
+            {
+              "en": "She is a bus driver.",
+              "answer": "她是公交司机。",
+              "targetWord": "driver"
+            },
+            {
+              "en": "He is a famous writer.",
+              "answer": "他是著名作家。",
+              "targetWord": "writer"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "他是谁 · 句型",
+          "pattern": "He is ___.",
+          "patternMeaning": "他是...",
+          "slots": [
+            "a doctor",
+            "a teacher",
+            "an engineer"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "他是...",
+              "answer": "He is a doctor.",
+              "pattern": "He is ___.",
+              "slotValues": {
+                "slot1": "a doctor",
+                "slot2": "a teacher",
+                "slot3": "an engineer"
+              }
+            },
+            {
+              "zh": "他是...吗？",
+              "answer": "Is he a manager? Yes he is.",
+              "pattern": "Is he a ___?",
+              "slotValues": {
+                "slot1": "manager",
+                "slot2": "driver",
+                "slot3": "writer"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他有什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "他有什么 · 中译英",
+          "chunk": "laptop / car / office",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他有一台新电脑。",
+              "answer": "He has a new laptop.",
+              "targetWord": "laptop"
+            },
+            {
+              "zh": "他有一辆车。",
+              "answer": "He has a car.",
+              "targetWord": "car"
+            },
+            {
+              "zh": "他有一个大办公室。",
+              "answer": "He has a big office.",
+              "targetWord": "office"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "他有什么 · 英译中",
+          "chunk": "desk / phone / meeting",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He has a tidy desk.",
+              "answer": "他有一张整洁的办公桌。",
+              "targetWord": "desk"
+            },
+            {
+              "en": "She has a smartphone.",
+              "answer": "她有一部智能手机。",
+              "targetWord": "phone"
+            },
+            {
+              "en": "He has a meeting at 2.",
+              "answer": "他两点有个会议。",
+              "targetWord": "meeting"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "他有什么 · 句型",
+          "pattern": "He has ___.",
+          "patternMeaning": "他有...",
+          "slots": [
+            "a new laptop",
+            "a car",
+            "a big office"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "他有...",
+              "answer": "He has a new laptop.",
+              "pattern": "He has ___.",
+              "slotValues": {
+                "slot1": "a new laptop",
+                "slot2": "a car",
+                "slot3": "a big office"
+              }
+            },
+            {
+              "zh": "她有...吗？",
+              "answer": "Does she have a smartphone? Yes she does.",
+              "pattern": "Does she have ___?",
+              "slotValues": {
+                "slot1": "a smartphone",
+                "slot2": "a meeting today",
+                "slot3": "any questions"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "她喜欢什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "她喜欢什么 · 中译英",
+          "chunk": "reading / travel / music",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "她喜欢阅读。",
+              "answer": "She likes reading.",
+              "targetWord": "reading"
+            },
+            {
+              "zh": "她喜欢旅行。",
+              "answer": "She likes traveling.",
+              "targetWord": "travel"
+            },
+            {
+              "zh": "她喜欢音乐。",
+              "answer": "She likes music.",
+              "targetWord": "music"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "她喜欢什么 · 英译中",
+          "chunk": "sport / dance / art",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She likes playing tennis.",
+              "answer": "她喜欢打网球。",
+              "targetWord": "sport"
+            },
+            {
+              "en": "She likes dancing.",
+              "answer": "她喜欢跳舞。",
+              "targetWord": "dance"
+            },
+            {
+              "en": "She enjoys modern art.",
+              "answer": "她喜欢现代艺术。",
+              "targetWord": "art"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "她喜欢什么 · 句型",
+          "pattern": "She likes ___.",
+          "patternMeaning": "她喜欢...",
+          "slots": [
+            "reading",
+            "traveling",
+            "music"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "她喜欢...",
+              "answer": "She likes reading.",
+              "pattern": "She likes ___.",
+              "slotValues": {
+                "slot1": "reading",
+                "slot2": "traveling",
+                "slot3": "music"
+              }
+            },
+            {
+              "zh": "她喜欢...吗？",
+              "answer": "Does she like coffee? Yes she does.",
+              "pattern": "Does she like ___?",
+              "slotValues": {
+                "slot1": "coffee",
+                "slot2": "cooking",
+                "slot3": "swimming"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "家人职业": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "家人职业 · 中译英",
+          "chunk": "father / mother / brother",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我爸爸是医生。",
+              "answer": "My father is a doctor.",
+              "targetWord": "father"
+            },
+            {
+              "zh": "我妈妈是老师。",
+              "answer": "My mother is a teacher.",
+              "targetWord": "mother"
+            },
+            {
+              "zh": "我哥哥是工程师。",
+              "answer": "My brother is an engineer.",
+              "targetWord": "brother"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "家人职业 · 英译中",
+          "chunk": "nurse / lawyer / chef",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "My sister is a nurse.",
+              "answer": "我姐姐是护士。",
+              "targetWord": "nurse"
+            },
+            {
+              "en": "Her father is a lawyer.",
+              "answer": "她父亲是律师。",
+              "targetWord": "lawyer"
+            },
+            {
+              "en": "His uncle is a chef.",
+              "answer": "他叔叔是厨师。",
+              "targetWord": "chef"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "家人职业 · 句型",
+          "pattern": "My ___ is ___.",
+          "patternMeaning": "我的...是...",
+          "slots": [
+            "father a doctor",
+            "mother a teacher",
+            "brother an engineer"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我的...是...",
+              "answer": "My father is a doctor.",
+              "pattern": "My ___ is ___.",
+              "slotValues": {
+                "slot1": "father a doctor",
+                "slot2": "mother a teacher",
+                "slot3": "brother an engineer"
+              }
+            },
+            {
+              "zh": "他/她的...是...",
+              "answer": "Her mother is a nurse.",
+              "pattern": "Her ___ is a ___.",
+              "slotValues": {
+                "slot1": "mother nurse",
+                "slot2": "father lawyer",
+                "slot3": "sister teacher"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "家人习惯": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "家人习惯 · 中译英",
+          "chunk": "early / walk / read",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我爸爸起得很早。",
+              "answer": "My father gets up early.",
+              "targetWord": "early"
+            },
+            {
+              "zh": "我妈妈晚饭后散步。",
+              "answer": "My mother walks after dinner.",
+              "targetWord": "walk"
+            },
+            {
+              "zh": "我哥哥喜欢读报纸。",
+              "answer": "My brother likes to read newspapers.",
+              "targetWord": "read"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "家人习惯 · 英译中",
+          "chunk": "exercise / cook / garden",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "My father exercises every morning.",
+              "answer": "我爸爸每天早上锻炼。",
+              "targetWord": "exercise"
+            },
+            {
+              "en": "My mother cooks delicious food.",
+              "answer": "我妈妈做美味的食物。",
+              "targetWord": "cook"
+            },
+            {
+              "en": "My grandfather works in the garden.",
+              "answer": "我爷爷打理花园。",
+              "targetWord": "garden"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "家人习惯 · 句型",
+          "pattern": "My ___ ___ every ___.",
+          "patternMeaning": "我的...每天...",
+          "slots": [
+            "father exercises morning",
+            "mother cooks dinner",
+            "brother reads at night"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我的...每天...",
+              "answer": "My father exercises every morning.",
+              "pattern": "My ___ ___ every ___.",
+              "slotValues": {
+                "slot1": "father exercises morning",
+                "slot2": "mother cooks dinner",
+                "slot3": "brother reads at night"
+              }
+            },
+            {
+              "zh": "我的...喜欢...",
+              "answer": "My mother likes gardening.",
+              "pattern": "My ___ likes ___.",
+              "slotValues": {
+                "slot1": "mother gardening",
+                "slot2": "father cooking",
+                "slot3": "sister dancing"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "她几点起床": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "她几点起床 · 中译英",
+          "chunk": "wake / brush / leave",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "她早上7点起床。",
+              "answer": "She wakes up at 7 am.",
+              "targetWord": "wake"
+            },
+            {
+              "zh": "她早上刷牙。",
+              "answer": "She brushes her teeth in the morning.",
+              "targetWord": "brush"
+            },
+            {
+              "zh": "她8点离开家。",
+              "answer": "She leaves home at 8.",
+              "targetWord": "leave"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "她几点起床 · 英译中",
+          "chunk": "breakfast / shower / dress",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She has breakfast at 7:30.",
+              "answer": "她7:30吃早餐。",
+              "targetWord": "breakfast"
+            },
+            {
+              "en": "She takes a shower in the morning.",
+              "answer": "她早上洗澡。",
+              "targetWord": "shower"
+            },
+            {
+              "en": "She dresses quickly.",
+              "answer": "她很快穿好衣服。",
+              "targetWord": "dress"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "她几点起床 · 句型",
+          "pattern": "She ___ at ___.",
+          "patternMeaning": "她...在...点。",
+          "slots": [
+            "wakes up 7",
+            "has breakfast 7:30",
+            "leaves home 8"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "她...在...点。",
+              "answer": "She wakes up at 7.",
+              "pattern": "She ___ at ___.",
+              "slotValues": {
+                "slot1": "wakes up 7",
+                "slot2": "has breakfast 7:30",
+                "slot3": "leaves home 8"
+              }
+            },
+            {
+              "zh": "他什么时候...？",
+              "answer": "What time does he get up?",
+              "pattern": "What time does he ___?",
+              "slotValues": {
+                "slot1": "get up",
+                "slot2": "go to work",
+                "slot3": "come back"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "疑问与回答": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "疑问与回答 · 中译英",
+          "chunk": "question / answer / reply",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "请回答这个问题。",
+              "answer": "Please answer this question.",
+              "targetWord": "question"
+            },
+            {
+              "zh": "请给我一个答案。",
+              "answer": "Please give me an answer.",
+              "targetWord": "answer"
+            },
+            {
+              "zh": "请尽快回复。",
+              "answer": "Please reply as soon as possible.",
+              "targetWord": "reply"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "疑问与回答 · 英译中",
+          "chunk": "ask / respond / clarify",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Feel free to ask questions.",
+              "answer": "请随意提问。",
+              "targetWord": "ask"
+            },
+            {
+              "en": "Please respond by Friday.",
+              "answer": "请在周五前回复。",
+              "targetWord": "respond"
+            },
+            {
+              "en": "Could you clarify that?",
+              "answer": "你能澄清一下吗？",
+              "targetWord": "clarify"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "疑问与回答 · 句型",
+          "pattern": "Do you ___?",
+          "patternMeaning": "你...吗？",
+          "slots": [
+            "like coffee",
+            "have a question",
+            "understand"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你...吗？",
+              "answer": "Do you like coffee?",
+              "pattern": "Do you ___?",
+              "slotValues": {
+                "slot1": "like coffee",
+                "slot2": "have a question",
+                "slot3": "understand"
+              }
+            },
+            {
+              "zh": "他...吗？",
+              "answer": "Does he work here? Yes he does.",
+              "pattern": "Does he ___ here?",
+              "slotValues": {
+                "slot1": "work",
+                "slot2": "live",
+                "slot3": "study"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我和你vs他/她": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我和你vs他/她 · 中译英",
+          "chunk": "I / you / they",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我喜欢咖啡。她喜欢茶。",
+              "answer": "I like coffee. She likes tea.",
+              "targetWord": "I"
+            },
+            {
+              "zh": "你每天跑步。他每周跑步。",
+              "answer": "You run every day. He runs every week.",
+              "targetWord": "you"
+            },
+            {
+              "zh": "他们学习中文。她学习英文。",
+              "answer": "They study Chinese. She studies English.",
+              "targetWord": "they"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我和你vs他/她 · 英译中",
+          "chunk": "we / he / she",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We go to school together. He goes alone.",
+              "answer": "我们一起上学。他一个人去。",
+              "targetWord": "we"
+            },
+            {
+              "en": "He plays soccer. She plays tennis.",
+              "answer": "他踢足球。她打网球。",
+              "targetWord": "he"
+            },
+            {
+              "en": "She reads books. They watch movies.",
+              "answer": "她看书。他们看电影。",
+              "targetWord": "she"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我和你vs他/她 · 句型",
+          "pattern": "I ___ but she ___.",
+          "patternMeaning": "我...但她...",
+          "slots": [
+            "like coffee likes tea",
+            "go home goes home early",
+            "work hard works harder"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我...但她...",
+              "answer": "I like coffee but she likes tea.",
+              "pattern": "I ___ but she ___.",
+              "slotValues": {
+                "slot1": "like coffee likes tea",
+                "slot2": "go home goes home early",
+                "slot3": "work hard works harder"
+              }
+            },
+            {
+              "zh": "你...而他...",
+              "answer": "You run every day but he runs every week.",
+              "pattern": "You ___ but he ___.",
+              "slotValues": {
+                "slot1": "run every day runs every week",
+                "slot2": "study hard studies harder",
+                "slot3": "get up early gets up late"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "他做什么工作": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "他做什么工作 · 中译英",
+          "chunk": "company / office / team",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他在一家大公司工作。",
+              "answer": "He works for a big company.",
+              "targetWord": "company"
+            },
+            {
+              "zh": "他在市中心办公。",
+              "answer": "He works in an office downtown.",
+              "targetWord": "office"
+            },
+            {
+              "zh": "他领导一个团队。",
+              "answer": "He leads a team.",
+              "targetWord": "team"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "他做什么工作 · 英译中",
+          "chunk": "industry / career / boss",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He works in the IT industry.",
+              "answer": "他在IT行业工作。",
+              "targetWord": "industry"
+            },
+            {
+              "en": "She has a successful career.",
+              "answer": "她有一个成功的事业。",
+              "targetWord": "career"
+            },
+            {
+              "en": "His boss is very nice.",
+              "answer": "他的老板很好。",
+              "targetWord": "boss"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "他做什么工作 · 句型",
+          "pattern": "He works ___ ___.",
+          "patternMeaning": "他在...工作。",
+          "slots": [
+            "for a big company",
+            "in an office",
+            "in marketing"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "他在...工作。",
+              "answer": "He works for a big company.",
+              "pattern": "He works ___ ___.",
+              "slotValues": {
+                "slot1": "for a big company",
+                "slot2": "in an office",
+                "slot3": "in marketing"
+              }
+            },
+            {
+              "zh": "她做什么工作？",
+              "answer": "What does she do? She is a doctor.",
+              "pattern": "What does ___ do? ___ is a ___.",
+              "slotValues": {
+                "slot1": "she She doctor",
+                "slot2": "he He engineer",
+                "slot3": "your mother She teacher"
               }
             }
           ]

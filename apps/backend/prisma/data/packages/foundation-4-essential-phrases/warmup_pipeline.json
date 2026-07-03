@@ -180,23 +180,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "问时间与交通 · 英译中",
-          "chunk": "airport / train / ticket",
+          "chunk": "platform / arrive / drop",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "How much does it cost to go to the airport? -- About 120 yuan.",
-              "answer": "去机场要多少钱？——大约120元。",
-              "targetWord": "airport"
+              "en": "Which platform does the train leave from? Platform 3.",
+              "answer": "火车从哪个站台出发？3号站台。",
+              "targetWord": "platform"
             },
             {
-              "en": "What time does the next train leave? -- At 3:30 pm from platform 2.",
-              "answer": "下一班火车几点发车？——下午3点半，2号站台。",
-              "targetWord": "train"
+              "en": "What time does the bus arrive?",
+              "answer": "公交车几点到？",
+              "targetWord": "arrive"
             },
             {
-              "en": "Where can I buy a ticket? -- You can buy one online or at the station.",
-              "answer": "我在哪里可以买票？——你可以在网上买或在车站买。",
-              "targetWord": "ticket"
+              "en": "Can you drop me off at the station?",
+              "answer": "你能在车站让我下车吗？",
+              "targetWord": "drop"
             }
           ]
         },
@@ -604,23 +604,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "打车与接送 · 英译中",
-          "chunk": "airport / luggage / ride",
+          "chunk": "pickup / deliver / location",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "How much is a taxi to the airport? -- It depends on traffic.",
-              "answer": "打车去机场多少钱？——看交通情况。",
-              "targetWord": "airport"
+              "en": "Can you pick me up at 8?",
+              "answer": "你能8点来接我吗？",
+              "targetWord": "pickup"
             },
             {
-              "en": "Could you put my luggage in the trunk? -- Of course.",
-              "answer": "能把我的行李放后备箱吗？——当然。",
-              "targetWord": "luggage"
+              "en": "Please deliver the package to my office.",
+              "answer": "请把包裹送到我办公室。",
+              "targetWord": "deliver"
             },
             {
-              "en": "Please take me to this address. -- Sure, get in please.",
-              "answer": "请送我到这个地址。——好的，请上车。",
-              "targetWord": "ride"
+              "en": "What's your current location?",
+              "answer": "你现在在哪里？",
+              "targetWord": "location"
             }
           ]
         },
@@ -757,23 +757,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "购物问询 · 英译中",
-          "chunk": "price / discount / card",
+          "chunk": "discount / size / quality",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "How much does this cost? -- Its 120 yuan.",
-              "answer": "这个多少钱？——120元。",
-              "targetWord": "price"
-            },
-            {
-              "en": "Is there a discount? -- Yes, 20% off for members.",
-              "answer": "有打折吗？——有的，会员打八折。",
+              "en": "Is there any discount on this item?",
+              "answer": "这件商品有折扣吗？",
               "targetWord": "discount"
             },
             {
-              "en": "Can I pay by card? -- Of course, we take all cards.",
-              "answer": "可以用卡付吗？——当然，我们收所有卡。",
-              "targetWord": "card"
+              "en": "Do you have this in a larger size?",
+              "answer": "这个有大一点的尺寸吗？",
+              "targetWord": "size"
+            },
+            {
+              "en": "The quality of this product is excellent.",
+              "answer": "这个产品的质量很好。",
+              "targetWord": "quality"
             }
           ]
         },
@@ -951,23 +951,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "餐厅点餐 · 英译中",
-          "chunk": "recommend / dish / order",
+          "chunk": "flavor / special / chef",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "What do you recommend? -- The grilled fish is very popular.",
-              "answer": "你推荐什么？——烤鱼很受欢迎。",
-              "targetWord": "recommend"
+              "en": "I love the flavor of this dish.",
+              "answer": "我喜欢这道菜的味道。",
+              "targetWord": "flavor"
             },
             {
-              "en": "What dish would you like? -- Ill have the steak.",
-              "answer": "你想要什么菜？——我要牛排。",
-              "targetWord": "dish"
+              "en": "Today's special is fish.",
+              "answer": "今日特色菜是鱼。",
+              "targetWord": "special"
             },
             {
-              "en": "Are you ready to order? -- Yes, Ill have the pasta.",
-              "answer": "准备好点餐了吗？——是的，我要意面。",
-              "targetWord": "order"
+              "en": "I'll have the chef's special.",
+              "answer": "我要主厨推荐。",
+              "targetWord": "chef"
             }
           ]
         },
@@ -1056,23 +1056,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "餐厅服务与评价 · 英译中",
-          "chunk": "bill / taste / review",
+          "chunk": "service / portion / flavor",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Could I have the bill, please? -- Sure, here you are.",
-              "answer": "请买单。——好的，给你。",
-              "targetWord": "bill"
+              "en": "The service here is very good.",
+              "answer": "这里的服务非常好。",
+              "targetWord": "service"
             },
             {
-              "en": "How is the food here? -- Everything is delicious.",
-              "answer": "这里的食物怎么样？——都很好吃。",
-              "targetWord": "taste"
+              "en": "The portions are quite large.",
+              "answer": "份量很大。",
+              "targetWord": "portion"
             },
             {
-              "en": "The service is excellent! -- Thank you, glad you like it.",
-              "answer": "服务非常好！——谢谢，很高兴你喜欢。",
-              "targetWord": "review"
+              "en": "I love the flavor of this dish.",
+              "answer": "我喜欢这道菜的味道。",
+              "targetWord": "flavor"
             }
           ]
         },
@@ -1192,23 +1192,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "认识新朋友 · 英译中",
-          "chunk": "fun / hobby / free",
+          "chunk": "hobby / travel / music",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "What do you do for fun? -- I like watching movies and hiking.",
-              "answer": "你平时玩什么？——我喜欢看电影和徒步。",
-              "targetWord": "fun"
-            },
-            {
-              "en": "What are your hobbies? -- I enjoy reading and cooking.",
-              "answer": "你有什么爱好？——我喜欢阅读和烹饪。",
+              "en": "What are your hobbies?",
+              "answer": "你的爱好是什么？",
               "targetWord": "hobby"
             },
             {
-              "en": "Are you free this weekend? -- Yes, I am free on Saturday.",
-              "answer": "你这周末有空吗？——周六有空。",
-              "targetWord": "free"
+              "en": "Do you like to travel?",
+              "answer": "你喜欢旅行吗？",
+              "targetWord": "travel"
+            },
+            {
+              "en": "What kind of music do you like?",
+              "answer": "你喜欢什么类型的音乐？",
+              "targetWord": "music"
             }
           ]
         },
@@ -1317,23 +1317,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "爱好与兴趣 · 英译中",
-          "chunk": "music / sport / hobby",
+          "chunk": "sport / movie / reading",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "What kind of music do you like? -- I like pop and jazz.",
-              "answer": "你喜欢什么类型的音乐？——我喜欢流行和爵士。",
-              "targetWord": "music"
-            },
-            {
-              "en": "Do you like sports? -- Yes, I play basketball every week.",
-              "answer": "你喜欢运动吗？——是的，我每周打篮球。",
+              "en": "What sport do you play?",
+              "answer": "你做什么运动？",
               "targetWord": "sport"
             },
             {
-              "en": "What are your hobbies? -- I enjoy hiking and photography.",
-              "answer": "你有什么爱好？——我喜欢徒步和摄影。",
-              "targetWord": "hobby"
+              "en": "I watched a great movie last night.",
+              "answer": "我昨晚看了一部很棒的电影。",
+              "targetWord": "movie"
+            },
+            {
+              "en": "Reading is my favorite hobby.",
+              "answer": "阅读是我最喜欢的爱好。",
+              "targetWord": "reading"
             }
           ]
         },
@@ -1442,23 +1442,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "约见面 · 英译中",
-          "chunk": "grab / free / coffee",
+          "chunk": "meeting / schedule / arrange",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Do you want to grab lunch together? -- Id love to!",
-              "answer": "一起吃午饭吗？——我很乐意！",
-              "targetWord": "grab"
+              "en": "Let's set up a meeting for Friday.",
+              "answer": "我们周五安排个见面吧。",
+              "targetWord": "meeting"
             },
             {
-              "en": "Are you free this weekend? -- Yes, I am free on Saturday.",
-              "answer": "你这周末有空吗？——周六有空。",
-              "targetWord": "free"
+              "en": "What's your schedule like this week?",
+              "answer": "你这周的时间安排怎么样？",
+              "targetWord": "schedule"
             },
             {
-              "en": "Do you want to get a coffee? -- Sure, I know a good place.",
-              "answer": "去喝杯咖啡吗？——好，我知道一个不错的地方。",
-              "targetWord": "coffee"
+              "en": "I'll arrange a time for us to meet.",
+              "answer": "我来安排我们见面的时间。",
+              "targetWord": "arrange"
             }
           ]
         },
@@ -1557,23 +1557,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "关心与问候 · 英译中",
-          "chunk": "okay / tired / worry",
+          "chunk": "feeling / health / rest",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Is everything okay? -- Yeah, Im fine. Just tired.",
-              "answer": "一切都好吗？——嗯，没事，只是有点累。",
-              "targetWord": "okay"
+              "en": "How are you feeling today?",
+              "answer": "你今天感觉怎么样？",
+              "targetWord": "feeling"
             },
             {
-              "en": "You look tired. Did you sleep well? -- Not really.",
-              "answer": "你看起来很累。睡得好吗？——不太好。",
-              "targetWord": "tired"
+              "en": "I hope you feel better soon.",
+              "answer": "希望你早日康复。",
+              "targetWord": "health"
             },
             {
-              "en": "Dont worry! Everything will be fine.",
-              "answer": "别担心！一切都会好的。",
-              "targetWord": "worry"
+              "en": "You should get some rest.",
+              "answer": "你应该休息一下。",
+              "targetWord": "rest"
             }
           ]
         },
@@ -1818,23 +1818,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "打电话找人 · 英译中",
-          "chunk": "back / meeting / later",
+          "chunk": "ring / office / line",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "When is he back? -- He is back in about an hour.",
-              "answer": "他什么时候回来？——大约一小时后回来。",
-              "targetWord": "back"
+              "en": "The phone is ringing. Can you answer it?",
+              "answer": "电话在响。你能接一下吗？",
+              "targetWord": "ring"
             },
             {
-              "en": "Hes in a meeting right now. Can I take a message?",
-              "answer": "他正在开会。需要我转告吗？",
-              "targetWord": "meeting"
+              "en": "He's not in the office right now.",
+              "answer": "他现在不在办公室。",
+              "targetWord": "office"
             },
             {
-              "en": "Ill call back later. -- Sure, Ill tell him you called.",
-              "answer": "我晚点再打。——好的，我会告诉他你来过电话。",
-              "targetWord": "later"
+              "en": "Please hold the line. I'll connect you.",
+              "answer": "请别挂断。我帮你转接。",
+              "targetWord": "line"
             }
           ]
         },
@@ -1943,23 +1943,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "留言与回电 · 英译中",
-          "chunk": "back / message / number",
+          "chunk": "voicemail / reply / contact",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Please ask him to call me back. -- Sure. Whats your name and number?",
-              "answer": "请让他回电话给我。——好的，你的名字和电话是？",
-              "targetWord": "back"
+              "en": "Please leave a voicemail after the beep.",
+              "answer": "请听到提示音后留言。",
+              "targetWord": "voicemail"
             },
             {
-              "en": "Can I leave a message? -- Of course, let me get a pen.",
-              "answer": "我能留言吗？——当然，我拿支笔。",
-              "targetWord": "message"
+              "en": "I'll reply to your message as soon as possible.",
+              "answer": "我会尽快回复你的留言。",
+              "targetWord": "reply"
             },
             {
-              "en": "Whats your phone number? -- Its 138-555-1234.",
-              "answer": "你的电话号码是什么？——138-555-1234。",
-              "targetWord": "number"
+              "en": "How can I contact you later?",
+              "answer": "我以后怎么联系你？",
+              "targetWord": "contact"
             }
           ]
         },
@@ -2068,23 +2068,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "电话确认 · 英译中",
-          "chunk": "ill / leave / back",
+          "chunk": "confirm / detail / change",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Sorry, I think you have the wrong number. -- Oh, Im sorry. Ill check the number again.",
-              "answer": "对不起，你打错了。——哦，抱歉，我再查一下号码。",
-              "targetWord": "ill"
+              "en": "Please confirm your reservation by email.",
+              "answer": "请通过邮件确认预约。",
+              "targetWord": "reservation"
             },
             {
-              "en": "I want to leave a message. Is that okay? -- Sure. Go ahead.",
-              "answer": "我想留言，可以吗？——好的，请说。",
-              "targetWord": "leave"
+              "en": "Let me check the details of your booking.",
+              "answer": "让我查看一下你的预订详情。",
+              "targetWord": "booking"
             },
             {
-              "en": "Please ask him to call me back. -- Sure. Whats your name and number?",
-              "answer": "请让他回电话给我。——好的，你的名字和电话是？",
-              "targetWord": "back"
+              "en": "Can I change my appointment time?",
+              "answer": "我能改一下预约时间吗？",
+              "targetWord": "appointment"
             }
           ]
         },
@@ -2224,23 +2224,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "问联系方式 · 英译中",
-          "chunk": "contact / number / email",
+          "chunk": "reach / social / address",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "How can I contact you? -- You can call me at this number.",
-              "answer": "我怎么联系你？——你可以打这个号码找我。",
-              "targetWord": "contact"
+              "en": "How can I reach you?",
+              "answer": "我怎么联系你？",
+              "targetWord": "reach"
             },
             {
-              "en": "Whats your phone number? -- Its 138-5555-1234.",
-              "answer": "你的电话号码是多少？——138-5555-1234。",
-              "targetWord": "number"
+              "en": "What's your social media account?",
+              "answer": "你的社交媒体账号是什么？",
+              "targetWord": "social"
             },
             {
-              "en": "Can I have your email address? -- Sure, its LiMing@email.com.",
-              "answer": "能给我你的邮箱吗？——当然，LiMing@email.com。",
-              "targetWord": "email"
+              "en": "Please write down your home address.",
+              "answer": "请写下你的家庭地址。",
+              "targetWord": "address"
             }
           ]
         },
@@ -2380,23 +2380,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "电话问题处理 · 英译中",
-          "chunk": "signal / wrong / clear",
+          "chunk": "interference / static / hang",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "The signal is bad. Can you hear me? -- Not clearly. Can you call again?",
-              "answer": "信号不好。你能听到吗？——不太清楚，你能再打一次吗？",
-              "targetWord": "signal"
+              "en": "There's a lot of interference on the line.",
+              "answer": "线上有很多干扰。",
+              "targetWord": "interference"
             },
             {
-              "en": "I think you have the wrong number. -- Oh, Im sorry.",
-              "answer": "你打错了。——哦，对不起。",
-              "targetWord": "wrong"
+              "en": "I can hear static noise. Can you speak up?",
+              "answer": "我能听到静电噪音。你能大点声吗？",
+              "targetWord": "static"
             },
             {
-              "en": "Can you speak more clearly? -- Sure, is this better?",
-              "answer": "你能说得更清楚点吗？——好的，这样好点吗？",
-              "targetWord": "clear"
+              "en": "Please don't hang up. I'll check.",
+              "answer": "请别挂断。我查一下。",
+              "targetWord": "hang"
             }
           ]
         },
@@ -2536,23 +2536,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "紧急呼救 · 英译中",
-          "chunk": "hurt / ambulance / police",
+          "chunk": "emergency / police / danger",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Is everyone okay? -- I think so. One person is a little hurt.",
-              "answer": "大家都还好吗？——是的，有一个人受了点伤。",
-              "targetWord": "hurt"
+              "en": "This is an emergency! Please call 911!",
+              "answer": "这是紧急情况！请打911！",
+              "targetWord": "emergency"
             },
             {
-              "en": "Call an ambulance! -- OK, I am calling now. Stay calm.",
-              "answer": "叫救护车！——好的，我正在打。保持冷静。",
-              "targetWord": "ambulance"
-            },
-            {
-              "en": "Please call the police! -- What happened? -- Someone broke into my car.",
-              "answer": "请报警！——发生什么事了？——有人撬了我的车。",
+              "en": "Please call the police right away!",
+              "answer": "请立刻报警！",
               "targetWord": "police"
+            },
+            {
+              "en": "There is danger. Please help us!",
+              "answer": "有危险。请救救我们！",
+              "targetWord": "danger"
             }
           ]
         },
@@ -2651,23 +2651,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "问路求助 · 英译中",
-          "chunk": "lost / direction / help",
+          "chunk": "guide / locate / direction",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Im lost. Can you help me? -- Of course. Where are you going?",
-              "answer": "我迷路了。你能帮我吗？——当然。你要去哪？",
-              "targetWord": "lost"
+              "en": "Could you guide me to the nearest hospital?",
+              "answer": "你能带我去最近的医院吗？",
+              "targetWord": "guide"
             },
             {
-              "en": "Can you tell me the way to the museum? -- Go straight, then turn left.",
-              "answer": "你能告诉我去博物馆的路吗？——直走，然后左转。",
-              "targetWord": "direction"
+              "en": "I'm trying to find this address.",
+              "answer": "我想找这个地址。",
+              "targetWord": "find"
             },
             {
-              "en": "Could you help me find this address? -- Sure, follow me.",
-              "answer": "你能帮我找这个地址吗？——好的，跟我来。",
-              "targetWord": "help"
+              "en": "Can you show me the way on this map?",
+              "answer": "你能在地图上给我指路吗？",
+              "targetWord": "way"
             }
           ]
         },
@@ -2776,23 +2776,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "看病问诊 · 英译中",
-          "chunk": "fee / symptom / medicine",
+          "chunk": "pain / fever / examine",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.",
-              "answer": "在这里看医生多少钱？——挂号费大约200元。",
-              "targetWord": "fee"
+              "en": "I have a sharp pain in my stomach.",
+              "answer": "我胃疼得厉害。",
+              "targetWord": "pain"
             },
             {
-              "en": "What symptoms do you have? -- I have a fever and a sore throat.",
-              "answer": "你有什么症状？——我发烧，喉咙痛。",
-              "targetWord": "symptom"
+              "en": "Do you have a fever?",
+              "answer": "你发烧吗？",
+              "targetWord": "fever"
             },
             {
-              "en": "Take this medicine three times a day. -- OK, thank you doctor.",
-              "answer": "这个药一天吃三次。——好的，谢谢医生。",
-              "targetWord": "medicine"
+              "en": "Let me examine you. Does it hurt here?",
+              "answer": "让我检查一下。这里疼吗？",
+              "targetWord": "examine"
             }
           ]
         },
@@ -2891,23 +2891,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "丢失物品 · 英译中",
-          "chunk": "lost / found / missing",
+          "chunk": "pocket / station / counter",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I lost my wallet. Where is the lost and found? -- Its on the first floor.",
-              "answer": "我的钱包丢了。失物招领处在哪里？——在一楼。",
-              "targetWord": "lost"
+              "en": "I left my phone in my pocket.",
+              "answer": "我把手机忘在口袋里了。",
+              "targetWord": "pocket"
             },
             {
-              "en": "Did you find a black bag? -- Yes, someone turned it in.",
-              "answer": "你有没有看到一个黑色的包？——有，有人交过来了。",
-              "targetWord": "found"
+              "en": "Please check the lost and found at the station.",
+              "answer": "请去车站的失物招领处看看。",
+              "targetWord": "station"
             },
             {
-              "en": "My passport is missing! -- Dont worry, lets go to the police.",
-              "answer": "我的护照不见了！——别担心，我们去报警。",
-              "targetWord": "missing"
+              "en": "You can ask at the information desk.",
+              "answer": "你可以去问讯台问问。",
+              "targetWord": "desk"
             }
           ]
         },
@@ -2996,22 +2996,22 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "语言沟通困难 · 英译中",
-          "chunk": "speak / understand / translate",
+          "chunk": "slowly / repeat / translate",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Do you speak English? -- Just a little.",
-              "answer": "你会说英语吗？——只会一点点。",
-              "targetWord": "speak"
+              "en": "Could you please speak more slowly?",
+              "answer": "你能说慢一点吗？",
+              "targetWord": "slowly"
             },
             {
-              "en": "I dont understand. Can you explain? -- Sure. Let me try again.",
-              "answer": "我不明白。你能解释一下吗？——好的，我再试试。",
-              "targetWord": "understand"
+              "en": "Could you repeat that please?",
+              "answer": "你能重复一遍吗？",
+              "targetWord": "repeat"
             },
             {
-              "en": "Can you translate this for me? -- Of course. Its easy.",
-              "answer": "你能帮我翻译一下吗？——当然，很简单。",
+              "en": "Can you translate this for me?",
+              "answer": "你能帮我翻译一下吗？",
               "targetWord": "translate"
             }
           ]
@@ -3052,6 +3052,111 @@
                 "slot1": "translate this",
                 "slot2": "find a doctor",
                 "slot3": "call my friend"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "支付与结账": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "支付与结账 · 中译英",
+          "chunk": "cash / card / receipt",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你付现金还是刷卡？",
+              "answer": "Do you pay by cash or card?",
+              "targetWord": "cash"
+            },
+            {
+              "zh": "我能刷卡吗？",
+              "answer": "Can I pay by card?",
+              "targetWord": "card"
+            },
+            {
+              "zh": "请给我收据。",
+              "answer": "Please give me a receipt.",
+              "targetWord": "receipt"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "支付与结账 · 英译中",
+          "chunk": "total / change / bill",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Your total is 50 dollars.",
+              "answer": "你总共50美元。",
+              "targetWord": "total"
+            },
+            {
+              "en": "Here is your change and receipt.",
+              "answer": "这是你的找零和收据。",
+              "targetWord": "change"
+            },
+            {
+              "en": "Could I have the bill please?",
+              "answer": "请给我账单好吗？",
+              "targetWord": "bill"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "支付与结账 · 句型",
+          "pattern": "How much is ___?",
+          "patternMeaning": "...多少钱？",
+          "slots": [
+            "this",
+            "the total",
+            "this item"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "...多少钱？",
+              "answer": "How much is this?",
+              "pattern": "How much is ___?",
+              "slotValues": {
+                "slot1": "this",
+                "slot2": "the total",
+                "slot3": "this item"
+              }
+            },
+            {
+              "zh": "我能...付款吗？",
+              "answer": "Can I pay by credit card?",
+              "pattern": "Can I pay by ___?",
+              "slotValues": {
+                "slot1": "credit card",
+                "slot2": "cash",
+                "slot3": "mobile payment"
+              }
+            },
+            {
+              "zh": "请给我...",
+              "answer": "Please give me a receipt.",
+              "pattern": "Please give me ___.",
+              "slotValues": {
+                "slot1": "a receipt",
+                "slot2": "the bill",
+                "slot3": "my change"
               }
             }
           ]

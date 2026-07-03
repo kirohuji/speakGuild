@@ -10,13 +10,49 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "我以前是/有 · 中译英",
-          "chunk": "before",
+          "chunk": "before / shy / young",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "他以前很害羞。",
               "answer": "He was very shy before.",
               "targetWord": "before"
+            },
+            {
+              "zh": "我以前是个学生。",
+              "answer": "I was a student before.",
+              "targetWord": "shy"
+            },
+            {
+              "zh": "她年轻时很活跃。",
+              "answer": "She was very active when she was young.",
+              "targetWord": "young"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我以前是/有 · 英译中",
+          "chunk": "student / active / kid",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I was a student before I started working.",
+              "answer": "我工作以前是个学生。",
+              "targetWord": "student"
+            },
+            {
+              "en": "She was very active in high school.",
+              "answer": "她高中时很活跃。",
+              "targetWord": "active"
+            },
+            {
+              "en": "I was a shy kid when I was young.",
+              "answer": "我小时候很害羞。",
+              "targetWord": "kid"
             }
           ]
         },
@@ -99,13 +135,49 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "昨天在哪里 · 中译英",
-          "chunk": "all",
+          "chunk": "office / home / party",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我一整天都在办公室。",
               "answer": "I was at the office all day.",
-              "targetWord": "all"
+              "targetWord": "office"
+            },
+            {
+              "zh": "他昨晚在家。",
+              "answer": "He was at home last night.",
+              "targetWord": "home"
+            },
+            {
+              "zh": "他们都在派对上。",
+              "answer": "They were all at the party.",
+              "targetWord": "party"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "昨天在哪里 · 英译中",
+          "chunk": "yesterday / night / there",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I was at the office all day yesterday.",
+              "answer": "我昨天一整天都在办公室。",
+              "targetWord": "yesterday"
+            },
+            {
+              "en": "Were you at home last night? -- Yes I was.",
+              "answer": "你昨晚在家吗？——在。",
+              "targetWord": "night"
+            },
+            {
+              "en": "Was there a party at your place? -- No there wasn't.",
+              "answer": "你家有派对吗？——没有。",
+              "targetWord": "there"
             }
           ]
         },
@@ -168,26 +240,62 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "不规则动词 · 中译英",
-          "chunk": "beach",
+          "chunk": "saw / said / made",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我们在海滩玩得很开心。",
-              "answer": "We had a great time at the beach.",
-              "targetWord": "beach"
+              "zh": "我在商场看到了一个朋友。",
+              "answer": "I saw a friend at the mall.",
+              "targetWord": "saw"
+            },
+            {
+              "zh": "她跟我说了你好。",
+              "answer": "She said hello to me.",
+              "targetWord": "said"
+            },
+            {
+              "zh": "他做了一个蛋糕。",
+              "answer": "He made a cake for the party.",
+              "targetWord": "made"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "不规则动词 · 英译中",
+          "chunk": "told / wrote / gave",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She told me a funny story.",
+              "answer": "她给我讲了个好笑的故事。",
+              "targetWord": "told"
+            },
+            {
+              "en": "He wrote a letter to his mom.",
+              "answer": "他给他妈妈写了一封信。",
+              "targetWord": "wrote"
+            },
+            {
+              "en": "She gave me a nice gift.",
+              "answer": "她给了我一个漂亮的礼物。",
+              "targetWord": "gave"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "不规则动词 · 句型",
           "pattern": "I saw ___ at ___.",
           "patternMeaning": "我在...看到...",
           "slots": [
-            "a friend",
-            "the mall",
-            "my teacher"
+            "a friend the mall",
+            "my teacher the park",
+            "a dog the street"
           ],
           "direction": "zh_to_en",
           "items": [
@@ -196,49 +304,28 @@
               "answer": "I saw a friend at the mall.",
               "pattern": "I saw ___ at ___.",
               "slotValues": {
-                "slot1": "a friend",
-                "slot2": "the mall",
-                "slot3": "my teacher"
+                "slot1": "a friend the mall",
+                "slot2": "my teacher the park"
+              }
+            },
+            {
+              "zh": "他做了...",
+              "answer": "He made a cake for the party.",
+              "pattern": "He made ___ for ___.",
+              "slotValues": {
+                "slot1": "a cake the party",
+                "slot2": "dinner us",
+                "slot3": "a mistake work"
               }
             },
             {
               "zh": "她说了...",
               "answer": "She said hello to me.",
-              "pattern": "She said ___.",
+              "pattern": "She said ___ to me.",
               "slotValues": {
                 "slot1": "hello",
                 "slot2": "goodbye",
                 "slot3": "thank you"
-              }
-            },
-            {
-              "zh": "他做了...",
-              "answer": "He made a big cake for the party.",
-              "pattern": "He made ___.",
-              "slotValues": {
-                "slot1": "a cake",
-                "slot2": "dinner",
-                "slot3": "a mistake"
-              }
-            },
-            {
-              "zh": "我做了...",
-              "answer": "I did my homework after school.",
-              "pattern": "I did ___.",
-              "slotValues": {
-                "slot1": "my homework",
-                "slot2": "the dishes",
-                "slot3": "exercise"
-              }
-            },
-            {
-              "zh": "我们度过了...",
-              "answer": "We had a great time at the beach.",
-              "pattern": "We had ___.",
-              "slotValues": {
-                "slot1": "a great time",
-                "slot2": "a meeting",
-                "slot3": "lunch"
               }
             }
           ]
@@ -257,13 +344,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "过去的时间表达 · 中译英",
-          "chunk": "beach",
+          "chunk": "yesterday / last / weekend",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我们在海滩玩得很开心。",
-              "answer": "We had a great time at the beach.",
-              "targetWord": "beach"
+              "zh": "我昨天去了超市。",
+              "answer": "I went to the supermarket yesterday.",
+              "targetWord": "yesterday"
+            },
+            {
+              "zh": "他昨晚看了电影。",
+              "answer": "He watched a movie last night.",
+              "targetWord": "last"
+            },
+            {
+              "zh": "我每周末和朋友打篮球。",
+              "answer": "I played basketball with my friends every weekend.",
+              "targetWord": "weekend"
             }
           ]
         },
@@ -273,13 +370,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "过去的时间表达 · 英译中",
-          "chunk": "every",
+          "chunk": "night / morning / ago",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I played basketball with my friends every weekend.",
-              "answer": "我每周末和朋友打篮球。",
-              "targetWord": "every"
+              "en": "I went to the supermarket last night.",
+              "answer": "我昨晚去了超市。",
+              "targetWord": "night"
+            },
+            {
+              "en": "He read a book this morning.",
+              "answer": "他今早看了一本书。",
+              "targetWord": "morning"
+            },
+            {
+              "en": "We played football two days ago.",
+              "answer": "我们两天前踢了足球。",
+              "targetWord": "ago"
             }
           ]
         },
@@ -287,8 +394,8 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "过去的时间表达 · 句型",
-          "pattern": "I went to ___.",
-          "patternMeaning": "我去了...",
+          "pattern": "I went to ___ yesterday.",
+          "patternMeaning": "我昨天去了...",
           "slots": [
             "the supermarket",
             "the park",
@@ -297,9 +404,9 @@
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我去了...",
-              "answer": "I went to the supermarket.",
-              "pattern": "I went to ___.",
+              "zh": "我昨天去了...",
+              "answer": "I went to the supermarket yesterday.",
+              "pattern": "I went to ___ yesterday.",
               "slotValues": {
                 "slot1": "the supermarket",
                 "slot2": "the park",
@@ -307,43 +414,23 @@
               }
             },
             {
-              "zh": "我吃了...作为...",
-              "answer": "I ate noodles for lunch.",
-              "pattern": "I ate ___ for ___.",
+              "zh": "我昨晚___了。",
+              "answer": "I watched a movie last night.",
+              "pattern": "I ___ed ___ last night.",
               "slotValues": {
-                "slot1": "noodles",
-                "slot2": "lunch",
-                "slot3": "rice"
+                "slot1": "watched a movie",
+                "slot2": "cooked dinner",
+                "slot3": "read a book"
               }
             },
             {
-              "zh": "我上(段时间)做了...",
-              "answer": " watched a movie last night.",
-              "pattern": "I ___ed ___ last ___.",
+              "zh": "我每周末___。",
+              "answer": "I played basketball with my friends every weekend.",
+              "pattern": "I ___ed ___ every weekend.",
               "slotValues": {
-                "slot1": "watched",
-                "slot2": "a movie",
-                "slot3": "night"
-              }
-            },
-            {
-              "zh": "我和...一起做了...",
-              "answer": "I played basketball with my friends.",
-              "pattern": "I ___ed ___ with ___.",
-              "slotValues": {
-                "slot1": "played",
-                "slot2": "basketball",
-                "slot3": "my friends"
-              }
-            },
-            {
-              "zh": "我在...看到...",
-              "answer": "I saw a friend at the mall.",
-              "pattern": "I saw ___ at ___.",
-              "slotValues": {
-                "slot1": "a friend",
-                "slot2": "the mall",
-                "slot3": "my teacher"
+                "slot1": "played basketball with my friends",
+                "slot2": "visited my grandparents",
+                "slot3": "went hiking"
               }
             }
           ]
@@ -362,77 +449,91 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "过去频率 · 中译英",
-          "chunk": "every",
+          "chunk": "often / every / usually",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我每周末和朋友打篮球。",
-              "answer": "I played basketball with my friends every weekend.",
+              "zh": "我过去经常迟到。",
+              "answer": "I was often late.",
+              "targetWord": "often"
+            },
+            {
+              "zh": "我每天都跑步。",
+              "answer": "I ran every day.",
               "targetWord": "every"
+            },
+            {
+              "zh": "我通常走路去上学。",
+              "answer": "I usually walked to school.",
+              "targetWord": "usually"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "过去频率 · 英译中",
+          "chunk": "daily / always / rarely",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I took the bus daily to school.",
+              "answer": "我每天坐公交去上学。",
+              "targetWord": "daily"
+            },
+            {
+              "en": "I always walked home after school.",
+              "answer": "我放学后总是走路回家。",
+              "targetWord": "always"
+            },
+            {
+              "en": "I rarely ate fast food.",
+              "answer": "我很少吃快餐。",
+              "targetWord": "rarely"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "过去频率 · 句型",
-          "pattern": "I went to ___.",
-          "patternMeaning": "我去了...",
+          "pattern": "I often ___ when I was ___.",
+          "patternMeaning": "我___时经常___。",
           "slots": [
-            "the supermarket",
-            "the park",
-            "a restaurant"
+            "was late in high school",
+            "played outside a child",
+            "read books in college"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我去了...",
-              "answer": "I went to the supermarket.",
-              "pattern": "I went to ___.",
+              "zh": "我___时经常___。",
+              "answer": "I was often late when I was in high school.",
+              "pattern": "I often ___ when I was ___.",
               "slotValues": {
-                "slot1": "the supermarket",
-                "slot2": "the park",
-                "slot3": "a restaurant"
+                "slot1": "was late in high school",
+                "slot2": "played outside a child"
               }
             },
             {
-              "zh": "我吃了...作为...",
-              "answer": "I ate noodles for lunch.",
-              "pattern": "I ate ___ for ___.",
+              "zh": "我过去通常___。",
+              "answer": "I usually walked to school when I was young.",
+              "pattern": "I usually ___ when I was ___.",
               "slotValues": {
-                "slot1": "noodles",
-                "slot2": "lunch",
-                "slot3": "rice"
+                "slot1": "walked to school young",
+                "slot2": "got up early a student"
               }
             },
             {
-              "zh": "我上(段时间)做了...",
-              "answer": " watched a movie last night.",
-              "pattern": "I ___ed ___ last ___.",
+              "zh": "我过去每天___。",
+              "answer": "I ran every day in high school.",
+              "pattern": "I ___ed every day in ___.",
               "slotValues": {
-                "slot1": "watched",
-                "slot2": "a movie",
-                "slot3": "night"
-              }
-            },
-            {
-              "zh": "我和...一起做了...",
-              "answer": "I played basketball with my friends.",
-              "pattern": "I ___ed ___ with ___.",
-              "slotValues": {
-                "slot1": "played",
-                "slot2": "basketball",
-                "slot3": "my friends"
-              }
-            },
-            {
-              "zh": "我在...看到...",
-              "answer": "I saw a friend at the mall.",
-              "pattern": "I saw ___ at ___.",
-              "slotValues": {
-                "slot1": "a friend",
-                "slot2": "the mall",
-                "slot3": "my teacher"
+                "slot1": "ran high school",
+                "slot2": "studied college",
+                "slot3": "swam summer"
               }
             }
           ]
@@ -451,13 +552,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "ago 表达 · 中译英",
-          "chunk": "ago",
+          "chunk": "ago / year / month",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "两年前我住在上海。",
               "answer": "I lived in Shanghai two years ago.",
               "targetWord": "ago"
+            },
+            {
+              "zh": "她一年前大学毕业。",
+              "answer": "She graduated from college a year ago.",
+              "targetWord": "year"
+            },
+            {
+              "zh": "我三个月前开始这份工作。",
+              "answer": "I started this job three months ago.",
+              "targetWord": "month"
             }
           ]
         },
@@ -467,13 +578,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "ago 表达 · 英译中",
-          "chunk": "ago",
+          "chunk": "week / decade / period",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I started this job three months ago.",
-              "answer": "我三个月前开始这份工作。",
-              "targetWord": "ago"
+              "en": "I moved here a week ago.",
+              "answer": "我一周前搬到了这里。",
+              "targetWord": "week"
+            },
+            {
+              "en": "The building was built a decade ago.",
+              "answer": "这座建筑是十年前建的。",
+              "targetWord": "decade"
+            },
+            {
+              "en": "She lived here for a short period.",
+              "answer": "她在这里住过一小段时间。",
+              "targetWord": "period"
             }
           ]
         },
@@ -482,22 +603,41 @@
           "type": "pattern_drill",
           "title": "ago 表达 · 句型",
           "pattern": "I ___ ___ ago.",
-          "patternMeaning": "我...前...",
+          "patternMeaning": "我...前...。",
           "slots": [
-            "lived in Shanghai",
-            "two years",
-            "started this job"
+            "lived in Shanghai two years",
+            "started this job three months",
+            "graduated a year"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我...前...",
+              "zh": "我...前...。",
               "answer": "I lived in Shanghai two years ago.",
               "pattern": "I ___ ___ ago.",
               "slotValues": {
-                "slot1": "lived in Shanghai",
-                "slot2": "two years",
-                "slot3": "started this job"
+                "slot1": "lived in Shanghai two years",
+                "slot2": "started this job three months"
+              }
+            },
+            {
+              "zh": "他/她...前...。",
+              "answer": "She graduated from college a year ago.",
+              "pattern": "She/He ___ ___ ago.",
+              "slotValues": {
+                "slot1": "graduated a year",
+                "slot2": "moved here three months",
+                "slot3": "started learning English six months"
+              }
+            },
+            {
+              "zh": "他们...前...。",
+              "answer": "They got married five years ago.",
+              "pattern": "They ___ ___ ago.",
+              "slotValues": {
+                "slot1": "got married five years",
+                "slot2": "bought a house three years",
+                "slot3": "met each other ten years"
               }
             }
           ]
@@ -516,37 +656,72 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "某年某事 · 中译英",
-          "chunk": "college",
+          "chunk": "college / meet / graduate",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我在大学认识了好朋友。",
               "answer": "I met my best friend in college.",
               "targetWord": "college"
+            },
+            {
+              "zh": "他2018年搬到了北京。",
+              "answer": "He moved to Beijing in 2018.",
+              "targetWord": "meet"
+            },
+            {
+              "zh": "她2020年大学毕业。",
+              "answer": "She graduated from college in 2020.",
+              "targetWord": "graduate"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "某年某事 · 英译中",
+          "chunk": "high / year / university",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I met my best friend in high school.",
+              "answer": "我在高中认识了好朋友。",
+              "targetWord": "high"
+            },
+            {
+              "en": "We moved to Beijing that year.",
+              "answer": "我们那年搬到了北京。",
+              "targetWord": "year"
+            },
+            {
+              "en": "She went to university in 2020.",
+              "answer": "她2020年上了大学。",
+              "targetWord": "university"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "某年某事 · 句型",
-          "pattern": "We moved to ___ in ___.",
-          "patternMeaning": "我们在某年搬到了...",
+          "pattern": "I met ___ in/at ___.",
+          "patternMeaning": "我在...认识了...",
           "slots": [
-            "Beijing",
-            "2015",
-            "this apartment"
+            "my best friend college",
+            "my wife university",
+            "my first boss work"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我们在某年搬到了...",
-              "answer": "We moved to this city in 2018.",
-              "pattern": "We moved to ___ in ___.",
+              "zh": "我在...认识了...",
+              "answer": "I met my best friend in college.",
+              "pattern": "I met ___ in/at ___.",
               "slotValues": {
-                "slot1": "Beijing",
-                "slot2": "2015",
-                "slot3": "this apartment"
+                "slot1": "my best friend college",
+                "slot2": "my wife university"
               }
             },
             {
@@ -554,19 +729,19 @@
               "answer": "She started learning English when she was 10.",
               "pattern": "She started ___ when she was ___.",
               "slotValues": {
-                "slot1": "learning English",
-                "slot2": "10",
-                "slot3": "playing piano"
+                "slot1": "learning English 10",
+                "slot2": "playing piano 8",
+                "slot3": "working 22"
               }
             },
             {
-              "zh": "我在...认识了...",
-              "answer": "I met my best friend in college.",
-              "pattern": "I met ___ in/at ___.",
+              "zh": "我们...年搬到了...",
+              "answer": "We moved to this city in 2018.",
+              "pattern": "We moved to ___ in ___.",
               "slotValues": {
-                "slot1": "my best friend",
-                "slot2": "college",
-                "slot3": "my wife"
+                "slot1": "this city 2018",
+                "slot2": "Shanghai 2015",
+                "slot3": "a new house 2020"
               }
             }
           ]
@@ -585,21 +760,57 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "疑问句 Did · 中译英",
-          "chunk": "concert",
+          "chunk": "concert / weekend / yesterday",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "你昨晚去哪了？我去了一场音乐会。",
               "answer": "Where did you go last night? I went to a concert.",
               "targetWord": "concert"
+            },
+            {
+              "zh": "你周末过得好吗？——很好！",
+              "answer": "Did you have a good weekend? -- Yes, great!",
+              "targetWord": "weekend"
+            },
+            {
+              "zh": "你昨天见到她了吗？——见到了。",
+              "answer": "Did you see her yesterday? -- Yes, I did.",
+              "targetWord": "yesterday"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "疑问句 Did · 英译中",
+          "chunk": "movie / evening / morning",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Did you watch a movie last night? -- Yes I did.",
+              "answer": "你昨晚看电影了吗？——看了。",
+              "targetWord": "movie"
+            },
+            {
+              "en": "Where did you go in the evening? I stayed home.",
+              "answer": "你晚上去哪了？我待在家。",
+              "targetWord": "evening"
+            },
+            {
+              "en": "Did you eat breakfast this morning? -- No I didn't.",
+              "answer": "你今天早上吃早餐了吗？——没有。",
+              "targetWord": "morning"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "疑问句 Did · 句型",
-          "pattern": "Did you ___? — Yes I did. / No I didn't.",
+          "pattern": "Did you ___? -- Yes I did. / No I didn't.",
           "patternMeaning": "你...了吗？",
           "slots": [
             "have a good weekend",
@@ -611,7 +822,7 @@
             {
               "zh": "你...了吗？",
               "answer": "Did you have a good weekend? Yes I did!",
-              "pattern": "Did you ___? — Yes I did. / No I didn't.",
+              "pattern": "Did you ___? -- Yes I did. / No I didn't.",
               "slotValues": {
                 "slot1": "have a good weekend",
                 "slot2": "eat lunch",
@@ -621,41 +832,21 @@
             {
               "zh": "她...了吗？",
               "answer": "Did she call you yesterday? No she didn't.",
-              "pattern": "Did she ___? — Yes she did. / No she didn't.",
+              "pattern": "Did she ___? -- Yes she did. / No she didn't.",
               "slotValues": {
-                "slot1": "call you",
+                "slot1": "call you yesterday",
                 "slot2": "come to class",
                 "slot3": "bring the book"
               }
             },
             {
-              "zh": "你什么时候...了？",
-              "answer": "When did you arrive? I arrived at 3 pm.",
-              "pattern": "When did you ___? — I ___ at ___.",
+              "zh": "你昨天___了吗？",
+              "answer": "Did you see her yesterday? -- Yes I did.",
+              "pattern": "Did you ___ yesterday?",
               "slotValues": {
-                "slot1": "arrive",
-                "slot2": "arrived",
-                "slot3": "3"
-              }
-            },
-            {
-              "zh": "你去哪...了？",
-              "answer": "Where did you go last night? I went to a concert.",
-              "pattern": "Where did you ___? — I ___ to ___.",
-              "slotValues": {
-                "slot1": "go",
-                "slot2": "went",
-                "slot3": "a concert"
-              }
-            },
-            {
-              "zh": "你...了什么？",
-              "answer": "What did you do yesterday? I stayed home.",
-              "pattern": "What did you ___? — I ___.",
-              "slotValues": {
-                "slot1": "do yesterday",
-                "slot2": "stayed home",
-                "slot3": "eat for breakfast"
+                "slot1": "see her",
+                "slot2": "go to the gym",
+                "slot3": "finish the report"
               }
             }
           ]
@@ -674,66 +865,92 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "去过/做过 · 中译英",
-          "chunk": "ever",
+          "chunk": "been / tried / finished",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "你去过上海吗？去过。",
               "answer": "Have you ever been to Shanghai? Yes I have.",
-              "targetWord": "ever"
+              "targetWord": "been"
+            },
+            {
+              "zh": "我吃过火锅。",
+              "answer": "I have tried hot pot before.",
+              "targetWord": "tried"
+            },
+            {
+              "zh": "你做完作业了吗？做完了。",
+              "answer": "Have you finished your homework? Yes I have.",
+              "targetWord": "finished"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "去过/做过 · 英译中",
+          "chunk": "visited / traveled / eaten",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Have you visited Beijing? Yes I have.",
+              "answer": "你参观过北京吗？去过。",
+              "targetWord": "visited"
+            },
+            {
+              "en": "I have traveled abroad before.",
+              "answer": "我以前出过国。",
+              "targetWord": "traveled"
+            },
+            {
+              "en": "Have you eaten Korean food? -- Yes I have.",
+              "answer": "你吃过韩国菜吗？——吃过。",
+              "targetWord": "eaten"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "去过/做过 · 句型",
-          "pattern": "I have been to ___.",
-          "patternMeaning": "我去过...",
+          "pattern": "Have you ever been to ___?",
+          "patternMeaning": "你去过...吗？",
           "slots": [
+            "Shanghai",
             "Beijing",
-            "Japan",
             "the US"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我去过...",
-              "answer": "I have been to Beijing.",
-              "pattern": "I have been to ___.",
+              "zh": "你去过...吗？",
+              "answer": "Have you ever been to Shanghai? Yes I have.",
+              "pattern": "Have you ever been to ___? — Yes I have.",
               "slotValues": {
-                "slot1": "Beijing",
-                "slot2": "Japan",
+                "slot1": "Shanghai",
+                "slot2": "Beijing",
                 "slot3": "the US"
               }
             },
             {
-              "zh": "你去过...吗？",
-              "answer": "Have you ever been to Shanghai? Yes I have.",
-              "pattern": "Have you ever been to ___? — Yes I have. / No I haven't.",
+              "zh": "你吃过...吗？",
+              "answer": "Have you ever tried hot pot? Yes, it's great!",
+              "pattern": "Have you ever tried ___?",
               "slotValues": {
-                "slot1": "Shanghai",
-                "slot2": "Paris",
-                "slot3": "a concert"
-              }
-            },
-            {
-              "zh": "我从未...",
-              "answer": "I have never tried hot pot.",
-              "pattern": "I have never ___.",
-              "slotValues": {
-                "slot1": "been abroad",
-                "slot2": "driven a car",
-                "slot3": "seen snow"
+                "slot1": "hot pot",
+                "slot2": "sushi",
+                "slot3": "Thai food"
               }
             },
             {
               "zh": "你...了吗？",
-              "answer": "Have you finished your homework? Yes I have.",
-              "pattern": "Have you ___? — Yes I have. / Not yet.",
+              "answer": "Have you finished your homework? Not yet.",
+              "pattern": "Have you ___? — Not yet.",
               "slotValues": {
                 "slot1": "finished your homework",
-                "slot2": "eaten",
+                "slot2": "eaten lunch",
                 "slot3": "called her"
               }
             }
@@ -753,13 +970,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "刚刚/还没 · 中译英",
-          "chunk": "already",
+          "chunk": "already / just / yet",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "她已经离开办公室了。",
               "answer": "She has already left the office.",
               "targetWord": "already"
+            },
+            {
+              "zh": "我刚到车站。",
+              "answer": "I have just arrived at the station.",
+              "targetWord": "just"
+            },
+            {
+              "zh": "我还没吃午饭。",
+              "answer": "I haven't eaten lunch yet.",
+              "targetWord": "yet"
             }
           ]
         },
@@ -769,18 +996,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "刚刚/还没 · 英译中",
-          "chunk": "just / yet",
+          "chunk": "early / right / still",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have just arrived at the station.",
-              "answer": "我刚到车站。",
-              "targetWord": "just"
+              "en": "She left early this morning.",
+              "answer": "她今天一大早走了。",
+              "targetWord": "early"
             },
             {
-              "en": "I haven't eaten lunch yet.",
+              "en": "I will be right back.",
+              "answer": "我马上回来。",
+              "targetWord": "right"
+            },
+            {
+              "en": "I still haven't eaten lunch.",
               "answer": "我还没吃午饭。",
-              "targetWord": "yet"
+              "targetWord": "still"
             }
           ]
         },
@@ -842,6 +1074,16 @@
               "zh": "你吃了吗？还没。",
               "answer": "Have you eaten yet? No not yet.",
               "targetWord": "yet"
+            },
+            {
+              "zh": "作业做完了吗？做完了。",
+              "answer": "Have you finished your homework? Yes already.",
+              "targetWord": "already"
+            },
+            {
+              "zh": "他到了吗？刚到。",
+              "answer": "Has he arrived? He has just arrived.",
+              "targetWord": "just"
             }
           ]
         }
@@ -859,47 +1101,92 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "持续多久 · 中译英",
-          "chunk": "since",
+          "chunk": "since / for / years",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "她2020年以来一直在这里工作。",
               "answer": "She has worked here since 2020.",
               "targetWord": "since"
+            },
+            {
+              "zh": "我在这里住了五年。",
+              "answer": "I have lived here for five years.",
+              "targetWord": "for"
+            },
+            {
+              "zh": "他们认识很多年了。",
+              "answer": "They have known each other for many years.",
+              "targetWord": "years"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "持续多久 · 英译中",
+          "chunk": "long / while / decade",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "How long have you lived here? For five years.",
+              "answer": "你住在这里多久了？五年。",
+              "targetWord": "long"
+            },
+            {
+              "en": "I worked there for a while.",
+              "answer": "我在那里工作了一段时间。",
+              "targetWord": "while"
+            },
+            {
+              "en": "She has taught here for a decade.",
+              "answer": "她在这里教书十年了。",
+              "targetWord": "decade"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "持续多久 · 句型",
           "pattern": "I have ___ for ___.",
-          "patternMeaning": "我...了(时间段)",
+          "patternMeaning": "我...了(时间段)。",
           "slots": [
-            "lived here",
-            "five years",
-            "worked here"
+            "lived here five years",
+            "worked here three years",
+            "known her ten years"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我...了(时间段)",
+              "zh": "我...了(时间段)。",
               "answer": "I have lived here for five years.",
               "pattern": "I have ___ for ___.",
               "slotValues": {
-                "slot1": "lived here",
-                "slot2": "five years",
-                "slot3": "worked here"
+                "slot1": "lived here five years",
+                "slot2": "worked here three years"
               }
             },
             {
               "zh": "他/她从(时间点)起就一直...",
               "answer": "She has worked here since 2020.",
-              "pattern": "He/She has ___ since ___.",
+              "pattern": "She/He has ___ since ___.",
               "slotValues": {
-                "slot1": "worked here",
-                "slot2": "2020",
-                "slot3": "been a teacher"
+                "slot1": "worked here 2020",
+                "slot2": "lived here 2018",
+                "slot3": "been a teacher 2015"
+              }
+            },
+            {
+              "zh": "他们认识...了。",
+              "answer": "They have known each other for many years.",
+              "pattern": "They have known each other for ___.",
+              "slotValues": {
+                "slot1": "many years",
+                "slot2": "a long time",
+                "slot3": "ten years"
               }
             }
           ]
@@ -918,109 +1205,56 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "ever/never · 中译英",
-          "chunk": "ever",
+          "chunk": "ever / never / best",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "这是我看过的最好的电影！",
               "answer": "This is the best movie I have ever seen!",
               "targetWord": "ever"
+            },
+            {
+              "zh": "我从未出过国。",
+              "answer": "I have never been abroad.",
+              "targetWord": "never"
+            },
+            {
+              "zh": "这是我吃过的最好吃的菜。",
+              "answer": "This is the best dish I have ever tasted!",
+              "targetWord": "best"
             }
           ]
         },
         {
-          "id": "pd_1",
-          "type": "pattern_drill",
-          "title": "ever/never · 句型",
-          "pattern": "I have been to ___.",
-          "patternMeaning": "我去过...",
-          "slots": [
-            "Beijing",
-            "Japan",
-            "the US"
-          ],
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "我去过...",
-              "answer": "I have been to Beijing.",
-              "pattern": "I have been to ___.",
-              "slotValues": {
-                "slot1": "Beijing",
-                "slot2": "Japan",
-                "slot3": "the US"
-              }
-            },
-            {
-              "zh": "你去过...吗？",
-              "answer": "Have you ever been to Shanghai? Yes I have.",
-              "pattern": "Have you ever been to ___? — Yes I have. / No I haven't.",
-              "slotValues": {
-                "slot1": "Shanghai",
-                "slot2": "Paris",
-                "slot3": "a concert"
-              }
-            },
-            {
-              "zh": "我从未...",
-              "answer": "I have never tried hot pot.",
-              "pattern": "I have never ___.",
-              "slotValues": {
-                "slot1": "been abroad",
-                "slot2": "driven a car",
-                "slot3": "seen snow"
-              }
-            },
-            {
-              "zh": "你...了吗？",
-              "answer": "Have you finished your homework? Yes I have.",
-              "pattern": "Have you ___? — Yes I have. / Not yet.",
-              "slotValues": {
-                "slot1": "finished your homework",
-                "slot2": "eaten",
-                "slot3": "called her"
-              }
-            },
-            {
-              "zh": "她已经...",
-              "answer": "She has already left the office.",
-              "pattern": "She has already ___.",
-              "slotValues": {
-                "slot1": "left",
-                "slot2": "finished",
-                "slot3": "eaten"
-              }
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "回忆过去": {
-    "outputTraining": {
-      "version": 1,
-      "enabled": true,
-      "pipeline": [
-        {
-          "id": "cs_zh_0",
+          "id": "cs_en_1",
           "type": "chunk_substitution",
           "kind": "word",
-          "direction": "zh_to_en",
-          "title": "回忆过去 · 中译英",
-          "chunk": "remember",
+          "direction": "en_to_zh",
+          "title": "ever/never · 英译中",
+          "chunk": "worst / none / always",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我记得小时候每天都在外面玩。",
-              "answer": "I remember when I was a child I played outside every day.",
-              "targetWord": "remember"
+              "en": "This is the worst movie I have ever seen!",
+              "answer": "这是我看过的最差的电影！",
+              "targetWord": "worst"
+            },
+            {
+              "en": "None of my friends have been there.",
+              "answer": "我的朋友没人去过那里。",
+              "targetWord": "none"
+            },
+            {
+              "en": "I have always wanted to travel.",
+              "answer": "我一直想去旅行。",
+              "targetWord": "always"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "pd_2",
           "type": "pattern_drill",
-          "title": "回忆过去 · 句型",
+          "title": "ever/never · 句型",
           "pattern": "I remember when I was a child I ___ every day.",
           "patternMeaning": "我记得小时候每天...",
           "slots": [
@@ -1039,6 +1273,26 @@
                 "slot2": "went fishing",
                 "slot3": "rode my bike"
               }
+            },
+            {
+              "zh": "我小时候常去...",
+              "answer": "I went fishing with my dad when I was a child.",
+              "pattern": "I ___ed ___ when I was a child.",
+              "slotValues": {
+                "slot1": "went fishing",
+                "slot2": "visited my grandma",
+                "slot3": "played soccer"
+              }
+            },
+            {
+              "zh": "我以前每天...",
+              "answer": "I used to play outside after school.",
+              "pattern": "I used to ___ after school.",
+              "slotValues": {
+                "slot1": "play outside",
+                "slot2": "watch TV",
+                "slot3": "play video games"
+              }
             }
           ]
         }
@@ -1056,13 +1310,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "生活变化 · 中译英",
-          "chunk": "since",
+          "chunk": "since / changed / past",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "从那时起我变了很多。",
               "answer": "I have changed a lot since then.",
               "targetWord": "since"
+            },
+            {
+              "zh": "过去十年变化太大了。",
+              "answer": "Things have changed so much in the past ten years.",
+              "targetWord": "changed"
+            },
+            {
+              "zh": "她比以前自信多了。",
+              "answer": "She is much more confident than before.",
+              "targetWord": "past"
             }
           ]
         },
@@ -1072,13 +1336,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "生活变化 · 英译中",
-          "chunk": "past",
+          "chunk": "different / growth / now",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Things have changed so much in the past ten years.",
-              "answer": "过去十年变化太大了。",
-              "targetWord": "past"
+              "en": "Life is very different now.",
+              "answer": "生活跟以前很不一样了。",
+              "targetWord": "different"
+            },
+            {
+              "en": "I can see my own growth over the years.",
+              "answer": "我能看到自己这些年的成长。",
+              "targetWord": "growth"
+            },
+            {
+              "en": "Things are much better now.",
+              "answer": "现在好多了。",
+              "targetWord": "now"
             }
           ]
         },
@@ -1086,15 +1360,24 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "生活变化 · 句型",
-          "pattern": "Things have changed so much in the past ___.",
-          "patternMeaning": "过去...变化很大。",
+          "pattern": "I have changed ___ since ___.",
+          "patternMeaning": "从...开始我改变了...。",
           "slots": [
-            "ten years",
-            "five years",
-            "few months"
+            "a lot then",
+            "so much 2020",
+            "completely last year"
           ],
           "direction": "zh_to_en",
           "items": [
+            {
+              "zh": "从...开始我改变了...。",
+              "answer": "I have changed a lot since then.",
+              "pattern": "I have changed ___ since ___.",
+              "slotValues": {
+                "slot1": "a lot then",
+                "slot2": "so much 2020"
+              }
+            },
             {
               "zh": "过去...变化很大。",
               "answer": "Things have changed so much in the past ten years.",
@@ -1103,6 +1386,16 @@
                 "slot1": "ten years",
                 "slot2": "five years",
                 "slot3": "few months"
+              }
+            },
+            {
+              "zh": "生活跟以前___。",
+              "answer": "Life is very different from the past.",
+              "pattern": "Life is ___ from ___.",
+              "slotValues": {
+                "slot1": "very different the past",
+                "slot2": "much better before",
+                "slot3": "not the same before"
               }
             }
           ]
@@ -1121,18 +1414,54 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "今昔对比 · 中译英",
-          "chunk": "before",
+          "chunk": "before / different / changed",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "以前生活更简单现在一切都太快了。",
-              "answer": "Life was simpler before Now everything is so fast.",
+              "answer": "Life was simpler before. Now everything is so fast.",
               "targetWord": "before"
+            },
+            {
+              "zh": "现在的学校和以前不一样了。",
+              "answer": "Schools are very different from before.",
+              "targetWord": "different"
+            },
+            {
+              "zh": "她比以前自信多了。",
+              "answer": "She is much more confident than before.",
+              "targetWord": "changed"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "今昔对比 · 英译中",
+          "chunk": "modern / past / now",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Life is much faster in modern times.",
+              "answer": "现代生活快多了。",
+              "targetWord": "modern"
+            },
+            {
+              "en": "In the past things were cheaper.",
+              "answer": "过去东西更便宜。",
+              "targetWord": "past"
+            },
+            {
+              "en": "Now everything is more convenient.",
+              "answer": "现在一切更方便了。",
+              "targetWord": "now"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "今昔对比 · 句型",
           "pattern": "When I was ___ I ___ Now I ___.",
@@ -1190,9 +1519,19 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "used to表达 · 中译英",
-          "chunk": "realize",
+          "chunk": "used / would / realize",
           "chunkMeaning": "",
           "items": [
+            {
+              "zh": "我过去常在这里玩。",
+              "answer": "I used to play here.",
+              "targetWord": "used"
+            },
+            {
+              "zh": "小时候我常骑车去上学。",
+              "answer": "I used to ride my bike to school when I was young.",
+              "targetWord": "would"
+            },
             {
               "zh": "回望过去我意识到自己成长了多少。",
               "answer": "Looking back I realize how much I have grown.",
@@ -1201,26 +1540,51 @@
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "used to表达 · 英译中",
+          "chunk": "once / past / remember",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I once lived in Shanghai.",
+              "answer": "我曾经住在上海。",
+              "targetWord": "once"
+            },
+            {
+              "en": "In the past I played the piano.",
+              "answer": "过去我弹钢琴。",
+              "targetWord": "past"
+            },
+            {
+              "en": "I remember playing outside every day.",
+              "answer": "我记得每天都在外面玩。",
+              "targetWord": "remember"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "used to表达 · 句型",
-          "pattern": "There used to be ___ but now it's ___.",
-          "patternMeaning": "这里过去有...但现在它是...",
+          "pattern": "There used to be ___ here. Now it's ___.",
+          "patternMeaning": "这里过去有...现在变成...了。",
           "slots": [
-            "a park",
-            "a shopping mall",
-            "a cinema"
+            "a park a shopping mall",
+            "a cinema a restaurant",
+            "a small shop a big store"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "这里过去有...但现在它是...",
-              "answer": "There used to be a park here but now it's a shopping mall.",
-              "pattern": "There used to be ___ but now it's ___.",
+              "zh": "这里过去有...现在变成...了。",
+              "answer": "There used to be a park here. Now it's a shopping mall.",
+              "pattern": "There used to be ___ here. Now it's ___.",
               "slotValues": {
-                "slot1": "a park",
-                "slot2": "a shopping mall",
-                "slot3": "a cinema"
+                "slot1": "a park a shopping mall",
+                "slot2": "a cinema a restaurant"
               }
             },
             {
@@ -1228,10 +1592,1414 @@
               "answer": "I used to think this was difficult but now I know it's easy.",
               "pattern": "I used to think ___ but now I know ___.",
               "slotValues": {
-                "slot1": "this was difficult",
-                "slot2": "it's easy",
-                "slot3": "he was unfriendly"
+                "slot1": "this was difficult it's easy",
+                "slot2": "he was unfriendly he's nice"
               }
+            },
+            {
+              "zh": "我过去常...但现在不...了。",
+              "answer": "I used to play outside but now I don't.",
+              "pattern": "I used to ___ but now I ___.",
+              "slotValues": {
+                "slot1": "play outside don't",
+                "slot2": "stay up late go to bed early",
+                "slot3": "eat junk food eat healthy"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "过去的感受": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "过去的感受 · 中译英",
+          "chunk": "comfortable / concerned / desperate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我对结果很满意。",
+              "answer": "I was very comfortable with the result.",
+              "targetWord": "comfortable"
+            },
+            {
+              "zh": "她对安全很担心。",
+              "answer": "She was concerned about safety.",
+              "targetWord": "concerned"
+            },
+            {
+              "zh": "他急需帮助。",
+              "answer": "He was desperate for help.",
+              "targetWord": "desperate"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "过去的感受 · 英译中",
+          "chunk": "happy / bored / surprised",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I was happy with my exam results.",
+              "answer": "我对考试成绩很满意。",
+              "targetWord": "happy"
+            },
+            {
+              "en": "He was bored during the long meeting.",
+              "answer": "他在漫长的会议中感到很无聊。",
+              "targetWord": "bored"
+            },
+            {
+              "en": "She was surprised by the news.",
+              "answer": "她对那个消息感到惊讶。",
+              "targetWord": "surprised"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "过去的感受 · 句型",
+          "pattern": "I was ___ about ___.",
+          "patternMeaning": "我对...感到很...",
+          "slots": [
+            "happy about the result",
+            "worried about the exam",
+            "excited about the trip"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我对...感到很...",
+              "answer": "I was happy about the result.",
+              "pattern": "I was ___ about ___.",
+              "slotValues": {
+                "slot1": "happy about the result",
+                "slot2": "worried about the exam",
+                "slot3": "excited about the trip"
+              }
+            },
+            {
+              "zh": "她感到...",
+              "answer": "She was excited about the trip.",
+              "pattern": "She was ___ about ___.",
+              "slotValues": {
+                "slot1": "excited about the trip",
+                "slot2": "worried about the interview",
+                "slot3": "nervous about the test"
+              }
+            },
+            {
+              "zh": "他们感到...",
+              "answer": "They were happy with the outcome.",
+              "pattern": "They were ___ with ___.",
+              "slotValues": {
+                "slot1": "happy with the outcome",
+                "slot2": "satisfied with the result",
+                "slot3": "pleased with the service"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "过去的感受 · 一词多句",
+          "vocabWord": "was / were / felt",
+          "vocabMeaning": "感到/觉得",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I was ___. / I felt ___.",
+              "items": [
+                {
+                  "zh": "我对结果很满意。",
+                  "answer": "I was very comfortable with the result."
+                },
+                {
+                  "zh": "她感到紧张。",
+                  "answer": "She felt nervous before the exam."
+                }
+              ]
+            },
+            {
+              "chunk": "He/She was ___. / They were ___.",
+              "items": [
+                {
+                  "zh": "他急需帮助。",
+                  "answer": "He was desperate for help."
+                },
+                {
+                  "zh": "他们对消息感到惊讶。",
+                  "answer": "They were surprised by the news."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "过去的外表": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "过去的外表 · 中译英",
+          "chunk": "thin / serious / round",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他年轻的时候很瘦。",
+              "answer": "He was very thin when he was young.",
+              "targetWord": "thin"
+            },
+            {
+              "zh": "她的表情很严肃。",
+              "answer": "She looked very serious.",
+              "targetWord": "serious"
+            },
+            {
+              "zh": "他的脸圆圆的。",
+              "answer": "He had a round face.",
+              "targetWord": "round"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "过去的外表 · 英译中",
+          "chunk": "curly / strong / uniform",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She had curly hair when she was a child.",
+              "answer": "她小时候是卷发。",
+              "targetWord": "curly"
+            },
+            {
+              "en": "He was very strong when he was young.",
+              "answer": "他年轻时很强壮。",
+              "targetWord": "strong"
+            },
+            {
+              "en": "He wore a uniform to school every day.",
+              "answer": "他每天穿校服上学。",
+              "targetWord": "uniform"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "过去的外表 · 句型",
+          "pattern": "He was ___ when he was young.",
+          "patternMeaning": "他年轻时...",
+          "slots": [
+            "very thin",
+            "quite tall",
+            "very strong"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "他年轻时...",
+              "answer": "He was very thin when he was young.",
+              "pattern": "He was ___ when he was young.",
+              "slotValues": {
+                "slot1": "very thin",
+                "slot2": "quite tall",
+                "slot3": "very strong"
+              }
+            },
+            {
+              "zh": "她小时候有...",
+              "answer": "She had curly hair when she was a child.",
+              "pattern": "She had ___ when she was a child.",
+              "slotValues": {
+                "slot1": "curly hair",
+                "slot2": "long hair",
+                "slot3": "short hair"
+              }
+            },
+            {
+              "zh": "他过去戴...",
+              "answer": "He wore glasses when he was young.",
+              "pattern": "He wore ___ when he was young.",
+              "slotValues": {
+                "slot1": "glasses",
+                "slot2": "a uniform",
+                "slot3": "a hat"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "过去的外表 · 一词多句",
+          "vocabWord": "thin / curly / strong",
+          "vocabMeaning": "瘦/卷发/强壮",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "He was ___ when he was young.",
+              "items": [
+                {
+                  "zh": "他年轻时很瘦。",
+                  "answer": "He was very thin when he was young."
+                },
+                {
+                  "zh": "她小时候很壮。",
+                  "answer": "She was very strong when she was little."
+                }
+              ]
+            },
+            {
+              "chunk": "She had ___ hair.",
+              "items": [
+                {
+                  "zh": "她过去是卷发。",
+                  "answer": "She had curly hair last year."
+                },
+                {
+                  "zh": "她小时候有长头发。",
+                  "answer": "She had long hair when she was a child."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "过去的天气和日子": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "过去的天气和日子 · 中译英",
+          "chunk": "climate / extreme / dry",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这里的气候过去更温和。",
+              "answer": "The climate was milder here before.",
+              "targetWord": "climate"
+            },
+            {
+              "zh": "昨天的天气太极端了。",
+              "answer": "The weather was extreme yesterday.",
+              "targetWord": "extreme"
+            },
+            {
+              "zh": "过去几个星期很干燥。",
+              "answer": "It was very dry for the past few weeks.",
+              "targetWord": "dry"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "过去的天气和日子 · 英译中",
+          "chunk": "wet / warm / cold",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "It was wet all day yesterday.",
+              "answer": "昨天下了一整天雨。",
+              "targetWord": "wet"
+            },
+            {
+              "en": "The weather was warm last week.",
+              "answer": "上周天气很暖和。",
+              "targetWord": "warm"
+            },
+            {
+              "en": "Was it cold yesterday? Yes it was.",
+              "answer": "昨天冷吗？是的。",
+              "targetWord": "cold"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "过去的天气和日子 · 句型",
+          "pattern": "It was ___ yesterday.",
+          "patternMeaning": "昨天天气...",
+          "slots": [
+            "rainy all day",
+            "very cold",
+            "warm and sunny"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "昨天天气...",
+              "answer": "It was rainy all day yesterday.",
+              "pattern": "It was ___ yesterday.",
+              "slotValues": {
+                "slot1": "rainy all day",
+                "slot2": "very cold",
+                "slot3": "warm and sunny"
+              }
+            },
+            {
+              "zh": "上周天气...",
+              "answer": "The weather was warm last week.",
+              "pattern": "The weather was ___ last week.",
+              "slotValues": {
+                "slot1": "warm",
+                "slot2": "terrible",
+                "slot3": "nice"
+              }
+            },
+            {
+              "zh": "...的时候天气很...",
+              "answer": "It was very cold when I left the house.",
+              "pattern": "It was ___ when I ___.",
+              "slotValues": {
+                "slot1": "very cold left the house",
+                "slot2": "raining went outside",
+                "slot3": "nice woke up"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "过去的天气和日子 · 一词多句",
+          "vocabWord": "It was / The weather was",
+          "vocabMeaning": "天气是...",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It was ___ yesterday.",
+              "items": [
+                {
+                  "zh": "昨天下了一整天雨。",
+                  "answer": "It was wet all day yesterday."
+                },
+                {
+                  "zh": "昨天很冷。",
+                  "answer": "It was very cold yesterday."
+                }
+              ]
+            },
+            {
+              "chunk": "The weather was ___ last week.",
+              "items": [
+                {
+                  "zh": "上周天气很暖和。",
+                  "answer": "The weather was warm last week."
+                },
+                {
+                  "zh": "上周天气太极端了。",
+                  "answer": "The weather was extreme last week."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "昨天做了什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "昨天做了什么 · 中译英",
+          "chunk": "cook / clean / call",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我昨晚做了晚饭。",
+              "answer": "I cooked dinner last night.",
+              "targetWord": "cook"
+            },
+            {
+              "zh": "他打扫了房间。",
+              "answer": "He cleaned his room yesterday.",
+              "targetWord": "clean"
+            },
+            {
+              "zh": "我给我妈打了电话。",
+              "answer": "I called my mom yesterday.",
+              "targetWord": "call"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "昨天做了什么 · 英译中",
+          "chunk": "study / watch / visit",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I studied for two hours last night.",
+              "answer": "我昨晚学习了两个小时。",
+              "targetWord": "study"
+            },
+            {
+              "en": "I watched a movie with my friends.",
+              "answer": "我和朋友看了一部电影。",
+              "targetWord": "watch"
+            },
+            {
+              "en": "I visited my grandparents last weekend.",
+              "answer": "我上周末去看望了祖父母。",
+              "targetWord": "visit"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "昨天做了什么 · 句型",
+          "pattern": "I ___ed yesterday.",
+          "patternMeaning": "我昨天...了。",
+          "slots": [
+            "cooked dinner",
+            "cleaned my room",
+            "studied English"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我昨天...了。",
+              "answer": "I cooked dinner yesterday.",
+              "pattern": "I ___ed yesterday.",
+              "slotValues": {
+                "slot1": "cooked dinner",
+                "slot2": "cleaned my room",
+                "slot3": "studied English"
+              }
+            },
+            {
+              "zh": "他昨晚...",
+              "answer": "He watched a movie last night.",
+              "pattern": "He ___ed last night.",
+              "slotValues": {
+                "slot1": "watched a movie",
+                "slot2": "played basketball",
+                "slot3": "called his mom"
+              }
+            },
+            {
+              "zh": "她昨天...",
+              "answer": "She visited her grandparents yesterday.",
+              "pattern": "She ___ed ___ yesterday.",
+              "slotValues": {
+                "slot1": "visited her grandparents",
+                "slot2": "studied for the exam",
+                "slot3": "cleaned the house"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "昨天做了什么 · 一词多句",
+          "vocabWord": "cook / clean / call",
+          "vocabMeaning": "做饭/打扫/打电话",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I ___ed yesterday.",
+              "items": [
+                {
+                  "zh": "我昨晚做了晚饭。",
+                  "answer": "I cooked dinner last night."
+                },
+                {
+                  "zh": "我打扫了房间。",
+                  "answer": "I cleaned my room yesterday."
+                }
+              ]
+            },
+            {
+              "chunk": "He/She ___ed last night.",
+              "items": [
+                {
+                  "zh": "他看了一部电影。",
+                  "answer": "He watched a movie last night."
+                },
+                {
+                  "zh": "她给妈妈打了电话。",
+                  "answer": "She called her mom last night."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "规则动词 -ed": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "规则动词 -ed · 中译英",
+          "chunk": "help / talk / finish",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我帮了妈妈做家务。",
+              "answer": "I helped my mom with housework.",
+              "targetWord": "help"
+            },
+            {
+              "zh": "我们聊了很长时间。",
+              "answer": "We talked for a long time.",
+              "targetWord": "talk"
+            },
+            {
+              "zh": "我七点前完成了作业。",
+              "answer": "I finished my homework before 7.",
+              "targetWord": "finish"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "规则动词 -ed · 英译中",
+          "chunk": "start / decide / try",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I started this job three months ago.",
+              "answer": "我三个月前开始了这份工作。",
+              "targetWord": "start"
+            },
+            {
+              "en": "She decided to study abroad.",
+              "answer": "她决定出国留学。",
+              "targetWord": "decide"
+            },
+            {
+              "en": "I tried Korean food for the first time.",
+              "answer": "我第一次尝试了韩国菜。",
+              "targetWord": "try"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "规则动词 -ed · 句型",
+          "pattern": "I ___ed ___ yesterday.",
+          "patternMeaning": "我昨天...了。",
+          "slots": [
+            "helped my mom",
+            "talked to my friend",
+            "finished work early"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我昨天...了。",
+              "answer": "I helped my mom with housework yesterday.",
+              "pattern": "I ___ed ___ yesterday.",
+              "slotValues": {
+                "slot1": "helped my mom with housework",
+                "slot2": "talked to my friend",
+                "slot3": "finished work early"
+              }
+            },
+            {
+              "zh": "她...了。",
+              "answer": "She started learning English last year.",
+              "pattern": "She ___ed ___ last year.",
+              "slotValues": {
+                "slot1": "started learning English",
+                "slot2": "decided to move",
+                "slot3": "tried something new"
+              }
+            },
+            {
+              "zh": "他...了吗？",
+              "answer": "Did he finish his homework? Yes he did.",
+              "pattern": "Did he ___ his ___?",
+              "slotValues": {
+                "slot1": "finish homework",
+                "slot2": "start project",
+                "slot3": "try new food"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "规则动词 -ed · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单动作",
+              "en": "I helped my mom yesterday.",
+              "zh": "我昨天帮了妈妈。",
+              "highlight": "helped",
+              "hint": "先说简单过去动作"
+            },
+            {
+              "level": 2,
+              "label": "加上对象",
+              "en": "I helped my mom with housework yesterday.",
+              "zh": "我昨天帮妈妈做了家务。",
+              "highlight": "housework",
+              "hint": "加上 with housework 说明帮了什么"
+            },
+            {
+              "level": 3,
+              "label": "加上时间",
+              "en": "I helped my mom with housework after school yesterday.",
+              "zh": "我昨天放学后帮妈妈做了家务。",
+              "highlight": "after school",
+              "hint": "加上 after school 说明时间"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "上个周末/去年": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "上个周末/去年 · 中译英",
+          "chunk": "weekend / month / last",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我上周末去了博物馆。",
+              "answer": "I went to the museum last weekend.",
+              "targetWord": "weekend"
+            },
+            {
+              "zh": "我去年去了日本旅行。",
+              "answer": "I traveled to Japan last year.",
+              "targetWord": "month"
+            },
+            {
+              "zh": "他上个月搬了家。",
+              "answer": "He moved last month.",
+              "targetWord": "last"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "上个周末/去年 · 英译中",
+          "chunk": "during / ago / college",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I visited my grandparents during the holiday.",
+              "answer": "我假期去看望了祖父母。",
+              "targetWord": "during"
+            },
+            {
+              "en": "I graduated from college two years ago.",
+              "answer": "我两年前大学毕业。",
+              "targetWord": "ago"
+            },
+            {
+              "en": "I met my best friend in college.",
+              "answer": "我在大学认识了我最好的朋友。",
+              "targetWord": "college"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "上个周末/去年 · 句型",
+          "pattern": "Last weekend I ___ed ___.",
+          "patternMeaning": "上周末我...了。",
+          "slots": [
+            "visited my grandparents",
+            "went to the museum",
+            "traveled to the beach"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "上周末我...了。",
+              "answer": "Last weekend I visited my grandparents.",
+              "pattern": "Last weekend I ___ed ___.",
+              "slotValues": {
+                "slot1": "visited my grandparents",
+                "slot2": "went to the museum",
+                "slot3": "traveled to the beach"
+              }
+            },
+            {
+              "zh": "去年我...",
+              "answer": "Last year I traveled to Japan.",
+              "pattern": "Last year I ___ed ___.",
+              "slotValues": {
+                "slot1": "traveled to Japan",
+                "slot2": "started a new job",
+                "slot3": "learned to drive"
+              }
+            },
+            {
+              "zh": "我...前...了。",
+              "answer": "I moved to this city two years ago.",
+              "pattern": "I ___ed ___ ___ ago.",
+              "slotValues": {
+                "slot1": "moved to this city two years",
+                "slot2": "started this job three months",
+                "slot3": "graduated one year"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "上个周末/去年 · 一词多句",
+          "vocabWord": "last weekend / last year / ago",
+          "vocabMeaning": "上周末/去年/以前",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Last weekend I ___.",
+              "items": [
+                {
+                  "zh": "我上周末去了博物馆。",
+                  "answer": "I went to the museum last weekend."
+                },
+                {
+                  "zh": "我上周末看望了祖父母。",
+                  "answer": "I visited my grandparents last weekend."
+                }
+              ]
+            },
+            {
+              "chunk": "___ ago I ___.",
+              "items": [
+                {
+                  "zh": "两年前我大学毕业。",
+                  "answer": "I graduated from college two years ago."
+                },
+                {
+                  "zh": "一年前我搬到了这里。",
+                  "answer": "I moved here one year ago."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "否定句 didn't": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "否定句 didn't · 中译英",
+          "chunk": "absent / fail / regret",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我昨天没去上学。",
+              "answer": "I didn't go to school yesterday.",
+              "targetWord": "absent"
+            },
+            {
+              "zh": "他考试没通过。",
+              "answer": "He didn't pass the exam.",
+              "targetWord": "fail"
+            },
+            {
+              "zh": "她没有后悔这个决定。",
+              "answer": "She didn't regret the decision.",
+              "targetWord": "regret"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "否定句 didn't · 英译中",
+          "chunk": "forget / bring / buy",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I didn't forget your birthday!",
+              "answer": "我没有忘记你的生日！",
+              "targetWord": "forget"
+            },
+            {
+              "en": "She didn't bring her umbrella.",
+              "answer": "她没有带伞。",
+              "targetWord": "bring"
+            },
+            {
+              "en": "He didn't buy anything at the shop.",
+              "answer": "他什么也没在店里买。",
+              "targetWord": "buy"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "否定句 didn't · 句型",
+          "pattern": "I didn't ___ yesterday.",
+          "patternMeaning": "我昨天没有...",
+          "slots": [
+            "go to school",
+            "eat breakfast",
+            "finish my work"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我昨天没有...",
+              "answer": "I didn't go to school yesterday.",
+              "pattern": "I didn't ___ yesterday.",
+              "slotValues": {
+                "slot1": "go to school",
+                "slot2": "eat breakfast",
+                "slot3": "finish my work"
+              }
+            },
+            {
+              "zh": "她没...",
+              "answer": "She didn't bring her umbrella.",
+              "pattern": "She didn't ___ her ___.",
+              "slotValues": {
+                "slot1": "bring her umbrella",
+                "slot2": "forget your birthday",
+                "slot3": "buy anything"
+              }
+            },
+            {
+              "zh": "他为什么没...？",
+              "answer": "He didn't come to the party because he was sick.",
+              "pattern": "He didn't come to the party because ___.",
+              "slotValues": {
+                "slot1": "he was sick",
+                "slot2": "he was busy",
+                "slot3": "he was tired"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "否定句 didn't · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单否定",
+              "en": "I didn't go to school.",
+              "zh": "我没去上学。",
+              "highlight": "didn't go",
+              "hint": "用 didn't + 动词原形"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "I didn't go to school yesterday because I was sick.",
+              "zh": "我昨天没去上学因为我生病了。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            },
+            {
+              "level": 3,
+              "label": "加更多细节",
+              "en": "I didn't go to school yesterday because I was sick and tired.",
+              "zh": "我昨天没去上学因为我生病了而且很累。",
+              "highlight": "and tired",
+              "hint": "用 and 增加更多信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "完成时混合表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "完成时混合表达 · 中译英",
+          "chunk": "experience / effect / realize",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我有过类似的经历。",
+              "answer": "I have had a similar experience.",
+              "targetWord": "experience"
+            },
+            {
+              "zh": "这产生了很大的影响。",
+              "answer": "This has had a great effect.",
+              "targetWord": "effect"
+            },
+            {
+              "zh": "我已经意识到自己的错误。",
+              "answer": "I have realized my mistake.",
+              "targetWord": "realize"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "完成时混合表达 · 英译中",
+          "chunk": "learn / move / change",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have learned a lot from this experience.",
+              "answer": "我从这次经历中学到了很多。",
+              "targetWord": "learn"
+            },
+            {
+              "en": "She has moved to a new city.",
+              "answer": "她搬到了一个新的城市。",
+              "targetWord": "move"
+            },
+            {
+              "en": "Things have changed a lot since then.",
+              "answer": "从那时起事情变了很多。",
+              "targetWord": "change"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "完成时混合表达 · 句型",
+          "pattern": "I have ___ since ___.",
+          "patternMeaning": "我从...以来...了。",
+          "slots": [
+            "learned a lot 2020",
+            "lived here 2018",
+            "known her college"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我从...以来...了。",
+              "answer": "I have learned a lot since 2020.",
+              "pattern": "I have ___ since ___.",
+              "slotValues": {
+                "slot1": "learned a lot 2020",
+                "slot2": "lived here 2018",
+                "slot3": "known her college"
+              }
+            },
+            {
+              "zh": "他已经...了吗？",
+              "answer": "Have you ever been to Japan? Yes I have.",
+              "pattern": "Have you ever ___?",
+              "slotValues": {
+                "slot1": "been to Japan",
+                "slot2": "tried sushi",
+                "slot3": "seen that movie"
+              }
+            },
+            {
+              "zh": "她从来没有...",
+              "answer": "She has never tried hot pot before.",
+              "pattern": "She has never ___ before.",
+              "slotValues": {
+                "slot1": "tried hot pot",
+                "slot2": "been abroad",
+                "slot3": "seen snow"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "完成时混合表达 · 一词多句",
+          "vocabWord": "have been / have done / have never",
+          "vocabMeaning": "去过/做过/从未",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Have you ever ___?",
+              "items": [
+                {
+                  "zh": "你去过日本吗？去过。",
+                  "answer": "Have you ever been to Japan? Yes I have."
+                },
+                {
+                  "zh": "你尝试过火锅吗？试过。",
+                  "answer": "Have you ever tried hot pot? Yes I have."
+                }
+              ]
+            },
+            {
+              "chunk": "I have never ___.",
+              "items": [
+                {
+                  "zh": "我从未出过国。",
+                  "answer": "I have never been abroad."
+                },
+                {
+                  "zh": "我从未看过那部电影。",
+                  "answer": "I have never seen that movie."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "回忆过去": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "回忆过去 · 中译英",
+          "chunk": "remember / memory / once",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我记得小时候常去公园。",
+              "answer": "I remember going to the park as a child.",
+              "targetWord": "remember"
+            },
+            {
+              "zh": "那段记忆很美好。",
+              "answer": "That memory is very beautiful.",
+              "targetWord": "memory"
+            },
+            {
+              "zh": "我曾经住在这里。",
+              "answer": "I once lived here.",
+              "targetWord": "once"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "回忆过去 · 英译中",
+          "chunk": "youth / childhood / past",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I was very active in my youth.",
+              "answer": "我年轻时很活跃。",
+              "targetWord": "youth"
+            },
+            {
+              "en": "I had a happy childhood.",
+              "answer": "我有一个快乐的童年。",
+              "targetWord": "childhood"
+            },
+            {
+              "en": "In the past things were different.",
+              "answer": "过去事情不一样。",
+              "targetWord": "past"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "回忆过去 · 句型",
+          "pattern": "I remember when I was ___.",
+          "patternMeaning": "我记得我...的时候。",
+          "slots": [
+            "a child I played outside every day",
+            "young I had a bike",
+            "in school I studied hard"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我记得我...的时候。",
+              "answer": "I remember when I was a child I played outside every day.",
+              "pattern": "I remember when I was ___ I ___ every day.",
+              "slotValues": {
+                "slot1": "a child played outside",
+                "slot2": "young had a bike",
+                "slot3": "in school studied hard"
+              }
+            },
+            {
+              "zh": "我回忆...",
+              "answer": "I look back at my childhood with fondness.",
+              "pattern": "I look back at my ___ with ___.",
+              "slotValues": {
+                "slot1": "childhood fondness",
+                "slot2": "school days nostalgia",
+                "slot3": "youth happiness"
+              }
+            },
+            {
+              "zh": "那时...",
+              "answer": "Life was simpler back then.",
+              "pattern": "Life was ___ back ___.",
+              "slotValues": {
+                "slot1": "simpler then",
+                "slot2": "better in the old days",
+                "slot3": "harder before"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "回忆过去 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "回忆过去",
+              "en": "I remember my childhood.",
+              "zh": "我记得我的童年。",
+              "highlight": "remember",
+              "hint": "用 I remember 开始回忆"
+            },
+            {
+              "level": 2,
+              "label": "加具体内容",
+              "en": "I remember playing outside every day when I was a child.",
+              "zh": "我记得小时候每天在外面玩。",
+              "highlight": "playing outside",
+              "hint": "加上具体活动"
+            },
+            {
+              "level": 3,
+              "label": "加感受",
+              "en": "I remember playing outside every day when I was a child. Those were happy days.",
+              "zh": "我记得小时候每天在外面玩。那是快乐的日子。",
+              "highlight": "happy days",
+              "hint": "加上感受描述"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "过去vs现在习惯": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "过去vs现在习惯 · 中译英",
+          "chunk": "use / habit / change",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我过去常在这里跑步。",
+              "answer": "I used to run here every morning.",
+              "targetWord": "use"
+            },
+            {
+              "zh": "这是多年前养成的习惯。",
+              "answer": "This is a habit I formed many years ago.",
+              "targetWord": "habit"
+            },
+            {
+              "zh": "从那时起我的习惯变了。",
+              "answer": "My habits have changed since then.",
+              "targetWord": "change"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "过去vs现在习惯 · 英译中",
+          "chunk": "daily / always / never",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I used to go for a walk daily.",
+              "answer": "我过去每天散步。",
+              "targetWord": "daily"
+            },
+            {
+              "en": "I always played outside after school.",
+              "answer": "我放学后总是在外面玩。",
+              "targetWord": "always"
+            },
+            {
+              "en": "I never used to like vegetables.",
+              "answer": "我过去从不喜欢蔬菜。",
+              "targetWord": "never"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "过去vs现在习惯 · 句型",
+          "pattern": "I used to ___ but now I ___.",
+          "patternMeaning": "我过去...但是现在我...",
+          "slots": [
+            "run in the morning exercise at night",
+            "eat junk food eat healthy",
+            "stay up late go to bed early"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我过去...但是现在我...",
+              "answer": "I used to run in the morning but now I exercise at night.",
+              "pattern": "I used to ___ but now I ___.",
+              "slotValues": {
+                "slot1": "run in the morning exercise at night",
+                "slot2": "eat junk food eat healthy",
+                "slot3": "stay up late go to bed early"
+              }
+            },
+            {
+              "zh": "他过去...但现在...",
+              "answer": "He used to play video games every day but now he studies more.",
+              "pattern": "He used to ___ but now he ___.",
+              "slotValues": {
+                "slot1": "play video games every day studies more",
+                "slot2": "be shy is confident",
+                "slot3": "live alone has a family"
+              }
+            },
+            {
+              "zh": "我以前不...但现在...",
+              "answer": "I didn't use to like coffee but now I drink it daily.",
+              "pattern": "I didn't use to ___ but now I ___.",
+              "slotValues": {
+                "slot1": "like coffee drink it daily",
+                "slot2": "enjoy reading read every night",
+                "slot3": "eat vegetables love them"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "过去vs现在习惯 · 一词多句",
+          "vocabWord": "used to / now / never used to",
+          "vocabMeaning": "过去常常/现在/过去从不",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I used to ___ but now I ___.",
+              "items": [
+                {
+                  "zh": "我过去早上跑步但现在是晚上运动。",
+                  "answer": "I used to run in the morning but now I exercise at night."
+                },
+                {
+                  "zh": "我过去吃垃圾食品但现在吃健康的。",
+                  "answer": "I used to eat junk food but now I eat healthy."
+                }
+              ]
+            },
+            {
+              "chunk": "I didn't use to ___ but now I ___.",
+              "items": [
+                {
+                  "zh": "我过去不喜欢蔬菜但现在我爱吃了。",
+                  "answer": "I didn't use to like vegetables but now I love them."
+                },
+                {
+                  "zh": "我过去不喝咖啡但现在每天喝。",
+                  "answer": "I didn't use to drink coffee but now I have it daily."
+                }
+              ]
             }
           ]
         }

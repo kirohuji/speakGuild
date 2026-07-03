@@ -91,15 +91,27 @@
             {
               "chunk": "I usually ___. / I'm ___ing right now.",
               "items": [
-                { "zh": "我通常在家吃饭。/ 我现在正在吃饭。", "answer": "I usually eat at home. / I'm eating right now." },
-                { "zh": "我每天晚上学习。/ 我现在正在学习。", "answer": "I study every evening. / I'm studying right now." }
+                {
+                  "zh": "我通常在家吃饭。/ 我现在正在吃饭。",
+                  "answer": "I usually eat at home. / I'm eating right now."
+                },
+                {
+                  "zh": "我每天晚上学习。/ 我现在正在学习。",
+                  "answer": "I study every evening. / I'm studying right now."
+                }
               ]
             },
             {
               "chunk": "He/She ___. / Right now he/she is ___ing.",
               "items": [
-                { "zh": "他在医院工作。/ 他现在正在工作。", "answer": "He works in a hospital. / Right now he is working." },
-                { "zh": "她早上跑步。/ 她现在正在跑步。", "answer": "She runs in the morning. / Right now she is running." }
+                {
+                  "zh": "他在医院工作。/ 他现在正在工作。",
+                  "answer": "He works in a hospital. / Right now he is working."
+                },
+                {
+                  "zh": "她早上跑步。/ 她现在正在跑步。",
+                  "answer": "She runs in the morning. / Right now she is running."
+                }
               ]
             }
           ]
@@ -144,23 +156,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "他/她正在… · 英译中",
-          "chunk": "work / sleep / run",
+          "chunk": "stand / walk / talk",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "He works in a hospital. / He is working on a report now.",
-              "answer": "他在医院工作。/ 他正在写报告。",
-              "targetWord": "work"
+              "en": "She is standing by the window.",
+              "answer": "她站在窗边。",
+              "targetWord": "stand"
             },
             {
-              "en": "The baby sleeps peacefully. / The baby is sleeping now.",
-              "answer": "宝宝睡得安稳。/ 宝宝正在睡觉。",
-              "targetWord": "sleep"
+              "en": "He is walking to school.",
+              "answer": "他正走去学校。",
+              "targetWord": "walk"
             },
             {
-              "en": "She runs every morning. / She is running in the park right now.",
-              "answer": "她每天早上跑步。/ 她正在公园跑步。",
-              "targetWord": "run"
+              "en": "They are talking about the movie.",
+              "answer": "他们在聊那部电影。",
+              "targetWord": "talk"
             }
           ]
         },
@@ -204,15 +216,27 @@
             {
               "chunk": "He/She ___. / Right now he/she is ___ing.",
               "items": [
-                { "zh": "他在办公室工作。/ 他现在正在工作。", "answer": "He works in an office. / Right now he is working." },
-                { "zh": "她教英语。/ 她现在正在教课。", "answer": "She teaches English. / Right now she is teaching." }
+                {
+                  "zh": "他在办公室工作。/ 他现在正在工作。",
+                  "answer": "He works in an office. / Right now he is working."
+                },
+                {
+                  "zh": "她教英语。/ 她现在正在教课。",
+                  "answer": "She teaches English. / Right now she is teaching."
+                }
               ]
             },
             {
               "chunk": "They ___. / Right now they are ___ing.",
               "items": [
-                { "zh": "孩子们每天玩。/ 他们现在正在玩。", "answer": "The children play every day. / Right now they are playing." },
-                { "zh": "宝宝每天睡很久。/ 宝宝现在正在睡觉。", "answer": "The baby sleeps a lot. / Right now the baby is sleeping." }
+                {
+                  "zh": "孩子们每天玩。/ 他们现在正在玩。",
+                  "answer": "The children play every day. / Right now they are playing."
+                },
+                {
+                  "zh": "宝宝每天睡很久。/ 宝宝现在正在睡觉。",
+                  "answer": "The baby sleeps a lot. / Right now the baby is sleeping."
+                }
               ]
             }
           ]
@@ -257,23 +281,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "此刻场景描述 · 英译中",
-          "chunk": "rain / snow / wind",
+          "chunk": "wind / fog / storm",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "It rains a lot in spring. / Its raining outside now.",
-              "answer": "春天多雨。/ 外面正在下雨。",
-              "targetWord": "rain"
-            },
-            {
-              "en": "It snows in winter. / Its snowing right now.",
-              "answer": "冬天下雪。/ 现在正在下雪。",
-              "targetWord": "snow"
-            },
-            {
-              "en": "The wind blows hard. / The wind is blowing now.",
-              "answer": "风很大。/ 现在正在刮风。",
+              "en": "The wind is blowing strongly.",
+              "answer": "风很大。",
               "targetWord": "wind"
+            },
+            {
+              "en": "There is heavy fog in the morning.",
+              "answer": "早上有很大雾。",
+              "targetWord": "fog"
+            },
+            {
+              "en": "The storm is coming.",
+              "answer": "暴风雨要来了。",
+              "targetWord": "storm"
             }
           ]
         },
@@ -358,23 +382,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "感官动词对比 · 英译中",
-          "chunk": "think / see / look",
+          "chunk": "hear / feel / taste",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "She thinks its a good idea. / She is thinking about it now.",
-              "answer": "她觉得是好主意。/ 她正在考虑。",
-              "targetWord": "think"
+              "en": "I hear a strange noise.",
+              "answer": "我听到奇怪的声音。",
+              "targetWord": "hear"
             },
             {
-              "en": "I see a car outside. / Im seeing my friends tonight.",
-              "answer": "我看到外面有辆车。/ 我今晚去见朋友。",
-              "targetWord": "see"
+              "en": "I feel the cold wind.",
+              "answer": "我感觉到冷风。",
+              "targetWord": "feel"
             },
             {
-              "en": "You look great today! / What are you looking at?",
-              "answer": "你今天看起来很棒！/ 你在看什么？",
-              "targetWord": "look"
+              "en": "This soup tastes delicious.",
+              "answer": "这汤尝起来很美味。",
+              "targetWord": "taste"
             }
           ]
         },
@@ -431,15 +455,27 @@
             {
               "chunk": "I think ___. / Im thinking about ___.",
               "items": [
-                { "zh": "我觉得她是个好老师。/ 我正在想这节课。", "answer": "I think she is a good teacher. / Im thinking about the lesson." },
-                { "zh": "我觉得这是个好主意。/ 我正在思考这个计划。", "answer": "I think it is a good idea. / Im thinking about the plan." }
+                {
+                  "zh": "我觉得她是个好老师。/ 我正在想这节课。",
+                  "answer": "I think she is a good teacher. / Im thinking about the lesson."
+                },
+                {
+                  "zh": "我觉得这是个好主意。/ 我正在思考这个计划。",
+                  "answer": "I think it is a good idea. / Im thinking about the plan."
+                }
               ]
             },
             {
               "chunk": "I see ___. / Im looking at ___.",
               "items": [
-                { "zh": "我看到外面有辆车。/ 我正在看那辆车。", "answer": "I see a car outside. / Im looking at the car." },
-                { "zh": "我看到一些鸟。/ 我正在看那些鸟。", "answer": "I see some birds. / Im looking at the birds." }
+                {
+                  "zh": "我看到外面有辆车。/ 我正在看那辆车。",
+                  "answer": "I see a car outside. / Im looking at the car."
+                },
+                {
+                  "zh": "我看到一些鸟。/ 我正在看那些鸟。",
+                  "answer": "I see some birds. / Im looking at the birds."
+                }
               ]
             }
           ]
@@ -484,23 +520,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "平时vs今天 · 英译中",
-          "chunk": "tonight / today / week",
+          "chunk": "normally / currently / lately",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "We usually eat at home. / Were eating out tonight.",
-              "answer": "我们通常在家吃。/ 我们今晚出去吃。",
-              "targetWord": "tonight"
+              "en": "Normally I drink tea but today I want coffee.",
+              "answer": "平时我喝茶但今天想喝咖啡。",
+              "targetWord": "normally"
             },
             {
-              "en": "I usually walk to school. / Im riding a bike today.",
-              "answer": "我平时走路去上学。/ 我今天骑车。",
-              "targetWord": "today"
+              "en": "He is currently working on a project.",
+              "answer": "他目前在做一个项目。",
+              "targetWord": "currently"
             },
             {
-              "en": "He normally works in Beijing. / He is working in Shanghai this week.",
-              "answer": "他平时在北京工作。/ 他这周在上海。",
-              "targetWord": "week"
+              "en": "I have been busy lately.",
+              "answer": "我最近很忙。",
+              "targetWord": "lately"
             }
           ]
         },
@@ -557,15 +593,27 @@
             {
               "chunk": "I usually ___ but today I'm ___ing.",
               "items": [
-                { "zh": "我通常坐公交但今天打车。", "answer": "I usually take the bus but today I'm taking a taxi." },
-                { "zh": "我通常在家吃但今天出去吃。", "answer": "I usually eat at home but today I'm eating out." }
+                {
+                  "zh": "我通常坐公交但今天打车。",
+                  "answer": "I usually take the bus but today I'm taking a taxi."
+                },
+                {
+                  "zh": "我通常在家吃但今天出去吃。",
+                  "answer": "I usually eat at home but today I'm eating out."
+                }
               ]
             },
             {
               "chunk": "I normally ___ but this week I'm ___ing.",
               "items": [
-                { "zh": "我通常走路去上学但这周骑车。", "answer": "I normally walk to school but this week I'm riding a bike." },
-                { "zh": "他通常在北京工作但这周在上海。", "answer": "He normally works in Beijing but this week he's working in Shanghai." }
+                {
+                  "zh": "我通常走路去上学但这周骑车。",
+                  "answer": "I normally walk to school but this week I'm riding a bike."
+                },
+                {
+                  "zh": "他通常在北京工作但这周在上海。",
+                  "answer": "He normally works in Beijing but this week he's working in Shanghai."
+                }
               ]
             }
           ]
@@ -709,23 +757,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "近期变化 · 英译中",
-          "chunk": "normally / change / month",
+          "chunk": "recent / shift / trend",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I normally walk to school. / Im riding a bike this month.",
-              "answer": "我平时走路去学校。/ 这个月我骑自行车。",
-              "targetWord": "normally"
+              "en": "There has been a recent change.",
+              "answer": "最近有了变化。",
+              "targetWord": "recent"
             },
             {
-              "en": "She usually wears a uniform. / Today she is wearing a dress.",
-              "answer": "她平时穿工作服。/ 今天她穿裙子。",
-              "targetWord": "change"
+              "en": "There's a shift in my schedule.",
+              "answer": "我的日程有变化。",
+              "targetWord": "shift"
             },
             {
-              "en": "We usually meet on Fridays. / This week we are meeting on Thursday.",
-              "answer": "我们通常周五见面。/ 这周我们周四见面。",
-              "targetWord": "month"
+              "en": "The trend is toward healthy eating.",
+              "answer": "趋势是健康饮食。",
+              "targetWord": "trend"
             }
           ]
         },
@@ -811,23 +859,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "有时/很少/从不 · 英译中",
-          "chunk": "always / never / sometimes",
+          "chunk": "occasionally / rarely / seldom",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I always get up at 7.",
-              "answer": "我总是7点起床。",
-              "targetWord": "always"
+              "en": "I occasionally eat out.",
+              "answer": "我偶尔在外面吃饭。",
+              "targetWord": "occasionally"
             },
             {
-              "en": "He never eats meat.",
-              "answer": "他从来不吃肉。",
-              "targetWord": "never"
+              "en": "She rarely watches TV.",
+              "answer": "她很少看电视。",
+              "targetWord": "rarely"
             },
             {
-              "en": "I sometimes watch TV after work.",
-              "answer": "我下班后有时看电视。",
-              "targetWord": "sometimes"
+              "en": "He seldom exercises.",
+              "answer": "他很少锻炼。",
+              "targetWord": "seldom"
             }
           ]
         },
@@ -916,23 +964,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "have状态用法 · 英译中",
-          "chunk": "have / has / headache",
+          "chunk": "flu / cold / feeling",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have a car.",
-              "answer": "我有一辆车。",
-              "targetWord": "have"
+              "en": "I have a flu.",
+              "answer": "我得了流感。",
+              "targetWord": "flu"
             },
             {
-              "en": "He has two sisters.",
-              "answer": "他有两个姐妹。",
-              "targetWord": "has"
+              "en": "She has a cold.",
+              "answer": "她感冒了。",
+              "targetWord": "cold"
             },
             {
-              "en": "Do you have a headache? -- Yes, I have a bad one.",
-              "answer": "你头疼吗？——是的，头疼得厉害。",
-              "targetWord": "headache"
+              "en": "This feeling is strange.",
+              "answer": "这种感觉很奇怪。",
+              "targetWord": "strange"
             }
           ]
         },
@@ -1015,23 +1063,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "have动作用法 · 英译中",
-          "chunk": "breakfast / dinner / party",
+          "chunk": "eat / drink / enjoy",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I usually have breakfast at home. / Im having breakfast now.",
-              "answer": "我通常在家吃早餐。/ 我正在吃早餐。",
-              "targetWord": "breakfast"
+              "en": "I eat breakfast at 7.",
+              "answer": "我7点吃早餐。",
+              "targetWord": "eat"
             },
             {
-              "en": "We have dinner together on Sundays. / Were having dinner now.",
-              "answer": "我们周日一起吃晚餐。/ 我们正在吃晚餐。",
-              "targetWord": "dinner"
+              "en": "Let's have a drink together.",
+              "answer": "我们一起喝一杯吧。",
+              "targetWord": "drink"
             },
             {
-              "en": "They have a party tonight. / They are having a party right now.",
-              "answer": "他们今晚开派对。/ 他们正在开派对。",
-              "targetWord": "party"
+              "en": "They enjoy a party on weekends.",
+              "answer": "他们周末享受派对。",
+              "targetWord": "enjoy"
             }
           ]
         },
@@ -1116,23 +1164,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "get变得/收到 · 英译中",
-          "chunk": "get / become / receive",
+          "chunk": "receive / obtain / become",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Im getting tired. Lets take a break.",
-              "answer": "我开始累了。我们休息一下吧。",
-              "targetWord": "get"
-            },
-            {
-              "en": "Its getting dark. Lets go inside.",
-              "answer": "天黑了。我们进去吧。",
-              "targetWord": "become"
-            },
-            {
-              "en": "I get a lot of emails every day. / Im getting too many emails lately.",
-              "answer": "我每天收很多邮件。/ 我最近收到太多邮件了。",
+              "en": "I received a gift from my friend.",
+              "answer": "我收到了朋友的礼物。",
               "targetWord": "receive"
+            },
+            {
+              "en": "He obtained a new skill.",
+              "answer": "他获得了一项新技能。",
+              "targetWord": "obtain"
+            },
+            {
+              "en": "She became a doctor.",
+              "answer": "她成为了一名医生。",
+              "targetWord": "became"
             }
           ]
         },
@@ -1218,23 +1266,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "get短语动词 · 英译中",
-          "chunk": "along / up / ready",
+          "chunk": "get along / get over / get through",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "He gets along well with everyone. / Hes getting along better now.",
-              "answer": "他跟谁都处得好。/ 他现在处得更好了。",
-              "targetWord": "along"
+              "en": "We get along very well.",
+              "answer": "我们相处得很好。",
+              "targetWord": "very"
             },
             {
-              "en": "She gets up at 7 every day. / She is getting up right now.",
-              "answer": "她每天7点起床。/ 她正在起床。",
-              "targetWord": "up"
+              "en": "She got over her illness.",
+              "answer": "她康复了。",
+              "targetWord": "illness"
             },
             {
-              "en": "She gets ready quickly. / She is getting ready for school.",
-              "answer": "她准备得很快。/ 她正在准备上学。",
-              "targetWord": "ready"
+              "en": "He got through the exam.",
+              "answer": "他通过了考试。",
+              "targetWord": "exam"
             }
           ]
         },
@@ -1277,6 +1325,766 @@
               "slotValues": {
                 "slot1": "ready takes her time",
                 "slot2": "dressed is quick"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "此刻与习惯对比": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "此刻与习惯对比 · 中译英",
+          "chunk": "now / usually / today",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我现在在看书。平时我跑步。",
+              "answer": "I am reading now. I usually run.",
+              "targetWord": "now"
+            },
+            {
+              "zh": "他通常喝茶但现在喝咖啡。",
+              "answer": "He usually drinks tea but now he drinks coffee.",
+              "targetWord": "usually"
+            },
+            {
+              "zh": "今天下雨但平时出太阳。",
+              "answer": "It is raining today but it is usually sunny.",
+              "targetWord": "today"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "此刻与习惯对比 · 英译中",
+          "chunk": "normally / currently / everyday",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Normally I go to bed at 10 but currently I stay up late.",
+              "answer": "通常我10点睡但目前我熬夜。",
+              "targetWord": "normally"
+            },
+            {
+              "en": "Currently I'm studying for an exam.",
+              "answer": "目前我正在备考。",
+              "targetWord": "currently"
+            },
+            {
+              "en": "This is my everyday routine.",
+              "answer": "这是我的日常。",
+              "targetWord": "everyday"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "此刻与习惯对比 · 句型",
+          "pattern": "Normally I ___ but now/currently I ___.",
+          "patternMeaning": "通常我...但现在我...",
+          "slots": [
+            "read run",
+            "drink tea drink coffee",
+            "go to bed early stay up late"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "通常我...但现在我...",
+              "answer": "Normally I read but now I run.",
+              "pattern": "Normally I ___ but now I ___.",
+              "slotValues": {
+                "slot1": "read run",
+                "slot2": "drink tea drink coffee",
+                "slot3": "go to bed early stay up late"
+              }
+            },
+            {
+              "zh": "他通常...但今天...",
+              "answer": "He usually walks but today he drives.",
+              "pattern": "He usually ___ but today he ___.",
+              "slotValues": {
+                "slot1": "walks drives",
+                "slot2": "cooks eats out",
+                "slot3": "studies rests"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "常态vs例外": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "常态vs例外 · 中译英",
+          "chunk": "always / except / special",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我总是走路去上班除了下雨天。",
+              "answer": "I always walk to work except on rainy days.",
+              "targetWord": "always"
+            },
+            {
+              "zh": "我平时吃素但今天是例外。",
+              "answer": "I usually eat vegetarian but today is an exception.",
+              "targetWord": "except"
+            },
+            {
+              "zh": "这是一个特别的日子。",
+              "answer": "This is a special day.",
+              "targetWord": "special"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "常态vs例外 · 英译中",
+          "chunk": "normal / unusual / regular",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This is a normal day for me.",
+              "answer": "对我来说这是正常的一天。",
+              "targetWord": "normal"
+            },
+            {
+              "en": "This weather is unusual for spring.",
+              "answer": "这个天气在春天不常见。",
+              "targetWord": "unusual"
+            },
+            {
+              "en": "I follow my regular schedule.",
+              "answer": "我遵循平时的日程。",
+              "targetWord": "regular"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "常态vs例外 · 句型",
+          "pattern": "I usually ___ except ___.",
+          "patternMeaning": "我通常...除了...",
+          "slots": [
+            "walk on rainy days",
+            "eat at home on weekends",
+            "sleep early on Friday"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我通常...除了...",
+              "answer": "I usually walk except on rainy days.",
+              "pattern": "I usually ___ except ___.",
+              "slotValues": {
+                "slot1": "walk on rainy days",
+                "slot2": "eat at home on weekends",
+                "slot3": "sleep early on Friday"
+              }
+            },
+            {
+              "zh": "这很...",
+              "answer": "This is unusual for me.",
+              "pattern": "This is ___ for me.",
+              "slotValues": {
+                "slot1": "unusual",
+                "slot2": "normal",
+                "slot3": "special"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "双时态叙事": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "双时态叙事 · 中译英",
+          "chunk": "story / past / memory",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我在回忆一个故事。",
+              "answer": "I am remembering a story.",
+              "targetWord": "story"
+            },
+            {
+              "zh": "我过去住在这里但现在住在北京。",
+              "answer": "I lived here before but now I live in Beijing.",
+              "targetWord": "past"
+            },
+            {
+              "zh": "我保留着美好的记忆。",
+              "answer": "I keep beautiful memories.",
+              "targetWord": "memory"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "双时态叙事 · 英译中",
+          "chunk": "recall / describe / imagine",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I recall my childhood.",
+              "answer": "我回忆起童年。",
+              "targetWord": "recall"
+            },
+            {
+              "en": "He is describing his trip.",
+              "answer": "他在描述他的旅行。",
+              "targetWord": "describe"
+            },
+            {
+              "en": "I can imagine the scene.",
+              "answer": "我能想象那个场景。",
+              "targetWord": "imagine"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "双时态叙事 · 句型",
+          "pattern": "I ___ before but now I ___.",
+          "patternMeaning": "我过去...但现在我...",
+          "slots": [
+            "lived here live in Beijing",
+            "played soccer play tennis",
+            "ate out cook at home"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我过去...但现在我...",
+              "answer": "I lived here before but now I live in Beijing.",
+              "pattern": "I ___ before but now I ___.",
+              "slotValues": {
+                "slot1": "lived here live in Beijing",
+                "slot2": "played soccer play tennis",
+                "slot3": "ate out cook at home"
+              }
+            },
+            {
+              "zh": "她正在...同时...",
+              "answer": "She is describing the scene while he is listening.",
+              "pattern": "She is ___ while he is ___.",
+              "slotValues": {
+                "slot1": "describing the scene listening",
+                "slot2": "telling a story taking notes",
+                "slot3": "cooking dinner setting the table"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "总是/通常/经常": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "总是/通常/经常 · 中译英",
+          "chunk": "always / usually / often",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我总是七点起床。",
+              "answer": "I always get up at 7.",
+              "targetWord": "always"
+            },
+            {
+              "zh": "我通常走路去上学。",
+              "answer": "I usually walk to school.",
+              "targetWord": "usually"
+            },
+            {
+              "zh": "我经常去图书馆。",
+              "answer": "I often go to the library.",
+              "targetWord": "often"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "总是/通常/经常 · 英译中",
+          "chunk": "every time / most / common",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Every time I see her she smiles.",
+              "answer": "每次我见到她她都笑。",
+              "targetWord": "every time"
+            },
+            {
+              "en": "Most days I eat breakfast.",
+              "answer": "大多数日子我吃早餐。",
+              "targetWord": "most"
+            },
+            {
+              "en": "This is a common mistake.",
+              "answer": "这是一个常见错误。",
+              "targetWord": "common"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "总是/通常/经常 · 句型",
+          "pattern": "I ___ ___ in the morning.",
+          "patternMeaning": "我早上总是/通常/经常...",
+          "slots": [
+            "always get up at 7",
+            "usually eat breakfast",
+            "often read the news"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我早上总是/通常/经常...",
+              "answer": "I always get up at 7 in the morning.",
+              "pattern": "I ___ in the morning.",
+              "slotValues": {
+                "slot1": "always get up at 7",
+                "slot2": "usually eat breakfast",
+                "slot3": "often read the news"
+              }
+            },
+            {
+              "zh": "他/她总是...",
+              "answer": "She always arrives on time.",
+              "pattern": "She always ___ on time.",
+              "slotValues": {
+                "slot1": "arrives",
+                "slot2": "finishes work",
+                "slot3": "comes to class"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "频率+进行时混合": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "频率+进行时混合 · 中译英",
+          "chunk": "sometimes / often / currently",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我有时候在看书。",
+              "answer": "Sometimes I am reading a book.",
+              "targetWord": "sometimes"
+            },
+            {
+              "zh": "她经常在听音乐。",
+              "answer": "She is often listening to music.",
+              "targetWord": "often"
+            },
+            {
+              "zh": "我目前在做一个项目。",
+              "answer": "I am currently working on a project.",
+              "targetWord": "currently"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "频率+进行时混合 · 英译中",
+          "chunk": "always / still / lately",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She is always complaining.",
+              "answer": "她总是在抱怨。",
+              "targetWord": "always"
+            },
+            {
+              "en": "I am still waiting for the bus.",
+              "answer": "我还在等公交车。",
+              "targetWord": "still"
+            },
+            {
+              "en": "I have been thinking about this lately.",
+              "answer": "我最近一直在想这个。",
+              "targetWord": "lately"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "频率+进行时混合 · 句型",
+          "pattern": "I am ___ while ___.",
+          "patternMeaning": "我正在...同时...",
+          "slots": [
+            "reading while eating",
+            "listening while working",
+            "thinking while walking"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我正在...同时...",
+              "answer": "I am reading while eating.",
+              "pattern": "I am ___ while ___.",
+              "slotValues": {
+                "slot1": "reading eating",
+                "slot2": "listening working",
+                "slot3": "thinking walking"
+              }
+            },
+            {
+              "zh": "她总是...",
+              "answer": "She is always singing while working.",
+              "pattern": "She is always ___ while ___.",
+              "slotValues": {
+                "slot1": "singing working",
+                "slot2": "talking eating",
+                "slot3": "humming walking"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "be+频率副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "be+频率副词 · 中译英",
+          "chunk": "always / rarely / usually",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我上课从来不迟到。",
+              "answer": "I am never late for class.",
+              "targetWord": "always"
+            },
+            {
+              "zh": "他通常很友善。",
+              "answer": "He is usually very friendly.",
+              "targetWord": "usually"
+            },
+            {
+              "zh": "她很少生气。",
+              "answer": "She is rarely angry.",
+              "targetWord": "rarely"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "be+频率副词 · 英译中",
+          "chunk": "often / sometimes / hardly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She is often busy on Mondays.",
+              "answer": "她周一经常很忙。",
+              "targetWord": "often"
+            },
+            {
+              "en": "I am sometimes tired after work.",
+              "answer": "我下班后有时很累。",
+              "targetWord": "sometimes"
+            },
+            {
+              "en": "He is hardly ever late.",
+              "answer": "他几乎从不迟到。",
+              "targetWord": "hardly"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "be+频率副词 · 句型",
+          "pattern": "I am ___ ___.",
+          "patternMeaning": "我总/通常/很少...",
+          "slots": [
+            "never late",
+            "usually happy",
+            "rarely angry"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我总/通常/很少...",
+              "answer": "I am never late for class.",
+              "pattern": "I am ___ ___.",
+              "slotValues": {
+                "slot1": "never late",
+                "slot2": "usually happy",
+                "slot3": "rarely angry"
+              }
+            },
+            {
+              "zh": "他/她...",
+              "answer": "She is always kind.",
+              "pattern": "She is ___ ___.",
+              "slotValues": {
+                "slot1": "always kind",
+                "slot2": "usually friendly",
+                "slot3": "sometimes busy"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "频率问句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "频率问句 · 中译英",
+          "chunk": "how often / frequency / time",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你多久锻炼一次？",
+              "answer": "How often do you exercise?",
+              "targetWord": "how often"
+            },
+            {
+              "zh": "你每周去几次健身房？",
+              "answer": "How many times a week do you go to the gym?",
+              "targetWord": "frequency"
+            },
+            {
+              "zh": "你什么时候学习？",
+              "answer": "What time do you study?",
+              "targetWord": "time"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "频率问句 · 英译中",
+          "chunk": "sometimes / once / twice",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I sometimes go to the gym.",
+              "answer": "我有时去健身房。",
+              "targetWord": "sometimes"
+            },
+            {
+              "en": "I go swimming once a week.",
+              "answer": "我每周游一次泳。",
+              "targetWord": "once"
+            },
+            {
+              "en": "I eat out twice a month.",
+              "answer": "我每月在外面吃两次。",
+              "targetWord": "twice"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "频率问句 · 句型",
+          "pattern": "How often do you ___?",
+          "patternMeaning": "你多久...一次？",
+          "slots": [
+            "exercise",
+            "go to the gym",
+            "read books"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你多久...一次？",
+              "answer": "How often do you exercise?",
+              "pattern": "How often do you ___?",
+              "slotValues": {
+                "slot1": "exercise",
+                "slot2": "go to the gym",
+                "slot3": "read books"
+              }
+            },
+            {
+              "zh": "每周...次",
+              "answer": "I go swimming once a week.",
+              "pattern": "I go ___ ___ a ___.",
+              "slotValues": {
+                "slot1": "swimming once week",
+                "slot2": "running three times week",
+                "slot3": "shopping once month"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "get起床/到达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "get起床/到达 · 中译英",
+          "chunk": "get up / arrive / reach",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我每天早上6点起床。",
+              "answer": "I get up at 6 every morning.",
+              "targetWord": "get up"
+            },
+            {
+              "zh": "我8点到学校。",
+              "answer": "I arrive at school at 8.",
+              "targetWord": "arrive"
+            },
+            {
+              "zh": "我及时到达车站。",
+              "answer": "I reach the station on time.",
+              "targetWord": "reach"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "get起床/到达 · 英译中",
+          "chunk": "wake / leave / return",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I wake up before my alarm.",
+              "answer": "我在闹钟前醒来。",
+              "targetWord": "wake"
+            },
+            {
+              "en": "I leave home at 7:30.",
+              "answer": "我7:30离开家。",
+              "targetWord": "leave"
+            },
+            {
+              "en": "I return home at 6 pm.",
+              "answer": "我下午6点回到家。",
+              "targetWord": "return"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "get起床/到达 · 句型",
+          "pattern": "I get up at ___.",
+          "patternMeaning": "我...点起床。",
+          "slots": [
+            "6 every morning",
+            "7 on weekdays",
+            "8 on weekends"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我...点起床。",
+              "answer": "I get up at 6 every morning.",
+              "pattern": "I get up at ___.",
+              "slotValues": {
+                "slot1": "6 every morning",
+                "slot2": "7 on weekdays",
+                "slot3": "8 on weekends"
+              }
+            },
+            {
+              "zh": "我...点到达。",
+              "answer": "I arrive at school at 8.",
+              "pattern": "I arrive at ___ at ___.",
+              "slotValues": {
+                "slot1": "school 8",
+                "slot2": "work 9",
+                "slot3": "the station 7:30"
               }
             }
           ]

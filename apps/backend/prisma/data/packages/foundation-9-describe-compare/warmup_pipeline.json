@@ -1,1 +1,3126 @@
-{}
+{
+  "比...更": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "比...更 · 中译英",
+          "chunk": "comparison / smart / sensible",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "跟那个比，这个更好。",
+              "answer": "In comparison to that one this is better.",
+              "targetWord": "comparison"
+            },
+            {
+              "zh": "她比她姐姐更聪明。",
+              "answer": "She is smarter than her sister.",
+              "targetWord": "smart"
+            },
+            {
+              "zh": "这个决定比以前那个更明智。",
+              "answer": "This decision is more sensible than the previous one.",
+              "targetWord": "sensible"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "比...更 · 英译中",
+          "chunk": "suitable / limited / silent",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This one is more suitable for me than that one.",
+              "answer": "这个比那个更适合我。",
+              "targetWord": "suitable"
+            },
+            {
+              "en": "My time is more limited than yours.",
+              "answer": "我的时间比你的更有限。",
+              "targetWord": "limited"
+            },
+            {
+              "en": "The night is more silent than the day.",
+              "answer": "夜晚比白天更安静。",
+              "targetWord": "silent"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "比...更 · 句型",
+          "pattern": "___ is ___er than ___. / ___ is more ___ than ___.",
+          "patternMeaning": "...比...更...。",
+          "slots": [
+            "this book big that one",
+            "this phone expensive that one",
+            "she tall her brother"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这本书比那本大。",
+              "answer": "This book is bigger than that one.",
+              "pattern": "___ is ___er than ___.",
+              "slotValues": {
+                "slot1": "this book big that one"
+              }
+            },
+            {
+              "zh": "这部手机比那部贵。",
+              "answer": "This phone is more expensive than that one.",
+              "pattern": "___ is more ___ than ___.",
+              "slotValues": {
+                "slot1": "this phone expensive that one"
+              }
+            },
+            {
+              "zh": "她比她弟弟高。",
+              "answer": "She is taller than her brother.",
+              "pattern": "___ is ___er than ___.",
+              "slotValues": {
+                "slot1": "she tall her brother"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "比...更 · 一词多句",
+          "vocabWord": "than / more than / -er than",
+          "vocabMeaning": "比...更",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is ___er than ___. / ___ is more ___ than ___.",
+              "items": [
+                { "zh": "我的包比你的重。", "answer": "My bag is heavier than yours." },
+                { "zh": "中文比英文更难。", "answer": "Chinese is more difficult than English." }
+              ]
+            },
+            {
+              "chunk": "___ is not as ___ as ___. / ___ is better than ___.",
+              "items": [
+                { "zh": "这家餐厅不如那家好。", "answer": "This restaurant is not as good as that one." },
+                { "zh": "今天比昨天好。", "answer": "Today is better than yesterday." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "最...的": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "最...的 · 中译英",
+          "chunk": "smart / suitable / annual",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他是我认识的最聪明的人。",
+              "answer": "He is the smartest person I know.",
+              "targetWord": "smart"
+            },
+            {
+              "zh": "这是最适合你的选择。",
+              "answer": "This is the most suitable choice for you.",
+              "targetWord": "suitable"
+            },
+            {
+              "zh": "这是年度最重要的事件。",
+              "answer": "This is the most important annual event.",
+              "targetWord": "annual"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "最...的 · 英译中",
+          "chunk": "cruel / depressing / educational",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "That is the cruelest thing I have ever heard.",
+              "answer": "那是我听过最残酷的事。",
+              "targetWord": "cruel"
+            },
+            {
+              "en": "This is the most depressing movie I have seen.",
+              "answer": "这是我看过最压抑的电影。",
+              "targetWord": "depressing"
+            },
+            {
+              "en": "It's the most educational experience of my life.",
+              "answer": "这是我人生中最有教育意义的经历。",
+              "targetWord": "educational"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "最...的 · 句型",
+          "pattern": "___ is the ___est ___. / ___ is the most ___ ___.",
+          "patternMeaning": "...是最...的...。",
+          "slots": [
+            "this big cake I have ever seen",
+            "she smart student in the class",
+            "this beautiful place I have visited"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这是我见过的最大的蛋糕。",
+              "answer": "This is the biggest cake I have ever seen.",
+              "pattern": "___ is the ___est ___.",
+              "slotValues": {
+                "slot1": "this big cake I have ever seen"
+              }
+            },
+            {
+              "zh": "她是班上最聪明的学生。",
+              "answer": "She is the smartest student in the class.",
+              "pattern": "___ is the ___est ___ in ___.",
+              "slotValues": {
+                "slot1": "she smart student in the class"
+              }
+            },
+            {
+              "zh": "这是我去过的最美的地方。",
+              "answer": "This is the most beautiful place I have visited.",
+              "pattern": "___ is the most ___ ___.",
+              "slotValues": {
+                "slot1": "this beautiful place I have visited"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "最...的 · 一词多句",
+          "vocabWord": "the -est / the most / one of the",
+          "vocabMeaning": "最...的 / ...之一",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is the ___est ___. / ___ is the most ___ ___.",
+              "items": [
+                { "zh": "这是最大的蛋糕。", "answer": "This is the biggest cake." },
+                { "zh": "这是最贵的手表。", "answer": "This is the most expensive watch." }
+              ]
+            },
+            {
+              "chunk": "It's one of the ___est ___. / It's one of the most ___ ___.",
+              "items": [
+                { "zh": "它是世界上最古老的城市之一。", "answer": "It's one of the oldest cities in the world." },
+                { "zh": "它是最流行的应用之一。", "answer": "It's one of the most popular apps." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "不规则比较": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "不规则比较 · 中译英",
+          "chunk": "comparison / entertainment / treatment",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "相比来说，这次更好。",
+              "answer": "In comparison this time is better.",
+              "targetWord": "comparison"
+            },
+            {
+              "zh": "这种娱乐比那种更好。",
+              "answer": "This kind of entertainment is better than that kind.",
+              "targetWord": "entertainment"
+            },
+            {
+              "zh": "这种治疗比那种更有效。",
+              "answer": "This treatment is more effective than that one.",
+              "targetWord": "treatment"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "不规则比较 · 英译中",
+          "chunk": "impact / heavily / perfectly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This has a bigger impact on me than that.",
+              "answer": "这个比那个对我的影响更大。",
+              "targetWord": "impact"
+            },
+            {
+              "en": "It rained more heavily today than yesterday.",
+              "answer": "今天下雨比昨天更大。",
+              "targetWord": "heavily"
+            },
+            {
+              "en": "She did perfectly better than last time.",
+              "answer": "她做得比上次好得多。",
+              "targetWord": "perfectly"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "不规则比较 · 句型",
+          "pattern": "___ is better than ___. / ___ is worse than ___.",
+          "patternMeaning": "...比...好。/ ...比...差。",
+          "slots": [
+            "this restaurant that one",
+            "today yesterday",
+            "this phone that one"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这家餐厅比那家好。",
+              "answer": "This restaurant is better than that one.",
+              "pattern": "___ is better than ___.",
+              "slotValues": {
+                "slot1": "this restaurant that one"
+              }
+            },
+            {
+              "zh": "今天比昨天好。",
+              "answer": "Today is better than yesterday.",
+              "pattern": "___ is better than ___.",
+              "slotValues": {
+                "slot1": "today yesterday"
+              }
+            },
+            {
+              "zh": "这部手机比那部好。",
+              "answer": "This phone is better than that one.",
+              "pattern": "___ is better than ___.",
+              "slotValues": {
+                "slot1": "this phone that one"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "不规则比较 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本比较",
+              "en": "This restaurant is better than that one.",
+              "zh": "这家餐厅比那家好。",
+              "highlight": "better",
+              "hint": "用 better than 做比较"
+            },
+            {
+              "level": 2,
+              "label": "加程度",
+              "en": "This restaurant is much better than that one.",
+              "zh": "这家餐厅比那家好得多。",
+              "highlight": "much",
+              "hint": "加 much 加强程度"
+            },
+            {
+              "level": 3,
+              "label": "加原因",
+              "en": "This restaurant is much better than that one because the food is fresher.",
+              "zh": "这家比那家好得多，因为食物更新鲜。",
+              "highlight": "because",
+              "hint": "用 because 说明原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "越...越...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "越...越... · 中译英",
+          "chunk": "heavily / originally / perfectly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "雨下得越大，路越滑。",
+              "answer": "The more heavily it rains the slipperier the road gets.",
+              "targetWord": "heavily"
+            },
+            {
+              "zh": "最初的计划越好，结果越好。",
+              "answer": "The better the original plan is the better the result.",
+              "targetWord": "originally"
+            },
+            {
+              "zh": "你练习得越完美，表现越好。",
+              "answer": "The more perfectly you practice the better you perform.",
+              "targetWord": "perfectly"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "越...越... · 英译中",
+          "chunk": "treatment / rank / relate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The better the treatment the faster you recover.",
+              "answer": "治疗越好，恢复越快。",
+              "targetWord": "treatment"
+            },
+            {
+              "en": "The higher you rank the more responsibility you have.",
+              "answer": "排名越高，责任越大。",
+              "targetWord": "rank"
+            },
+            {
+              "en": "The more you relate to it the more interesting it is.",
+              "answer": "你越与之相关，它就越有趣。",
+              "targetWord": "relate"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "越...越... · 句型",
+          "pattern": "The ___, the ___.",
+          "patternMeaning": "越...，越...。",
+          "slots": [
+            "faster better",
+            "more merrier",
+            "sooner better"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "越快越好。",
+              "answer": "The faster the better.",
+              "pattern": "The ___, the ___.",
+              "slotValues": {
+                "slot1": "faster better"
+              }
+            },
+            {
+              "zh": "越多越热闹。",
+              "answer": "The more the merrier.",
+              "pattern": "The ___, the ___.",
+              "slotValues": {
+                "slot1": "more merrier"
+              }
+            },
+            {
+              "zh": "越早越好。",
+              "answer": "The sooner the better.",
+              "pattern": "The ___, the ___.",
+              "slotValues": {
+                "slot1": "sooner better"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "越...越... · 一词多句",
+          "vocabWord": "the...the...",
+          "vocabMeaning": "越...越...",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The ___, the ___. / The more ___ the more ___.",
+              "items": [
+                { "zh": "越早越好。", "answer": "The earlier the better." },
+                { "zh": "越多练习，进步越快。", "answer": "The more you practice the faster you improve." }
+              ]
+            },
+            {
+              "chunk": "The ___, the ___. / The more ___ the ___er.",
+              "items": [
+                { "zh": "越便宜越好。", "answer": "The cheaper the better." },
+                { "zh": "你越多付，得到越多。", "answer": "The more you pay the more you get." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "多音节比较": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "多音节比较 · 中译英",
+          "chunk": "educational / entertainment / depressing",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这个节目比那个更有教育意义。",
+              "answer": "This show is more educational than that one.",
+              "targetWord": "educational"
+            },
+            {
+              "zh": "这种娱乐比那种更吸引人。",
+              "answer": "This form of entertainment is more attractive than that one.",
+              "targetWord": "entertainment"
+            },
+            {
+              "zh": "天气比昨天更令人压抑。",
+              "answer": "The weather is more depressing than yesterday.",
+              "targetWord": "depressing"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "多音节比较 · 英译中",
+          "chunk": "discount / campus / northern",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This discount is more generous than that one.",
+              "answer": "这个折扣比那个更优惠。",
+              "targetWord": "discount"
+            },
+            {
+              "en": "Our campus is more beautiful than theirs.",
+              "answer": "我们的校园比他们的更漂亮。",
+              "targetWord": "campus"
+            },
+            {
+              "en": "The northern city is more peaceful than the south.",
+              "answer": "北方城市比南方更宁静。",
+              "targetWord": "northern"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "多音节比较 · 句型",
+          "pattern": "___ is more ___ than ___.",
+          "patternMeaning": "...比...更...。",
+          "slots": [
+            "this one beautiful that one",
+            "this book interesting that one",
+            "Chinese difficult English"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个比那个更漂亮。",
+              "answer": "This one is more beautiful than that one.",
+              "pattern": "___ is more ___ than ___.",
+              "slotValues": {
+                "slot1": "this one beautiful that one"
+              }
+            },
+            {
+              "zh": "这本书比那本更有趣。",
+              "answer": "This book is more interesting than that one.",
+              "pattern": "___ is more ___ than ___.",
+              "slotValues": {
+                "slot1": "this book interesting that one"
+              }
+            },
+            {
+              "zh": "中文比英文更难。",
+              "answer": "Chinese is more difficult than English.",
+              "pattern": "___ is more ___ than ___.",
+              "slotValues": {
+                "slot1": "Chinese difficult English"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "多音节比较 · 一词多句",
+          "vocabWord": "more / less / much more",
+          "vocabMeaning": "更/更少/得多",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is more ___ than ___. / ___ is less ___ than ___.",
+              "items": [
+                { "zh": "这个手机比那个更贵。", "answer": "This phone is more expensive than that one." },
+                { "zh": "这个比那个不有趣。", "answer": "This one is less interesting than that one." }
+              ]
+            },
+            {
+              "chunk": "___ is much more ___ than ___. / ___ is a little more ___ than ___.",
+              "items": [
+                { "zh": "这个比那个好得多。", "answer": "This is much more beautiful than that." },
+                { "zh": "这个比那个稍微贵一点。", "answer": "This is a little more expensive than that." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "有...在...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "有...在... · 中译英",
+          "chunk": "appointment / balance / destination",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "桌子上有一份约会记录。",
+              "answer": "There is an appointment on the desk.",
+              "targetWord": "appointment"
+            },
+            {
+              "zh": "银行里有一个余额查询机。",
+              "answer": "There is a balance checker in the bank.",
+              "targetWord": "balance"
+            },
+            {
+              "zh": "地图上有一个目的地标记。",
+              "answer": "There is a destination marked on the map.",
+              "targetWord": "destination"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "有...在... · 英译中",
+          "chunk": "photographer / episode / label",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "There is a photographer in the park.",
+              "answer": "公园里有一个摄影师。",
+              "targetWord": "photographer"
+            },
+            {
+              "en": "There is an episode on TV tonight.",
+              "answer": "今晚电视上有一集。",
+              "targetWord": "episode"
+            },
+            {
+              "en": "There is a label on the box.",
+              "answer": "盒子上有一个标签。",
+              "targetWord": "label"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "有...在... · 句型",
+          "pattern": "There is a ___ on / in / at the ___. / There are ___ in the ___.",
+          "patternMeaning": "在...有...。",
+          "slots": [
+            "book on the desk",
+            "three people in the room",
+            "a bank near here"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "桌子上有一本书。",
+              "answer": "There is a book on the desk.",
+              "pattern": "There is a ___ on the ___.",
+              "slotValues": {
+                "slot1": "book on the desk"
+              }
+            },
+            {
+              "zh": "房间里有三个人。",
+              "answer": "There are three people in the room.",
+              "pattern": "There are ___ in the ___.",
+              "slotValues": {
+                "slot1": "three people in the room"
+              }
+            },
+            {
+              "zh": "附近有银行吗？",
+              "answer": "Is there a bank near here?",
+              "pattern": "Is there a ___ near here?",
+              "slotValues": {
+                "slot1": "a bank near here"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "有...在... · 一词多句",
+          "vocabWord": "There is / There are / Is there",
+          "vocabMeaning": "有/有（复数）/有...吗？",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "There is a ___ in/on/at ___. / There are ___ in ___.",
+              "items": [
+                { "zh": "桌子上有一支笔。", "answer": "There is a pen on the desk." },
+                { "zh": "书包里有五本书。", "answer": "There are five books in the bag." }
+              ]
+            },
+            {
+              "chunk": "Is there a ___ near here? / There isn't any ___ left.",
+              "items": [
+                { "zh": "附近有超市吗？", "answer": "Is there a supermarket near here?" },
+                { "zh": "没有牛奶了。", "answer": "There isn't any milk left." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "在...里/上/旁边": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "在...里/上/旁边 · 中译英",
+          "chunk": "countryside / surface / throat",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "一只猫在乡村小路边。",
+              "answer": "There is a cat in the countryside by the road.",
+              "targetWord": "countryside"
+            },
+            {
+              "zh": "桌面上有一个杯子。",
+              "answer": "There is a cup on the surface of the table.",
+              "targetWord": "surface"
+            },
+            {
+              "zh": "一根刺卡在喉咙里。",
+              "answer": "Something is stuck in my throat.",
+              "targetWord": "throat"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "在...里/上/旁边 · 英译中",
+          "chunk": "solid / steep / mixed",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "There is a solid rock in the river.",
+              "answer": "河里有一块坚固的岩石。",
+              "targetWord": "solid"
+            },
+            {
+              "en": "There is a steep hill next to the village.",
+              "answer": "村庄旁边有一座陡峭的山。",
+              "targetWord": "steep"
+            },
+            {
+              "en": "There are mixed opinions about the plan.",
+              "answer": "关于这个计划有不同的意见。",
+              "targetWord": "mixed"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "在...里/上/旁边 · 句型",
+          "pattern": "___ is in/on/under/next to ___.",
+          "patternMeaning": "...在...的里面/上面/下面/旁边。",
+          "slots": [
+            "the cat under the table",
+            "the bank next to the post office",
+            "the keys in my bag"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "猫在桌子下面。",
+              "answer": "The cat is under the table.",
+              "pattern": "___ is under ___.",
+              "slotValues": {
+                "slot1": "the cat under the table"
+              }
+            },
+            {
+              "zh": "银行在邮局旁边。",
+              "answer": "The bank is next to the post office.",
+              "pattern": "___ is next to ___.",
+              "slotValues": {
+                "slot1": "the bank next to the post office"
+              }
+            },
+            {
+              "zh": "钥匙在我包里。",
+              "answer": "The keys are in my bag.",
+              "pattern": "___ are in ___.",
+              "slotValues": {
+                "slot1": "the keys in my bag"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "在...里/上/旁边 · 一词多句",
+          "vocabWord": "in / on / under / next to / between",
+          "vocabMeaning": "在...里/上/下/旁边/之间",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is on ___. / ___ is under ___.",
+              "items": [
+                { "zh": "书在桌子上。", "answer": "The book is on the desk." },
+                { "zh": "狗在床下面。", "answer": "The dog is under the bed." }
+              ]
+            },
+            {
+              "chunk": "___ is next to ___. / ___ is between ___ and ___.",
+              "items": [
+                { "zh": "学校在公园旁边。", "answer": "The school is next to the park." },
+                { "zh": "餐厅在酒店和电影院之间。", "answer": "The restaurant is between the hotel and the cinema." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "方向与指路": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "方向与指路 · 中译英",
+          "chunk": "destination / location / current",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "直走然后左转到达目的地。",
+              "answer": "Go straight and turn left to reach the destination.",
+              "targetWord": "destination"
+            },
+            {
+              "zh": "我现在的位置在市中心。",
+              "answer": "My current location is in the city center.",
+              "targetWord": "location"
+            },
+            {
+              "zh": "按照目前的方向继续走。",
+              "answer": "Keep going in the current direction.",
+              "targetWord": "current"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "方向与指路 · 英译中",
+          "chunk": "outdoors / previously / relax",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Go outdoors and turn right at the first corner.",
+              "answer": "走到户外，在第一个拐角右转。",
+              "targetWord": "outdoors"
+            },
+            {
+              "en": "As mentioned previously go straight for two blocks.",
+              "answer": "如前所述，直走两个街区。",
+              "targetWord": "previously"
+            },
+            {
+              "en": "Relax and follow the path straight ahead.",
+              "answer": "放松，沿着路一直往前走。",
+              "targetWord": "relax"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "方向与指路 · 句型",
+          "pattern": "Go straight and turn ___ at the ___. / It's on the ___ floor.",
+          "patternMeaning": "直走然后在...拐弯。/ 在...楼。",
+          "slots": [
+            "left at the corner",
+            "right at the traffic light",
+            "second floor"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "直走在拐角左转。",
+              "answer": "Go straight and turn left at the corner.",
+              "pattern": "Go straight and turn ___ at the ___.",
+              "slotValues": {
+                "slot1": "left at the corner"
+              }
+            },
+            {
+              "zh": "直走在红绿灯右转。",
+              "answer": "Go straight and turn right at the traffic light.",
+              "pattern": "Go straight and turn ___ at the ___.",
+              "slotValues": {
+                "slot1": "right at the traffic light"
+              }
+            },
+            {
+              "zh": "在二楼。",
+              "answer": "It's on the second floor.",
+              "pattern": "It's on the ___ floor.",
+              "slotValues": {
+                "slot1": "second floor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "方向与指路 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本方向",
+              "en": "Go straight and turn left.",
+              "zh": "直走然后左转。",
+              "highlight": "turn left",
+              "hint": "先说基本动作"
+            },
+            {
+              "level": 2,
+              "label": "加地点",
+              "en": "Go straight and turn left at the corner.",
+              "zh": "直走，在拐角左转。",
+              "highlight": "at the corner",
+              "hint": "加上具体位置"
+            },
+            {
+              "level": 3,
+              "label": "加目的地",
+              "en": "Go straight and turn left at the corner then you will see the bank.",
+              "zh": "直走在拐角左转，然后你就会看到银行。",
+              "highlight": "then",
+              "hint": "加 then 说明结果"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "空间描述": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "空间描述 · 中译英",
+          "chunk": "similarity / competitive / occasion",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这两个空间有相似之处。",
+              "answer": "There is a similarity between these two spaces.",
+              "targetWord": "similarity"
+            },
+            {
+              "zh": "这是一个竞争激烈的环境。",
+              "answer": "This is a competitive environment.",
+              "targetWord": "competitive"
+            },
+            {
+              "zh": "这是一个特殊场合的布置。",
+              "answer": "This is a setup for a special occasion.",
+              "targetWord": "occasion"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "空间描述 · 英译中",
+          "chunk": "elderly / resident / tube",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "There is an elderly person sitting on the bench.",
+              "answer": "长椅上坐着一位老人。",
+              "targetWord": "elderly"
+            },
+            {
+              "en": "The resident lives next to the park.",
+              "answer": "那位居民住在公园旁边。",
+              "targetWord": "resident"
+            },
+            {
+              "en": "There is a tube on the shelf.",
+              "answer": "架子上有一根管子。",
+              "targetWord": "tube"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "空间描述 · 句型",
+          "pattern": "There is a ___ next to / across from / between ___. / The ___ is in front of ___.",
+          "patternMeaning": "在...旁边/对面/之间有一个...。/ ...在...前面。",
+          "slots": [
+            "hospital across from the station",
+            "restaurant between the hotel and cinema",
+            "school next to the park"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "医院在车站对面。",
+              "answer": "There is a hospital across from the station.",
+              "pattern": "___ across from ___.",
+              "slotValues": {
+                "slot1": "hospital across from the station"
+              }
+            },
+            {
+              "zh": "餐厅在酒店和电影院之间。",
+              "answer": "The restaurant is between the hotel and the cinema.",
+              "pattern": "___ is between ___ and ___.",
+              "slotValues": {
+                "slot1": "restaurant between the hotel and cinema"
+              }
+            },
+            {
+              "zh": "学校在公园旁边。",
+              "answer": "The school is next to the park.",
+              "pattern": "___ is next to ___.",
+              "slotValues": {
+                "slot1": "school next to the park"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "空间描述 · 一词多句",
+          "vocabWord": "across from / between / next to / in front of",
+          "vocabMeaning": "在...对面/之间/旁边/前面",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is across from ___. / ___ is between ___ and ___.",
+              "items": [
+                { "zh": "银行在邮局对面。", "answer": "The bank is across from the post office." },
+                { "zh": "超市在学校和医院之间。", "answer": "The supermarket is between the school and the hospital." }
+              ]
+            },
+            {
+              "chunk": "___ is next to ___. / ___ is in front of ___.",
+              "items": [
+                { "zh": "咖啡馆在书店旁边。", "answer": "The cafe is next to the bookstore." },
+                { "zh": "汽车在房子前面。", "answer": "The car is in front of the house." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "存在句疑问否定": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "存在句疑问否定 · 中译英",
+          "chunk": "bother / protest / reaction",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "有麻烦吗？——没有，别担心。",
+              "answer": "Is there any bother? -- No don't worry.",
+              "targetWord": "bother"
+            },
+            {
+              "zh": "有抗议吗？——没有。",
+              "answer": "Is there any protest? -- No there isn't.",
+              "targetWord": "protest"
+            },
+            {
+              "zh": "有什么反应吗？——没有。",
+              "answer": "Is there any reaction? -- No there isn't.",
+              "targetWord": "reaction"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "存在句疑问否定 · 英译中",
+          "chunk": "donate / gather / grade",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Is there anyone who wants to donate? -- No there isn't.",
+              "answer": "有人想捐款吗？——没有。",
+              "targetWord": "donate"
+            },
+            {
+              "en": "Are there people gathering outside? -- Yes there are.",
+              "answer": "外面有人聚集吗？——有。",
+              "targetWord": "gather"
+            },
+            {
+              "en": "Is there any grade higher than this? -- No there isn't.",
+              "answer": "有比这更高的等级吗？——没有。",
+              "targetWord": "grade"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "存在句疑问否定 · 句型",
+          "pattern": "Is there ___? — Yes there is. / No there isn't. / Are there ___? — Yes there are. / No there aren't.",
+          "patternMeaning": "有...吗？——有。/没有。",
+          "slots": [
+            "a bank near here",
+            "any questions",
+            "any milk left"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "附近有银行吗？——有。",
+              "answer": "Is there a bank near here? -- Yes there is.",
+              "pattern": "Is there ___?",
+              "slotValues": {
+                "slot1": "a bank near here"
+              }
+            },
+            {
+              "zh": "有问题吗？——没有。",
+              "answer": "Are there any questions? -- No there aren't.",
+              "pattern": "Are there ___?",
+              "slotValues": {
+                "slot1": "any questions"
+              }
+            },
+            {
+              "zh": "还有牛奶吗？——没有。",
+              "answer": "Is there any milk left? -- No there isn't.",
+              "pattern": "Is there ___?",
+              "slotValues": {
+                "slot1": "any milk left"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "存在句疑问否定 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单问句",
+              "en": "Is there a bank near here?",
+              "zh": "附近有银行吗？",
+              "highlight": "Is there",
+              "hint": "先用 Is there 提问"
+            },
+            {
+              "level": 2,
+              "label": "肯定回答",
+              "en": "Is there a bank near here? Yes there is.",
+              "zh": "附近有银行吗？有。",
+              "highlight": "Yes",
+              "hint": "用 Yes there is 肯定回答"
+            },
+            {
+              "level": 3,
+              "label": "否定回答",
+              "en": "Is there a bank near here? No there isn't but there is a post office.",
+              "zh": "附近有银行吗？没有，但有一个邮局。",
+              "highlight": "but",
+              "hint": "用 No there isn't 否定并补充信息"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "和...一样": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "和...一样 · 中译英",
+          "chunk": "central / similarly / worldwide",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这个位置和市中心一样方便。",
+              "answer": "This location is as convenient as the central area.",
+              "targetWord": "central"
+            },
+            {
+              "zh": "情况和我们之前想的一样。",
+              "answer": "The situation is similarly as we thought.",
+              "targetWord": "similarly"
+            },
+            {
+              "zh": "这个品牌和那个一样全球知名。",
+              "answer": "This brand is as famous worldwide as that one.",
+              "targetWord": "worldwide"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "和...一样 · 英译中",
+          "chunk": "gentle / breath / growth",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Her voice is as gentle as a breeze.",
+              "answer": "她的声音和微风一样轻柔。",
+              "targetWord": "gentle"
+            },
+            {
+              "en": "Take a deep breath and stay as calm as possible.",
+              "answer": "深呼吸，尽可能保持冷静。",
+              "targetWord": "breath"
+            },
+            {
+              "en": "The growth this year is as fast as last year.",
+              "answer": "今年的增长和去年一样快。",
+              "targetWord": "growth"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "和...一样 · 句型",
+          "pattern": "___ is as ___ as ___. / ___ is not as ___ as ___.",
+          "patternMeaning": "...和...一样。/ ...不如...。",
+          "slots": [
+            "she tall her sister",
+            "this car expensive that one",
+            "today cold yesterday"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "她和她姐姐一样高。",
+              "answer": "She is as tall as her sister.",
+              "pattern": "___ is as ___ as ___.",
+              "slotValues": {
+                "slot1": "she tall her sister"
+              }
+            },
+            {
+              "zh": "这辆车不如那辆贵。",
+              "answer": "This car is not as expensive as that one.",
+              "pattern": "___ is not as ___ as ___.",
+              "slotValues": {
+                "slot1": "this car expensive that one"
+              }
+            },
+            {
+              "zh": "今天和昨天一样冷。",
+              "answer": "Today is as cold as yesterday.",
+              "pattern": "___ is as ___ as ___.",
+              "slotValues": {
+                "slot1": "today cold yesterday"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "和...一样 · 一词多句",
+          "vocabWord": "as...as / not as...as",
+          "vocabMeaning": "和...一样/不如",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is as ___ as ___. / ___ is not as ___ as ___.",
+              "items": [
+                { "zh": "他和他爸爸一样高。", "answer": "He is as tall as his father." },
+                { "zh": "这个包不如那个重。", "answer": "This bag is not as heavy as that one." }
+              ]
+            },
+            {
+              "chunk": "I have as many ___ as ___. / I don't have as many ___ as ___.",
+              "items": [
+                { "zh": "我的书和你一样多。", "answer": "I have as many books as you." },
+                { "zh": "我没有他那么多朋友。", "answer": "I don't have as many friends as he does." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "不如...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "不如... · 中译英",
+          "chunk": "unable / old-fashioned / increasingly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我不如以前了，年纪大了。",
+              "answer": "I'm not as able as before. I'm getting old-fashioned.",
+              "targetWord": "unable"
+            },
+            {
+              "zh": "这个设计不如那个时尚，有点过时。",
+              "answer": "This design is not as stylish as that one. It's old-fashioned.",
+              "targetWord": "old-fashioned"
+            },
+            {
+              "zh": "竞争变得越来越激烈，不如从前容易了。",
+              "answer": "The competition is increasingly tough. It's not as easy as before.",
+              "targetWord": "increasingly"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "不如... · 英译中",
+          "chunk": "client / election / resort",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This client is not as important as that one.",
+              "answer": "这个客户不如那个重要。",
+              "targetWord": "client"
+            },
+            {
+              "en": "This election is not as exciting as the last one.",
+              "answer": "这次选举不如上次激动人心。",
+              "targetWord": "election"
+            },
+            {
+              "en": "This resort is not as popular as it used to be.",
+              "answer": "这个度假村不如以前受欢迎了。",
+              "targetWord": "resort"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "不如... · 句型",
+          "pattern": "___ is not as ___ as ___. / I'm not as ___ as ___.",
+          "patternMeaning": "...不如...。",
+          "slots": [
+            "this book interesting that one",
+            "he tall his brother",
+            "today hot yesterday"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这本书不如那本有趣。",
+              "answer": "This book is not as interesting as that one.",
+              "pattern": "___ is not as ___ as ___.",
+              "slotValues": {
+                "slot1": "this book interesting that one"
+              }
+            },
+            {
+              "zh": "他不如他哥哥高。",
+              "answer": "He is not as tall as his brother.",
+              "pattern": "___ is not as ___ as ___.",
+              "slotValues": {
+                "slot1": "he tall his brother"
+              }
+            },
+            {
+              "zh": "今天不如昨天热。",
+              "answer": "Today is not as hot as yesterday.",
+              "pattern": "___ is not as ___ as ___.",
+              "slotValues": {
+                "slot1": "today hot yesterday"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "不如... · 一词多句",
+          "vocabWord": "not as...as / less...than",
+          "vocabMeaning": "不如/比...少",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is not as ___ as ___. / ___ is less ___ than ___.",
+              "items": [
+                { "zh": "这不如我想的那么难。", "answer": "This is not as difficult as I thought." },
+                { "zh": "这个比那个不有趣。", "answer": "This is less interesting than that." }
+              ]
+            },
+            {
+              "chunk": "___ is not as ___ as I thought. / It's not as bad as I thought.",
+              "items": [
+                { "zh": "它没有我想的那么贵。", "answer": "It's not as expensive as I thought." },
+                { "zh": "没有我想的那么糟。", "answer": "It's not as bad as I thought." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "太...不能": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "太...不能 · 中译英",
+          "chunk": "freeze / unable / increasingly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "水太冷，要结冰了，不能游泳。",
+              "answer": "The water is too cold. It will freeze. I can't swim.",
+              "targetWord": "freeze"
+            },
+            {
+              "zh": "这个太大了，我搬不动。",
+              "answer": "This is too heavy. I am unable to move it.",
+              "targetWord": "unable"
+            },
+            {
+              "zh": "难度越来越高，我跟不上了。",
+              "answer": "It's increasingly difficult. It's too hard for me.",
+              "targetWord": "increasingly"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "太...不能 · 英译中",
+          "chunk": "cover / internal / diagram",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The ground is too covered with snow to walk.",
+              "answer": "地面被雪覆盖得太厚了，不能走。",
+              "targetWord": "cover"
+            },
+            {
+              "en": "The internal damage is too serious to repair.",
+              "answer": "内部损坏太严重了，无法修复。",
+              "targetWord": "internal"
+            },
+            {
+              "en": "The diagram is too complex to understand easily.",
+              "answer": "图表太复杂了，不容易理解。",
+              "targetWord": "diagram"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "太...不能 · 句型",
+          "pattern": "___ is too ___ to ___. / ___ is too ___ for me.",
+          "patternMeaning": "...太...了，不能...。",
+          "slots": [
+            "this bag heavy carry",
+            "this coffee hot drink",
+            "this room small for us"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个包太重了搬不动。",
+              "answer": "This bag is too heavy to carry.",
+              "pattern": "___ is too ___ to ___.",
+              "slotValues": {
+                "slot1": "this bag heavy carry"
+              }
+            },
+            {
+              "zh": "这咖啡太烫了不能喝。",
+              "answer": "This coffee is too hot to drink.",
+              "pattern": "___ is too ___ to ___.",
+              "slotValues": {
+                "slot1": "this coffee hot drink"
+              }
+            },
+            {
+              "zh": "这个房间对我们来说太小了。",
+              "answer": "This room is too small for us.",
+              "pattern": "___ is too ___ for me.",
+              "slotValues": {
+                "slot1": "this room small for us"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "太...不能 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "陈述事实",
+              "en": "This bag is too heavy.",
+              "zh": "这个包太重了。",
+              "highlight": "heavy",
+              "hint": "先说事实"
+            },
+            {
+              "level": 2,
+              "label": "加结果",
+              "en": "This bag is too heavy to carry.",
+              "zh": "这个包太重了搬不动。",
+              "highlight": "to carry",
+              "hint": "用 too...to 表达结果"
+            },
+            {
+              "level": 3,
+              "label": "加原因",
+              "en": "This bag is too heavy to carry because I hurt my back.",
+              "zh": "这个包太重了搬不动，因为我伤了背。",
+              "highlight": "because",
+              "hint": "用 because 说明原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "足够...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "足够... · 中译英",
+          "chunk": "confirm / basis / location",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我们有足够的证据来确认。",
+              "answer": "We have enough evidence to confirm.",
+              "targetWord": "confirm"
+            },
+            {
+              "zh": "这为讨论提供了足够的基础。",
+              "answer": "This provides enough basis for discussion.",
+              "targetWord": "basis"
+            },
+            {
+              "zh": "这个场地足够大，可以举办活动。",
+              "answer": "The location is big enough to hold an event.",
+              "targetWord": "location"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "足够... · 英译中",
+          "chunk": "financial / worldwide / unable",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We have enough financial support to start.",
+              "answer": "我们有足够的财力支持来开始。",
+              "targetWord": "financial"
+            },
+            {
+              "en": "The brand is famous enough worldwide.",
+              "answer": "这个品牌足够全球知名。",
+              "targetWord": "worldwide"
+            },
+            {
+              "en": "I'm not good enough yet. I'm unable to do it.",
+              "answer": "我还不够好。我做不到。",
+              "targetWord": "unable"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "足够... · 句型",
+          "pattern": "___ is ___ enough to ___. / I'm not ___ enough to ___.",
+          "patternMeaning": "...足够...可以...。/ ...不够...不能...。",
+          "slots": [
+            "the room big for ten people",
+            "I old drive",
+            "she tall reach the shelf"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个房间够大，能容纳十个人。",
+              "answer": "The room is big enough for ten people.",
+              "pattern": "___ is ___ enough to ___.",
+              "slotValues": {
+                "slot1": "the room big for ten people"
+              }
+            },
+            {
+              "zh": "我还没到开车的年龄。",
+              "answer": "I'm not old enough to drive.",
+              "pattern": "I'm not ___ enough to ___.",
+              "slotValues": {
+                "slot1": "I old drive"
+              }
+            },
+            {
+              "zh": "她不够高，够不到架子。",
+              "answer": "She is not tall enough to reach the shelf.",
+              "pattern": "___ is not ___ enough to ___.",
+              "slotValues": {
+                "slot1": "she tall reach the shelf"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "足够... · 一词多句",
+          "vocabWord": "enough / not enough",
+          "vocabMeaning": "足够/不够",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is ___ enough to ___. / I don't have enough ___ to ___.",
+              "items": [
+                { "zh": "他够强壮了，可以搬动它。", "answer": "He is strong enough to move it." },
+                { "zh": "我没有足够的钱买那个。", "answer": "I don't have enough money to buy that." }
+              ]
+            },
+            {
+              "chunk": "___ is not ___ enough to ___. / There isn't enough ___ to ___.",
+              "items": [
+                { "zh": "她不够勇敢。", "answer": "She is not brave enough." },
+                { "zh": "没有足够的时间做完。", "answer": "There isn't enough time to finish." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "方式副词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "方式副词 · 中译英",
+          "chunk": "urgently / perfectly / heavily",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "请紧急处理这件事。",
+              "answer": "Please handle this urgently.",
+              "targetWord": "urgently"
+            },
+            {
+              "zh": "她说得非常完美。",
+              "answer": "She speaks perfectly.",
+              "targetWord": "perfectly"
+            },
+            {
+              "zh": "雨下得很大。",
+              "answer": "It rains heavily.",
+              "targetWord": "heavily"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "方式副词 · 英译中",
+          "chunk": "similarly / central / internal",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "They reacted similarly to the news.",
+              "answer": "他们对这个消息的反应相似。",
+              "targetWord": "similarly"
+            },
+            {
+              "en": "The issue is centrally managed.",
+              "answer": "这个问题被集中管理。",
+              "targetWord": "central"
+            },
+            {
+              "en": "The system works internally.",
+              "answer": "这个系统在内部运行。",
+              "targetWord": "internal"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "方式副词 · 句型",
+          "pattern": "Please ___ slowly/carefully/quietly. / He/She ___ very well.",
+          "patternMeaning": "请慢点/小心地/安静地...。/ 他/她...得很好。",
+          "slots": [
+            "speak slowly",
+            "drive carefully",
+            "sings very well"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请说慢一点。",
+              "answer": "Please speak slowly.",
+              "pattern": "Please ___ slowly.",
+              "slotValues": {
+                "slot1": "speak slowly"
+              }
+            },
+            {
+              "zh": "请小心开车。",
+              "answer": "Please drive carefully.",
+              "pattern": "Please ___ carefully.",
+              "slotValues": {
+                "slot1": "drive carefully"
+              }
+            },
+            {
+              "zh": "她唱歌非常好。",
+              "answer": "She sings very well.",
+              "pattern": "He/She ___ very well.",
+              "slotValues": {
+                "slot1": "sings very well"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "方式副词 · 一词多句",
+          "vocabWord": "-ly adverbs / well / hard",
+          "vocabMeaning": "方式副词",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Please ___ slowly/quickly/carefully. / He/She ___ very well.",
+              "items": [
+                { "zh": "请安静地走。", "answer": "Please walk quietly." },
+                { "zh": "她英语说得很好。", "answer": "She speaks English very well." }
+              ]
+            },
+            {
+              "chunk": "He/She ___ hard. / I ___ quickly and then ___.",
+              "items": [
+                { "zh": "他工作很努力。", "answer": "He works very hard." },
+                { "zh": "我快速吃完然后出去了。", "answer": "I ate quickly and then went out." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "偏好选择": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "偏好选择 · 中译英",
+          "chunk": "select / value / champion",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你需要从选项中选择一个。",
+              "answer": "You need to select one from the options.",
+              "targetWord": "select"
+            },
+            {
+              "zh": "我重视质量胜过数量。",
+              "answer": "I value quality more than quantity.",
+              "targetWord": "value"
+            },
+            {
+              "zh": "他是冠军，所以我选他。",
+              "answer": "He is the champion so I choose him.",
+              "targetWord": "champion"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "偏好选择 · 英译中",
+          "chunk": "talented / brief / contact",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She is more talented so I prefer her.",
+              "answer": "她更有才华，所以我更喜欢她。",
+              "targetWord": "talented"
+            },
+            {
+              "en": "I prefer a brief introduction.",
+              "answer": "我更喜欢简短的介绍。",
+              "targetWord": "brief"
+            },
+            {
+              "en": "Which contact do you prefer email or phone?",
+              "answer": "你更喜欢哪种联系方式，邮件还是电话？",
+              "targetWord": "contact"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "偏好选择 · 句型",
+          "pattern": "Which do you like more ___ or ___? / I prefer ___ because ___.",
+          "patternMeaning": "你更喜欢...还是...？/ 我更喜欢...因为...。",
+          "slots": [
+            "the red one the blue one",
+            "this restaurant it's cheaper",
+            "coffee or tea"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你更喜欢红色还是蓝色？",
+              "answer": "Which do you like more the red one or the blue one?",
+              "pattern": "Which do you like more ___ or ___?",
+              "slotValues": {
+                "slot1": "the red one the blue one"
+              }
+            },
+            {
+              "zh": "我更喜欢这家餐厅，因为更便宜。",
+              "answer": "I prefer this restaurant because it's cheaper.",
+              "pattern": "I prefer ___ because ___.",
+              "slotValues": {
+                "slot1": "this restaurant it's cheaper"
+              }
+            },
+            {
+              "zh": "咖啡还是茶？",
+              "answer": "Which do you like more coffee or tea?",
+              "pattern": "Which do you like more ___ or ___?",
+              "slotValues": {
+                "slot1": "coffee or tea"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "偏好选择 · 一词多句",
+          "vocabWord": "prefer / like better / would rather",
+          "vocabMeaning": "更喜欢/宁愿",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I prefer ___ because ___. / I like ___ better than ___.",
+              "items": [
+                { "zh": "我更喜欢咖啡因为更提神。", "answer": "I prefer coffee because it's more refreshing." },
+                { "zh": "我喜欢游泳胜过跑步。", "answer": "I like swimming better than running." }
+              ]
+            },
+            {
+              "chunk": "Between ___ and ___, which is ___? / I like this one more because ___.",
+              "items": [
+                { "zh": "这两个哪个更快？", "answer": "Between these two which is faster?" },
+                { "zh": "我更喜欢这个因为它更亮。", "answer": "I like this one more because it's brighter." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "推荐表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "推荐表达 · 中译英",
+          "chunk": "invest / trade / reference",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我推荐你投资这个领域。",
+              "answer": "I recommend you invest in this sector.",
+              "targetWord": "invest"
+            },
+            {
+              "zh": "我推荐进行贸易合作。",
+              "answer": "I recommend trade cooperation.",
+              "targetWord": "trade"
+            },
+            {
+              "zh": "我推荐用这个做参考。",
+              "answer": "I recommend using this as a reference.",
+              "targetWord": "reference"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "推荐表达 · 英译中",
+          "chunk": "declare / measurement / remark",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I declare this is the best choice I recommend.",
+              "answer": "我声明这是我最推荐的选择。",
+              "targetWord": "declare"
+            },
+            {
+              "en": "Take proper measurement as I recommended.",
+              "answer": "按照我推荐的，做适当的测量。",
+              "targetWord": "measurement"
+            },
+            {
+              "en": "His remark made me recommend this book.",
+              "answer": "他的评论让我推荐了这本书。",
+              "targetWord": "remark"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "推荐表达 · 句型",
+          "pattern": "I recommend ___. / I suggest ___. / This is the best ___ in ___.",
+          "patternMeaning": "我推荐... / 我建议... / 这是...最好的...。",
+          "slots": [
+            "this restaurant in this area",
+            "trying the fish here",
+            "this hotel for families"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我推荐这一片最好的餐厅。",
+              "answer": "I recommend the best restaurant in this area.",
+              "pattern": "I recommend the best ___ in ___.",
+              "slotValues": {
+                "slot1": "this restaurant in this area"
+              }
+            },
+            {
+              "zh": "我建议试试这里的鱼。",
+              "answer": "I recommend trying the fish here.",
+              "pattern": "I recommend ___.",
+              "slotValues": {
+                "slot1": "trying the fish here"
+              }
+            },
+            {
+              "zh": "这家酒店最适合家庭。",
+              "answer": "This is the best hotel for families.",
+              "pattern": "This is the best ___ for ___.",
+              "slotValues": {
+                "slot1": "this hotel for families"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "推荐表达 · 一词多句",
+          "vocabWord": "recommend / suggest / the best choice",
+          "vocabMeaning": "推荐/建议/最好的选择",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I recommend ___. / I suggest ___.",
+              "items": [
+                { "zh": "我推荐这个菜。", "answer": "I recommend this dish." },
+                { "zh": "我建议早点出发。", "answer": "I suggest leaving early." }
+              ]
+            },
+            {
+              "chunk": "This is the best ___ for ___. / If you want ___, this is your best choice.",
+              "items": [
+                { "zh": "这是最适合初学者的书。", "answer": "This is the best book for beginners." },
+                { "zh": "如果你想要便宜又好用的，这个最好。", "answer": "If you want something cheap and good this is your best choice." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "对比评价": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "对比评价 · 中译英",
+          "chunk": "comparison / opponent / narrative",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "经过比较这个比对手好。",
+              "answer": "In comparison this is better than the opponent.",
+              "targetWord": "comparison"
+            },
+            {
+              "zh": "对比双方的叙述后，我选这个。",
+              "answer": "After comparing both narratives I choose this one.",
+              "targetWord": "narrative"
+            },
+            {
+              "zh": "相比之下这个评价更高。",
+              "answer": "In comparison this one gets higher remarks.",
+              "targetWord": "opponent"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "对比评价 · 英译中",
+          "chunk": "horrible / lonely / happiness",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Compared to the horrible one this is much better.",
+              "answer": "跟那个可怕的比，这个好多了。",
+              "targetWord": "horrible"
+            },
+            {
+              "en": "I feel lonely there. Compared to here it's worse.",
+              "answer": "我在那里感到孤独。跟这里比更糟。",
+              "targetWord": "lonely"
+            },
+            {
+              "en": "Compared to money happiness is more important.",
+              "answer": "跟钱比，幸福更重要。",
+              "targetWord": "happiness"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "对比评价 · 句型",
+          "pattern": "Compared to ___, this is ___. / This one is ___ than that but ___.",
+          "patternMeaning": "跟...比，这个更...。/ 这个比那个...但...。",
+          "slots": [
+            "the other one much better",
+            "cheaper the quality is lower",
+            "faster the battery is worse"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "跟另一个比，这个好多了。",
+              "answer": "Compared to the other one this is much better.",
+              "pattern": "Compared to ___, this is ___.",
+              "slotValues": {
+                "slot1": "the other one much better"
+              }
+            },
+            {
+              "zh": "这个更便宜但质量更差。",
+              "answer": "This one is cheaper than that but the quality is lower.",
+              "pattern": "This one is ___ than that but ___.",
+              "slotValues": {
+                "slot1": "cheaper the quality is lower"
+              }
+            },
+            {
+              "zh": "这个更快但电池更差。",
+              "answer": "This one is faster than that but the battery is worse.",
+              "pattern": "This one is ___ than that but ___.",
+              "slotValues": {
+                "slot1": "faster the battery is worse"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "对比评价 · 一词多句",
+          "vocabWord": "compared to / but / however",
+          "vocabMeaning": "跟...比/但是/然而",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Compared to ___, this is ___. / ___ is ___ than ___ but ___ is ___.",
+              "items": [
+                { "zh": "跟旧的比，这个手机好多了。", "answer": "Compared to the old one this phone is much better." },
+                { "zh": "这部手机更快但电池更差。", "answer": "This phone is faster but the battery is worse." }
+              ]
+            },
+            {
+              "chunk": "It's not the ___, but it's the most ___. / It's the same ___ but ___.",
+              "items": [
+                { "zh": "不是最快的，但最可靠。", "answer": "It's not the fastest but it's the most reliable." },
+                { "zh": "价格一样但更好用。", "answer": "It's the same price but it's more useful." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "最高级推荐": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "最高级推荐 · 中译英",
+          "chunk": "reference / selection / value",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这是最好的参考资料。",
+              "answer": "This is the best reference.",
+              "targetWord": "reference"
+            },
+            {
+              "zh": "这是最好的选择。",
+              "answer": "This is the best selection.",
+              "targetWord": "selection"
+            },
+            {
+              "zh": "这是最有价值的选择。",
+              "answer": "This is the best value for money.",
+              "targetWord": "value"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "最高级推荐 · 英译中",
+          "chunk": "arrival / producer / narrative",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This is the best arrival time I recommend.",
+              "answer": "这是我推荐的最佳到达时间。",
+              "targetWord": "arrival"
+            },
+            {
+              "en": "This producer is the most reliable one.",
+              "answer": "这个制作人是最可靠的。",
+              "targetWord": "producer"
+            },
+            {
+              "en": "This is the most engaging narrative I recommend.",
+              "answer": "这是最吸引人的叙述，我推荐。",
+              "targetWord": "narrative"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "最高级推荐 · 句型",
+          "pattern": "This is the best ___ in ___. / I recommend this one. It's the most ___.",
+          "patternMeaning": "这是...最好的...。/ 我推荐这个。它是最...的。",
+          "slots": [
+            "restaurant in this area",
+            "the most popular dish here",
+            "the best value for money"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这是这一片最好的餐厅。",
+              "answer": "This is the best restaurant in this area.",
+              "pattern": "This is the best ___ in ___.",
+              "slotValues": {
+                "slot1": "restaurant in this area"
+              }
+            },
+            {
+              "zh": "我推荐这个。它是最受欢迎的菜。",
+              "answer": "I recommend this one. It's the most popular dish here.",
+              "pattern": "I recommend this one. It's the most ___.",
+              "slotValues": {
+                "slot1": "the most popular dish here"
+              }
+            },
+            {
+              "zh": "这是最值的选择。",
+              "answer": "This is the best value for money.",
+              "pattern": "This is the best ___.",
+              "slotValues": {
+                "slot1": "the best value for money"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "最高级推荐 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本推荐",
+              "en": "This is the best restaurant.",
+              "zh": "这是最好的餐厅。",
+              "highlight": "best",
+              "hint": "先说 the best"
+            },
+            {
+              "level": 2,
+              "label": "加范围",
+              "en": "This is the best restaurant in this area.",
+              "zh": "这是这一片最好的餐厅。",
+              "highlight": "in this area",
+              "hint": "加范围"
+            },
+            {
+              "level": 3,
+              "label": "加理由",
+              "en": "This is the best restaurant in this area because the food is fresh and the service is great.",
+              "zh": "这是这一片最好的餐厅，因为食物新鲜，服务也好。",
+              "highlight": "because",
+              "hint": "用 because 说明推荐理由"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "二选一比较": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "二选一比较 · 中译英",
+          "chunk": "revise / submit / crash",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这两个选择中，修改还是重写？",
+              "answer": "Between these two choose to revise or rewrite?",
+              "targetWord": "revise"
+            },
+            {
+              "zh": "你要提交这个还是选另一个？",
+              "answer": "Will you submit this one or choose the other?",
+              "targetWord": "submit"
+            },
+            {
+              "zh": "两个方案中，哪个风险更低？",
+              "answer": "Between these two which has lower risk of crash?",
+              "targetWord": "crash"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "二选一比较 · 英译中",
+          "chunk": "firm / opponent / emergency",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Between this firm and that one which is better?",
+              "answer": "这家公司和那家之间哪个更好？",
+              "targetWord": "firm"
+            },
+            {
+              "en": "Between these opponents which is stronger?",
+              "answer": "这两个对手哪个更强？",
+              "targetWord": "opponent"
+            },
+            {
+              "en": "In an emergency which is more important?",
+              "answer": "紧急情况下哪个更重要？",
+              "targetWord": "emergency"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "二选一比较 · 句型",
+          "pattern": "Between ___ and ___, which is ___? / I like both but I like ___ more because ___.",
+          "patternMeaning": "...和...之间，哪个...？/ 两个都喜欢但我更喜欢...因为...。",
+          "slots": [
+            "the bus and the subway faster",
+            "the phone the tablet better",
+            "this one that one prettier"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "公交和地铁哪个更快？",
+              "answer": "Between the bus and the subway which is faster?",
+              "pattern": "Between ___ and ___, which is ___?",
+              "slotValues": {
+                "slot1": "the bus and the subway faster"
+              }
+            },
+            {
+              "zh": "手机和平板哪个更好？",
+              "answer": "Between the phone and the tablet which is better?",
+              "pattern": "Between ___ and ___, which is ___?",
+              "slotValues": {
+                "slot1": "the phone the tablet better"
+              }
+            },
+            {
+              "zh": "两个我都喜欢，但我更喜欢这个，因为它更漂亮。",
+              "answer": "I like both but I like this one more because it's prettier.",
+              "pattern": "I like both but I like ___ more because ___.",
+              "slotValues": {
+                "slot1": "this one that one prettier"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "二选一比较 · 一词多句",
+          "vocabWord": "Between A and B / Which do you prefer",
+          "vocabMeaning": "在A和B之间/你更喜欢哪个",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Between ___ and ___, which is ___? / I prefer ___ because ___.",
+              "items": [
+                { "zh": "这两个哪个更舒服？", "answer": "Between these two which is more comfortable?" },
+                { "zh": "我更喜欢这个因为它更实用。", "answer": "I prefer this one because it's more practical." }
+              ]
+            },
+            {
+              "chunk": "I've tried both and ___ is definitely ___. / Between A and B I'd choose ___.",
+              "items": [
+                { "zh": "两个我都试过，这个绝对更好。", "answer": "I've tried both and this one is definitely better." },
+                { "zh": "在这两个中我会选这个。", "answer": "Between these two I'd choose this one." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "多维度比较": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "多维度比较 · 中译英",
+          "chunk": "commercial / influence / promote",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "从商业角度来看这个影响更大。",
+              "answer": "From a commercial perspective this has more influence.",
+              "targetWord": "commercial"
+            },
+            {
+              "zh": "它的影响力更大但成本更高。",
+              "answer": "It has more influence but the cost is higher.",
+              "targetWord": "influence"
+            },
+            {
+              "zh": "这个推广效果更好但花费更多。",
+              "answer": "This one promotes better but costs more.",
+              "targetWord": "promote"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "多维度比较 · 英译中",
+          "chunk": "romantic / remote / edge",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This place is more romantic but more remote.",
+              "answer": "这个地方更浪漫但更偏远。",
+              "targetWord": "romantic"
+            },
+            {
+              "en": "It has an edge in quality but falls short in price.",
+              "answer": "它在质量上有优势但价格不行。",
+              "targetWord": "edge"
+            },
+            {
+              "en": "This one is more remote yet more peaceful.",
+              "answer": "这个更偏远但更安静。",
+              "targetWord": "remote"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "多维度比较 · 句型",
+          "pattern": "___ is ___er and ___, but ___. / This one is more ___ but less ___.",
+          "patternMeaning": "...更...更...，但...。/ 这个更...但更少...。",
+          "slots": [
+            "this phone lighter faster that one has a better camera",
+            "this restaurant cheaper the food is not as good",
+            "this car more expensive more comfortable"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这部手机更轻更快，但那个相机更好。",
+              "answer": "This phone is lighter and faster but that one has a better camera.",
+              "pattern": "___ is ___er and ___, but ___.",
+              "slotValues": {
+                "slot1": "this phone lighter faster that one has a better camera"
+              }
+            },
+            {
+              "zh": "这家餐厅更便宜但食物没那么好。",
+              "answer": "This restaurant is cheaper but the food is not as good.",
+              "pattern": "___ is ___er but ___.",
+              "slotValues": {
+                "slot1": "this restaurant cheaper the food is not as good"
+              }
+            },
+            {
+              "zh": "这辆车更贵但更舒服。",
+              "answer": "This car is more expensive but more comfortable.",
+              "pattern": "This one is more ___ but more ___.",
+              "slotValues": {
+                "slot1": "this car more expensive more comfortable"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "多维度比较 · 一词多句",
+          "vocabWord": "but / however / on the other hand",
+          "vocabMeaning": "但是/然而/另一方面",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is ___er but ___. / This one is more ___ but less ___.",
+              "items": [
+                { "zh": "这个更便宜但质量没那么好。", "answer": "This one is cheaper but the quality is not as good." },
+                { "zh": "这个更方便但更贵。", "answer": "This one is more convenient but more expensive." }
+              ]
+            },
+            {
+              "chunk": "On one hand ___. On the other hand ___. / All things considered ___.",
+              "items": [
+                { "zh": "一方面它更便宜。另一方面质量更差。", "answer": "On one hand it's cheaper. On the other hand the quality is lower." },
+                { "zh": "综合考虑这是最好的选择。", "answer": "All things considered this is the best choice." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "变化描述": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "变化描述 · 中译英",
+          "chunk": "growth / spread / lower",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "增长越来越快，影响不断扩大。",
+              "answer": "The growth is getting faster and the influence is spreading.",
+              "targetWord": "growth"
+            },
+            {
+              "zh": "问题在扩散，情况变得越来越糟。",
+              "answer": "The problem is spreading and it's getting worse and worse.",
+              "targetWord": "spread"
+            },
+            {
+              "zh": "价格越来越低，越来越便宜了。",
+              "answer": "The price is getting lower and lower. It's becoming cheaper.",
+              "targetWord": "lower"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "变化描述 · 英译中",
+          "chunk": "election / racing / technique",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The election is getting more and more competitive.",
+              "answer": "选举变得越来越激烈了。",
+              "targetWord": "election"
+            },
+            {
+              "en": "The racing industry is growing faster and faster.",
+              "answer": "赛车行业发展越来越快。",
+              "targetWord": "racing"
+            },
+            {
+              "en": "The technique is improving more and more.",
+              "answer": "技术越来越进步了。",
+              "targetWord": "technique"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "变化描述 · 句型",
+          "pattern": "It's getting ___er and ___er every day. / __ is becoming more and more ___.",
+          "patternMeaning": "一天比一天更...了。/ ...越来越...了。",
+          "slots": [
+            "hot hot",
+            "more and more confident",
+            "cold cold"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "一天比一天热了。",
+              "answer": "It's getting hotter and hotter every day.",
+              "pattern": "It's getting ___er and ___er every day.",
+              "slotValues": {
+                "slot1": "hot hot"
+              }
+            },
+            {
+              "zh": "他越来越自信了。",
+              "answer": "He is becoming more and more confident.",
+              "pattern": "___ is becoming more and more ___.",
+              "slotValues": {
+                "slot1": "more and more confident"
+              }
+            },
+            {
+              "zh": "一天比一天冷了。",
+              "answer": "It's getting colder and colder every day.",
+              "pattern": "It's getting ___er and ___er every day.",
+              "slotValues": {
+                "slot1": "cold cold"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "变化描述 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本变化",
+              "en": "It's getting hotter.",
+              "zh": "越来越热了。",
+              "highlight": "hotter",
+              "hint": "先说基本变化"
+            },
+            {
+              "level": 2,
+              "label": "加强变化",
+              "en": "It's getting hotter and hotter.",
+              "zh": "越来越热了。",
+              "highlight": "hotter and hotter",
+              "hint": "用 and 连接重复比较级"
+            },
+            {
+              "level": 3,
+              "label": "加对比",
+              "en": "It's getting hotter and hotter every day. Compared to last week today is much warmer.",
+              "zh": "一天比一天热。跟上周比今天暖和多了。",
+              "highlight": "compared to",
+              "hint": "用 compared to 对比"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "性价比评价": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "性价比评价 · 中译英",
+          "chunk": "goods / definition / substance",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这些商品质量不错价格也合理。",
+              "answer": "These goods have good quality and reasonable prices.",
+              "targetWord": "goods"
+            },
+            {
+              "zh": "从定义上讲这个性价比更高。",
+              "answer": "By definition this offers better value.",
+              "targetWord": "definition"
+            },
+            {
+              "zh": "这件东西质量扎实花得值。",
+              "answer": "This substance is solid and worth the money.",
+              "targetWord": "substance"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "性价比评价 · 英译中",
+          "chunk": "issue / limit / hardly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The only issue is the price but it's still worth it.",
+              "answer": "唯一的问题是价格，但还是值得的。",
+              "targetWord": "issue"
+            },
+            {
+              "en": "There is a limit to how cheap you can go.",
+              "answer": "便宜也有个限度。",
+              "targetWord": "limit"
+            },
+            {
+              "en": "It's hardly cheap but the quality is worth it.",
+              "answer": "它不便宜，但质量值得。",
+              "targetWord": "hardly"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "性价比评价 · 句型",
+          "pattern": "This one is cheaper but ___. / It's worth the money because ___.",
+          "patternMeaning": "这个更便宜但...。/ 它物有所值因为...。",
+          "slots": [
+            "the quality is lower",
+            "the materials are good",
+            "it lasts longer"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个更便宜但质量更差。",
+              "answer": "This one is cheaper but the quality is lower.",
+              "pattern": "This one is cheaper but ___.",
+              "slotValues": {
+                "slot1": "the quality is lower"
+              }
+            },
+            {
+              "zh": "它物有所值因为材料好。",
+              "answer": "It's worth the money because the materials are good.",
+              "pattern": "It's worth the money because ___.",
+              "slotValues": {
+                "slot1": "the materials are good"
+              }
+            },
+            {
+              "zh": "它更贵但更耐用。",
+              "answer": "It's more expensive but it lasts longer.",
+              "pattern": "It's more expensive but ___.",
+              "slotValues": {
+                "slot1": "it lasts longer"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "性价比评价 · 一词多句",
+          "vocabWord": "worth the money / good value / overpriced",
+          "vocabMeaning": "物有所值/性价比高/太贵",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It's worth the money because ___. / It's good value for ___.",
+              "items": [
+                { "zh": "它物有所值因为质量好。", "answer": "It's worth the money because the quality is good." },
+                { "zh": "对旅行者来说性价比高。", "answer": "It's good value for travelers." }
+              ]
+            },
+            {
+              "chunk": "It's not the cheapest but ___. / The more you pay the better ___.",
+              "items": [
+                { "zh": "不是最便宜的但最耐用。", "answer": "It's not the cheapest but it's the most durable." },
+                { "zh": "付得越多质量越好。", "answer": "The more you pay the better quality you get." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "综合推荐": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "综合推荐 · 中译英",
+          "chunk": "opposition / influence / spread",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "虽然有反对意见我仍然推荐这个。",
+              "answer": "Despite the opposition I still recommend this.",
+              "targetWord": "opposition"
+            },
+            {
+              "zh": "考虑到它的影响力我推荐这个选择。",
+              "answer": "Considering its influence I recommend this choice.",
+              "targetWord": "influence"
+            },
+            {
+              "zh": "这个推荐正在传播越来越多的人采用。",
+              "answer": "This recommendation is spreading. More people are adopting it.",
+              "targetWord": "spread"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "综合推荐 · 英译中",
+          "chunk": "transfer / attach / being",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I recommend transferring to this service.",
+              "answer": "我推荐转用这个服务。",
+              "targetWord": "transfer"
+            },
+            {
+              "en": "Attach importance to quality as I recommend.",
+              "answer": "按我推荐的重视质量。",
+              "targetWord": "attach"
+            },
+            {
+              "en": "For a human being this is the best choice.",
+              "answer": "对一个人来说这是最好的选择。",
+              "targetWord": "being"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "综合推荐 · 句型",
+          "pattern": "All things considered ___ is the best choice because ___. / I highly recommend ___ because ___.",
+          "patternMeaning": "综合考虑...是最好的选择因为...。/ 我强烈推荐...因为...。",
+          "slots": [
+            "this beginners it's easy and affordable",
+            "this product it's durable and cheap",
+            "this hotel it's comfortable and convenient"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "综合考虑这对初学者最好，因为简单又便宜。",
+              "answer": "All things considered this is the best choice for beginners because it's easy and affordable.",
+              "pattern": "All things considered ___ is the best choice because ___.",
+              "slotValues": {
+                "slot1": "this beginners it's easy and affordable"
+              }
+            },
+            {
+              "zh": "我强烈推荐这个产品因为耐用又便宜。",
+              "answer": "I highly recommend this product because it's durable and cheap.",
+              "pattern": "I highly recommend ___ because ___.",
+              "slotValues": {
+                "slot1": "this product it's durable and cheap"
+              }
+            },
+            {
+              "zh": "我强烈推荐这家酒店因为舒适又方便。",
+              "answer": "I highly recommend this hotel because it's comfortable and convenient.",
+              "pattern": "I highly recommend ___ because ___.",
+              "slotValues": {
+                "slot1": "this hotel it's comfortable and convenient"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "综合推荐 · 一词多句",
+          "vocabWord": "I recommend / I highly recommend / All things considered",
+          "vocabMeaning": "我推荐/我强烈推荐/综合考虑",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I highly recommend ___. / All things considered ___ is the best ___.",
+              "items": [
+                { "zh": "我强烈推荐这个产品。", "answer": "I highly recommend this product." },
+                { "zh": "综合考虑这是最适合你的。", "answer": "All things considered this is the best choice for you." }
+              ]
+            },
+            {
+              "chunk": "I recommend ___ because not only ___ but also ___. / It's not the ___ but the most ___.",
+              "items": [
+                { "zh": "我推荐这个因为它不仅便宜而且耐用。", "answer": "I recommend this because it's not only cheap but also durable." },
+                { "zh": "不是最便宜的但最方便。", "answer": "It's not the cheapest but the most convenient." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "观点对比": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "观点对比 · 中译英",
+          "chunk": "opposition / criticize / illegal",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "虽然有反对意见我仍然认为这是最好的。",
+              "answer": "Despite the opposition I still think this is the best.",
+              "targetWord": "opposition"
+            },
+            {
+              "zh": "有些人批评这个方案但我认为它可行。",
+              "answer": "Some people criticize this plan but I think it works.",
+              "targetWord": "criticize"
+            },
+            {
+              "zh": "他们认为这不合法但我觉得不一定。",
+              "answer": "They think it's illegal but I'm not so sure.",
+              "targetWord": "illegal"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "观点对比 · 英译中",
+          "chunk": "cheat / annoy / discipline",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I think cheating is wrong but some people don't.",
+              "answer": "我认为作弊不对，但有些人不这么认为。",
+              "targetWord": "cheat"
+            },
+            {
+              "en": "This behavior is annoying however I understand.",
+              "answer": "这个行为很烦人，但我能理解。",
+              "targetWord": "annoy"
+            },
+            {
+              "en": "Discipline is important but freedom is also necessary.",
+              "answer": "纪律很重要，但自由也是必要的。",
+              "targetWord": "discipline"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "观点对比 · 句型",
+          "pattern": "In my opinion ___. However some people ___ because ___. / I think ___ but some people think ___.",
+          "patternMeaning": "在我看来...。然而有些人...因为...。/ 我认为...但有些人认为...。",
+          "slots": [
+            "this one is better prefer that one it's cheaper",
+            "we should go prefer to stay they are tired",
+            "this is right think it's wrong they disagree"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "依我看这个更好。但有些人更喜欢那个因为更便宜。",
+              "answer": "In my opinion this one is better. However some people prefer that one because it's cheaper.",
+              "pattern": "In my opinion ___. However some people ___ because ___.",
+              "slotValues": {
+                "slot1": "this one is better prefer that one it's cheaper"
+              }
+            },
+            {
+              "zh": "我认为我们应该去。但有些人想留下因为他们累了。",
+              "answer": "I think we should go. However some people prefer to stay because they are tired.",
+              "pattern": "I think ___. However some people ___ because ___.",
+              "slotValues": {
+                "slot1": "we should go prefer to stay they are tired"
+              }
+            },
+            {
+              "zh": "我认为这是对的。但有人认为这是错的。",
+              "answer": "I think this is right. However some people think it's wrong.",
+              "pattern": "I think ___. However some people think ___.",
+              "slotValues": {
+                "slot1": "this is right think it's wrong"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "观点对比 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本观点",
+              "en": "In my opinion this is the best choice.",
+              "zh": "在我看来这是最好的选择。",
+              "highlight": "In my opinion",
+              "hint": "先说自己的观点"
+            },
+            {
+              "level": 2,
+              "label": "加对比",
+              "en": "In my opinion this is the best choice. However some people disagree.",
+              "zh": "在我看来这是最好的选择。但有些人不同意。",
+              "highlight": "However",
+              "hint": "用 However 引出相反观点"
+            },
+            {
+              "level": 3,
+              "label": "完整表达",
+              "en": "In my opinion this is the best choice. However some people disagree because they think it's too expensive.",
+              "zh": "在我看来这是最好的选择。但有些人不同意，因为他们觉得太贵。",
+              "highlight": "because",
+              "hint": "用 because 说明原因"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

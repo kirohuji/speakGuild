@@ -10,18 +10,54 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "请求许可 · 中译英",
-          "chunk": "receipt",
+          "chunk": "permit / allow / receipt",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "能给我一张收据吗？",
-              "answer": "Can I get a receipt please?",
+              "zh": "我能借用你的手机吗？——当然可以。",
+              "answer": "Can I use your phone? -- Yes of course.",
+              "targetWord": "permit"
+            },
+            {
+              "zh": "能让我进去吗？——请进。",
+              "answer": "Can I come in? -- Please come in.",
+              "targetWord": "allow"
+            },
+            {
+              "zh": "能给我一张收据吗？——好的。",
+              "answer": "Can I get a receipt please? -- Sure.",
               "targetWord": "receipt"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "请求许可 · 英译中",
+          "chunk": "borrow / enter / check",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Can I borrow your pen? -- Sure, here you are.",
+              "answer": "我能借你的笔吗？——当然，给你。",
+              "targetWord": "borrow"
+            },
+            {
+              "en": "May I enter the room? -- Please do.",
+              "answer": "我可以进房间吗？——请进。",
+              "targetWord": "enter"
+            },
+            {
+              "en": "Could you check this form for me?",
+              "answer": "你能帮我检查一下这张表格吗？",
+              "targetWord": "check"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "请求许可 · 句型",
           "pattern": "Can I ___? — Yes of course.",
@@ -45,13 +81,59 @@
             },
             {
               "zh": "我能要...吗？",
-              "answer": "Can I have a glass of water?",
+              "answer": "Can I have a glass of water? Here you go.",
               "pattern": "Can I have ___? — Here you go.",
               "slotValues": {
                 "slot1": "a glass of water",
                 "slot2": "the menu",
                 "slot3": "more time"
               }
+            },
+            {
+              "zh": "可以___吗？",
+              "answer": "Is it okay if I sit here? -- Sure.",
+              "pattern": "Is it okay if I ___?",
+              "slotValues": {
+                "slot1": "sit here",
+                "slot2": "open the window",
+                "slot3": "leave early"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "请求许可 · 一词多句",
+          "vocabWord": "Can I / May I / Is it okay",
+          "vocabMeaning": "我可以...吗？",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Can I ___? / May I ___?",
+              "items": [
+                {
+                  "zh": "我能借你的笔吗？——当然。",
+                  "answer": "Can I borrow your pen? -- Sure."
+                },
+                {
+                  "zh": "我可以进来吗？——请进。",
+                  "answer": "May I come in? -- Please do."
+                }
+              ]
+            },
+            {
+              "chunk": "Is it okay if I ___? / Do you mind if I ___?",
+              "items": [
+                {
+                  "zh": "我坐这里可以吗？——没问题。",
+                  "answer": "Is it okay if I sit here? -- No problem."
+                },
+                {
+                  "zh": "你介意我开窗吗？——不介意。",
+                  "answer": "Do you mind if I open the window? -- Not at all."
+                }
+              ]
             }
           ]
         }
@@ -69,39 +151,65 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "Can/Could 礼貌程度 · 中译英",
-          "chunk": "receipt",
+          "chunk": "polite / could / help",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "能给我一张收据吗？",
-              "answer": "Can I get a receipt please?",
-              "targetWord": "receipt"
+              "zh": "您能告诉我去博物馆怎么走吗？",
+              "answer": "Could you tell me how to get to the museum?",
+              "targetWord": "polite"
+            },
+            {
+              "zh": "请给我账单好吗？",
+              "answer": "Could I have the bill please?",
+              "targetWord": "could"
+            },
+            {
+              "zh": "您能帮我一下吗？",
+              "answer": "Could you help me please?",
+              "targetWord": "help"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "Can/Could 礼貌程度 · 英译中",
+          "chunk": "mind / possible / favor",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Would you mind opening the window?",
+              "answer": "你介意打开窗户吗？",
+              "targetWord": "mind"
+            },
+            {
+              "en": "Is it possible to change my reservation?",
+              "answer": "可以改我的预约吗？",
+              "targetWord": "possible"
+            },
+            {
+              "en": "Could you do me a favor?",
+              "answer": "你能帮我一个忙吗？",
+              "targetWord": "favor"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "Can/Could 礼貌程度 · 句型",
-          "pattern": "You can ___.",
-          "patternMeaning": "你可以...",
+          "pattern": "Could you tell me how to get to ___?",
+          "patternMeaning": "您能告诉我去...怎么走吗？",
           "slots": [
-            "do it",
-            "make it",
-            "pass the test"
+            "the museum",
+            "the airport",
+            "the train station"
           ],
           "direction": "zh_to_en",
           "items": [
-            {
-              "zh": "你可以...",
-              "answer": "You can do it! I believe in you.",
-              "pattern": "You can ___.",
-              "slotValues": {
-                "slot1": "do it",
-                "slot2": "make it",
-                "slot3": "pass the test"
-              }
-            },
             {
               "zh": "您能告诉我去...怎么走吗？",
               "answer": "Could you tell me how to get to the museum?",
@@ -128,9 +236,45 @@
               "pattern": "Could you ___?",
               "slotValues": {
                 "slot1": "speak more slowly",
-                "slot2": "speak louder",
+                "slot2": "help me",
                 "slot3": "repeat that"
               }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "Can/Could 礼貌程度 · 一词多句",
+          "vocabWord": "Could you / Would you / Is it possible",
+          "vocabMeaning": "您能.../可以...吗？",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Could you ___ please? / Would you ___?",
+              "items": [
+                {
+                  "zh": "您能帮我看一下这个吗？",
+                  "answer": "Could you take a look at this please?"
+                },
+                {
+                  "zh": "请把盐递给我好吗？",
+                  "answer": "Would you pass me the salt please?"
+                }
+              ]
+            },
+            {
+              "chunk": "Is it possible to ___? / Is there any way to ___?",
+              "items": [
+                {
+                  "zh": "可以改一下预约时间吗？",
+                  "answer": "Is it possible to reschedule the appointment?"
+                },
+                {
+                  "zh": "有没有办法提前入住？",
+                  "answer": "Is there any way to check in early?"
+                }
+              ]
             }
           ]
         }
@@ -148,22 +292,58 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "能力程度表达 · 中译英",
-          "chunk": "receipt",
+          "chunk": "ability / can / skill",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "能给我一张收据吗？",
-              "answer": "Can I get a receipt please?",
-              "targetWord": "receipt"
+              "zh": "我会说一点法语。",
+              "answer": "I can speak a little French.",
+              "targetWord": "ability"
+            },
+            {
+              "zh": "她唱歌非常好听。",
+              "answer": "She can sing very well.",
+              "targetWord": "can"
+            },
+            {
+              "zh": "我不会游泳。",
+              "answer": "I can't swim.",
+              "targetWord": "skill"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "能力程度表达 · 英译中",
+          "chunk": "manage / capable / handle",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I can manage this task by myself.",
+              "answer": "我能自己处理这项任务。",
+              "targetWord": "manage"
+            },
+            {
+              "en": "She is capable of finishing it on time.",
+              "answer": "她有能力按时完成。",
+              "targetWord": "capable"
+            },
+            {
+              "en": "Can you handle this situation?",
+              "answer": "你能处理这种情况吗？",
+              "targetWord": "handle"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "能力程度表达 · 句型",
           "pattern": "I can't ___.",
-          "patternMeaning": "我不能/会...",
+          "patternMeaning": "我不能/不会...",
           "slots": [
             "speak French",
             "sing",
@@ -222,6 +402,42 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "能力程度表达 · 一词多句",
+          "vocabWord": "can / able to / good at",
+          "vocabMeaning": "会/能/擅长",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I can ___. / I am able to ___.",
+              "items": [
+                {
+                  "zh": "我能用中文点餐。",
+                  "answer": "I can order in Chinese."
+                },
+                {
+                  "zh": "他能在截止日期前完成。",
+                  "answer": "He is able to finish before the deadline."
+                }
+              ]
+            },
+            {
+              "chunk": "I can't ___. / I am not good at ___.",
+              "items": [
+                {
+                  "zh": "我不会做中国菜。",
+                  "answer": "I can't cook Chinese food."
+                },
+                {
+                  "zh": "我不太擅长记名字。",
+                  "answer": "I am not good at remembering names."
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -237,18 +453,54 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "承诺与保证 · 中译英",
-          "chunk": "guarantee",
+          "chunk": "guarantee / promise / swear",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我保证你会喜欢的。",
+              "zh": "我保证你会喜欢这个的。",
               "answer": "I guarantee you'll love it.",
               "targetWord": "guarantee"
+            },
+            {
+              "zh": "我保证不会告诉任何人。",
+              "answer": "I promise I won't tell anyone.",
+              "targetWord": "promise"
+            },
+            {
+              "zh": "我发誓我说的是实话。",
+              "answer": "I swear I'm telling the truth.",
+              "targetWord": "swear"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "承诺与保证 · 英译中",
+          "chunk": "assure / vow / pledge",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I assure you everything will be fine.",
+              "answer": "我向你保证一切都会好的。",
+              "targetWord": "assure"
+            },
+            {
+              "en": "I vow to always be by your side.",
+              "answer": "我发誓永远在你身边。",
+              "targetWord": "vow"
+            },
+            {
+              "en": "He pledged to support the project.",
+              "answer": "他承诺支持这个项目。",
+              "targetWord": "pledge"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "承诺与保证 · 句型",
           "pattern": "I promise I'll ___.",
@@ -281,6 +533,37 @@
               }
             }
           ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "承诺与保证 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单承诺",
+              "en": "I promise I'll be there.",
+              "zh": "我保证我会到。",
+              "highlight": "promise",
+              "hint": "先做简单承诺"
+            },
+            {
+              "level": 2,
+              "label": "加强保证",
+              "en": "I promise I'll be there. I guarantee it.",
+              "zh": "我保证我会到。我保证。",
+              "highlight": "guarantee",
+              "hint": "加上 I guarantee it 加强语气"
+            },
+            {
+              "level": 3,
+              "label": "郑重发誓",
+              "en": "I promise I'll be there. I guarantee it. I swear on my word.",
+              "zh": "我保证我会到。我保证。我以名誉发誓。",
+              "highlight": "swear",
+              "hint": "用 I swear 做最郑重的承诺"
+            }
+          ]
         }
       ]
     }
@@ -296,18 +579,54 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "意愿表达/社交祝愿 · 中译英",
-          "chunk": "guarantee",
+          "chunk": "wish / hope / bless",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我保证你会喜欢的。",
-              "answer": "I guarantee you'll love it.",
-              "targetWord": "guarantee"
+              "zh": "希望你有美好的一天。",
+              "answer": "I hope you have a wonderful day.",
+              "targetWord": "wish"
+            },
+            {
+              "zh": "祝你考试好运！",
+              "answer": "Good luck on your exam!",
+              "targetWord": "hope"
+            },
+            {
+              "zh": "祝你好运！",
+              "answer": "Best of luck to you!",
+              "targetWord": "bless"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "意愿表达/社交祝愿 · 英译中",
+          "chunk": "celebrate / cheer / congratulate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Let's celebrate your success tonight!",
+              "answer": "今晚庆祝你的成功吧！",
+              "targetWord": "celebrate"
+            },
+            {
+              "en": "Cheer up! Everything will be okay.",
+              "answer": "振作起来！一切都会好的。",
+              "targetWord": "cheer"
+            },
+            {
+              "en": "I congratulate you on your achievement.",
+              "answer": "祝贺你取得的成就。",
+              "targetWord": "congratulate"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "意愿表达/社交祝愿 · 句型",
           "pattern": "Good luck on ___!",
@@ -368,6 +687,2812 @@
                 "slot2": "pass the test",
                 "slot3": "win"
               }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "意愿表达/社交祝愿 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单祝福",
+              "en": "Good luck on your test!",
+              "zh": "祝你考试好运！",
+              "highlight": "luck",
+              "hint": "先说 Good luck"
+            },
+            {
+              "level": 2,
+              "label": "表达愿望",
+              "en": "Good luck on your test! I hope you do well.",
+              "zh": "祝你考试好运！希望你能考好。",
+              "highlight": "hope",
+              "hint": "加上 I hope 表达愿望"
+            },
+            {
+              "level": 3,
+              "label": "完整祝福",
+              "en": "Good luck on your test! I hope you do well. Have a great day!",
+              "zh": "祝你考试好运！希望你能考好。祝你有美好的一天！",
+              "highlight": "great",
+              "hint": "用 Have a great day 完整收尾"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我打算…": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我打算… · 中译英",
+          "chunk": "ambitious / plan / intend",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我计划明年出国留学。",
+              "answer": "I'm going to study abroad next year.",
+              "targetWord": "ambitious"
+            },
+            {
+              "zh": "我们打算下个月搬家。",
+              "answer": "We plan to move next month.",
+              "targetWord": "plan"
+            },
+            {
+              "zh": "我打算学一门新语言。",
+              "answer": "I intend to learn a new language.",
+              "targetWord": "intend"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我打算… · 英译中",
+          "chunk": "arrangement / preparation / aim",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have made all the arrangements for the trip.",
+              "answer": "我已经为旅行做好了所有安排。",
+              "targetWord": "arrangement"
+            },
+            {
+              "en": "I need to do more preparation for the exam.",
+              "answer": "我 need 为考试做更多准备。",
+              "targetWord": "preparation"
+            },
+            {
+              "en": "My aim is to finish this project by Friday.",
+              "answer": "我的目标是在周五前完成这个项目。",
+              "targetWord": "aim"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我打算… · 句型",
+          "pattern": "I'm going to ___ this ___.",
+          "patternMeaning": "我打算这个...",
+          "slots": [
+            "study abroad next year",
+            "move to a new city next month",
+            "start a new job next week"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我打算这个...",
+              "answer": "I'm going to study abroad next year.",
+              "pattern": "I'm going to ___ this ___.",
+              "slotValues": {
+                "slot1": "study abroad next year",
+                "slot2": "move to a new city next month",
+                "slot3": "start a new job next week"
+              }
+            },
+            {
+              "zh": "她打算...",
+              "answer": "She's going to travel to Japan next summer.",
+              "pattern": "She's going to ___ next ___.",
+              "slotValues": {
+                "slot1": "travel to Japan next summer",
+                "slot2": "learn Chinese next year",
+                "slot3": "buy a car next month"
+              }
+            },
+            {
+              "zh": "你们打算...吗？",
+              "answer": "Are you going to join us for dinner?",
+              "pattern": "Are you going to ___?",
+              "slotValues": {
+                "slot1": "join us for dinner",
+                "slot2": "come to the party",
+                "slot3": "take the exam"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我打算… · 一词多句",
+          "vocabWord": "going to / plan to / intend to",
+          "vocabMeaning": "打算/计划",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I'm going to ___. / I plan to ___.",
+              "items": [
+                {
+                  "zh": "我打算明年出国留学。",
+                  "answer": "I'm going to study abroad next year."
+                },
+                {
+                  "zh": "我计划搬家。",
+                  "answer": "I plan to move to a new city."
+                }
+              ]
+            },
+            {
+              "chunk": "She's going to ___. / He intends to ___.",
+              "items": [
+                {
+                  "zh": "她打算去日本旅行。",
+                  "answer": "She's going to travel to Japan."
+                },
+                {
+                  "zh": "他打算学一门新语言。",
+                  "answer": "He intends to learn a new language."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "将会怎样": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "将会怎样 · 中译英",
+          "chunk": "prediction / forecast / future",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我预测明天会下雪。",
+              "answer": "I predict it will snow tomorrow.",
+              "targetWord": "prediction"
+            },
+            {
+              "zh": "天气预报说会晴朗。",
+              "answer": "The forecast says it will be sunny.",
+              "targetWord": "forecast"
+            },
+            {
+              "zh": "未来的世界会很不同。",
+              "answer": "The future will be very different.",
+              "targetWord": "future"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "将会怎样 · 英译中",
+          "chunk": "likely / remain / probably",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "It is likely to rain this evening.",
+              "answer": "今晚很可能下雨。",
+              "targetWord": "likely"
+            },
+            {
+              "en": "The weather will remain warm for the next few days.",
+              "answer": "接下来几天天气会保持温暖。",
+              "targetWord": "remain"
+            },
+            {
+              "en": "He will probably arrive late due to traffic.",
+              "answer": "由于交通他可能会迟到。",
+              "targetWord": "probably"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "将会怎样 · 句型",
+          "pattern": "It will ___ tomorrow.",
+          "patternMeaning": "明天会...",
+          "slots": [
+            "rain",
+            "be sunny",
+            "be cold"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "明天会...",
+              "answer": "It will rain tomorrow.",
+              "pattern": "It will ___ tomorrow.",
+              "slotValues": {
+                "slot1": "rain",
+                "slot2": "be sunny",
+                "slot3": "be cold"
+              }
+            },
+            {
+              "zh": "他可能...",
+              "answer": "He will probably be late for the meeting.",
+              "pattern": "He will probably ___ for ___.",
+              "slotValues": {
+                "slot1": "be late the meeting",
+                "slot2": "be early the interview",
+                "slot3": "leave soon the trip"
+              }
+            },
+            {
+              "zh": "我认为...会...",
+              "answer": "I think everything will be okay in the end.",
+              "pattern": "I think ___ will ___.",
+              "slotValues": {
+                "slot1": "everything be okay",
+                "slot2": "she pass the exam",
+                "slot3": "they arrive soon"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "将会怎样 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单预测",
+              "en": "It will rain tomorrow.",
+              "zh": "明天会下雨。",
+              "highlight": "will rain",
+              "hint": "用 will 做简单预测"
+            },
+            {
+              "level": 2,
+              "label": "加程度",
+              "en": "It will probably rain tomorrow.",
+              "zh": "明天很可能会下雨。",
+              "highlight": "probably",
+              "hint": "加上 probably 表示可能性"
+            },
+            {
+              "level": 3,
+              "label": "加原因",
+              "en": "It will probably rain tomorrow because the sky is dark.",
+              "zh": "明天很可能会下雨因为天黑了。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "将来时间表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "将来时间表达 · 中译英",
+          "chunk": "soon / later / tonight",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我很快就到。",
+              "answer": "I will be there soon.",
+              "targetWord": "soon"
+            },
+            {
+              "zh": "我们晚点再讨论这个。",
+              "answer": "We will discuss this later.",
+              "targetWord": "later"
+            },
+            {
+              "zh": "我今晚会给你打电话。",
+              "answer": "I will call you tonight.",
+              "targetWord": "tonight"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "将来时间表达 · 英译中",
+          "chunk": "tomorrow / next / eventual",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I will finish the report tomorrow.",
+              "answer": "我明天会完成报告。",
+              "targetWord": "tomorrow"
+            },
+            {
+              "en": "We are moving to a new office next month.",
+              "answer": "我们下个月搬到新办公室。",
+              "targetWord": "next"
+            },
+            {
+              "en": "This is just the beginning; the eventual outcome will be great.",
+              "answer": "这只是开始；最终结果会很棒的。",
+              "targetWord": "eventual"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "将来时间表达 · 句型",
+          "pattern": "I will ___ soon.",
+          "patternMeaning": "我很快就...",
+          "slots": [
+            "be there",
+            "finish this",
+            "call you back"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我很快就...",
+              "answer": "I will be there soon.",
+              "pattern": "I will ___ soon.",
+              "slotValues": {
+                "slot1": "be there",
+                "slot2": "finish this",
+                "slot3": "call you back"
+              }
+            },
+            {
+              "zh": "我明天...",
+              "answer": "I will finish the report tomorrow.",
+              "pattern": "I will ___ tomorrow.",
+              "slotValues": {
+                "slot1": "finish the report",
+                "slot2": "meet with my boss",
+                "slot3": "go to the gym"
+              }
+            },
+            {
+              "zh": "我们下周...",
+              "answer": "We will start the project next week.",
+              "pattern": "We will ___ next ___.",
+              "slotValues": {
+                "slot1": "start the project week",
+                "slot2": "have a meeting Monday",
+                "slot3": "go on vacation month"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "将来时间表达 · 一词多句",
+          "vocabWord": "soon / later / next",
+          "vocabMeaning": "很快/晚些/下个",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I will ___ soon/later.",
+              "items": [
+                {
+                  "zh": "我很快就到。",
+                  "answer": "I will be there soon."
+                },
+                {
+                  "zh": "我们晚点讨论。",
+                  "answer": "We will discuss this later."
+                }
+              ]
+            },
+            {
+              "chunk": "___ next week/month.",
+              "items": [
+                {
+                  "zh": "我们下周开始。",
+                  "answer": "We will start next week."
+                },
+                {
+                  "zh": "她下个月旅行。",
+                  "answer": "She will travel next month."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "计划疑问句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "计划疑问句 · 中译英",
+          "chunk": "ask / wonder / decide",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我来问一下他的计划。",
+              "answer": "Let me ask about his plans.",
+              "targetWord": "ask"
+            },
+            {
+              "zh": "我在想他会不会来。",
+              "answer": "I wonder if he will come.",
+              "targetWord": "wonder"
+            },
+            {
+              "zh": "你决定了要去哪里吗？",
+              "answer": "Have you decided where to go?",
+              "targetWord": "decide"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "计划疑问句 · 英译中",
+          "chunk": "uncertain / unsure / clear",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I'm still uncertain about my plans for the summer.",
+              "answer": "我还不能确定夏天的计划。",
+              "targetWord": "uncertain"
+            },
+            {
+              "en": "She's unsure whether to take the job.",
+              "answer": "她不确定是否接受这份工作。",
+              "targetWord": "unsure"
+            },
+            {
+              "en": "I need to get a clear idea of what to do next.",
+              "answer": "我需要清楚接下来该做什么。",
+              "targetWord": "clear"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "计划疑问句 · 句型",
+          "pattern": "What are you going to do ___?",
+          "patternMeaning": "你...打算做什么？",
+          "slots": [
+            "this weekend",
+            "next summer",
+            "tomorrow"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你...打算做什么？",
+              "answer": "What are you going to do this weekend?",
+              "pattern": "What are you going to do ___?",
+              "slotValues": {
+                "slot1": "this weekend",
+                "slot2": "next summer",
+                "slot3": "tomorrow"
+              }
+            },
+            {
+              "zh": "你决定了...吗？",
+              "answer": "Have you decided where to go for vacation?",
+              "pattern": "Have you decided ___?",
+              "slotValues": {
+                "slot1": "where to go for vacation",
+                "slot2": "what to study",
+                "slot3": "when to leave"
+              }
+            },
+            {
+              "zh": "他会不会...？",
+              "answer": "I wonder if he will come to the party.",
+              "pattern": "I wonder if ___ will ___.",
+              "slotValues": {
+                "slot1": "he come to the party",
+                "slot2": "she like the gift",
+                "slot3": "they arrive on time"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "计划疑问句 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单提问",
+              "en": "What are you going to do this weekend?",
+              "zh": "你这周末打算做什么？",
+              "highlight": "going to do",
+              "hint": "用 What are you going to do 提问"
+            },
+            {
+              "level": 2,
+              "label": "加选择",
+              "en": "What are you going to do this weekend? Stay home or go out?",
+              "zh": "你这周末打算做什么？待在家还是出去？",
+              "highlight": "or",
+              "hint": "用 or 提供选项"
+            },
+            {
+              "level": 3,
+              "label": "加邀约",
+              "en": "What are you going to do this weekend? Would you like to join us?",
+              "zh": "你这周末打算做什么？要不要加入我们？",
+              "highlight": "join",
+              "hint": "加上邀请"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "预测与迹象": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "预测与迹象 · 中译英",
+          "chunk": "sign / evidence / clear",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "天黑了，要下雨了。",
+              "answer": "It's getting dark. It's going to rain.",
+              "targetWord": "sign"
+            },
+            {
+              "zh": "有迹象表明经济在好转。",
+              "answer": "There are signs that the economy is improving.",
+              "targetWord": "evidence"
+            },
+            {
+              "zh": "很明显他会成功。",
+              "answer": "It's clear that he will succeed.",
+              "targetWord": "clear"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "预测与迹象 · 英译中",
+          "chunk": "apparent / likely / bound",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "It's apparent that she's going to win the race.",
+              "answer": "很明显她会赢得比赛。",
+              "targetWord": "apparent"
+            },
+            {
+              "en": "The project is likely to be finished on time.",
+              "answer": "这个项目很可能会按时完成。",
+              "targetWord": "likely"
+            },
+            {
+              "en": "You are bound to pass the exam if you study hard.",
+              "answer": "如果你努力学习就一定会通过考试。",
+              "targetWord": "bound"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "预测与迹象 · 句型",
+          "pattern": "It's going to ___ because ___.",
+          "patternMeaning": "要...了，因为...",
+          "slots": [
+            "rain because the sky is dark",
+            "snow because it's very cold",
+            "storm because the wind is strong"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "要...了，因为...",
+              "answer": "It's going to rain because the sky is dark.",
+              "pattern": "It's going to ___ because ___.",
+              "slotValues": {
+                "slot1": "rain the sky is dark",
+                "slot2": "snow it's very cold",
+                "slot3": "storm the wind is strong"
+              }
+            },
+            {
+              "zh": "他肯定会...",
+              "answer": "He is bound to succeed if he keeps trying.",
+              "pattern": "He is bound to ___ if ___.",
+              "slotValues": {
+                "slot1": "succeed he keeps trying",
+                "slot2": "pass he studies hard",
+                "slot3": "win he practices more"
+              }
+            },
+            {
+              "zh": "看迹象...",
+              "answer": "Look at the clouds! It's going to rain soon.",
+              "pattern": "Look at ___! It's going to ___.",
+              "slotValues": {
+                "slot1": "the clouds rain soon",
+                "slot2": "the sky be stormy",
+                "slot3": "the weather forecast snow"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "预测与迹象 · 一词多句",
+          "vocabWord": "going to / bound to / likely to",
+          "vocabMeaning": "将要/一定会/很可能",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It's going to ___. / It's likely to ___.",
+              "items": [
+                {
+                  "zh": "要下雨了，天黑了。",
+                  "answer": "It's going to rain. The sky is dark."
+                },
+                {
+                  "zh": "今晚很可能会下雪。",
+                  "answer": "It's likely to snow tonight."
+                }
+              ]
+            },
+            {
+              "chunk": "He's bound to ___.",
+              "items": [
+                {
+                  "zh": "他一定会成功的。",
+                  "answer": "He is bound to succeed."
+                },
+                {
+                  "zh": "她一定会赢的。",
+                  "answer": "She is bound to win the race."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我能/会…": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我能/会… · 中译英",
+          "chunk": "ability / skill / talent",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我有能力完成这项任务。",
+              "answer": "I have the ability to finish this task.",
+              "targetWord": "ability"
+            },
+            {
+              "zh": "她的沟通技巧很好。",
+              "answer": "Her communication skills are excellent.",
+              "targetWord": "skill"
+            },
+            {
+              "zh": "他有音乐天赋。",
+              "answer": "He has a talent for music.",
+              "targetWord": "talent"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我能/会… · 英译中",
+          "chunk": "capable / can / enable",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She is capable of handling difficult situations.",
+              "answer": "她有能力处理困难的情况。",
+              "targetWord": "capable"
+            },
+            {
+              "en": "I can speak three languages fluently.",
+              "answer": "我能流利地说三种语言。",
+              "targetWord": "can"
+            },
+            {
+              "en": "This course will enable me to improve my English.",
+              "answer": "这门课将使我能够提高英语水平。",
+              "targetWord": "enable"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我能/会… · 句型",
+          "pattern": "I can ___ very well.",
+          "patternMeaning": "我能很好地...",
+          "slots": [
+            "speak English",
+            "play the piano",
+            "swim"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我能很好地...",
+              "answer": "I can speak English very well.",
+              "pattern": "I can ___ very well.",
+              "slotValues": {
+                "slot1": "speak English",
+                "slot2": "play the piano",
+                "slot3": "swim"
+              }
+            },
+            {
+              "zh": "她会...",
+              "answer": "She can dance beautifully.",
+              "pattern": "She can ___ beautifully.",
+              "slotValues": {
+                "slot1": "dance",
+                "slot2": "sing",
+                "slot3": "draw"
+              }
+            },
+            {
+              "zh": "他不会...",
+              "answer": "He can't speak French at all.",
+              "pattern": "He can't ___ at all.",
+              "slotValues": {
+                "slot1": "speak French",
+                "slot2": "cook",
+                "slot3": "drive"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我能/会… · 一词多句",
+          "vocabWord": "can / able to / capable of",
+          "vocabMeaning": "能/会/有能力",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I can ___. / I am able to ___.",
+              "items": [
+                {
+                  "zh": "我能说三种语言。",
+                  "answer": "I can speak three languages."
+                },
+                {
+                  "zh": "我能完成这个任务。",
+                  "answer": "I am able to finish this task."
+                }
+              ]
+            },
+            {
+              "chunk": "She is capable of ___.",
+              "items": [
+                {
+                  "zh": "她能处理困难情况。",
+                  "answer": "She is capable of handling difficult situations."
+                },
+                {
+                  "zh": "他能解决这个问题。",
+                  "answer": "He is capable of solving this problem."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "请求帮助": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "请求帮助 · 中译英",
+          "chunk": "help / support / assist",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你能帮我个忙吗？",
+              "answer": "Can you help me please?",
+              "targetWord": "help"
+            },
+            {
+              "zh": "我需要你的支持。",
+              "answer": "I need your support.",
+              "targetWord": "support"
+            },
+            {
+              "zh": "你能协助我完成这个项目吗？",
+              "answer": "Can you assist me with this project?",
+              "targetWord": "assist"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "请求帮助 · 英译中",
+          "chunk": "favor / lend / hand",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Could you do me a favor?",
+              "answer": "你能帮我个忙吗？",
+              "targetWord": "favor"
+            },
+            {
+              "en": "Could you lend me a hand with this?",
+              "answer": "你能帮我一把吗？",
+              "targetWord": "lend"
+            },
+            {
+              "en": "Can you give me a hand? I'm stuck.",
+              "answer": "你能帮我一下吗？我卡住了。",
+              "targetWord": "hand"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "请求帮助 · 句型",
+          "pattern": "Could you help me ___?",
+          "patternMeaning": "你能帮我...吗？",
+          "slots": [
+            "carry this bag",
+            "open the door",
+            "find my keys"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你能帮我...吗？",
+              "answer": "Could you help me carry this bag?",
+              "pattern": "Could you help me ___?",
+              "slotValues": {
+                "slot1": "carry this bag",
+                "slot2": "open the door",
+                "slot3": "find my keys"
+              }
+            },
+            {
+              "zh": "你能帮我一个忙吗？",
+              "answer": "Could you do me a favor?",
+              "pattern": "Could you do me ___?",
+              "slotValues": {
+                "slot1": "a favor",
+                "slot2": "a small favor",
+                "slot3": "a huge favor"
+              }
+            },
+            {
+              "zh": "你能...吗？",
+              "answer": "Would you mind helping me with this?",
+              "pattern": "Would you mind ___?",
+              "slotValues": {
+                "slot1": "helping me with this",
+                "slot2": "opening the window",
+                "slot3": "checking this for me"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "请求帮助 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单请求",
+              "en": "Can you help me?",
+              "zh": "你能帮我吗？",
+              "highlight": "Can you",
+              "hint": "用 Can you 请求帮助"
+            },
+            {
+              "level": 2,
+              "label": "礼貌请求",
+              "en": "Could you help me carry this bag?",
+              "zh": "你能帮我拿这个包吗？",
+              "highlight": "Could you",
+              "hint": "用 Could you 更礼貌"
+            },
+            {
+              "level": 3,
+              "label": "详细请求",
+              "en": "Could you please help me carry this heavy bag? I'd really appreciate it.",
+              "zh": "你能帮我拿这个重包吗？非常感谢。",
+              "highlight": "appreciate",
+              "hint": "加上 I'd appreciate it 表达感谢"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "你应该/必须": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "你应该/必须 · 中译英",
+          "chunk": "should / must / ought",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你应该去看医生。",
+              "answer": "You should see a doctor.",
+              "targetWord": "should"
+            },
+            {
+              "zh": "你必须在8点前到。",
+              "answer": "You must be there by 8 o'clock.",
+              "targetWord": "must"
+            },
+            {
+              "zh": "你应该为自己的行为负责。",
+              "answer": "You ought to be responsible for your actions.",
+              "targetWord": "ought"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "你应该/必须 · 英译中",
+          "chunk": "recommend / suggest / advise",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I recommend you take a taxi.",
+              "answer": "我建议你打车。",
+              "targetWord": "recommend"
+            },
+            {
+              "en": "I suggest you talk to your teacher.",
+              "answer": "我建议你找老师谈谈。",
+              "targetWord": "suggest"
+            },
+            {
+              "en": "I advise you to start early.",
+              "answer": "我建议你早点开始。",
+              "targetWord": "advise"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "你应该/必须 · 句型",
+          "pattern": "You should ___ before ___.",
+          "patternMeaning": "在...之前你应该...",
+          "slots": [
+            "see a doctor it gets worse",
+            "call him before 6 pm",
+            "prepare well the interview"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "在...之前你应该...",
+              "answer": "You should see a doctor before it gets worse.",
+              "pattern": "You should ___ before ___.",
+              "slotValues": {
+                "slot1": "see a doctor it gets worse",
+                "slot2": "call him 6 pm",
+                "slot3": "prepare well the interview"
+              }
+            },
+            {
+              "zh": "他必须...",
+              "answer": "He must finish the report by Friday.",
+              "pattern": "He must ___ by ___.",
+              "slotValues": {
+                "slot1": "finish the report Friday",
+                "slot2": "be at work 9 am",
+                "slot3": "pay the bill tomorrow"
+              }
+            },
+            {
+              "zh": "你不应该...",
+              "answer": "You shouldn't eat so much junk food.",
+              "pattern": "You shouldn't ___ so ___.",
+              "slotValues": {
+                "slot1": "eat much junk food",
+                "slot2": "stay up late",
+                "slot3": "spend too much money"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "你应该/必须 · 一词多句",
+          "vocabWord": "should / must / ought to",
+          "vocabMeaning": "应该/必须",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "You should ___. / You must ___.",
+              "items": [
+                {
+                  "zh": "你应该去看医生。",
+                  "answer": "You should see a doctor."
+                },
+                {
+                  "zh": "你必须在8点前到。",
+                  "answer": "You must be there by 8 o'clock."
+                }
+              ]
+            },
+            {
+              "chunk": "You shouldn't ___. / You don't have to ___.",
+              "items": [
+                {
+                  "zh": "你不该熬夜。",
+                  "answer": "You shouldn't stay up late."
+                },
+                {
+                  "zh": "你不必现在付钱。",
+                  "answer": "You don't have to pay now."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "客观义务 have to": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "客观义务 have to · 中译英",
+          "chunk": "must / forced / required",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我明天必须上班。",
+              "answer": "I have to work tomorrow.",
+              "targetWord": "must"
+            },
+            {
+              "zh": "他被迫接受这个决定。",
+              "answer": "He was forced to accept the decision.",
+              "targetWord": "forced"
+            },
+            {
+              "zh": "按要求所有人都要参加。",
+              "answer": "Everyone is required to attend.",
+              "targetWord": "required"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "客观义务 have to · 英译中",
+          "chunk": "obliged / mandatory / compulsory",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I am obliged to follow the rules.",
+              "answer": "我有义务遵守规则。",
+              "targetWord": "obliged"
+            },
+            {
+              "en": "Wearing a seatbelt is mandatory.",
+              "answer": "系安全带是强制性的。",
+              "targetWord": "mandatory"
+            },
+            {
+              "en": "English is compulsory in this school.",
+              "answer": "英语在这所学校是必修课。",
+              "targetWord": "compulsory"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "客观义务 have to · 句型",
+          "pattern": "I have to ___ every ___.",
+          "patternMeaning": "我每天/每周必须...",
+          "slots": [
+            "work every day",
+            "take medicine every morning",
+            "go to school every weekday"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我每天/每周必须...",
+              "answer": "I have to work every day this week.",
+              "pattern": "I have to ___ every ___.",
+              "slotValues": {
+                "slot1": "work day this week",
+                "slot2": "take medicine morning",
+                "slot3": "go to school weekday"
+              }
+            },
+            {
+              "zh": "她不得不...",
+              "answer": "She has to take a taxi because she's late.",
+              "pattern": "She has to ___ because ___.",
+              "slotValues": {
+                "slot1": "take a taxi she's late",
+                "slot2": "work overtime her boss asked",
+                "slot3": "study hard the exam is coming"
+              }
+            },
+            {
+              "zh": "我必须...吗？",
+              "answer": "Do I have to bring my passport?",
+              "pattern": "Do I have to ___?",
+              "slotValues": {
+                "slot1": "bring my passport",
+                "slot2": "fill out this form",
+                "slot3": "pay in advance"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "客观义务 have to · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单义务",
+              "en": "I have to work today.",
+              "zh": "我今天必须上班。",
+              "highlight": "have to",
+              "hint": "用 have to 表达客观义务"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "I have to work today because my boss asked me.",
+              "zh": "我今天必须上班因为老板让我去。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            },
+            {
+              "level": 3,
+              "label": "加频率",
+              "en": "I have to work every day this week because we have a deadline.",
+              "zh": "我这周每天都得上班因为我们有截止日期。",
+              "highlight": "every day",
+              "hint": "加上频率表达"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "禁止与不必": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "禁止与不必 · 中译英",
+          "chunk": "forbidden / banned / restricted",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这里禁止吸烟。",
+              "answer": "You mustn't smoke here.",
+              "targetWord": "forbidden"
+            },
+            {
+              "zh": "在这个区域禁止停车。",
+              "answer": "Parking is banned in this area.",
+              "targetWord": "banned"
+            },
+            {
+              "zh": "进入受限区域。",
+              "answer": "Access is restricted.",
+              "targetWord": "restricted"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "禁止与不必 · 英译中",
+          "chunk": "optional / unnecessary / permit",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Attendance is optional, not required.",
+              "answer": "出席是可选的，不是必须的。",
+              "targetWord": "optional"
+            },
+            {
+              "en": "It's unnecessary to bring anything.",
+              "answer": "不必带任何东西。",
+              "targetWord": "unnecessary"
+            },
+            {
+              "en": "You don't need a permit for this.",
+              "answer": "这个不需要许可证。",
+              "targetWord": "permit"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "禁止与不必 · 句型",
+          "pattern": "You mustn't ___ here.",
+          "patternMeaning": "你不能在这里...",
+          "slots": [
+            "smoke",
+            "park",
+            "take photos"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你不能在这里...",
+              "answer": "You mustn't smoke here.",
+              "pattern": "You mustn't ___ here.",
+              "slotValues": {
+                "slot1": "smoke",
+                "slot2": "park",
+                "slot3": "take photos"
+              }
+            },
+            {
+              "zh": "你不必...",
+              "answer": "You don't have to pay now. You can pay later.",
+              "pattern": "You don't have to ___ now. You can ___ later.",
+              "slotValues": {
+                "slot1": "pay pay",
+                "slot2": "decide tell me",
+                "slot3": "come join us"
+              }
+            },
+            {
+              "zh": "禁止...",
+              "answer": "Smoking is not allowed in this building.",
+              "pattern": "___ is not allowed in this ___.",
+              "slotValues": {
+                "slot1": "Smoking building",
+                "slot2": "Parking area",
+                "slot3": "Running hallway"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "禁止与不必 · 一词多句",
+          "vocabWord": "mustn't / don't have to / not allowed",
+          "vocabMeaning": "禁止/不必/不允许",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "You mustn't ___. / You are not allowed to ___.",
+              "items": [
+                {
+                  "zh": "你不能在这里抽烟。",
+                  "answer": "You mustn't smoke here."
+                },
+                {
+                  "zh": "你不允许在这里停车。",
+                  "answer": "You are not allowed to park here."
+                }
+              ]
+            },
+            {
+              "chunk": "You don't have to ___. / It's optional.",
+              "items": [
+                {
+                  "zh": "你不必现在付钱。",
+                  "answer": "You don't have to pay now."
+                },
+                {
+                  "zh": "参加是可选的。",
+                  "answer": "It's optional to attend."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "建议疑问句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "建议疑问句 · 中译英",
+          "chunk": "suggest / propose / recommend",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你有什么建议？",
+              "answer": "What do you suggest?",
+              "targetWord": "suggest"
+            },
+            {
+              "zh": "我提议下周见面。",
+              "answer": "I propose we meet next week.",
+              "targetWord": "propose"
+            },
+            {
+              "zh": "你推荐哪家餐厅？",
+              "answer": "Which restaurant do you recommend?",
+              "targetWord": "recommend"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "建议疑问句 · 英译中",
+          "chunk": "opinion / advice / idea",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "What's your opinion on this matter?",
+              "answer": "你对这件事的看法是什么？",
+              "targetWord": "opinion"
+            },
+            {
+              "en": "Can you give me some advice?",
+              "answer": "你能给我一些建议吗？",
+              "targetWord": "advice"
+            },
+            {
+              "en": "Do you have any idea what I should do?",
+              "answer": "你知道我应该怎么做吗？",
+              "targetWord": "idea"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "建议疑问句 · 句型",
+          "pattern": "What do you suggest I ___?",
+          "patternMeaning": "你建议我...？",
+          "slots": [
+            "do",
+            "wear",
+            "bring"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你建议我...？",
+              "answer": "What do you suggest I do?",
+              "pattern": "What do you suggest I ___?",
+              "slotValues": {
+                "slot1": "do",
+                "slot2": "wear",
+                "slot3": "bring"
+              }
+            },
+            {
+              "zh": "我该怎么办？",
+              "answer": "What should I do? I can't decide.",
+              "pattern": "What should I ___? I can't decide.",
+              "slotValues": {
+                "slot1": "do",
+                "slot2": "choose",
+                "slot3": "say"
+              }
+            },
+            {
+              "zh": "你觉得...怎么样？",
+              "answer": "What do you think about taking a taxi?",
+              "pattern": "What do you think about ___?",
+              "slotValues": {
+                "slot1": "taking a taxi",
+                "slot2": "trying the new restaurant",
+                "slot3": "leaving early"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "建议疑问句 · 一词多句",
+          "vocabWord": "What should / What do you suggest / What's your opinion",
+          "vocabMeaning": "建议/看法",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "What should I ___?",
+              "items": [
+                {
+                  "zh": "我该怎么办？",
+                  "answer": "What should I do?"
+                },
+                {
+                  "zh": "我应该穿什么？",
+                  "answer": "What should I wear?"
+                }
+              ]
+            },
+            {
+              "chunk": "What do you think about ___?",
+              "items": [
+                {
+                  "zh": "你觉得打车怎么样？",
+                  "answer": "What do you think about taking a taxi?"
+                },
+                {
+                  "zh": "你觉得那家新餐厅怎么样？",
+                  "answer": "What do you think about the new restaurant?"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "推荐表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "推荐表达 · 中译英",
+          "chunk": "recommend / suggest / propose",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我推荐这家餐厅。",
+              "answer": "I recommend this restaurant.",
+              "targetWord": "recommend"
+            },
+            {
+              "zh": "我建议试试这个应用。",
+              "answer": "I suggest trying this app.",
+              "targetWord": "suggest"
+            },
+            {
+              "zh": "我提议点那个套餐。",
+              "answer": "I propose we order the set menu.",
+              "targetWord": "propose"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "推荐表达 · 英译中",
+          "chunk": "popular / excellent / worth",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This dish is very popular among customers.",
+              "answer": "这道菜很受顾客欢迎。",
+              "targetWord": "popular"
+            },
+            {
+              "en": "The service here is excellent.",
+              "answer": "这里的服务非常好。",
+              "targetWord": "excellent"
+            },
+            {
+              "en": "This movie is definitely worth watching.",
+              "answer": "这部电影绝对值得一看。",
+              "targetWord": "worth"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "推荐表达 · 句型",
+          "pattern": "I recommend ___ because ___.",
+          "patternMeaning": "我推荐...因为...",
+          "slots": [
+            "this restaurant the food is great",
+            "this app it's very useful",
+            "this hotel it's affordable"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我推荐...因为...",
+              "answer": "I recommend this restaurant because the food is great.",
+              "pattern": "I recommend ___ because ___.",
+              "slotValues": {
+                "slot1": "this restaurant the food is great",
+                "slot2": "this app it's very useful",
+                "slot3": "this hotel it's affordable"
+              }
+            },
+            {
+              "zh": "你应该试试...",
+              "answer": "You should try this new cafe. The coffee is excellent.",
+              "pattern": "You should try ___ because ___.",
+              "slotValues": {
+                "slot1": "this new cafe the coffee is excellent",
+                "slot2": "this dish it's delicious",
+                "slot3": "this course it's very helpful"
+              }
+            },
+            {
+              "zh": "我强烈推荐...",
+              "answer": "I highly recommend visiting the museum.",
+              "pattern": "I highly recommend ___.",
+              "slotValues": {
+                "slot1": "visiting the museum",
+                "slot2": "trying the pasta",
+                "slot3": "reading this book"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "推荐表达 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单推荐",
+              "en": "I recommend this restaurant.",
+              "zh": "我推荐这家餐厅。",
+              "highlight": "recommend",
+              "hint": "用 I recommend 推荐"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "I recommend this restaurant because the food is excellent.",
+              "zh": "我推荐这家餐厅因为食物很好。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            },
+            {
+              "level": 3,
+              "label": "加行动建议",
+              "en": "I recommend this restaurant because the food is excellent. You should try the pasta!",
+              "zh": "我推荐这家餐厅因为食物很好。你应该试试他们家的意面！",
+              "highlight": "try",
+              "hint": "加上 You should try 的具体建议"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "可能 may/might": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "可能 may/might · 中译英",
+          "chunk": "possible / maybe / perhaps",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他可能会迟到。",
+              "answer": "He may be late.",
+              "targetWord": "possible"
+            },
+            {
+              "zh": "也许她说的是真的。",
+              "answer": "Maybe she is telling the truth.",
+              "targetWord": "maybe"
+            },
+            {
+              "zh": "或许我们应该再等等。",
+              "answer": "Perhaps we should wait a bit more.",
+              "targetWord": "perhaps"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "可能 may/might · 英译中",
+          "chunk": "likely / uncertain / doubtful",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "It's likely to rain later today.",
+              "answer": "今天晚些时候很可能下雨。",
+              "targetWord": "likely"
+            },
+            {
+              "en": "The outcome is still uncertain.",
+              "answer": "结果还不确定。",
+              "targetWord": "uncertain"
+            },
+            {
+              "en": "It's doubtful that she will come now.",
+              "answer": "她现在来的可能性很小。",
+              "targetWord": "doubtful"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "可能 may/might · 句型",
+          "pattern": "It may ___ this ___.",
+          "patternMeaning": "这个...可能...",
+          "slots": [
+            "rain this evening",
+            "snow tonight",
+            "be sunny tomorrow"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个...可能...",
+              "answer": "It may rain this evening.",
+              "pattern": "It may ___ this ___.",
+              "slotValues": {
+                "slot1": "rain evening",
+                "slot2": "snow tonight",
+                "slot3": "be sunny tomorrow"
+              }
+            },
+            {
+              "zh": "她可能...",
+              "answer": "She might come to the party, but I'm not sure.",
+              "pattern": "She might ___ but I'm not sure.",
+              "slotValues": {
+                "slot1": "come to the party",
+                "slot2": "be late",
+                "slot3": "change her mind"
+              }
+            },
+            {
+              "zh": "可能会...",
+              "answer": "There may be traffic on the way.",
+              "pattern": "There may be ___ on ___.",
+              "slotValues": {
+                "slot1": "traffic the way",
+                "slot2": "a delay the flight",
+                "slot3": "a problem the system"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "可能 may/might · 一词多句",
+          "vocabWord": "may / might / maybe",
+          "vocabMeaning": "可能/或许",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It may ___. / She might ___.",
+              "items": [
+                {
+                  "zh": "今晚可能会下雨。",
+                  "answer": "It may rain this evening."
+                },
+                {
+                  "zh": "她可能会来派对。",
+                  "answer": "She might come to the party."
+                }
+              ]
+            },
+            {
+              "chunk": "Maybe ___. / Perhaps ___.",
+              "items": [
+                {
+                  "zh": "也许她说的是真的。",
+                  "answer": "Maybe she is telling the truth."
+                },
+                {
+                  "zh": "或许我们应该等等。",
+                  "answer": "Perhaps we should wait."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "邀请与提议": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "邀请与提议 · 中译英",
+          "chunk": "invite / offer / propose",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我想邀请你参加派对。",
+              "answer": "I'd like to invite you to the party.",
+              "targetWord": "invite"
+            },
+            {
+              "zh": "我提议我们一起去。",
+              "answer": "I propose we go together.",
+              "targetWord": "propose"
+            },
+            {
+              "zh": "他给了我很优惠的条件。",
+              "answer": "He offered me a very good deal.",
+              "targetWord": "offer"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "邀请与提议 · 英译中",
+          "chunk": "welcome / pleasure / treat",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "You're welcome to join us anytime.",
+              "answer": "随时欢迎你加入我们。",
+              "targetWord": "welcome"
+            },
+            {
+              "en": "It's my pleasure to have you here.",
+              "answer": "很高兴你能来。",
+              "targetWord": "pleasure"
+            },
+            {
+              "en": "Let me treat you to dinner tonight.",
+              "answer": "今晚让我请你吃饭吧。",
+              "targetWord": "treat"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "邀请与提议 · 句型",
+          "pattern": "Would you like to ___?",
+          "patternMeaning": "你想...吗？",
+          "slots": [
+            "join us for dinner",
+            "come to the party",
+            "go for a walk"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你想...吗？",
+              "answer": "Would you like to join us for dinner?",
+              "pattern": "Would you like to ___?",
+              "slotValues": {
+                "slot1": "join us for dinner",
+                "slot2": "come to the party",
+                "slot3": "go for a walk"
+              }
+            },
+            {
+              "zh": "我很乐意...",
+              "answer": "I'd be happy to help you with your project.",
+              "pattern": "I'd be happy to ___ with ___.",
+              "slotValues": {
+                "slot1": "help you your project",
+                "slot2": "work with you",
+                "slot3": "share my experience"
+              }
+            },
+            {
+              "zh": "我提议...",
+              "answer": "Let me suggest we try that new restaurant.",
+              "pattern": "Let me suggest we ___.",
+              "slotValues": {
+                "slot1": "try that new restaurant",
+                "slot2": "meet tomorrow instead",
+                "slot3": "start with the basics"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "邀请与提议 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单邀请",
+              "en": "Would you like to join us?",
+              "zh": "你想加入我们吗？",
+              "highlight": "Would you like",
+              "hint": "用 Would you like 发出邀请"
+            },
+            {
+              "level": 2,
+              "label": "说明活动",
+              "en": "Would you like to join us for dinner tonight?",
+              "zh": "今晚想和我们一起吃晚饭吗？",
+              "highlight": "dinner tonight",
+              "hint": "说明具体活动和时间"
+            },
+            {
+              "level": 3,
+              "label": "热情邀请",
+              "en": "Would you like to join us for dinner tonight? We'd love to have you!",
+              "zh": "今晚想和我们一起吃晚饭吗？我们很希望你来！",
+              "highlight": "love to have you",
+              "hint": "用 We'd love to have you 表达热情"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "主动提供 Shall I/Let me": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "主动提供 Shall I/Let me · 中译英",
+          "chunk": "offer / proposal / volunteer",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "要我帮你拿包吗？",
+              "answer": "Shall I carry your bag for you?",
+              "targetWord": "offer"
+            },
+            {
+              "zh": "让我来帮你吧。",
+              "answer": "Let me help you.",
+              "targetWord": "proposal"
+            },
+            {
+              "zh": "他自愿帮忙组织活动。",
+              "answer": "He volunteered to help organize the event.",
+              "targetWord": "volunteer"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "主动提供 Shall I/Let me · 英译中",
+          "chunk": "assistance / support / service",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Do you need any assistance?",
+              "answer": "你需要任何帮助吗？",
+              "targetWord": "assistance"
+            },
+            {
+              "en": "I'm here to offer my support.",
+              "answer": "我在这里为你提供支持。",
+              "targetWord": "support"
+            },
+            {
+              "en": "Our service includes free delivery.",
+              "answer": "我们的服务包括免费送货。",
+              "targetWord": "service"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "主动提供 Shall I/Let me · 句型",
+          "pattern": "Shall I ___ for you?",
+          "patternMeaning": "要我帮你...吗？",
+          "slots": [
+            "open the door",
+            "carry your bag",
+            "call a taxi"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "要我帮你...吗？",
+              "answer": "Shall I open the door for you?",
+              "pattern": "Shall I ___ for you?",
+              "slotValues": {
+                "slot1": "open the door",
+                "slot2": "carry your bag",
+                "slot3": "call a taxi"
+              }
+            },
+            {
+              "zh": "让我...",
+              "answer": "Let me help you with that.",
+              "pattern": "Let me ___ with ___.",
+              "slotValues": {
+                "slot1": "help you that",
+                "slot2": "assist you the project",
+                "slot3": "give you a hand"
+              }
+            },
+            {
+              "zh": "我来...",
+              "answer": "Let me check the schedule for you.",
+              "pattern": "Let me ___ for you.",
+              "slotValues": {
+                "slot1": "check the schedule",
+                "slot2": "find the information",
+                "slot3": "make the reservation"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "主动提供 Shall I/Let me · 一词多句",
+          "vocabWord": "Shall I / Let me / I'll",
+          "vocabMeaning": "要我...？/让我/我来",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Shall I ___?",
+              "items": [
+                {
+                  "zh": "要我帮你开门吗？",
+                  "answer": "Shall I open the door for you?"
+                },
+                {
+                  "zh": "要我叫出租车吗？",
+                  "answer": "Shall I call a taxi?"
+                }
+              ]
+            },
+            {
+              "chunk": "Let me ___ / I'll ___",
+              "items": [
+                {
+                  "zh": "让我帮你吧。",
+                  "answer": "Let me help you with that."
+                },
+                {
+                  "zh": "我来查一下时间表。",
+                  "answer": "Let me check the schedule for you."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "委婉提议 How about": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "委婉提议 How about · 中译英",
+          "chunk": "suggest / propose / recommend",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "出去走走怎么样？",
+              "answer": "How about going for a walk?",
+              "targetWord": "suggest"
+            },
+            {
+              "zh": "我提议换个时间见面。",
+              "answer": "I propose we meet another time.",
+              "targetWord": "propose"
+            },
+            {
+              "zh": "你推荐怎么做？",
+              "answer": "What do you recommend doing?",
+              "targetWord": "recommend"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "委婉提议 How about · 英译中",
+          "chunk": "alternative / option / choice",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We need to find an alternative solution.",
+              "answer": "我们需要找到替代方案。",
+              "targetWord": "alternative"
+            },
+            {
+              "en": "This option seems better.",
+              "answer": "这个选择似乎更好。",
+              "targetWord": "option"
+            },
+            {
+              "en": "It's your choice. What do you prefer?",
+              "answer": "这是你的选择。你更喜欢哪个？",
+              "targetWord": "choice"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "委婉提议 How about · 句型",
+          "pattern": "How about ___?",
+          "patternMeaning": "...怎么样？",
+          "slots": [
+            "going for a walk",
+            "trying the new restaurant",
+            "watching a movie"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "...怎么样？",
+              "answer": "How about going for a walk?",
+              "pattern": "How about ___?",
+              "slotValues": {
+                "slot1": "going for a walk",
+                "slot2": "trying the new restaurant",
+                "slot3": "watching a movie"
+              }
+            },
+            {
+              "zh": "为什么不...？",
+              "answer": "Why don't we take a break and have some coffee?",
+              "pattern": "Why don't we ___ and ___?",
+              "slotValues": {
+                "slot1": "take a break have some coffee",
+                "slot2": "go shopping have lunch",
+                "slot3": "meet early discuss the plan"
+              }
+            },
+            {
+              "zh": "你觉得...怎么样？",
+              "answer": "What do you think about taking the train instead?",
+              "pattern": "What do you think about ___ instead?",
+              "slotValues": {
+                "slot1": "taking the train",
+                "slot2": "doing it tomorrow",
+                "slot3": "asking for help"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "委婉提议 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "委婉提议",
+              "en": "How about going for a walk?",
+              "zh": "出去走走怎么样？",
+              "highlight": "How about",
+              "hint": "用 How about 提出建议"
+            },
+            {
+              "level": 2,
+              "label": "加理由",
+              "en": "How about going for a walk? The weather is nice.",
+              "zh": "出去走走怎么样？天气很好。",
+              "highlight": "weather",
+              "hint": "加上理由让对方更容易接受"
+            },
+            {
+              "level": 3,
+              "label": "加肯定期待",
+              "en": "How about going for a walk? The weather is nice. I think you'd love it!",
+              "zh": "出去走走怎么样？天气很好。我觉得你会喜欢的！",
+              "highlight": "you'd love it",
+              "hint": "用 I think you'd love it 表达自信"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "礼貌接受与拒绝": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "礼貌接受与拒绝 · 中译英",
+          "chunk": "accept / decline / refuse",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我很乐意接受邀请。",
+              "answer": "I'd be happy to accept the invitation.",
+              "targetWord": "accept"
+            },
+            {
+              "zh": "我不得不谢绝。",
+              "answer": "I have to decline politely.",
+              "targetWord": "decline"
+            },
+            {
+              "zh": "他拒绝了我的请求。",
+              "answer": "He refused my request.",
+              "targetWord": "refuse"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "礼貌接受与拒绝 · 英译中",
+          "chunk": "grateful / appreciate / delighted",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I'm very grateful for your kind offer.",
+              "answer": "我非常感谢你的好意。",
+              "targetWord": "grateful"
+            },
+            {
+              "en": "I really appreciate your help.",
+              "answer": "我非常感谢你的帮助。",
+              "targetWord": "appreciate"
+            },
+            {
+              "en": "I'm delighted to join you.",
+              "answer": "我很高兴加入你们。",
+              "targetWord": "delighted"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "礼貌接受与拒绝 · 句型",
+          "pattern": "I'd love to ___.",
+          "patternMeaning": "我很乐意...",
+          "slots": [
+            "join you",
+            "come to the party",
+            "help out"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我很乐意...",
+              "answer": "I'd love to join you.",
+              "pattern": "I'd love to ___.",
+              "slotValues": {
+                "slot1": "join you",
+                "slot2": "come to the party",
+                "slot3": "help out"
+              }
+            },
+            {
+              "zh": "谢谢但...",
+              "answer": "Thanks for the invitation but I'm afraid I can't make it.",
+              "pattern": "Thanks for the invitation but ___.",
+              "slotValues": {
+                "slot1": "I'm afraid I can't make it",
+                "slot2": "I have another appointment",
+                "slot3": "I need to check my schedule"
+              }
+            },
+            {
+              "zh": "也许下次...",
+              "answer": "Thank you anyway. Maybe next time!",
+              "pattern": "Thank you anyway. Maybe ___!",
+              "slotValues": {
+                "slot1": "next time",
+                "slot2": "another time",
+                "slot3": "some other day"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "礼貌接受与拒绝 · 一词多句",
+          "vocabWord": "I'd love to / Thanks but / Maybe next time",
+          "vocabMeaning": "我很乐意/谢谢但/下次吧",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I'd love to ___. / That sounds great!",
+              "items": [
+                {
+                  "zh": "我很乐意加入你们。",
+                  "answer": "I'd love to join you."
+                },
+                {
+                  "zh": "听起来很棒！",
+                  "answer": "That sounds great!"
+                }
+              ]
+            },
+            {
+              "chunk": "Thanks but ___. / Maybe next time.",
+              "items": [
+                {
+                  "zh": "谢谢但我恐怕来不了。",
+                  "answer": "Thanks for the invitation but I'm afraid I can't make it."
+                },
+                {
+                  "zh": "谢谢，也许下次吧。",
+                  "answer": "Thank you anyway. Maybe next time!"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "祝福用语": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "祝福用语 · 中译英",
+          "chunk": "bless / bless / congratulate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "愿上帝保佑你。",
+              "answer": "God bless you.",
+              "targetWord": "bless"
+            },
+            {
+              "zh": "祝你好运！",
+              "answer": "Good luck!",
+              "targetWord": "bless"
+            },
+            {
+              "zh": "祝贺你毕业！",
+              "answer": "Congratulations on your graduation!",
+              "targetWord": "congratulate"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "祝福用语 · 英译中",
+          "chunk": "celebrate / toast / best",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Let's celebrate your achievement tonight!",
+              "answer": "今晚来庆祝你的成就吧！",
+              "targetWord": "celebrate"
+            },
+            {
+              "en": "I'd like to propose a toast to the happy couple!",
+              "answer": "我想为幸福的一对敬一杯！",
+              "targetWord": "toast"
+            },
+            {
+              "en": "Best wishes for your new journey!",
+              "answer": "祝你的新旅程一切顺利！",
+              "targetWord": "best"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "祝福用语 · 句型",
+          "pattern": "I wish you all the best with ___.",
+          "patternMeaning": "我祝你在...方面一切顺利。",
+          "slots": [
+            "your new job",
+            "your studies",
+            "your new life"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我祝你在...方面一切顺利。",
+              "answer": "I wish you all the best with your new job.",
+              "pattern": "I wish you all the best with ___.",
+              "slotValues": {
+                "slot1": "your new job",
+                "slot2": "your studies",
+                "slot3": "your new life"
+              }
+            },
+            {
+              "zh": "祝你有美好的一天！",
+              "answer": "Have a wonderful day!",
+              "pattern": "Have a ___!",
+              "slotValues": {
+                "slot1": "wonderful day",
+                "slot2": "great weekend",
+                "slot3": "nice trip"
+              }
+            },
+            {
+              "zh": "...快乐！",
+              "answer": "Happy New Year! I wish you happiness!",
+              "pattern": "Happy ___! I wish you ___.",
+              "slotValues": {
+                "slot1": "New Year happiness",
+                "slot2": "Birthday health and joy",
+                "slot3": "Anniversary love and peace"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "祝福用语 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单祝福",
+              "en": "Good luck on your test!",
+              "zh": "祝你考试好运！",
+              "highlight": "Good luck",
+              "hint": "先说 Good luck"
+            },
+            {
+              "level": 2,
+              "label": "加愿望",
+              "en": "Good luck on your test! I hope you do well.",
+              "zh": "祝你考试好运！希望你能考好。",
+              "highlight": "hope",
+              "hint": "加上 I hope 表达愿望"
+            },
+            {
+              "level": 3,
+              "label": "完整祝福",
+              "en": "Good luck on your test! I hope you do well. I believe in you!",
+              "zh": "祝你考试好运！希望你能考好。我相信你！",
+              "highlight": "believe in you",
+              "hint": "用 I believe in you 鼓励对方"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "鼓励与支持": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "鼓励与支持 · 中译英",
+          "chunk": "encourage / support / motivate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我鼓励你继续尝试。",
+              "answer": "I encourage you to keep trying.",
+              "targetWord": "encourage"
+            },
+            {
+              "zh": "我们支持你的决定。",
+              "answer": "We support your decision.",
+              "targetWord": "support"
+            },
+            {
+              "zh": "他的故事激励了我。",
+              "answer": "His story motivated me.",
+              "targetWord": "motivate"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "鼓励与支持 · 英译中",
+          "chunk": "keep / believe / cheer",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Keep going! Don't give up!",
+              "answer": "继续加油！别放弃！",
+              "targetWord": "keep"
+            },
+            {
+              "en": "I believe in you. You can make it!",
+              "answer": "我相信你。你能行的！",
+              "targetWord": "believe"
+            },
+            {
+              "en": "Cheer up! Things will get better.",
+              "answer": "振作起来！一切都会好的。",
+              "targetWord": "cheer"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "鼓励与支持 · 句型",
+          "pattern": "I believe you can ___.",
+          "patternMeaning": "我相信你能...",
+          "slots": [
+            "make it",
+            "pass the exam",
+            "achieve your goal"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我相信你能...",
+              "answer": "I believe you can make it.",
+              "pattern": "I believe you can ___.",
+              "slotValues": {
+                "slot1": "make it",
+                "slot2": "pass the exam",
+                "slot3": "achieve your goal"
+              }
+            },
+            {
+              "zh": "加油！",
+              "answer": "Keep going! You're almost there!",
+              "pattern": "Keep going! You're almost ___!",
+              "slotValues": {
+                "slot1": "there",
+                "slot2": "done",
+                "slot3": "finished"
+              }
+            },
+            {
+              "zh": "别放弃！",
+              "answer": "Don't give up! You can do this!",
+              "pattern": "Don't ___! You can do this!",
+              "slotValues": {
+                "slot1": "give up",
+                "slot2": "stop trying",
+                "slot3": "lose hope"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "鼓励与支持 · 一词多句",
+          "vocabWord": "I believe / Keep going / Don't give up",
+          "vocabMeaning": "我相信/加油/别放弃",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I believe in you. You can ___.",
+              "items": [
+                {
+                  "zh": "我相信你。你能行的！",
+                  "answer": "I believe in you. You can make it!"
+                },
+                {
+                  "zh": "我相信你能通过考试。",
+                  "answer": "I believe you can pass the exam."
+                }
+              ]
+            },
+            {
+              "chunk": "Keep ___! Don't ___!",
+              "items": [
+                {
+                  "zh": "继续加油！别放弃！",
+                  "answer": "Keep going! Don't give up!"
+                },
+                {
+                  "zh": "继续努力！别停止尝试！",
+                  "answer": "Keep trying! Don't stop!"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "提供帮助": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "提供帮助 · 中译英",
+          "chunk": "offer / assistance / support",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我可以帮助你。",
+              "answer": "I'd be happy to help you.",
+              "targetWord": "offer"
+            },
+            {
+              "zh": "如果你需要任何帮助请告诉我。",
+              "answer": "Let me know if you need any assistance.",
+              "targetWord": "assistance"
+            },
+            {
+              "zh": "我会一直支持你。",
+              "answer": "I'll always be here to support you.",
+              "targetWord": "support"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "提供帮助 · 英译中",
+          "chunk": "willing / ready / available",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I'm willing to help with anything you need.",
+              "answer": "我愿意帮你做任何事。",
+              "targetWord": "willing"
+            },
+            {
+              "en": "I'm ready to assist whenever you need me.",
+              "answer": "我随时准备好帮助你。",
+              "targetWord": "ready"
+            },
+            {
+              "en": "I'm available if you need a hand.",
+              "answer": "如果你需要帮忙，我有空。",
+              "targetWord": "available"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "提供帮助 · 句型",
+          "pattern": "I'd be happy to ___ for you.",
+          "patternMeaning": "我很乐意为你...",
+          "slots": [
+            "help",
+            "check it",
+            "make a call"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我很乐意为你...",
+              "answer": "I'd be happy to help you.",
+              "pattern": "I'd be happy to ___ for you.",
+              "slotValues": {
+                "slot1": "help",
+                "slot2": "check it",
+                "slot3": "make a call"
+              }
+            },
+            {
+              "zh": "如果你需要...请告诉我。",
+              "answer": "Let me know if you need any assistance.",
+              "pattern": "Let me know if you need ___ ___.",
+              "slotValues": {
+                "slot1": "any assistance",
+                "slot2": "my help",
+                "slot3": "anything else"
+              }
+            },
+            {
+              "zh": "需要我...吗？",
+              "answer": "Do you need me to pick you up?",
+              "pattern": "Do you need me to ___?",
+              "slotValues": {
+                "slot1": "pick you up",
+                "slot2": "wait for you",
+                "slot3": "take care of it"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "提供帮助 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单提供",
+              "en": "I'd be happy to help you.",
+              "zh": "我很乐意帮你。",
+              "highlight": "help",
+              "hint": "用 I'd be happy to help 主动提供"
+            },
+            {
+              "level": 2,
+              "label": "加具体帮助",
+              "en": "I'd be happy to help you with your project.",
+              "zh": "我很乐意帮你做项目。",
+              "highlight": "with your project",
+              "hint": "加上具体帮什么"
+            },
+            {
+              "level": 3,
+              "label": "加邀请",
+              "en": "I'd be happy to help you with your project. Let me know if you need anything!",
+              "zh": "我很乐意帮你做项目。如果你需要什么，告诉我！",
+              "highlight": "Let me know",
+              "hint": "用 Let me know 保持开放"
             }
           ]
         }

@@ -67,7 +67,11 @@
           "title": "我是谁 · 句型",
           "pattern": "I am ___.",
           "patternMeaning": "我是...",
-          "slots": ["Li Ming", "a student", "Tom"],
+          "slots": [
+            "Li Ming",
+            "a student",
+            "Tom"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -194,7 +198,11 @@
           "title": "你是谁 · 句型",
           "pattern": "You are very ___.",
           "patternMeaning": "你很...",
-          "slots": ["good", "smart", "funny"],
+          "slots": [
+            "good",
+            "smart",
+            "funny"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -282,9 +290,9 @@
               "targetWord": "old"
             },
             {
-              "en": "I am new here.",
+              "en": "I am a newcomer.",
               "answer": "我是新来的。",
-              "targetWord": "new"
+              "targetWord": "newcomer"
             }
           ]
         },
@@ -294,7 +302,10 @@
           "title": "我的信息 · 句型",
           "pattern": "My name is ___. I am from ___.",
           "patternMeaning": "我的名字是...我来自...",
-          "slots": ["Li Ming China", "Tom America"],
+          "slots": [
+            "Li Ming China",
+            "Tom America"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -359,8 +370,14 @@
             {
               "chunk": "My name is ___. I am from ___.",
               "items": [
-                { "zh": "我叫李明。我来自中国。", "answer": "My name is Li Ming. I am from China." },
-                { "zh": "我叫汤姆。我来自美国。", "answer": "My name is Tom. I am from America." }
+                {
+                  "zh": "我叫李明。我来自中国。",
+                  "answer": "My name is Li Ming. I am from China."
+                },
+                {
+                  "zh": "我叫汤姆。我来自美国。",
+                  "answer": "My name is Tom. I am from America."
+                }
               ]
             }
           ]
@@ -436,7 +453,10 @@
           "title": "问候与礼貌 · 句型",
           "pattern": "Nice to meet you. I am ___.",
           "patternMeaning": "很高兴认识你。我是...",
-          "slots": ["Li Ming", "Tom"],
+          "slots": [
+            "Li Ming",
+            "Tom"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -528,7 +548,10 @@
           "title": "年龄与数字 · 句型",
           "pattern": "How old ___ you? I am ___.",
           "patternMeaning": "你多大？我...",
-          "slots": ["are 20", "is he 10"],
+          "slots": [
+            "are 20",
+            "is he 10"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -562,8 +585,14 @@
             {
               "chunk": "How old ___ you? I am ___ years old.",
               "items": [
-                { "zh": "你多大了？我20岁。", "answer": "How old are you? I am 20 years old." },
-                { "zh": "他多大了？他10岁。", "answer": "How old is he? He is 10 years old." }
+                {
+                  "zh": "你多大了？我20岁。",
+                  "answer": "How old are you? I am 20 years old."
+                },
+                {
+                  "zh": "他多大了？他10岁。",
+                  "answer": "How old is he? He is 10 years old."
+                }
               ]
             }
           ]
@@ -639,7 +668,11 @@
           "title": "它是什么 · 句型",
           "pattern": "It is ___.",
           "patternMeaning": "它是...",
-          "slots": ["a book", "red", "very big"],
+          "slots": [
+            "a book",
+            "red",
+            "very big"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -740,7 +773,10 @@
           "title": "颜色与大小 · 句型",
           "pattern": "It is ___ and ___.",
           "patternMeaning": "它又___又___。",
-          "slots": ["big red", "small green"],
+          "slots": [
+            "big red",
+            "small green"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -774,8 +810,14 @@
             {
               "chunk": "The ___ is ___.",
               "items": [
-                { "zh": "苹果是红色的。", "answer": "The apple is red." },
-                { "zh": "包是蓝色的。", "answer": "The bag is blue." }
+                {
+                  "zh": "苹果是红色的。",
+                  "answer": "The apple is red."
+                },
+                {
+                  "zh": "包是蓝色的。",
+                  "answer": "The bag is blue."
+                }
               ]
             }
           ]
@@ -825,28 +867,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "位置与方向 · 英译中",
-          "chunk": "table / box / near / phone",
+          "chunk": "desk / chair / behind",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "The book is on the table.",
-              "answer": "书在桌上。",
-              "targetWord": "table"
+              "en": "The book is on the desk.",
+              "answer": "书在书桌上。",
+              "targetWord": "desk"
             },
             {
-              "en": "The pen is in the box.",
-              "answer": "笔在盒子里。",
-              "targetWord": "box"
+              "en": "The cat is under the chair.",
+              "answer": "猫在椅子下面。",
+              "targetWord": "chair"
             },
             {
-              "en": "I am near the door.",
-              "answer": "我在门附近。",
-              "targetWord": "near"
-            },
-            {
-              "en": "Where is my phone?",
-              "answer": "我的手机在哪里？",
-              "targetWord": "phone"
+              "en": "The school is behind the park.",
+              "answer": "学校在公园后面。",
+              "targetWord": "behind"
             }
           ]
         },
@@ -856,7 +893,10 @@
           "title": "位置与方向 · 句型",
           "pattern": "It is ___ the ___.",
           "patternMeaning": "它在___的___。",
-          "slots": ["on table", "in bag"],
+          "slots": [
+            "on table",
+            "in bag"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -924,23 +964,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "天气描述 · 英译中",
-          "chunk": "sun / rain / warm",
+          "chunk": "warm / cool / rainy",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "The sun is hot.",
-              "answer": "太阳很热。",
-              "targetWord": "sun"
-            },
-            {
-              "en": "It is rainy today.",
-              "answer": "今天下雨。",
-              "targetWord": "rain"
-            },
-            {
-              "en": "It is warm in spring.",
-              "answer": "春天很暖和。",
+              "en": "It is warm today.",
+              "answer": "今天很暖和。",
               "targetWord": "warm"
+            },
+            {
+              "en": "The weather is cool in autumn.",
+              "answer": "秋天天气凉爽。",
+              "targetWord": "cool"
+            },
+            {
+              "en": "It is rainy in spring.",
+              "answer": "春天多雨。",
+              "targetWord": "rainy"
             }
           ]
         },
@@ -950,7 +990,11 @@
           "title": "天气描述 · 句型",
           "pattern": "It is ___ today.",
           "patternMeaning": "今天天气___。",
-          "slots": ["sunny", "hot", "cold"],
+          "slots": [
+            "sunny",
+            "hot",
+            "cold"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -982,8 +1026,14 @@
             {
               "chunk": "It is ___ today.",
               "items": [
-                { "zh": "今天很热。", "answer": "It is very hot today." },
-                { "zh": "今天很冷。", "answer": "It is very cold today." }
+                {
+                  "zh": "今天很热。",
+                  "answer": "It is very hot today."
+                },
+                {
+                  "zh": "今天很冷。",
+                  "answer": "It is very cold today."
+                }
               ]
             }
           ]
@@ -1059,7 +1109,10 @@
           "title": "数量表达 · 句型",
           "pattern": "There is ___ on the ___.",
           "patternMeaning": "___上有一个___。",
-          "slots": ["a book table", "a pen desk"],
+          "slots": [
+            "a book table",
+            "a pen desk"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1153,7 +1206,10 @@
           "title": "他/她是谁 · 句型",
           "pattern": "He is ___. His name is ___.",
           "patternMeaning": "他是...他的名字是...",
-          "slots": ["a doctor Tom", "a teacher John"],
+          "slots": [
+            "a doctor Tom",
+            "a teacher John"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1221,28 +1277,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "家庭关系 · 英译中",
-          "chunk": "sister / daughter / son / family",
+          "chunk": "father / mother / parent",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have two sisters.",
-              "answer": "我有两个姐妹。",
-              "targetWord": "sister"
+              "en": "My dad is a doctor.",
+              "answer": "我爸爸是医生。",
+              "targetWord": "dad"
             },
             {
-              "en": "She is my daughter.",
-              "answer": "她是我女儿。",
-              "targetWord": "daughter"
+              "en": "My mom is a teacher.",
+              "answer": "我妈妈是老师。",
+              "targetWord": "mom"
             },
             {
-              "en": "He is my son.",
-              "answer": "他是我儿子。",
-              "targetWord": "son"
-            },
-            {
-              "en": "My family is big.",
-              "answer": "我家很大。",
-              "targetWord": "family"
+              "en": "My parents are very kind.",
+              "answer": "我父母很善良。",
+              "targetWord": "parent"
             }
           ]
         },
@@ -1252,7 +1303,10 @@
           "title": "家庭关系 · 句型",
           "pattern": "My ___ is a ___.",
           "patternMeaning": "我的___是一名___。",
-          "slots": ["father doctor", "mother teacher"],
+          "slots": [
+            "father doctor",
+            "mother teacher"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1320,23 +1374,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "职业身份 · 英译中",
-          "chunk": "student / doctor / nurse",
+          "chunk": "engineer / worker / nurse",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "He is a good student.",
-              "answer": "他是一名好学生。",
-              "targetWord": "student"
+              "en": "My brother is an engineer.",
+              "answer": "我哥哥是工程师。",
+              "targetWord": "engineer"
             },
             {
-              "en": "He is a doctor.",
-              "answer": "他是一名医生。",
-              "targetWord": "doctor"
+              "en": "He works as a factory worker.",
+              "answer": "他是工厂工人。",
+              "targetWord": "worker"
             },
             {
-              "en": "She is a good nurse.",
-              "answer": "她是一名好护士。",
-              "targetWord": "nurse"
+              "en": "The nurse helps the doctor.",
+              "answer": "护士帮助医生。",
+              "targetWord": "helps"
             }
           ]
         },
@@ -1346,7 +1400,11 @@
           "title": "职业身份 · 句型",
           "pattern": "He is a ___. / She is a ___.",
           "patternMeaning": "他/她是一名___。",
-          "slots": ["doctor", "teacher", "nurse"],
+          "slots": [
+            "doctor",
+            "teacher",
+            "nurse"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1412,23 +1470,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "外表描述 · 英译中",
-          "chunk": "young / beautiful / tall",
+          "chunk": "young / pretty / strong",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "She is young and beautiful.",
-              "answer": "她年轻漂亮。",
-              "targetWord": "beautiful"
-            },
-            {
-              "en": "He is very tall.",
-              "answer": "他很高。",
-              "targetWord": "tall"
-            },
-            {
-              "en": "She is a young girl.",
-              "answer": "她是一个年轻女孩。",
+              "en": "She is young and pretty.",
+              "answer": "她又年轻又漂亮。",
               "targetWord": "young"
+            },
+            {
+              "en": "He is very strong.",
+              "answer": "他很强壮。",
+              "targetWord": "strong"
+            },
+            {
+              "en": "She has a lovely smile.",
+              "answer": "她有可爱的笑容。",
+              "targetWord": "lovely"
             }
           ]
         },
@@ -1438,7 +1496,10 @@
           "title": "外表描述 · 句型",
           "pattern": "He is ___ and ___.",
           "patternMeaning": "他又___又___。",
-          "slots": ["tall thin", "young pretty"],
+          "slots": [
+            "tall thin",
+            "young pretty"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1541,7 +1602,10 @@
           "title": "国籍与语言 · 句型",
           "pattern": "I am from ___. I speak ___.",
           "patternMeaning": "我来自___。我说___。",
-          "slots": ["China Chinese", "America English"],
+          "slots": [
+            "China Chinese",
+            "America English"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1635,7 +1699,11 @@
           "title": "打招呼与告别 · 句型",
           "pattern": "___! How are you?",
           "patternMeaning": "___！你好吗？",
-          "slots": ["Good morning", "Hello", "Hi"],
+          "slots": [
+            "Good morning",
+            "Hello",
+            "Hi"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1727,7 +1795,11 @@
           "title": "简单闲聊 · 句型",
           "pattern": "Where are you from? I am from ___.",
           "patternMeaning": "你来自哪里？我来自___。",
-          "slots": ["China", "Japan", "America"],
+          "slots": [
+            "China",
+            "Japan",
+            "America"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1814,7 +1886,10 @@
           "title": "询问近况 · 句型",
           "pattern": "How is ___? It is ___.",
           "patternMeaning": "___怎么样？___。",
-          "slots": ["your day good", "everything fine"],
+          "slots": [
+            "your day good",
+            "everything fine"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1908,7 +1983,11 @@
           "title": "介绍他人 · 句型",
           "pattern": "This is my ___.",
           "patternMeaning": "这是我的___。",
-          "slots": ["friend", "brother", "classmate"],
+          "slots": [
+            "friend",
+            "brother",
+            "classmate"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -1995,7 +2074,10 @@
           "title": "表达关心 · 句型",
           "pattern": "Are you ___? I am ___.",
           "patternMeaning": "你___吗？我___。",
-          "slots": ["okay fine", "tired sorry"],
+          "slots": [
+            "okay fine",
+            "tired sorry"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2058,23 +2140,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "时间表达 · 英译中",
-          "chunk": "now / time / school",
+          "chunk": "clock / hour / minute",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "It is six thirty.",
-              "answer": "六点半了。",
-              "targetWord": "now"
+              "en": "The clock says 3 o'clock.",
+              "answer": "钟上显示3点。",
+              "targetWord": "clock"
             },
             {
-              "en": "It is six fifteen.",
-              "answer": "六点十五分。",
-              "targetWord": "time"
+              "en": "I will be back in one hour.",
+              "answer": "我一小时后回来。",
+              "targetWord": "hour"
             },
             {
-              "en": "I go to school at eight.",
-              "answer": "我八点上学。",
-              "targetWord": "school"
+              "en": "Please wait a minute.",
+              "answer": "请等一分钟。",
+              "targetWord": "minute"
             }
           ]
         },
@@ -2084,7 +2166,10 @@
           "title": "时间表达 · 句型",
           "pattern": "What time is it? It is ___.",
           "patternMeaning": "几点了？___。",
-          "slots": ["three o'clock", "half past six"],
+          "slots": [
+            "three o'clock",
+            "half past six"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2177,23 +2262,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "日期与星期 · 英译中",
-          "chunk": "week / month / year",
+          "chunk": "week / year / season",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have English on Tuesday.",
-              "answer": "我周二有英语课。",
+              "en": "There are 7 days in a week.",
+              "answer": "一周有7天。",
               "targetWord": "week"
             },
             {
-              "en": "My birthday is in July.",
-              "answer": "我生日在七月。",
-              "targetWord": "month"
+              "en": "This year is 2026.",
+              "answer": "今年是2026年。",
+              "targetWord": "year"
             },
             {
-              "en": "I was born in 1998.",
-              "answer": "我生于1998年。",
-              "targetWord": "year"
+              "en": "There are four seasons in a year.",
+              "answer": "一年有四季。",
+              "targetWord": "season"
             }
           ]
         },
@@ -2203,7 +2288,11 @@
           "title": "日期与星期 · 句型",
           "pattern": "Today is ___.",
           "patternMeaning": "今天是___。",
-          "slots": ["Monday", "Tuesday", "Friday"],
+          "slots": [
+            "Monday",
+            "Tuesday",
+            "Friday"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2327,7 +2416,10 @@
           "title": "日常时间词 · 句型",
           "pattern": "I ___ every ___.",
           "patternMeaning": "我每天___。",
-          "slots": ["study English day", "run morning"],
+          "slots": [
+            "study English day",
+            "run morning"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2390,23 +2482,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "频率表达 · 英译中",
-          "chunk": "usually / sometimes / always",
+          "chunk": "usually / sometimes / rarely",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "She usually walks to school.",
-              "answer": "她通常走路上学。",
+              "en": "I usually get up at 7.",
+              "answer": "我通常7点起床。",
               "targetWord": "usually"
             },
             {
-              "en": "I sometimes watch TV.",
-              "answer": "我有时看电视。",
+              "en": "Sometimes I watch TV after dinner.",
+              "answer": "有时候我晚饭后看电视。",
               "targetWord": "sometimes"
             },
             {
-              "en": "He is always happy.",
-              "answer": "他总是很开心。",
-              "targetWord": "always"
+              "en": "I rarely eat fast food.",
+              "answer": "我很少吃快餐。",
+              "targetWord": "rarely"
             }
           ]
         },
@@ -2416,7 +2508,10 @@
           "title": "频率表达 · 句型",
           "pattern": "I ___ ___.",
           "patternMeaning": "我___。",
-          "slots": ["always eat breakfast", "sometimes watch TV"],
+          "slots": [
+            "always eat breakfast",
+            "sometimes watch TV"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2450,8 +2545,14 @@
             {
               "chunk": "I ___ eat breakfast.",
               "items": [
-                { "zh": "我总是吃早餐。", "answer": "I always eat breakfast." },
-                { "zh": "我从不吃早餐。", "answer": "I never eat breakfast." }
+                {
+                  "zh": "我总是吃早餐。",
+                  "answer": "I always eat breakfast."
+                },
+                {
+                  "zh": "我从不吃早餐。",
+                  "answer": "I never eat breakfast."
+                }
               ]
             }
           ]
@@ -2522,7 +2623,10 @@
           "title": "我想要... · 句型",
           "pattern": "I want ___.",
           "patternMeaning": "我想要___。",
-          "slots": ["a coffee", "to go home"],
+          "slots": [
+            "a coffee",
+            "to go home"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2648,7 +2752,10 @@
           "title": "我能/我会 · 句型",
           "pattern": "I can ___.",
           "patternMeaning": "我会/能___。",
-          "slots": ["speak English", "swim"],
+          "slots": [
+            "speak English",
+            "swim"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2688,8 +2795,14 @@
             {
               "chunk": "I can ___. Can you ___?",
               "items": [
-                { "zh": "我会说英语。你会说英语吗？", "answer": "I can speak English. Can you speak English?" },
-                { "zh": "我会游泳。你会游泳吗？", "answer": "I can swim. Can you swim?" }
+                {
+                  "zh": "我会说英语。你会说英语吗？",
+                  "answer": "I can speak English. Can you speak English?"
+                },
+                {
+                  "zh": "我会游泳。你会游泳吗？",
+                  "answer": "I can swim. Can you swim?"
+                }
               ]
             }
           ]
@@ -2760,7 +2873,11 @@
           "title": "我喜欢/不喜欢 · 句型",
           "pattern": "I like ___.",
           "patternMeaning": "我喜欢___。",
-          "slots": ["coffee", "to read", "reading"],
+          "slots": [
+            "coffee",
+            "to read",
+            "reading"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2847,7 +2964,10 @@
           "title": "身体感受 · 句型",
           "pattern": "I am ___. I want to ___.",
           "patternMeaning": "我___。我想___。",
-          "slots": ["hungry eat", "thirsty drink"],
+          "slots": [
+            "hungry eat",
+            "thirsty drink"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2910,23 +3030,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "请求帮助 · 英译中",
-          "chunk": "slowly / speak / find",
+          "chunk": "please / issue / trouble",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Could you speak slowly?",
-              "answer": "你能说慢点吗？",
-              "targetWord": "speak"
+              "en": "Can you help me please?",
+              "answer": "你能帮我吗？",
+              "targetWord": "please"
             },
             {
-              "en": "Can you help me find my bag?",
-              "answer": "你能帮我找我的包吗？",
-              "targetWord": "find"
+              "en": "I have an issue with my phone.",
+              "answer": "我的手机有问题。",
+              "targetWord": "issue"
             },
             {
-              "en": "Can I ask a question?",
-              "answer": "我能问个问题吗？",
-              "targetWord": "question"
+              "en": "Sorry for the trouble.",
+              "answer": "对不起，麻烦你了。",
+              "targetWord": "trouble"
             }
           ]
         },
@@ -2936,7 +3056,10 @@
           "title": "请求帮助 · 句型",
           "pattern": "Can you help me ___?",
           "patternMeaning": "你能帮我___吗？",
-          "slots": ["find this", "with this"],
+          "slots": [
+            "find this",
+            "with this"
+          ],
           "direction": "zh_to_en",
           "items": [
             {
@@ -2953,6 +3076,110 @@
               "pattern": "Excuse me, ___?",
               "slotValues": {
                 "slot1": "where is the bathroom"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "数字1-20": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "数字1-20 · 中译英",
+          "chunk": "one / two / three / ten",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "数字1，2，3。",
+              "answer": "One, two, three.",
+              "targetWord": "one"
+            },
+            {
+              "zh": "我从1数到10。",
+              "answer": "I count from one to ten.",
+              "targetWord": "two"
+            },
+            {
+              "zh": "她有三个苹果。",
+              "answer": "She has three apples.",
+              "targetWord": "three"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "数字1-20 · 英译中",
+          "chunk": "four / seven / twelve",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "There are four seasons in a year.",
+              "answer": "一年有四个季节。",
+              "targetWord": "four"
+            },
+            {
+              "en": "I wake up at seven in the morning.",
+              "answer": "我早上七点起床。",
+              "targetWord": "seven"
+            },
+            {
+              "en": "There are twelve months in a year.",
+              "answer": "一年有十二个月。",
+              "targetWord": "twelve"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "数字1-20 · 句型",
+          "pattern": "I have ___ ___.",
+          "patternMeaning": "我有...个...",
+          "slots": [
+            "three books",
+            "two pens",
+            "five fingers"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我有...个...",
+              "answer": "I have three books.",
+              "pattern": "I have ___ ___.",
+              "slotValues": {
+                "slot1": "three books",
+                "slot2": "two pens",
+                "slot3": "five fingers"
+              }
+            },
+            {
+              "zh": "他...岁了。",
+              "answer": "He is ten years old.",
+              "pattern": "He is ___ years old.",
+              "slotValues": {
+                "slot1": "ten",
+                "slot2": "five",
+                "slot3": "eight"
+              }
+            },
+            {
+              "zh": "这里...个...",
+              "answer": "There are twenty students in my class.",
+              "pattern": "There are ___ ___ in my ___.",
+              "slotValues": {
+                "slot1": "twenty students",
+                "slot2": "class"
               }
             }
           ]

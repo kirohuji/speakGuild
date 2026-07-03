@@ -1,4 +1,2868 @@
 {
+  "我认为...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我认为... · 中译英",
+          "chunk": "aware / cultural / pleasant",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我认为每个人都需要意识到这个问题。",
+              "answer": "I think everyone needs to be aware of this problem.",
+              "targetWord": "aware"
+            },
+            {
+              "zh": "我认为文化交流非常重要。",
+              "answer": "I think cultural exchange is very important.",
+              "targetWord": "cultural"
+            },
+            {
+              "zh": "我认为这次旅行很愉快。",
+              "answer": "I think the trip was very pleasant.",
+              "targetWord": "pleasant"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我认为... · 英译中",
+          "chunk": "fascinating / global / powerful",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I think the exhibition was fascinating.",
+              "answer": "我认为这个展览很吸引人。",
+              "targetWord": "fascinating"
+            },
+            {
+              "en": "I think we need a global solution.",
+              "answer": "我认为我们需要一个全球性的解决方案。",
+              "targetWord": "global"
+            },
+            {
+              "en": "I think education is a powerful tool.",
+              "answer": "我认为教育是一个强大的工具。",
+              "targetWord": "powerful"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我认为... · 句型",
+          "pattern": "I think (that) ___. / I don't think (that) ___.",
+          "patternMeaning": "我认为... / 我认为...不...",
+          "slots": [
+            "you are right",
+            "he will come",
+            "it's a good idea"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我认为你是对的。",
+              "answer": "I think that you are right.",
+              "pattern": "I think (that) ___.",
+              "slotValues": {
+                "slot1": "you are right"
+              }
+            },
+            {
+              "zh": "我不认为他会来。",
+              "answer": "I don't think that he will come.",
+              "pattern": "I don't think (that) ___.",
+              "slotValues": {
+                "slot1": "he will come"
+              }
+            },
+            {
+              "zh": "我认为这是个好主意。",
+              "answer": "I think that it's a good idea.",
+              "pattern": "I think (that) ___.",
+              "slotValues": {
+                "slot1": "it's a good idea"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我认为... · 一词多句",
+          "vocabWord": "I think / I believe / I feel",
+          "vocabMeaning": "我认为/我相信/我觉得",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I think (that) ___. / I believe (that) ___.",
+              "items": [
+                { "zh": "我认为你做得对。", "answer": "I think that you did the right thing." },
+                { "zh": "我相信他会成功的。", "answer": "I believe that he will succeed." }
+              ]
+            },
+            {
+              "chunk": "I feel (that) ___. / I don't think (that) ___.",
+              "items": [
+                { "zh": "我觉得我们应该等等。", "answer": "I feel that we should wait." },
+                { "zh": "我不认为这是个好主意。", "answer": "I don't think that it's a good idea." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我知道/听说": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我知道/听说 · 中译英",
+          "chunk": "improvement / production / range",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我知道这需要很大的改进。",
+              "answer": "I know that this needs a lot of improvement.",
+              "targetWord": "improvement"
+            },
+            {
+              "zh": "我听说生产已经开始了。",
+              "answer": "I heard that production has already started.",
+              "targetWord": "production"
+            },
+            {
+              "zh": "我知道这涵盖了一个很大的范围。",
+              "answer": "I know that this covers a wide range.",
+              "targetWord": "range"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我知道/听说 · 英译中",
+          "chunk": "environmental / exhibition / related",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I know that environmental issues are serious.",
+              "answer": "我知道环境问题很严重。",
+              "targetWord": "environmental"
+            },
+            {
+              "en": "I heard that the exhibition was a success.",
+              "answer": "我听说那个展览很成功。",
+              "targetWord": "exhibition"
+            },
+            {
+              "en": "I know that these two topics are related.",
+              "answer": "我知道这两个话题是相关的。",
+              "targetWord": "related"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我知道/听说 · 句型",
+          "pattern": "I know (that) ___. / I heard (that) ___.",
+          "patternMeaning": "我知道... / 我听说...",
+          "slots": [
+            "you are busy",
+            "the store is closing",
+            "she moved to London"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我知道你很忙。",
+              "answer": "I know that you are busy.",
+              "pattern": "I know (that) ___.",
+              "slotValues": {
+                "slot1": "you are busy"
+              }
+            },
+            {
+              "zh": "我听说那家店要关了。",
+              "answer": "I heard that the store is closing.",
+              "pattern": "I heard (that) ___.",
+              "slotValues": {
+                "slot1": "the store is closing"
+              }
+            },
+            {
+              "zh": "我听说她搬去伦敦了。",
+              "answer": "I heard that she moved to London.",
+              "pattern": "I heard (that) ___.",
+              "slotValues": {
+                "slot1": "she moved to London"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我知道/听说 · 一词多句",
+          "vocabWord": "I know / I heard / I'm sure",
+          "vocabMeaning": "我知道/我听说/我确定",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I know (that) ___. / I'm sure (that) ___.",
+              "items": [
+                { "zh": "我知道他会来的。", "answer": "I know that he will come." },
+                { "zh": "我确定一切都会好的。", "answer": "I'm sure that everything will be fine." }
+              ]
+            },
+            {
+              "chunk": "I heard (that) ___. / I'm sorry (that) ___.",
+              "items": [
+                { "zh": "我听说他们结婚了。", "answer": "I heard that they got married." },
+                { "zh": "抱歉我迟到了。", "answer": "I'm sorry that I'm late." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "不确定": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "不确定 · 中译英",
+          "chunk": "anxious / deny / circumstance",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我不确定他是否感到焦虑。",
+              "answer": "I'm not sure whether he feels anxious.",
+              "targetWord": "anxious"
+            },
+            {
+              "zh": "我不确定她是否会否认这件事。",
+              "answer": "I'm not sure if she will deny it.",
+              "targetWord": "deny"
+            },
+            {
+              "zh": "我不确定在这种情况下该怎么办。",
+              "answer": "I'm not sure what to do in this circumstance.",
+              "targetWord": "circumstance"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "不确定 · 英译中",
+          "chunk": "translate / imaginary / unfair",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I'm not sure how to translate this word.",
+              "answer": "我不确定这个词怎么翻译。",
+              "targetWord": "translate"
+            },
+            {
+              "en": "I'm not sure if the story is imaginary.",
+              "answer": "我不确定这个故事是不是虚构的。",
+              "targetWord": "imaginary"
+            },
+            {
+              "en": "I'm not sure why it seems unfair.",
+              "answer": "我不确定为什么它看起来不公平。",
+              "targetWord": "unfair"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "不确定 · 句型",
+          "pattern": "I'm not sure (that) ___. / I don't know what ___.",
+          "patternMeaning": "我不确定... / 我不知道...",
+          "slots": [
+            "I can go",
+            "he wants",
+            "she said"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我不确定我能去。",
+              "answer": "I'm not sure that I can go.",
+              "pattern": "I'm not sure (that) ___.",
+              "slotValues": {
+                "slot1": "I can go"
+              }
+            },
+            {
+              "zh": "我不知道他想要什么。",
+              "answer": "I don't know what he wants.",
+              "pattern": "I don't know what ___.",
+              "slotValues": {
+                "slot1": "he wants"
+              }
+            },
+            {
+              "zh": "我不知道她说了什么。",
+              "answer": "I don't know what she said.",
+              "pattern": "I don't know what ___.",
+              "slotValues": {
+                "slot1": "she said"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "不确定 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单不确定",
+              "en": "I'm not sure.",
+              "zh": "我不确定。",
+              "highlight": "sure",
+              "hint": "先说 I'm not sure"
+            },
+            {
+              "level": 2,
+              "label": "加内容",
+              "en": "I'm not sure that I can go.",
+              "zh": "我不确定我能去。",
+              "highlight": "can go",
+              "hint": "加上具体内容"
+            },
+            {
+              "level": 3,
+              "label": "加原因",
+              "en": "I'm not sure that I can go because I have a meeting.",
+              "zh": "我不确定我能去，因为我有个会。",
+              "highlight": "because",
+              "hint": "用 because 说明原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "转述他人": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "转述他人 · 中译英",
+          "chunk": "account / consist / participate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他跟我说了这个情况的来龙去脉。",
+              "answer": "He gave an account of the situation.",
+              "targetWord": "account"
+            },
+            {
+              "zh": "她说团队由五个人组成。",
+              "answer": "She said the team consists of five people.",
+              "targetWord": "consist"
+            },
+            {
+              "zh": "他告诉我他打算参加活动。",
+              "answer": "He told me that he plans to participate.",
+              "targetWord": "participate"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "转述他人 · 英译中",
+          "chunk": "element / nation / occur",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He said that this element is important.",
+              "answer": "他说这个元素很重要。",
+              "targetWord": "element"
+            },
+            {
+              "en": "She told me that the nation is celebrating.",
+              "answer": "她告诉我全国都在庆祝。",
+              "targetWord": "nation"
+            },
+            {
+              "en": "He mentioned that the event will occur next week.",
+              "answer": "他提到这个活动将在下周举行。",
+              "targetWord": "occur"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "转述他人 · 句型",
+          "pattern": "He said (that) ___. / She told me (that) ___.",
+          "patternMeaning": "他说... / 她告诉我...",
+          "slots": [
+            "he would come",
+            "she liked it",
+            "they were leaving"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "他说他会来。",
+              "answer": "He said that he would come.",
+              "pattern": "He said (that) ___.",
+              "slotValues": {
+                "slot1": "he would come"
+              }
+            },
+            {
+              "zh": "她告诉我她喜欢这个。",
+              "answer": "She told me that she liked it.",
+              "pattern": "She told me (that) ___.",
+              "slotValues": {
+                "slot1": "she liked it"
+              }
+            },
+            {
+              "zh": "他说他们准备离开了。",
+              "answer": "He said that they were leaving.",
+              "pattern": "He said (that) ___.",
+              "slotValues": {
+                "slot1": "they were leaving"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "转述他人 · 一词多句",
+          "vocabWord": "He said / She told me / I heard / They explained",
+          "vocabMeaning": "他说/她告诉我/我听说/他们解释",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "He said (that) ___. / She told me (that) ___.",
+              "items": [
+                { "zh": "他说他忙完了。", "answer": "He said that he was done." },
+                { "zh": "她告诉我她已经准备好了。", "answer": "She told me that she was ready." }
+              ]
+            },
+            {
+              "chunk": "I heard (that) ___. / They explained (that) ___.",
+              "items": [
+                { "zh": "我听说价格涨了。", "answer": "I heard that the price went up." },
+                { "zh": "他们解释了为什么会出问题。", "answer": "They explained that something went wrong." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "疑问词从句": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "疑问词从句 · 中译英",
+          "chunk": "block / bury / sink",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我不知道是什么挡住了路。",
+              "answer": "I don't know what is blocking the road.",
+              "targetWord": "block"
+            },
+            {
+              "zh": "我想知道他们为什么把东西埋了。",
+              "answer": "I wonder why they buried it.",
+              "targetWord": "bury"
+            },
+            {
+              "zh": "你能告诉我船在哪里沉没的吗？",
+              "answer": "Can you tell me where the ship sank?",
+              "targetWord": "sink"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "疑问词从句 · 英译中",
+          "chunk": "tape / sum / spiritual",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I don't know where the tape is.",
+              "answer": "我不知道磁带在哪里。",
+              "targetWord": "tape"
+            },
+            {
+              "en": "Can you tell me what the total sum is?",
+              "answer": "你能告诉我总额是多少吗？",
+              "targetWord": "sum"
+            },
+            {
+              "en": "I wonder why he is so spiritual.",
+              "answer": "我想知道他为什么那么有灵性。",
+              "targetWord": "spiritual"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "疑问词从句 · 句型",
+          "pattern": "I don't know what ___. / Can you tell me where ___? / I wonder why ___.",
+          "patternMeaning": "我不知道... / 你能告诉我...吗？ / 我想知道为什么...",
+          "slots": [
+            "to do",
+            "the station is",
+            "he left"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我不知道该做什么。",
+              "answer": "I don't know what to do.",
+              "pattern": "I don't know what ___.",
+              "slotValues": {
+                "slot1": "to do"
+              }
+            },
+            {
+              "zh": "你能告诉我车站在哪吗？",
+              "answer": "Can you tell me where the station is?",
+              "pattern": "Can you tell me where ___?",
+              "slotValues": {
+                "slot1": "the station is"
+              }
+            },
+            {
+              "zh": "我想知道他为什么走了。",
+              "answer": "I wonder why he left.",
+              "pattern": "I wonder why ___.",
+              "slotValues": {
+                "slot1": "he left"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "疑问词从句 · 一词多句",
+          "vocabWord": "I don't know / Can you tell me / I wonder",
+          "vocabMeaning": "我不知道/你能告诉我吗/我想知道",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I don't know what ___. / I don't know where ___.",
+              "items": [
+                { "zh": "我不知道她想要什么。", "answer": "I don't know what she wants." },
+                { "zh": "我不知道他去哪了。", "answer": "I don't know where he went." }
+              ]
+            },
+            {
+              "chunk": "Can you tell me when ___? / I wonder why ___.",
+              "items": [
+                { "zh": "你能告诉我什么时候开始吗？", "answer": "Can you tell me when it starts?" },
+                { "zh": "我想知道她为什么不在。", "answer": "I wonder why she isn't here." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "描述物品": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "描述物品 · 中译英",
+          "chunk": "category / clause / depth",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这本书属于一个有趣的类别。",
+              "answer": "This book belongs to an interesting category.",
+              "targetWord": "category"
+            },
+            {
+              "zh": "我读的那个条款很清楚。",
+              "answer": "The clause that I read is very clear.",
+              "targetWord": "clause"
+            },
+            {
+              "zh": "我测量的那个深度令人惊讶。",
+              "answer": "The depth that I measured was surprising.",
+              "targetWord": "depth"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "描述物品 · 英译中",
+          "chunk": "curtain / expense / shift",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The curtain that she bought is beautiful.",
+              "answer": "她买的那块窗帘很漂亮。",
+              "targetWord": "curtain"
+            },
+            {
+              "en": "The expense that we budgeted was not enough.",
+              "answer": "我们预算的那笔费用不够。",
+              "targetWord": "expense"
+            },
+            {
+              "en": "The shift that I worked was very long.",
+              "answer": "我上的那个班次很长。",
+              "targetWord": "shift"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "描述物品 · 句型",
+          "pattern": "The ___ that I ___ is ___.",
+          "patternMeaning": "我...的那个...是...。",
+          "slots": [
+            "book read interesting",
+            "movie watched good",
+            "food like spicy"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我读的那本书很有趣。",
+              "answer": "The book that I read is interesting.",
+              "pattern": "The ___ that I ___ is ___.",
+              "slotValues": {
+                "slot1": "book read interesting"
+              }
+            },
+            {
+              "zh": "我看的那部电影很好。",
+              "answer": "The movie that I watched is good.",
+              "pattern": "The ___ that I ___ is ___.",
+              "slotValues": {
+                "slot1": "movie watched good"
+              }
+            },
+            {
+              "zh": "我喜欢的那个食物是辣的。",
+              "answer": "The food that I like is spicy.",
+              "pattern": "The ___ that I ___ is ___.",
+              "slotValues": {
+                "slot1": "food like spicy"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "描述物品 · 一词多句",
+          "vocabWord": "that / which",
+          "vocabMeaning": "那个...的",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The ___ that I ___ is ___. / The ___ which I ___ is ___.",
+              "items": [
+                { "zh": "我买的那只猫很可爱。", "answer": "The cat that I bought is very cute." },
+                { "zh": "我选的那条裙子太贵了。", "answer": "The dress which I chose is too expensive." }
+              ]
+            },
+            {
+              "chunk": "Is this the ___ that you ___?",
+              "items": [
+                { "zh": "这是你喜欢的那个颜色吗？", "answer": "Is this the color that you like?" },
+                { "zh": "这是你推荐的那家餐厅吗？", "answer": "Is this the restaurant that you recommended?" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "描述人": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "描述人 · 中译英",
+          "chunk": "emotion / imagination / locate",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "懂得控制情绪的人更成熟。",
+              "answer": "A person who controls emotions is more mature.",
+              "targetWord": "emotion"
+            },
+            {
+              "zh": "有丰富想象力的人很有创造力。",
+              "answer": "A person who has rich imagination is creative.",
+              "targetWord": "imagination"
+            },
+            {
+              "zh": "你能帮我找到那个人的位置吗？",
+              "answer": "Can you locate the person who called?",
+              "targetWord": "locate"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "描述人 · 英译中",
+          "chunk": "proper / rapid / summarize",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The person who gave the proper advice helped me a lot.",
+              "answer": "那个给出恰当建议的人帮了我很多。",
+              "targetWord": "proper"
+            },
+            {
+              "en": "A colleague who works with rapid speed is very efficient.",
+              "answer": "做事迅速的同事实在很高效。",
+              "targetWord": "rapid"
+            },
+            {
+              "en": "The manager who summarized the report did a great job.",
+              "answer": "总结报告的那个经理做得很好。",
+              "targetWord": "summarize"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "描述人 · 句型",
+          "pattern": "The person who ___ is ___.",
+          "patternMeaning": "那个...的人是...。",
+          "slots": [
+            "called my boss",
+            "helped me my friend",
+            "is waiting my teacher"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "打电话的那个人是我老板。",
+              "answer": "The person who called is my boss.",
+              "pattern": "The person who ___ is ___.",
+              "slotValues": {
+                "slot1": "called my boss"
+              }
+            },
+            {
+              "zh": "帮我那个人是我朋友。",
+              "answer": "The person who helped me is my friend.",
+              "pattern": "The person who ___ is ___.",
+              "slotValues": {
+                "slot1": "helped me my friend"
+              }
+            },
+            {
+              "zh": "在等的那个人是我老师。",
+              "answer": "The person who is waiting is my teacher.",
+              "pattern": "The person who ___ is ___.",
+              "slotValues": {
+                "slot1": "is waiting my teacher"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "描述人 · 一词多句",
+          "vocabWord": "who / that",
+          "vocabMeaning": "那个...的人",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The person who ___ is ___. / The man who ___ is ___.",
+              "items": [
+                { "zh": "帮我那个人很善良。", "answer": "The person who helped me is very kind." },
+                { "zh": "在门口等的那个人是我哥哥。", "answer": "The man who is waiting at the door is my brother." }
+              ]
+            },
+            {
+              "chunk": "Do you know the ___ who ___?",
+              "items": [
+                { "zh": "你认识坐在那边的那个女孩吗？", "answer": "Do you know the girl who is sitting over there?" },
+                { "zh": "你认识在这里工作的那个人吗？", "answer": "Do you know the person who works here?" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "地点与原因": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "地点与原因 · 中译英",
+          "chunk": "stadium / pressure / due",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我们见面的那个体育场很大。",
+              "answer": "The stadium where we met is very big.",
+              "targetWord": "stadium"
+            },
+            {
+              "zh": "这就是我感受到压力的原因。",
+              "answer": "This is the reason why I felt pressure.",
+              "targetWord": "pressure"
+            },
+            {
+              "zh": "这就是为什么截止日期到了。",
+              "answer": "This is the reason why it's due.",
+              "targetWord": "due"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "地点与原因 · 英译中",
+          "chunk": "tend / trend / resolve",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The place where people tend to gather is the park.",
+              "answer": "人们倾向于聚集的地方是公园。",
+              "targetWord": "tend"
+            },
+            {
+              "en": "This is the reason why the trend changed.",
+              "answer": "这就是为什么趋势改变了。",
+              "targetWord": "trend"
+            },
+            {
+              "en": "The office where we resolve issues is on the second floor.",
+              "answer": "我们解决问题的办公室在二楼。",
+              "targetWord": "resolve"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "地点与原因 · 句型",
+          "pattern": "The ___ where ___ is ___. / This is the reason why ___.",
+          "patternMeaning": "...的地方是... / 这就是为什么...。",
+          "slots": [
+            "restaurant we met still there",
+            "I called",
+            "park we walked beautiful"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我们见面的那家餐厅还在那里。",
+              "answer": "The restaurant where we met is still there.",
+              "pattern": "The ___ where ___ is ___.",
+              "slotValues": {
+                "slot1": "restaurant we met still there"
+              }
+            },
+            {
+              "zh": "这就是我打电话的原因。",
+              "answer": "This is the reason why I called.",
+              "pattern": "This is the reason why ___.",
+              "slotValues": {
+                "slot1": "I called"
+              }
+            },
+            {
+              "zh": "我们散步的那个公园很漂亮。",
+              "answer": "The park where we walked is beautiful.",
+              "pattern": "The ___ where ___ is ___.",
+              "slotValues": {
+                "slot1": "park we walked beautiful"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "地点与原因 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本陈述",
+              "en": "The restaurant where we met is still there.",
+              "zh": "我们见面的那家餐厅还在那里。",
+              "highlight": "restaurant",
+              "hint": "先陈述地点"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "The restaurant where we met is still there and that's the reason why I go back.",
+              "zh": "我们见面的那家餐厅还在那里，这就是为什么我回去的原因。",
+              "highlight": "reason why",
+              "hint": "加 the reason why"
+            },
+            {
+              "level": 3,
+              "label": "加感受",
+              "en": "The restaurant where we met is still there and that's the reason why I go back because it brings back good memories.",
+              "zh": "我们见面的餐厅还在那里，这就是为什么我回去，因为它带来美好回忆。",
+              "highlight": "memories",
+              "hint": "用 because 完善原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "偏好描述": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "偏好描述 · 中译英",
+          "chunk": "relaxing / safety / violent",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我最喜欢的电影是那种让人放松的。",
+              "answer": "The movie that I like most is the relaxing kind.",
+              "targetWord": "relaxing"
+            },
+            {
+              "zh": "我最关心的是安全问题。",
+              "answer": "The thing that I care about most is safety.",
+              "targetWord": "safety"
+            },
+            {
+              "zh": "我不喜欢那种暴力的电影。",
+              "answer": "I don't like movies that are violent.",
+              "targetWord": "violent"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "偏好描述 · 英译中",
+          "chunk": "worth / conclude / consistent",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The book that I think is worth reading is this one.",
+              "answer": "我觉得值得读的那本书是这本。",
+              "targetWord": "worth"
+            },
+            {
+              "en": "The conclusion that I drew is different from yours.",
+              "answer": "我得出的那个结论和你的不同。",
+              "targetWord": "conclude"
+            },
+            {
+              "en": "I like people who are consistent.",
+              "answer": "我喜欢言行一致的人。",
+              "targetWord": "consistent"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "偏好描述 · 句型",
+          "pattern": "The ___ that I like most is ___. / I like ___ that ___.",
+          "patternMeaning": "我最喜欢的...是... / 我喜欢...的...。",
+          "slots": [
+            "book 'To Kill a Mockingbird'",
+            "movies make me laugh",
+            "color blue"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我最喜欢的书是《杀死一只知更鸟》。",
+              "answer": "The book that I like most is To Kill a Mockingbird.",
+              "pattern": "The ___ that I like most is ___.",
+              "slotValues": {
+                "slot1": "book 'To Kill a Mockingbird'"
+              }
+            },
+            {
+              "zh": "我喜欢能让我笑的电影。",
+              "answer": "I like movies that make me laugh.",
+              "pattern": "I like ___ that ___.",
+              "slotValues": {
+                "slot1": "movies make me laugh"
+              }
+            },
+            {
+              "zh": "我最喜欢的颜色是蓝色。",
+              "answer": "The color that I like most is blue.",
+              "pattern": "The ___ that I like most is ___.",
+              "slotValues": {
+                "slot1": "color blue"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "偏好描述 · 一词多句",
+          "vocabWord": "like most / prefer / favorite",
+          "vocabMeaning": "最喜欢/偏爱/最爱的",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The ___ that I like most is ___. / I prefer ___ that ___.",
+              "items": [
+                { "zh": "我最喜欢的音乐是爵士乐。", "answer": "The music that I like most is jazz." },
+                { "zh": "我偏爱那些温暖的颜色。", "answer": "I prefer colors that are warm." }
+              ]
+            },
+            {
+              "chunk": "My favorite ___ is ___. / The ___ that I enjoy most is ___.",
+              "items": [
+                { "zh": "我最喜欢的季节是秋天。", "answer": "My favorite season is autumn." },
+                { "zh": "我最享受的活动是旅行。", "answer": "The activity that I enjoy most is traveling." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "综合描述": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "综合描述 · 中译英",
+          "chunk": "apart / fence / glove",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我们相隔很远，但友谊不变。",
+              "answer": "We live apart from each other but the friendship that we have remains.",
+              "targetWord": "apart"
+            },
+            {
+              "zh": "我家的篱笆是白色的。",
+              "answer": "The fence that surrounds my house is white.",
+              "targetWord": "fence"
+            },
+            {
+              "zh": "他忘了他借我的那只手套了。",
+              "answer": "He forgot the glove that I lent him.",
+              "targetWord": "glove"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "综合描述 · 英译中",
+          "chunk": "rapid / unnecessary / historic",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The change that is rapid is sometimes hard to follow.",
+              "answer": "那种快速的变化有时候难以跟上。",
+              "targetWord": "rapid"
+            },
+            {
+              "en": "The details that are unnecessary should be removed.",
+              "answer": "那些不必要的细节应该去掉。",
+              "targetWord": "unnecessary"
+            },
+            {
+              "en": "The building that is historic is worth preserving.",
+              "answer": "那个有历史意义的建筑值得保护。",
+              "targetWord": "historic"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "综合描述 · 句型",
+          "pattern": "The ___ that ___ is someone / something that ___.",
+          "patternMeaning": "...的...是一个...的人/事。",
+          "slots": [
+            "friend helped me I can always trust",
+            "book I read worth reading",
+            "place we visited truly beautiful"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "帮我的那个朋友是我永远可以信任的人。",
+              "answer": "The friend who helped me is someone that I can always trust.",
+              "pattern": "The ___ that ___ is someone that ___.",
+              "slotValues": {
+                "slot1": "friend helped me I can always trust"
+              }
+            },
+            {
+              "zh": "我读的那本书是值得读的。",
+              "answer": "The book that I read is something that is worth reading.",
+              "pattern": "The ___ that ___ is something that ___.",
+              "slotValues": {
+                "slot1": "book I read worth reading"
+              }
+            },
+            {
+              "zh": "我们去的那个地方真的很美。",
+              "answer": "The place that we visited is truly beautiful.",
+              "pattern": "The ___ that ___ is ___.",
+              "slotValues": {
+                "slot1": "place we visited truly beautiful"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "综合描述 · 一词多句",
+          "vocabWord": "that / who / where",
+          "vocabMeaning": "那个...的/人/地方",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "There are many ___ that I want to ___. / The ___ who ___ is someone that ___.",
+              "items": [
+                { "zh": "有很多我想读的书。", "answer": "There are many books that I want to read." },
+                { "zh": "帮助我的朋友是我最信任的人。", "answer": "The friend who helped me is someone that I trust most." }
+              ]
+            },
+            {
+              "chunk": "The ___ where ___ is ___. / I like the ___ that ___.",
+              "items": [
+                { "zh": "我们学习的地方是图书馆。", "answer": "The place where we study is the library." },
+                { "zh": "我喜欢你选的那一个。", "answer": "I like the one that you chose." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "想要/希望": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "想要/希望 · 中译英",
+          "chunk": "desire / admire / honour",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我想要学习更多以提升自己。",
+              "answer": "I desire to learn more to improve myself.",
+              "targetWord": "desire"
+            },
+            {
+              "zh": "我钦佩那些坚持不懈的人。",
+              "answer": "I admire people who never give up.",
+              "targetWord": "admire"
+            },
+            {
+              "zh": "我希望为团队带来荣誉。",
+              "answer": "I hope to bring honour to the team.",
+              "targetWord": "honour"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "想要/希望 · 英译中",
+          "chunk": "experienced / graduate / proud",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I want to work with experienced people.",
+              "answer": "我想和有经验的人一起工作。",
+              "targetWord": "experienced"
+            },
+            {
+              "en": "I hope to graduate next year.",
+              "answer": "我希望明年毕业。",
+              "targetWord": "graduate"
+            },
+            {
+              "en": "I want to make my family proud.",
+              "answer": "我想让家人为我骄傲。",
+              "targetWord": "proud"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "想要/希望 · 句型",
+          "pattern": "I want to ___. / I hope to ___. / I would like to ___.",
+          "patternMeaning": "我想... / 我希望... / 我想要...。",
+          "slots": [
+            "learn Spanish",
+            "see you again",
+            "apply for this job"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我想学西班牙语。",
+              "answer": "I want to learn Spanish.",
+              "pattern": "I want to ___.",
+              "slotValues": {
+                "slot1": "learn Spanish"
+              }
+            },
+            {
+              "zh": "我希望很快再见到你。",
+              "answer": "I hope to see you again soon.",
+              "pattern": "I hope to ___.",
+              "slotValues": {
+                "slot1": "see you again"
+              }
+            },
+            {
+              "zh": "我想申请这份工作。",
+              "answer": "I would like to apply for this job.",
+              "pattern": "I would like to ___.",
+              "slotValues": {
+                "slot1": "apply for this job"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "想要/希望 · 一词多句",
+          "vocabWord": "want to / hope to / would like to",
+          "vocabMeaning": "想要/希望/想要（礼貌）",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I want to ___. / I hope to ___.",
+              "items": [
+                { "zh": "我想环游世界。", "answer": "I want to travel around the world." },
+                { "zh": "我希望有一天能再去。", "answer": "I hope to go again someday." }
+              ]
+            },
+            {
+              "chunk": "I would like to ___. / I plan to ___.",
+              "items": [
+                { "zh": "我想订一张桌子。", "answer": "I would like to book a table." },
+                { "zh": "我计划明年去留学。", "answer": "I plan to study abroad next year." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "决定/承诺": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "决定/承诺 · 中译英",
+          "chunk": "analyse / investigate / conclude",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我决定先分析数据再做决定。",
+              "answer": "I decided to analyse the data before making a decision.",
+              "targetWord": "analyse"
+            },
+            {
+              "zh": "我承诺会深入调查此事。",
+              "answer": "I promised to investigate the matter thoroughly.",
+              "targetWord": "investigate"
+            },
+            {
+              "zh": "我决定得出结论之前再考虑一下。",
+              "answer": "I decided to conclude after more consideration.",
+              "targetWord": "conclude"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "决定/承诺 · 英译中",
+          "chunk": "engaged / retain / oppose",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I decided to get engaged last month.",
+              "answer": "我上个月决定订婚了。",
+              "targetWord": "engaged"
+            },
+            {
+              "en": "I promised to retain the original design.",
+              "answer": "我承诺保留原来的设计。",
+              "targetWord": "retain"
+            },
+            {
+              "en": "I decided to oppose the new plan.",
+              "answer": "我决定反对这个新计划。",
+              "targetWord": "oppose"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "决定/承诺 · 句型",
+          "pattern": "I decided to ___. / I promised to ___. / I chose to ___.",
+          "patternMeaning": "我决定... / 我承诺... / 我选择...。",
+          "slots": [
+            "study abroad",
+            "help him",
+            "stay at home"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我决定出国留学。",
+              "answer": "I decided to study abroad.",
+              "pattern": "I decided to ___.",
+              "slotValues": {
+                "slot1": "study abroad"
+              }
+            },
+            {
+              "zh": "我承诺帮助他。",
+              "answer": "I promised to help him.",
+              "pattern": "I promised to ___.",
+              "slotValues": {
+                "slot1": "help him"
+              }
+            },
+            {
+              "zh": "她选择待在家里。",
+              "answer": "She chose to stay at home.",
+              "pattern": "I chose to ___.",
+              "slotValues": {
+                "slot1": "stay at home"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "决定/承诺 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单决定",
+              "en": "I decided to study abroad.",
+              "zh": "我决定出国留学。",
+              "highlight": "decided",
+              "hint": "先说决定"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "I decided to study abroad because I want to learn more.",
+              "zh": "我决定出国留学，因为我想学更多。",
+              "highlight": "because",
+              "hint": "用 because 说明原因"
+            },
+            {
+              "level": 3,
+              "label": "加承诺",
+              "en": "I decided to study abroad because I want to learn more and I promised myself I would do it.",
+              "zh": "我决定出国留学，因为我想学更多，而且我对自己承诺过我会做到的。",
+              "highlight": "promised",
+              "hint": "加上 promised 加强语气"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "为了...目的": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "为了...目的 · 中译英",
+          "chunk": "essential / vital / fitness",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我来这里是为了学习必要的技能。",
+              "answer": "I came here to learn essential skills.",
+              "targetWord": "essential"
+            },
+            {
+              "zh": "我锻炼是为了保持健康。",
+              "answer": "I exercise to maintain my fitness.",
+              "targetWord": "fitness"
+            },
+            {
+              "zh": "我早起是为了做最重要的事。",
+              "answer": "I wake up early to do something vital.",
+              "targetWord": "vital"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "为了...目的 · 英译中",
+          "chunk": "sector / performance / theory",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I went to the finance sector to find a job.",
+              "answer": "我去金融行业找工作。",
+              "targetWord": "sector"
+            },
+            {
+              "en": "I practice every day to improve my performance.",
+              "answer": "我每天练习来提高我的表现。",
+              "targetWord": "performance"
+            },
+            {
+              "en": "I study hard to understand the theory.",
+              "answer": "我努力学习以理解这个理论。",
+              "targetWord": "theory"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "为了...目的 · 句型",
+          "pattern": "I ___ to ___. / I went to ___ to ___.",
+          "patternMeaning": "我做...是为了... / 我去...是为了...。",
+          "slots": [
+            "came here study English",
+            "the store buy some food",
+            "saved money buy a car"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我来这里学英语。",
+              "answer": "I came here to study English.",
+              "pattern": "I ___ to ___.",
+              "slotValues": {
+                "slot1": "came here study English"
+              }
+            },
+            {
+              "zh": "我去商店买食物。",
+              "answer": "I went to the store to buy some food.",
+              "pattern": "I went to ___ to ___.",
+              "slotValues": {
+                "slot1": "the store buy some food"
+              }
+            },
+            {
+              "zh": "我存钱买车。",
+              "answer": "I saved money to buy a car.",
+              "pattern": "I ___ to ___.",
+              "slotValues": {
+                "slot1": "saved money buy a car"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "为了...目的 · 一词多句",
+          "vocabWord": "to / in order to / so as to",
+          "vocabMeaning": "为了",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I ___ to ___. / I ___ in order to ___.",
+              "items": [
+                { "zh": "我打电话确认时间。", "answer": "I called to confirm the time." },
+                { "zh": "我早起为了赶上第一班车。", "answer": "I got up early in order to catch the first bus." }
+              ]
+            },
+            {
+              "chunk": "I ___ so as to ___.",
+              "items": [
+                { "zh": "我轻声说话以免吵醒她。", "answer": "I spoke softly so as not to wake her up." },
+                { "zh": "他提前到达以免迟到。", "answer": "He arrived early so as not to be late." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "评价：做...是...的": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "评价：做...是...的 · 中译英",
+          "chunk": "reality / nerve / wrap",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "面对现实是很重要的。",
+              "answer": "It's important to face reality.",
+              "targetWord": "reality"
+            },
+            {
+              "zh": "做这种需要勇气的事情很难。",
+              "answer": "It's hard to do something that takes nerve.",
+              "targetWord": "nerve"
+            },
+            {
+              "zh": "在结束之前把工作做完很重要。",
+              "answer": "It's important to wrap up the work before leaving.",
+              "targetWord": "wrap"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "评价：做...是...的 · 英译中",
+          "chunk": "shocked / smooth / decline",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "It's shocking to hear the news.",
+              "answer": "听到这个消息很震惊。",
+              "targetWord": "shocked"
+            },
+            {
+              "en": "It's nice to have a smooth journey.",
+              "answer": "旅途顺利是很令人愉快的。",
+              "targetWord": "smooth"
+            },
+            {
+              "en": "It's sad to see the business decline.",
+              "answer": "看到生意下滑很难过。",
+              "targetWord": "decline"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "评价：做...是...的 · 句型",
+          "pattern": "It's ___ to ___.",
+          "patternMeaning": "做...是...的。",
+          "slots": [
+            "important practice every day",
+            "fun travel with friends",
+            "hard say goodbye"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "每天练习很重要。",
+              "answer": "It's important to practice every day.",
+              "pattern": "It's ___ to ___.",
+              "slotValues": {
+                "slot1": "important practice every day"
+              }
+            },
+            {
+              "zh": "和朋友一起旅行很有趣。",
+              "answer": "It's fun to travel with friends.",
+              "pattern": "It's ___ to ___.",
+              "slotValues": {
+                "slot1": "fun travel with friends"
+              }
+            },
+            {
+              "zh": "说再见很难。",
+              "answer": "It's hard to say goodbye.",
+              "pattern": "It's ___ to ___.",
+              "slotValues": {
+                "slot1": "hard say goodbye"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "评价：做...是...的 · 一词多句",
+          "vocabWord": "It's ___ to / It's important to / It's fun to",
+          "vocabMeaning": "做...是...的",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It's ___ to ___. / It's important to ___.",
+              "items": [
+                { "zh": "保持健康很重要。", "answer": "It's important to stay healthy." },
+                { "zh": "尝试新事物很有趣。", "answer": "It's fun to try new things." }
+              ]
+            },
+            {
+              "chunk": "It's hard to ___. / It's nice to ___.",
+              "items": [
+                { "zh": "学好一门语言很难。", "answer": "It's hard to learn a language well." },
+                { "zh": "能再见到你真好。", "answer": "It's nice to see you again." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "有事要做": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "有事要做 · 中译英",
+          "chunk": "wrap / retain / sector",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我有些工作要在结束前完成。",
+              "answer": "I have some work to wrap up.",
+              "targetWord": "wrap"
+            },
+            {
+              "zh": "我有一些信息要保留。",
+              "answer": "I have some information to retain.",
+              "targetWord": "retain"
+            },
+            {
+              "zh": "我有几个行业要研究。",
+              "answer": "I have several sectors to research.",
+              "targetWord": "sector"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "有事要做 · 英译中",
+          "chunk": "theory / oppose / shocked",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have some theories to test.",
+              "answer": "我有一些理论要测试。",
+              "targetWord": "theory"
+            },
+            {
+              "en": "I have some ideas to oppose.",
+              "answer": "我有一些想法要反对。",
+              "targetWord": "oppose"
+            },
+            {
+              "en": "I have some shocking news to share.",
+              "answer": "我有一些令人震惊的消息要分享。",
+              "targetWord": "shocked"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "有事要做 · 句型",
+          "pattern": "I have ___ to ___.",
+          "patternMeaning": "我有...要...。",
+          "slots": [
+            "something tell you",
+            "a lot to learn",
+            "nothing to say"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我有事要告诉你。",
+              "answer": "I have something to tell you.",
+              "pattern": "I have ___ to ___.",
+              "slotValues": {
+                "slot1": "something tell you"
+              }
+            },
+            {
+              "zh": "我有很多要学。",
+              "answer": "I have a lot to learn.",
+              "pattern": "I have ___ to ___.",
+              "slotValues": {
+                "slot1": "a lot to learn"
+              }
+            },
+            {
+              "zh": "我无话可说。",
+              "answer": "I have nothing to say.",
+              "pattern": "I have ___ to ___.",
+              "slotValues": {
+                "slot1": "nothing to say"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "有事要做 · 一词多句",
+          "vocabWord": "have something / have a lot / have nothing",
+          "vocabMeaning": "有...要...",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I have ___ to ___. / Do you have ___ to ___?",
+              "items": [
+                { "zh": "我有事要问。", "answer": "I have something to ask." },
+                { "zh": "你有什么要说的吗？", "answer": "Do you have anything to say?" }
+              ]
+            },
+            {
+              "chunk": "I have ___ to ___. / Give me ___ to ___.",
+              "items": [
+                { "zh": "我有很多工作要做。", "answer": "I have a lot of work to do." },
+                { "zh": "给我点吃的。", "answer": "Give me something to eat." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我喜欢做...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我喜欢做... · 中译英",
+          "chunk": "admit / belief / collection",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我喜欢承认错误并从中学习。",
+              "answer": "I enjoy admitting mistakes and learning from them.",
+              "targetWord": "admit"
+            },
+            {
+              "zh": "我相信保持积极信念很重要。",
+              "answer": "I believe in maintaining positive beliefs.",
+              "targetWord": "belief"
+            },
+            {
+              "zh": "我喜欢收集邮票。",
+              "answer": "I enjoy collecting stamps.",
+              "targetWord": "collection"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我喜欢做... · 英译中",
+          "chunk": "decorate / ingredient / journal",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I enjoy decorating my room.",
+              "answer": "我喜欢装饰我的房间。",
+              "targetWord": "decorate"
+            },
+            {
+              "en": "I like cooking with fresh ingredients.",
+              "answer": "我喜欢用新鲜食材做饭。",
+              "targetWord": "ingredient"
+            },
+            {
+              "en": "I enjoy keeping a journal.",
+              "answer": "我喜欢写日记。",
+              "targetWord": "journal"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我喜欢做... · 句型",
+          "pattern": "I enjoy ___. / I like ___. / I love ___.",
+          "patternMeaning": "我喜欢...。",
+          "slots": [
+            "reading books",
+            "swimming",
+            "watching movies"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我喜欢读书。",
+              "answer": "I enjoy reading books.",
+              "pattern": "I enjoy ___.",
+              "slotValues": {
+                "slot1": "reading books"
+              }
+            },
+            {
+              "zh": "我喜欢游泳。",
+              "answer": "I like swimming.",
+              "pattern": "I like ___.",
+              "slotValues": {
+                "slot1": "swimming"
+              }
+            },
+            {
+              "zh": "我热爱看电影。",
+              "answer": "I love watching movies.",
+              "pattern": "I love ___.",
+              "slotValues": {
+                "slot1": "watching movies"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我喜欢做... · 一词多句",
+          "vocabWord": "enjoy / like / love / hate",
+          "vocabMeaning": "喜欢/热爱/讨厌",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I enjoy ___. / I like ___, but I don't like ___.",
+              "items": [
+                { "zh": "我喜欢听音乐。", "answer": "I enjoy listening to music." },
+                { "zh": "我喜欢游泳，但不喜欢跑步。", "answer": "I like swimming but I don't like running." }
+              ]
+            },
+            {
+              "chunk": "I love ___. / I hate ___.",
+              "items": [
+                { "zh": "我周末喜欢看电影。", "answer": "I love watching movies on weekends." },
+                { "zh": "我讨厌排长队。", "answer": "I hate waiting in long lines." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "开始/结束/继续": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "开始/结束/继续 · 中译英",
+          "chunk": "determine / enhance / maintain",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我决定开始提高我的技能。",
+              "answer": "I determined to start enhancing my skills.",
+              "targetWord": "determine"
+            },
+            {
+              "zh": "我开始维护这个系统。",
+              "answer": "I started maintaining the system.",
+              "targetWord": "maintain"
+            },
+            {
+              "zh": "我继续努力提升自己。",
+              "answer": "I keep enhancing myself.",
+              "targetWord": "enhance"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "开始/结束/继续 · 英译中",
+          "chunk": "export / import / modify",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The company started exporting last year.",
+              "answer": "这家公司去年开始出口。",
+              "targetWord": "export"
+            },
+            {
+              "en": "They finished importing the goods.",
+              "answer": "他们完成了商品进口。",
+              "targetWord": "import"
+            },
+            {
+              "en": "We keep modifying the design.",
+              "answer": "我们继续修改设计。",
+              "targetWord": "modify"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "开始/结束/继续 · 句型",
+          "pattern": "I started ___. / I finished ___. / I keep ___.",
+          "patternMeaning": "我开始... / 我完成... / 我继续...。",
+          "slots": [
+            "learning English",
+            "writing the report",
+            "trying my best"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我开始学英语。",
+              "answer": "I started learning English.",
+              "pattern": "I started ___.",
+              "slotValues": {
+                "slot1": "learning English"
+              }
+            },
+            {
+              "zh": "我写完了报告。",
+              "answer": "I finished writing the report.",
+              "pattern": "I finished ___.",
+              "slotValues": {
+                "slot1": "writing the report"
+              }
+            },
+            {
+              "zh": "我不断尽力而为。",
+              "answer": "I keep trying my best.",
+              "pattern": "I keep ___.",
+              "slotValues": {
+                "slot1": "trying my best"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "开始/结束/继续 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "开始做",
+              "en": "I started learning English.",
+              "zh": "我开始学英语。",
+              "highlight": "started",
+              "hint": "先说开始做什么"
+            },
+            {
+              "level": 2,
+              "label": "加时间",
+              "en": "I started learning English two years ago.",
+              "zh": "我两年前开始学英语。",
+              "highlight": "two years ago",
+              "hint": "加上时间"
+            },
+            {
+              "level": 3,
+              "label": "加持续",
+              "en": "I started learning English two years ago and I keep practicing every day.",
+              "zh": "我两年前开始学英语，并且坚持每天练习。",
+              "highlight": "keep",
+              "hint": "用 keep 表示持续"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "擅长/对...感兴趣": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "擅长/对...感兴趣 · 中译英",
+          "chunk": "convince / reflect / qualification",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我擅长说服别人。",
+              "answer": "I am good at convincing people.",
+              "targetWord": "convince"
+            },
+            {
+              "zh": "我对反思过去的经历很感兴趣。",
+              "answer": "I am interested in reflecting on past experiences.",
+              "targetWord": "reflect"
+            },
+            {
+              "zh": "我擅长获取相关资格。",
+              "answer": "I am good at getting qualifications.",
+              "targetWord": "qualification"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "擅长/对...感兴趣 · 英译中",
+          "chunk": "remind / risk / seriously",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I am good at reminding people of their schedules.",
+              "answer": "我擅长提醒人们他们的日程。",
+              "targetWord": "remind"
+            },
+            {
+              "en": "I am interested in taking risks sometimes.",
+              "answer": "我有时对冒险感兴趣。",
+              "targetWord": "risk"
+            },
+            {
+              "en": "I am good at taking things seriously.",
+              "answer": "我擅长认真对待事情。",
+              "targetWord": "seriously"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "擅长/对...感兴趣 · 句型",
+          "pattern": "I am good at ___. / I am interested in ___. / I am tired of ___.",
+          "patternMeaning": "我擅长... / 我对...感兴趣 / 我厌倦了...。",
+          "slots": [
+            "remembering names",
+            "learning new things",
+            "waiting"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我擅长记名字。",
+              "answer": "I am good at remembering names.",
+              "pattern": "I am good at ___.",
+              "slotValues": {
+                "slot1": "remembering names"
+              }
+            },
+            {
+              "zh": "我对学新东西感兴趣。",
+              "answer": "I am interested in learning new things.",
+              "pattern": "I am interested in ___.",
+              "slotValues": {
+                "slot1": "learning new things"
+              }
+            },
+            {
+              "zh": "我厌倦了等待。",
+              "answer": "I am tired of waiting.",
+              "pattern": "I am tired of ___.",
+              "slotValues": {
+                "slot1": "waiting"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "擅长/对...感兴趣 · 一词多句",
+          "vocabWord": "good at / interested in / tired of",
+          "vocabMeaning": "擅长/对...感兴趣/厌倦",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I am good at ___. / I am interested in ___.",
+              "items": [
+                { "zh": "我擅长解决问题。", "answer": "I am good at solving problems." },
+                { "zh": "她对摄影感兴趣。", "answer": "She is interested in photography." }
+              ]
+            },
+            {
+              "chunk": "I am tired of ___. / I am excited about ___.",
+              "items": [
+                { "zh": "我厌倦了无休止的等待。", "answer": "I am tired of endless waiting." },
+                { "zh": "我对即将到来的旅行感到兴奋。", "answer": "I am excited about the upcoming trip." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "做...很有趣": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "做...很有趣 · 中译英",
+          "chunk": "confuse / various / prime",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "解决令人困惑的问题很有趣。",
+              "answer": "Solving confusing problems is a lot of fun.",
+              "targetWord": "confuse"
+            },
+            {
+              "zh": "尝试各种不同的活动很有趣。",
+              "answer": "Trying various activities is a lot of fun.",
+              "targetWord": "various"
+            },
+            {
+              "zh": "在黄金时段锻炼很有趣。",
+              "answer": "Exercising at prime time is a lot of fun.",
+              "targetWord": "prime"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "做...很有趣 · 英译中",
+          "chunk": "politics / southern / tight",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Discussing politics is interesting.",
+              "answer": "讨论政治很有趣。",
+              "targetWord": "politics"
+            },
+            {
+              "en": "Traveling to southern cities is enjoyable.",
+              "answer": "去南方城市旅行很令人愉快。",
+              "targetWord": "southern"
+            },
+            {
+              "en": "Keeping a tight schedule is challenging but fun.",
+              "answer": "保持紧凑的日程有挑战性但也很有趣。",
+              "targetWord": "tight"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "做...很有趣 · 句型",
+          "pattern": "___ is a lot of fun. / ___ is good for ___.",
+          "patternMeaning": "...很有趣。 / ...对...有好处。",
+          "slots": [
+            "Swimming your health",
+            "Traveling your mind",
+            "Reading your brain"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "游泳很有趣。",
+              "answer": "Swimming is a lot of fun.",
+              "pattern": "___ is a lot of fun.",
+              "slotValues": {
+                "slot1": "Swimming"
+              }
+            },
+            {
+              "zh": "游泳对你的健康有好处。",
+              "answer": "Swimming is good for your health.",
+              "pattern": "___ is good for ___.",
+              "slotValues": {
+                "slot1": "Swimming your health"
+              }
+            },
+            {
+              "zh": "阅读对你大脑有好处。",
+              "answer": "Reading is good for your brain.",
+              "pattern": "___ is good for ___.",
+              "slotValues": {
+                "slot1": "Reading your brain"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "做...很有趣 · 一词多句",
+          "vocabWord": "Swimming / Traveling / Reading",
+          "vocabMeaning": "游泳/旅行/阅读",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ is a lot of fun. / ___ is good for ___.",
+              "items": [
+                { "zh": "跳舞很有趣。", "answer": "Dancing is a lot of fun." },
+                { "zh": "学习新语言对大脑有好处。", "answer": "Learning a new language is good for your brain." }
+              ]
+            },
+            {
+              "chunk": "___ is good for ___. / I think ___ is ___.",
+              "items": [
+                { "zh": "锻炼对身体好。", "answer": "Exercise is good for your body." },
+                { "zh": "我觉得做饭很放松。", "answer": "I think cooking is relaxing." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "感谢/道歉": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "感谢/道歉 · 中译英",
+          "chunk": "guard / warning / symptom",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "感谢你为我守护。",
+              "answer": "Thank you for guarding me.",
+              "targetWord": "guard"
+            },
+            {
+              "zh": "谢谢你的警告。",
+              "answer": "Thank you for the warning.",
+              "targetWord": "warning"
+            },
+            {
+              "zh": "抱歉让你察觉到了症状。",
+              "answer": "I'm sorry for noticing the symptom.",
+              "targetWord": "symptom"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "感谢/道歉 · 英译中",
+          "chunk": "uncomfortable / sticky / shy",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Thank you for making me feel comfortable when I felt uncomfortable.",
+              "answer": "谢谢你在我不舒服的时候让我感到自在。",
+              "targetWord": "uncomfortable"
+            },
+            {
+              "en": "I'm sorry for the sticky situation.",
+              "answer": "抱歉造成了这个棘手的局面。",
+              "targetWord": "sticky"
+            },
+            {
+              "en": "Thank you for understanding that I am shy.",
+              "answer": "谢谢你理解我害羞。",
+              "targetWord": "shy"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "感谢/道歉 · 句型",
+          "pattern": "Thank you for ___. / I'm sorry for ___.",
+          "patternMeaning": "感谢... / 抱歉...。",
+          "slots": [
+            "helping me",
+            "being late",
+            "calling"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "谢谢你帮我。",
+              "answer": "Thank you for helping me.",
+              "pattern": "Thank you for ___.",
+              "slotValues": {
+                "slot1": "helping me"
+              }
+            },
+            {
+              "zh": "抱歉我迟到了。",
+              "answer": "I'm sorry for being late.",
+              "pattern": "I'm sorry for ___.",
+              "slotValues": {
+                "slot1": "being late"
+              }
+            },
+            {
+              "zh": "谢谢你打电话来。",
+              "answer": "Thank you for calling.",
+              "pattern": "Thank you for ___.",
+              "slotValues": {
+                "slot1": "calling"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "感谢/道歉 · 一词多句",
+          "vocabWord": "Thank you for / I'm sorry for",
+          "vocabMeaning": "感谢/抱歉",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Thank you for ___. / Thanks for ___.",
+              "items": [
+                { "zh": "谢谢你的时间。", "answer": "Thank you for your time." },
+                { "zh": "谢谢你等我。", "answer": "Thanks for waiting for me." }
+              ]
+            },
+            {
+              "chunk": "I'm sorry for ___. / I apologize for ___.",
+              "items": [
+                { "zh": "抱歉打扰你了。", "answer": "I'm sorry for disturbing you." },
+                { "zh": "我为我的错误道歉。", "answer": "I apologize for my mistake." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "混合从句与不定式": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "混合从句与不定式 · 中译英",
+          "chunk": "importance / objective / afford",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我认为认识到学习的重要性很重要。",
+              "answer": "I think it's important to recognize the importance of learning.",
+              "targetWord": "importance"
+            },
+            {
+              "zh": "我知道设定目标是必要的。",
+              "answer": "I know that it's necessary to set objectives.",
+              "targetWord": "objective"
+            },
+            {
+              "zh": "我认为负担旅行费用很重要。",
+              "answer": "I think it's important to afford the travel costs.",
+              "targetWord": "afford"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "混合从句与不定式 · 英译中",
+          "chunk": "determined / examine / faith",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I think it's important to stay determined.",
+              "answer": "我认为保持决心很重要。",
+              "targetWord": "determined"
+            },
+            {
+              "en": "I know that we need to examine the evidence.",
+              "answer": "我知道我们需要检查证据。",
+              "targetWord": "examine"
+            },
+            {
+              "en": "I believe it's important to have faith.",
+              "answer": "我相信有信念很重要。",
+              "targetWord": "faith"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "混合从句与不定式 · 句型",
+          "pattern": "I think it's ___ to ___. / I know that ___ needs to ___.",
+          "patternMeaning": "我认为做...是很...的。/ 我知道...需要...。",
+          "slots": [
+            "important practice every day",
+            "he to study harder",
+            "fun try new things"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我认为每天练习很重要。",
+              "answer": "I think it's important to practice every day.",
+              "pattern": "I think it's ___ to ___.",
+              "slotValues": {
+                "slot1": "important practice every day"
+              }
+            },
+            {
+              "zh": "我知道他需要更努力学习。",
+              "answer": "I know that he needs to study harder.",
+              "pattern": "I know that ___ needs to ___.",
+              "slotValues": {
+                "slot1": "he to study harder"
+              }
+            },
+            {
+              "zh": "我认为尝试新事物很有趣。",
+              "answer": "I think it's fun to try new things.",
+              "pattern": "I think it's ___ to ___.",
+              "slotValues": {
+                "slot1": "fun try new things"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "混合从句与不定式 · 一词多句",
+          "vocabWord": "I think it's / I know that / I believe",
+          "vocabMeaning": "我认为/我知道/我相信",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I think it's ___ to ___. / I know that ___ wants to ___.",
+              "items": [
+                { "zh": "我认为保持健康很重要。", "answer": "I think it's important to stay healthy." },
+                { "zh": "我知道他想当医生。", "answer": "I know that he wants to be a doctor." }
+              ]
+            },
+            {
+              "chunk": "I believe that ___ is ___. / The best thing that you can do is to ___.",
+              "items": [
+                { "zh": "我相信学英语很有趣。", "answer": "I believe that learning English is fun." },
+                { "zh": "你能做的最好的事就是继续尝试。", "answer": "The best thing that you can do is to keep trying." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "混合不定式与动名词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "混合不定式与动名词 · 中译英",
+          "chunk": "quit / commit / rent",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我决定戒烟，转而开始跑步。",
+              "answer": "I decided to quit smoking and started running instead.",
+              "targetWord": "quit"
+            },
+            {
+              "zh": "我承诺投入这个项目并坚持下去。",
+              "answer": "I committed to the project and keep working on it.",
+              "targetWord": "commit"
+            },
+            {
+              "zh": "我打算租房子，不想继续付房租了。",
+              "answer": "I plan to rent a house instead of paying rent forever.",
+              "targetWord": "rent"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "混合不定式与动名词 · 英译中",
+          "chunk": "crop / printing / pot",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I like growing crops but I hate waiting for harvest.",
+              "answer": "我喜欢种庄稼但讨厌等待收获。",
+              "targetWord": "crop"
+            },
+            {
+              "en": "I started printing my own designs and hope to sell them.",
+              "answer": "我开始打印自己的设计并希望卖掉它们。",
+              "targetWord": "printing"
+            },
+            {
+              "en": "I enjoy cooking with a pot but I need to learn more recipes.",
+              "answer": "我喜欢用锅做饭但我需要学更多食谱。",
+              "targetWord": "pot"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "混合不定式与动名词 · 句型",
+          "pattern": "I like ___. / I decided to ___. / I keep ___.",
+          "patternMeaning": "我喜欢... / 我决定... / 我坚持...。",
+          "slots": [
+            "cooking learn new recipes",
+            "traveling save money for trips",
+            "reading buy more books"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我喜欢做饭，决定学新菜谱。",
+              "answer": "I like cooking and decided to learn new recipes.",
+              "pattern": "I like ___. I decided to ___.",
+              "slotValues": {
+                "slot1": "cooking learn new recipes"
+              }
+            },
+            {
+              "zh": "我喜欢旅行，决定为旅行存钱。",
+              "answer": "I enjoy traveling and decided to save money for trips.",
+              "pattern": "I enjoy ___. I decided to ___.",
+              "slotValues": {
+                "slot1": "traveling save money for trips"
+              }
+            },
+            {
+              "zh": "我喜欢阅读，坚持买更多书。",
+              "answer": "I love reading and keep buying more books.",
+              "pattern": "I love ___. I keep ___.",
+              "slotValues": {
+                "slot1": "reading buy more books"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "混合不定式与动名词 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单动作",
+              "en": "I enjoy cooking.",
+              "zh": "我喜欢做饭。",
+              "highlight": "cooking",
+              "hint": "先说喜欢做什么"
+            },
+            {
+              "level": 2,
+              "label": "加决定",
+              "en": "I enjoy cooking and decided to learn new recipes.",
+              "zh": "我喜欢做饭并决定学新菜谱。",
+              "highlight": "decided",
+              "hint": "加上决定做什么"
+            },
+            {
+              "level": 3,
+              "label": "加目的",
+              "en": "I enjoy cooking and decided to learn new recipes to surprise my family.",
+              "zh": "我喜欢做饭并决定学新菜谱，为了给我的家人惊喜。",
+              "highlight": "to surprise",
+              "hint": "用不定式说明目的"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "叙事：我的一段经历": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "叙事：我的一段经历 · 中译英",
+          "chunk": "inspire / muscle / session",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我经历了一段激励人心的旅程。",
+              "answer": "I had an experience that inspired me.",
+              "targetWord": "inspire"
+            },
+            {
+              "zh": "我记得那次锻炼后肌肉酸痛。",
+              "answer": "I remember a training session that left my muscles sore.",
+              "targetWord": "muscle"
+            },
+            {
+              "zh": "我参加了一个令我难忘的课程。",
+              "answer": "I attended a session that I will never forget.",
+              "targetWord": "session"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "叙事：我的一段经历 · 英译中",
+          "chunk": "rope / tank / tongue",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I remember climbing a rope that was very challenging.",
+              "answer": "我记得爬了一条很有挑战性的绳索。",
+              "targetWord": "rope"
+            },
+            {
+              "en": "I visited a fish tank that was amazing.",
+              "answer": "我参观了一个令人惊叹的鱼缸。",
+              "targetWord": "tank"
+            },
+            {
+              "en": "I learned a new language that twisted my tongue.",
+              "answer": "我学了一门绕口令般的新语言。",
+              "targetWord": "tongue"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "叙事：我的一段经历 · 句型",
+          "pattern": "I remember ___. / I had an experience that ___.",
+          "patternMeaning": "我记得... / 我有一段...的经历。",
+          "slots": [
+            "a trip to Japan",
+            "taught me a lesson",
+            "a funny story"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我记得一次去日本的旅行。",
+              "answer": "I remember a trip to Japan.",
+              "pattern": "I remember ___.",
+              "slotValues": {
+                "slot1": "a trip to Japan"
+              }
+            },
+            {
+              "zh": "我有一次让我学到教训的经历。",
+              "answer": "I had an experience that taught me a lesson.",
+              "pattern": "I had an experience that ___.",
+              "slotValues": {
+                "slot1": "taught me a lesson"
+              }
+            },
+            {
+              "zh": "我记得一个有趣的故事。",
+              "answer": "I remember a funny story.",
+              "pattern": "I remember ___.",
+              "slotValues": {
+                "slot1": "a funny story"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "叙事：我的一段经历 · 一词多句",
+          "vocabWord": "I remember / I had / I will never forget",
+          "vocabMeaning": "我记得/我有过/我永远不会忘记",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I remember ___. / I had ___ that ___.",
+              "items": [
+                { "zh": "我记得第一次上台演讲。", "answer": "I remember my first speech on stage." },
+                { "zh": "我有一次改变了我人生的经历。", "answer": "I had an experience that changed my life." }
+              ]
+            },
+            {
+              "chunk": "I will never forget ___. / The ___ that I ___ most is ___.",
+              "items": [
+                { "zh": "我永远不会忘记那一天的教训。", "answer": "I will never forget the lesson from that day." },
+                { "zh": "我最珍惜的回忆是那次旅行。", "answer": "The memory that I treasure most is that trip." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
   "观点：我为什么觉得...": {
     "outputTraining": {
       "version": 1,
@@ -10,34 +2874,235 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "观点：我为什么觉得... · 中译英",
-          "chunk": "worth",
+          "chunk": "worth / attitude / silly",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我觉得我们看的那部电影值得看。",
-              "answer": "I think the movie that we watched is worth seeing.",
+              "zh": "我觉得这部电影值得看。",
+              "answer": "I think this movie is worth watching.",
               "targetWord": "worth"
+            },
+            {
+              "zh": "我认为积极的态度很重要。",
+              "answer": "I think a positive attitude is important.",
+              "targetWord": "attitude"
+            },
+            {
+              "zh": "我觉得这个想法很愚蠢。",
+              "answer": "I think this idea is silly.",
+              "targetWord": "silly"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "观点：我为什么觉得... · 英译中",
+          "chunk": "doubt / confused / unconscious",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I think there is some doubt about the plan.",
+              "answer": "我认为这个计划有些疑问。",
+              "targetWord": "doubt"
+            },
+            {
+              "en": "I think people are confused about the instructions.",
+              "answer": "我认为人们对说明感到困惑。",
+              "targetWord": "confused"
+            },
+            {
+              "en": "I think he was unconscious of the danger.",
+              "answer": "我认为他没有意识到危险。",
+              "targetWord": "unconscious"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "观点：我为什么觉得... · 句型",
-          "pattern": "I think the + 名词 + that + 句子 + is worth + 动名词",
-          "patternMeaning": "我觉得...值得...",
+          "pattern": "I think ___ is worth ___. / I think ___ is ___.",
+          "patternMeaning": "我觉得...值得... / 我觉得...是...。",
           "slots": [
-            "movie that we watched is worth seeing book that we read is worth reading"
+            "the movie worth watching",
+            "a positive attitude important",
+            "this idea silly"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我觉得...值得...",
-              "answer": "I think the movie that we watched is worth seeing.",
-              "pattern": "I think the + 名词 + that + 句子 + is worth + 动名词",
+              "zh": "我觉得这部电影值得看。",
+              "answer": "I think the movie is worth watching.",
+              "pattern": "I think ___ is worth ___.",
               "slotValues": {
-                "slot1": "movie that we watched is worth seeing book that we read is worth reading"
+                "slot1": "the movie worth watching"
               }
+            },
+            {
+              "zh": "我认为积极的态度很重要。",
+              "answer": "I think a positive attitude is important.",
+              "pattern": "I think ___ is ___.",
+              "slotValues": {
+                "slot1": "a positive attitude important"
+              }
+            },
+            {
+              "zh": "我觉得这个想法很愚蠢。",
+              "answer": "I think this idea is silly.",
+              "pattern": "I think ___ is ___.",
+              "slotValues": {
+                "slot1": "this idea silly"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "观点：我为什么觉得... · 一词多句",
+          "vocabWord": "I think / I believe / In my opinion",
+          "vocabMeaning": "我觉得/我相信/在我看来",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I think ___ is worth ___. / I believe ___ is ___.",
+              "items": [
+                { "zh": "我觉得这本书值得一读。", "answer": "I think this book is worth reading." },
+                { "zh": "我相信努力付出就会有回报。", "answer": "I believe hard work pays off." }
+              ]
+            },
+            {
+              "chunk": "In my opinion ___. / The reason why I think ___ is that ___.",
+              "items": [
+                { "zh": "在我看来，这是最好的选择。", "answer": "In my opinion this is the best choice." },
+                { "zh": "我为什么这么觉得是因为我亲身经历过。", "answer": "The reason why I think so is that I experienced it myself." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "长篇描述：我最喜欢的...": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "长篇描述：我最喜欢的... · 中译英",
+          "chunk": "cheerful / spirit / marriage",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我最喜欢的是那些令人快乐的人。",
+              "answer": "What I like most are cheerful people.",
+              "targetWord": "cheerful"
+            },
+            {
+              "zh": "我最欣赏的是那种不服输的精神。",
+              "answer": "What I admire most is the spirit of never giving up.",
+              "targetWord": "spirit"
+            },
+            {
+              "zh": "我描述了一段美满的婚姻。",
+              "answer": "I described a happy marriage.",
+              "targetWord": "marriage"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "长篇描述：我最喜欢的... · 英译中",
+          "chunk": "gentleman / broad / strongly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The person I admire most is a true gentleman.",
+              "answer": "我最敬仰的人是一个真正的绅士。",
+              "targetWord": "gentleman"
+            },
+            {
+              "en": "What I like about this city is the broad streets.",
+              "answer": "这个城市我最喜欢的是宽阔的街道。",
+              "targetWord": "broad"
+            },
+            {
+              "en": "I strongly believe that honesty is the best policy.",
+              "answer": "我坚信诚实是最好的策略。",
+              "targetWord": "strongly"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "长篇描述：我最喜欢的... · 句型",
+          "pattern": "What I like most about ___ is ___. / The ___ that I enjoy most is ___.",
+          "patternMeaning": "关于...我最喜欢的是... / 我最享受的...是...。",
+          "slots": [
+            "this city the people",
+            "this job the team",
+            "this school the teachers"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个城市我最喜欢的是这里的人。",
+              "answer": "What I like most about this city is the people.",
+              "pattern": "What I like most about ___ is ___.",
+              "slotValues": {
+                "slot1": "this city the people"
+              }
+            },
+            {
+              "zh": "这个工作我最喜欢的是团队。",
+              "answer": "What I like most about this job is the team.",
+              "pattern": "What I like most about ___ is ___.",
+              "slotValues": {
+                "slot1": "this job the team"
+              }
+            },
+            {
+              "zh": "这所学校我最喜欢的是老师们。",
+              "answer": "What I like most about this school is the teachers.",
+              "pattern": "What I like most about ___ is ___.",
+              "slotValues": {
+                "slot1": "this school the teachers"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "长篇描述：我最喜欢的... · 一词多句",
+          "vocabWord": "What I like most / The thing I enjoy / My favorite",
+          "vocabMeaning": "我最喜欢的/我最享受的/我的最爱",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "What I like most about ___ is ___. / The thing that I enjoy most is ___.",
+              "items": [
+                { "zh": "这本书我最喜欢的是故事的情节。", "answer": "What I like most about this book is the story plot." },
+                { "zh": "我最享受的事情是和家人在一起。", "answer": "The thing that I enjoy most is being with family." }
+              ]
+            },
+            {
+              "chunk": "My favorite ___ is ___. / I decided to ___ because I think ___.",
+              "items": [
+                { "zh": "我最喜欢的季节是秋天。", "answer": "My favorite season is autumn." },
+                { "zh": "我决定学英语，因为它对我的未来很重要。", "answer": "I decided to learn English because I think it's important for my future." }
+              ]
             }
           ]
         }

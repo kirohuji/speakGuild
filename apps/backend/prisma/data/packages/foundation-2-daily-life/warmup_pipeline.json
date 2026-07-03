@@ -146,18 +146,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "我的日常动作 · 英译中",
-          "chunk": "football / music",
+          "chunk": "run / music / game",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I play football on weekends.",
-              "answer": "我周末踢足球。",
-              "targetWord": "football"
+              "en": "I run every morning.",
+              "answer": "我每天早上跑步。",
+              "targetWord": "run"
             },
             {
-              "en": "I listen to music in the car.",
-              "answer": "我在车里听音乐。",
-              "targetWord": "music"
+              "en": "She loves classical music.",
+              "answer": "她喜欢古典音乐。",
+              "targetWord": "classical"
+            },
+            {
+              "en": "The children are playing a game.",
+              "answer": "孩子们在玩游戏。",
+              "targetWord": "game"
             }
           ]
         },
@@ -231,6 +236,32 @@
           ]
         },
         {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "起床到出门 · 英译中",
+          "chunk": "alarm / shower / dress",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "My alarm goes off at 6.",
+              "answer": "我的闹钟6点响。",
+              "targetWord": "alarm"
+            },
+            {
+              "en": "I take a bath in the morning.",
+              "answer": "我早上洗澡。",
+              "targetWord": "bath"
+            },
+            {
+              "en": "I dress quickly on weekdays.",
+              "answer": "我工作日很快穿好衣服。",
+              "targetWord": "dress"
+            }
+          ]
+        },
+        {
           "id": "pd_1",
           "type": "pattern_drill",
           "title": "起床到出门 · 句型",
@@ -276,8 +307,14 @@
             {
               "chunk": "I take a shower ___.",
               "items": [
-                { "zh": "我早上洗澡。", "answer": "I take a shower in the morning." },
-                { "zh": "我晚上洗澡。", "answer": "I take a shower in the evening." }
+                {
+                  "zh": "我早上洗澡。",
+                  "answer": "I take a shower in the morning."
+                },
+                {
+                  "zh": "我晚上洗澡。",
+                  "answer": "I take a shower in the evening."
+                }
               ]
             }
           ]
@@ -313,6 +350,32 @@
               "zh": "我晚上11点睡觉。",
               "answer": "I go to bed at 11 pm.",
               "targetWord": "bed"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "晚上做什么 · 英译中",
+          "chunk": "dinner / relax / sleep",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have supper with my family.",
+              "answer": "我和家人吃晚饭。",
+              "targetWord": "supper"
+            },
+            {
+              "en": "I relax by watching TV.",
+              "answer": "我看电视放松。",
+              "targetWord": "relax"
+            },
+            {
+              "en": "I usually sleep at 11.",
+              "answer": "我通常11点睡觉。",
+              "targetWord": "sleep"
             }
           ]
         },
@@ -362,8 +425,14 @@
             {
               "chunk": "I ___ after dinner.",
               "items": [
-                { "zh": "我晚饭后看电视。", "answer": "I watch TV after dinner." },
-                { "zh": "我晚饭后看书。", "answer": "I read books after dinner." }
+                {
+                  "zh": "我晚饭后看电视。",
+                  "answer": "I watch TV after dinner."
+                },
+                {
+                  "zh": "我晚饭后看书。",
+                  "answer": "I read books after dinner."
+                }
               ]
             }
           ]
@@ -680,18 +749,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "放学/下班后 · 英译中",
-          "chunk": "homework / housework",
+          "chunk": "chore / project / cook",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I do my homework after school.",
-              "answer": "我放学后做作业。",
-              "targetWord": "homework"
+              "en": "I do house chores after work.",
+              "answer": "我下班后做家务。",
+              "targetWord": "chore"
             },
             {
-              "en": "I do housework after work.",
-              "answer": "我下班后做家务。",
-              "targetWord": "housework"
+              "en": "I have a project to finish.",
+              "answer": "我有一个项目要完成。",
+              "targetWord": "project"
+            },
+            {
+              "en": "I cook dinner for my family.",
+              "answer": "我给家人做晚饭。",
+              "targetWord": "cook"
             }
           ]
         },
@@ -806,18 +880,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "时间规划 · 英译中",
-          "chunk": "keys / phone",
+          "chunk": "schedule / plan / routine",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I look for my keys.",
-              "answer": "我在找我的钥匙。",
-              "targetWord": "keys"
+              "en": "I check my schedule every morning.",
+              "answer": "我每天早上查看日程。",
+              "targetWord": "schedule"
             },
             {
-              "en": "I look for my phone.",
-              "answer": "我在找我的手机。",
-              "targetWord": "phone"
+              "en": "I plan my week on Sunday.",
+              "answer": "我每周日做周计划。",
+              "targetWord": "plan"
+            },
+            {
+              "en": "I have a daily routine.",
+              "answer": "我有固定的日常安排。",
+              "targetWord": "routine"
             }
           ]
         },
@@ -932,18 +1011,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "我想买… · 英译中",
-          "chunk": "shopping / dress",
+          "chunk": "choose / fit / spend",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I need to go shopping this weekend.",
-              "answer": "我这周末需要去购物。",
-              "targetWord": "shopping"
+              "en": "I need to choose a gift.",
+              "answer": "我需要选个礼物。",
+              "targetWord": "choose"
             },
             {
-              "en": "I want to buy a dress.",
-              "answer": "我想买一条裙子。",
-              "targetWord": "dress"
+              "en": "This dress fits me perfectly.",
+              "answer": "这条裙子很合身。",
+              "targetWord": "fit"
+            },
+            {
+              "en": "I don't want to spend too much.",
+              "answer": "我不想花太多钱。",
+              "targetWord": "spend"
             }
           ]
         },
@@ -1047,6 +1131,32 @@
           ]
         },
         {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "试穿与挑选 · 英译中",
+          "chunk": "try / mirror / style",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Can I try this on?",
+              "answer": "我能试穿这个吗？",
+              "targetWord": "try"
+            },
+            {
+              "en": "Let me look in the mirror.",
+              "answer": "让我照照镜子。",
+              "targetWord": "mirror"
+            },
+            {
+              "en": "I like this style very much.",
+              "answer": "我非常喜欢这个风格。",
+              "targetWord": "style"
+            }
+          ]
+        },
+        {
           "id": "pd_1",
           "type": "pattern_drill",
           "title": "试穿与挑选 · 句型",
@@ -1092,8 +1202,14 @@
             {
               "chunk": "Do you have this in ___?",
               "items": [
-                { "zh": "这个有小一号的吗？", "answer": "Do you have this in a smaller size?" },
-                { "zh": "这个有蓝色的吗？", "answer": "Do you have this in blue?" }
+                {
+                  "zh": "这个有小一号的吗？",
+                  "answer": "Do you have this in a smaller size?"
+                },
+                {
+                  "zh": "这个有蓝色的吗？",
+                  "answer": "Do you have this in blue?"
+                }
               ]
             }
           ]
@@ -1138,18 +1254,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "天气与活动 · 英译中",
-          "chunk": "warm / umbrella",
+          "chunk": "forecast / outdoor / inside",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "What's the weather like? It's warm and sunny.",
-              "answer": "天气怎么样？暖和晴朗。",
-              "targetWord": "warm"
+              "en": "The forecast says it'll be sunny.",
+              "answer": "天气预报说会晴天。",
+              "targetWord": "forecast"
             },
             {
-              "en": "I need an umbrella. It's raining outside.",
-              "answer": "我需要一把伞。外面在下雨。",
-              "targetWord": "umbrella"
+              "en": "We can do outdoor activities.",
+              "answer": "我们可以做户外活动。",
+              "targetWord": "outdoor"
+            },
+            {
+              "en": "Let's stay inside today.",
+              "answer": "我们今天待在家里吧。",
+              "targetWord": "inside"
             }
           ]
         },
@@ -1358,18 +1479,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "点餐 · 英译中",
-          "chunk": "order / recommend",
+          "chunk": "dish / special / chef",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I would like to order a pizza and a salad.",
-              "answer": "我想点一个披萨和一份沙拉。",
-              "targetWord": "order"
+              "en": "What dish do you recommend?",
+              "answer": "你推荐什么菜？",
+              "targetWord": "dish"
             },
             {
-              "en": "What do you recommend?",
-              "answer": "你有什么推荐的？",
-              "targetWord": "recommend"
+              "en": "Today's special is fish.",
+              "answer": "今日特色菜是鱼。",
+              "targetWord": "special"
+            },
+            {
+              "en": "I'll have the chef's special.",
+              "answer": "我要主厨推荐。",
+              "targetWord": "chef"
             }
           ]
         },
@@ -1576,6 +1702,32 @@
           ]
         },
         {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "约见面 · 英译中",
+          "chunk": "arrange / confirm / cancel",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Let's arrange a time to meet.",
+              "answer": "我们安排个时间见面吧。",
+              "targetWord": "arrange"
+            },
+            {
+              "en": "Please confirm the time.",
+              "answer": "请确认时间。",
+              "targetWord": "confirm"
+            },
+            {
+              "en": "I need to cancel the appointment.",
+              "answer": "我需要取消预约。",
+              "targetWord": "cancel"
+            }
+          ]
+        },
+        {
           "id": "pd_1",
           "type": "pattern_drill",
           "title": "约见面 · 句型",
@@ -1621,8 +1773,14 @@
             {
               "chunk": "Let's meet at ___ at ___.",
               "items": [
-                { "zh": "我们3点在咖啡店见吧。", "answer": "Let's meet at the coffee shop at 3 pm." },
-                { "zh": "我们5点在车站见吧。", "answer": "Let's meet at the station at 5 pm." }
+                {
+                  "zh": "我们3点在咖啡店见吧。",
+                  "answer": "Let's meet at the coffee shop at 3 pm."
+                },
+                {
+                  "zh": "我们5点在车站见吧。",
+                  "answer": "Let's meet at the station at 5 pm."
+                }
               ]
             }
           ]
@@ -1653,6 +1811,32 @@
               "zh": "抱歉我迟到了。公交晚了。",
               "answer": "Sorry I am late. The bus was late.",
               "targetWord": "traffic"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "迟到与道歉 · 英译中",
+          "chunk": "traffic / late / apologize",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I'm stuck in traffic jam.",
+              "answer": "我堵车了。",
+              "targetWord": "jam"
+            },
+            {
+              "en": "I'm sorry I'm late.",
+              "answer": "对不起我迟到了。",
+              "targetWord": "sorry"
+            },
+            {
+              "en": "I apologize for the delay.",
+              "answer": "我为迟到道歉。",
+              "targetWord": "apologize"
             }
           ]
         },
@@ -1702,8 +1886,14 @@
             {
               "chunk": "Sorry, I'm late. ___ was ___.",
               "items": [
-                { "zh": "抱歉我迟到了。路上很堵。", "answer": "Sorry, I'm late. The traffic was bad." },
-                { "zh": "抱歉我迟到了。公交晚了。", "answer": "Sorry, I'm late. The bus was late." }
+                {
+                  "zh": "抱歉我迟到了。路上很堵。",
+                  "answer": "Sorry, I'm late. The traffic was bad."
+                },
+                {
+                  "zh": "抱歉我迟到了。公交晚了。",
+                  "answer": "Sorry, I'm late. The bus was late."
+                }
               ]
             }
           ]
@@ -1739,6 +1929,32 @@
               "zh": "别忘了带书。",
               "answer": "Don't forget to bring your book.",
               "targetWord": "forget"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "否定祈使句 · 英译中",
+          "chunk": "rule / warning / notice",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Please follow the rules.",
+              "answer": "请遵守规则。",
+              "targetWord": "rule"
+            },
+            {
+              "en": "I'm warning you!",
+              "answer": "我警告你！",
+              "targetWord": "warning"
+            },
+            {
+              "en": "Did you see the notice?",
+              "answer": "你看到通知了吗？",
+              "targetWord": "notice"
             }
           ]
         },
@@ -1788,8 +2004,14 @@
             {
               "chunk": "Don't ___.",
               "items": [
-                { "zh": "别担心。", "answer": "Don't worry." },
-                { "zh": "别迟到。", "answer": "Don't be late." }
+                {
+                  "zh": "别担心。",
+                  "answer": "Don't worry."
+                },
+                {
+                  "zh": "别迟到。",
+                  "answer": "Don't be late."
+                }
               ]
             }
           ]
@@ -1825,6 +2047,32 @@
               "zh": "我们吃吧！",
               "answer": "Let's eat!",
               "targetWord": "eat"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "Let's提议 · 英译中",
+          "chunk": "suggestion / together / agree",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have a suggestion.",
+              "answer": "我有个建议。",
+              "targetWord": "suggestion"
+            },
+            {
+              "en": "Let's do it together!",
+              "answer": "我们一起做吧！",
+              "targetWord": "together"
+            },
+            {
+              "en": "I agree with you.",
+              "answer": "我同意你的看法。",
+              "targetWord": "agree"
             }
           ]
         },
@@ -1874,8 +2122,14 @@
             {
               "chunk": "Let's ___!",
               "items": [
-                { "zh": "我们走吧！", "answer": "Let's go!" },
-                { "zh": "我们吃吧！", "answer": "Let's eat!" }
+                {
+                  "zh": "我们走吧！",
+                  "answer": "Let's go!"
+                },
+                {
+                  "zh": "我们吃吧！",
+                  "answer": "Let's eat!"
+                }
               ]
             }
           ]
@@ -1920,18 +2174,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "提醒与建议 · 英译中",
-          "chunk": "meet / careful",
+          "chunk": "remind / advise / offer",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Let's meet at 3 o'clock.",
-              "answer": "我们3点见吧。",
-              "targetWord": "meet"
+              "en": "Please remind me later.",
+              "answer": "请稍后提醒我。",
+              "targetWord": "remind"
             },
             {
-              "en": "Be careful!",
-              "answer": "小心！",
-              "targetWord": "careful"
+              "en": "I advise you to be careful.",
+              "answer": "我建议你小心。",
+              "targetWord": "advise"
+            },
+            {
+              "en": "I offer to help you.",
+              "answer": "我主动帮你。",
+              "targetWord": "offer"
             }
           ]
         },
@@ -2040,18 +2299,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "综合运用 · 英译中",
-          "chunk": "meet / careful",
+          "chunk": "combine / review / practice",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Let's meet at 3 o'clock.",
-              "answer": "我们3点见吧。",
-              "targetWord": "meet"
+              "en": "Let's combine these ideas.",
+              "answer": "我们把想法结合起来。",
+              "targetWord": "combine"
             },
             {
-              "en": "Be careful!",
-              "answer": "小心！",
-              "targetWord": "careful"
+              "en": "Let me review my notes.",
+              "answer": "让我复习一下笔记。",
+              "targetWord": "review"
+            },
+            {
+              "en": "Practice makes perfect.",
+              "answer": "熟能生巧。",
+              "targetWord": "practice"
             }
           ]
         },
@@ -2116,6 +2380,1022 @@
                 "slot1": "call me",
                 "slot2": "lock the door",
                 "slot3": "do your homework"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "周末活动": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "周末活动 · 中译英",
+          "chunk": "park / cinema / picnic",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我周末常去公园。",
+              "answer": "I often go to the park on weekends.",
+              "targetWord": "park"
+            },
+            {
+              "zh": "我们去看电影吧。",
+              "answer": "Let's go to the cinema.",
+              "targetWord": "cinema"
+            },
+            {
+              "zh": "我们去野餐怎么样？",
+              "answer": "How about a picnic?",
+              "targetWord": "picnic"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "周末活动 · 英译中",
+          "chunk": "relax / fun / enjoy",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I relax on weekends.",
+              "answer": "我周末放松。",
+              "targetWord": "relax"
+            },
+            {
+              "en": "We have fun at the beach.",
+              "answer": "我们在海边玩得很开心。",
+              "targetWord": "fun"
+            },
+            {
+              "en": "I enjoy my free time.",
+              "answer": "我享受空闲时间。",
+              "targetWord": "enjoy"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "周末活动 · 句型",
+          "pattern": "I often ___ on weekends.",
+          "patternMeaning": "我周末经常...",
+          "slots": [
+            "go to the park",
+            "watch movies",
+            "visit friends"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我周末经常...",
+              "answer": "I often go to the park on weekends.",
+              "pattern": "I often ___ on weekends.",
+              "slotValues": {
+                "slot1": "go to the park",
+                "slot2": "watch movies",
+                "slot3": "visit friends"
+              }
+            },
+            {
+              "zh": "我们周末...",
+              "answer": "We sometimes have a picnic.",
+              "pattern": "We sometimes ___ on weekends.",
+              "slotValues": {
+                "slot1": "have a picnic",
+                "slot2": "play sports",
+                "slot3": "go shopping"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "周末活动 · 一词多句",
+          "vocabWord": "on weekends / on Saturday",
+          "vocabMeaning": "在周末/在周六",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I ___ on weekends.",
+              "items": [
+                {
+                  "zh": "我周末常去公园。",
+                  "answer": "I often go to the park on weekends."
+                },
+                {
+                  "zh": "我周末看电影。",
+                  "answer": "I watch movies on weekends."
+                }
+              ]
+            },
+            {
+              "chunk": "We ___ on Saturday.",
+              "items": [
+                {
+                  "zh": "我们周六去野餐。",
+                  "answer": "We have a picnic on Saturday."
+                },
+                {
+                  "zh": "我们周六购物。",
+                  "answer": "We go shopping on Saturday."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我喜欢…": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我喜欢… · 中译英",
+          "chunk": "coffee / music / reading",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我喜欢喝咖啡。",
+              "answer": "I like coffee.",
+              "targetWord": "coffee"
+            },
+            {
+              "zh": "我喜欢音乐。",
+              "answer": "I like music.",
+              "targetWord": "music"
+            },
+            {
+              "zh": "我喜欢阅读。",
+              "answer": "I like reading.",
+              "targetWord": "reading"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我喜欢… · 英译中",
+          "chunk": "sport / movie / cooking",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I like playing sports.",
+              "answer": "我喜欢运动。",
+              "targetWord": "sport"
+            },
+            {
+              "en": "I like watching movies.",
+              "answer": "我喜欢看电影。",
+              "targetWord": "movie"
+            },
+            {
+              "en": "I like cooking Chinese food.",
+              "answer": "我喜欢做中国菜。",
+              "targetWord": "cooking"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我喜欢… · 句型",
+          "pattern": "I like ___.",
+          "patternMeaning": "我喜欢...",
+          "slots": [
+            "coffee",
+            "music",
+            "reading"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我喜欢...",
+              "answer": "I like coffee.",
+              "pattern": "I like ___.",
+              "slotValues": {
+                "slot1": "coffee",
+                "slot2": "music",
+                "slot3": "reading"
+              }
+            },
+            {
+              "zh": "他喜欢...",
+              "answer": "He likes playing soccer.",
+              "pattern": "He likes ___.",
+              "slotValues": {
+                "slot1": "playing soccer",
+                "slot2": "watching TV",
+                "slot3": "listening to music"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我想要…": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我想要… · 中译英",
+          "chunk": "water / coffee / help",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我想要一杯水。",
+              "answer": "I want a glass of water.",
+              "targetWord": "water"
+            },
+            {
+              "zh": "我想要杯咖啡。",
+              "answer": "I want a cup of coffee.",
+              "targetWord": "coffee"
+            },
+            {
+              "zh": "我需要帮助。",
+              "answer": "I need help.",
+              "targetWord": "help"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我想要… · 英译中",
+          "chunk": "hungry / thirsty / tired",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I am hungry. I want to eat.",
+              "answer": "我饿了。我想吃东西。",
+              "targetWord": "hungry"
+            },
+            {
+              "en": "I am thirsty. I need a drink.",
+              "answer": "我渴了。我需要喝点东西。",
+              "targetWord": "thirsty"
+            },
+            {
+              "en": "I am tired. I want to rest.",
+              "answer": "我累了。我想休息。",
+              "targetWord": "tired"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我想要… · 句型",
+          "pattern": "I want ___.",
+          "patternMeaning": "我想要...",
+          "slots": [
+            "a glass of water",
+            "a cup of coffee",
+            "some help"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我想要...",
+              "answer": "I want a glass of water.",
+              "pattern": "I want ___.",
+              "slotValues": {
+                "slot1": "a glass of water",
+                "slot2": "a cup of coffee",
+                "slot3": "some help"
+              }
+            },
+            {
+              "zh": "我需要...",
+              "answer": "I need to go home now.",
+              "pattern": "I need ___.",
+              "slotValues": {
+                "slot1": "to go home now",
+                "slot2": "some rest",
+                "slot3": "your advice"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我有什么": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我有什么 · 中译英",
+          "chunk": "have / own / keep",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我有一辆自行车。",
+              "answer": "I have a bike.",
+              "targetWord": "have"
+            },
+            {
+              "zh": "我有一本新书。",
+              "answer": "I own a new book.",
+              "targetWord": "own"
+            },
+            {
+              "zh": "我养了一只猫。",
+              "answer": "I keep a cat as a pet.",
+              "targetWord": "keep"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我有什么 · 英译中",
+          "chunk": "dog / car / house",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have a dog at home.",
+              "answer": "我家里有只狗。",
+              "targetWord": "dog"
+            },
+            {
+              "en": "He has a new car.",
+              "answer": "他有一辆新车。",
+              "targetWord": "car"
+            },
+            {
+              "en": "They have a big house.",
+              "answer": "他们有一栋大房子。",
+              "targetWord": "house"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我有什么 · 句型",
+          "pattern": "I have ___.",
+          "patternMeaning": "我有...",
+          "slots": [
+            "a bike",
+            "a dog",
+            "a new book"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我有...",
+              "answer": "I have a bike.",
+              "pattern": "I have ___.",
+              "slotValues": {
+                "slot1": "a bike",
+                "slot2": "a dog",
+                "slot3": "a new book"
+              }
+            },
+            {
+              "zh": "他/她有...",
+              "answer": "She has a new phone.",
+              "pattern": "She has ___.",
+              "slotValues": {
+                "slot1": "a new phone",
+                "slot2": "a beautiful bag",
+                "slot3": "an interesting book"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我不喜欢…": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我不喜欢… · 中译英",
+          "chunk": "rain / cold / noise",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我不喜欢下雨天。",
+              "answer": "I don't like rainy days.",
+              "targetWord": "rain"
+            },
+            {
+              "zh": "我不喜欢冷天气。",
+              "answer": "I don't like cold weather.",
+              "targetWord": "cold"
+            },
+            {
+              "zh": "我不喜欢噪音。",
+              "answer": "I don't like noise.",
+              "targetWord": "noise"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我不喜欢… · 英译中",
+          "chunk": "spicy / bitter / busy",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I don't like spicy food.",
+              "answer": "我不喜欢辣的食物。",
+              "targetWord": "spicy"
+            },
+            {
+              "en": "The coffee tastes bitter.",
+              "answer": "咖啡很苦。",
+              "targetWord": "bitter"
+            },
+            {
+              "en": "I don't like busy schedules.",
+              "answer": "我不喜欢太忙的日程。",
+              "targetWord": "busy"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我不喜欢… · 句型",
+          "pattern": "I don't like ___.",
+          "patternMeaning": "我不喜欢...",
+          "slots": [
+            "rainy days",
+            "cold weather",
+            "noise"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我不喜欢...",
+              "answer": "I don't like rainy days.",
+              "pattern": "I don't like ___.",
+              "slotValues": {
+                "slot1": "rainy days",
+                "slot2": "cold weather",
+                "slot3": "noise"
+              }
+            },
+            {
+              "zh": "她不喜欢...",
+              "answer": "She doesn't like getting up early.",
+              "pattern": "She doesn't like ___.",
+              "slotValues": {
+                "slot1": "getting up early",
+                "slot2": "eating spicy food",
+                "slot3": "waiting for long"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "我的能力和意愿": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "我的能力和意愿 · 中译英",
+          "chunk": "swim / dance / cook",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我会游泳。",
+              "answer": "I can swim.",
+              "targetWord": "swim"
+            },
+            {
+              "zh": "我会跳舞。",
+              "answer": "I can dance.",
+              "targetWord": "dance"
+            },
+            {
+              "zh": "我会做中国菜。",
+              "answer": "I can cook Chinese food.",
+              "targetWord": "cook"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "我的能力和意愿 · 英译中",
+          "chunk": "drive / sing / draw",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Can you drive a car?",
+              "answer": "你会开车吗？",
+              "targetWord": "drive"
+            },
+            {
+              "en": "She can sing very well.",
+              "answer": "她唱歌很好听。",
+              "targetWord": "sing"
+            },
+            {
+              "en": "He can draw beautiful pictures.",
+              "answer": "他会画漂亮的画。",
+              "targetWord": "draw"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "我的能力和意愿 · 句型",
+          "pattern": "I can ___.",
+          "patternMeaning": "我会...",
+          "slots": [
+            "swim",
+            "dance",
+            "cook"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我会...",
+              "answer": "I can swim.",
+              "pattern": "I can ___.",
+              "slotValues": {
+                "slot1": "swim",
+                "slot2": "dance",
+                "slot3": "cook"
+              }
+            },
+            {
+              "zh": "她...",
+              "answer": "She can sing very well.",
+              "pattern": "She can ___ very well.",
+              "slotValues": {
+                "slot1": "sing",
+                "slot2": "dance",
+                "slot3": "draw"
+              }
+            },
+            {
+              "zh": "我能...吗？",
+              "answer": "Can I use your phone?",
+              "pattern": "Can I ___?",
+              "slotValues": {
+                "slot1": "use your phone",
+                "slot2": "sit here",
+                "slot3": "come in"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "交通方式": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "交通方式 · 中译英",
+          "chunk": "bus / bike / walk",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我坐公交上学。",
+              "answer": "I take the bus to school.",
+              "targetWord": "bus"
+            },
+            {
+              "zh": "我骑车去公园。",
+              "answer": "I ride my bike to the park.",
+              "targetWord": "bike"
+            },
+            {
+              "zh": "我走路去超市。",
+              "answer": "I walk to the supermarket.",
+              "targetWord": "walk"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "交通方式 · 英译中",
+          "chunk": "subway / taxi / train",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I take the subway to work.",
+              "answer": "我坐地铁上班。",
+              "targetWord": "subway"
+            },
+            {
+              "en": "I take a taxi when I'm late.",
+              "answer": "我迟到时打车。",
+              "targetWord": "taxi"
+            },
+            {
+              "en": "The train is very fast.",
+              "answer": "火车很快。",
+              "targetWord": "train"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "交通方式 · 句型",
+          "pattern": "I take the ___ to ___.",
+          "patternMeaning": "我坐...去...",
+          "slots": [
+            "bus school",
+            "subway work",
+            "train Beijing"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我坐...去...",
+              "answer": "I take the bus to school.",
+              "pattern": "I take the ___ to ___.",
+              "slotValues": {
+                "slot1": "bus school",
+                "slot2": "subway work",
+                "slot3": "train Beijing"
+              }
+            },
+            {
+              "zh": "你怎么去...？",
+              "answer": "How do you go to work?",
+              "pattern": "How do you go to ___?",
+              "slotValues": {
+                "slot1": "work",
+                "slot2": "school",
+                "slot3": "the airport"
+              }
+            },
+            {
+              "zh": "我走路去...",
+              "answer": "I walk to the supermarket.",
+              "pattern": "I walk to ___.",
+              "slotValues": {
+                "slot1": "the supermarket",
+                "slot2": "my friend's house",
+                "slot3": "the park"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "问价格": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "问价格 · 中译英",
+          "chunk": "price / cost / dollar",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这个多少钱？",
+              "answer": "How much is this?",
+              "targetWord": "price"
+            },
+            {
+              "zh": "这个花了我十块钱。",
+              "answer": "It cost me ten yuan.",
+              "targetWord": "cost"
+            },
+            {
+              "zh": "这只要5美元。",
+              "answer": "This is only five dollars.",
+              "targetWord": "dollar"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "问价格 · 英译中",
+          "chunk": "cheap / expensive / affordable",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "This is very cheap.",
+              "answer": "这个很便宜。",
+              "targetWord": "cheap"
+            },
+            {
+              "en": "That's too expensive for me.",
+              "answer": "那对我来说太贵了。",
+              "targetWord": "expensive"
+            },
+            {
+              "en": "The price is very affordable.",
+              "answer": "价格很实惠。",
+              "targetWord": "affordable"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "问价格 · 句型",
+          "pattern": "How much is ___?",
+          "patternMeaning": "...多少钱？",
+          "slots": [
+            "this",
+            "that dress",
+            "the total"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "...多少钱？",
+              "answer": "How much is this?",
+              "pattern": "How much is ___?",
+              "slotValues": {
+                "slot1": "this",
+                "slot2": "that dress",
+                "slot3": "the total"
+              }
+            },
+            {
+              "zh": "太...了",
+              "answer": "It's too expensive.",
+              "pattern": "It's too ___.",
+              "slotValues": {
+                "slot1": "expensive",
+                "slot2": "cheap",
+                "slot3": "much"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "评价食物": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "评价食物 · 中译英",
+          "chunk": "tasty / sweet / fresh",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "这个菜很好吃。",
+              "answer": "This dish is very tasty.",
+              "targetWord": "tasty"
+            },
+            {
+              "zh": "这蛋糕很甜。",
+              "answer": "The cake is very sweet.",
+              "targetWord": "sweet"
+            },
+            {
+              "zh": "水果很新鲜。",
+              "answer": "The fruit is very fresh.",
+              "targetWord": "fresh"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "评价食物 · 英译中",
+          "chunk": "delicious / salty / healthy",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The food is delicious!",
+              "answer": "这食物太好吃了！",
+              "targetWord": "delicious"
+            },
+            {
+              "en": "The soup is too salty.",
+              "answer": "汤太咸了。",
+              "targetWord": "salty"
+            },
+            {
+              "en": "Salad is very healthy.",
+              "answer": "沙拉很健康。",
+              "targetWord": "healthy"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "评价食物 · 句型",
+          "pattern": "This ___ is very ___.",
+          "patternMeaning": "这个...很...",
+          "slots": [
+            "dish tasty",
+            "cake sweet",
+            "fruit fresh"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这个...很...",
+              "answer": "This dish is very tasty.",
+              "pattern": "This ___ is very ___.",
+              "slotValues": {
+                "slot1": "dish tasty",
+                "slot2": "cake sweet",
+                "slot3": "fruit fresh"
+              }
+            },
+            {
+              "zh": "食物太...",
+              "answer": "The food is too salty.",
+              "pattern": "The ___ is too ___.",
+              "slotValues": {
+                "slot1": "soup salty",
+                "slot2": "coffee bitter",
+                "slot3": "chicken spicy"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "日常指令": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "日常指令 · 中译英",
+          "chunk": "clean / wash / put",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "打扫你的房间。",
+              "answer": "Clean your room.",
+              "targetWord": "clean"
+            },
+            {
+              "zh": "洗你的手。",
+              "answer": "Wash your hands.",
+              "targetWord": "wash"
+            },
+            {
+              "zh": "把书放桌上。",
+              "answer": "Put the book on the table.",
+              "targetWord": "put"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "日常指令 · 英译中",
+          "chunk": "open / close / turn",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Open the window please.",
+              "answer": "请开窗。",
+              "targetWord": "open"
+            },
+            {
+              "en": "Close the door behind you.",
+              "answer": "随手关门。",
+              "targetWord": "close"
+            },
+            {
+              "en": "Turn off the lights.",
+              "answer": "关灯。",
+              "targetWord": "turn"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "日常指令 · 句型",
+          "pattern": "Please ___ your ___.",
+          "patternMeaning": "请...你的...",
+          "slots": [
+            "clean room",
+            "wash hands",
+            "close door"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请...你的...",
+              "answer": "Please clean your room.",
+              "pattern": "Please ___ your ___.",
+              "slotValues": {
+                "slot1": "clean room",
+                "slot2": "wash hands",
+                "slot3": "close door"
+              }
+            },
+            {
+              "zh": "让我们...",
+              "answer": "Let's go now.",
+              "pattern": "Let's ___.",
+              "slotValues": {
+                "slot1": "go now",
+                "slot2": "start eating",
+                "slot3": "clean the house"
+              }
+            },
+            {
+              "zh": "不要...",
+              "answer": "Don't run in the hallway.",
+              "pattern": "Don't ___ in the ___.",
+              "slotValues": {
+                "slot1": "run hallway",
+                "slot2": "shout class",
+                "slot3": "eat library"
               }
             }
           ]

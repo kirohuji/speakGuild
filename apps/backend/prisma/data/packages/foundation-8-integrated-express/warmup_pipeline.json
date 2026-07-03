@@ -10,13 +10,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "so 结果 · 中译英",
-          "chunk": "unless",
+          "chunk": "consequence / therefore / effort",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "除非你跟我一起去否则我不去。",
-              "answer": "I won't go unless you come with me.",
-              "targetWord": "unless"
+              "zh": "下大雨了，所以我们取消了野餐。",
+              "answer": "It rained heavily so we canceled the picnic.",
+              "targetWord": "consequence"
+            },
+            {
+              "zh": "他每天都练习，因此进步很快。",
+              "answer": "He practices every day therefore he improves quickly.",
+              "targetWord": "therefore"
+            },
+            {
+              "zh": "她付出了很多努力，所以最终成功了。",
+              "answer": "She put in a lot of effort so she succeeded at last.",
+              "targetWord": "effort"
             }
           ]
         },
@@ -26,13 +36,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "so 结果 · 英译中",
-          "chunk": "unless",
+          "chunk": "demand / rely / suffer",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "You can't enter unless you have a ticket.",
-              "answer": "除非你有票否则你不能进。",
-              "targetWord": "unless"
+              "en": "The demand was high so they hired more workers.",
+              "answer": "需求很高所以他们雇了更多工人。",
+              "targetWord": "demand"
+            },
+            {
+              "en": "You can rely on her so don't worry.",
+              "answer": "你可以信赖她，所以不用担心。",
+              "targetWord": "rely"
+            },
+            {
+              "en": "He didn't study so he suffered in the exam.",
+              "answer": "他没学习，所以考试很痛苦。",
+              "targetWord": "suffer"
             }
           ]
         },
@@ -40,28 +60,62 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "so 结果 · 句型",
-          "pattern": "I was ___ so I ___.",
-          "patternMeaning": "我...所以我...",
+          "pattern": "___ so ___.",
+          "patternMeaning": "...所以...",
           "slots": [
-            "tired went to bed early, hungry ate, busy couldn't come"
+            "I was tired I went to bed early",
+            "she practiced she won",
+            "we got lost we asked for directions"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我...所以我...",
+              "zh": "我很累，所以早睡了。",
               "answer": "I was tired so I went to bed early.",
-              "pattern": "I was ___ so I ___.",
+              "pattern": "___ so ___.",
               "slotValues": {
-                "slot1": "tired went to bed early, hungry ate, busy couldn't come"
+                "slot1": "I was tired I went to bed early"
               }
             },
             {
-              "zh": "...所以...",
-              "answer": "It started to rain so we took a taxi.",
+              "zh": "她练习了，所以赢了。",
+              "answer": "She practiced so she won.",
               "pattern": "___ so ___.",
               "slotValues": {
-                "slot1": "it started to rain we took a taxi, the store was closed I went home"
+                "slot1": "she practiced she won"
               }
+            },
+            {
+              "zh": "我们迷路了，所以问了路。",
+              "answer": "We got lost so we asked for directions.",
+              "pattern": "___ so ___.",
+              "slotValues": {
+                "slot1": "we got lost we asked for directions"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "so 结果 · 一词多句",
+          "vocabWord": "so / therefore / as a result",
+          "vocabMeaning": "所以/因此/结果",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ so ___. / ___ therefore ___.",
+              "items": [
+                { "zh": "他很努力，所以通过了考试。", "answer": "He worked hard so he passed the exam." },
+                { "zh": "她很有经验，因此得到了这份工作。", "answer": "She was experienced therefore she got the job." }
+              ]
+            },
+            {
+              "chunk": "___ as a result ___.",
+              "items": [
+                { "zh": "他迟到了，结果错过了火车。", "answer": "He was late as a result he missed the train." },
+                { "zh": "公司亏钱了，结果不得不裁员。", "answer": "The company lost money as a result they had to cut jobs." }
+              ]
             }
           ]
         }
@@ -79,13 +133,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "unless 除非 · 中译英",
-          "chunk": "unless",
+          "chunk": "unless / ignore / challenge",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "除非你跟我一起去否则我不去。",
-              "answer": "I won't go unless you come with me.",
+              "zh": "除非你邀请我，否则我不会参加聚会。",
+              "answer": "I won't attend the party unless you invite me.",
               "targetWord": "unless"
+            },
+            {
+              "zh": "除非你处理这个问题，否则它会变得更糟。",
+              "answer": "The problem will get worse unless you handle it.",
+              "targetWord": "ignore"
+            },
+            {
+              "zh": "除非我们面对挑战，否则无法成长。",
+              "answer": "We cannot grow unless we face challenges.",
+              "targetWord": "challenge"
             }
           ]
         },
@@ -95,13 +159,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "unless 除非 · 英译中",
-          "chunk": "unless",
+          "chunk": "escape / depressed / concentrate",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "You can't enter unless you have a ticket.",
-              "answer": "除非你有票否则你不能进。",
-              "targetWord": "unless"
+              "en": "You can't escape responsibility unless you quit.",
+              "answer": "除非你辞职，否则无法逃避责任。",
+              "targetWord": "escape"
+            },
+            {
+              "en": "He will stay depressed unless he gets help.",
+              "answer": "除非他得到帮助，否则会一直沮丧。",
+              "targetWord": "depressed"
+            },
+            {
+              "en": "You can't concentrate unless you get enough sleep.",
+              "answer": "除非你睡够，否则无法集中精力。",
+              "targetWord": "concentrate"
             }
           ]
         },
@@ -109,20 +183,1067 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "unless 除非 · 句型",
-          "pattern": "I won't ___ unless ___.",
-          "patternMeaning": "除非...否则我不会...",
+          "pattern": "___ won't ___ unless ___.",
+          "patternMeaning": "除非...否则...不会...",
           "slots": [
-            "go you come, eat I'm hungry, leave you ask me, buy it it's cheap"
+            "I go you come",
+            "she succeed she tries harder",
+            "they finish they start now"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "除非...否则我不会...",
-              "answer": "I won't go unless you come with me.",
-              "pattern": "I won't ___ unless ___.",
+              "zh": "除非你来，否则我不会去。",
+              "answer": "I won't go unless you come.",
+              "pattern": "___ won't ___ unless ___.",
               "slotValues": {
-                "slot1": "go you come, eat I'm hungry, leave you ask me, buy it it's cheap"
+                "slot1": "I go you come"
               }
+            },
+            {
+              "zh": "除非更努力，否则她不会成功。",
+              "answer": "She won't succeed unless she tries harder.",
+              "pattern": "___ won't ___ unless ___.",
+              "slotValues": {
+                "slot1": "she succeed she tries harder"
+              }
+            },
+            {
+              "zh": "除非现在开始，否则他们完不成。",
+              "answer": "They won't finish unless they start now.",
+              "pattern": "___ won't ___ unless ___.",
+              "slotValues": {
+                "slot1": "they finish they start now"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "unless 除非 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本条件",
+              "en": "I won't go unless you come.",
+              "zh": "除非你来，否则我不去。",
+              "highlight": "unless",
+              "hint": "先用简单条件句"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "I won't go unless you come because I hate going alone.",
+              "zh": "除非你来否则我不去，因为我讨厌一个人去。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            },
+            {
+              "level": 3,
+              "label": "完整表达",
+              "en": "I won't go unless you come with me because I hate going alone and I'd feel awkward.",
+              "zh": "除非你跟我一起去否则我不去，因为我讨厌一个人去而且会觉得尴尬。",
+              "highlight": "awkward",
+              "hint": "用 and 连接更多细节"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "because 原因": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "because 原因 · 中译英",
+          "chunk": "annoyed / embarrassed / injured",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他迟到了，因为路上堵车。",
+              "answer": "He was late because the traffic was heavy.",
+              "targetWord": "annoyed"
+            },
+            {
+              "zh": "她觉得尴尬，因为没人回答她的问题。",
+              "answer": "She felt embarrassed because no one answered her question.",
+              "targetWord": "embarrassed"
+            },
+            {
+              "zh": "他受伤了，因为发生了事故。",
+              "answer": "He got injured because there was an accident.",
+              "targetWord": "injured"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "because 原因 · 英译中",
+          "chunk": "explore / generous / atmosphere",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We decided to explore the city because we had a free day.",
+              "answer": "我们决定探索这座城市，因为有一天空闲。",
+              "targetWord": "explore"
+            },
+            {
+              "en": "He is popular because he is generous and kind.",
+              "answer": "他很受欢迎，因为他慷慨又善良。",
+              "targetWord": "generous"
+            },
+            {
+              "en": "I like this cafe because of the relaxing atmosphere.",
+              "answer": "我喜欢这家咖啡馆，因为氛围很放松。",
+              "targetWord": "atmosphere"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "because 原因 · 句型",
+          "pattern": "___ because ___.",
+          "patternMeaning": "...因为...",
+          "slots": [
+            "I stayed home I was sick",
+            "she passed the test she studied hard",
+            "we canceled the trip it rained"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我待在家，因为我病了。",
+              "answer": "I stayed home because I was sick.",
+              "pattern": "___ because ___.",
+              "slotValues": {
+                "slot1": "I stayed home I was sick"
+              }
+            },
+            {
+              "zh": "她通过了考试，因为她努力学习。",
+              "answer": "She passed the test because she studied hard.",
+              "pattern": "___ because ___.",
+              "slotValues": {
+                "slot1": "she passed the test she studied hard"
+              }
+            },
+            {
+              "zh": "我们取消了行程，因为下雨了。",
+              "answer": "We canceled the trip because it rained.",
+              "pattern": "___ because ___.",
+              "slotValues": {
+                "slot1": "we canceled the trip it rained"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "because 原因 · 一词多句",
+          "vocabWord": "because / since / as",
+          "vocabMeaning": "因为/由于",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ because ___. / Since ___, ___.",
+              "items": [
+                { "zh": "他辞职了，因为压力太大。", "answer": "He quit because the pressure was too high." },
+                { "zh": "既然大家都到了，我们开始吧。", "answer": "Since everyone is here let's start." }
+              ]
+            },
+            {
+              "chunk": "As ___, ___.",
+              "items": [
+                { "zh": "由于天气不好，我们没出门。", "answer": "As the weather was bad we didn't go out." },
+                { "zh": "由于时间不够，我跳过了早餐。", "answer": "As I had no time I skipped breakfast." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "if 条件": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "if 条件 · 中译英",
+          "chunk": "access / advanced / educated",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "如果你有网络，就能访问这些资源。",
+              "answer": "If you have internet you can access these resources.",
+              "targetWord": "access"
+            },
+            {
+              "zh": "如果你掌握了高级技巧，就能胜任这份工作。",
+              "answer": "If you master advanced skills you can handle this job.",
+              "targetWord": "advanced"
+            },
+            {
+              "zh": "如果你受过良好教育，机会会更多。",
+              "answer": "If you are well educated you will have more opportunities.",
+              "targetWord": "educated"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "if 条件 · 英译中",
+          "chunk": "technical / mild / outdoor",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "If you have technical problems call the support team.",
+              "answer": "如果你有技术问题，请致电支持团队。",
+              "targetWord": "technical"
+            },
+            {
+              "en": "If the weather is mild we can have a picnic.",
+              "answer": "如果天气温和，我们可以去野餐。",
+              "targetWord": "mild"
+            },
+            {
+              "en": "If you enjoy outdoor activities you will love this place.",
+              "answer": "如果你喜欢户外活动，你会爱上这个地方。",
+              "targetWord": "outdoor"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "if 条件 · 句型",
+          "pattern": "If ___, ___ will ___.",
+          "patternMeaning": "如果...，...会...",
+          "slots": [
+            "it rains tomorrow we stay home",
+            "you practice more you improve",
+            "she gets the job she move to London"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "如果明天下雨，我们就待在家。",
+              "answer": "If it rains tomorrow we will stay home.",
+              "pattern": "If ___, ___ will ___.",
+              "slotValues": {
+                "slot1": "it rains tomorrow we stay home"
+              }
+            },
+            {
+              "zh": "如果你多练习，就会进步。",
+              "answer": "If you practice more you will improve.",
+              "pattern": "If ___, ___ will ___.",
+              "slotValues": {
+                "slot1": "you practice more you improve"
+              }
+            },
+            {
+              "zh": "如果她得到那份工作，她会搬到伦敦。",
+              "answer": "If she gets the job she will move to London.",
+              "pattern": "If ___, ___ will ___.",
+              "slotValues": {
+                "slot1": "she gets the job she move to London"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "if 条件 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本条件",
+              "en": "If it rains I will stay home.",
+              "zh": "如果下雨，我就待在家。",
+              "highlight": "if",
+              "hint": "先说基本条件"
+            },
+            {
+              "level": 2,
+              "label": "加时间",
+              "en": "If it rains tomorrow I will stay home and watch a movie.",
+              "zh": "如果明天下雨，我就待在家看电影。",
+              "highlight": "tomorrow",
+              "hint": "加上时间 tomorrow"
+            },
+            {
+              "level": 3,
+              "label": "加原因",
+              "en": "If it rains tomorrow I will stay home and watch a movie because I don't like going out in the rain.",
+              "zh": "如果明天下雨，我就待在家看电影，因为我不喜欢雨天出门。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "as long as 只要": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "as long as 只要 · 中译英",
+          "chunk": "mainly / current / property",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "只要你主要集中在学习上，就会进步。",
+              "answer": "As long as you focus mainly on studying you will improve.",
+              "targetWord": "mainly"
+            },
+            {
+              "zh": "只要目前的情况不变，我们就按计划来。",
+              "answer": "As long as the current situation stays the same we follow the plan.",
+              "targetWord": "current"
+            },
+            {
+              "zh": "只要你妥善保管财产，就不会有损失。",
+              "answer": "As long as you take care of the property there will be no loss.",
+              "targetWord": "property"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "as long as 只要 · 英译中",
+          "chunk": "consumer / presentation / quote",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "As long as consumers are happy we are doing well.",
+              "answer": "只要消费者满意，我们就做得不错。",
+              "targetWord": "consumer"
+            },
+            {
+              "en": "As long as the presentation is ready we can start.",
+              "answer": "只要演示准备好了，我们就可以开始。",
+              "targetWord": "presentation"
+            },
+            {
+              "en": "As long as you quote the source it's fine.",
+              "answer": "只要你注明出处，就没问题。",
+              "targetWord": "quote"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "as long as 只要 · 句型",
+          "pattern": "As long as ___, ___.",
+          "patternMeaning": "只要...，就...",
+          "slots": [
+            "you try your best it's okay",
+            "you are happy I am happy",
+            "it doesn't rain we will go"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "只要你尽力了，就没关系。",
+              "answer": "As long as you try your best it's okay.",
+              "pattern": "As long as ___, ___.",
+              "slotValues": {
+                "slot1": "you try your best it's okay"
+              }
+            },
+            {
+              "zh": "只要你开心，我就开心。",
+              "answer": "As long as you are happy I am happy.",
+              "pattern": "As long as ___, ___.",
+              "slotValues": {
+                "slot1": "you are happy I am happy"
+              }
+            },
+            {
+              "zh": "只要不下雨，我们就去。",
+              "answer": "As long as it doesn't rain we will go.",
+              "pattern": "As long as ___, ___.",
+              "slotValues": {
+                "slot1": "it doesn't rain we will go"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "as long as 只要 · 一词多句",
+          "vocabWord": "as long as / provided / on condition",
+          "vocabMeaning": "只要/在...条件下",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "As long as ___, ___. / Provided that ___, ___.",
+              "items": [
+                { "zh": "只要你按时完成，就没问题。", "answer": "As long as you finish on time it's fine." },
+                { "zh": "只要你提前通知，我们可以改时间。", "answer": "Provided that you inform us in advance we can reschedule." }
+              ]
+            },
+            {
+              "chunk": "On condition that ___, ___.",
+              "items": [
+                { "zh": "在你不迟到的条件下，我可以带你去。", "answer": "On condition that you are not late I can take you." },
+                { "zh": "在你不告诉别人的条件下，我告诉你一个秘密。", "answer": "On condition that you don't tell anyone I will tell you a secret." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "and 并列": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "and 并列 · 中译英",
+          "chunk": "talent / beauty / passion",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "她既有才华又有美貌。",
+              "answer": "She has both talent and beauty.",
+              "targetWord": "talent"
+            },
+            {
+              "zh": "他充满激情和能量。",
+              "answer": "He is full of passion and energy.",
+              "targetWord": "passion"
+            },
+            {
+              "zh": "这座城市既美丽又繁华。",
+              "answer": "The city is beautiful and prosperous.",
+              "targetWord": "beauty"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "and 并列 · 英译中",
+          "chunk": "brave / reliable / enthusiastic",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He is brave and honest.",
+              "answer": "他既勇敢又诚实。",
+              "targetWord": "brave"
+            },
+            {
+              "en": "She is reliable and hardworking.",
+              "answer": "她既可靠又勤奋。",
+              "targetWord": "reliable"
+            },
+            {
+              "en": "The team is enthusiastic and energetic.",
+              "answer": "这个团队既热情又有活力。",
+              "targetWord": "enthusiastic"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "and 并列 · 句型",
+          "pattern": "I like ___ and ___. / He is ___ and ___.",
+          "patternMeaning": "我喜欢...和... / 他既...又...",
+          "slots": [
+            "coffee tea",
+            "smart kind",
+            "reading writing"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我喜欢咖啡和茶。",
+              "answer": "I like coffee and tea.",
+              "pattern": "I like ___ and ___.",
+              "slotValues": {
+                "slot1": "coffee tea"
+              }
+            },
+            {
+              "zh": "他聪明又善良。",
+              "answer": "He is smart and kind.",
+              "pattern": "He is ___ and ___.",
+              "slotValues": {
+                "slot1": "smart kind"
+              }
+            },
+            {
+              "zh": "我喜欢阅读和写作。",
+              "answer": "I like reading and writing.",
+              "pattern": "I like ___ and ___.",
+              "slotValues": {
+                "slot1": "reading writing"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "and 并列 · 一词多句",
+          "vocabWord": "and / both...and / not only...but also",
+          "vocabMeaning": "和/既...又/不仅...而且",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ and ___. / both ___ and ___.", 
+              "items": [
+                { "zh": "我买了苹果和香蕉。", "answer": "I bought apples and bananas." },
+                { "zh": "她既会唱歌又会跳舞。", "answer": "She can both sing and dance." }
+              ]
+            },
+            {
+              "chunk": "not only ___ but also ___.", 
+              "items": [
+                { "zh": "他不仅会说英语还会说法语。", "answer": "He not only speaks English but also French." },
+                { "zh": "这部电影不仅有趣而且感人。", "answer": "This movie is not only funny but also touching." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "or 选择": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "or 选择 · 中译英",
+          "chunk": "standard / latest / plenty",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "你要标准间还是豪华间？",
+              "answer": "Do you want a standard room or a deluxe room?",
+              "targetWord": "standard"
+            },
+            {
+              "zh": "你买最新款还是旧款？",
+              "answer": "Are you buying the latest model or the old one?",
+              "targetWord": "latest"
+            },
+            {
+              "zh": "要足够的食物还是少量零食？",
+              "answer": "Do you want plenty of food or just a few snacks?",
+              "targetWord": "plenty"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "or 选择 · 英译中",
+          "chunk": "indoors / conservative / sudden",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Do you prefer staying indoors or going outside?",
+              "answer": "你更喜欢待在室内还是出去？",
+              "targetWord": "indoors"
+            },
+            {
+              "en": "Is your style conservative or modern?",
+              "answer": "你的风格是保守还是现代？",
+              "targetWord": "conservative"
+            },
+            {
+              "en": "Was it a sudden decision or did you plan it?",
+              "answer": "这是一个突然的决定还是你计划好的？",
+              "targetWord": "sudden"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "or 选择 · 句型",
+          "pattern": "Do you want ___ or ___? / Is it ___ or ___?",
+          "patternMeaning": "你想要...还是...？/ 它是...还是...？",
+          "slots": [
+            "tea coffee",
+            "big small",
+            "to stay to go"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你想要茶还是咖啡？",
+              "answer": "Do you want tea or coffee?",
+              "pattern": "Do you want ___ or ___?",
+              "slotValues": {
+                "slot1": "tea coffee"
+              }
+            },
+            {
+              "zh": "它是大的还是小的？",
+              "answer": "Is it big or small?",
+              "pattern": "Is it ___ or ___?",
+              "slotValues": {
+                "slot1": "big small"
+              }
+            },
+            {
+              "zh": "你想留下还是离开？",
+              "answer": "Do you want to stay or to go?",
+              "pattern": "Do you want ___ or ___?",
+              "slotValues": {
+                "slot1": "to stay to go"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "or 选择 · 一词多句",
+          "vocabWord": "or / either...or / whether...or",
+          "vocabMeaning": "或者/要么...要么/是否...还是",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ or ___? / either ___ or ___.",
+              "items": [
+                { "zh": "你想现在走还是等一会儿？", "answer": "Do you want to leave now or wait a while?" },
+                { "zh": "我们要么去看电影，要么待在家。", "answer": "We can either go to a movie or stay home." }
+              ]
+            },
+            {
+              "chunk": "whether ___ or ___.", 
+              "items": [
+                { "zh": "无论你同意还是不同意，我都要去。", "answer": "Whether you agree or not I am going." },
+                { "zh": "我不知道他是来还是不来。", "answer": "I don't know whether he is coming or not." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "but 转折": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "but 转折 · 中译英",
+          "chunk": "disappointing / unpleasant / complex",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "结果令人失望，但过程很有价值。",
+              "answer": "The result was disappointing but the process was valuable.",
+              "targetWord": "disappointing"
+            },
+            {
+              "zh": "工作很麻烦，但薪水不错。",
+              "answer": "The work is unpleasant but the pay is good.",
+              "targetWord": "unpleasant"
+            },
+            {
+              "zh": "问题很复杂，但我们可以解决。",
+              "answer": "The problem is complex but we can solve it.",
+              "targetWord": "complex"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "but 转折 · 英译中",
+          "chunk": "amazed / mad / naturally",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I was amazed by the view but the weather was bad.",
+              "answer": "景色让我惊叹，但天气不好。",
+              "targetWord": "amazed"
+            },
+            {
+              "en": "He was mad at first but later calmed down.",
+              "answer": "他起初很生气，但后来平静下来了。",
+              "targetWord": "mad"
+            },
+            {
+              "en": "It may seem strange but it's naturally formed.",
+              "answer": "它可能看起来奇怪，但它是自然形成的。",
+              "targetWord": "naturally"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "but 转折 · 句型",
+          "pattern": "___ is ___, but ___. / I ___, but ___.",
+          "patternMeaning": "...虽然...，但是... / 我...，但是...",
+          "slots": [
+            "the food cheap it tastes good",
+            "I wanted to go I was too tired",
+            "the hotel small it's clean"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "食物便宜，但味道不错。",
+              "answer": "The food is cheap but it tastes good.",
+              "pattern": "___ is ___, but ___.",
+              "slotValues": {
+                "slot1": "the food cheap it tastes good"
+              }
+            },
+            {
+              "zh": "我想去，但我太累了。",
+              "answer": "I wanted to go but I was too tired.",
+              "pattern": "I ___, but ___.",
+              "slotValues": {
+                "slot1": "wanted to go I was too tired"
+              }
+            },
+            {
+              "zh": "酒店小，但很干净。",
+              "answer": "The hotel is small but it's clean.",
+              "pattern": "___ is ___, but ___.",
+              "slotValues": {
+                "slot1": "the hotel small it's clean"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "but 转折 · 一词多句",
+          "vocabWord": "but / however / yet",
+          "vocabMeaning": "但是/然而/可是",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___, but ___. / ___. However, ___.", 
+              "items": [
+                { "zh": "我想帮你，但我没时间。", "answer": "I want to help you but I have no time." },
+                { "zh": "我想去。然而，我太忙了。", "answer": "I wanted to go. However I was too busy." }
+              ]
+            },
+            {
+              "chunk": "___, yet ___.", 
+              "items": [
+                { "zh": "他累了，但仍然继续工作。", "answer": "He was tired yet he kept working." },
+                { "zh": "这很简单，然而没人会做。", "answer": "It is simple yet no one can do it." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "however 对比": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "however 对比 · 中译英",
+          "chunk": "expand / abandon / measure",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "业务需要扩张。然而，预算有限。",
+              "answer": "The business needs to expand. However the budget is limited.",
+              "targetWord": "expand"
+            },
+            {
+              "zh": "他想放弃。然而，他不能半途而废。",
+              "answer": "He wanted to abandon it. However he couldn't give up halfway.",
+              "targetWord": "abandon"
+            },
+            {
+              "zh": "我们采取了措施。然而，效果不明显。",
+              "answer": "We took measures. However the effect was not obvious.",
+              "targetWord": "measure"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "however 对比 · 英译中",
+          "chunk": "additional / generally / slightly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We need additional staff. However we have no budget.",
+              "answer": "我们需要额外的人手。然而，我们没有预算。",
+              "targetWord": "additional"
+            },
+            {
+              "en": "The plan is generally good. However there are some issues.",
+              "answer": "这个计划大体不错。然而，还有一些问题。",
+              "targetWord": "generally"
+            },
+            {
+              "en": "Sales increased slightly. However profits dropped sharply.",
+              "answer": "销量略有增长。然而，利润大幅下降。",
+              "targetWord": "slightly"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "however 对比 · 句型",
+          "pattern": "___. However, ___.",
+          "patternMeaning": "...。然而，...。",
+          "slots": [
+            "I wanted to come I was too sick",
+            "the hotel was cheap it was far from the beach",
+            "she tried her best she failed the exam"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我想来。然而，我病得太重了。",
+              "answer": "I wanted to come. However I was too sick.",
+              "pattern": "___. However, ___.",
+              "slotValues": {
+                "slot1": "I wanted to come I was too sick"
+              }
+            },
+            {
+              "zh": "酒店很便宜。然而，离海滩太远了。",
+              "answer": "The hotel was cheap. However it was far from the beach.",
+              "pattern": "___. However, ___.",
+              "slotValues": {
+                "slot1": "the hotel was cheap it was far from the beach"
+              }
+            },
+            {
+              "zh": "她尽了最大努力。然而，她考试没通过。",
+              "answer": "She tried her best. However she failed the exam.",
+              "pattern": "___. However, ___.",
+              "slotValues": {
+                "slot1": "she tried her best she failed the exam"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "however 对比 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "简单陈述",
+              "en": "The hotel was cheap.",
+              "zh": "酒店很便宜。",
+              "highlight": "cheap",
+              "hint": "先说一个事实"
+            },
+            {
+              "level": 2,
+              "label": "加转折",
+              "en": "The hotel was cheap. However it was far from the beach.",
+              "zh": "酒店很便宜。然而，离海滩很远。",
+              "highlight": "however",
+              "hint": "用 However 引出转折"
+            },
+            {
+              "level": 3,
+              "label": "加结果",
+              "en": "The hotel was cheap. However it was far from the beach so we didn't book it.",
+              "zh": "酒店很便宜。然而离海滩很远，所以没预订。",
+              "highlight": "so",
+              "hint": "加上 so 说明结果"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "not only...but also 递进": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "not only...but also 递进 · 中译英",
+          "chunk": "qualify / profit / presence",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "她不仅有资格做这份工作，而且经验丰富。",
+              "answer": "She not only qualifies for the job but also has rich experience.",
+              "targetWord": "qualify"
+            },
+            {
+              "zh": "这家公司不仅盈利，而且发展迅速。",
+              "answer": "The company not only makes profit but also grows fast.",
+              "targetWord": "profit"
+            },
+            {
+              "zh": "他不仅出席了会议，而且还发表了演讲。",
+              "answer": "He not only made his presence at the meeting but also gave a speech.",
+              "targetWord": "presence"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "not only...but also 递进 · 英译中",
+          "chunk": "frame / script / vote",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She not only designed the frame but also built it herself.",
+              "answer": "她不仅设计了框架，还自己搭建了。",
+              "targetWord": "frame"
+            },
+            {
+              "en": "He not only wrote the script but also directed the play.",
+              "answer": "他不仅写了剧本，还导演了这部剧。",
+              "targetWord": "script"
+            },
+            {
+              "en": "They not only won the vote but also gained public support.",
+              "answer": "他们不仅赢得了选票，还获得了公众支持。",
+              "targetWord": "vote"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "not only...but also 递进 · 句型",
+          "pattern": "not only ___ but also ___.",
+          "patternMeaning": "不仅...而且...",
+          "slots": [
+            "speaks English speaks Chinese",
+            "smart hardworking",
+            "sings dances"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "不仅会说英语还会说中文。",
+              "answer": "She not only speaks English but also speaks Chinese.",
+              "pattern": "not only ___ but also ___.",
+              "slotValues": {
+                "slot1": "speaks English speaks Chinese"
+              }
+            },
+            {
+              "zh": "不仅聪明而且勤奋。",
+              "answer": "He is not only smart but also hardworking.",
+              "pattern": "not only ___ but also ___.",
+              "slotValues": {
+                "slot1": "smart hardworking"
+              }
+            },
+            {
+              "zh": "不仅会唱歌还会跳舞。",
+              "answer": "She not only sings but also dances.",
+              "pattern": "not only ___ but also ___.",
+              "slotValues": {
+                "slot1": "sings dances"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "not only...but also 递进 · 一词多句",
+          "vocabWord": "not only...but also / not just...but / as well as",
+          "vocabMeaning": "不仅...而且/不只是...而且是/以及",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "not only ___ but also ___. / not just ___ but ___.", 
+              "items": [
+                { "zh": "她不仅美丽而且善良。", "answer": "She is not only beautiful but also kind." },
+                { "zh": "这不只是工作，这是使命。", "answer": "This is not just a job but a mission." }
+              ]
+            },
+            {
+              "chunk": "___ as well as ___.", 
+              "items": [
+                { "zh": "他既有经验又有热情。", "answer": "He has experience as well as passion." },
+                { "zh": "这座城市既有历史又有活力。", "answer": "This city has history as well as energy." }
+              ]
             }
           ]
         }
@@ -140,34 +1261,1862 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "while 同时 · 中译英",
-          "chunk": "setting",
+          "chunk": "setting / meanwhile / whenever",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我在做饭的时候我妹妹在摆桌子。",
               "answer": "While I was cooking my sister was setting the table.",
               "targetWord": "setting"
+            },
+            {
+              "zh": "我在看书，与此同时他在看电视。",
+              "answer": "I was reading meanwhile he was watching TV.",
+              "targetWord": "meanwhile"
+            },
+            {
+              "zh": "每次我看到他他都在笑。",
+              "answer": "Whenever I see him he is always smiling.",
+              "targetWord": "whenever"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "while 同时 · 英译中",
+          "chunk": "previous / afterwards / encounter",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "In the previous episode they were lost.",
+              "answer": "在上一集里他们迷路了。",
+              "targetWord": "previous"
+            },
+            {
+              "en": "We had dinner first and went to a movie afterwards.",
+              "answer": "我们先吃了晚饭，然后去看电影。",
+              "targetWord": "afterwards"
+            },
+            {
+              "en": "I first encountered him while traveling in Japan.",
+              "answer": "我第一次遇见他是在日本旅行的时候。",
+              "targetWord": "encounter"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "while 同时 · 句型",
-          "pattern": "I ___ while ___.",
-          "patternMeaning": "我...的同时...",
+          "pattern": "___ while ___.",
+          "patternMeaning": "...的同时...",
           "slots": [
-            "listened to music I worked, talked on the phone I walked, played games we waited"
+            "I listened to music I worked",
+            "she talked on the phone she walked",
+            "he cooked she set the table"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我...的同时...",
-              "answer": "We played games while we waited.",
-              "pattern": "I ___ while ___.",
+              "zh": "我一边听音乐一边工作。",
+              "answer": "I listened to music while I worked.",
+              "pattern": "___ while ___.",
               "slotValues": {
-                "slot1": "listened to music I worked, talked on the phone I walked, played games we waited"
+                "slot1": "I listened to music I worked"
               }
+            },
+            {
+              "zh": "她一边打电话一边走路。",
+              "answer": "She talked on the phone while she walked.",
+              "pattern": "___ while ___.",
+              "slotValues": {
+                "slot1": "she talked on the phone she walked"
+              }
+            },
+            {
+              "zh": "他做饭的时候她摆桌子。",
+              "answer": "He cooked while she set the table.",
+              "pattern": "___ while ___.",
+              "slotValues": {
+                "slot1": "he cooked she set the table"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "while 同时 · 一词多句",
+          "vocabWord": "while / during / meanwhile",
+          "vocabMeaning": "在...的同时/期间",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ while ___. / ___ during ___.",
+              "items": [
+                { "zh": "我们在候机时玩了游戏。", "answer": "We played games while we waited for the flight." },
+                { "zh": "他在会议期间睡着了。", "answer": "He fell asleep during the meeting." }
+              ]
+            },
+            {
+              "chunk": "___. Meanwhile, ___.",
+              "items": [
+                { "zh": "妈妈在做饭。与此同时，爸爸在打扫。", "answer": "Mom was cooking. Meanwhile Dad was cleaning." },
+                { "zh": "我在加班。与此同时，她在家里等我。", "answer": "I was working overtime. Meanwhile she was waiting for me at home." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "when 当…时": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "when 当…时 · 中译英",
+          "chunk": "confident / effective / characteristic",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "当我充满自信时，我能做好任何事。",
+              "answer": "When I feel confident I can do anything well.",
+              "targetWord": "confident"
+            },
+            {
+              "zh": "当方法有效时，结果就会好。",
+              "answer": "When the method is effective the results will be good.",
+              "targetWord": "effective"
+            },
+            {
+              "zh": "当你有这种特征时，别人会注意到你。",
+              "answer": "When you have this characteristic people will notice you.",
+              "targetWord": "characteristic"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "when 当…时 · 英译中",
+          "chunk": "extraordinary / keen / valuable",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "When you see something extraordinary you never forget it.",
+              "answer": "当你看到非凡的事物时，你永远不会忘记。",
+              "targetWord": "extraordinary"
+            },
+            {
+              "en": "When she is keen on something she gives it her all.",
+              "answer": "当她热衷于某事时，她会全力以赴。",
+              "targetWord": "keen"
+            },
+            {
+              "en": "When you have valuable experience you should share it.",
+              "answer": "当你有宝贵的经验时，应该分享出来。",
+              "targetWord": "valuable"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "when 当…时 · 句型",
+          "pattern": "When ___, ___.",
+          "patternMeaning": "当...时，...。",
+          "slots": [
+            "I arrived she was cooking",
+            "you get home call me",
+            "it rains I stay home"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我到达时，她正在做饭。",
+              "answer": "When I arrived she was cooking.",
+              "pattern": "When ___, ___.",
+              "slotValues": {
+                "slot1": "I arrived she was cooking"
+              }
+            },
+            {
+              "zh": "你到家时给我打电话。",
+              "answer": "When you get home call me.",
+              "pattern": "When ___, ___.",
+              "slotValues": {
+                "slot1": "you get home call me"
+              }
+            },
+            {
+              "zh": "下雨时我待在家。",
+              "answer": "When it rains I stay home.",
+              "pattern": "When ___, ___.",
+              "slotValues": {
+                "slot1": "it rains I stay home"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "when 当…时 · 一词多句",
+          "vocabWord": "when / whenever / every time",
+          "vocabMeaning": "当...时/每当/每次",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "When ___, ___. / Whenever ___, ___.",
+              "items": [
+                { "zh": "当我年轻的时候常去那里。", "answer": "When I was young I often went there." },
+                { "zh": "每当我有空，我就去跑步。", "answer": "Whenever I have free time I go running." }
+              ]
+            },
+            {
+              "chunk": "Every time ___, ___.",
+              "items": [
+                { "zh": "每次我看到他，他都在笑。", "answer": "Every time I see him he is smiling." },
+                { "zh": "每次我去那家餐厅，都要排队。", "answer": "Every time I go to that restaurant I have to wait in line." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "before/after 前后": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "before/after 前后 · 中译英",
+          "chunk": "establish / propose / persuade",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "在建立信任之前，你需要真诚。",
+              "answer": "Before you establish trust you need to be sincere.",
+              "targetWord": "establish"
+            },
+            {
+              "zh": "在提出方案之后，我们讨论了细节。",
+              "answer": "After we proposed the plan we discussed the details.",
+              "targetWord": "propose"
+            },
+            {
+              "zh": "在说服他之前，我们先收集证据。",
+              "answer": "Before we persuade him we need to gather evidence.",
+              "targetWord": "persuade"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "before/after 前后 · 英译中",
+          "chunk": "contract / supply / sample",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Before you sign the contract read it carefully.",
+              "answer": "在签合同之前，仔细阅读。",
+              "targetWord": "contract"
+            },
+            {
+              "en": "After the supply arrives we can start production.",
+              "answer": "在供应到达之后，我们可以开始生产。",
+              "targetWord": "supply"
+            },
+            {
+              "en": "Before you buy check a sample first.",
+              "answer": "在你买之前先检查一下样品。",
+              "targetWord": "sample"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "before/after 前后 · 句型",
+          "pattern": "Before ___, ___. / After ___, ___.",
+          "patternMeaning": "在...之前，... / 在...之后，...",
+          "slots": [
+            "I go to bed I brush my teeth",
+            "I finished work I went to the gym",
+            "you leave turn off the lights"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "睡觉前我刷牙。",
+              "answer": "Before I go to bed I brush my teeth.",
+              "pattern": "Before ___, ___.",
+              "slotValues": {
+                "slot1": "I go to bed I brush my teeth"
+              }
+            },
+            {
+              "zh": "下班后我去了健身房。",
+              "answer": "After I finished work I went to the gym.",
+              "pattern": "After ___, ___.",
+              "slotValues": {
+                "slot1": "I finished work I went to the gym"
+              }
+            },
+            {
+              "zh": "你离开前请关灯。",
+              "answer": "Before you leave turn off the lights.",
+              "pattern": "Before ___, ___.",
+              "slotValues": {
+                "slot1": "you leave turn off the lights"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "before/after 前后 · 一词多句",
+          "vocabWord": "before / after / afterwards",
+          "vocabMeaning": "在...之前/在...之后/然后",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Before ___, ___. / After ___, ___.",
+              "items": [
+                { "zh": "吃饭前要洗手。", "answer": "Before you eat wash your hands." },
+                { "zh": "下班后我通常去散步。", "answer": "After work I usually go for a walk." }
+              ]
+            },
+            {
+              "chunk": "___. Afterwards, ___.",
+              "items": [
+                { "zh": "我们先吃了饭。然后去看电影。", "answer": "We had dinner first. Afterwards we went to a movie." },
+                { "zh": "他完成了作业。然后出去玩了。", "answer": "He finished his homework. Afterwards he went out to play." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "until 直到": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "until 直到 · 中译英",
+          "chunk": "shelter / damage / strength",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我们躲在树荫下直到雨停。",
+              "answer": "We stayed under the shelter until the rain stopped.",
+              "targetWord": "shelter"
+            },
+            {
+              "zh": "等到确认没有损坏为止。",
+              "answer": "Wait until we confirm there is no damage.",
+              "targetWord": "damage"
+            },
+            {
+              "zh": "坚持直到你恢复体力。",
+              "answer": "Keep going until you regain your strength.",
+              "targetWord": "strength"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "until 直到 · 英译中",
+          "chunk": "obligation / outer / length",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have an obligation to stay until the job is done.",
+              "answer": "我有义务待到工作完成。",
+              "targetWord": "obligation"
+            },
+            {
+              "en": "Keep exploring the outer space until we find answers.",
+              "answer": "继续探索外太空，直到我们找到答案。",
+              "targetWord": "outer"
+            },
+            {
+              "en": "Continue this length until it fits perfectly.",
+              "answer": "继续这个长度直到完全合适。",
+              "targetWord": "length"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "until 直到 · 句型",
+          "pattern": "___ until ___.",
+          "patternMeaning": "...直到...。",
+          "slots": [
+            "Please wait here I come back",
+            "keep trying you succeed",
+            "stay inside it stops raining"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请在这里等我回来。",
+              "answer": "Please wait here until I come back.",
+              "pattern": "___ until ___.",
+              "slotValues": {
+                "slot1": "Please wait here I come back"
+              }
+            },
+            {
+              "zh": "继续尝试直到成功。",
+              "answer": "Keep trying until you succeed.",
+              "pattern": "___ until ___.",
+              "slotValues": {
+                "slot1": "keep trying you succeed"
+              }
+            },
+            {
+              "zh": "待在室内直到雨停。",
+              "answer": "Stay inside until it stops raining.",
+              "pattern": "___ until ___.",
+              "slotValues": {
+                "slot1": "stay inside it stops raining"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "until 直到 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本动作",
+              "en": "Please wait here until I come back.",
+              "zh": "请在这里等我回来。",
+              "highlight": "wait",
+              "hint": "先说基本动作"
+            },
+            {
+              "level": 2,
+              "label": "加原因",
+              "en": "Please wait here until I come back because I need your help.",
+              "zh": "请在这里等我回来，因为我需要你的帮助。",
+              "highlight": "because",
+              "hint": "加上 because 说明原因"
+            },
+            {
+              "level": 3,
+              "label": "加承诺",
+              "en": "Please wait here until I come back because I need your help. I promise I won't be long.",
+              "zh": "请在这里等我回来，因为我需要你的帮助。我保证不会太久。",
+              "highlight": "promise",
+              "hint": "加上 promise 做出承诺"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "时间顺序链": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "时间顺序链 · 中译英",
+          "chunk": "sequence / combination / management",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "首先按顺序排列，然后检查组合。",
+              "answer": "First arrange them in sequence then check the combination.",
+              "targetWord": "sequence"
+            },
+            {
+              "zh": "首先评估组合方案，然后讨论管理策略。",
+              "answer": "First evaluate the combination then discuss the management strategy.",
+              "targetWord": "combination"
+            },
+            {
+              "zh": "首先做好管理计划，然后逐步实施。",
+              "answer": "First make a management plan then implement it step by step.",
+              "targetWord": "management"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "时间顺序链 · 英译中",
+          "chunk": "finding / insight / specialist",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "First share your finding then we can discuss.",
+              "answer": "先分享你的发现，然后我们可以讨论。",
+              "targetWord": "finding"
+            },
+            {
+              "en": "First gain some insight then make a decision.",
+              "answer": "先获得一些见解，然后做决定。",
+              "targetWord": "insight"
+            },
+            {
+              "en": "First consult a specialist then start the treatment.",
+              "answer": "先咨询专家，然后开始治疗。",
+              "targetWord": "specialist"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "时间顺序链 · 句型",
+          "pattern": "First, ___. Then, ___. After that, ___.",
+          "patternMeaning": "首先...。然后...。之后...。",
+          "slots": [
+            "I got up I took a shower I ate breakfast",
+            "we went to the museum we had lunch we walked in the park",
+            "she did her homework she watched TV she went to bed"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "首先起床，然后洗澡，之后吃早饭。",
+              "answer": "First I got up. Then I took a shower. After that I ate breakfast.",
+              "pattern": "First, ___. Then, ___. After that, ___.",
+              "slotValues": {
+                "slot1": "I got up I took a shower I ate breakfast"
+              }
+            },
+            {
+              "zh": "先去博物馆，然后吃午饭，之后在公园散步。",
+              "answer": "First we went to the museum. Then we had lunch. After that we walked in the park.",
+              "pattern": "First, ___. Then, ___. After that, ___.",
+              "slotValues": {
+                "slot1": "we went to the museum we had lunch we walked in the park"
+              }
+            },
+            {
+              "zh": "她先做作业，然后看电视，之后上床睡觉。",
+              "answer": "First she did her homework. Then she watched TV. After that she went to bed.",
+              "pattern": "First, ___. Then, ___. After that, ___.",
+              "slotValues": {
+                "slot1": "she did her homework she watched TV she went to bed"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "时间顺序链 · 一词多句",
+          "vocabWord": "First / Then / After that / Finally",
+          "vocabMeaning": "首先/然后/之后/最后",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "First, ___. Then, ___. Finally, ___.",
+              "items": [
+                { "zh": "先准备材料，然后开始制作，最后包装。", "answer": "First prepare the materials. Then start making it. Finally pack it up." },
+                { "zh": "先买票，然后入场，最后找座位。", "answer": "First buy tickets. Then enter. Finally find your seat." }
+              ]
+            },
+            {
+              "chunk": "First, ___. After that, ___. Then, ___.",
+              "items": [
+                { "zh": "先去银行，然后去超市，再回家。", "answer": "First go to the bank. After that go to the supermarket. Then go home." },
+                { "zh": "先复习课文，然后做练习，再检查答案。", "answer": "First review the text. After that do the exercises. Then check the answers." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "for example 举例": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "for example 举例 · 中译英",
+          "chunk": "instance / impression / connection",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "举个例子，这个印象一直留在我的脑海里。",
+              "answer": "For instance this impression has stayed in my mind.",
+              "targetWord": "instance"
+            },
+            {
+              "zh": "例如，第一印象很重要。",
+              "answer": "For example first impressions matter a lot.",
+              "targetWord": "impression"
+            },
+            {
+              "zh": "比如，建立连接需要时间。",
+              "answer": "For example building connections takes time.",
+              "targetWord": "connection"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "for example 举例 · 英译中",
+          "chunk": "contrast / facility / effectively",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "There is a sharp contrast. For example the rich and the poor.",
+              "answer": "有鲜明的对比。比如富人和穷人。",
+              "targetWord": "contrast"
+            },
+            {
+              "en": "This facility offers many services. For example free Wi-Fi.",
+              "answer": "这个设施提供很多服务。比如免费Wi-Fi。",
+              "targetWord": "facility"
+            },
+            {
+              "en": "You need to work effectively. For example set clear goals.",
+              "answer": "你需要高效工作。比如设定明确目标。",
+              "targetWord": "effectively"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "for example 举例 · 句型",
+          "pattern": "I like ___. For example, ___.",
+          "patternMeaning": "我喜欢...。比如...。",
+          "slots": [
+            "sports I play basketball",
+            "music I listen to pop",
+            "movies I watch comedies"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我喜欢运动。比如打篮球。",
+              "answer": "I like sports. For example I play basketball.",
+              "pattern": "I like ___. For example, ___.",
+              "slotValues": {
+                "slot1": "sports I play basketball"
+              }
+            },
+            {
+              "zh": "我喜欢音乐。比如听流行歌曲。",
+              "answer": "I like music. For example I listen to pop.",
+              "pattern": "I like ___. For example, ___.",
+              "slotValues": {
+                "slot1": "music I listen to pop"
+              }
+            },
+            {
+              "zh": "我喜欢电影。比如看喜剧片。",
+              "answer": "I like movies. For example I watch comedies.",
+              "pattern": "I like ___. For example, ___.",
+              "slotValues": {
+                "slot1": "movies I watch comedies"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "for example 举例 · 一词多句",
+          "vocabWord": "for example / for instance / such as",
+          "vocabMeaning": "例如/比如/像",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "For example, ___. / For instance, ___.",
+              "items": [
+                { "zh": "我喜欢户外活动。比如爬山和骑行。", "answer": "I enjoy outdoor activities. For example hiking and cycling." },
+                { "zh": "很多水果对健康好。比如苹果和香蕉。", "answer": "Many fruits are good for health. For instance apples and bananas." }
+              ]
+            },
+            {
+              "chunk": "___ such as ___.",
+              "items": [
+                { "zh": "我喜欢像篮球这样的运动。", "answer": "I like sports such as basketball." },
+                { "zh": "她会说多种语言，比如英语和法语。", "answer": "She speaks many languages such as English and French." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "also/too/as well 补充": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "also/too/as well 补充 · 中译英",
+          "chunk": "combine / development / exchange",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "我们还需要结合这些想法。另外也要考虑发展。",
+              "answer": "We need to combine these ideas. Also consider the development.",
+              "targetWord": "combine"
+            },
+            {
+              "zh": "发展很重要。文化发展同样重要。",
+              "answer": "Development is important. Cultural development is important too.",
+              "targetWord": "development"
+            },
+            {
+              "zh": "我们有文化交流项目。也有学生交换项目。",
+              "answer": "We have cultural exchange programs. Also we have student exchange programs.",
+              "targetWord": "exchange"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "also/too/as well 补充 · 英译中",
+          "chunk": "domestic / entertain / domestic",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We focus on domestic markets. Also we explore international ones.",
+              "answer": "我们关注国内市场。也探索国际市场。",
+              "targetWord": "domestic"
+            },
+            {
+              "en": "The show can educate. It can entertain as well.",
+              "answer": "这个节目能教育人。也能娱乐人。",
+              "targetWord": "entertain"
+            },
+            {
+              "en": "We need domestic investment. International investment too.",
+              "answer": "我们需要国内投资。国际投资也需要。",
+              "targetWord": "domestic"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "also/too/as well 补充 · 句型",
+          "pattern": "___. Also, ___.",
+          "patternMeaning": "...。而且，...。",
+          "slots": [
+            "She is kind she is hardworking",
+            "I like coffee I like tea",
+            "He can sing he can dance"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "她很善良。而且很勤奋。",
+              "answer": "She is kind. Also she is hardworking.",
+              "pattern": "___. Also, ___.",
+              "slotValues": {
+                "slot1": "She is kind she is hardworking"
+              }
+            },
+            {
+              "zh": "我喜欢咖啡。也喜欢茶。",
+              "answer": "I like coffee. Also I like tea.",
+              "pattern": "___. Also, ___.",
+              "slotValues": {
+                "slot1": "I like coffee I like tea"
+              }
+            },
+            {
+              "zh": "他会唱歌。也会跳舞。",
+              "answer": "He can sing. Also he can dance.",
+              "pattern": "___. Also, ___.",
+              "slotValues": {
+                "slot1": "He can sing he can dance"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "also/too/as well 补充 · 一词多句",
+          "vocabWord": "also / too / as well / either",
+          "vocabMeaning": "也/还",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___. Also, ___. / ___, too.",
+              "items": [
+                { "zh": "她喜欢音乐。也喜欢绘画。", "answer": "She likes music. Also she likes painting." },
+                { "zh": "我喜欢这个。她也喜欢。", "answer": "I like this. She likes it too." }
+              ]
+            },
+            {
+              "chunk": "___, as well.",
+              "items": [
+                { "zh": "他说英语，也说日语。", "answer": "He speaks English and he speaks Japanese as well." },
+                { "zh": "她善良，也很聪明。", "answer": "She is kind and she is smart as well." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "besides/what's more 递进": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "besides/what's more 递进 · 中译英",
+          "chunk": "approve / campaign / grand",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "委员会批准了方案。此外，还启动了推广活动。",
+              "answer": "The committee approved the plan. Besides they launched a campaign.",
+              "targetWord": "approve"
+            },
+            {
+              "zh": "我们发起了活动。而且，目标很宏大。",
+              "answer": "We started a campaign. What's more the goal is grand.",
+              "targetWord": "campaign"
+            },
+            {
+              "zh": "这个计划很宏大。而且，可行性很高。",
+              "answer": "The plan is grand. Besides it's highly feasible.",
+              "targetWord": "grand"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "besides/what's more 递进 · 英译中",
+          "chunk": "furthermore / mysterious / sensitive",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The place is beautiful. Furthermore it has a mysterious atmosphere.",
+              "answer": "这个地方很美。而且有一种神秘的氛围。",
+              "targetWord": "furthermore"
+            },
+            {
+              "en": "He is very talented. What's more he is sensitive to others' feelings.",
+              "answer": "他很有才华。而且他很敏感，能体察别人的感受。",
+              "targetWord": "sensitive"
+            },
+            {
+              "en": "The story is mysterious. Furthermore the ending is surprising.",
+              "answer": "故事很神秘。而且结尾出人意料。",
+              "targetWord": "mysterious"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "besides/what's more 递进 · 句型",
+          "pattern": "___. Besides, ___. / ___. What's more, ___.",
+          "patternMeaning": "...。而且，.../...。更重要的是，...。",
+          "slots": [
+            "this restaurant is nice the prices are good",
+            "the movie is funny the music is wonderful",
+            "he is smart he is hardworking"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "这家餐厅不错。而且价格也实惠。",
+              "answer": "This restaurant is nice. Besides the prices are good.",
+              "pattern": "___. Besides, ___.",
+              "slotValues": {
+                "slot1": "this restaurant is nice the prices are good"
+              }
+            },
+            {
+              "zh": "电影很好笑。而且音乐很棒。",
+              "answer": "The movie is funny. What's more the music is wonderful.",
+              "pattern": "___. What's more, ___.",
+              "slotValues": {
+                "slot1": "the movie is funny the music is wonderful"
+              }
+            },
+            {
+              "zh": "他很聪明。而且很勤奋。",
+              "answer": "He is smart. What's more he is hardworking.",
+              "pattern": "___. What's more, ___.",
+              "slotValues": {
+                "slot1": "he is smart he is hardworking"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "besides/what's more 递进 · 一词多句",
+          "vocabWord": "besides / what's more / moreover / furthermore",
+          "vocabMeaning": "而且/更重要的是/此外",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___. Besides, ___. / ___. What's more, ___.",
+              "items": [
+                { "zh": "这家酒店位置好。而且价格合理。", "answer": "This hotel is well located. Besides the price is reasonable." },
+                { "zh": "他很有经验。而且态度也很好。", "answer": "He is very experienced. What's more his attitude is great." }
+              ]
+            },
+            {
+              "chunk": "___. Moreover, ___. / ___. Furthermore, ___.",
+              "items": [
+                { "zh": "项目很有前景。而且我们已经有了资金。", "answer": "The project is promising. Moreover we already have funding." },
+                { "zh": "方案很创新。此外实施起来也不难。", "answer": "The solution is innovative. Furthermore it's not hard to implement." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "either 否定补充": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "either 否定补充 · 中译英",
+          "chunk": "reject / punish / struggle",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "他们不会拒绝这个提议。我们也不会。",
+              "answer": "They won't reject the offer. We won't either.",
+              "targetWord": "reject"
+            },
+            {
+              "zh": "他们不会惩罚孩子。我们也不会。",
+              "answer": "They won't punish the child. We won't either.",
+              "targetWord": "punish"
+            },
+            {
+              "zh": "他不会为此挣扎。你也不必。",
+              "answer": "He won't struggle with it. You don't have to either.",
+              "targetWord": "struggle"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "either 否定补充 · 英译中",
+          "chunk": "unemployed / victim / tough",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He is not unemployed. She isn't either.",
+              "answer": "他没有失业。她也没有。",
+              "targetWord": "unemployed"
+            },
+            {
+              "en": "Don't blame the victim. Don't blame yourself either.",
+              "answer": "不要责怪受害者。也不要责怪自己。",
+              "targetWord": "victim"
+            },
+            {
+              "en": "The exam isn't tough. The homework isn't either.",
+              "answer": "考试不难。家庭作业也不难。",
+              "targetWord": "tough"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "either 否定补充 · 句型",
+          "pattern": "I don't ___. I don't ___, either.",
+          "patternMeaning": "我不...。我也不...。",
+          "slots": [
+            "like coffee like tea",
+            "eat meat eat fish",
+            "drink alcohol smoke"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我不喜欢咖啡。也不喜欢茶。",
+              "answer": "I don't like coffee. I don't like tea either.",
+              "pattern": "I don't ___. I don't ___, either.",
+              "slotValues": {
+                "slot1": "like coffee like tea"
+              }
+            },
+            {
+              "zh": "我不吃肉。也不吃鱼。",
+              "answer": "I don't eat meat. I don't eat fish either.",
+              "pattern": "I don't ___. I don't ___, either.",
+              "slotValues": {
+                "slot1": "eat meat eat fish"
+              }
+            },
+            {
+              "zh": "我不喝酒。也不抽烟。",
+              "answer": "I don't drink alcohol. I don't smoke either.",
+              "pattern": "I don't ___. I don't ___, either.",
+              "slotValues": {
+                "slot1": "drink alcohol smoke"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "either 否定补充 · 一词多句",
+          "vocabWord": "either / neither / nor",
+          "vocabMeaning": "也不/两者都不",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I don't ___, either. / Neither ___ nor ___.",
+              "items": [
+                { "zh": "我不喜欢咖啡。也不喜欢茶。", "answer": "I don't like coffee. I don't like tea either." },
+                { "zh": "他既不会唱歌也不会跳舞。", "answer": "He can neither sing nor dance." }
+              ]
+            },
+            {
+              "chunk": "___ doesn't ___. ___ doesn't ___, either.",
+              "items": [
+                { "zh": "他不是学生。她也不是。", "answer": "He isn't a student. She isn't either." },
+                { "zh": "我不累。他也不累。", "answer": "I'm not tired. He isn't either." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "对话衔接词": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "对话衔接词 · 中译英",
+          "chunk": "obviously / decent / impression",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "嗯，很明显这个计划需要改进。",
+              "answer": "Well obviously this plan needs improvement.",
+              "targetWord": "obviously"
+            },
+            {
+              "zh": "老实说，这需要一个体面的解决方案。",
+              "answer": "To be honest we need a decent solution.",
+              "targetWord": "decent"
+            },
+            {
+              "zh": "顺便说一下，我的第一印象不错。",
+              "answer": "By the way my first impression was good.",
+              "targetWord": "impression"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "对话衔接词 · 英译中",
+          "chunk": "license / means / portrait",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Actually you need a license to drive here.",
+              "answer": "实际上，在这里开车需要驾照。",
+              "targetWord": "license"
+            },
+            {
+              "en": "I mean this is not the best means to solve it.",
+              "answer": "我的意思是，这不是解决这个问题的最好方法。",
+              "targetWord": "means"
+            },
+            {
+              "en": "Well that portrait is really impressive.",
+              "answer": "嗯，那幅画像真的很令人印象深刻。",
+              "targetWord": "portrait"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "对话衔接词 · 句型",
+          "pattern": "Well, ___. / Actually, ___. / By the way, ___.",
+          "patternMeaning": "嗯...。/ 实际上...。/ 顺便说一下...。",
+          "slots": [
+            "I think it's a good idea",
+            "I don't like coffee I prefer tea",
+            "did you hear about the party"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "嗯，我觉得这是个好主意。",
+              "answer": "Well I think it's a good idea.",
+              "pattern": "Well, ___.",
+              "slotValues": {
+                "slot1": "I think it's a good idea"
+              }
+            },
+            {
+              "zh": "实际上，我不喜欢咖啡。我更喜欢茶。",
+              "answer": "Actually I don't like coffee. I prefer tea.",
+              "pattern": "Actually, ___.",
+              "slotValues": {
+                "slot1": "I don't like coffee I prefer tea"
+              }
+            },
+            {
+              "zh": "顺便说一下，你听说那个派对了吗？",
+              "answer": "By the way did you hear about the party?",
+              "pattern": "By the way, ___.",
+              "slotValues": {
+                "slot1": "did you hear about the party"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "对话衔接词 · 一词多句",
+          "vocabWord": "well / actually / by the way / anyway",
+          "vocabMeaning": "嗯/实际上/顺便说一下/不管怎样",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Well, ___. / Actually, ___.",
+              "items": [
+                { "zh": "嗯，我也不确定。", "answer": "Well I'm not sure either." },
+                { "zh": "实际上，我改变主意了。", "answer": "Actually I changed my mind." }
+              ]
+            },
+            {
+              "chunk": "By the way, ___. / Anyway, ___.",
+              "items": [
+                { "zh": "顺便问一下，几点了？", "answer": "By the way what time is it?" },
+                { "zh": "不管怎样，我们继续吧。", "answer": "Anyway let's move on." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "多步骤叙事": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "多步骤叙事 · 中译英",
+          "chunk": "sequence / addition / scheme",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "首先按顺序排列，然后添加细节。",
+              "answer": "First arrange them in sequence then add the details.",
+              "targetWord": "sequence"
+            },
+            {
+              "zh": "除了这些，还需要增加新方案。",
+              "answer": "In addition to these we need to add a new scheme.",
+              "targetWord": "addition"
+            },
+            {
+              "zh": "首先制定方案，然后按步骤执行。",
+              "answer": "First make a scheme then follow the steps.",
+              "targetWord": "scheme"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "多步骤叙事 · 英译中",
+          "chunk": "alarm / signal / command",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "First set the alarm. Then get ready. Finally leave.",
+              "answer": "先设好闹钟。然后准备好。最后出发。",
+              "targetWord": "alarm"
+            },
+            {
+              "en": "First wait for the signal. Then follow the command.",
+              "answer": "先等信号。然后执行命令。",
+              "targetWord": "signal"
+            },
+            {
+              "en": "First take command. Then organize the team.",
+              "answer": "先接管指挥。然后组织团队。",
+              "targetWord": "command"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "多步骤叙事 · 句型",
+          "pattern": "First, ___. Then, ___. After that, ___. Finally, ___.",
+          "patternMeaning": "首先...。然后...。之后...。最后...。",
+          "slots": [
+            "wake up take a shower eat breakfast go to work",
+            "buy tickets enter the cinema watch the movie leave",
+            "prepare materials mix them bake the cake decorate it"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "先起床，然后洗澡，之后吃早饭，最后上班。",
+              "answer": "First wake up. Then take a shower. After that eat breakfast. Finally go to work.",
+              "pattern": "First, ___. Then, ___. After that, ___. Finally, ___.",
+              "slotValues": {
+                "slot1": "wake up take a shower eat breakfast go to work"
+              }
+            },
+            {
+              "zh": "先买票，然后入场，之后看电影，最后离开。",
+              "answer": "First buy tickets. Then enter the cinema. After that watch the movie. Finally leave.",
+              "pattern": "First, ___. Then, ___. After that, ___. Finally, ___.",
+              "slotValues": {
+                "slot1": "buy tickets enter the cinema watch the movie leave"
+              }
+            },
+            {
+              "zh": "先准备材料，然后混合，之后烤蛋糕，最后装饰。",
+              "answer": "First prepare materials. Then mix them. After that bake the cake. Finally decorate it.",
+              "pattern": "First, ___. Then, ___. After that, ___. Finally, ___.",
+              "slotValues": {
+                "slot1": "prepare materials mix them bake the cake decorate it"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "多步骤叙事 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "一步",
+              "en": "First I woke up.",
+              "zh": "首先我起床了。",
+              "highlight": "first",
+              "hint": "先说第一步"
+            },
+            {
+              "level": 2,
+              "label": "两步",
+              "en": "First I woke up. Then I took a shower.",
+              "zh": "首先我起床了。然后我洗了澡。",
+              "highlight": "then",
+              "hint": "加上第二步"
+            },
+            {
+              "level": 3,
+              "label": "完整链",
+              "en": "First I woke up. Then I took a shower. After that I ate breakfast. Finally I went to work.",
+              "zh": "首先我起床了。然后洗了澡。之后吃了早饭。最后去上班。",
+              "highlight": "finally",
+              "hint": "用 After that 和 Finally 完成叙事链"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "因果链叙事": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "因果链叙事 · 中译英",
+          "chunk": "existence / intense / directly",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "因为它的存在，所以我们必须小心。",
+              "answer": "Because of its existence we must be careful.",
+              "targetWord": "existence"
+            },
+            {
+              "zh": "因为压力很大，所以他的情绪很强烈。",
+              "answer": "The pressure was intense so his emotions were strong.",
+              "targetWord": "intense"
+            },
+            {
+              "zh": "因为他直接参与了，所以知道内情。",
+              "answer": "He was directly involved so he knew the details.",
+              "targetWord": "directly"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "因果链叙事 · 英译中",
+          "chunk": "efficient / enthusiasm / vision",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "The system is efficient so we save time.",
+              "answer": "系统效率高，所以我们节省了时间。",
+              "targetWord": "efficient"
+            },
+            {
+              "en": "He showed great enthusiasm so the team was motivated.",
+              "answer": "他展现了极大的热情，所以团队很有动力。",
+              "targetWord": "enthusiasm"
+            },
+            {
+              "en": "She has a clear vision so the project succeeded.",
+              "answer": "她有清晰的愿景，所以项目成功了。",
+              "targetWord": "vision"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "因果链叙事 · 句型",
+          "pattern": "___ because ___. / ___, so ___.",
+          "patternMeaning": "...因为...。/...所以...。",
+          "slots": [
+            "I stayed home I was sick",
+            "I was tired I went to bed early",
+            "she studied hard she passed the exam"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我待在家，因为我病了。",
+              "answer": "I stayed home because I was sick.",
+              "pattern": "___ because ___.",
+              "slotValues": {
+                "slot1": "I stayed home I was sick"
+              }
+            },
+            {
+              "zh": "我很累，所以早早上床了。",
+              "answer": "I was tired so I went to bed early.",
+              "pattern": "___, so ___.",
+              "slotValues": {
+                "slot1": "I was tired I went to bed early"
+              }
+            },
+            {
+              "zh": "她努力学习，所以通过了考试。",
+              "answer": "She studied hard so she passed the exam.",
+              "pattern": "___, so ___.",
+              "slotValues": {
+                "slot1": "she studied hard she passed the exam"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "因果链叙事 · 一词多句",
+          "vocabWord": "because / so / therefore / as a result",
+          "vocabMeaning": "因为/所以/因此/结果",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "___ because ___. Because ___, ___.",
+              "items": [
+                { "zh": "他迟到了因为错过了公交。", "answer": "He was late because he missed the bus." },
+                { "zh": "因为下雨了，我们待在屋里。", "answer": "Because it rained we stayed inside." }
+              ]
+            },
+            {
+              "chunk": "___, so ___. ___. Therefore, ___.",
+              "items": [
+                { "zh": "我饿了，所以吃了个三明治。", "answer": "I was hungry so I ate a sandwich." },
+                { "zh": "他很有经验。因此他得到了晋升。", "answer": "He is very experienced. Therefore he got promoted." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "条件链叙事": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "条件链叙事 · 中译英",
+          "chunk": "arrest / basic / official",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "如果他被捕了，就会影响他的前途。",
+              "answer": "If he gets arrested it will affect his future.",
+              "targetWord": "arrest"
+            },
+            {
+              "zh": "如果你掌握基本技能，就能找到工作。",
+              "answer": "If you master the basic skills you can find a job.",
+              "targetWord": "basic"
+            },
+            {
+              "zh": "如果你拿到官方许可，就可以开始。",
+              "answer": "If you get official permission you can start.",
+              "targetWord": "official"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "条件链叙事 · 英译中",
+          "chunk": "private / particular / relative",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "If it's a private matter you should handle it carefully.",
+              "answer": "如果是私事，你应该小心处理。",
+              "targetWord": "private"
+            },
+            {
+              "en": "If you have particular concerns please let us know.",
+              "answer": "如果你有特别的顾虑，请告诉我们。",
+              "targetWord": "particular"
+            },
+            {
+              "en": "If a relative visits we need to prepare the guest room.",
+              "answer": "如果有亲戚来访，我们需要准备客房。",
+              "targetWord": "relative"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "条件链叙事 · 句型",
+          "pattern": "If ___, ___. / Unless ___, ___.",
+          "patternMeaning": "如果...，...。/除非...，否则...。",
+          "slots": [
+            "it rains I'll stay home",
+            "you study you will pass",
+            "you try you won't know"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "如果下雨，我就待在家。",
+              "answer": "If it rains I'll stay home.",
+              "pattern": "If ___, ___.",
+              "slotValues": {
+                "slot1": "it rains I'll stay home"
+              }
+            },
+            {
+              "zh": "如果你学习，就能通过。",
+              "answer": "If you study you will pass.",
+              "pattern": "If ___, ___.",
+              "slotValues": {
+                "slot1": "you study you will pass"
+              }
+            },
+            {
+              "zh": "除非你尝试，否则不会知道。",
+              "answer": "Unless you try you won't know.",
+              "pattern": "Unless ___, ___.",
+              "slotValues": {
+                "slot1": "you try you won't know"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "条件链叙事 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本条件",
+              "en": "If you study hard you will pass.",
+              "zh": "如果你努力学习，就能通过。",
+              "highlight": "if",
+              "hint": "先说基本条件"
+            },
+            {
+              "level": 2,
+              "label": "加结果",
+              "en": "If you study hard you will pass and get a good grade.",
+              "zh": "如果你努力学习，就能通过并且取得好成绩。",
+              "highlight": "and",
+              "hint": "加上 and 连接更多结果"
+            },
+            {
+              "level": 3,
+              "label": "加条件限制",
+              "en": "If you study hard you will pass and get a good grade but only if you practice as well.",
+              "zh": "如果你努力学习就能通过并取得好成绩，但前提是你也要练习。",
+              "highlight": "but only if",
+              "hint": "用 but only if 添加限制条件"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "时间链叙事": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "时间链叙事 · 中译英",
+          "chunk": "familiar / pursue / landscape",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "当我熟悉了环境后我开始追求梦想。",
+              "answer": "When I became familiar with the environment I started to pursue my dream.",
+              "targetWord": "familiar"
+            },
+            {
+              "zh": "在我们追求目标之前先了解地形。",
+              "answer": "Before we pursue our goal first understand the landscape.",
+              "targetWord": "pursue"
+            },
+            {
+              "zh": "当我看到那片风景时我决定留下来。",
+              "answer": "When I saw the landscape I decided to stay.",
+              "targetWord": "landscape"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "时间链叙事 · 英译中",
+          "chunk": "cottage / chest / garage",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "After we bought the cottage we renovated it.",
+              "answer": "我们买了那间小屋之后装修了它。",
+              "targetWord": "cottage"
+            },
+            {
+              "en": "Before you pack the chest make a list.",
+              "answer": "在打包箱子之前先列个清单。",
+              "targetWord": "chest"
+            },
+            {
+              "en": "While I was cleaning the garage I found old photos.",
+              "answer": "我在打扫车库的时候发现了一些老照片。",
+              "targetWord": "garage"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "时间链叙事 · 句型",
+          "pattern": "When ___, ___. / After ___, ___. / Before ___, ___.",
+          "patternMeaning": "当...时...。/在...之后...。/在...之前...。",
+          "slots": [
+            "I arrived she was cooking",
+            "I finished work I went home",
+            "you leave turn off the lights"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我到的时候她正在做饭。",
+              "answer": "When I arrived she was cooking.",
+              "pattern": "When ___, ___.",
+              "slotValues": {
+                "slot1": "I arrived she was cooking"
+              }
+            },
+            {
+              "zh": "下班后我回家了。",
+              "answer": "After I finished work I went home.",
+              "pattern": "After ___, ___.",
+              "slotValues": {
+                "slot1": "I finished work I went home"
+              }
+            },
+            {
+              "zh": "你离开前请关灯。",
+              "answer": "Before you leave turn off the lights.",
+              "pattern": "Before ___, ___.",
+              "slotValues": {
+                "slot1": "you leave turn off the lights"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "时间链叙事 · 一词多句",
+          "vocabWord": "when / while / before / after / by the time",
+          "vocabMeaning": "当...时/在...期间/在...之前/在...之后/到...时",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "When ___, ___. / While ___, ___.",
+              "items": [
+                { "zh": "我到家时她在看书。", "answer": "When I got home she was reading." },
+                { "zh": "我在做饭时他在听音乐。", "answer": "While I was cooking he was listening to music." }
+              ]
+            },
+            {
+              "chunk": "Before ___, ___. / After ___, ___.",
+              "items": [
+                { "zh": "睡觉前我喝了一杯牛奶。", "answer": "Before I went to bed I drank a glass of milk." },
+                { "zh": "吃完饭后我们去散步了。", "answer": "After we finished dinner we went for a walk." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "混合观点表达": {
+    "outputTraining": {
+      "version": 1,
+      "enabled": true,
+      "pipeline": [
+        {
+          "id": "cs_zh_0",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "zh_to_en",
+          "title": "混合观点表达 · 中译英",
+          "chunk": "honest / sympathy / definite",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "zh": "老实说我很同情他但是他的计划不确定。",
+              "answer": "To be honest I have sympathy for him but his plan is not definite.",
+              "targetWord": "honest"
+            },
+            {
+              "zh": "我理解你的感受不过我们不缺同情。",
+              "answer": "I understand your feelings. However sympathy alone is not enough.",
+              "targetWord": "sympathy"
+            },
+            {
+              "zh": "我认为这是一个肯定的答复但是还需要确认。",
+              "answer": "I think it's a definite yes but we still need to confirm.",
+              "targetWord": "definite"
+            }
+          ]
+        },
+        {
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "混合观点表达 · 英译中",
+          "chunk": "enthusiasm / intense / brand",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I think enthusiasm is important but it's not everything.",
+              "answer": "我认为热情很重要，但它不是全部。",
+              "targetWord": "enthusiasm"
+            },
+            {
+              "en": "I believe the competition is intense however we can win.",
+              "answer": "我相信竞争很激烈，但我们可以赢。",
+              "targetWord": "intense"
+            },
+            {
+              "en": "In my opinion this brand is good but it's too expensive.",
+              "answer": "在我看来这个品牌不错，但是太贵了。",
+              "targetWord": "brand"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
+          "type": "pattern_drill",
+          "title": "混合观点表达 · 句型",
+          "pattern": "I think ___. However ___. / In my opinion ___ because ___ but ___.",
+          "patternMeaning": "我认为...。然而...。/在我看来...因为...但是...。",
+          "slots": [
+            "this is a good plan we need more time",
+            "I agree with you I have some concerns",
+            "the movie was good the ending was weak"
+          ],
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我觉得这是个好计划。然而我们需要更多时间。",
+              "answer": "I think this is a good plan. However we need more time.",
+              "pattern": "I think ___. However ___.",
+              "slotValues": {
+                "slot1": "this is a good plan we need more time"
+              }
+            },
+            {
+              "zh": "我同意你的看法。然而我有一些顾虑。",
+              "answer": "I agree with you. However I have some concerns.",
+              "pattern": "I agree ___. However ___.",
+              "slotValues": {
+                "slot1": "with you I have some concerns"
+              }
+            },
+            {
+              "zh": "我觉得电影不错。然而结局太弱了。",
+              "answer": "I think the movie was good. However the ending was weak.",
+              "pattern": "I think ___. However ___.",
+              "slotValues": {
+                "slot1": "the movie was good the ending was weak"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sd_3",
+          "type": "sentence_decomposition",
+          "title": "混合观点表达 · 逐步构建",
+          "levels": [
+            {
+              "level": 1,
+              "label": "基本观点",
+              "en": "I think this is a good plan.",
+              "zh": "我觉得这是个好计划。",
+              "highlight": "think",
+              "hint": "先说基本观点"
+            },
+            {
+              "level": 2,
+              "label": "加转折",
+              "en": "I think this is a good plan. However we need more time.",
+              "zh": "我觉得这是个好计划。然而我们需要更多时间。",
+              "highlight": "however",
+              "hint": "用 However 引出转折"
+            },
+            {
+              "level": 3,
+              "label": "完整表达",
+              "en": "I think this is a good plan. However we need more time because the budget is tight and we have to be careful.",
+              "zh": "我觉得这是个好计划。然而我们需要更多时间因为预算紧张，我们必须小心。",
+              "highlight": "because",
+              "hint": "用 because 和 and 组成完整链"
             }
           ]
         }
